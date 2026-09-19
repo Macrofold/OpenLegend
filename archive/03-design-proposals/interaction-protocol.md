@@ -17,16 +17,18 @@ Separate four questions:
 
 A model can interpret “comfort her with the bear” while deterministic logic transfers an item, checks reach, and emits speech. A subjective response depends on the recipient's memories and personality; “cute” does not guarantee a fixed happiness boost.
 
+The [world profile](world-rules-and-parameters.md) constrains what causes/effects can exist, independently of whether their implementation is present. Semantic expression remains open-ended: roleplaying a spell is possible speech, while actual magical ignition is rejected in a world without supernatural powers. [Complexity management](simulation-scope-and-complexity.md) favors reuse and coarse consistent rules rather than a new subsystem for every nuance.
+
 ## Proposed contracts
 
 These are specification sketches inside documentation, not executable files or finalized API definitions.
 
 | Contract | Required information |
 |---|---|
-| Intent | Request ID; source/player/NPC; actor ID; target IDs or unresolved references; requested verb/text; supplied tools; requested mode; client timestamp |
+| Intent | Request ID; world ID; source/player/NPC; actor ID; target IDs or unresolved references; requested verb/text and proposed method; supplied tools; requested mode; client timestamp |
 | Observation context | Sector/tick; relevant entity/component versions; authorized facts; perception evidence; policy and world-rules versions |
 | Mechanism definition | ID/version; parameter schema; applicability predicates; required knowledge/capabilities; read/write declarations; effect template; duration model; presentation bindings; tests/provenance |
-| Effect proposal | Command ID; input intent; mechanism/version or ad-hoc decision ID; read set; checks; reservations; bounded operations; RNG record; expiry; causal explanation |
+| Effect proposal | Command ID; world/profile revision; input intent; mechanism/version or ad-hoc decision ID; read set; checks; reservations; bounded operations; admitted causal/source references; RNG record; expiry; causal explanation |
 | Commit result | Accepted/rejected/deferred/interrupted; event ID; actual effects; consumed resources; failure reason; next allowed actions; visibility labels |
 | Ongoing process | Process ID/version; participants; causal parent/root; inherited cumulative budgets; start/end or remaining work; integration rule; last evaluated tick; interruption conditions; cleanup rule |
 
@@ -74,15 +76,17 @@ The referenced predicates and operations must already be supported and typed. YA
 ## Route from arbitrary language to a result
 
 1. Resolve selected entities and the actor's literal request. Treat quoted speech, item descriptions, and memories as game data, never privileged instructions.
-2. Retrieve candidate mechanisms by verb, component compatibility, and semantic similarity. Candidate retrieval does not prove applicability.
+2. Consult the effective world profile and proposed cause/method; distinguish forbidden effects from plausible missing support and uncertain interpretation. Retrieve compatible candidate mechanisms by verb, components, and semantic similarity. Candidate retrieval does not prove applicability. Known actions can use cheap deterministic checks; unfamiliar meaning may require scoped classification.
 3. Try approved mechanisms with exact typed guards. Known menus can directly select a mechanism when the player knowingly requests that existing action.
 4. For unresolved meaning, use a bounded semantic choice/score if suitable; otherwise a general model produces a structured proposal or abstains.
-5. Validate permissions, visibility, resources, plausibility bounds, version dependencies, maximum affected area, event fan-out, and available primitive support.
+5. Validate world/profile revision and causal constraints, permissions, visibility, resources, plausibility bounds, version dependencies, maximum affected area, event fan-out, and available primitive support.
 6. Begin an interruptible action with a visible anticipation cue when appropriate.
 7. Recheck changed dependencies at commit, apply atomic effects, then emit observable consequences and private appraisal events. Build player explanations from actual committed outcomes and observer-visible facts, not the model's proposed narrative.
-8. Queue promising novel patterns for reusable mechanism generation and testing. Do not automatically generalize every ad-hoc result.
+8. Queue promising, world-compatible novel patterns for reusable mechanism generation and testing within the novelty budget. Do not automatically generalize every ad-hoc result or send an explicitly forbidden effect through repeated generation attempts.
 
 Interpretation and execution may have different deadlines. A brief “trying to work out how” activity can preserve play while a novel request resolves. For unclear targets or consequential ambiguity, present a concise in-world choice. Do not let a model silently resolve “burn it” against the wrong person or building.
+
+For a forbidden magical ignition in a realistic world, a friendly response can be: “Trees here are unmoved by incantations. You'll need a physical source of heat.” This rejects the effect without claiming a performed ritual or consumed items. Actual roleplay, failed physical attempts, unavailable materials, and deferred implementation have different consequences and explanations. See the [feedback contract](world-rules-and-parameters.md#friendly-rejection-and-truthful-feedback) for tone, alternatives, privacy, and fallback behavior.
 
 ## Five kinds of reuse
 

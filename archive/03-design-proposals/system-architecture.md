@@ -136,6 +136,8 @@ Colyseus is a plausible transport/room adapter because its documented model lets
 
 ## Parallel world versions and presentation layers
 
+Each world also selects an effective [world profile](world-rules-and-parameters.md): causal premise, allowed domains, gameplay permissions, admitted concessions, simulation detail, generation envelope, and feedback behavior. Capability discovery can extend supported behavior within that profile; ordinary actor requests cannot change it. Bind semantic decisions, caches, candidates, and commits to compatible profile revisions. Keep initial society/knowledge, live state, and operational budgets distinct from the world's physical rules.
+
 Future option discussed with the creator: keep an existing 2.5D world running while launching a fresh world with a different presentation, physics, or capabilities. The new version need not port the old world's content or history. This is an architectural option, not an initial-release deliverable.
 
 A **sector** is an area within a world. A **world version** selects compatible simulation rules, capabilities, state/protocol schemas, and presentation clients. Each running world has its own identity, authoritative state, history, and clock.

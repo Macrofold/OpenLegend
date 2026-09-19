@@ -2,6 +2,10 @@
 
 Recorded September 19, 2026. **Design proposal, not implemented or physically calibrated.** The user requested a representation of match-versus-twig/wall ignition and fire growing across neighboring building parts. Architecture and formulas below are original game-design sketches, using abstract game units rather than real ignition thresholds. See [evolving materials and construction](evolving-materials-and-construction.md), [interaction protocol](interaction-protocol.md), and [simulation time](time-and-simulation-speed.md).
 
+## Implementation scope after the complexity discussion
+
+M04/M05 accept starting with a coarse, consistent model and refining it for demonstrated gameplay value. The [scope proposal](simulation-scope-and-complexity.md) describes a small initial ignition/spread representation using material/section categories, moisture, source strength/duration, ignition progress with cooling, fuel, and local spread. The more detailed thermal accounting and node representation below are design options and failure-case guidance, not a requirement to implement them all first. Choose one authoritative representation at a time. A [world profile](world-rules-and-parameters.md) determines whether the proposed cause is allowed before any missing fire mechanic is generated; a realistic world does not admit magical ignition merely because its physical-fire implementation is incomplete.
+
 ## The distinction the model needs
 
 Combustibility does not answer whether a particular source ignites a particular target. The useful game distinction is between a material's ability to provide fuel, the target surface's current readiness to ignite, and the source's ability to deliver heat over time. A small flame is not automatically a low-temperature flame; temperature alone is therefore insufficient as the source descriptor.
@@ -51,9 +55,7 @@ Use distinct ignition and sustain conditions where useful so a started flame doe
 
 ## Fuel, heat output, and feedback
 
-Once a section burns, a bounded rate rule consumes fuel according to exposed burning area, material profile, moisture, and available ventilation. Integrate only to the next relevant event boundary, such as exhaustion. A conceptual accounting relationship is:
-
-Burning area grows through admitted local surface/neighbor transitions, up to the section's exposed area. It does not instantly include the entire wall or all its remaining fuel when one patch ignites.
+Once a section burns, a bounded rate rule consumes fuel according to exposed burning area, material profile, moisture, and available ventilation. Integrate only to the next relevant event boundary, such as exhaustion. Burning area grows through admitted local surface/neighbor transitions, up to the section's exposed area. It does not instantly include the entire wall or all its remaining fuel when one patch ignites. A conceptual accounting relationship is:
 
 ```text
 fuel_consumed = min(remaining_fuel, supported_burn_rate × elapsed_time)

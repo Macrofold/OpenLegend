@@ -27,7 +27,11 @@ Use the accepted PlayCanvas/custom-simulation boundary. Begin P1 with a small [v
 
 P4–P6 can change order based on feedback. Voice may be pulled earlier if spoken presence is essential, but would displace other work. Scale should follow demand; a second sector for testing is useful long before thousands of players, while a global infrastructure program is not.
 
+M02/M03 construction refinement: the first shelter feature should create editable parts with persistent material/state and simple coverage/support, following [modular construction](../03-design-proposals/evolving-materials-and-construction.md). Later building stages add space/household comfort and richer replacement; they do not convert indivisible prefab tiers. Reserve script-reference and semantic-extension contracts during definition design while keeping G2 execution staged. The no-spread campfire milestone remains useful, but [source-dependent ignition and local growing spread](../03-design-proposals/heat-and-fire.md) are the intended richer model, gated by R21 rather than assumed implemented in P1/P2.
+
 ## P1/P2 implementation backlog, proposed only
+
+M04/M05 scope/world refinement: P1/P2 should select one small explicit [world profile](../03-design-proposals/world-rules-and-parameters.md) and coarse consistent systems, with known action checks and readable rejection reasons. P3 distinguishes permitted missing mechanics from forbidden causes before generation and rechecks the profile at admission/commit. R22 covers that behavior. The [complexity proposal](../03-design-proposals/simulation-scope-and-complexity.md) governs later refinements; detailed thermal exploration, a broad configuration UI, and a multi-world platform are not added to the first-release checklist.
 
 | Work ID | Outcome | Dependencies | Verification |
 |---|---|---|---|

@@ -1,6 +1,6 @@
 # Design follow-ups — user steering
 
-This file preserves subsequent user input alongside the unchanged [original brief](original-brief.txt). Main-thread entries use U identifiers; the visual/engine side conversation uses V identifiers, ordered within that discussion. Product direction may be accepted here while implementation details remain proposals. No implementation has been requested.
+This file preserves subsequent user input alongside the unchanged [original brief](original-brief.txt). Main-thread entries use U identifiers; the visual/engine side conversation uses V identifiers; the mechanics/construction side conversation uses M identifiers, ordered within each discussion. Product direction may be accepted here while implementation details remain proposals. No implementation has been requested.
 
 ## U01 — starting in the wilderness
 
@@ -78,6 +78,50 @@ The [player controls](../03-design-proposals/world-and-player-experience.md#play
 > what if macrofold supports long running workers that load in workspaces like that? seems like a valid use case for macrofold in general. Trying to see if using macrofold gains us anything (if it supports that) vs just home baking something for open legend
 
 This asks for a conditional build-versus-reuse assessment. The [shared-worker proposal](../03-design-proposals/macrofold-shared-workers.md) revises the recommendation toward using Macrofold for ordinary reasoning if efficient pooled execution is available or worthwhile to build there. This is an assistant recommendation, not accepted adoption or implementation authorization. The inspected Macrofold runtime still uses a sandbox-per-run lifecycle.
+
+## M01 — explain declarative composition
+
+> "Declarative compositions of approved effects" explain your proposal for how this would work
+
+The assistant explained a reusable construction recipe composed of supported material consumption, interruptible work, object creation, and environmental effects. It separated choosing a composition from implementing its component operations, and noted that the composition itself needs validation. This was an explanation, not an implemented language.
+
+## M02 — evolving properties and modular homes
+
+> Cool! It's a good starting point. "Describing something as “waterproof” only has a mechanical consequence when the supported shelter rules give that property meaning." and how would this mechanic be defined? This declarative template itself should be evolvable over time I think, like initially it's going to be missing a lot of properties that need to be defined later based on actions taken on it, like if someone tried to smash it, does it have a strength or integrity parameter or if someone tries to light it on fire does it have a flammability parameter, and does it have a wetness or dryness attribute that is dynamic.
+>
+> And say someone does “I could bind these branches together into a little house.” that should still find this lean-to. But then it should get additional properties that come with being a home, like maybe how many people can live in it comfortably, etc.
+>
+> But also i don't think a shelter should necessarily be one "thing", like they should be able to build walls and roofing separately maybe. Or is that too complicated? The thing is, what if they gain a family member and want to expand? it shouldn't have to evolve from a lean-to into a house and all of a sudden become a house. They should knock down a wall and expand it or something. They should be able to replace the walls with stone walls (which are harder to knock down). Thoughts?
+
+The assistant proposed material definitions, construction properties, changing instance state, and derived behavior; versioned extension/migration of missing properties; persistent building parts; derived spaces and occupancy; and household meaning distinct from physical capabilities. A lean-to template becomes an editable construction plan. A simple grid/support model was recommended; detailed structural simulation was deferred.
+
+## M03 — document the direction; script flexibility, semantic nuance, and fire
+
+> Yes excellent. Document all of this. And maybe, potentially, to leave room for flexibility, parts of the declarative language should allow for arbitrary pointers to scripts.
+>
+> One question is: when we have this declarative language, will it leave room for semantic interactions that are more nuanced or expressive than what the declarative language captures?
+>
+> For example a wall may be combustible. A wall made out of wood may have pretty high combustibility but a single match with a tiny fire should not be able to light it on fire. A small twig that also has combustibility, however, should light on fire with the match.
+>
+> If, for example, you were to manage to light one log in the wooden wall, that fire should spread to nearby walls. The fire should get bigger and bigger and spread faster and faster as it grows. How do you think that should be represented?
+
+Recorded September 19, 2026. Accepted documentation direction: evolving properties, dynamic material state, replaceable building parts, continuous expansion, and functional/social home meaning. Script pointers are explicitly tentative; the assistant proposes registered versioned script references with scoped effect outputs. Semantic extensibility and nuanced ignition/spread are requested design topics; the detailed thermal model and runtime remain proposals. [Evolving materials and construction](../03-design-proposals/evolving-materials-and-construction.md) and [heat/fire](../03-design-proposals/heat-and-fire.md) document the discussion. No game implementation or external changes are authorized by this documentation request.
+
+## M04 — concern about simulation complexity
+
+> I see you created a doc specifically for heat, ignition, and fire spread. This is just, obviously, one possible mechanic that requires, apparently, a pretty significant degree of explanation as to how this would work physically within the game. I'm curious what you think: is this going to very, very quickly get out of hand and how do we potentially mitigate that?
+>
+> "**The execution contract shouldn’t limit what someone can express.** It should establish how an interpreted action becomes a consistent consequence." agreed
+
+The assistant acknowledged the risk of unbounded systems/properties and the excess depth of the initial fire exploration for a first release. It recommended coarse consistent models, reusable rule families, explicit limited connections between systems, shared script interfaces, semantic richness without unnecessary physics, and refinement tied to demonstrated gameplay value. The user accepts documenting that recommendation in M05.
+
+## M05 — document scope control and world-level possibility rules
+
+> yes excellent. makes sense. let's document what we discussed here in detail. Also let's start some docs specifying what should be the parameters of the world. I think every world should probably have a set of high-level parameters that define what can happen during typical gameplay and bound things. For example if someone tries to light something on fire, that mechanic can be invented, declared, and fleshed out on the fly. That's kind of the beauty of this emergent gameplay but at the same time we want to prevent impossible things from happening.
+>
+> If we say that an overall rule of the world is that this world mirrors real reality, then if someone tried to cast a magic spell to light a tree on fire, that shouldn't be allowed. The world classifier or the world decision-making engine should reject that and say, "You can't do that," or, with some humor or whatever in a friendly way, "You can't do that." Document that behavior too.
+
+Recorded September 19, 2026. Accepted documentation direction: constrain complexity through coarse reusable systems and worthwhile refinements; give each world explicit parameters bounding ordinary gameplay and on-the-fly invention; reject effects inconsistent with its premise; explain rejection clearly and kindly, with optional light humor. The realistic-world/no-magical-ignition case is a required example, not a mandate that every future world use realism. The exact profile schema, classifier, numeric budgets, default preset, and admission/runtime policies remain proposals. [Complexity management](../03-design-proposals/simulation-scope-and-complexity.md) and [world parameters/feedback](../03-design-proposals/world-rules-and-parameters.md) contain the detailed design. Documentation only; no game implementation.
 
 ## U10 — environment state and general AI workflows in Macrofold
 

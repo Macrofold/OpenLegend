@@ -44,12 +44,13 @@ The world loop produces consequences. The memory loop produces continuity. The c
 | Thought and semantic routing | F09–F10, F31 | [Jev](02-research/jev-and-semantic-routing.md) | Rules + asynchronous dialogue/novel reasoning | Evaluated bounded judge, richer harnesses |
 | Arbitrary interactions | F11–F13 | [Protocol](03-design-proposals/interaction-protocol.md) | Intent mapping and guarded known actions | Generated mechanism families |
 | Runtime growth | F14–F16, F20 | [Capability lifecycle](03-design-proposals/generative-capability-lifecycle.md) | Declarative recipes/effects and creator preview | Isolated algorithms, trusted primitive releases |
-| Items and construction | F17–F18 | [World/player](03-design-proposals/world-and-player-experience.md) | Small materials, inventory, barter, simple crafting | Building stages, economy, resource transformations |
+| Items and construction | F17–F18, F42 | [World/player](03-design-proposals/world-and-player-experience.md), [evolving materials/buildings](03-design-proposals/evolving-materials-and-construction.md) | Small material library, inventory, simple crafting, editable shelter parts | Continuous expansion/replacement, derived spaces/households, property evolution, [local heat/fire](03-design-proposals/heat-and-fire.md) |
 | Institutions and technology | F19 | [World/player](03-design-proposals/world-and-player-experience.md) | Promises, cooperation, learned recipes | Groups, formal organizations, discovered dependency graph |
 | Feedback and fairness | F21–F23 | [World/player](03-design-proposals/world-and-player-experience.md) | Local causal feed, anticipation, private NPC state | Better interruption, repair and recovery tools |
 | Phones and speech | F24, F27 | [Engine/audio](02-research/engines-art-and-audio.md) | Text dialogue first | Contacts, texts, calls, spatial voice |
 | Graphics and environment | F15–F16, F25, F40 | [Visual brief](03-design-proposals/visual-direction.md), [engine/art](02-research/engines-art-and-audio.md) | Compelling PlayCanvas wilderness proof with grounded pixel art, terrain depth, lighting and a repeatable animation family | Richer assets, weather, destruction and optional physics within measured budgets |
 | Simulation ownership | F30, F40–F41 | [Architecture](03-design-proposals/system-architecture.md) | Own headless rules, clock and generative interface; reuse engine infrastructure | Measured simulation depth; G2 runtime only when justified |
+| World rules and simulation scope | F43–F44 | [World parameters](03-design-proposals/world-rules-and-parameters.md), [complexity](03-design-proposals/simulation-scope-and-complexity.md) | One explicit profile, coarse systems, allowed/missing/forbidden distinctions and friendly feedback | World-compatible invention, measured refinements, explicit profile migrations and domain extensions |
 | Hosting and population scale | F26, F30–F31 | [Hosting](02-research/hosting-and-scale.md) | One authority/region, persistence, bounded queues | Sectors, handoff, regional scaling |
 | Business and impact | F28–F29 | [Ideation](04-ideation/business-and-future-directions.md) | Measure cost and player value | Paid allowances, private worlds, validated adjacent uses |
 | Planning and evidence | F30, F32–F34 | [Roadmap](05-project/roadmap.md) | Research archive only | Decision-driven experiments and implementation |
@@ -86,6 +87,7 @@ Foundations for all phases: bounded time/work/cost, stable identity, versioned d
 - **What external evidence says:** [research guide](02-research/source-guide.md) and linked research documents.
 - **How we currently propose building it:** [design overview](03-design-proposals/overview.md) and detailed proposals.
 - **What else might be valuable:** [open ideation](04-ideation/business-and-future-directions.md).
+- **How the open project and creator ecosystem fit:** [licensing](../LICENSING.md), [creator economy and packs](06-marketing/creator-economy-and-mechanics-packs.md), and [patrons, contributors and history](06-marketing/patrons-contributors-and-world-history.md).
 - **What needs a choice:** [decision register](05-project/open-decisions.md).
 - **What needs evidence:** [research backlog](05-project/research-backlog.md).
 - **What might be implemented next:** [roadmap](05-project/roadmap.md).

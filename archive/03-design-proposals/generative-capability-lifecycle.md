@@ -12,6 +12,8 @@ Yes: an in-game request can initiate the creation, testing, registration, and us
 
 The game should accumulate a versioned capability library rather than casually rewriting its own application source on every request. A development assistant can later propose core-code changes through ordinary review and release workflows. Runtime content growth and source-code evolution are separate paths, both accessible from creator tools.
 
+M04/M05 add a governing boundary: [world rules and parameters](world-rules-and-parameters.md) define admissible causality and gameplay constraints before generation. A plausible missing physical mechanic can enter the candidate path; a spell cannot produce heat in a world that excludes supernatural effects. Missing implementation, uncertain interpretation, forbidden effects, and temporary scope/budget limits are different outcomes with truthful feedback. [Complexity management](simulation-scope-and-complexity.md) keeps the supported model coarse until more detail earns its cost.
+
 There is research precedent for reusable generated skills: Voyager stores executable skills and improves them with environmental feedback while operating inside Minecraft. That demonstrates growing agent behavior within an existing world; it does not demonstrate safe creation of arbitrary multiplayer game laws or an automatically balanced economy. [Voyager project and code](https://github.com/minedojo/voyager)
 
 ## Four levels of generation
@@ -39,15 +41,19 @@ Generated capabilities must target stable simulation queries and effects, never 
 
 ```mermaid
 flowchart TD
-    I[Player or creator proposes an invention] --> R[Retrieve existing capabilities]
+    I[Player or creator proposes an invention] --> W[Check world profile and authorized mode]
+    W -->|Contradicts ordinary world rules| F[Explain limit or use supported fallback]
+    W -->|Allowed or plausibly compatible| R[Retrieve existing capabilities]
     R -->|Applicable| U[Use pinned approved mechanism]
-    R -->|Missing| D[Generate bounded definition]
+    R -->|Missing| N[Check novelty scope and budget]
+    N -->|Within envelope| D[Generate bounded definition]
+    N -->|Deferred or unresolved| F
     D --> V[Schema, authority, resource and dependency checks]
     V --> S[Isolated simulation and counterexample tests]
     S --> C[Canary in limited scope]
     C --> A[Approved versioned capability]
     A --> U
-    V -->|Invalid| F[Explain limit or use supported fallback]
+    V -->|Invalid| F
     S -->|Failure| F
     C -->|Regression| Q[Quarantine and repair]
     A -->|Regression| Q
@@ -56,6 +62,8 @@ flowchart TD
 Track draft, validating, rejected, canary, approved, deprecated, and quarantined states. A candidate definition and a deployed definition are different records. Store provenance (request and relevant context), authoring model/prompt version, parent mechanisms, input/output schemas, dependency versions, tests, evaluation results, ownership/visibility, resource envelope, asset bindings, and rollout scope.
 
 Permit automatic admission only inside a small proven envelope: approved operations, strict magnitude limits, no new authority, limited affected entities, no irreversible economy-wide outcome, complete tests, and observable rollback/compensation behavior. Initially, the creator's private sector can accept more experiments than the public world. The exact automatic-versus-reviewed boundary is D06, not a blanket promise that every invention needs manual approval forever.
+
+Every envelope is bound to a world/profile revision and allowed causal domains. Satisfying JSON shape and effect bounds alone is insufficient: a bounded temperature increase without an admitted source can still violate a realistic world's rules. Scripts obey the same causal/resource requirements. Revalidate candidates after profile changes and keep generated mechanisms from editing their own admission policy. Creator profile edits use a distinct explicit administration path.
 
 ## Concrete invention session
 

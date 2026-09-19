@@ -2,6 +2,8 @@
 
 Status: **open ideation**. These are product hypotheses, not accepted requirements, market validation, revenue forecasts, or commitments. The brief explicitly asks about free/paid access, entertainment and other value, and advertising.
 
+September 19 update: subsequent accepted directions and their remaining open details are recorded in [creator worlds and mechanics packs](../06-marketing/creator-economy-and-mechanics-packs.md) and [patrons, contributors, and world history](../06-marketing/patrons-contributors-and-world-history.md). Those documents supersede the earlier open alternatives here where applicable: both subscription models, standalone premium games, host-paid operation, a pack ecosystem, patron recognition, and a creator fund are wanted. Prices and implementation remain unselected. [Token/funding exploration](../06-marketing/tokens-and-community-funding.md) remains exploratory; the [core AGPL decision](../../LICENSING.md) is applied.
+
 ## A product promise people can understand
 
 The strongest candidate promise is: **meet people who remember you, and help a shared world discover what it can do**. “AI NPCs” describes a technology; returning to a resident who remembers helping you describes a reason to play.

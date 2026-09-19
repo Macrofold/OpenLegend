@@ -4,6 +4,8 @@ Recorded September 19, 2026. **Accepted direction:** the user approved documenti
 
 This extends the [interaction protocol](interaction-protocol.md) and [capability lifecycle](generative-capability-lifecycle.md). It supersedes the earlier single-object shelter example as the intended construction model. [Heat, ignition, and fire spread](heat-and-fire.md) is the worked example of interacting material rules.
 
+M04/M05 refine the scope: [complexity management](simulation-scope-and-complexity.md) favors coarse models, a small explicit set of relationships, and evidence-driven additions. The [world profile](world-rules-and-parameters.md) bounds which proposed effects and causes can exist. Evolving fields and script references cannot silently change those laws; not every descriptive detail requires a new mechanical property.
+
 ## Properties, state, and behavior
 
 An entity is composed of typed components. A material definition supplies shared characteristics; a constructed part supplies geometry, workmanship, and connections; its instance stores changing state. A rule reads those records and proposes a change. A label alone does not establish a mechanical property.
