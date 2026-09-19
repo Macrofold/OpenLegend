@@ -1,0 +1,93 @@
+This is a new project called Open Legend.
+
+A simulator/game where it's a bunch of agents with needs, feelings, thoughts, memories, etc, in a simulated 3d environment they can interact with. Humans can enter the game, walk around, interact with things, interact with agents, etc.
+
+Emergent behavior ensues.
+
+This would be like a very advanced version of Rimworld (browse web to understand that game thoroughly).
+
+Each character (human or agent) has certain bodily and mental needs as "meters" or "statuses". Actors need to perform actions to keep those bars up. Natural survival need. Agents (NPCs) go about their lives attempting to fulfill their needs which range from physical needs to mental ones.
+
+I want this to be generative in nature. You can speak to agents, interact arbitrarily with the world (ie. right click -> interact -> type anything). Certain actions will be supported naturally, others expanded as people play. For example the first time someone asks to light something on fire, a script is produced that defines how that works, and later that becomes stored as an option available in a toolset of scripts that the game can choose from depending on the user's requested action.
+
+Any and all interactions should be semantically determined, not merely mechanically so (unless it's an interaction that explicitly known to be mechanical and already labeled and supported as such and selected by the game to trigger that mechanical/cached interaction). For example if someone "punches someone in the head" then the game should semantically via LLM/Jev determine what happens to that person's head and the puncher's hand. If they're wearing a helmet, the puncher should get hurt and the punchee should be injured less. In order to prevent runaway LLM costs by making too many semantic decisions, the game engine should aggressively categorize and parameterize interactions and shelf them away as saved interaction mechanisms when all conditions and factors align for the same effect to happen - either by storing a mechanical script to run, or by storing a semantic decision served by Jev. Real time decisions for new interaction types support flexible gameplay while known interactions are saved. There should be an elegant architecture that allows for this.
+
+Environment actions can be pre-built but I would also like them to be generative. For example, if someone walks up to a tree with a match and says "light tree on fire" it should check if they can do that given the current context and then if so do it. This would require pre-built animations and assets but as long as there's a fire asset and the tree has "health", say, then the tree could light on fire and burn to ashes. As a later version it would be amazing if those effects/assets could all be generated on the fly, if they're missing or reused if they were generated before (ie. tree burn stages, fire strength mechanic, timing logic, etc). Can we define a universal interaction protocol that maybe specifies a framework for those things that way new interactions can be generated more easily to fit the system. Every object/actor could have certain attributes that can be affected by actions, over certain amounts of time (rate), with certain restrictions, with certain associated assets for different states depending on those attributes. Health, structural integrity, happiness (or more complex emotions), things like that.
+
+I know this open generative interaction framework will be tough and complex so we should think through how to start simple and expand while designing the framework to support arbitrary expansion as flexibly as possible (ie. logically sandboxed scripts that can be create on the fly and thrown away if they're buggy or if it errors out it calls an LLM to evaluate ad-hoc or something). The most important thing I think is for actors to be able to interact with each other and speak to one another, and for the environment to logically affect actor meters and attributes over time. Wouldn't it be cool if the environment/world mechanics/interaction mechanics start with only seeded fundamentals, and everything else can be generatively define on the fly as I start playing as the first player? I want to survive so i kill deer, I build animal traps, I build a bow, then the game has animal traps and bows forever in the future. IS IT POSSIBLE TO DESIGN A SYSTEM OF AUGMENTING THE CODEBASE/GAME CAPABILITIES FROM WITHIN THE GAME? Let's think about how we can do that with all the available AI tools at our disposal. Ad-hoc code generation is totally possible now. How do we fit that into this use case in an elegant and scalable way. I think we need to be very smart about defining protocols and fundamental (game) engine architecture.
+
+Physical needs:
+- Hunger, sickness, things like that
+- physical state for each body part like in Rimworld (liver, left thigh, etc etc). Injuries can happen, healing mechanics control them.
+- even tiredness, need for sleep
+- agents should age, grow frail, and die. Agents can die of hunger and disease, etc.
+- agents should be able to have sex, get pregnant, and give birth (PG animations and language though, we can think about the age restrictions for this game later as necessary)
+
+Emotions:
+- Could start simply but would be cool to be flexible for eventually a much more sophisticated system of many many different axes not just happiness but comfort, apathy, joy, humor, anxiety, grief, anger, contentment, fear, etc etc that all have different levels at any time and are all affected by conversation and environmental events. We could end up with 100 emotions and to avoid display complexity, we roll them up to hierarchical categories or composite bars like "health", "happiness". Their different levels could also affect an agent's decisions and thought process, each with some instruction on what the effect is depending on the level.
+
+Memories
+- agents should have durable memory with processes like dreaming that consolidate memories and don't necessarily save every detail but selectively do so. Each agent should be given a limited capacity in terms of raw data capacity and once it starts to fill up there have to be some things that are strategically dropped.
+
+Personalities / traits
+- Agents should, in addition to all environment factors like needs, statuses, emotions, memories, have personalities. These are determined at their creation-time (aka birth) and can actually change over time as their experiences shape them.
+- Personality traits can be a complex range of different meters (this should be based on modern psychological research and frameworks) and should, like memories, and emotional and physical state, affect their decision making and thought processes.
+- potentially could be composed of a list of traits like "calm under pressure, excitable, IQ = 200, alcohol addiction (mild)" etc etc
+
+Environment state / perception
+- Agents interact with their immediate environment based on what they can perceive, governed by some rules like what is "within earshot" or what is "visible" or what is "touchable". A gunshot would enter the perception of all agents within earshot. This could get pretty advanced, but to start it could be simple and we expand later as long as it's designed to allow for rules to be expanded. Like for sound, maybe we add rules around what is between the actor and the sound (a wall muffles noise). Or maybe this requires a more physics based game engine?
+
+Agent thoughts / actions:
+- agents should independently act
+- the entirety of their state physical emotional personality memories etc and current environment should go into producing their thoughts and actions.
+- a possible design: various environmental or time-based factors can trigger decision-points. Each decision point asks:
+  - should the agent make a decision here? yes/no -> if yes, should the agent produce a thought before making the decision? yes/no. if no, use Jev to make a decision (aka, walk left or right, if no events/memory warrant a novel thought). IF yes, use an LLM to produce a thought (aka, does the agent know where they're going? no -> so produce a thought where the agent thinks about where they're going)
+  - should the agent produce a thought here? yes/no. 
+  This design could prevent the need to make hundreds of slow and expensive LLM calls just so agents can walk down the street.
+- LLM thoughts can be agent harnesses with access to environment info, since single-pass LLMs aren't very good often. Maybe Jev can determine, when thoughts are triggered, that thinking level should be used based on the situation. Agents may think hard for higher-stakes decisions, but a "greet neighbor?" decision/thought/speech may be more automatic or low thinking like a nano-model. Maybe that's also a universal layer - thought-level Jev point that determines thinking level before every single thought and can be modularized technically. Or maybe it's a question passed to Jev, following a speculative fan-out pattern, when it decides whether the agent should think/act at all.
+
+Gear / Items
+- arbitrary world objects with properties defining how they affect actors and environment. Some can be mechanical based on an in-game system (ie. strength=100) and others can be semantic and descriptive leaving room for arbitrary interaction (ie. teddy bear is "extremely cute").
+- some pre-defined item types can be clothes, armor, weapons. Idk. Do we want to orient the game around fighting? probably not.
+
+World
+- can start small and we add sectors as compute capacity and player volume grows.
+
+Economy / resources
+- in game currency.
+- trading is freeform and everything can be negotiated.
+- perhaps certain resources can be seeded like stone, wood, etc? Or do you think this can be emergent too? Chop a tree, get wood. Get enough wood, build a house. House-building-progress-stages, all of that can ideally be define generatively along the way as I play (as the first player).
+
+Institutions / governance / organization
+- I think... maybe we start with total anarchy aka no built-in mechanics. Let institutions and order arise naturally. Groups that cooperate collect more resources and survive better. Give agents the means to gather resources, collaborate, and build new technologies so they can reach the modern age naturally but not in paved paths like, say the game Civilization provides. Maybe we need a tech tree at some point, but I like the idea of an emergent tech tree defined by unpredictable interactions and LLM-enabled-generative-freedom rewarding creativity of agents and players alike.
+- Later I can always add stuff in god-mode. As long as the code is designed in a way that is flexible to new systems like if we wanted to add like the concept of "businesses" so agents/characters can run businesses and sell things, and for some reason that needs to be a fundamental code instead of the idea of a business arising naturally and getting "derived" from the needs of the actors in the world.
+- So maybe the world starts with abundant natural resources that can reasonably be turned into order and systems and interesting mechanics as the population and world evolves and grows. And our job to create the first seeds of this game are to fill it with enough variety of such things, and define a rich set of initial rules and interactions that allow for the system to evolve. YES!
+
+I, as the creator, should then be able to introduce game-level things like new mechanics or entities like "add a dragon" to the outskirts. I'd have to define a lot more than just that but you get the idea. The overall design should be flexible to allow for novel things like that.
+
+Players should be able to interact with agents but not have any god-like powers. If they want to learn about them they have to talk/interact with them. Like if some acts angry then can ask "why are you angry". Therefore when agents take physical action, they should wait a bit of time for players around them to have time to react.
+
+Player characters themselves should ALSO have all of the same attributes like physical needs and personality traits and so on. BUT players should have forgiving mechanics around death and such. If a character dies there should be creative ways the game allows them to revive (like if the player chooses, an angel comes and heals them). Players should have phones they can call/text specific actors with including other players.
+That said while they are not gods there should be good quality of life features that make gameplay fun and forgiving. There will prob be lots of bugs or just weird unexpected interactions. There should be an environment event logs that shows players why stuff happened at least in their immediate vicinity.
+
+I don't think there needs to be a goal necessarily. This is a simulation and there are natural survival mechanisms. Later narrative or world mechanics can be either emergent or introduced later (ie. "this sector currently has a zombie outbreak")
+
+I would like the following ideally:
+- probably pixel art, 3rd person 3d but not a physics based env to keep it simple (unless that's actually possible given the goals of this project without making it much more complicated given available tools and libraries).
+- host on the web so someone can visit a site and log in and play it
+- many thousands of simultaneous players, could maybe divide the world into sectors and have a limit of number of players per sector and they have borders so players must wait to enter if it's too full.
+- spatial audio - if a player enters earshot they can hear actors speak including agents and other players. They can talk instead of typing to agents. Agents respond with voices and text appear over their heads too.
+- there should be a free tier, but that limits player LLM-based actions. Higher pricing tiers allow more interactions and arbitrary interaction freedom like right click interact, or maybe access to certain areas (take inspiration from other games like Runescape, Minecraft, etc) on pricing. Maybe higher tiers allow players to own multiple characters.
+
+Another interesting area to probe - are there any real world use cases or impact that this simulator/game can have beyond just entertainment? Any business value or potential? Advertising if it becomes popular?
+
+Do not implement anything yet. Help me ideate around features, technical architecture, how to host this, art style, etc. Create a folder archive/ and create files outlining/fleshing out in great detail and excellent organization all of the above. Help me create a master mapping of all of these things. Research the web for similar games, key feature ideas, technical implementation. Create a running doc for open decisions, research todos/targets, and implementation status. Separate agreed on feature documentation from open ideation and from task/project management. Explore Jev (typesafe.ai) as a possible solution for frequent fast cheap semantic decision-making by agents and by the system/environment. For some of the more advanced environmental features like sound, light, destructibility, flammability, physics, etc, would these require a much more sophisticated game engine from the start to support them? Or could we start with a pixel art semi-3d engine and build in all of our own effects, or would it actually be better to consider unreal engine from the getgo if those ambitious effects are definitely a future goal? Also research design, graphics, and art direction options. Consider that maybe pixel art will be much easier to produce and interact with generatively/semantically than 3d models that require blender and physics.
+
+Technically, I want the simplest version of everything to get this going as quickly as possible, that leaves room for scale in the future, or if they are not scalable, at least being modular/extensible so we can swap them out with more scalable solutions as needed. Take advantage of libraries, tools, APIs, etc.
+
+Also agents should be able to operate with high parallelization while sharing environmental state otherwise it'll be too slow to wait for 100 agents to complete their LLM-based thinking/speaking/dreaming.
+
+I know this is a very ambitious project, I would like to sequence it so I can deploy some of the most interesting aspects of it first while more advanced aspects come later. 80/20 rule constantly, please specifically account for that as you flesh this out and come up with a plan and think about implementation and design and mechanics architecture.
+
+
+
