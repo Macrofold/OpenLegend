@@ -88,7 +88,7 @@ export const thoughtOnlySchema = z
   })
   .strict();
 
-function domainCommand(input: CommandInput, actorId: string, id: string): Command {
+export function domainCommand(input: CommandInput, actorId: string, id: string): Command {
   const base = { actorId, id };
   switch (input.type) {
     case 'move':

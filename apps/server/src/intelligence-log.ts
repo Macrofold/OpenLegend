@@ -1,0 +1,169 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { randomUUID } from 'node:crypto';
+import type { AiClient, FetchTransport } from '@open-legend/ai';
+import type { IntelligenceCall } from '@open-legend/protocol';
+import type { GameRepository } from './store.js';
+
+function clean(value: unknown): unknown {
+  return JSON.parse(
+    JSON.stringify(value ?? null, (key, item: unknown) =>
+      /authorization|api[_-]?key|secret|password|access[_-]?token|refresh[_-]?token/i.test(key)
+        ? '[redacted]'
+        : key === 'signal'
+          ? undefined
+          : key === 'embedding' && Array.isArray(item)
+            ? { dimensions: item.length }
+            : item,
+    ),
+  );
+}
+
+/** Private diagnostic records, separate from simulation state and public projections. */
+export class IntelligenceLog {
+  private triggerContext = new AsyncLocalStorage<string>();
+  withTrigger<T>(id: string, execute: () => Promise<T>): Promise<T> {
+    return this.triggerContext.run(id, execute);
+  }
+  record(id: string, kind: string, input: unknown, output?: unknown): void {
+    this.save({
+      id,
+      parentId: this.triggerContext.getStore(),
+      kind,
+      startedAt: new Date().toISOString(),
+      status: 'completed',
+      input: clean(input),
+      output: clean(output),
+      exchanges: [],
+    });
+  }
+  private context = new AsyncLocalStorage<IntelligenceCall>();
+  constructor(private store: GameRepository) {}
+  save(call: IntelligenceCall): void {
+    try {
+      const captured = structuredClone(call);
+      if (Buffer.byteLength(JSON.stringify(captured)) > 500000) {
+        captured.exchanges = [];
+        captured.output = { unavailable: 'Capture limit exceeded; receipt remains in accounting.' };
+      }
+      this.store.putIntelligenceCall(captured);
+    } catch {
+      console.error('Could not persist intelligence diagnostics.');
+    }
+  }
+  async run<T>(kind: string, input: unknown, execute: () => Promise<T>): Promise<T> {
+    const call: IntelligenceCall = {
+      id: randomUUID(),
+      parentId: this.triggerContext.getStore(),
+      kind,
+      startedAt: new Date().toISOString(),
+      status: 'running',
+      input: clean(input),
+      exchanges: [],
+    };
+    if (Buffer.byteLength(JSON.stringify(call.input)) > 150000)
+      call.input = { unavailable: 'Diagnostic input exceeded capture limit.' };
+    this.save(call);
+    return this.context.run(call, async () => {
+      try {
+        const output = await execute();
+        // Scores and source coverage explain retrieval; thousands of raw vector
+        // coordinates only obscure the inspector and exhaust capture capacity.
+        call.output = clean(
+          kind === 'Embeddings' &&
+            output &&
+            typeof output === 'object' &&
+            'value' in output &&
+            Array.isArray(output.value)
+            ? {
+                ...output,
+                value: { vectors: output.value.length, dimensions: output.value[0]?.length },
+              }
+            : output,
+        );
+        const outcome =
+          output && typeof output === 'object' && 'outcome' in output
+            ? String(output.outcome)
+            : undefined;
+        call.status = outcome && outcome !== 'value' ? 'failed' : 'completed';
+        call.disposition = outcome ?? 'completed';
+        return output;
+      } catch (error) {
+        call.status = 'failed';
+        call.output = { error: error instanceof Error ? error.message : String(error) };
+        throw error;
+      } finally {
+        call.completedAt = new Date().toISOString();
+        this.save(call);
+      }
+    });
+  }
+  wrap(client: AiClient): AiClient {
+    return {
+      judge: (request) => this.run('Jev', request, () => client.judge(request)),
+      generate: (request) =>
+        this.run(`LM · ${request.execution ?? 'default'} · ${request.task}`, request, () =>
+          client.generate(request),
+        ),
+    };
+  }
+  readonly fetch: FetchTransport = async (url, init) => {
+    const call = this.context.getStore();
+    if (!call) return fetch(url, init);
+    const path = new URL(url).pathname;
+    const exchange: IntelligenceCall['exchanges'][number] = {
+      path,
+      method: init.method ?? 'GET',
+      startedAt: new Date().toISOString(),
+      input: typeof init.body === 'string' ? this.decode(init.body) : null,
+    };
+    // Repeated status polls update one record; inference submissions remain separate.
+    const previous =
+      exchange.method === 'GET'
+        ? call.exchanges.findIndex((item) => item.path === path && item.method === 'GET')
+        : -1;
+    if (previous >= 0) call.exchanges[previous] = exchange;
+    else call.exchanges.push(exchange);
+    this.save(call);
+    try {
+      const response = await fetch(url, init);
+      exchange.httpStatus = response.status;
+      // Bound diagnostic capture while leaving the original provider response untouched.
+      const reader = response.clone().body?.getReader();
+      if (reader) {
+        const chunks: Uint8Array[] = [];
+        let size = 0;
+        try {
+          for (;;) {
+            const chunk = await reader.read();
+            if (chunk.done) break;
+            const remaining = 1_000_000 - size;
+            chunks.push(chunk.value.subarray(0, remaining));
+            size += chunk.value.byteLength;
+            if (size > 1_000_000) {
+              exchange.truncated = true;
+              break;
+            }
+          }
+          exchange.output = this.decode(Buffer.concat(chunks).toString('utf8'));
+        } catch {
+          exchange.output = { error: 'Response capture interrupted.' };
+        } finally {
+          void reader.cancel().catch(() => undefined);
+        }
+      }
+      return response;
+    } catch (error) {
+      exchange.output = { error: error instanceof Error ? error.message : String(error) };
+      throw error;
+    } finally {
+      this.save(call);
+    }
+  };
+  private decode(text: string): unknown {
+    try {
+      return clean(JSON.parse(text));
+    } catch {
+      return text;
+    }
+  }
+}

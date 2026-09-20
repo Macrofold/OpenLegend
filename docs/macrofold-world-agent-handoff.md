@@ -1,12 +1,16 @@
 # Macrofold handoff: persistent world-agent conversations
 
-Requested in the September 19 interface follow-up. This document is an implementation proposal for Macrofold and the subsequent Open Legend integration, not a claim that the remote agents or world-context tools are connected. Product context: `archive/03-design-proposals/world-agent-and-workshop.md` and the quick-slot/interface proposal. The latest requested slot count is three dynamic plus three personal.
+Requested in the September 19 interface follow-up. This document combines the source-inspected conversation backend with remaining context/tool requirements. Live execution is not accepted; world-query and mutation tools remain pending. Product context: `archive/03-design-proposals/world-agent-and-workshop.md` and the quick-slot/interface proposal. The latest requested slot count is three dynamic plus three personal.
 
 ## Experience and current boundary
 
 Open Legend now has a persistent center-left World agent launcher, a panel with multiple independent conversation tabs, and an editable message/history area per tab. New conversation creates a local conversation identity. Selecting Invent from unmatched right-click search creates a new tab, adds `Invent this: <original search>`, and automatically submits exactly that message. Plain opening, switching tabs, restoring the page and typing must not dispatch runs. Manual follow-ups stay in their selected conversation.
 
-The current client saves these tabs, history and drafts in browser localStorage under the world ID. These are local UX records, not Macrofold sessions or authoritative server history. The server accepts the authenticated `/api/world-agent/messages` request shape `{requestId, conversationId, worldId, text}`, validates the current world, and returns HTTP 503 with `world-agent-unavailable`. It invokes neither Macrofold nor the existing NPC/invention director. That separation is deliberate: direct G1 invention is not a substitute for a persistent creator agent. Browser history labels the result Status, not a fabricated assistant reply. No keys, paid calls, remote agents or world-context engineering were added in this slice.
+The client saves tabs, displayed history and drafts in browser localStorage under the world ID. These are UX records, not a backend-authoritative message archive. The authenticated `/api/world-agent/messages` route validates the world and invokes the separate Macrofold backend when configured; missing configuration returns unavailable. It does not route through NPC full-mind patches or substitute direct G1 invention for a creator agent.
+
+The backend persists remote identities/operation fingerprints, reserves model and explicit compute allowance, uses independent conversation lanes and retains session plus sandbox IDs for continuation. Bounded NPC generation instead starts fresh model history on reusable compute. Initial requests are selector-free and use one backend key; Macrofold allocates workspace context. Files, shell and connectors remain denied, and supplied public observations do not constitute complete world-query access. Closing a tab tombstones it, cancels active work and requests sandbox destruction; remote history is retained because no session-close mutation is exposed. Uncertain outcomes remain blocked for reconciliation, never silently retried.
+
+The earlier UI-only slice returned HTTP 503 for every world-agent message; that blanket unavailable behavior is superseded by this backend. Its no-paid-call evidence remains specific to that slice. Later static/build results and pending live checks are retained in [maintainer TODO](maintainers/TODO.md); none proves live remote persistence or latency.
 
 ## Existing Macrofold foundation inspected
 
@@ -14,7 +18,7 @@ The sibling `../AgentCloud` repository identifies itself as Macrofold. Its READM
 
 ## Required remote behavior
 
-Each Open Legend tab represents a separate persistent agent instance with an independent Macrofold session, conversation history, private working files and pending run. A common saved agent preset/configuration may be reused; sharing the preset must not merge sessions. Persist a server-owned mapping from `(application, world, principal, conversationId)` to the remote agent/session/workspace IDs and configuration version. The browser never chooses arbitrary remote IDs or grants.
+Each Open Legend tab represents a separate persistent agent instance with an independent Macrofold session, conversation history, private working files and pending run. Open Legend owns versioned master instructions and configuration; skip agent presets initially. Reusing configuration must not merge sessions. Unlike NPC cognition, these creator tabs deliberately retain their separate conversation history. Persist a server-owned mapping from `(application, world, principal, conversationId)` to the remote agent/session/workspace IDs and configuration version. The browser never chooses arbitrary remote IDs or grants.
 
 Prefer a private workspace per conversation with scoped read/query access to the canonical world. A different implementation is acceptable if it guarantees independent mutable state and concurrent conversations without workspace collisions. Do not copy the entire mutable world into each workspace. Reuse warm execution capacity where supported; session persistence must not require a permanently running sandbox per tab. Cold starts, busy queues and failed persistence must have honest visible states.
 
@@ -24,7 +28,7 @@ The creator can ask questions, inspect world history and private NPC context und
 
 Implement a server-side `WorldAgentGateway` separate from NPC cognition and generic typed inference. Suggested operations:
 
-- Create or resolve a conversation idempotently, using application-bound world/principal identity and a versioned preset. Return stable remote identity only to the application store.
+- Create or resolve a conversation idempotently, using application-bound world/principal identity and versioned instructions/configuration. Return stable remote identity only to the application store.
 - Submit a message with a durable request ID and expected conversation revision. Persist user-message admission before dispatch, map the request to one remote run, and distinguish rejection-before-dispatch from uncertain completion.
 - Read messages and stream progress using monotonic event sequence IDs and a resume cursor. An acknowledged request is not a completed assistant answer. Support queued, starting, running, awaiting-input, completed, unavailable, failed, cancelled and completion-unknown states.
 - Reopen a conversation after browser/server restart without starting another run. Persist history and mappings server-side; the browser cache becomes an optional cache, never sole durable storage.
@@ -34,13 +38,15 @@ Serialize turns within one conversation; retain independent conversations across
 
 ## World context: intentionally deferred
 
-Future creator tools should query authorized current state, entity relationships, relevant historical events, private NPC records, definitions, recipe/declaration versions, and workspace drafts. Open Legend owns retrieval policy, canonical state, audience separation and mutation admission. Macrofold supplies persistent execution/session abstractions and tools scoped by server-issued capabilities. Neither browser text nor a model-written file can grant broader authority.
+Future creator tools should query authorized current state, entity relationships, retained witnessed events, accepted NPC inner-world text and permitted private records, definitions, recipe/declaration versions, and workspace drafts. Unwitnessed experiential events are absent by design; operational recovery records have separate coverage. Creator access never teaches the player actor hidden facts. Open Legend owns retrieval policy, canonical state, audience separation and mutation admission. Macrofold supplies persistent execution/session abstractions and tools scoped by server-issued capabilities. Neither browser text nor a model-written file can grant broader authority.
 
 Use versioned query results and retrieval watermarks, not a single giant prompt or duplicated world snapshot. Refresh evidence at each relevant turn, retain citations/record IDs, and recheck permissions and world/definition revisions before committing effects. Exclude credentials, other worlds and unrelated account data. Full context engineering, semantic indexing and tool implementations are separate work; do not invent placeholder world facts for this UX.
 
 ## Invention and safe effects
 
 The initial automatically submitted message is an explicit user invention intention. The agent may clarify, propose, retrieve existing definitions and produce typed drafts. It must use Open Legend's supported trusted declaration families, policy checks, spending gates and version-aware admission. Code or new JSON properties never acquire executable authority automatically. Workshop changes create versions/diffs; receipt, draft, admitted definition and performed action are distinct outcomes. Context engineering should preserve the clicked target/location as structured evidence in a future request extension; the current UX sends the user's text only.
+
+The planned [god-mode conjuring operation](../archive/03-design-proposals/world-agent-and-workshop.md#confirmed-god-mode-conjuring) extends this workflow to creating a physical instance of a named or randomly proposed object. Help define its properties, behavior, appearance and dependencies, then present a concrete quantity/location/effects and generation-budget preview for explicit confirmation. Reuse definitions/art or automatically author missing supported definitions and queue art within the confirmed scope. Conjuring requires its own server-granted mutation authority, stable candidate/confirmation/receipt and fresh admission checks; ordinary invention activation does not authorize spawning. Unsupported mechanics remain blocked, while valid instances can show a fallback pending art. INV-4.6 owns implementation and validation; no conjuring tool is currently delivered by this specification.
 
 ## Costs and observability
 
@@ -49,7 +55,7 @@ Reserve a bounded allowance before remote dispatch, aggregate all tab usage agai
 ## Delivery sequence and batch acceptance
 
 1. Durable conversation repository and ownership binding in Open Legend; replace local-only history with authenticated list/create/read/submit routes and preserve drafts during migration.
-2. Macrofold adapter with session/workspace isolation, idempotent creation/submission, explicit budgets and a deliberately unavailable implementation for missing configuration.
+2. Verify the existing Macrofold adapter's session/workspace isolation, idempotent creation/submission, explicit budgets and unavailable behavior; live acceptance remains open.
 3. Streaming/reconnect, cancellation, per-conversation serialization, cross-tab quotas, persistence failure handling and restart recovery.
 4. Read-only creator tools with access controls and bounded retrieval; verify cross-world, cross-conversation and NPC-to-creator separation.
 5. Typed invention/workshop tools and validated effect admission, then an explicitly budgeted live playtest.

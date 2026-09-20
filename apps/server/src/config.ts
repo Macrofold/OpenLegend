@@ -41,6 +41,17 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   )
     throw new Error('A custom JEV_MODEL requires an explicit JEV_INPUT_USD_PER_MILLION.');
   return {
+    databaseUrl: env['OPEN_LEGEND_DATABASE_URL'] ?? '',
+    embeddingKey: env['OPENAI_EMBEDDING_API_KEY'] ?? env['OPENAI_API_KEY'] ?? '',
+    embeddingModel: env['EMBEDDING_MODEL'] ?? 'text-embedding-3-small',
+    embeddingDimensions: numberSetting(env, 'EMBEDDING_DIMENSIONS', 512, 64, 3072),
+    embeddingReserveUsd: numberSetting(env, 'EMBEDDING_CALL_RESERVE_USD', 0.01, 0.000001, 1),
+    miniModel: env['COGNITION_MINI_MODEL'] ?? 'gpt-5-mini',
+    complexModel: env['COGNITION_COMPLEX_MODEL'] ?? 'gpt-5',
+    summaryModel: env['COGNITION_SUMMARY_MODEL'] ?? 'gpt-5-nano',
+    macrofoldMiniModel: env['MACROFOLD_MINI_MODEL'] ?? 'openai/gpt-5-mini',
+    macrofoldComplexModel: env['MACROFOLD_COMPLEX_MODEL'] ?? 'openai/gpt-5',
+    macrofoldSummaryModel: env['MACROFOLD_SUMMARY_MODEL'] ?? 'openai/gpt-5-nano',
     host: '127.0.0.1',
     godMode: env['OPEN_LEGEND_GOD_MODE'] === 'true',
     port: numberSetting(env, 'PORT', 3210, 1024, 65535),

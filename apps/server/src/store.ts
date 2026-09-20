@@ -1,3 +1,4 @@
+import type { IntelligenceCall } from '@open-legend/protocol';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -5,6 +6,17 @@ import { createHash } from 'node:crypto';
 import type { WorldState } from '@open-legend/domain';
 import type { AiReceipt } from '@open-legend/ai';
 import type { AiJobView, PlayerProfile, PlayerPreferencePatch } from '@open-legend/protocol';
+
+export interface SqlDatabase {
+  dialect?: 'postgres';
+  exec(sql: string): void;
+  prepare(sql: string): {
+    get(...params: any[]): Record<string, unknown> | undefined;
+    all(...params: any[]): Record<string, unknown>[];
+    run(...params: any[]): unknown;
+  };
+  close(): void;
+}
 
 export interface SavedWorld {
   world: WorldState;
@@ -14,6 +26,7 @@ export interface SavedWorld {
 }
 export interface JobRecord extends AiJobView {
   playerSpeechEventId?: string;
+  stimulusEvidenceIds?: string[];
   fingerprint: string;
   createdAt: number;
   request: { text: string; npcId?: string };
@@ -36,6 +49,12 @@ export interface WorldStore {
 }
 
 export interface GameRepository extends WorldStore {
+  readonly persistence?: 'postgres' | 'sqlite';
+  putIntelligenceCall(call: IntelligenceCall): void;
+  intelligenceCalls(offset: number): IntelligenceCall[];
+  intelligenceCall(id: string): IntelligenceCall | undefined;
+  diagnosticRoots(offset: number, filters: Record<string, string>): IntelligenceCall[];
+  diagnosticStages(parentIds: string[], details?: boolean): IntelligenceCall[];
   getIntegration(key: string): unknown;
   putIntegration(key: string, value: unknown): void;
   getProfile(id: string): PlayerProfile;
@@ -69,12 +88,105 @@ export interface GameRepository extends WorldStore {
  * simulated timeline, so reopening a save cannot repeat or erase provider usage.
  */
 export class SqliteStore implements GameRepository {
-  private readonly db: DatabaseSync;
+  readonly db: SqlDatabase;
+  get persistence() {
+    return this.db.dialect === 'postgres' ? ('postgres' as const) : ('sqlite' as const);
+  }
 
-  constructor(path: string) {
-    if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
-    this.db = new DatabaseSync(path);
-    this.db.exec(`
+  intelligenceCall(id: string): IntelligenceCall | undefined {
+    const row = this.db.prepare('SELECT payload FROM intelligence_calls WHERE id = ?').get(id);
+    return row ? (JSON.parse(String(row['payload'])) as IntelligenceCall) : undefined;
+  }
+  putIntelligenceCall(call: IntelligenceCall): void {
+    this.db
+      .prepare(
+        'INSERT INTO intelligence_calls (id, started_at, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload',
+      )
+      .run(call.id, call.startedAt, JSON.stringify(call));
+    this.db.exec(
+      'DELETE FROM intelligence_calls WHERE id IN (SELECT id FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 1000000 OFFSET 1000)',
+    );
+  }
+  intelligenceCalls(offset: number): IntelligenceCall[] {
+    return this.db
+      .prepare(
+        'SELECT payload FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 25 OFFSET ?',
+      )
+      .all(offset)
+      .map((row) => JSON.parse(String(row['payload'])) as IntelligenceCall);
+  }
+
+  diagnosticRoots(offset: number, filters: Record<string, string>): IntelligenceCall[] {
+    const clauses = ["json_extract(payload, '$.parentId') IS NULL"];
+    const params: unknown[] = [];
+    const fields: Record<string, string> = {
+      actor: 'actorName',
+      route: 'route',
+      outcome: 'disposition',
+    };
+    for (const [key, value] of Object.entries(filters)) {
+      if (!value) continue;
+      if (key === 'search') {
+        clauses.push('LOWER(payload) LIKE LOWER(?)');
+        params.push(`%${value}%`);
+      } else if (key === 'from' || key === 'to') {
+        clauses.push(`started_at ${key === 'from' ? '>=' : '<='} ?`);
+        params.push(value);
+      } else if (key === 'stage') {
+        clauses.push(
+          "id IN (SELECT json_extract(payload, '$.parentId') FROM intelligence_calls WHERE LOWER(json_extract(payload, '$.kind')) LIKE LOWER(?))",
+        );
+        params.push(`%${value}%`);
+      } else if (fields[key]) {
+        clauses.push(`LOWER(json_extract(payload, '$.${fields[key]}')) LIKE LOWER(?)`);
+        params.push(`%${value}%`);
+      }
+    }
+    return this.db
+      .prepare(
+        `SELECT payload FROM intelligence_calls WHERE ${clauses.join(' AND ')} ORDER BY started_at DESC,id DESC LIMIT 26 OFFSET ?`,
+      )
+      .all(...params, offset)
+      .map((row) => JSON.parse(String(row['payload'])) as IntelligenceCall);
+  }
+  diagnosticStages(parentIds: string[], details = false): IntelligenceCall[] {
+    if (!parentIds.length) return [];
+    const fields = details
+      ? 'payload'
+      : `id,started_at,json_extract(payload, '$.parentId') AS parent_id,json_extract(payload, '$.kind') AS kind,json_extract(payload, '$.status') AS status,json_extract(payload, '$.output.receipt') AS receipt`;
+    const records: IntelligenceCall[] = [];
+    for (let offset = 0; offset < 1000; offset += 16) {
+      const rows = this.db
+        .prepare(
+          `SELECT ${fields} FROM intelligence_calls WHERE json_extract(payload, '$.parentId') IN (${parentIds.map(() => '?').join(',')}) ORDER BY started_at,id LIMIT 16 OFFSET ?`,
+        )
+        .all(...parentIds, offset);
+      for (const row of rows)
+        records.push(
+          details
+            ? (JSON.parse(String(row['payload'])) as IntelligenceCall)
+            : {
+                id: String(row['id']),
+                parentId: String(row['parent_id']),
+                kind: String(row['kind']),
+                startedAt: String(row['started_at']),
+                status: String(row['status']) as IntelligenceCall['status'],
+                input: null,
+                output: row['receipt']
+                  ? { receipt: JSON.parse(String(row['receipt'])) }
+                  : undefined,
+                exchanges: [],
+              },
+        );
+      if (rows.length < 16) break;
+    }
+    return records;
+  }
+
+  constructor(path: string, database?: SqlDatabase) {
+    if (!database && path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
+    this.db = database ?? new DatabaseSync(path);
+    const schema = `
       PRAGMA journal_mode = WAL;
       PRAGMA busy_timeout = 3000;
       PRAGMA foreign_keys = ON;
@@ -89,19 +201,31 @@ export class SqliteStore implements GameRepository {
         reserved INTEGER NOT NULL CHECK (reserved >= 0), spent INTEGER NOT NULL DEFAULT 0 CHECK (spent >= 0),
         receipt TEXT, created_at INTEGER NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS intelligence_calls (id TEXT PRIMARY KEY, started_at TEXT NOT NULL, payload TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS intelligence_calls_time ON intelligence_calls(started_at DESC, id DESC);
       CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS player_profiles (
         id TEXT PRIMARY KEY, revision INTEGER NOT NULL,
         show_unavailable_actions INTEGER NOT NULL CHECK (show_unavailable_actions IN (0, 1)),
         pause_when_hidden INTEGER NOT NULL DEFAULT 1 CHECK (pause_when_hidden IN (0, 1))
       );
-    `);
+    `;
+    this.db.exec(
+      database ? schema.replace(/PRAGMA[^;]+;/g, '').replace(/\bINTEGER\b/g, 'BIGINT') : schema,
+    );
+    if (database)
+      this.db.exec(
+        `CREATE TABLE IF NOT EXISTS mind.inner_world (world_id TEXT NOT NULL, actor_id TEXT NOT NULL, revision BIGINT NOT NULL, text TEXT NOT NULL, source_snapshot TEXT NOT NULL, publication_job_id TEXT NOT NULL, PRIMARY KEY(world_id,actor_id))`,
+      );
     const version = this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema');
     if (version && version['value'] !== '1')
       throw new Error('Unsupported save schema. Keep this save and use a compatible version.');
-    this.db.prepare('INSERT OR IGNORE INTO meta VALUES (?, ?)').run('schema', '1');
+    this.db
+      .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
+      .run('schema', '1');
     // Additive migration preserves old profiles and their unavailable-action choice.
     if (
+      !database &&
       !this.db
         .prepare('PRAGMA table_info(player_profiles)')
         .all()
@@ -116,8 +240,24 @@ export class SqliteStore implements GameRepository {
     const row = this.db.prepare('SELECT revision, payload FROM world WHERE id = 1').get();
     if (!row) return null;
     const state = JSON.parse(String(row['payload'])) as SavedWorld;
-    if (state.world?.schemaVersion !== 1)
+    if (![1, 2].includes(state.world?.schemaVersion))
       throw new Error('Unsupported world schema; refusing to overwrite your save.');
+    if (this.db.dialect === 'postgres' && state.world.schemaVersion === 2) {
+      const rows = this.db
+        .prepare('SELECT actor_id,revision,text FROM mind.inner_world WHERE world_id=?')
+        .all(state.world.id);
+      for (const [actorId, inner] of Object.entries(state.world.innerWorlds ?? {})) {
+        const accepted = rows.find((row) => row['actor_id'] === actorId);
+        if (
+          !accepted ||
+          Number(accepted['revision']) !== inner.revision ||
+          accepted['text'] !== inner.text
+        )
+          throw new Error(
+            'Accepted inner-world snapshot disagrees with its world commit; restore/reconcile before starting.',
+          );
+      }
+    }
     return { revision: Number(row['revision']), state };
   }
 
@@ -129,12 +269,35 @@ export class SqliteStore implements GameRepository {
       const current = row ? Number(row['revision']) : 0;
       if (current !== expectedRevision)
         throw new Error('Save conflict: another writer changed this world.');
+      const ledgerKey = `forget-ledger:${state.world.id}`;
+      const ledger = (this.getIntegration(ledgerKey) ?? {}) as Record<string, string[]>;
+      for (const [actorId, ids] of Object.entries(ledger))
+        if (ids.some((id) => !state.world.experience?.forgotten[actorId]?.includes(id)))
+          throw new Error(
+            'Restore would resurrect forgotten evidence; reapply the current forgetting ledger first.',
+          );
+      if (state.world.experience) this.putIntegration(ledgerKey, state.world.experience.forgotten);
       const revision = current + 1;
       this.db
         .prepare(
           'INSERT INTO world VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision, payload=excluded.payload',
         )
         .run(revision, payload);
+      if (this.db.dialect === 'postgres')
+        for (const [actorId, inner] of Object.entries(state.world.innerWorlds ?? {})) {
+          this.db
+            .prepare(
+              `INSERT INTO mind.inner_world VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(world_id,actor_id) DO UPDATE SET revision=excluded.revision,text=excluded.text,source_snapshot=excluded.source_snapshot,publication_job_id=excluded.publication_job_id`,
+            )
+            .run(
+              state.world.id,
+              actorId,
+              inner.revision,
+              inner.text,
+              inner.sourceSnapshot,
+              inner.publicationJobId,
+            );
+        }
       this.db.exec('COMMIT');
       return revision;
     } catch (error) {
@@ -253,8 +416,16 @@ export class SqliteStore implements GameRepository {
   }
 
   settle(id: string, receipt: AiReceipt): void {
-    const row = this.db.prepare('SELECT status,reserved FROM attempts WHERE id = ?').get(id);
-    if (!row || row['status'] === 'settled') return; // Duplicate definitive callbacks do not spend twice.
+    const row = this.db
+      .prepare('SELECT status,reserved,receipt FROM attempts WHERE id = ?')
+      .get(id);
+    if (!row) return;
+    if (row['status'] === 'settled') {
+      // Older saves marked unpriced successful calls settled. Their conservative
+      // reserve may still be replaced by a definitive late billing receipt.
+      const prior = row['receipt'] ? (JSON.parse(String(row['receipt'])) as AiReceipt) : undefined;
+      if (!prior?.dispatched || prior.estimatedCostUsd !== undefined) return;
+    }
     if (row['status'] === 'uncertain' && receipt.completionUncertain) return;
     const reserve = Number(row['reserved']);
     const estimated = receipt.estimatedCostUsd;
@@ -266,10 +437,12 @@ export class SqliteStore implements GameRepository {
         : micro(estimated);
     this.db
       .prepare(
-        "UPDATE attempts SET status=?,spent=?,receipt=? WHERE id=? AND status IN ('reserved','uncertain')",
+        "UPDATE attempts SET status=?,spent=?,receipt=? WHERE id=? AND status IN ('reserved','uncertain','settled')",
       )
       .run(
-        receipt.completionUncertain ? 'uncertain' : 'settled',
+        receipt.dispatched && (receipt.completionUncertain || estimated === undefined)
+          ? 'uncertain'
+          : 'settled',
         spent,
         JSON.stringify(receipt),
         id,

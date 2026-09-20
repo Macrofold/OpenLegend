@@ -1,8 +1,8 @@
 # Context assembly and AI routing
 
-> **NPC cognition update:** [Memory architecture](../../docs/memory-architecture.md) owns current personal recall and fast/complex/full-deliberation policy. AI-authored lasting inner-world proposals require full deliberation; coupled outputs use the highest required tier. This document continues to own the broader context, audience and inference contract.
+> **NPC cognition update:** [Memory architecture](../../docs/memory-architecture.md) owns the accepted redesign: Jev attention/escalation, default level-2 speech, separate low/high complex reasoning, and background level-5 workspace reflection. Ordinary responses do not carry mind patches. The richer manifests, coverage and dependency envelopes below belong to server contracts, not serialized NPC prompt text. Routine experience summarization has its own small-model route; subjective inner-world edits belong to reflection. [CR01–CR12](../../docs/maintainers/cognition-redesign.md) track implementation; the broader audience/authority contract remains in force.
 
-Status: **technical proposal**, September 19, 2026. This is the broader contract between Open Legend's simulation, memory, declaration registry and AI execution adapters. The executable prototype now has bounded context retrieval and Jev/LLM routes described in [implemented architecture](../../docs/architecture.md); the richer retrieval, perception and infrastructure proposed here are not implemented or benchmarked. Read with the [system architecture](system-architecture.md), [declaration specification](declarations-and-evolution.md), and [Macrofold brief](macrofold-implementation-brief.md).
+Status: **technical proposal**, September 19, 2026. This is the broader contract between Open Legend's simulation, memory, declaration registry and AI execution adapters. The executable prototype now has bounded context retrieval and Jev/LLM routes described in [implemented architecture](../../docs/architecture.md); scoped embeddings, multi-question Jev attention and background reflection are implemented; richer perception and distributed infrastructure remain proposed, with benchmarks and broad acceptance still open. Read with the [system architecture](system-architecture.md), [declaration specification](declarations-and-evolution.md), and [Macrofold brief](macrofold-implementation-brief.md).
 
 ## 1. Context is a versioned product of the application
 
@@ -34,6 +34,8 @@ Open Legend authenticates the player/job and resolves its actor and audience. Ma
 ### A. Normalize the task and preserve uncertainty
 
 Inputs include trigger/intent, server-resolved actor and targets, purpose, conversation/plan generation, effective world/profile, deadline and cost/context budget. Resolve UI-selected IDs directly. If freeform text identifies several possible targets or methods, preserve candidates and ask a bounded clarification when consequential ambiguity cannot be resolved. A cheap preliminary interpretation can itself use a small scoped context; avoid a circular dependency where a full context requires a full plan first.
+
+For every admitted NPC semantic trigger, render the permitted event/intent as a sentence before recall and routing. Speech is one trigger among hazards, notable events, encounters and need/goal changes. Required embeddings search the full stimulus plus relevant decision context; structured event fields remain server bindings. Native emergency behavior proceeds independently. Preserve uncertainty about causes the actor did not perceive.
 
 ### B. Bind a consistent world and authorization view
 
@@ -75,17 +77,19 @@ For NPCs, distinguish observed, heard, inferred and imagined content. An old bel
 
 ### E. Retrieve personal context when the task needs it
 
-Combine current goals/plan, small personality/value summaries, urgent needs and relevant active commitments with selected episodes, beliefs and relationships. Rank by involved entities, topic, time, salience and intent; diversify repetitive evidence. Read bounded evidence links when needed. Numeric body state can constrain choices without serializing every organ into every greeting.
+Include the complete accepted inner-world text as About me, relevant current goals/plan, urgent needs and active commitments, plus one Jev-selected Recall section combining consolidated memories and recent raw personal/aware-event experience without duplication. Rank by involved entities, topic, time, salience and intent; diversify repetitive evidence. Read bounded evidence links when needed. Numeric body state can constrain choices without serializing every organ into every greeting.
 
-Do not invoke an LLM merely to retrieve an exact promise or a known recipe ID. Start with indexed owner/entity/status/time queries and full-text retrieval. Add embeddings or learned ranking only after evaluation shows missing paraphrase recall. Index lag must be recorded; a stale search index cannot establish that no new critical memory exists. Mandatory commitments and fresh events use a path that does not depend on optional indexing.
+Selection explicitly considers who is present, what just happened, current goals, unresolved concerns and conflicting beliefs. Derive bounded actor-scoped cues from permitted state and accepted inner-world text, including relevant counterevidence; do not introduce a second writable narrative store. Deliver structured lookups first, arbitrary-intent semantic matching second, and selective-recall tools only after demonstrated initial-context omissions. This sequencing does not delay required reflection file access; see the [canonical selection contract](../../docs/memory-architecture.md#selection-signals-and-delivery-order).
 
-A decision names the minimum observation watermark it requires. Read the newly committed observation/commitment records directly if the derived memory view lags; wait briefly or return pending when essential data is not available. Do not solve the race by replaying the full hidden world journal into NPC context. Optional reflection may propose a belief or skill update against memory/knowledge revisions; raw observation ingestion and basic practice/teaching records do not wait for that reflection.
+Do not invoke an LLM merely to retrieve an exact promise or a known recipe ID. Start with indexed owner/entity/status/time queries and full-text retrieval. Use required embedding retrieval for arbitrary intents and paraphrases, embedding the complete intent rather than purchasing keyword expansion. Evaluate the model/storage choices and supplementary ranking; embeddings are no longer conditional on a lexical-search failure. Index lag must be recorded; a stale search index cannot establish that no new critical memory exists. Mandatory commitments and fresh events use a path that does not depend on optional indexing.
+
+A decision names the minimum observation watermark it requires. Read the newly committed observation/commitment records directly if the derived memory view lags; wait briefly or return pending when essential data is not available. Do not solve the race by replaying the full hidden world journal into NPC context. Background reflection edits subjective inner-world files against relevant accepted revisions; it cannot grant skills. Native observation ingestion and evidence-backed practice/teaching records do not wait for reflection.
 
 ### F. Budget and serialize deliberately
 
 Allocate budgets across world constraints, task/targets, candidate contracts, current evidence, personal context and optional history. Required safety/causal facts, relevant urgent state and active obligations cannot simply fall off the end of a truncated prompt. Drop optional detail deterministically and record the omissions. If mandatory content does not fit, narrow the question, retrieve a smaller applicable candidate set, choose a compatible execution policy within budget or return insufficient context.
 
-Use a provider-aware token estimate plus hard byte/record/tool-result limits. Provider context limits are upper bounds, not target sizes. Context retrieval, summaries, embeddings, retries and tooling have costs too. Start with small task-specific budgets, measure quality versus size, then tune; no fixed token count is accepted by this design.
+Use a provider-aware token estimate plus hard byte/record/tool-result limits. Provider context limits are upper bounds, not target sizes. Context retrieval, summaries, embeddings, retries and tooling have costs too. Start with small task-specific budgets, measure quality versus size, then tune; the greeting target is a few hundred input tokens and 10–50 visible output tokens, with exact per-route ceilings still open. Full About me inclusion must fit the accepted snapshot budget.
 
 Serialize stable definitions separately from volatile observations to allow content-addressed reuse and provider-supported caching when actually available. Do not assume that attaching a resource reference means the provider reads it for free: the adapter must resolve/authorize it and account for the actual submitted payload.
 
@@ -97,9 +101,11 @@ The artifact digest identifies the exact serialized input after required redacti
 
 Two digests serve different purposes. The context digest identifies the normalized application evidence; the execution receipt also identifies the actual provider request after prompt/template rendering, resolved references and adapter conversion. Record adapter/template versions and disclose transformations. Retain the minimal accepted decision in the game before applying effects; full prompt retention and diagnostic replay may expire independently. A provider schema can validate shape, not the truth of the evidence or safety of its requested effect.
 
+The [god-mode context inspector](../../docs/memory-architecture.md#god-mode-cognition-debugger) exposes this assembly as a bounded child of the semantic trigger: actual query, source/snapshot versions, required/selected/omitted evidence, section budgets and final provider payload. Include per-candidate embedding metric/score and Jev inclusion where available, with index/cache/coverage gaps explicit. Keep application and provider artifacts distinct, access-controlled and labeled when partial; diagnostic inspection does not replay inference.
+
 ## 4. Illustrative wire contracts
 
-These examples define semantics to preserve, not API names that already exist:
+These examples are server-owned execution envelopes, not NPC prompt serialization or model-echoed fields. NPCs receive the compact English projection defined in the canonical memory specification. API names remain illustrative:
 
 ```json
 {
@@ -135,7 +141,9 @@ An agent is a bounded loop of model calls and tools, not a different species of 
 | Movement, need decay, fuel use, rain transmission, ordinary process update | Standard code/admitted formula or algorithm | Defined process recovery; no model-per-tick repair |
 | Exact fact or missing retrievable dependency | Authorized data query | Essential unavailable data → explicit approximation policy, clarification or defer |
 | Closed set of plausible interpretations or activities | Jev or equivalent typed inference | Unknown/uncertain → bounded additional context, single LLM when meaning needs generation, or clarify |
-| Open interpretation, dialogue, short plan or simple declaration draft with sufficient evidence | One LLM call with a typed result where appropriate | One bounded repair/extension only if useful and budgeted; otherwise unresolved |
+| NPC speech or immediate decision | Jev attention/escalation; level 2 mini by default, level 3 low or level 4 high for complexity | Minimal speech/action result; independently enqueue reflection when warranted; no automatic paid repair |
+| Simple declaration draft with sufficient evidence | One typed LLM call | Invalid output stays unresolved; any further paid authoring requires separate admission and authorization |
+| Subjective reflection or eligible dream | Background level-5 bounded workspace harness | Publish accepted inner-world text and short thoughts atomically; preserve previous snapshot on failure |
 | Multi-step investigation, retrieving related evidence, designing/testing a novel composition | Bounded agent job with approved tools | Return evidence and draft; independent validators decide admission |
 | Authoring/testing generated code or larger artifacts | Isolated native harness task | Candidate artifact only; engineering or G2 admission still required |
 | Forbidden cause, missing permission or unsupported authority | Deterministic rejection after adequate interpretation | Friendly truthful explanation; no larger-model bypass |
@@ -143,7 +151,7 @@ An agent is a bounded loop of model calls and tools, not a different species of 
 
 M10/M11 require live LLM decisions, conversation and generation plus a useful Jev route in the [first playable MVP](../05-project/first-playable-mvp.md). Fixtures and optional adapter capabilities support development and failure handling; they do not make live AI optional for the playable acceptance test.
 
-This is a branching policy, not deterministic → Jev → LLM → agent for every request. Check obvious native conditions first and skip irrelevant stages. A model should not decide whether every other model call is needed. A single LLM can return an intent, proposed plan and required clarification together when they share evidence; separate them only when outputs truly depend on information obtained later.
+This is a branching policy across task families. Native routine actions need no inference. Each admitted NPC semantic opportunity receives bounded Jev attention/escalation; Jev calls do not recursively route themselves. Speech defaults to level 2, complex immediate decisions use levels 3/4, and level 5 runs reflection independently in the background. A single LLM can return an intent, proposed plan and required clarification together when they share evidence; separate them only when outputs truly depend on information obtained later.
 
 Jev is suitable for supplied choices, scores or yes/no judgments over text/structured state. Its independent questions share state but do not consume each other's answers; dependent decisions need another stage or a different formulation. Use explicit other/unknown choices. Keep model IDs pinned and rubric-specific calibration; do not normalize all providers to an invented universal confidence percentage. [Primitives](https://docs.typesafe.ai/primitives), [state](https://docs.typesafe.ai/concepts/state), [models](https://docs.typesafe.ai/models).
 
@@ -161,7 +169,8 @@ The game scheduler decides when reasoning is useful from explicit events and sta
 | Current action completes, plan fails, or a significant need/opportunity changes | Native utility selection; typed choice or short LLM plan if unresolved | Retain a valid current plan; one current planning generation per actor; cooldown repeated failures |
 | Directed speech or relevant conversational turn | LLM response using that actor's permitted evidence | Prioritize responsiveness; cancel superseded drafts; retain committed speech history |
 | Meaningful social event or surprising outcome | Bounded appraisal/memory proposal if deterministic recording is insufficient | Batch related events; ordinary observations are recorded without a model call |
-| Rest/low activity, a memory-volume threshold, or a significant unresolved experience | Consolidation or reflection; one call when enough, tool loop when evidence must be inspected | Low priority and finite budget; compare memory revision before accepting; rest need not always trigger inference |
+| Every simulated hour | Small-model consolidation of raw personal/aware-event experience older than six game hours | Atomic summary publication; preserve concurrent evidence, bounded backlog, no automatic paid retry |
+| Safe downtime, eligible sleep, authored-capacity pressure or significant unresolved experience | Background level-5 file reflection; sleep requires two continuous hours before dream eligibility | Independent bounded queue; publish accepted inner-world text and short thoughts; never block speech or native rest |
 | Novel intent after compatible-family retrieval fails | Missing-support record, single declaration draft or bounded authoring/testing agent | Canonical deduplication, novelty budget, repeated-demand priority; ordinary world activity continues |
 | Creator describes/edits a premise or requests an explicit intervention | Creator-scoped profile/manifest workflow | Separate authority and budget; consequential profile changes use validation and migration |
 | Repeated mechanic failures or poor decision evaluation | Quarantine policy plus optional diagnosis/regression job | Bounded repair attempts; engineering work cannot automatically patch live trusted code |
@@ -172,7 +181,7 @@ At higher game speed, preserve hard real-time spending and concurrency limits. M
 
 ## 6. Tools and bounded expansion
 
-Ordinary cognitive tools can expose `observe`, `inspectKnownEntity`, `recall`, `inspectMemoryEvidence`, `listKnownCapabilities`, `estimateSupportedAction` and `proposePlan`. Names are illustrative. Their implementations resolve scope from the job and bound records, field selection, distance, time range and output bytes. A model receives no arbitrary SQL or access to world-file history. Every result includes provenance and version/freshness metadata.
+Ordinary cognitive tools can expose `observe`, `inspectKnownEntity`, `recall`, `inspectMemoryEvidence`, `listKnownCapabilities`, `estimateSupportedAction` and `proposePlan`. Names are illustrative. Their implementations resolve scope from the job and bound records, field selection, distance, time range and output bytes. A model receives no arbitrary SQL or access to world-file history. The server envelope retains provenance and version/freshness metadata; NPC-facing results contain scoped English evidence, useful uncertainty and only necessary local handles. Immediate levels 2–4 do not require a tool round.
 
 Builder tools can retrieve admitted declaration contracts, inspect authorized candidate dependencies, run headless fixtures in disposable worlds and submit a draft bundle. They do not activate a rule, modify the live profile or read NPC private histories unless a specific authorized task needs that evidence. Isolated shell/code tools belong to the build mode, not default NPC conversation.
 
@@ -192,7 +201,7 @@ Separate dependencies of a semantic judgment from prerequisites of executing its
 
 Feedback enters distinct records: committed world outcomes; perceived observations; subjective memory updates; decision evaluations; and declaration demand/counterexamples. Store accepted model results for replay. Do not automatically retrain a provider or grant cross-world data use because context artifacts exist.
 
-Forgetting propagates through accessible records, retrieval indexes, cached contexts, workspace projections and native session reuse. If retained native history can reintroduce forgotten facts, start a new context/session or use a policy-compatible curated continuation. Creator audit retention is separate from NPC recall; backups are not an NPC memory tool.
+Forgetting propagates through accessible records, retrieval indexes, cached contexts, workspace projections and native session reuse. Every NPC cognition job starts with fresh model conversation state; only bounded within-reflection turns share a session. Reuse warm compute independently, never forgotten cross-job transcripts. World-agent conversations retain their separate policy. Creator audit retention is separate from NPC recall; backups are not an NPC memory tool.
 
 ## 8. Worked routing cases
 
@@ -219,6 +228,8 @@ A read grant never authorizes edits. Workshop outputs are proposals to the appli
 ## 9. Evaluation before richer infrastructure
 
 Build a labeled corpus by task family, including paraphrases, rare consequential cases, forbidden causes, missing fields, private facts, contradictory testimony and large distractor histories. Keep tuning and held-out examples separate. Compare local rules, bounded typed calls, single LLMs and agents at equivalent evidence and authority. Evaluation should measure useful coverage and accepted errors, not merely schema pass rate.
+
+Acceptance must connect selected memories to observable later utterances, decisions or actions in labeled cases spanning all five selection signals. Compare matched situations with different permitted histories, preserve justified unchanged outcomes, and require meaningful behavioral differences where evidence matters. Prompt inclusion alone is insufficient; fixtures do not establish live behavioral usefulness.
 
 Track required-fact recall, irrelevant-context volume, attribution errors, unauthorized retrieval, false forbidden/missing classifications, accepted wrong routes, stale-result rejection, commitment misses, context assembly latency, provider latency, total tokens, tool rounds and dollars per real hour. Compare small contexts with richer contexts; complexity must improve behavior enough to justify its cost.
 

@@ -134,6 +134,7 @@ export interface AiJobView {
 }
 
 export interface GameView {
+  godMode?: boolean;
   schemaVersion: 1;
   revision: number;
   worldId: string;
@@ -209,6 +210,19 @@ export interface ApiResult {
 
 /** Private inspection DTO: returned only by the separately authorized god endpoint. */
 export interface GodMindView {
+  corrections?: Record<string, string>;
+  legacyThoughts?: Array<{
+    decisionId: string;
+    at: number;
+    text: string;
+    kind: string;
+    source: string;
+  }>;
+  acceptedText?: string;
+  experiences?: Array<{ id: string; text: string; at: number; kind: string }>;
+  commitments?: Array<{ id: string; text: string; resolved: boolean }>;
+  skills?: Array<{ name: string; source: string; learnedAt: number }>;
+  rest?: { asleep: boolean; sleepingSeconds: number; restedSeconds: number; debtSeconds: number };
   actorId: string;
   name: string;
   revision: number;
@@ -233,4 +247,32 @@ export interface GodMindView {
     evidence: Array<{ id: string; relation: string }>;
   }>;
   thoughts: Array<{ decisionId: string; at: number; text: string; kind: string; source: string }>;
+}
+
+/** Owner-only debugging payload; never included in GameView or public event streams. */
+export interface IntelligenceCall {
+  parentId?: string;
+  worldId?: string;
+  actorId?: string;
+  disposition?: string;
+  route?: string;
+  gameTime?: number;
+  actorName?: string;
+  trigger?: string;
+  id: string;
+  kind: string;
+  startedAt: string;
+  completedAt?: string;
+  status: 'running' | 'completed' | 'failed';
+  input: unknown;
+  output?: unknown;
+  exchanges: {
+    path: string;
+    method: string;
+    startedAt: string;
+    input: unknown;
+    output?: unknown;
+    httpStatus?: number;
+    truncated?: boolean;
+  }[];
 }

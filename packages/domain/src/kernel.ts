@@ -1,3 +1,5 @@
+import { experiences } from './experience.js';
+import { accountRest, REST_RULES } from './sleep.js';
 import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
 import { appendMemory, canonicalJson, emit, finish, outcome } from './events.js';
@@ -32,7 +34,7 @@ export const SIMULATION_RULES = {
   starvationDamagePerSecond: 0.009,
   exhaustionDamagePerSecond: 0.003,
   restEnergyPerSecond: 0.07,
-  nativeRestSeconds: 240,
+  nativeRestSeconds: 28800,
   harvestSeconds: 84,
   cookSeconds: 90,
   shotSeconds: 18,
@@ -373,6 +375,13 @@ export function executeCommand(original: WorldState, command: Command): Transiti
         (!target?.actor?.alive || !canHear(world, actor.position, target.position))
       )
         return reject('not-heard', 'The listener is not within hearing range.');
+      if (target?.actor?.rest?.asleep) {
+        target.actor.action = null;
+        target.actor.planGeneration++;
+        target.actor.rest.asleep = false;
+        target.actor.rest.episode = null;
+        target.actor.rest.sleepingSeconds = 0;
+      }
       emit(
         world,
         events,
@@ -739,6 +748,12 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
       (item) => !!world.itemDefinitions[item.definitionId]?.nutrition,
     );
     if (food) {
+      if (component.rest?.asleep) {
+        component.action = null;
+        component.planGeneration++;
+        component.rest.asleep = false;
+        component.rest.sleepingSeconds = 0;
+      }
       const definition = world.itemDefinitions[food.definitionId]!;
       takeItem(world, actor.id, food.id);
       component.fullness = Math.min(100, component.fullness + definition.nutrition!);
@@ -774,7 +789,12 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
       return;
     }
   }
-  if (component.energy < 22 && component.action?.type !== 'rest') {
+  if (
+    (component.energy < 22 ||
+      (world.simTime % 86400 >= 57600 &&
+        (component.rest?.restedSeconds ?? 0) < REST_RULES.requiredSeconds)) &&
+    component.action?.type !== 'rest'
+  ) {
     component.action = createAction(world, 'rest', SIMULATION_RULES.nativeRestSeconds);
     component.planGeneration++;
   }
@@ -860,6 +880,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
         continue;
       }
       nativeSurvival(world, actor, events);
+      accountRest(component, world.simTime, seconds);
       advanceAction(world, actor, seconds, events);
     }
     for (const entity of Object.values(world.entities).sort((a, b) => a.id.localeCompare(b.id))) {
@@ -875,9 +896,16 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
   }
   for (const actor of Object.values(world.entities).filter((e) => e.actor?.alive)) {
     const seen = Object.values(world.entities)
-      .filter((e) => e.id !== actor.id && e.actor?.alive && canSee(actor.position, e.position))
+      .filter(
+        (e) =>
+          e.id !== actor.id &&
+          e.actor?.alive &&
+          (canSee(actor.position, e.position) ||
+            (world.visiblePeople?.[actor.id]?.includes(e.id) &&
+              distance(actor.position, e.position) <= PERCEPTION_RULES.sightRadius + 2)),
+      )
       .map((e) => e.id);
-    const previous = world.visiblePeople?.[actor.id] ?? [];
+    const previous = world.visiblePeople?.[actor.id] ?? seen;
     for (const id of seen.filter((id) => !previous.includes(id))) {
       const recent = (world.memories[actor.id] ?? []).some(
         (m) =>
@@ -912,8 +940,10 @@ export function queryMemories(
 ): MemoryRecord[] {
   const words = (options.text ?? '').toLowerCase().split(/\W+/).filter(Boolean);
   return structuredClone(
-    (getOwn(world.memories, actorId) ?? [])
-      .filter(isRecallableExperience)
+    (world.experience
+      ? experiences(world, actorId)
+      : (getOwn(world.memories, actorId) ?? []).filter(isRecallableExperience)
+    )
       .filter((memory) => !options.entityId || memory.entityIds.includes(options.entityId))
       .map((memory) => ({
         memory,
@@ -962,7 +992,17 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
     itemDefinitions: [...definitionIds].map((id) => world.itemDefinitions[id]!).filter(Boolean),
     knownRecipes,
     memories: queryMemories(world, actorId),
-    recentEvents: world.events.filter((event) => event.audience.includes(actorId)).slice(-24),
+    recentEvents: world.events
+      .filter((event) =>
+        world.experience
+          ? world.experience.awareness[actorId]?.some((a) => a.eventId === event.id)
+          : event.audience.includes(actorId),
+      )
+      .slice(-24)
+      .map((event) => {
+        const aware = world.experience?.awareness[actorId]?.find((a) => a.eventId === event.id);
+        return aware ? { ...event, text: aware.text } : event;
+      }),
   });
 }
 

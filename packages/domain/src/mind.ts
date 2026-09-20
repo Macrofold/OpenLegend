@@ -1,3 +1,4 @@
+import { experiences } from './experience.js';
 import type { Command, MemoryRecord, Transition, WorldState } from './types.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { executeCommand } from './kernel.js';
@@ -398,7 +399,9 @@ export function get_memories(
   query: RecallQuery = {},
   strategy: RecallStrategy = lexicalRecall,
 ) {
-  const all = (world.memories[actorId] ?? []).filter(isRecallableExperience);
+  const all = world.experience
+    ? experiences(world, actorId)
+    : (world.memories[actorId] ?? []).filter(isRecallableExperience);
   const required = new Set([
     ...(query.requiredIds ?? []),
     ...all.filter((m) => m.kind === 'commitment' && !m.resolved).map((m) => m.id),

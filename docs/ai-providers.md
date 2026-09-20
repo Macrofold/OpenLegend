@@ -2,7 +2,17 @@
 
 `@open-legend/ai` is a server-only HTTP boundary with two independent methods: `judge` for Jev and `generate` for OpenAI Responses. It imports Node utilities and must never be bundled into the browser. No credentials, fabricated answers, fixture fallbacks, automatic retries, scheduled work, or budget storage are built into the package. Tests inject HTTP responses explicitly.
 
-The game server owns routing, fresh context assembly, audience restrictions, request deduplication, durable reservations, cancellation, model eligibility, and validating proposals before world changes. A valid JSON result establishes its shape, not its truth, safety, or applicability to the current world. Native known actions need neither method. Jev can select among supplied routes or rate supplied evidence; conversation, thoughts, and novel declaration drafts require the generator. Macrofold remains an optional future orchestration adapter rather than a dependency of these direct calls.
+The game server owns routing, fresh context assembly, audience restrictions, request deduplication, durable reservations, cancellation, model eligibility, and validating proposals before world changes. A valid JSON result establishes its shape, not its truth, safety, or applicability to the current world. Native known actions need neither method. Jev can select among supplied routes or rate supplied evidence; conversation, thoughts, and novel declaration drafts require the generator. The server also implements a Macrofold backend; a configured `MACROFOLD_API_KEY` selects it ahead of direct providers. The direct client described below remains a separate adapter. Current live full deliberation requires Macrofold and fails explicitly without it.
+
+## Current Macrofold routes
+
+Macrofold uses `POST /v1/inferences` with only `model_binding`, native provider `input`, and `limits`. Jev input is `{state, questions}` with independent named choice/score questions; it is never encoded as a Cartesian product of choices. Default synchronous 200 and asynchronous/replayed 202 share durable run handling. Answers come from `result.inference.value.answers`. Generative input uses native messages and strict JSON Schema. BYOK puts `provider_connection_id` inside `model_binding`; local Jev and generation use the configured saved OpenRouter connection, with no managed fallback.
+
+The server routes level 2 to mini/low, levels 3/4 to complex/low or high, and cleanup to nano. Reflection uses the full harness with fresh sessions, actor-scoped `mind/*.md` grants and independent PostgreSQL publication; shell and unrelated tools remain denied. Model aliases and actual reported revisions appear in receipts. Per-call monetary/output/time limits remain explicit, and no paid retry occurs automatically.
+
+`jev-questions.ts` separates relevance, immediate complexity, lasting significance and invention admissibility/mechanism. One attention request contains up to 24 candidate questions; routing asks route and reflection together; invention asks admissibility and route together. Useful contradictory evidence must survive relevance selection. A provider confidence field is not the same as a selected answer's probability. Invention remains conservatively gated; routing never grants domain authority.
+
+Reported BYOK provider costs are distinct from zero platform model charges. Complete harness usage rows supply token/cost receipts when available; missing or ambiguous billing retains the admitted reserve and can be reconciled later. The grouped god debugger links actual provider input/output to trigger, recall, route and committed outcome. Live synthetic examples and limitations remain in [TODO](maintainers/TODO.md).
 
 ## Configuration and interface
 

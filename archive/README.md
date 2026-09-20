@@ -1,8 +1,10 @@
 # Open Legend — research and planning archive
 
-Created September 18, 2026 (America/New_York); web research continued into September 19 UTC. Updated for wilderness, native survival, accelerated time, Macrofold/memory, and the accepted PlayCanvas/custom-simulation and grounded pixel-art direction. **Documentation only: no game implementation, assets, accounts, or deployment.**
+Created September 18, 2026 (America/New_York); web research continued into September 19 UTC. Updated for wilderness, native survival, accelerated time, Macrofold/memory, and the accepted PlayCanvas/custom-simulation and grounded pixel-art direction. This archive began as documentation-only planning. The prototype now exists; [implementation status](05-project/implementation-status.md) owns delivery evidence. Proposed systems and dated research are not live acceptance.
 
 Open Legend is a shared world of embodied people and autonomous residents whose needs, memories, emotions, and relationships shape their lives—and whose available interactions can grow through play.
+
+For active task documents and their owning specifications, use the [master TODO and implementation-plan index](../docs/maintainers/README.md).
 
 ## Start here
 
@@ -51,7 +53,7 @@ M10/M11 clarify the first playable: live LLM decisions and NPC conversation, Jev
 
 **Character depth:** games → human models → agents → world/player experience.
 
-**Persistent minds and Macrofold:** [workspace comparison and costs](02-research/macrofold-workspaces.md) → [memory storage and retrieval](03-design-proposals/memory-storage-and-retrieval.md) → [shared-worker adoption comparison](03-design-proposals/macrofold-shared-workers.md) → D14/D28 and R11/R19. Rich per-NPC memory is desired; Macrofold for ordinary reasoning is conditionally preferred if efficient pooled execution is available or worthwhile to build. Adoption remains open.
+**Persistent minds and Macrofold:** [workspace comparison and costs](02-research/macrofold-workspaces.md) → [canonical memory architecture](../docs/memory-architecture.md) → [shared-worker adoption comparison](03-design-proposals/macrofold-shared-workers.md) → D14/D28 and R11/R19. The accepted design separates immediate cognition, hourly cleanup and required background file reflection. A prototype Macrofold adapter exists; pooled execution and target publication/live acceptance remain open in [CR01–CR12](../docs/maintainers/cognition-redesign.md).
 
 **Broader Macrofold integration:** [AI workflows and world state](03-design-proposals/macrofold-ai-workflows-and-world-state.md) → D28/D30 and R20. Proposed reusable typed inference, structured resources and workflow infrastructure; Open Legend defines game semantics and validates changes. Physical storage can be provided by Macrofold.
 

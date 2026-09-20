@@ -1,6 +1,6 @@
 # Agents, bodies, emotions, and memory
 
-> Memory/cognition policy is now owned by [Memory architecture](../../docs/memory-architecture.md), including the 300-entry recent-recall target, highest-required-tier routing and god-only profile Thoughts view. Earlier illustrative limits and display suggestions below are historical where they conflict.
+> Memory/cognition policy is owned by [Memory architecture](../../docs/memory-architecture.md): minimal English context, Jev attention, level-2 conversation and independent background reflection. Agents require eight game hours of daily rest; dreams become eligible after two hours asleep. The sections below follow that policy; [delivery tasks](../../docs/maintainers/cognition-redesign.md) remain open.
 
 Status: **design proposal**, updated for accepted primitive survival direction. Requirements: F02–F10, F21–F24, F31, F35–F39. Research basis and its limitations: [human models](../02-research/human-models-and-memory.md), [comparable games](../02-research/games-and-emergence.md). The system is designed for believable play, not clinical realism or validated predictions of human behavior.
 
@@ -53,7 +53,7 @@ At birth/creation, combine seeded variation, authored background, and later expe
 
 ## Memory storage and forgetting
 
-Concrete proposed collections, indexes, ingestion, provenance, recall tools and consolidation races are developed in [memory storage and retrieval](memory-storage-and-retrieval.md). The [Macrofold comparison](../02-research/macrofold-workspaces.md) recommends shared structured memory with selective full-workspace execution; that integration is not agreed or implemented.
+The canonical [memory architecture](../../docs/memory-architecture.md) defines awareness, English recall, authored inner world, quotas and publication. The [production data model](../07-technical-architecture/production-data-model.md) specifies repository projections. The [Macrofold comparison](../02-research/macrofold-workspaces.md) retains research and cost scenarios; current integration evidence belongs in [implementation status](../05-project/implementation-status.md).
 
 Use distinct records:
 
@@ -61,26 +61,28 @@ Use distinct records:
 |---|---|---|
 | Working context | Current activity, recent turns, immediate observations | Short and replaceable |
 | Episodic memory | Who, what, where, when, observed/heard/inferred, affect, evidence | Salience-weighted finite budget |
-| Semantic belief | Learned proposition with confidence, source, contradictions | Consolidate and update; never silently convert rumor to fact |
-| Relationship summary | Directional familiarity, trust, affection, obligations | Compact, evidence-linked, slowly updated |
+| Subjective beliefs | Authored inner-world prose with meaningful uncertainty and attribution | Reflection updates accepted text; never silently convert rumor to fact |
+| Relationship assessment | Directional authored perspective; supported native facets and obligations stay separate | Accepted inner-world text; derived query projections do not own another prose copy |
 | Procedural knowledge | Known recipes, skills, routes, habits | Versioned references rather than copied scripts |
 | Protected commitments | Active promise, debt, appointment, caregiving obligation | Keep until resolved; bounded creation |
 
 The authoritative world journal is separate. NPC forgetting does not delete item ownership, a birth record, or a committed trade. Conversely, an NPC cannot retrieve the journal to recover events it never perceived.
 
-Illustrative budget per resident: 20–40 recent observations, 100–300 episodic summaries, a small set of beliefs, and compact relationship/skill records. Choose actual byte/token limits after retrieval-quality testing; counts alone do not bound storage if one entry can contain a novel. Enforce per-record and total size. A population of thousands makes unbounded transcripts expensive even before inference.
+Raw recall spans the last six game hours; hourly small-model consolidation processes older raw personal memories and actor-aware shared events. Select useful summaries alongside recent experiences without duplicating events. Finite count/byte/backlog limits still need tuning. The initial authored ceiling is ten files of 500 words each plus a byte bound; CR01 must resolve its tension with full About me inclusion and compact greeting targets. Counts alone cannot bound a novel-sized record or population-wide storage.
 
 Score retention using salience, recency, repetition, relevance to commitments, and distinctiveness. Avoid always retaining negative events just because they are emotionally intense. Maintain key positive experiences and mundane routines as well. Expire stale location beliefs; preserve their uncertainty rather than pretending an old observation is live.
 
-Retrieval combines current intent, relevant people/places, recency, and semantic matching. Supply only a few high-value memories to a thought. Summaries retain references to source memories while they exist, note uncertain interpretations, and avoid inventing connective details.
+Retrieval combines current intent, relevant people/places, recency, and semantic matching. Include the complete accepted About me text and Jev-selected high-value recall within route budgets. Summaries retain references to source memories while they exist, note uncertain interpretations, and avoid inventing connective details.
+
+Recall selection follows the [canonical signal and delivery contract](../../docs/memory-architecture.md#selection-signals-and-delivery-order): present people, recent events, goals, unresolved concerns and conflicting beliefs drive structured lookups first, followed by arbitrary-intent semantic retrieval. Selective-recall tools follow demonstrated initial-context gaps. Evaluate whether remembered evidence changes later behavior where relevant, not only whether it appears in context.
 
 ## Sleep, dreaming, and consolidation
 
-The dream mechanic now lives in the canonical [memory architecture](../../docs/memory-architecture.md#9-sleep-dreams-forgetting-and-consolidation). It defines budgeted sleep consolidation, full-harness subjective updates, imagined dream provenance, protected commitments, concurrent-observation preservation and native retention fallback. Use its implementation checklist for delivery status.
+The dream mechanic now lives in the canonical [memory architecture](../../docs/memory-architecture.md#9-sleep-dreams-forgetting-and-consolidation). It requires eight hours of daily rest and at least two continuous hours asleep before optional dream reflection. Hourly small-model consolidation is independent of sleep; full-harness background reflection updates files and publishes accepted text. Imagined dream attribution, protected commitments, concurrent observations and native retention remain distinct. Use its implementation checklist for delivery status.
 
 ## Perception, beliefs, and attention
 
-The [perception and attention specification](../07-technical-architecture/perception-and-attention.md) now owns the detailed proposal: shared near/medium/far object descriptions with supported state overlays, event-based attenuated sound, actor-specific evidence, arbitrary-intent semantic interests, mandatory person-encounter opportunities and batched Jev routing. It distinguishes the current 10-unit sight/event audience from future sensory fidelity. New exposure need not buy a thought; mundane objects become decision-relevant when a goal or significant change makes them matter. Persistent critical-need reminders follow simulation time under real-time inference caps.
+The [perception and attention specification](../07-technical-architecture/perception-and-attention.md) now owns the detailed proposal: shared near/medium/far object descriptions with supported state overlays, event-based attenuated sound, actor-specific evidence, arbitrary-intent semantic interests, mandatory person-encounter opportunities and batched Jev routing. It distinguishes the current 28-unit sight and separate 10-unit hearing audience from future sensory fidelity. New exposure need not buy a thought; mundane objects become decision-relevant when a goal or significant change makes them matter. Persistent critical-need reminders follow simulation time under real-time inference caps.
 
 Initially use distance, facing if useful, and grid line-of-sight for vision; a radius/intensity model for hearing; adjacency for touch. Later, walls, doors, weather, light, species senses, and masking noise can alter these queries. Perception emits observations with confidence and source, not omniscient facts.
 
@@ -99,11 +101,11 @@ Use the existing perception/attention/memory pipeline rather than a model call f
 1. A need threshold, addressed speech, interrupted plan, hazard, new opportunity, or scheduled review creates a decision event.
 2. Local logic decides whether the current plan remains adequate. Known urgent responses need no semantic gate.
 3. Score eligible actions using needs, values, relationships, effort, risk, and commitments. Commit to short plans with interruption rules.
-4. If the situation is familiar, select an existing action or skill. If ambiguous, optionally use a bounded semantic judge. If novel or socially important, admit a deliberative job.
-5. A bounded harness can inspect authorized observations, retrieve memories, inspect known recipes, or simulate candidate consequences. It has strict tool-call/token/deadline limits and no direct mutation tools.
-6. Return the next intent and a short state summary; execute through the same interaction resolver as players. Record only useful resulting memories.
+4. Native code continues familiar actions; Jev evaluates attention and escalation for each admitted semantic opportunity in bounded batches.
+5. Speech defaults to level 2; Jev can select complex low/high reasoning (levels 3/4) and independently enqueue background level-5 reflection.
+6. Return only speech or the offered action handle required by that immediate route. Commit through native admission. Reflection separately edits bounded files and publishes accepted text with short god-only thoughts.
 
-“Should I think?” need not itself be a model call. A deterministic scheduler handles most such decisions. An optional semantic fan-out can estimate novelty, social relevance, and desired effort from one context when all answers are independent. Do not fan out multiple expensive full planners speculatively without evidence that saved latency justifies the cost.
+The scheduler creates meaningful opportunities without polling every tick. Jev routing does not recursively route itself or require a call per object. Unknown/unavailable outcomes defer semantic work while native survival continues. Do not fan out expensive planners speculatively or require mind patches to speak.
 
 Thoughts stored for characterization should be brief in-world reflections, intentions, and appraisals—not raw hidden model reasoning. Players see expression and speech, not private thought traces. Creator debugging can show structured causes and decisions without relying on verbose internal prose.
 
@@ -117,6 +119,6 @@ Start with one-on-one text, then nearby group text, then voice. Scale social bel
 
 ## Wilderness seed cast and evaluation
 
-Proposed initial cast: 6–12 people with distinct but modest differences, useful possessions, some survival knowledge, at least one social tie and practical skill, and unmet needs. Examples include a sociable forager, someone skilled at bindings, and someone who knows shelter or simple care. They are not blank minds, and no established village is supplied. Avoid elaborate lore that exists only in prompts and never affects actions.
+After the one-NPC first playable, proposed group cast: 6–12 people with distinct but modest differences, useful possessions, some survival knowledge, at least one social tie and practical skill, and unmet needs. Examples include a sociable forager, someone skilled at bindings, and someone who knows shelter or simple care. They are not blank minds, and no established village is supplied. Avoid elaborate lore that exists only in prompts and never affects actions.
 
 Evaluate through observable episodes: a resident finds food without instruction; two residents contend over a scarce item without duplication; a promised meal is remembered tomorrow; a false rumor remains attributed; a frightened resident chooses shelter; forgetting frees memory while preserving an active obligation; provider outage leaves basic survival intact. Compare deterministic-only, minimal-memory, and richer-memory variants in playtests so complexity earns its cost.

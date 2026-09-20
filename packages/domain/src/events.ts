@@ -1,5 +1,6 @@
+import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
-import { canHear } from './perception.js';
+import { canHear, canSee } from './perception.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import type { Entity, MemoryRecord, Outcome, Transition, WorldEvent, WorldState } from './types.js';
 
@@ -36,7 +37,7 @@ export function appendMemory(
     return;
   records.push({
     ...memory,
-    summary: [...memory.summary].slice(0, 240).join(''),
+    summary: memory.summary,
     id: nextId(world, 'memory'),
     actorId,
     at: world.simTime,
@@ -44,18 +45,6 @@ export function appendMemory(
     entityIds: memory.entityIds.slice(0, 8),
     importance: Math.max(0, Math.min(10, memory.importance)),
   });
-  // Active commitments have a separate allowance and are not silently consolidated away.
-  const ordinary = records.filter((record) => record.kind !== 'commitment' || record.resolved);
-  const remove = new Set<string>();
-  let bytes = ordinary.reduce((sum, memory) => sum + byteCount(memory) + 1, 2);
-  let count = ordinary.length;
-  for (const record of ordinary) {
-    if (count <= MIND_LIMITS.experiences && bytes <= MIND_LIMITS.experienceBytes) break;
-    remove.add(record.id);
-    count--;
-    bytes -= byteCount(record) + 1;
-  }
-  if (remove.size) world.memories[actorId] = records.filter((record) => !remove.has(record.id));
 }
 export function emit(
   world: WorldState,
@@ -69,7 +58,12 @@ export function emit(
   const audience = Object.values(world.entities)
     .filter(
       (entity) =>
-        entity.actor?.alive && (!source || canHear(world, entity.position, source.position)),
+        entity.actor?.alive &&
+        !entity.actor.rest?.asleep &&
+        !!source &&
+        (type === 'speech'
+          ? canHear(world, entity.position, source.position)
+          : canSee(entity.position, source.position)),
     )
     .map((entity) => entity.id);
   if (source?.actor && !audience.includes(source.id)) audience.push(source.id);
@@ -84,42 +78,39 @@ export function emit(
   if (source) event.actorId = source.id;
   if (targetId) event.targetId = targetId;
   if (data) event.data = data;
-  world.events.push(event);
+  if (audience.length) world.events.push(event);
   events.push(event);
-  if (world.events.length > 300) world.events.splice(0, world.events.length - 300);
-  const important = [
-    'speech',
-    'death',
-    'animal-died',
-    'crafted',
-    'declaration-admitted',
-    'taught',
-    'shot',
-    'harvested',
-    'cooked',
-    'ate',
-    'gathered',
-  ].includes(type);
-  if (important)
-    for (const actorId of audience)
-      appendMemory(world, actorId, {
-        kind: 'episode',
-        source: type === 'speech' && actorId !== source?.id ? 'heard' : 'observed',
-        summary: text,
-        entityIds: [source?.id, targetId].filter((id): id is string => !!id),
+  if (world.experience) {
+    for (const actorId of audience) {
+      const awareness = (world.experience.awareness[actorId] ??= []);
+      awareness.push({
         eventId: event.id,
-        eventType: type,
-        ...(type === 'speech' && source ? { speakerId: source.id } : {}),
+        actorId,
+        text,
+        at: event.at,
+        sequence: world.nextId,
+        modality: type === 'speech' ? 'heard' : 'observed',
+        recognized: true,
+        intelligible: true,
+        entityIds: [source?.id, targetId].filter((id): id is string => !!id),
         importance:
-          type === 'death' || type === 'taught'
+          data?.['significant'] === true || ['death', 'taught', 'incapacitated'].includes(type)
             ? 9
-            : type === 'speech' || type === 'crafted'
+            : type === 'speech'
               ? 7
-              : 3,
+              : data?.['semanticTrigger'] === true ||
+                  ['crafted', 'declaration-admitted', 'shot', 'fire-out', 'rested'].includes(type)
+                ? 6
+                : 3,
       });
+    }
+  }
+  recordSpokenPromise(world, event);
+  advanceCommitments(world, [event]);
   return event;
 }
 export function finish(world: WorldState, events: WorldEvent[], result: Outcome): Transition {
+  advanceCommitments(world, events);
   world.sequence++;
   return { world, events, outcome: result };
 }

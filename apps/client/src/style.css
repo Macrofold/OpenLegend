@@ -2884,3 +2884,89 @@ kbd {
   font-size: 10px;
   margin-top: -5px;
 }
+
+.intelligence-calls details {
+  margin: 10px 0;
+  padding: 8px;
+  border: 1px solid #ffffff26;
+  border-radius: 8px;
+}
+.intelligence-calls summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.intelligence-calls pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  max-height: 480px;
+  overflow: auto;
+}
+
+.panel-dock .dock-panel.intelligence-calls {
+  width: min(660px, calc(100vw - 184px));
+  flex-shrink: 0;
+}
+@media (max-width: 800px) {
+  .panel-dock .dock-panel.intelligence-calls {
+    width: min(560px, calc(100vw - 184px));
+  }
+}
+
+.intelligence-calls .json-copy {
+  float: right;
+  margin-left: 12px;
+  padding: 2px 8px;
+  border: 1px solid #ffffff40;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.intelligence-calls .intelligence-call-summary {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.intelligence-call-field + .intelligence-call-field::before {
+  content: ' · ';
+  color: var(--subtle);
+}
+.intelligence-call-status {
+  float: right;
+  margin-left: 8px;
+  font-weight: 700;
+}
+.intelligence-call-status.success {
+  color: #9edb92;
+}
+.intelligence-call-status.failure {
+  color: #ef9292;
+}
+.intelligence-call-status.pending {
+  color: var(--subtle);
+}
+
+.cognition-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  padding-top: 10px;
+}
+.cognition-filters label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+.cognition-filters input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #ffffff40;
+  border-radius: 4px;
+  background: #ffffff0a;
+  color: inherit;
+  font: inherit;
+  color-scheme: dark;
+}

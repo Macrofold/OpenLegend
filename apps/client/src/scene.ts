@@ -131,9 +131,9 @@ export class WildernessScene {
       canvas.addEventListener('wheel', this.wheel, { passive: false });
       window.addEventListener('blur', this.blur);
       this.app.on('update', (dt: number) => this.update(dt));
-      this.app.start();
       this.resize();
       this.placeCamera();
+      this.app.start();
     } catch (error) {
       this.destroy();
       throw error;
@@ -254,13 +254,14 @@ export class WildernessScene {
 
   private resize(): void {
     const rect = this.canvas.getBoundingClientRect();
-    // Crisp low-resolution world, while the DOM remains full-resolution and accessible.
+    // CSS owns display size. resizeCanvas rewrites it using KEEP_ASPECT and
+    // feeds rounded backing-buffer dimensions into this observer repeatedly.
+    // Only resize the rendering buffer so viewport changes cannot drift or crop.
     this.app.setCanvasResolution(
       pc.RESOLUTION_FIXED,
       Math.max(1, Math.round(rect.width * 0.8)),
       Math.max(1, Math.round(rect.height * 0.8)),
     );
-    this.app.resizeCanvas(rect.width, rect.height);
   }
   private texture(source: HTMLCanvasElement): pc.Texture {
     const texture = new pc.Texture(this.app.graphicsDevice, {

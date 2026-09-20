@@ -2,6 +2,8 @@
 
 Recorded September 19, 2026. **Accepted product scope from M09–M11. The subsequent U13 request explicitly authorized implementation.** The initial executable implementation is described in [current architecture](../../docs/architecture.md); [verification](../../docs/verification.md) distinguishes automated evidence from the still-open live-provider acceptance gate. This specification supersedes earlier sequencing that put live conversation or generated mechanics after the first playable version. The [roadmap](roadmap.md) describes product milestones; the [technical delivery plan](../07-technical-architecture/review-and-delivery-plan.md) describes internal build steps.
 
+
+The [memory architecture](../../docs/memory-architecture.md) owns the latest cognition target: level-2 speech with Jev escalation, independent background reflection and hourly memory cleanup, awareness-scoped recall and accepted inner-world text. [CR01–CR12](../../docs/maintainers/cognition-redesign.md) extend the delivery plan; they do not erase this MVP's useful live conversation, continuity, invention or native-survival acceptance requirements.
 ## What the first version must demonstrate
 
 The first playable world includes a live AI resident who makes decisions, remembers relevant interactions, and can converse with the player. The player can find resources, ask for a plausible new tool, have AI generate its supported mechanical definition, craft it, and use it to affect the world. The concrete initial story is **gather resources → invent and craft a sling → hunt an animal → harvest and eat it**, alongside ordinary survival and conversation.

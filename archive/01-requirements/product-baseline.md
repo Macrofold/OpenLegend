@@ -12,7 +12,7 @@ The central promise is **a world that remembers people and learns new ways to in
 
 There need not be a victory condition. Survival, companionship, discovery, collaboration, conflict, and the histories people create can provide purpose. Combat is possible, but the brief does not establish combat as the main activity.
 
-The starting world is now a primitive wilderness group with some survival knowledge, accessible resources and possessions, before a village exists. Agents may live or die as they learn and act; universally forgiving NPC needs are not required. Gathering, eating, resting and other selected survival fundamentals should be seeded mechanics. The creator wants accelerated time and god controls to change its rate. One real hour per 24-hour day is a proposed tuning example, not a final rate.
+The starting world is now a primitive wilderness group with some survival knowledge, accessible resources and possessions, before a village exists. Agents may live or die as they learn and act; universally forgiving NPC needs are not required. Gathering, eating, resting and other selected survival fundamentals should be seeded mechanics. The creator wants accelerated time and god controls to change its rate. The accepted base is one game minute per real second (60:1), with 0.5×/1×/3×/8× presets; memory and sleep use that same simulated clock.
 
 The accepted [first playable MVP](../05-project/first-playable-mvp.md) includes live LLM decisions and conversation, Jev for suitable bounded semantic judgments, AI-generated crafting, and the resource → sling → hunting → harvesting/preparing/eating loop. A second invention, with bow-and-arrow as the candidate, tests reuse. Pause/speed controls are required; the initial personal world pauses while the player is away and schedules no autonomous AI then. No-model fixtures are internal tests, not the playable deliverable.
 
@@ -35,11 +35,11 @@ The accepted [first playable MVP](../05-project/first-playable-mvp.md) includes 
 | F03 | Body parts, injuries, sickness, healing, hunger, fatigue, aging, frailty, and death | Required direction, expandable depth | [Agent systems](../03-design-proposals/agents-and-social-simulation.md) |
 | F04 | PG intimacy, reproduction, pregnancy, birth, and growing populations | Required direction; release timing open | [World systems](../03-design-proposals/world-and-player-experience.md) |
 | F05 | Many emotional dimensions, summarized into legible composite displays | Required direction, gradual depth | [Agent systems](../03-design-proposals/agents-and-social-simulation.md) |
-| F06 | Durable, capacity-limited memories with selective forgetting and dream-like consolidation | Required direction | [Agent systems](../03-design-proposals/agents-and-social-simulation.md) |
+| F06 | Durable bounded memory, six-hour raw recall, hourly older-experience consolidation and independent background reflection/dreams | Required direction | [Memory architecture](../../docs/memory-architecture.md), [Agent systems](../03-design-proposals/agents-and-social-simulation.md) |
 | F07 | Personalities established at creation and changed by experience; research-informed framework | Required direction | [Human models](../02-research/human-models-and-memory.md) |
 | F08 | Agents know only what they perceive or learn; visibility, hearing, and touch matter | Required direction | [Architecture](../03-design-proposals/system-architecture.md) |
-| F09 | Agents independently think and act, with state, beliefs, personality, and surroundings shaping decisions | Required direction | [Agent systems](../03-design-proposals/agents-and-social-simulation.md) |
-| F10 | Cheap ordinary behavior; event-triggered reasoning and variable thinking effort | Required direction; routing design open | [Jev research](../02-research/jev-and-semantic-routing.md) |
+| F09 | Agents independently think and act, with state, beliefs, personality, and surroundings shaping decisions | Required direction | [Memory architecture](../../docs/memory-architecture.md), [Agent systems](../03-design-proposals/agents-and-social-simulation.md) |
+| F10 | Cheap ordinary behavior; event-triggered reasoning and variable thinking effort | Accepted semantic levels and Jev attention/escalation; exact provider bindings and budgets open | [Jev research](../02-research/jev-and-semantic-routing.md) |
 | F11 | Free-form dialogue and contextual requests such as right-click → interact → type anything | Required direction | [Interaction protocol](../03-design-proposals/interaction-protocol.md) |
 | F12 | Semantic interpretation of interactions unless an applicable known mechanism already exists | Required direction | [Interaction protocol](../03-design-proposals/interaction-protocol.md) |
 | F13 | Parameterize, categorize, and reuse interaction mechanisms when relevant conditions match | Required direction | [Interaction protocol](../03-design-proposals/interaction-protocol.md) |
@@ -115,9 +115,24 @@ The [source summary](../00-source/perception-and-attention-followup.md) explicit
 | F66 | Physical/emotional threshold crossings and persistent serious needs cause reconsideration, with an hourly low-food thought/reminder as the example | Accepted direction; low-fullness interpretation, exact thresholds and generated-thought guarantee versus cost limits remain open | [Needs and time](../07-technical-architecture/perception-and-attention.md#9-needs-reminders-and-accelerated-time) |
 | F67 | Broad embodied vision agrees with what the player can see on-screen within character LOS; off-screen/hidden objects provide no new visual detail | Accepted direction; authoritative camera limits, background mode and display policy remain open | [Visual parity](../07-technical-architecture/perception-and-attention.md#embodied-visual-parity) |
 
+## Compact cognition follow-up — F68–F73
+
+The [source request](../00-source/cognition-context-followup.md) explicitly asks for documentation/tasks before implementation. The [canonical design](../../docs/memory-architecture.md) owns these accepted targets; [CR01–CR12](../../docs/maintainers/cognition-redesign.md) are all open.
+
+| ID | User requirement | Delivery tasks |
+| --- | --- | --- |
+| F68 | Minimal English context and tiny purpose-specific output; remove storage metadata, redundant catalogues, empty scaffolding and ordinary mind-patch responses | CR01–CR03, CR12 |
+| F69 | Native behavior plus Jev level 1, mini level 2, complex low/high levels 3/4 and harness level 5; speech defaults to level 2; Jev evaluates escalation; inventions can configure trusted trigger mechanics | CR02, CR08, CR10 |
+| F70 | Jev yes/no attention selects actor-permitted nearby entities, possessions, recipes and recall; all actors including the player have event-time awareness; no unwitnessed experiential log requirement | CR04–CR05 |
+| F71 | Store English memory text; combine aware events and personal memories without duplicates; raw context covers six game hours; hourly small-model cleanup groups old routines and preserves important experiences | CR03, CR05–CR06 |
+| F72 | Reflection runs in the background during downtime, dreams and significant events; edit persistent workspace files, publish one PostgreSQL inner-world text row per actor, include it in every decision, and return god-only presentation thoughts of at most 20 words each | CR07–CR08, CR11 |
+| F73 | Eight in-game hours of daily rest; dreams only after at least two in-game hours asleep | CR09 |
+
+These settle behavior, not exact provider availability, budgets, daily rest accounting or measured latency. The full-snapshot requirement versus a few-hundred-token greeting remains an explicit sizing tradeoff, not permission to silently drop About me.
+
 ## What this baseline does not settle
 
-PlayCanvas and ownership of an independent simulation are accepted planning choices. No engine version, hosted-editor subscription, general LLM provider, database vendor, subscription price, server capacity, specific psychological theory, model vendor, release date, or staffing assumption is agreed. The wilderness and grounded pixel-art directions are accepted; camera freedom, art pipeline, exact population, inventories, survival rates, clock multiplier and biological-aging policy remain open. Neither “thousands online” nor “100 emotions” determines the correct first release. No conclusion that Jev meets production needs should be read into the brief.
+PlayCanvas and ownership of an independent simulation are accepted planning choices. The hosted transactional target is PostgreSQL and accepted inner-world publication uses its text row; exact hosted deployment and release remain open. General model bindings, hosted-editor adoption, subscription price, server capacity, specific psychological theory, release date and staffing remain unproven or undecided. The wilderness and grounded pixel-art directions are accepted; camera freedom, art pipeline, exact population, inventories, survival rates, future clock presets/overload behavior and biological-aging policy remain open. Neither “thousands online” nor “100 emotions” determines the correct first release. No conclusion that Jev meets production needs should be read into the brief.
 
 “Generative” has several distinct meanings: dialogue, decisions, compositional mechanics, genuinely new executable logic, art, and world layout. Each has a different cost, validation burden, and latency. The archive evaluates them separately while preserving the eventual combined vision.
 

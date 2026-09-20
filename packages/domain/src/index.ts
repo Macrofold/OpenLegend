@@ -16,3 +16,8 @@ export { admitDeclaration, validateDeclaration, DECLARATION_CONTRACT } from './d
 export { distance, findPath, hasLineOfSight, isWalkable } from './spatial.js';
 
 export * from './mind.js';
+
+export * from './experience.js';
+export * from './sleep.js';
+export * from './cognition-policy.js';
+export * from './commitments.js';

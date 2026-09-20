@@ -1,416 +1,315 @@
-# Memory, attention and character cognition
+# Memory architecture
 
-Status: **canonical target architecture and accepted design**, September 19, 2026. This document describes the intended complete system, not a claim that it all runs today. The implementation audit and sequenced checklist at the bottom identify the executable subset and remaining work. It supersedes earlier memory limits, NPC cognition routing and thought-display guidance where they conflict. The implementation audit below distinguishes fixture-verified behavior from blocked live acceptance.
+This is the **single authoritative specification for the complete intended memory and cognition system**. It combines the current requirements for character minds, awareness, retrieval, attention, conversation, consolidation, reflection, workspaces, sleep and dreams. Related engineering documents can detail implementation, but do not define alternative memory behavior.
 
-Related contracts: [implemented architecture](architecture.md), [context and inference](../archive/07-technical-architecture/context-and-inference.md), [perception and attention](../archive/07-technical-architecture/perception-and-attention.md), [production data model](../archive/07-technical-architecture/production-data-model.md#8-minds-evidence-knowledge-and-conversation), [data queries and MCP](../archive/07-technical-architecture/data-queries-and-mcp.md), and [declaration admission](../archive/07-technical-architecture/declarations-and-evolution.md). Those retain broader world, storage and transport detail; this document owns the memory/cognition behavior and delivery sequence.
+The CR01–CR11 runtime foundation is implemented; integrated acceptance and broader conditional features remain open. Build tasks are in [CR01–CR12](maintainers/cognition-redesign.md); actual delivery evidence belongs in [implementation status](../archive/05-project/implementation-status.md) and [maintainer TODO](maintainers/TODO.md). This document describes what to build rather than maintaining previous versions of the design.
 
-## Today's required delivery
+## 1. Intent and ownership
 
-**Today's implementation must include a functioning full-harness thinking path and persistent inner-world updates. Completing only episodic memory storage or fast thoughts does not satisfy the task.** Deliver the vertical slice across the first four checklist stages: directional relationships, beliefs, appraisals, goals/concerns, reflection, basic sleep/dream consolidation, bounded authored mind documents, deterministic commits and a god-only mind/thought inspector.
+A short exchange should receive a short, promptly generated answer. Speaking or making an immediate decision does not require the character to rewrite its relationships, beliefs, goals and concerns. Reflection is a separate background activity. Routine cleanup of remembered experience is lighter still.
 
-NPCs must be able to reflect during safe downtime, not only when handling an immediate action or speech. Reflection can change their interpretation of past experiences and influence later decisions. Sleep can run the same cognition/consolidation machinery with an optional imagined dream presentation. Both paths are required in an initial form today; advanced semantic retrieval, elaborate dream generation and incremental streaming can follow later.
+A simple greeting's optimization target is a few hundred input tokens and roughly 10–50 visible output tokens. This is a target, not a measured result or a promise for every character/context. Count the complete workflow, including Jev, tool responses and reasoning tokens, when assessing cost and latency.
 
-The bound for **authored inner-world text is at most 10 logical documents per actor, at most 500 words each** (at most 5,000 words in aggregate). See the precise quota and overflow rules below. The 300-entry recent-experience buffer is a separate bounded input, not a replacement for this richer inner world.
+The domain remains pure, deterministic and authoritative for simulation transitions. The server owns awareness, context, scheduling, spending, workspace publication and admission. The AI package supplies generic typed execution; the client displays permitted data and sends intentions. Free prose, generated JSON fields and edited inner-world files cannot acquire executable meaning automatically.
 
-**Use a fresh NPC harness conversation for every thinking, reflection or dream job, while reusing compatible warm compute. Skip Macrofold agent presets initially.** Open Legend owns versioned master cognition instructions and injects them with the current actor context at the start of every job. Multiple model/tool turns within that job share its conversation; accepted mind state supplies continuity across jobs. World-agent chat tabs may retain their conversations.
+### What belongs in a character's mind
 
-**Allow flexible inner-world organization.** Instructions describe permitted files, quotas, provenance and output boundaries, and suggest relationships, beliefs, feelings, values, concerns and goals as useful subjects. They do not mandate a file per category, a rigid psychological checklist or a change after every reflection. Agents may name, combine, reorganize and summarize their own mind documents within the enforced limits.
+The character has a durable inner life, not just a log of events. Its authored files can express the following subjects without requiring one file, JSON record or mandatory checklist per category.
 
-This is implementation scope, not evidence that the feature has been delivered. Acceptance examples and unchecked tasks at the bottom must be completed against actual code and separately authorized live execution where required.
+| Content                        | Intended behavior                                                                                                       |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Identity and self-concept      | Background, traits, values, preferences and the character's understanding of itself                                     |
+| Beliefs                        | Interpretations of people, events and the world; beliefs may be mistaken or uncertain                                   |
+| Relationships                  | Directional familiarity, trust, affection and narrative assessments; A's opinion of B need not match B's opinion of A   |
+| Feelings and appraisals        | How experiences felt and what they mean to the character; numerical effects require supported native rules              |
+| Goals, intentions and concerns | Durable motivations, unresolved questions and plans that influence attention and later decisions                        |
+| Commitments                    | Remembered promises, debts and appointments; actual obligations and their lifecycle remain native authoritative records |
+| Knowledge                      | Learned skills and recipes; thinking about a capability does not teach or admit it mechanically                         |
+| Reflections and dreams         | Reinterpretation, associations and imagined possibilities retained when useful                                          |
 
-## 1. Separate mind, storage and executor
+“I saw someone take berries” is an experience; “they stole from me” is an interpretation. A later explanation can change the belief without rewriting the original experience. The character may be wrong. Validation should protect scope and game rules, not demand objectively correct beliefs or another model call to judge every interpretation.
 
-An NPC has a persistent logical mind scoped by world and actor. The game owns its canonical state and update rules. A database, optional file view, model conversation and compute sandbox are different things. A filesystem or MCP server is not required to retrieve database-backed memories: the backend can call its own retrieval function, assemble context and commit validated proposals from a response.
+New actors receive an authored identity and permitted starting knowledge, goals and possessions atomically with their initial saved state. Their own workspace and initial accepted About me text provide continuity from the first decision. Seed background is not a fabricated witnessed event. Essential identity and active obligations must survive ordinary compaction; new experiences can still change the character's opinions and priorities.
 
-The current storage is a SQLite world snapshot. The end-state uses structured mind records behind a repository interface; separate normalized tables can be introduced without changing the cognition contract. PostgreSQL, a vector service and a workspace per NPC are not prerequisites for the first useful version.
+World state, remembered experience, authored inner world and thought presentation are separate. Inventory, health and location belong to the simulation. Raw/consolidated experiences supply recall. Reflection edits the inner world. God-only thought history presents short narration and is not automatically another memory store.
 
-Macrofold executes jobs and optionally hosts scoped tools and working files. Open Legend controls perception, recall eligibility, routing permissions, budgets, state transitions and client projection. No model receives the whole world or another actor's private mind. Canonical persistence and the reasoning executor remain replaceable independently.
+### Character continuity and learning
 
-## 2. What belongs in a mind
+Relationships remain sparse and directional, with supported familiarity, trust, affection and fear; group membership is a separate world fact. Narrative assessments live in the accepted inner world. Any queryable prose projection must derive from that accepted revision, not become another writable biography. Native mechanical facets, protected commitments and learned capabilities retain their own authority.
 
-| Record family          | Meaning                                                                 | Producer and authority                                                     |
-| ---------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Identity/profile       | Authored history, traits, values, dispositions and supported attributes | Initial game definitions; later changes follow explicit world rules        |
-| Observations/episodes  | What this actor experienced, with event-time detail and attribution     | Native perception and ingestion; no AI required                            |
-| Beliefs                | Claims about the world, other people or oneself, including uncertainty  | Authored seeds, native learning rules or validated full-harness proposals  |
-| Relationships          | Directional familiarity, trust, affection and narrative assessments     | Actual encounter evidence plus native rules or full-harness interpretation |
-| Appraisals/affect      | Cause-linked interpretation and supported emotional state               | Native responses and full-harness proposals under declared update rules    |
-| Goals/intentions/plans | Durable concerns and plans that affect attention and future decisions   | Authored goals, native urgency or validated full-harness proposals         |
-| Commitments            | Promises, debts and appointments, including due time and status         | Actual attributed speech/actions; interpretation may use a full harness    |
-| Knowledge              | Learned admitted capabilities, recipes and skills                       | Authoritative teaching, practice and declaration/learning receipts         |
-| Reflections/dreams     | Subjective interpretation, self-narrative and imagined associations     | Full-harness proposals when retained as part of the mind                   |
-| Thought presentation   | Short in-character narration for an authorized god observer             | Any permitted thought tier; separate from recallable memory                |
+Conversation preserves speaker, actual per-turn audience, interruption and topic continuity. Characters can decline, keep working while talking, ask clarifying questions and return to unfinished plans. A promise and its fulfillment are distinct events; exhausting inference allowance must not erase accepted obligations. One-on-one text precedes group text and voice, with captions retained for accessibility.
 
-Inner-world examples include “I think they will share the food,” “that refusal felt humiliating,” “I dislike depending on them,” “I want to be helpful,” “I still wonder why they left,” and imagined future possibilities. These can influence context and supported decision rules. Free prose never creates executable mechanics: “I feel twice as strong” does not change strength.
+Stable traits, values and habits are distinct from temporary feelings and practical skills. Supported appraisals carry cause, target, intensity, decay and stacking keys so repeated sightings do not multiply the same fear. Native thresholds use hysteresis; stable traits change only at admitted rates. Fictional characterization must not infer sensitive traits of the human player.
 
-The engine stores what was perceived; the actor can interpret it incorrectly. “I saw someone take berries” is an observation. “They stole from me” is an inferred belief whose ownership assumptions may be wrong. Evidence validation establishes that the actor had the cited experience, not that the interpretation is objectively true. Background beliefs have authored provenance. Hypotheses and imagined scenes are allowed with their proper type; they cannot manufacture observed history.
+Learning can follow observation, testimony, teaching and actual practice without a research minigame. Seeing part of a method cannot reveal hidden steps; proficiency changes require native evidence. Learned technique identity and compatible version mappings survive upgrades, while genuinely new steps must be learned.
 
-Records use stable IDs, owner/world scope, revision, simulation time, recorded time, source kind, bounded prose, relevant entity/topic references, confidence where meaningful, salience and retention state. Evidence links distinguish supports, contradicts, derived-from and supersedes. Relationship A→B is independent of B→A. Do not create hundreds of psychological columns in advance; use finite supported facets and versioned schemas, keeping new prose descriptions non-executable.
+## 2. Semantic levels and triggers
 
-## 2a. Bounded authored mind: 10 documents, 500 words each
+| Level | Executor                        | Purpose and allowed result                                                                      |
+| ----- | ------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 0     | Native code                     | Routine behavior, urgent survival and ongoing actions; no semantic model required               |
+| 1     | Jev                             | Attention, significance and routing; select supplied actions or escalate within offered choices |
+| 2     | Mini LLM, fast thought          | Brief speech or immediate decision; default for talking to an actor                             |
+| 3     | Complex LLM with low reasoning  | More complex immediate interpretation or decision                                               |
+| 4     | Complex LLM with high reasoning | Difficult immediate interpretation or decision needing more deliberation                        |
+| 5     | Full bounded harness            | Background reflection and multi-turn inner-world file work, including eligible dreams           |
 
-Use up to **10 logical mind documents per actor**, each with a hard maximum of **500 words**. Persist them as structured database-backed records with stable IDs and revisions; optionally present them as workspace files through the same interface. Do not require a second filesystem authority. The quota applies identically whether the model returns typed patches or stages edits in files.
+Jev always evaluates escalation for a semantic decision opportunity. This does not mean a paid call for each fixed step, each footstep or each object: native routine responses proceed immediately, while meaningful stimuli are coalesced into bounded actor-scoped opportunities. Jev attention/routing calls do not recursively create more routing calls. Unknown/unavailable judgments have an explicit defer/native outcome under the same budget, not an automatic paid retry.
 
-Possible subjects include profile/self-concept, beliefs, relationships, goals, concerns, commitments, values/preferences, reflections and retained dream interpretations. These are suggestions, not mandatory categories or file names. Agents can combine subjects, choose titles, introduce their own organizational structure and reorganize documents within the ten-document allowance. A reflection may conclude that nothing needs changing.
+Talking to an agent creates a level-2 response opportunity automatically. Jev may escalate the immediate reply to level 3 or 4, or also request level-5 reflection when the circumstance warrants it. A reflection request runs in the background; the reply and simulation do not wait for it. A perceived need to develop a relationship is not a requirement to withhold speech until the mind is rewritten. Actual speech can create native evidence and supported promises through existing admission rules without a model editing a relationship record.
 
-Keep a small typed envelope around each document: stable ID, title, revision and evidence references where applicable. Free-form prose does not require a rigid internal template. Explicit changes to structured relationships, goals, commitments or other mechanically meaningful fields still use finite typed proposals; prose alone never acquires executable meaning. Directional relationship records can carry supported numeric facets alongside bounded narrative assessments, with all authored narrative counted against the document quota.
+Environmental triggers may select any appropriate level. Significant events can be marked by trusted mechanics directly; other configured event classes ask Jev whether they warrant reflection. Downtime and eligible sleep are independent reflection opportunities. Admission, relevance, cooldowns, fair scheduling, concurrency and spending limits remain server responsibilities.
 
-Budget boundaries:
+Trigger and escalation rules should be malleable through admitted in-game mechanics/inventions and world configuration. They must use finite trusted policy families; an invented description cannot grant new tools, exceed spending caps or bypass native urgent behavior. Exact models, low/high effort parameter mappings and token ceilings are configurable and must be verified for the chosen adapter. High effort is not the default for all complex thought or ordinary speech.
 
-- Count all character-authored natural-language fields in the canonical mind, including titles, relationship assessments, belief statements, summaries and durable scratch prose. Every such field must belong to one of these documents; there is no unmetered parallel store of authored prose.
-- Count words using one versioned deterministic function on normalized text (initially nonempty Unicode whitespace-delimited tokens). Count all string fields designated as prose by the shipped schema. IDs, numeric facets and provenance metadata have separate schema/count limits and cannot carry arbitrary prose. Set an additional finite UTF-8 byte limit per document and job so a giant unbroken string cannot bypass the word limit.
-- The separately bounded **300 recent observed episodes** are engine-produced evidence, not harness-authored notes. Keep them available through `get_memories`; the harness cannot bypass the authored quota by creating fake episodes.
-- Trusted operating instructions, `AGENTS.md` policy text, context manifests and schema metadata are outside the authored-mind quota but have their own request limits. Models cannot edit those fields to stash memories.
-- God-only thought/audit history has a separate bounded retention policy and is not an NPC recall source. If a displayed reflection is retained for future cognition, its retained prose must fit the authored-mind quota.
-- Old sessions, checkpoint files, exports and scratch must not expose an additional searchable autobiography to the NPC. Durable scratch counts toward the quota or is removed before the next job. Audit backups remain creator-only.
+## 3. One compact model-facing context
 
-Before submitting a bundle that would exceed a limit, the full harness must decide which eligible material to summarize, merge or remove **within that same bounded run**. Supply current per-document word counts, remaining slots and protected records in the context. A read-only quota/patch-preview tool can return deterministic errors and counts, allowing the harness to revise its draft before final submission within the already admitted call/tool/cost limits.
+Every semantic reasoning route uses the same actor-perspective projection principles, with only the information its decision requires. Keep the complete accepted inner-world text as “About me” in each decision context; other candidate sources pass through attention. Do not serialize the server's storage or execution envelope as the character's context.
 
-Commit the compaction and new inner-world changes atomically against expected revisions. Preserve active commitments, essential identity and valid evidence attribution. The model cannot erase a still-active obligation merely to make room. If protected content cannot fit, compress its narrative without losing required structured fields or reject/defer the optional new material. Never silently truncate accepted prose or independently delete arbitrary relationships in code to fit a model response.
+Useful sections are the actual stimulus/question, About me, current relevant needs/environment, attended possessions and learned techniques, and a single Recall section. Render calendar day, time of day and known environmental conditions such as temperature in ordinary language. Raw simulation seconds, world IDs, world profile objects and the fact that self is an NPC are not useful context. A relevant world constraint can be stated briefly in English. Do not invent weather, dates or sensory knowledge that the simulation does not supply.
 
-An over-limit final response is rejected by code, preserving the previous mind. Do not launch an automatic paid retry. Subsequent explicitly scheduled consolidation can address capacity. The harness chooses semantic summaries/removals; the server validates eligibility, quotas, provenance and revisions without another LLM call.
+Inventory means owned quantities/instances; materials describe item definitions/properties. For cognition, combine the relevant facts into one description, such as “I have two lengths of cord suitable for tying.” Do not send both an inventory-ID list and a duplicated material catalogue. Invention/resolver tasks may need a different typed mechanical contract; their requirements must not inflate ordinary conversation.
 
-## 3. Recall volume and the get_memories boundary
+Store every memory with a plain-English representation at creation or consolidation. Prefer deterministic text construction for native facts; a separately admitted small summarizer can help when needed. Model-facing recall is a list of strings, for example “Day 4, morning: I heard John say hi.” Use a person's permitted name only if recognized. Preserve meaningful testimony, inference, uncertainty and imagined attribution in the text; omit technical envelopes and empty values unless emptiness itself matters, such as “I have no food.”
 
-**Initial target: retain approximately 300 recent episodic entries per actor and support retrieval of up to 300 entries.** This supersedes the earlier 20–40 recent-observation starting suggestion. It is an engineering starting point, not a claim about human memory capacity. A character should have substantial continuity; twelve short snippets must not become the permanent architectural ceiling.
+Recent events are experiences, not a separate duplicated context section. One recall view combines selected consolidated memories, recent raw personal memories and recent raw world events the actor was aware of. Do not repeat the same event as a memory, a conversation transcript and a recent event.
 
-Keep three separate limits:
+### Metadata stays in the server binding
 
-- **Recent retention:** a configurable 300-entry recent episodic window, with an explicit byte budget and bounded summaries. Before entries leave it, eligible material can become long-term summaries, beliefs or relationship evidence. Mandatory commitments and identity have separate bounded storage and do not disappear merely because 300 routine episodes arrived.
-- **Retrieval:** `get_memories` allows a requested limit up to 300 in the initial version. Full reflection may request the entire recent window; routing can request a smaller selection. Later retrieval searches eligible older retained records rather than only this window. Pagination does not bypass per-job limits or revive forgotten details.
-- **Model context:** each task has a configurable record/token/byte allowance. A 300-entry retrieval is not an instruction to send 300 arbitrarily long documents to every Jev call. The assembler reports omissions and missing mandatory information; it never silently truncates JSON. Measure a high-recall context before choosing a smaller default.
+| Current field/content                                                  | Target treatment                                                                                                    |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `instructionsVersion`, `policy`, `decisionId`, world/actor IDs         | Keep in execution receipts and authoritative bindings; do not ask the model to echo them                            |
+| `expectedRevision`, record revisions, `processedWatermark`             | Keep for concurrency and publication validation outside ordinary model text                                         |
+| `coverage`, indexes, evidence IDs, protected flags                     | Preserve internally for retrieval/admission/audit; render only useful uncertainty or missing information in English |
+| `acceptedMind` documents/records                                       | Replace in model context with the accepted plain-text “About me” snapshot                                           |
+| Generic request “Current situation, relationships, goals and concerns” | Replace with the actual stimulus and narrow task                                                                    |
+| `quotaUsage`, file constraints                                         | Supply only in the reflection workspace instructions/tool interface                                                 |
+| Empty arrays/nulls/default facets                                      | Omit unless their absence is relevant information                                                                   |
+| Action identity                                                        | A short offered handle is allowed only when selecting an action; resolve its authority server-side                  |
 
-The current 20KB context cap and 80 ordinary-memory retention are implementation limits, not the new design. Simply increasing the query limit would not make 300 entries available. Retention, retrieval and context sizing must be updated together. An illustrative 300 summaries × 50 tokens is about 15,000 tokens before other context; count and prose length both matter. This is arithmetic, not a measured model-cost or quality estimate.
+Assemble each decision from one consistent view of current permitted state, accepted inner-world text and selected recall. Record its input boundary server-side. Historical experiences keep their own times; they must not be mistaken for current observations. If a tool explicitly retrieves newer state, recheck affected dependencies before accepting a result.
 
-The proposed public name is `get_memories`; implementation can use ordinary language conventions. Its actor authority comes from the backend job binding, never from a model-supplied actor ID:
+Trusted short operating instructions remain separate from untrusted character prose and observed speech. Removing metadata from model text does not remove privacy, stale-result checks, idempotency or evidence validation. IDs needed by scoped tools can be short local handles; server-owned bindings map them to permitted objects.
 
-```ts
-get_memories(scope, {
-  purpose,                 // route, think, deliberate, consolidate, conversation
-  trigger,
-  query,                   // free text, including arbitrary intent
-  entityIds, topics, kinds,
-  simulationTimeRange,
-  sinceObservationSequence,
-  goalRevision,
-  includeCommitments,
-  requiredMemoryIds,
-  strategy,                // recent, relevant, mixed
-  limit,                   // initial maximum 300
-  maxBytes,
-  cursor
-}) -> {
-  entries,
-  observationWatermark,
-  mindRevision,
-  retrievalPolicyVersion,
-  coverage,                // returned, omitted, index freshness, required missing
-  nextCursor
-}
-```
+## 4. Jev attention before context inclusion
 
-This is a proposed contract, not an existing API. The backend clamps limits and derives scope. Returned memories preserve source type, historical time and uncertainty. Mandatory references and unresolved relevant obligations have a direct path outside optional similarity ranking. If mandatory material cannot fit, narrow/defer the question or admit a larger context within budget; do not imply complete recall.
+The server first establishes what this actor can know. Jev then answers “What am I paying attention to right now?” with a yes/no judgment per eligible candidate in bounded batches. This applies to nearby entities, inventory, known recipes, raw experiences and consolidated recall. Jev cannot authorize an unseen object, another actor's memory or a technique the actor has never learned.
 
-## 4. Semantic memory retrieval and attention
+Use native scope checks, indexes, retrieval and goal subscriptions to construct bounded candidate sets. Batch or partition large sets with coverage recorded server-side rather than making an individual paid request per object or silently claiming all history was considered. Relevant direct speech, essential immediate evidence, urgent dangers and active obligations have a protected path; optional relevance filtering cannot make native survival blind.
 
-The end-state includes a **semantic and attention-aware retrieval mechanism**. Recency alone cannot retrieve a relevant old promise, relationship pattern or similar problem. The first strategy uses recent entries, exact entity/commitment lookups and lexical matching; subsequent strategies add semantic search and ranking behind the same `get_memories` interface.
+Attention is reevaluated on meaningful changes in stimulus, intent or evidence. Cache only with valid dependencies. Record omitted/deferred candidates for diagnostics outside the reasoning prompt. During an unavailable Jev route or exhausted budget, preserve native reactions and explicitly defer semantic work rather than passing the whole world/history to another model. The [perception proposal](../archive/07-technical-architecture/perception-and-attention.md) still governs sensory detail, encounters and interest discovery.
 
-The attention query uses the trigger, current purpose, active goals, involved people/objects, unresolved concerns, emotional salience, recent outcomes and relevant traits. Retrieval proceeds through:
+### Every semantic decision uses an event or intent sentence
 
-1. Filter by actor/world ownership, recall eligibility and permitted historical exposure.
-2. Include required evidence, fresh observations and relevant active commitments.
-3. Retrieve recent entries and candidates matching entities, topics and arbitrary intent.
-4. Rank by relevance, recency, salience and evidence, with diversity so repetition or negative experiences do not monopolize recall.
-5. Return bounded records and coverage; preserve conflicting testimony and distinguish absence from incomplete retrieval.
+The retrieval pipeline applies to every admitted semantic decision opportunity, not only speech or explicit goals: notable events, hazards, encounters, need/goal changes and conversation all supply an actor-perspective sentence or short description. For example, “Lightning struck the tree directly in front of me” can retrieve “I recently saw someone die after being struck by lightning,” only if that actor actually retained that experience. Embed the full permitted stimulus with relevant decision context, use Jev to select recall and route reasoning, and let the recalled evidence influence the response. If the actor only hears an unidentified crash, describe that uncertainty instead of supplying hidden lightning facts.
 
-Optional embeddings index eligible record IDs and revisions; they are not the canonical mind. Entity/relationship lookup and fresh critical observations must work during index lag. Tombstones, corrections and forgetting invalidate search results and caches. Authorized scope filtering applies before ranking, snippets and counts.
+Native templates render supported events without a separate prose-generation call. Event identity, revisions, timestamps and authority bindings remain server-side. Meaningful opportunities are coalesced and scoped caches may be reused; this is not a model call per simulation step. Native emergency responses never wait for embeddings, Jev or reflection. The lightning case specifies cognition behavior for an admitted event or labeled fixture, not new weather mechanics delivered by this design.
 
-External attention uses the [perception contract](../archive/07-technical-architecture/perception-and-attention.md): semantic interpretation of a new goal compiles bounded interests in recognizable features/affordances. Native matching then notices relevant exposures without calling Jev for every tree. Evaluate interests immediately against already visible objects as well as future arrivals. This world-attention mechanism and personal-memory retrieval share intent concepts but have different eligible data sources; neither grants knowledge of unseen world objects.
+### Selection signals and delivery order
 
-## 5. Cognition tiers and coherent outputs
+Memory selection must respond explicitly to **who is present, what just happened, current goals, unresolved concerns, and conflicting beliefs**. Build bounded actor-scoped signals from permitted encounters/recent experience, native plan and commitment state, and the accepted inner-world perspective. Concerns and belief conflicts can have derived retrieval cues tied to the accepted snapshot; they do not require a second writable belief store or a mandatory extraction patch on every reply. Include relevant supporting and contradictory evidence without forcing the character to adopt an objectively correct belief. Keep structured lookup signals and diagnostics server-side, with useful meaning rendered in English for Jev and reasoning context.
 
-Native simulation and valid ongoing plans run first. Use one Jev routing judgment where semantic selection adds value; avoid a mandatory chain of “act?”, “novel?”, “simple?” and “fast?” calls. Routing considers both reasoning difficulty and whether a lasting inner-world change is needed.
+Deliver retrieval in order: first explicit structured signals with exact/entity/topic/commitment lookups; then semantic matching for arbitrary intents and paraphrases; then selective-recall tools when recorded cases demonstrate that an agent needs permitted information omitted from its initial context. Semantic retrieval expands candidate discovery without replacing Jev inclusion judgments. The tool gate applies to extra recall, not the file capabilities required for reflection. Record the omitted evidence, why it mattered, and whether improved initial selection or bounded tool access resolves the gap.
 
-| Tier              | Executor                           | Permitted result                                                                                                        |
-| ----------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Continue/native   | Code, or Jev selecting continue    | Existing plan/native action; no generated inner-world change                                                            |
-| Existing action   | Jev selects a supplied candidate   | Action proposal under current prerequisites                                                                             |
-| Fast thought      | Configured mini/nano LLM           | Short thought/dialogue and optionally an existing action proposal; no lasting inner-world proposal                      |
-| Complex thought   | Stronger single LLM call           | Richer interpretation or immediate decision and optionally an existing action proposal; no lasting inner-world proposal |
-| Full deliberation | Bounded Macrofold harness          | Coherent action, thought/dialogue and proposed inner-world changes; scoped recall tools when needed                     |
-| Defer/unknown     | Code consumes explicit uncertainty | Preserve native behavior, ask for information where appropriate, or wait                                                |
+### Encounters, sensory detail and reminder continuity
 
-**Only full deliberation may propose AI-authored lasting inner-world updates.** This is the chosen application policy, not a technical limitation of smaller models or a reason every harness run must use tools. A full harness may finish after one model response if it has enough evidence. Model selection within the harness remains configurable; route authority comes from the server, not the model's claimed tier.
+A genuinely new person encounter creates a logical decision opportunity, including an unrecognized person; it does not require greeting or a full thought. Preserve encounter identities, enter/exit hysteresis and restart baselines. Native immediate behavior can continue while bounded Jev routing processes semantic opportunities. Reevaluate already exposed objects when goals change. Ordinary objects without relevant changes do not individually purchase inference.
 
-Use the highest required tier for the whole coherent decision. If an encounter requires an action, a thought and a trust revision, one full-deliberation job returns them together. Do not separately ask weaker models to finalize parts of that decision. Jev can propose the route and evidence needs, while the server enforces allowed outputs, budget and limits.
+Reserve queue capacity for hazards and directed speech, coalesce repeated episodes, and partition crowded scenes fairly with recorded coverage. A restart must not fabricate new encounters or replay paid work. Missing recognition, unintelligible speech and distant detail remain unknown; later proximity cannot retroactively upgrade historical evidence. Observation is distinct from accepting a claim as true.
 
-A fast/complex thought can return `needsDeliberation` when it discovers that lasting interpretation is needed. That preliminary result remains uncommitted; one explicitly admitted escalation can resolve the bundle. No hidden retry/escalation loop. If deliberation is unavailable, continue safe native behavior and retain experiences for later processing; do not downgrade a mind write to an unauthorized fast call.
+Persistent critical-need reminders are a separate proposed policy from accepted hourly memory cleanup. The perception proposal recommends an initial crossing and an hourly simulated reminder while unresolved, with native continuation of an adequate plan allowed. D54 still owns threshold/cadence and any fresh-generated-thought requirement. These reminders must respect real-time budgets and cannot silently become mandatory paid hourly thoughts. The example below 20/100 refers to fullness, not low hunger urgency.
 
-The full-harness requirement applies to AI-authored revisions, not all state changes. Observations, inventory changes, taught knowledge, fulfilled commitments, configured affect decay and native survival behavior must continue without waiting for a harness. Selecting an immediate action is an executable intention; adopting a persistent personal goal, relationship interpretation or enduring plan is an inner-world proposal. Deliberate rehearsal or memory salience changes can be proposed by the harness, while the engine still owns retention policy.
+### Retrieval service and selective recall tools
 
-A fast thought's stored UI/audit entry is **not** automatically a recallable memory, belief, emotional update or future context source. Otherwise logging would become a covert mind-write path. Actual spoken dialogue is an external event and follows ordinary observation rules; promises or other durable implications should route to full deliberation before generation when anticipated.
+Use one actor-scoped retrieval service for context assembly and reflection tools. `get_memories` accepts a purpose, topic or arbitrary intent, permitted people/entities, time range, recent/relevant/mixed strategy, and bounded record/byte limits. Scope comes from the authenticated job, never a model-selected actor. Server-side results retain selected sources, coverage, freshness and revisions; model-facing results are useful English strings.
 
-## 6. Context construction and execution sequence
+Search recent raw experiences and eligible older consolidated memories. Use exact person/topic/commitment lookups and text indexes first, with semantic matching for arbitrary intents and paraphrases behind a replaceable interface. Rank by relevance, recency and salience, and diversify results so routine repetition or negative incidents do not crowd out other useful experiences. Jev makes the inclusion judgments described above. Relevant active promises and mandatory fresh evidence have direct lookup paths independent of similarity ranking or index freshness.
 
-The context builder owns a versioned task contract with required/optional records, output authority and known/unknown policy. Assemble a consistent decision view, not unrelated reads of “latest” files.
+Embeddings are required for semantic retrieval of arbitrary intents and paraphrases. Embed the complete natural-language intent rather than requiring an LLM to invent search keywords. Embed the English text of recallable experiences/summaries and relevant permitted retrieval content when created or meaningfully changed; retain source identity, revision, actor/disclosure scope and embedding-model version alongside each vector. Reuse unchanged vectors and compatible cached query embeddings. Exact person/commitment lookups and full-text search remain complementary paths; Jev still selects inclusion from bounded candidates.
+
+Batch indexing under explicit real-time resource/spending limits. Embedding inference has compute and, for paid providers, billable usage; account for both indexing and query calls without automatic paid retries. Pending/failed indexing must preserve mandatory fresh evidence through direct lookup and disclose incomplete semantic coverage rather than silently claiming equivalent keyword recall. Forgetting, corrections and permission changes remove or invalidate affected vectors and cached results. Model changes require versioned reindexing; never compare incompatible vector spaces.
+
+The embedding model/provider, dimensions, similarity metric and vector-storage implementation remain open choices. PostgreSQL remains the canonical persistence target; `pgvector` is a candidate, not an accepted dependency. Evaluate paraphrase recall, privacy, latency, index size and total cost to choose those details, not to decide whether embeddings are needed.
+
+Embeddings and caches are derived indexes, not canonical memory. Actor scope is enforced before ranking, snippets and counts. Corrections, forgetting and changed permissions invalidate affected entries. A lagging index cannot establish that an important new experience never happened. If required information does not fit, narrow or defer the task rather than pretend recall is complete or reveal hidden facts.
+
+Reflection may use bounded `get_memories`, `inspect_memory` and `list_commitments` tools over this service, exposed through MCP or an equivalent adapter. Limit total calls, records, bytes, time and spending across the job; pagination cannot bypass those limits. No arbitrary SQL, world-history search or access to another actor's private mind is granted. Immediate level-2–4 calls use assembled context without requiring a tool round. Tools and database-backed recall do not require a separate database per NPC.
+
+Goal changes reevaluate already perceived objects as well as new exposures. World-interest subscriptions and personal recall can share an intent, but have distinct permission scopes: remembering a tree does not establish that it is still present or currently visible.
+
+## 5. Events, awareness and memory storage
+
+All actors, including the player, have limited awareness. Record event-time awareness as a shared event plus an actor/event join carrying or referencing each actor's permitted perceived text, detail and attribution. Only a subset of actors may know an event; one listener might recognize a speaker while another only hears an indistinct voice. Joining an area later never grants historical witnessing.
+
+If no actor was aware of a simulation occurrence, it need not be retained as an experiential world event. Its state effects still commit, and necessary state-change, idempotency, accounting and recovery records remain independent. Creator journal coverage must say what was never recorded; it cannot promise omniscient experiential history. Later discovery or testimony is a new experience, not retroactive awareness of the original event.
+
+Do not independently copy every aware world event into each actor's raw memory collection. The awareness view is already a raw experience source. Separate raw memories can hold other legitimate personal experiences. Both sources need stored English text and native source bindings; actor-specific projections must never reveal the shared event's hidden payload.
+
+The production schema uses actor-scoped awareness and memory records alongside `mind.inner_world`; see the [data model](../archive/07-technical-architecture/production-data-model.md#8-minds-evidence-knowledge-and-conversation). Existing SQLite snapshots require an explicit migration. This plan does not imply those tables exist today.
+
+### Storage responsibilities
+
+PostgreSQL is the target shared store; records are scoped by world and actor. A persistent actor workspace is the authoring surface for inner-world text, not a second simulation database.
+
+| Record                                      | Responsibility                                                                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Shared experiential event                   | One retained occurrence with at least one aware actor                                                                           |
+| Actor/event awareness                       | Which actor perceived which part of the event, with stored permitted English text and event-time detail                         |
+| Personal memory                             | Raw personal experience or consolidated summary, with English text, game time/range, relevant people/topics and retention state |
+| `mind.inner_world`                          | One current accepted text snapshot per world/actor, with revision and publication binding stored alongside it                   |
+| Native commitments and learned capabilities | Protected mechanical facts, status and permissions, independent of authored prose                                               |
+| Cognition/consolidation jobs                | Input boundary, scheduling, spending, completion and idempotent publication state                                               |
+| Private thought history                     | Bounded god-only presentation entries, separate from actor recall                                                               |
+
+World commits and awareness delivery must be recoverable together; duplicate delivery must not create duplicate experiences. Game time drives age, recall windows, sleep and reminders; real time drives service deadlines, queue limits and spending. Store enough clock information to interpret saved game times after restart. The [production data model](../archive/07-technical-architecture/production-data-model.md#8-minds-evidence-knowledge-and-conversation) supplies physical table/index details for these responsibilities.
+
+## 6. Hourly consolidation and six-hour raw recall
+
+At every simulated-hour boundary, schedule bounded cleanup of raw personal memories and aware world events **older than six in-game hours**. The recent raw context window is the last six hours; count/byte caps remain operational safeguards, not the semantic definition of “recent.” A delayed older backlog is not dumped raw into the next conversation.
+
+Use a small summarization model, with GPT-5 nano as the requested candidate pending adapter availability and budget verification. This is light memory maintenance, not a full reflection harness. Group like entries, remove routine inconsequential details and retain or emphasize important experiences. For example, repeated berry eating can become “This morning I ate a lot of wild berries to satisfy my hunger,” and repeated observations of gathering can become “I watched John gather a bunch of fiber.” Preserve exceptions, consequential incidents, uncertain testimony and unresolved promises; do not aggressively erase character continuity.
+
+Consolidation consumes the union of raw memories and raw aware events once per actor. Save source coverage/watermarks and atomically publish summaries before retiring covered detail from active recall. Shared source retention must respect other observers still awaiting consolidation. Never replace observations that arrived during a job or silently turn an imagined dream into witnessed history.
+
+Every semantic decision context is selected consolidated memories plus selected recent raw memories plus selected recent aware events, woven into one recall section. Summaries remain subject to attention and longer-term retention limits; “consolidated” does not mean send every lifetime summary each time.
+
+Failures leave the last accepted summaries usable and preserve critical unprocessed evidence under an explicit bounded backlog policy. Hourly eligibility uses simulation time; real-time concurrency, deadlines and caps control actual dispatch at accelerated speeds. Pause/offline behavior follows the existing world clock policy. Missed work is coalesced, not replayed as an unbounded series of paid catch-up calls.
+
+### Retention, corrections and protected commitments
+
+Keep separate finite limits for raw experience, consolidated memory, authored inner-world text and god-only history. The six-hour window does not imply unlimited rows during a busy hour, and consolidated summaries do not imply unlimited lifetime retention. Tune record and byte budgets together. Native exact deduplication and supported decay work without a model; semantic summarization needs its separately admitted call.
+
+Preserve actual unresolved promises through routine noise and compaction. Their creation allowance is finite, and native rules own fulfillment, deadlines, cancellation and other supported lifecycle changes. A model cannot create an obligation from an unsupported paraphrase, erase an active obligation to make room, or claim a promised action already happened. Narrative can be compressed without losing the required native fact.
+
+Corrections and contradictory testimony should update later interpretation without rewriting witnessed history. Reconsider affected derived summaries or beliefs when their supporting material changes; invalidating a search entry alone is insufficient. The character may retain a mistaken belief, but the system must not silently present corrected or unavailable supporting detail as established evidence. Compacted source detail may become unavailable; keep only enough attribution to distinguish observation, testimony and imagination honestly. Forgotten details leave active indexes, cached contexts and actor-accessible files. Old provider sessions and backups must not secretly restore them. Creator retention is separately bounded and does not grant an NPC unrestricted recollection.
+
+## 7. Minimal outputs and independent commits
+
+A simple conversation needs only speech. An immediate action decision may include one supplied action handle. Ordinary semantic responses do not return `policy`, `expectedRevision`, internal `thought`, `documents`, `removeDocuments`, `records` or other mind-patch arrays. Do not demand a private narration or psychological checklist with each reply.
+
+The server binds the result to the admitted job, validates its tiny route-specific schema and rechecks current action prerequisites before committing effects. Native memory/awareness ingestion proceeds whether or not an LLM runs. Dialogue, immediate action and background reflection have distinct commit boundaries; there is no mandatory highest-tier bundle holding all three hostage.
+
+Reflection changes files through scoped workspace capabilities. Its final response returns **one or more short presentation thoughts, each no more than 20 words**. Choose a finite per-job count during implementation. These are authored character narration for the game, not provider private deliberation. It must not echo the entire edited inner world or its database metadata in JSON. Invalid output/publication preserves the previous accepted state; there is no automatic paid repair.
+
+### Validation and recovery
+
+Validation is deterministic code: check shape and size, the admitted actor/job, relevant revisions, offered action handles, current resources/targets/knowledge and already-committed results. Recheck relevant dependencies rather than rejecting a historical reflection merely because an unrelated world tick advanced. A delayed action must not act on a dead actor, moved target or consumed item.
+
+Within each commit boundary, coupled changes publish atomically and duplicate completion is harmless. Preserve native observations arriving during AI work. Provider refusal, invalid output, missing credentials, cancellation and uncertain completion remain distinct. Uncertain paid execution retains its accounting reservation until reconciled; a restart must not resend it automatically.
+
+Complete validated output is the initial publication boundary. Streaming thoughts or early action execution can follow only with explicit typed accepted messages and independent commit boundaries. Partial JSON or provisional text cannot execute an action or publish part of an inner world.
+
+## 8. Reflection, workspaces and publication
+
+The persistent actor workspace is its editable inner world. Reflection runs a bounded multi-turn harness during safe downtime, eligible dreams or significant events. The agent can name, edit, reorganize and consolidate its own inner-world files freely within enforced quotas. No mandatory relationship/belief/goal document taxonomy or change on every reflection is required.
+
+Keep the existing ten-file/500-word-per-file maximum as an initial storage safety ceiling pending an explicit context-budget decision; it is not a request to fill every file. All durable authored prose counts, including scratch retained between jobs, and finite byte limits prevent bypasses. Quota instructions belong to reflection only. The maximum 5,000-word snapshot conflicts with a few-hundred-token greeting if actually filled: CR01 must set a sustainable accepted snapshot budget or report the tradeoff, rather than silently omit required About me text.
+
+After reflection, the server snapshots the allowed files, validates scope, sizes and relevant revisions, and pulls their text into PostgreSQL as a **single current text entry in `mind.inner_world` for each world/actor**. Stable file ordering/headings can preserve organization without JSON wrappers. The last accepted text is included in every subsequent decision context. File edits are staged authoring; only an accepted publication changes the database text used by decisions.
+
+Store snapshot/version/job provenance beside the text, not inside the prompt. Atomic publication updates that actor's accepted snapshot and short thought history without replacing concurrent raw experience. A failed, partial, stale or canceled export cannot publish half a mind. Keep the previous accepted snapshot available while reflection runs; reconcile workspace/database disagreement explicitly, with one accepted revision rather than two competing authorities.
+
+The simulation and interactive conversation **never wait for reflection** or remote cancellation cleanup. Use a bounded background queue, separate admission/priorities and shared spend reservations. Safe immediate behavior and the current accepted inner world remain usable while files are being edited. Reflection receives no authority to change physical state, grant a recipe, erase native obligations or elevate invented prose into observed facts.
+
+Every NPC cognition job starts with fresh model conversation state and current trusted instructions, including immediate reasoning as well as reflection and dreams. Immediate calls use the assembled context; a reflection may share conversation state across its bounded within-job tool/model turns. Compatible compute can remain warm. Cross-job continuity comes from accepted inner-world files and permitted memories, not old model transcripts, checkpoints or audit exports. Scoped recall tools may retrieve more permitted experiences within the already admitted budget. World-agent chat tabs retain their separate conversation policy. No per-tick workspace hydration or full-harness call is required for level 2–4 reasoning.
+
+### Safe downtime and reflection scheduling
+
+Downtime eligibility requires no immediate survival emergency or responsibility demanding attention. Purposeful native work continues; introspection must not displace it. Meaningful unprocessed experiences, unresolved concerns, a supported periodic review or approaching authored capacity can create a reflection opportunity. Jev can choose reflection alongside continuing ordinary activity.
+
+Track the actor's experience boundary, idle/sleep episode and last accepted reflection. Coalesce repeated triggers, stagger actors and use real-time cooldowns and shared caps. Completing a reflection while still idle must not immediately schedule another over unchanged evidence. Mark processing progress only after accepted publication. Failure may defer a future opportunity, but never launch an automatic paid retry of the same work.
+
+Urgent events, waking, actor death, canceled jobs or changed relevant rules may supersede pending work. Preserve the last accepted snapshot and native observation ingestion. Decide acceptance using the affected dependencies; a past experience remains usable even when its stimulus is no longer present.
+
+### Instructions, file organization and quotas
+
+Open Legend owns versioned master instructions, model bindings, permissions and character seeds. Skip Macrofold agent presets initially. Supply the current instructions at each fresh job; store their version in server receipts. Trusted instructions are not editable memory. Policy changes govern new jobs and can revoke incompatible in-flight work.
+
+The harness chooses its own file names and subjects. An illustrative layout is:
 
 ```text
-DecisionContext
-  decision ID; world/actor scope; purpose; policy/schema versions
-  simulation time; observation watermark; mind/goal/capability revisions
-  trigger and recent relevant actions/outcomes
-  environment: permitted visual/audible facts and other actors' observed actions
-  body: relevant needs, conditions and owned inventory
-  inner context: traits, relevant relationships, goals, intent, concerns
-  recall: attributed memories/beliefs/commitments from get_memories
-  actions: candidate IDs, bound parameters and capability/version references
-  coverage: omissions, uncertainties, missing required information
-  budget/deadline; permitted output fields; authorized tool references
+AGENTS.md        trusted reflection instructions, if needed by the harness
+context/         bounded read-only permitted experience for this job
+mind/            agent-organized persistent inner-world files
 ```
 
-Routing gets a purpose-specific smaller context with any memories necessary to interpret its trigger. Enrich after selecting the work required; do not serialize the entire biography into every call. Reuse authorized immutable templates and bounded cache entries when safe; warm compute does not make prompt tokens free.
+Workspace implementation may stage edits in an isolated snapshot or proposal directory before acceptance. Do not mount obsolete snapshots, transcripts or unrestricted creator exports. No mandatory file per psychological category or per remembered event is required.
 
-The lifecycle is:
+The initial authored quota is at most ten files, each at most 500 normalized whitespace-delimited words, including titles, and a finite UTF-8 byte bound. Count all retained authored narrative, including relationship descriptions and durable scratch; metadata cannot be used as hidden prose storage. Engine-produced experiences and routine memory summaries have separate bounded stores. Trusted instructions and temporary tool results have request limits rather than consuming authored mind capacity.
 
-1. Commit actual world outcomes and record permitted experiences independently of AI availability. Coalesce repetitive exposure; not every footstep is a durable episode.
-2. Create/coalesce decision opportunities per actor: directed speech, a person encounter, relevant resource discovery, goal progress/blockage, action outcome, meaningful need thresholds or supported hazards. An opportunity need not purchase a thought.
-3. Execute native urgency/valid ongoing work first. Apply scheduling, fairness, real-time call limits and spending admission. Simulated reminders and real-time deadlines are different clocks.
-4. Build routing context with the necessary observation watermark and select the highest required tier. Preserve explicit uncertainty.
-5. Retrieve/enrich context for the selected tier. Bind mind and relevant world dependencies. During full deliberation, bounded tools can recall more actor-permitted evidence.
-6. Receive and durably identify a complete typed proposal. Normalize provider failure/refusal/invalid/uncertain outcomes without inventing a game result.
-7. Validate dependencies and proposed changes in ordinary code. Commit the coherent bundle atomically where coupled, with an idempotent decision receipt. A rejected coupled action/mind bundle is not partially applied. Independent historical annotations require an explicitly separate contract.
-8. Advance accepted actions in simulation. Record their eventual success/failure and perceived consequences as new experiences. An action request or start is not a memory that its outcome already happened.
+Expose deterministic counts and a bounded preview/validation tool during reflection. Near capacity, the harness chooses what to summarize, merge or remove within the admitted run. Publish the final file set atomically only if it fits and preserves required identity/obligations. Reject an unresolved overflow while retaining the old snapshot; do not silently truncate text or purchase a repair call.
 
-Do not postpone raw observation ingestion until a thought finishes. Do not grant inventory, action completion or an invented capability merely because it was described in a response. Updated plans, dead actors, consumed resources and changed target conditions can invalidate a delayed proposal. Recheck relevant predicates instead of rejecting everything on every unrelated world tick. A historical reflection can remain useful after a stimulus ends, but must not supply stale authority for a current action.
+### Execution adapter requirements
 
-## 7. Response, validation and commit
+Macrofold supplies generic bounded inference/harness execution, scoped file access, snapshots and compatible warm compute; Open Legend owns the meaning of memory and publication. Keep persistence and execution behind independently replaceable interfaces. Direct inference, fixtures or shared workers can implement the appropriate execution contract without changing memory semantics; worker lifetime, job lifetime and persistent actor identity remain separate. Verify independent model routes for levels 2–4 and the small summarizer, actor-scoped workspace reads/writes, fresh sessions, cancel/close behavior and reliable snapshot export. A catalogue entry or provisioned workspace alone does not establish those capabilities.
 
-A full-deliberation proposal can contain:
-
-```json
-{
-  "decisionId": "decision-123",
-  "contextId": "context-123",
-  "expectedMindRevision": 8,
-  "thoughtText": "I want to help, although I am still unsure I trust them.",
-  "action": { "candidateId": "candidate-7" },
-  "mindProposals": [
-    {
-      "kind": "relationshipAssessment",
-      "subjectId": "person-known-to-this-actor",
-      "text": "Cautiously willing to cooperate",
-      "evidenceIds": ["observation-42"]
-    }
-  ]
-}
-```
-
-Illustrative shape only: shipped schemas enumerate the actual patch families. Fast/complex schemas exclude `mindProposals`; server authority checks reject them even if output uses the full schema. The server binds the actor and decision; a model cannot choose whose mind it edits.
-
-**Validation is ordinary deterministic programming, not another LLM call.** Checks include:
-
-- Schema/type/size limits, finite numbers, supported patch families and enum values.
-- Correct decision identity, caller/tier authority, actor ownership and live revision dependencies.
-- Evidence references exist and are available to this actor; observed/heard/inferred/imagined provenance cannot be silently upgraded.
-- Relationship changes name permitted subjects and stay within supported state/update rules.
-- Actions resolve exact supplied candidate IDs to registered capabilities, versions and parameters; a display-name match is insufficient.
-- Current resource, reachability, knowledge, target, permission and other execution prerequisites still hold.
-- Already committed decision IDs are not applied twice; coupled changes commit together or not at all.
-
-The validator does not claim to prove a belief true, a thought psychologically realistic or a relationship assessment wise. Those are quality/evaluation questions. Subjective mistaken interpretations are legitimate game content when properly represented. More semantic interpretation, when genuinely required, belongs to an explicit budgeted decision/declaration workflow rather than a routine hidden “validation LLM.”
-
-Generated novel mechanics remain proposals until the declaration validator admits them into finite trusted families. Missing primitives become an unresolved capability request, not executable generated code. No automatic paid repair on invalid output.
-
-## 8. Thoughts, streaming and god visibility
-
-Private thoughts appear **only in god mode, in a Thoughts section of the character profile**. They do not appear over the character's head. Above-avatar action labels and inventory notifications are separate public presentation. Thoughts are authored character narration, separate from the provider's internal reasoning.
-
-Enforce god access in the backend response/stream projection, not only by hiding a UI control. Ordinary players and other NPCs receive behavior, permitted speech and observations, not private thought entries. Store thought presentation with actor, decision, time and outcome, under its own retention policy. Display storage does not automatically make it recallable by the NPC.
-
-First implementation waits for a complete validated decision before publishing thought text and starting its proposed action. Later streaming uses typed messages with explicit proposal/accepted states. Partial JSON never executes. If an action must begin before the entire harness run finishes, a complete accepted action message establishes a separate commit boundary; subsequent text cannot retroactively change it. That extension is deferred until coherence, cancellation and stale-state handling are demonstrated.
+The game can call retrieval directly; harness tools reuse the same service. Hosted tool access needs authenticated reachability rather than assuming the worker can access the game's localhost. Keep secrets out of context and files visible to the model. PostgreSQL publication and editable workspace reflection remain required outcomes even if an interim repository adapter uses SQLite.
 
 ## 9. Sleep, dreams, forgetting and consolidation
 
-This section owns the dream mechanic previously described in [agents and social simulation](../archive/03-design-proposals/agents-and-social-simulation.md#sleep-dreaming-and-consolidation); [the research discussion](../archive/02-research/human-models-and-memory.md) retains its background rationale.
+Agents must rest for **eight in-game hours per day**. A dream reflection becomes eligible only after **at least two continuous in-game hours asleep**. These are accepted thresholds, not wall-clock timers. Track sleep episodes and rest accounting in saved deterministic state so pause, speed changes and restarts do not duplicate dreams or manufacture rest.
 
-### Safe downtime and the reflect decision
+Rest and sleep need distinct states: merely starting a rest action is not proof of two hours asleep. The initial native rules use calendar game days, credit split rest within each day, begin sleep after fifteen uninterrupted resting minutes, and reset continuous sleep when the rest episode changes. Daily shortfall adds debt capped at one day and modestly increases awake fatigue. One dream opportunity is admitted per eligible episode; later cadence remains conditional. Dreams are optional paid work; lack of credentials or budget must not prevent native sleep or rest.
 
-Safe downtime is a first-class reflection opportunity. Native eligibility checks confirm no immediate survival emergency, pending urgent directed interaction or responsibility requiring attention. Active purposeful work is not interrupted just to generate introspective prose. A sleeping/resting actor may consolidate while the native rest action continues.
+Dreamed scenes remain imagined and cannot prove an actual theft, encounter or invention. God-mode thought history receives short presentation thoughts; it is not another recall channel. Forgotten detail must leave actor-accessible indexes, workspace exports and later contexts, while creator-only audit retention stays separately scoped.
 
-When idle and eligible, offer `reflect` as a **cognitive candidate** to Jev alongside continuing/waiting and relevant existing actions. Selecting it dispatches full deliberation; it is not an invented physical action or a request to mutate the world directly. The harness can review recent encounters, revisit beliefs, update relationship assessments, form concerns/goals and return private thoughts with a coherent mind-update bundle. A new goal can then change attention and future action selection through supported rules.
+Hourly routine consolidation remains independent of sleep and reflection. A dreaming harness can reinterpret permitted experiences, but it does not replace the six-hour/hourly maintenance process.
 
-Trigger opportunities on meaningful unprocessed experience, unresolved concerns, a supported periodic review or approaching the authored-mind capacity. Track an experience watermark, idle/rest episode and last reflection time. Coalesce repeated triggers, use per-actor real-time cooldowns and global spending/concurrency limits, and stagger actors. Finishing reflection while still idle must not immediately schedule another reflection over unchanged evidence. Mark processing progress only after the result is accepted; failures use a bounded scheduler backoff rather than a paid retry loop.
+## 10. Privacy, inspection and verification
 
-Urgent changes can cancel or supersede reflection. The world continues advancing; it does not freeze for introspection. An obsolete proposed action is not performed, and coupled mind/action changes obey the coherent-commit rule. Idle reflection normally omits a physical action, allowing its historical interpretation to be validated against relevant mind/evidence revisions independently of unrelated world motion.
+Thought history and inner-world inspection remain god-only, enforced by the backend. Ordinary players see only permitted speech and behavior, never private reflection files, reasoning or another actor's About me text. The player is also an actor for awareness filtering; creator privileges do not widen their character's knowledge.
 
-### Sleep and dream consolidation
+The character profile exposes inner-world text, relationships/beliefs and short Thoughts only to an authorized god observer. Include an experience timeline, active promises and learned skills so continuity can be inspected alongside prose. Thoughts do not appear over avatars; public action labels are separate. Enforce the same access in responses and any future streams, not merely hidden UI controls.
 
-During eligible sleep/rest, schedule a low-priority, budgeted consolidation opportunity. A full-deliberation job can select consequential experiences, merge repetition, identify unresolved concerns, revise beliefs, compact relationship evidence and propose which details to retain or forget. Optional dream narration presents this process in the god-only Thoughts section. This is a fictional game mechanic, not a scientific model of sleep.
+Record routes, attention coverage, prompt/schema/response size, reasoning tokens, queue/provider latency and actual usage separately. Include all Jev, summarizer and harness costs per real hour at each game speed. Also measure recall/attribution errors, missed commitments, retained bytes and cost per simulated day. Compare executor or retrieval alternatives on the same character histories and workload; fluent narration alone is not acceptance. Keep diagnostic storage server-side; expose scoped detail only through authorized god inspection, avoiding bulk whole-mind exports. No observability vendor or new SDK is required by this design.
 
-Dream scenes are tagged **imagined**. They can inspire a hypothesis or proposed invention but cannot become evidence that a real event occurred. A dreamed theft does not establish a theft; an inspired invention still needs declaration admission, materials and actual execution.
+### God-mode cognition debugger
 
-Consolidation reads an observation watermark and record revisions. Propose patches against record IDs, never replace the entire mind with a fresh file. Preserve experiences arriving during the job, unresolved obligations and protected identity. Deterministically merge nonconflicting changes where supported; otherwise defer a new cognitive decision. There is no automatic paid rerun on conflict.
+Extend the existing right-side Intelligence calls panel into a development inspector grouped by semantic trigger/action, rather than requiring application-log searches. Deliver its foundation alongside routing, then add context/retrieval and background-job inspection as those systems land; CR11 finishes integration rather than starting instrumentation. This is accepted target behavior, not a claim that the current call viewer already implements it.
 
-Native retention, exact deduplication and supported decay operate without a harness. When budgets/provider capacity are exhausted, sleep and survival continue; staged retention rules preserve critical material and remove eligible low-value detail. Semantic consolidation waits. Stagger sleepers' jobs and deprioritize dreams before urgent decisions or directed conversation.
+Each detected semantic opportunity creates a stable root before routing: actor/world, perceived event or intent sentence, game and wall time, policy version, offered route options and disposition. Native-only, ignored, deferred, coalesced and budget-blocked opportunities remain inspectable even without a provider call. Link coalesced inputs and asynchronous reflection to their originating roots; ordinary simulation ticks do not create semantic triggers or model calls. Keep bounded history with explicit retention gaps instead of silently implying that missing records mean nothing happened.
 
-Differentiate recent experience, recallable long-term summaries and optional creator audit storage. Forgotten detail must leave retrieval indexes, file views and subsequent NPC context. A creator archive is not an unrestricted recall tool. Corrections retain attribution and invalidate relevant derived beliefs/caches without rewriting the original experience into something never observed.
+The collapsed row shows time, actor, trigger sentence, chosen route, current outcome and aggregate known cost. Expand progressively through **semantic trigger/offered routes → semantic decision/Jev routing → context and attention → escalated LLM or harness → validation/committed outcome**. Represent actual execution order and dependencies, including attention before routing when applicable, rather than fabricating a fixed pipeline. Separate Jev routing from Jev relevance calls; show every recorded child call once, with parent links for background work.
 
-Conversation transcripts are a second memory channel. Start a fresh NPC session for every thinking/reflection/dream job, not just after policy changes. Retain conversation only for the model/tool turns inside that job. Across jobs, reconstruct context from accepted, recallable mind state and experiences while reusing compatible warm compute. Workspace checkpoints, old exports and scratch files must not allow the NPC to recover forgotten data by searching them. Player-facing world-agent chat tabs may retain conversation history under their separate audience policy.
+Routing details show native gates, offered choices, Jev input/judgment, selected level/model and recorded reason or unavailable reason. Output details distinguish model-proposed actions/decisions, spoken text and short presentation thoughts from validated speech/actions and accepted snapshot publication. Show pending, skipped, deferred, coalesced, canceled, stale, rejected, failed and uncertain states explicitly. Reasons come from actual policy results or explicit model outputs; do not fabricate explanations or require hidden chain-of-thought.
 
-## 10. Open Legend instructions, fresh sessions and flexible files
+Context details show the event/intent query, consistent snapshot and accepted About me revision, instruction/adapter versions, section token/byte sizes, source coverage, required evidence, selected/omitted material and final submitted input. The bounded candidate view covers memories, events, objects, items and knowledge: permitted source text/revision, structured or semantic match, embedding model/version/metric, similarity score and rank when available, Jev inclusion judgment and linked call, and final selection/exclusion reason. Scores are not probabilities or comparable across incompatible metrics/models; exact lookups, cache hits and unavailable scores are labeled honestly. Show index lag, truncation, unexamined candidates and coverage rather than suggesting the whole history was searched.
 
-**Skip Macrofold agent presets initially.** Open Legend owns the master cognition instructions, model/harness configuration, output contracts and tool permissions. Presets are an optional future packaging convenience, not a dependency of today's implementation or a second source of policy.
+Each expandable stage exposes captured input/output, model/effort, token usage, queue/provider duration and estimated versus actual cost with receipts. Separate input, output, cached and reasoning tokens when supplied; absent usage is unknown, not zero. Aggregate charges exactly once, including embeddings, attention, tools and linked background jobs, with late billing updates. Link application context and actual transformed provider input; label sanitized, partial, expired or unavailable captures. Harness internal calls are only inspectable when supplied by the provider. Inspecting or refreshing details must never rerun inference.
 
-1. **Master instructions:** keep a versioned template in Open Legend explaining the NPC role, permitted sources, file locations, quotas, evidence attribution, output format and update authority. Suggest useful inner-world subjects without prescribing a universal personality, narrative style, file taxonomy or psychological checklist. Agents may organize their thoughts freely within the boundaries and need not change their mind on every job.
-2. **Per-character seed:** authored background, traits, values, initial relationships/beliefs, permitted starting knowledge and possessions receive explicit provenance. Seeded facts are not fabricated experienced events. Mechanical setup is committed by the game; the harness receives an authorized projection.
-3. **Every-job injection:** each game thinking turn starts a fresh harness session with the current master instructions, policy/schema versions, actor identity, task, permitted writes/tools, context manifest, accepted mind contents and quota usage. Required rules are included explicitly, not merely linked by a filename the model might skip. Within that job, subsequent model/tool turns use the same conversation and instruction snapshot. Keep stable policy text separate from volatile observations for inspection and potential caching.
-4. **Flexible file view:** an optional generated `AGENTS.md` is a convenience entry point for the same policy, not the source of authority. Expose the accepted mind as a read-only snapshot, and let the harness stage additions, edits, renames, merges or removals in a restricted proposal area. Validate and atomically commit the resulting coherent bundle. Never treat edited files as automatic canonical replacements. Retained authored content, including scratch, follows the ten-document/500-word policy; observations and trusted instructions have separately declared limits.
+Consolidation shows source coverage/watermarks, summary output, backlog and acceptance/retirement; reflection/dreams show eligibility, queue state, tools, bounded file changes, presentation thoughts and snapshot publication. Search/filter by actor, time, trigger, route, stage and outcome. Provide paginated history, follow/pause updates and new-entry notices; preserve expansion, reading position and keyboard focus as updates arrive. Details load on demand so the initial view stays compact.
 
-Illustrative layout; the authored document names and organization are agent-chosen:
+Authorize every list/detail/update/export request on the server, redact credentials, and clear cached private views on world change or lost access. Diagnostic capture and retention have finite limits; expose capture failures/gaps without blocking native survival or cognition. This god-only view never widens NPC recall or ordinary-player DTOs. Expiring diagnostics cannot erase authoritative accepted decisions, and no observability vendor, SDK or UI-framework migration is required.
 
-```text
-AGENTS.md                 # optional generated entry point, not agent-editable
-context/manifest.json    # actor, watermark, versions, permitted references
-context/experiences.jsonl # bounded engine-produced observations
-mind/<chosen-name>.md    # accepted authored documents and typed metadata
-proposals/               # staged edits for this job, not another persistent mind
-```
+The [CR12 acceptance tasks](maintainers/cognition-redesign.md#cr12--acceptance-and-tokenlatency-evidence) cover short greetings, complex decisions, promises, repeated routines, significant events, dreams, outages and migration. Fixture payload measurements are not evidence of live speed, model quality or dollars saved. Paid checks require configured credentials, explicit caps and separate authorization.
 
-A staging area can temporarily contain a candidate next version, but its validated final authored set must satisfy the same total quota. Temporary proposals cannot become retained or searchable overflow storage. Supply protected records and deterministic quota counts so the harness can choose its own summaries and removals. Typed state patches accompany any mechanically meaningful changes; arbitrary document wording remains expressive content.
+Verification must also cover encounter overflow/restart, historical sensory detail, contradictory testimony, interrupted conversation, partial learning and query-membership changes. Separate tuning cases from held-out cases. Distinguish simulation-time relevance deadlines from real-time execution deadlines; missing information is unknown, never an invented zero or known absence.
 
-Do not rewrite a running worktree on every simulation tick. Send the current context in each job request; publish file snapshots only at a safe job boundary or as immutable artifacts. Inline accepted documents and structured final proposals can implement the same contract before a file adapter is needed. Either representation must deliver a working full-harness inner-world path today.
+## 11. Migration, delivery and acceptance
 
-**Every NPC job gets a fresh conversation; compute can stay warm.** Several model/tool rounds within one job are expected when useful. At the next job, supply the latest accepted mind and permitted observations rather than inheriting a transcript. Reuse only compute/workspace state that cannot expose old sessions, obsolete mind files or retained scratch. Warmth is a compute optimization, not an alternate memory channel. World-agent chat tabs may keep actual conversations because user follow-ups depend on them; that exception does not change NPC recall rules.
+Import existing authored documents into the initial accepted text and workspace without losing identity, relationships, beliefs, concerns or goals. Preserve native commitments and learned capabilities independently. Deduplicate legacy event/memory copies where their source identity is known; do not fabricate awareness when historical audience evidence is missing. Version saved state and support recoverable migration without a silent reset.
 
-Stamp the dispatched instruction version. Game-wide updates take effect for the next NPC job automatically. Define whether already in-flight proposals remain acceptable after a policy change; server revocation/validation still applies regardless of instructions already sent. No special conditional session-migration mechanism is required for ordinary NPC jobs because their conversations are always fresh.
+Deliver the system through the [CR01–CR12 build tasks](maintainers/cognition-redesign.md): compact contracts and immediate conversation; attention and awareness; hourly memory cleanup; editable workspaces and accepted snapshots; background reflection and sleep; admitted trigger configuration; migration and inspection; then integrated acceptance. The task list is execution tracking, not a second architecture specification.
 
-Macrofold's inspected contracts support explicit harness/model selection without an agent preset, plus workspace/session/run/sandbox identities. Relevant sources: `../AgentCloud/packages/contracts/api.d.ts` (`RunCreate`), `../AgentCloud/packages/core/src/runs.ts` and the Open Legend backend adapter. This is source evidence, not live acceptance verification. Existing native calls denying files/tools are not evidence that the scoped staging/recall policy above is implemented.
+Acceptance must demonstrate:
 
-## 11. Selective recall tools and remaining Macrofold work
+- A greeting uses a short immediate response without compulsory reflection or mind-patch JSON; difficult decisions can escalate through Jev under explicit budgets.
+- A promise survives repetitive routine activity; an older relevant memory can be retrieved; rumors, uncertainty and dreams remain distinguishable from witnessed facts.
+- Different actors remember only what they perceived, including different detail of one shared event; unseen events still affect saved simulation state.
+- Hourly cleanup summarizes material older than six game hours once, preserves important exceptions and concurrent observations, and prevents repeated raw/consolidated copies in context.
+- Reflection edits flexible files, publishes one accepted PostgreSQL text snapshot, and influences a later decision after restart without blocking the simulation or conversation.
+- Rest accumulates under explicit native rules, dreams cannot run before two hours asleep, and provider failure never prevents sleep or survival.
+- Cross-actor access, forgotten-session leakage, duplicate completion, stale publication, cancellation and partial failures cannot corrupt or disclose the mind.
+- God inspection shows accepted inner-world content and short thoughts; ordinary clients do not receive them.
 
-Expose the same retrieval service to a full harness through scoped tools when needed. An MCP adapter is a good transport for `get_memories`, `inspect_memory`, `list_commitments`, permitted observation queries and action-candidate lookup. MCP must not become a second implementation of memory semantics.
+Behavioral acceptance must show the right memory influencing a subsequent decision, utterance or action, not merely appearing in the prompt. Use labeled cases for each selection signal and compare matched situations with different permitted histories: a present person recalls an old promise, a fresh event revives an unresolved concern, or conflicting testimony leads to a clarifying question or changed plan. Record the selected evidence and observable outcome without requiring private deliberation. Recall need not always change behavior; unchanged behavior can be justified, but the suite must demonstrate meaningful changes where the remembered evidence matters. Fixture routing proves plumbing; model-driven behavioral usefulness remains a separately capped live gate.
 
-Tool grants are bound to the world/actor/job by the server. Limit calls, records, bytes, time and spend; preserve snapshot semantics, coverage and historical provenance. Do not expose unrestricted SQL, world history or raw database credentials. Ordinary fast/complex requests use backend-assembled context without a tool round.
+Use no-cost fixtures for deterministic contracts and separately capped live execution for provider compatibility, useful behavior, latency and actual cost. Do not call the complete system delivered from fixtures alone.
 
-A `propose_mind_update` tool can stage typed changes for a full-deliberation job, but a final response containing the coherent action/thought/mind bundle is sufficient initially. Do not expose arbitrary `save_memory` or direct canonical file replacement. “Save” means submit a proposed record/patch through the same admission service.
+## 12. Remaining implementation choices
 
-No new Macrofold memory database is required to start. Open Legend needs the mind/retrieval/validation services and tier routing. Full selective recall additionally needs an authenticated connection between Macrofold and the game query service, plus least-authority tool grants. Verify hosted reachability separately: a hosted worker cannot assume the application's localhost is its own localhost. No network exposure or credential changes are authorized by this document.
+Initial choices are explicit and configurable: mini/low at level 2, complex/low or high at levels 3/4, nano cleanup, and the configured reflection harness; 1,024/4,096/8,192 immediate output tokens; a complete accepted-text context ceiling of 100,000 bytes; one native Jev map for up to 24 candidates; and one to three presentation thoughts of at most twenty words. Required evidence survives attention failure. Relevance includes a winning yes probability of at least 0.5; route choice uses a winning probability of at least 0.5, while uncertain addressed speech stays level 2. These are tuning policies, not calibrated correctness guarantees.
 
-Capabilities to verify or extend in Macrofold before relying on the full end-state:
+The initial embedding index uses OpenAI `text-embedding-3-small`, 512 dimensions and cosine ranking over actor-scoped revision-compatible vectors stored through the repository, without pgvector. Raw recall is six hours; backlog 8,192 records; summaries 256 with thirty-day routine expiry and protected high-salience retention; thought history 100; diagnostics 1,000 roots/stages combined. Overflow is visible rather than silently losing protected evidence. Remaining work is held-out quality/cost tuning, comprehensive recovery/fixture acceptance and any later repeat-dream or demonstrated-omission recall-tool requirement.
 
-- Enforce scoped recall/file grants with the selected harness; confirm tools cannot inspect another actor or old memory exports.
-- Propagate Open Legend instruction versions and context identifiers into durable run receipts; use explicit run configuration without requiring agent presets. Define current-policy handling for in-flight jobs.
-- Support a fresh session on compatible warm compute, explicit close/cancel and honest persistence outcomes.
-- Provide the desired direct small/strong JSON model routes. The current Open Legend `generate` adapter uses a native harness; that is not yet the fast/complex no-harness split. Do not assume `/v1/models` eligibility for native runs means the same model is enabled for typed inference.
-- Add typed incremental output only when early action commit/streaming is implemented. SSE text alone is insufficient.
-
-Worker lifetime, session history, mind persistence and thinking-tier authority remain independent. A full harness is selected for proposed inner-world changes by policy even when it requires no tool calls; this can cost more than one small-model call. Measure that tradeoff and keep the execution contract modular so future revisions can authorize bounded mind-writing inference without changing storage.
-
-## 12. Implementation audit and sequenced TODO
-
-Source inspection on September 19, 2026. Checked items mean code exists, not that live-provider quality, latency, cost, persistence or end-to-end acceptance is proven. Parent-thread runtime work may advance independently; update this audit against actual code when completing a stage. This document's target contracts take precedence over older illustrative limits; unchecked work must not be described as implemented.
-
-### Implemented and fixture-verified, September 19
-
-`packages/domain/src/mind.ts` owns typed envelopes/facets, flexible documents, quotas, atomic proposals, private narration, revision checks and scoped recall. Native events and person-entry observations are recorded without AI. SQLite snapshots persist accepted minds. `apps/server/src/cognition.ts` owns versioned instructions and context. `ai-director.ts` routes through Jev, admits at most one explicit fast/complex-to-full escalation, and schedules reflection/dream opportunities. It discards lower-tier provisional output; full cognition cannot silently fall back to a direct model call.
-
-The shared provisioner creates one persistent workspace/default worktree per NPC at startup and on discovery of new NPCs. NPC jobs start fresh sessions on compatible warm actor compute, with tools/files/shell/connections/network denied. Accepted documents and typed staged patches travel inline. No Macrofold preset, filesystem mirror or model-invoked MCP recall tool is installed. World-agent chat tabs retain conversational sessions separately.
-
-The backend god endpoint and character inspector require `OPEN_LEGEND_GOD_MODE=true`, the existing local-owner cookie and same-origin boundary. This is **not** a multiplayer role system: keep it disabled when serving ordinary players. Public state and avatar labels exclude private thoughts and authored mind documents.
-
-| Boundary                             | Implemented limit                                                                                              |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| Ordinary native experience retention | 300 entries; 240 Unicode code points per summary; 400,000 total UTF-8 bytes                                    |
-| Legacy active native commitments     | Existing separate 16-record protected allowance                                                                |
-| Authored mind                        | 10 documents; 500 NFKC whitespace-delimited words including title and 8,000 UTF-8 bytes per document           |
-| Typed facets and proposals           | 80 facets; 100,000 proposal bytes; all durable narrative belongs in quota-counted documents                    |
-| Private thought presentation         | Last 100; each ≤250 words and ≤2,000 characters; never actor recall                                            |
-| Job context                          | Full recall requests 300, smaller tiers 30; compact context ≤80,000 UTF-16 code units and ≤400,000 UTF-8 bytes |
-| Complete Macrofold prompt            | 98,000 characters; fail before sending if it cannot fit                                                        |
-
-Optional recall yields to the complete accepted mind and active obligations; coverage reports omissions. Required-content overflow fails before dispatch. A **synthetic payload measurement**, not model acceptance, supplied 300 short experiences in 52,944 context bytes, plus 3,009 schema bytes and 2,414 instruction bytes. Longer summaries or full authored capacity can reduce optional recall. Recent commit receipts are bounded to 300; durable backend jobs guard older operation replay.
-
-Legacy model-authored belief/reflection notes remain in saved audit data but are excluded from actor recall, so they cannot bypass authored quotas. Seed goals enter protected identity. New commitment facets require accessible, native, self-attributed promise speech; models cannot invent executable debts or clear active obligations. Automatic obligation fulfillment, deadlines, richer relationship metrics and emotional mechanics remain extensions. Contradiction/supersession evidence links preserve attribution without proving an interpretation objectively true.
-
-Safe downtime requires no active non-rest work, adequate needs and unprocessed evidence. Reflection uses a one-simulated-hour cooldown. Rest jobs bind the exact rest episode and watermark. Durable fingerprints, a wall-time admission interval, unchanged-evidence suppression and shared spending reservations bound attempts. Native urgent actions continue independently. Dreams remain imagined; concurrent observations survive commit.
-
-### Reproduce setup and separately authorized live acceptance
-
-Configure backend `.env`: existing `MACROFOLD_API_KEY`, `MACROFOLD_BASE_URL=http://localhost:3210`, `MACROFOLD_MODEL=gpt-5.4-mini`, `MACROFOLD_HARNESS=opencode`, an explicit `AI_BUDGET_USD`, `MACROFOLD_COMPUTE_MAX_USD=10`, and `MACROFOLD_RUN_MAX_USD=0.25`. The live catalogue listed GPT-5.4-mini as the highest enabled GPT-5 mini. The template keeps paid work disabled until an operator selects caps. Keys never reach the frontend.
-
-```sh
-# Workspace/worktree provisioning only: no compute or model call.
-node --env-file=.env --import tsx scripts/macrofold-seed.ts
-# Explicit paid acceptance: isolated saved world, four capped harness jobs.
-node --env-file=.env --import tsx scripts/verify-live-memory.ts
-# Only after diagnosing interrupted setup; reuses its original idempotency key.
-node --env-file=.env --import tsx scripts/macrofold-resume-setup.ts .data/live-memory-acceptance.sqlite ada
-```
-
-These scripts and the shared backend preserve the exact request sequence: workspace, default worktree, capped sandbox, fresh runs, status/result polling and verified persistence. Mutations are durably journaled before sending. Uncertain admission blocks duplicates; the recovery script is an explicit operator action, not an automatic paid retry. The $10 compute allocation is a conservative reservation, **not a measured invoice**. Model-run caps are additional and share the application allowance.
-
-**Observed live status:** Ada's workspace was created. The isolated acceptance initially had a world-identity conflict, corrected with distinct world identities and stable naming. Sandbox creation then returned HTTP 503, `execution_disabled`, before any model run was admitted. Macrofold's local execution requires `ALLOW_PAID_EXECUTION=true`, `EXECUTION_PROVIDER=docker`, `ORCHESTRATION_BACKEND=poller`, Docker and its worker. No live relationship quality, dream behavior, token cost, latency or warm-compute acceptance is claimed.
-
-**Additional compatibility gap:** the inspected Macrofold inference implementation exposes Jev through Typesafe/OpenRouter, while generic JSON inference currently uses Anthropic. Open Legend's fast/complex adapter requests GPT-5.4-mini via OpenRouter; that JSON route requires Macrofold support and separate live verification. It fails explicitly instead of substituting another model or sandbox. Full mini-model harness execution and Jev classification are distinct routes.
-
-### Today acceptance — complete the vertical slice before calling this done
-
-Checked items indicate implemented deterministic behavior with fixture evidence, not live model acceptance. Live-dependent items remain unchecked. These tasks draw on Stages 1–4 below; those stages describe sequencing within delivery, not permission to postpone the full harness and inner world to another day.
-
-- [ ] A real full-harness route receives an actor-scoped snapshot of experiences and current mind, produces a thought plus typed belief/relationship/appraisal/goal proposals, and the backend durably commits valid changes.
-- [ ] Consecutive NPC jobs use distinct conversation/session IDs and compatible reused compute. Every job receives the current Open Legend master instructions and accepted mind; no agent preset is required. Old transcripts, obsolete files and scratch do not leak into recall.
-- [ ] The harness can choose document names, combine topics and reorganize its thoughts within quota without a mandatory psychological checklist. Typed envelopes/patches preserve identity, evidence and mechanical boundaries.
-- [ ] Ada experiences an actual supported interaction; a later reflection can develop a directional relationship assessment and an explicitly inferred belief citing that experience. Reload/restart preserves them, and the next decision receives the committed assessment/belief.
-- [ ] Safe idle time creates a bounded `reflect` opportunity. Jev can select it without requiring a new player command; native urgency and existing responsibilities take priority. Unchanged idle state does not cause repeated paid reflections.
-- [ ] Sleep/rest triggers a basic full-harness consolidation/dream job. It preserves concurrent new observations and obligations; any dreamed scene is tagged imagined and does not become observed evidence.
-- [x] Up to ten authored mind documents, each at most 500 words, are enforced in code. At capacity, the harness can submit an atomic summarize/remove/add bundle; an unresolved overflow preserves the previous state. Inspectable structured relationships/beliefs remain available, not just a single narrative memory blob.
-- [x] The god-only character profile exposes Thoughts and inspectable relationships/beliefs/inner-world state. Ordinary player DTOs and avatar labels never expose private thoughts.
-- [x] Fast/complex calls cannot propose lasting inner-world changes. A decision needing action, thought and a mind update routes as one full-deliberation bundle.
-- [ ] Fixture checks cover these boundaries without external calls. Separately budgeted live checks prove an actual Macrofold run, accepted result, durable mind update and reuse in a later decision; report any external blocker rather than claiming live acceptance.
-
-### Stage 1 — Mind contracts and useful initial recall
-
-- [x] Define canonical versioned mind/proposal schemas, directional relationships, appraisals, active concerns, authored seed provenance and `imagined` source support. Implement the ten-document, 500-word-per-document authored quota, deterministic word/byte counters and atomic compaction proposals.
-- [x] Implement the `get_memories` port using current persistence; raise the recent window and retrieval ceiling to the initial **300-entry** target. Preserve commitments/identity with explicit storage allowances.
-- [x] Update context sizing alongside retention: support high-recall jobs, smaller routing views, honest omissions and mandatory-evidence overflow. Measure actual payload sizes before freezing defaults.
-- [x] Define semantic/attention strategy interfaces now; initially use recent/entity/commitment/lexical retrieval. Add appropriate storage indexes when records leave the world snapshot.
-- [x] Separate thought presentation records from recallable memories; record native experiences regardless of AI availability.
-
-### Stage 2 — One coherent routed decision
-
-- [x] Add versioned routing contract for continue/action/fast/complex/full/defer, including whether lasting inner-world change is needed. Highest required tier owns the final bundle.
-- [ ] Bind mini/nano and stronger single-call executors separately from the Macrofold harness; verify supported provider/model routes and budgets. No cheaper-route mind writes.
-- [x] Implement complete response schemas, deterministic proposal validation, tier authorization and atomic coupled commits with idempotency and relevant revision checks.
-- [x] Make awaiting/proposed/started/completed actions distinct; record actual action outcomes through the existing event path.
-- [x] Add explicit abstention and a bounded, separately admitted escalation request without committing a lower-tier provisional result or automatically repeating paid calls.
-
-### Stage 3 — Full deliberation and inspectable thoughts
-
-- [x] Store/version master cognition instructions and actor seeds in Open Legend; inject them with the current policy, context and quota manifest every job. Skip Macrofold agent presets. Start a fresh NPC session for every job and retain only its within-job model/tool conversation; reuse compatible warm compute without exposing stale memory files.
-- [ ] Provide scoped recall/inspection tools through MCP or an equivalent adapter over the same service. Enforce actor/job authority and bounded results.
-- [x] Support agent-chosen mind-document organization with a small typed envelope and quota enforcement. Add optional read-only accepted snapshots and a restricted proposal staging area when using files; define scratch cleanup and safe publication boundaries. Do not mirror every tick or allow unmetered persistent staging.
-- [x] Add a backend-authorized god-mode Thoughts section in character profiles. Exclude private thoughts from ordinary clients and avatar status queues.
-- [x] Initially display only complete accepted narration. Defer typed streaming/early commit until the final-response path is reliable.
-
-### Stage 4 — Dreams, continuity and recovery
-
-- [x] Schedule safe-downtime `reflect` opportunities and staggered sleep/rest consolidation with priority, experience watermarks, episode deduplication, budget, simulation-time eligibility and real-time execution limits. Deliver their basic working paths today.
-- [x] Implement full-harness consolidation proposals with imagined dream tagging, evidence-preserving summaries, protected commitments and watermark-safe merges.
-- [x] Implement forgetting across indexes, workspace views and future session context; keep creator audit access separate from actor recall.
-- [x] Add correction/contradiction handling and deterministic fallback retention during provider/budget failure.
-- [x] Verify restart, concurrent observation arrival, cancellation, expired context and stale-policy behavior before enabling continuous background cognition broadly.
-
-### Stage 5 — Advanced retrieval and measured expansion
-
-- [ ] Add semantic retrieval/reranking for eligible older records and arbitrary intents, including index freshness, cache invalidation, diversity and mandatory direct lookups.
-- [ ] Connect goal-derived world attention interests to personal recall while maintaining separate visibility/knowledge scopes.
-- [ ] Add typed incremental thought/action events only with explicit independent commit boundaries and god-authorized streams.
-- [ ] Evaluate high-recall contexts versus selective contexts, tier selection, long-term continuity and the harness-only mind-write policy; refine via versioned configuration rather than storage rewrites.
-
-### Validation and acceptance work for those stages
-
-- [ ] Fixture checks: 300-entry retention/retrieval, mandatory commitments, imagined-versus-observed separation, actor isolation, source/detail restrictions, tier write rejection, atomic/idempotent commit, stale dependencies, sleep-job merge, forgotten-session leakage and god-only thoughts. Fixtures make no external requests.
-- [ ] Behavioral evaluation: old promises amid distractors, neutral/positive/negative recall balance, rumors and contradictions, coherent action/thought/relationship bundles, bounded routes that abstain rather than invent evidence.
-- [ ] Separately authorized live acceptance: real model/harness compatibility, scoped MCP access, warm-session behavior, result/persistence outcomes, usage, context size, tool rounds, latency and spend per real hour and simulated day. No automatic paid retries.
-
-Open parameters: exact supplementary record byte budgets (the ten-document/500-word authored limits and 300-entry recent target are settled starting values), longer-term retention allowances, cognition model choices, native emotional update rules, thought-audit retention, semantic index backend and streaming protocol. The direction is settled here; these values should remain configurable and evidence-driven.
+The accepted requirements include embedding retrieval across all admitted semantic decision triggers, actor-perspective event/intent sentences, and the semantic levels, level-2 speech default, Jev escalation and attention, compact English context, actor awareness, hourly cleanup of experiences older than six hours, background file reflection, PostgreSQL text publication, eight-hour daily rest and two-hour sleep minimum for dreams. Implementation choices must preserve these behaviors.

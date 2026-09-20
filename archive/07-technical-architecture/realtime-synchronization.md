@@ -17,6 +17,8 @@ Run the shared simulation on authoritative servers with loaded state in memory. 
 | Replication service    | Build permitted views from committed results; track subscriptions and baselines                                      | Sends approved fields and outcomes, never an unfiltered world snapshot                               |
 | Query/report service   | Structured inspection, history, memories, definitions and MCP access                                                 | Uses declared commit/freshness watermarks; browser predictions are not queryable world truth         |
 
+The [production scope](production-data-model.md#implementation-scope-baseline-versus-conditional-expansion) starts with one writer per world, saved generation/revision checks and transactional current records. Multiple sector authorities, renewable leases and generic state-change replay are conditional expansions; scoped confirmations and duplicate protection still apply.
+
 These may start in one server application with separate modules and bounded queues. They are not a requirement to deploy six services initially.
 
 ```mermaid

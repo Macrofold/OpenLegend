@@ -1,3 +1,4 @@
+import { migrateCognition } from './experience.js';
 import type { ActorComponent, Entity, ItemDefinition, WorldState } from './types.js';
 
 export const PLAYER_ID = 'player';
@@ -310,5 +311,6 @@ export function createWorld(seed = 73): WorldState {
     entityIds: ['campfire'],
     importance: 8,
   });
+  migrateCognition(world);
   return world;
 }

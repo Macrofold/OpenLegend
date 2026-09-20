@@ -42,10 +42,10 @@ Start with a fixed inspectable [world profile](../03-design-proposals/world-rule
 | I04 | Native survival, needs, injury/death, seeded knowledge and executable plans | I01–I02, D26; tiny I08 seam first | Gather/eat/rest and urgent reactions work during provider delay; meaningful deprivation can kill |
 | I05 | Visible events, observations and private-state filtering | I01–I02 | Unseen/private information excluded from player/NPC evidence |
 | I06 | Task-specific context, live LLM dialogue/planning/generation and useful Jev classification route through replaceable execution port | I04–I05, I08 durable decisions, I10 budgets/access before paid calls | Live useful decisions and conversations; unknown/late/canceled cases handled; bounded measured latency/usage |
-| I07 | Learning, episodic memory, attributed beliefs and protected commitments | I05/I08; I06 for selected appraisals | Relevant recent promises recalled; observations/testimony do not grant hidden recipe knowledge |
+| I07 | Native learning/commitments, awareness-scoped recall and accepted inner-world beliefs; CR05–CR09 detail cleanup/reflection/sleep | I05/I08; I06 for selected appraisals | Relevant recent promises recalled; observations/testimony do not grant hidden recipe knowledge |
 | I08 | Batched persistence, receipts, event-time observations and restore | I01; prove minimal path before expanding survival or paid AI | Restore committed state; ambiguous commits reconcile; no repeated external work or effects |
 | I09 | First-session resources, animal types, possessions and coherent visuals | I00/I02/I04/I12 | Resources and consequences readable; few supported types provide a usable complete story |
-| I10 | Cost/queue ceilings, usage receipts, explicit fallback and diagnostics | I01/I08 fixtures; limits before paid I06 | No duplicate accounting or unbounded queue; absence stops autonomous scheduling; late usage retained |
+| I10 | Cost/queue ceilings, usage receipts, explicit fallback and diagnostics | I01/I08 fixtures; limits before paid I06 | No duplicate accounting or unbounded queue; effective pause/disconnection stops autonomous scheduling; opted-in connected background play retains caps; late usage retained |
 | I11 | First personal AI creative playtest, then shared group study | P1: I00–I10, I12–I13; P2 adds external identity/shared conflict checks | Full [MVP evidence](first-playable-mvp.md#evidence-required-for-a-first-playable-claim); later social/cost evidence before widening cast |
 | I12 | Trusted preparation/assembly, equipment/ammunition, simple projectiles, animal reactions, damage/death, finite remains/harvest and food preparation | I01/I02/I04/I08; small reusable families | Material/work/ammo/yield accounting; hits and misses; finite harvest; food can actually be eaten |
 | I13 | Live generated sling recipe plus another supported invention, with bow-and-arrow the candidate | I06/I08/I10/I12; D06 narrow G1 envelope | Previously absent recipe admitted, crafted, used, saved and semantically reused; negative cases and interruptions handled |
@@ -95,6 +95,23 @@ All targets below are hypotheses to adjust with evidence, not service guarantees
 ## U14 extension track
 
 The [governance, controls and workshop delivery track](../07-technical-architecture/review-and-delivery-plan.md#u14-delivery-track-governance-controls-and-the-workshop) sequences F53–F60: admission policy/provenance, complete action discovery and durable inspection, configurable controls and scoped read agents, one versioned G1 edit, then account libraries and complete pack cloning. Contribution terms precede shared-world contributions; marketplace commerce follows proven rights and compatibility. These additions preserve the existing P1 live-AI acceptance requirements and do not imply the prototype already supports them.
+
+## Cognition redesign track
+
+The [September 19 request](../00-source/cognition-context-followup.md) authorizes documentation and task planning only. [CR01–CR12](../../docs/maintainers/cognition-redesign.md) extend I05–I08/I10 under the [canonical cognition design](../../docs/memory-architecture.md). All redesign tasks are **not started**; existing memory fixtures do not complete them.
+
+| Tasks | Delivery outcome | Dependency / gate |
+| --- | --- | --- |
+| CR01–CR04 | Compact English context, minimal output, level-2 speech, low/high complex routes and bounded Jev attention | Server-only bindings and measured budgets before dispatch; CR04 foundation uses existing records, then integrates CR05–CR07 before final acceptance |
+| CR05–CR06 | Actor/event awareness, stored English experience, hourly consolidation of raw material older than six game hours | Event-time privacy, source deduplication, safe retention and small-model compatibility |
+| CR07–CR09 | Editable persistent inner world, PostgreSQL text snapshot, nonblocking reflection, eight-hour rest and two-hour dream eligibility | Scoped file execution, atomic publication, independent scheduling and native sleep accounting |
+| CR10–CR12 | Admitted configurable triggers, migration/god inspection and cost/latency acceptance | Earlier contracts, legacy-save recovery, no-cost fixtures followed by separately capped live checks |
+
+God-mode debugging is incremental: CR01 defines correlation, CR02 delivers a grouped trigger viewer, CR03–CR04 add context and scored selection, CR06–CR08 expose background work, and CR11 finishes inspection. It must be usable during development, not postponed until final integration.
+
+The task document owns the detailed dependency order: design migration before schema changes, validate each slice as it lands, and add selective-recall tools only after demonstrated omissions and a working scoped service. Required embeddings and sentence-based stimuli apply to all admitted semantic opportunities, including non-speech events; ordinary native steps do not require inference.
+
+This supersedes compulsory full-harness conversation and large default recall, not the first-playable requirement for useful live AI. No provider calls, migrations or game behavior are delivered by this track's documentation.
 
 ## Planning without invented delivery dates
 

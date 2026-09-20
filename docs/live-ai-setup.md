@@ -1,6 +1,16 @@
 # Enable live AI locally
 
-Open Legend currently calls Jev (TypeSafe) for routing and decisions, and OpenAI for dialogue, reflection and new recipe proposals. Both providers are required for the live conversational/invention path. Macrofold is not required by this implementation.
+Open Legend selects Macrofold when `MACROFOLD_API_KEY` is configured; otherwise it uses direct Jev/OpenAI adapters. Native play requires neither. Conversation uses compact level-2 inference with Jev escalation. Independent workspace reflection requires Macrofold and PostgreSQL; direct keys support immediate decisions and cleanup. See [memory architecture](memory-architecture.md).
+
+## Macrofold, embeddings and PostgreSQL
+
+Use the settings in `.env.example`: `MACROFOLD_BASE_URL`, backend key, model/harness, billing mode, optional provider/Jev connection IDs, model-run cap, explicit compute allocation and total `AI_BUDGET_USD`. One key authenticates inference and runs; there is no project selector or separate inference key. BYOK defaults to the configured OpenRouter connection for both Contributor and Jev; connection IDs select server-stored credentials, never raw keys in prompts.
+
+Both a nonzero total allowance and an explicit nonzero compute allocation are required before workspace compute can be provisioned. Allocation counts against the durable cap and is not an instruction to purchase or renew credits. Preserve uncertain operation identities; inspect recorded status before any manually authorized retry. September 20 live BYOK inference, embeddings and workspace publication succeeded. The earlier HTTP 402 remains historical evidence, not a current local BYOK blocker. Local zero-rate compute can work with zero platform credit; hosted compute has separate billing requirements. See [pending acceptance](maintainers/TODO.md#npc-memory-and-macrofold-integration).
+
+Restart after configuration changes and inspect the selected backend. A configured label is not live acceptance. Current model/effort requests and unverified compatibility are described in [AI providers](ai-providers.md). Set `OPEN_LEGEND_DATABASE_URL=postgresql://mzw@127.0.0.1:5432/openlegend` for this local database (adapt username/database elsewhere). An OpenAI embedding key is required even with Macrofold: `OPENAI_EMBEDDING_API_KEY` falls back to `OPENAI_API_KEY`. Defaults are `text-embedding-3-small`, 512 dimensions; explicit embedding reservations count against the same total cap. Existing-save imports use `scripts/import-postgres.ts` with the stopped source and an exclusive backup; never point two writers at one save.
+
+The following direct-provider steps apply when the Macrofold key is absent and do not supply file-reflection harness execution.
 
 ## 1. Get a Jev key
 
@@ -40,12 +50,12 @@ For the built client, use `pnpm run build` followed by `pnpm start` instead. Do 
 
 ## 5. Refresh and inspect configuration
 
-Refresh [the local game](http://127.0.0.1:3210/), then open the AI status button at the upper right. Jev and Language model should both say **Configured**, and the world allowance should show available funds. A configured label means the server received a nonempty key; it does not prove authentication, model access or successful inference yet.
+Refresh [the local game](http://127.0.0.1:3211/), then open the AI status button at the upper right. Jev and Language model should both say **Configured**, and the world allowance should show available funds. A configured label means the server received a nonempty key; it does not prove authentication, model access or successful inference yet.
 
 ## 6. Make a first live request
 
-Resume the world, move near Ada, select Talk, and send a short greeting. Observe the request status and actual response, then review the AI panel’s recent work and execution counts. While the world is running, autonomous NPC thinking can also use the shared allowance. Pause when you finish the test.
+With immediate inference configured and spending explicitly authorized, resume the world, move near Ada, select Talk, and send a short greeting. Observe the request status and actual response, then review the AI panel’s recent work and execution counts. While the world is running, autonomous NPC thinking can also use the shared allowance. Pause when you finish the test.
 
 If a request fails, inspect its recorded reason before sending again. Missing or rejected credentials, inaccessible models, insufficient provider funds, insufficient world allowance, timeouts and invalid output are separate problems. The application does not silently retry paid requests. Live quality remains a separate acceptance check; follow [verification](verification.md) for the full playtest.
 
-Provider setup links were checked September 19, 2026. This guide does not imply that credentials were supplied or a paid request was made during implementation.
+Provider setup links were checked September 19, 2026. The September 20 capped synthetic checks are recorded in maintainer TODO; they do not replace the full live playtest.

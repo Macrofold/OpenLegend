@@ -1,10 +1,44 @@
 # Implementation status and change log
 
-## Current executable version — September 19, 2026
+## Current cognition runtime — September 20, 2026
+
+CR01–CR11 now have a working runtime foundation: compact immediate decisions, versioned native multi-question Jev rubrics, scoped embeddings, awareness/consolidation, accepted PostgreSQL text, scoped background file reflection, native sleep thresholds and grouped authorized diagnostics. PostgreSQL cutover preserved the existing save. Capped synthetic live calls verified Jev, memory-informed speech, summary generation and file publication; broader quality/recovery and migrated fixtures remain open. See [task status](../../docs/maintainers/cognition-redesign.md) and [detailed evidence](../../docs/maintainers/TODO.md#september-20-native-jev-and-live-cognition).
+
+The dated entries below preserve their original implementation and verification state; their earlier setup blockers and planned-only descriptions are superseded by this current section, without erasing their unique findings.
+
+## God-mode cognition debugging plan — September 19, 2026
+
+The accepted target now adds progressive trigger/action groups to the existing Intelligence calls panel: offered routes, Jev routing and relevance, context sources and embedding scores, escalated input/output, usage and committed outcomes. CR01–CR04 deliver early inspection; CR06–CR08 add background lifecycles; CR11 integrates filters, history and access handling; CR12 verifies the workflow without application-log searches. This is documentation-only planning; existing inspector validation remains open in maintainer TODO, and no runtime implementation or live acceptance is claimed.
+
+## Cognition task coverage audit — September 19, 2026
+
+The memory-related requirements, companion technical contracts, research gates and deferred cognition findings were reviewed against CR01–CR12. The task list now explicitly covers consistent snapshots, all semantic event sentences, fresh immediate sessions, native obligations/learning, correction propagation, quotas/seeding, reflection deduplication, conditional recall-tool implementation, inspector completeness and recovery evidence. It preserves task identifiers and existing checks while clarifying foundation versus final integration dependencies; migration safeguards and fixture validation precede each affected cutover. Broader creator, visual/acoustic, multiplayer and commerce work retains its separate plans. This is documentation only; no runtime implementation or acceptance was performed.
+
+## Cognition redesign planning — September 19, 2026
+
+**Documentation complete; implementation not started for this redesign.** The [accepted target](../../docs/memory-architecture.md) and [CR01–CR12 backlog](../../docs/maintainers/cognition-redesign.md) replace full-harness speech/mind JSON with compact English context, Jev attention and semantic levels, awareness-based experience, hourly cleanup beyond six game hours, background file reflection and one PostgreSQL inner-world text row per actor. Eight daily rest hours and a two-hour sleep minimum for dreams are recorded.
+
+The complete current design is consolidated in [Memory architecture](../../docs/memory-architecture.md); the duplicate historical specification was removed. This update inspected source only, changed documentation only, and performed no runtime tests, migrations or live inference. Reported token/latency numbers come from the user; savings and new behavior have not been verified. Later runtime findings remain in [maintainer TODO](../../docs/maintainers/TODO.md).
+
+### Required embeddings decision
+
+Embeddings are now required for arbitrary-intent semantic retrieval. The canonical memory specification, CR04 and related context/perception/storage/query/verification guidance record full-intent queries, versioned scoped vectors, invalidation, bounded indexing and paid-call accounting. Model/provider, dimensions, similarity metric and vector storage remain undecided; `pgvector` is not selected. This is documentation only, not an implemented index or live evaluation.
+
+### Recall selection clarification
+
+The memory specification and CR04/CR12 now explicitly require all five selection signals, structured → semantic → evidence-justified selective-tool delivery, and observable behavioral acceptance. Context, extension, agent-design, research and verification guidance are synchronized. This clarification adds documentation/tasks only; existing requirements and evidence remain intact, and no runtime or live checks were performed.
+
+## Memory documentation reconciliation — September 19, 2026
+
+The canonical spec now incorporates unique encounter/reminder, sensory attribution, social continuity, learning and appraisal constraints from companion documents. Related requirements, decisions, context/perception bodies, storage/query/migration contracts, provider/setup/extension instructions, research recommendations and CR tasks were reconciled in place. AGENTS.md now requires this cross-document reconciliation and an explicit information-preservation review.
+
+Source inspection confirms a later Macrofold backend and fast/complex/full cognition slice beyond the initial executable snapshot recorded below. At that inspection, conversation still used full inline mind proposals with file/tools denied; the configured Contributor helper requests low or xhigh, not the target independent level-3/4 bindings. Explicit chat/invention can hold successful results across pause; background thoughts cancel. These findings update current guidance without rewriting earlier test evidence. The setup blocker recorded then was HTTP 402 `insufficient_credit`; no live status was rechecked and no runtime tests or paid calls were made for this documentation update.
+
+## Initial executable version — September 19, 2026
 
 U13 explicitly authorized building the first version. The repository now contains the TypeScript domain kernel, PlayCanvas client, local HTTP application, SQLite persistence, scoped structured memory/knowledge, native survival/ranged rules, bounded generative declaration admission, and real Jev/OpenAI adapters. See [run instructions](../../README.md), [implemented architecture](../../docs/architecture.md), [extension guide](../../docs/extending.md) and [verification](../../docs/verification.md).
 
-Native gameplay, fixture-generated sling/bow/arrow mechanics, provider transport boundaries, durable spending, pause/absence and restore are covered by automated tests. A Chromium playtest exercises the real local client/server without paid inference. **Live NPC cognition/conversation and genuinely live-generated inventions remain an acceptance gate requiring credentials and an explicit spending allowance.** No paid calls, Macrofold changes, cloud deployment or commerce were performed. Do not equate fixture success with completion of the MVP's live-AI evidence requirements.
+Native gameplay, fixture-generated sling/bow/arrow mechanics, provider transport boundaries, durable spending, pause/absence and restore are covered by automated tests. A Chromium playtest exercises the real local client/server without paid inference. **Live NPC cognition/conversation and genuinely live-generated inventions remain an acceptance gate requiring credentials and an explicit spending allowance.** That initial implementation run made no paid calls, Macrofold changes, cloud deployment or commerce; later adapter changes and unverified refinements are recorded above and in the maintainer queue. Do not equate fixture success with completion of the MVP's live-AI evidence requirements.
 
 The table and chronology below preserve the earlier planning record; statements of “unimplemented” describe that earlier documentation phase. The linked current implementation and verification documents supersede those historical runtime-status labels. Long-term systems outside the finite MVP remain proposals.
 
@@ -44,7 +78,7 @@ Both native canvas and Nearby-row context gestures use the browser; ground conte
 
 The latest request adds [invention locks, creator ownership and world packs](../03-design-proposals/invention-governance-and-ownership.md), [discoverable actions, ranking and configurable controls](../03-design-proposals/playability-and-controls.md), and [durable logs, world-agent access and versioned workshops](../03-design-proposals/world-agent-and-workshop.md). Requirements F53–F60 and decisions D42–D49 record the direction and open choices. The [delivery track](../07-technical-architecture/review-and-delivery-plan.md#u14-delivery-track-governance-controls-and-the-workshop) sequences the dependencies without changing first-playable acceptance.
 
-That earlier update changed documentation only. The subsequent action-browser implementation above supplies the finite catalogue and saved unavailable filter. The bounded 300-event journal still does not implement a durable entire-world log; account libraries, packs, independent agent/player invention locks, configurable slots and the workshop agent remain proposals. Admitted G1 definitions remain immutable; Macrofold integration remains future work.
+That earlier update changed documentation only. The subsequent action-browser implementation above supplies the finite catalogue and saved unavailable filter. The bounded 300-event journal still does not implement a durable entire-world log; account libraries, packs, independent agent/player invention locks, configurable slots and the workshop agent remain proposals. Admitted G1 definitions remain immutable. A later Macrofold backend exists as recorded above; the U14 world-query and workshop capabilities remain future work.
 
 ## U15 documentation addition — billing reports
 

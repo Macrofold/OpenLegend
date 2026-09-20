@@ -137,7 +137,10 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
   ): Promise<AiResult<T>> {
     const started = Date.now();
     const options: ProviderConfig | undefined = providerConfigs[provider];
-    const model = options?.model ?? DEFAULTS[provider].model;
+    const model =
+      (provider === 'openai' ? (request as GenerateRequest).model : undefined) ??
+      options?.model ??
+      DEFAULTS[provider].model;
     const endpoint = options?.endpoint ?? DEFAULTS[provider].endpoint;
     const receipt: AiReceipt = {
       requestId: request.requestId,
@@ -255,7 +258,10 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
           const usage = decodeUsage(data);
           if (usage) {
             receipt.usage = usage;
-            const cost = estimateCostUsd(usage, options.prices);
+            const cost = estimateCostUsd(
+              usage,
+              model === (options.model ?? DEFAULTS[provider].model) ? options.prices : undefined,
+            );
             if (cost !== undefined) receipt.estimatedCostUsd = cost;
           }
         }
@@ -322,8 +328,8 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
           max_output_tokens: outputLimit,
           text: { format: { type: 'json_schema', name, strict: true, schema } },
         };
-        if (providerConfigs.openai?.reasoningEffort)
-          body.reasoning = { effort: providerConfigs.openai.reasoningEffort };
+        const effort = request.reasoningEffort ?? providerConfigs.openai?.reasoningEffort;
+        if (effort) body.reasoning = { effort };
         return {
           body,
           decode(data: unknown): T {

@@ -55,6 +55,8 @@ export interface JudgeRequest extends RequestControl {
 }
 
 export interface GenerateRequest extends RequestControl {
+  model?: string;
+  reasoningEffort?: 'none' | 'low' | 'high';
   actorScope?: string;
   execution?: 'fast' | 'complex' | 'full';
   /** Diagnostic task category; domain policy and instructions remain caller-owned. */

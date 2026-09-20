@@ -7,3 +7,7 @@ export {
   macrofoldString,
   validateMacrofoldValue,
 } from './macrofold.js';
+
+export * from './embedding.js';
+
+export { validateQuestions, decodeJudge, decodeUsage } from './validation.js';

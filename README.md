@@ -20,7 +20,7 @@ cp .env.example .env
 pnpm run dev
 ```
 
-Open **http://127.0.0.1:3210**. For live AI, edit `.env` locally with `TYPESAFE_API_KEY`, `OPENAI_API_KEY`, and a chosen nonzero `AI_BUDGET_USD`, then restart. The default allowance is zero. Keys never go to the browser. The allowance and usage accounting persist with this world's save, rather than resetting on page reload.
+Open **http://127.0.0.1:3210**. For live AI, follow the [setup guide](docs/live-ai-setup.md): a configured Macrofold key selects that backend; direct Jev/OpenAI keys select the direct path otherwise. Current full NPC conversation requires Macrofold with explicit model/compute allowance. Set a chosen nonzero `AI_BUDGET_USD` and restart only when ready to permit paid work. The default allowance is zero. Keys never go to the browser. The allowance and usage accounting persist with this world's save, rather than resetting on page reload.
 
 If another app uses that port, run `PORT=3211 pnpm run dev` and open **http://127.0.0.1:3211** instead. Set `PORT=3211` in your existing `.env` to keep that choice across restarts.
 
@@ -65,13 +65,15 @@ The browser check needs Playwright Chromium (`pnpm exec playwright install chrom
 
 ## Explore the project
 
-The [perception and attention design](archive/07-technical-architecture/perception-and-attention.md) now has an initial visual experiment: sight reaches 28 map units, with a clear central field and a strongly blurred outer band instead of a dark fog. Previously seen objects can remain as frozen, non-interactive blurred images after leaving sight. Detailed occlusion, distance-specific descriptions, hearing gradients and semantic attention remain future work.
+The [perception and attention design](archive/07-technical-architecture/perception-and-attention.md) now has an initial visual experiment: sight reaches 28 map units, with a clear central field and a strongly blurred outer band instead of a dark fog. Previously seen objects can remain as frozen, non-interactive blurred images after leaving sight. Detailed occlusion, distance-specific descriptions, hearing gradients remain future work; scoped semantic attention and embeddings are implemented.
 
 The latest design additions cover [world locks and invention ownership](archive/03-design-proposals/invention-governance-and-ownership.md), [playability and controls](archive/03-design-proposals/playability-and-controls.md), and [world logs and invention workshops](archive/03-design-proposals/world-agent-and-workshop.md). They describe planned extensions beyond the running prototype.
 
+- [Master TODO and implementation-plan index](docs/maintainers/README.md) — maintenance, cognition, world-agent/invention/conjuring and production-data work
 - [Research and design archive](archive/README.md)
 - [Real-time multiplayer synchronization](archive/07-technical-architecture/realtime-synchronization.md) — batching, prediction, replication and future improvements
 - [Production data model](archive/07-technical-architecture/production-data-model.md), [world-agent queries](archive/07-technical-architecture/data-queries-and-mcp.md), and [migration/scale plan](archive/07-technical-architecture/data-delivery-and-scale.md) — proposed next implementation
+- [Cognition redesign](docs/memory-architecture.md) and [build tasks CR01–CR12](docs/maintainers/cognition-redesign.md) — implemented compact context, attention, cleanup and background reflection, with remaining acceptance tracked explicitly
 - [Project decisions](archive/05-project/open-decisions.md) and [implementation status](archive/05-project/implementation-status.md)
 - [First playable MVP agreement](archive/05-project/first-playable-mvp.md)
 - [Art direction and reference board](art-direction/README.md)

@@ -1,3 +1,5 @@
+import { traceHistory, traceDetails } from './cognition-inspection.js';
+import { admitCognitionPolicy } from '@open-legend/domain';
 import { inspectGodMind } from './god-mind.js';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
@@ -7,6 +9,7 @@ import { z } from 'zod';
 import type { AiClient } from '@open-legend/ai';
 import { AiDirector } from './ai-director.js';
 import { readConfig, type AppConfig } from './config.js';
+import { PostgresDatabase } from './postgres.js';
 import { SqliteStore } from './store.js';
 import { WorldService, commandInputSchema, requestIdSchema } from './world-service.js';
 import { projectView } from './view.js';
@@ -91,7 +94,12 @@ export async function createGameServer(
   } = {},
 ) {
   const config = options.config ?? readConfig();
-  const store = options.store ?? new SqliteStore(config.databasePath);
+  const store =
+    options.store ??
+    new SqliteStore(
+      config.databasePath,
+      config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
+    );
   const service = new WorldService(store, config, options.now);
   const director = new AiDirector(service, options.aiClient, options.now);
   const session = randomBytes(32).toString('hex');
@@ -228,6 +236,136 @@ export async function createGameServer(
           case '/api/command': {
             const value = command.parse(body);
             return send(response, 200, service.command(value.commandId, value.command));
+          }
+          case '/api/god/correct-memory': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({
+                actorId: requestIdSchema,
+                sourceId: requestIdSchema,
+                correctionEventId: requestIdSchema,
+              })
+              .strict()
+              .parse(body);
+            return send(
+              response,
+              200,
+              service.correctMemory(value.actorId, value.sourceId, value.correctionEventId),
+            );
+          }
+          case '/api/god/forget-memory': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({ actorId: requestIdSchema, sourceId: requestIdSchema })
+              .strict()
+              .parse(body);
+            const result = service.forgetMemory(value.actorId, value.sourceId);
+            if (result.ok) store.db.exec('DELETE FROM intelligence_calls');
+            return send(response, 200, result);
+          }
+          case '/api/god/cognition-policy': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({ policy: z.unknown(), expectedRevision: z.number().int().min(1) })
+              .strict()
+              .parse(body);
+            return send(
+              response,
+              200,
+              service.transition((world) =>
+                admitCognitionPolicy(world, value.policy, value.expectedRevision),
+              ),
+            );
+          }
+          case '/api/god/triggers': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const filter = z
+              .object({
+                offset: z.number().int().min(0).max(1000).default(0),
+                search: z.string().max(200).optional(),
+                actor: z.string().max(100).optional(),
+                route: z.string().max(50).optional(),
+                outcome: z.string().max(50).optional(),
+                stage: z.string().max(100).optional(),
+                from: z.string().max(40).optional(),
+                to: z.string().max(40).optional(),
+              })
+              .strict()
+              .parse(body);
+            return send(response, 200, {
+              ok: true,
+              worldId: service.world.id,
+              ...traceHistory(store, filter),
+            });
+          }
+          case '/api/god/trigger': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const { id } = z.object({ id: requestIdSchema }).strict().parse(body);
+            const details = traceDetails(store, id);
+            return send(response, details ? 200 : 404, { ok: !!details, details });
+          }
+          case '/api/god/intelligence-details': {
+            if (!config.godMode)
+              return send(response, 403, {
+                ok: false,
+                message: 'God inspection is disabled by the host.',
+              });
+            const { id } = z.object({ id: z.string().uuid() }).strict().parse(body);
+            return send(response, 200, {
+              ok: true,
+              details: await director.macrofold.inspectCall(id),
+            });
+          }
+          case '/api/god/intelligence-calls': {
+            if (!config.godMode)
+              return send(response, 403, {
+                ok: false,
+                message: 'Enable OPEN_LEGEND_GOD_MODE to inspect private intelligence calls.',
+              });
+            const { offset } = z
+              .object({ offset: z.number().int().min(0).max(1_000_000).default(0) })
+              .strict()
+              .parse(body);
+            return send(response, 200, {
+              ok: true,
+              calls: store.intelligenceCalls(offset).map((call) => {
+                const input = call.input as { requestId?: string; actorScope?: string };
+                const requestId = input?.requestId;
+                const job = requestId
+                  ? store.getJob(requestId.slice(0, requestId.lastIndexOf(':')))
+                  : undefined;
+                const worldAgent = call.kind.includes('world agent');
+                const actorId =
+                  input?.actorScope ??
+                  (job
+                    ? job.kind === 'invention'
+                      ? 'player'
+                      : (job.request.npcId ?? 'ada')
+                    : undefined);
+                return {
+                  ...call,
+                  actorName: worldAgent
+                    ? 'World agent'
+                    : actorId
+                      ? (service.world.entities[actorId]?.name ?? actorId)
+                      : call.actorName,
+                  trigger: worldAgent
+                    ? 'Message'
+                    : job?.kind === 'chat'
+                      ? 'Speech'
+                      : job?.kind === 'invention'
+                        ? 'Invention'
+                        : job?.kind === 'thought'
+                          ? job.request.text
+                          : call.trigger,
+                };
+              }),
+            });
           }
           case '/api/god/mind': {
             if (!config.godMode)

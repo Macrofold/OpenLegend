@@ -62,9 +62,9 @@ Define decay, saturation, and stacking rules. High distress can increase avoidan
 
 ## 5. Durable but bounded memory
 
-**Proposed memory stores:** a short recent-event buffer; selected autobiographical episodes; learned beliefs; relationship summaries; and active commitments. The server's factual event ledger is separate from every actor's memory. An actor can forget an event without erasing what actually happened, ownership, injury, or another actor's recollection.
+**Current application design:** the [canonical memory architecture](../../docs/memory-architecture.md) separates six-hour raw personal/aware-event experience, selected consolidated memories, authored beliefs/relationship assessments in accepted inner-world text, and native commitments/knowledge. The server's factual event ledger is separate from every actor's memory. An actor can forget an event without erasing what actually happened, ownership, injury, or another actor's recollection.
 
-Each memory should carry:
+Repository evidence should preserve the following metadata where applicable; NPC prompts receive useful English text and attribution rather than the technical envelope:
 
 - Identity, actor owner, observed time, and stored time.
 - Type: observation, reported speech, inference, reflection, or intention.
@@ -75,9 +75,9 @@ Each memory should carry:
 
 The key distinction is “Ben said the bridge is safe” versus “the bridge is safe.” Dialogue adds the former immediately; the latter remains a belief with supporting evidence. Summaries must not upgrade rumor into fact. A generated thought cannot retroactively assert that an unseen event occurred.
 
-**Proposed consolidation:** sleeping schedules a background review of recent experiences. Select consequential episodes, extract tentative lessons, preserve unresolved promises, merge repetition, and remove low-value detail. “Dreaming” is a fictional presentation for this maintenance task, not a scientifically faithful account of sleep. Imagined dream scenes must be tagged as imagination and excluded from authoritative history.
+**Accepted application policy:** hourly small-model consolidation merges repetitive raw experience older than six game hours, preserves consequential episodes and unresolved promises, and removes low-value detail. Independent background reflection can derive tentative lessons; dreams become eligible after two continuous hours asleep within an eight-hour daily rest requirement. Dreaming is fictional subjective reinterpretation, not the maintenance mechanism or a scientifically faithful account of sleep. Imagined scenes remain attributed as imagination, never authoritative history.
 
-Use hard byte limits as well as record counts. An initial experimental policy could cap recent episodes at 512 and reserve separate space for significant relationships and unfinished commitments, but that is a tuning starting point, not a validated capacity. Count embeddings and index overhead separately. When the budget fills, compact repetitive episodes before discarding pivotal events. Commitments need a protected allocation so forgetting routine details does not randomly delete an outstanding debt or appointment.
+Use hard byte limits as well as record counts. The former illustrative 512-episode recent window is superseded by six simulated hours with additional operational count/byte safeguards. Summary, inner-world and commitment budgets remain separate; exact caps require evaluation. Count embeddings and index overhead separately. When the budget fills, compact repetitive episodes before discarding pivotal events. Commitments need a protected allocation so forgetting routine details does not randomly delete an outstanding debt or appointment.
 
 Deleting or compacting a source needs an explicit policy for dependent summaries. Preserve a compact provenance stub, or mark the summary's evidence as unavailable. A summary that cannot be supported should not remain confidently factual forever. Keep operator retention and player privacy policy separate from the fictional forgetting mechanic.
 
@@ -93,7 +93,7 @@ The model also contains general pretrained knowledge. Prompt instructions can li
 
 **Proposal:** use deterministic continuous needs updates, event-triggered appraisal, cheap routine action selection, and bounded model deliberation for novelty and dialogue. Relevant state should influence a decision through a compact context projection; “the entirety of state” should not mean serializing a lifetime of memories for every call. Preserve access to additional permitted memories through bounded retrieval when needed.
 
-One hundred agents deliberating every thirty seconds produce 12,000 deliberations per real hour before extra dialogue or reflection. Parallel execution lowers waiting but does not remove those calls or their expense. This arithmetic is illustrative, not a service estimate. Apply per-sector and per-agent budgets, priority queues, deadlines, and cancellation when a plan becomes obsolete. Stagger consolidation instead of waking every sleeper's model at the same instant.
+One hundred agents deliberating every thirty seconds produce 12,000 deliberations per real hour before extra dialogue or reflection. Parallel execution lowers waiting but does not remove those calls or their expense. This arithmetic is illustrative, not a service estimate. Apply per-sector and per-agent budgets, priority queues, deadlines, and cancellation when a plan becomes obsolete. Stagger hourly consolidation and independent eligible reflection instead of waking every actor's model at the same instant.
 
 Let agents propose actions concurrently against versioned observations; only the authoritative world applies state changes. A delayed proposal to eat the last meal must fail or replan if someone else already took it. Start physical actions with an observable intention and a reaction window where appropriate, as the brief requests. Keep walking and idle behavior available during model delays.
 

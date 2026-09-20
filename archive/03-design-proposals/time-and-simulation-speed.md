@@ -28,7 +28,7 @@ Implemented presets, assuming a 365-day simulated year for the illustrative year
 
 These are the current presets; larger multipliers require explicit admission and load testing. The creator can request a speed change at any point through the separate god/admin controls. Apply it at an explicit authoritative boundary and journal the old rate, new rate, simulation timestamp, command ID, and actor. Integrate time before that boundary at the old rate and time after it at the new rate. Never rescale elapsed work retroactively.
 
-Pause freezes needs, movement, aging, environment, action progress, scheduled world outcomes and autonomous AI scheduling. Rendering, inspection, menus, networking and wall-clock provider timeouts may continue. Cancel unnecessary pending work where supported; already-dispatched requests may still finish and incur usage. The current prototype discards results canceled by pause; it does not silently apply them on resume. Explicitly requested conversation or creator editing while paused has a separate visible policy; such interactions do not silently resume world time.
+Pause freezes needs, movement, aging, environment, action progress, scheduled world outcomes and autonomous AI scheduling. Rendering, inspection, menus, networking and wall-clock provider timeouts may continue. Cancel unnecessary pending work where supported; already-dispatched requests may still finish and incur usage. The current director cancels background thoughts. Explicit chat/invention can finish its admitted provider stage, holding successful results until resume before another paid stage or commit; shutdown cancels held waits and restart recovery remains pending. Canceled work is not automatically retried. Explicitly requested conversation or creator editing while paused has a separate visible policy; such interactions do not silently resume world time.
 
 ## Survival, work, and timed effects
 
@@ -49,6 +49,8 @@ Keep an independent lifecycle coefficient as an **open option**, not an adopted 
 ## Conversation, sleep, and human attention
 
 At 1× (60:1), a five-second model response consumes five simulated minutes; a two-minute human conversation spans two simulated hours. Eight simulated hours of sleep take eight real minutes. At 8×, the same sleep takes one real minute, while five seconds of inference spans forty simulated minutes. These are material design consequences, not just interface details.
+
+The accepted [memory design](../../docs/memory-architecture.md) requires eight game hours of daily rest, dreams eligible only after two continuous game hours asleep, a six-game-hour raw recall window and hourly cleanup of older experience. Save rest/sleep episode and cleanup progress in deterministic state. Daily rest accounting and sleep-debt mechanics remain open. Native sleep and conversation never wait for optional paid dreams or background reflection; missed maintenance coalesces under real-time caps.
 
 NPCs need plans that remain useful for meaningful simulated intervals. Batch routine work and reserve model calls for decisions, conversation, and novel interactions. A pending conversation should not monopolize a starving character indefinitely; authored interruption and urgent-action rules still apply.
 

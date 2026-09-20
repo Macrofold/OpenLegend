@@ -2,6 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
   createWorld,
+  migrateCognition,
+  forgetExperience,
+  correctExperience,
+  experiences,
+  EXPERIENCE_LIMITS,
   mindFor,
   executeCommand,
   advanceWorld,
@@ -66,6 +71,7 @@ export class WorldService {
   private pauseWhenHidden: boolean;
   private debtSeconds = 0;
   storageError: string | null = null;
+  memoryBacklog: string | null = null;
   readonly generation = randomUUID();
 
   constructor(
@@ -74,6 +80,11 @@ export class WorldService {
     private readonly now = Date.now,
   ) {
     const existing = store.load();
+    if (
+      existing?.state.world.schemaVersion === 1 &&
+      !store.getIntegration(`legacy-backup:${existing.state.world.id}`)
+    )
+      store.putIntegration(`legacy-backup:${existing.state.world.id}`, structuredClone(existing));
     this.pauseWhenHidden = this.profile.preferences.pauseWhenHidden;
     this.saved = existing?.state ?? {
       world: createWorld(config.seed),
@@ -84,6 +95,7 @@ export class WorldService {
     this.saved.world.minds ??= {};
     for (const entity of Object.values(this.saved.world.entities))
       if (entity.actor) this.saved.world.minds[entity.id] ??= mindFor(this.saved.world, entity.id);
+    migrateCognition(this.saved.world);
     // No persisted wall-clock delta is replayed. Presence is deliberately process-local.
     this.saved = { ...this.saved, world: { ...this.saved.world, paused: true } };
     this.revision = store.commit(this.revision, this.saved);
@@ -158,12 +170,15 @@ export class WorldService {
     try {
       // A newly admitted actor receives its seed mind in the same saved transition.
       // Later context construction must never redefine identity from a changed goal.
-      const newcomers = Object.values(saved.world.entities).filter(entity => entity.actor && !saved.world.minds?.[entity.id]);
+      const newcomers = Object.values(saved.world.entities).filter(
+        (entity) => entity.actor && !saved.world.minds?.[entity.id],
+      );
       if (newcomers.length) {
-        const world = {...saved.world, minds: {...saved.world.minds}};
+        const world = { ...saved.world, minds: { ...saved.world.minds } };
         for (const entity of newcomers) world.minds[entity.id] = mindFor(world, entity.id);
-        saved = {...saved, world};
+        saved = { ...saved, world };
       }
+      migrateCognition(saved.world);
       // Completed onboarding milestones outlive the bounded recent-event feed.
       const flags = { ...saved.milestones };
       const events = saved.world.events.filter((event) => event.audience.includes('player'));
@@ -272,6 +287,26 @@ export class WorldService {
     if (elapsedRealSeconds > 2) {
       this.debtSeconds = 0;
       return;
+    }
+    if (
+      Object.values(this.world.experience?.awareness ?? {}).some(
+        (entries) => entries.length >= EXPERIENCE_LIMITS.backlog,
+      ) ||
+      Object.values(this.world.memories).some(
+        (entries) => entries.length >= EXPERIENCE_LIMITS.backlog + 16,
+      )
+    ) {
+      if (!this.memoryBacklog) {
+        this.memoryBacklog =
+          'Experience backlog is full; simulation is waiting for consolidation or operator resolution. No memories were discarded.';
+        this.notify();
+      }
+      this.debtSeconds = 0;
+      return;
+    }
+    if (this.memoryBacklog) {
+      this.memoryBacklog = null;
+      this.notify();
     }
     this.debtSeconds += elapsedRealSeconds * this.config.baseRatio * this.speed;
     // Supported timer gaps are at most two seconds. Even at 8×, at most 960 cheap
@@ -384,6 +419,42 @@ export class WorldService {
         ...(targetId ? { targetId } : {}),
       }),
     );
+  }
+
+  correctMemory(actorId: string, sourceId: string, correctionEventId: string): ApiResult {
+    const corrected = correctExperience(this.world, actorId, sourceId, correctionEventId);
+    if (!corrected.outcome.ok) return corrected.outcome;
+    const ok = this.commit({ ...this.saved, world: corrected.world });
+    if (ok) this.store.putIntegration(`vectors:${this.world.id}:${actorId}`, null);
+    return {
+      ok,
+      code: ok ? 'corrected' : 'storage',
+      message: ok ? corrected.outcome.message : this.storageError!,
+    };
+  }
+
+  forgetMemory(actorId: string, sourceId: string): ApiResult {
+    if (!this.world.entities[actorId]?.actor)
+      return { ok: false, code: 'actor', message: 'Unknown actor.' };
+    if (
+      !experiences(this.world, actorId, true).some(
+        (m) => m.id === sourceId || m.eventId === sourceId,
+      )
+    )
+      return { ok: false, code: 'source', message: 'That source is not retained for this actor.' };
+    const forgotten = forgetExperience(this.world, actorId, sourceId);
+    const ok = this.commit({ ...this.saved, world: forgotten.world });
+    if (ok) {
+      this.store.putIntegration(`vectors:${this.world.id}:${actorId}`, null);
+      this.store.putIntegration(`interests:${this.world.id}:${actorId}`, null);
+    }
+    return {
+      ok,
+      code: ok ? 'forgotten' : 'storage',
+      message: ok
+        ? 'Recall and derived text invalidated; workspace resets before its next fresh job.'
+        : this.storageError!,
+    };
   }
 
   setGoal(requestId: string, text: string): ApiResult {

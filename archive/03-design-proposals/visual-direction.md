@@ -64,6 +64,8 @@ Maintain versioned asset manifests with scale, pivots, directional frames, anima
 
 Today, `apps/client/src/art.ts` draws procedural animal art, darkens it for death, and `scene.ts` rotates the corpse sprite. That is the current visual fallback, not an implemented bleeding system or image-generation pipeline. Richer death poses, wound/blood effects and background generated art are future work.
 
+The [confirmed god-mode conjuring workflow](world-agent-and-workshop.md#confirmed-god-mode-conjuring) also requests missing artwork automatically for an approved named or random object. Preview the object, properties, placement and bounded art allowance before explicit confirmation; paid art dispatch follows confirmation and spending admission. Reuse compatible assets or procedural composition before generating missing art. Track definition readiness, instance creation and art publication separately: a mechanically valid conjured object can use a truthful fallback while art is pending, and art cannot supply missing mechanics. No separate user art request is needed; failed generation remains visible without automatic paid retries.
+
 ### State is authoritative
 
 A player intention first resolves through the game rules. “Kill the rabbit” is not proof that a hit succeeded or the animal died. Render death, wounds and any ongoing bleeding only when the committed outcome and supported visual-state contract justify them. A blood decal can be presentation without detailed fluid simulation; it cannot invent blood loss, damage or other mechanics. Distinguish a lingering blood stain from active bleeding. Art containing a wound or flame never installs an injury or combustion rule.

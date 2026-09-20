@@ -1,6 +1,6 @@
 # Open Legend UI design brief
 
-Status: design handoff and recommended technology direction, September 19, 2026. React, React Aria, Motion and the asset libraries below are recommendations, not an adopted implementation. This brief records the desired UX; it is not live acceptance evidence. Provide current screenshots alongside it. General documentation may lag recent UI changes; see the [deferred validation and documentation queue](deferred-validation-and-documentation.md).
+Status: design handoff and recommended technology direction, September 19, 2026. React, React Aria, Motion and the asset libraries below are recommendations, not an adopted implementation. This brief records the desired UX; it is not live acceptance evidence. Provide current screenshots alongside it. General documentation may lag recent UI changes; see the [deferred validation and documentation queue](maintainers/TODO.md).
 
 ## Project and atmosphere
 
@@ -38,6 +38,10 @@ Use **Lucide** for utility symbols such as close, back, search and settings. Use
 - Unavailable actions appear only when requested, below available actions and grayed out. Hide that toggle when there are none. Detailed action explanations appear after a one-second hover and should also be available through keyboard focus.
 - Left-click selects or walks; left-drag pans. Clicking the map to dismiss an action menu must not also move the character.
 - Status text appears above the relevant character or object in white without a background. New notices stack above older ones. Work labels and smooth progress bars appear only when work begins, remain while incomplete and disappear immediately on completion. Walking gets no status. Keep a consistent gap above the subject, including beneath a progress bar.
+
+## God-mode cognition debugging
+
+Extend the existing right-side Intelligence calls panel with the [canonical debugger hierarchy](memory-architecture.md#god-mode-cognition-debugger): compact trigger/action rows expanding into route options, Jev decisions, context/retrieval and model/harness stages, then committed outcomes. Show candidate match scores and inclusion decisions in drilldowns, and per-stage input/output, tokens and costs on demand. Provide filters, paginated history and follow/pause updates without moving the reader's focus or scroll. This authorized development view is planned alongside CR01–CR12; it does not require the proposed UI-library migration.
 
 ## Requested design output
 

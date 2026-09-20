@@ -115,6 +115,7 @@ export interface Action {
   consumed: { definitionId: string; quantity: number }[];
 }
 export interface ActorComponent {
+  rest?: import('./sleep.js').RestState;
   controller: 'player' | 'npc';
   health: number;
   fullness: number;
@@ -161,6 +162,7 @@ export interface Entity {
   heat?: HeatComponent;
 }
 export interface MemoryRecord {
+  obligation?: import('./commitments.js').Obligation;
   /** Native attribution survives event-log rotation; never supplied by model proposals. */
   eventType?: string;
   speakerId?: string;
@@ -205,7 +207,10 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
-  schemaVersion: 1;
+  experience?: import('./experience.js').ExperienceState;
+  innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
+  cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
+  schemaVersion: 1 | 2;
   id: string;
   seed: number;
   rngState: number;

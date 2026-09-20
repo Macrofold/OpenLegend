@@ -8,7 +8,10 @@ import type { AppConfig } from './config.js';
 export const COGNITION_PERMISSIONS = {
   version: 1,
   shell: 'deny',
-  files: { read: { include: [] }, write: { include: [] } },
+  files: {
+    read: { include: ['mind/*.md'] },
+    write: { include: ['mind/*.md'], exclude: ['mind/identity.md'] },
+  },
   tools: { include: [] },
 };
 export interface ActorWorkspace {
@@ -34,7 +37,7 @@ export class MacrofoldProvisioner {
     return promise;
   }
   private async create(actorId: string, name: string): Promise<ActorWorkspace> {
-    const key = `macrofold-actor:${digest(this.config.macrofoldUrl)}:${this.worldId}:${actorId}`;
+    const key = `macrofold-actor-v2:${digest(this.config.macrofoldUrl)}:${this.worldId}:${actorId}`;
     const state = this.store.getIntegration(key) as
       | { operationId: string; pending?: boolean; result?: ActorWorkspace }
       | undefined;

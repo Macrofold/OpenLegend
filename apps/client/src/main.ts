@@ -1,3 +1,4 @@
+import { IntelligencePanel } from './intelligence-panel';
 import type { GodMindView } from '@open-legend/protocol';
 import { PanelDock } from './panel-dock';
 import type {
@@ -79,7 +80,7 @@ app.innerHTML = `
   <main class="game-shell" aria-label="Open Legend wilderness">
     <canvas id="world" aria-label="Wilderness map. Click a person or resource to inspect, right-click for actions, or click empty ground to walk. Use the nearby list for keyboard access." tabindex="0"></canvas>
     <header class="topbar">
-      <div class="brand"><span class="brand-mark">${icon('leaf')}</span><div><h1>OPEN LEGEND</h1><p>A world, becoming.</p></div></div>
+      <div class="brand"><span class="brand-mark">${icon('leaf')}</span><div><h1>OPEN LEGEND</h1></div></div>
       <div class="time-control surface"><div class="clock-icon">${icon('sun')}</div><div id="worldClock" class="clock-text">The first clearing<span>Opening your world…</span></div><span class="divider"></span><button id="pause" class="icon-button" title="Pause or resume world" aria-label="Pause world" disabled>${icon('pause')}</button><div id="speeds" class="speed-control" aria-label="Simulation speed"><button data-speed="0.5">0.5×</button><button data-speed="1">1×</button><button data-speed="3">3×</button><button data-speed="8">8×</button></div>
       <div id="timeSettings" class="time-settings"><button type="button" class="icon-button" aria-label="Time settings" title="Time settings" aria-expanded="false" aria-controls="timeSettingsPanel">${icon('settings')}</button>
         <div id="timeSettingsPanel" class="time-settings-panel surface" role="group" aria-label="Time settings" hidden>
@@ -103,6 +104,7 @@ app.innerHTML = `
       <button class="round-tool" data-panel="characterPanel" aria-label="Character" aria-expanded="false">${icon('heart')}<span class="icon-label">Character</span></button>
     </nav>
     <nav class="icon-rail right-rail" aria-label="World tools">
+      <button class="round-tool" data-panel="intelligencePanel" aria-label="Intelligence calls" aria-expanded="false">${icon('spark')}<span class="icon-label">Intelligence calls</span></button>
       <button id="worldAgentToggle" class="round-tool" data-panel="worldAgent" aria-label="World agent" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="10" r="7"/><path d="m8 17-2 4h12l-2-4M10 5l-1 3m7 3-2 2"/></svg><span class="icon-label">World agent</span></button>
       <button class="round-tool" data-panel="fieldPanel" aria-label="In View" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="icon-label">In View</span></button>
     </nav>
@@ -120,6 +122,7 @@ app.innerHTML = `
           .join('')}
       </div><div class="dock-spacer"></div><div class="dock-side dock-right">
         <section id="fieldPanel" class="dock-panel surface" aria-label="In View" hidden><header><h2 id="fieldHeading">In View</h2><button class="icon-button" data-panel-close="fieldPanel" aria-label="Close visible panel">×</button></header><div id="fieldContent" class="panel-content"></div></section>
+        <section id="intelligencePanel" class="dock-panel surface intelligence-calls" aria-label="Intelligence calls" hidden><header><h2>Intelligence calls</h2><button class="icon-button" data-panel-close="intelligencePanel" aria-label="Close intelligence calls">×</button></header><div class="panel-content"></div></section>
         <section id="worldAgent" class="world-agent dock-panel surface" aria-label="World agent" hidden></section>
       </div>
     </div>
@@ -166,6 +169,7 @@ const messageInput = byId<HTMLTextAreaElement>('message');
 messageInput.value = initialDraft.text;
 const timeSettings = new TimeSettings(byId('timeSettings'), (message) => toast(message, true));
 const dock = new PanelDock(byId('panelDock'));
+const intelligencePanel = new IntelligencePanel(byId('intelligencePanel'));
 const worldAgents = new WorldAgentPanel(byId('worldAgent'), (open) => dock.set('worldAgent', open));
 const quickActions = new QuickActions(
   byId('quickActions'),
@@ -328,10 +332,11 @@ function chooseEntity(
 let inspectedMind: GodMindView | null = null;
 let mindError = '';
 let mindRequest = 0;
+let mindCheckedAt = 0;
 function mindMarkup(): string {
   if (!inspectedMind) return `<p class="small-note">${escape(mindError)}</p>`;
   const mind = inspectedMind;
-  return `<h3>${escape(mind.name)} · Inner world</h3><h3>Thoughts</h3>${
+  return `<h3>${escape(mind.name)} · Inner world</h3><details><summary>Accepted About me · revision ${mind.revision}</summary><pre>${escape(mind.acceptedText ?? 'Unavailable')}</pre></details><details><summary>Experiences, obligations and learned skills</summary><pre>${escape(JSON.stringify({ experiences: mind.experiences, commitments: mind.commitments, skills: mind.skills, rest: mind.rest }, null, 2))}</pre></details><h3>Thoughts</h3>${
     mind.thoughts
       .slice()
       .reverse()
@@ -339,7 +344,7 @@ function mindMarkup(): string {
         (t) => `<p><small>${escape(t.kind)} · ${escape(t.source)}</small><br>${escape(t.text)}</p>`,
       )
       .join('') || '<p class="small-note">No thoughts recorded yet.</p>'
-  }${mind.documents
+  }${mind.legacyThoughts?.length ? `<details><summary>Legacy thought audit</summary><pre>${escape(JSON.stringify(mind.legacyThoughts, null, 2))}</pre></details>` : ''}${mind.documents
     .map(
       (d) =>
         `<details><summary>${escape(d.title)}</summary><p style="white-space:pre-wrap">${escape(d.text)}</p>${mind.records
@@ -563,6 +568,7 @@ function render(): void {
         : 'In the wild';
   quickActions.update(view, connected);
   worldAgents.setWorld(view.worldId);
+  intelligencePanel.setWorld(view.worldId);
   const saved = byId('saveStatus');
   saved.textContent = view.persistence.status === 'saved' ? 'SAVED' : 'SAVE ERROR';
   saved.title = view.persistence.message;
@@ -663,6 +669,30 @@ function acceptState(next: GameView): void {
     mindRequest++;
   }
   view = next;
+  intelligencePanel.setAccess(next.godMode !== false);
+  if (next.godMode === false) {
+    inspectedMind = null;
+    mindRequest++;
+  }
+  if (inspectedMind && !byId('characterPanel').hidden && Date.now() - mindCheckedAt > 2000) {
+    mindCheckedAt = Date.now();
+    const request = ++mindRequest;
+    const worldId = next.worldId;
+    void post<{ ok: boolean; mind?: GodMindView }>('/api/god/mind', {
+      actorId: inspectedMind.actorId,
+    })
+      .then((result) => {
+        if (request !== mindRequest || worldId !== view?.worldId) return;
+        inspectedMind = result.ok ? (result.mind ?? null) : null;
+        renderPanel();
+      })
+      .catch(() => {
+        if (request === mindRequest) {
+          inspectedMind = null;
+          renderPanel();
+        }
+      });
+  }
   if (!sceneStartupFailed) {
     try {
       if (!scene) {
@@ -772,6 +802,7 @@ app.addEventListener('click', (event) => {
   }
   if (target.hasAttribute('data-deselect')) chooseEntity(null);
   if (target.dataset.panel) {
+    if (target.dataset.panel === 'intelligencePanel') void intelligencePanel.refresh();
     if (target.dataset.panel === 'worldAgent' && byId('worldAgent').hidden) worldAgents.open();
     else dock.toggle(target.dataset.panel);
   }

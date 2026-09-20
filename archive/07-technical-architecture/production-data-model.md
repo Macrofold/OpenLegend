@@ -2,7 +2,26 @@
 
 Status: **proposed production implementation specification**, September 19, 2026. Requested in the database-design side conversation. This establishes the target persistence and query boundaries before further database-dependent features are built. It does not implement tables, migrations, MCP tools, hosting, or capacity guarantees. The executable prototype remains [documented separately](../../docs/architecture.md).
 
-This document owns canonical records, identities, invariants and transaction boundaries. [Data queries and MCP](data-queries-and-mcp.md) owns the durable query interface. [Data delivery and scale](data-delivery-and-scale.md) owns migration, deployment, retention, capacity evaluation and rollout. Together they refine the logical storage section of [system architecture](system-architecture.md#4-world-representation-and-persistence). Existing [declaration](declarations-and-evolution.md), [memory](../03-design-proposals/memory-storage-and-retrieval.md), [governance](../03-design-proposals/invention-governance-and-ownership.md), [workshop](../03-design-proposals/world-agent-and-workshop.md) and [billing](billing-and-usage-reporting.md) documents continue to own their product semantics.
+This document owns canonical records, identities, invariants and transaction boundaries. [Data queries and MCP](data-queries-and-mcp.md) owns the durable query interface. [Data delivery and scale](data-delivery-and-scale.md) owns migration, deployment, retention, capacity evaluation and rollout. Together they refine the logical storage section of [system architecture](system-architecture.md#4-world-representation-and-persistence). Existing [declaration](declarations-and-evolution.md), [memory](../../docs/memory-architecture.md), [governance](../03-design-proposals/invention-governance-and-ownership.md), [workshop](../03-design-proposals/world-agent-and-workshop.md) and [billing](billing-and-usage-reporting.md) documents continue to own their product semantics.
+
+## Implementation scope: baseline versus conditional expansion
+
+**Initial target:** one server application, one PostgreSQL database and one authoritative simulation writer per world, with bounded background work. Module names below describe code/data ownership, not separately deployed services. Implement records only for supported gameplay and cognition. Preserve world/actor scope, atomic state changes, durable jobs and receipts, spending reconciliation, versioned migrations and tested recovery from the start.
+
+**Conditional expansion** means retained design guidance, not an immediate implementation obligation. Activate it only for a named feature or measured operational need, recording the trigger and acceptance evidence in the checklist below. The later sections retain the detailed constraints that apply when that capability is enabled.
+
+| Area | Baseline | Conditional expansion and activation condition |
+| --- | --- | --- |
+| Service and database boundaries | Modules and transactions in one application/database | Separate control/content/work services, cross-service reconciliation and separate credentials/pools when deployment or isolation requires them |
+| Authority and placement | One writer per world, expected revision/generation checks and duplicate-command protection | Lease renewal, worker assignment, shard directory/moves and sector transfer protocols when multiple workers can own or take over worlds/sectors |
+| Recovery and history | Persist current records atomically; retain required receipts/evidence; test backup/restore | Generic state-change replay, checkpoint watermark vectors and cold archive manifests when historical reconstruction or measured recovery/retention needs justify them |
+| Delivery | Same-transaction local updates; bounded durable jobs for asynchronous awareness and paid work | General consumer/outbox infrastructure for independently delivered effects; cross-service messaging when services actually split |
+| Content and accounts | Supported definitions, immutable versions, admission and current access checks | Full tenancy, creator libraries, redistribution grants, packs and quarantine protocols when those product features launch |
+| Queries and storage | Scoped queries used by current features; ordinary tables and necessary indexes | Broad query compiler/MCP datasets, partitions, replicas, external search and spatial engines when a consumer or measured workload needs them |
+| Future mechanics | Records for supported people, possessions, actions and memory | Anatomy, institutions, advanced physical contributions and speculative record families with their consuming mechanics |
+| Hosting | A recoverable development deployment | Managed failover, regional placement and release operations before a hosted availability promise or external release requires them |
+
+Cognition keeps its full accepted behavior in [memory architecture](../../docs/memory-architecture.md). These scope labels defer infrastructure, not memory privacy, required embeddings, atomic accepted-text publication or behavioral requirements. Detailed cognition work remains in [CR01–CR12](../../docs/maintainers/cognition-redesign.md); the checklist here owns persistence delivery and links those tasks rather than duplicating them.
 
 ## 1. Decisions this design establishes
 
@@ -31,9 +50,9 @@ These are concrete engineering recommendations for the next implementation, not 
 | `work`    | Game workflow coordinator                  | Game operations tables, outside rewindable state | Distributed workers/queue behind the same attempt identity                  |
 | `read_v1` | Query service                              | Views/projection tables, read-only to consumers  | Replica/search/analytics implementations behind unchanged contracts         |
 
-Namespaces are ownership boundaries, not mandatory services to deploy separately. Cross-module writes pass through their application interfaces. In the initial cluster, use real foreign keys inside each future placement unit. Across `control`, `content`, `work` and world shards, use validated references, immutable local pins, durable outbox messages and reconciliation; do not make future shard extraction depend on synchronous cross-database joins.
+Namespaces are ownership boundaries, not mandatory services to deploy separately. Cross-module writes pass through their application interfaces. In the initial cluster, use real foreign keys inside each future placement unit. When those modules are deployed across databases, use validated references, immutable local pins, durable outbox messages and reconciliation; do not make shard extraction depend on synchronous cross-database joins. This is conditional expansion: the baseline may use local transactions and constraints without implementing a distributed publication protocol.
 
-Object storage holds immutable large assets, content artifacts, checkpoints and cold journal segments. PostgreSQL holds metadata, authorization and committed references. Redis, a vector engine, a graph database, Kafka and a warehouse are not launch prerequisites. PostgreSQL full-text search is the initial prose index. Optional search/vector indexes are derived and rebuildable.
+When large artifacts or cold archives are needed, object storage holds their immutable bytes; it is not required merely to store ordinary memory text. PostgreSQL holds metadata, authorization and committed references. Redis, a vector engine, a graph database, Kafka and a warehouse are not launch prerequisites. PostgreSQL full-text search is the initial prose index. Embedding retrieval is required for arbitrary-intent recall; its vector index is derived and rebuildable. Persist source/actor/disclosure scope, source revision and embedding-model version with vectors. Model, dimensions, metric and storage extension remain undecided; no separate vector service or `pgvector` adoption is implied.
 
 ```mermaid
 flowchart LR
@@ -44,9 +63,11 @@ flowchart LR
   Entity --> Placement[Placement and inventory]
   Entity --> Process[Ongoing process]
   Process --> Event[Committed event]
-  Event --> Observation[Actor-scoped observation]
-  Observation --> Memory[Memory and evidence]
-  Memory --> Belief[Beliefs and commitments]
+  Event --> Awareness[Actor-scoped event awareness]
+  Awareness --> Memory[Memory and evidence]
+  Memory --> Reflection[Background file reflection]
+  Reflection --> InnerWorld[Accepted inner-world text]
+  Memory --> Commitment[Native commitments and learned knowledge]
   Version --> Knowledge[Actor knowledge]
   Version --> Pack[Pack release]
 ```
@@ -73,7 +94,7 @@ In table descriptions below, `W` means a required `world_id UUID`, and `id` mean
 
 Mutable canonical records carry `row_revision BIGINT`, `created_at TIMESTAMPTZ`, `updated_at TIMESTAMPTZ` and a last commit reference where applicable. Revisions increase under their owner; wall timestamps do not resolve concurrency. Immutable records have creation/provenance and schema versions, not mutable revision counters. Required fields are `NOT NULL`; optional fields are explicitly nullable. Tombstones preserve identity references after death, consumption, destruction or retirement.
 
-Store simulation time as signed `BIGINT` microseconds relative to a world clock origin. `sim_clock_version` pins its interpretation. Birth, age, due dates, elapsed work and fuel use simulation time; service deadlines, lease expiry, billing and retention use real UTC timestamps. Pauses and rate changes are committed configuration events. Do not use accelerated time as an event partition key.
+Store simulation time as signed `BIGINT` microseconds relative to a world clock origin. `sim_clock_version` pins its interpretation. Birth, age, due dates, elapsed work and fuel use simulation time; memory age, hourly consolidation, daily rest and dream eligibility also use simulation time. Service deadlines, lease expiry, billing and operational archive retention use real UTC timestamps. Pauses and rate changes are committed configuration events. Do not use accelerated time as an event partition key.
 
 Quantities use integral quanta with a pinned unit/scale definition: for example count units or a declared mass quantum. `quantity_q BIGINT >= 0` avoids fractional item ambiguity. Checked conversion/overflow is required; large counters and 64-bit values cross JavaScript/JSON boundaries as decimal strings. Continuous simulation values use the registered component's numeric representation, bounds, precision and units; reject non-finite values. Currency uses exact integers/decimal strings with an explicit currency and scale, never floating-point totals.
 
@@ -88,6 +109,8 @@ Frequently queried fields are first-class columns, or deliberately indexed expre
 Unknown, known, not applicable and unsupported remain distinct values according to the component contract. A missing moisture component is not equivalent to zero moisture. Text descriptions and unregistered JSON fields never acquire simulation authority.
 
 ## 4. Accounts, worlds and simulation ownership
+
+**Conditional expansion:** shard locators, tenant membership hierarchies, worker leases and distributed grant propagation apply when hosting/ownership features consume them. Start with the current access model, world identity and one writer. Keep expected revision/generation checks; a lease service is not required for a single writer. The catalog below reserves the larger model without requiring every table initially.
 
 The catalog identifies the complete target record families. Delivery phases specify which are implemented first; reserved families should not become empty speculative tables without a consuming feature.
 
@@ -106,9 +129,9 @@ The catalog identifies the complete target record families. Delivery phases spec
 | `sim.region_chunks`                     | `(W,sector_id,chunk_key)`; terrain schema/version, compact tile/height data or blob pin, revision                                                                  | Coarse bounded chunks, not one row per terrain cell; change and stream chunks independently                                                                           |
 | `sim.environment_cells`                 | `(W,sector_id,cell_key,family_id)`; family schema, state JSONB, last integrated time                                                                               | Weather/field values stored only when supported; spatial indexes serve relevant cells                                                                                 |
 
-Effective world grants used for admission are installed with a revision in the world shard. Authorization checks cannot accept an indefinitely stale membership cache. A revocation completes only after active authorities are fenced or acknowledge the new minimum grant revision; unavailable authorities stop accepting relevant commands. Account lookup failure never means broader permissions.
+For distributed grant enforcement, effective world grants used for admission are installed with a revision in the world shard. Authorization checks cannot accept an indefinitely stale membership cache. A revocation completes only after active authorities are fenced or acknowledge the new minimum grant revision; unavailable authorities stop accepting relevant commands. Account lookup failure never means broader permissions.
 
-The local grant projection is `work.world_access_grants`, keyed by `(world_id,principal_kind,principal_id,capability)`, with issuer/tenant reference, source grant revision, status, valid interval and synchronization watermark. It lives beside the world for enforcement but is outside rewindable checkpoints. It is rebuilt from control authority, not independently edited by the simulation. Restore/fork reauthorizes access and controller leases instead of reinstating revoked accounts from a historical save.
+When a separate control authority supplies grants, the local grant projection is `work.world_access_grants`, keyed by `(world_id,principal_kind,principal_id,capability)`, with issuer/tenant reference, source grant revision, status, valid interval and synchronization watermark. It lives beside the world for enforcement but is outside rewindable checkpoints. It is rebuilt from control authority, not independently edited by the simulation. Restore/fork reauthorizes access and controller leases instead of reinstating revoked accounts from a historical save.
 
 ## 5. Entities, people, traits and relationships
 
@@ -123,7 +146,7 @@ The local grant projection is `work.world_access_grants`, keyed by `(world_id,pr
 | `sim.entity_relations`  | `(W,relation_id)`; type pin, source/target entity FKs, role, bounded configuration, effective state                               | Index both directions `(W,source_id,type_id)` and `(W,target_id,type_id)`; relation contract defines symmetry, cardinality and permitted cycles                                       |
 | `sim.body_conditions`   | `(W,condition_id)`; actor/part refs, condition definition pin, severity/state, cause/evidence, process ref                        | Future anatomy/injury family; body parts use ordinary entity identities and admitted part relations                                                                                   |
 | `sim.group_memberships` | `(W,group_entity_id,member_entity_id,role_id)`; effective interval/status                                                         | Future households/institutions; authoritative membership is distinct from affection or a belief about membership                                                                      |
-| `mind.relationships`    | `(W,observer_actor_id,other_entity_id)`; familiarity, trust, affection/fear where supported, assessment, evidence links, revision | Directional, sparse, scoped private appraisal; no dense all-person pair matrix                                                                                                        |
+| `mind.relationships`    | `(W,observer_actor_id,other_entity_id)`; familiarity, trust, affection/fear where supported, assessment, evidence links, revision | Directional, sparse native mechanical facets; narrative assessment derives from accepted inner-world text, never a second writable biography                                                                                                        |
 
 `entity_components` is an extension store, not a second owner for `actor_vitals`, placement, quantity or inventory. A component registry records the native table adapter or JSON adapter for each family. Query views unify them. Promoting a family to native columns transfers ownership through a migration; both stores never independently update the same quantity.
 
@@ -169,33 +192,48 @@ One family owns a changing property. Contributions from rain, drying and contact
 
 ## 8. Minds, evidence, knowledge and conversation
 
+The canonical [memory architecture](../../docs/memory-architecture.md) owns these semantics. These are proposed tables, not a delivered migration. Accepted text, raw experience, summaries and native obligations have distinct owners:
+
+| Table | Key and essential fields | Invariants / indexes |
+| --- | --- | --- |
+| `mind.event_awareness` | `(W, actor_id, EventRef)`; perceived English text or scoped projection, modality/detail, awareness sequence and game time | One actor/event awareness binding; includes the player; actor/time/sequence and source-event indexes; never an unrestricted join to hidden event payload |
+| `mind.inner_world` | `(W, actor_id)`; one current `text` value, revision, accepted workspace snapshot ref, publication job ID | Single current accepted row per actor; atomic publication after bounded file validation; previous text remains readable during reflection |
+
+`mind.memory_entries.narrative` is required English text. Add source coverage and consolidation status sufficient to summarize the union of raw memories and aware events once per actor. `mind.event_awareness` specializes the experiential audience join; existing `journal.event_audiences` must reuse it for actor witnessing rather than maintain a second independent awareness authority. Administrative grants are separate and never confer character knowledge. `mind.observations` can retain non-event exposures/delivery evidence, but must not duplicate every aware event as another recallable raw memory.
+
+Hourly jobs consolidate experiences older than six game hours; raw recall uses the latest six hours, selected alongside eligible summaries. All source IDs, watermarks and revisions remain repository/job metadata. Consolidation does not rewrite the accepted inner-world text: background reflection authors files, then the server publishes their combined text. Existing typed obligations, knowledge and native mechanical facets retain authority independently of prose. The query projections below must not create another writable narrative authority or a required mind-patch response for speech. [CR05–CR07 and CR11](../../docs/maintainers/cognition-redesign.md) cover schema, retention, snapshot recovery and legacy import.
+
 All mind tables are world- and actor-scoped. Character traits describe the fictional person; the mind's goals, memories and appraisals describe its present perspective. Keeping these independently queryable is necessary for retrieval and author inspection without loading every resident.
 
 | Table                          | Key and essential fields                                                                                                                                                   | Invariants / indexes                                                                                                           |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `mind.minds`                   | `(W,actor_id)`; mind stream, revision, observation watermark, plan generation, compact working context, retention policy/version                                           | Small current header, not a biography; no private copy of canonical inventory/health                                           |
-| `mind.observations`            | `(W,actor_id,observation_id)`; actor observation sequence, source EventRef, perceived payload/schema, source kind, simulation/recording times, confidence, delivery status | Unique `(W,actor_id,source_delivery_key)`; index `(W,actor_id,observation_seq)`; payload may reveal less than the source event |
-| `mind.memory_entries`          | `(W,actor_id,memory_id)`; kind, observed/heard/inferred/imagined attribution, narrative, salience, confidence, time range, retention state, revision                       | Index `(W,actor_id,retention_state,kind,sim_time,memory_id)` plus scoped full-text search; narrative/actor byte quotas         |
+| `mind.observations`            | `(W,actor_id,observation_id)`; actor observation sequence, optional source EventRef/delivery binding, non-event perceived payload/schema, source kind, simulation/recording times, confidence, delivery status | Unique `(W,actor_id,source_delivery_key)`; index `(W,actor_id,observation_seq)`; event deliveries reference awareness; do not copy a recallable event payload |
+| `mind.memory_entries`          | `(W,actor_id,memory_id)`; raw-personal/consolidated kind, source coverage and consolidation watermark, observed/heard/inferred/imagined attribution, required English narrative, salience, confidence, time range, retention state, revision                       | Index `(W,actor_id,retention_state,kind,sim_time,memory_id)` plus scoped full-text search; narrative/actor byte quotas         |
 | `mind.memory_entities`         | `(W,actor_id,memory_id,referenced_entity_id,role)`                                                                                                                         | Composite FK to the same actor's memory; index `(W,actor_id,referenced_entity_id,memory_id)`                                   |
 | `mind.evidence_sources`        | `(W,actor_id,evidence_id)`; authorized observation/memory ref, provenance summary, optional journal locator, availability/redaction state                                  | Compact source capsule can outlive hot journal payload; a locator is not authorization to read the underlying event            |
 | `mind.memory_links`            | `(W,actor_id,link_id)`; source memory, target memory/evidence, relation type                                                                                               | Supports/contradicts/derived-from/supersedes; explicit target-kind CHECK and same-actor FKs                                    |
-| `mind.goals`                   | `(W,actor_id,goal_id)`; objective, priority, status, parent goal, evidence, due time                                                                                       | Sparse active goal tree; bounded depth; plan generation invalidates old execution suggestions                                  |
+| `mind.goals`                   | `(W,actor_id,goal_id)`; objective, priority, status, parent goal, evidence, due time                                                                                       | Native executable plan state or a derived index of the accepted inner-world revision; bounded depth; never independent authored prose                                  |
 | `mind.commitments`             | `(W,commitment_id)`; attributed promise/obligation, status, due simulation time, evidence, revision                                                                        | No commitment from an unsupported paraphrase; index active due commitments; creation quota protects finite storage             |
 | `mind.commitment_participants` | `(W,commitment_id,actor_id,role)`; participant-visible interpretation/access                                                                                               | Each participant's knowledge/access explicit; a secret promise does not become publicly readable through a join                |
 | `mind.known_capabilities`      | `(W,actor_id,capability_id,version_id)`; awareness/proficiency, learned time/source, evidence, compatibility state                                                         | Knowing a version is separate from installed support or owning the output; index `(W,actor_id,capability_id)`                  |
-| `mind.appraisals`              | `(W,actor_id,appraisal_id)`; type, cause/target refs, intensity, decay, evidence, stacking key                                                                             | Temporary affect separate from stable traits; repeated observations do not create unlimited duplicate fear                     |
+| `mind.appraisals`              | `(W,actor_id,appraisal_id)`; type, cause/target refs, intensity, decay, evidence, stacking key                                                                             | Supported native mechanical affect or a derived accepted-text index; separate from stable traits; bounded stacking prevents duplicate fear                     |
 | `mind.conversations`           | `(W,conversation_id)`; modality, lifecycle, start/end, current turn generation                                                                                             | Persistent turn context independent of a provider session                                                                      |
-| `mind.conversation_turns`      | `(W,conversation_id,turn_id)`; speaker, committed speech EventRef, text/artifact ref, turn sequence, interruption state                                                    | Speech committed once; NPC private reflection stored separately; audio media has separate retention                            |
-| `mind.conversation_audiences`  | `(W,conversation_id,turn_id,actor_id)`; permitted modality/content scope                                                                                                   | Per-turn audience; joining later does not reveal earlier private speech                                                        |
+| `mind.conversation_turns`      | `(W,conversation_id,turn_id)`; speaker, committed speech EventRef, text/artifact ref, turn sequence, interruption state                                                    | Speech committed once; text references the shared event/projection without duplicate recall; private reflection and audio retention are separate                            |
+| `mind.conversation_audiences`  | `(W,conversation_id,turn_id,actor_id)`; permitted modality/content scope                                                                                                   | Per-turn view of event awareness; no second audience authority or retroactive access for later joiners                                                        |
 | `mind.memory_jobs`             | `(W,actor_id,job_id)`; type, input watermark/revisions, status, result proposal, execution ref                                                                             | Idempotent ingestion/consolidation; job completion never overwrites newer observations                                         |
 
-Directional `mind.relationships` is defined in section 5; evidence joins are actor-scoped like memory links. Beliefs use `memory_entries` with explicit attribution and support/contradiction links. More structured proposition fields can be added under a schema when actual queries need them; do not introduce a separate knowledge-graph service initially.
+Directional `mind.relationships` is defined in section 5; evidence joins are actor-scoped like memory links. Subjective beliefs live in `mind.inner_world.text`; attributed raw testimony and consolidated experience remain in the experience stores. Queryable belief fields, goal prose and relationship assessments derive from the accepted snapshot revision if needed, with support/contradiction links retained. Legacy belief rows migrate without loss, rather than remaining a second prose authority. Do not introduce a separate knowledge-graph service initially.
+
+`mind.thought_history` stores world/actor/job identity, accepted snapshot revision, simulation/recording time and bounded presentation thoughts (at most 20 words each, finite count per job). It is god-only and never an extra NPC recall source. Rest/sleep episode identity, accumulated daily rest and continuous sleep time belong to saved native actor state; the daily accounting policy remains an explicit implementation choice.
+
+Inner-world publication atomically validates the staged file set, accepted revision and job identity, replaces the one current text row, and appends its short thought presentation. Failed or duplicate export cannot partially publish, and concurrent raw observations remain untouched. Workspace staging is editable; only accepted PostgreSQL text is used by decisions.
 
 ### Reliable observation and memory updates
 
-The later [perception and attention proposal](perception-and-attention.md#10-modular-records-execution-and-recovery) specializes these records: retained `mind.observations` preserve modality, perceived detail/intelligibility, recognition uncertainty, event-time origin evidence and relevant description/policy revisions. Historical far observations must not acquire today's near detail. Sensory profiles belong to versioned definitions; emission state belongs to committed events/processes. Semantic object/event indexes and actor interest subscriptions are derived, versioned projections with scoped queries and rebuild behavior, not second authoritative inventories or permission grants. Future schema migrations must define reminder/encounter delivery keys and retention explicitly; none are implemented by this documentation addition.
+The later [perception and attention proposal](perception-and-attention.md#10-modular-records-execution-and-recovery) specializes these records: event-aware projections and non-event `mind.observations` preserve modality, perceived detail/intelligibility, recognition uncertainty, event-time origin evidence and relevant description/policy revisions. Historical far observations must not acquire today's near detail. Sensory profiles belong to versioned definitions; emission state belongs to committed events/processes. Semantic object/event indexes and actor interest subscriptions are derived, versioned projections with scoped queries and rebuild behavior, not second authoritative inventories or permission grants. Future schema migrations must define reminder/encounter delivery keys and retention explicitly; none are implemented by this documentation addition.
 
-The world commits the event and a durable delivery envelope together. The envelope records audience and the observation policy/version at event time, or an immutable bounded observation payload; it does not recompute yesterday's listeners from today's positions. Ingestion may be asynchronous and is idempotent per actor/delivery key. Active promises and recent addressed speech must be available to context through a bounded pending-delivery overlay or a wait for the actor watermark; search-index lag cannot erase them.
+For an event with at least one aware actor, the world commits the shared experiential event and durable actor-awareness delivery envelope together. An unwitnessed transition still commits authoritative state/recovery evidence without an experiential event row. The envelope records audience and the observation policy/version at event time, or an immutable bounded observation payload; it does not recompute yesterday's listeners from today's positions. Ingestion may be asynchronous and is idempotent per actor/delivery key. Active promises and recent addressed speech must be available to context through a bounded pending-delivery overlay or a wait for the actor watermark; search-index lag cannot erase them.
 
 Routine observation ingestion and consolidation lock the relevant mind revision, not the world's global clock. A consolidation proposal records input IDs/revisions and observation watermark. Apply only compatible changes; append-only observations after that watermark remain intact. World actions still go through the world authority even when the mind proposes them.
 
@@ -235,6 +273,8 @@ A recipe version declares material roles, quantities, work, supported outputs, p
 
 ### Publication and activation across services
 
+**Conditional expansion:** this protocol applies to a separately owned catalog and asynchronous account/pack projections. Initially, supported content admission can use one local transaction with immutable definitions, validation and an activation receipt. Full rights/pack records become required with those features; existing access and admission checks remain mandatory.
+
 1. Store candidate bytes and artifacts durably; validate scope, dependencies, compatibility and contribution terms. Register account attribution/rights and a durable creator capsule before making it eligible for world installation.
 2. Stage authorized immutable local pins. Missing content, rights evidence or migration evidence keeps the candidate uninstalled.
 3. At a world boundary, validate the current policy/lock and expected manifest, migrate or finish incompatible processes, and commit pins/manifest/activation receipt and events together.
@@ -248,7 +288,9 @@ Retain active versions, versions referenced by instances/processes/checkpoints, 
 
 ## 10. Journal, commits, history and checkpoints
 
-Separate the high-level player/creator journal from the lower-level changes needed to restore a recent checkpoint. An event such as `item.crafted` describes a meaningful committed outcome. A component update such as remaining work is a state change and need not create a visible event each tick.
+Experiential `journal.world_events` are retained only when at least one actor had event-time awareness. This changes coverage, not simulation persistence: unwitnessed occurrences still update canonical state and any required commit/change/receipt records. Creator queries must label absent experiential history honestly; system/accounting audit records remain separate.
+
+Separate the high-level player/creator journal from current saved state. Generic state-change replay, checkpoint vectors and archive segments below are conditional on offering reconstruction or requiring that recovery strategy; baseline recovery may restore transactional current records from verified backups without replay. Required commit identities, receipts, awareness and retained memory evidence are still durable. When checkpoint replay is enabled, separate its lower-level changes from the high-level journal. An event such as `item.crafted` describes a meaningful committed outcome. A component update such as remaining work is a state change and need not create a visible event each tick.
 
 | Table                       | Key and essential fields                                                                                                                                                  | Invariants / indexes                                                                                                                        |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -256,7 +298,7 @@ Separate the high-level player/creator journal from the lower-level changes need
 | `journal.state_changes`     | `(W,stream_id,commit_seq,change_no)`; typed record key, before/after revision, operation, replacement/patch payload                                                       | Exactly specified replay semantics; FK to retained batch; no generated code in a patch                                                      |
 | `journal.world_events`      | `(W,journal_month,event_id)`; stream/commit ref, ordinal, simulation time, recorded time, type/category, actor, outcome, schema, payload, causation refs, audience policy | `journal_month` is first UTC day of recorded month; index `(W,journal_month,recorded_at,event_id)` and actor/type filters                   |
 | `journal.event_entities`    | `(W,journal_month,event_id,entity_id,role)`                                                                                                                               | Participant/target lookup; index `(W,entity_id,journal_month,event_id)`; same retention segment as event                                    |
-| `journal.event_audiences`   | `(W,journal_month,event_id,audience_entry_id)`; actor/grant snapshot, content visibility                                                                                  | Event-time perception and current read permission are both enforced; no broad role label that grants later joiners earlier speech           |
+| `journal.event_audiences`   | `(W,journal_month,event_id,audience_entry_id)`; administrative grant snapshot/content visibility; actor witnessing is a view of `mind.event_awareness`                                                                                  | Event-time perception and current read permission are both enforced; no broad role label that grants later joiners earlier speech           |
 | `journal.delivery_outbox`   | `(W,message_id)`; source commit, type/destination, versioned payload, claim/lease, attempt state                                                                          | Insert with source changes; at-least-once delivery; recipient deduplicates message ID; no claim of exactly-once network delivery            |
 | `journal.consumer_receipts` | `(W,consumer_id,message_id)`; outcome/watermark                                                                                                                           | Deduplication retained through redelivery horizon; delivery failure remains inspectable                                                     |
 | `journal.checkpoints`       | `(W,checkpoint_id)`; stream watermark vector, manifest/schema/build pins, checksummed chunk refs, lifecycle                                                               | Consistent committed cut; excludes dispatch ledgers and external account rights                                                             |
@@ -264,7 +306,7 @@ Separate the high-level player/creator journal from the lower-level changes need
 
 An `EventRef` includes world, journal month and event ID, encapsulated by the query API. This permits later time partitioning without pretending PostgreSQL has a global unique key across arbitrary time partitions. Local event uniqueness also includes stream/commit/ordinal within the recorded month; the commit writer derives month once and deduplicates the entire batch before generating events. A replay never chooses a new month for an old event. PostgreSQL requires partition keys in partitioned unique/primary constraints; see [partitioning limitations](https://www.postgresql.org/docs/18/ddl-partitioning.html#DDL-PARTITIONING-DECLARATIVE-LIMITATIONS).
 
-Initially use ordinary event tables with these partition-compatible keys. When volume warrants it, migrate to monthly partitions, with matching participant/audience retention segments. Do not create a partition per actor or one tiny table per world. Commit headers/state changes can instead hash-partition by world because their uniqueness keys include it; garbage-collect checkpoint-covered ranges in bounded jobs. These are different workloads and need not share a partition scheme.
+Use ordinary event tables initially. Partition-compatible keys below preserve a possible expansion path; partition administration is conditional on measured volume. When volume warrants it, migrate to monthly partitions, with matching participant/audience retention segments. Do not create a partition per actor or one tiny table per world. Commit headers/state changes can instead hash-partition by world because their uniqueness keys include it; garbage-collect checkpoint-covered ranges in bounded jobs. These are different workloads and need not share a partition scheme.
 
 Long-lived records reference retained evidence capsules or typed journal locators, not hard FKs into expiring event payload partitions. Event child rows are inserted atomically and checked by the journal writer; their retention-coupled link is an explicitly documented application invariant, so archive/detach is possible without cascading away memory. Durable canonical entity/content references retain real local FKs. No arbitrary orphaning is permitted; consistency audits verify archive manifests and child coverage before removal.
 
@@ -294,6 +336,8 @@ One budgeting service owns all applicable cap rows for a dispatch and reserves t
 
 ### World commit
 
+For the baseline, the authority stream below is the single world writer and its saved revision/generation. Commit changed current records, required receipts/events and pending asynchronous work together. A generic replay patch log, multiple authority heads and a renewable worker-lease protocol are conditional; the transaction, duplicate detection and ambiguous-commit reconciliation are not.
+
 1. Route by world and relevant authority stream. Authenticate the intention and capture current policy/controller/definition versions.
 2. Compute deterministic changes from a consistent in-memory state. Supply randomness, time and command identity explicitly. No model/network calls or artifact uploads occur while holding the transaction.
 3. Begin a short database transaction; lock the stream head and required inventory/process rows in stable order. Verify writer epoch/lease, expected head, command identity and required revisions. Coordinated operations spanning local streams lock all involved heads in stable order.
@@ -315,7 +359,7 @@ Initially use explicit row locks plus expected revisions with PostgreSQL's ordin
 
 A memory job cannot write health; a definition publication cannot transfer inventory; an account-library projection cannot activate a rule. These restrictions are enforced by repository permissions and application interfaces, not comments alone.
 
-Restore current state from checkpoint plus committed changes after its watermark without re-running AI or external effects. Use replay-aware consumers and retained message receipts so restoration does not redeliver old account/billing operations. An intentional timeline rewind creates a new world namespace or explicit new authority generation, while the non-rewindable control and work records persist. Deterministic resimulation requires additional versioned inputs and tests; restoring saved outcomes does not establish it.
+When checkpoint replay is enabled, restore current state from checkpoint plus committed changes after its watermark without re-running AI or external effects. Use replay-aware consumers and retained message receipts so restoration does not redeliver old account/billing operations. An intentional timeline rewind creates a new world namespace or explicit new authority generation, while the non-rewindable control and work records persist. Deterministic resimulation requires additional versioned inputs and tests; restoring saved outcomes does not establish it.
 
 ## 13. Concrete walkthroughs
 
@@ -323,16 +367,53 @@ Restore current state from checkpoint plus committed changes after its watermark
 
 **Use a cloak as a roof.** Its identity and wetness component remain unchanged when placement becomes attached to a structure port. Support relations and exposure dependencies change. Rain updates the owning wetness component through admitted contributions. Dismantling changes placement back to a container or world position; damage and moisture remain. A new rule version requires migration or compatible pinned execution, never a fresh dry cloak.
 
-**Remember a promise.** Committed speech identifies speaker and listeners. Ada receives an attributed observation, then a commitment/evidence record protected by its policy. The creator can inspect the authorized record; another NPC cannot discover it through a world-wide journal join. Forgetting unrelated episodes does not delete the commitment; archival of the original speech marks source availability without inventing a quote.
+**Remember a promise.** Committed speech identifies speaker and listeners. Ada receives an attributed awareness binding to that speech, then a native commitment/evidence record protected by its policy; no duplicate raw event memory is required. The creator can inspect the authorized record; another NPC cannot discover it through a world-wide journal join. Forgetting unrelated episodes does not delete the commitment; archival of the original speech marks source availability without inventing a quote.
 
 **Copy a mechanics pack.** Resolve an immutable release, verify every permitted dependency/artifact, stage pins and activate under the destination's lock/profile policy. Copy definitions and their rights/provenance, not people or private memories. Instantiating starting people belongs to a separately authorized template operation with a new world namespace.
 
 ## 14. What is fixed and what can evolve
 
-Fix now: world-scoped identities, independent canonical record families, immutable versions and pins, quantity/placement ownership, explicit evidence and audiences, transactional batches/outbox, scoped stable query interfaces, separate non-rewindable accounting, and a measured migration path.
+Fix now: world-scoped identities, independently owned records for supported features, immutable versions and pins, quantity/placement ownership, explicit evidence and audiences, transactional batches and necessary durable asynchronous delivery, scoped stable query interfaces, separate non-rewindable accounting, and a measured migration path. Distributed outboxes, generic replay and service topology follow the conditional scope above.
 
 Remain configurable: numeric game balance, budgets, allowed schemas, indexed optional fields, retention tiers, worker counts, checkpoint frequency and database placement. Changing a schema still requires migration; a replaceable adapter does not make migrations free.
 
 Remain product decisions: human-private-record access by creators, exact sharing licenses/retention obligations, NPC authorship beneficiaries, ordinary lock versus an explicit owner exception, and shared-world time/absence behavior. Default to existing restrictions until those choices are recorded. They do not prevent implementing the structural model, but affected features must not launch with invented permission semantics.
 
 No claim is made that arbitrary globally coupled physics, unlimited mind histories or hundreds of thousands of simultaneous players can run in one transaction domain. The [scale plan](data-delivery-and-scale.md) specifies the feasible growth path and the boundaries that still require new engineering.
+
+
+## 15. Implementation checklist
+
+All items start open: this documentation change establishes scope, not implementation evidence. Check an item only with linked changes and relevant verification; record partial progress beneath it. Preserve unique findings and blockers in [maintainer TODO](../../docs/maintainers/TODO.md). D0–D6 in [data delivery](data-delivery-and-scale.md#8-sequenced-implementation-and-exit-gates) remain phase/acceptance definitions; this is their persistence status checklist, not a second cognition queue.
+
+### Baseline, in dependency order
+
+- [ ] PD01 — Define consumed records, scoped repository contracts and migration boundaries (D0; CR01).
+- [x] PD02 — Implement PostgreSQL connections, versioned migrations and the single-world-writer contract (D1).
+- [ ] PD03 — Persist supported state atomically with revisions, receipts and ambiguous-commit recovery (D1).
+- [ ] PD04 — Import existing saves losslessly and verify recovery before each store cutover (D1; CR11).
+- [ ] PD05 — Add durable bounded jobs, spending reconciliation and necessary asynchronous delivery (D1; CR02).
+- [ ] PD06 — Deliver scoped read queries alongside each consuming feature (D1/D2; CR03–CR04).
+- [ ] PD07 — Deliver awareness, memory, commitments and consolidation storage through CR05–CR06 (D2).
+- [x] PD08 — Deliver accepted inner-world publication and reflection scheduling storage through CR07–CR09 (D2).
+- [x] PD09 — Persist bounded trigger/stage diagnostics alongside each cognition slice (CR01–CR11).
+- [ ] PD10 — Verify retention, forgetting, access isolation, restart and backup restoration (D2; CR12).
+- [ ] PD11 — Measure baseline read/write performance and document actual delivery evidence (D1/D2).
+
+September 20 implementation: PostgreSQL uses a single-writer advisory lock, snapshot CAS and atomic `mind.inner_world` rows. Durable jobs/attempts/diagnostics and scoped current-state queries exist; the local import preserved full world digests and spending records. This is the consumed cognition subset, not the full normalized schema. PD03–PD07 retain broader recovery/normalization acceptance; PD10–PD11 remain open. See [evidence](../../docs/maintainers/TODO.md#september-20-native-jev-and-live-cognition).
+
+PD04 is repeated incrementally before switching each later store; diagnostics begin with routing, not after reflection. PD07–PD09 are integration checkpoints whose detailed tasks remain in cognition-redesign.md. Early CR02–CR04 work can use current permitted records behind the CR01 interfaces; accepted PostgreSQL publication requires PD02–PD04. No task here authorizes paid execution.
+
+### Conditional expansion — inactive until its trigger is recorded
+
+- [ ] PX01 — Expand query compilation, reports and MCP datasets for a named consumer (D3).
+- [ ] PX02 — Add full tenancy, authorship, rights, libraries and packs with those features (D4).
+- [ ] PX03 — Add checkpoint replay and archive manifests for explicit recovery/history requirements (D2 expansion).
+- [ ] PX04 — Add managed failover and release operations for the chosen hosted availability contract (D5).
+- [ ] PX05 — Split services and add distributed delivery when deployment/isolation requires it (D6).
+- [ ] PX06 — Add worker leases, placement and world moves when multiple authorities require coordination (D6).
+- [ ] PX07 — Add partitions, replicas or specialized indexes after measured bottlenecks (D6).
+- [ ] PX08 — Add sector authorities and cross-sector protocols after single-world limits are demonstrated (D6).
+- [ ] PX09 — Add reserved record families when their gameplay mechanics are implemented.
+
+For each conditional item, record **trigger, selected scope, dependencies and exit evidence** before implementation. An unchecked conditional item does not block baseline completion. These designs remain available; no unique requirement is discarded by deferring its activation.

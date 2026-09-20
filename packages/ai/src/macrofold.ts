@@ -17,6 +17,55 @@ export class MacrofoldTransport {
     )
       throw new Error('Invalid Macrofold base URL.');
   }
+  async file(
+    worktree: string,
+    path: string,
+    method: 'GET' | 'PUT' | 'DELETE',
+    options: { revision?: string; operationId?: string; text?: string; signal: AbortSignal },
+  ): Promise<{ text: string; revision: string | null }> {
+    const url = new URL(
+      `/v1/worktrees/${encodeURIComponent(worktree)}/file?path=${encodeURIComponent(path)}`,
+      this.base,
+    );
+    const response = await this.transport(url.href, {
+      method,
+      redirect: 'error',
+      signal: options.signal,
+      headers: {
+        Authorization: `Bearer ${this.key}`,
+        ...(method === 'GET'
+          ? {}
+          : {
+              'Content-Type': 'application/octet-stream',
+              'If-Match': options.revision!,
+              'Idempotency-Key': options.operationId!,
+            }),
+      },
+      ...(method === 'PUT' ? { body: options.text } : {}),
+    });
+    if (!response.ok) {
+      void response.body?.cancel();
+      throw new Error(`Workspace file request failed (HTTP ${response.status}).`);
+    }
+    const reader = response.body!.getReader();
+    const chunks: Uint8Array[] = [];
+    let bytes = 0;
+    try {
+      for (;;) {
+        const next = await reader.read();
+        if (next.done) break;
+        bytes += next.value.byteLength;
+        if (bytes > 16000) throw new Error('Workspace file response exceeds quota.');
+        chunks.push(next.value);
+      }
+    } finally {
+      void reader.cancel().catch(() => {});
+    }
+    return {
+      text: new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)),
+      revision: response.headers.get('etag'),
+    };
+  }
   async request(
     path: string,
     body?: unknown,
@@ -37,9 +86,7 @@ export class MacrofoldTransport {
         ...(operationId ? { 'Idempotency-Key': operationId } : {}),
       },
       ...(body === undefined ? {} : { body: serialize(body, 500_000) }),
-      signal: signal
-        ? AbortSignal.any([signal, AbortSignal.timeout(30_000)])
-        : AbortSignal.timeout(30_000),
+      signal: signal ?? AbortSignal.timeout(30_000),
     });
     const reader = response.body?.getReader();
     if (!reader) throw new Error('Macrofold returned an empty response.');

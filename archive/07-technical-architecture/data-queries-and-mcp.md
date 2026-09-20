@@ -6,6 +6,8 @@ Status: **proposed production contract**, September 19, 2026; no endpoints, view
 
 Provide an application-owned `GameDataReader` with versioned datasets, fields, typed references, filters, joins, pagination, consistency and permission semantics. HTTP/SDK clients, the creator inspector, player UI and MCP adapt this same service. Physical repositories remain private to their module; MCP is a transport over the query service, not a database superuser session.
 
+Implement only datasets and query operations consumed by current features; the broad compiler, report service and MCP surface expand with named consumers (PD06/PX01 in the [production checklist](production-data-model.md#15-implementation-checklist)). Historical reconstruction, replicas and archive readers are conditional capabilities and must report unsupported until delivered.
+
 Start with read-only PostgreSQL `read_v1` views and a small parameterized query compiler. Local SQLite can implement the same response contracts. Storage changes, indexes, replicas, archive readers and shard routing stay behind that contract. New datasets/fields are additive; changing units, visibility, cardinality or meanings requires a new contract version. Do not rename a public field merely because its SQL column moved.
 
 Use explicit supported capabilities rather than pretending the local adapter implements every production query. A dataset can be `unsupported`, `not_yet_migrated`, `temporarily_unavailable`, or present with zero matching records. These outcomes must remain distinct.
@@ -25,12 +27,12 @@ The following dataset names are the proposed `ol.data/v1` vocabulary. Their resp
 | `possessions`                          | One in-world ownership interest                | Object, holder, claim type/evidence; physical custody is a separate field/relationship                                          |
 | `resources`                            | One reservoir                                  | Source entity, material/unit, current quantity and availability facts allowed to the viewer                                     |
 | `processes`                            | One ongoing/historical action                  | Actor/participants, pinned action version, stage, progress, consumed inputs and supported outcome refs                          |
-| `memories`                             | One actor-owned memory                         | Kind, attribution, narrative, time, confidence, salience, evidence and retention state                                          |
-| `relationships`                        | One observer/other entity pair                 | Directional subjective relationship, selected dimensions and evidence                                                           |
+| `memories`                             | One raw-personal or consolidated actor memory                         | Kind, attribution, narrative, time, confidence, salience, evidence and retention state                                          |
+| `relationships`                        | One observer/other entity pair                 | Supported native dimensions and derived accepted-inner-world assessment, evidence and source revision                                                           |
 | `commitments`                          | One visible commitment                         | Participants, exact attributed promise/evidence, status and due time                                                            |
 | `knowledge`                            | One actor/capability/version                   | Awareness/proficiency, learning provenance, compatibility; does not claim possession or execution availability                  |
 | `conversations` / `conversation_turns` | One conversation / one committed turn          | Participants or event-time permitted audience, speech and interruption; no NPC reflection in public speech                      |
-| `world_events`                         | One committed meaningful event                 | EventRef, type/category, simulation/recording time, actor/targets, outcome, definition pins, causation, coverage                |
+| `world_events`                         | One retained actor-witnessed experiential event                 | EventRef, type/category, simulation/recording time, actor/targets, outcome, definition pins, causation, coverage                |
 | `inventions`                           | One definition identity                        | Name/kind, lineage, permitted origin and authorship, available versions                                                         |
 | `invention_versions`                   | One immutable version                          | Complete authorized declaration/configuration, parameters, effects, artifact refs, compatibility and validation                 |
 | `world_installations`                  | One world activation/manifest entry            | Pinned version, effective time, policy/migration receipt, retired/quarantined state                                             |
@@ -38,6 +40,14 @@ The following dataset names are the proposed `ol.data/v1` vocabulary. Their resp
 | `pack_releases`                        | One immutable release                          | Manifest/dependencies, terms, completeness/blockers and permitted export refs                                                   |
 | `ai_decisions`                         | One normalized decision/application outcome    | Task, evidence/context digests, model/execution refs, accepted/rejected state; full prompt is a separately granted artifact     |
 | `usage`                                | One report or invocation/adjustment detail     | Real-time incurred usage and disclosed source/freshness; follows the separate billing contract                                  |
+
+| Dataset | Grain / identity | Fields and meaning |
+| --- | --- | --- |
+| `event_awareness` | One world/actor/event | Permitted English experience, modality/detail, attribution, game time and consolidation coverage; never unrestricted event payload |
+| `inner_world` | One current world/actor snapshot | Accepted text/revision and publication state; own NPC job or authorized god inspection only |
+| `thought_history` | One accepted actor/job presentation entry | Short reflection thoughts; god-only, excluded from actor recall |
+
+The [memory architecture](../../docs/memory-architecture.md) owns recall semantics: six-hour raw window, hourly older-experience cleanup and one combined attention-selected recall view. Experiential event coverage excludes unwitnessed occurrences; recovery/accounting history is separate. Creator archive access cannot restore forgotten detail to an NPC. Reading these datasets itself makes no paid model call; Jev attention is separately admitted by context assembly.
 
 Dataset descriptions include field types, optionality, units, visibility, enum/registry values, supported operators, relation cardinalities, default sorts, retention and consistency capabilities. Names and descriptions stored by players are untrusted data. Schema descriptions come from shipped contracts, not invented record text.
 
@@ -68,7 +78,7 @@ Illustrative identifiers below are placeholders, not accepted UUIDs or running A
   "contract": "ol.data/v1",
   "dataset": "memories",
   "world_id": "<world-id>",
-  "select": ["id", "kind", "summary", "sim_time", "evidence"],
+  "select": ["id", "kind", "narrative", "sim_time", "evidence"],
   "filter": {
     "all": [
       { "field": "actor_id", "op": "eq", "value": "<ada-id>" },
@@ -90,6 +100,8 @@ The server resolves who is asking and whether they can inspect Ada; a model-supp
 ## 4. Consistency, cursors and historical reads
 
 The [real-time protocol](realtime-synchronization.md) uses the same committed-state/freshness concepts for client confirmations and view baselines. Predicted browser positions are presentation state, not MCP query truth. If journal-first persistence is later adopted, a SQL projection must disclose its materialization watermark and satisfy `at_least` through waiting/routing or an explicit lag result.
+
+Every repository/API result returns the following server metadata. NPC tools project permitted English strings, meaningful uncertainty and necessary short handles; they do not serialize this envelope into ordinary cognition. Creator tools may expose richer authorized diagnostics.
 
 Every result returns:
 
@@ -121,7 +133,7 @@ World-wide multi-sector reads initially use the one-shard transaction. After phy
 | Audience                       | Permitted view                                                                                                                                      |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Ordinary player                | Their current permitted observations, own inventory/knowledge/history, public mechanics and granted content                                         |
-| NPC task                       | That actor's observations, recallable memories, knowledge and current permitted state; no omniscient journal or another mind                        |
+| NPC task                       | That actor's accepted inner-world text, permitted awareness/observations, recallable memories, knowledge and current state; no omniscient journal or another mind                        |
 | Authorized world creator/agent | Broad world inspection and private fictional NPC context under an explicit grant; human-private records remain governed by a separate chosen policy |
 | Inventor account               | Their retained contribution capsule/version details and granted dependencies; leaving a host does not automatically expose its private world        |
 | Billing viewer                 | Payer/delegated billing scope; world god permission does not imply financial access                                                                 |
@@ -149,7 +161,9 @@ Separate migration, simulation-write, memory-write, query and background-report 
 | Usage over arbitrary dates                | Source/currency/scope/incurred-time/category indexes; late-adjustment-aware report per billing contract      |
 | Cross-world popularity                    | Outbox-fed aggregate read model; expose freshness; no synchronous all-shard join                             |
 
-Each indexed JSON field has declared type and units. Full-text search and optional vectors return candidates, never rights or factual truth. Recent commitments/direct lookups stay available from canonical rows even if search is behind. Search results carry record versions, and context rechecks access/retention before using text.
+Awareness recall uses world/actor/game-time/sequence and source-event indexes; consolidation uses its unprocessed source watermark. Current inner-world reads use the unique world/actor key, and derived narrative indexes carry its accepted revision. These access paths must preserve one experience source and actor scope before ranking.
+
+Each indexed JSON field has declared type and units. Full-text search and required embedding-based semantic retrieval return candidates, never rights or factual truth. Enforce actor/disclosure and retention scope before candidate ranking; expose index lag and invalidate changed/forgotten sources. Embedding inference is separately admitted and accounted for, not an implicit paid call inside a read-only data query. Recent commitments/direct lookups stay available from canonical rows even if search is behind. Search results carry record versions, and context rechecks access/retention before using text.
 
 Popularity/personal usage increments from deduplicated committed action outcomes. One action contributes once according to its usage contract; animation steps, menu opens and model suggestions do not count. Store bounded period aggregates or projection counters, not a permanently contended global counter per click. Ranking can change between menu openings while remaining stable during pointer/focus interaction.
 

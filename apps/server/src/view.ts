@@ -178,7 +178,11 @@ export function projectView(
         actions,
       };
     });
-  const events = world.events.filter((event) => event.audience.includes('player'));
+  const events = world.events.filter((event) =>
+    world.experience
+      ? world.experience.awareness['player']?.some((a) => a.eventId === event.id)
+      : event.audience.includes('player'),
+  );
   const usage = service.store.usage(service.config.budgetUsd);
   const jobs = service.store
     .recentJobs()
@@ -191,12 +195,8 @@ export function projectView(
       queueLatencyMs,
       totalLatencyMs,
     }));
-  const jevConfigured = service.config.macrofoldKey
-    ? service.config.macrofoldComputeUsd > 0
-    : !!service.config.jevKey;
-  const llmConfigured = service.config.macrofoldKey
-    ? service.config.macrofoldComputeUsd > 0
-    : !!service.config.llmKey;
+  const jevConfigured = service.config.macrofoldKey ? true : !!service.config.jevKey;
+  const llmConfigured = service.config.macrofoldKey ? true : !!service.config.llmKey;
   // Job history is not a service-health probe. A later completed request
   // supersedes an older failure; cancellations do not diagnose provider health.
   const latestSettled = jobs.find((job) => job.status === 'failed' || job.status === 'completed');
@@ -239,6 +239,7 @@ export function projectView(
     schemaVersion: 1,
     revision: service.version,
     worldId: world.id,
+    godMode: service.config.godMode,
     profile: service.profile,
     vision: { radius: PERCEPTION_RULES.sightRadius },
     map: {
@@ -413,8 +414,11 @@ export function projectView(
       done: milestone.done || service.milestones[milestone.id] === true,
     })),
     persistence: {
-      status: service.storageError ? 'error' : 'saved',
-      message: service.storageError ?? 'Saved locally · the world pauses when you leave',
+      status: service.storageError || service.memoryBacklog ? 'error' : 'saved',
+      message:
+        service.storageError ??
+        service.memoryBacklog ??
+        'Saved locally · the world pauses when you leave',
     },
   };
 }

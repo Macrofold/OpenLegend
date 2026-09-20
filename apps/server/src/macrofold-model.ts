@@ -6,7 +6,7 @@ export const DEFAULT_MACROFOLD_MODEL = 'meta/muse-spark-1.3-contributor';
  * downgrading unsupported options, including on continued harness sessions. */
 export function macrofoldModelParameters(execution?: GenerateRequest['execution']) {
   return {
-    reasoning: { effort: execution === 'fast' ? ('low' as const) : ('xhigh' as const) },
+    reasoning: { effort: execution === 'full' ? ('xhigh' as const) : ('low' as const) },
     provider: { require_parameters: true },
   };
 }

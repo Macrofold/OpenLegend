@@ -61,13 +61,16 @@ The nodes represent responsibilities; this does not require deploying a separate
 | Workflow | Execution mode Macrofold could provide | Rules Open Legend supplies |
 |---|---|---|
 | Intent mapping, bounded applicability judgment, novelty detection | Brief typed inference such as Jev, with an explicit unknown route | Candidate set, relevant context, acceptance and fallback policy |
-| NPC dialogue and planning | Shared-worker LLM calls or bounded tool-using loop | Perception, personality, memory access, permitted actions and response deadlines |
-| Memory reflection/consolidation | Background job with versioned inputs and proposed record changes | Salience, commitments, attribution, forgetting and conflict policy |
+| NPC dialogue and immediate planning | Jev attention/escalation, level-2 mini or level-3/4 complex calls | Compact English/full About me, permitted evidence/actions and response deadlines; no compulsory tool loop |
+| Routine memory consolidation | Hourly small-model job over raw experience older than six game hours | Deduplicated awareness/personal evidence, salience, commitments, attribution and atomic summaries |
+| Inner-world reflection/dreams | Independent background file harness and accepted PostgreSQL text publication | Authored perspective, quotas, fresh sessions, revision conflicts and short god-only thoughts; eight-hour daily rest/two-hour sleep eligibility |
 | New mechanics or recipes | Generative reasoning followed by isolated code/tests where needed | Primitive vocabulary, invariants, compatibility, admission and promotion criteria |
 | Optional world events or narrative direction | Budgeted scheduled/event-triggered planner | Which events are allowed and who may approve or activate them |
 | Later asset production and evaluations | Existing provider tools or isolated artifact jobs, with common traces | Style/asset contracts and game-specific expected behavior |
 
 These are workload categories, not a commitment to deliver every feature in the initial game. Platform infrastructure runs versioned task definitions; the definitions, prompts and criteria can belong to the Open Legend project without becoming hard-coded Macrofold core concepts. A hunger rule and a customer-support urgency rule can use the same execution infrastructure while remaining separate application policies.
+
+For NPC work, the [canonical memory specification](../../docs/memory-architecture.md) defines the current application contract: level-2 speech, Jev attention/escalation, separate complex low/high reasoning, hourly small-model consolidation beyond six game hours, and independent background file reflection. Reflection publishes one accepted PostgreSQL text snapshot; immediate responses do not echo mind patches. Every NPC job starts fresh model history. Generic platform continuation remains useful for creator conversations, with separate scope. The Open Legend adapter now exists; the platform observations below describe the inspected baseline and do not establish deployed support for the target contracts.
 
 ## Existing foundations and necessary additions
 
@@ -78,7 +81,7 @@ The reusable additions worth considering are:
 1. **A lightweight typed-inference operation.** Accept a versioned decision specification and bounded context; enforce provider-specific request/output schemas, budgets, deadlines and attribution without booting a sandbox or launching a coding harness. Jev is one adapter, not the definition of this API. Typed schema validation is separate from game correctness.
 2. **Shared reasoning workers.** Retain short per-job identities and limits while reusing capacity, as in the [worker proposal](macrofold-shared-workers.md). Avoid compulsory Git/file checkpoint work for a task that only reads structured context and returns a result.
 3. **Versioned resource access.** Let a workspace refer to immutable snapshots and authorized queries over external or platform-hosted records. Make permissions, provenance, versions and write ownership explicit. A game supplies its own projection and commit handlers.
-4. **Small composable workflows.** Reuse existing queue/lifecycle primitives for sequences such as classify → deliberate if necessary → validate → publish a proposal. Record results, costs and versions; add safe retries and cancellation. A generic visual workflow builder or new distributed database is not a prerequisite.
+4. **Small composable workflows.** Reuse existing queue/lifecycle primitives for sequences such as classify → deliberate if necessary → validate → publish a proposal. Record results, costs and versions; add reconciliation and cancellation without automatic paid retries. A generic visual workflow builder or new distributed database is not a prerequisite.
 
 Current scheduling and automation facilities should not be assumed to be a low-latency simulation event bus. The game filters and coalesces events before submitting work. A brief judgment should avoid a full filesystem lifecycle. Recent Macrofold working-tree changes already remove artificial ready-phase waits and improve hydration; the proposed lightweight executor is a distinct new path. Preserve authorization and spending bounds while measuring per-call database/queue/gateway overhead. [Scheduling](../../../AgentCloud/docs/features/execution/scheduling.md), [updated startup findings](../02-research/macrofold-workspaces.md#vercel-and-slow-startup), [implementation handoff](../07-technical-architecture/macrofold-implementation-brief.md).
 
