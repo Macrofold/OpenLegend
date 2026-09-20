@@ -1,0 +1,62 @@
+[
+  {
+    "id": "curious",
+    "name": "Curious",
+    "description": "Drawn to unfamiliar things and the questions they raise."
+  },
+  {
+    "id": "patient",
+    "name": "Patient",
+    "description": "Comfortable taking time to watch, practise, and understand."
+  },
+  {
+    "id": "resourceful",
+    "name": "Resourceful",
+    "description": "Looks for useful possibilities in the materials close at hand."
+  },
+  {
+    "id": "cautious",
+    "name": "Cautious",
+    "description": "Prefers to understand a risk before stepping into it."
+  },
+  {
+    "id": "generous",
+    "name": "Generous",
+    "description": "Finds meaning in sharing knowledge, attention, and what can be spared."
+  },
+  {
+    "id": "independent",
+    "name": "Independent",
+    "description": "Values finding a way forward through personal judgment and effort."
+  },
+  {
+    "id": "observant",
+    "name": "Observant",
+    "description": "Tends to notice small changes in people and surroundings."
+  },
+  {
+    "id": "steadfast",
+    "name": "Steadfast",
+    "description": "Holds to commitments even when progress is slow."
+  },
+  {
+    "id": "inventive",
+    "name": "Inventive",
+    "description": "Enjoys imagining new uses for familiar things."
+  },
+  {
+    "id": "sociable",
+    "name": "Sociable",
+    "description": "Welcomes conversation and the chance to know another person."
+  },
+  {
+    "id": "reflective",
+    "name": "Reflective",
+    "description": "Returns to past experiences to consider what they might mean."
+  },
+  {
+    "id": "adventurous",
+    "name": "Adventurous",
+    "description": "Feels the pull of unexplored places and untried possibilities."
+  }
+]

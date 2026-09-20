@@ -37,18 +37,20 @@ test('time settings persist and distinguish background play, manual pause and di
     const checkbox = page.getByRole('checkbox', { name: 'Pause game when hidden', exact: true });
     await settings.click();
     await expect(checkbox).toBeChecked();
-    await expect(page.locator('.time-rate')).toHaveText(
-      '1×: 1 game minute per real second. A day takes 24 real minutes.',
+    await expect(page.locator('.ol-time-settings .ol-caption')).toHaveText(
+      '1×: one real second is one game minute. Manual pause always wins.',
     );
     await expect.poll(() => game.service.paused).toBe(false);
     game.service.tick(1);
     expect(game.service.world.simTime).toBe(60);
-    await page.locator('[data-speed="0.5"]').click();
+    await page
+      .locator('.ol-radio')
+      .filter({ has: page.getByRole('radio', { name: '0.5×', exact: true }) })
+      .click();
     await expect.poll(() => game.service.speed).toBe(0.5);
-    await expect(page.locator('[data-speed="0.5"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
     game.service.tick(1);
     expect(game.service.world.simTime).toBe(90);
-    await settings.click();
     await checkbox.uncheck();
     await expect(checkbox).toBeEnabled();
     await expect.poll(() => game.service.profile.preferences.pauseWhenHidden).toBe(false);
@@ -56,10 +58,11 @@ test('time settings persist and distinguish background play, manual pause and di
     await expect(page.locator('#loading')).toBeHidden();
     await settings.click();
     await expect(checkbox).not.toBeChecked();
-    await expect(page.locator('[data-speed="0.5"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
     await page.screenshot({ path: info.outputPath('time-settings.png') });
     await page.setViewportSize({ width: 390, height: 844 });
-    const panelBounds = await page.locator('#timeSettingsPanel').boundingBox();
+    await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
+    const panelBounds = await page.locator('.ol-time-settings').boundingBox();
     expect(panelBounds!.x).toBeGreaterThanOrEqual(0);
     expect(panelBounds!.x + panelBounds!.width).toBeLessThanOrEqual(390);
     // The dropdown must sit above adjacent panels, not merely within the viewport.
@@ -87,7 +90,6 @@ test('time settings persist and distinguish background play, manual pause and di
     await focus(true);
     await expect.poll(() => game.service.paused).toBe(false);
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
-    await settings.click();
     await checkbox.uncheck();
     await expect(checkbox).toBeEnabled();
     await focus(false);

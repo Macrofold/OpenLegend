@@ -51,8 +51,8 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
     };
     await canvas.click({ button: 'right', position: point });
     await expect(page.locator('#contextTitle')).toHaveText('Vision fixture');
-    // Context remains accessible, but no visible title consumes a menu row.
-    await expect(page.locator('#contextTitle')).toHaveClass('sr-only');
+    // The design system names the target in a visible compact header.
+    await expect(page.locator('#contextTitle')).toBeVisible();
     await expect(page.locator('.context-heading h2')).toHaveCount(0);
     await page.screenshot({ path: info.outputPath('compact-actions.png') });
     await page.keyboard.press('Escape');
@@ -75,11 +75,11 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
     // Still in the server's broad sight radius, but fully blurred: neither
     // pointer hover nor a right-click may identify the obscured object.
     await page.mouse.move(point.x, point.y);
-    await expect(page.locator('#hover')).toContainText('Vision fixture');
+    await expect(page.locator('.ol-world-hover')).toContainText('Vision fixture');
     expect(relocate({ x: 24, z: 12 }).ok).toBe(true);
-    await expect(page.locator('#hover')).toBeHidden();
+    await expect(page.locator('.ol-world-hover')).toBeHidden();
     await canvas.click({ button: 'right', position: point });
-    await expect(page.locator('#contextTitle')).toHaveText('Actions here');
+    await expect(page.locator('#contextTitle')).toHaveText('The clearing');
     await page.keyboard.press('Escape');
     expect(relocate({ x: 27, z: 23 }).ok).toBe(true);
     await expect(page.locator('[data-entity="vision-fixture"]')).toHaveCount(0);
@@ -90,15 +90,17 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
       .toBeGreaterThan(field.x! + 500);
     await page.screenshot({ path: info.outputPath('vision-far.png') });
     await page.mouse.move(point.x, point.y);
-    await expect(page.locator('#hover')).toBeHidden();
+    await expect(page.locator('.ol-world-hover')).toBeHidden();
     await canvas.click({ button: 'right', position: point });
-    await expect(page.locator('#contextTitle')).toHaveText('Actions here');
+    await expect(page.locator('#contextTitle')).toHaveText('The clearing');
     await page.locator('#actionSearch').fill('Vision fixture');
-    await expect(page.locator('.catalogue-action')).toHaveCount(0);
+    await expect(page.locator('[data-catalogue-action]')).toHaveCount(0);
     await page.keyboard.press('Escape');
 
     expect(relocate(original).ok).toBe(true);
+    await page.getByRole('button', { name: 'In view', exact: true }).click();
     await expect(page.locator('[data-entity="vision-fixture"]')).toBeVisible();
+    await page.getByRole('button', { name: 'Hide In view panel' }).click();
     await canvas.click({ button: 'right', position: point });
     await expect(page.locator('#contextTitle')).toHaveText('Vision fixture');
     await page.keyboard.press('Escape');

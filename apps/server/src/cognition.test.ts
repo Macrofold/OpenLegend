@@ -162,7 +162,7 @@ describe('fixture: cognition vertical slice', () => {
     const s = service();
     const { prepared, p } = proposal(s);
     s.transition((w) => commitCognition(w, prepared.binding, p));
-    expect(inspectGodMind(s, 'ada').thoughts[0]?.text).toBe(p.thought);
+    expect(inspectGodMind(s, 'ada').legacyThoughts?.[0]?.text).toBe(p.thought);
     expect(JSON.stringify(projectView(s, 'test-fixture'))).not.toContain(p.thought);
     expect(() => inspectGodMind(service(':memory:', false), 'ada')).toThrow('disabled');
   });
@@ -192,10 +192,10 @@ describe('fixture: cognition vertical slice', () => {
           data = {
             data: [
               {
-                id: 'gpt-5.4-mini',
+                id: 'meta/muse-spark-1.3-contributor',
                 enabled: true,
                 harnesses: ['opencode'],
-                billing_modes: ['managed'],
+                billing_modes: ['byok'],
               },
             ],
           };
@@ -255,7 +255,7 @@ describe('fixture: cognition vertical slice', () => {
         context: prepared.context,
         schema: fullCognitionJsonSchema,
       });
-      expect(result.outcome).toBe('value');
+      expect(result.outcome, result.outcome === 'value' ? '' : result.reason).toBe('value');
       if (result.outcome === 'value')
         expect(
           s.transition((w) =>

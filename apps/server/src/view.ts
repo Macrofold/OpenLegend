@@ -1,10 +1,12 @@
 import type { ActionOption, EntityView, GameView, InventoryItemView } from '@open-legend/protocol';
 import {
   NATIVE_PREPARATIONS,
+  experiences,
   PERCEPTION_RULES,
   canHear,
   canRecoverAtCamp,
 } from '@open-legend/domain';
+import { describeEntity } from './entity-description.js';
 import type { WorldService } from './world-service.js';
 
 /** This explicit projection is a security boundary: never serialize WorldState to the browser. */
@@ -145,6 +147,8 @@ export function projectView(
       return {
         id: entity.id,
         name: entity.name,
+        description: describeEntity(entity, world.itemDefinitions),
+        ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),
         kind,
         subtype: entity.animal?.species ?? entity.resource?.definitionId ?? entity.kind,
         position: entity.position,
@@ -293,6 +297,12 @@ export function projectView(
                     ),
           }
         : null,
+      traits: actor.traits?.map((t) => ({ ...t })),
+      memories: experiences(world, player.id)
+        .sort((a, b) => a.at - b.at)
+        .slice(-20)
+        .map((m) => ({ id: m.id, text: m.summary, time: m.at })),
+      history: `Your life in this clearing began on Day 1. You have lived here for ${Math.floor(world.simTime / 86400)} full days.`,
       inventory,
       actions: playerActions,
     },

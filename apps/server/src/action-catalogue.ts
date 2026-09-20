@@ -6,7 +6,7 @@ import type {
   CommandInput,
 } from '@open-legend/protocol';
 import type { WorldService } from './world-service.js';
-import { ACTION_DESCRIPTIONS, describeCommand } from './action-descriptions.js';
+import { ACTION_DESCRIPTIONS, describeCommand, commandFacts } from './action-descriptions.js';
 
 /** Complete finite catalogue of learned techniques, possessions and perceived targets.
  * Queried only while browsing, not on every simulation tick. Previewing uses the
@@ -40,6 +40,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
       label,
       category,
       description: describeCommand(command, observation),
+      facts: commandFacts(command, observation),
       keywords,
       ...(targetId ? { targetId } : {}),
       enabled: result.ok,

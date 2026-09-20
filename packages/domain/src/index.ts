@@ -1,6 +1,14 @@
 export * from './types.js';
 export { canSee, canHear, PERCEPTION_RULES } from './perception.js';
-export { createWorld, NATIVE_ITEMS, NATIVE_PREPARATIONS, PLAYER_ID, NPC_ID } from './data.js';
+export {
+  createWorld,
+  createActor,
+  initializeActorTraits,
+  NATIVE_ITEMS,
+  NATIVE_PREPARATIONS,
+  PLAYER_ID,
+  NPC_ID,
+} from './data.js';
 export {
   canRecoverAtCamp,
   executeCommand,

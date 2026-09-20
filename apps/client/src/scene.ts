@@ -814,7 +814,8 @@ export class WildernessScene {
       x: event.clientX,
       y: event.clientY,
       button: event.button,
-      pan: event.button === 0,
+      // Primary drag follows the design system; secondary/middle retain camera access.
+      pan: true,
       moved: false,
     };
     this.canvas.setPointerCapture(event.pointerId);

@@ -204,6 +204,9 @@ describe('fixture: bounded authored minds', () => {
   it('records person encounters natively without repeated per-step records', () => {
     let world = createWorld(4);
     world.paused = false;
+    world.entities.player!.position = { x: 100, z: 100 };
+    world = advanceWorld(world, 1).world;
+    world.entities.player!.position = { ...world.entities.ada!.position };
     world = advanceWorld(world, 1).world;
     const initial = (world.memories.ada ?? []).filter((m) => m.summary.startsWith('I saw ')).length;
     expect(initial).toBeGreaterThan(0);
@@ -282,7 +285,7 @@ describe('fixture: evidence and forgetting boundaries', () => {
       id: 'promise',
       actorId: 'ada',
       type: 'say',
-      text: 'I will help you gather food.',
+      text: 'I promise to help you gather food.',
       targetId: 'player',
     }).world;
     const promise = spoken.memories.ada!.find((m) => m.speakerId === 'ada')!;

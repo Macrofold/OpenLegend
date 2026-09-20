@@ -114,7 +114,15 @@ export interface Action {
   /** Inputs leave inventory at work start, never refunded by cancel or restart. */
   consumed: { definitionId: string; quantity: number }[];
 }
+export interface CharacterTrait {
+  id: string;
+  name: string;
+  description: string;
+}
+
 export interface ActorComponent {
+  /** Descriptive starting traits, not mechanical bonuses. Saved with the actor. */
+  traits?: CharacterTrait[];
   rest?: import('./sleep.js').RestState;
   controller: 'player' | 'npc';
   health: number;

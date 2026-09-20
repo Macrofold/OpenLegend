@@ -88,3 +88,38 @@ export function describeCommand(command: CommandInput, observation: ActorObserva
       return common;
   }
 }
+
+/** Facts come from the same trusted work definitions as execution. Travel time is separate. */
+export function commandFacts(
+  command: CommandInput,
+  observation: ActorObservation,
+): Array<[string, string]> {
+  const target = observation.visibleEntities.find((e) => e.id === command.targetId);
+  const name = (id: string) =>
+    observation.itemDefinitions.find((d) => d.id === id)?.name ?? NATIVE_ITEMS[id]?.name ?? id;
+  const duration = (seconds: number) =>
+    `${seconds < 60 ? `${seconds} seconds` : `${Number((seconds / 60).toFixed(1))} minutes`} of game time`;
+  if (command.type === 'gather' && target?.resource)
+    return [
+      ['Yields', `${Math.min(2, target.resource.quantity)} ${name(target.resource.definitionId)}`],
+      ['Time', `${duration(target.resource.workSeconds)}, plus travel`],
+    ];
+  if (command.type === 'prepare' && command.preparation) {
+    const p = NATIVE_PREPARATIONS[command.preparation];
+    return [
+      ['Costs', `${p.inputQuantity} ${name(p.input)}`],
+      ['Yields', `${p.outputQuantity} ${name(p.output)}`],
+      ['Time', duration(p.workSeconds)],
+    ];
+  }
+  if (command.type === 'craft') {
+    const r = observation.knownRecipes.find((r) => r.id === command.recipeId);
+    if (r)
+      return [
+        ['Costs', r.inputs.map((i) => `${i.quantity} ${name(i.definitionId)}`).join(', ')],
+        ['Yields', r.output.name],
+        ['Time', duration(r.workSeconds)],
+      ];
+  }
+  return [];
+}

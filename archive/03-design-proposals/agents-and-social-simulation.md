@@ -43,6 +43,8 @@ Record amplification caps and stacking keys. Seeing the same fire twenty times s
 
 ## Personality and experience
 
+The September 20 first-playable UI now assigns three distinct descriptive traits from a configurable [JSON bank](../../packages/domain/config/traits.json) using saved randomness. Their names/descriptions persist and appear in character inspection; legacy actors receive traits once. These starting dispositions have no numerical bonuses or new automatic cognition policy. The dimensional mappings, trait evolution and provenance model below remain a richer future design; see [current architecture](../../docs/architecture.md#react-presentation-and-character-traits).
+
 Use a small trait vector inspired by mainstream dimensional personality models, as reviewed in the research document. Traits modify preferences and sensitivities: sociability affects approaching strangers; conscientiousness can affect promise salience; emotional volatility affects response/recovery; openness affects exploration. These are designed mappings, not scientific formulas.
 
 Store traits with provenance, confidence or authored certainty, and permitted rates of change. Experiences can gradually shift tendencies; one insult should not rewrite a personality. Distinguish stable tendencies, temporary states, learned skills, values, habits, and conditions. “Calm under pressure,” “high woodworking skill,” and “alcohol dependence” should not be interchangeable tags.
@@ -117,8 +119,18 @@ Conversation has turn-taking, speaker identity, audience, interruption, and topi
 
 Start with one-on-one text, then nearby group text, then voice. Scale social believability before adding voice cost. Keep text captions for accessibility and as a fall-back during media failure. Prevent paid interaction quotas from making an NPC abandon already-accepted world obligations unpredictably.
 
+## Later tool-assisted planning and interaction
+
+For a difficult goal, a bounded harness can inspect permitted memories, known methods and current affordances before choosing a next action. A leaking shelter is a useful example: diagnose from observations, consider known materials, propose an improvement, then reconsider after actual construction and rain. Native simulation executes the work; separate fresh jobs use saved goals and evidence to continue the learning cycle. Ordinary survival does not wait for this route, and engine authoring/validation does not become character knowledge.
+
+Teaching and coordination can benefit when an agent needs to investigate a question, compare accounts or check commitments before replying. Conversation across people remains separate from internal tool turns: the harness cannot fabricate another actor's response, cooperation or mastery. Speech stays lightweight unless a concrete information gap warrants investigation; observed practice and attributed testimony determine learning.
+
 ## Wilderness seed cast and evaluation
 
 After the one-NPC first playable, proposed group cast: 6–12 people with distinct but modest differences, useful possessions, some survival knowledge, at least one social tie and practical skill, and unmet needs. Examples include a sociable forager, someone skilled at bindings, and someone who knows shelter or simple care. They are not blank minds, and no established village is supplied. Avoid elaborate lore that exists only in prompts and never affects actions.
 
 Evaluate through observable episodes: a resident finds food without instruction; two residents contend over a scarce item without duplication; a promised meal is remembered tomorrow; a false rumor remains attributed; a frightened resident chooses shelter; forgetting frees memory while preserving an active obligation; provider outage leaves basic survival intact. Compare deterministic-only, minimal-memory, and richer-memory variants in playtests so complexity earns its cost.
+
+## Later harness delivery tasks
+
+The [cognition extension checklist](../../docs/maintainers/cognition-redesign.md#later-harness-extensions) owns **CH01** (difficult planning/investigation), **CH02** (tool-assisted teaching and coordination) and **CH03** (behavioral/cost comparison). They follow core cognition acceptance and usable scoped tools. [INV-7.6](../07-technical-architecture/declarations-and-evolution.md#inv-7--discover-missing-mechanics-during-play-without-endless-generation) owns the bridge to missing-capability authoring; do not create a second invention or reflection queue here.

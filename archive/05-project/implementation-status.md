@@ -1,5 +1,11 @@
 # Implementation status and change log
 
+## React design-system adoption — September 20, 2026
+
+The HUD now uses React and React Aria with the supplied fonts, icons, semantic tokens and Wilderness/Fantasy/Sci-fi themes. The previous DOM panels and stylesheet are removed. Survival, Inventory, In view, Character, Crafting, Journal, AI settings and authorized diagnostics share the new components. World-agent and Talk/invention panels are 1.5 times the standard width; mobile layouts use a sheet. Continuous work overlays, a fixed-width pause bar, inline search invention and Look closer are implemented. Three configurable quick slots show no cooldown rings because native actions have no cooldowns. A JSON trait bank supplies three distinct saved traits per person with hover descriptions; this adds no numerical or automated cognition effects.
+
+Current recipes/jobs have structured cards. Typed creator proposals, multi-question response contracts, confirmed conjuring and missing-art generation remain in the existing invention/workshop track. This UI work does not complete those backend tasks or paid acceptance. [Architecture](../../docs/architecture.md#react-presentation-and-character-traits) owns the implementation; [verification](../../docs/verification.md) records the new isolated checks. The older UI entries below retain their dated evidence, including obsolete notebook labels, broad-ground discovery and titleless-menu layouts.
+
 ## Current cognition runtime — September 20, 2026
 
 CR01–CR11 now have a working runtime foundation: compact immediate decisions, versioned native multi-question Jev rubrics, scoped embeddings, awareness/consolidation, accepted PostgreSQL text, scoped background file reflection, native sleep thresholds and grouped authorized diagnostics. PostgreSQL cutover preserved the existing save. Capped synthetic live calls verified Jev, memory-informed speech, summary generation and file publication; broader quality/recovery and migrated fixtures remain open. See [task status](../../docs/maintainers/cognition-redesign.md) and [detailed evidence](../../docs/maintainers/TODO.md#september-20-native-jev-and-live-cognition).
@@ -22,7 +28,7 @@ The complete current design is consolidated in [Memory architecture](../../docs/
 
 ### Required embeddings decision
 
-Embeddings are now required for arbitrary-intent semantic retrieval. The canonical memory specification, CR04 and related context/perception/storage/query/verification guidance record full-intent queries, versioned scoped vectors, invalidation, bounded indexing and paid-call accounting. Model/provider, dimensions, similarity metric and vector storage remain undecided; `pgvector` is not selected. This is documentation only, not an implemented index or live evaluation.
+Embeddings are now required for arbitrary-intent semantic retrieval. The canonical memory specification, CR04 and related context/perception/storage/query/verification guidance record full-intent queries, versioned scoped vectors, invalidation, bounded indexing and paid-call accounting. At the September 19 planning milestone, model/provider, dimensions, similarity metric and vector storage were undecided; that milestone changed documentation only. The September 20 implementation selects OpenAI `text-embedding-3-small`, 512 dimensions and pgvector database-side exact cosine top-N retrieval. Held-out model-quality and broader scale acceptance remain pending.
 
 ### Recall selection clarification
 

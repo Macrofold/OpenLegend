@@ -10,6 +10,8 @@ The creator can talk to a world agent that can look up the world's environment, 
 
 An invention opened from a log or account library offers Inspect, Workshop and, where permitted, Export / use in another world. The workshop retains the conversation, draft, base version, evidence and validation results across turns. The author can refine their own contribution; activation in another owner's world still requires that world's permissions. Proposed owner exception: a deliberate owner edit can be separately authorized and audited while the player invention lock is on. Until that exception is adopted, owner authoring requires the player lock off and editing permission; the independent agent lock need not be changed. Calling the world agent or labeling a new behavior a revision cannot bypass the applicable lock: a player-directed AI workflow retains player origin, while autonomous NPC invention follows the agent lock.
 
+Clicking **Invent** first searches permitted existing inventions using text embeddings and vector search. Similar matches open a new **Similar inventions** modal offering Use existing, Modify existing, Invent new or Cancel before candidate generation. Modification retains the selected version as a derived draft; use follows ordinary crafting/action prerequisites. No matches proceeds normally; search failure is visible. The [canonical search contract](../07-technical-architecture/declarations-and-evolution.md#similar-inventions-before-authoring) and INV-2.1a–2.1b own details and implementation status. This workflow is planned, not implemented.
+
 ## Confirmed god-mode conjuring
 
 Accepted September 20, 2026; planned, not implemented. In god mode, the creator can ask the world agent to conjure a named object or suggest a random object. The request may describe something not yet defined in the world. The agent helps complete the object as it does an invention: propose relevant properties, supported behavior, dependencies, appearance and initial instance state, explain consequential choices, and ask for missing information only where it matters. “Random” selects a reviewable candidate; confirmation and retries must not silently reroll it.
@@ -42,6 +44,12 @@ Whole-world access means complete authorized query coverage, not the entire data
 Exact lookups, filters, counts and diffs use database/code operations. Jev routes ambiguous requests or chooses among supplied intents. LLMs explain evidence and draft declarations/revisions. Bounded tool-using agents handle multi-step investigation and validation. Filtering logs and refreshing menus never require inference per frame.
 
 Macrofold is the preferred generic typed-execution and bounded-agent service behind replaceable contracts. Open Legend owns tool semantics, grants, context selection, spending admission and authoritative changes. An optional workspace retains drafts/reports; canonical active definitions, rights and receipts remain game-owned. This does not require a permanently running sandbox. The runtime now has a Macrofold conversation/execution backend; scoped world query and mutation tools remain unimplemented, and live acceptance remains pending. See [the handoff](../../docs/macrofold-world-agent-handoff.md) and [maintainer TODO](../../docs/maintainers/TODO.md).
+
+### Multi-turn tool use within a task
+
+A retained chat thread supplies conversational continuity; a harness additionally lets the agent choose another tool call after inspecting an actual result. This is especially useful for unfamiliar inventions, following causes through world history, revising interacting mechanics, and completing a complex conjured object's dependencies. Example: inspect a roof's composition, discover the active rain rule, examine supported permeability, then revise and validate the smallest relevant change. Tools and feedback supply the benefit; more ungrounded model turns do not.
+
+Start with simple typed operations for the first release. Later runs may inspect, draft and validate repeatedly within one admitted allowance, with finite rounds/time/bytes and no automatic failed-run retry. Pause the task durably when awaiting creator confirmation, physical work or asynchronous artwork. Revalidate on resumption; session continuity never grants broader authority.
 
 ## Durable records behind the log and inspector
 
@@ -87,12 +95,12 @@ Open choices include event coverage/retention budgets, human-private-record poli
 
 Added September 19, 2026. Use the [canonical sequenced invention tracker](../07-technical-architecture/declarations-and-evolution.md#implementation-tracker-from-world-agent-invention-to-evolving-world-mechanics) for task status and dependencies; this section maps the user experience to those tasks rather than creating a second independently maintained backlog.
 
-**Current boundary, from source inspection:** persistent Macrofold chat is now wired in `apps/server/src/macrofold.ts`, superseding this document's older statement that integration is absent. It receives `buildContext(..., 'player', ...)`, not authorized whole-world creator queries, and explicitly has no world-mutation tools. Right-click Invent opens and submits to a new chat tab, but the chat does not currently submit declarations to the engine. The separate invention pipeline supports only its existing finite families. These observations do not establish complete live gameplay acceptance.
+**Current boundary, from source inspection:** persistent Macrofold chat is now wired in `apps/server/src/macrofold.ts`, superseding this document's older statement that integration is absent. It receives `buildContext(..., 'player', ...)`, not authorized whole-world creator queries, and explicitly has no world-mutation tools. Right-click Invent now opens an editable native invention draft without dispatch; the larger React world-agent chat remains a separate discussion surface and does not submit declarations to the engine. The separate invention pipeline supports only its existing finite families. These observations do not establish complete live gameplay acceptance.
 
 | Ship in order | Player/creator experience | Canonical tasks |
 | --- | --- | --- |
 | 1 | One common request, policy and durable invention outcome across entry points | INV-1 |
-| 2 | Right-click Invent yields an actual admitted recipe, then an ordinary Craft/use action; reload retains the result | INV-2 — first playable release |
+| 2 | Invent searches similar inventions, offers the reuse/modify/new modal, then yields a usable recipe; reload retains the result | INV-2 — first playable release |
 | 3 | New non-weapon families appear through the same chat, action catalogue and presentation contract | INV-3 |
 | 4 | Inspect authorized world-wide evidence, retain drafts and confirm named/random object conjuring with properties and automatic art | INV-4, alongside INV-3; conjuring also uses the art pipeline |
 | 5 | Workshop an existing invention, inspect the diff, activate a compatible version while preserving existing progress/resources | INV-5 |
@@ -104,3 +112,7 @@ The first implementation should use a small **server-mediated typed operation** 
 The eventual creator agent may query the entire **authorized world** through bounded tools, including permitted private character context. That is query coverage, not a giant world snapshot or permission to disclose private source material in public inventions. Its effects remain typed application operations: draft, validate and request activation; any physical action, character learning, instance spawning or creator command needs its own supported authority and admission path. Macrofold conversations and workspaces supply execution and continuity, never independent authority over the game.
 
 Progress is recorded under the canonical task IDs above. No world-agent mutation path, expanded context access or new mechanic was implemented by this documentation change.
+
+### Later harness delivery tasks
+
+Track completion in the canonical invention queue: **INV-4.7** adds unfamiliar-invention investigation, **INV-4.8** adds evidence-driven world queries, **INV-4.9** coordinates complex confirmed conjuring, and **INV-5.5** adds validation-guided workshop refinement. These follow usable typed tools and do not block INV-2's first playable invention. **INV-7.6** connects embodied discovery to actual gameplay feedback; creator access is never inherited by NPCs.

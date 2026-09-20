@@ -2,6 +2,7 @@
 
 `index.ts` is the package boundary. State and return values are plain JSON; the kernel imports no renderer, provider, transport, database or ambient clock. It uses persisted seeded RNG, stable IDs and copied state. The application binds actor/world authority before calling it and commits returned state, receipts and events together.
 
+- `createActor(world, controller, fullness)`: creates an actor with three distinct described traits sampled from `config/traits.json` using saved RNG. Save the returned actor in the creating transition. Trait prose grants no mechanical powers. `initializeActorTraits` fills only missing legacy traits; it is idempotent and preserves saved descriptions.
 - `createWorld(seed?)`: creates the primitive wilderness, people, native materials, finite resources, animals and dependable cooking fire. `recipes` starts empty. Finished sling/bow/arrow compositions exist only in test fixtures, never production seeds.
 - `executeCommand(world, command)`: validates an action and returns `{world, events, outcome}`. An accepted command ID is reusable only with the same canonical body. Rejections leave input state unchanged. Keep receipts durable for the session's retry horizon.
 - `advanceWorld(world, seconds)`: advances native one-second steps without AI. The application supplies due simulation time, normally fixed integer steps. Paused worlds do not advance. The application owns presence, real-time speed/budgets and no-catch-up policy.

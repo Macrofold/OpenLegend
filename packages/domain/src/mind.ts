@@ -199,7 +199,11 @@ export function commitCognition(
     (actor.action?.type !== 'rest' || actor.action.id !== binding.restEpisode)
   )
     return reject('Rest episode changed.');
-  const currentEvidence = new Set((input.memories[binding.actorId] ?? []).map((m) => m.id));
+  // Ordinary perceived events live in actor-scoped awareness after the cognition
+  // migration. Native commitments still live in memories, and experiences()
+  // intentionally presents both stores through one evidence boundary.
+  const currentExperiences = experiences(input, binding.actorId, true);
+  const currentEvidence = new Set(currentExperiences.map((memory) => memory.id));
   const allowed = new Set(binding.evidenceIds);
   const checkEvidence = (links: EvidenceLink[]) =>
     links.length <= 16 &&
@@ -288,7 +292,7 @@ export function commitCognition(
     // commitment records are the only source of mechanically protected promises.
     if (patch.kind === 'commitment' && !prior) {
       const promised = patch.evidence.some((link) =>
-        (input.memories[binding.actorId] ?? []).some(
+        currentExperiences.some(
           (memory) =>
             memory.id === link.id &&
             memory.eventType === 'speech' &&

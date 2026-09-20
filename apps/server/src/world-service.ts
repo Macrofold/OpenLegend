@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
   createWorld,
+  initializeActorTraits,
   migrateCognition,
   forgetExperience,
   correctExperience,
@@ -96,6 +97,7 @@ export class WorldService {
     for (const entity of Object.values(this.saved.world.entities))
       if (entity.actor) this.saved.world.minds[entity.id] ??= mindFor(this.saved.world, entity.id);
     migrateCognition(this.saved.world);
+    initializeActorTraits(this.saved.world);
     // No persisted wall-clock delta is replayed. Presence is deliberately process-local.
     this.saved = { ...this.saved, world: { ...this.saved.world, paused: true } };
     this.revision = store.commit(this.revision, this.saved);
@@ -179,6 +181,7 @@ export class WorldService {
         saved = { ...saved, world };
       }
       migrateCognition(saved.world);
+      initializeActorTraits(saved.world);
       // Completed onboarding milestones outlive the bounded recent-event feed.
       const flags = { ...saved.milestones };
       const events = saved.world.events.filter((event) => event.audience.includes('player'));

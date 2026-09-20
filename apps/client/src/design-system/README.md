@@ -1,0 +1,32 @@
+# Open Legend UI system
+
+This is the production port of the supplied September 20 design system. React owns the HUD and world-status markup. React Aria provides buttons, toolbars, radio groups, conversation tabs and delayed tooltips. PlayCanvas still renders the world and supplies screen coordinates; it never authorizes actions.
+
+- `components.tsx`: typed shared controls, semantic icons, meters, rows, panels and explanations.
+- `components.css`: supplied theme/component styling, with preview-only landscape removed.
+- `layout.css`: production docking, narrow sheets, scale, status overlays and explicit product adaptations.
+- `tokens/`: the supplied Wilderness, Fantasy and Sci-fi tokens, including the data catalogue.
+- `fonts/`: self-hosted WOFF2 assets and their original OFL notices.
+- `icons/`: curated semantic SVG data, author credits and Lucide license. Only these repository-owned SVG bodies are rendered as markup. User/model content always renders as React text.
+- `../ui/`: connected game panels and workflows; keep transport and orchestration outside reusable visual controls.
+
+Use semantic token names, a 4px spacing scale, the supplied display/UI/utility type roles, and accessible names on every icon button. Unknown content receives an initial-letter sigil. Do not use emoji or imply that generated artwork is being requested when no art job exists. Keep one primary gold action per panel; focus uses sage in action search. Game-icons.net art is CC BY 3.0, Lucide ISC, and fonts OFL; first-party code remains AGPL-3.0-only.
+
+## Accepted adaptations
+
+The attached reference instructions are design input. The user's explicit overrides govern this port:
+
+- Work above characters is a continuous white bar, interpolated against the server's simulation rate and frozen while paused. It disappears on completion/cancellation. Keep at most three transient notices, separate from active work.
+- Quick circles are contextual suggestions plus three persisted shortcuts. Rings are reserved for actual action cooldowns. Current actions have no cooldown contract, so no rings are shown; never feed work progress into them.
+- Pausing does not change clock width. World-agent and Talk/invention panels are 504px (1.5 × the normal 336px), with larger tabs and 32px close/new controls.
+- Search retains “Search actions or invent something…” and an inline invention affordance for unmatched text. Enter opens an editable invention draft; only explicit Send dispatches. There is no separate invention row below the search.
+- Look closer uses current server-projected descriptions. Hover facts use actual native work durations and material yields/costs; berry gathering is 30 game seconds plus travel and has no explicit energy cost.
+- Traits are saved domain data, sampled three without replacement from `packages/domain/config/traits.json`. They are descriptive starting dispositions, not earned bonuses. The character sheet shows the player's scoped memories and observed history; private NPC cognition stays behind god authorization.
+
+Primary dragging pans, as specified by the reference; secondary/middle dragging also pan. A stationary secondary click opens actions, and a map click that dismisses a picker never walks. Keyboard shortcuts do not intercept text fields. Panels use opening order and collapse older panels when space is insufficient; narrow layouts share one sheet. Theme/scale/reduced-motion preferences stay local and never alter game semantics.
+
+## Present capability boundaries
+
+Known recipes and invention jobs have structured cards. Prose world-agent replies ending in a question receive an answer affordance; this is presentation, not a typed multi-question backend protocol. Creator discussion remains read-only. Conjure previews/confirmation, editable proposal admission and generated artwork need the existing invention/workshop delivery track; UI styling does not grant those capabilities. Ending a conversation closes its backend lane; restoring its transcript creates a new identity, never pretends to reopen a tombstoned session. Hiding a panel retains drafts and pending work.
+
+CSS handles the modest panel transitions; reduced motion disables transitions and animations. No separate motion dependency is needed for this layout. UI layout extensions are defined alongside the imported tokens rather than requiring approval for routine spacing decisions.

@@ -1,7 +1,6 @@
 import { attentionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
 import { experiences, mindFor, type WorldState } from '@open-legend/domain';
 import {
-  cosineSimilarity,
   createEmbeddingClient,
   type EmbeddingClient,
   type JudgeRequest,
@@ -96,7 +95,6 @@ export function candidateSet(
 interface VectorCache {
   model: string;
   dimensions: number;
-  entries: Record<string, { revision: string; vector: number[] }>;
   queries: Record<string, number[]>;
 }
 /** Scope is resolved before vector lookup. Every batch and result is bounded and revision-keyed. */
@@ -147,17 +145,19 @@ export class RecallService {
         'The complete semantic stimulus exceeds the embedding input allowance; split this opportunity.',
       );
     const key = `vectors:${world.id}:${actorId}`;
-    let cache = this.service.store.getIntegration(key) as VectorCache | undefined;
+    const vectors = this.service.store.vectors;
+    let cache = (vectors ? this.service.store.getIntegration(key) : undefined) as
+      | VectorCache
+      | undefined;
     if (cache?.model !== config.embeddingModel || cache.dimensions !== config.embeddingDimensions)
       cache = {
         model: config.embeddingModel,
         dimensions: config.embeddingDimensions,
-        entries: {},
         queries: {},
       };
-    const valid = new Map(candidates.map((c) => [c.id, c.revision]));
-    for (const [id, v] of Object.entries(cache.entries))
-      if (valid.get(id) !== v.revision) delete cache.entries[id];
+    const scope = { key, model: config.embeddingModel, dimensions: config.embeddingDimensions };
+    const sources = candidates.map(({ id, revision }) => ({ id, revision }));
+    const indexed = vectors?.reconcile(scope, sources) ?? new Set<string>();
     const ranked = [...candidates].sort(
       (a, b) =>
         Number(b.required) -
@@ -167,15 +167,16 @@ export class RecallService {
         b.salience - a.salience ||
         b.at - a.at,
     );
-    const missing = ranked.filter((c) => !cache!.entries[c.id]).slice(0, 32);
+    const missing = ranked.filter((c) => !indexed.has(c.id)).slice(0, 32);
     const queryKey = digest({
       query,
       revision: inner?.revision,
       forgotten: world.experience?.forgotten[actorId],
     });
     const cachedQuery = cache.queries[queryKey];
-    let embeddingStatus = 'cache';
-    if (missing.length || !cachedQuery) {
+    let embeddingStatus = vectors ? 'cache' : 'unavailable: PostgreSQL with pgvector required';
+    const additions: { id: string; revision: string; vector: number[] }[] = [];
+    if (vectors && (missing.length || !cachedQuery)) {
       const id = `${jobId}:embeddings`;
       if (!config.embeddingKey) embeddingStatus = 'unavailable: no embedding credentials';
       else if (!this.service.store.reserve(id, 'openai', config.embeddingReserveUsd, budgetCeiling))
@@ -198,42 +199,51 @@ export class RecallService {
           let i = 0;
           if (!cachedQuery) cache.queries[queryKey] = result.value[i++]!;
           for (const c of missing)
-            cache.entries[c.id] = { revision: c.revision, vector: result.value[i++]! };
+            additions.push({ id: c.id, revision: c.revision, vector: result.value[i++]! });
           for (const id of Object.keys(cache.queries).slice(0, -16)) delete cache.queries[id];
         }
       }
     }
-    for (const id of Object.keys(cache.entries).slice(0, -1024)) delete cache.entries[id];
     // A late response must not repopulate corrected/forgotten content.
     if (
       digest(this.service.world.experience?.forgotten[actorId] ?? []) ===
         digest(world.experience?.forgotten[actorId] ?? []) &&
       digest(this.service.world.experience?.corrections?.[actorId] ?? {}) ===
         digest(world.experience?.corrections?.[actorId] ?? {})
-    )
-      this.service.store.putIntegration(key, cache);
-    const q = cache.queries[queryKey];
-    for (const c of ranked) {
-      const vector = cache.entries[c.id];
-      if (q && vector) c.score = cosineSimilarity(q, vector.vector);
+    ) {
+      if (vectors && additions.length) {
+        vectors.put(scope, additions);
+        for (const source of additions) indexed.add(source.id);
+      }
+      if (vectors) this.service.store.putIntegration(key, cache);
+    } else {
+      // Rebuilding from a changed privacy snapshot belongs to a fresh decision.
+      throw new Error('Recall sources changed during embedding; discard stale context.');
     }
-    ranked.sort(
-      (a, b) =>
-        Number(b.required) - Number(a.required) ||
-        (b.score ?? 0) +
-          (b.entityIds.some((id) => people.includes(id)) ? 0.15 : 0) +
-          b.salience * 0.01 -
-          ((a.score ?? 0) +
-            (a.entityIds.some((id) => people.includes(id)) ? 0.15 : 0) +
-            a.salience * 0.01) ||
-        b.at - a.at,
-    );
+    const q = cache.queries[queryKey];
+    const matches = q && vectors ? vectors.search(scope, q, sources, 24) : [];
+    const byId = new Map(candidates.map((c) => [c.id, c]));
+    const semantic = matches.map(({ id, score }) => {
+      const candidate = byId.get(id)!;
+      candidate.score = score;
+      return candidate;
+    });
+    // Rerank only the bounded database result using existing structured signals;
+    // vector arithmetic and the full semantic scan remain entirely in PostgreSQL.
+    const priority = (c: AttentionCandidate) =>
+      (c.score ?? 0) +
+      (c.entityIds.some((id) => people.includes(id)) ? 0.15 : 0) +
+      c.salience * 0.01;
+    semantic.sort((a, b) => priority(b) - priority(a) || b.at - a.at);
+    // Mandatory evidence bypasses top-N. Structured candidates fill remaining slots
+    // when the semantic index is incomplete or unavailable.
+    const ordered = [...new Map([...semantic, ...ranked].map((c) => [c.id, c])).values()];
     const mandatory = ranked.filter((c) => c.required);
     if (mandatory.length > 24)
       throw new Error('Required recall exceeds bounded attention capacity.');
     const batch = [
       ...mandatory,
-      ...ranked.filter((c) => !c.required).slice(0, 24 - mandatory.length),
+      ...ordered.filter((c) => !c.required).slice(0, 24 - mandatory.length),
     ];
     const candidateTexts = Object.fromEntries(batch.map((c, i) => [`c${i}`, c.text]));
     const questions = attentionQuestions(Object.keys(candidateTexts));
@@ -304,8 +314,10 @@ export class RecallService {
           metric: 'cosine',
           status: embeddingStatus,
           cachedQuery: !!cachedQuery,
-          indexed: Object.keys(cache.entries).length,
-          lag: ranked.filter((c) => !cache!.entries[c.id]).length,
+          storage: vectors ? 'pgvector' : 'unavailable',
+          search: 'database exact top-24',
+          indexed: indexed.size,
+          lag: ranked.filter((c) => !indexed.has(c.id)).length,
         },
         candidates: batch,
         eligible: candidates.length,

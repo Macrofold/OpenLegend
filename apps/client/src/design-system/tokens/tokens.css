@@ -1,0 +1,301 @@
+/* Open Legend tokens — generated from tokens.json. Set data-theme="wilderness|fantasy|scifi" on the HUD root. */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('../fonts/cormorant-garamond-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('../fonts/cormorant-garamond-latin-500-italic.woff2') format('woff2');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('../fonts/cormorant-garamond-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('../fonts/cormorant-garamond-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('../fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('../fonts/atkinson-hyperlegible-next-latin-wght-italic.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cinzel';
+  src: url('../fonts/cinzel-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cinzel';
+  src: url('../fonts/cinzel-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Chakra Petch';
+  src: url('../fonts/chakra-petch-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Chakra Petch';
+  src: url('../fonts/chakra-petch-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+:root,
+[data-theme='wilderness'] {
+  --canvas: #0d1310;
+  --surface: #141c18;
+  --surface-glass: rgba(20, 28, 24, 0.9);
+  --surface-raised: #1b2520;
+  --surface-hover: #232f29;
+  --surface-selected: #2c3b33;
+  --line: #2c3832;
+  --line-strong: #6a7d70;
+  --ink: #efe7d6;
+  --ink-muted: #b8bca9;
+  --ink-faint: #8d9786;
+  --accent: #a9bf95;
+  --accent-quiet: rgba(169, 191, 149, 0.14);
+  --highlight: #c3a765;
+  --highlight-quiet: rgba(195, 167, 101, 0.1);
+  --on-highlight: #1e1809;
+  --focus: #a9bf95;
+  --health: #dc8f7a;
+  --food: #d1b06b;
+  --energy: #b3c9c3;
+  --meter-track: rgba(239, 231, 214, 0.13);
+  --danger: #eb907e;
+  --danger-quiet: rgba(235, 144, 126, 0.14);
+  --on-danger: #2a0f09;
+  --world-text: #ffffff;
+  --world-halo: rgba(4, 8, 6, 0.75);
+  --scrim: rgba(7, 10, 8, 0.62);
+  --shadow-panel: 0 24px 48px -12px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 12px 28px -8px rgba(0, 0, 0, 0.6);
+}
+[data-theme='fantasy'] {
+  --canvas: #110e17;
+  --surface: #19141f;
+  --surface-glass: rgba(25, 20, 31, 0.9);
+  --surface-raised: #211b29;
+  --surface-hover: #2a2334;
+  --surface-selected: #342b41;
+  --line: #342c40;
+  --line-strong: #7a6b8d;
+  --ink: #f2e8da;
+  --ink-muted: #c4b9c9;
+  --ink-faint: #9a8ea4;
+  --accent: #c3a8e4;
+  --accent-quiet: rgba(195, 168, 228, 0.15);
+  --highlight: #cdb071;
+  --highlight-quiet: rgba(205, 176, 113, 0.1);
+  --on-highlight: #20160a;
+  --focus: #c3a8e4;
+  --health: #e0907f;
+  --food: #d9b56c;
+  --energy: #b7bfe6;
+  --meter-track: rgba(242, 232, 218, 0.13);
+  --danger: #ef8f8a;
+  --danger-quiet: rgba(239, 143, 138, 0.14);
+  --on-danger: #2a0d0c;
+  --world-text: #ffffff;
+  --world-halo: rgba(8, 4, 10, 0.75);
+  --scrim: rgba(9, 7, 12, 0.62);
+  --shadow-panel: 0 24px 48px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.4);
+  --shadow-float: 0 12px 28px -8px rgba(0, 0, 0, 0.65);
+}
+[data-theme='scifi'] {
+  --canvas: #090e12;
+  --surface: #0e161c;
+  --surface-glass: rgba(14, 22, 28, 0.9);
+  --surface-raised: #142029;
+  --surface-hover: #1a2934;
+  --surface-selected: #213544;
+  --line: #20303b;
+  --line-strong: #56778c;
+  --ink: #e3eef1;
+  --ink-muted: #a8bcc4;
+  --ink-faint: #7c929c;
+  --accent: #6fd8c9;
+  --accent-quiet: rgba(111, 216, 201, 0.13);
+  --highlight: #d3a550;
+  --highlight-quiet: rgba(211, 165, 80, 0.09);
+  --on-highlight: #1d1406;
+  --focus: #6fd8c9;
+  --health: #f08a7d;
+  --food: #e7c25d;
+  --energy: #8fd0f0;
+  --meter-track: rgba(227, 238, 241, 0.12);
+  --danger: #ff8a80;
+  --danger-quiet: rgba(255, 138, 128, 0.13);
+  --on-danger: #2b0c09;
+  --world-text: #ffffff;
+  --world-halo: rgba(2, 6, 9, 0.75);
+  --scrim: rgba(4, 7, 9, 0.62);
+  --shadow-panel: 0 20px 40px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.5);
+  --shadow-float: 0 12px 28px -8px rgba(0, 0, 0, 0.65);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-xl: 40px;
+  --control-sm: 32px;
+  --control-md: 40px;
+  --launcher: 52px;
+  --panel-width: 336px;
+  --duration-instant: 0ms;
+  --duration-quick: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --duration-hover-intent: 1000ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-standard: cubic-bezier(0.3, 0, 0.2, 1);
+  --z-world-label: 10;
+  --z-hud: 20;
+  --z-panel: 30;
+  --z-menu: 40;
+  --z-sheet: 50;
+  --font-display: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+  --font-ui: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-display-fantasy: Cinzel, 'Cormorant Garamond', Georgia, serif;
+  --font-display-scifi: 'Chakra Petch', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+.t-wordmark {
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+.t-panel-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 600;
+}
+.t-entity-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 600;
+}
+.t-count {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 24px;
+  font-weight: 600;
+}
+.t-narrative {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 25px;
+  font-weight: 500;
+}
+.t-narrative-italic {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 25px;
+  font-weight: 500;
+  font-style: italic;
+}
+.t-body {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 400;
+}
+.t-label {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.t-meta {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+}
+.t-caption {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+}
+.t-eyebrow {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.t-world-status {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+}
+.t-clock {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 500;
+}

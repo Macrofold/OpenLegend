@@ -10,6 +10,8 @@ This applies to the current first-party documentation and reference-board code a
 
 Earlier revisions were released under Apache-2.0. Existing grants for those revisions remain in effect; this change does not revoke recipients' rights in them. The former license is retained at [licenses/Apache-2.0.txt](licenses/Apache-2.0.txt) for that history and future explicitly designated components. Its presence does **not** dual-license this entire revision. Preserve applicable third-party and inherited notices when incorporating work.
 
+The imported UI assets have separate notices in [design-system assets](apps/client/src/design-system/README.md): Game-icons.net silhouettes are CC BY 3.0 with per-icon authors, Lucide utilities are ISC, and bundled fonts use SIL OFL 1.1. These assets are licensed imports, distinct from the unlicensed-to-us art reference board.
+
 ## Why AGPL
 
 The primary adoption path is expected to be people playing and creating hosted worlds. Open Legend benefits when operators who improve its shared engine make covered improvements available. This favors AGPL reciprocity over permitting closed engine forks by default.
@@ -18,14 +20,14 @@ AGPL permits commercial operation, paid access, and self-hosting. Section 13 req
 
 ## Component boundaries
 
-| Component | Policy | Current status |
-|---|---|---|
-| Core simulation, authoritative game server, and application code without a separate notice | AGPL-3.0-only | Repository default selected; game implementation has not started |
-| Standalone creator SDKs, integration libraries, and reusable examples | Apache-2.0 when explicitly released as independent components | Planned; no SDK/library/example directory is currently designated Apache |
-| World state, character memories, player records, and histories | Private access by default; not automatically distributed with engine source | Product direction; no live hosted world exists |
-| Independent original world content, assets, and mechanics packs | Creator-selected terms, compatible with inherited material and dependencies | Supported product direction; individual packages must declare actual rights |
-| Engine patches and executable extensions forming part of covered software | AGPL obligations unless applicable additional permission or another license authorizes otherwise | Do not assume a proprietary-pack exemption exists |
-| Public starter libraries and selected official content | Explicit package licenses and dependency notices at release | Exact contents and licenses remain open |
+| Component                                                                                  | Policy                                                                                           | Current status                                                              |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| Core simulation, authoritative game server, and application code without a separate notice | AGPL-3.0-only                                                                                    | Applied to the implemented local game and first-party UI                    |
+| Standalone creator SDKs, integration libraries, and reusable examples                      | Apache-2.0 when explicitly released as independent components                                    | Planned; no SDK/library/example directory is currently designated Apache    |
+| World state, character memories, player records, and histories                             | Private access by default; not automatically distributed with engine source                      | Product direction; no live hosted world exists                              |
+| Independent original world content, assets, and mechanics packs                            | Creator-selected terms, compatible with inherited material and dependencies                      | Supported product direction; individual packages must declare actual rights |
+| Engine patches and executable extensions forming part of covered software                  | AGPL obligations unless applicable additional permission or another license authorizes otherwise | Do not assume a proprietary-pack exemption exists                           |
+| Public starter libraries and selected official content                                     | Explicit package licenses and dependency notices at release                                      | Exact contents and licenses remain open                                     |
 
 A database row, JSON document, or script file is not automatically independent content just because of its storage format. AGPL does not make every input/output a covered work; copied implementation and combined-program boundaries still matter. Privacy of server-side definitions is an access-control property. Client-delivered definitions can be inspected by their recipients.
 

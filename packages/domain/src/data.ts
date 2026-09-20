@@ -1,3 +1,4 @@
+import traitBank from '../config/traits.json' with { type: 'json' };
 import { migrateCognition } from './experience.js';
 import type { ActorComponent, Entity, ItemDefinition, WorldState } from './types.js';
 
@@ -127,8 +128,13 @@ export function addItem(
   world.items[id] = { id, ownerId, definitionId, quantity };
   return id;
 }
-function actor(controller: 'player' | 'npc', fullness: number): ActorComponent {
+export function createActor(
+  world: WorldState,
+  controller: 'player' | 'npc',
+  fullness: number,
+): ActorComponent {
   return {
+    traits: sampleTraits(world),
     controller,
     health: 100,
     fullness,
@@ -196,9 +202,15 @@ export function createWorld(seed = 73): WorldState {
       name: 'You',
       kind: 'player',
       position: { x: 11, z: 13 },
-      actor: actor('player', 76),
+      actor: createActor(world, 'player', 76),
     },
-    { id: NPC_ID, name: 'Ada', kind: 'npc', position: { x: 13, z: 12 }, actor: actor('npc', 66) },
+    {
+      id: NPC_ID,
+      name: 'Ada',
+      kind: 'npc',
+      position: { x: 13, z: 12 },
+      actor: createActor(world, 'npc', 66),
+    },
     {
       id: 'campfire',
       name: 'Banked campfire',
@@ -313,4 +325,24 @@ export function createWorld(seed = 73): WorldState {
   });
   migrateCognition(world);
   return world;
+}
+
+/** Sample without replacement using committed RNG; copy definitions so bank edits
+ * affect new actors without rewriting existing personalities. */
+function sampleTraits(world: WorldState) {
+  if (
+    traitBank.length < 3 ||
+    new Set(traitBank.map((t) => t.id)).size !== traitBank.length ||
+    traitBank.some((t) => !t.id || !t.name || !t.description)
+  )
+    throw new Error('Trait bank needs at least three unique, described traits.');
+  const available = [...traitBank];
+  return Array.from({ length: 3 }, () => ({
+    ...available.splice(Math.floor(nextRandom(world) * available.length), 1)[0]!,
+  }));
+}
+export function initializeActorTraits(world: WorldState): void {
+  for (const entity of Object.values(world.entities))
+    if (entity.actor && entity.actor.traits === undefined)
+      entity.actor.traits = sampleTraits(world);
 }

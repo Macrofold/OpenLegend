@@ -317,13 +317,18 @@ export class AiDirector {
       .catch((error) =>
         this.log.withTrigger(job.id, async () => {
           const known = error instanceof StopJob;
+          const cancelled = run.controller.signal.aborted;
           this.log.record(`${run.job.id}:failure`, 'Workflow failure', {
             reason: error instanceof Error ? error.message : 'Unknown failure',
           });
           this.update(
             run,
-            known ? error.status : 'failed',
-            known ? error.message : 'The workflow failed safely. No automatic paid retry was sent.',
+            known ? error.status : cancelled ? 'cancelled' : 'failed',
+            known
+              ? error.message
+              : cancelled
+                ? (run.cancelReason ?? 'The request was cancelled before completion.')
+                : 'The workflow failed safely. No automatic paid retry was sent.',
           );
         }),
       )
@@ -709,6 +714,11 @@ export class AiDirector {
 
   /** Meaningful changes are coalesced; native steps never purchase inference. */
   considerThought(): void {
+    if (
+      !this.service.config.macrofoldKey &&
+      (!this.service.config.jevKey || !this.service.config.llmKey)
+    )
+      return;
     this.maintenance.tick(!!this.running);
     if (this.running || this.stopped || this.service.paused || this.now() < this.nextThoughtAt)
       return;

@@ -41,6 +41,7 @@ export interface CatalogueAction {
   category: string;
   /** Situation-aware plain text, projected by the server from permitted facts. */
   description: string;
+  facts?: Array<[string, string]>;
   keywords: string[];
   targetId?: string;
   enabled: boolean;
@@ -77,6 +78,8 @@ export interface EntityView {
   position: Position;
   radius: number;
   status: string;
+  description?: string;
+  traits?: Array<{ id: string; name: string; description: string }>;
   canTalk?: boolean;
   health?: number;
   quantity?: number;
@@ -175,6 +178,9 @@ export interface GameView {
       elapsedSeconds: number;
       advancing: boolean;
     } | null;
+    traits?: Array<{ id: string; name: string; description: string }>;
+    memories?: Array<{ id: string; text: string; time: number }>;
+    history?: string;
     inventory: InventoryItemView[];
     actions: ActionOption[];
   };

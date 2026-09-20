@@ -94,3 +94,9 @@ Equivalent requests should remain equivalent despite eloquent wording. A repeate
 ## A small story that exercises the design
 
 Proposed validation story: use a cloak as a roof; expose it to rain; extend the shelter with another material; remove a support while work is pending; retrieve and wear the same cloak; compare equivalent wording and separately informed characters; interrupt generation and save/reload. Check object identity, changing use, knowledge attribution, concurrency, consistent material behavior, and feedback. Include a later interaction anticipated in authoring notes but not yet implemented. These are planned scenarios, not completed tests.
+
+## Later multi-turn discovery tasks
+
+A harness can help an agent decide what to inspect next, compare a hypothesis with permitted evidence, or refine a supported invention after validation. Learning through ordinary interaction still requires real observations and actions: save the objective between jobs, let simulation execute the experiment, and resume on its actual outcome. Waiting for rain or another character is not a reason to keep a model loop running. A server-side preview does not teach an NPC hidden facts.
+
+Use the existing canonical tasks: [CH01–CH03](../../docs/maintainers/cognition-redesign.md#later-harness-extensions) cover character investigation, teaching and demonstrated benefit; [INV-4.7](../07-technical-architecture/declarations-and-evolution.md#inv-4--give-the-creator-useful-scoped-world-investigation-and-workshop-tools) covers bounded invention investigation; [INV-7.6](../07-technical-architecture/declarations-and-evolution.md#inv-7--discover-missing-mechanics-during-play-without-endless-generation) connects proposals to physical experiments and later reconsideration. These later tasks preserve the first version's simple generation path and do not require a research minigame.

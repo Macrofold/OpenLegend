@@ -48,8 +48,10 @@ test('native wilderness is visible, playable, saved and honestly reports absent 
     await page.unroute('**/api/presence');
     await expect(page.getByRole('button', { name: 'Pause world', exact: true })).toBeEnabled();
     await expect(page.locator('#aiLabel')).toHaveText('AI needs setup');
+    await page.getByRole('button', { name: 'Talk to Ada', exact: true }).click();
     await expect(page.locator('#sendMessage')).toBeEnabled();
     await expect(page.locator('#composerReadiness')).toContainText('Talk and invention need Jev');
+    await page.getByRole('button', { name: 'Hide Conversation panel' }).click();
     await page.screenshot({ path: info.outputPath('wilderness.png') });
 
     // These points are on the visible sprites in the seeded 1440×960 scene.
@@ -128,6 +130,7 @@ test('native wilderness is visible, playable, saved and honestly reports absent 
     await page.getByRole('button', { name: 'Resume world', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Pause world', exact: true })).toBeVisible();
 
+    await page.getByRole('button', { name: 'Hide Conversation panel' }).click();
     const initialPosition = { ...game.service.world.entities['player']!.position };
     await page.locator('#world').click({ position: { x: 800, y: 580 } });
     await expect
@@ -140,9 +143,9 @@ test('native wilderness is visible, playable, saved and honestly reports absent 
     // Wait for arrival instead of racing a control that correctly becomes disabled.
     await expect.poll(() => game.service.world.entities['player']!.actor!.action).toBeNull();
 
-    await page.getByRole('button', { name: 'Possessions', exact: true }).click();
+    await page.getByRole('button', { name: 'Inventory', exact: true }).click();
     await page.locator('#world').click({ button: 'right', position: reedsPoint });
-    await expect(page.getByRole('heading', { name: 'Your possessions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Inventory' })).toBeVisible();
     await expect(page.locator('#contextTitle')).toHaveText('River reeds');
     const gather = page
       .locator('#contextMenu')
@@ -168,43 +171,58 @@ test('native wilderness is visible, playable, saved and honestly reports absent 
         { timeout: 10_000 },
       )
       .toBe(true);
-    await expect(page.getByRole('heading', { name: 'Your possessions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Inventory' })).toBeVisible();
     await expect(page.getByText('Reed fibers', { exact: true })).toBeVisible();
     await expect(
-      page.locator('[data-inventory-item]').filter({ hasText: 'Reed fibers' }).locator('.quantity'),
+      page
+        .locator('#inventoryPanel .ol-row')
+        .filter({ hasText: 'Reed fibers' })
+        .locator('.ol-row-count'),
     ).toHaveText('2');
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Resume world', exact: true })).toBeVisible();
     const pausedTime = game.service.world.simTime;
     await page.waitForTimeout(500);
     expect(game.service.world.simTime).toBe(pausedTime);
-    await page.locator('[data-speed="3"]').click();
+    await page
+      .locator('.ol-radio')
+      .filter({ has: page.getByRole('radio', { name: '3×', exact: true }) })
+      .click();
     await expect.poll(() => game.service.speed).toBe(3);
+    // Ada was moved beyond hearing earlier; reopen the saved composer through Crafting.
+    await page.getByRole('button', { name: 'Crafting', exact: true }).click();
+    await page.getByRole('button', { name: 'Invent a tool', exact: true }).click();
+    await page
+      .locator('.ol-radio')
+      .filter({ has: page.getByRole('radio', { name: 'Talk', exact: true }) })
+      .click();
     await page.locator('#message').fill('Ada, what do you remember about this clearing?');
     await page.locator('#message').press('Enter');
-    await expect(page.getByRole('heading', { name: 'Enable Talk & invention' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'AI & allowance' })).toBeVisible();
     await expect(page.locator('#message')).toHaveValue(
       'Ada, what do you remember about this clearing?',
     );
     expect(aiRequests).toEqual([]);
-    await page.getByRole('button', { name: 'Close intelligence panel' }).click();
-    await page.getByRole('tab', { name: 'Invent something' }).click();
+    await page.getByRole('button', { name: 'Hide AI & allowance panel' }).click();
+    await page
+      .locator('.ol-radio')
+      .filter({ has: page.getByRole('radio', { name: 'Invent something' }) })
+      .click();
     await page.locator('#message').fill('Weave a sling from the cord and prepared fibers.');
     await page.reload();
     await expect(page.getByRole('button', { name: 'Resume world', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Crafting', exact: true }).click();
+    await page.getByRole('button', { name: 'Invent a tool', exact: true }).click();
     await expect(page.locator('#message')).toHaveValue(
       'Weave a sling from the cord and prepared fibers.',
     );
-    await expect(page.getByRole('tab', { name: 'Invent something' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    await expect(page.getByRole('radio', { name: 'Invent something' })).toBeChecked();
     await expect(page.locator('#aiPanel')).toBeHidden();
     expect(game.service.world.simTime).toBe(pausedTime);
     await page.getByRole('button', { name: 'Resume world', exact: true }).click();
     await expect.poll(() => game.service.world.simTime).toBeGreaterThan(pausedTime);
-    await page.locator('#aiToggle').click();
-    await expect(page.getByText('Waiting for configuration', { exact: true })).toBeVisible();
+    await page.locator('#aiLabel').click();
+    await expect(page.getByText('unconfigured', { exact: true })).toBeVisible();
     expect(game.service.store.usage(0).usage.llmCalls).toBe(0);
     expect(aiRequests).toEqual([]);
     expect(errors).toEqual([]);

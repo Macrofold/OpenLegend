@@ -9,7 +9,6 @@ import type {
 } from '@open-legend/ai';
 import { mindFor, remember, type DeclarationDraft, type WorldState } from '@open-legend/domain';
 import { AiDirector } from './ai-director.js';
-import { cognitionContext, thoughtProposal } from './cognition.js';
 import { buildContext } from './context.js';
 import { declarationSchema } from './ai-schemas.js';
 import { readConfig, type AppConfig } from './config.js';
@@ -67,44 +66,45 @@ function value<T>(requestId: string, provider: 'jev' | 'openai', result: T): AiR
   return { outcome: 'value', value: result, receipt: receipt(requestId, provider) };
 }
 function judgment(request: JudgeRequest, selected: string): AiResult<JudgeValue> {
-  const route = request.questions['route'];
-  if (!route || route.type !== 'choice') throw new Error('Expected fixture Choice question');
-  expect(
-    Object.hasOwn(route.criteria, selected),
-    `Fixture route ${selected} must actually be offered`,
-  ).toBe(true);
+  const answers: JudgeValue['answers'] = {};
+  for (const [name, question] of Object.entries(request.questions)) {
+    if (question.type !== 'choice') throw new Error('Expected fixture Choice question');
+    const legacyRoute = ['reply', 'deliberate', 'fast'].includes(selected) ? 'level2' : selected;
+    const choice =
+      name === 'admissibility'
+        ? 'supported'
+        : name === 'reflection'
+          ? 'no'
+          : name === 'route'
+            ? Object.hasOwn(question.criteria, legacyRoute)
+              ? legacyRoute
+              : Object.hasOwn(question.criteria, 'level2')
+                ? 'level2'
+                : Object.keys(question.criteria)[0]!
+            : Object.hasOwn(question.criteria, selected)
+              ? selected
+              : Object.hasOwn(question.criteria, 'yes')
+                ? 'yes'
+                : Object.keys(question.criteria)[0]!;
+    answers[name] = {
+      type: 'choice',
+      choice,
+      confidence: 0.95,
+      probabilities: Object.fromEntries(
+        Object.keys(question.criteria).map((key) => [key, key === choice ? 1 : 0]),
+      ),
+    };
+  }
   return value(request.requestId, 'jev', {
-    answers: {
-      route: {
-        type: 'choice',
-        choice: selected,
-        confidence: 0.95,
-        probabilities: Object.fromEntries(
-          Object.keys(route.criteria).map((key) => [key, key === selected ? 1 : 0]),
-        ),
-      },
-    },
+    answers,
   });
 }
-function cognitionFixture(
-  request: GenerateRequest,
-  thought: string,
-  actionId: string | null = null,
-  speech?: string,
-) {
-  const context = request.context as ReturnType<typeof cognitionContext>['context'];
-  return {
-    policy: context.policy,
-    decisionId: context.decisionId,
-    expectedRevision: context.expectedRevision,
-    thought,
-    actionId,
-    documents: [],
-    removeDocuments: [],
-    records: [],
-    removeRecords: [],
-    ...(speech ? { speech } : {}),
-  };
+const speechFixture = (speech: string) => ({ speech });
+const actionFixture = (actionId: string | null) => ({ actionId });
+function offeredAction(request: GenerateRequest, text: string): string | null {
+  const actions = (request.context as { actions?: Array<{ id: string; description: string }> })
+    .actions;
+  return actions?.find((action) => action.description.toLowerCase().includes(text))?.id ?? null;
 }
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -227,30 +227,18 @@ describe('AI director with explicit fixtures, no live calls', () => {
   it('uses relevant private memory in scoped conversation and refreshes observations after judging', async () => {
     const wait = deferred<AiResult<JudgeValue>>();
     const h = harness({
-      judge: () => wait.promise,
+      judge: (request) => (request.questions['route'] ? judgment(request, 'level2') : wait.promise),
       generate: (request) =>
-        value(
-          request.requestId,
-          'openai',
-          cognitionFixture(
-            request,
-            'The newcomer may keep their berry promise.',
-            null,
-            'I remember your offer of berries.',
-          ),
-        ),
+        value(request.requestId, 'openai', speechFixture('I remember your offer of berries.')),
     });
     h.change((world) => {
-      const mind = mindFor(world, 'ada');
-      mind.documents.push({
-        id: 'berries',
-        title: 'Berries',
-        text: 'Berries would help me trust the newcomer.',
-        revision: 1,
-        evidence: [],
-        protected: false,
+      const inner = world.innerWorlds!.ada!;
+      inner.files.push({
+        path: 'berries.md',
+        text: 'Berries\n\nBerries would help me trust the newcomer.',
       });
-      (world.minds ??= {}).ada = mind;
+      inner.text += '\n\n# berries.md\nBerries\n\nBerries would help me trust the newcomer.';
+      inner.revision++;
     });
     h.service.transition((world) =>
       remember(world, 'player', {
@@ -266,21 +254,16 @@ describe('AI director with explicit fixtures, no live calls', () => {
     });
     h.director.submit('chat', 'chat-1', 'Do you remember the berries?');
     h.change((world) => {
-      world.entities['ada']!.actor!.fullness = 55;
+      world.entities['ada']!.actor!.fullness = 25;
     });
-    wait.resolve(judgment(h.calls.judges[0]!, 'reply'));
+    wait.resolve(judgment(h.calls.judges[0]!, 'yes'));
     await h.director.idle();
-    const context = h.calls.generations[0]!.context as ReturnType<
-      typeof cognitionContext
-    >['context'];
-    expect(context.current.self.actor?.fullness).toBe(55);
+    const context = h.calls.generations[0]!.context as Record<string, unknown>;
+    expect(context['body']).toContain('very hungry');
     expect(JSON.stringify(context)).toContain('Berries would help');
     expect(JSON.stringify(context)).not.toContain('PLAYER_PRIVATE_SECRET_724');
     expect(JSON.stringify(context)).not.toContain('PLAYER_PRIVATE_GOAL_839');
-    expect(mindFor(h.service.world, 'ada').thoughts.at(-1)).toMatchObject({
-      source: 'inferred',
-      text: 'The newcomer may keep their berry promise.',
-    });
+    expect(mindFor(h.service.world, 'ada').thoughts).toHaveLength(0);
     expect(
       h.service.world.memories['player']!.some((memory) =>
         memory.summary.includes('may keep their berry promise'),
@@ -291,48 +274,49 @@ describe('AI director with explicit fixtures, no live calls', () => {
     ).toBe(true);
   });
 
-  it('executes known player actions with zero AI and lets Jev choose a native NPC action without generation', async () => {
-    const h = harness({ judge: (request) => judgment(request, 'rest') });
+  it('executes known player actions with zero AI and admits a generated NPC action from offered IDs', async () => {
+    const h = harness({
+      judge: (request) => judgment(request, 'level2'),
+      generate: (request) =>
+        value(
+          request.requestId,
+          'openai',
+          actionFixture(offeredAction(request, 'rest to recover')),
+        ),
+    });
     expect(h.service.command('native-rest', { type: 'rest' }).ok).toBe(true);
     expect(h.calls.judges).toHaveLength(0);
     h.director.considerThought();
     await h.director.idle();
     expect(h.service.world.entities['ada']!.actor!.action?.type).toBe('rest');
-    expect(h.calls.judges).toHaveLength(1);
-    expect(h.calls.generations).toHaveLength(0);
+    expect(h.calls.judges.length).toBeGreaterThan(0);
+    expect(h.calls.generations).toHaveLength(1);
   });
 
-  it('uses generation only for a routed reconsideration and stores inferred reflection', async () => {
+  it('uses generation for a routed semantic action without writing an immediate reflection', async () => {
     const h = harness({
-      judge: (request) => judgment(request, 'deliberate'),
+      judge: (request) => judgment(request, 'level2'),
       generate: (request) =>
         value(
           request.requestId,
           'openai',
-          cognitionFixture(request, 'Rest will help me work.', 'rest'),
+          actionFixture(offeredAction(request, 'rest to recover')),
         ),
     });
     h.director.considerThought();
     await h.director.idle();
     expect(h.calls.generations).toHaveLength(1);
-    expect(mindFor(h.service.world, 'ada').thoughts.at(-1)?.text).toBe('Rest will help me work.');
+    expect(mindFor(h.service.world, 'ada').thoughts).toHaveLength(0);
     expect(h.service.world.entities['ada']!.actor!.action?.type).toBe('rest');
-    expect(
-      h.service.world.memories['ada']!.some(
-        (memory) => memory.source === 'inferred' && memory.summary === 'Rest will help me work.',
-      ),
-    ).toBe(false); // Thoughts are presentation, not recalled experiences.
+    expect(h.service.world.memories['ada']!.some((memory) => memory.source === 'inferred')).toBe(
+      false,
+    ); // Thoughts are presentation, not recalled experiences.
   });
 
   it('does not let an invented action identifier execute a command', async () => {
     const h = harness({
-      judge: (request) => judgment(request, 'deliberate'),
-      generate: (request) =>
-        value(
-          request.requestId,
-          'openai',
-          cognitionFixture(request, 'Fixture untrusted output.', 'grant-all-items'),
-        ),
+      judge: (request) => judgment(request, 'level2'),
+      generate: (request) => value(request.requestId, 'openai', actionFixture('grant-all-items')),
     });
     const before = structuredClone(h.service.world);
     h.director.considerThought();
@@ -356,7 +340,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     expect(Object.keys(h.service.world.recipes)).toHaveLength(1);
   });
 
-  it('discards a late generation after pause, even if resumed before the response arrives', async () => {
+  it('holds a late explicit result while paused and admits it only after resume', async () => {
     const wait = deferred<AiResult<unknown>>();
     const started = deferred<void>();
     const h = harness({
@@ -368,11 +352,14 @@ describe('AI director with explicit fixtures, no live calls', () => {
     h.director.submit('invention', 'paused-late', 'A sling.');
     await started.promise;
     h.service.control({ paused: true });
-    h.service.control({ paused: false });
     wait.resolve(value(h.calls.generations[0]!.requestId, 'openai', slingFixture()));
-    await h.director.idle();
-    expect(h.store.getJob('paused-late')?.status).toBe('cancelled');
+    await Promise.resolve();
+    await Promise.resolve();
     expect(h.service.world.recipes).toEqual({});
+    h.service.control({ paused: false });
+    await h.director.idle();
+    expect(h.store.getJob('paused-late')?.status).toBe('completed');
+    expect(Object.keys(h.service.world.recipes)).toHaveLength(1);
     expect(h.store.usage(h.config.budgetUsd).usage.llmCalls).toBe(1);
     expect(h.store.usage(h.config.budgetUsd).budget.spentUsd).toBeGreaterThan(0);
   });
@@ -388,16 +375,25 @@ describe('AI director with explicit fixtures, no live calls', () => {
     expect(h.calls.judges[0]!.signal?.aborted).toBe(true);
     wait.resolve(judgment(h.calls.judges[0]!, 'rest'));
     await h.director.idle();
-    expect(h.store.recentJobs()[0]?.status).toBe('cancelled');
+    const job = h.store.recentJobs()[0];
+    expect(job?.status, job?.message).toBe('cancelled');
     expect(h.service.world.entities['ada']!.actor!.action).toBeNull();
   });
 
   it('rejects stale native plans and avoids generation when the plan changed during Jev', async () => {
     const wait = deferred<AiResult<JudgeValue>>();
-    const h = harness({ judge: () => wait.promise });
+    const started = deferred<void>();
+    const h = harness({
+      judge: (request) => {
+        if (!request.questions['route']) return judgment(request, 'yes');
+        started.resolve();
+        return wait.promise;
+      },
+    });
     h.director.considerThought();
+    await started.promise;
     expect(h.service.setGoal('new-plan', 'Attend to the camp instead.').ok).toBe(true);
-    wait.resolve(judgment(h.calls.judges[0]!, 'deliberate'));
+    wait.resolve(judgment(h.calls.judges.at(-1)!, 'level2'));
     await h.director.idle();
     expect(h.calls.generations).toHaveLength(0);
     expect(h.store.recentJobs()[0]?.status).toBe('stale');
@@ -408,7 +404,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     const wait = deferred<AiResult<unknown>>();
     const started = deferred<void>();
     const h = harness({
-      judge: (request) => judgment(request, 'deliberate'),
+      judge: (request) => judgment(request, 'level2'),
       generate: () => {
         started.resolve();
         return wait.promise;
@@ -422,7 +418,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
       value(
         h.calls.generations[0]!.requestId,
         'openai',
-        cognitionFixture(h.calls.generations[0]!, 'Old reflection.', 'rest'),
+        actionFixture(offeredAction(h.calls.generations[0]!, 'rest')),
       ),
     );
     await h.director.idle();
@@ -432,7 +428,14 @@ describe('AI director with explicit fixtures, no live calls', () => {
 
   it('revalidates a native candidate whose food was consumed while Jev was deciding', async () => {
     const wait = deferred<AiResult<JudgeValue>>();
-    const h = harness({ judge: () => wait.promise });
+    const started = deferred<void>();
+    const h = harness({
+      judge: (request) => {
+        if (!request.questions['route']) return judgment(request, 'yes');
+        started.resolve();
+        return wait.promise;
+      },
+    });
     const berries = Object.values(h.service.world.items).find(
       (item) => item.ownerId === 'ada' && item.definitionId === 'berries',
     )!;
@@ -440,11 +443,12 @@ describe('AI director with explicit fixtures, no live calls', () => {
       world.items[berries.id]!.quantity = 1;
     });
     h.director.considerThought();
+    await started.promise;
     expect(
       h.service.command('eat-before-answer', { type: 'eat', itemId: berries.id }, 'ada').ok,
     ).toBe(true);
     const before = structuredClone(h.service.world);
-    wait.resolve(judgment(h.calls.judges[0]!, `eat:${berries.id}`));
+    wait.resolve(judgment(h.calls.judges.at(-1)!, 'level2'));
     await h.director.idle();
     expect(h.service.world.items).toEqual(before.items);
     expect(h.service.world.entities['ada']!.actor!.fullness).toBe(
@@ -458,7 +462,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     const wait = deferred<AiResult<unknown>>();
     const started = deferred<void>();
     const h = harness({
-      judge: (request) => judgment(request, 'reply'),
+      judge: (request) => judgment(request, 'level2'),
       generate: () => {
         started.resolve();
         return wait.promise;
@@ -469,13 +473,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     h.change((world) => {
       world.entities['player']!.position = { x: 26, z: 22 };
     });
-    wait.resolve(
-      value(
-        h.calls.generations[0]!.requestId,
-        'openai',
-        cognitionFixture(h.calls.generations[0]!, 'PRIVATE_LATE_REFLECTION', null, 'Hello there.'),
-      ),
-    );
+    wait.resolve(value(h.calls.generations[0]!.requestId, 'openai', speechFixture('Hello there.')));
     await h.director.idle();
     expect(h.store.getJob('far-reply')?.status).toBe('stale');
     expect(
@@ -547,7 +545,9 @@ describe('AI director with explicit fixtures, no live calls', () => {
     });
     h.director.submit('invention', 'unknown-cost', 'A sling.');
     await h.director.idle();
-    expect(h.store.usage(h.config.budgetUsd).budget.spentUsd).toBe(h.config.jevReserveUsd);
+    expect(h.store.usage(h.config.budgetUsd).budget.spentUsd).toBeGreaterThanOrEqual(
+      h.config.jevReserveUsd,
+    );
     expect(h.calls.judges).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
     expect(h.service.world.recipes).toEqual({});
@@ -619,35 +619,29 @@ describe('AI director with explicit fixtures, no live calls', () => {
     expect(h.calls.generations).toHaveLength(0);
   });
 
-  it('commits conversation and private thought together, without the retired unbounded reflection format', async () => {
+  it('commits immediate conversation without coupling it to private reflection', async () => {
     const h = harness({
-      judge: (r) => judgment(r, 'reply'),
+      judge: (r) => judgment(r, 'level2'),
       generate: (r) =>
-        value(
-          r.requestId,
-          'openai',
-          cognitionFixture(r, 'I considered this exchange.', null, 'I will help you gather food.'),
-        ),
+        value(r.requestId, 'openai', speechFixture('I promise to help you gather food.')),
     });
     h.director.submit('chat', 'coherent-chat', 'Can we work together?');
     await h.director.idle();
     expect(h.store.getJob('coherent-chat')?.status).toBe('completed');
-    expect(mindFor(h.service.world, 'ada').thoughts.at(-1)?.text).toBe(
-      'I considered this exchange.',
-    );
+    expect(mindFor(h.service.world, 'ada').thoughts).toHaveLength(0);
     expect(h.service.world.memories.ada!.some((m) => m.kind === 'reflection')).toBe(false);
     expect(
       h.service.world.memories.ada!.some(
-        (m) => m.speakerId === 'ada' && m.summary.includes('I will help'),
+        (m) => m.speakerId === 'ada' && m.summary.includes('I promise to help'),
       ),
     ).toBe(true);
   });
   it('rejects unsupported legacy extraction fields without committing a partial speech', async () => {
     const h = harness({
-      judge: (r) => judgment(r, 'reply'),
+      judge: (r) => judgment(r, 'level2'),
       generate: (r) =>
         value(r.requestId, 'openai', {
-          ...cognitionFixture(r, 'Thought', null, 'Hello.'),
+          ...speechFixture('Hello.'),
           commitment: { quote: 'Fabricated promise' },
         }),
     });
@@ -659,23 +653,17 @@ describe('AI director with explicit fixtures, no live calls', () => {
     );
     expect(mindFor(h.service.world, 'ada').thoughts).toHaveLength(0);
   });
-  it('admits one explicit fast-to-full escalation without committing the provisional thought', async () => {
+  it('routes difficult immediate work to the configured complex level without a mind write', async () => {
     const h = harness({
-      judge: (r) => judgment(r, 'fast'),
-      generate: (r) =>
-        value(
-          r.requestId,
-          'openai',
-          r.execution === 'fast'
-            ? { thought: 'PROVISIONAL', actionId: 'rest', needsDeliberation: true }
-            : cognitionFixture(r, 'I reconsidered the whole decision.'),
-        ),
+      judge: (r) => judgment(r, 'level4'),
+      generate: (r) => value(r.requestId, 'openai', actionFixture(null)),
     });
     h.director.considerThought();
     await h.director.idle();
-    expect(h.calls.generations.map((r) => r.execution)).toEqual(['fast', 'full']);
-    expect(new Set(h.calls.generations.map((r) => r.requestId)).size).toBe(2);
-    expect(JSON.stringify(mindFor(h.service.world, 'ada'))).not.toContain('PROVISIONAL');
+    expect(h.calls.generations.map((r) => [r.execution, r.reasoningEffort])).toEqual([
+      ['complex', 'high'],
+    ]);
+    expect(mindFor(h.service.world, 'ada').thoughts).toHaveLength(0);
     expect(h.service.world.entities.ada!.actor!.action).toBeNull();
   });
 

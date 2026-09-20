@@ -8,7 +8,7 @@ The first implementation is a **local, single-player wilderness prototype** with
 
 The broader shared-world platform, arbitrary invented physics, hosted worlds, marketplace, memberships and creator fund remain future work. Automated fixture tests are not evidence of live model quality. See [verification status](docs/verification.md).
 
-![The local wilderness prototype with original procedural artwork](docs/images/wilderness.png)
+![The React interface over original procedural artwork, in an isolated native fixture](docs/images/wilderness.png)
 
 ## Run locally
 
@@ -26,13 +26,15 @@ If another app uses that port, run `PORT=3211 pnpm run dev` and open **http://12
 
 Follow the [step-by-step live AI setup guide](docs/live-ai-setup.md) for key creation, local configuration and the first real conversation.
 
-Until AI is configured, the Talk composer stays editable and **Set up AI** explains what is missing. Enter opens setup without sending a request. Unsent drafts survive a reload within the same browser tab.
+Open Talk through a nearby person or quick suggestion. Until AI is configured, its composer stays editable and **Set up AI** explains what is missing. Enter opens setup without sending a request. Unsent drafts survive a reload within the same browser tab.
 
-Click the ground to walk; right-click a person, animal, resource or the ground to browse actions. On macOS, Control-click also works. An object menu contains only actions involving that object. Empty-ground menus search the broader catalogue of supported actions, your possessions, visible targets and learned recipes. Right-clicking preserves your current side-panel tab. Available actions appear first. **Show Unavailable Actions** reveals gray entries, including in search; the label becomes **Hide Unavailable Actions**, and the choice is saved to your local player profile across reloads and server restarts. Hover over an action for one second (or focus it with the arrow keys) for a contextual explanation and any current blocker. Compact rows keep category tags on the right. To propose something new, use the **Invent something** tab in the main composer.
+Click the ground to walk; click a thing to **Look closer**, or right-click / Control-click for its actions. Object menus stay scoped to that object, self menus contain personal work, and empty-ground menus offer walking. **Show Unavailable Actions** reveals blocked options and saves that preference. Hover or keyboard-focus an action for a one-second explanation with actual material/time facts. Search retains **Search actions or invent something…**: unmatched Enter opens an editable invention draft, and only **Send** dispatches it.
 
-Hold the **right mouse button and drag** across the world to pan the camera. A right-click without dragging opens actions on release. Middle-button dragging and Space + primary dragging also pan; scroll to zoom, or use the camera buttons to zoom and recenter.
+Drag with the primary, right or middle mouse button to pan. A stationary right-click opens actions on release. Scroll to zoom or use the camera buttons to zoom and recenter. Dismissing a menu by clicking the world never walks.
 
-Select a resource and Gather. Your character approaches it, completes the work, then adds up to two units to Possessions (merging with an existing stack). Reeds/grass yield Reed fibers, fallen branches yield Supple branch, river stones yield Small stone, and berry bushes yield Wild berries. Work stops while paused; another movement/work command replaces unfinished work. Your inventory includes a few possessions and prepared materials. Talk to Ada, then use **Invent** to describe a physical sling made from cord and prepared fibers. A live model proposes a new recipe; the engine independently checks it. Craft the admitted recipe, equip the launcher, carry stones, hunt, harvest, cook raw meat at the starting fire, and eat. Inventing a bow and then arrows exercises the same ranged rules; bone from a hunted animal can provide a point. Gathering, preparing fibers/cord, eating and resting use ordinary code.
+The React interface uses the [new design system](apps/client/src/design-system/README.md): Inventory (I), Crafting (C), Character (K), World agent (W), In view (V) and Journal (J). Panels open beside their launchers and share a bottom sheet on narrow screens. **Settings and help** offers Wilderness/Fantasy/Sci-fi skins, 90–130% HUD scale, reduced motion and asset credits. Themes never change game rules. Character traits are sampled from a configurable bank and saved; hover or focus a trait for its description.
+
+Select a resource and Gather. Your character approaches it, completes the work, then adds up to two units to Inventory (merging with an existing stack). Reeds/grass yield Reed fibers, fallen branches yield Supple branch, river stones yield Small stone, and berry bushes yield Wild berries. Work stops while paused; another movement/work command replaces unfinished work. Your inventory includes a few possessions and prepared materials. Talk to Ada, then use **Invent a tool** to describe a physical sling made from cord and prepared fibers. A live model proposes a new recipe; the engine independently checks it. Craft the admitted recipe, equip the launcher, carry stones, hunt, harvest, cook raw meat at the starting fire, and eat. Inventing a bow and then arrows exercises the same ranged rules; bone from a hunted animal can provide a point. Gathering, preparing fibers/cord, eating and resting use ordinary code.
 
 Pause and **0.5× / 1× / 3× / 8×** controls use one simulation clock. At **1×, one real second advances one game minute**: a full game day takes 24 real minutes (48 minutes at 0.5×, 8 minutes at 3×, 3 minutes at 8×). Open **Time settings** beside the speed buttons to change **Pause game when hidden**. It is checked by default and saved to your local player profile. Checked, hiding the tab or moving focus away pauses the game; unchecked, the server continues while a game tab remains connected, even if background heartbeats are throttled. Manual pause always wins. Closing all game connections pauses progression after disconnect detection; server downtime and computer sleep produce no offline catch-up. An already dispatched model request may still incur usage, but a paused world cannot accept its effects.
 
@@ -61,7 +63,7 @@ The browser check needs Playwright Chromium (`pnpm exec playwright install chrom
 | `packages/ai`       | Replaceable typed Jev / LLM execution with validated results and receipts              |
 | `packages/protocol` | Public client DTOs and command intentions                                              |
 | `apps/server`       | Context, routing, durable spending, persistence, admission and HTTP                    |
-| `apps/client`       | PlayCanvas presentation and accessible DOM controls                                    |
+| `apps/client`       | PlayCanvas world and React / React Aria HUD                                            |
 
 ## Explore the project
 

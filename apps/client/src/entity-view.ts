@@ -11,6 +11,8 @@ export function playerEntity(view: GameView): EntityView {
     radius: 0.35,
     status: view.player.alive ? (view.player.action?.label ?? 'In the wild') : 'Dead',
     health: view.player.health,
+    description: view.player.history,
+    traits: view.player.traits,
     actions: view.player.actions,
   };
 }

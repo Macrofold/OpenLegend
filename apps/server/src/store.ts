@@ -1,3 +1,4 @@
+import { VectorStore } from './vector-store.js';
 import type { IntelligenceCall } from '@open-legend/protocol';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
@@ -49,6 +50,7 @@ export interface WorldStore {
 }
 
 export interface GameRepository extends WorldStore {
+  readonly vectors?: VectorStore;
   readonly persistence?: 'postgres' | 'sqlite';
   putIntelligenceCall(call: IntelligenceCall): void;
   intelligenceCalls(offset: number): IntelligenceCall[];
@@ -89,6 +91,7 @@ export interface GameRepository extends WorldStore {
  */
 export class SqliteStore implements GameRepository {
   readonly db: SqlDatabase;
+  readonly vectors?: VectorStore;
   get persistence() {
     return this.db.dialect === 'postgres' ? ('postgres' as const) : ('sqlite' as const);
   }
@@ -217,6 +220,7 @@ export class SqliteStore implements GameRepository {
       this.db.exec(
         `CREATE TABLE IF NOT EXISTS mind.inner_world (world_id TEXT NOT NULL, actor_id TEXT NOT NULL, revision BIGINT NOT NULL, text TEXT NOT NULL, source_snapshot TEXT NOT NULL, publication_job_id TEXT NOT NULL, PRIMARY KEY(world_id,actor_id))`,
       );
+    if (this.db.dialect === 'postgres') this.vectors = new VectorStore(this.db);
     const version = this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema');
     if (version && version['value'] !== '1')
       throw new Error('Unsupported save schema. Keep this save and use a compatible version.');

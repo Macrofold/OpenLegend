@@ -2,143 +2,79 @@ import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../../apps/server/src/config.js';
 import { SqliteStore } from '../../apps/server/src/store.js';
-
-test('complete searchable actions and the player preference survive reopening and reload', async ({
+test('scoped React action search, delayed facts and saved unavailable preference (native fixture)', async ({
   page,
 }, info) => {
-  // A stationary native fixture keeps scene coordinates independent of test speed.
   const game = await createGameServer({
     config: readConfig({}),
     store: new SqliteStore(':memory:'),
     production: true,
     tick: false,
   });
-  await new Promise<void>((resolve, reject) => {
-    game.server.once('error', reject);
-    game.server.listen(0, '127.0.0.1', resolve);
-  });
+  await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
   const address = game.server.address();
-  if (!address || typeof address === 'string') throw new Error('Missing listener');
-  const aiRequests: string[] = [];
-  page.on('request', (request) => {
-    if (/\/api\/(chat|invent)$/.test(request.url())) aiRequests.push(request.url());
+  if (!address || typeof address === 'string') throw Error('No listener');
+  const paid: string[] = [],
+    errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('request', (r) => {
+    if (/\/api\/(chat|invent|world-agent\/messages)$/.test(r.url())) paid.push(r.url());
   });
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
   try {
-    await page.goto('http://127.0.0.1:' + address.port);
-    await expect(page.locator('#loading')).toBeHidden();
-    await expect.poll(() => game.service.paused).toBe(false);
-    const reedsPoint = { x: 480, y: 398 };
-    await page.locator('#world').click({ button: 'right', position: reedsPoint });
-    await expect(page.locator('#contextTitle')).toHaveText('River reeds');
-    await expect(
-      page.locator('#contextMenu').getByRole('button', { name: /^Gather River reeds/ }),
-    ).toBeEnabled();
-    const search = page.getByRole('searchbox', { name: 'Find an action' });
-    const showUnavailable = page.locator('.unavailable-toggle');
-    const menu = page.locator('#contextMenu');
-    const tooltip = page.getByRole('tooltip');
-    const gather = menu.getByRole('button', { name: /^Gather River reeds/ });
+    await page.goto(`http://127.0.0.1:${address.port}`);
+    await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
+    const menu = page.locator('#contextMenu'),
+      search = page.getByRole('searchbox', { name: 'Find an action' }),
+      tip = page.getByRole('tooltip');
+    await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
     await expect(search).toBeFocused();
-    await expect(menu.locator('.action-search-label, .invent-action, .invention-note')).toHaveCount(
-      0,
-    );
-    await expect(menu.locator('.catalogue-status')).toBeHidden();
-    expect(await search.evaluate((element) => getComputedStyle(element).fontSize)).toBe(
-      await gather.evaluate((element) => getComputedStyle(element).fontSize),
-    );
-    const labelBounds = await gather.locator('span').boundingBox();
-    const tagBounds = await gather.locator('small').boundingBox();
-    expect(tagBounds!.x).toBeGreaterThan(labelBounds!.x + labelBounds!.width);
-    expect(Math.abs(tagBounds!.y - labelBounds!.y)).toBeLessThan(5);
+    const gather = menu.getByRole('button', { name: /Gather River reeds/ });
     await gather.hover();
     await page.waitForTimeout(400);
-    await expect(tooltip).toBeHidden();
-    await expect(tooltip).toBeVisible({ timeout: 1200 });
-    await expect(tooltip).toContainText('River reeds has');
-    await expect(gather).toHaveAttribute('aria-describedby', 'actionTooltip');
-    await search.hover();
-    await expect(tooltip).toBeHidden();
-    await expect(showUnavailable).toHaveAttribute('aria-expanded', 'false');
-    await expect(showUnavailable).toHaveText('› Show Unavailable Actions');
-    // Object menus remain strictly scoped, even with unrelated search terms.
+    await expect(tip).toBeHidden();
+    await expect(tip).toContainText('36 seconds');
+    await expect(tip).toContainText('Yields');
     await search.fill('hunt');
-    await expect(page.locator('#contextMenu .catalogue-action')).toHaveCount(0);
-    await showUnavailable.click();
+    await expect(menu.locator('[data-catalogue-action]')).toHaveCount(0);
+    await search.fill('a new woven sling');
+    await search.press('Enter');
+    await expect(menu).toBeHidden();
+    await expect(page.locator('#message')).toHaveValue('a new woven sling');
+    expect(paid).toEqual([]);
+    await page.getByRole('button', { name: 'Hide Conversation panel' }).click();
+    await page.getByRole('button', { name: 'Pause world', exact: true }).click();
+    await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
+    const toggle = menu.getByRole('button', { name: 'Show Unavailable Actions', exact: true });
+    await toggle.click();
     await expect.poll(() => game.service.profile.preferences.showUnavailableActions).toBe(true);
-    await expect(showUnavailable).toBeEnabled();
-    await expect(showUnavailable).toHaveText('› Hide Unavailable Actions');
-    await expect(menu.locator('.catalogue-action')).toHaveCount(0);
-    await page.keyboard.press('Escape');
-    await page.locator('#world').click({ button: 'right', position: { x: 800, y: 580 } });
-    await search.fill('hunt');
-    await expect(
-      page.locator('#contextMenu .unavailable-actions .catalogue-action').first(),
-    ).toBeDisabled();
-    await expect(page.locator('#contextMenu .available-actions .catalogue-action')).toHaveCount(0);
-    // Blocked options remain inspectable by keyboard, but Enter cannot execute them.
-    await search.focus();
+    await expect(gather).toHaveAttribute('aria-disabled', 'true');
+    await search.fill('gather');
     await search.press('ArrowDown');
-    const blocked = menu.locator('.catalogue-action').first();
-    await expect(blocked).toBeFocused();
-    await expect(tooltip).toBeVisible({ timeout: 3000 });
-    await expect(tooltip).toContainText('A shot can miss');
-    await expect(tooltip).toContainText('Unavailable: Equip a suitable ranged tool first.');
+    await expect(gather).toBeFocused();
+    await expect(tip).toContainText('Resume the world');
     await page.keyboard.press('Enter');
     expect(game.service.world.entities.player!.actor!.action).toBeNull();
     await expect(menu).toBeVisible();
-    game.service.control({ paused: true });
-    await expect(tooltip).toContainText('Unavailable: Resume the world to act.');
-    game.service.control({ paused: false });
-    await expect(tooltip).toContainText('Unavailable: Equip a suitable ranged tool first.');
-    await search.fill('');
-    await expect(tooltip).toBeHidden();
-    const actionStates = await page
-      .locator('#contextMenu .catalogue-action')
-      .evaluateAll((buttons) =>
-        buttons.map((button) => button.getAttribute('aria-disabled') === 'true'),
-      );
-    const firstDisabled = actionStates.indexOf(true);
-    expect(firstDisabled).toBeGreaterThan(0);
-    expect(actionStates.slice(firstDisabled).every(Boolean)).toBe(true);
-    await search.fill('weave a new carrying sling');
-    await search.press('Enter');
-    expect(aiRequests).toEqual([]);
-    await expect(menu).toBeVisible();
-    await expect(menu.locator('.catalogue-action')).toHaveCount(0);
-    await page.keyboard.press('Escape');
-    await page.getByRole('tab', { name: 'Invent something' }).click();
-    await expect(page.getByRole('tab', { name: 'Invent something' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(aiRequests).toEqual([]);
-    await page.reload();
-    await expect(page.locator('#loading')).toBeHidden();
-    await page.locator('#world').click({ button: 'right', position: { x: 800, y: 580 } });
-    await expect(showUnavailable).toHaveAttribute('aria-expanded', 'true');
-    await expect(
-      page.locator('#contextMenu .unavailable-actions .catalogue-action').first(),
-    ).toBeDisabled();
-    await showUnavailable.click();
-    await expect.poll(() => game.service.profile.preferences.showUnavailableActions).toBe(false);
-    await expect(showUnavailable).toBeEnabled();
-    await expect(showUnavailable).toHaveText('› Show Unavailable Actions');
-    await expect(page.locator('#unavailableActions')).toBeHidden();
-
-    await page.keyboard.press('Escape');
-    await page.locator('#world').click({ button: 'right', position: { x: 800, y: 580 } });
-    await expect(page.locator('#contextTitle')).toHaveText('Actions here');
-    await expect(
-      page.locator('#contextMenu').getByRole('button', { name: /^Walk here/ }),
-    ).toBeEnabled();
-    await expect(showUnavailable).toHaveAttribute('aria-expanded', 'false');
-    await showUnavailable.click();
-    await expect(showUnavailable).toBeEnabled();
     await page.screenshot({ path: info.outputPath('action-menu.png') });
+    await page.keyboard.press('Escape');
+    await page.reload();
+    await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
+    await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
+    await expect(
+      menu.getByRole('button', { name: 'Hide Unavailable Actions', exact: true }),
+    ).toBeVisible();
+    await menu.getByRole('button', { name: 'Hide Unavailable Actions', exact: true }).click();
+    await expect.poll(() => game.service.profile.preferences.showUnavailableActions).toBe(false);
+    await expect(gather).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await page.locator('#world').click({ button: 'right', position: { x: 900, y: 700 } });
+    await expect(page.locator('#contextTitle')).toHaveText('The clearing');
+    await expect(menu.getByRole('button', { name: /Walk here/ })).toHaveCount(0); // paused and unavailable hidden
+    await menu.getByRole('button', { name: 'Show Unavailable Actions', exact: true }).click();
+    await expect(menu.locator('[data-catalogue-action]')).toHaveCount(1);
+    await expect(menu.getByRole('button', { name: /Walk here/ })).toBeVisible();
     expect(errors).toEqual([]);
-    expect(aiRequests).toEqual([]);
+    expect(paid).toEqual([]);
   } finally {
     await page.close();
     await game.close();
