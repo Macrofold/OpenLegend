@@ -59,6 +59,8 @@ Do not infer every imaginable downstream effect from an attribute name. A system
 
 New relationships are changes to the dependency graph and should be evaluated accordingly. Record affected families, feedback loops, update frequency, and preservation of existing state. A small local rate can still become unbounded when many descendants or cycles repeat it; bound aggregate work and resource conversion as well as individual operations.
 
+M08 accepts bounded anticipation beyond existing mechanics: maintain an [influence record](state-systems-and-future-influences.md) for plausible future causes and consumers, including missing prerequisites and world compatibility. Anticipation improves later discovery and avoids narrow definitions, but a catalog entry is not an active dependency or an instruction to generate its entire subsystem. Keep supported, anticipated, uncertain, and profile-forbidden relationships distinct.
+
 Coarse evaluation for inactive regions is an implementation option, not permission to change world laws when a player looks away. Define what an approximation preserves and how it catches up. Delay speculative simulation-detail machinery until workload evidence justifies it.
 
 ## Keep scripts as reusable algorithms

@@ -34,7 +34,7 @@ Initially record birth time/age and use the world clock consistently. Long-term 
 
 ## Native survival package
 
-The user's named basics are gathering, eating and resting. The following is the proposed small package around those basics; additional entries remain design recommendations rather than newly accepted requirements. RimWorld is a useful reference for coupled needs, wounds and environmental consequences, but Open Legend's exact rules are its own. [Official RimWorld overview](https://rimworldgame.com/)
+The original named basics are gathering, eating and resting. M10/M11 now require native support for generated tools, hunting, finite harvesting and preparing/eating animal food within the [first playable MVP](../05-project/first-playable-mvp.md). The following package supplies those foundations; extra environmental/medical detail remains proposed where not required by that story. RimWorld is a useful reference for coupled needs, wounds and environmental consequences, but Open Legend's exact rules are its own. [Official RimWorld overview](https://rimworldgame.com/)
 
 | System | Built-in first behavior | Dependency / scope control |
 |---|---|---|
@@ -44,14 +44,16 @@ The user's named basics are gathering, eating and resting. The following is the 
 | Rest and sleep | Rest in place or seek a better location; replenish energy over time; allow interruption | Sleep is a process, not an instant refill; exhaustion changes abilities |
 | Water and hydration | Proposed for the first wilderness slice: drink from an accessible source; carry water if equipped | This is an Open Legend proposal, not a claim about base RimWorld; omit detailed contamination initially |
 | Exposure and shelter | Weather/time bands affect comfort and physical risk; natural cover and simple shelters reduce exposure | Start with logical coverage, not physical cloth or structural engineering |
-| Work and crafting | Timed gather/prepare/assemble tasks with tool/material requirements and interruptible progress | Same simulation clock as hunger; no repeated LLM call per work tick |
-| Basic fire and cooking | If included in the initial environment: known ignition, refueling, extinguishing, heat, bounded cooking transformations | A small campfire is prebuilt; arbitrary burning materials/spread extend it later |
+| Work and crafting | Timed gather/prepare/assemble tasks with tool/material requirements and interruptible progress; AI composes new usable recipes from trusted families | Same simulation clock as hunger; live generation in first playable, no repeated LLM call per work tick |
+| Basic fire and cooking | Dependable preparation for the chosen food; known heat source/cooking if meat requires it; simple fuel/extinguishing rules where used | Required dependencies are supplied in P1; arbitrary burning/spread extend the basic family later |
 | Simple shelter/bindings | A known small shelter plan assembling editable supports/roofing and any needed walls; basic binding/carrying using approved material families | Seed dependable parts and coverage rules; later additions/replacements extend the same assembly; ordinary survival does not depend on code generation |
 | Injuries and care | Small body-part graph, wounds, impairment, bounded recovery, simple assistance | Detailed surgery, organs, epidemic modeling and medicine catalog wait |
 | Food state | Simple freshness/spoilage process; visible or learned signs of poor food | No elaborate microbiology; advanced preservation can arrive later |
+| Equipment and hunting | Equip compatible tools/ammunition, launch through a shared simple ranged family, resolve hits/misses and animal flee/damage/death | Supports generated sling and later bow/arrow candidate; no detailed ballistics or LLM per animal |
+| Harvest animal remains | Convert finite available yields to meat/bone or other supported materials through timed work | No repeated extraction of the same yield; simple quantities, not detailed anatomy |
 | Death and aftermath | Explicit irreversible NPC state transition, belongings/remains, local observations | Player recovery rules distinct; no secret NPC respawn |
 
-Implement the smallest complete gather → carry → eat → rest → work loop first, then add exposure/fire/cooking/shelter and basic injury consequences within the first wilderness release. A modest climate and edible plants allow this foundation to be tested before hunting, traps, farming, seasons or complex diseases become necessary. Keeping these later initially reduces development scope; it does not require forgiving need rates.
+Build gather → carry → eat → rest → work as an internal checkpoint, then complete the first playable with live AI conversation/planning, generated sling crafting, hunting, harvesting and preparing/eating food. A modest climate and edible plants let known survival actions remain useful while invention is evaluated. Traps, farming, seasons, complex diseases and detailed physics can follow; hunting itself is now P1 scope. Add exposure/fire/shelter only to the depth needed by the selected scenario.
 
 The [modular construction direction](evolving-materials-and-construction.md) applies from the first construction feature, even when the initial shelter plan has few parts. The [heat/fire proposal](heat-and-fire.md) preserves a small no-spread campfire milestone while specifying later source-dependent ignition and growing local spread. Seeding the initial rules is separate from extending missing material properties through play.
 
@@ -61,7 +63,7 @@ Agents begin knowing a few local edible resources, basic resting/gathering proce
 
 Separate engine capability, a character's procedural knowledge, current perception and physical ability. A globally registered cook action does not mean every character knows the recipe, owns a pot or can see a fire. Seed a limited realistic memory of the starting locality if desired; do not reveal the whole map.
 
-Use a simple utility/work scheduler with urgency, prerequisites, reachability, effort, capabilities, reservations and commitment persistence. For example, hunger can interrupt a low-priority craft, but a trivial fluctuation should not cause endless switching between sleep and gathering. Known emergency responses remain available during model failure. Social ambiguity, invention and longer-term planning still admit semantic thought under budgets.
+Live LLM decisions and conversation are required in the first playable. Use a simple utility/work scheduler to execute and interrupt their plans, with urgency, prerequisites, reachability, effort, capabilities, reservations and commitment persistence. For example, hunger can interrupt a low-priority craft, but a trivial fluctuation should not cause endless switching between sleep and gathering. Known emergency responses remain available during model failure. Social ambiguity, invention and longer-term planning still admit semantic thought under budgets.
 
 Baseline skills and instincts do not guarantee optimization. The system should support meaningful variation in prudence, knowledge and cooperation while preserving the ability to perform known actions reliably. Keep a creator-visible cause trace to distinguish poor choices from software defects.
 
@@ -75,11 +77,13 @@ Do not hold basic ignition hostage to the first player asking for fire if the su
 
 ## First-session candidate
 
-The group needs food and a place to rest before night. People have different knowledge and possessions. Some forage, someone gathers dry material, and two disagree about sharing a tool. The player can help, ask questions, make promises, or experiment with a carrying bundle. Daylight, fatigue, stockpiles and relationships change together. At night, exposure and unfinished work have real consequences.
+The first personal session starts with one live conversational resident, useful possessions/knowledge and reachable resources. The player explores, talks and helps gather, then requests a sling. AI generates a supported usable recipe; the player crafts it, hunts, harvests and prepares/eats the animal. Another invention, with bow-and-arrow as the candidate, exercises shared families. Memory, needs, work and world time change together. Later group sessions add cooperation, disagreement and more residents.
 
-This is an observation scenario, not a compulsory quest or an authored guarantee of cooperation. The creator can speed up, slow down or pause to examine the society. The first generation experiment should improve a functioning survival loop rather than supply its missing essentials.
+This is an observation scenario, not a compulsory quest or an authored guarantee of cooperation. The creator can speed up, slow down or pause to examine the society. The initial personal world pauses and stops autonomous AI scheduling when the player is away. The first generation experiment should improve a functioning survival loop rather than supply its missing essentials.
 
 ## Acceptance scenarios
+
+These native failure checks complement the [required live-AI creative-loop acceptance](../05-project/first-playable-mvp.md#evidence-required-for-a-first-playable-claim); passing without a model does not fulfill the playable product.
 
 - A competent agent with visible reachable food and sufficient time can gather, eat and rest without a language-model dependency at every step.
 - Poor choices or depleted resources can result in death; the committed cause and relevant observations can be reconstructed.

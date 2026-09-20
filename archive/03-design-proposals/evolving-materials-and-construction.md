@@ -26,6 +26,8 @@ The first waterproofing approximation can calculate rain transmission per roof s
 
 Do not attach every conceivable field to every object. Register small component families as interactions require them, while seeding the fundamental survival properties before play. Every new mechanical field needs an ID, type, units, bounds, applicability, default/unknown semantics, owner, visibility, persistence version, and behavior that reads or updates it. Record provenance for generated definitions and estimates.
 
+M07/M08 further specify the [state-system authoring contract](state-systems-and-future-influences.md). Detect whether a missing variable needs a new owner or maps to an existing system; combine external contributions through that owner. Proactively enumerate a bounded set of plausible influences even if their actions, objects, or subsystems are not yet specified or discovered. Keep those anticipated relationships as scoped notes with dependencies and activation criteria; they do not execute or automatically become NPC knowledge. Considering them must not recursively create every related subsystem.
+
 Resolve a requested property through explicit instance state/overrides, constructed composition, and the pinned material/component definition. Specify precedence and aggregation rules; two constituent materials must not become one arbitrary averaged flammability score. Unknown is distinct from zero, false, indestructible, and noncombustible.
 
 When a player first attempts an unsupported interaction:

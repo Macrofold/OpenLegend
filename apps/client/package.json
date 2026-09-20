@@ -1,0 +1,11 @@
+{
+  "name": "@open-legend/client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "dependencies": {
+    "@open-legend/protocol": "workspace:*",
+    "playcanvas": "2.22.2"
+  }
+}

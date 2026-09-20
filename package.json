@@ -1,0 +1,34 @@
+{
+  "name": "open-legend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env apps/server/src/main.ts",
+    "start": "node --import tsx --env-file-if-exists=.env apps/server/src/main.ts --production",
+    "build": "tsc --noEmit && vite build --config apps/client/vite.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "pnpm run format:check && pnpm run typecheck && pnpm test && pnpm run build",
+    "format": "prettier --write apps packages scripts tests docs README.md CONTRIBUTING.md AGENTS.md package.json tsconfig.json vitest.config.ts playwright.config.ts .prettierrc.json .github/workflows/check.yml pnpm-workspace.yaml",
+    "format:check": "prettier --check apps packages scripts tests docs README.md CONTRIBUTING.md AGENTS.md package.json tsconfig.json vitest.config.ts playwright.config.ts .prettierrc.json .github/workflows/check.yml pnpm-workspace.yaml",
+    "test:browser": "pnpm run build && playwright test"
+  },
+  "dependencies": {
+    "tsx": "4.23.13"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "prettier": "3.6.2",
+    "@types/node": "22.20.4",
+    "typescript": "7.0.2",
+    "vite": "8.3.0",
+    "vitest": "5.0.1"
+  },
+  "packageManager": "pnpm@10.33.0"
+}

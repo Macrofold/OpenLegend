@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Open Legend · The art we love</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #111815;
+        --panel: #18211e;
+        --ink: #eeeee2;
+        --muted: #b2beb3;
+        --line: #36443c;
+        --accent: #d9e6ad;
+        --gold: #ddb58a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          16px/1.65 system-ui,
+          sans-serif;
+      }
+      a {
+        color: var(--accent);
+        text-underline-offset: 4px;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 5px;
+      }
+      .shell {
+        width: min(1440px, 92vw);
+        margin: auto;
+      }
+      .mast {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 28px 0;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .hero {
+        padding: 38px 0 24px;
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 70px;
+        align-items: end;
+      }
+      .eyebrow {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--gold);
+        margin: 0 0 10px;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        line-height: 1.05;
+      }
+      h1 {
+        font-size: clamp(46px, 6vw, 88px);
+        letter-spacing: -0.045em;
+        margin: 0;
+      }
+      h1 em {
+        color: var(--accent);
+        font-weight: 400;
+      }
+      .lead {
+        font-size: 20px;
+        line-height: 1.6;
+        margin: 0 0 12px;
+      }
+      .muted,
+      .medium {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .hero-image {
+        margin: 30px 0 12px;
+      }
+      .hero-image img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+      }
+      .hero-image figcaption {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      .principles {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 28px;
+        margin: 48px 0;
+      }
+      .principles section {
+        border-top: 1px solid var(--line);
+        padding-top: 18px;
+      }
+      .principles h3 {
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
+      .principles p {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 16px 0;
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: #111815f5;
+        border-block: 1px solid var(--line);
+      }
+      .toolbar span {
+        font-size: 12px;
+        margin-right: auto;
+        color: var(--muted);
+      }
+      .toolbar button {
+        padding: 6px 13px;
+        border: 1px solid var(--line);
+        border-radius: 30px;
+        background: transparent;
+        color: var(--ink);
+        font-size: 12px;
+      }
+      .toolbar button[aria-pressed='true'] {
+        background: var(--accent);
+        color: var(--bg);
+        border-color: var(--accent);
+      }
+      .reference {
+        padding: 54px 0;
+        border-bottom: 1px solid var(--line);
+        scroll-margin-top: 90px;
+      }
+      .reference-title {
+        display: flex;
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 26px;
+      }
+      .number {
+        color: var(--gold);
+        font: 14px monospace;
+        padding-top: 3px;
+      }
+      h2 {
+        font-size: clamp(30px, 3vw, 46px);
+        margin: 0 0 8px;
+      }
+      .medium {
+        margin: 0;
+      }
+      .reference-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(270px, 1fr);
+        gap: 38px;
+        align-items: start;
+      }
+      .gallery {
+        display: grid;
+        gap: 22px;
+      }
+      figure {
+        margin: 0;
+      }
+      .image-button {
+        display: block;
+        position: relative;
+        background: #080d0b;
+        border: 1px solid var(--line);
+        padding: 0;
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        text-align: left;
+      }
+      .image-button img {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 640px;
+        object-fit: contain;
+      }
+      .enlarge {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        font-size: 11px;
+        color: white;
+        background: #111d;
+        padding: 4px 9px;
+        border-radius: 20px;
+      }
+      .gallery figcaption {
+        font-size: 12px;
+        color: var(--muted);
+        padding-top: 7px;
+      }
+      .notes {
+        position: sticky;
+        top: 90px;
+      }
+      .notes section {
+        margin-bottom: 24px;
+      }
+      .notes h3 {
+        font-size: 11px;
+        color: var(--gold);
+        text-transform: uppercase;
+        letter-spacing: 0.13em;
+        margin: 0 0 8px;
+      }
+      .notes p {
+        font-size: 15px;
+        margin: 0;
+      }
+      .preference {
+        padding: 20px;
+        background: var(--panel);
+        border-left: 2px solid var(--accent);
+      }
+      details {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 24px 0;
+      }
+      summary {
+        cursor: pointer;
+      }
+      details p {
+        padding-top: 12px;
+        font-size: 13px !important;
+      }
+      .source {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      footer {
+        padding: 45px 0 70px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      footer p {
+        max-width: 940px;
+      }
+      dialog {
+        width: min(1550px, 96vw);
+        max-height: 95vh;
+        padding: 18px;
+        background: #111815;
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      dialog::backdrop {
+        background: #000d;
+      }
+      .lightbox-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .lightbox-top strong {
+        flex: 1;
+      }
+      .lightbox-top button {
+        background: transparent;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: var(--ink);
+        padding: 5px 13px;
+      }
+      #large {
+        display: block;
+        max-width: 100%;
+        max-height: 74vh;
+        object-fit: contain;
+        margin: auto;
+      }
+      #caption {
+        margin: 12px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      #imageSource {
+        font-size: 12px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 850px) {
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+        .principles {
+          grid-template-columns: 1fr 1fr;
+        }
+        .reference-layout {
+          grid-template-columns: 1fr;
+        }
+        .notes {
+          position: static;
+        }
+        .toolbar {
+          position: static;
+        }
+        .mast {
+          font-size: 10px;
+        }
+        .reference {
+          padding-top: 35px;
+        }
+      }
+      @media print {
+        .toolbar,
+        .enlarge,
+        dialog {
+          display: none;
+        }
+        .notes {
+          position: static;
+        }
+        .reference {
+          break-inside: avoid;
+        }
+        .shell {
+          width: 100%;
+        }
+        body {
+          font-size: 12px;
+        }
+        .reference-layout {
+          gap: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="mast">
+        <span>Open Legend / Art direction</span><span>Final creative inspiration board</span>
+      </div>
+      <header class="hero">
+        <div>
+          <p class="eyebrow">The references we’re keeping</p>
+          <h1>A world with detail.<br /><em>People with life.</em></h1>
+        </div>
+        <div>
+          <p class="lead">
+            Rich environments, expressive characters and light that gives everything a place.
+          </p>
+          <p class="muted">
+            Eleven confirmed favorites. Pixels and painted forms share the same ambition: a
+            beautiful, dimensional world that rewards looking closer. This board consolidates your
+            preferences; it does not lock a production technique.
+          </p>
+        </div>
+      </header>
+      <figure class="hero-image">
+        <a href="#steam"
+          ><img
+            src="images/steam-autumn-sale.png"
+            alt="Steam Autumn Sale pixel illustration with detailed people, illuminated shop and twisting foreground trees"
+        /></a>
+        <figcaption>
+          Your Steam Autumn Sale reference · exceptional detail as the visual ambition · promotional
+          illustration, not a game
+        </figcaption>
+      </figure>
+      <div class="principles">
+        <section>
+          <h3>Detail that describes</h3>
+          <p>
+            Clothing, equipment, bark and small possessions should tell us what something is. More
+            detail should reveal more life.
+          </p>
+        </section>
+        <section>
+          <h3>People at two scales</h3>
+          <p>
+            Recognizable bodies and outfits in the world; richer faces, gestures and materials in
+            profiles and close views.
+          </p>
+        </section>
+        <section>
+          <h3>Light with purpose</h3>
+          <p>
+            Warm fire against cool shade. Reflections, directional shadows and atmosphere that
+            connect people to their surroundings.
+          </p>
+        </section>
+        <section>
+          <h3>Richness with clarity</h3>
+          <p>
+            Layered nature and lived-in spaces, balanced by clean silhouettes, quiet areas and
+            deliberate focal points.
+          </p>
+        </section>
+      </div>
+      <nav class="toolbar" aria-label="Filter inspiration">
+        <span id="count">11 favorites · click any image to enlarge</span
+        ><button data-filter="All" aria-pressed="true">All</button
+        ><button data-filter="People" aria-pressed="false">People</button
+        ><button data-filter="Lighting" aria-pressed="false">Lighting</button
+        ><button data-filter="Detail" aria-pressed="false">Detail</button
+        ><button data-filter="Worlds" aria-pressed="false">Worlds</button
+        ><button data-filter="Composition" aria-pressed="false">Composition</button>
+      </nav>
+      <main><article id="dave" data-category="People" class="reference"><header class="reference-title"><span class="number">01</span><div><p class="eyebrow">Personality at every scale</p><h2>Dave the Diver</h2><p class="medium">Pixel + 3D hybrid</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="dave" data-image="0" aria-label="Enlarge Dave the Diver: World scale · clear silhouette, luminous water and layered terrain"><img src="images/dave-underwater.png" alt="World scale · clear silhouette, luminous water and layered terrain" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>World scale · clear silhouette, luminous water and layered terrain</figcaption></figure><figure><button class="image-button" data-entry="dave" data-image="1" aria-label="Enlarge Dave the Diver: Close-up · expressive anatomy, clothing folds and purposeful action"><img src="images/dave-character.png" alt="Close-up · expressive anatomy, clothing folds and purposeful action" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Close-up · expressive anatomy, clothing folds and purposeful action</figcaption></figure><figure><button class="image-button" data-entry="dave" data-image="2" aria-label="Enlarge Dave the Diver: Social scale · distinctive people, inhabited detail and warm lighting"><img src="images/dave-restaurant.png" alt="Social scale · distinctive people, inhabited detail and warm lighting" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Social scale · distinctive people, inhabited detail and warm lighting</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>Your strongest new endorsement: “I LOVE DAVE THE DIVER ART.” You supplied the underwater scene, character close-up and restaurant as references.</p></section><section><h3>What makes it work</h3><p>The underwater image pairs a small readable diver with enormous layered rock forms, blue atmospheric depth and delicate coral. The chef close-up describes face, fabric folds and a purposeful gesture. In the restaurant, varied bodies and outfits make a busy social scene feel inhabited.</p></section><section><h3>Bring into Open Legend</h3><p>Give the wilderness depth and breathing room; make individuals recognizable through body shape, hair, skin tone and equipment. Let closer character views reveal richer faces and material detail while world avatars stay legible.</p></section><details><summary>Boundaries & context</summary><p>The chef is a close-up, not evidence of facial detail at gameplay distance. Your new endorsement broadens the earlier concerns about cartoon-like proportions: appealing stylization is welcome when the finish and personality work.</p></details><div class="source"><a href="https://store.steampowered.com/app/1868140/DAVE_THE_DIVER/" target="_blank" rel="noopener noreferrer">Game / source ↗</a></div></div></div></article>
+<article id="steam" data-category="Detail" class="reference"><header class="reference-title"><span class="number">02</span><div><p class="eyebrow">The detail benchmark</p><h2>Steam Autumn Sale illustration</h2><p class="medium">Pixel-art promotional illustration</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="steam" data-image="0" aria-label="Enlarge Steam Autumn Sale illustration: Full supplied illustration · foreground roots, readable people and layered environmental detail"><img src="images/steam-autumn-sale.png" alt="Full supplied illustration · foreground roots, readable people and layered environmental detail" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Full supplied illustration · foreground roots, readable people and layered environmental detail</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>You called this exceptional, specifically praising pixel density and character/environment detail.</p></section><section><h3>What makes it work</h3><p>Twisting foreground roots, layered buildings, little storefront objects and differentiated figures make the scene reward close inspection. The brightest shop holds attention; quieter blue silhouettes keep the density organized. Reflections connect the lights to the ground.</p></section><section><h3>Bring into Open Legend</h3><p>Use deliberate fine detail for clothing, tools, bark, shelters and small possessions. Compose scenes with foreground framing, readable figures and a clear focal area. A dense world should still have quiet spaces.</p></section><details><summary>Boundaries & context</summary><p>This is a promotional illustration, not a game. It establishes a visual aspiration, not evidence of runtime performance, animation or procedural generation. Artist and original publication provenance are not verified; preserve the supplied screenshot as reference only.</p></details><div class="source"><span>Supplied illustration · original artist unverified</span></div></div></div></article>
+<article id="pathway" data-category="Lighting" class="reference"><header class="reference-title"><span class="number">03</span><div><p class="eyebrow">Light makes the world dimensional</p><h2>Pathway</h2><p class="medium">Pixel-led angled presentation</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="pathway" data-image="0" aria-label="Enlarge Pathway: Warm light / cool shadow · relief in stone and grounded figures"><img src="images/pathway-lighting.png" alt="Warm light / cool shadow · relief in stone and grounded figures" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Warm light / cool shadow · relief in stone and grounded figures</figcaption></figure><figure><button class="image-button" data-entry="pathway" data-image="1" aria-label="Enlarge Pathway: World figure + profile · two useful scales of character information"><img src="images/pathway-profile.png" alt="World figure + profile · two useful scales of character information" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>World figure + profile · two useful scales of character information</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>You singled out Pathway’s lighting as really great.</p></section><section><h3>What makes it work</h3><p>Amber illumination against blue-violet surroundings models the stone, separates figures and throws long directional shadows. The recruitment view demonstrates a readable world figure paired with a more detailed portrait and equipment display.</p></section><section><h3>Bring into Open Legend</h3><p>Make campfires and lanterns cast convincing pools of color and directional shadows. Carry light onto nearby materials and characters. Use profiles to reveal identity and gear without requiring tiny world faces to do everything.</p></section><details><summary>Boundaries & context</summary><p>The supplied image shows the appearance of lighting, not proof of a particular lighting implementation. Borrow the light/material relationship; the historical setting and parchment UI are not selected requirements.</p></details><div class="source"><a href="https://pathway-game.com/" target="_blank" rel="noopener noreferrer">Game / source ↗</a></div></div></div></article>
+<article id="t01" data-category="Composition" class="reference"><header class="reference-title"><span class="number">04</span><div><p class="eyebrow">The illustrated finish</p><h2>Hades</h2><p class="medium">Hand-painted / illustrated; not pixel art</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="t01" data-image="0" aria-label="Enlarge Hades: Elysium · water, vegetation and gameplay-scale character"><img src="https://guides.gamepressure.com/hades/gfx/word/364087375.jpg" alt="Elysium · water, vegetation and gameplay-scale character" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Elysium · water, vegetation and gameplay-scale character</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>You explicitly love Hades and call its art really great.</p></section><section><h3>What makes it work</h3><p>Clear silhouettes and strongly grouped color let an ornate angled world remain readable. Vegetation, water and stone each contribute distinct shapes.</p></section><section><h3>Bring into Open Legend</h3><p>Aim for a coherent art direction across people, environment and props; use color grouping to make a rich scene easy to read.</p></section><details><summary>Boundaries & context</summary><p>Illustrated rather than conventional pixel art. Its mythology, combat effects and exaggerated character design are not automatically part of our brief.</p></details><div class="source"><a href="https://www.supergiantgames.com/games/hades/" target="_blank" rel="noopener noreferrer">Game / source ↗</a></div></div></div></article>
+<article id="t02" data-category="People" class="reference"><header class="reference-title"><span class="number">05</span><div><p class="eyebrow">People worth getting to know</p><h2>Hades II</h2><p class="medium">Illustrated hybrid presentation; not pixel art</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="t02" data-image="0" aria-label="Enlarge Hades II: Crossroads · gameplay environment"><img src="https://cdn.mos.cms.futurecdn.net/PVvf2ZTrDWENJx93DqesgX-1200-80.jpg" alt="Crossroads · gameplay environment" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Crossroads · gameplay environment</figcaption></figure><figure><button class="image-button" data-entry="t02" data-image="1" aria-label="Enlarge Hades II: Official Early Access image · portrait versus world avatar"><img src="https://images.ctfassets.net/5owu3y35gz1g/1bjuKMwtSJIFELYT79ceDs/3777d4004f6aaf8d485a90eb28fa01c5/hades2_apr30_01.jpg" alt="Official Early Access image · portrait versus world avatar" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Official Early Access image · portrait versus world avatar</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>You explicitly love Hades II and reaffirmed it as a favorite.</p></section><section><h3>What makes it work</h3><p>The small world figures and expressive large portraits serve different jobs. Costumes and silhouettes communicate identity; close views provide face and personality.</p></section><section><h3>Bring into Open Legend</h3><p>Create an intentional relationship between recognizable world agents and detailed character profiles. Let clothing and possessions tell personal stories.</p></section><details><summary>Boundaries & context</summary><p>The dialogue reference is Early Access media. A beautiful portrait alone does not establish that ordinary world avatars meet our identity requirements.</p></details><div class="source"><a href="https://www.supergiantgames.com/games/hades-ii/" target="_blank" rel="noopener noreferrer">Game / source ↗</a></div></div></div></article>
+<article id="t11" data-category="Detail" class="reference"><header class="reference-title"><span class="number">06</span><div><p class="eyebrow">Cinematic pixel craft</p><h2>REPLACED</h2><p class="medium">Dense pixel art</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="t11" data-image="0" aria-label="Enlarge REPLACED: Original round-one reference image"><img src="https://i0.wp.com/www.pcmrace.com/wp-content/uploads/2022/12/REPLACED_Screenshot_05.jpg?ssl=1" alt="Original round-one reference image" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Original round-one reference image</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>REPLACED was your strongest preference in both earlier rounds, and you reaffirm it here.</p></section><section><h3>What makes it work</h3><p>Fine environmental detail, dimensional lighting and carefully staged space create a cinematic finish rather than a deliberately coarse retro one.</p></section><section><h3>Bring into Open Legend</h3><p>Use it as the standard for care in surfaces, clothing, atmosphere and scene composition. Translate that finish into vegetation, wood, stone and primitive possessions.</p></section><details><summary>Boundaries & context</summary><p>Some reference imagery is promotional. The city, side-view camera, violence and nighttime mood are not selected requirements; a still does not verify animation.</p></details><div class="source"><a href="https://www.pcmrace.com/2022/12/09/replaced-se-lanzara-para-pc-xbox-y-game-pass-en-el-2023-nuevos-screenshots-y-trailer-de-gameplay/" target="_blank" rel="noopener noreferrer">Game / source ↗</a></div></div></div></article>
+<article id="t12" data-category="People" class="reference"><header class="reference-title"><span class="number">07</span><div><p class="eyebrow">People, materials and atmosphere</p><h2>Tails Noir / Backbone</h2><p class="medium">Dense pixel art</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="t12" data-image="0" aria-label="Enlarge Tails Noir / Backbone: Original round-one reference image"><img src="https://game-guide.fr/wp-content/uploads/2018/04/Backbone-screenshot-4.jpg" alt="Original round-one reference image" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Original round-one reference image</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>A repeated favorite: you specifically praised water reflections, lighting, character detail and the environment.</p></section><section><h3>What makes it work</h3><p>Readable clothing and dense inhabited surroundings work together. Reflected light ties architecture, water and figures into one convincing place.</p></section><section><h3>Bring into Open Legend</h3><p>Give people distinctive outfits and grounded material responses. Carry atmosphere through the entire scene, not just a background layer.</p></section><details><summary>Boundaries & context</summary><p>Borrow the finish, not the anthropomorphic cast, city setting or noir mood as a permanent default.</p></details><div class="source"><a href="https://game-guide.fr/231194-backbone-un-jeu-denquete-en-pixelart/" target="_blank" rel="noopener noreferrer">Game / source ↗</a></div></div></div></article>
+<article id="t03" data-category="Composition" class="reference"><header class="reference-title"><span class="number">08</span><div><p class="eyebrow">Color with intention</p><h2>Transistor</h2><p class="medium">Hand-painted / illustrated; not pixel art</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="t03" data-image="0" aria-label="Enlarge Transistor: Gameplay · world figure and architectural detail"><img src="https://cdn.mobygames.com/screenshots/9836430-transistor-windows-still-hurt-by-one-of-the-bosses-red-lost-most.jpg" alt="Gameplay · world figure and architectural detail" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Gameplay · world figure and architectural detail</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>You named Transistor among the beautiful games in your final favorites.</p></section><section><h3>What makes it work</h3><p>Repeated shapes, colored light and graphic architectural detail create a unified scene around a distinct protagonist.</p></section><section><h3>Bring into Open Legend</h3><p>Choose purposeful palettes and shapes for each place. Let clothing and important objects stand out without turning every element into a bright accent.</p></section><details><summary>Boundaries & context</summary><p>Urban geometry and science fiction are references for composition, not the wilderness subject matter.</p></details><div class="source"><a href="https://store.steampowered.com/app/237930/Transistor/" target="_blank" rel="noopener noreferrer">Game / source ↗</a></div></div></div></article>
+<article id="t06" data-category="Lighting" class="reference"><header class="reference-title"><span class="number">09</span><div><p class="eyebrow">Intimate light in a large world</p><h2>Octopath Traveler II</h2><p class="medium">Pixel art / pixel-led presentation</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="t06" data-image="0" aria-label="Enlarge Octopath Traveler II: Gameplay reference · previously reviewed"><img src="https://gh.cdn.sewest.net/assets/ident/games/8bd47aa2/3-OPII_partyofheightaroundafirecamp-upoy5vqh9.jpg?quality=65" alt="Gameplay reference · previously reviewed" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Gameplay reference · previously reviewed</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>You now name Octopath Traveler as a favorite. Earlier you especially praised lighting, mood and palette while wanting a more modern treatment of people.</p></section><section><h3>What makes it work</h3><p>Warm campfire light against the cool surrounding wilderness makes a small party feel present and protected. The depth gives the setting scale.</p></section><section><h3>Bring into Open Legend</h3><p>Use firelight, shade and daylight to change the emotional character of a place. Keep a small human gathering readable within expansive nature.</p></section><details><summary>Boundaries & context</summary><p>The image is Octopath Traveler II. Miniature figures and strong blur are not mandatory: earlier reservations remain useful component-level guidance.</p></details><div class="source"><a href="https://store.steampowered.com/app/1971650/" target="_blank" rel="noopener noreferrer">Game / source ↗</a></div></div></div></article>
+<article id="t07" data-category="Worlds" class="reference"><header class="reference-title"><span class="number">10</span><div><p class="eyebrow">A place with life in it</p><h2>Eastward</h2><p class="medium">Pixel art / pixel-led presentation</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="t07" data-image="0" aria-label="Enlarge Eastward: Gameplay reference · previously reviewed"><img src="https://cdn.mos.cms.futurecdn.net/FjCGBKPmgyXH9rxphyywqQ.jpeg" alt="Gameplay reference · previously reviewed" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Gameplay reference · previously reviewed</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>You love Eastward’s environment, colors, lighting and mood, and include it in the final favorites. Earlier you asked for more detailed bodies and readable gear.</p></section><section><h3>What makes it work</h3><p>Small props, layered architecture and vegetation make the environment seem used and lived in. Color variety adds warmth without making every object equally important.</p></section><section><h3>Bring into Open Legend</h3><p>Let camps accumulate meaningful objects: bundles, tools, cooking materials, wear and vegetation. Create richness through the traces of people living there.</p></section><details><summary>Boundaries & context</summary><p>Liking the whole direction does not require copying its simplified character proportions. Keep clothing and gear legible at our actual camera scale.</p></details><div class="source"><a href="https://www.gamesradar.com/eastward-review/" target="_blank" rel="noopener noreferrer">Game / source ↗</a></div></div></div></article>
+<article id="t05" data-category="Worlds" class="reference"><header class="reference-title"><span class="number">11</span><div><p class="eyebrow">Nature with depth and wonder</p><h2>Ori and the Will of the Wisps</h2><p class="medium">Painterly, dimensional presentation; not pixel art</p></div></header><div class="reference-layout"><div class="gallery"><figure><button class="image-button" data-entry="t05" data-image="0" aria-label="Enlarge Ori and the Will of the Wisps: Forest gameplay · depth and organic materials"><img src="https://cdn.staticneo.com/ew/0/03/Ori_And_The_Will_Of_The_Wisps_3_24_2020_10_48_46_AM.png" alt="Forest gameplay · depth and organic materials" loading="lazy" referrerpolicy="no-referrer"><span class="enlarge">↗ View full image</span></button><figcaption>Forest gameplay · depth and organic materials</figcaption></figure></div><div class="notes"><section class="preference"><h3>What you like</h3><p>You named Ori as one of the beautiful final favorites.</p></section><section><h3>What makes it work</h3><p>Organic silhouettes and atmospheric layers create deep space. Light separates surfaces and suggests moisture, air and distance.</p></section><section><h3>Bring into Open Legend</h3><p>Build a wilderness with layered foliage, clear near/far relationships and luminous moments. Let forests feel alive, including in daylight.</p></section><details><summary>Boundaries & context</summary><p>Painterly dimensional presentation, not conventional pixel art. The nonhuman protagonist is not a human-character reference. Persistent gloom or heavy blur is not required.</p></details><div class="source"><a href="https://store.steampowered.com/app/1057090/Ori_and_the_Will_of_the_Wisps/" target="_blank" rel="noopener noreferrer">Game / source ↗</a></div></div></div></article></main>
+      <footer>
+        <p>
+          <a href="creative-brief.md">Read the complete creative brief</a> ·
+          <a href="../round-03/index.html">Round three</a> ·
+          <a href="../round-02/index.html">Round two</a> ·
+          <a href="../index.html">Original exploration</a>
+        </p>
+        <p>
+          “What you like” records your stated preferences. “What makes it work” and “Bring into Open
+          Legend” are creative analysis and proposed application. Your latest favorites broaden the
+          direction: stylized forms and hybrid rendering can work beautifully. Earlier reservations
+          about tiny generic people and permanent gloom still help us evaluate individual
+          components.
+        </p>
+        <p>
+          Six supplied screenshots are preserved locally, unchanged. Other references load from
+          their credited hosts and require internet access. Artwork remains the property of its
+          respective owners; these are inspiration references, not licensed game assets. The Steam
+          illustration’s artist and original publication are unverified. No earlier board or
+          feedback file is replaced.
+        </p>
+      </footer>
+    </div>
+    <dialog id="viewer" aria-label="Enlarged art reference">
+      <div class="lightbox-top">
+        <strong id="viewerTitle"></strong
+        ><button id="previous" aria-label="Previous image">←</button
+        ><button id="next" aria-label="Next image">→</button
+        ><button id="close" aria-label="Close enlarged image">Close ×</button>
+      </div>
+      <img id="large" alt="" />
+      <p id="caption"></p>
+      <a id="imageSource" target="_blank" rel="noopener noreferrer">Original image source ↗</a>
+    </dialog>
+    <script>
+      const entries = [{"id": "dave", "title": "Dave the Diver", "role": "Personality at every scale", "category": "People", "medium": "Pixel + 3D hybrid", "liked": "Your strongest new endorsement: “I LOVE DAVE THE DIVER ART.” You supplied the underwater scene, character close-up and restaurant as references.", "good": "The underwater image pairs a small readable diver with enormous layered rock forms, blue atmospheric depth and delicate coral. The chef close-up describes face, fabric folds and a purposeful gesture. In the restaurant, varied bodies and outfits make a busy social scene feel inhabited.", "apply": "Give the wilderness depth and breathing room; make individuals recognizable through body shape, hair, skin tone and equipment. Let closer character views reveal richer faces and material detail while world avatars stay legible.", "limit": "The chef is a close-up, not evidence of facial detail at gameplay distance. Your new endorsement broadens the earlier concerns about cartoon-like proportions: appealing stylization is welcome when the finish and personality work.", "images": [{"url": "images/dave-underwater.png", "label": "World scale · clear silhouette, luminous water and layered terrain", "source": "User-supplied screenshot"}, {"url": "images/dave-character.png", "label": "Close-up · expressive anatomy, clothing folds and purposeful action", "source": "User-supplied screenshot"}, {"url": "images/dave-restaurant.png", "label": "Social scale · distinctive people, inhabited detail and warm lighting", "source": "User-supplied screenshot"}], "source": "https://store.steampowered.com/app/1868140/DAVE_THE_DIVER/"}, {"id": "steam", "title": "Steam Autumn Sale illustration", "role": "The detail benchmark", "category": "Detail", "medium": "Pixel-art promotional illustration", "liked": "You called this exceptional, specifically praising pixel density and character/environment detail.", "good": "Twisting foreground roots, layered buildings, little storefront objects and differentiated figures make the scene reward close inspection. The brightest shop holds attention; quieter blue silhouettes keep the density organized. Reflections connect the lights to the ground.", "apply": "Use deliberate fine detail for clothing, tools, bark, shelters and small possessions. Compose scenes with foreground framing, readable figures and a clear focal area. A dense world should still have quiet spaces.", "limit": "This is a promotional illustration, not a game. It establishes a visual aspiration, not evidence of runtime performance, animation or procedural generation. Artist and original publication provenance are not verified; preserve the supplied screenshot as reference only.", "images": [{"url": "images/steam-autumn-sale.png", "label": "Full supplied illustration · foreground roots, readable people and layered environmental detail", "source": "User-supplied screenshot"}], "source": null}, {"id": "pathway", "title": "Pathway", "role": "Light makes the world dimensional", "category": "Lighting", "medium": "Pixel-led angled presentation", "liked": "You singled out Pathway’s lighting as really great.", "good": "Amber illumination against blue-violet surroundings models the stone, separates figures and throws long directional shadows. The recruitment view demonstrates a readable world figure paired with a more detailed portrait and equipment display.", "apply": "Make campfires and lanterns cast convincing pools of color and directional shadows. Carry light onto nearby materials and characters. Use profiles to reveal identity and gear without requiring tiny world faces to do everything.", "limit": "The supplied image shows the appearance of lighting, not proof of a particular lighting implementation. Borrow the light/material relationship; the historical setting and parchment UI are not selected requirements.", "images": [{"url": "images/pathway-lighting.png", "label": "Warm light / cool shadow · relief in stone and grounded figures", "source": "User-supplied screenshot"}, {"url": "images/pathway-profile.png", "label": "World figure + profile · two useful scales of character information", "source": "User-supplied screenshot"}], "source": "https://pathway-game.com/"}, {"id": "t01", "title": "Hades", "role": "The illustrated finish", "category": "Composition", "medium": "Hand-painted / illustrated; not pixel art", "liked": "You explicitly love Hades and call its art really great.", "good": "Clear silhouettes and strongly grouped color let an ornate angled world remain readable. Vegetation, water and stone each contribute distinct shapes.", "apply": "Aim for a coherent art direction across people, environment and props; use color grouping to make a rich scene easy to read.", "limit": "Illustrated rather than conventional pixel art. Its mythology, combat effects and exaggerated character design are not automatically part of our brief.", "images": [{"url": "https://guides.gamepressure.com/hades/gfx/word/364087375.jpg", "source": "https://guides.gamepressure.com/hades/guide.asp?ID=60343", "label": "Elysium · water, vegetation and gameplay-scale character"}], "source": "https://www.supergiantgames.com/games/hades/"}, {"id": "t02", "title": "Hades II", "role": "People worth getting to know", "category": "People", "medium": "Illustrated hybrid presentation; not pixel art", "liked": "You explicitly love Hades II and reaffirmed it as a favorite.", "good": "The small world figures and expressive large portraits serve different jobs. Costumes and silhouettes communicate identity; close views provide face and personality.", "apply": "Create an intentional relationship between recognizable world agents and detailed character profiles. Let clothing and possessions tell personal stories.", "limit": "The dialogue reference is Early Access media. A beautiful portrait alone does not establish that ordinary world avatars meet our identity requirements.", "images": [{"url": "https://cdn.mos.cms.futurecdn.net/PVvf2ZTrDWENJx93DqesgX-1200-80.jpg", "source": "https://www.gamesradar.com/games/hades/hades-2-surface-ward-incantation/", "label": "Crossroads · gameplay environment"}, {"url": "https://images.ctfassets.net/5owu3y35gz1g/1bjuKMwtSJIFELYT79ceDs/3777d4004f6aaf8d485a90eb28fa01c5/hades2_apr30_01.jpg", "source": "https://www.supergiantgames.com/blog/hades2-early-access-is-here/", "label": "Official Early Access image · portrait versus world avatar"}], "source": "https://www.supergiantgames.com/games/hades-ii/"}, {"id": "t11", "title": "REPLACED", "role": "Cinematic pixel craft", "category": "Detail", "medium": "Dense pixel art", "liked": "REPLACED was your strongest preference in both earlier rounds, and you reaffirm it here.", "good": "Fine environmental detail, dimensional lighting and carefully staged space create a cinematic finish rather than a deliberately coarse retro one.", "apply": "Use it as the standard for care in surfaces, clothing, atmosphere and scene composition. Translate that finish into vegetation, wood, stone and primitive possessions.", "limit": "Some reference imagery is promotional. The city, side-view camera, violence and nighttime mood are not selected requirements; a still does not verify animation.", "images": [{"url": "https://i0.wp.com/www.pcmrace.com/wp-content/uploads/2022/12/REPLACED_Screenshot_05.jpg?ssl=1", "source": "https://www.pcmrace.com/2022/12/09/replaced-se-lanzara-para-pc-xbox-y-game-pass-en-el-2023-nuevos-screenshots-y-trailer-de-gameplay/", "label": "Original round-one reference image"}], "source": "https://www.pcmrace.com/2022/12/09/replaced-se-lanzara-para-pc-xbox-y-game-pass-en-el-2023-nuevos-screenshots-y-trailer-de-gameplay/"}, {"id": "t12", "title": "Tails Noir / Backbone", "role": "People, materials and atmosphere", "category": "People", "medium": "Dense pixel art", "liked": "A repeated favorite: you specifically praised water reflections, lighting, character detail and the environment.", "good": "Readable clothing and dense inhabited surroundings work together. Reflected light ties architecture, water and figures into one convincing place.", "apply": "Give people distinctive outfits and grounded material responses. Carry atmosphere through the entire scene, not just a background layer.", "limit": "Borrow the finish, not the anthropomorphic cast, city setting or noir mood as a permanent default.", "images": [{"url": "https://game-guide.fr/wp-content/uploads/2018/04/Backbone-screenshot-4.jpg", "source": "https://game-guide.fr/231194-backbone-un-jeu-denquete-en-pixelart/", "label": "Original round-one reference image"}], "source": "https://game-guide.fr/231194-backbone-un-jeu-denquete-en-pixelart/"}, {"id": "t03", "title": "Transistor", "role": "Color with intention", "category": "Composition", "medium": "Hand-painted / illustrated; not pixel art", "liked": "You named Transistor among the beautiful games in your final favorites.", "good": "Repeated shapes, colored light and graphic architectural detail create a unified scene around a distinct protagonist.", "apply": "Choose purposeful palettes and shapes for each place. Let clothing and important objects stand out without turning every element into a bright accent.", "limit": "Urban geometry and science fiction are references for composition, not the wilderness subject matter.", "images": [{"url": "https://cdn.mobygames.com/screenshots/9836430-transistor-windows-still-hurt-by-one-of-the-bosses-red-lost-most.jpg", "source": "https://www.mobygames.com/game/65869/transistor/screenshots/windows/758398/", "label": "Gameplay · world figure and architectural detail"}], "source": "https://store.steampowered.com/app/237930/Transistor/"}, {"id": "t06", "title": "Octopath Traveler II", "role": "Intimate light in a large world", "category": "Lighting", "medium": "Pixel art / pixel-led presentation", "liked": "You now name Octopath Traveler as a favorite. Earlier you especially praised lighting, mood and palette while wanting a more modern treatment of people.", "good": "Warm campfire light against the cool surrounding wilderness makes a small party feel present and protected. The depth gives the setting scale.", "apply": "Use firelight, shade and daylight to change the emotional character of a place. Keep a small human gathering readable within expansive nature.", "limit": "The image is Octopath Traveler II. Miniature figures and strong blur are not mandatory: earlier reservations remain useful component-level guidance.", "images": [{"url": "https://gh.cdn.sewest.net/assets/ident/games/8bd47aa2/3-OPII_partyofheightaroundafirecamp-upoy5vqh9.jpg?quality=65", "source": "https://www.square-enix-games.com/en_GB/games/octopath-traveler-ii", "label": "Gameplay reference · previously reviewed"}], "source": "https://store.steampowered.com/app/1971650/"}, {"id": "t07", "title": "Eastward", "role": "A place with life in it", "category": "Worlds", "medium": "Pixel art / pixel-led presentation", "liked": "You love Eastward’s environment, colors, lighting and mood, and include it in the final favorites. Earlier you asked for more detailed bodies and readable gear.", "good": "Small props, layered architecture and vegetation make the environment seem used and lived in. Color variety adds warmth without making every object equally important.", "apply": "Let camps accumulate meaningful objects: bundles, tools, cooking materials, wear and vegetation. Create richness through the traces of people living there.", "limit": "Liking the whole direction does not require copying its simplified character proportions. Keep clothing and gear legible at our actual camera scale.", "images": [{"url": "https://cdn.mos.cms.futurecdn.net/FjCGBKPmgyXH9rxphyywqQ.jpeg", "source": "https://www.gamesradar.com/eastward-review/", "label": "Gameplay reference · previously reviewed"}], "source": "https://www.gamesradar.com/eastward-review/"}, {"id": "t05", "title": "Ori and the Will of the Wisps", "role": "Nature with depth and wonder", "category": "Worlds", "medium": "Painterly, dimensional presentation; not pixel art", "liked": "You named Ori as one of the beautiful final favorites.", "good": "Organic silhouettes and atmospheric layers create deep space. Light separates surfaces and suggests moisture, air and distance.", "apply": "Build a wilderness with layered foliage, clear near/far relationships and luminous moments. Let forests feel alive, including in daylight.", "limit": "Painterly dimensional presentation, not conventional pixel art. The nonhuman protagonist is not a human-character reference. Persistent gloom or heavy blur is not required.", "images": [{"url": "https://cdn.staticneo.com/ew/0/03/Ori_And_The_Will_Of_The_Wisps_3_24_2020_10_48_46_AM.png", "source": "https://www.neoseeker.com/ori-and-the-will-of-the-wisps/Gorlek_Ore", "label": "Forest gameplay · depth and organic materials"}], "source": "https://store.steampowered.com/app/1057090/Ori_and_the_Will_of_the_Wisps/"}];
+      const viewer = document.getElementById('viewer');
+      let selected = null,
+        index = 0;
+      function show() {
+        const img = selected.images[index];
+        document.getElementById('large').src = img.url;
+        document.getElementById('large').alt = img.label;
+        document.getElementById('viewerTitle').textContent = selected.title;
+        document.getElementById('caption').textContent =
+          img.label + ' · ' + (index + 1) + ' / ' + selected.images.length;
+        const source = document.getElementById('imageSource');
+        source.hidden = !img.source.startsWith('https://');
+        if (!source.hidden) source.href = img.source;
+        document.getElementById('previous').hidden = document.getElementById('next').hidden =
+          selected.images.length < 2;
+      }
+      document.querySelectorAll('[data-entry]').forEach((button) =>
+        button.addEventListener('click', () => {
+          selected = entries.find((e) => e.id === button.dataset.entry);
+          index = Number(button.dataset.image);
+          show();
+          viewer.showModal();
+        }),
+      );
+      function advance(delta) {
+        index = (index + delta + selected.images.length) % selected.images.length;
+        show();
+      }
+      document.getElementById('previous').onclick = () => advance(-1);
+      document.getElementById('next').onclick = () => advance(1);
+      document.getElementById('close').onclick = () => viewer.close();
+      viewer.addEventListener('click', (event) => {
+        if (event.target === viewer) {
+          const r = viewer.getBoundingClientRect();
+          if (
+            event.clientX < r.left ||
+            event.clientX > r.right ||
+            event.clientY < r.top ||
+            event.clientY > r.bottom
+          )
+            viewer.close();
+        }
+      });
+      viewer.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          advance(-1);
+        }
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          advance(1);
+        }
+      });
+      document.querySelectorAll('[data-filter]').forEach((button) =>
+        button.addEventListener('click', () => {
+          let count = 0;
+          document.querySelectorAll('.reference').forEach((card) => {
+            card.hidden =
+              button.dataset.filter !== 'All' && card.dataset.category !== button.dataset.filter;
+            if (!card.hidden) count++;
+          });
+          document
+            .querySelectorAll('[data-filter]')
+            .forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+          document.getElementById('count').textContent =
+            count + ' favorites · click any image to enlarge';
+        }),
+      );
+      document.querySelectorAll('.image-button img').forEach((img) =>
+        img.addEventListener('error', () => {
+          const caption = img.closest('figure').querySelector('figcaption');
+          caption.textContent += ' · Preview unavailable; use the source link.';
+        }),
+      );
+    </script>
+  </body>
+</html>

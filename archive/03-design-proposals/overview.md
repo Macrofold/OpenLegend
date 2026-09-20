@@ -20,13 +20,13 @@ This architecture preserves the user's emphasis on meaning without paying for la
 | World | **Accepted: independent custom simulation and generative-rule interface**; deterministic domain modules proposed | Run headlessly with its own clock; no engine objects in world state; reuse engine infrastructure without surrendering mechanics |
 | Multiplayer | Colyseus adapter, one sector authority | Existing room/state transport; persistence and perception remain our responsibility |
 | Persistence | PostgreSQL snapshots, event outcomes, registry and job table | Few infrastructure pieces; no standalone vector database initially |
-| Cognition | Local utility/rules + bounded async LLM gateway | Parallel thoughts without blocking world updates |
-| Semantic judge | Jev evaluation candidate | Bounded choices/scores; early access and own workload untested |
+| Cognition | Native utility/rules + game-owned context/routing; proposed Macrofold lightweight execution with replaceable direct adapter | Bounded parallel thoughts without blocking world updates; [detailed contracts](../07-technical-architecture/README.md) |
+| Semantic judge | Jev integration direction accepted for first playable in M10/M11 | Suitable bounded judgments; access, workload fit and measured performance still unproven |
 | Hosting | One paid regional always-on service, CDN and managed database | Render proposed under current assumptions; routing and pricing must be verified before scale |
 | Voice | Text first; managed media later | Prove social value before adding speech/media cost |
 | Generated mechanics | Declarative compositions of approved effects | Genuine early novelty with a smaller failure surface than arbitrary code |
 
-PlayCanvas and the custom-simulation boundary are accepted; supporting tools and detailed integration are candidates, not installs. [Engine evidence](../02-research/engines-art-and-audio.md), [visual direction](visual-direction.md), [hosting evidence](../02-research/hosting-and-scale.md), and [Jev evidence](../02-research/jev-and-semantic-routing.md) explain limitations and alternatives.
+PlayCanvas, the custom-simulation boundary and first-playable Jev/LLM integration direction are accepted; other supporting tools and detailed integration remain candidates, not installs. [Engine evidence](../02-research/engines-art-and-audio.md), [visual direction](visual-direction.md), [hosting evidence](../02-research/hosting-and-scale.md), and [Jev evidence](../02-research/jev-and-semantic-routing.md) explain limitations and alternatives.
 
 ## Answers to the hardest questions
 
@@ -48,6 +48,6 @@ PlayCanvas and the custom-simulation boundary are accepted; supporting tools and
 
 ## The first proof should be human-scale
 
-Build a few people in the wild, dependable gathering/eating/resting, an explicit accelerated clock, consequential needs and death, remembered promises, and one reusable invention. A new carrying-bundle recipe can demonstrate generation using available cord, material and carrying primitives. Basic campfire and shelter behavior should be seeded if the survival scenario depends on them. Novel burning contexts or a helmet strike can later test conditional effect resolution. The earlier door-wedge example remains a possible later test once built doors exist; it no longer defines the initial scenario.
+The accepted [first playable](../05-project/first-playable-mvp.md) starts with one live conversational/autonomous NPC, useful memory, dependable survival and AI-generated crafting. Gather resources, generate and craft a usable sling, hunt animals, harvest finite remains and prepare/eat food. Another invention, with bow-and-arrow the candidate, tests shared rule families. Pause/speed controls are required, and the personal world pauses with no autonomous AI scheduling while the player is away. Carrying bundles and no-model fixtures remain internal checks. Seed campfire/cooking and shelter only to the depth required by the scenario; detailed fire spread, structural physics and larger groups follow evidence.
 
 The largest product uncertainty is whether residents remain interesting and coherent over repeated sessions. The largest technical uncertainty is whether new mechanisms generalize safely within useful bounds. The largest business uncertainty is how much real interaction costs at the usage level players want. The [roadmap](../05-project/roadmap.md) and [research backlog](../05-project/research-backlog.md) place these questions ahead of scale and feature count.

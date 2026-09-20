@@ -20,6 +20,8 @@ Hosting costs and creator earnings are separate. A popular world is not automati
 
 ## One subscription across participating worlds
 
+Player subscriptions also have an accepted [tier-based invention allowance](business-plan.md#player-subscription-tiers-and-invention-allowances): a limited recurring free allowance and larger paid allowances, with exact counts and packaging still open. This is distinct from creator revenue allocations, premium-world entry and world AI funding. The free-player examples are 10 or 30 inventions per month, not committed pricing or a selected daily quota.
+
 The user favors earmarking a fixed amount from each paying subscriber for participating worlds they use. **$5 per subscriber per month is only an example**, not an agreed price or promise. If the budget were $5 and an allocation were 60/40, the two worlds would receive $3 and $2; visiting more worlds would not create more money.
 
 Define qualifying human participation and the allocation policy before launch. NPC activity, faster simulated time, idle bots, and fabricated accounts must not mint payouts. Whether separately subscribed premium worlds also qualify for this pool remains open. Show clearly what each purchase includes and prevent accidental duplicate billing for the same entitlement.
@@ -33,6 +35,14 @@ A creator invents a mechanic during play, inspects it, refines it, and can packa
 Keep a reusable template distinct from a running world's state and private history. Export selected definitions and permitted assets without automatically publishing character memories, player conversations, or unrelated world records. A fork receives only content it is authorized to copy.
 
 An original wizard-school setting is a useful example. Selling packs incorporating protected franchise material, such as Harry Potter characters and setting expression, requires appropriate rights; user-generated content is not automatically cleared. [Copyright Office: derivative works](https://www.copyright.gov/circs/circ14.pdf).
+
+## World packs, contributor ownership and free-use worlds
+
+The [invention governance and ownership requirements](../03-design-proposals/invention-governance-and-ownership.md) add three product commitments: players keep attributed account-library records of inventions across worlds; every world has a complete invention-pack inventory; and owners can offer free-use worlds whose authorized whole packs can be copied into other worlds. These are future requirements, not implemented marketplace features.
+
+Host governance is separate from creator ownership. An owner may independently lock player invention and autonomous agent/NPC invention while both groups continue using and learning existing permitted actions. Contributing to another person's world does not automatically transfer ownership to its host. Learning or using an invention is also distinct from exporting or redistributing its definition.
+
+Publish immutable pack versions with dependencies and contributor terms. The full world inventory must show nonexportable entries and dependent blockers; a partial download cannot be advertised as the complete world pack. A free-use world must disclose its contribution/sharing terms before contributions and obtain the permissions needed for its complete-pack promise. The owner can choose this policy, but cannot retroactively appropriate earlier contributions or revoke already granted permissions. Exact licenses and commercial/redistribution rights remain to be selected. Copying a mechanics library does not copy private world history or character memories.
 
 ## Import and compatibility proposal
 

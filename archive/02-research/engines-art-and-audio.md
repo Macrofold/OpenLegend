@@ -87,6 +87,10 @@ Start with idle, walk, talk, use/reach, rest, and hurt reactions. Let the same u
 
 ## 5. Asset protocol and generation workflow
 
+The later accepted [hybrid representation direction](../03-design-proposals/procedural-art-and-animation.md) retains procedural composition and adds reusable 2D rigs alongside authored/generated sprites. It records generation-versus-rendering tradeoffs, the limits of 2D rotation, safe visual descriptions and pixel-density scaling. Tool/runtime selection remains open; skeletal-animation examples are evidence of the technique, not an adopted dependency.
+
+September 19 follow-up accepts [art generated during play](../03-design-proposals/visual-direction.md#art-generated-during-play): immediate state-based poses/effects plus asynchronous generation for missing art, with persistent reuse. That specification owns the rabbit-death example, stale-result handling, image-job boundaries and separate art funding. This section supplies the underlying asset protocol; no live generation pipeline is implemented.
+
 Asset references should be data, not hardwired names embedded in rule scripts. Define an asset manifest containing:
 
 - Stable asset ID, immutable version/content hash, family, style revision, and source/provenance.

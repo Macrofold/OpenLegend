@@ -1,0 +1,70 @@
+# Billing and usage reporting
+
+Status: **accepted U15 product requirement; proposed interface and service contract**. The user requests a small billing control with detailed LLM and Jev costs for the current server session, past 24 hours, 7 days, 30 days, all time, and arbitrary start/end times. See the [interface specification](../03-design-proposals/playability-and-controls.md#billing-menu-and-cost-breakdown), F61 and D50. This documents future behavior; the current local spending ledger is not a Macrofold billing integration.
+
+## Time ranges and attribution
+
+Use real elapsed time, independent of simulation speed, pause, rewind or saved-world time. Open Legend generates an opaque server-session ID at process startup and records its UTC start time. Browser reloads and player reconnects do not reset it; restarting the server starts a new session. Stamp each submitted execution with authorized application, project, world and originating server-session references. Nested invocations inherit attribution; resuming a workflow in another session attributes new invocations to that session while preserving workflow lineage.
+
+| Preset          | Query meaning                                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------------- |
+| Current session | Current server-session ID, from its recorded startup to the query's fixed end time; show startup and uptime |
+| Past 24 hours   | Rolling 24 elapsed hours ending at the query end time                                                       |
+| Past 7 days     | Rolling 168 elapsed hours ending at the query end time                                                      |
+| Past 30 days    | Rolling 720 elapsed hours ending at the query end time                                                      |
+| All time        | Entire retained accounting history in the selected authorized scope, including previous sessions            |
+| Custom          | Any explicit start/end timestamps in that scope                                                             |
+
+Every range is half-open: start inclusive, end exclusive. Capture one end time for all panels in a refresh. Send UTC timestamps and display the user's timezone and exact resolved bounds; rolling periods are not local calendar-day buckets. A custom picker must handle timezone offsets unambiguously. Multi-server deployments show which server session is selected; project/world totals can include all sessions. Session filtering supplements the time range so concurrent servers do not contaminate a single server's session total.
+
+Assign inference usage to the invocation's dispatch time; compute/storage line items use recorded service intervals with a documented allocation rule for ranges cutting those intervals. Late settlement corrects the original usage period, preserving a separate posting timestamp and query revision. Queries default to incurred usage, not wallet deposits or invoice payment dates. For example, a call dispatched at 23:59 and reconciled after midnight remains in the 23:59 usage period. Show that a previous period can change as costs settle.
+
+## What a report contains
+
+Break out **LLM inference**, **Jev inference**, and **other charges** such as Macrofold compute, storage or service fees. Jev classification is a separate service category even if its backing provider also offers general LLMs. Categorize actual billed invocations, not just the parent workflow: one conversation may incur both a Jev route and an LLM response. Child costs roll up once; do not add the same costs again as an agent-run total.
+
+Return currency, finalized incurred charges, provisional estimates, unknown-cost counts and outstanding reservations separately. Reservations are allowance holds, not additional incurred charges. A settled charge replaces its provisional estimate in current totals; preserve the adjustment trail without summing both values. Credits/refunds are identified adjustments, not negative call counts. Distinguish the estimated/known total cost of operating the game from amounts actually charged by Macrofold. In BYOK mode, a reported provider estimate is not a Macrofold debit or a verified upstream invoice; unavailable provider cost remains unknown. Do not add internal provider cost to a customer charge that already includes it.
+
+Provide breakdowns by service category, provider/model, workflow purpose (conversation, resident decision, invention, workshop), world and session where authorized. Include dispatched call counts, outcomes, reported input/output/cached-token quantities, and each service's native billing units when available. Missing usage is not zero; cached tokens must not be counted twice in input totals. A detail row links an invocation/line-item receipt, timestamps, attribution, price/version basis, cost status and adjustments. Rejected-before-dispatch work is not a paid invocation; canceled, failed or uncertain work can still incur cost.
+
+All monetary aggregation uses exact integers following Macrofold's micro-USD decimal-string convention, with explicit currency and rounding at display boundaries. Do not sum different currencies without a separately disclosed conversion policy. Model names and workflow labels are dimensions, not executable instructions. Billing views contain accounting metadata, not prompts, NPC memories or credentials.
+
+## Art generation costs
+
+The accepted [runtime-art direction](../03-design-proposals/visual-direction.md#art-generated-during-play) adds an explicit **Image / art generation** cost category when that provider path is implemented. Preserve separate LLM planning, Jev classification, image-provider, validation-compute and storage line items; include each once in the overall total. Image usage can use native image/output units rather than token counts. Extend the reporting category contract without inventing zero charges for unsupported or unreported services. The current local ledger has no image-generation adapter.
+
+Open Legend admits optional art work against a configured art allocation and the relevant overall spending ceiling before dispatch. A missing budget or failed provider keeps the existing visual fallback. Cached asset reuse does not incur a new generation charge, though serving/storage can have their own costs. Killing or depicting a rabbit, producing a state variant for an existing mechanic and improving an asset do not consume player invention units. Supporting art for a qualifying new invention does not consume an additional unit. Art permissions and funding remain separate from player/agent invention locks and quota accounting.
+
+## Player invention entitlements
+
+The [subscription-tier direction](../06-marketing/business-plan.md#player-subscription-tiers-and-invention-allowances) adds a player invention allowance alongside monetary reporting. Free-tier examples of 10 or 30 per month are provisional; no amount, tier price or renewal schedule is selected. Display the player's tier, entitlement period, included/used/reserved/remaining invention units and next reset separately from LLM/Jev dollars. Changing the report's visible date range never resets an entitlement period.
+
+Proposed implementation: Open Legend owns a replaceable account-entitlement service and durable, idempotent quota ledger. Store account, period, policy version, limit, reservations and committed invention/admission references. Check and reserve an available unit before authoring dispatch; finalize consumption only for a successful qualifying admission, retaining the same reservation identity across child jobs and reconciliation. Serialize competing requests across worlds so two simultaneous requests cannot spend the last unit. Definitive non-admission releases the hold; uncertain completion requires reconciliation against the durable admission record before release or redispatch. A period rollover cannot strand a reservation; define late-completion attribution before launch. No paid automatic retry is implied.
+
+Player-directed AI work retains the player's entitlement origin. Autonomous NPC invention follows its separate world policy and funding. Admission requires the applicable invention lock to permit the action, valid authoring rights, available player allowance when applicable, and separately authorized AI spending. Macrofold reports execution costs and may provide generic execution primitives; it does not decide what counts as an Open Legend invention or silently maintain a competing player quota.
+
+Future checks cover the final unit requested concurrently from two worlds, duplicate or late completion, rejected generation, lock changes during work, period rollover, plan changes, independent NPC work and retaining inventions after exhaustion. Quota and paid-cost accounting are distinct: a failed paid call can cost money while consuming no completed-invention unit. This is a planned service contract, not an implemented subscription or payment integration.
+
+## Macrofold query contract
+
+Expose a generic read-only billing usage operation, illustratively **`GET /v1/billing/usage`**, with an SDK equivalent such as `billing.usage.query(...)`. Reuse or extend an existing suitable Macrofold reporting route if available; the name here is proposed, not a claim that this endpoint exists. It must support one easy query for the requested interval and detailed breakdown, without starting a model run, allocating a sandbox or authorizing new spending.
+
+| Input                                                                   | Behavior                                                                                                                    |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Authorized project/application scope; optional world/session references | Server-validated filters; an arbitrary tag or caller-supplied account ID cannot expand billing access                       |
+| `from`, `to`                                                            | RFC 3339 instants with offsets; normalize to UTC, require `from < to`; omitted `from` explicitly means all retained history |
+| Service/provider/model/workflow filters and bounded `group_by` fields   | Obtain LLM and Jev separately or together; grouping must preserve totals                                                    |
+| Time-series interval                                                    | Optional chart buckets clipped to the selected range, with explicit timezone/bucket boundaries                              |
+| Detail inclusion, bounded page size and cursor                          | Paginated line items; a summary is always over the complete query, not only the current page                                |
+
+Return normalized scope/bounds, a stable report revision or snapshot token, generation time, source freshness watermark, coverage start/end and completeness status. Include aggregate totals and statuses, grouped breakdowns, optional time-series data, and paginated detail rows/continuation. Pages share the same query snapshot; an expired snapshot requires an explicit refresh, not silent mixing of revisions. An invalid or inaccessible scope fails explicitly; a valid complete empty period reports zero. Partial history, delayed accounting or provider outages report the gap, not false zero spending.
+
+Build this read model from Macrofold's existing invocation records, billing ledger and reconciliations. Do not create a competing wallet or independently writable set of charges. Retain accounting facts or equivalently precise aggregates long enough to answer all-time and arbitrary-boundary queries after diagnostic/run-history expiry. Coarse daily totals alone cannot answer arbitrary partial-day ranges accurately; disclose any historical loss of precision. Index by scope, incurred time and category, with reconciliation-aware aggregates for large histories. Choose actual retention and query limits during implementation; never silently truncate an all-time report to a recent window.
+
+## Open Legend boundary and rollout
+
+The browser calls an authenticated Open Legend reporting route. The server resolves the billing scope, server session and timezone bounds, queries Macrofold with server-side credentials, and projects authorized results through a replaceable `BillingUsageReader` interface. Billing permission belongs to the payer or an explicitly delegated viewer, independently of character/god permissions. The initial default is the current world's configured billing scope, displayed in the menu; broader project/account views require explicit selection and authority.
+
+Keep the local dispatch-cap ledger separate from billing reports. It protects admission when the reporting service is slow and must not be reset by changing the visible period. A direct-provider reporting adapter can later implement the same read interface with clearly labeled local estimates and coverage; Macrofold cannot report calls made outside it unless their authorized accounting evidence is explicitly ingested and deduplicated. Never silently present a Macrofold-only total as complete combined spending when direct routes are also active.
+
+First define attribution and durable cost facts, then implement Macrofold aggregation and the Open Legend read adapter, then the compact menu. On-demand queries and bounded refreshes while open need no AI. Proposed acceptance covers range edges, server restarts and concurrent sessions, both services within one workflow, uncertain/canceled calls, late receipts and refunds, hierarchy deduplication, partial history, pagination consistency, exact arithmetic and foreign-scope rejection. These are future checks, not test or live billing evidence from this documentation update.

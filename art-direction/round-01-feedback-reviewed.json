@@ -1,0 +1,370 @@
+{
+  "atlas": "Open Legend art atlas v1",
+  "version": 2,
+  "savedAt": "2026-09-19T06:16:56.565Z",
+  "preferences": {
+    "G01": {
+      "rating": "like",
+      "aspects": [
+        "Lighting",
+        "Mood",
+        "Palette",
+        "Motion"
+      ],
+      "note": "I like the art generally though I feel like the style of the people and some of the assets in particular feel a little bit outdated. They feel a little bit like they are from 10 years ago, which they are. I like the overall vibe and the lighting especially, but I would like something that feels a little bit more modern. I want this to appeal to Gen Z and Gen Alpha. "
+    },
+    "G07": {
+      "rating": "maybe",
+      "aspects": [
+        "Palette",
+        "Environment"
+      ],
+      "note": "I like the fantasy vibe but the graphics seem a little outdated. ",
+      "updatedAt": "2026-09-19T06:02:33.768Z"
+    },
+    "G08": {
+      "rating": "maybe",
+      "aspects": [],
+      "note": "I don't think it's detailed enough. The characters are definitely not detailed enough. ",
+      "updatedAt": "2026-09-19T05:56:09.118Z"
+    },
+    "G09": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Looks very cartoony and outdated. Graphics ",
+      "updatedAt": "2026-09-19T05:56:42.015Z"
+    },
+    "G12": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Lighting",
+        "Palette",
+        "Mood"
+      ],
+      "note": "I like the vibrant colors, the level of detail, and the fact that the building is pretty detailed. I think the character bodies could be more detailed. I don't want my characters to have Pokemon-style bodies that are very undetailed. I want the characters to be detailed enough that they can have visible armor and clothing and, ideally, their faces, skin tone, fashion, etc., are somewhat recognizable. I want pretty detailed pixels. ",
+      "updatedAt": "2026-09-19T05:57:52.478Z"
+    },
+    "G13": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Seems pretty cartoony. ",
+      "updatedAt": "2026-09-19T05:58:04.416Z"
+    },
+    "G17": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Not my style. It's pixel art but it's very pixelated. This feels more like an arcade game. ",
+      "updatedAt": "2026-09-19T05:58:17.398Z"
+    },
+    "G23": {
+      "rating": "like",
+      "aspects": [],
+      "note": "Yeah pretty good style but the pixel art is a little bit too pixelated. I would like it to be more detailed but I do like the style of the art itself and the color choices. In this particular scene the color is drab but the palette, considering the scene, is good. ",
+      "updatedAt": "2026-09-19T05:59:01.152Z"
+    },
+    "C03": {
+      "rating": "like",
+      "aspects": [],
+      "note": "I really like the detail of the pixel art: the level of detail, how it's not too pixelated and has good definition. The water here is amazing (the reflective water). I would say the color palette looks a little bit cartoony though. ",
+      "updatedAt": "2026-09-19T05:59:29.797Z"
+    },
+    "C05": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Palette",
+        "Mood"
+      ],
+      "note": "This is more like concept art rather than pixel art but I do like the overall environment, the mood, and the colors. ",
+      "updatedAt": "2026-09-19T05:59:48.191Z"
+    },
+    "A01": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too cartoony, outdated look ",
+      "updatedAt": "2026-09-19T05:59:59.565Z"
+    },
+    "A02": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too basic, pixelated, outdated look ",
+      "updatedAt": "2026-09-19T06:00:08.091Z"
+    },
+    "G02": {
+      "rating": "maybe",
+      "aspects": [
+        "Environment",
+        "Lighting",
+        "Motion",
+        "Mood"
+      ],
+      "note": "It does feel quite modern with the blur. That's pretty interesting. I don't know if I want blur in this game but something about this does look pretty modern. ",
+      "updatedAt": "2026-09-19T06:00:47.818Z"
+    },
+    "G04": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Lighting",
+        "Palette",
+        "Mood"
+      ],
+      "note": "The environment is really nice. The characters are a little too cartoony for my liking. These are kind of like anime and cartoony but the level of detail is good. The level of pixel art detail is good. The environment is really, really nice. ",
+      "updatedAt": "2026-09-19T06:01:22.672Z"
+    },
+    "G05": {
+      "rating": "maybe",
+      "aspects": [
+        "Mood",
+        "Environment"
+      ],
+      "note": "I like the mood that this scene creates. I don't like the fact that the mood is kind of depressing but I do like the level of detail in the environment, the little boxes everywhere, and the fidelity of the rugs hanging on the fence. I think the character is not detailed enough. The character is a little too pixelated for my liking but the environment has some nice detail. ",
+      "updatedAt": "2026-09-19T06:02:58.932Z"
+    },
+    "G06": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too bright, cartoony, and 2D. ",
+      "updatedAt": "2026-09-19T06:02:22.211Z"
+    },
+    "G03": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "The environment is more 3D so I don't think that this really applies. The characters are too pixelated and cartoony. ",
+      "updatedAt": "2026-09-19T06:02:50.523Z"
+    },
+    "G10": {
+      "rating": "pass",
+      "aspects": [
+        "Lighting"
+      ],
+      "note": "I like the fact that there is lighting. The graphics are too basic and cartoony and the environment is too basic and cartoony. ",
+      "updatedAt": "2026-09-19T06:03:20.836Z"
+    },
+    "G11": {
+      "rating": "like",
+      "aspects": [
+        "Mood",
+        "Palette",
+        "Environment"
+      ],
+      "note": "I like the mood and the vibrant colors. The characters are too simple and not detailed enough. The environment has a great amount of detail and an artistic feel, though. I do like the environment. ",
+      "updatedAt": "2026-09-19T06:03:57.874Z"
+    },
+    "G14": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too basic, cartoony, and outdated-looking. ",
+      "updatedAt": "2026-09-19T06:04:13.324Z"
+    },
+    "G15": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Pretty outdated-looking, cartoony ",
+      "updatedAt": "2026-09-19T06:04:24.433Z"
+    },
+    "G16": {
+      "rating": "maybe",
+      "aspects": [
+        "Environment"
+      ],
+      "note": "I like the detailed pixel environment. The characters are not detailed enough. They are too simple. The colors are a little bit too saturated for me. ",
+      "updatedAt": "2026-09-19T06:04:54.439Z"
+    },
+    "G18": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too cartoony and outdated. ",
+      "updatedAt": "2026-09-19T06:05:05.776Z"
+    },
+    "G19": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too cartoony and outdated. ",
+      "updatedAt": "2026-09-19T06:05:16.436Z"
+    },
+    "G20": {
+      "rating": "maybe",
+      "aspects": [
+        "Lighting"
+      ],
+      "note": "I like the lighting here. The environment feels a little bit too tile-based. I don't want the environment in this game to feel tile-based. I want it to feel a little bit more alive. ",
+      "updatedAt": "2026-09-19T06:05:53.598Z"
+    },
+    "G21": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "A little bit too cartoony and outdated and ",
+      "updatedAt": "2026-09-19T06:06:25.800Z"
+    },
+    "G22": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Characters",
+        "Lighting",
+        "Palette",
+        "Mood"
+      ],
+      "note": "Really nice colors. I love the detail in the pixel art in the environment. This is more like a 2D platformer but in terms of the art itself, I do really like it. The characters are pretty detailed. I like that large character. He's not like a standard body shape. I would like my characters to be even more detailed than this because, again, when dressing them, you should be able to see all of their pants, shirt, helmet, face, and everything. I really like this overall. ",
+      "updatedAt": "2026-09-19T06:07:22.643Z"
+    },
+    "G24": {
+      "rating": "maybe",
+      "aspects": [
+        "Environment"
+      ],
+      "note": "Mood is very drab. Character is very simple but the environment is very, very detailed. I like the detail in the environment. ",
+      "updatedAt": "2026-09-19T06:07:45.517Z"
+    },
+    "G25": {
+      "rating": "maybe",
+      "aspects": [
+        "Characters",
+        "Environment"
+      ],
+      "note": "The character has a good deal of detail. You can see his gear and everything. That's pretty solid. I do like the level of detail on the character. The environment itself is also quite nice and detailed although it does feel a little bit too cartoony and painted. ",
+      "updatedAt": "2026-09-19T06:08:12.872Z"
+    },
+    "G26": {
+      "rating": "maybe",
+      "aspects": [
+        "Environment",
+        "Mood"
+      ],
+      "note": "Very solid environment. I like the detail and the aesthetic. I don't know about adopting this particular aesthetic but I do like the quality of the aesthetic. The character also has some detail. It is not super detailed but could be more detailed. The environment is nice. ",
+      "updatedAt": "2026-09-19T06:08:48.948Z"
+    },
+    "G27": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Way too simple. ",
+      "updatedAt": "2026-09-19T06:08:58.778Z"
+    },
+    "G28": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too simple and outdated-looking. Looks like an arcade game. ",
+      "updatedAt": "2026-09-19T06:09:09.331Z"
+    },
+    "G29": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too simple and outdated-looking. Although that tree is pretty nice and detailed, overall I think pretty simple. ",
+      "updatedAt": "2026-09-19T06:09:23.895Z"
+    },
+    "G30": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Characters",
+        "Lighting",
+        "Palette",
+        "Motion",
+        "Mood"
+      ],
+      "note": "Yes, excellent, amazing. I really like the cinematic look and feel of it, the detail in the environment, the detail in the people, the lighting, just the parallax, the detail in the pixel art. Really great, really great. I love this a lot. ",
+      "updatedAt": "2026-09-19T06:09:56.699Z"
+    },
+    "G31": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Lighting",
+        "Mood"
+      ],
+      "note": "People could be more detailed. I like the lighting, the detail, and the amount of thought put into the environment with the tree, the chair, and stuff. I would like my pixel art to be more dense to allow for more detail but I do like the overall look and feel of this one. ",
+      "updatedAt": "2026-09-19T06:10:25.258Z"
+    },
+    "G32": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Characters",
+        "Lighting",
+        "Mood"
+      ],
+      "note": "Very solid. I like the detail of the environment and the pixel art, and the lighting and the mood. The characters have good detail too. You can see their clothing and I like the density of the pixel art. I think I like high-density pixel art. And the reflective water there is very nice. ",
+      "updatedAt": "2026-09-19T06:10:59.900Z"
+    },
+    "G33": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Way too simple and outdated-looking. ",
+      "updatedAt": "2026-09-19T06:13:02.751Z"
+    },
+    "G34": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too simple and outdated-looking. ",
+      "updatedAt": "2026-09-19T06:13:09.493Z"
+    },
+    "C01": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Characters",
+        "Motion"
+      ],
+      "note": "Very interesting. The character definition is very nice. The animation is nice. I like that kind of natural-looking environment. The overall image doesn't show too much but I do like this level of pixel density. I don't know, it could be even more dense than this but I do like the overall detail here. ",
+      "updatedAt": "2026-09-19T06:13:58.292Z"
+    },
+    "C02": {
+      "rating": "maybe",
+      "aspects": [
+        "Lighting"
+      ],
+      "note": "It's a little bit cartoony. Maybe it's the palette but I do like the level of detail in the environment. I think the pixels could be a little bit more dense and more expressive. There's a lot that I do like here in terms of the pixel density, lighting, and environment. The character has some level of detail. He could be a little bit more well-defined but I think I like the lighting mostly, actually. ",
+      "updatedAt": "2026-09-19T06:14:53.795Z"
+    },
+    "C04": {
+      "rating": "maybe",
+      "aspects": [
+        "Characters"
+      ],
+      "note": "Pretty cartoony and outdated-looking but I like that the boss has a lot of character detail. ",
+      "updatedAt": "2026-09-19T06:15:07.901Z"
+    },
+    "C06": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too simple and outdated. ",
+      "updatedAt": "2026-09-19T06:15:15.956Z"
+    },
+    "A03": {
+      "rating": "like",
+      "aspects": [
+        "Characters",
+        "Environment",
+        "Palette"
+      ],
+      "note": "I like the level of detail, even though the character is so tiny that it's fairly detailed. The hat and the animation style are pretty compelling. I do like that the stone that they're mining has a lot of detail as well and I like that it shines. The animation where it shines and the high-density pixel are good here although the overall art style still comes across a little bit cartoony for my taste. ",
+      "updatedAt": "2026-09-19T06:16:05.763Z"
+    },
+    "A04": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "A bit too simple. ",
+      "updatedAt": "2026-09-19T06:16:20.783Z"
+    },
+    "A05": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too simple, outdated, and cartoony-looking. ",
+      "updatedAt": "2026-09-19T06:16:29.667Z"
+    },
+    "A06": {
+      "rating": "maybe",
+      "aspects": [],
+      "note": "I like the animation a lot but I prefer denser pixel art. ",
+      "updatedAt": "2026-09-19T06:16:43.243Z"
+    },
+    "A08": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Too simple and cartoony. ",
+      "updatedAt": "2026-09-19T06:16:54.252Z"
+    }
+  }
+}

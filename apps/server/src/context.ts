@@ -1,0 +1,318 @@
+import {
+  findPath,
+  NATIVE_PREPARATIONS,
+  queryMemories,
+  mindFor,
+  SIMULATION_RULES,
+} from '@open-legend/domain';
+import type { CommandInput } from '@open-legend/protocol';
+import type { WorldService } from './world-service.js';
+
+export const CONTEXT_BYTE_LIMIT = 100_000;
+export class ContextBudgetError extends Error {
+  constructor() {
+    super('Required actor facts exceed the 100KB context budget; this context was not sent.');
+    this.name = 'ContextBudgetError';
+  }
+}
+const excerpt = (text: string, limit: number) => {
+  const characters = [...text];
+  return characters.length <= limit ? text : `${characters.slice(0, limit - 1).join('')}…`;
+};
+
+/** Relevance is local and deterministic. A model cannot broaden its own knowledge scope. */
+export function buildContext(service: WorldService, actorId: string, query: string) {
+  const observed = service.observe(actorId);
+  if (!observed) throw new Error('Actor unavailable');
+  const words = [
+    ...new Set(
+      query
+        .normalize('NFKC')
+        .toLowerCase()
+        .match(/[\p{L}\p{N}]+/gu) ?? [],
+    ),
+  ].filter(
+    (word) =>
+      word.length >= 3 && !['the', 'and', 'with', 'that', 'this', 'make', 'using'].includes(word),
+  );
+  // Rank the entire known registry (currently capped at 64), then bound the supplied set.
+  // This deterministic retrieval helps old techniques surface; it does not prove paraphrase equivalence.
+  const rankedRecipes = observed.knownRecipes
+    .map((recipe, index) => {
+      const familyTerms =
+        recipe.output.launcher?.mechanism === 'swing'
+          ? 'sling throw stone pebble pouch swing'
+          : recipe.output.launcher?.mechanism === 'flex'
+            ? 'bow flex launch arrow'
+            : 'arrow shaft point fletching projectile';
+      const text =
+        `${recipe.name} ${recipe.description} ${familyTerms} ${recipe.inputs.map((input) => `${input.definitionId} ${input.role}`).join(' ')}`.toLowerCase();
+      return {
+        recipe,
+        index,
+        score: words.reduce((sum, word) => sum + (text.includes(word) ? 1 : 0), 0),
+      };
+    })
+    .sort((a, b) => b.score - a.score || b.index - a.index)
+    .slice(0, 24);
+  const ownedDefinitionIds = new Set(observed.inventory.map((item) => item.definitionId));
+  // Native mechanics and every owned definition remain present. Unowned generated
+  // definitions duplicate candidate recipe outputs and need not be sent twice.
+  const materials = observed.itemDefinitions
+    .filter((definition) => !definition.recipeId || ownedDefinitionIds.has(definition.id))
+    .map((definition) => ({
+      id: definition.id,
+      version: definition.version,
+      name: excerpt(definition.name, 40),
+      properties: definition.properties,
+      native: !definition.recipeId,
+      ...(definition.nutrition !== undefined ? { nutrition: definition.nutrition } : {}),
+      ...(definition.cooked !== undefined ? { cooked: definition.cooked } : {}),
+      ...(definition.launcher ? { launcher: definition.launcher } : {}),
+      ...(definition.ammunition ? { ammunition: definition.ammunition } : {}),
+    }));
+  const context = {
+    world: { id: observed.worldId, profile: service.world.profile, simulationSeconds: observed.at },
+    self: { ...observed.actor, name: excerpt(observed.actor.name, 40) },
+    nearby: observed.visibleEntities.map((entity) => ({
+      id: entity.id,
+      name: excerpt(entity.name, 40),
+      kind: entity.kind,
+      position: entity.position,
+      ...(entity.resource ? { resource: entity.resource } : {}),
+      ...(entity.animal
+        ? { animal: { alive: entity.animal.alive, fleeing: entity.animal.fleeSeconds > 0 } }
+        : {}),
+      ...(entity.actor
+        ? { activity: entity.actor.action?.type ?? 'idle', alive: entity.actor.alive }
+        : {}),
+    })),
+    // Ownership is implicit in this actor-scoped list; IDs and quantities are exact.
+    inventory: observed.inventory.map(({ id, definitionId, quantity }) => ({
+      id,
+      definitionId,
+      quantity,
+    })),
+    materials,
+    knownRecipes: rankedRecipes.map(({ recipe }) => ({
+      id: recipe.id,
+      name: excerpt(recipe.name, 64),
+      description: excerpt(recipe.description, 120),
+      inputs: recipe.inputs,
+      workSeconds: recipe.workSeconds,
+      output: {
+        kind: recipe.output.kind,
+        properties: recipe.output.properties,
+        ...(recipe.output.launcher ? { launcher: recipe.output.launcher } : {}),
+        ...(recipe.output.ammunition ? { ammunition: recipe.output.ammunition } : {}),
+      },
+    })),
+    memories: queryMemories(service.world, actorId, { text: query, limit: 12 }).map((memory) => ({
+      ...memory,
+      summary: excerpt(memory.summary, 220),
+    })),
+    recentEvents: observed.recentEvents.slice(-12).map((event) => {
+      const data = Object.fromEntries(
+        Object.entries(event.data ?? {}).filter(([key]) => key !== 'text'),
+      );
+      return {
+        id: event.id,
+        at: event.at,
+        type: event.type,
+        text: excerpt(
+          typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text,
+          220,
+        ),
+        ...(event.actorId ? { actorId: event.actorId } : {}),
+        ...(event.targetId ? { targetId: event.targetId } : {}),
+        ...(Object.keys(data).length ? { data } : {}),
+      };
+    }),
+    innerWorld: (() => {
+      const { thoughts, receipts, ...mind } = mindFor(service.world, actorId);
+      return mind;
+    })(),
+    request: query,
+    coverage: {
+      proseMayBeExcerpted: true,
+      knownRecipeTotal: observed.knownRecipes.length,
+      knownRecipeSupplied: rankedRecipes.length,
+      memorySupplied: 0,
+      recentEventSupplied: 0,
+      nearbySupplied: observed.visibleEntities.length,
+    },
+  };
+  const bytes = () => {
+    context.coverage.knownRecipeSupplied = context.knownRecipes.length;
+    context.coverage.memorySupplied = context.memories.length;
+    context.coverage.recentEventSupplied = context.recentEvents.length;
+    context.coverage.nearbySupplied = context.nearby.length;
+    return Buffer.byteLength(JSON.stringify(context), 'utf8');
+  };
+  // Discard complete lowest-priority records, never structural JSON fragments or
+  // item/material identities. Keep current speech and the best memories when possible.
+  while (bytes() > CONTEXT_BYTE_LIMIT && context.knownRecipes.length > 8)
+    context.knownRecipes.pop();
+  while (bytes() > CONTEXT_BYTE_LIMIT && context.recentEvents.length > 4)
+    context.recentEvents.shift();
+  while (bytes() > CONTEXT_BYTE_LIMIT && context.memories.length > 4) context.memories.pop();
+  while (bytes() > CONTEXT_BYTE_LIMIT && context.knownRecipes.length > 1)
+    context.knownRecipes.pop();
+  while (bytes() > CONTEXT_BYTE_LIMIT && context.nearby.length > 0) context.nearby.pop();
+  while (bytes() > CONTEXT_BYTE_LIMIT && context.recentEvents.length > 1)
+    context.recentEvents.shift();
+  while (bytes() > CONTEXT_BYTE_LIMIT && context.memories.length > 1) context.memories.pop();
+  // Even display labels are optional compared with physical fields and owned IDs.
+  if (bytes() > CONTEXT_BYTE_LIMIT) for (const material of context.materials) material.name = '';
+  if (bytes() > CONTEXT_BYTE_LIMIT) throw new ContextBudgetError();
+  return context;
+}
+
+export interface CandidateAction {
+  id: string;
+  description: string;
+  command: CommandInput | null;
+}
+export function npcCandidates(service: WorldService, actorId = 'ada'): CandidateAction[] {
+  const observed = service.observe(actorId);
+  const actor = observed?.actor.actor;
+  if (!observed || !actor?.alive || actor.incapacitated || service.paused) return [];
+  const definitions = new Map(
+    observed.itemDefinitions.map((definition) => [definition.id, definition]),
+  );
+  const inventory = observed.inventory.filter(
+    (item) => item.ownerId === observed.actor.id && item.quantity > 0,
+  );
+  const quantity = (definitionId: string) =>
+    inventory
+      .filter((item) => item.definitionId === definitionId)
+      .reduce((sum, item) => sum + item.quantity, 0);
+  const actions: CandidateAction[] = [
+    {
+      id: 'continue',
+      description: actor.action
+        ? `Continue the ${actor.action.type} already in progress.`
+        : 'Watch the clearing while considering the next useful step.',
+      command: null,
+    },
+  ];
+  for (const item of inventory) {
+    const definition = definitions.get(item.definitionId);
+    if (definition?.nutrition && actor.fullness < (actor.action ? 30 : 85))
+      actions.push({
+        id: `eat:${item.id}`,
+        description: `Eat one ${definition.name} to restore fullness.`,
+        command: { type: 'eat', itemId: item.id },
+      });
+  }
+  if (actor.energy < (actor.action ? 10 : 90) && actor.action?.type !== 'rest')
+    actions.push({ id: 'rest', description: 'Rest to recover energy.', command: { type: 'rest' } });
+  // Starting another timed task would discard actual work/materials. Native survival
+  // may still interrupt an emergency; ordinary thought preserves the existing plan.
+  if (actor.action) return actions;
+
+  for (const [preparation, recipe] of Object.entries(NATIVE_PREPARATIONS)) {
+    if (quantity(recipe.input) >= recipe.inputQuantity)
+      actions.push({
+        id: `prepare:${preparation}`,
+        description:
+          preparation === 'fiber'
+            ? 'Clean raw plant fibers into usable prepared fibers.'
+            : 'Twist prepared fibers into binding cord.',
+        command: { type: 'prepare', preparation: preparation as 'fiber' | 'cord' },
+      });
+  }
+  const compatibleAmmo = (kind: string) =>
+    inventory.find((item) => definitions.get(item.definitionId)?.ammunition?.kind === kind);
+  for (const item of inventory) {
+    const definition = definitions.get(item.definitionId);
+    if (
+      definition?.launcher &&
+      item.id !== actor.equippedItemId &&
+      compatibleAmmo(definition.launcher.ammunitionKind)
+    )
+      actions.push({
+        id: `equip:${item.id}`,
+        description: `Equip ${definition.name}; compatible ${definition.launcher.ammunitionKind} ammunition is carried.`,
+        command: { type: 'equip', itemId: item.id },
+      });
+  }
+  const equipped = inventory.find((item) => item.id === actor.equippedItemId);
+  const launcher = equipped && definitions.get(equipped.definitionId)?.launcher;
+  const ammunition = launcher && compatibleAmmo(launcher.ammunitionKind);
+  const cuttingTool = inventory.some((item) =>
+    definitions.get(item.definitionId)?.properties.includes('point'),
+  );
+  const fires: { id: string; travelSeconds: number; fuelSeconds: number }[] = [];
+  for (const entity of observed.visibleEntities) {
+    // Target discovery uses only this actor's perception. Terrain is the same public
+    // geometry used by native movement, never a search for hidden entities/items.
+    const path = findPath(service.world, observed.actor.position, entity.position);
+    if (!path) continue;
+    if (entity.resource && entity.resource.quantity > 0)
+      actions.push({
+        id: `gather:${entity.id}`,
+        description: `Gather ${entity.name}.`,
+        command: { type: 'gather', targetId: entity.id },
+      });
+    if (entity.animal?.alive && equipped && launcher && ammunition)
+      actions.push({
+        id: `hunt:${entity.id}`,
+        description: `Hunt the visible ${entity.name} using ${definitions.get(equipped.definitionId)!.name} and one ${launcher.ammunitionKind} projectile.`,
+        command: {
+          type: 'hunt',
+          targetId: entity.id,
+          itemId: equipped.id,
+          ammunitionId: ammunition.id,
+        },
+      });
+    if (
+      entity.remains &&
+      !entity.remains.harvested &&
+      entity.remains.yields.some((item) => item.quantity > 0) &&
+      cuttingTool
+    )
+      actions.push({
+        id: `harvest:${entity.id}`,
+        description: `Use a carried cutting point to harvest the finite ${entity.name}.`,
+        command: { type: 'harvest', targetId: entity.id },
+      });
+    if (entity.heat?.lit) {
+      let previous = observed.actor.position;
+      let length = 0;
+      for (const point of path) {
+        length += Math.hypot(point.x - previous.x, point.z - previous.z);
+        previous = point;
+      }
+      fires.push({
+        id: entity.id,
+        travelSeconds: length / SIMULATION_RULES.movementTilesPerSecond,
+        fuelSeconds: entity.heat.fuelSeconds,
+      });
+    }
+  }
+  const cookingFire = fires
+    .filter((fire) => fire.fuelSeconds > fire.travelSeconds + SIMULATION_RULES.cookSeconds + 2)
+    .sort((a, b) => a.travelSeconds - b.travelSeconds || a.id.localeCompare(b.id))[0];
+  if (cookingFire)
+    for (const item of inventory) {
+      if (item.definitionId === 'raw_meat')
+        actions.push({
+          id: `cook:${item.id}`,
+          description: 'Cook one raw meat over the nearby lit campfire before eating it.',
+          command: { type: 'cook', itemId: item.id, targetId: cookingFire.id },
+        });
+    }
+  for (const recipe of observed.knownRecipes.slice(-12)) {
+    const required = new Map<string, number>();
+    for (const input of recipe.inputs)
+      required.set(input.definitionId, (required.get(input.definitionId) ?? 0) + input.quantity);
+    if ([...required].every(([definitionId, amount]) => quantity(definitionId) >= amount))
+      actions.push({
+        id: `craft:${recipe.id}`,
+        description: `Craft the learned ${recipe.name} using the materials already carried.`,
+        command: { type: 'craft', recipeId: recipe.id },
+      });
+  }
+  return actions;
+}

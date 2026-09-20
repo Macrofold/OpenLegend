@@ -1,0 +1,158 @@
+{
+  "atlas": "Open Legend art atlas round 2",
+  "version": 2,
+  "savedAt": "2026-09-19T23:00:19.176Z",
+  "preferences": {
+    "R01": {
+      "rating": "like",
+      "aspects": [],
+      "note": "",
+      "updatedAt": "2026-09-19T06:45:58.017Z"
+    },
+    "R02": {
+      "rating": "maybe",
+      "aspects": [],
+      "note": "The detail in the environment is excellent but I don't like the overall mood: too gloomy, too dark, and a little cartoony. I like a more realistic look. The characters are detailed. I do like the detail in the characters but they feel cartoony. ",
+      "updatedAt": "2026-09-19T22:24:11.815Z"
+    },
+    "R03": {
+      "rating": "maybe",
+      "aspects": [],
+      "note": "Nope on the characters too video gamey. They look like arcade sprites. The detail in the environment in the pixel art environment is good though. ",
+      "updatedAt": "2026-09-19T22:25:06.281Z"
+    },
+    "R04": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Characters are too arcade-like and cartoony. I don't like the arcade look. ",
+      "updatedAt": "2026-09-19T22:25:42.408Z"
+    },
+    "R05": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "Character pixel density and environment pixel density, I think, need to be higher this looks a little bit too 8-bit for me ",
+      "updatedAt": "2026-09-19T22:26:04.211Z"
+    },
+    "R06": {
+      "rating": "maybe",
+      "aspects": [],
+      "note": "Looks like too arcadey. I like the pixel density but the vibe I'm going for is a little bit more... I don't know. I do like the pixel density but it still feels cartoony. ",
+      "updatedAt": "2026-09-19T22:26:57.696Z"
+    },
+    "R07": {
+      "rating": "maybe",
+      "aspects": [
+        "Environment",
+        "Lighting"
+      ],
+      "note": "I like the vibe and the lighting but the pixel density should be higher. I think the characters don't have enough detail. His hand is just a square and his head is just all hair and a tiny little bit of tan. It's like 2 pixels of tan ",
+      "updatedAt": "2026-09-19T22:27:35.912Z"
+    },
+    "R08": {
+      "rating": "like",
+      "aspects": [
+        "Environment"
+      ],
+      "note": "I really like the quality of the environment, the nice sky colors, the realistic kind of nature feel, the vibe is a bit too gloomy for me. I like the animal. It's a nicely designed pixel animal ",
+      "updatedAt": "2026-09-19T22:28:14.026Z"
+    },
+    "R09": {
+      "rating": "maybe",
+      "aspects": [],
+      "note": "The character is too pixelated. The dragons are cool. They're a little bit too cartoony but I do like the detail ",
+      "updatedAt": "2026-09-19T22:28:32.714Z"
+    },
+    "R10": {
+      "rating": "maybe",
+      "aspects": [],
+      "note": "It's okay. The image is kind of blurry. It all looks kind of okay ",
+      "updatedAt": "2026-09-19T22:29:18.313Z"
+    },
+    "R11": {
+      "rating": "pass",
+      "aspects": [],
+      "note": "No it's too cartoony and arcade-like ",
+      "updatedAt": "2026-09-19T22:29:33.715Z"
+    },
+    "R12": {
+      "rating": "maybe",
+      "aspects": [
+        "Characters"
+      ],
+      "note": "Pixel art density is great and the character detail is great but it's still a little too cartoony. The overall style of this one is a little too cartoony. I like the pixel art nature but I don't like the art style here. Actually in the second image, I really like the guy sitting down on the couch: the level of detail in his overalls and his hair, and how he has a face. I do like the detail of the characters' faces because they're kind of more recognizable. I would like our characters to definitely have this level of detail in their faces. ",
+      "updatedAt": "2026-09-19T22:55:31.819Z"
+    },
+    "R13": {
+      "rating": "maybe",
+      "aspects": [],
+      "note": "Pixel density is not high enough ",
+      "updatedAt": "2026-09-19T22:55:49.406Z"
+    },
+    "R14": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Characters",
+        "Lighting",
+        "Palette",
+        "Mood"
+      ],
+      "note": "I like this a lot: the quality and design of the environment, the composition of colors, and the detailed clothing of the character. You can't see his face but that's specific to that character I think ",
+      "updatedAt": "2026-09-19T22:56:18.673Z"
+    },
+    "R15": {
+      "rating": "like",
+      "aspects": [
+        "Environment"
+      ],
+      "note": "Yeah I really like the environment in the Pixel Art environment. Look and feel here the character could use more detail. Actually now that I'm thinking about it, maybe this is a good level of detail for the avatar of the character. When they open up their character profile, that's when they can see more character detail on their face, their body, and so on. I think it could be more detailed than this one. I just want them to be able to see their clothing, gear, and stuff that they've done. ",
+      "updatedAt": "2026-09-19T22:57:45.836Z"
+    },
+    "R16": {
+      "rating": "maybe",
+      "aspects": [
+        "Characters"
+      ],
+      "note": "I like how detailed the characters are. The environment is kind of uncanny valley. It looks like 3D models but the detail of the character is nice ",
+      "updatedAt": "2026-09-19T22:58:54.887Z"
+    },
+    "R17": {
+      "rating": "like",
+      "aspects": [
+        "Environment"
+      ],
+      "note": "Very nice landscapes. I do love the environment, look, and feel here. Pixel density and detail could be higher. ",
+      "updatedAt": "2026-09-19T22:59:17.476Z"
+    },
+    "R18": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Characters",
+        "Lighting",
+        "Palette",
+        "Mood"
+      ],
+      "note": "As before, definitely my favorite one ",
+      "updatedAt": "2026-09-19T22:59:34.965Z"
+    },
+    "R19": {
+      "rating": "like",
+      "aspects": [
+        "Environment",
+        "Characters",
+        "Lighting",
+        "Palette",
+        "Mood"
+      ],
+      "note": "Also still really like this one. The water reflection, the lighting, the character detail, the environment, all very well done ",
+      "updatedAt": "2026-09-19T22:59:56.168Z"
+    },
+    "R20": {
+      "rating": "like",
+      "aspects": [],
+      "note": "Same as before, little cartoony, but I do like all of the detail and the vibe ",
+      "updatedAt": "2026-09-19T23:00:07.405Z"
+    }
+  }
+}

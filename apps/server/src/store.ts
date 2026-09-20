@@ -1,0 +1,333 @@
+import { DatabaseSync } from 'node:sqlite';
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { createHash } from 'node:crypto';
+import type { WorldState } from '@open-legend/domain';
+import type { AiReceipt } from '@open-legend/ai';
+import type { AiJobView, PlayerProfile, PlayerPreferencePatch } from '@open-legend/protocol';
+
+export interface SavedWorld {
+  world: WorldState;
+  speed: number;
+  manuallyPaused: boolean;
+  milestones?: Record<string, boolean>;
+}
+export interface JobRecord extends AiJobView {
+  playerSpeechEventId?: string;
+  fingerprint: string;
+  createdAt: number;
+  request: { text: string; npcId?: string };
+  result?: unknown;
+  startedAt?: number;
+  completedAt?: number;
+  queueLatencyMs?: number;
+  totalLatencyMs?: number;
+}
+
+const micro = (usd: number): number => Math.ceil(usd * 1_000_000);
+export const digest = (value: unknown): string =>
+  createHash('sha256').update(JSON.stringify(value)).digest('hex');
+
+/** Replaceable persistence boundary; SQLite is intentionally a single-process MVP adapter. */
+export interface WorldStore {
+  load(): { revision: number; state: SavedWorld } | null;
+  commit(expectedRevision: number, state: SavedWorld): number;
+  close(): void;
+}
+
+export interface GameRepository extends WorldStore {
+  getIntegration(key: string): unknown;
+  putIntegration(key: string, value: unknown): void;
+  getProfile(id: string): PlayerProfile;
+  setPreferences(id: string, preferences: PlayerPreferencePatch): PlayerProfile;
+  getJob(id: string): JobRecord | undefined;
+  getSpeechJob(eventId: string): JobRecord | undefined;
+  putJob(job: JobRecord): void;
+  recentJobs(limit?: number): JobRecord[];
+  reserve(
+    id: string,
+    provider: 'jev' | 'openai' | 'macrofold',
+    amountUsd: number,
+    ceilingUsd: number,
+  ): boolean;
+  settle(id: string, receipt: AiReceipt): void;
+  recoverInterruptedWork(): void;
+  usage(ceilingUsd: number): {
+    budget: { limitUsd: number; spentUsd: number; reservedUsd: number; estimated: boolean };
+    usage: {
+      jevCalls: number;
+      llmCalls: number;
+      inputTokens: number;
+      outputTokens: number;
+      lastLatencyMs: number;
+    };
+  };
+}
+
+/**
+ * World snapshots and command receipts commit together. Paid attempts live outside the
+ * simulated timeline, so reopening a save cannot repeat or erase provider usage.
+ */
+export class SqliteStore implements GameRepository {
+  private readonly db: DatabaseSync;
+
+  constructor(path: string) {
+    if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
+    this.db = new DatabaseSync(path);
+    this.db.exec(`
+      PRAGMA journal_mode = WAL;
+      PRAGMA busy_timeout = 3000;
+      PRAGMA foreign_keys = ON;
+      CREATE TABLE IF NOT EXISTS world (
+        id INTEGER PRIMARY KEY CHECK (id = 1), revision INTEGER NOT NULL, payload TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS jobs (
+        id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, created_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS attempts (
+        id TEXT PRIMARY KEY, provider TEXT NOT NULL, status TEXT NOT NULL,
+        reserved INTEGER NOT NULL CHECK (reserved >= 0), spent INTEGER NOT NULL DEFAULT 0 CHECK (spent >= 0),
+        receipt TEXT, created_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS player_profiles (
+        id TEXT PRIMARY KEY, revision INTEGER NOT NULL,
+        show_unavailable_actions INTEGER NOT NULL CHECK (show_unavailable_actions IN (0, 1)),
+        pause_when_hidden INTEGER NOT NULL DEFAULT 1 CHECK (pause_when_hidden IN (0, 1))
+      );
+    `);
+    const version = this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema');
+    if (version && version['value'] !== '1')
+      throw new Error('Unsupported save schema. Keep this save and use a compatible version.');
+    this.db.prepare('INSERT OR IGNORE INTO meta VALUES (?, ?)').run('schema', '1');
+    // Additive migration preserves old profiles and their unavailable-action choice.
+    if (
+      !this.db
+        .prepare('PRAGMA table_info(player_profiles)')
+        .all()
+        .some((column) => column['name'] === 'pause_when_hidden')
+    )
+      this.db.exec(
+        'ALTER TABLE player_profiles ADD COLUMN pause_when_hidden INTEGER NOT NULL DEFAULT 1 CHECK (pause_when_hidden IN (0, 1))',
+      );
+  }
+
+  load(): { revision: number; state: SavedWorld } | null {
+    const row = this.db.prepare('SELECT revision, payload FROM world WHERE id = 1').get();
+    if (!row) return null;
+    const state = JSON.parse(String(row['payload'])) as SavedWorld;
+    if (state.world?.schemaVersion !== 1)
+      throw new Error('Unsupported world schema; refusing to overwrite your save.');
+    return { revision: Number(row['revision']), state };
+  }
+
+  commit(expectedRevision: number, state: SavedWorld): number {
+    const payload = JSON.stringify(state);
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      const row = this.db.prepare('SELECT revision FROM world WHERE id = 1').get();
+      const current = row ? Number(row['revision']) : 0;
+      if (current !== expectedRevision)
+        throw new Error('Save conflict: another writer changed this world.');
+      const revision = current + 1;
+      this.db
+        .prepare(
+          'INSERT INTO world VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision, payload=excluded.payload',
+        )
+        .run(revision, payload);
+      this.db.exec('COMMIT');
+      return revision;
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
+    }
+  }
+
+  /** UI preferences live outside world snapshots, so restoring a world cannot rewind them. */
+  getProfile(id: string): PlayerProfile {
+    const row = this.db.prepare('SELECT * FROM player_profiles WHERE id = ?').get(id);
+    return {
+      id,
+      revision: row ? Number(row['revision']) : 0,
+      preferences: {
+        showUnavailableActions: row?.['show_unavailable_actions'] === 1,
+        pauseWhenHidden: row ? row['pause_when_hidden'] === 1 : true,
+      },
+    };
+  }
+
+  setPreferences(id: string, preferences: PlayerPreferencePatch): PlayerProfile {
+    const unavailable =
+      preferences.showUnavailableActions === undefined
+        ? null
+        : Number(preferences.showUnavailableActions);
+    const pause =
+      preferences.pauseWhenHidden === undefined ? null : Number(preferences.pauseWhenHidden);
+    this.db
+      .prepare(
+        `INSERT INTO player_profiles (id, revision, show_unavailable_actions, pause_when_hidden)
+      VALUES (?, 1, COALESCE(?, 0), COALESCE(?, 1))
+      ON CONFLICT(id) DO UPDATE SET revision=player_profiles.revision+1,
+      show_unavailable_actions=COALESCE(?, player_profiles.show_unavailable_actions),
+      pause_when_hidden=COALESCE(?, player_profiles.pause_when_hidden)`,
+      )
+      .run(id, unavailable, pause, unavailable, pause);
+    return this.getProfile(id);
+  }
+
+  getJob(id: string): JobRecord | undefined {
+    const row = this.db.prepare('SELECT payload FROM jobs WHERE id = ?').get(id);
+    return row ? (JSON.parse(String(row['payload'])) as JobRecord) : undefined;
+  }
+
+  getSpeechJob(eventId: string): JobRecord | undefined {
+    const row = this.db
+      .prepare(
+        "SELECT payload FROM jobs WHERE json_extract(payload, '$.playerSpeechEventId') = ? AND json_extract(payload, '$.kind') = 'chat' LIMIT 1",
+      )
+      .get(eventId);
+    return row ? (JSON.parse(String(row['payload'])) as JobRecord) : undefined;
+  }
+
+  putJob(job: JobRecord): void {
+    const previous = this.getJob(job.id);
+    if (previous && previous.fingerprint !== job.fingerprint)
+      throw new Error('A request ID cannot be reused with different input.');
+    this.db
+      .prepare(
+        'INSERT INTO jobs VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload',
+      )
+      .run(job.id, job.fingerprint, JSON.stringify(job), job.createdAt);
+  }
+
+  recentJobs(limit = 12): JobRecord[] {
+    return this.db
+      .prepare('SELECT payload FROM jobs ORDER BY created_at DESC, rowid DESC LIMIT ?')
+      .all(limit)
+      .map((row) => JSON.parse(String(row['payload'])) as JobRecord);
+  }
+
+  getIntegration(key: string): unknown {
+    const row = this.db.prepare('SELECT value FROM meta WHERE key = ?').get(`integration:${key}`);
+    return row ? JSON.parse(String(row['value'])) : undefined;
+  }
+  putIntegration(key: string, value: unknown): void {
+    this.db
+      .prepare(
+        'INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+      )
+      .run(`integration:${key}`, JSON.stringify(value));
+  }
+
+  reserve(
+    id: string,
+    provider: 'jev' | 'openai' | 'macrofold',
+    amountUsd: number,
+    ceilingUsd: number,
+  ): boolean {
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      if (this.db.prepare('SELECT id FROM attempts WHERE id = ?').get(id))
+        throw new Error('Attempt already admitted; do not dispatch it again.');
+      const row = this.db
+        .prepare(
+          "SELECT COALESCE(SUM(spent + CASE WHEN status = 'reserved' THEN reserved ELSE 0 END), 0) AS total FROM attempts",
+        )
+        .get();
+      const amount = micro(amountUsd);
+      if (Number(row?.['total'] ?? 0) + amount > micro(ceilingUsd)) {
+        this.db.exec('ROLLBACK');
+        return false;
+      }
+      this.db
+        .prepare(
+          "INSERT INTO attempts (id,provider,status,reserved,created_at) VALUES (?,?,'reserved',?,?)",
+        )
+        .run(id, provider, amount, Date.now());
+      this.db.exec('COMMIT');
+      return true;
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
+    }
+  }
+
+  settle(id: string, receipt: AiReceipt): void {
+    const row = this.db.prepare('SELECT status,reserved FROM attempts WHERE id = ?').get(id);
+    if (!row || row['status'] === 'settled') return; // Duplicate definitive callbacks do not spend twice.
+    if (row['status'] === 'uncertain' && receipt.completionUncertain) return;
+    const reserve = Number(row['reserved']);
+    const estimated = receipt.estimatedCostUsd;
+    // Missing/ambiguous provider evidence conservatively consumes the reservation.
+    const spent = !receipt.dispatched
+      ? 0
+      : receipt.completionUncertain || estimated === undefined
+        ? reserve
+        : micro(estimated);
+    this.db
+      .prepare(
+        "UPDATE attempts SET status=?,spent=?,receipt=? WHERE id=? AND status IN ('reserved','uncertain')",
+      )
+      .run(
+        receipt.completionUncertain ? 'uncertain' : 'settled',
+        spent,
+        JSON.stringify(receipt),
+        id,
+      );
+  }
+
+  /** A restart never resends an admitted call whose external outcome is unknown. */
+  recoverInterruptedWork(): void {
+    this.db.exec("UPDATE attempts SET status='uncertain', spent=reserved WHERE status='reserved'");
+    for (const row of this.db.prepare('SELECT payload FROM jobs').all()) {
+      const job = JSON.parse(String(row['payload'])) as JobRecord;
+      if (['queued', 'judging', 'generating'].includes(job.status)) {
+        this.putJob({
+          ...job,
+          status: 'stale',
+          message: 'Interrupted by restart; no paid request or world effect was repeated.',
+        });
+      }
+    }
+  }
+
+  usage(ceilingUsd: number) {
+    const rows = this.db
+      .prepare('SELECT provider,status,reserved,spent,receipt FROM attempts')
+      .all();
+    let spent = 0,
+      reserved = 0,
+      jevCalls = 0,
+      llmCalls = 0,
+      inputTokens = 0,
+      outputTokens = 0,
+      lastLatencyMs = 0;
+    for (const row of rows) {
+      spent += Number(row['spent']);
+      if (row['status'] === 'reserved') reserved += Number(row['reserved']);
+      if (row['receipt']) {
+        const receipt = JSON.parse(String(row['receipt'])) as AiReceipt;
+        if (receipt.dispatched) {
+          if (row['provider'] === 'jev') jevCalls++;
+          else if (row['provider'] === 'openai') llmCalls++;
+        }
+        inputTokens += receipt.usage?.inputTokens ?? 0;
+        outputTokens += receipt.usage?.outputTokens ?? 0;
+        lastLatencyMs = receipt.latencyMs;
+      }
+    }
+    return {
+      budget: {
+        limitUsd: ceilingUsd,
+        spentUsd: spent / 1e6,
+        reservedUsd: reserved / 1e6,
+        estimated: true,
+      },
+      usage: { jevCalls, llmCalls, inputTokens, outputTokens, lastLatencyMs },
+    };
+  }
+
+  close(): void {
+    this.db.close();
+  }
+}

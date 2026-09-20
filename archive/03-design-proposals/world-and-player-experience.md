@@ -23,7 +23,9 @@ The accepted presentation direction is beautiful grounded pixel art in a spatial
 
 ## Player controls
 
-Accepted first-version direction: complete mouse controls using click-to-move and contextual interaction. WASD/arrow-key movement and action shortcuts are planned additions. This is a documented design, not implemented functionality. [User approval](../00-source/design-followups.md#u08--player-controls)
+Accepted first-version direction: complete mouse controls using click-to-move and contextual interaction. The local prototype implements basic click-to-move, selection and right-click/Control-click action menus; the broader controls below remain design requirements and proposals. WASD/arrow-key movement is a planned addition. [User approval](../00-source/design-followups.md#u08--player-controls), [current implementation](../../docs/architecture.md)
+
+The later accepted [playability and controls direction](playability-and-controls.md) extends those menus into a complete searchable action catalogue with automatic categories, contextual availability, personal/world/global usage ordering, configurable action/category bindings and dynamic suggestions. Five configured slots plus three suggestions to their left are a tentative layout. Existing actions remain discoverable beyond recommendations; unavailable entries explain their prerequisites. An explicit AI sparkle starts permitted invention when the player invention lock is off, independently of the agent invention lock, with naming and workshop links. Exact geometry, ranking and staging remain proposals.
 
 | Input | Behavior |
 |---|---|
@@ -75,6 +77,8 @@ Player revival is an explicit game rule. A possible first version is a recovery 
 Every consequential event includes an internal causal record and a separate observer-facing explanation. A player who saw a burning tree can read that it lost integrity while burning. A player who did not see who ignited it should not receive the culprit's identity in the log.
 
 Use readable entries such as “The wet branches failed to catch” or “Your hand struck the helmet's hard shell,” with optional “what changed” details for one's own state. Distinguish an observed event from an NPC's interpretation. Filters, replayable recent context, and reportable event IDs help debug odd results without exposing model prompts.
+
+The accepted [log and inspection direction](playability-and-controls.md#world-history-god-history-and-invention-inspection) adds filterable player history and a separate authorized god log across the world. Invention entries link to full persisted technical definitions, effects, revisions and any supported script artifacts, beyond the recent feed. God inspection must expose the world records within that authority even when characters do not know them. [World agent and workshop](world-agent-and-workshop.md) covers comprehensive retrieval and conversational editing; [invention governance](invention-governance-and-ownership.md) covers world locks, creator attribution and cross-world reuse.
 
 ## Resources, crafting, and construction
 

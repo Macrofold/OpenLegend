@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Open Legend · The art we love</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #111815;
+        --panel: #18211e;
+        --ink: #eeeee2;
+        --muted: #b2beb3;
+        --line: #36443c;
+        --accent: #d9e6ad;
+        --gold: #ddb58a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          16px/1.65 system-ui,
+          sans-serif;
+      }
+      a {
+        color: var(--accent);
+        text-underline-offset: 4px;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 5px;
+      }
+      .shell {
+        width: min(1440px, 92vw);
+        margin: auto;
+      }
+      .mast {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 28px 0;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .hero {
+        padding: 38px 0 24px;
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 70px;
+        align-items: end;
+      }
+      .eyebrow {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--gold);
+        margin: 0 0 10px;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        line-height: 1.05;
+      }
+      h1 {
+        font-size: clamp(46px, 6vw, 88px);
+        letter-spacing: -0.045em;
+        margin: 0;
+      }
+      h1 em {
+        color: var(--accent);
+        font-weight: 400;
+      }
+      .lead {
+        font-size: 20px;
+        line-height: 1.6;
+        margin: 0 0 12px;
+      }
+      .muted,
+      .medium {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .hero-image {
+        margin: 30px 0 12px;
+      }
+      .hero-image img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+      }
+      .hero-image figcaption {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      .principles {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 28px;
+        margin: 48px 0;
+      }
+      .principles section {
+        border-top: 1px solid var(--line);
+        padding-top: 18px;
+      }
+      .principles h3 {
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
+      .principles p {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 16px 0;
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: #111815f5;
+        border-block: 1px solid var(--line);
+      }
+      .toolbar span {
+        font-size: 12px;
+        margin-right: auto;
+        color: var(--muted);
+      }
+      .toolbar button {
+        padding: 6px 13px;
+        border: 1px solid var(--line);
+        border-radius: 30px;
+        background: transparent;
+        color: var(--ink);
+        font-size: 12px;
+      }
+      .toolbar button[aria-pressed='true'] {
+        background: var(--accent);
+        color: var(--bg);
+        border-color: var(--accent);
+      }
+      .reference {
+        padding: 54px 0;
+        border-bottom: 1px solid var(--line);
+        scroll-margin-top: 90px;
+      }
+      .reference-title {
+        display: flex;
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 26px;
+      }
+      .number {
+        color: var(--gold);
+        font: 14px monospace;
+        padding-top: 3px;
+      }
+      h2 {
+        font-size: clamp(30px, 3vw, 46px);
+        margin: 0 0 8px;
+      }
+      .medium {
+        margin: 0;
+      }
+      .reference-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(270px, 1fr);
+        gap: 38px;
+        align-items: start;
+      }
+      .gallery {
+        display: grid;
+        gap: 22px;
+      }
+      figure {
+        margin: 0;
+      }
+      .image-button {
+        display: block;
+        position: relative;
+        background: #080d0b;
+        border: 1px solid var(--line);
+        padding: 0;
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        text-align: left;
+      }
+      .image-button img {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 640px;
+        object-fit: contain;
+      }
+      .enlarge {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        font-size: 11px;
+        color: white;
+        background: #111d;
+        padding: 4px 9px;
+        border-radius: 20px;
+      }
+      .gallery figcaption {
+        font-size: 12px;
+        color: var(--muted);
+        padding-top: 7px;
+      }
+      .notes {
+        position: sticky;
+        top: 90px;
+      }
+      .notes section {
+        margin-bottom: 24px;
+      }
+      .notes h3 {
+        font-size: 11px;
+        color: var(--gold);
+        text-transform: uppercase;
+        letter-spacing: 0.13em;
+        margin: 0 0 8px;
+      }
+      .notes p {
+        font-size: 15px;
+        margin: 0;
+      }
+      .preference {
+        padding: 20px;
+        background: var(--panel);
+        border-left: 2px solid var(--accent);
+      }
+      details {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 24px 0;
+      }
+      summary {
+        cursor: pointer;
+      }
+      details p {
+        padding-top: 12px;
+        font-size: 13px !important;
+      }
+      .source {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      footer {
+        padding: 45px 0 70px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      footer p {
+        max-width: 940px;
+      }
+      dialog {
+        width: min(1550px, 96vw);
+        max-height: 95vh;
+        padding: 18px;
+        background: #111815;
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      dialog::backdrop {
+        background: #000d;
+      }
+      .lightbox-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .lightbox-top strong {
+        flex: 1;
+      }
+      .lightbox-top button {
+        background: transparent;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: var(--ink);
+        padding: 5px 13px;
+      }
+      #large {
+        display: block;
+        max-width: 100%;
+        max-height: 74vh;
+        object-fit: contain;
+        margin: auto;
+      }
+      #caption {
+        margin: 12px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      #imageSource {
+        font-size: 12px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 850px) {
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+        .principles {
+          grid-template-columns: 1fr 1fr;
+        }
+        .reference-layout {
+          grid-template-columns: 1fr;
+        }
+        .notes {
+          position: static;
+        }
+        .toolbar {
+          position: static;
+        }
+        .mast {
+          font-size: 10px;
+        }
+        .reference {
+          padding-top: 35px;
+        }
+      }
+      @media print {
+        .toolbar,
+        .enlarge,
+        dialog {
+          display: none;
+        }
+        .notes {
+          position: static;
+        }
+        .reference {
+          break-inside: avoid;
+        }
+        .shell {
+          width: 100%;
+        }
+        body {
+          font-size: 12px;
+        }
+        .reference-layout {
+          gap: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="mast">
+        <span>Open Legend / Art direction</span><span>Final creative inspiration board</span>
+      </div>
+      <header class="hero">
+        <div>
+          <p class="eyebrow">The references we’re keeping</p>
+          <h1>A world with detail.<br /><em>People with life.</em></h1>
+        </div>
+        <div>
+          <p class="lead">
+            Rich environments, expressive characters and light that gives everything a place.
+          </p>
+          <p class="muted">
+            Eleven confirmed favorites. Pixels and painted forms share the same ambition: a
+            beautiful, dimensional world that rewards looking closer. This board consolidates your
+            preferences; it does not lock a production technique.
+          </p>
+        </div>
+      </header>
+      <figure class="hero-image">
+        <a href="#steam"
+          ><img
+            src="images/steam-autumn-sale.png"
+            alt="Steam Autumn Sale pixel illustration with detailed people, illuminated shop and twisting foreground trees"
+        /></a>
+        <figcaption>
+          Your Steam Autumn Sale reference · exceptional detail as the visual ambition · promotional
+          illustration, not a game
+        </figcaption>
+      </figure>
+      <div class="principles">
+        <section>
+          <h3>Detail that describes</h3>
+          <p>
+            Clothing, equipment, bark and small possessions should tell us what something is. More
+            detail should reveal more life.
+          </p>
+        </section>
+        <section>
+          <h3>People at two scales</h3>
+          <p>
+            Recognizable bodies and outfits in the world; richer faces, gestures and materials in
+            profiles and close views.
+          </p>
+        </section>
+        <section>
+          <h3>Light with purpose</h3>
+          <p>
+            Warm fire against cool shade. Reflections, directional shadows and atmosphere that
+            connect people to their surroundings.
+          </p>
+        </section>
+        <section>
+          <h3>Richness with clarity</h3>
+          <p>
+            Layered nature and lived-in spaces, balanced by clean silhouettes, quiet areas and
+            deliberate focal points.
+          </p>
+        </section>
+      </div>
+      <nav class="toolbar" aria-label="Filter inspiration">
+        <span id="count">11 favorites · click any image to enlarge</span
+        ><button data-filter="All" aria-pressed="true">All</button
+        ><button data-filter="People" aria-pressed="false">People</button
+        ><button data-filter="Lighting" aria-pressed="false">Lighting</button
+        ><button data-filter="Detail" aria-pressed="false">Detail</button
+        ><button data-filter="Worlds" aria-pressed="false">Worlds</button
+        ><button data-filter="Composition" aria-pressed="false">Composition</button>
+      </nav>
+      <main><!--CARDS--></main>
+      <footer>
+        <p>
+          <a href="creative-brief.md">Read the complete creative brief</a> ·
+          <a href="../round-03/index.html">Round three</a> ·
+          <a href="../round-02/index.html">Round two</a> ·
+          <a href="../index.html">Original exploration</a>
+        </p>
+        <p>
+          “What you like” records your stated preferences. “What makes it work” and “Bring into Open
+          Legend” are creative analysis and proposed application. Your latest favorites broaden the
+          direction: stylized forms and hybrid rendering can work beautifully. Earlier reservations
+          about tiny generic people and permanent gloom still help us evaluate individual
+          components.
+        </p>
+        <p>
+          Six supplied screenshots are preserved locally, unchanged. Other references load from
+          their credited hosts and require internet access. Artwork remains the property of its
+          respective owners; these are inspiration references, not licensed game assets. The Steam
+          illustration’s artist and original publication are unverified. No earlier board or
+          feedback file is replaced.
+        </p>
+      </footer>
+    </div>
+    <dialog id="viewer" aria-label="Enlarged art reference">
+      <div class="lightbox-top">
+        <strong id="viewerTitle"></strong
+        ><button id="previous" aria-label="Previous image">←</button
+        ><button id="next" aria-label="Next image">→</button
+        ><button id="close" aria-label="Close enlarged image">Close ×</button>
+      </div>
+      <img id="large" alt="" />
+      <p id="caption"></p>
+      <a id="imageSource" target="_blank" rel="noopener noreferrer">Original image source ↗</a>
+    </dialog>
+    <script>
+      const entries = /*DATA*/ [];
+      const viewer = document.getElementById('viewer');
+      let selected = null,
+        index = 0;
+      function show() {
+        const img = selected.images[index];
+        document.getElementById('large').src = img.url;
+        document.getElementById('large').alt = img.label;
+        document.getElementById('viewerTitle').textContent = selected.title;
+        document.getElementById('caption').textContent =
+          img.label + ' · ' + (index + 1) + ' / ' + selected.images.length;
+        const source = document.getElementById('imageSource');
+        source.hidden = !img.source.startsWith('https://');
+        if (!source.hidden) source.href = img.source;
+        document.getElementById('previous').hidden = document.getElementById('next').hidden =
+          selected.images.length < 2;
+      }
+      document.querySelectorAll('[data-entry]').forEach((button) =>
+        button.addEventListener('click', () => {
+          selected = entries.find((e) => e.id === button.dataset.entry);
+          index = Number(button.dataset.image);
+          show();
+          viewer.showModal();
+        }),
+      );
+      function advance(delta) {
+        index = (index + delta + selected.images.length) % selected.images.length;
+        show();
+      }
+      document.getElementById('previous').onclick = () => advance(-1);
+      document.getElementById('next').onclick = () => advance(1);
+      document.getElementById('close').onclick = () => viewer.close();
+      viewer.addEventListener('click', (event) => {
+        if (event.target === viewer) {
+          const r = viewer.getBoundingClientRect();
+          if (
+            event.clientX < r.left ||
+            event.clientX > r.right ||
+            event.clientY < r.top ||
+            event.clientY > r.bottom
+          )
+            viewer.close();
+        }
+      });
+      viewer.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          advance(-1);
+        }
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          advance(1);
+        }
+      });
+      document.querySelectorAll('[data-filter]').forEach((button) =>
+        button.addEventListener('click', () => {
+          let count = 0;
+          document.querySelectorAll('.reference').forEach((card) => {
+            card.hidden =
+              button.dataset.filter !== 'All' && card.dataset.category !== button.dataset.filter;
+            if (!card.hidden) count++;
+          });
+          document
+            .querySelectorAll('[data-filter]')
+            .forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+          document.getElementById('count').textContent =
+            count + ' favorites · click any image to enlarge';
+        }),
+      );
+      document.querySelectorAll('.image-button img').forEach((img) =>
+        img.addEventListener('error', () => {
+          const caption = img.closest('figure').querySelector('figcaption');
+          caption.textContent += ' · Preview unavailable; use the source link.';
+        }),
+      );
+    </script>
+  </body>
+</html>

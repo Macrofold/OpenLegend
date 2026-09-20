@@ -1,5 +1,7 @@
 # Persistent minds: storage, retrieval and optional workspaces
 
+> **Superseded design owner:** [Memory architecture](../../docs/memory-architecture.md) is the canonical source for current memory, attention, cognition tiers, dreams, thought visibility and the sequenced implementation checklist. The discussion below is retained as historical rationale; its smaller starting limits and generic LLM mind-write guidance do not override the new 300-entry target or full-deliberation policy.
+
 Status: **technical proposal, unimplemented**. Extends the existing [agent design](agents-and-social-simulation.md) in response to [U03](../00-source/design-followups.md#u03--macrofold-and-richer-agent-memory). The user wants complex durable memory and an inner life; Macrofold adoption and the schema below remain open. [Repository comparison and cost analysis](../02-research/macrofold-workspaces.md).
 
 ## A mind has records, relationships and prose
@@ -9,6 +11,8 @@ Each NPC has its own logical collection of memories, beliefs, goals, commitments
 Use relational fields for identity, time, participants, status and evidence; prose for what an experience meant to the character. A compact profile is an entry point, not the entire mind. Records form a small evidence graph through ordinary reference tables; a separate graph database is not initially necessary.
 
 The prior proposal already specified memory categories, bounded retention, selective retrieval and consolidation. This document makes their persistence and update boundaries concrete. It is not a migration, measured capacity claim or completed implementation.
+
+The later [production data model](../07-technical-architecture/production-data-model.md#8-minds-evidence-knowledge-and-conversation) owns concrete canonical records and transaction boundaries; [data queries and MCP](../07-technical-architecture/data-queries-and-mcp.md) owns the stable consumer interface. This document retains the memory behavior and retrieval rationale.
 
 ## Proposed storage model
 

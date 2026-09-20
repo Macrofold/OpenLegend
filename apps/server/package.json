@@ -1,0 +1,13 @@
+{
+  "name": "@open-legend/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "dependencies": {
+    "@open-legend/domain": "workspace:*",
+    "@open-legend/ai": "workspace:*",
+    "@open-legend/protocol": "workspace:*",
+    "zod": "4.6.5"
+  }
+}

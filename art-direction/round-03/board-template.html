@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Open Legend · Art Direction Round 03</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101613;
+        --panel: #19221d;
+        --line: #344038;
+        --muted: #a5b4a9;
+        --text: #f0f0e6;
+        --accent: #d9eb99;
+        --gold: #e4b77f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.5 system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      button,
+      a,
+      input,
+      select,
+      textarea {
+        outline-offset: 4px;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      button {
+        cursor: pointer;
+        color: inherit;
+        background: transparent;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 8px 12px;
+      }
+      button:hover {
+        border-color: var(--accent);
+        background: #26332a;
+      }
+      button.active,
+      button[aria-pressed='true'] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #182119;
+      }
+      button.pass[aria-pressed='true'] {
+        background: #dfb6aa;
+        border-color: #dfb6aa;
+      }
+      button.maybe[aria-pressed='true'] {
+        background: var(--gold);
+        border-color: var(--gold);
+      }
+      input,
+      select,
+      textarea {
+        background: #111a15;
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 9px;
+      }
+      textarea {
+        width: 100%;
+        resize: vertical;
+        min-height: 75px;
+      }
+      input {
+        min-width: 180px;
+      }
+      header,
+      main,
+      footer {
+        max-width: 1536px;
+        margin: auto;
+        padding: 0 38px;
+      }
+      .masthead {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 24px;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .masthead strong {
+        color: var(--accent);
+      }
+      .hero {
+        padding: 36px 0 24px;
+        display: grid;
+        grid-template-columns: 1.3fr 1fr;
+        gap: 55px;
+        align-items: end;
+      }
+      h1 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        font-size: clamp(38px, 4.3vw, 66px);
+        letter-spacing: -0.04em;
+        line-height: 1.05;
+        margin: 0 0 18px;
+      }
+      h1 em {
+        color: var(--accent);
+        font-weight: 400;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      .lede {
+        font-size: 17px;
+        color: #c4cec5;
+        max-width: 660px;
+      }
+      .intro {
+        border-left: 1px solid var(--line);
+        padding-left: 28px;
+        color: var(--muted);
+      }
+      .intro b {
+        color: var(--text);
+      }
+      .kicker {
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 11px;
+        color: var(--gold);
+        margin-bottom: 10px;
+      }
+      .toolbar {
+        position: sticky;
+        top: 0;
+        background: #101613f5;
+        backdrop-filter: blur(16px);
+        z-index: 5;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        padding: 16px 0;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .tabs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .filters {
+        display: flex;
+        gap: 8px;
+        margin-left: auto;
+        flex-wrap: wrap;
+      }
+      .filters input {
+        width: 180px;
+      }
+      .filters select {
+        max-width: 210px;
+      }
+      .status {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 22px 0 16px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        scroll-margin-top: 150px;
+      }
+      .picture {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        width: 100%;
+        aspect-ratio: 16/10;
+        background: #090e0b;
+        display: block;
+        position: relative;
+        overflow: hidden;
+      }
+      .picture img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        transition: transform 0.25s;
+      }
+      .picture:hover img {
+        transform: scale(1.025);
+      }
+      .picture .zoom {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        padding: 2px 7px;
+        background: #0c130ee0;
+        border-radius: 4px;
+        font-size: 11px;
+      }
+      .badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: #101613e6;
+        border: 1px solid #aebbb755;
+        color: var(--accent);
+        font:
+          600 12px/1.3 ui-monospace,
+          monospace;
+        padding: 5px 8px;
+        border-radius: 4px;
+      }
+      .broken {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        padding: 20px;
+        color: var(--muted);
+        font-size: 13px;
+        text-align: center;
+      }
+      .card-body {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+      }
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 7px;
+      }
+      h2 {
+        font:
+          500 23px/1.2 Georgia,
+          serif;
+        margin: 0 0 10px;
+      }
+      .focus {
+        font-weight: 550;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+      .description {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 15px;
+      }
+      .card-foot {
+        margin-top: auto;
+      }
+      .links {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        margin: 10px 0 14px;
+      }
+      .rating {
+        display: flex;
+        gap: 6px;
+      }
+      .rating button {
+        font-size: 12px;
+        flex: 1;
+        padding: 7px;
+      }
+      .small {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .saved-note {
+        padding-top: 8px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        color: var(--gold);
+        font-size: 12px;
+      }
+      .empty {
+        padding: 80px 10px;
+        text-align: center;
+        color: var(--muted);
+        grid-column: 1/-1;
+      }
+      footer {
+        padding-top: 36px;
+        padding-bottom: 40px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      footer p {
+        max-width: 1000px;
+      }
+      dialog {
+        background: #131b16;
+        color: var(--text);
+        border: 1px solid #5b695e;
+        border-radius: 12px;
+        padding: 0;
+        width: min(1300px, 95vw);
+        max-height: 94vh;
+        overflow: auto;
+      }
+      dialog::backdrop {
+        background: #020704dd;
+        backdrop-filter: blur(4px);
+      }
+      .dialog-top {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #131b16;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+      .dialog-top b {
+        font-size: 13px;
+      }
+      .dialog-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+      }
+      .large-image {
+        background: #090e0b;
+        min-height: 320px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .large-image img {
+        max-width: 100%;
+        max-height: 75vh;
+        object-fit: contain;
+      }
+      .detail {
+        padding: 25px;
+      }
+      .detail h2 {
+        font-size: 30px;
+      }
+      .detail .question {
+        border-left: 2px solid var(--accent);
+        padding-left: 12px;
+        margin: 20px 0;
+        color: #dce3d9;
+      }
+      .detail .rating {
+        margin: 20px 0;
+      }
+      .aspect-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .aspects {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 18px;
+      }
+      .aspects button {
+        font-size: 12px;
+      }
+      .detail label {
+        display: block;
+        margin: 18px 0 7px;
+        font-size: 12px;
+      }
+      .detail .meta {
+        border-top: 1px solid var(--line);
+        padding-top: 15px;
+        margin-top: 15px;
+      }
+      .export-content {
+        padding: 25px;
+      }
+      .export-content textarea {
+        min-height: 340px;
+        font:
+          13px/1.6 ui-monospace,
+          monospace;
+        margin: 10px 0 18px;
+      }
+      .notice {
+        color: var(--gold);
+      }
+      .count {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-left: 4px;
+      }
+      .off {
+        display: none !important;
+      }
+      @media (min-width: 1700px) {
+        .grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 1050px) {
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .hero {
+          gap: 25px;
+        }
+        .filters {
+          margin-left: 0;
+        }
+        .dialog-layout {
+          grid-template-columns: 1fr;
+        }
+        .large-image img {
+          max-height: 55vh;
+        }
+      }
+      @media (max-width: 640px) {
+        header,
+        main,
+        footer {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 16px;
+          padding-top: 25px;
+        }
+        .intro {
+          padding-left: 16px;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .toolbar {
+          position: static;
+        }
+        .status {
+          display: block;
+        }
+        .filters input {
+          width: 100%;
+        }
+        .filters {
+          width: 100%;
+        }
+        .masthead {
+          letter-spacing: 0.04em;
+          font-size: 10px;
+        }
+        .dialog-top {
+          padding: 10px;
+        }
+        .detail {
+          padding: 18px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          scroll-behavior: auto !important;
+        }
+      }
+      .file-save {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin: 18px 0 0;
+        padding: 12px 15px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+      .file-save #save-file {
+        background: var(--accent);
+        color: #182119;
+        font-weight: 600;
+      }
+      .file-save [data-kind='saved'] {
+        color: var(--accent);
+      }
+      .file-save [data-kind='error'] {
+        color: #edb2a2;
+      }
+      .file-save-status {
+        flex: 1;
+        min-width: 220px;
+      }
+      .file-save button:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+
+      .round-links {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        font-size: 13px;
+        margin: 0 0 24px;
+      }
+      .image-column {
+        background: #090e0b;
+      }
+      .image-options {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 16px 20px 8px;
+      }
+      .image-options button {
+        font-size: 12px;
+        text-align: left;
+      }
+      .image-caption,
+      .image-help {
+        padding: 0 20px 12px;
+      }
+      .image-caption {
+        padding-top: 12px;
+      }
+      .caution {
+        font-size: 13px;
+        color: var(--gold);
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+      .large-image img {
+        display: block;
+      }
+      .large-image a {
+        display: block;
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="masthead">
+        <strong>Open Legend / Visual research</strong><span>Round 03 · September 2026</span>
+      </div>
+      <div class="hero">
+        <div>
+          <div class="kicker">Hades first · Pixels and painted worlds</div>
+          <h1>Pixels or paint?<br /><em>Keep the beauty.</em></h1>
+          <p class="lede">
+            Hades and Hades II lead this round. Compare their illustrated finish with the dense
+            pixel art you already love.
+          </p>
+        </div>
+        <div class="intro">
+          <p>
+            <b>Rate the finish, not just the technique.</b> You want believable detail, readable
+            clothing and rich environments. Hades is stylized too: this round asks which kinds of
+            stylization appeal.
+          </p>
+          <p>
+            Seven opening comparisons; twelve total. Five references are new, five revisit popular
+            pixel-art games with your earlier notes, and two retain your strongest benchmarks.
+          </p>
+          <p class="small">
+            Save to feedback-round-03.json inside round-03. Earlier rounds and their feedback remain
+            separate.
+          </p>
+        </div>
+      </div>
+      <nav class="round-links" aria-label="Research rounds">
+        <a href="../round-02/index.html">← Round two</a
+        ><a href="../round-02-analysis.md">Your latest feedback, summarized</a
+        ><a href="../index.html">Original board</a>
+      </nav>
+    </header>
+    <main>
+      <div class="toolbar">
+        <div class="tabs" role="group" aria-label="Reference collections">
+          <button data-tab="start" class="active">Start here <span class="count">7</span></button
+          ><button data-tab="all">All <span class="count">12</span></button
+          ><button data-tab="saved">Rated</button>
+        </div>
+        <div class="filters">
+          <input
+            id="search"
+            type="search"
+            aria-label="Search references"
+            placeholder="Search name, mood, ID…"
+          /><select id="group" aria-label="Filter visual direction">
+            <option value="">Every direction</option></select
+          ><button id="share">Share preferences</button>
+        </div>
+      </div>
+      <div class="file-save">
+        <button id="save-file" disabled>Save</button
+        ><button id="choose-file" disabled>Choose file…</button>
+        <div class="file-save-status">
+          <span id="file-status" class="small" role="status" aria-live="polite"
+            >Checking saved file connection…</span
+          >
+        </div>
+      </div>
+      <div class="status">
+        <span id="count" aria-live="polite"></span
+        ><span>Click image to enlarge · ♥ Like · ? Maybe · × Pass</span>
+      </div>
+      <div class="grid" id="grid"></div>
+    </main>
+    <footer>
+      <p>
+        Research collected September 19, 2026. Images load from credited external hosts and need an
+        internet connection. Each reference links to its image source and, where available, an
+        artist or Steam page. Historical promotional imagery and non-pixel paintings are labeled.
+        Visual observations are exploratory judgments.
+      </p>
+      <p>
+        This round has 16 new games, one artist study, and three familiar benchmarks. Judge world
+        sprites separately from large dialogue portraits. Still images do not establish animation
+        quality; follow the Steam or source links for motion. No assets have been purchased or
+        adopted. <a href="references.md">Text catalog</a> ·
+        <a href="../decisions.md">Decision log</a> · <a href="README.md">Folder guide</a>
+      </p>
+      <p id="storageNotice" class="notice off">
+        Browser backup is unavailable. Keep this page open until the file status says Saved, or use
+        Share preferences to copy your notes.
+      </p>
+    </footer>
+    <dialog id="viewer" aria-label="Reference details">
+      <div class="dialog-top">
+        <b id="viewer-label"></b>
+        <div>
+          <button id="prev" aria-label="Previous reference">←</button>
+          <button id="next" aria-label="Next reference">→</button>
+          <button id="close">Close ✕</button>
+        </div>
+      </div>
+      <div id="viewer-body"></div>
+    </dialog>
+    <dialog id="exporter" aria-label="Share preferences">
+      <div class="dialog-top">
+        <b>Your art-direction preferences</b><button id="close-export">Close ✕</button>
+      </div>
+      <div class="export-content">
+        <p>
+          Copy this into our conversation so we can record the patterns and decisions. Your ratings
+          are feedback, not automatic design commitments.
+        </p>
+        <textarea id="export-text" aria-label="Preference summary" readonly></textarea
+        ><button id="copy">Copy summary</button>
+        <button id="save-file-export" disabled>Save to linked file</button>
+        <button id="download">Download copy</button>
+        <p id="export-file-status" class="small" role="status" aria-live="polite"></p>
+        <p id="copy-status" class="small" aria-live="polite" style="margin-top: 10px"></p>
+      </div>
+    </dialog>
+    <script>
+      /*FEEDBACK_STORAGE*/
+    </script>
+    <script>
+      const DATA = /*REFERENCE_DATA*/ null;
+      const KEY = 'open-legend-art-atlas-round-03';
+      let preferences = {};
+      try {
+        preferences = JSON.parse(localStorage.getItem(KEY) || '{}');
+        if (!preferences || Array.isArray(preferences) || typeof preferences !== 'object')
+          preferences = {};
+      } catch (e) {}
+      const $ = (s) => document.querySelector(s),
+        esc = (s) =>
+          String(s ?? '').replace(
+            /[&<>"']/g,
+            (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+          );
+      let tab = 'start',
+        visible = [],
+        current = null;
+      const frames = {};
+      function pref(id) {
+        return preferences[id] || { rating: '', aspects: [], note: '' };
+      }
+      function cachePreferences(value) {
+        try {
+          localStorage.setItem(KEY, JSON.stringify(value));
+        } catch (e) {
+          $('#storageNotice').classList.remove('off');
+        }
+      }
+      let latestFileStatus = { message: 'Checking saved file connection…', busy: true };
+      let fileHandles;
+      try {
+        fileHandles = ArtFeedbackStorage.createHandleStorage(window.indexedDB, location.pathname);
+      } catch (e) {
+        fileHandles = {
+          load: async () => null,
+          save: async () => {
+            throw e;
+          },
+        };
+      }
+      const feedbackStore = new ArtFeedbackStorage.FeedbackStore({
+        preferences,
+        pickFile:
+          typeof window.showSaveFilePicker === 'function'
+            ? (options) => window.showSaveFilePicker(options)
+            : null,
+        handles: fileHandles,
+        persist: cachePreferences,
+        onPreferences: (value) => {
+          preferences = value;
+          render();
+          syncFeedbackControls();
+        },
+        onStatus: (state) => {
+          latestFileStatus = state;
+          document
+            .querySelectorAll('.file-status-inline')
+            .forEach((el) => (el.textContent = state.message));
+          if ($('#save-detail')) $('#save-detail').disabled = state.busy;
+          $('#file-status').textContent = state.message;
+          $('#file-status').dataset.kind = state.kind;
+          $('#export-file-status').textContent = state.message;
+          for (const id of ['save-file', 'save-file-export', 'choose-file'])
+            $('#' + id).disabled = state.busy;
+          $('#save-file').textContent = state.busy ? 'Please wait…' : 'Save';
+        },
+      });
+      function syncFeedbackControls() {
+        document.querySelectorAll('[data-rate]').forEach((button) => {
+          const id = button.closest('[data-id]').dataset.id;
+          button.setAttribute('aria-pressed', String(pref(id).rating === button.dataset.rate));
+        });
+        if (current)
+          document
+            .querySelectorAll('#viewer [data-aspect]')
+            .forEach((button) =>
+              button.setAttribute(
+                'aria-pressed',
+                String((pref(current).aspects || []).includes(button.dataset.aspect)),
+              ),
+            );
+      }
+      function commitFeedback(id, entry) {
+        preferences[id] = entry;
+        // Update selection before persistence and keep the dialog controls/focus intact.
+        syncFeedbackControls();
+        feedbackStore.changed(id, entry);
+      }
+      $('#save-file').onclick = () => feedbackStore.saveNow();
+      $('#save-file-export').onclick = () => feedbackStore.saveNow();
+      $('#choose-file').onclick = () => feedbackStore.saveNow(true);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') void feedbackStore.flush();
+      });
+      window.addEventListener('beforeunload', (event) => {
+        if (feedbackStore.handle && (feedbackStore.dirty || feedbackStore.writing)) {
+          event.preventDefault();
+          event.returnValue = '';
+        }
+      });
+      function link(url, label) {
+        return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a>`;
+      }
+      function links(e) {
+        let l = [link(e.source, 'Image source')];
+        if (e.steam) l.push(link(e.steam, 'Steam'));
+        if (e.steamSearch) l.push(link(e.steamSearch, 'Search Steam'));
+        if (e.creatorUrl && e.creatorUrl !== e.source) l.push(link(e.creatorUrl, 'Artist'));
+        if (e.extraLink) l.push(link(e.extraLink.url, e.extraLink.label));
+        return l.join('');
+      }
+      function rating(e) {
+        return `<div class="rating" data-id="${e.id}">${[
+          ['like', '♥ Like'],
+          ['maybe', '? Maybe'],
+          ['pass', '× Pass'],
+        ]
+          .map(
+            ([r, l]) =>
+              `<button class="${r}" data-rate="${r}" aria-pressed="${pref(e.id).rating === r}" aria-label="${l} ${esc(e.title)}">${l}</button>`,
+          )
+          .join('')}</div>`;
+      }
+      function render() {
+        const q = $('#search').value.toLowerCase(),
+          g = $('#group').value;
+        visible = DATA.entries.filter(
+          (e) =>
+            (tab === 'all' ||
+              (tab === 'start' && e.start) ||
+              (tab === 'saved' &&
+                (pref(e.id).rating || pref(e.id).note || (pref(e.id).aspects || []).length)) ||
+              tab === e.type) &&
+            (!g || e.group === g) &&
+            (!q ||
+              [e.id, e.title, e.creator, e.group, e.focus, e.borrow]
+                .join(' ')
+                .toLowerCase()
+                .includes(q)),
+        );
+        $('#count').textContent =
+          `${visible.length} references · ${tab === 'start' ? 'Seven comparisons: Hades and your strongest references' : tab === 'saved' ? 'Your ratings and notes' : g || 'Explore freely'}`;
+        $('#grid').innerHTML = visible.length
+          ? visible
+              .map(
+                (e) =>
+                  `<article class="card" id="${e.id}"><button class="picture" data-open="${e.id}" aria-label="Enlarge ${esc(e.title)}"><img src="${esc(e.image)}" alt="${esc(e.title)} — ${esc(e.focus)}" loading="lazy" referrerpolicy="no-referrer"><span class="badge">${e.id}</span><span class="zoom">${e.images.length > 1 ? e.images.length + ' views · ' : ''}Explore ↗</span></button><div class="card-body"><div class="eyebrow">${esc(e.type)} · ${esc(e.group)}</div><h2>${esc(e.title)}</h2><p class="focus">${esc(e.focus)}</p><p class="description">${esc(e.borrow)}</p><div class="card-foot"><div class="links">${links(e)}</div>${rating(e)}<div class="saved-note">${esc((pref(e.id).aspects || []).join(' · '))}${pref(e.id).note ? '<br>' + esc(pref(e.id).note) : ''}</div></div></div></article>`,
+              )
+              .join('')
+          : '<div class="empty">No references in this view. Try another filter or mark a few favorites.</div>';
+        document.querySelectorAll('.picture img').forEach(
+          (img) =>
+            (img.onerror = () => {
+              img.style.visibility = 'hidden';
+              const el = document.createElement('span');
+              el.className = 'broken';
+              el.textContent =
+                'The image host did not respond. Open “Image source” to view the original.';
+              img.parentElement.append(el);
+            }),
+        );
+        document.querySelectorAll('[data-tab]').forEach((b) => {
+          b.classList.toggle('active', b.dataset.tab === tab);
+          b.setAttribute('aria-pressed', b.dataset.tab === tab);
+        });
+      }
+      function detail(id) {
+        current = id;
+        const e = DATA.entries.find((e) => e.id === id),
+          p = pref(id);
+        $('#viewer-label').textContent = `${e.id} / ${e.group}`;
+        $('#viewer-body').innerHTML =
+          `<div class="dialog-layout"><div class="image-column"><div id="image-stage"></div><div class="image-options">${e.images.map((frame, i) => `<button data-frame="${i}" aria-pressed="${(frames[id] || 0) === i}">${i + 1}. ${esc(frame.label)}</button>`).join('')}</div><p class="small image-help">Click the picture to open its full size. A large exported image can still contain coarse source pixels.</p></div><div class="detail"><div class="eyebrow">${esc(e.medium || e.type)}</div><h2>${esc(e.title)}</h2>${e.creator ? `<p class="small">${esc(e.creator)}</p>` : ''}<p class="focus">${esc(e.focus)}</p><p class="description">${esc(e.borrow)}</p><p class="caution"><b>Watch for:</b> ${esc(e.caution)}</p>${e.originalId ? `<p class="small">Previous reference: <a href="../index.html#${esc(e.originalId)}">${esc(e.originalId)}</a>. Round-one feedback is preserved.</p>` : ''}<p class="question">${esc(e.question)}</p>${rating(e)}<div class="aspect-label">What appeals? Select any.</div><div class="aspects">${['Environment', 'Characters', 'Clothing', 'Faces', 'Lighting', 'Palette', 'Mood', 'Camera'].map((s) => `<button data-aspect="${s}" aria-pressed="${(p.aspects || []).includes(s)}">${s}</button>`).join('')}</div><label for="note">What would you borrow or change?</label><textarea id="note" placeholder="Love the trees; prefer taller people…">${esc(p.note)}</textarea><p class="small">Link a file with Save once to enable autosaving. Your browser copy remains available as a backup.</p><button id="save-detail" ${latestFileStatus.busy ? 'disabled' : ''}>Save</button><p class="small file-status-inline" role="status" aria-live="polite">${esc(latestFileStatus.message)}</p><div class="links">${links(e)}</div><div class="meta small">${e.note ? `<p>${esc(e.note)}</p>` : ''}${e.availability ? `<p><b>${esc(e.availability)}</b></p>` : ''}${e.license ? `<p>${esc(e.license)}</p>` : ''}<p>${esc(e.reuse)}</p></div></div></div>`;
+        showFrame(e);
+        $('#save-detail').onclick = () => feedbackStore.saveNow();
+        $('#note').addEventListener('input', (ev) => {
+          commitFeedback(id, { ...pref(id), note: ev.target.value });
+        });
+        if (!$('#viewer').open) $('#viewer').showModal();
+      }
+      function showFrame(e) {
+        const n = frames[e.id] || 0,
+          frame = e.images[n];
+        $('#image-stage').innerHTML =
+          `<div class="large-image"><a href="${esc(frame.url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(frame.url)}" alt="${esc(e.title + ' — ' + frame.label)}" referrerpolicy="no-referrer"></a></div><p class="image-caption small">${esc(frame.label)} · ${link(frame.source, 'Image source')}</p>`;
+        const pic = $('#image-stage img');
+        pic.onerror = () => {
+          const p = document.createElement('p');
+          p.className = 'image-help notice';
+          p.textContent =
+            'This image host did not respond. Use the Image source link or try another view.';
+          pic.replaceWith(p);
+        };
+        document
+          .querySelectorAll('[data-frame]')
+          .forEach((b) => b.setAttribute('aria-pressed', Number(b.dataset.frame) === n));
+      }
+      function handleBoardClick(ev) {
+        const target = ev.target instanceof Element ? ev.target : ev.target.parentElement;
+        if (!target) return;
+        const frame = target.closest('[data-frame]');
+        if (frame && current) {
+          frames[current] = Number(frame.dataset.frame);
+          showFrame(DATA.entries.find((e) => e.id === current));
+          return;
+        }
+        const open = target.closest('[data-open]');
+        if (open) {
+          detail(open.dataset.open);
+          return;
+        }
+        const ratingButton = target.closest('[data-rate]');
+        if (ratingButton) {
+          const id = ratingButton.closest('[data-id]').dataset.id;
+          commitFeedback(id, {
+            ...pref(id),
+            rating: pref(id).rating === ratingButton.dataset.rate ? '' : ratingButton.dataset.rate,
+          });
+          return;
+        }
+        const aspect = target.closest('[data-aspect]');
+        if (aspect && current) {
+          const p = pref(current),
+            value = aspect.dataset.aspect,
+            selected = p.aspects || [];
+          commitFeedback(current, {
+            ...p,
+            aspects: selected.includes(value)
+              ? selected.filter((x) => x !== value)
+              : [...selected, value],
+          });
+        }
+      }
+      // Listen at the dialog itself as well as the grid, avoiding document-level
+      // handlers and preserving the same buttons throughout file saves and edits.
+      $('#viewer').addEventListener('click', handleBoardClick);
+      $('#grid').addEventListener('click', handleBoardClick);
+      document.querySelectorAll('[data-tab]').forEach(
+        (b) =>
+          (b.onclick = () => {
+            tab = b.dataset.tab;
+            $('#group').value = '';
+            render();
+          }),
+      );
+      [...new Set(DATA.entries.map((e) => e.group))].forEach((g) => {
+        const o = document.createElement('option');
+        o.value = g;
+        o.textContent = g;
+        $('#group').append(o);
+      });
+      $('#group').onchange = render;
+      $('#search').oninput = render;
+      $('#close').onclick = () => $('#viewer').close();
+      function advance(d) {
+        const i = visible.findIndex((e) => e.id === current);
+        if (visible.length) detail(visible[(i + d + visible.length) % visible.length].id);
+      }
+      $('#prev').onclick = () => advance(-1);
+      $('#next').onclick = () => advance(1);
+      $('#viewer').addEventListener('keydown', (ev) => {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(ev.target.tagName)) return;
+        if (ev.key === 'ArrowRight') advance(1);
+        if (ev.key === 'ArrowLeft') advance(-1);
+      });
+      function summary() {
+        const chosen = DATA.entries.filter(
+          (e) => pref(e.id).rating || pref(e.id).note || (pref(e.id).aspects || []).length,
+        );
+        return [
+          'Open Legend — round-three art-direction feedback',
+          '',
+          ...chosen.map((e) => {
+            const p = pref(e.id);
+            return `${e.id} — ${e.title}\nRating: ${p.rating || 'Unrated'}${(p.aspects || []).length ? '\nAppeals: ' + p.aspects.join(', ') : ''}${p.note ? '\nNotes: ' + p.note : ''}\n`;
+          }),
+          chosen.length
+            ? 'These are preferences to discuss, not final design decisions.'
+            : 'No preferences recorded yet.',
+        ].join('\n');
+      }
+      $('#share').onclick = () => {
+        $('#export-text').value = summary();
+        $('#copy-status').textContent = '';
+        $('#exporter').showModal();
+      };
+      $('#close-export').onclick = () => $('#exporter').close();
+      $('#copy').onclick = async () => {
+        try {
+          await navigator.clipboard.writeText($('#export-text').value);
+          $('#copy-status').textContent = 'Copied. Paste this into our conversation.';
+        } catch (e) {
+          $('#export-text').focus();
+          $('#export-text').select();
+          $('#copy-status').textContent = 'Text selected. Press Command+C (or Ctrl+C) to copy.';
+        }
+      };
+      $('#download').onclick = () => {
+        const blob = new Blob(
+            [
+              JSON.stringify(
+                {
+                  atlas: 'Open Legend art atlas round 3',
+                  exported: new Date().toISOString(),
+                  preferences,
+                },
+                null,
+                2,
+              ),
+            ],
+            { type: 'application/json' },
+          ),
+          url = URL.createObjectURL(blob),
+          a = document.createElement('a');
+        a.href = url;
+        a.download = 'feedback-round-03.json';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      };
+      render();
+      void feedbackStore.restore();
+      if (location.hash) {
+        const id = location.hash.slice(1);
+        if (DATA.entries.some((e) => e.id === id)) detail(id);
+      }
+    </script>
+  </body>
+</html>

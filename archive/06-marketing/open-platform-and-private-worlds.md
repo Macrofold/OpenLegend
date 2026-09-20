@@ -41,6 +41,14 @@ Selectively releasing an official mechanic to the open library should include it
 
 World owners, collaborating creators and ordinary players may all contribute ideas or expression during gameplay. Define their rights and the platform's limited hosting license before making ownership claims. Do not silently give a world owner every right to other people's contributions or treat AI generation as proof of exclusive ownership.
 
+## Player inventions and owner-selected sharing
+
+The [invention governance and ownership proposal](../03-design-proposals/invention-governance-and-ownership.md) records the requested account library of a player's inventions across all their worlds, with origin, attribution, versions and authorized technical details. Leaving a host should not silently erase the creator's eligible work. Private dependencies and unrelated player/world records do not become portable merely because they were involved in an invention.
+
+World owners independently open or lock agent/NPC invention and player invention, separately from whether the world offers free-use packs. Every world has a complete invention inventory, but distributable releases require permission for their contents and dependency closure. Free-use worlds disclose contribution terms in advance so creators can build there and copy the complete authorized pack to their own world. A world with unresolved export blockers must identify them and cannot claim an incomplete bundle is the whole pack.
+
+This is a product direction for creator control, attribution and agreed reuse, not an ownership assignment or new license. Hosts cannot retroactively claim player contributions; inherited grants and terms remain attached to published versions. The existing AGPL engine policy and unresolved executable-extension boundary remain unchanged.
+
 ## Messaging and unresolved choices
 
 Candidate positioning: **“An open platform for worlds with their own rules.”** Supporting explanation: run the public foundations yourself, join an official world, or create a hosted world with your own selected mechanics and access policy.

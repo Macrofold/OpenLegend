@@ -1,0 +1,8 @@
+{
+  "name": "@open-legend/protocol",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "license": "AGPL-3.0-only"
+}

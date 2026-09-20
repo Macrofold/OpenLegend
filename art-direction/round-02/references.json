@@ -1,0 +1,523 @@
+{
+  "title": "Open Legend — Art Direction, Round 02",
+  "researched": "2026-09-19",
+  "status": "Follow-up to 47 round-one ratings; all new ratings start empty",
+  "entries": [
+    {
+      "id": "R01",
+      "title": "Kathy Rain 2: Soothsayer",
+      "type": "Game",
+      "group": "People and clothing",
+      "focus": "Readable outfits, adult proportions, atmospheric streets",
+      "borrow": "Following your praise for Tails Noir: inspect the people standing in the scene, their clothing layers, and colored light on wet surfaces.",
+      "caution": "A detailed dialogue portrait is visible too. Judge the smaller world figures separately; the city and mystery setting are not proposals.",
+      "question": "Do the world figures have enough face, clothing, and body detail—or does only the large portrait meet your target?",
+      "images": [
+        {
+          "url": "https://a.storyblok.com/f/245535/1920x1080/9c10e94457/kathyrain2-screenshot1.jpg",
+          "source": "https://www.nicegamehints.com/a/kathy-rain-2-review",
+          "label": "Street scene · compare world figures with the portrait"
+        },
+        {
+          "url": "https://www.adventurecorner.de/uploads/images/kathyrain2screens/ss-8605ee1588d423ed305fb3d853109eed1dcffaf3.1920x1080.jpg",
+          "source": "https://www.adventurecorner.de/gallery/2636/kathy-rain-2-soothsayer-screenshots",
+          "label": "Second scene · character and environment comparison"
+        }
+      ],
+      "image": "https://a.storyblok.com/f/245535/1920x1080/9c10e94457/kathyrain2-screenshot1.jpg",
+      "source": "https://www.nicegamehints.com/a/kathy-rain-2-review",
+      "start": true,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/1466390/"
+    },
+    {
+      "id": "R02",
+      "title": "Unavowed",
+      "type": "Game",
+      "group": "People and clothing",
+      "focus": "Distinct people, clothing, and restrained material shading",
+      "borrow": "The cast has different builds, hairstyles, layers, and recognizable clothing. This tests the identity you want beyond Eastward’s simplified bodies.",
+      "caution": "Its adventure-game camera gives people much more screen space than an overhead simulation would. The large portrait is a separate artwork.",
+      "question": "Is this a useful target for ordinary people in the world, or does the finish still feel too old-fashioned?",
+      "images": [
+        {
+          "url": "https://www.gtogg.com/att/Games/Adventure/Point_and_Click/Unavowed/Screenshots/02.jpg",
+          "source": "https://www.gtogg.com/News/en/A_djinn_a_mage_and_a_cop_walk_into_a_bar_Unavowed_preview/",
+          "label": "World cast at right · dialogue portrait at left"
+        },
+        {
+          "url": "https://news-cdn.softpedia.com/images/news2/unavowed-review-522237-22.jpg",
+          "source": "https://www.softpedia.com/reviews/games/pc/unavowed-review-522237.shtml",
+          "label": "Alternate scene"
+        }
+      ],
+      "image": "https://www.gtogg.com/att/Games/Adventure/Point_and_Click/Unavowed/Screenshots/02.jpg",
+      "source": "https://www.gtogg.com/News/en/A_djinn_a_mage_and_a_cop_walk_into_a_bar_Unavowed_preview/",
+      "start": true,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/336140/"
+    },
+    {
+      "id": "R03",
+      "title": "HUNTDOWN",
+      "type": "Game",
+      "group": "People and clothing",
+      "focus": "Costume detail, dense materials, sharp local light",
+      "borrow": "Compare readable clothing and bodies against carefully drawn urban surfaces. This tests how much detail matters independently of the setting.",
+      "caution": "Exaggerated action poses and a deliberate arcade flavor may conflict with your preference for a contemporary finish.",
+      "question": "Do the sprites meet your detail threshold, and can you separate their craft from the retro action styling?",
+      "images": [
+        {
+          "url": "https://uploads.golmedia.net/uploads/articles/article_media/18244243971620913939gol1.jpg",
+          "source": "https://www.gamingonlinux.com/2021/05/the-absolutely-awesome-action-platformer-shooter-huntdown-is-out-now-for-linux/",
+          "label": "World sprites · subway scene"
+        },
+        {
+          "url": "https://vooks.net/img/2020/06/Huntdown_ScreenShot7.jpeg",
+          "source": "https://www.vooks.net/huntdown-switch-review/",
+          "label": "Alternate gameplay scene"
+        }
+      ],
+      "image": "https://uploads.golmedia.net/uploads/articles/article_media/18244243971620913939gol1.jpg",
+      "source": "https://www.gamingonlinux.com/2021/05/the-absolutely-awesome-action-platformer-shooter-huntdown-is-out-now-for-linux/",
+      "start": true,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/598550/"
+    },
+    {
+      "id": "R04",
+      "title": "Gestalt: Steam & Cinder",
+      "type": "Game",
+      "group": "Nature and fantasy",
+      "focus": "Layered foliage, textured machinery, expressive color",
+      "borrow": "A bridge from Owlboy’s environmental richness to taller action sprites. Look at light through foliage, depth layers, and material texture.",
+      "caution": "The hero remains small in gameplay; large anime dialogue portraits are shown only as a comparison, not evidence of world-sprite detail.",
+      "question": "Does the forest have the right richness? Are the actual world sprites detailed enough, independent of the portraits?",
+      "images": [
+        {
+          "url": "https://www.digitec.ch/Files/7/6/2/5/5/6/3/8/gestalt-steam-and-cinder-feuer.jpg",
+          "source": "https://www.digitec.ch/en/page/gestalt-steam-cinder-is-the-perfect-metroidvania-for-the-weekend-34313",
+          "label": "Gameplay · forest depth and small world sprite"
+        },
+        {
+          "url": "https://images.squarespace-cdn.com/content/v1/613ef8a0a3de987d28d14431/61cd4691-0393-439f-816a-30f61189b44e/Gestalt%2BSteam%2Band%2BCinder%2BSteam%2BNext%2BFest%2BScreenshot%2B%287%29.jpg?format=1500w",
+          "source": "https://foreverclassicgames.com/news/2023/2/gestalt-steam-and-cinder-demo-news",
+          "label": "Dialogue comparison · large portraits are not world sprites"
+        }
+      ],
+      "image": "https://www.digitec.ch/Files/7/6/2/5/5/6/3/8/gestalt-steam-and-cinder-feuer.jpg",
+      "source": "https://www.digitec.ch/en/page/gestalt-steam-cinder-is-the-perfect-metroidvania-for-the-weekend-34313",
+      "start": true,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/1231990/"
+    },
+    {
+      "id": "R05",
+      "title": "The Excavation of Hob’s Barrow",
+      "type": "Game",
+      "group": "Nature and fantasy",
+      "focus": "Organic woodland, layered branches, ordinary clothing",
+      "borrow": "Moves the comparison out of neon cities: inspect irregular trees, undergrowth, atmospheric distance, and the clothing of people in a landscape.",
+      "caution": "Its folk-horror mood and visible pixel grain may be too gloomy or coarse. This is a wilderness/material study, not a horror recommendation.",
+      "question": "Would you want this kind of organic landscape with warmer daylight and finer characters, or is the pixel treatment itself unsuitable?",
+      "images": [
+        {
+          "url": "https://www.wadjeteyegames.com/wp-content/uploads/hobs-barrow-bloodletting.png",
+          "source": "https://wadjeteyegames.com/games/the-excavation-of-hobs-barrow/",
+          "label": "Woodland · ordinary people and vegetation"
+        },
+        {
+          "url": "https://cdn.80.lv/api/upload/content/4e/images/65f2c05af1560/widen_920x0.jpg",
+          "source": "https://80.lv/articles/check-out-this-folk-horror-adventure-inspired-by-the-wicker-man-twin-peaks",
+          "label": "Second environment study"
+        }
+      ],
+      "image": "https://www.wadjeteyegames.com/wp-content/uploads/hobs-barrow-bloodletting.png",
+      "source": "https://wadjeteyegames.com/games/the-excavation-of-hobs-barrow/",
+      "start": true,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/1182310/"
+    },
+    {
+      "id": "R06",
+      "title": "The Last Faith",
+      "type": "Game",
+      "group": "Nature and fantasy",
+      "focus": "Long silhouettes, coats, gear, and intricate architecture",
+      "borrow": "Follows your positive reaction to Blasphemous 2’s legible gear. Study equipment and clothing shapes alongside detailed surfaces.",
+      "caution": "Gothic gloom and combat are not the target. Rate the character and material definition separately from the oppressive atmosphere.",
+      "question": "Is this closer to the clothing and equipment fidelity you want, if placed in a more inviting world?",
+      "images": [
+        {
+          "url": "https://cdn.mos.cms.futurecdn.net/upUbXNepmwaw2CFNfs4z89.png",
+          "source": "https://www.pcgamer.com/the-last-faith-review/",
+          "label": "Gameplay · character against detailed environment"
+        },
+        {
+          "url": "https://i0.wp.com/intoindiegames.com/wp-content/uploads/20231114121634_1.jpg?fit=1920%2C1080&ssl=1",
+          "source": "https://intoindiegames.com/walkthroughs/the-last-faith-walkthrough-part-1/",
+          "label": "Second gameplay view"
+        }
+      ],
+      "image": "https://cdn.mos.cms.futurecdn.net/upUbXNepmwaw2CFNfs4z89.png",
+      "source": "https://www.pcgamer.com/the-last-faith-review/",
+      "start": true,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/1274600/"
+    },
+    {
+      "id": "R07",
+      "title": "Chrono Sword",
+      "type": "Game",
+      "group": "Angled views",
+      "focus": "Oblique view, depth, textured ground, local light",
+      "borrow": "Tests the hardest translation: bringing atmospheric pixel scenery into an angled view while keeping individual agents legible.",
+      "caution": "The small cloaked figure has less facial and clothing information than a side-view adventure cast. Do not treat scene detail as proof of character detail.",
+      "question": "Does this camera and ground treatment appeal? How much larger or more finely drawn would the people need to be?",
+      "images": [
+        {
+          "url": "https://clan.steamstatic.com/images/43680561/0b4d8a97ba61a6cd7bc926ed0fdc9eba232c71ec.png",
+          "source": "https://steamcommunity.com/app/1520160/",
+          "label": "Angled gameplay view · world figure and environment"
+        },
+        {
+          "url": "https://gaming-cdn.com/images/products/18125/screenshot/chrono-sword-pc-game-steam-wallpaper-5.jpg?v=1739350844",
+          "source": "https://www.instant-gaming.com/en/18125-buy-chrono-sword-pc-game-steam/",
+          "label": "Alternate angled gameplay view"
+        }
+      ],
+      "image": "https://clan.steamstatic.com/images/43680561/0b4d8a97ba61a6cd7bc926ed0fdc9eba232c71ec.png",
+      "source": "https://steamcommunity.com/app/1520160/",
+      "start": true,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/1520160/"
+    },
+    {
+      "id": "R08",
+      "title": "NORCO",
+      "type": "Game",
+      "group": "Light and landscape",
+      "focus": "Wetland atmosphere, reflective water, layered vegetation",
+      "borrow": "An environment-only study following your interest in Ferrari’s water and Rocha’s wilderness composition.",
+      "caution": "Scenes and close-up artwork are not ordinary simulation sprites. The industrial melancholy may not be the emotional target.",
+      "question": "Would you borrow its atmosphere and landscape texture, with more warmth and visible life?",
+      "images": [
+        {
+          "url": "https://adventuregamehotspot.com/images/posts/230/1575-batture_1920x1080.png",
+          "source": "https://adventuregamehotspot.com/review/230/norco",
+          "label": "Wetland environment study"
+        },
+        {
+          "url": "https://cdn.mos.cms.futurecdn.net/v2/t%3A22%2Cl%3A0%2Ccw%3A2749%2Cch%3A1546%2Cq%3A80%2Cw%3A2560/TapmqrTS5ZZatp7taZUKVV.png",
+          "source": "https://www.pcgamer.com/adventure-game-norco-is-a-pixel-art-lovers-dream/",
+          "label": "Second environment study"
+        }
+      ],
+      "image": "https://adventuregamehotspot.com/images/posts/230/1575-batture_1920x1080.png",
+      "source": "https://adventuregamehotspot.com/review/230/norco",
+      "start": true,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/1221250/"
+    },
+    {
+      "id": "R09",
+      "title": "Savior",
+      "type": "Game",
+      "group": "Nature and fantasy",
+      "focus": "Expressive motion, clouds, organic fantasy forms",
+      "borrow": "Explore animation and a brighter fantasy palette as a counterweight to the darker detail studies. Source article includes motion footage.",
+      "caution": "Historical promotional artwork. The small hero and stylized creatures may still be too simplified; this is not presented as a proven character-detail match.",
+      "question": "Does the sense of life and motion appeal, even if the shapes or pixels need more definition?",
+      "images": [
+        {
+          "url": "https://cdn.mos.cms.futurecdn.net/bCDhSZm3U2nJKqqu4PLgW9.jpg",
+          "source": "https://www.pcgamer.com/check-out-the-pixel-art-animation-in-parkour-platformer-savior/",
+          "label": "Promotional scene · creature, clouds, and small world figure"
+        }
+      ],
+      "image": "https://cdn.mos.cms.futurecdn.net/bCDhSZm3U2nJKqqu4PLgW9.jpg",
+      "source": "https://www.pcgamer.com/check-out-the-pixel-art-animation-in-parkour-platformer-savior/",
+      "start": false,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/1093810/"
+    },
+    {
+      "id": "R10",
+      "title": "Death’s Gambit: Afterlife",
+      "type": "Game",
+      "group": "Nature and fantasy",
+      "focus": "Readable equipment and fantasy environment texture",
+      "borrow": "A further test of the gear visibility you liked in Blasphemous 2, alongside foliage, stone, and atmospheric color.",
+      "caution": "Small action sprites and stylized fantasy shapes may still fall below your desired density. Separate the gear study from dark-fantasy subject matter.",
+      "question": "Does this equipment read clearly enough, or do you want subtler, finer anatomy and material detail?",
+      "images": [
+        {
+          "url": "https://cdn.staticneo.com/ew/thumb/e/ea/DGA_CentralSanctuary_01.jpeg/730px-DGA_CentralSanctuary_01.jpeg",
+          "source": "https://www.neoseeker.com/deaths-gambit-afterlife/walkthrough/Central_Sanctuary",
+          "label": "Gameplay environment and character study"
+        }
+      ],
+      "image": "https://cdn.staticneo.com/ew/thumb/e/ea/DGA_CentralSanctuary_01.jpeg/730px-DGA_CentralSanctuary_01.jpeg",
+      "source": "https://www.neoseeker.com/deaths-gambit-afterlife/walkthrough/Central_Sanctuary",
+      "start": false,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/356650/"
+    },
+    {
+      "id": "R11",
+      "title": "Beyond the Ice Palace 2",
+      "type": "Game",
+      "group": "Nature and fantasy",
+      "focus": "Tall armored figures, stonework, layered backgrounds",
+      "borrow": "Another equipment-and-material comparison: assess shape separation, highlights on clothing or armor, and definition within the scenery.",
+      "caution": "Its nostalgic platformer presentation may feel dated despite detailed drawing. This intentionally tests that boundary.",
+      "question": "Is the character craftsmanship useful, or does the overall retro finish make it the wrong direction?",
+      "images": [
+        {
+          "url": "https://cdn1.epicgames.com/spt-assets/9063f117e78e4034bc690c175c21776f/beyond-the-ice-palace-2-19ozj.jpg?h=720&quality=medium&resize=1&w=1280",
+          "source": "https://store.epicgames.com/de/p/beyond-the-ice-palace-2-aed03d",
+          "label": "Gameplay reference from the Epic store"
+        },
+        {
+          "url": "https://cdn.mos.cms.futurecdn.net/AS7EwdtQtpBHvfeQNcVWZL-1920-80.jpg",
+          "source": "https://www.gamesradar.com/games/action/and-you-thought-hollow-knight-silksong-is-late-37-years-in-the-making-this-retro-metroidvania-has-a-whip-smart-steam-next-fest-demo-thats-as-castlevania-as-it-gets/",
+          "label": "Second gameplay view"
+        }
+      ],
+      "image": "https://cdn1.epicgames.com/spt-assets/9063f117e78e4034bc690c175c21776f/beyond-the-ice-palace-2-19ozj.jpg?h=720&quality=medium&resize=1&w=1280",
+      "source": "https://store.epicgames.com/de/p/beyond-the-ice-palace-2-aed03d",
+      "start": false,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/2384730/"
+    },
+    {
+      "id": "R12",
+      "title": "Whispers of a Machine",
+      "type": "Game",
+      "group": "People and clothing",
+      "focus": "Natural proportions and a more restrained color range",
+      "borrow": "Compare human scale, clothing silhouettes, and everyday environments with the more theatrical lighting of Kathy Rain 2 and Unavowed.",
+      "caution": "It may read too muted or too much like a classic adventure game. A quieter palette is being tested, not prescribed.",
+      "question": "Does the restraint make the people and materials more convincing, or does it lose the richness you want?",
+      "images": [
+        {
+          "url": "https://cdn.mos.cms.futurecdn.net/KCxBy2WkcizwHfnnNxYSf5.jpg",
+          "source": "https://www.pcgamer.com/whispers-of-a-machine-review/",
+          "label": "Gameplay · people and surroundings"
+        },
+        {
+          "url": "https://www.gtogg.com/att/Games/Adventure/Point_and_Click/Whispers_of_a_Machine/Screenshots/01.jpg",
+          "source": "https://www.gtogg.com/News/en/Cyberpunk_adventure_game_Whispers_of_a_Machine_gets_April_release_date/",
+          "label": "Alternate scene"
+        }
+      ],
+      "image": "https://cdn.mos.cms.futurecdn.net/KCxBy2WkcizwHfnnNxYSf5.jpg",
+      "source": "https://www.pcgamer.com/whispers-of-a-machine-review/",
+      "start": false,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/631570/"
+    },
+    {
+      "id": "R13",
+      "title": "The Drifter",
+      "type": "Game",
+      "group": "Boundary comparisons",
+      "focus": "Natural human silhouettes with conspicuous pixel grain",
+      "borrow": "Useful for separating anatomy and mood from raw pixel density. The office scene gives people recognizable clothing and posture.",
+      "caution": "The pixels remain quite visible and the faces small. This is a lower-detail comparison rather than a claim that it matches REPLACED.",
+      "question": "Are these bodies and outfits convincing enough despite the grain, or is this clearly below your minimum density?",
+      "images": [
+        {
+          "url": "https://www.powerhoof.com/press/The%20Drifter/images/screenshots_06.png",
+          "source": "https://www.powerhoof.com/press/sheet.php?p=The+Drifter",
+          "label": "Official press screenshot · office and world figures"
+        }
+      ],
+      "image": "https://www.powerhoof.com/press/The%20Drifter/images/screenshots_06.png",
+      "source": "https://www.powerhoof.com/press/sheet.php?p=The+Drifter",
+      "start": false,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/1170570/"
+    },
+    {
+      "id": "R14",
+      "title": "VirtuaVerse",
+      "type": "Game",
+      "group": "Boundary comparisons",
+      "focus": "Dense props and strongly colored light",
+      "borrow": "Pushes the detailed urban-material side of Tails Noir toward a more intense palette. Consider the amount of visual information in a room or street.",
+      "caution": "Neon saturation may repeat your objection to UNSIGHTED. No cyberpunk setting is implied.",
+      "question": "Is the density appealing but the palette too much, or do both work when the lighting is this deliberate?",
+      "images": [
+        {
+          "url": "https://indiearenabooth.de/assets/media/apartment.png",
+          "source": "https://indiearenabooth.de/Gamescom2019/games/show/589",
+          "label": "Room study · dense props and local color"
+        },
+        {
+          "url": "https://cdn.mobygames.com/screenshots/16568620-virtuaverse-windows-city-by-night.png",
+          "source": "https://www.mobygames.com/game/145459/virtuaverse/screenshots/windows/1013479/",
+          "label": "City at night · saturation comparison"
+        }
+      ],
+      "image": "https://indiearenabooth.de/assets/media/apartment.png",
+      "source": "https://indiearenabooth.de/Gamescom2019/games/show/589",
+      "start": false,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/1019310/"
+    },
+    {
+      "id": "R15",
+      "title": "Tower 57",
+      "type": "Game",
+      "group": "Angled views",
+      "focus": "Overhead character readability and dense props",
+      "borrow": "An overhead counterpart to the taller side-view references: inspect costumes, body distinctions, material texture, and walkable-space clarity.",
+      "caution": "The exaggerated proportions and retro flavor may be a mismatch. This tests the camera/detail trade-off rather than proposes its entire style.",
+      "question": "Can an overhead view like this preserve enough individuality, or does it make people too small and cartoon-like?",
+      "images": [
+        {
+          "url": "https://www.gamereactor.eu/media/70/tower57_2287083b.png",
+          "source": "https://www.gamereactor.eu/tower-57-review/",
+          "label": "Overhead gameplay view"
+        },
+        {
+          "url": "https://gamesfromtheblackhole.wordpress.com/wp-content/uploads/2023/07/arm.jpg?w=958",
+          "source": "https://gamesfromtheblackhole.wordpress.com/2023/07/23/tower57/",
+          "label": "Alternate gameplay view"
+        }
+      ],
+      "image": "https://www.gamereactor.eu/media/70/tower57_2287083b.png",
+      "source": "https://www.gamereactor.eu/tower-57-review/",
+      "start": false,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/530950/"
+    },
+    {
+      "id": "R16",
+      "title": "ANNO: Mutationem",
+      "type": "Game",
+      "group": "Boundary comparisons",
+      "focus": "Pixel characters within dimensional urban spaces",
+      "borrow": "A deliberate comparison with your Star Ocean rejection: can more substantial world sprites work with dimensional environments?",
+      "caution": "Explicit 2D/3D hybrid and anime styling. These may be exactly what you do not want; this is a narrowly labeled boundary test.",
+      "question": "Does the character detail change your view of a hybrid presentation, or is the visual mismatch still a clear no?",
+      "images": [
+        {
+          "url": "https://d.player.one/en/full/186834/anno-mutationem-gets-gameplay-trailer-chinajoy-2019.png?f=9632b7d8480a4eb229b6caabd5f43526&h=900&q=88&w=1600",
+          "source": "https://www.player.one/chinajoy-2019-cyberpunk-pixel-art-action-game-anno-mutationem-gets-new-128688",
+          "label": "Gameplay · pixel figure in a dimensional environment"
+        },
+        {
+          "url": "https://images.cgames.de/images/gsgp/293/anno-mutationem-screenshots_6146965.jpg",
+          "source": "https://www.gamepro.de/galerien/anno_mutationem%2C134964.html",
+          "label": "Alternate gameplay view"
+        }
+      ],
+      "image": "https://d.player.one/en/full/186834/anno-mutationem-gets-gameplay-trailer-chinajoy-2019.png?f=9632b7d8480a4eb229b6caabd5f43526&h=900&q=88&w=1600",
+      "source": "https://www.player.one/chinajoy-2019-cyberpunk-pixel-art-action-game-anno-mutationem-gets-new-128688",
+      "start": false,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "steam": "https://store.steampowered.com/app/1368030/"
+    },
+    {
+      "id": "R17",
+      "title": "Jubilee / 8pxl — landscape studies",
+      "type": "Art study",
+      "group": "Light and landscape",
+      "focus": "Cloud form, water, atmospheric color",
+      "borrow": "An artist-led palette and atmosphere study: compare cooler, softly shaded water and cloud forms with a warmer pink landscape.",
+      "caution": "No character-detail evidence here. The pink landscape is visibly blockier; image dimensions do not equal finely drawn source pixels.",
+      "question": "Which atmosphere is closer: restrained blue light or heightened pink warmth? Is either too soft, coarse, or cartoon-like?",
+      "images": [
+        {
+          "url": "https://storage.ko-fi.com/cdn/useruploads/post/89b5cbcb-1783-4cc4-8a69-5a541b1d4563_11.png",
+          "source": "https://ko-fi.com/8pxl",
+          "label": "Blue water and cloud study"
+        },
+        {
+          "url": "https://storage.ko-fi.com/cdn/useruploads/post/f414f922-0273-4716-91af-fc20d1945e2a_wp.png",
+          "source": "https://ko-fi.com/8pxl",
+          "label": "Pink landscape · visibly broader pixel forms"
+        }
+      ],
+      "image": "https://storage.ko-fi.com/cdn/useruploads/post/89b5cbcb-1783-4cc4-8a69-5a541b1d4563_11.png",
+      "source": "https://ko-fi.com/8pxl",
+      "start": false,
+      "reuse": "Reference only. Images remain at credited hosts; no production asset rights acquired.",
+      "creator": "Jubilee / 8pxl",
+      "creatorUrl": "https://ko-fi.com/8pxl"
+    },
+    {
+      "id": "R18",
+      "title": "REPLACED",
+      "group": "Round-one benchmarks",
+      "focus": "Overall finish, density, and cinematic light",
+      "borrow": "Your strongest overall response: excellent and amazing, with environmental and human detail, lighting, parallax, and atmosphere.",
+      "question": "Which part is the non-negotiable benchmark: people, lighting, environment density, or the combination?",
+      "image": "https://i0.wp.com/www.pcmrace.com/wp-content/uploads/2022/12/REPLACED_Screenshot_05.jpg?ssl=1",
+      "source": "https://www.pcmrace.com/2022/12/09/replaced-se-lanzara-para-pc-xbox-y-game-pass-en-el-2023-nuevos-screenshots-y-trailer-de-gameplay/",
+      "type": "Benchmark",
+      "steamSearch": "https://store.steampowered.com/search/?term=REPLACED",
+      "note": "Historical promotional imagery; included for art direction, with no claim about current release availability.",
+      "start": false,
+      "reuse": "Visual reference only; no production reuse permission assumed.",
+      "caution": "Carried forward for comparison. Your round-one feedback remains intact; any rating here is a separate round-two response.",
+      "originalId": "G30",
+      "images": [
+        {
+          "url": "https://i0.wp.com/www.pcmrace.com/wp-content/uploads/2022/12/REPLACED_Screenshot_05.jpg?ssl=1",
+          "source": "https://www.pcmrace.com/2022/12/09/replaced-se-lanzara-para-pc-xbox-y-game-pass-en-el-2023-nuevos-screenshots-y-trailer-de-gameplay/",
+          "label": "Original round-one reference image"
+        }
+      ]
+    },
+    {
+      "id": "R19",
+      "title": "Tails Noir / Backbone",
+      "group": "Round-one benchmarks",
+      "focus": "Readable clothing and carefully composed environments",
+      "borrow": "You liked detailed people and surroundings, clothing, lighting, mood, density, and reflective water.",
+      "question": "Does this still set the clearest target for ordinary characters and materials?",
+      "image": "https://game-guide.fr/wp-content/uploads/2018/04/Backbone-screenshot-4.jpg",
+      "source": "https://game-guide.fr/231194-backbone-un-jeu-denquete-en-pixelart/",
+      "type": "Benchmark",
+      "steamSearch": "https://store.steampowered.com/search/?term=Tails%20Noir%20%2F%20Backbone",
+      "note": "Historical promotional imagery; included for art direction, with no claim about current release availability.",
+      "start": false,
+      "reuse": "Visual reference only; no production reuse permission assumed.",
+      "caution": "Carried forward for comparison. Your round-one feedback remains intact; any rating here is a separate round-two response.",
+      "originalId": "G32",
+      "images": [
+        {
+          "url": "https://game-guide.fr/wp-content/uploads/2018/04/Backbone-screenshot-4.jpg",
+          "source": "https://game-guide.fr/231194-backbone-un-jeu-denquete-en-pixelart/",
+          "label": "Original round-one reference image"
+        }
+      ]
+    },
+    {
+      "id": "R20",
+      "title": "Owlboy",
+      "group": "Round-one benchmarks",
+      "focus": "Lush environment, color, and varied body shapes",
+      "borrow": "You liked its richness, palette, and body-shape variety, while asking for more visible clothing, helmets, and faces.",
+      "question": "How much of this color and lushness belongs in the target, and how far should the people move toward finer detail?",
+      "image": "https://cdn.mos.cms.futurecdn.net/Tu5r5mcgx9X5QwY9fS9cg6-1200-80.jpg",
+      "source": "https://www.pcgamer.com/owlboy-release-date-set-after-nine-years-in-development/",
+      "type": "Benchmark",
+      "steamSearch": "https://store.steampowered.com/search/?term=Owlboy",
+      "start": false,
+      "reuse": "Visual reference only; no production reuse permission assumed.",
+      "caution": "Carried forward for comparison. Your round-one feedback remains intact; any rating here is a separate round-two response.",
+      "originalId": "G22",
+      "images": [
+        {
+          "url": "https://cdn.mos.cms.futurecdn.net/Tu5r5mcgx9X5QwY9fS9cg6-1200-80.jpg",
+          "source": "https://www.pcgamer.com/owlboy-release-date-set-after-nine-years-in-development/",
+          "label": "Original round-one reference image"
+        }
+      ]
+    }
+  ]
+}

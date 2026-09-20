@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 data = json.loads((ROOT / 'references.json').read_text())
 template = (ROOT / 'board-template.html').read_text()
+template = template.replace('/*FEEDBACK_STORAGE*/', (ROOT / 'feedback-storage.js').read_text().replace('</', '<\\/'))
 (ROOT / 'index.html').write_text(template.replace('/*REFERENCE_DATA*/null', json.dumps(data).replace('</', '<\\/')))
 lines = ['# Open Legend — reference catalog', '', f"Research date: {data['researched']}. 48 references: 34 games, 6 art studies, 8 asset packs.", '', 'Visual observations are exploratory judgments, not approved design decisions. Images remain hosted at their credited sources. Some game references use historical promotional imagery.', '']
 group = None

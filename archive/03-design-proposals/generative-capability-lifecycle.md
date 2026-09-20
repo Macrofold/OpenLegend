@@ -23,7 +23,7 @@ There is research precedent for reusable generated skills: Voyager stores execut
 | G0: expressive content | Dialogue, descriptions, plans using known actions | NPC proposes sharing a meal | First playable wilderness group |
 | G1: bounded definitions | Recipes, archetype parameters, status definitions, effect compositions | A wood-and-fiber trap built from known trigger/capture primitives | Early creative prototype |
 | G2: sandboxed algorithms | Restricted executable procedures with declared capabilities | A new bounded diffusion or crafting-quality algorithm | After validation and failure tooling |
-| G3: engine extensions | New trusted primitives, renderer adapters, schema migrations | Fluid networks or persistent institutions with new invariants | Explicit engineering release |
+| G3: engine extensions | New trusted primitives, renderer adapters, incompatible storage/interpreter migrations | Fluid networks or persistent institutions with new invariants | Explicit engineering release |
 
 G1 is already meaningful generativity. Designers need not hand-author every recipe; they define enough primitives and tests for the system to combine them safely. The initial [survival package](survival-baseline.md) supplies dependable basic actions before this generation layer; a novel shelter below is a variant, not the only way to survive exposure. G2 should earn its place when a real desired mechanic cannot be expressed in G1. G3 cannot be made harmless just by calling it a plug-in.
 
@@ -31,7 +31,7 @@ G1 is already meaningful generativity. Designers need not hand-author every reci
 
 Generated recipes, goals, behavior graphs and effect definitions are data consumed by our rule interpreter. That path can work with PlayCanvas, Unity or another renderer. An agent inventing smoke-drying can propose a composition of supported heat, smoke, fuel, labor, food-conversion and spoilage rules; the client depicts approved outcomes with existing assets. If a required physical or biological rule does not exist, the generator must identify that missing dependency rather than imply it has been implemented.
 
-Generating new executable algorithms during play is a distinct G2 requirement. JavaScript/TypeScript integration makes a browser-based stack convenient, but does not authorize evaluating arbitrary scripts in the client or authoritative process. Those algorithms still receive scoped inputs, produce bounded effect proposals and pass through the isolation/promotion path below. New trusted primitives and schema changes remain G3 engineering releases.
+Generating new executable algorithms during play is a distinct G2 requirement. JavaScript/TypeScript integration makes a browser-based stack convenient, but does not authorize evaluating arbitrary scripts in the client or authoritative process. Those algorithms still receive scoped inputs, produce bounded effect proposals and pass through the isolation/promotion path below. Registering a component schema using already supported field types and initialization operations can be G1. New trusted primitives, storage representations or interpreter semantics require a G3 engineering release. The [technical declaration contract](../07-technical-architecture/declarations-and-evolution.md) specifies this distinction and atomic dependency bundles.
 
 Unity is not mechanically restrictive: its standard C# web compilation workflow has dynamic-code-generation limits, not a prohibition on custom rules or generative content. An interpreter, JavaScript bridge or external execution service can support runtime logic when needed. This is an execution/runtime tradeoff, not a reason to build our own graphics engine. [Unity scripting backends](https://docs.unity.com/en-us/engine/6000.0/manual/scripting/compilation-and-code-reload/script-compilation/backends), [Unity 6.0 web limitations](https://docs.unity3d.com/6000.0/Documentation/Manual/webgl-technical-overview.html)
 
@@ -50,7 +50,7 @@ flowchart TD
     N -->|Deferred or unresolved| F
     D --> V[Schema, authority, resource and dependency checks]
     V --> S[Isolated simulation and counterexample tests]
-    S --> C[Canary in limited scope]
+    S --> C[Trial with scope-consistent activation]
     C --> A[Approved versioned capability]
     A --> U
     V -->|Invalid| F
@@ -61,7 +61,9 @@ flowchart TD
 
 Track draft, validating, rejected, canary, approved, deprecated, and quarantined states. A candidate definition and a deployed definition are different records. Store provenance (request and relevant context), authoring model/prompt version, parent mechanisms, input/output schemas, dependency versions, tests, evaluation results, ownership/visibility, resource envelope, asset bindings, and rollout scope.
 
-Permit automatic admission only inside a small proven envelope: approved operations, strict magnitude limits, no new authority, limited affected entities, no irreversible economy-wide outcome, complete tests, and observable rollback/compensation behavior. Initially, the creator's private sector can accept more experiments than the public world. The exact automatic-versus-reviewed boundary is D06, not a blanket promise that every invention needs manual approval forever.
+Permit automatic admission only inside a small proven envelope: approved operations, strict magnitude limits, no new authority, limited affected entities, no irreversible economy-wide outcome, complete tests, and observable rollback/compensation behavior. Initially, a separate creator test world can accept more experiments than the public world. The exact automatic-versus-reviewed boundary is D06, not a blanket promise that every invention needs manual approval forever.
+
+M07/M08 clarify that [invention discovers the world](world-creation-and-discovery.md). Test new shared laws in copied/isolated scenes before admission; activate them consistently across their actual material/construction scope. A local prototype can test a particular recipe using shared laws, but identical objects must not have different physics solely because one player is in a canary cohort. Physical applicability is separate from who has learned the recipe. Definitions must respect relevant committed outcomes and explicit migration policies.
 
 Every envelope is bound to a world/profile revision and allowed causal domains. Satisfying JSON shape and effect bounds alone is insufficient: a bounded temperature increase without an admitted source can still violate a realistic world's rules. Scripts obey the same causal/resource requirements. Revalidate candidates after profile changes and keep generated mechanisms from editing their own admission policy. Creator profile edits use a distinct explicit administration path.
 
@@ -69,7 +71,7 @@ Every envelope is bound to a world/profile revision and allowed causal domains. 
 
 A player asks, “Can I make a little rain shelter from these branches?” The resolver finds no exact recipe but finds construction, fiber binding, supported parts, and coverage rules. It proposes branch/fiber consumption, labor stages, a small assembly of supports and roofing, and its material/connection specifications. Coverage, rain transmission, and condition derive from the placed parts. “A little house” can retrieve this same construction family while exposing unmet requirements such as full enclosure or enough sleeping space. The completed structure remains editable and can acquire household meaning without a discrete upgrade.
 
-The candidate is run against missing materials, concurrent inventory use, interruption, moving the target site, overlap with protected areas, save/reload, demolition, and repair cases. If valid within the G1 envelope, it becomes a local canary recipe. The player sees a short construction action and a functional shelter. The registry stores the recipe; the player learns it; nearby NPCs only learn it if they observe or are taught. Repeated successful uses provide evidence for broader promotion.
+The candidate is run against missing materials, concurrent inventory use, interruption, moving the target site, overlap with protected areas, save/reload, demolition, and repair cases. If valid within the G1 envelope, the prototype can be constructed under shared admitted rules and its tested applicability. The player sees a short construction action and a functional shelter. The registry stores the recipe; characters learn from what they actually perceive, hear, or do. Repeated successful uses can support broader applicability without granting universal knowledge or changing identical objects' physics by rollout cohort.
 
 If the generator invents an unsupported force field or a resource exploit, the candidate fails validation. The player receives a useful outcome such as “You can bind a small lean-to with this material; a sealed roof needs something waterproof.” The wording should describe the world constraint, not expose internal compiler terminology.
 
@@ -99,13 +101,15 @@ On invalid output, reject the candidate. On runtime failure, quarantine that ver
 
 Do not silently bypass validation because an LLM is the fallback. Do not retry generation indefinitely. Do not guarantee an immediate new mechanic on a live player's timeline. Use a maximum attempt budget, a cooldown, a deduplication key, and a backlog entry for recurring unsupported requests.
 
+Keep ordinary activity available while a method is evaluated. Resource/work stages and live prerequisites are rechecked when an action runs; provider waiting time is not automatically in-world experimental labor. A service failure must not fabricate physical damage, consumption, or a false learning experience. Preserve genuine partial work already committed. See [discovery timing and learning](world-creation-and-discovery.md).
+
 For an ongoing fire or disease using a quarantined version, select a declared safe migration/termination policy. For example, stop future propagation while preserving already-committed damage and completing bounded cleanup. This behavior must be specified by the mechanism family; a generic “roll back everything” button is insufficient.
 
 ## Versioning a persistent world
 
 Never replace an approved definition in place. An active process pins its version until completion or an explicit migration. Store retired definitions needed for replay. Capability updates can change new uses without changing a bridge built yesterday; if a data migration is necessary, preview its impact and make it a recorded operation.
 
-Maintain dependency graphs: if `burn.v2` depends on `material.v3`, either validate that pairing or refuse activation. Avoid dynamic “latest” resolution during long-running actions. A globally available mechanic and a locally discovered recipe are different registries. World rules can differ between experimental and public sectors, with explicit border rules for incompatible items.
+Maintain dependency graphs: if `burn.v2` depends on `material.v3`, either validate that pairing or refuse activation. Avoid dynamic “latest” resolution during long-running actions. A world-available mechanic and a locally learned recipe are different registries. Incompatible governing rules belong in separate experimental world instances; connected sectors share the effective profile and clock. Cross-world item transfer would require a future explicit compatibility protocol and is not assumed here.
 
 Definitions should converge into canonical families. Otherwise players can produce millions of spelling variants and make retrieval unreliable. Store variants as parameters and metadata where possible. Track usage, failure rate, marginal novelty, dependency count, and maintenance cost; deprecate redundant definitions without erasing historical records.
 
@@ -122,3 +126,13 @@ Ordinary actors cannot acquire creator privileges by asking convincingly. A fict
 Code assistants can help author primitives, generate counterexample fixtures, build asset manifests, analyze playtest traces, and propose fixes. A runtime failure report can create a development work item containing a minimal replay. The engineering agent can propose a patch and validation evidence. Deploying a new trusted kernel remains a normal versioned release with compatibility checks.
 
 This yields a practical loop: players discover missing affordances → the world records demand → bounded inventions arrive quickly → repeated demand informs deeper engine work. The result can feel like the game is growing from within without making every public session a live experiment in unrestricted source-code execution.
+
+## Symbolic presentation for every new action and item
+
+Every action and item should have a small symbolic representation suitable for circular quick actions, inventory entries and menus. Recovery uses a campfire, resting a sleep symbol, and gathering combines the resource symbol with a hand badge. Accessible names and plain white hover labels remain available alongside the artwork.
+
+New approved definitions should enqueue an asynchronous presentation job, keyed by definition ID and version. This is separate from mechanical admission: an invention becomes usable immediately with a trusted local fallback icon. Asset generation must not block invention, simulation or action execution, and opening a menu must never trigger a paid call. Reuse existing item symbols and trusted composition modifiers before generating bespoke artwork. Bound generation by the configured spending allowance; failed or unavailable jobs retain the fallback without automatic paid retries.
+
+The eventual presentation registry should expose a versioned symbol reference, fallback family, optional item reference/modifier, and pending/ready/failed state. Validate generated assets before publishing them; generated SVG or arbitrary markup must not execute in the client. Cache assets by immutable revision and record provenance/licensing. Updating artwork must not change the definition's mechanics or invalidate quick-action bindings.
+
+Current UI implementation uses local vector symbols with a generic fallback and hand overlays for gathering. Asynchronous artwork generation and the per-definition presentation registry remain planned work.

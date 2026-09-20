@@ -4,6 +4,8 @@ Recorded September 19, 2026. **Accepted direction from M05:** each world should 
 
 Related: [complexity management](simulation-scope-and-complexity.md), [interaction protocol](interaction-protocol.md), [capability lifecycle](generative-capability-lifecycle.md), [world architecture](system-architecture.md), and [time and speed](time-and-simulation-speed.md).
 
+M07/M08 accept [AI-assisted world creation and discovery](world-creation-and-discovery.md): familiar premises select substantial defaults with little questioning; novel magic systems receive a few consequential questions and suggested defaults. Ordinary invention discovers consistent possibilities rather than editing the world's laws. The creation summary makes assumptions and game concessions visible; exact flow/schema details remain proposed.
+
 ## Possibility and implementation are different
 
 A world has a versioned profile that constrains generation and execution. Its capability library can grow inside that profile. “Not implemented yet” does not mean forbidden; “forbidden by this world's rules” does not mean merely awaiting a more persuasive model response.

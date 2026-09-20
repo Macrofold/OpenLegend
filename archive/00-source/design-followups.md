@@ -1,6 +1,6 @@
 # Design follow-ups — user steering
 
-This file preserves subsequent user input alongside the unchanged [original brief](original-brief.txt). Main-thread entries use U identifiers; the visual/engine side conversation uses V identifiers; the mechanics/construction side conversation uses M identifiers, ordered within each discussion. Product direction may be accepted here while implementation details remain proposals. No implementation has been requested.
+This file preserves subsequent user input alongside the unchanged [original brief](original-brief.txt). Main-thread entries use U identifiers; the visual/engine side conversation uses V identifiers; the mechanics/construction side conversation uses M identifiers, ordered within each discussion. Product direction may be accepted here while implementation details remain proposals. U13 below explicitly authorized the initial implementation after the earlier documentation-only phase.
 
 ## U01 — starting in the wilderness
 
@@ -123,8 +123,111 @@ The assistant acknowledged the risk of unbounded systems/properties and the exce
 
 Recorded September 19, 2026. Accepted documentation direction: constrain complexity through coarse reusable systems and worthwhile refinements; give each world explicit parameters bounding ordinary gameplay and on-the-fly invention; reject effects inconsistent with its premise; explain rejection clearly and kindly, with optional light humor. The realistic-world/no-magical-ignition case is a required example, not a mandate that every future world use realism. The exact profile schema, classifier, numeric budgets, default preset, and admission/runtime policies remain proposals. [Complexity management](../03-design-proposals/simulation-scope-and-complexity.md) and [world parameters/feedback](../03-design-proposals/world-rules-and-parameters.md) contain the detailed design. Documentation only; no game implementation.
 
+## M06 — review the core mechanic's unresolved risks
+
+> Any other open questions we should discuss around how the mechanics are evolved and declared and how this remains flexible? This is one of the core mechanics of this entire game that makes it unique and also probably one of the biggest risks because of the enormous amount of complexity that it could give rise to. There are also enormous amounts of edge cases and situations that need to be accounted for in the game itself for any given moment to function correctly and be fun. Let's really think this through. What are your thoughts? What should we be thinking about here that we haven't discussed or flushed out yet?
+
+The assistant reviewed discovery versus changing world laws; player/NPC design agency; object identity across changing uses; meaningful scoped effect APIs; combining simultaneous influences; generation latency versus simulated work; prompt-equivalence and legitimate powerful discoveries; and legible consequences. It proposed a cloak-as-roof scenario covering rain, extension, support removal, later wearing, knowledge differences, interruption, and restore. M07/M08 accept the recommendations with the clarifications below.
+
+## M07 — discovery, AI-assisted creation, learning, and numeric systems
+
+> yes i agree i think invention discovers the world. This requires that the world has a pretty good definition of what it is and what is allowed within it. I guess we may want to have a world creation flow where you define the parameters of the world. That should probably be an AI-assisted flow where the AI asks you questions and helps you flesh it out. By the time the world actually starts running, the world engine has a good enough grasp on what should and shouldn't be allowed. For example if I were to create a world and during the world creation flow I say, "This world behaves exactly like true reality," then the world engine doesn't really need to ask any other questions because it should be able to enforce that pretty well. If I were to say, "This world has a magical system," the world creator should probably ask me questions about:
+>
+> - what kind of magic system it is
+> - what is allowed
+> - what the fundamentals of the system are, and so on and so forth
+>
+> "Experimental rollout needs to respect the scope of the rule being introduced." what does this mean?
+>
+> "I would support broad goals while exposing a few meaningful choices: available materials, trade-offs, placement, intended use, and willingness to experiment. Routine execution can be automated once those choices are settled." I agree. I think wherever possible the world engine should invent those things and make the experience as seamless as possible for the player. It should make reasonable assumptions whenever possible and be sparing in asking the player questions about their requests. There should be cases where it can ask questions about the requests. It should just be done sparingly.
+>
+> "we still need to decide **how hypotheses, experiments, teaching, and successful practice become knowledge**." What do you mean by this? I think an NPC should gain knowledge when they observe something. Or experience it. Or hear about it. Through some sort of interaction.
+>
+> "My proposed default is narrow initial scope: supported material families, construction methods, conditions, and limits. Broader applicability can follow additional evidence." ok. And yes we should probably build up a good set of defaults over time. The world will not have everything well defined at the start but I think through my initial personal play of the game, we can define a lot of the more reasonable defaults. We can also have the AI try to enumerate a bunch of stuff that generally should be thought about when creating new rules, materials, objects, interactions, and so on.
+>
+> "Who determines the resulting moisture, condition, and support?" I think anything that can have an effect like this, that may have a threshold or whatever, should probably affect a number. If there's a wetness factor then drying should reduce it and observing rain should increase it. Perhaps past certain thresholds of wetness, something happens, like the wood rots or something. I don't know. Each state variable belonging to a responsible system makes sense, where other mechanics supply contributions or requests. That makes perfect sense. We should also have some way for the world to know when a mechanic is created, if a system also needs to be created (like a system that is represented by a state variable). And then when that system is created, it should probably decide on a few other ways that system can be influenced.
+>
+> **6. What players experience while a mechanic is being invented.**
+>
+> yes follow your recommendation
+>
+> i agree with all the rest
+
+The assistant clarified that a familiar premise selects a substantial default library rather than promising perfect enforcement from one sentence; novel magic needs a few meaningful questions and visible assumptions. Physical applicability is separate from actor knowledge; testing a shared rule must not make identical objects obey different physics by player cohort. Learning occurs naturally from interaction with attribution and uncertainty. Actual rain changes object state; observation changes a character's knowledge. A responsible system combines numeric contributions; duration can matter as well as thresholds. New system definitions should identify likely influences without recursively implementing every related domain.
+
+## M08 — document the decisions and anticipate undiscovered influences
+
+> yes agreed with all of this. document it all!
+>
+> "Which existing actions or conditions increase or decrease it." i would just add, also what non-existing things could affect it even if those things weren't specified or "discovered" yet it should think about it a bit to preempt. But agreed it should not create every related subsystem.
+
+Recorded September 19, 2026. Accepted direction: the M06/M07 recommendations and clarifications, plus bounded proactive consideration of plausible influences beyond the currently specified/implemented/discovered mechanics. Proposed representation: an influence record distinguishing admitted, anticipated, uncertain, and profile-forbidden relationships, with dependencies and later activation criteria. Thinking ahead does not activate a mechanic or reveal it to NPCs. [World creation and discovery](../03-design-proposals/world-creation-and-discovery.md) and [state systems/future influences](../03-design-proposals/state-systems-and-future-influences.md) detail the accepted direction and proposed implementation. This request authorizes documentation only.
+
 ## U10 — environment state and general AI workflows in Macrofold
 
 > Would it also potentially make sense to store environment state in Macropod workspaces and run JEV inferences on top of that? What do you think? Is there a benefit to modularizing some of the other kinds of AI workflows into Macropod versus building our own kind of agent frameworks and control layers within Open Legend? Macropod, again, is our project, so we have full freedom to iterate on it and make any changes to support our use case for Open Legend. All the while, while doing that, we'll also be adding more functionality to Macropod for any other users of it as well.
 
 The [AI-workflow and world-state proposal](../03-design-proposals/macrofold-ai-workflows-and-world-state.md) treats the owned platform as extensible beyond its current runtime. It recommends considering generic lightweight inference, shared workers and versioned resources while Open Legend defines simulation and memory semantics. Macrofold may provide physical storage; its current workspace file API is not assumed to supply structured transactional state. This is exploration of reusable functionality, not implementation or adoption approval. Macrofold is the inspected product name; the user's wording is preserved above.
+
+## U11 — detailed technical architecture and Macrofold implementation handoff
+
+> Yeah seems like a big part of what we need to implement for Open Legend is a robust system for bringing the right content into the context for either Jev or agents or individual LLM calls.
+>
+> I'd like you to read the newest updated set of documents we've discussed a little bit more separately and write a little bit more down in the documentation for Open Legend and how we want to build it. I'd like you to especially think about:
+>
+> - the generative evolving declaration system, where every new interaction will potentially create new declarations and interactions to represent in the game engine and also for individual agents' interactions with the world
+> - when Jev will be called, when LMs will be called, and when agents will be called
+> - the tools that are available to us, including Macrofold, and the ability to architect, design, and implement Macrofold to our liking to support this in the best possible way while maintaining a reasonable separation of concerns (where Macrofold is a standalone service and can provide good abstractions in terms of AI agents and typed inference)
+> - all of that, along with the traditional tools available to us, including direct LLM integrations, any available APIs, databases, standard programming, etc.
+>
+> I would like you to consider all of that and then consider everything that we've discussed that we want to implement within Open World so far, as well as considering any questions that we haven't answered yet and leaving room for future improvement, future changes, and future extensibility. I would also like you to always try to be modular so we can easily swap things out when and if decisions and parameters change. Considering all of that I would like you to propose an architecture in detail. In addition to what you've already written down for Open Legend, store that as technical architecture documentation and then also propose a detailed proposal of what we want to implement within Macrofold to support our use cases. Explain what kind of behavior specifically we will need in Macrofold. I am going to copy and paste that into another AI to go ahead and implement those things in Macrofold.
+
+Recorded September 19, 2026; quote formatting normalized. This authorizes detailed documentation and a future implementation handoff, not game/platform implementation in this task. The [technical architecture set](../07-technical-architecture/README.md) covers context, routing, declaration evolution, conventional infrastructure, modular boundaries, open choices and verification. The [standalone Macrofold brief](../07-technical-architecture/macrofold-implementation-brief.md) specifies proposed platform behavior and implementation phases. "Open World" is treated as the existing Open Legend project. Recommendations remain proposals until accepted.
+
+## U12 — outsider critique and architecture revision
+
+> I want to review everything. I want you to review everything you just created and pretend you're an outsider. Critique yourself and make any adjustments that you think would make this:
+>
+> - more modular
+> - robust
+> - extensible
+> - something that we can implement and sequence properly
+> - something that is also technically feasible and allows for all of the functionality that we desire
+
+Recorded September 19, 2026; quote formatting normalized. The [architecture review and delivery plan](../07-technical-architecture/review-and-delivery-plan.md) records the critique, changes, smaller initial slices, later feature gates and coverage. The system, context, declaration and Macrofold documents were revised directly. No implementation, benchmark or validation of runtime guarantees is implied by this review.
+
+## M09 — clarify the first world-engine MVP
+
+> Anything else we need to discuss and agree on here before we start the initial MVP implementation of just the very first version of this world engine?
+
+The assistant proposed a small native/no-model checkpoint and a carrying-bundle composition. M10 corrects the implied first-playable boundary: internal engineering fixtures can remain small, but the first playable product must already contain live AI and useful emergent survival.
+
+## M10 — live AI, generated tools, hunting, and pause from the first version
+
+> How can it run without AI? The agent needs to constantly make decisions now and we need to be able to talk to the agent. I think that's a pretty key mechanic here. Creating the auto generation needs to be AI-generated so we need to be using Java and LLMs in the first version of this. Yeah I think pause and speed controls are good. We should definitely have those. Yeah I agree it should be paused while we're not playing it, at least for now. I generally agree with all the other stuff. I think I should be able to, in this first version, start to do some emergent stuff:
+>
+> - find some resources
+> - create a sling
+> - kill some animals with the sling
+> - eat those animals
+> - maybe make an arrow out of grass, wood, and bone and kill animals with that
+>
+> Should be able to do some stuff like that
+
+The assistant accepted the correction: live decisions, NPC conversation and actual AI-generated mechanics belong in the first playable version. It explicitly interpreted “Java” as **Jev**, the semantic service under discussion, not a language selection. It proposed one small map/NPC, resource discovery, a generated sling recipe, equipment/ammunition, basic animal reactions/damage/death, finite harvesting, preparation/eating, and another invention using a shared projectile family, with bow-and-arrow as the candidate. Material suitability and a launcher still matter; plausible phrasing does not guarantee success.
+
+The assistant distinguished continuous autonomous activity from model calls every tick: live LLMs handle conversation, goals, meaningful replanning and generation; Jev handles suitable bounded classifications; native code handles work, movement, needs and committed physical effects. No-model fixtures remain useful engineering tests, not the playable deliverable. Pause/speed and pausing while away were accepted, with no offline simulation and no scheduling autonomous AI while absent. Exact rates, operational limits, credentials and development spend remain unresolved. Detailed physics, large populations and G2 are deferred. The assistant did not implement or invoke paid services.
+
+## M11 — document the revised MVP agreement
+
+> Okay agreed. Document that.
+
+Recorded September 19, 2026. This accepts documenting the M10 correction and the assistant's proposed small live-AI creative loop. The [first playable MVP](../05-project/first-playable-mvp.md) records scope, native versus generated responsibilities, absence behavior and acceptance evidence. The roadmap and technical delivery sequence distinguish internal checkpoints from the complete first playable milestone. Exact recipes/balance remain proposals, and the bow-and-arrow example retains its tentative status as the second-invention candidate. Documentation only; no game implementation or paid integration is authorized by this request.
+
+## U13 — implement the first playable version
+
+> Okay now I would like you to implement the first version of Open Legend. Read all the documentation that we've created in this repo to fully understand the project at hand and implement the first version, which is documented in a doc somewhere, first playable MVP Spec.
+
+The user explicitly authorized implementation, emphasizing foundational generalizable primitives, modular replaceable components, evolving expressions/declarations/interactions, open-source code quality, useful comments and developer documentation. Native world/simulation logic should handle all suitable routine work; Jev should aggressively route, deflect and decide bounded cases before expensive inference; LLMs should still produce meaningful thoughts, complex decisions and new mechanics where needed. This supersedes prior documentation-only restrictions for Open Legend. It does not authorize modifying Macrofold, buying services or unlimited paid inference.
+
+The executable version and remaining live-acceptance requirements are recorded in [implementation status](../05-project/implementation-status.md), [current architecture](../../docs/architecture.md) and [verification](../../docs/verification.md).

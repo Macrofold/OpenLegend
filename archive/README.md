@@ -6,32 +6,46 @@ Open Legend is a shared world of embodied people and autonomous residents whose 
 
 ## Start here
 
+The latest [perception and attention proposal](07-technical-architecture/perception-and-attention.md) documents current sight/hearing and future sensory gradients, distance-specific descriptions, sound events, semantic interests and bounded decision triggers. This addition is documentation only; see [implementation status](05-project/implementation-status.md) for the executable prototype.
+
 1. [Recommended direction](03-design-proposals/overview.md) — direct answers to the central questions and a proposed small starting stack.
 2. [Master map](master-map.md) — how every feature connects to systems, research, and delivery.
-3. [Roadmap](05-project/roadmap.md) — the smallest useful releases and evidence required to expand.
+3. [First playable MVP](05-project/first-playable-mvp.md) and [roadmap](05-project/roadmap.md) — accepted live-AI creative loop, internal checkpoints and evidence required to expand.
 4. [Open decisions](05-project/open-decisions.md) — choices still belonging to the creator.
 5. [Licensing](../LICENSING.md) — accepted AGPL core, future permissive SDKs, and private-content boundaries.
 6. [Creator ecosystem and marketing](06-marketing/README.md) — memberships, mechanics packs, patrons, world history, and the creator fund.
+7. [Detailed technical architecture](07-technical-architecture/README.md) — system contracts, context assembly, evolving declarations, and a standalone Macrofold implementation handoff.
+
+For the subsequent critical review, start with [architecture findings and the revised build sequence](07-technical-architecture/review-and-delivery-plan.md). It records weaknesses corrected in the detailed documents, remaining feasibility risks, and separate gates for later features.
 
 The accepted starting direction is a primitive wilderness group with survival knowledge, accessible resources and possessions, before a village exists. Basic survival mechanics are built in, and NPCs can live or die through their choices and circumstances. Accelerated time and creator speed controls are wanted; one real hour per game day remains a tuning candidate. **PlayCanvas is the accepted browser-engine direction, with an independent custom simulation and generative-rule interface.** The visual target is beautiful grounded pixel art with 3D structure and modern atmosphere. Reuse engine infrastructure while owning mechanics, time and persistence; keep simulation runnable without graphics. The proposed capability library starts with validated recipes/effects before new executable algorithms. Camera/editor/asset details and other technology choices remain open.
+
+M10/M11 clarify the first playable: live LLM decisions and NPC conversation, Jev for suitable bounded judgments, actual generated sling crafting, hunting and harvesting/preparing/eating, plus another invention with bow-and-arrow the candidate. Pause/speed controls are required; the initial personal world pauses while the player is away and stops scheduling autonomous AI. See the [MVP agreement](05-project/first-playable-mvp.md); native/no-model and carrying-bundle fixtures are internal checkpoints.
 
 ## Archive structure
 
 | Location | Purpose | Documents |
 |---|---|---|
 | `00-source/` | Preserve the requests | [Original brief](00-source/original-brief.txt); [design follow-ups](00-source/design-followups.md); [open-source/community follow-ups](00-source/open-source-and-community-followups.md) |
-| `01-requirements/` | User-stated direction, separate from recommendations | [Product baseline and F01–F44](01-requirements/product-baseline.md) |
+| `01-requirements/` | User-stated direction, separate from recommendations | [Product baseline and F01–F61](01-requirements/product-baseline.md) |
 | `02-research/` | Verified external evidence, attributed limits and comparisons | [Source guide](02-research/source-guide.md); [games](02-research/games-and-emergence.md); [human models](02-research/human-models-and-memory.md); [Jev](02-research/jev-and-semantic-routing.md); [engines/art/audio](02-research/engines-art-and-audio.md); [hosting/scale](02-research/hosting-and-scale.md) |
 | `03-design-proposals/` | Concrete proposals implementing accepted directions; details remain open | [Overview](03-design-proposals/overview.md); [visual direction](03-design-proposals/visual-direction.md); [survival baseline](03-design-proposals/survival-baseline.md); [time and speed](03-design-proposals/time-and-simulation-speed.md); [architecture](03-design-proposals/system-architecture.md); [interaction protocol](03-design-proposals/interaction-protocol.md); [capability lifecycle](03-design-proposals/generative-capability-lifecycle.md); [agents](03-design-proposals/agents-and-social-simulation.md); [world/player experience](03-design-proposals/world-and-player-experience.md) |
 | `04-ideation/` | Optional directions and unvalidated business hypotheses | [Business and future directions](04-ideation/business-and-future-directions.md) |
-| `05-project/` | Running project records | [Roadmap](05-project/roadmap.md); [decisions](05-project/open-decisions.md); [research backlog](05-project/research-backlog.md); [implementation status](05-project/implementation-status.md) |
+| `05-project/` | Running project records | [First playable MVP](05-project/first-playable-mvp.md); [roadmap](05-project/roadmap.md); [decisions](05-project/open-decisions.md); [research backlog](05-project/research-backlog.md); [implementation status](05-project/implementation-status.md) |
 | `06-marketing/` | Positioning, channels and accepted creator/community directions; commercial details open | [Marketing overview](06-marketing/README.md); [positioning/copy](06-marketing/positioning-and-copy.md); [ideas/channels](06-marketing/ideas-channels-and-experiments.md); [open platform/private worlds](06-marketing/open-platform-and-private-worlds.md); [creator economy/packs](06-marketing/creator-economy-and-mechanics-packs.md); [patrons/history](06-marketing/patrons-contributors-and-world-history.md); [token exploration](06-marketing/tokens-and-community-funding.md) |
+| `07-technical-architecture/` | Current implementation proposals and explicit service boundaries; unimplemented | [Index](07-technical-architecture/README.md); [system architecture](07-technical-architecture/system-architecture.md); [context/inference](07-technical-architecture/context-and-inference.md); [declarations](07-technical-architecture/declarations-and-evolution.md); [Macrofold handoff](07-technical-architecture/macrofold-implementation-brief.md) |
 
 ## Reading paths
 
-**Generative architecture:** overview → interaction protocol → capability lifecycle → Jev → system architecture.
+**Billing visibility (U15):** [small billing menu and detailed LLM/Jev breakdowns](03-design-proposals/playability-and-controls.md#billing-menu-and-cost-breakdown) → [session, historical and arbitrary-period reporting contract](07-technical-architecture/billing-and-usage-reporting.md) → [Macrofold implementation brief](07-technical-architecture/macrofold-implementation-brief.md#billing-reports-for-application-interfaces). See F61/D50 and the [source request](00-source/billing-interface-followup.md). This is documented future behavior.
+
+**Invention governance and player interfaces (U14):** [owner locks, player ownership and complete/free-use world packs](03-design-proposals/invention-governance-and-ownership.md) → [action discovery, typeahead, categories, usage ranking and quick slots](03-design-proposals/playability-and-controls.md) → [durable logs, world-wide creator agent and revision workshop](03-design-proposals/world-agent-and-workshop.md). See [source request](00-source/world-governance-and-controls-followup.md), F53–F60 and D42–D49. These are documented future requirements; the current small right-click menu/journal does not implement them all.
+
+**Generative architecture:** [technical architecture](07-technical-architecture/system-architecture.md) → [context/inference](07-technical-architecture/context-and-inference.md) → [declarations/evolution](07-technical-architecture/declarations-and-evolution.md). The earlier interaction protocol and capability lifecycle retain examples and history. Copy the [Macrofold brief](07-technical-architecture/macrofold-implementation-brief.md) for downstream platform implementation.
 
 **World boundaries and manageable growth:** [simulation scope and complexity](03-design-proposals/simulation-scope-and-complexity.md) → [world rules, parameters, and friendly rejection](03-design-proposals/world-rules-and-parameters.md) → D32/D33 and R22. Use coarse consistent systems; distinguish plausible missing mechanics from effects forbidden by the selected world's premise. Exact presets, classifiers, and numeric budgets remain proposals.
+
+**Creating and discovering a world:** [AI-assisted creation and discovery through play](03-design-proposals/world-creation-and-discovery.md) → [state systems and anticipated future influences](03-design-proposals/state-systems-and-future-influences.md) → D12/D39–D41 and R23. Accepted direction: consistent discoveries, substantial defaults, sparse clarification, natural learning, and proactive consideration of undiscovered influences without automatically implementing them.
 
 **Evolving materials and buildings:** [modular construction, script references, and semantic expression](03-design-proposals/evolving-materials-and-construction.md) → [heat, ignition, and growing fire](03-design-proposals/heat-and-fire.md) → D20/D31 and R21. Modular, expandable construction is accepted direction; the exact component schemas, algorithms, script runtime, and spread rollout remain proposals.
 

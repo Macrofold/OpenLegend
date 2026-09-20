@@ -18,6 +18,7 @@ The concrete example supplied by the user is a magic tree spell: cast it while p
 
 | Document | Contents |
 |---|---|
+| [Business plan](business-plan.md) | Paid hosted-world launch, proposed pricing, bounded operating costs, early customers, and profitability milestones for a sustainable side project |
 | [Positioning and copy](positioning-and-copy.md) | Audiences, value proposition, draft homepage copy, taglines, creator experience and demo storyboard |
 | [Ideas, channels and experiments](ideas-channels-and-experiments.md) | Campaign concepts, candidate channels, sequence, lightweight message tests and measures |
 | [Open platform and private worlds](open-platform-and-private-worlds.md) | AGPL engine direction, private world content, optional mechanic libraries, creator control, and licensing boundaries |

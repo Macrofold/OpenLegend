@@ -1,5 +1,7 @@
 # Agents, bodies, emotions, and memory
 
+> Memory/cognition policy is now owned by [Memory architecture](../../docs/memory-architecture.md), including the 300-entry recent-recall target, highest-required-tier routing and god-only profile Thoughts view. Earlier illustrative limits and display suggestions below are historical where they conflict.
+
 Status: **design proposal**, updated for accepted primitive survival direction. Requirements: F02–F10, F21–F24, F31, F35–F39. Research basis and its limitations: [human models](../02-research/human-models-and-memory.md), [comparable games](../02-research/games-and-emergence.md). The system is designed for believable play, not clinical realism or validated predictions of human behavior.
 
 ## One character model, two controllers
@@ -74,19 +76,23 @@ Retrieval combines current intent, relevant people/places, recency, and semantic
 
 ## Sleep, dreaming, and consolidation
 
-During rest, a low-priority job can merge repeated observations, identify unfinished commitments, update beliefs, compact relationship evidence, and choose memories to retain. This is a budgeted data-management task with optional in-world dream narration.
-
-Dreams are tagged as imagined. A dreamed theft cannot become evidence that a neighbor stole an item. If imaginative associations inspire an invention, the resulting plan still passes world validation. A consolidation job returns a versioned replacement proposal; it cannot overwrite memories acquired while it was running. Merge by record IDs and versions or rerun on conflict.
-
-When provider capacity is exhausted, deterministic eviction/consolidation rules preserve commitments and remove low-value records. Residents should not lose their identity or freeze because a dream job timed out.
+The dream mechanic now lives in the canonical [memory architecture](../../docs/memory-architecture.md#9-sleep-dreams-forgetting-and-consolidation). It defines budgeted sleep consolidation, full-harness subjective updates, imagined dream provenance, protected commitments, concurrent-observation preservation and native retention fallback. Use its implementation checklist for delivery status.
 
 ## Perception, beliefs, and attention
+
+The [perception and attention specification](../07-technical-architecture/perception-and-attention.md) now owns the detailed proposal: shared near/medium/far object descriptions with supported state overlays, event-based attenuated sound, actor-specific evidence, arbitrary-intent semantic interests, mandatory person-encounter opportunities and batched Jev routing. It distinguishes the current 10-unit sight/event audience from future sensory fidelity. New exposure need not buy a thought; mundane objects become decision-relevant when a goal or significant change makes them matter. Persistent critical-need reminders follow simulation time under real-time inference caps.
 
 Initially use distance, facing if useful, and grid line-of-sight for vision; a radius/intensity model for hearing; adjacency for touch. Later, walls, doors, weather, light, species senses, and masking noise can alter these queries. Perception emits observations with confidence and source, not omniscient facts.
 
 A heard gunshot might produce “sharp bang eastward” rather than the shooter's identity. A whispered conversation may be detected but not intelligible. Hearing a statement records that it was said; accepting it as true is a separate belief update.
 
 Attention filters observations by urgency, novelty, relationship, goals, and current workload. Otherwise a crowded square floods every resident with all speech and movement. Keep an observation queue cap and coalesce repeated stimuli. Model calls use observations, not raw event streams.
+
+## Learning through ordinary interaction
+
+M07/M08 accept observation, direct experience, hearing information, teaching, and other interactions as learning sources. No formal research minigame is required. The character gains the evidence, belief, visible procedure, or practiced familiarity justified by the interaction; watching a method does not reveal hidden steps, and hearing a claim does not establish objective truth. Repeated practice can strengthen supported knowledge without overgeneralizing one outcome.
+
+Use the existing perception/attention/memory pipeline rather than a model call for every state update. Actual rain changes exposed objects independently of observers; witnessing it changes what a resident knows. Engine-authored definitions and [anticipated future influences](state-systems-and-future-influences.md) are not automatically accessible NPC knowledge. The [discovery specification](world-creation-and-discovery.md#interaction-is-how-knowledge-develops) gives examples; exact skill/confidence updates remain open.
 
 ## Decision pipeline
 

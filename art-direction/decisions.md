@@ -12,9 +12,20 @@ The earlier `archive/03-design-proposals/visual-direction.md` describes a ground
 
 The primitive wilderness setting is useful context when discussing references. The collection also includes cities, established settlements, exaggerated characters, and non-pixel painting to explore individual visual qualities.
 
-## New aesthetic decisions
+## Preferences established by round-one feedback — September 19, 2026
 
-None confirmed yet. The collection and its initial twelve references are research, not an adopted art direction.
+Evidence: [saved feedback](feedback.json), [verbatim record](round-01-feedback-record.md), and [analysis with examples](round-01-analysis.md). These preferences guide further research; they do not finalize the renderer, assets, camera, or sprite dimensions.
+
+- **Fine pixel density and definition:** avoid conspicuously chunky or simplistic forms. REPLACED (G30) and Tails Noir (G32) are the strongest overall benchmarks.
+- **Recognizable individuals:** clothing, equipment, body shapes, skin tones, and faces should read on world characters. Eastward (G12) illustrates an environment the user likes with characters that remain too simple.
+- **Cinematic lighting and material response:** atmospheric depth, reflective water, and deliberate illumination are positives. REPLACED, Tails Noir, Octopath II (G01), and Ferrari (C03) supply different examples.
+- **Rich, organic environments:** deliberate props, foliage, surfaces, and depth; avoid an obviously repeated grid. Core Keeper (G20) supplies the latter objection despite liked lighting.
+- **Expressive but controlled color:** Owlboy (G22), Eastward, and Children of Morta (G11) supply appealing richness. Excessive saturation and cartoon-like proportions are recurring negatives.
+- **Life and warmth alongside atmosphere:** cinematic does not mean permanently gloomy. Holstin (G05) and Rain World (G24) show detail worth studying but an unwanted depressing mood.
+
+Open: the minimum world-sprite detail, character screen size, overhead versus side-view translation, blur, exact palette, and compatibility with a primitive wilderness setting. A Like applies to the described qualities, not automatically the entire game's style.
+
+The [second board](round-02/index.html) explores these remaining questions. It keeps 17 new references and three benchmarks separate from the original board and feedback.
 
 ## Choices to resolve from feedback
 
