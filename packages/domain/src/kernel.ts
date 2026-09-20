@@ -1003,17 +1003,19 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
     itemDefinitions: [...definitionIds].map((id) => world.itemDefinitions[id]!).filter(Boolean),
     knownRecipes,
     memories: queryMemories(world, actorId),
-    recentEvents: world.events
-      .filter((event) =>
-        world.experience
-          ? world.experience.awareness[actorId]?.some((a) => a.eventId === event.id)
-          : event.audience.includes(actorId),
-      )
-      .slice(-24)
-      .map((event) => {
-        const aware = world.experience?.awareness[actorId]?.find((a) => a.eventId === event.id);
-        return aware ? { ...event, text: aware.text } : event;
-      }),
+    recentEvents: world.experience
+      ? (world.experience.awareness[actorId] ?? []).slice(-24).map((aware) => ({
+          id: aware.eventId,
+          sequence: aware.sequence,
+          at: aware.at,
+          type: aware.eventType ?? aware.modality,
+          text: aware.text,
+          audience: [actorId],
+          ...(aware.sourceId ? { actorId: aware.sourceId } : {}),
+          ...(aware.targetId ? { targetId: aware.targetId } : {}),
+          ...(aware.content !== undefined ? { data: { text: aware.content } } : {}),
+        }))
+      : world.events.filter((event) => event.audience.includes(actorId)).slice(-24),
   });
 }
 

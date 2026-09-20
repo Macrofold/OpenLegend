@@ -1,0 +1,144 @@
+# Inventions and world evolution implementation tracker
+
+This is the sole implementation tracker for declarations, invention, conjuring and world-evolution delivery. The canonical design is [Declarations, reusable mechanisms, and world evolution](../../archive/07-technical-architecture/declarations-and-evolution.md). Product behavior for the creator workflow belongs to the [world-agent and workshop design](../../archive/03-design-proposals/world-agent-and-workshop.md), and ownership policy belongs to [invention governance](../../archive/03-design-proposals/invention-governance-and-ownership.md).
+
+### Destination and the smallest useful first release
+
+The eventual experience is: a player or NPC expresses an intent; the system finds what already exists, identifies the missing capability, authors the smallest compatible addition, validates and activates it under world policy, and makes it available through ordinary interactions. Creator workshop changes can deliberately revise laws; ordinary invention must discover possibilities consistent with the world's premise and relevant established outcomes. An AI discussion, a stored description and a successful provider run are not an executable mechanic.
+
+**The first release should let a right-click Invent request produce a usable, persisted recipe from an existing supported family, inside the world-agent conversation.** It need not wait for world-wide retrieval, generic material simulation, cross-world pack distribution, or executable algorithm generation. It must use the same authoritative invention workflow that later supports those capabilities. Subsequent releases expand what that workflow can admit rather than introducing a separate route for each UI or model.
+
+### Inspected starting point
+
+- [x] **BASE-1 — Existing finite admission:** `packages/domain/src/declarations.ts` validates generated sling/bow/arrow declarations, deduplicates content, commits definition/recipe records and records admission. This is a narrow family contract, not general mechanics generation.
+- [x] **BASE-2 — Existing invention execution:** `apps/server/src/ai-director.ts` retrieves known recipes, routes reuse or one of three supported families, generates a typed draft and invokes domain admission. Its player-specific orchestration and family switch need extraction, not duplication.
+- [x] **BASE-3 — Existing conversation entry:** `apps/client/src/world-agent.ts` opens a new conversation and submits `Invent this: …`. `apps/server/src/macrofold.ts` runs persistent chat with player-scoped context but explicitly denies mutation tools and only returns text. It does not submit chat inventions to admission.
+- [ ] **BASE-4 — Complete live gameplay evidence:** a real world-agent request produces an admitted invention, which is crafted and used after reload. Basic provider/harness connectivity is insufficient evidence for this gate.
+
+### Contracts to establish early, without building a universal framework
+
+Keep these as small typed application/domain interfaces with in-process implementations first. SQLite can remain the repository; Macrofold remains one replaceable execution adapter. Exact field names are implementation decisions, not a new frozen public API.
+
+| Contract                         | Owns                                                                                                                                              | Must remain separate from                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Invention request                | Stable request ID, world/epoch, principal, initiating player/NPC authority, actor if applicable, intent, target evidence, dependencies and budget | Provider run/session identity and browser-authored authority |
+| Draft and candidate version      | Stable invention ID, schema/family version, immutable candidate digest, provenance, dependencies, assumptions and unresolved requirements         | World installation, character knowledge and item instances   |
+| Authoring executor               | Bounded generation, clarification or abstention; evidence and typed proposal output                                                               | Rules, permissions and authoritative admission               |
+| Capability family registry       | Trusted validators, applicability, supported effects, execution/action adapters and presentation defaults                                         | A growing central switch over named finished inventions      |
+| Admission and activation         | Current policy, compatibility, deterministic checks, atomic world installation and receipt                                                        | Conversation prose and model confidence                      |
+| Learning and action execution    | Which actor knows the result; ordinary prerequisites, resource consumption, progress and effects                                                  | Merely installing a definition or opening creator chat       |
+| Conversation and creator queries | Durable conversation state, task references and audience-scoped reads                                                                             | Canonical world storage and omniscient NPC context           |
+
+For initial compatible G1 additions, candidate approval and world activation may occur in **one database transaction**, but keep their identities/outcomes distinct. This permits later preview, revision, delayed activation and migration without changing the meaning of “invented.” A recipe's first version need not require a package manager or a general graph service.
+
+### INV-1 — One shared, authorized invention workflow
+
+**Depends on:** the existing finite admission path. **Unlocks:** a reusable backend service before changing UI behavior.
+
+- [ ] **1.1 Extract the existing pipeline.** Introduce an application-owned invention service for resolve/reuse, author, validate and admit. Adapt the current endpoint and director to it. Carry actor identity explicitly instead of hard-coding `player`; keep typed execution free of game policy.
+- [ ] **1.2 Persist request and draft identity.** Store the initiating request, candidate/digest, status and authoritative receipt independently of the bounded event feed, provider result retention and browser localStorage. Reference these from conversations. Use a repository interface over the current database; no distributed infrastructure prerequisite.
+- [ ] **1.3 Introduce the common policy gate.** Persist independent player/NPC invention locks and a policy revision; check them before authoring spend and at activation. Preserve origin through delegation and every entry point. Start with player invention allowed and autonomous NPC invention disabled as a proposed prototype default; expose and document both settings when implemented. Owner edits follow the player gate until a separate administrative exception is explicitly adopted.
+- [ ] **1.4 Make results truthful and recoverable.** Return typed outcomes for reused, needs clarification, draft ready, activated, unsupported capability, forbidden premise, stale/conflict, cancelled, unavailable and uncertain execution. A pending request can be read after restart without replaying generation. Retain stable mutation IDs and do not add automatic paid retries.
+- [ ] **1.5 Bind admission to relevant dependencies.** Recheck world identity, authority, applicable lock history, candidate digest and referenced definition versions. Unrelated simulation ticks should not invalidate a recipe; a revoked request must not become valid merely because a lock later reopens. Reserve authoring cost separately from eventual crafting resources.
+
+**Completion gate:** direct requests and delegated requests reach the same admission policy and durable receipt. Duplicate delivery admits once; invalid proposals leave definitions, knowledge and resources unchanged. Existing crafting and learning still work while invention is locked.
+
+### INV-2 — Make right-click Invent playable through world-agent chat
+
+**Depends on:** INV-1. **This is the first user-facing release; do not wait for later stages.**
+
+- [ ] **2.1 Preserve structured intent.** Send `invent` versus `ask`/`workshop` as an explicit request mode, plus optional clicked entity/location and observed revision. The server verifies references and binds authority. Do not infer authorization solely from an `Invent this:` string or silently turn quoted conversation into authoring.
+- [ ] **2.1a Index and retrieve similar inventions.** Implement the [similar-invention contract](../../archive/07-technical-architecture/declarations-and-evolution.md#similar-inventions-before-authoring) with versioned text embeddings, vector search, authorized scope and applicability filters; refresh changed definitions and expose incomplete/unavailable search honestly. Run on explicit Invent intent before new candidate generation.
+- [ ] **2.1b Add the Similar inventions modal.** Present ranked matches and differences, with Use existing, Modify existing, Invent new and Cancel. Preserve intent and selected version across continuation; recheck permissions and prerequisites. Modification creates a validated derived draft, never an in-place edit. No matches proceeds normally; unavailable search offers retry or explicit continuation. Do not generate while awaiting a choice or replay generation on reopening.
+
+- [ ] **2.2 Add a bounded invention operation to the world-agent gateway.** It invokes INV-1 under the conversation's server-bound scope. An initial typed final-response envelope plus server dispatch is sufficient; MCP/tool streaming is optional. After the similar-invention search and any modal choice, an explicit Invent request can enter the authoring path without paying for a preliminary assistant turn just to repeat the request. If the agent already produced a valid candidate, submit that candidate rather than commissioning a second generation.
+- [ ] **2.3 Render structured progress and receipts in the conversation.** Show reuse, relevant clarification, authoring, validation, blocked and installed outcomes. Give the admitted result an inspectable reference and a Craft/use affordance when appropriate. Assistant prose cannot claim installation before the committed receipt. Keep follow-up drafts attached to the same invention task.
+- [ ] **2.4 Define installation versus learning.** A player-character invention can grant knowledge through the existing discovery rule. A creator-only installation does not teach every character or spawn objects. Clicking Craft submits a separate ordinary action with fresh prerequisites; requesting an invention is not permission to consume inventory automatically.
+- [ ] **2.5 Close the delivery gaps.** Persist enough server-owned conversation/task linkage to recover pending work and receipts after reload, handle simultaneous tabs and deduplicate double submits. Reopening, switching tabs or reconnecting must not dispatch. A paused world may support discussion/drafting; activation waits for the allowed simulation boundary and revalidation.
+- [ ] **2.6 Exercise the real loop separately from fixtures.** Right-click Invent → embedding/vector lookup → choose reuse, modification or new invention when matches exist → generate a supported recipe when needed → admit exactly once → display available crafting → gather missing ingredients → craft/use → reload and reuse without regeneration. Also cover paraphrased matches, no matches, inaccessible records, failed search, modal cancellation and duplicate continuation. Show an unsupported request honestly, with no invented item or fake success.
+
+**Authorization policy for this slice:** the explicit Invent interaction can authorize automatic activation of a new compatible recipe within a declared low-impact G1 envelope. Do not add a confirmation dialog to every normal invention. Shared-law changes, destructive migrations or unclear scope require the distinct workshop policy and a concrete diff. Ask only consequential clarification; use bounded defaults for cosmetic details.
+
+### INV-3 — Expand beyond the three recipes through registered families
+
+**Depends on:** INV-2's functioning loop. **Unlocks:** genuinely different inventions without rewriting chat/admission each time.
+
+- [ ] **3.1 Register capabilities, not finished answers.** Move existing launcher/ammunition families behind versioned descriptors: input schema, material roles, applicability, permitted reads/effects, cost/work limits, validator, execution adapter and failure behavior. Preserve existing saved definitions through an explicit legacy adapter/version migration.
+- [ ] **3.2 Generalize the proposal envelope.** Use stable kind/family/version references and bounded family-specific payloads, rather than a universal set of weapon fields. Allow a small dependency bundle such as recipe + output definition + action description. Keep G0 interpretation, G1 declarative changes and unsupported host requirements distinct.
+- [ ] **3.3 Make action discovery data-driven.** Families project parameter schemas, target rules, prerequisites and executable bindings into the complete action catalogue, crafting UI and NPC candidates. A newly admitted action becomes discoverable through the existing UI; rendering a new label alone must not make it executable. Visibility, knowledge and target availability remain authoritative filters.
+- [ ] **3.4 Add common presentation requirements.** Each invention includes bounded item/action descriptions and a symbolic action representation, with appropriate common target/state variants. Publish custom icons/art asynchronously by artifact/version identity; use a trusted fallback immediately. Presentation failure cannot roll back valid mechanics or change collision, reach or effects.
+- [ ] **3.5 Prove extension with a non-weapon family.** Implement a carrying/container assembly or similarly small utility family with real capacity, containment and resource semantics. Generate a new instance of that family through the same conversation pipeline. No name-triggered canned recipe. Choose one useful family at a time; do not build the entire future material system first.
+
+**Completion gate:** adding a trusted family changes its module/registration and necessary engine support, not the conversation protocol or a switch over named inventions. Old saves/recipes still work; unsupported operations remain explicit gaps.
+
+### INV-4 — Give the creator useful, scoped world investigation and workshop tools
+
+**Depends on:** INV-1/2 identities and permissions. Can proceed alongside INV-3.
+
+- [ ] **4.1 Separate creator and embodied audiences.** Introduce server-granted creator query capabilities over the authorized world. Cover entities, definitions, installations, character context and events through bounded typed reads. Never send the whole world snapshot, credentials or other actors' private memories to ordinary player/NPC jobs. Creator-only findings stay out of character knowledge unless learned through a valid in-world event.
+- [ ] **4.2 Make history durable and navigable.** Persist the declared event coverage and technical invention artifacts beyond UI scrollback. Support exact lookup and paginated time/entity/version filters with evidence IDs, revisions and honest gaps. Add database indexes when needed; broad semantic search is not required for basic inspection.
+- [ ] **4.3 Expose tool-shaped read and draft operations.** Resolve a definition, inspect dependencies, retrieve permitted evidence, get/update a draft and request validation through the same application services used by UI. Macrofold gets bounded capabilities or an equivalent server-mediated loop, never direct database writes or policy-setting authority.
+- [ ] **4.4 Add durable multi-turn workshop state.** Record base version, intended scope, draft revisions, unresolved questions and validation reports. Present before/after mechanics and affected objects/processes. Keep conversation sessions replaceable; the canonical draft must survive provider-session loss.
+- [ ] **4.5 Enforce revocation and output audiences.** Recheck grants on each query, draft publication and activation. Separate creator explanation from public invention descriptions; private source evidence must not accidentally appear in a recipe, public event or exported artifact.
+- [ ] **4.6 Add confirmed god-mode conjuring.** Implement the [world-agent conjuring contract](../../archive/03-design-proposals/world-agent-and-workshop.md#confirmed-god-mode-conjuring): named or random candidate, reuse or guided definition of all relevant properties/dependencies, concrete quantity/location/effects/art-budget preview, explicit confirmation, and a separately authorized idempotent instance-creation operation. Automatically queue missing artwork after confirmation through INV-3.4 and the runtime art pipeline; distinguish valid creation with pending art from unsupported mechanics. Recheck scope, locks and revisions; preserve the confirmed random choice and receipts across restart. Verify cancellation before confirmation, duplicate submissions, revoked access, unsupported families, art failure and late art without duplicate spawning or paid retries. Existing families can ship first; expanded families/art depend on INV-3 and the asset pipeline, and shared-law changes still depend on INV-5.
+
+- [ ] **4.7 Add bounded invention investigation.** After scoped tools in 4.3 and relevant INV-3 families, let a harness inspect materials, existing mechanisms and missing dependencies before producing a reusable candidate. Preserve the simple one-call path, reuse valid drafts and return unsupported host requirements honestly; do not add a mandatory preliminary call to explicit Invent requests.
+- [ ] **4.8 Add evidence-driven world investigation.** After 4.1–4.3, let the harness choose successive bounded queries over events, definitions and permitted character context. Demonstrate an explanation whose next query depends on prior evidence; cite records and gaps, enforce cumulative traversal budgets and keep god findings out of NPC knowledge.
+- [ ] **4.9 Coordinate complex conjuring through tools.** Extend 4.6 once property/dependency and asset tools exist: inspect/reuse definitions, complete the reviewable candidate, then coordinate approved mechanics and art within the confirmed scope. End the run while waiting for user confirmation or long-running art; resume from durable task state without rerolling the candidate or duplicating paid generation.
+
+**Completion gate:** the authorized creator can investigate an invention, cite its actual definition/history and prepare a scoped revision. The same tools called under ordinary player authority cannot reveal private NPC context or grant world-edit privileges.
+
+### INV-5 — Versioned workshop activation and existing-state migration
+
+**Depends on:** INV-3 version/family contract and INV-4 workshop state. **Unlocks:** changing existing inventions safely.
+
+- [ ] **5.1 Separate candidate approval from installation.** Persist immutable versions, parent/fork lineage, pinned dependencies and per-world installation manifests. For a new compatible recipe, keep the simple transaction; for a revision, require an explicit family compatibility/migration result.
+- [ ] **5.2 Rehearse affected-state changes.** Identify instances, learned references, pending work and owning systems. Preserve elapsed work, consumed materials, stored contents and pending contributions. Do not let an old owner and a replacement both update the same state.
+- [ ] **5.3 Activate at a committed boundary.** Check expected base/profile/policy versions, migrate or quiesce affected processes, then atomically commit definitions, state and receipt. Preparation failure keeps the old installation. Recovery after a crash reads the receipt instead of repeating migration.
+- [ ] **5.4 Handle conflicts and retirement.** Concurrent edits report conflict/rebase rather than last-write-wins; retain versions still referenced by instances, processes or the replay horizon. Quarantine affects declared scope and has a visible recovery policy. Rollback is a forward compatible change, not undoing unrelated history.
+
+- [ ] **5.5 Add iterative workshop refinement.** After 4.3–4.4 and 5.1–5.3, give a bounded harness access to draft diffs, trusted validation reports and authorized scenario/migration previews. Use returned findings to revise within the admitted allowance, then present consequences before activation. Compare the roof-waterproofing or burn-rate case with one-call authoring; validator success is not permission to change the live world.
+
+**Completion gate:** a workshop revision changes actual behavior while preserving existing resources and progress; rejected or interrupted activation never leaves mixed definitions/state.
+
+### INV-6 — Composable materials, assemblies and passive world processes
+
+**Depends on:** INV-3 and INV-5. **Unlocks:** reusable physical interactions rather than more isolated item recipes.
+
+- [ ] **6.1 Add typed properties and ownership incrementally.** Register units, ranges, applicability, defaults, provenance and a single state owner. Distinguish unknown/conflicting/not-applicable; no arbitrary zero or immunity from missing data. Prefer component/material composition over attaching every conceivable field to every object.
+- [ ] **6.2 Add bounded declarative composition.** Trusted operations supply mandatory reads, permitted writes, transfer accounting and evaluation limits. Declarative predicates/formulas may compose those operations within finite limits; new prose, property names or JSON keys cannot invent host effects.
+- [ ] **6.3 Establish the fixed-step contribution protocol.** Read one start-state, aggregate competing resource claims, then atomically apply bounded contributions/transfers in stable order. Record time/random inputs. Enforce work and scheduled-descendant limits; no unbounded recursive updates or AI per tick.
+- [ ] **6.4 Deliver one vertical physical example.** Build a modular shelter with rain/exposure/moisture behavior; then add drying/combustion as separate registered consumers/owners when supported. Cover material defaults, attachment changes, passive exposure during AI outage and version-preserving migration. Avoid implementing a full physics simulator as the first milestone.
+- [ ] **6.5 Retain dormant influence notes.** Store capped anticipated consumers/causes with triggers, uncertainty and dependencies, but no executable effect or automatic recursive authoring. An unsupported immersion influence is neither implemented nor forever impossible.
+
+**Completion gate:** two independently invented objects reuse the same admitted law, including unattended environmental effects. Resource accounting and behavior remain coherent without a model connection.
+
+### INV-7 — Discover missing mechanics during play without endless generation
+
+**Depends on:** INV-3; passive-system discovery additionally requires INV-6.
+
+- [ ] **7.1 Introduce a missing-capability request.** An unusual action/environmental interaction records the relevant family, missing contract, evidence, intent, current profile and bounded scope. Classify existing execution, semantic interpretation, supported new declaration, forbidden premise and unsupported host operation separately. Not every new encounter needs a permanent definition.
+- [ ] **7.2 Retrieve before authoring.** Reuse INV-2's text-embedding/vector retrieval alongside IDs, aliases, family applicability and lexical lookup behind a replaceable retrieval port. Apply actor-scoped discovery rules; autonomous NPC selection does not open the player modal. Jev can select among supplied eligible alternatives or abstain. Similarity never proves equivalent mechanics or changes unknown into impossible.
+- [ ] **7.3 Bound autonomous invention.** NPC goals/attention and meaningful blocked-action events may initiate requests under the agent lock. Coalesce compatible concurrent requests, use cooldowns/negative-result expiry and reserve cost before dispatch. Player delegation preserves player origin. Native survival does not wait on generation.
+- [ ] **7.4 Revalidate resumption separately.** An activated capability can outlive its initiating request. Before resuming an action, recheck target, actor intent, prerequisites, authority and cancellation; activation alone does not perform it. Invalidate affected lookup/availability caches without regenerating every actor's context.
+- [ ] **7.5 Validate consistency and measure value.** Check candidate effects against the profile and relevant past outcomes, without overgeneralizing one observation. Record reuse rate, deferrals, latency, spend and gameplay consequences separately. An error does not trigger an automatic paid repair loop.
+
+- [ ] **7.6 Connect character discovery across gameplay events.** With CH01 and relevant INV-3/INV-6 support, connect a scoped planning harness to permitted missing-capability requests, actual action receipts and later observations. Exercise leaking shelter → inspect known materials → propose an improvement → construct through native actions → observe later rain → reconsider. Keep character hypotheses distinct from engine authoring, enforce the agent invention lock, and preserve progress across fresh jobs without waiting inside a paid run.
+
+**Completion gate:** an eligible unsupported interaction can become a reusable supported behavior, or remain an honest bounded deferral, without per-step inference, duplicate world laws or accidental action execution.
+
+### INV-8 — Portable inventions and later algorithm extensions
+
+**Depends on:** stable identity, activation and permissions. These do not block INV-2 through INV-7.
+
+- [ ] **8.1 Add creator library and complete world-pack inventory.** Separate original authorship, learning, imports and installation; retain exact versions, rights and private-dependency blockers. Begin with a local library, not a marketplace service.
+- [ ] **8.2 Export/import immutable manifests.** Pin authorized dependency closure, compatibility and lineage; preview conflicts and activate through INV-5 under the destination's policy. Export definitions, not private memories or a whole save. Partial distributable payloads must be labeled partial.
+- [ ] **8.3 Resolve contribution terms before shared publication.** Implement consent, creator retention, free-use eligibility and co-authorship policy before promising complete freely reusable packs. Paid marketplace work follows proven free sharing/import.
+- [ ] **8.4 Gate G2 separately if needed.** Only after a concrete mechanic cannot fit admitted G1 operations, evaluate a restricted deterministic algorithm runtime against a fixed query/effect interface. Require isolation, instruction/memory/output limits, replay, quarantine and migration evidence. No `eval`, generated host JavaScript, model-driven engine installation or Macrofold sandbox executing each simulation tick. Activating this future capability requires a separately approved engineering change; it is not available under current runtime rules.
+- [ ] **8.5 Keep G3 an engineering release.** A new privileged operation, storage meaning or interpreter behavior requires reviewed host code, compatibility handling and migration. Preserve unsupported requests as design input; never claim the model has silently implemented them.
+
+### How to implement and track the next slice
+
+Implement **INV-1, then INV-2**, in small changes against the existing family adapter. Finish the real crafting/use loop before broadening the ontology. INV-3 and INV-4 then provide independent extension and investigation work; INV-5 precedes edits to active physical systems. Select the next family by a concrete gameplay example, not by trying to predefine all future nouns.
+
+For each task, record: affected interfaces, migration/backward-compatibility choice, remaining limitations, deterministic evidence and (where needed) separately budgeted live evidence. A check mark means the task's stated outcome exists, not merely that an interface or prompt was added. Keep expensive evaluation and fixture batches deliberate. This documentation update adds the roadmap only; it changes no runtime behavior and sends no paid requests.

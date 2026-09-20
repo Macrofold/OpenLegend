@@ -13,7 +13,6 @@ export {
 export {
   GOD_SPAWN_OPTIONS,
   editPerson,
-  personMemory,
   editWorldEvents,
   reviveActor,
   spawnWorldEntity,

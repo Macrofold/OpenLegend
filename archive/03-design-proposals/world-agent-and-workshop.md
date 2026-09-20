@@ -1,6 +1,6 @@
 # World agent, durable world log, and invention workshop
 
-Recorded September 19, 2026 from [U14](../00-source/world-governance-and-controls-followup.md). **Accepted product direction; contracts and sequencing below are proposals, not implemented features.** The prototype has a bounded journal and immutable admitted G1 recipes, not a complete historical event store, privileged world agent or revision workshop.
+This document owns accepted product behavior for the creator agent, world inspection, workshop and confirmed conjuring experience. The current prototype has a bounded journal and immutable admitted G1 recipes, without a complete historical event store, privileged world agent or revision workshop.
 
 This document owns world-agent access, durable inspection and revision workflows. [Playability and controls](playability-and-controls.md) owns log/menu presentation; [invention governance and ownership](invention-governance-and-ownership.md) owns locks, authorship and pack rights. The [declaration architecture](../07-technical-architecture/declarations-and-evolution.md) owns authoritative activation and migration.
 
@@ -22,7 +22,7 @@ Before executing conjuring, show a concrete preview and obtain explicit confirma
 
 Conjuring is a separate server-authorized creator operation that can instantiate an admitted object without ordinary crafting resources. It must not silently grant character knowledge or change unrelated objects. Recheck god access, world/policy revisions and definition readiness at commit; new behavior still follows applicable invention locks and admission, without implying a general owner exception. Persist request, candidate, confirmation and one instance-creation receipt so duplicate submissions or restart cannot create extra objects or repeat paid generation.
 
-After confirmation, automatically complete and validate the approved definition and queue any missing art. Mechanically complete objects may appear with an honest temporary fallback while art finishes; show pending/failed art separately from successful creation. Publish validated art against the retained definition/version and current instance state. Missing required mechanics prevent spawning; art failure does not erase a valid object or authorize automatic paid retries. The creator should not need a separate prompt to request the missing artwork. Track this work in [INV-4.6](../07-technical-architecture/declarations-and-evolution.md#inv-4--give-the-creator-useful-scoped-world-investigation-and-workshop-tools), using INV-3 presentation/family support and the existing art pipeline.
+After confirmation, automatically complete and validate the approved definition and queue any missing art. Mechanically complete objects may appear with an honest temporary fallback while art finishes; show pending/failed art separately from successful creation. Publish validated art against the retained definition/version and current instance state. Missing required mechanics prevent spawning; art failure does not erase a valid object or authorize automatic paid retries. The creator should not need a separate prompt to request the missing artwork. Track this work in [INV-4.6](../../docs/maintainers/inventions-and-world-evolution.md#inv-4--give-the-creator-useful-scoped-world-investigation-and-workshop-tools), using INV-3 presentation/family support and the existing art pipeline.
 
 ## Whole-world access with distinct audiences
 
@@ -93,28 +93,6 @@ Acceptance covers history beyond scrollback; technical records after restart/run
 
 Open choices include event coverage/retention budgets, human-private-record policies, co-author/moderator rights, migration defaults, world deletion versus author retention, workshop approval defaults and Macrofold interfaces available at implementation time.
 
-## Implementation tracker: world-agent invention and workshop
+## Delivery
 
-Added September 19, 2026. Use the [canonical sequenced invention tracker](../07-technical-architecture/declarations-and-evolution.md#implementation-tracker-from-world-agent-invention-to-evolving-world-mechanics) for task status and dependencies; this section maps the user experience to those tasks rather than creating a second independently maintained backlog.
-
-**Current boundary, from source inspection:** persistent Macrofold chat is now wired in `apps/server/src/macrofold.ts`, superseding this document's older statement that integration is absent. It receives `buildContext(..., 'player', ...)`, not authorized whole-world creator queries, and explicitly has no world-mutation tools. Right-click Invent now opens an editable native invention draft without dispatch; the larger React world-agent chat remains a separate discussion surface and does not submit declarations to the engine. The separate invention pipeline supports only its existing finite families. These observations do not establish complete live gameplay acceptance.
-
-| Ship in order | Player/creator experience | Canonical tasks |
-| --- | --- | --- |
-| 1 | One common request, policy and durable invention outcome across entry points | INV-1 |
-| 2 | Invent searches similar inventions, offers the reuse/modify/new modal, then yields a usable recipe; reload retains the result | INV-2 — first playable release |
-| 3 | New non-weapon families appear through the same chat, action catalogue and presentation contract | INV-3 |
-| 4 | Inspect authorized world-wide evidence, retain drafts and confirm named/random object conjuring with properties and automatic art | INV-4, alongside INV-3; conjuring also uses the art pipeline |
-| 5 | Workshop an existing invention, inspect the diff, activate a compatible version while preserving existing progress/resources | INV-5 |
-| 6 | Discover reusable material, construction and environmental interactions through play | INV-6 and INV-7 |
-| 7 | Inspect a creator library, share/import compatible packs; later consider constrained algorithms only behind their engineering gate | INV-8 |
-
-The first implementation should use a small **server-mediated typed operation** from world-agent chat to the shared invention service. It can return complete response envelopes before adding MCP or streaming. Avoid an LLM call whose only purpose is to repeat an explicit Invent request, and never generate a second candidate when a valid scoped candidate already exists. Normal authorized low-impact invention need not acquire a new confirmation dialog; shared-law edits and consequential migrations follow the separate workshop policy.
-
-The eventual creator agent may query the entire **authorized world** through bounded tools, including permitted private character context. That is query coverage, not a giant world snapshot or permission to disclose private source material in public inventions. Its effects remain typed application operations: draft, validate and request activation; any physical action, character learning, instance spawning or creator command needs its own supported authority and admission path. Macrofold conversations and workspaces supply execution and continuity, never independent authority over the game.
-
-Progress is recorded under the canonical task IDs above. No world-agent mutation path, expanded context access or new mechanic was implemented by this documentation change.
-
-### Later harness delivery tasks
-
-Track completion in the canonical invention queue: **INV-4.7** adds unfamiliar-invention investigation, **INV-4.8** adds evidence-driven world queries, **INV-4.9** coordinates complex confirmed conjuring, and **INV-5.5** adds validation-guided workshop refinement. These follow usable typed tools and do not block INV-2's first playable invention. **INV-7.6** connects embodied discovery to actual gameplay feedback; creator access is never inherited by NPCs.
+Delivery is tracked in [Inventions and world evolution](../../docs/maintainers/inventions-and-world-evolution.md). The focused remote conversation/session boundary is specified in the [Macrofold world-agent handoff](../../docs/macrofold-world-agent-handoff.md).

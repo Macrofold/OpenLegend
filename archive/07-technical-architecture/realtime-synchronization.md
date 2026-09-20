@@ -1,5 +1,7 @@
 # Real-time synchronization, prediction and persistence
 
+
+The personal-world runtime already uses GET bootstrap + typed SSE `GamePatch` updates; shared-world synchronization described here is future work. Current transport behavior belongs to [Architecture](../../docs/architecture.md).
 Current local runtime note (September 20): the prototype uses a private SQL-transactional change journal with periodic snapshots, and public bootstrap/SSE typed patches with bounded replay. See the [canonical implemented architecture](../../docs/architecture.md#state-and-transitions). This is not the optional future external journal-first authority migration or the complete normalized/multiplayer design below; SQL commit remains the durability boundary, while routine local timer progress may be published before its one-second flush.
 
 Status: **accepted architectural direction; proposed implementation contract**, September 19, 2026. The user approved server-side queued/batched updates, responsive browser prediction, authoritative multiplayer outcomes, selective replication and the future improvement path described here. No networking, storage or gameplay code is implemented by this document. Numerical tuning, transport rollout and capacity remain subject to measurement.

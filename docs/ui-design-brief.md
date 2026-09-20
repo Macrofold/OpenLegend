@@ -1,6 +1,6 @@
 # Open Legend UI design brief
 
-Status: design handoff, updated September 20, 2026. React and React Aria are now adopted; Motion remains unnecessary for the current modest transitions. This brief records desired UX and future direction, not live acceptance evidence. Provide current screenshots alongside it. See the [production UI ownership guide](../apps/client/src/design-system/README.md) and [deferred validation queue](maintainers/TODO.md).
+React and React Aria are the current UI foundation; Motion remains unnecessary for the current modest transitions. This brief owns presentation and interaction behavior. See the [production UI ownership guide](../apps/client/src/design-system/README.md), [current architecture](architecture.md) and [cross-cutting validation queue](maintainers/TODO.md).
 
 ## Project and atmosphere
 
@@ -48,9 +48,9 @@ A later reaction mechanism may briefly show natural text such as “Hmm” above
 
 The [narration/conversation design](narration-and-conversations.md) specifies future presentation. Show non-speech reactions, actions and relevant world events as prose between speech messages, without a fake speaker or internal thoughts. Beneath narrated consequences, show smaller distinct readable impacts such as “−1 Health”, derived only from committed effects. Expressive actions without mechanics show no invented damage/condition changes; offer a subtle expression/no-effects cue where needed. Thought-only/no-response outcomes finish the pending indicator without fabricating speech.
 
-Outside conversation, The Narrator can show stylized book-like text across the top of the screen. Save the same private entry in the player's Journal, respect UI scale/reduced motion and avoid stealing focus or blocking controls. Narrator voice is a player preference affecting future prose, not game rules or existing history. Event access is independent of conversation membership; later joiners see earlier speech only if they actually heard it. Hiding a panel differs from explicitly leaving a conversation. Merge notices link the old thread to the destination without importing hidden history.
+Outside conversation, The Narrator can show stylized book-like text across the top of the screen and save the same entry in the player's Journal. Respect UI scale and reduced motion, and avoid stealing focus or blocking controls. Narrator voice changes future presentation only. Hide and leave use visibly distinct controls, and merge notices link to the destination without copying hidden text into the visible thread.
 
-Show stable chronological history when generation finishes late, preserve reading position, and avoid rendering an action both as a raw event and as its narration. One meteor can cause different private descriptions in several conversations, grounded in what each viewer perceived. Optional private single-actor narration and distant story cutaways require explicit server disclosure policies, not a UI toggle that exposes another actor's mind. Delivery and acceptance are tracked in [NC01–NC13](narration-and-conversations.md#13-implementation-tasks); no runtime implementation is claimed here.
+Show stable chronological history when generation finishes late, preserve reading position and avoid rendering the same action twice. Authorization, membership, merges, source scope and privacy are defined in [Narration, agent responses and conversations](narration-and-conversations.md); the UI renders only the server-authorized projection. Delivery is tracked in the [Narration and conversations tracker](maintainers/narration-and-conversations.md).
 
 ## God-mode cognition debugging
 

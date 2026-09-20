@@ -21,6 +21,7 @@ export function Composer({
   seed,
   setup,
   notify,
+  visible,
 }: {
   view: GameView;
   connected: boolean;
@@ -28,6 +29,7 @@ export function Composer({
   seed: ComposerDraft | null;
   setup(): void;
   notify(text: string): void;
+  visible: boolean;
 }) {
   const [draft, setDraft] = useState(readDraft),
     [sending, setSending] = useState(false);
@@ -61,7 +63,6 @@ export function Composer({
       message.kind === 'action' ? (
         <div className="ol-meta">
           <p>{message.text}</p>
-          {message.mechanical === false && <small>Expression · no mechanical effects</small>}
         </div>
       ) : (
         <ConversationMessage
@@ -69,7 +70,6 @@ export function Composer({
           label={message.speaker}
           text={message.text}
           failureReason={message.replyStatus === 'failed' ? message.replyFailure : undefined}
-          interruption={message.replyInterruption}
           pending={activeReply(message.replyStatus)}
         >
           {message.speakerId !== view.player.id && /\?\s*$/.test(message.text) && (
@@ -131,6 +131,7 @@ export function Composer({
             conversationKey={`${view.worldId}:${npc?.id ?? 'nearby'}`}
             items={messages}
             ariaLabel={npc ? `Conversation with ${npc.name}` : 'Conversation'}
+            visible={visible}
           />
         </>
       ) : (

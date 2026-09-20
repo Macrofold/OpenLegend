@@ -108,6 +108,7 @@ const godAwareness = z
     intelligible: z.boolean(),
     entityIds: z.array(requestIdSchema).max(100),
     importance: z.number().finite(),
+    urgency: z.number().finite().min(0).max(10).optional(),
   })
   .strict();
 const godMemory = z
@@ -170,6 +171,8 @@ const godWorldEvent = z
     actorId: requestIdSchema.optional(),
     targetId: requestIdSchema.optional(),
     audience: z.array(requestIdSchema).max(1000),
+    importance: z.number().finite().min(0).max(10).optional(),
+    urgency: z.number().finite().min(0).max(10).optional(),
     data: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
   })
   .strict();
@@ -223,6 +226,7 @@ export async function createGameServer(
     timeout?: ReturnType<typeof setTimeout>;
   };
   const streams = new Map<ServerResponse, StreamState>();
+  let pendingStreams = 0;
   let publicView: GameView | undefined;
   const patches = new Map<number, { revision: number; message: string }>();
   let patchBytes = 0;
@@ -361,19 +365,38 @@ export async function createGameServer(
             message: 'Reload the game to establish a local session.',
           });
         if (request.method === 'GET' && url.pathname === '/api/events') {
-          if (streams.size >= 8)
+          if (streams.size + pendingStreams >= 8)
             return send(response, 429, {
               ok: false,
               code: 'connections',
               message: 'Too many open game tabs.',
             });
           const connectionId = randomBytes(16).toString('hex');
-          await service.setConnection(connectionId, true);
-          response.on('close', async () => {
+          let connected = false;
+          let closed = false;
+          let released = false;
+          const release = async () => {
+            if (!connected || released || disposed) return;
+            released = true;
+            await service.setConnection(connectionId, false);
+          };
+          response.once('close', () => {
+            closed = true;
             clearTimeout(streams.get(response)?.timeout);
             streams.delete(response);
-            if (!disposed) await service.setConnection(connectionId, false);
+            void release();
           });
+          pendingStreams++;
+          try {
+            await service.setConnection(connectionId, true);
+            connected = true;
+          } finally {
+            pendingStreams--;
+          }
+          if (closed) {
+            await release();
+            return;
+          }
           response.writeHead(200, {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-store',

@@ -57,44 +57,9 @@ Avoid real-world IQ numbers as an all-purpose intelligence meter. More useful ga
 
 At birth/creation, combine seeded variation, authored background, and later experience. Heredity and developmental personality systems can wait. Human players may choose a lightweight background and change it within product rules; the system should not infer sensitive traits from their chat.
 
-## Memory storage and forgetting
+## Cognition, memory and perception boundaries
 
-The canonical [memory architecture](../../docs/memory-architecture.md) defines awareness, English recall, authored inner world, quotas and publication. The [production data model](../07-technical-architecture/production-data-model.md) specifies repository projections. The [Macrofold comparison](../02-research/macrofold-workspaces.md) retains research and cost scenarios; current integration evidence belongs in [implementation status](../05-project/implementation-status.md).
-
-Use distinct records:
-
-| Store | Content | Retention approach |
-|---|---|---|
-| Working context | Current activity, recent turns, immediate observations | Short and replaceable |
-| Episodic memory | Who, what, where, when, observed/heard/inferred, affect, evidence | Salience-weighted finite budget |
-| Subjective beliefs | Authored inner-world prose with meaningful uncertainty and attribution | Reflection updates accepted text; never silently convert rumor to fact |
-| Relationship assessment | Freely revisable directional descriptions informed by memories, without points; structured kinship and obligations stay separate | Accepted inner-world text; derived query projections do not own another prose copy |
-| Procedural knowledge | Known recipes, skills, routes, habits | Versioned references rather than copied scripts |
-| Protected commitments | Active promise, debt, appointment, caregiving obligation | Keep until resolved; bounded creation |
-
-The authoritative world journal is separate. NPC forgetting does not delete item ownership, a birth record, or a committed trade. Conversely, an NPC cannot retrieve the journal to recover events it never perceived.
-
-Raw recall spans the last six game hours; hourly small-model consolidation processes older raw personal memories and actor-aware shared events. Select useful summaries alongside recent experiences without duplicating events. Finite count/byte/backlog limits still need tuning. The initial authored ceiling is ten files of 500 words each plus a byte bound; CR01 must resolve its tension with full About me inclusion and compact greeting targets. Counts alone cannot bound a novel-sized record or population-wide storage.
-
-Score retention using salience, recency, repetition, relevance to commitments, and distinctiveness. Avoid always retaining negative events just because they are emotionally intense. Maintain key positive experiences and mundane routines as well. Expire stale location beliefs; preserve their uncertainty rather than pretending an old observation is live.
-
-Retrieval combines current intent, relevant people/places, recency, and semantic matching. Include the complete accepted About me text and Jev-selected high-value recall within route budgets. Summaries retain references to source memories while they exist, note uncertain interpretations, and avoid inventing connective details.
-
-Recall selection follows the [canonical signal and delivery contract](../../docs/memory-architecture.md#selection-signals-and-delivery-order): present people, recent events, goals, unresolved concerns and conflicting beliefs drive structured lookups first, followed by arbitrary-intent semantic retrieval. Selective-recall tools follow demonstrated initial-context gaps. Evaluate whether remembered evidence changes later behavior where relevant, not only whether it appears in context.
-
-## Sleep, dreaming, and consolidation
-
-The dream mechanic now lives in the canonical [memory architecture](../../docs/memory-architecture.md#9-sleep-dreams-forgetting-and-consolidation). It requires eight hours of daily rest and at least two continuous hours asleep before optional dream reflection. Hourly small-model consolidation is independent of sleep; full-harness background reflection updates files and publishes accepted text. Imagined dream attribution, protected commitments, concurrent observations and native retention remain distinct. Use its implementation checklist for delivery status.
-
-## Perception, beliefs, and attention
-
-The [perception and attention specification](../07-technical-architecture/perception-and-attention.md) now owns the detailed proposal: shared near/medium/far object descriptions with supported state overlays, event-based attenuated sound, actor-specific evidence, arbitrary-intent semantic interests, mandatory person-encounter opportunities and batched Jev routing. It distinguishes the current 28-unit sight and separate 10-unit hearing audience from future sensory fidelity. New exposure need not buy a thought; mundane objects become decision-relevant when a goal or significant change makes them matter. Persistent critical-need reminders follow simulation time under real-time inference caps.
-
-Initially use distance, facing if useful, and grid line-of-sight for vision; a radius/intensity model for hearing; adjacency for touch. Later, walls, doors, weather, light, species senses, and masking noise can alter these queries. Perception emits observations with confidence and source, not omniscient facts.
-
-A heard gunshot might produce “sharp bang eastward” rather than the shooter's identity. A whispered conversation may be detected but not intelligible. Hearing a statement records that it was said; accepting it as true is a separate belief update.
-
-Attention filters observations by urgency, novelty, relationship, goals, and current workload. Otherwise a crowded square floods every resident with all speech and movement. Keep an observation queue cap and coalesce repeated stimuli. Model calls use observations, not raw event streams.
+[Memory architecture](../../docs/memory-architecture.md) owns awareness, recall, beliefs, consolidation, reflection, sleep and dreams. [Perception and sensory evidence](../07-technical-architecture/perception-and-attention.md) owns visual/acoustic exposure and sensory event generation. This document uses those systems but does not redefine their routes, quotas, retention or implementation tasks.
 
 ## Learning through ordinary interaction
 
@@ -102,24 +67,9 @@ M07/M08 accept observation, direct experience, hearing information, teaching, an
 
 Use the existing perception/attention/memory pipeline rather than a model call for every state update. Actual rain changes exposed objects independently of observers; witnessing it changes what a resident knows. Engine-authored definitions and [anticipated future influences](state-systems-and-future-influences.md) are not automatically accessible NPC knowledge. The [discovery specification](world-creation-and-discovery.md#interaction-is-how-knowledge-develops) gives examples; exact skill/confidence updates remain open.
 
-## Decision pipeline
+## Decision and conversation boundaries
 
-1. A need threshold, addressed speech, interrupted plan, hazard, new opportunity, or scheduled review creates a decision event.
-2. Local logic decides whether the current plan remains adequate. Known urgent responses need no semantic gate.
-3. Score eligible actions using needs, values, relationships, effort, risk, and commitments. Commit to short plans with interruption rules.
-4. Native code continues familiar actions; Jev evaluates attention and escalation for each admitted semantic opportunity in bounded batches.
-5. Speech defaults to level 2; Jev can select complex low/high reasoning (levels 3/4) and independently enqueue background level-5 reflection.
-6. Under the accepted future [talk/act/think contract](../../docs/narration-and-conversations.md#3-talk-act-and-think-response-contract), return any optional combination of speech, an admitted action/expression and a brief private thought, or choose no new response. Commit components through native admission with separate receipts and remembered experience. Current runtime routes still return speech or an offered action separately. Reflection continues to edit bounded files independently and publishes accepted text with short god-only presentation thoughts.
-
-The scheduler creates meaningful opportunities without polling every tick. Jev routing does not recursively route itself or require a call per object. Unknown/unavailable outcomes defer semantic work while native survival continues. Do not fan out expensive planners speculatively or require mind patches to speak.
-
-Thoughts stored for characterization should be brief in-world reflections, intentions, and appraisals—not raw hidden model reasoning. Players see expression and speech, not private thought traces. Creator debugging can show structured causes and decisions without relying on verbose internal prose.
-
-## Talk, act, think and narration
-
-Accepted future direction, September 20, 2026; documentation only. Any triggered situation can elicit talking, acting and/or thinking, not just a spoken answer to speech. An insult might make Ada silently frown. She could instead say “Screw you,” slap Mike and privately think “I don't like Mike,” with each component's actor, entity targets and source recorded. Every accepted component becomes her own experience: speech/action through self-awareness, thought through private recallable memory. These fictional thoughts are not provider reasoning and do not require a full reflection job.
-
-Conversation narration describes observed non-speech reactions/actions and relevant world consequences, excluding internal thoughts. **The Narrator** renders committed evidence in a player's chosen voice; it cannot decide effects. The first future slice supports expressive gestures/contact fiction with no new mechanical effects: an unsupported slap can be shown and remembered, but causes no health loss or bleeding. Known mechanical actions retain their real effects. Missing action/effect invention during play is a later extension through the normal declaration boundary, not generated prose becoming physics. See the [technical design and NC tasks](../../docs/narration-and-conversations.md).
+Actor decisions use the cognition contracts in [Memory architecture](../../docs/memory-architecture.md). Talk/act/think response composition, durable conversation identity, membership, merging, narration and transcript rules belong to [Narration, agent responses and conversations](../../docs/narration-and-conversations.md). Social design here defines relationships and obligations, not those execution pipelines.
 
 ## Social continuity
 
@@ -130,11 +80,7 @@ Accepted character design, September 20, 2026 (future implementation): relations
 
 Subjective descriptions belong to the accepted inner world; any query projection derives from that revision. The freedom to revise one's assessment is not restricted to god mode. It does not rewrite the other person's assessment or objective relationship facts. Keep group membership and outstanding obligations separate from personal liking; changing a description does not erase a promise. Exact editing and publication mechanics remain to be designed.
 
-Conversation has a durable identity, turn-taking, speaker identity, event-time audience, interruption and topic continuity. First directed speech starts a conversation with speaker and addressed actor(s); self-talk has one participant. Later actors join by speaking, while mere overhearing creates awareness without membership. Participants can leave independently; the conversation ends when everyone has closed/left. Earlier speech is visible only where actual awareness permits it. A conversation can grow from two to five people and finish with two different people.
-
-When a current participant engages another conversation, the source conversation ends with a “Joined conversation #123” narration and all its current participants join the destination. Earlier events retain their original conversation IDs and audiences. NPCs can decline, continue work while talking, ask clarifying questions or refer back to unfinished plans. A conversation can create a promise intent; promising and completing a task are different events. Exact lifecycle, merging and concurrency rules are proposed in the [conversation design](../../docs/narration-and-conversations.md#6-durable-conversation-lifecycle).
-
-Start with one-on-one text, then nearby group text, then voice. Scale social believability before adding voice cost. Keep text captions for accessibility and as a fall-back during media failure. Prevent paid interaction quotas from making an NPC abandon already-accepted world obligations unpredictably.
+Conversation lifecycle and merge semantics are defined only in [Narration, agent responses and conversations](../../docs/narration-and-conversations.md).
 
 ## Player-designed stats
 
@@ -158,4 +104,4 @@ Evaluate through observable episodes: a resident finds food without instruction;
 
 ## Later harness delivery tasks
 
-The [cognition extension checklist](../../docs/maintainers/cognition-redesign.md#later-harness-extensions) owns **CH01** (difficult planning/investigation), **CH02** (tool-assisted teaching and coordination) and **CH03** (behavioral/cost comparison). They follow core cognition acceptance and usable scoped tools. [INV-7.6](../07-technical-architecture/declarations-and-evolution.md#inv-7--discover-missing-mechanics-during-play-without-endless-generation) owns the bridge to missing-capability authoring; do not create a second invention or reflection queue here.
+The [cognition extension checklist](../../docs/maintainers/cognition-redesign.md#later-harness-extensions) owns **CH01** (difficult planning/investigation), **CH02** (tool-assisted teaching and coordination) and **CH03** (behavioral/cost comparison). They follow core cognition acceptance and usable scoped tools. [INV-7.6](../../docs/maintainers/inventions-and-world-evolution.md#inv-7--discover-missing-mechanics-during-play-without-endless-generation) owns the bridge to missing-capability authoring; do not create a second invention or reflection queue here.

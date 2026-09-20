@@ -567,10 +567,24 @@ function App() {
           </>
         );
       case 'agent':
-        return <WorldAgent key={view.worldId} worldId={view.worldId} invent={invent} />;
+        return (
+          <WorldAgent
+            key={view.worldId}
+            worldId={view.worldId}
+            invent={invent}
+            visible={open.includes('agent') && (!narrow || open.at(-1) === 'agent')}
+          />
+        );
       case 'composer':
         return (
-          <Composer {...props} npcId={npcId} seed={seed} setup={() => show('ai')} notify={notify} />
+          <Composer
+            {...props}
+            npcId={npcId}
+            seed={seed}
+            setup={() => show('ai')}
+            notify={notify}
+            visible={open.includes('composer') && (!narrow || open.at(-1) === 'composer')}
+          />
         );
       case 'ai':
         return <AiSettings view={view} />;

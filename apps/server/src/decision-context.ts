@@ -14,7 +14,6 @@ import { digest } from './store.js';
 import type { WorldService } from './world-service.js';
 import { COGNITION_VERSION, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
 import { readableDecisionContext } from './response-context.js';
-import { attentionQuestions } from './jev-questions.js';
 function currentConversationEvidenceIds(
   world: WorldService['world'],
   actorId: string,
@@ -88,6 +87,7 @@ export function decisionDependencies(service: WorldService, actorId: string) {
     knowledge: observed?.knownRecipes.map((r) => r.id),
     inventory: observed?.inventory,
     obligations: (world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment'),
+    corrections: world.experience?.corrections?.[actorId],
     forgotten: world.experience?.forgotten[actorId],
   });
 }
@@ -102,11 +102,16 @@ export async function prepareDecision(
   signal: AbortSignal,
   budgetCeiling = service.config.budgetUsd,
   includeCurrentConversation = false,
+  attempt = 0,
 ) {
   const world = service.world;
   const observed = observeActor(world, actorId);
   if (!observed) throw new Error('Actor unavailable.');
   const dependencies = decisionDependencies(service, actorId);
+  const awarenessSequence = Math.max(
+    0,
+    ...(world.experience?.awareness[actorId] ?? []).map((entry) => entry.sequence),
+  );
   const automaticIds =
     includeCurrentConversation ||
     requiredIds.some((id) =>
@@ -114,7 +119,25 @@ export async function prepareDecision(
     )
       ? currentConversationEvidenceIds(world, actorId, requiredIds)
       : [];
+  const availableActions = npcCandidates(service, actorId);
   const candidates = candidateSet(world, actorId, observed, requiredIds, automaticIds);
+  const actionByAttentionId = new Map(
+    availableActions.map((action, index) => {
+      const id = `action:${index}:${action.id}`;
+      candidates.push({
+        id,
+        kind: 'action',
+        text: action.description,
+        revision: digest(action),
+        required: false,
+        automatic: false,
+        entityIds: action.command?.targetId ? [action.command.targetId] : [],
+        at: world.simTime,
+        salience: action.command === null ? 4 : 3,
+      });
+      return [id, action] as const;
+    }),
+  );
   const snapshotActor = observed.actor.actor!;
   const automaticIdSet = new Set(automaticIds);
   const triggerIdSet = new Set(requiredIds);
@@ -138,14 +161,8 @@ export async function prepareDecision(
       )
       .sort((a, b) => a.at - b.at || a.id.localeCompare(b.id))
       .map((candidate) => candidate.text),
-    surroundings: observed.visibleEntities.map(
-      (entity) =>
-        `${entity.name} (${entity.id}): ${entity.actor ? `person, ${entity.actor.action?.type ?? 'idle'}` : entity.kind}`,
-    ),
-    possessions: observed.inventory.map(
-      (item) =>
-        `${item.quantity} ${world.itemDefinitions[item.definitionId]?.name ?? item.definitionId} (${item.id})`,
-    ),
+    surroundings: [],
+    possessions: [],
   };
   if (
     !observed.inventory.some((item) =>
@@ -159,18 +176,26 @@ export async function prepareDecision(
   const requiredBytes =
     Buffer.byteLength(readableDecisionContext(requiredContext, [], false)) +
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
-  if (requiredBytes > 100000)
+  const largestActionOffers = [...availableActions]
+    .sort((a, b) => Buffer.byteLength(b.description) - Buffer.byteLength(a.description))
+    .slice(0, 24)
+    .map((candidate, index) => ({ id: `a${index}`, description: candidate.description }));
+  const actionPromptBytes =
+    Buffer.byteLength(readableDecisionContext(requiredContext, largestActionOffers, true)) +
+    Buffer.byteLength(RESPONSE_INSTRUCTIONS);
+  const actionReserveBytes = Math.max(0, actionPromptBytes - requiredBytes);
+  if (requiredBytes + actionReserveBytes > 100000)
     throw new Error('Complete accepted inner world and required context exceed the input budget.');
   const selection = await recall.select(
     world,
     actorId,
     stimulus,
-    jobId,
+    `${jobId}:attempt:${attempt}`,
     candidates,
     judge,
     signal,
     budgetCeiling,
-    100000 - requiredBytes,
+    100000 - requiredBytes - actionReserveBytes,
   );
   if (decisionDependencies(service, actorId) === dependencies)
     await service.store.putIntegration(
@@ -184,23 +209,11 @@ export async function prepareDecision(
   if (!currentObserved) throw new Error('Actor unavailable.');
   const currentDependencies = decisionDependencies(service, actorId);
   const actor = currentObserved.actor.actor!;
-  const terms = new Set(
-    `${stimulus} ${actor.goal} ${selection.selected.map((entry) => entry.text).join(' ')}`
-      .toLowerCase()
-      .match(/[\p{L}\p{N}]{3,}/gu) ?? [],
-  );
-  const rankedActions = npcCandidates(service, actorId)
-    .map((candidate, index) => ({
-      candidate,
-      index,
-      score: [...terms].reduce(
-        (sum, term) => sum + Number(candidate.description.toLowerCase().includes(term)),
-        0,
-      ),
-    }))
-    .sort((a, b) => b.score - a.score || a.index - b.index)
-    .slice(0, 16)
-    .map(({ candidate }) => candidate);
+  const rankedActions = selection.selected.flatMap((candidate) => {
+    if (candidate.kind !== 'action') return [];
+    const action = actionByAttentionId.get(candidate.id);
+    return action ? [action] : [];
+  });
   const context: Record<string, unknown> = {
     stimulus,
     identity: `I am ${currentObserved.actor.name} (${actorId}).${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
@@ -251,15 +264,6 @@ export async function prepareDecision(
     actions: {},
   };
   const offered: { id: string; description: string }[] = [];
-  // Every visible reference remains identifiable even if optional recall omitted it.
-  context['surroundings'] = currentObserved.visibleEntities.map(
-    (entity) =>
-      `Entity ID "${entity.id}" — ${entity.name}: ${entity.actor ? `person, ${entity.actor.action?.type ?? 'idle'}` : entity.kind}. Use exactly "${entity.id}" in addressee, target, and about fields.`,
-  );
-  context['possessions'] = currentObserved.inventory.map(
-    (item) =>
-      `${item.quantity} ${currentWorld.itemDefinitions[item.definitionId]?.name ?? item.definitionId} (${item.id})`,
-  );
   const prompt = readableDecisionContext(context, offered, false);
   const bytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   if (bytes > 100000)
@@ -270,6 +274,7 @@ export async function prepareDecision(
     binding,
     offered,
     actionCandidates: rankedActions,
+    awarenessSequence,
     dependencies: currentDependencies,
     diagnostics: {
       instructionsVersion: COGNITION_VERSION,
@@ -289,42 +294,17 @@ export async function prepareDecision(
   };
 }
 
-export async function selectDecisionActions(
-  prepared: Awaited<ReturnType<typeof prepareDecision>>,
-  judge: (r: Omit<JudgeRequest, 'requestId' | 'signal'>) => Promise<JudgeValue>,
-  signal: AbortSignal,
-) {
+export async function selectDecisionActions(prepared: Awaited<ReturnType<typeof prepareDecision>>) {
   const candidates = prepared.actionCandidates;
-  let selected = candidates;
-  let status = candidates.length ? 'fallback: all bounded candidates' : 'no candidates';
-  if (candidates.length) {
-    try {
-      const judged = await judge({
-        state: {
-          stimulus: prepared.context['stimulus'],
-          goal: prepared.context['goal'],
-          candidates: Object.fromEntries(
-            candidates.map((candidate, index) => [`action${index}`, candidate.description]),
-          ),
-        },
-        questions: attentionQuestions(candidates.map((_, index) => `action${index}`)),
-      });
-      selected = candidates.filter((candidate, index) => {
-        const answer = judged.answers[`action${index}`];
-        return (
-          candidate.command === null ||
-          (answer &&
-            'choice' in answer &&
-            answer.choice === 'yes' &&
-            (answer.probabilities['yes'] ?? 0) >= 0.5)
-        );
-      });
-      status = 'completed';
-    } catch (error) {
-      signal.throwIfAborted();
-      status = error instanceof Error ? `fallback: ${error.message}` : 'fallback: unavailable';
-    }
-  }
+  const allOffers = candidates.map((candidate, index) => ({
+    id: `a${index}`,
+    description: candidate.description,
+  }));
+  const maximumPrompt = readableDecisionContext(prepared.context, allOffers, true);
+  if (Buffer.byteLength(maximumPrompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS) > 100000)
+    throw new Error('Complete accepted inner world and required context exceed the input budget.');
+  const selected = candidates;
+  const status = candidates.length ? 'completed in shared context attention' : 'no candidates';
   const actions = Object.fromEntries(
     selected.map((candidate, index) => [
       `a${index}`,

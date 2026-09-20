@@ -18,6 +18,7 @@ Guidelines
 - Explicit over implicit – Favor clear, descriptive names and type annotations over clever tricks
 - Fail fast – Validate inputs, throw early, and surface actionable errors
 - Let the code speak – If you need a multi-paragraph comment, refactor until intent is obvious
+- Centralize semantic mutations – Adding, updating or deleting a domain concept must go through one authoritative entrypoint that performs validation, dependent-state updates, invalidation and committed side effects. Parameterize legitimate variants instead of creating shortcut paths that can omit downstream work.
 
 ## Boundaries
 
@@ -29,13 +30,14 @@ Guidelines
 
 ## Documentation is a maintained source of truth
 
-- For every documentation or design update, identify the canonical owner and read all related documentation: incoming/outgoing links, semantic mentions, requirements, decisions, examples, schemas, plans, tasks, setup and implementation status. Follow dependencies beyond the initially edited file.
-- Reconcile the bodies of every affected document in the same change. Update conflicting tables, examples, diagrams and task instructions; a supersession notice or link alone is insufficient. Core documentation must describe the latest agreed state consistently.
-- Preserve unique requirements, rationale, constraints, edge cases, open questions, tasks, findings and evidence. Before consolidating or removing text, compare both sources and move still-relevant information to its proper home. Only remove information explicitly superseded, outdated, untrue or no longer relevant; never treat an entire document as obsolete because part changed.
-- Bring architecture requirements discovered in companion documents into the canonical architecture document. Keep specialized implementation detail in its owning document with accurate links, rather than creating competing specifications or duplicate task queues.
-- Distinguish accepted target behavior, current implementation, proposals and historical evidence. Preserve source requests and dated test findings as evidence; do not rewrite history or claim planned/fixture-tested behavior is live. Historical labeling must not hide requirements that still apply.
-- Review the complete documentation diff against the pre-edit content for information loss, check links/anchors and search related documents for stale prescriptions. Report actual unresolved conflicts or blockers; do not claim synchronization complete while known contradictions remain.
-- Keep implementation checklists aligned with the accepted design without deleting unique investigation results, blockers or pending validation. A documentation update does not complete an implementation or acceptance task.
+- Give every substantive concept one canonical owner. Other documents may link to it, summarize it briefly or state a dependency, but must not duplicate its requirements, contracts, schemas, decision tables, acceptance criteria or task list.
+- Specifications describe accepted target behavior. Detailed implementation tasks, dependencies, blockers and exit criteria live only in focused files under `docs/maintainers/`. `docs/maintainers/README.md` is navigation, and `docs/maintainers/TODO.md` contains only miscellaneous or cross-cutting validation, integration and documentation gaps that have no focused tracker.
+- Current implementation facts belong in `docs/architecture.md` and the current subsystem snapshot in `archive/05-project/implementation-status.md`. Current evidence belongs in `docs/verification.md`; unresolved decisions belong only in `archive/05-project/open-decisions.md`; active research questions belong in `archive/05-project/research-backlog.md`.
+- Current specifications and trackers state current truth without provenance or dated implementation diaries. Record documentation moves, superseded directions and worthwhile historical context only in `docs/documentation-changelog.md`.
+- Before consolidating or deleting a document, classify its contents and migrate every unique current requirement, task, implementation fact, acceptance criterion, unresolved decision, research question and needed reference to its canonical owner. Delete the source only after updating every inbound link.
+- Resolve implemented-state conflicts from code and current verification evidence. Resolve target behavior from the latest accepted requirement and designated design owner. If a material product or technical choice remains genuinely incompatible, record the unresolved choice in `open-decisions.md` instead of silently choosing a direction.
+- Preserve task IDs, checkbox state, dependencies, blockers and still-valid exit criteria when moving work. Documentation reorganization never completes an implementation or acceptance task.
+- After documentation changes, review the complete diff for information loss and run repository-wide checks for stale links, deleted owners, duplicate task bodies, competing canonical claims, misplaced decisions and broken relative links or anchors.
 
 ## Work discipline
 

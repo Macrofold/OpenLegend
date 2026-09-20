@@ -65,8 +65,28 @@ function collectChanges(
   next: unknown,
   path: Array<string | number>,
   operations: WorldChange[],
+  appendEventCount?: number,
 ): void {
   if (samePrimitive(previous, next)) return;
+  if (
+    appendEventCount !== undefined &&
+    path.length === 2 &&
+    path[0] === 'world' &&
+    path[1] === 'events' &&
+    Array.isArray(previous) &&
+    Array.isArray(next) &&
+    next.length === previous.length + appendEventCount
+  ) {
+    if (appendEventCount)
+      operations.push({
+        op: 'splice',
+        path,
+        index: previous.length,
+        deleteCount: 0,
+        values: next.slice(previous.length),
+      });
+    return;
+  }
   if (
     previous === null ||
     next === null ||
@@ -99,7 +119,7 @@ function collectChanges(
     }
     const shared = Math.min(previous.length, next.length);
     for (let index = 0; index < shared; index++)
-      collectChanges(previous[index], next[index], [...path, index], operations);
+      collectChanges(previous[index], next[index], [...path, index], operations, appendEventCount);
     for (let index = shared; index < next.length; index++)
       operations.push({ op: 'set', path: [...path, index], value: structuredClone(next[index]) });
     if (previous.length !== next.length)
@@ -115,13 +135,17 @@ function collectChanges(
       if (before[key] !== undefined) operations.push({ op: 'remove', path: [...path, key] });
     } else if (!Object.hasOwn(before, key))
       operations.push({ op: 'set', path: [...path, key], value: structuredClone(value) });
-    else collectChanges(before[key], value, [...path, key], operations);
+    else collectChanges(before[key], value, [...path, key], operations, appendEventCount);
 }
 
-export function diffSavedWorld(previous: SavedWorld | null, next: SavedWorld): WorldChanges {
+export function diffSavedWorld(
+  previous: SavedWorld | null,
+  next: SavedWorld,
+  appendEventCount?: number,
+): WorldChanges {
   if (!previous) return { operations: [{ op: 'set', path: [], value: structuredClone(next) }] };
   const operations: WorldChange[] = [];
-  collectChanges(previous, next, [], operations);
+  collectChanges(previous, next, [], operations, appendEventCount);
   return { operations };
 }
 
@@ -161,6 +185,7 @@ export interface WorldStore {
     expectedRevision: number,
     state: SavedWorld,
     invalidatedMemoryIds?: Record<string, string[]>,
+    appendEventCount?: number,
   ): Promise<number>;
   close(): Promise<void>;
 }
@@ -433,11 +458,12 @@ export class SqliteStore implements GameRepository {
     expectedRevision: number,
     state: SavedWorld,
     invalidatedMemoryIds?: Record<string, string[]>,
+    appendEventCount?: number,
   ): Promise<number> {
     await this.ready;
 
     const changes = this.acceptedState
-      ? diffSavedWorld(this.acceptedState, state)
+      ? diffSavedWorld(this.acceptedState, state, appendEventCount)
       : { operations: [] };
     const changesPayload = JSON.stringify(changes);
     const changedRows = Object.entries(state.world.innerWorlds ?? {})

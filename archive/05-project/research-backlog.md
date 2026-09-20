@@ -1,6 +1,6 @@
-# Research backlog — questions with a way to answer them
+# Research backlog
 
-Last updated September 18, 2026. Desk research completed in this archive is distinct from experiments. **No benchmarks, playtests, API evaluations, load tests, or prototypes have been run.** Priorities: P0 blocks initial shape; P1 blocks an associated feature; P2 exploratory.
+This file contains only active empirical questions whose answers could change a current decision or design. Current runtime evidence belongs in [Verification](../../docs/verification.md); completed research conclusions belong in their canonical design owner. Priorities: P0 blocks initial shape, P1 blocks an associated feature and P2 is exploratory.
 
 | ID / priority | Question and hypothesis | Next evidence-producing task | Completion criterion | Status / dependency |
 |---|---|---|---|---|
@@ -49,28 +49,10 @@ Pass criteria: creator intent remains visible in the profile; inference/defaults
 
 ## Evidence record template
 
-Architecture-review additions: R08/R12/R13 should first benchmark the native committed-batch loop and crash restore without any model; distinguish restore/outcome replay from deterministic resimulation. R11 must include delayed event-time perception and a promise arriving during consolidation. R20 includes ambiguous cross-service submission, expired idempotency retention, old/new Macrofold worker compatibility, promoted artifacts surviving run expiry and late usage correction. R21/R23 include passive unknown properties during provider outage, aggregate cross-owner resource claims and owner/process migration at a committed boundary. Run each group when its smallest slice exists, not as one giant final acceptance project. [Revised delivery gates](../07-technical-architecture/review-and-delivery-plan.md)
+Architecture-review additions: R08/R12/R13 should first benchmark the native committed-batch loop and crash restore without any model; distinguish restore/outcome replay from deterministic resimulation. R11 must include delayed event-time perception and a promise arriving during consolidation. R20 includes ambiguous cross-service submission, expired idempotency retention, old/new Macrofold worker compatibility, promoted artifacts surviving run expiry and late usage correction. R21/R23 include passive unknown properties during provider outage, aggregate cross-owner resource claims and owner/process migration at a committed boundary. Run each group when its smallest slice exists, not as one giant final acceptance project. [Active work index](../../docs/maintainers/README.md)
 
 R11/R19 recall follow-up: evaluate the five [selection signals](../../docs/memory-architecture.md#selection-signals-and-delivery-order)—present people, recent events, goals, unresolved concerns and conflicting beliefs. Start with structured lookups, then arbitrary-intent semantic retrieval; add selective-recall tools only for demonstrated initial-context omissions. Use matched histories to show useful recall changing later speech, decisions or actions where evidence matters; record justified unchanged behavior too. Selection coverage alone is not behavioral acceptance. These checks remain unperformed.
 
 Technical-architecture follow-up to R03/R11/R19/R20: evaluate the [context pipeline](../07-technical-architecture/context-and-inference.md) at equal evidence and authority across direct and Macrofold paths. Measure required-fact recall, omitted versus unknown fields, authorization before retrieval, index lag, query-membership invalidation, cross-audience disclosure, expired input, native-session forgetting, mandatory content exceeding limits, model-version provenance and total real-time spend. Include task-child budget races, uncertain provider completion, cancellation with late usage and crash-after-commit recovery from the [platform brief](../07-technical-architecture/macrofold-implementation-brief.md). Recent Macrofold startup fixes are part of the current baseline, not proposed missing work. No such integration or benchmark has run here.
 
 For each experiment, record ID, hypothesis, scenario/workload, versions, region/device, data provenance, dates, evaluator, raw artifacts, result, uncertainty, decision affected, and follow-up. Separate vendor benchmark numbers from our measurements. Do not select acceptance thresholds after seeing the final holdout result.
-
-## Research already completed
-
-- Primary-source game comparison, including RimWorld's storyteller/autonomy distinction and DLC scope.
-- Personality/emotion/memory literature suitable for informing a game model, with limits on scientific inference.
-- Jev's public primitives, interface, reported pricing/limits, documented failure modes, early-access status and adoption questions.
-- Engine/web constraints, art-production tradeoffs, logical environmental effects, spatial audio architecture.
-- PlayCanvas engine/editor-frontend licensing, standalone versus hosted workflow, recent maintenance and published-game precedents; Unity/RimWorld custom-simulation precedent. Historical audience claims are attributed, not Open Legend capacity evidence.
-- Practical host/framework shortlist, room ownership/routing, media permissions, persistence, scale and cost drivers.
-- Generated skill precedent and bounded execution ingredients; original proposed protocol and promotion lifecycle.
-
-None of this substitutes for prototype/playtest evidence. Current primary citations are indexed in the [source guide](../02-research/source-guide.md).
-
-## Follow-up scope, not new experimental evidence
-
-The [design follow-ups](../00-source/design-followups.md) establish a primitive wilderness start with seeded survival knowledge, accessible resources and possessions; tolerance for NPC death; native survival fundamentals; and creator time acceleration. The September 19 timing refinement supersedes the earlier candidate with one game minute per real second at 1× and optional connected background play. None of those preferences demonstrates that a particular rate, needs curve or AI schedule will work. R08 must inform P1/P2 before external playtests, while human-player revival and offline protection remain separate open policies.
-
-V02–V04 additionally establish PlayCanvas, a custom simulation/generative-rule interface and grounded modern pixel art as accepted directions. R01/R02 now validate that choice and its production workflow rather than reopen engine selection by default. D20/R05 still govern new executable algorithms; JavaScript integration alone is not evidence that unbounded runtime code is suitable.

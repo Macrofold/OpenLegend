@@ -1,8 +1,8 @@
 import { draftWorld, cloneValue } from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
-import { finish, outcome } from './events.js';
+import { canonicalJson, finish, outcome } from './events.js';
 import { memoryPerspective } from './memory-perspective.js';
-import type { MemoryRecord, Transition, WorldState } from './types.js';
+import type { ExperienceEntry, MemoryRecord, Transition, WorldState } from './types.js';
 
 export const EXPERIENCE_LIMITS = {
   rawHours: 6,
@@ -24,6 +24,8 @@ export interface Awareness {
   intelligible: boolean;
   entityIds: string[];
   importance: number;
+  /** How quickly this experience should interrupt an in-flight response, from 0–10. */
+  urgency?: number;
   /** Stable event-time trigger semantics survive rotation of the bounded world-event feed. */
   eventType?: string;
   sourceId?: string;
@@ -64,6 +66,128 @@ export interface InnerWorld {
   publicationJobId: string;
   evidenceIds: string[];
   reconsiderationRequired?: boolean;
+}
+
+export function experienceEntry(
+  world: WorldState,
+  actorId: string,
+  key: string,
+): ExperienceEntry | undefined {
+  const separator = key.indexOf(':');
+  const source = key.slice(0, separator);
+  const id = key.slice(separator + 1);
+  if (source === 'awareness') {
+    const value = world.experience?.awareness[actorId]?.find((entry) => entry.eventId === id);
+    return value && { source, value };
+  }
+  if (source === 'memory') {
+    const value = world.memories[actorId]?.find((entry) => entry.id === id);
+    return value && { source, value };
+  }
+  if (source === 'summary') {
+    const value = world.experience?.summaries[actorId]?.find((entry) => entry.id === id);
+    return value && { source, value };
+  }
+  return undefined;
+}
+
+export type ExperienceMutation =
+  | { operation: 'add'; entry: ExperienceEntry }
+  | { operation: 'update'; entryId: string; entry: ExperienceEntry }
+  | { operation: 'delete'; entryId: string };
+
+function stableExperienceUpdate(previous: ExperienceEntry, next: ExperienceEntry): boolean {
+  if (previous.source !== next.source) return false;
+  const editable =
+    previous.source === 'awareness'
+      ? new Set(['text', 'content', 'importance'])
+      : previous.source === 'memory'
+        ? new Set(['summary', 'importance'])
+        : new Set(['text', 'importance']);
+  const before = previous.value as unknown as Record<string, unknown>;
+  const after = next.value as unknown as Record<string, unknown>;
+  return [...new Set([...Object.keys(before), ...Object.keys(after)])].every(
+    (key) => editable.has(key) || canonicalJson(before[key]) === canonicalJson(after[key]),
+  );
+}
+
+/** The one authoritative path for creator mutation of retained experience. */
+export function mutateExperience(
+  world: WorldState,
+  actorId: string,
+  mutation: ExperienceMutation | ExperienceMutation[],
+): string[] | null {
+  migrateCognition(world);
+  const mutations = Array.isArray(mutation) ? mutation : [mutation];
+  if (!mutations.length) return [];
+  if (mutations.some((change) => change.operation === 'add')) {
+    if (mutations.some((change) => change.operation !== 'add')) return null;
+    const additions = mutations.map((change) => {
+      if (change.operation !== 'add') throw new Error('Mixed experience mutation batch.');
+      return cloneValue(change.entry);
+    });
+    const keys = additions.map((entry) =>
+      entry.source === 'awareness'
+        ? `awareness:${entry.value.eventId}`
+        : `${entry.source}:${entry.value.id}`,
+    );
+    if (
+      new Set(keys).size !== keys.length ||
+      keys.some((key) => experienceEntry(world, actorId, key)) ||
+      additions.some((entry) => 'actorId' in entry.value && entry.value.actorId !== actorId)
+    )
+      return null;
+    for (const entry of additions) {
+      if (entry.source === 'awareness')
+        (world.experience!.awareness[actorId] ??= []).push(entry.value);
+      else if (entry.source === 'memory') (world.memories[actorId] ??= []).push(entry.value);
+      else (world.experience!.summaries[actorId] ??= []).push(entry.value);
+    }
+    return [];
+  }
+
+  const resolved = mutations.map((change) => ({
+    change,
+    previous:
+      change.operation === 'add' ? undefined : experienceEntry(world, actorId, change.entryId),
+  }));
+  if (resolved.some(({ previous }) => !previous)) return null;
+  const updatedSources: string[] = [];
+  const deletedSources: string[] = [];
+  for (const { change, previous } of resolved) {
+    if (!previous || change.operation === 'add') return null;
+    const sourceId = previous.source === 'awareness' ? previous.value.eventId : previous.value.id;
+    if (change.operation === 'update') {
+      if (!stableExperienceUpdate(previous, change.entry)) return null;
+      const awarenessTextChanged =
+        previous.source === 'awareness' &&
+        change.entry.source === 'awareness' &&
+        previous.value.text !== change.entry.value.text;
+      const awarenessContentChanged =
+        previous.source === 'awareness' &&
+        change.entry.source === 'awareness' &&
+        previous.value.content !== change.entry.value.content;
+      const replacement = cloneValue(change.entry.value);
+      if ('actorId' in replacement && replacement.actorId !== actorId) return null;
+      Object.assign(previous.value, replacement);
+      if (previous.source === 'awareness' && awarenessTextChanged && !awarenessContentChanged)
+        previous.value.content = previous.value.text;
+      if (previous.source === 'summary')
+        previous.value.revision = (previous.value.revision ?? 0) + 1;
+      updatedSources.push(sourceId);
+    } else {
+      deletedSources.push(sourceId);
+      if (previous.source === 'memory' && previous.value.eventId)
+        deletedSources.push(previous.value.eventId);
+    }
+  }
+  const invalidated = new Set<string>();
+  if (updatedSources.length)
+    for (const id of invalidateExperience(world, actorId, updatedSources)) invalidated.add(id);
+  if (deletedSources.length)
+    for (const id of invalidateExperience(world, actorId, deletedSources, true))
+      invalidated.add(id);
+  return [...invalidated];
 }
 export function flattenFiles(files: InnerWorld['files']): string {
   const paths = new Set<string>();
@@ -135,7 +259,10 @@ export function migrateCognition(world: WorldState): void {
         recognized: true,
         intelligible: true,
         entityIds: [e.actorId, e.targetId].filter((id): id is string => !!id),
-        importance: e.type === 'speech' ? 7 : 3,
+        importance: e.importance ?? (e.type === 'speech' ? 7 : 3),
+        urgency:
+          e.urgency ??
+          (['death', 'incapacitated'].includes(e.type) ? 10 : e.type === 'speech' ? 4 : 2),
         eventType: e.type,
         ...(e.actorId ? { sourceId: e.actorId } : {}),
         ...(e.targetId ? { targetId: e.targetId } : {}),
@@ -397,7 +524,16 @@ export function acceptConsolidation(
 export function forgetExperience(input: WorldState, actorId: string, sourceId: string): Transition {
   const world = draftWorld(input);
   migrateCognition(world);
-  const invalidated = invalidateExperience(world, actorId, [sourceId], true);
+  const key = world.experience!.awareness[actorId]?.some((entry) => entry.eventId === sourceId)
+    ? `awareness:${sourceId}`
+    : world.memories[actorId]?.some((entry) => entry.id === sourceId)
+      ? `memory:${sourceId}`
+      : world.experience!.summaries[actorId]?.some((entry) => entry.id === sourceId)
+        ? `summary:${sourceId}`
+        : null;
+  const invalidated = key
+    ? mutateExperience(world, actorId, { operation: 'delete', entryId: key })!
+    : invalidateExperience(world, actorId, [sourceId], true);
   return {
     ...finish(world, [], outcome(true, 'forgotten', 'Recall and derived inner world invalidated.')),
     invalidatedMemoryIds: { [actorId]: invalidated },

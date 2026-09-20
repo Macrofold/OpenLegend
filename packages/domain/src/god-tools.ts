@@ -1,14 +1,19 @@
-import { draftWorld, cloneValue } from './draft.js';
+import { draftWorld } from './draft.js';
 import { addItem, createActor, nextId, TRAIT_BANK } from './data.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
 import { mindFor } from './mind.js';
-import { invalidateExperience, migrateCognition } from './experience.js';
+import {
+  experienceEntry,
+  invalidateExperience,
+  migrateCognition,
+  mutateExperience,
+  type ExperienceMutation,
+} from './experience.js';
 import { memoryPerspective } from './memory-perspective.js';
 import { distance, isWalkable } from './spatial.js';
 import type {
   Entity,
   GodPersonEdit,
-  GodMemoryEdit,
   GodPersonDraft,
   GodSpawnDraft,
   GodSpawnType,
@@ -190,29 +195,6 @@ export function reviveActor(original: WorldState, actorId: string): Transition {
   return finish(world, events, outcome(true, 'revived', `${entity.name} revived.`));
 }
 
-export function personMemory(
-  world: WorldState,
-  actorId: string,
-  key: string,
-): GodMemoryEdit | undefined {
-  const separator = key.indexOf(':');
-  const source = key.slice(0, separator);
-  const id = key.slice(separator + 1);
-  if (source === 'awareness') {
-    const value = world.experience?.awareness[actorId]?.find((entry) => entry.eventId === id);
-    return value && { source, value };
-  }
-  if (source === 'memory') {
-    const value = world.memories[actorId]?.find((entry) => entry.id === id);
-    return value && { source, value };
-  }
-  if (source === 'summary') {
-    const value = world.experience?.summaries[actorId]?.find((entry) => entry.id === id);
-    return value && { source, value };
-  }
-  return undefined;
-}
-
 function sameStructure(left: object, right: object, editable: string[]): boolean {
   const fields = new Set([...Object.keys(left), ...Object.keys(right)]);
   return [...fields].every(
@@ -243,7 +225,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   )
     return reject(original, 'invalid-memory', 'A memory may only be changed once per save.');
   for (const change of draft.memoryChanges) {
-    const current = personMemory(original, draft.actorId, change.entryId);
+    const current = experienceEntry(original, draft.actorId, change.entryId);
     if (!current) return reject(original, 'invalid-memory', 'That memory no longer exists.');
     if (
       change.replacement &&
@@ -294,37 +276,28 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   }
   migrateCognition(world);
   const invalidated = new Set<string>();
+  const memoryMutations: ExperienceMutation[] = [];
   for (const change of draft.memoryChanges) {
-    const previous = personMemory(original, draft.actorId, change.entryId)!;
-    const sourceId = previous.source === 'awareness' ? previous.value.eventId : previous.value.id;
+    const previous = experienceEntry(original, draft.actorId, change.entryId)!;
     const replacement = change.replacement;
     if (replacement && canonicalJson(previous.value) === canonicalJson(replacement.value)) continue;
-    if (replacement) {
-      const current = personMemory(world, draft.actorId, change.entryId);
-      if (!current)
-        return reject(
-          original,
-          'invalid-memory',
-          'An edit conflicts with another changed memory or its evidence. Save these changes separately.',
-        );
-      Object.assign(current.value, cloneValue(replacement.value));
-      if (
-        current.source === 'awareness' &&
-        previous.source === 'awareness' &&
-        current.value.text !== previous.value.text
-      )
-        current.value.content = current.value.text;
-      if (current.source === 'summary') current.value.revision = (current.value.revision ?? 0) + 1;
-    }
-    const sources = [sourceId];
-    if (!replacement && previous.source === 'memory' && previous.value.eventId)
-      sources.push(previous.value.eventId);
-    for (const id of invalidateExperience(world, draft.actorId, sources, !replacement))
-      invalidated.add(id);
+    memoryMutations.push(
+      replacement
+        ? { operation: 'update', entryId: change.entryId, entry: replacement }
+        : { operation: 'delete', entryId: change.entryId },
+    );
   }
+  const affected = mutateExperience(world, draft.actorId, memoryMutations);
+  if (!affected)
+    return reject(
+      original,
+      'invalid-memory',
+      'An edit conflicts with another changed memory or its evidence. Save these changes separately.',
+    );
+  for (const id of affected) invalidated.add(id);
   if (
     draft.memoryChanges.some(
-      (change) => change.replacement && !personMemory(world, draft.actorId, change.entryId),
+      (change) => change.replacement && !experienceEntry(world, draft.actorId, change.entryId),
     )
   )
     return reject(
@@ -458,12 +431,13 @@ export function editWorldEvents(
         (entry) => entry.eventId === change.id,
       );
       const summaries = world.experience!.summaries[actorId] ?? [];
+      const corrections = world.experience!.corrections?.[actorId] ?? {};
       if (
-        !previous.audience.includes(actorId) &&
         !awareness &&
         !memories.length &&
         !summaries.some((entry) => entry.sourceIds.includes(change.id)) &&
-        !Object.values(world.experience!.corrections?.[actorId] ?? {}).includes(change.id)
+        !Object.hasOwn(corrections, change.id) &&
+        !Object.values(corrections).includes(change.id)
       )
         continue;
       if (change.replacement) {
@@ -473,20 +447,61 @@ export function editWorldEvents(
           change.replacement.text,
           change.replacement.type === 'speech',
         );
-        if (awareness) {
-          awareness.text = text;
-          awareness.content = String(
-            world.events[index]!.data?.['text'] ?? change.replacement.text,
+        const mutations: ExperienceMutation[] = [];
+        if (awareness)
+          mutations.push({
+            operation: 'update',
+            entryId: `awareness:${awareness.eventId}`,
+            entry: {
+              source: 'awareness',
+              value: {
+                ...awareness,
+                text,
+                content: String(world.events[index]!.data?.['text'] ?? change.replacement.text),
+              },
+            },
+          });
+        for (const memory of memories)
+          mutations.push({
+            operation: 'update',
+            entryId: `memory:${memory.id}`,
+            entry: { source: 'memory', value: { ...memory, summary: text } },
+          });
+        const affected = mutations.length
+          ? mutateExperience(world, actorId, mutations)
+          : invalidateExperience(world, actorId, [change.id]);
+        if (!affected)
+          return reject(
+            original,
+            'invalid-memory',
+            'The event dependencies changed during editing.',
           );
-        }
-        for (const memory of memories) memory.summary = text;
+        invalidatedMemoryIds[actorId] = [
+          ...new Set([...(invalidatedMemoryIds[actorId] ?? []), ...affected]),
+        ];
+      } else {
+        const mutations: ExperienceMutation[] = [
+          ...(awareness
+            ? [{ operation: 'delete' as const, entryId: `awareness:${awareness.eventId}` }]
+            : []),
+          ...memories.map((memory) => ({
+            operation: 'delete' as const,
+            entryId: `memory:${memory.id}`,
+          })),
+        ];
+        const affected = mutations.length
+          ? mutateExperience(world, actorId, mutations)
+          : invalidateExperience(world, actorId, [change.id], true);
+        if (!affected)
+          return reject(
+            original,
+            'invalid-memory',
+            'The event dependencies changed during deletion.',
+          );
+        invalidatedMemoryIds[actorId] = [
+          ...new Set([...(invalidatedMemoryIds[actorId] ?? []), ...affected]),
+        ];
       }
-      invalidatedMemoryIds[actorId] = [
-        ...new Set([
-          ...(invalidatedMemoryIds[actorId] ?? []),
-          ...invalidateExperience(world, actorId, [change.id], !change.replacement),
-        ]),
-      ];
       if (
         !change.replacement &&
         (original.memories[actorId] ?? []).some(

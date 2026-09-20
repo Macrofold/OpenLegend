@@ -31,7 +31,15 @@ const valid = (v: unknown): v is Conversation[] =>
           m && ['you', 'status', 'agent'].includes(m.role) && typeof m.text === 'string',
       ),
   );
-export function WorldAgent({ worldId, invent }: { worldId: string; invent(text: string): void }) {
+export function WorldAgent({
+  worldId,
+  invent,
+  visible,
+}: {
+  worldId: string;
+  invent(text: string): void;
+  visible: boolean;
+}) {
   const key = `open-legend:world-agent:${worldId}`;
   const [tabs, setTabs] = useState(() => readLocal(key, [], valid));
   const [active, setActive] = useState(() => tabs[0]?.id ?? '');
@@ -192,6 +200,7 @@ export function WorldAgent({ worldId, invent }: { worldId: string; invent(text: 
                 conversationKey={`${worldId}:${t.id}`}
                 items={messages}
                 ariaLabel={t.title}
+                visible={visible}
                 empty={
                   <EmptyState title="What might this world become?">
                     Ask about the clearing, explore a possibility, or discuss an invention.

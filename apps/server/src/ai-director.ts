@@ -47,6 +47,7 @@ class StopJob extends Error {
     super(message);
   }
 }
+const RESPONSE_INTERRUPTION = { importance: 8, urgency: 8 } as const;
 interface Running {
   job: JobRecord;
   controller: AbortController;
@@ -517,11 +518,19 @@ export class AiDirector {
     return await this.decide(run, true);
   }
 
-  private async decide(run: Running, speech: boolean): Promise<void> {
+  private async decide(
+    run: Running,
+    speech: boolean,
+    attempt = 0,
+    interruptionEvidenceIds: string[] = [],
+  ): Promise<void> {
     const actorId = run.job.request.npcId ?? 'ada';
-    const evidenceIds = run.playerSpeechEventId
-      ? [run.playerSpeechEventId]
-      : (run.job.stimulusEvidenceIds ?? []);
+    const evidenceIds = [
+      ...(run.playerSpeechEventId
+        ? [run.playerSpeechEventId]
+        : (run.job.stimulusEvidenceIds ?? [])),
+      ...interruptionEvidenceIds,
+    ];
     const stimulus = responseTrigger(
       this.service.world,
       actorId,
@@ -556,20 +565,38 @@ export class AiDirector {
       actorId,
       run.job.id,
       stimulus,
-      run.playerSpeechEventId ? [run.playerSpeechEventId] : (run.job.stimulusEvidenceIds ?? []),
+      evidenceIds,
       async (request) =>
         await this.call(
           run,
           'jev',
-          `attention:${attentionCall++}`,
+          `attempt:${attempt}:attention:${attentionCall++}`,
           async (id) =>
             await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
         ),
       run.controller.signal,
       this.service.config.budgetUsd,
       speech,
+      attempt,
     );
     this.current(run);
+    const urgentInterruptions = () =>
+      (this.service.world.experience?.awareness[actorId] ?? [])
+        .filter(
+          (entry) =>
+            entry.sequence > prepared.awarenessSequence &&
+            entry.importance >= RESPONSE_INTERRUPTION.importance &&
+            (entry.urgency ?? 0) >= RESPONSE_INTERRUPTION.urgency,
+        )
+        .map((entry) => entry.eventId);
+    const retryForUrgentAwareness = async () => {
+      if (attempt > 0) return false;
+      const ids = urgentInterruptions();
+      if (!ids.length) return false;
+      await this.decide(run, speech, attempt + 1, ids);
+      return true;
+    };
+    if (await retryForUrgentAwareness()) return;
     const policy = this.service.world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
     const questions = decisionQuestions(addressedSpeech, policy.maxImmediateLevel, speechTrigger);
     const routeQuestion = questions['route'];
@@ -578,7 +605,7 @@ export class AiDirector {
     const judged = await this.call(
       run,
       'jev',
-      `route`,
+      `attempt:${attempt}:route`,
       async (id) =>
         await this.client.judge({
           requestId: id,
@@ -587,6 +614,7 @@ export class AiDirector {
           questions,
         }),
     );
+    if (await retryForUrgentAwareness()) return;
     const routeAnswer = judged.answers['route'];
     // Routing spends a bounded allowance; it does not authorize a world effect.
     // Use the winning probability, not the provider's separate confidence score.
@@ -653,19 +681,7 @@ export class AiDirector {
     }
     if (decisionDependencies(this.service, actorId) !== prepared.dependencies)
       throw new StopJob('stale', 'Relevant context changed before generation.');
-    if (semanticTrigger.checkActionSelection)
-      prepared = await selectDecisionActions(
-        prepared,
-        async (request) =>
-          await this.call(
-            run,
-            'jev',
-            `attention:${attentionCall++}`,
-            async (id) =>
-              await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
-          ),
-        run.controller.signal,
-      );
+    if (semanticTrigger.checkActionSelection) prepared = await selectDecisionActions(prepared);
     await this.log.record(
       `${run.job.id}:context`,
       'Context and retrieval',
@@ -698,9 +714,10 @@ export class AiDirector {
         context: prepared.prompt,
         schema: z.toJSONSchema(schema, { target: 'draft-7' }),
       },
-      `generate`,
+      `attempt:${attempt}:generate`,
     );
     this.current(run);
+    if (await retryForUrgentAwareness()) return;
     const reply = responseSchema.parse(value);
     const commit = () =>
       this.service.transition((world) => {
@@ -710,18 +727,6 @@ export class AiDirector {
             'stale',
             'Relevant mind, policy, body, plan, audience or knowledge changed.',
           );
-        if (speech) {
-          const recent = world.experience?.awareness[actorId]
-            ?.filter(
-              (aware) =>
-                aware.triggerKind === 'addressed_speech' &&
-                aware.sourceId === 'player' &&
-                aware.targetId === actorId,
-            )
-            .at(-1);
-          if (recent?.eventId !== run.playerSpeechEventId)
-            throw new StopJob('stale', 'A newer conversation turn superseded this response.');
-        }
         return commitActorResponse(
           world,
           run.job.id,
@@ -735,6 +740,7 @@ export class AiDirector {
     let result = await commit();
     while (!result.ok && result.code === 'paused') {
       await this.awaitResume(run, true);
+      if (await retryForUrgentAwareness()) return;
       result = await commit();
     }
     const receipt = this.service.world.responseReceipts?.[run.job.id];

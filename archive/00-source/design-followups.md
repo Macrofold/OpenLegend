@@ -194,7 +194,7 @@ Recorded September 19, 2026; quote formatting normalized. This authorizes detail
 > - something that we can implement and sequence properly
 > - something that is also technically feasible and allows for all of the functionality that we desire
 
-Recorded September 19, 2026; quote formatting normalized. The [architecture review and delivery plan](../07-technical-architecture/review-and-delivery-plan.md) records the critique, changes, smaller initial slices, later feature gates and coverage. The system, context, declaration and Macrofold documents were revised directly. No implementation, benchmark or validation of runtime guarantees is implied by this review.
+Recorded September 19, 2026; quote formatting normalized. The [architecture review and delivery plan](../../docs/maintainers/README.md) records the critique, changes, smaller initial slices, later feature gates and coverage. The system, context, declaration and Macrofold documents were revised directly. No implementation, benchmark or validation of runtime guarantees is implied by this review.
 
 ## M09 — clarify the first world-engine MVP
 

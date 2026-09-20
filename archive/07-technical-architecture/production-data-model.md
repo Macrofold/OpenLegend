@@ -1,10 +1,8 @@
 # Production data model
 
-Current local runtime note (September 20): the prototype uses a private SQL-transactional change journal with periodic snapshots, and public bootstrap/SSE typed patches with bounded replay. See the [canonical implemented architecture](../../docs/architecture.md#state-and-transitions). This is not the optional future external journal-first authority migration or the complete normalized/multiplayer design below; SQL commit remains the durability boundary, while routine local timer progress may be published before its one-second flush.
+The current personal-world implementation stores whole-world snapshots plus transactional `WorldChanges`, periodic compaction, response receipts and SQLite/PostgreSQL cognition records; PostgreSQL also stores pgvector recall data. [Architecture](../../docs/architecture.md) owns exact current behavior. Records labeled transitional below exist only to bridge that runtime. Normalized production, conversation/story, rights/pack and hosted-operation records remain future target records until implemented.
 
-Status: **proposed production implementation specification**, September 19, 2026. Requested in the database-design side conversation. This establishes the target persistence and query boundaries before further database-dependent features are built. It does not implement tables, migrations, MCP tools, hosting, or capacity guarantees. The executable prototype remains [documented separately](../../docs/architecture.md).
-
-This document owns canonical records, identities, invariants and transaction boundaries. [Data queries and MCP](data-queries-and-mcp.md) owns the durable query interface. [Data delivery and scale](data-delivery-and-scale.md) owns migration, deployment, retention, capacity evaluation and rollout. Together they refine the logical storage section of [system architecture](system-architecture.md#4-world-representation-and-persistence). Existing [declaration](declarations-and-evolution.md), [memory](../../docs/memory-architecture.md), [governance](../03-design-proposals/invention-governance-and-ownership.md), [workshop](../03-design-proposals/world-agent-and-workshop.md) and [billing](billing-and-usage-reporting.md) documents continue to own their product semantics.
+This document owns target production records, identities, invariants and transaction boundaries. [Data queries and MCP](data-queries-and-mcp.md) owns the durable query interface. [Data delivery and scale](data-delivery-and-scale.md) owns migration, deployment, retention, capacity evaluation and rollout. Existing [declaration](declarations-and-evolution.md), [memory](../../docs/memory-architecture.md), [governance](../03-design-proposals/invention-governance-and-ownership.md), [workshop](../03-design-proposals/world-agent-and-workshop.md) and [billing](billing-and-usage-reporting.md) documents own their product semantics.
 
 ## Implementation scope: baseline versus conditional expansion
 
@@ -239,7 +237,7 @@ The future [NC response/conversation design](../../docs/narration-and-conversati
 
 ### Reliable observation and memory updates
 
-The later [perception and attention proposal](perception-and-attention.md#10-modular-records-execution-and-recovery) specializes these records: event-aware projections and non-event `mind.observations` preserve modality, perceived detail/intelligibility, recognition uncertainty, event-time origin evidence and relevant description/policy revisions. Historical far observations must not acquire today's near detail. Sensory profiles belong to versioned definitions; emission state belongs to committed events/processes. Semantic object/event indexes and actor interest subscriptions are derived, versioned projections with scoped queries and rebuild behavior, not second authoritative inventories or permission grants. Future schema migrations must define reminder/encounter delivery keys and retention explicitly; none are implemented by this documentation addition.
+The later [perception and attention proposal](perception-and-attention.md#7-sensory-event-generation) specializes these records: event-aware projections and non-event `mind.observations` preserve modality, perceived detail/intelligibility, recognition uncertainty, event-time origin evidence and relevant description/policy revisions. Historical far observations must not acquire today's near detail. Sensory profiles belong to versioned definitions; emission state belongs to committed events/processes. Semantic object/event indexes and actor interest subscriptions are derived, versioned projections with scoped queries and rebuild behavior, not second authoritative inventories or permission grants. Future schema migrations must define reminder/encounter delivery keys and retention explicitly; none are implemented by this documentation addition.
 
 For an event with at least one aware actor, the world commits the shared experiential event and durable actor-awareness delivery envelope together. The future NC04 policy also keeps notable unwitnessed external events using a stored trusted score/reason/policy version, with zero awareness rows. Other unwitnessed transitions commit state/recovery evidence without retaining experiential rows. The envelope records audience and observation policy/version at event time, or an immutable bounded observation payload; it does not recompute yesterday's listeners from today's positions. Ingestion may be asynchronous and is idempotent per actor/delivery key. Active promises and recent addressed speech must be available to context through a bounded pending-delivery overlay or a wait for the actor watermark; search-index lag cannot erase them.
 
@@ -396,38 +394,6 @@ Remain product decisions: human-private-record access by creators, exact sharing
 No claim is made that arbitrary globally coupled physics, unlimited mind histories or hundreds of thousands of simultaneous players can run in one transaction domain. The [scale plan](data-delivery-and-scale.md) specifies the feasible growth path and the boundaries that still require new engineering.
 
 
-## 15. Implementation checklist
+## 15. Implementation tracking
 
-All items start open: this documentation change establishes scope, not implementation evidence. Check an item only with linked changes and relevant verification; record partial progress beneath it. Preserve unique findings and blockers in [maintainer TODO](../../docs/maintainers/TODO.md). D0–D6 in [data delivery](data-delivery-and-scale.md#8-sequenced-implementation-and-exit-gates) remain phase/acceptance definitions; this is their persistence status checklist, not a second cognition queue.
-
-### Baseline, in dependency order
-
-- [ ] PD01 — Define consumed records, scoped repository contracts and migration boundaries (D0; CR01).
-- [x] PD02 — Implement PostgreSQL connections, versioned migrations and the single-world-writer contract (D1).
-- [ ] PD03 — Persist supported state atomically with revisions, receipts and ambiguous-commit recovery (D1).
-- [ ] PD04 — Import existing saves losslessly and verify recovery before each store cutover (D1; CR11).
-- [ ] PD05 — Add durable bounded jobs, spending reconciliation and necessary asynchronous delivery (D1; CR02).
-- [ ] PD06 — Deliver scoped read queries alongside each consuming feature (D1/D2; CR03–CR04).
-- [ ] PD07 — Deliver awareness, memory, commitments and consolidation storage through CR05–CR06 (D2).
-- [x] PD08 — Deliver accepted inner-world publication and reflection scheduling storage through CR07–CR09 (D2).
-- [x] PD09 — Persist bounded trigger/stage diagnostics alongside each cognition slice (CR01–CR11).
-- [ ] PD10 — Verify retention, forgetting, access isolation, restart and backup restoration (D2; CR12).
-- [ ] PD11 — Measure baseline read/write performance and document actual delivery evidence (D1/D2).
-
-September 20 implementation: PostgreSQL uses a single-writer advisory lock, snapshot CAS and atomic `mind.inner_world` rows. Durable jobs/attempts/diagnostics and scoped current-state queries exist; the local import preserved full world digests and spending records. This is the consumed cognition subset, not the full normalized schema. PD03–PD07 retain broader recovery/normalization acceptance; PD10–PD11 remain open. See [evidence](../../docs/maintainers/TODO.md#september-20-native-jev-and-live-cognition).
-
-PD04 is repeated incrementally before switching each later store; diagnostics begin with routing, not after reflection. PD07–PD09 are integration checkpoints whose detailed tasks remain in cognition-redesign.md. Early CR02–CR04 work can use current permitted records behind the CR01 interfaces; accepted PostgreSQL publication requires PD02–PD04. No task here authorizes paid execution.
-
-### Conditional expansion — inactive until its trigger is recorded
-
-- [ ] PX01 — Expand query compilation, reports and MCP datasets for a named consumer (D3).
-- [ ] PX02 — Add full tenancy, authorship, rights, libraries and packs with those features (D4).
-- [ ] PX03 — Add checkpoint replay and archive manifests for explicit recovery/history requirements (D2 expansion).
-- [ ] PX04 — Add managed failover and release operations for the chosen hosted availability contract (D5).
-- [ ] PX05 — Split services and add distributed delivery when deployment/isolation requires it (D6).
-- [ ] PX06 — Add worker leases, placement and world moves when multiple authorities require coordination (D6).
-- [ ] PX07 — Add partitions, replicas or specialized indexes after measured bottlenecks (D6).
-- [ ] PX08 — Add sector authorities and cross-sector protocols after single-world limits are demonstrated (D6).
-- [ ] PX09 — Add reserved record families when their gameplay mechanics are implemented.
-
-For each conditional item, record **trigger, selected scope, dependencies and exit evidence** before implementation. An unchecked conditional item does not block baseline completion. These designs remain available; no unique requirement is discarded by deferring its activation.
+Current task state and D0–D6 exit gates live only in the [Production data implementation tracker](../../docs/maintainers/production-data.md).

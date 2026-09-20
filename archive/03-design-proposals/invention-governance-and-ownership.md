@@ -1,6 +1,6 @@
 # Invention governance, creator ownership and world packs
 
-Recorded September 19, 2026, updated for the [separate-lock clarification](../00-source/world-governance-and-controls-followup.md#separate-agent-and-player-locks--september-19-2026). **Accepted product requirements:** world owners independently open or lock agent/NPC invention and player invention; players retain attribution and control of their own contributions across worlds; every world has a complete invention-pack inventory; owners can offer free-use worlds whose inventions can be copied into another world. The contracts and sequence below are proposals for implementing those requirements. Account libraries, multiplayer permissions, invention locks and marketplace packs are not implemented by this document. See [current architecture](../../docs/architecture.md) for executable behavior.
+This document owns product behavior for invention locks, creator attribution/control, portability, creator libraries, world invention packs, free-use worlds and contribution permissions. Account libraries, multiplayer permissions, invention locks and marketplace packs are target behavior rather than current implementation; see [Architecture](../../docs/architecture.md) for executable behavior.
 
 Related: [world creation and discovery](world-creation-and-discovery.md), [world rules](world-rules-and-parameters.md), [playability and controls](playability-and-controls.md), [world agent and workshop](world-agent-and-workshop.md), [creator economy](../06-marketing/creator-economy-and-mechanics-packs.md), and [licensing](../../LICENSING.md).
 
@@ -107,21 +107,6 @@ Open Legend owns policy, identity integration, admission and world activation. M
 
 Use stable IDs, immutable versions, explicit grants and replaceable repositories so a local account/library prototype can precede hosted accounts and marketplace services. Avoid a distributed ownership registry as a prerequisite for proving lock semantics.
 
-## Delivery sequence and acceptance cases
+## Delivery and unresolved choices
 
-1. Add a durable owner policy with independent agent/player locks and a common admission gate that preserves request origin. Verify all four settings combinations, delegation, imports and in-flight races; existing action execution remains available under either lock.
-2. Add immutable invention/attribution records and a local creator library/detail view. Separate original contributions, learning, imports and drafts.
-3. Decide whether owner changes require unlocking, then add workshop authorization, version diffs, dependency validation and audited activation/migration under that policy.
-4. Define contribution terms and retention policy; add account-level synchronization and a complete pack inventory with permission/dependency blockers.
-5. Prove free sharing and destination import with immutable manifests before paid marketplace listings. Whole-pack/free-use claims depend on complete rights and dependencies.
-
-Meaningful future acceptance scenarios include separate save/restore of both locks; players inventing while agents are locked and agents inventing while players are locked; a player request delegated through an NPC retaining its player origin; an NPC completion rejected after the agent lock changes but not merely after the player lock changes (and the symmetric player cases); a hidden import/revision route attempting to bypass it, crafting and teaching after lock, a creator leaving a host while retaining their eligible work, a private dependency preventing complete export, a co-authored revision preserving attribution, and a free-use policy change respecting earlier grants. Check that cloning brings definitions rather than private world history, that an old manifest remains reproducible, and that account rights never grant an in-world character unearned knowledge. These are planned checks, not completed runtime or live-provider evidence.
-
-## Decisions still open
-
-- Initial values for each independent invention lock, delegated editor roles, and any future permissions finer than the accepted agent/player split.
-- Exact free-use license, commercial-operation/modification/redistribution rights, contributor consent, collaboration and NPC attribution policy.
-- Creator capsule retention, deletion obligations, private/deleted-world metadata, identity verification and self-hosted account synchronization.
-- Pack history retention and how to represent unavailable historical artifacts without overstating completeness.
-- Version migration/rollback policy per mechanism family and review requirements for owner edits.
-- Marketplace moderation, payment terms and licenses for any future executable artifacts; none follows automatically from an invention's storage format.
+Implementation is mapped into the [Inventions and world evolution tracker](../../docs/maintainers/inventions-and-world-evolution.md). Runtime admission belongs to [Declarations and evolution](../07-technical-architecture/declarations-and-evolution.md), and persistence belongs to the [production data design](../07-technical-architecture/production-data-model.md). Material unresolved product choices are maintained only in [Open decisions](../05-project/open-decisions.md).

@@ -1,12 +1,14 @@
 # Stable data queries and world-agent MCP access
 
+
+Current HTTP state, editor and diagnostic queries are described in [Architecture](../../docs/architecture.md). This document specifies the future bounded production query service and scoped world-agent/MCP contracts; it does not imply those tools are live.
 Status: **proposed production contract**, September 19, 2026; no endpoints, views or MCP server are implemented here. Companion to the [production data model](production-data-model.md) and [delivery/scale plan](data-delivery-and-scale.md). This is the interface to establish before writing world-agent prompts or feature queries that would otherwise depend on the prototype's JSON layout.
 
 ## 1. One read service, several consumers
 
 Provide an application-owned `GameDataReader` with versioned datasets, fields, typed references, filters, joins, pagination, consistency and permission semantics. HTTP/SDK clients, the creator inspector, player UI and MCP adapt this same service. Physical repositories remain private to their module; MCP is a transport over the query service, not a database superuser session.
 
-Implement only datasets and query operations consumed by current features; the broad compiler, report service and MCP surface expand with named consumers (PD06/PX01 in the [production checklist](production-data-model.md#15-implementation-checklist)). Historical reconstruction, replicas and archive readers are conditional capabilities and must report unsupported until delivered.
+Implement only datasets and query operations consumed by current features; the broad compiler, report service and MCP surface expand with named consumers (PD06/PX01 in the [production checklist](../../docs/maintainers/production-data.md)). Historical reconstruction, replicas and archive readers are conditional capabilities and must report unsupported until delivered.
 
 Start with read-only PostgreSQL `read_v1` views and a small parameterized query compiler. Local SQLite can implement the same response contracts. Storage changes, indexes, replicas, archive readers and shard routing stay behind that contract. New datasets/fields are additive; changing units, visibility, cardinality or meanings requires a new contract version. Do not rename a public field merely because its SQL column moved.
 

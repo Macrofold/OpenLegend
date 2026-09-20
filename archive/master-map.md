@@ -8,7 +8,7 @@ Accepted technical/visual direction: PlayCanvas browser presentation, an indepen
 
 ## Product and technical loops
 
-The September 20 [narration/conversation follow-up](00-source/narration-and-conversation-followup.md) adds future optional talk/act/think responses and private storytelling over source-linked events. Feature homes are [agent reactions](03-design-proposals/agents-and-social-simulation.md#talk-act-think-and-narration) and [personal story](03-design-proposals/world-and-player-experience.md#the-narrator-and-personal-story); the [technical design and NC01–NC13 tracker](../docs/narration-and-conversations.md) own implementation planning. Missing action/effect invention is a separately deferred extension.
+The [narration/conversation design](../docs/narration-and-conversations.md) owns talk/act/think responses and private storytelling over source-linked events; [NC00–NC13](../docs/maintainers/narration-and-conversations.md) own delivery. Missing action/effect invention remains a separate deferred extension.
 
 ```mermaid
 flowchart TD
@@ -71,7 +71,7 @@ The [perception and attention contract](07-technical-architecture/perception-and
 | F56–F58 | [Playability and controls](03-design-proposals/playability-and-controls.md) | Complete permitted action catalogue and execution counts; configurable drawers, shortcuts and contextual slots |
 | F59–F60 | [World agent and workshop](03-design-proposals/world-agent-and-workshop.md) | Durable journal and technical inspection; scoped read tools, candidate revisions and validated activation/migration |
 
-See the [implementation sequence](07-technical-architecture/review-and-delivery-plan.md#u14-delivery-track-governance-controls-and-the-workshop). These are proposed extensions. Whole-world god access is a separate authorized audience from the ordinary actor/private views below; it is not a reason to disclose private NPC context to other players or models working for them.
+See the [invention implementation tracker](../docs/maintainers/inventions-and-world-evolution.md). These are proposed extensions. Whole-world god access is a separate authorized audience from ordinary actor/private views; it does not disclose private NPC context to other players or models working for them.
 
 ## Data and authority map
 

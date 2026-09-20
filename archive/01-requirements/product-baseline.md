@@ -1,6 +1,6 @@
 # Open Legend — product baseline
 
-Status: **user-stated direction**, organized from the [original brief](../00-source/original-brief.txt), [design follow-ups](../00-source/design-followups.md) [U14 governance/controls request](../00-source/world-governance-and-controls-followup.md) and [U15 billing request](../00-source/billing-interface-followup.md). Created September 18, 2026; updated September 19. U13 authorized the existing prototype; U14/U15 add documented requirements, not implemented features. See [current status](../05-project/implementation-status.md).
+This file owns high-level product requirements. Canonical design documents define behavior, [Implementation status](../05-project/implementation-status.md) records the current snapshot, and [Open decisions](../05-project/open-decisions.md) contains unresolved choices.
 
 This document records what the creator asked for. It does not turn every aspiration into a first-release commitment. Recommendations live in `03-design-proposals/`; optional extensions live in `04-ideation/`; delivery and unresolved choices live in `05-project/`.
 
@@ -63,7 +63,7 @@ The accepted [first playable MVP](../05-project/first-playable-mvp.md) includes 
 | F31 | Many concurrent agent reasoning/speaking/dreaming jobs sharing consistent world state | Required architecture property | [Architecture](../03-design-proposals/system-architecture.md) |
 | F32 | Research RimWorld thoroughly, comparable games, psychological models, engines, art, hosting, and Jev/typesafe.ai | Research request | [Research index](../02-research/source-guide.md) |
 | F33 | Organized archive separating baseline, proposals/ideation, research, decisions, tasks, and implementation status | Current deliverable | [Archive index](../README.md) |
-| F34 | Do not implement yet | Historical constraint superseded by U13 for the first playable; new U14 request is documentation only | [Implementation status](../05-project/implementation-status.md) |
+| F34 | Preserve planning boundaries between accepted product requirements and implementation authorization | Current implementation scope is recorded separately | [Implementation status](../05-project/implementation-status.md) |
 | F35 | Start with a primitive wilderness society, before a village exists | Accepted follow-up direction | [Survival baseline](../03-design-proposals/survival-baseline.md) |
 | F36 | Seed some survival knowledge, accessible resources and possessions | Accepted follow-up direction; exact content open | [Survival baseline](../03-design-proposals/survival-baseline.md) |
 | F37 | Allow consequential NPC survival and death; no requirement for artificially forgiving initial needs | Accepted follow-up correction; player recovery remains separate | [Survival baseline](../03-design-proposals/survival-baseline.md) |
@@ -104,20 +104,20 @@ These requirements extend the product direction without silently expanding the f
 
 ### September 19 — perception and attention
 
-The [source summary](../00-source/perception-and-attention-followup.md) explicitly requests documentation only. These requirements extend the design without silently adding completed features or changing the first-playable acceptance boundary.
+These requirements extend the product target without implying completed features or changing the first-playable acceptance boundary.
 
 | ID | User requirement | Status / interpretation | Design home |
 |---|---|---|---|
 | F62 | Toggleable sight/hearing indicators, subtle gradients or contours, initially circular and later shaped by occlusion; distance affects sensory clarity | Accepted direction; exact presentation, units and propagation proposed | [Indicators](../07-technical-architecture/perception-and-attention.md#5-compact-player-perception-indicators) |
 | F63 | Every meaningful object has shared or distinctive near/medium/far visual descriptions; supported state changes and attached effects alter the permitted description | Accepted direction; archetype/instance composition and effect ownership proposed | [Descriptions](../07-technical-architecture/perception-and-attention.md#6-shared-descriptions-with-meaningful-state-variation) |
 | F64 | Sound exposure represents events/actions and sustained sources, attenuates with distance/obstacles, and supplies only the evidence the listener can perceive | Accepted direction; no independent acoustic model implemented | [Sound emissions](../07-technical-architecture/perception-and-attention.md#4-sound-belongs-to-emissions-and-processes) |
-| F65 | Meaningful new exposure creates decision opportunities; people entering view always qualify, ordinary objects usually qualify only when relevant; semantic indexing supports arbitrary goals without per-object Jev calls | Accepted direction; scoped index, interest subscriptions and batching proposed | [Semantic interests](../07-technical-architecture/perception-and-attention.md#7-semantic-indexing-and-interest-subscriptions), [triggers](../07-technical-architecture/perception-and-attention.md#8-meaningful-exposure-changes-without-a-call-storm) |
-| F66 | Physical/emotional threshold crossings and persistent serious needs cause reconsideration, with an hourly low-food thought/reminder as the example | Accepted direction; low-fullness interpretation, exact thresholds and generated-thought guarantee versus cost limits remain open | [Needs and time](../07-technical-architecture/perception-and-attention.md#9-needs-reminders-and-accelerated-time) |
+| F65 | Meaningful new exposure creates decision opportunities; people entering view always qualify, ordinary objects usually qualify only when relevant; semantic indexing supports arbitrary goals without per-object Jev calls | Accepted direction; scoped index, interest subscriptions and batching proposed | [Semantic interests](../../docs/memory-architecture.md#selection-signals-and-delivery-order), [triggers](../07-technical-architecture/perception-and-attention.md#7-sensory-event-generation) |
+| F66 | Physical/emotional threshold crossings and persistent serious needs cause reconsideration, with an hourly low-food thought/reminder as the example | Accepted direction; low-fullness interpretation, exact thresholds and generated-thought guarantee versus cost limits remain open | [Needs and time](../07-technical-architecture/../../docs/memory-architecture.md) |
 | F67 | Broad embodied vision agrees with what the player can see on-screen within character LOS; off-screen/hidden objects provide no new visual detail | Accepted direction; authoritative camera limits, background mode and display policy remain open | [Visual parity](../07-technical-architecture/perception-and-attention.md#embodied-visual-parity) |
 
 ## Compact cognition follow-up — F68–F73
 
-The [source request](../00-source/cognition-context-followup.md) explicitly asks for documentation/tasks before implementation. The [canonical design](../../docs/memory-architecture.md) owns these accepted targets; [CR01–CR12](../../docs/maintainers/cognition-redesign.md) are all open.
+The [canonical design](../../docs/memory-architecture.md) owns these accepted targets; current delivery state belongs to [CR01–CR12](../../docs/maintainers/cognition-redesign.md).
 
 | ID | User requirement | Delivery tasks |
 | --- | --- | --- |
@@ -132,22 +132,22 @@ These settle behavior, not exact provider availability, budgets, daily rest acco
 
 ## Living actor model — F74
 
-| ID | User requirement | Status / interpretation | Design home |
-|---|---|---|---|
-| F74 | Treat every living being, including animals, as an actor; let lifecycle actions such as Revive and compatible conditions/effects such as wetness, fire and health changes apply across species; allow selected animals to gain intelligence, memory, inner worlds or speech | Accepted direction; current animals remain a separate implementation component, current revival is person-only, and shared cross-species status effects are not implemented | [Canonical actor model](../../docs/architecture.md#actor-means-any-living-being), [agent design](../03-design-proposals/agents-and-social-simulation.md#one-character-model-two-controllers), [source](../00-source/actor-model-followup.md) |
+| ID | Product requirement | Design home |
+|---|---|---|
+| F74 | Treat every living being, including animals, as an actor; let lifecycle actions such as Revive and compatible conditions/effects such as wetness, fire and health changes apply across species; allow selected animals to gain intelligence, memory, inner worlds or speech | [Canonical actor model](../../docs/architecture.md#actor-means-any-living-being), [agent design](../03-design-proposals/agents-and-social-simulation.md#one-character-model-two-controllers) |
 
 ## Narration and conversation follow-up — F75–F80
 
-Accepted September 20, 2026 from the [narration request](../00-source/narration-and-conversation-followup.md). **Document and plan only; no implementation requested.** The [technical design](../../docs/narration-and-conversations.md) owns proposed contracts and its bottom NC tracker owns delivery.
+The [narration and conversation specification](../../docs/narration-and-conversations.md) owns these requirements.
 
-| ID | User requirement | Delivery tasks |
-| --- | --- | --- |
-| F75 | Any trigger may elicit talk, act and/or think, with proper entity targets; every accepted component becomes the actor's own experience, including private thoughts | NC01–NC03 |
-| F76 | Narrate non-speech actions/reactions and relevant world consequences in conversation, excluding thoughts; show actual impacts below in smaller distinct text; allow unsupported expressions without mechanics initially, defer invention of missing conditional effects | NC03, NC08–NC10; NC13 deferred |
-| F77 | One external world-event catalogue with actor awareness joins; retain witnessed events and score-defined notable unseen events, discard ordinary unseen experiential records without discarding simulation state | NC04, NC11 |
-| F78 | The Narrator uses bounded scoped context/retrieval for one or several perspectives; explicitly permitted single-actor thoughts and distant notable cutaways are separate modes; standalone story appears atop the screen and in a private Journal, with player-selected voice | NC07–NC10 |
-| F79 | Durable conversations support changing membership, self-talk, overhearing without joining, no retroactive history awareness, last-member closure and source-to-destination merges with a terminal join notice | NC05–NC06, NC10–NC11 |
-| F80 | Narration is separate player-private storage, never a world event; explicit links include a many-to-many event join; reconstruct scoped conversation history chronologically, including separate narrations of a global event across conversations | NC07–NC12 |
+| ID | Product requirement |
+| --- | --- |
+| F75 | Any trigger may elicit talk, act and/or think, with proper entity targets; every accepted component becomes the actor's own experience, including private thoughts. |
+| F76 | Narrate non-speech actions/reactions and relevant world consequences in conversation, excluding thoughts; show actual impacts below in smaller distinct text; allow unsupported expressions without mechanics initially and defer invention of missing conditional effects. |
+| F77 | Use one external world-event catalogue with actor awareness joins; retain witnessed events and score-defined notable unseen events, and discard ordinary unseen experiential records without discarding simulation state. |
+| F78 | The Narrator uses bounded scoped context/retrieval for one or several perspectives; explicitly permitted single-actor thoughts and distant notable cutaways are separate modes; standalone story appears atop the screen and in a private Journal, with player-selected voice. |
+| F79 | Durable conversations support changing membership, self-talk, overhearing without joining, no retroactive history awareness, last-member closure and source-to-destination merges with a terminal join notice. |
+| F80 | Narration uses separate player-private storage and never becomes a world event; explicit links include a many-to-many event join; reconstruct scoped conversation history chronologically, including separate narrations of one global event across conversations. |
 
 ## What this baseline does not settle
 

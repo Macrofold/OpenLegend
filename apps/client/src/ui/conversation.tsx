@@ -25,7 +25,6 @@ export function ConversationMessage({
   label,
   text,
   failureReason,
-  interruption,
   pending,
   children,
 }: {
@@ -33,7 +32,6 @@ export function ConversationMessage({
   label: string;
   text: string;
   failureReason?: string;
-  interruption?: string;
   pending?: boolean;
   children?: ReactNode;
 }) {
@@ -43,7 +41,6 @@ export function ConversationMessage({
         <strong className="ol-message-author">{label}</strong>
         <div className="ol-prose">{text}</div>
         {failureReason && <FailureStatus reason={failureReason} />}
-        {interruption && <p className="ol-caption">{interruption}</p>}
         {children}
       </div>
       {pending && (
@@ -71,31 +68,50 @@ export function ConversationThread({
   empty,
   ariaLabel = 'Conversation',
   id,
+  visible = true,
 }: {
   conversationKey: string;
   items: ConversationItem[];
   empty?: ReactNode;
   ariaLabel?: string;
   id?: string;
+  visible?: boolean;
 }) {
   const log = useRef<HTMLDivElement>(null);
-  const previous = useRef<{ key: string; count: number } | null>(null);
+  const previous = useRef<{ key: string; count: number; latestId: string } | null>(null);
+  const wasVisible = useRef(false);
+  const scrollFrame = useRef<number | null>(null);
   const unread = useRef(false);
   const [showNewMessage, setShowNewMessage] = useState(false);
+  const latestId = items.at(-1)?.id ?? '';
 
   const scrollToBottom = () => {
     const element = log.current;
     if (!element) return;
     element.scrollTop = element.scrollHeight;
+    if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
+    scrollFrame.current = requestAnimationFrame(() => {
+      const current = log.current;
+      if (current) current.scrollTop = current.scrollHeight;
+      scrollFrame.current = null;
+    });
     unread.current = false;
     setShowNewMessage(false);
   };
 
   useLayoutEffect(() => {
-    const openedConversation = !previous.current || previous.current.key !== conversationKey;
-    const addedMessage = !!previous.current && items.length > previous.current.count;
+    const prior = previous.current;
+    const openedConversation =
+      visible && (!prior || prior.key !== conversationKey || !wasVisible.current);
+    const addedMessage =
+      visible &&
+      !!prior &&
+      prior.key === conversationKey &&
+      (items.length > prior.count || (items.length === prior.count && latestId !== prior.latestId));
+    previous.current = { key: conversationKey, count: items.length, latestId };
+    wasVisible.current = visible;
+    if (!visible) return;
     if (openedConversation) {
-      previous.current = { key: conversationKey, count: items.length };
       scrollToBottom();
       return;
     }
@@ -107,8 +123,13 @@ export function ConversationThread({
         scrollToBottom();
       }
     }
-    previous.current = { key: conversationKey, count: items.length };
-  }, [conversationKey, items.length]);
+  }, [conversationKey, items.length, latestId, visible]);
+
+  useLayoutEffect(() => {
+    return () => {
+      if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
+    };
+  }, []);
 
   return (
     <div className="ol-thread-shell">

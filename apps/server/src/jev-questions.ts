@@ -22,6 +22,23 @@ export function attentionQuestions(handles: string[]): TypedQuestionMap {
   );
 }
 
+/** One shared policy in judgment state keeps large independent batches below transport limits. */
+export function batchedAttentionQuestions(handles: string[]): TypedQuestionMap {
+  return Object.fromEntries(
+    handles.map((handle) => [
+      handle,
+      {
+        type: 'choice' as const,
+        instructions: `Judge candidate ${handle} independently using attentionPolicy.`,
+        criteria: {
+          yes: 'Including it would materially help this decision.',
+          no: 'It is incidental, redundant or unrelated.',
+        },
+      },
+    ]),
+  );
+}
+
 export function decisionQuestions(
   addressedSpeech: boolean,
   maxImmediateLevel: 2 | 3 | 4,

@@ -123,7 +123,13 @@ function stageSummary(call: IntelligenceCall) {
         usage?: { inputTokens: number; outputTokens: number };
       }
     | undefined;
-  return `${call.kind} · ${call.status}${receipt ? ` · ${receipt.latencyMs ?? '?'} ms · ${receipt.usage ? `${receipt.usage.inputTokens} in / ${receipt.usage.outputTokens} out` : 'tokens unknown'} · ${receipt.estimatedCostUsd === undefined ? 'cost unknown' : `$${receipt.estimatedCostUsd.toFixed(6)}`}` : ''}`;
+  const kind =
+    call.kind === 'Jev'
+      ? `Jev · ${jevPurpose(call)}`
+      : call.kind.startsWith('LM ·')
+        ? `LM · ${lmPurposeTitle(textAt(call.input, 'task'))}`
+        : call.kind;
+  return `${kind} · ${call.status}${receipt ? ` · ${receipt.latencyMs ?? '?'} ms · ${receipt.usage ? `${receipt.usage.inputTokens} in / ${receipt.usage.outputTokens} out` : 'tokens unknown'} · ${receipt.estimatedCostUsd === undefined ? 'cost unknown' : `$${receipt.estimatedCostUsd.toFixed(6)}`}` : ''}`;
 }
 
 function Labeled({ label, children }: { label: string; children: ReactNode }) {
@@ -139,6 +145,62 @@ function valueText(value: unknown): string | undefined {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   return undefined;
+}
+
+function humanize(value: string): string {
+  const text = value
+    .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
+    .replaceAll(/[_-]/g, ' ')
+    .trim();
+  return text ? text.replace(/^./, (character) => character.toUpperCase()) : value;
+}
+
+function jevPurpose(call: IntelligenceCall): string {
+  const ids = Object.keys(object(path(call.input, 'questions')) ?? {});
+  if (ids.includes('admissibility')) return 'Invention judgment';
+  if (ids.includes('route')) return 'Response routing';
+  if (ids.some((id) => /^action\d+$/.test(id))) return 'Action relevance';
+  if (ids.some((id) => /^c\d+$/.test(id))) return 'Memory relevance';
+  const requestId = textAt(call.input, 'requestId') ?? '';
+  if (requestId.endsWith(':route')) return 'Semantic routing';
+  if (requestId.includes(':attention')) return 'Context relevance';
+  return 'Semantic judgment';
+}
+
+function lmPurposeTitle(task?: string): string {
+  switch (task) {
+    case 'npc_response':
+      return 'NPC response';
+    case 'invent_supported_technique':
+      return 'Invention proposal';
+    case 'memory_consolidation':
+      return 'Memory consolidation';
+    case 'background_reflection':
+      return 'Background reflection';
+    case 'npc_cognition':
+      return 'NPC cognition';
+    default:
+      return task ? humanize(task) : 'Generation';
+  }
+}
+
+function lmPurpose(task?: string): string {
+  switch (task) {
+    case 'npc_response':
+      return 'Compose this actor’s spoken response, optional action, and private thought.';
+    case 'invent_supported_technique':
+      return 'Propose one recipe for the invention family selected by Jev.';
+    case 'memory_consolidation':
+      return 'Condense routine memories while preserving their chronology and source links.';
+    case 'background_reflection':
+      return 'Reconsider lasting beliefs, relationships, goals, and unresolved concerns.';
+    case 'npc_cognition':
+      return 'Choose the actor’s next semantic thought or intention.';
+    default:
+      return task
+        ? `Run the ${humanize(task).toLowerCase()} generation task.`
+        : 'Generate a typed result.';
+  }
 }
 
 function answerLabel(answer: unknown): string {
@@ -178,12 +240,7 @@ function jevTarget(state: JsonObject | undefined, id: string): { handle: string;
     valueText(data?.['name']);
   return {
     handle: candidateText ? id : 'Question',
-    text:
-      candidateText ??
-      id
-        .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
-        .replaceAll(/[_-]/g, ' ')
-        .replace(/^./, (character) => character.toUpperCase()),
+    text: candidateText ?? humanize(id),
   };
 }
 
@@ -230,6 +287,9 @@ function JevSummary({ call }: { call: IntelligenceCall }) {
   }
   return (
     <div className="ol-jev-summary">
+      <dl className="ol-diagnostic-fields ol-jev-purpose">
+        <Labeled label="Jev stage">{jevPurpose(call)}</Labeled>
+      </dl>
       {[...groups.entries()].map(([groupKey, group]) => {
         const options = jevOptions(group.question);
         return (
@@ -283,6 +343,143 @@ function JevSummary({ call }: { call: IntelligenceCall }) {
           </section>
         );
       })}
+    </div>
+  );
+}
+
+function LmResponse({ value }: { value: JsonObject }) {
+  const talk = object(value['talk']);
+  const act = object(value['act']);
+  const think = object(value['think']);
+  const action = act
+    ? act['kind'] === 'expression'
+      ? `${humanize(String(act['verb'] ?? 'expression'))}${act['target'] ? ` → ${String(act['target'])}` : ''}`
+      : act['kind'] === 'known'
+        ? `Use action ${String(act['actionId'] ?? 'unknown')}`
+        : valueText(act['description'])
+    : undefined;
+  return (
+    <div className="ol-lm-components">
+      <section className="ol-diagnostic-card">
+        <span className="ol-eyebrow">Spoken response</span>
+        <p className="ol-prose">{valueText(talk?.['text']) ?? 'No speech proposed.'}</p>
+        {talk?.['addressee'] !== undefined && (
+          <p className="ol-caption">To: {String(talk['addressee'])}</p>
+        )}
+      </section>
+      <section className="ol-diagnostic-card">
+        <span className="ol-eyebrow">Action</span>
+        <p className="ol-prose">{action ?? 'No action proposed.'}</p>
+      </section>
+      <section className="ol-diagnostic-card">
+        <span className="ol-eyebrow">Private thought</span>
+        <p className="ol-prose">{valueText(think?.['text']) ?? 'No private thought proposed.'}</p>
+        {Array.isArray(think?.['about']) && think['about'].length > 0 && (
+          <p className="ol-caption">About: {think['about'].map(String).join(', ')}</p>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function LmInvention({ value }: { value: JsonObject }) {
+  const output = object(value['output']);
+  const inputs = Array.isArray(value['inputs']) ? value['inputs'].map(object).filter(Boolean) : [];
+  return (
+    <section className="ol-diagnostic-card">
+      <span className="ol-eyebrow">Proposed invention</span>
+      <h4>{valueText(output?.['name']) ?? 'Unnamed proposal'}</h4>
+      {valueText(output?.['description']) && (
+        <p className="ol-prose">{valueText(output?.['description'])}</p>
+      )}
+      {!!inputs.length && (
+        <p className="ol-caption">
+          Materials:{' '}
+          {inputs
+            .map(
+              (input) =>
+                `${String(input?.['quantity'] ?? '?')} × ${String(input?.['definitionId'] ?? 'unknown')}`,
+            )
+            .join(', ')}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function LmConsolidation({ value }: { value: JsonObject }) {
+  const groups = Array.isArray(value['groups'])
+    ? value['groups'].map(object).filter((group): group is JsonObject => !!group)
+    : [];
+  return (
+    <section className="ol-diagnostic-card">
+      <span className="ol-eyebrow">Memory summaries</span>
+      {groups.length ? (
+        <ul className="ol-lm-summary-list">
+          {groups.map((group, index) => (
+            <li key={index}>
+              <span>{valueText(group['text']) ?? 'No summary text returned.'}</span>
+              {Array.isArray(group['sourceIds']) && (
+                <small>{group['sourceIds'].length} source memories</small>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="ol-prose">No memory groups returned.</p>
+      )}
+    </section>
+  );
+}
+
+function LmSummary({ call, trigger }: { call: IntelligenceCall; trigger?: string }) {
+  const task = textAt(call.input, 'task');
+  const context = object(path(call.input, 'context'));
+  const output = object(call.output);
+  const value = object(output?.['value']);
+  const failure =
+    valueText(output?.['reason']) ?? valueText(output?.['error']) ?? valueText(output?.['message']);
+  const requestLabel =
+    task === 'npc_response'
+      ? 'Player speech'
+      : task === 'invent_supported_technique'
+        ? 'Invention request'
+        : task === 'background_reflection'
+          ? 'Reflection trigger'
+          : 'Trigger';
+  const sourceCount = object(context?.['sources'])
+    ? Object.keys(object(context?.['sources'])!).length
+    : undefined;
+  return (
+    <div className="ol-lm-summary">
+      <dl className="ol-diagnostic-fields">
+        <Labeled label="Purpose">{lmPurpose(task)}</Labeled>
+        {trigger && <Labeled label={requestLabel}>{trigger}</Labeled>}
+        {valueText(context?.['selectedFamily']) && (
+          <Labeled label="Jev-selected family">{valueText(context?.['selectedFamily'])}</Labeled>
+        )}
+        {valueText(context?.['mode']) && (
+          <Labeled label="Consolidation mode">{humanize(String(context?.['mode']))}</Labeled>
+        )}
+        {sourceCount !== undefined && <Labeled label="Source memories">{sourceCount}</Labeled>}
+        {failure && <Labeled label="Failure">{failure}</Labeled>}
+      </dl>
+      {value && task === 'npc_response' && <LmResponse value={value} />}
+      {value && task === 'invent_supported_technique' && <LmInvention value={value} />}
+      {value && task === 'memory_consolidation' && <LmConsolidation value={value} />}
+      {value && task === 'background_reflection' && Array.isArray(value['thoughts']) && (
+        <section className="ol-diagnostic-card">
+          <span className="ol-eyebrow">Reflection thoughts</span>
+          <ul className="ol-lm-summary-list">
+            {value['thoughts'].map((thought, index) => (
+              <li key={index}>{valueText(object(thought)?.['text']) ?? valueText(thought)}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {!value && !failure && (
+        <p className="ol-caption">No typed model response was retained for this call.</p>
+      )}
     </div>
   );
 }
@@ -358,6 +555,8 @@ function responseFrom(calls: IntelligenceCall[]): string | undefined {
   for (const call of [...calls].reverse()) {
     const response =
       textAt(call.input, 'proposed', 'speech') ??
+      textAt(call.input, 'proposed', 'talk', 'text') ??
+      textAt(call.output, 'value', 'talk', 'text') ??
       textAt(call.output, 'value', 'speech') ??
       textAt(call.output, 'speech');
     if (response) return response;
@@ -369,10 +568,20 @@ function responseFrom(calls: IntelligenceCall[]): string | undefined {
   return undefined;
 }
 
-function StageReadable({ call, retrieval }: { call: IntelligenceCall; retrieval?: Retrieval }) {
+function StageReadable({
+  call,
+  retrieval,
+  trigger,
+}: {
+  call: IntelligenceCall;
+  retrieval?: Retrieval;
+  trigger?: string;
+}) {
   const jev = call.kind === 'Jev' || !!path(call.input, 'questions');
+  const lm = call.kind.startsWith('LM ·');
   const speech =
     textAt(call.input, 'proposed', 'speech') ??
+    textAt(call.input, 'proposed', 'talk', 'text') ??
     textAt(call.output, 'value', 'speech') ??
     textAt(call.output, 'speech');
   const stimulus =
@@ -380,25 +589,40 @@ function StageReadable({ call, retrieval }: { call: IntelligenceCall; retrieval?
     textAt(call.input, 'state', 'stimulus') ??
     textAt(call.output, 'stimulus');
   const proposedAction = textAt(call.input, 'proposed', 'actionId');
-  const message = textAt(call.output, 'message') ?? textAt(call.output, 'reason');
+  const message =
+    textAt(call.output, 'message') ??
+    textAt(call.output, 'reason') ??
+    textAt(call.output, 'error') ??
+    textAt(call.input, 'reason');
   const task = textAt(call.input, 'task');
   const showRetrieval = call.kind === 'Embeddings' || call.kind === 'Context and retrieval';
+  const failureStage = /failure|error/i.test(call.kind);
   return (
     <div className="ol-stage-readable">
-      {(stimulus || task || speech || proposedAction || message) && (
+      {(stimulus || (!lm && task) || speech || proposedAction || (!lm && message)) && (
         <dl className="ol-diagnostic-fields">
           {stimulus && <Labeled label="Trigger">{stimulus}</Labeled>}
-          {task && <Labeled label="Task">{task.replaceAll('_', ' ')}</Labeled>}
+          {!lm && task && <Labeled label="Task">{humanize(task)}</Labeled>}
           {speech && <Labeled label="Actor response">“{speech}”</Labeled>}
           {proposedAction && <Labeled label="Decision">{proposedAction}</Labeled>}
-          {message && <Labeled label="Outcome">{message}</Labeled>}
+          {!lm && message && (
+            <Labeled label={failureStage ? 'Error' : 'Outcome'}>{message}</Labeled>
+          )}
         </dl>
       )}
       {jev && <JevSummary call={call} />}
+      {lm && <LmSummary call={call} trigger={trigger} />}
       {showRetrieval && retrieval && <RetrievalSummary retrieval={retrieval} />}
-      {!stimulus && !task && !speech && !proposedAction && !message && !jev && !showRetrieval && (
-        <p className="ol-caption">No additional rendered fields were recorded for this stage.</p>
-      )}
+      {!stimulus &&
+        !task &&
+        !speech &&
+        !proposedAction &&
+        !message &&
+        !jev &&
+        !lm &&
+        !showRetrieval && (
+          <p className="ol-caption">No additional rendered fields were recorded for this stage.</p>
+        )}
     </div>
   );
 }
@@ -466,6 +690,7 @@ function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
 function Stage({
   call,
   retrieval,
+  trigger,
   remote,
   setRemote,
   setError,
@@ -473,6 +698,7 @@ function Stage({
 }: {
   call: IntelligenceCall;
   retrieval?: Retrieval;
+  trigger?: string;
   remote: unknown;
   setRemote(value: unknown): void;
   setError(message: string): void;
@@ -486,7 +712,7 @@ function Stage({
     <section className="ol-diagnostic-stage">
       <details>
         <summary>{stageSummary(call)}</summary>
-        <StageReadable call={call} retrieval={retrieval} />
+        <StageReadable call={call} retrieval={retrieval} trigger={trigger} />
         {hasProviderDetails && (
           <div className="ol-diagnostic-stage-actions">
             <Button
@@ -587,6 +813,7 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
               key={call.id}
               call={call}
               retrieval={retrieval}
+              trigger={detail.root.trigger}
               remote={remote[call.id]}
               setRemote={(value) => setRemote((current) => ({ ...current, [call.id]: value }))}
               setError={setError}

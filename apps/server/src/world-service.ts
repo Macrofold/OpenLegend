@@ -14,7 +14,7 @@ import {
   executeCommand,
   advanceWorld,
   admitDeclaration,
-  personMemory,
+  experienceEntry,
   editPerson as editPersonState,
   editWorldEvents as editWorldEventsState,
   observeActor,
@@ -74,10 +74,45 @@ export const commandInputSchema = z
   .strict();
 export const requestIdSchema = id;
 
+function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
+  const flags = { ...saved.milestones };
+  if (!flags['talk'] && events.some((event) => event.type === 'speech' && event.actorId === 'ada'))
+    flags['talk'] = true;
+  if (
+    !flags['hunt'] &&
+    events.some((event) => event.type === 'harvested' && event.actorId === 'player')
+  )
+    flags['hunt'] = true;
+  if (
+    !flags['eat'] &&
+    events.some(
+      (event) => event.type === 'ate' && event.actorId === 'player' && /meat/i.test(event.text),
+    )
+  )
+    flags['eat'] = true;
+  if (!flags['invent'] || !flags['bow']) {
+    const known = (saved.world.knowledge['player'] ?? []).map(
+      (record) => saved.world.recipes[record.recipeId],
+    );
+    if (!flags['invent'] && known.some((recipe) => recipe?.output.launcher?.mechanism === 'swing'))
+      flags['invent'] = true;
+    if (
+      !flags['bow'] &&
+      known.some((recipe) => recipe?.output.launcher?.mechanism === 'flex') &&
+      known.some((recipe) => recipe?.output.ammunition?.kind === 'arrow')
+    )
+      flags['bow'] = true;
+  }
+  if (!flags['craft'] && saved.world.entities['player']?.actor?.equippedItemId)
+    flags['craft'] = true;
+  return { ...saved, milestones: flags };
+}
+
 /** Application coordination only: pure rules live in domain; all I/O is through a store. */
 export class WorldService {
   private saved!: SavedWorld;
   private persistedRevision = 0;
+  private persistedEventCount = 0;
   private viewRevision = 0;
   private lastRoutinePersistAt = 0;
   private unpersisted = false;
@@ -128,6 +163,7 @@ export class WorldService {
       manuallyPaused: false,
     };
     this.persistedRevision = existing?.revision ?? 0;
+    this.persistedEventCount = this.saved.world.events.length;
     this.viewRevision = this.persistedRevision;
     this.saved = {
       ...this.saved,
@@ -140,7 +176,9 @@ export class WorldService {
         world.paused = true;
       }),
     };
-    this.persistedRevision = await store.commit(this.persistedRevision, this.saved);
+    this.saved = updateMilestones(this.saved, this.saved.world.events);
+    this.persistedRevision = await store.commit(this.persistedRevision, this.saved, undefined, 0);
+    this.persistedEventCount = this.saved.world.events.length;
     this.viewRevision = this.persistedRevision;
     this.lastRoutinePersistAt = this.now();
     await store.recoverInterruptedWork();
@@ -224,6 +262,7 @@ export class WorldService {
   private async commit(
     saved: SavedWorld,
     invalidatedMemoryIds?: Record<string, string[]>,
+    eventMode: 'append' | 'diff' = 'append',
   ): Promise<boolean> {
     if (this.storageError) return false;
     try {
@@ -239,37 +278,22 @@ export class WorldService {
           initializeActorTraits(world);
         }),
       };
-      // Completed onboarding milestones outlive the bounded recent-event feed.
-      const flags = { ...saved.milestones };
-      const events = saved.world.events.filter((event) => event.audience.includes('player'));
-      if (events.some((event) => event.type === 'speech' && event.actorId === 'ada'))
-        flags['talk'] = true;
-      if (events.some((event) => event.type === 'harvested' && event.actorId === 'player'))
-        flags['hunt'] = true;
-      if (
-        events.some(
-          (event) => event.type === 'ate' && event.actorId === 'player' && /meat/i.test(event.text),
-        )
-      )
-        flags['eat'] = true;
-      const known = (saved.world.knowledge['player'] ?? []).map(
-        (record) => saved.world.recipes[record.recipeId],
+      const appendEventCount =
+        eventMode === 'append' && saved.world.events.length >= this.persistedEventCount
+          ? saved.world.events.length - this.persistedEventCount
+          : undefined;
+      saved = updateMilestones(
+        saved,
+        appendEventCount ? saved.world.events.slice(-appendEventCount) : [],
       );
-      if (known.some((recipe) => recipe?.output.launcher?.mechanism === 'swing'))
-        flags['invent'] = true;
-      if (
-        known.some((recipe) => recipe?.output.launcher?.mechanism === 'flex') &&
-        known.some((recipe) => recipe?.output.ammunition?.kind === 'arrow')
-      )
-        flags['bow'] = true;
-      if (saved.world.entities['player']?.actor?.equippedItemId) flags['craft'] = true;
-      saved = { ...saved, milestones: flags };
       this.persistedRevision = await this.store.commit(
         this.persistedRevision,
         saved,
         invalidatedMemoryIds,
+        appendEventCount,
       );
       this.saved = saved;
+      this.persistedEventCount = saved.world.events.length;
       this.unpersisted = false;
       this.lastRoutinePersistAt = this.now();
       this.notify(false);
@@ -511,7 +535,7 @@ export class WorldService {
 
   async personMemoryJson(actorId: string, entryId: string) {
     await this.ready;
-    const entry = personMemory(this.world, actorId, entryId);
+    const entry = experienceEntry(this.world, actorId, entryId);
     return entry
       ? { ok: true as const, hash: digest(entry.value), json: JSON.stringify(entry.value, null, 2) }
       : { ok: false as const, code: 'memory', message: 'That memory no longer exists.' };
@@ -548,7 +572,7 @@ export class WorldService {
           revision: this.viewRevision,
         };
       for (const change of memoryChanges) {
-        const current = personMemory(this.world, actorId, change.entryId);
+        const current = experienceEntry(this.world, actorId, change.entryId);
         if (!current || digest(current.value) !== change.expectedHash)
           return {
             ok: false,
@@ -612,7 +636,13 @@ export class WorldService {
       }
       const result = editWorldEventsState(this.world, changes);
       if (!result.outcome.ok) return result.outcome;
-      if (!(await this.commit({ ...this.saved, world: result.world }, result.invalidatedMemoryIds)))
+      if (
+        !(await this.commit(
+          { ...this.saved, world: result.world },
+          result.invalidatedMemoryIds,
+          'diff',
+        ))
+      )
         return { ok: false, code: 'storage', message: this.storageError! };
       return { ...result.outcome, revision: this.viewRevision };
     });

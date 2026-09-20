@@ -496,26 +496,13 @@ export async function projectView(
             reply?.message === 'Models cannot author identity or seed provenance.' ||
             reply?.message ===
               "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.";
-          const terminalFailure = legacyIdentityFailure || reply?.status === 'failed';
+          const terminalFailure =
+            legacyIdentityFailure ||
+            (reply !== undefined && ['failed', 'cancelled', 'stale'].includes(reply.status));
           const replyStatus = terminalFailure ? 'failed' : reply?.status;
           const replyMessage = legacyIdentityFailure
             ? "The response tried to change the character's fixed identity or treat generated material as part of their original history."
             : reply?.message;
-          const responseResult =
-            reply?.result && typeof reply.result === 'object'
-              ? (reply.result as {
-                  components?: Record<string, { ok?: boolean; message?: string }>;
-                })
-              : undefined;
-          const rejectedComponents = Object.values(responseResult?.components ?? {})
-            .filter((component) => component.ok === false && component.message)
-            .map((component) => component.message!);
-          const replyInterruption =
-            reply?.status === 'stale' || reply?.status === 'cancelled'
-              ? reply.message
-              : reply?.status === 'completed' && rejectedComponents.length
-                ? `Part of the response could not happen: ${rejectedComponents.join(' ')}`
-                : undefined;
           return {
             id: event.id,
             kind: event.type === 'speech' ? ('speech' as const) : ('action' as const),
@@ -524,7 +511,6 @@ export async function projectView(
               ? {
                   replyStatus,
                   ...(replyStatus === 'failed' ? { replyFailure: replyMessage } : {}),
-                  ...(replyInterruption ? { replyInterruption } : {}),
                 }
               : {}),
             speakerId: event.actorId!,

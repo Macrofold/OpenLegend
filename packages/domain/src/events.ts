@@ -57,6 +57,25 @@ export function emit(
   targetId?: string,
   data?: WorldEvent['data'],
 ): WorldEvent {
+  const boundedMetric = (value: unknown, fallback: number) =>
+    typeof value === 'number' && Number.isFinite(value)
+      ? Math.max(0, Math.min(10, value))
+      : fallback;
+  const importance = boundedMetric(
+    data?.['importance'],
+    data?.['significant'] === true || ['death', 'taught', 'incapacitated'].includes(type)
+      ? 9
+      : type === 'speech'
+        ? 7
+        : data?.['semanticTrigger'] === true ||
+            ['crafted', 'declaration-admitted', 'shot', 'fire-out', 'rested'].includes(type)
+          ? 6
+          : 3,
+  );
+  const urgency = boundedMetric(
+    data?.['urgency'],
+    ['death', 'incapacitated'].includes(type) ? 10 : type === 'speech' ? 4 : 2,
+  );
   const audience = Object.values(world.entities)
     .filter(
       (entity) =>
@@ -76,6 +95,8 @@ export function emit(
     type,
     text,
     audience,
+    importance,
+    urgency,
   };
   if (source) event.actorId = source.id;
   if (targetId) event.targetId = targetId;
@@ -95,15 +116,8 @@ export function emit(
         recognized: true,
         intelligible: true,
         entityIds: [source?.id, targetId].filter((id): id is string => !!id),
-        importance:
-          data?.['significant'] === true || ['death', 'taught', 'incapacitated'].includes(type)
-            ? 9
-            : type === 'speech'
-              ? 7
-              : data?.['semanticTrigger'] === true ||
-                  ['crafted', 'declaration-admitted', 'shot', 'fire-out', 'rested'].includes(type)
-                ? 6
-                : 3,
+        importance: event.importance ?? importance,
+        urgency: event.urgency ?? urgency,
         eventType: type,
         ...(source ? { sourceId: source.id } : {}),
         ...(targetId ? { targetId } : {}),

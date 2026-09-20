@@ -206,6 +206,8 @@ export interface WorldEvent {
   actorId?: string;
   targetId?: string;
   audience: string[];
+  importance?: number;
+  urgency?: number;
   data?: Record<string, string | number | boolean | null>;
 }
 export interface Outcome {
@@ -297,10 +299,11 @@ export interface GodSpawnDraft {
   person?: GodPersonDraft;
 }
 
-export type GodMemoryEdit =
+export type ExperienceEntry =
   | { source: 'awareness'; value: import('./experience.js').Awareness }
   | { source: 'memory'; value: MemoryRecord }
   | { source: 'summary'; value: import('./experience.js').ExperienceSummary };
+export type GodMemoryEdit = ExperienceEntry;
 
 export interface GodPersonEdit {
   actorId: string;

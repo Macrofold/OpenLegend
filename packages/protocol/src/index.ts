@@ -124,8 +124,6 @@ export interface ChatMessage {
   replyStatus?: AiJobView['status'];
   /** User-facing detail revealed from the message-local failure label. */
   replyFailure?: string;
-  /** Plain narration for a reply interrupted by changing world circumstances. */
-  replyInterruption?: string;
   id: string;
   speakerId: string;
   speaker: string;
