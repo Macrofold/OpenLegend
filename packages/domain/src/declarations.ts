@@ -1,3 +1,4 @@
+import { draftWorld, cloneValue } from './draft.js';
 import { canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import type {
@@ -252,7 +253,7 @@ export function admitDeclaration(
       'registry-capacity',
       'This world has reached its initial limit of 64 invented techniques.',
     );
-  const world = structuredClone(original);
+  const world = draftWorld(original);
   const events: Transition['events'] = [];
   let recipeId = `recipe-${contentLabel(digest)}`;
   const matching = Object.values(world.recipes).find((recipe) => recipe.digest === digest);
@@ -272,13 +273,13 @@ export function admitDeclaration(
     };
     world.itemDefinitions[outputDefinitionId] = definition;
     world.recipes[recipeId] = {
-      ...structuredClone(draft),
+      ...cloneValue(draft),
       id: recipeId,
       version: 1,
       digest,
       outputDefinitionId,
       admittedAt: world.simTime,
-      provenance: structuredClone(provenance),
+      provenance: cloneValue(provenance),
     };
   }
   world.declarationReceipts[provenance.requestId] = { digest, recipeId };

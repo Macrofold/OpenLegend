@@ -1,3 +1,4 @@
+import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import { accountRest, REST_RULES } from './sleep.js';
 import { isRecallableExperience } from './mind.js';
@@ -199,7 +200,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
   if (original.paused && command.type !== 'cancel') return reject('paused', 'The world is paused.');
   if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
     return reject('not-alive', 'This actor cannot act.');
-  const world = structuredClone(original);
+  const world = draftWorld(original);
   const actor = world.entities[command.actorId]!;
   const component = actor.actor!;
   const events: WorldEvent[] = [];
@@ -447,7 +448,9 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       world,
       events,
       'action-started',
-      `${actor.name} started ${action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+      action.type === 'move' && action.destination
+        ? `${actor.name} started moving to ${Number(action.destination.x.toFixed(1))}, ${Number(action.destination.z.toFixed(1))}.`
+        : `${actor.name} started ${action.type === 'prepare' ? `preparing ${action.preparation}` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
       actor,
       action.targetId,
       { actionType: action.type },
@@ -494,6 +497,13 @@ function completeAction(
   switch (action.type) {
     case 'move':
       if (action.destination) actor.position = { ...action.destination };
+      emit(
+        world,
+        events,
+        'moved',
+        `${actor.name} moved to ${Number(actor.position.x.toFixed(1))}, ${Number(actor.position.z.toFixed(1))}.`,
+        actor,
+      );
       break;
     case 'gather': {
       const target = world.entities[action.targetId ?? ''];
@@ -779,7 +789,8 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
       .sort(
         (a, b) => distance(actor.position, a.position) - distance(actor.position, b.position),
       )[0];
-    if (resource && component.action?.type !== 'gather') {
+    if (resource && component.action?.type === 'gather') return;
+    if (resource) {
       const action = createAction(world, 'gather', resource.resource!.workSeconds);
       action.targetId = resource.id;
       if (!approach(world, actor, action)) {
@@ -826,7 +837,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
         original.paused ? 'World time is paused.' : 'No time elapsed.',
       ),
     };
-  const world = structuredClone(original);
+  const world = draftWorld(original);
   const events: WorldEvent[] = [];
   let remaining = elapsedSimSeconds;
   while (remaining > 0) {
@@ -939,7 +950,7 @@ export function queryMemories(
   options: { text?: string; entityId?: string; limit?: number } = {},
 ): MemoryRecord[] {
   const words = (options.text ?? '').toLowerCase().split(/\W+/).filter(Boolean);
-  return structuredClone(
+  return cloneValue(
     (world.experience
       ? experiences(world, actorId)
       : (getOwn(world.memories, actorId) ?? []).filter(isRecallableExperience)
@@ -971,7 +982,7 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
   const visibleEntities = Object.values(world.entities)
     .filter((entity) => entity.id !== actorId && visible(actor, entity))
     .map((entity) => {
-      const copy = structuredClone(entity);
+      const copy = cloneValue(entity);
       if (copy.actor) {
         copy.actor.goal = '';
         copy.actor.planGeneration = 0;
@@ -983,7 +994,7 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
     definitionIds.add(recipe.outputDefinitionId);
     for (const input of recipe.inputs) definitionIds.add(input.definitionId);
   }
-  return structuredClone({
+  return cloneValue({
     worldId: world.id,
     at: world.simTime,
     actor,
@@ -1064,7 +1075,7 @@ export function remember(
         'Observed or heard memories need an event this actor actually perceived.',
       ),
     };
-  const world = structuredClone(original);
+  const world = draftWorld(original);
   appendMemory(world, actorId, proposal);
   return finish(world, [], outcome(true, 'remembered', 'Private memory recorded.'));
 }

@@ -10,7 +10,7 @@ import { MacrofoldProvisioner } from '../apps/server/src/macrofold-provisioning.
 const config = readConfig();
 const store = new SqliteStore(config.databasePath);
 try {
-  const saved = store.load();
+  const saved = await store.load();
   if (!saved) throw new Error('Start Open Legend once to create a local world first.');
   const provisioner = new MacrofoldProvisioner(config, store, saved.state.world.id);
   for (const entity of Object.values(saved.state.world.entities).filter(
@@ -20,5 +20,5 @@ try {
     console.log(JSON.stringify({ actorId: entity.id, ...result }));
   }
 } finally {
-  store.close();
+  await store.close();
 }

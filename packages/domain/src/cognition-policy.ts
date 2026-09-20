@@ -1,3 +1,4 @@
+import { draftWorld, cloneValue } from './draft.js';
 import { finish, outcome } from './events.js';
 import type { Transition, WorldState } from './types.js';
 export interface CognitionPolicy {
@@ -44,8 +45,8 @@ export function admitCognitionPolicy(
     p.significantEventTypes.some((t) => typeof t !== 'string' || !/^[a-z-]{1,64}$/.test(t))
   )
     return reject();
-  const world = structuredClone(input);
-  world.cognitionPolicy = structuredClone(p);
+  const world = draftWorld(input);
+  world.cognitionPolicy = cloneValue(p);
   return finish(
     world,
     [],

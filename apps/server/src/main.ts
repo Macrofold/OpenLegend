@@ -21,7 +21,7 @@ game.server.listen(config.port, config.host, () => {
 });
 let closing = false;
 for (const signal of ['SIGINT', 'SIGTERM'] as const)
-  process.on(signal, () => {
+  process.on(signal, async () => {
     if (closing) return;
     closing = true;
     void game

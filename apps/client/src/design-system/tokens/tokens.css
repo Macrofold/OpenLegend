@@ -217,6 +217,16 @@
   --font-display-fantasy: Cinzel, 'Cormorant Garamond', Georgia, serif;
   --font-display-scifi: 'Chakra Petch', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  /* UI roles: display faces are reserved for headings and the wordmark. */
+  --text-body-size: 15px;
+  --text-body-leading: 22px;
+  --text-detail-size: 13px;
+  --text-detail-leading: 18px;
+  --text-item-title-size: 18px;
+  --content-gap: var(--space-3);
+  --content-padding: var(--space-4);
+  --control-padding-block: var(--space-2);
+  --control-padding-inline: var(--space-3);
 }
 .t-wordmark {
   font-family: var(--font-display);

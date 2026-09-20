@@ -21,6 +21,8 @@ The [world profile](world-rules-and-parameters.md) constrains what causes/effect
 
 ## Proposed contracts
 
+The accepted future [narration/response design](../../docs/narration-and-conversations.md#4-expressive-and-mechanical-actions) adds a bounded expressive-action mode alongside mechanical intents. A gesture or unsupported slap may become an observed, remembered expression with `mechanical=false`, but creates no damage, condition, inventory transfer or other physical effect. Known mechanics use the ordinary trusted path. Later on-the-spot invention supplies missing action/effect definitions through the existing validation/activation lifecycle; unsupported primitives and invented stats still require their own authority. Narrator prose describes admitted results and never applies effects or invents completed outcomes. This extension does not implement freeform mechanics.
+
 These are specification sketches inside documentation, not executable files or finalized API definitions.
 
 | Contract | Required information |

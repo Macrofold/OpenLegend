@@ -1,3 +1,4 @@
+import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import type { Command, MemoryRecord, Transition, WorldState } from './types.js';
 import { canonicalJson, finish, outcome } from './events.js';
@@ -101,15 +102,26 @@ export const byteCount = (value: unknown): number =>
   new TextEncoder().encode(typeof value === 'string' ? value : JSON.stringify(value)).length;
 export function mindFor(world: WorldState, actorId: string): ActorMind {
   const existing = world.minds?.[actorId];
-  if (existing) return structuredClone(existing);
+  if (existing) return cloneValue(existing);
   const actor = world.entities[actorId];
+  const component = actor?.actor;
+  const identity = [
+    `I am ${actor?.name ?? actorId}.`,
+    component?.personality,
+    component?.backstory,
+    component?.initialGoals?.length
+      ? `My starting goals are: ${component.initialGoals.join('; ')}.`
+      : (component?.goal ?? 'I am learning to survive.'),
+  ]
+    .filter(Boolean)
+    .join(' ');
   return {
     revision: 0,
     documents: [
       {
         id: 'identity',
         title: 'My beginnings',
-        text: `I am ${actor?.name ?? actorId}. ${actor?.actor?.goal ?? 'I am learning to survive.'}`,
+        text: identity,
         revision: 1,
         evidence: [],
         protected: true,
@@ -279,7 +291,9 @@ export function commitCognition(
     )
       return reject('Invalid record envelope.');
     if (patch.source === 'authored' || patch.kind === 'identity' || prior?.kind === 'identity')
-      return reject('Models cannot author identity or seed provenance.');
+      return reject(
+        "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.",
+      );
     if (patch.subjectId && !binding.entityIds.includes(patch.subjectId))
       return reject('Unknown relationship subject.');
     if (patch.kind === 'relationship' && (!patch.subjectId || patch.subjectId === binding.actorId))
@@ -315,7 +329,7 @@ export function commitCognition(
     mind.records.some((r) => !mind.documents.some((d) => d.id === r.documentId))
   )
     return reject('Mind capacity or document reference invalid.');
-  let world = structuredClone(input);
+  let world = draftWorld(input);
   let events: Transition['events'] = [];
   if (proposal.actionId !== null) {
     if (
@@ -331,7 +345,7 @@ export function commitCognition(
         actorId: binding.actorId,
       });
       if (!transition.outcome.ok) return reject(transition.outcome.message);
-      world = transition.world;
+      world = draftWorld(transition.world);
       events = transition.events;
     }
   }
@@ -435,7 +449,7 @@ export function get_memories(
   for (const { memory } of ranked) {
     const size = byteCount(memory) + 1;
     if (entries.length < limit && bytes + size <= budget) {
-      entries.push(structuredClone(memory));
+      entries.push(cloneValue(memory));
       bytes += size;
     }
   }

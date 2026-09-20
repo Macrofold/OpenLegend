@@ -76,9 +76,17 @@ test('React design system preserves native play, readable inspection, drafts and
     await page.reload();
     await page.getByRole('button', { name: 'World agent', exact: true }).click();
     await page.getByRole('button', { name: 'New conversation', exact: true }).first().click();
-    await page
-      .getByRole('textbox', { name: 'Message to world agent' })
-      .fill('A question kept while hidden');
+    const agentInput = page.getByRole('textbox', { name: 'Message to world agent' });
+    const send = page.locator('#agentPanel').getByRole('button', { name: 'Send', exact: true });
+    const oneLine = await agentInput.boundingBox();
+    await agentInput.fill(
+      'A question kept while hidden that is deliberately long enough to wrap onto another line in the conversation composer.',
+    );
+    const wrapped = await agentInput.boundingBox();
+    const sendBounds = await send.boundingBox();
+    expect(wrapped!.height).toBeGreaterThan(oneLine!.height);
+    expect(wrapped!.x + wrapped!.width).toBeLessThanOrEqual(sendBounds!.x);
+    await agentInput.fill('A question kept while hidden');
     await page.getByRole('button', { name: 'Hide World agent panel' }).click();
     await page.getByRole('button', { name: 'World agent', exact: true }).click();
     await expect(page.getByRole('textbox', { name: 'Message to world agent' })).toHaveValue(

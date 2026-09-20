@@ -2,16 +2,19 @@ import { decisionQuestions, inventionQuestions, JEV_QUESTIONS_VERSION } from './
 import { interestMatches, type InterestSubscription } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
-import { prepareDecision, decisionDependencies } from './decision-context.js';
 import {
-  SPEECH_INSTRUCTIONS,
-  ACTION_INSTRUCTIONS,
+  prepareDecision,
+  decisionDependencies,
+  selectDecisionActions,
+} from './decision-context.js';
+import { responseTrigger } from './response-context.js';
+import {
+  RESPONSE_INSTRUCTIONS,
   LEVEL_LIMITS,
-  speechSchema,
-  actionSchema,
+  responseSchema,
   COGNITION_VERSION,
 } from './cognition-contracts.js';
-import { experiences, DEFAULT_COGNITION_POLICY } from '@open-legend/domain';
+import { experiences, DEFAULT_COGNITION_POLICY, commitActorResponse } from '@open-legend/domain';
 import { IntelligenceLog } from './intelligence-log.js';
 import { cognitionOutputTokens } from './macrofold-model.js';
 import { z } from 'zod';
@@ -63,6 +66,13 @@ export class AiDirector {
   private running: Running | null = null;
   private pending: Promise<void> | null = null;
   private pendingWork = new Set<Promise<void>>();
+  private admissionTail: Promise<unknown> = Promise.resolve();
+  private admission<T>(operation: () => Promise<T>): Promise<T> {
+    const next = this.admissionTail.then(operation);
+    this.admissionTail = next.catch(() => undefined);
+    return next;
+  }
+
   private nextThoughtAt = 0;
   private readonly unsubscribe: () => void;
   private stopped = false;
@@ -120,98 +130,110 @@ export class AiDirector {
     kind: 'chat' | 'invention',
     id: string,
     text: string,
+    npcId?: string,
   ): Promise<ApiResult> {
     // Independent inference does not wait for remote reflection cancellation/cleanup.
     this.maintenance.cancel();
     if (this.running?.job.kind === 'thought') {
-      this.cancel(this.running.job.id);
+      await this.cancel(this.running.job.id);
       this.running = null;
     }
-    return this.submit(kind, id, text);
+    return await this.submit(kind, id, text, npcId);
   }
 
-  cancel(jobId: string): ApiResult {
+  async cancel(jobId: string): Promise<ApiResult> {
     const run = this.running;
     if (!run || run.job.id !== jobId)
       return { ok: false, code: 'not-running', message: 'That request is no longer running.' };
     if (!run.controller.signal.aborted) {
       run.cancelReason = 'Request cancelled.';
-      this.update(run, run.job.status, 'Cancelling request…');
+      await this.update(run, run.job.status, 'Cancelling request…');
       run.controller.abort();
       this.nextThoughtAt = this.now() + this.service.config.thoughtIntervalMs;
     }
     return { ok: true, code: 'cancelling', message: 'Cancellation requested.', jobId };
   }
 
-  submit(kind: 'chat' | 'invention', id: string, text: string): ApiResult {
-    const fingerprint = digest({ kind, text });
-    const previous = this.service.store.getJob(id);
-    if (previous)
-      return previous.fingerprint === fingerprint
-        ? {
-            ok: previous.status !== 'failed',
-            code: previous.status,
-            message: previous.message,
-            jobId: id,
-          }
-        : {
-            ok: false,
-            code: 'idempotency-conflict',
-            message: 'That request ID was already used for different input.',
-          };
-    if (this.service.paused)
-      return {
-        ok: false,
-        code: 'paused',
-        message: 'Resume the world before talking or inventing.',
-      };
-    if (
-      !this.service.world.entities['player']?.actor?.alive ||
-      this.service.world.entities['player']?.actor?.incapacitated
-    )
-      return { ok: false, code: 'actor', message: 'Recover at camp before acting.' };
-    if (
-      !this.service.config.macrofoldKey &&
-      (!this.service.config.jevKey || !this.service.config.llmKey)
-    )
-      return {
-        ok: false,
-        code: 'unconfigured',
+  async submit(
+    kind: 'chat' | 'invention',
+    id: string,
+    text: string,
+    npcId?: string,
+  ): Promise<ApiResult> {
+    return this.admission(async () => {
+      const targetId = kind === 'chat' ? (npcId ?? 'ada') : undefined;
+      const fingerprint = digest({ kind, text, targetId });
+      const previous = await this.service.store.getJob(id);
+      if (previous)
+        return previous.fingerprint === fingerprint
+          ? {
+              ok: previous.status !== 'failed',
+              code: previous.status,
+              message: previous.message,
+              jobId: id,
+            }
+          : {
+              ok: false,
+              code: 'idempotency-conflict',
+              message: 'That request ID was already used for different input.',
+            };
+      if (this.service.paused)
+        return {
+          ok: false,
+          code: 'paused',
+          message: 'Resume the world before talking or inventing.',
+        };
+      if (
+        !this.service.world.entities['player']?.actor?.alive ||
+        this.service.world.entities['player']?.actor?.incapacitated
+      )
+        return { ok: false, code: 'actor', message: 'Recover at camp before acting.' };
+      if (
+        !this.service.config.macrofoldKey &&
+        (!this.service.config.jevKey || !this.service.config.llmKey)
+      )
+        return {
+          ok: false,
+          code: 'unconfigured',
+          message:
+            'Configure the backend AI provider, a nonzero spending cap, and (for Macrofold) MACROFOLD_COMPUTE_MAX_USD. Macrofold uses the backend MACROFOLD_API_KEY.',
+        };
+      if (this.running || this.stopped)
+        return {
+          ok: false,
+          code: 'busy',
+          message: 'One AI request is already in progress. You can keep gathering and surviving.',
+        };
+      if (kind === 'chat') {
+        const target = this.service.world.entities[targetId!];
+        if (!target?.actor || target.actor.controller !== 'npc')
+          return { ok: false, code: 'target', message: 'Choose a person to talk with.' };
+        const spoken = await this.service.say(`${id}:player`, 'player', text, targetId);
+        if (!spoken.ok) return spoken;
+      }
+      const job: JobRecord = {
+        id,
+        kind,
+        fingerprint,
+        status: 'queued',
         message:
-          'Configure the backend AI provider, a nonzero spending cap, and (for Macrofold) MACROFOLD_COMPUTE_MAX_USD. Macrofold uses the backend MACROFOLD_API_KEY.',
+          kind === 'chat'
+            ? `${this.service.world.entities[targetId!]?.name ?? 'The person'} is considering your words.`
+            : 'Checking known techniques and supported mechanisms.',
+        request: { text, ...(targetId ? { npcId: targetId } : {}) },
+        createdAt: this.now(),
       };
-    if (this.running || this.stopped)
-      return {
-        ok: false,
-        code: 'busy',
-        message: 'One AI request is already in progress. You can keep gathering and surviving.',
-      };
-    if (kind === 'chat') {
-      const spoken = this.service.say(`${id}:player`, 'player', text, 'ada');
-      if (!spoken.ok) return spoken;
-    }
-    const job: JobRecord = {
-      id,
-      kind,
-      fingerprint,
-      status: 'queued',
-      message:
-        kind === 'chat'
-          ? 'Ada is considering your words.'
-          : 'Checking known techniques and supported mechanisms.',
-      request: { text, ...(kind === 'chat' ? { npcId: 'ada' } : {}) },
-      createdAt: this.now(),
-    };
-    this.begin(job);
-    return { ok: true, code: 'queued', message: job.message, jobId: id };
+      await this.begin(job);
+      return { ok: true, code: 'queued', message: job.message, jobId: id };
+    });
   }
 
-  private update(
+  private async update(
     run: Running,
     status: JobRecord['status'],
     message: string,
     result?: unknown,
-  ): void {
+  ): Promise<void> {
     const terminal = ['completed', 'failed', 'cancelled', 'stale'].includes(status);
     run.job = {
       ...run.job,
@@ -222,10 +244,10 @@ export class AiDirector {
         : {}),
       ...(result !== undefined ? { result } : {}),
     };
-    this.service.store.putJob(run.job);
-    const trace = this.service.store.intelligenceCall(run.job.id);
+    await this.service.store.putJob(run.job);
+    const trace = await this.service.store.intelligenceCall(run.job.id);
     if (trace)
-      this.log.save({
+      await this.log.save({
         ...trace,
         status: terminal ? (status === 'completed' ? 'completed' : 'failed') : 'running',
         disposition:
@@ -239,7 +261,11 @@ export class AiDirector {
   }
 
   private current(run: Running): void {
-    if (this.stopped || run.controller.signal.aborted || this.service.paused)
+    if (
+      this.stopped ||
+      run.controller.signal.aborted ||
+      (this.service.paused && run.job.kind === 'thought')
+    )
       throw new StopJob(
         'cancelled',
         run.cancelReason ??
@@ -249,16 +275,13 @@ export class AiDirector {
               ? 'This request was cancelled when the game paused.'
               : 'This request was cancelled before completion.'),
       );
-    if (
-      run.generation !== this.service.generation ||
-      !this.service.world.entities[
-        run.job.kind === 'invention' ? 'player' : (run.job.request.npcId ?? 'ada')
-      ]?.actor?.alive
-    )
+    const actorId = run.job.kind === 'invention' ? 'player' : (run.job.request.npcId ?? 'ada');
+    const actor = this.service.world.entities[actorId];
+    if (run.generation !== this.service.generation || !actor?.actor?.alive)
       throw new StopJob('stale', 'The actor or world changed; the result was not applied.');
     const resident = this.service.world.entities[run.job.request.npcId ?? 'ada']?.actor;
     if (
-      run.job.kind !== 'invention' &&
+      run.job.kind === 'thought' &&
       resident &&
       (resident.incapacitated ||
         resident.fullness < 20 ||
@@ -270,7 +293,7 @@ export class AiDirector {
       throw new StopJob('stale', 'The inventor became incapacitated; this result was not applied.');
   }
 
-  private begin(job: JobRecord): void {
+  private async begin(job: JobRecord, onCompleted?: () => Promise<void>): Promise<void> {
     job = {
       ...job,
       startedAt: this.now(),
@@ -290,15 +313,15 @@ export class AiDirector {
           (event) =>
             event.type === 'speech' &&
             event.actorId === 'player' &&
-            event.targetId === 'ada' &&
+            event.targetId === (job.request.npcId ?? 'ada') &&
             event.data?.['text'] === job.request.text.trim() &&
-            event.audience.includes('ada'),
+            event.audience.includes(job.request.npcId ?? 'ada'),
         )?.id;
     if (run.playerSpeechEventId) job.playerSpeechEventId = run.playerSpeechEventId;
     this.running = run;
-    this.service.store.putJob(job);
+    await this.service.store.putJob(job);
     this.service.notify();
-    this.log.save({
+    await this.log.save({
       id: job.id,
       kind: 'Semantic trigger',
       worldId: this.service.world.id,
@@ -313,15 +336,27 @@ export class AiDirector {
       exchanges: [],
     });
     const pending = this.log
-      .withTrigger(job.id, () => this.process(run))
+      .withTrigger(job.id, async () => await this.process(run))
+      .then(async () => {
+        if (run.job.status !== 'completed' || !onCompleted) return;
+        try {
+          await onCompleted();
+        } catch (error) {
+          this.service.storageError =
+            'A completed cognition result could not advance its durable trigger cursor; simulation is paused to prevent duplicate behavior.';
+          await this.log.record(`${run.job.id}:cursor`, 'Trigger cursor failure', {
+            reason: error instanceof Error ? error.message : 'Unknown persistence failure',
+          });
+        }
+      })
       .catch((error) =>
         this.log.withTrigger(job.id, async () => {
           const known = error instanceof StopJob;
           const cancelled = run.controller.signal.aborted;
-          this.log.record(`${run.job.id}:failure`, 'Workflow failure', {
+          await this.log.record(`${run.job.id}:failure`, 'Workflow failure', {
             reason: error instanceof Error ? error.message : 'Unknown failure',
           });
-          this.update(
+          await this.update(
             run,
             known ? error.status : cancelled ? 'cancelled' : 'failed',
             known
@@ -350,7 +385,7 @@ export class AiDirector {
   private async awaitResume(run: Running, responseReady = false): Promise<void> {
     if (!this.service.paused || run.job.kind === 'thought') return;
     if (this.stopped || run.controller.signal.aborted) this.current(run);
-    this.update(
+    await this.update(
       run,
       run.job.status,
       responseReady
@@ -419,12 +454,12 @@ export class AiDirector {
           provider === 'jev' ? config.jevReserveUsd : Math.max(0.25, config.llmReserveUsd),
           boundedEstimate,
         );
-    if (!this.service.store.reserve(id, provider, reserve, config.budgetUsd))
+    if (!(await this.service.store.reserve(id, provider, reserve, config.budgetUsd)))
       throw new StopJob(
         'failed',
         'AI spending cap reached. Existing survival actions and learned recipes still work.',
       );
-    this.update(
+    await this.update(
       run,
       provider === 'jev' ? 'judging' : 'generating',
       provider === 'jev'
@@ -434,7 +469,7 @@ export class AiDirector {
           : 'Ada is thinking. Detailed responses may take about a minute.',
     );
     const result = await dispatch(id);
-    this.service.store.settle(id, result.receipt);
+    await this.service.store.settle(id, result.receipt);
     if (result.outcome === 'value' && this.service.paused) await this.awaitResume(run, true);
     if (run.cancelReason) throw new StopJob('cancelled', run.cancelReason);
     // Surface actual provider failures even when an explicit request is paused.
@@ -449,7 +484,7 @@ export class AiDirector {
     return result.value;
   }
 
-  private generate<T>(
+  private async generate<T>(
     run: Running,
     request: Omit<GenerateRequest, 'requestId' | 'signal'>,
     operation = 'generate',
@@ -460,61 +495,97 @@ export class AiDirector {
       !this.service.config.macrofoldKey
     )
       throw new StopJob('failed', 'Full deliberation requires the configured Macrofold harness.');
-    return this.call(run, 'openai', operation, (id) =>
-      this.client.generate<T>({
-        ...request,
-        requestId: id,
-        signal: run.controller.signal,
-        maxOutputTokens:
-          request.maxOutputTokens ??
-          (this.service.config.macrofoldKey ? cognitionOutputTokens(request.execution) : 1800),
-      }),
+    return await this.call(
+      run,
+      'openai',
+      operation,
+      async (id) =>
+        await this.client.generate<T>({
+          ...request,
+          requestId: id,
+          signal: run.controller.signal,
+          maxOutputTokens:
+            request.maxOutputTokens ??
+            (this.service.config.macrofoldKey ? cognitionOutputTokens(request.execution) : 1800),
+        }),
     );
   }
 
   private async process(run: Running): Promise<void> {
-    if (run.job.kind === 'invention') return this.invent(run);
-    if (run.job.kind === 'thought') return this.think(run);
-    return this.decide(run, true);
+    if (run.job.kind === 'invention') return await this.invent(run);
+    if (run.job.kind === 'thought') return await this.think(run);
+    return await this.decide(run, true);
   }
 
   private async decide(run: Running, speech: boolean): Promise<void> {
     const actorId = run.job.request.npcId ?? 'ada';
-    const stimulus = speech
-      ? `The nearby speaker said to me: “${run.job.request.text}”`
-      : run.job.request.text;
-    const prepared = await prepareDecision(
+    const evidenceIds = run.playerSpeechEventId
+      ? [run.playerSpeechEventId]
+      : (run.job.stimulusEvidenceIds ?? []);
+    const stimulus = responseTrigger(
+      this.service.world,
+      actorId,
+      evidenceIds,
+      run.job.request.text,
+    );
+    const addressedSpeech = evidenceIds.some(
+      (id) =>
+        this.service.world.experience?.awareness[actorId]?.some(
+          (aware) => aware.eventId === id && aware.triggerKind === 'addressed_speech',
+        ) ||
+        this.service.world.events.some(
+          (event) =>
+            event.id === id &&
+            event.type === 'speech' &&
+            event.targetId === actorId &&
+            event.actorId !== actorId &&
+            event.audience.includes(actorId),
+        ),
+    );
+    const speechTrigger = evidenceIds.some(
+      (id) =>
+        this.service.world.experience?.awareness[actorId]?.some(
+          (aware) =>
+            aware.eventId === id && (aware.eventType === 'speech' || aware.modality === 'heard'),
+        ) || this.service.world.events.some((event) => event.id === id && event.type === 'speech'),
+    );
+    let attentionCall = 0;
+    let prepared = await prepareDecision(
       this.service,
       this.recall,
       actorId,
       run.job.id,
       stimulus,
       run.playerSpeechEventId ? [run.playerSpeechEventId] : (run.job.stimulusEvidenceIds ?? []),
-      (request) =>
-        this.call(run, 'jev', 'attention', (id) =>
-          this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+      async (request) =>
+        await this.call(
+          run,
+          'jev',
+          `attention:${attentionCall++}`,
+          async (id) =>
+            await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
         ),
       run.controller.signal,
+      this.service.config.budgetUsd,
+      speech,
     );
     this.current(run);
-    this.log.record(
-      `${run.job.id}:context`,
-      'Context and retrieval',
-      prepared.diagnostics,
-      prepared.context,
-    );
     const policy = this.service.world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
-    const questions = decisionQuestions(speech, policy.maxImmediateLevel);
+    const questions = decisionQuestions(addressedSpeech, policy.maxImmediateLevel, speechTrigger);
     const routeQuestion = questions['route'];
     if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
     const criteria = routeQuestion.criteria;
-    const judged = await this.call(run, 'jev', 'route', (id) =>
-      this.client.judge({
-        requestId: id,
-        signal: run.controller.signal,
-        state: speech ? prepared.context : { ...prepared.context, actions: prepared.offered },
-        questions,
-      }),
+    const judged = await this.call(
+      run,
+      'jev',
+      `route`,
+      async (id) =>
+        await this.client.judge({
+          requestId: id,
+          signal: run.controller.signal,
+          state: prepared.prompt,
+          questions,
+        }),
     );
     const routeAnswer = judged.answers['route'];
     // Routing spends a bounded allowance; it does not authorize a world effect.
@@ -526,87 +597,158 @@ export class AiDirector {
         ? routeAnswer.choice
         : null;
     // Uncertain escalation must not silence an addressed ordinary reply.
-    const route = selectedRoute ?? (speech ? 'level2' : null);
+    const route =
+      addressedSpeech && selectedRoute === 'native'
+        ? 'level2'
+        : (selectedRoute ?? (addressedSpeech ? 'level2' : null));
+    const actionGate = judged.answers['possibleAction'];
+    const shouldOfferActions =
+      !speechTrigger ||
+      !actionGate ||
+      !('choice' in actionGate) ||
+      actionGate.choice === 'yes' ||
+      (actionGate.probabilities['no'] ?? 0) < 0.8;
+    // This trigger property opens optional action selection; it is not an action decision.
+    const semanticTrigger = speechTrigger
+      ? {
+          kind: 'speech' as const,
+          checkActionSelection: shouldOfferActions,
+          gateAnswer: actionGate,
+          conservativeNoThreshold: 0.8,
+        }
+      : {
+          kind: 'event' as const,
+          checkActionSelection: true,
+          reason: 'non-speech semantic decision',
+        };
     if (policy.reflection && choice(judged.answers['reflection']) === 'yes')
-      this.maintenance.enqueue(actorId, run.job.id, stimulus);
-    this.log.record(
+      await this.maintenance.enqueue(actorId, run.job.id, stimulus);
+    await this.log.record(
       `${run.job.id}:routing`,
       'Semantic decision',
       {
         offeredRoutes: criteria,
-        fallback: !selectedRoute && speech ? 'level2: uncertain escalation' : null,
+        fallback: !selectedRoute && addressedSpeech ? 'level2: uncertain escalation' : null,
         policyRevision: policy.revision,
         questionVersion: JEV_QUESTIONS_VERSION,
+        trigger: semanticTrigger,
       },
       judged,
     );
-    const trace = this.service.store.intelligenceCall(run.job.id);
-    if (trace) this.log.save({ ...trace, route: route ?? 'deferred' });
+    const trace = await this.service.store.intelligenceCall(run.job.id);
+    if (trace) await this.log.save({ ...trace, route: route ?? 'deferred' });
     if (!route || !Object.hasOwn(criteria, route) || route === 'native') {
-      this.update(
+      await this.update(
         run,
         'completed',
         route === 'native'
           ? 'Native behavior continues; no model response.'
           : 'Semantic decision deferred: uncertain route.',
-        { disposition: route === 'native' ? 'native' : 'deferred' },
+        {
+          disposition: route === 'native' ? 'native' : 'deferred',
+          trigger: semanticTrigger,
+        },
       );
       return;
     }
     if (decisionDependencies(this.service, actorId) !== prepared.dependencies)
       throw new StopJob('stale', 'Relevant context changed before generation.');
+    if (semanticTrigger.checkActionSelection)
+      prepared = await selectDecisionActions(
+        prepared,
+        async (request) =>
+          await this.call(
+            run,
+            'jev',
+            `attention:${attentionCall++}`,
+            async (id) =>
+              await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+          ),
+        run.controller.signal,
+      );
+    await this.log.record(
+      `${run.job.id}:context`,
+      'Context and retrieval',
+      {
+        ...prepared.diagnostics,
+        trigger: semanticTrigger,
+      },
+      prepared.prompt,
+    );
     const level = route === 'level4' ? 4 : route === 'level3' ? 3 : 2;
     const limits = LEVEL_LIMITS[level];
     const c = this.service.config;
-    const schema = speech ? speechSchema : actionSchema;
-    const value = await this.generate<unknown>(run, {
-      task: speech ? 'npc_speech' : 'npc_action',
-      actorScope: actorId,
-      execution: level === 2 ? 'fast' : 'complex',
-      model: c.macrofoldKey
-        ? level === 2
-          ? c.macrofoldMiniModel
-          : c.macrofoldComplexModel
-        : level === 2
-          ? c.miniModel
-          : c.complexModel,
-      reasoningEffort: limits.effort,
-      maxOutputTokens: limits.outputTokens,
-      instructions: speech ? SPEECH_INSTRUCTIONS : ACTION_INSTRUCTIONS,
-      context: speech ? prepared.context : { ...prepared.context, actions: prepared.offered },
-      schema: z.toJSONSchema(schema, { target: 'draft-7' }),
-    });
+    const schema = responseSchema;
+    const value = await this.generate<unknown>(
+      run,
+      {
+        task: 'npc_response',
+        actorScope: actorId,
+        execution: level === 2 ? 'fast' : 'complex',
+        model: c.macrofoldKey
+          ? level === 2
+            ? c.macrofoldMiniModel
+            : c.macrofoldComplexModel
+          : level === 2
+            ? c.miniModel
+            : c.complexModel,
+        reasoningEffort: limits.effort,
+        maxOutputTokens: limits.outputTokens,
+        instructions: RESPONSE_INSTRUCTIONS,
+        context: prepared.prompt,
+        schema: z.toJSONSchema(schema, { target: 'draft-7' }),
+      },
+      `generate`,
+    );
     this.current(run);
-    if (decisionDependencies(this.service, actorId) !== prepared.dependencies)
-      throw new StopJob('stale', 'Relevant mind, policy, goal, audience or knowledge changed.');
-    if (speech) {
-      const reply = speechSchema.parse(value);
-      const recent = this.service.world.events
-        .filter((e) => e.type === 'speech' && e.actorId === 'player' && e.targetId === actorId)
-        .at(-1);
-      if (recent?.id !== run.playerSpeechEventId)
-        throw new StopJob('stale', 'A newer conversation turn superseded this response.');
-      const result = this.service.say(`${run.job.id}:speech`, actorId, reply.speech, 'player');
-      this.log.record(`${run.job.id}:commit`, 'Speech admission', { proposed: reply }, result);
-      this.update(run, result.ok ? 'completed' : 'stale', result.message);
-    } else {
-      const decision = actionSchema.parse(value);
-      if (decision.actionId && !Object.hasOwn(prepared.binding.actions, decision.actionId))
-        throw new StopJob('failed', 'Model selected an unoffered action.');
-      if (
-        this.service.world.entities[actorId]!.actor!.planGeneration !==
-        prepared.binding.expectedPlan
-      )
-        throw new StopJob('stale', 'Native plan changed while considering an action.');
-      const action = decision.actionId ? prepared.binding.actions[decision.actionId] : null;
-      const result = action
-        ? this.service.transition((world) =>
-            executeCommand(world, { ...action, id: `${run.job.id}:action` }),
-          )
-        : { ok: true, code: 'native', message: 'Continuing native behavior.' };
-      this.log.record(`${run.job.id}:commit`, 'Action admission', { proposed: decision }, result);
-      this.update(run, result.ok ? 'completed' : 'stale', result.message);
+    const reply = responseSchema.parse(value);
+    const commit = () =>
+      this.service.transition((world) => {
+        this.current(run);
+        if (decisionDependencies(this.service, actorId) !== prepared.dependencies)
+          throw new StopJob(
+            'stale',
+            'Relevant mind, policy, body, plan, audience or knowledge changed.',
+          );
+        if (speech) {
+          const recent = world.experience?.awareness[actorId]
+            ?.filter(
+              (aware) =>
+                aware.triggerKind === 'addressed_speech' &&
+                aware.sourceId === 'player' &&
+                aware.targetId === actorId,
+            )
+            .at(-1);
+          if (recent?.eventId !== run.playerSpeechEventId)
+            throw new StopJob('stale', 'A newer conversation turn superseded this response.');
+        }
+        return commitActorResponse(
+          world,
+          run.job.id,
+          actorId,
+          reply,
+          prepared.binding.actions,
+          prepared.binding.entityIds,
+          prepared.binding.expectedPlan,
+        );
+      });
+    let result = await commit();
+    while (!result.ok && result.code === 'paused') {
+      await this.awaitResume(run, true);
+      result = await commit();
     }
+    const receipt = this.service.world.responseReceipts?.[run.job.id];
+    await this.log.record(
+      `${run.job.id}:commit`,
+      'Response admission',
+      { proposed: reply },
+      { ...result, components: receipt?.components },
+    );
+    await this.update(run, result.ok ? 'completed' : 'failed', result.message, {
+      disposition: result.code,
+      components: receipt?.components,
+      trigger: semanticTrigger,
+    });
   }
 
   private async invent(run: Running): Promise<void> {
@@ -620,13 +762,17 @@ export class AiDirector {
     for (const recipe of context.knownRecipes)
       criteria[`reuse:${recipe.id}`] =
         `Existing supported technique already fulfills this request: ${recipe.name}. ${recipe.description}. Exact material roles: ${JSON.stringify(recipe.inputs)}. Do not reuse if the request explicitly requires materially different inputs or mechanics.`;
-    const judged = await this.call(run, 'jev', 'route', (id) =>
-      this.client.judge({
-        requestId: id,
-        signal: run.controller.signal,
-        state: { context, contract: DECLARATION_CONTRACT },
-        questions: inventionQuestions(criteria),
-      }),
+    const judged = await this.call(
+      run,
+      'jev',
+      'route',
+      async (id) =>
+        await this.client.judge({
+          requestId: id,
+          signal: run.controller.signal,
+          state: { context, contract: DECLARATION_CONTRACT },
+          questions: inventionQuestions(criteria),
+        }),
     );
     const admissibility = choice(judged.answers['admissibility']);
     if (admissibility !== 'supported')
@@ -646,7 +792,7 @@ export class AiDirector {
           'failed',
           'The suggested existing technique was not in the permitted candidate set.',
         );
-      this.update(
+      await this.update(
         run,
         'completed',
         `You already know ${recipe.name}. Use its Craft action; no new LLM generation was needed.`,
@@ -699,151 +845,201 @@ export class AiDirector {
         'failed',
         'The proposal used a material outside the inventor’s supplied knowledge. Nothing was admitted.',
       );
-    const outcome = this.service.admit(draft, {
+    const outcome = await this.service.admit(draft, {
       requestId: run.job.id,
       actorId: 'player',
       source: this.executionSource,
       model: run.generatedBy ?? this.service.config.llmModel,
       evidence: [`Jev route ${route}; definition generated from scoped material evidence.`],
     });
-    this.update(run, outcome.ok ? 'completed' : 'failed', outcome.message, {
+    await this.update(run, outcome.ok ? 'completed' : 'failed', outcome.message, {
       draft,
       admitted: outcome.ok,
     });
   }
 
   /** Meaningful changes are coalesced; native steps never purchase inference. */
-  considerThought(): void {
-    if (
-      !this.service.config.macrofoldKey &&
-      (!this.service.config.jevKey || !this.service.config.llmKey)
-    )
-      return;
-    this.maintenance.tick(!!this.running);
-    if (this.running || this.stopped || this.service.paused || this.now() < this.nextThoughtAt)
-      return;
-    const world = this.service.world;
-    const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
-    const actors = Object.values(world.entities)
-      .filter((e) => e.actor?.controller === 'npc')
-      .sort((a, b) => this.scheduledAt(a.id) - this.scheduledAt(b.id));
-    for (const entity of actors) {
-      const actor = entity.actor!;
-      if (!actor.alive || actor.incapacitated) continue;
-      const all = experiences(world, entity.id);
-      const key = `semantic-schedule:${world.id}:${entity.id}`;
-      const last = this.service.store.getIntegration(key) as
-        | { fingerprint: string; at: number; watermark?: number }
-        | undefined;
-      const unseen = all
-        .filter(
-          (m) =>
-            (m.importance >= 6 ||
-              world.events.some(
-                (e) => e.id === m.eventId && policy.significantEventTypes.includes(e.type),
-              )) &&
-            (m.sequence ?? 0) > (last?.watermark ?? 0),
-        )
-        .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
-      const latest = unseen.slice(0, 8);
-      const matches = interestMatches(
-        world,
-        entity.id,
-        this.service.store.getIntegration(`interests:${world.id}:${entity.id}`) as
-          | InterestSubscription
-          | undefined,
-        this.service.observe(entity.id)?.visibleEntities.map((e) => e.id) ?? [],
-      );
-      const fingerprint = digest({
-        matches,
-        goal: actor.goal,
-        need: actor.fullness < 20 ? 'hungry' : actor.energy < 15 ? 'exhausted' : 'stable',
-        mind: world.innerWorlds?.[entity.id]?.revision,
-        policy: policy.revision,
-      });
-
+  async considerThought(): Promise<void> {
+    return this.admission(async () => {
       if (
-        (last?.fingerprint === fingerprint && !unseen.length) ||
-        (last && this.now() - last.at < policy.cooldownSeconds * 1000)
+        !this.service.config.macrofoldKey &&
+        (!this.service.config.jevKey || !this.service.config.llmKey)
       )
-        continue;
-      const sentence = [
-        ...latest.map((m) => m.summary),
-        ...matches.map(
-          (id) => `I notice ${world.entities[id]!.name}, relevant to my current interest.`,
-        ),
-        `My current goal is ${actor.goal}.`,
-        ...(actor.fullness < 20 ? ['I am critically hungry.'] : []),
-        ...(actor.energy < 15 ? ['I am exhausted.'] : []),
-      ].join(' ');
-      this.service.store.putIntegration(key, {
-        fingerprint,
-        at: this.now(),
-        watermark: Math.max(last?.watermark ?? 0, ...latest.map((m) => m.sequence ?? 0)),
-      });
-      const id = `thought-${randomUUID()}`;
-      if (actor.fullness < 20 || actor.energy < 10 || actor.rest?.asleep) {
-        this.log.save({
-          id,
-          kind: 'Semantic trigger',
-          worldId: world.id,
-          actorId: entity.id,
-          actorName: entity.name,
-          trigger: sentence,
-          startedAt: new Date().toISOString(),
-          status: 'completed',
-          disposition: 'native',
-          route: 'level0',
-          gameTime: world.simTime,
-          input: { reason: actor.rest?.asleep ? 'Sleeping' : 'Native urgent protection' },
-          exchanges: [],
-        });
-        continue;
-      }
-      this.nextThoughtAt = this.now() + this.service.config.thoughtIntervalMs;
-      const significant = world.experience?.awareness[entity.id]?.some(
-        (a) =>
-          latest.some((m) => m.id === a.eventId) &&
-          world.events.some(
-            (e) => e.id === a.eventId && policy.significantEventTypes.includes(e.type),
-          ),
+        return;
+      await this.maintenance.tick(!!this.running);
+      if (this.running || this.stopped || this.service.paused || this.now() < this.nextThoughtAt)
+        return;
+      const world = this.service.world;
+      const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
+      const eventById = new Map(world.events.map((event) => [event.id, event]));
+      const actors = Object.values(world.entities).filter((e) => e.actor?.controller === 'npc');
+      const scheduled = new Map(
+        await Promise.all(actors.map(async (e) => [e.id, await this.scheduledAt(e.id)] as const)),
       );
-      if (significant) this.maintenance.enqueue(entity.id, id, sentence);
-      this.begin({
-        id,
-        kind: 'thought',
-        fingerprint,
-        status: 'queued',
-        message: 'Considering a semantic event.',
-        stimulusEvidenceIds: latest.map((m) => m.id),
-        request: { text: sentence, npcId: entity.id },
-        createdAt: this.now(),
-      });
-      const trace = this.service.store.intelligenceCall(id);
-      if (trace)
-        this.log.save({
-          ...trace,
-          input: {
-            policy: policy.revision,
-            coalescedSources: latest.map((m) => m.id),
-            deferredCount: unseen.length - latest.length,
-            offeredRoutes: [0, 1, 2, 3, 4, 5],
-          },
+      actors.sort((a, b) => scheduled.get(a.id)! - scheduled.get(b.id)!);
+      for (const entity of actors) {
+        const actor = entity.actor!;
+        if (!actor.alive || actor.incapacitated) continue;
+        const all = experiences(world, entity.id);
+        const key = `semantic-schedule:${world.id}:${entity.id}`;
+        const last = (await this.service.store.getIntegration(key)) as
+          | {
+              fingerprint: string;
+              at: number;
+              watermark?: number;
+              attemptedOpportunity?: string;
+            }
+          | undefined;
+        const unseen = all
+          .filter(
+            (m) =>
+              !(
+                eventById.get(m.eventId ?? '')?.actorId === entity.id &&
+                typeof eventById.get(m.eventId ?? '')?.data?.['responseId'] === 'string'
+              ) &&
+              (m.importance >= 6 ||
+                world.events.some(
+                  (e) => e.id === m.eventId && policy.significantEventTypes.includes(e.type),
+                )) &&
+              (m.sequence ?? 0) > (last?.watermark ?? 0),
+          )
+          .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+        const latest = unseen.slice(0, 8);
+        const matches = interestMatches(
+          world,
+          entity.id,
+          (await this.service.store.getIntegration(`interests:${world.id}:${entity.id}`)) as
+            | InterestSubscription
+            | undefined,
+          this.service.observe(entity.id)?.visibleEntities.map((e) => e.id) ?? [],
+        );
+        const fingerprint = digest({
+          matches,
+          goal: actor.goal,
+          need: actor.fullness < 20 ? 'hungry' : actor.energy < 15 ? 'exhausted' : 'stable',
+          mind: world.innerWorlds?.[entity.id]?.revision,
+          policy: policy.revision,
         });
-      return;
-    }
+        const opportunity = digest({ fingerprint, evidence: latest.map((memory) => memory.id) });
+
+        if (
+          (last?.fingerprint === fingerprint && !unseen.length) ||
+          last?.attemptedOpportunity === opportunity ||
+          (last && this.now() - last.at < policy.cooldownSeconds * 1000)
+        )
+          continue;
+        const sentence = [
+          ...latest.map((m) => m.summary),
+          ...matches.map(
+            (id) => `I notice ${world.entities[id]!.name}, relevant to my current interest.`,
+          ),
+          `My current goal is ${actor.goal}.`,
+          ...(actor.fullness < 20 ? ['I am critically hungry.'] : []),
+          ...(actor.energy < 15 ? ['I am exhausted.'] : []),
+        ].join(' ');
+        const id = `thought-${randomUUID()}`;
+        if (actor.fullness < 20 || actor.energy < 10 || actor.rest?.asleep) {
+          await this.log.save({
+            id,
+            kind: 'Semantic trigger',
+            worldId: world.id,
+            actorId: entity.id,
+            actorName: entity.name,
+            trigger: sentence,
+            startedAt: new Date().toISOString(),
+            status: 'completed',
+            disposition: 'native',
+            route: 'level0',
+            gameTime: world.simTime,
+            input: { reason: actor.rest?.asleep ? 'Sleeping' : 'Native urgent protection' },
+            exchanges: [],
+          });
+          await this.service.store.putIntegration(key, {
+            fingerprint,
+            at: this.now(),
+            watermark: actor.rest?.asleep
+              ? (last?.watermark ?? 0)
+              : Math.max(last?.watermark ?? 0, ...latest.map((m) => m.sequence ?? 0)),
+            ...(last?.attemptedOpportunity
+              ? { attemptedOpportunity: last.attemptedOpportunity }
+              : {}),
+          });
+          continue;
+        }
+        // Persist dispatch deduplication before paid work, but consume evidence only
+        // after routing/generation reaches a completed disposition.
+        await this.service.store.putIntegration(key, {
+          fingerprint,
+          at: this.now(),
+          watermark: last?.watermark ?? 0,
+          attemptedOpportunity: opportunity,
+        });
+        this.nextThoughtAt = this.now() + this.service.config.thoughtIntervalMs;
+        const significant = world.experience?.awareness[entity.id]?.some(
+          (a) =>
+            latest.some((m) => m.id === a.eventId) &&
+            world.events.some(
+              (e) => e.id === a.eventId && policy.significantEventTypes.includes(e.type),
+            ),
+        );
+        if (significant) await this.maintenance.enqueue(entity.id, id, sentence);
+        await this.begin(
+          {
+            id,
+            kind: 'thought',
+            fingerprint,
+            status: 'queued',
+            message: 'Considering a semantic event.',
+            stimulusEvidenceIds: latest.map((m) => m.id),
+            request: { text: sentence, npcId: entity.id },
+            createdAt: this.now(),
+          },
+          async () => {
+            const current = (await this.service.store.getIntegration(key)) as
+              | {
+                  fingerprint: string;
+                  at: number;
+                  watermark?: number;
+                  attemptedOpportunity?: string;
+                }
+              | undefined;
+            await this.service.store.putIntegration(key, {
+              fingerprint,
+              at: this.now(),
+              watermark: Math.max(
+                current?.watermark ?? 0,
+                ...latest.map((memory) => memory.sequence ?? 0),
+              ),
+              attemptedOpportunity: opportunity,
+            });
+          },
+        );
+        const trace = await this.service.store.intelligenceCall(id);
+        if (trace)
+          await this.log.save({
+            ...trace,
+            input: {
+              policy: policy.revision,
+              coalescedSources: latest.map((m) => m.id),
+              deferredCount: unseen.length - latest.length,
+              offeredRoutes: [0, 1, 2, 3, 4, 5],
+            },
+          });
+        return;
+      }
+    });
   }
-  private scheduledAt(actorId: string): number {
+  private async scheduledAt(actorId: string): Promise<number> {
     return (
       (
-        this.service.store.getIntegration(
+        (await this.service.store.getIntegration(
           `semantic-schedule:${this.service.world.id}:${actorId}`,
-        ) as { at?: number } | undefined
+        )) as { at?: number } | undefined
       )?.at ?? 0
     );
   }
   private async think(run: Running): Promise<void> {
-    return this.decide(run, false);
+    return await this.decide(run, false);
   }
 
   async idle(): Promise<void> {
@@ -853,6 +1049,7 @@ export class AiDirector {
     this.stopped = true;
     this.running?.controller.abort();
     this.unsubscribe();
+    await this.admissionTail;
     await Promise.allSettled([...this.pendingWork]);
     await this.maintenance.close();
   }

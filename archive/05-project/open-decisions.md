@@ -90,6 +90,12 @@ Settled: level-2 speech with Jev escalation, separate complex low/high reasoning
 
 Still open: per-route models/effort parameters and budgets; attention batching and failure behavior; snapshot size versus full inclusion and greeting token target; raw/backlog retention; summarizer support; rest-day/split-rest/debt semantics; repeat-dream cadence; snapshot recovery and presentation-thought count. These do not reopen the settled direction. See the [canonical specification](../../docs/memory-architecture.md).
 
+## D56 — Actors include animals
+
+Accepted September 20, 2026 from the [actor-model follow-up](../00-source/actor-model-followup.md). “Actor” is the shared domain concept for a living being, including people and animals. Species, body, controller, cognition, memory, inner world and speech are composable capabilities. General lifecycle actions and bodily effects target the relevant capabilities: Revive is intended for every dead actor, and conditions such as wetness or fire may affect the health of both animals and people according to their bodies.
+
+The current prototype's separate person-style `actor` and `animal` components are an implementation limitation, not the intended semantic boundary. Person-only revival, animal-to-remains death conversion, shared condition representation, save migration and how revived harvested remains behave still require design and implementation. See [F74](../01-requirements/product-baseline.md#living-actor-model--f74) and the [canonical actor model](../../docs/architecture.md#actor-means-any-living-being).
+
 ## Decisions requiring creator taste rather than more browsing
 
 M10/M11 settle the first-playable scope and initial absence policy: [live AI and generated survival tools](first-playable-mvp.md) are required, with no offline catch-up; the later accepted time setting allows connected background progression when explicitly enabled. They select Jev integration direction without establishing provider access or performance. The earlier optional-Jev and bundle-only first-release interpretations are superseded; exact operating limits remain open.
@@ -101,6 +107,14 @@ The [technical architecture](../07-technical-architecture/README.md) refines D08
 The user has chosen the wilderness premise, tolerance for meaningful NPC death, grounded modern pixel art, PlayCanvas and ownership of the simulation. Remaining consequential preferences are whether the camera must freely follow a character in 3D, whether spoken interaction is essential immediately, the acceptable spend ceiling, the exact pace of life/aging, and how dangerous human-to-human interaction should be. Research can clarify consequences, but cannot decide those values.
 
 Resolve the remaining parts of D01–D04 through focused discussion and, after implementation authorization, pacing experiments. The accepted 60:1 base rate and 0.5×/1×/3×/8× presets anchor memory/sleep timing; future overload and aging policy remain open. This archive uses explicit provisional assumptions to make the other proposals concrete; nothing has been provisioned on those assumptions.
+
+## D57 — Narration, composed responses and durable conversations
+
+Accepted September 20, 2026 from the [narration follow-up](../00-source/narration-and-conversation-followup.md); **documentation and future tasks only**. [F75–F80](../01-requirements/product-baseline.md#narration-and-conversation-follow-up--f75f80) record requirements and [NC01–NC13](../../docs/narration-and-conversations.md#13-implementation-tasks) own delivery.
+
+Settled: agents may talk, act and/or think at any admitted trigger and remember accepted components; private thoughts stay out of ordinary conversation narration. World events remain external occurrences, retained for awareness or configured notability. Separate player-private Narrator records link source events many-to-many and render consequences plus actual status impacts. Conversations have durable membership/lifecycle, self-talk, overhearing without joining, no retroactive awareness and source-closing merges. Standalone story goes atop the screen and into the private Journal; voice is a player preference. First slice uses expressive actions without new effects; on-the-spot action/effect invention is deferred.
+
+Proposed implementation choices remain explicit in the technical design: one component of each type per response, one active conversation per actor, ordering/admission details, PostgreSQL table names and bounded generation. Exact importance weights, batching, lifecycle grace, retention, voices and cutaway disclosure policy require implementation tuning. This extends D55's compact cognition and observed-event retention without removing its independent reflection, privacy or bounded-execution requirements.
 
 ## Decision history
 
@@ -125,3 +139,5 @@ September 19, 2026: recorded M06–M08, F45–F49 and D39–D41; refined D06/D12
 September 19, 2026: C01 accepts AGPL for the shared engine and authorizes applying it to this repository, documenting component boundaries, and committing/pushing current work. D34 supersedes the earlier Apache-first recommendation; previous Apache grants remain valid. D17/D35–D37 capture accepted creator-economy, pack, patron, and contributor directions while preserving open commercial details. D38 records token/NFT funding discussion as exploration only. [User source](../00-source/open-source-and-community-followups.md); game implementation and sales remain unstarted.
 
 September 19, 2026: D55 accepts compact cognition and independent reflection; F68–F73 and CR01–CR12 record the documentation-only redesign. All current memory requirements are reconciled into the canonical spec and related contracts; dated source audits remain evidence of their inspected version, not acceptance of new routes, awareness, publication or sleep rules.
+
+September 20, 2026: D56/F74 accept a species-inclusive actor model, general living-body actions/effects and optional richer animal minds. This records target behavior only; animals remain separate from the person-style actor component, and current revival remains person-only.

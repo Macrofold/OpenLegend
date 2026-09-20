@@ -67,7 +67,12 @@ export function describeCommand(command: CommandInput, observation: ActorObserva
         (entry) => entry.id === observation.actor.actor?.equippedItemId,
       );
       const weapon = equipped && definition(equipped.definitionId);
-      return `${target?.animal ? `Attempt one shot at ${target.name}, a ${target.animal.species}.` : 'Attempt one shot at a living animal.'} ${weapon?.launcher ? `Your equipped ${weapon.name} uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.`;
+      const subject = target?.animal
+        ? target.name.trim().toLowerCase() === target.animal.species.trim().toLowerCase()
+          ? `the ${target.animal.species}`
+          : target.name
+        : 'a living animal';
+      return `Attempt one shot at ${subject}. ${weapon?.launcher ? `Your equipped ${weapon.name} uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.`;
     }
     case 'harvest':
       if (!target?.remains) return common;

@@ -6,6 +6,8 @@ The [canonical design](../../docs/memory-architecture.md) and [delivery tasks](.
 
 ## Pasted proposal
 
+Historical scope note: the September 20 [narration follow-up](narration-and-conversation-followup.md) later adds notable unseen-event retention and optional recallable immediate thoughts. The original proposal below remains verbatim; current behavior requirements live in the linked canonical designs.
+
 ok the agent context and output requirements are WAYYYY TOO HUGE. it caused 5000 thinking outpout and 2500 response output, and crazy input size too. The agent took 1 min to respond.
 
 #1: xhigh reasoning.
@@ -143,7 +145,6 @@ At the end of reflection, the game should snapshot and pull the files into the p
 
 When do agents dream? If they have been asleep for at least 2 hours.
 Agents must rest for 8 hours a day
-
 
 
 

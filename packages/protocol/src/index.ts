@@ -119,7 +119,13 @@ export interface PublicEvent {
 }
 
 export interface ChatMessage {
+  kind?: 'speech' | 'action';
+  mechanical?: boolean;
   replyStatus?: AiJobView['status'];
+  /** User-facing detail revealed from the message-local failure label. */
+  replyFailure?: string;
+  /** Plain narration for a reply interrupted by changing world circumstances. */
+  replyInterruption?: string;
   id: string;
   speakerId: string;
   speaker: string;
@@ -138,6 +144,10 @@ export interface AiJobView {
 
 export interface GameView {
   godMode?: boolean;
+  godTools?: {
+    traits: Array<{ id: string; name: string; description: string }>;
+    spawnOptions: Array<{ id: string; label: string }>;
+  };
   schemaVersion: 1;
   revision: number;
   worldId: string;
@@ -207,11 +217,71 @@ export interface GameView {
   persistence: { status: 'saved' | 'error'; message: string };
 }
 
+export interface GamePatch {
+  schemaVersion: 1;
+  baseRevision: number;
+  revision: number;
+  profile?: GameView['profile'];
+  clock?: Partial<GameView['clock']>;
+  player?: Partial<GameView['player']>;
+  entities?: { upsert: EntityView[]; remove: string[]; order?: string[] };
+  recipes?: GameView['recipes'];
+  events?: GameView['events'];
+  conversation?: GameView['conversation'];
+  ai?: Partial<GameView['ai']>;
+  milestones?: GameView['milestones'];
+  persistence?: GameView['persistence'];
+}
+
 export interface ApiResult {
   ok: boolean;
   code: string;
   message: string;
   jobId?: string;
+}
+
+export interface GodPersonFields {
+  name: string;
+  personality: string;
+  backstory: string;
+  traitIds: string[];
+  initialGoals: string[];
+}
+
+export interface GodMemoryEditorEntry {
+  id: string;
+  source: 'awareness' | 'memory' | 'summary';
+  label: 'Raw' | 'Consolidated';
+  text: string;
+  time: number;
+  tags: string[];
+  hash: string;
+  eventType?: string;
+  json?: string;
+}
+
+export interface GodPersonEditorView {
+  ok: true;
+  revision: number;
+  actorId: string;
+  person: GodPersonFields;
+  memories: GodMemoryEditorEntry[];
+}
+
+export interface GodWorldEventEditorEntry {
+  id: string;
+  type: string;
+  text: string;
+  time: number;
+  actors: string[];
+  hash: string;
+  json?: string;
+}
+
+export interface GodWorldEventsEditorView {
+  ok: true;
+  revision: number;
+  events: GodWorldEventEditorEntry[];
 }
 
 /** Private inspection DTO: returned only by the separately authorized god endpoint. */
@@ -225,7 +295,7 @@ export interface GodMindView {
     source: string;
   }>;
   acceptedText?: string;
-  experiences?: Array<{ id: string; text: string; at: number; kind: string }>;
+  experiences?: Array<{ id: string; text: string; at: number; kind: string; source: string }>;
   commitments?: Array<{ id: string; text: string; resolved: boolean }>;
   skills?: Array<{ name: string; source: string; learnedAt: number }>;
   rest?: { asleep: boolean; sleepingSeconds: number; restedSeconds: number; debtSeconds: number };

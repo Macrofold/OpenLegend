@@ -25,26 +25,26 @@ const store = new SqliteStore(
   config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
 );
 try {
-  const current = store.load();
+  const current = await store.load();
   const state = JSON.parse(backup.tables.world[0]!.payload) as SavedWorld;
   if (!current || state.world.id !== current.state.world.id)
     throw new Error('World identity mismatch.');
   migrateCognition(state.world);
-  const ledger = store.getIntegration(`forget-ledger:${state.world.id}`) as
+  const ledger = (await store.getIntegration(`forget-ledger:${state.world.id}`)) as
     | Record<string, string[]>
     | undefined;
   for (const [actorId, ids] of Object.entries(ledger ?? {}))
     for (const id of ids) state.world = forgetExperience(state.world, actorId, id).world;
-  store.putIntegration(`pre-restore:${current.revision}`, current);
+  await store.putIntegration(`pre-restore:${current.revision}`, current);
   state.manuallyPaused = true;
   state.world.paused = true;
-  store.commit(current.revision, state);
+  await store.commit(current.revision, state);
   for (const actorId of Object.keys(state.world.entities)) {
-    store.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
-    store.putIntegration(`interests:${state.world.id}:${actorId}`, null);
+    await store.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
+    await store.putIntegration(`interests:${state.world.id}:${actorId}`, null);
   }
-  store.recoverInterruptedWork();
+  await store.recoverInterruptedWork();
   console.log('World restored paused; present-day spending and forgetting retained.');
 } finally {
-  store.close();
+  await store.close();
 }

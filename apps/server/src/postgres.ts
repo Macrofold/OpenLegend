@@ -1,57 +1,101 @@
-import { Worker } from 'node:worker_threads';
+import pg from 'pg';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';
-/** Preserve the existing synchronous commit boundary; one dedicated connection owns all transactions. */
+
+/** One asynchronous connection and a transaction lane; no main-thread waits or paid retries. */
 export class PostgresDatabase implements SqlDatabase {
   readonly dialect = 'postgres';
-  private worker: Worker;
+  private client: pg.Client;
+  private ready: Promise<void>;
+  private tail: Promise<unknown> = Promise.resolve();
+  private transactionContext = new AsyncLocalStorage<boolean>();
   private failed = false;
   constructor(connectionString: string) {
-    this.worker = new Worker(new URL('./postgres-worker.mjs', import.meta.url), {
-      workerData: { connectionString },
-      // This plain JS worker must not inherit tsx loaders or stdin/eval flags.
-      execArgv: [],
+    this.client = new pg.Client({
+      connectionString,
+      connectionTimeoutMillis: 5000,
+      statement_timeout: 5000,
     });
-    this.worker.on('error', () => {
+    this.ready = this.connect();
+    this.ready.catch(() => {
+      this.failed = true;
+    });
+    this.client.on('error', () => {
       this.failed = true;
     });
   }
-  query(sql: string, params: unknown[] = []): { rows: Record<string, unknown>[]; changes: number } {
-    if (this.failed) throw new Error('PostgreSQL requires restart after an uncertain operation.');
-    let index = 0;
-    sql = sql
-      .replace(/\?/g, () => `$${++index}`)
-      .replace(/BEGIN IMMEDIATE/g, 'BEGIN')
-      .replace(/\browid\b/g, 'id')
-      .replace(
-        /json_extract\(payload, '\$\.([A-Za-z.]+)'\)/g,
-        (_, path: string) => `(payload::jsonb #>> '{${path.split('.').join(',')}}')`,
-      );
-    const shared = new SharedArrayBuffer(16 * 1024 * 1024);
-    const header = new Int32Array(shared, 0, 2);
-    this.worker.postMessage({ sql, params, shared });
-    if (Atomics.wait(header, 0, 0, 10000) === 'timed-out') {
-      this.failed = true;
-      void this.worker.terminate();
-      throw new Error('Database completion uncertain. Stop and reconcile before retrying.');
-    }
-    const value = JSON.parse(
-      Buffer.from(new Uint8Array(shared, 8, Atomics.load(header, 1))).toString(),
-    ) as { rows: Record<string, unknown>[]; changes: number; error?: string };
-    if (value.error) throw new Error(value.error);
-    return value;
+  private async connect() {
+    await this.client.connect();
+    const lock = await this.client.query('SELECT pg_try_advisory_lock(187114, 1) AS acquired');
+    if (!lock.rows[0].acquired) throw new Error('Another Open Legend writer owns this database.');
+    await this.client.query(
+      'CREATE SCHEMA IF NOT EXISTS open_legend; SET search_path TO open_legend; CREATE SCHEMA IF NOT EXISTS mind',
+    );
   }
-  exec(sql: string): void {
-    this.query(sql);
+  private serial<T>(operation: () => Promise<T>): Promise<T> {
+    const next = this.tail.then(operation);
+    this.tail = next.catch(() => undefined);
+    return next;
+  }
+  async transaction<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.transactionContext.getStore()) return operation();
+    return this.serial(() =>
+      this.transactionContext.run(true, async () => {
+        await this.query('BEGIN');
+        try {
+          const result = await operation();
+          await this.query('COMMIT');
+          return result;
+        } catch (error) {
+          await this.query('ROLLBACK').catch(() => {
+            this.failed = true;
+          });
+          throw error;
+        }
+      }),
+    );
+  }
+  async query(sql: string, params: unknown[] = []) {
+    const execute = async () => {
+      await this.ready;
+      if (this.failed)
+        throw new Error('PostgreSQL unavailable; restart and reconcile pending writes.');
+      let index = 0;
+      const translated = sql
+        .replace(/\?/g, () => `$${++index}`)
+        .replace(/BEGIN IMMEDIATE/g, 'BEGIN')
+        .replace(/\browid\b/g, 'id')
+        .replace(
+          /json_extract\(payload, '\$\.([A-Za-z.]+)'\)/g,
+          (_, path: string) => `(payload::jsonb #>> '{${path.split('.').join(',')}}')`,
+        );
+      try {
+        const result = await this.client.query(translated, params);
+        return { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
+      } catch (error) {
+        const code = (error as { code?: string }).code;
+        // Do not leak SQL parameters or connection credentials in diagnostics.
+        throw new Error(
+          `PostgreSQL operation failed${code ? ` (${code})` : ''}. No automatic retry.`,
+        );
+      }
+    };
+    return this.transactionContext.getStore() ? execute() : this.serial(execute);
+  }
+  async exec(sql: string): Promise<void> {
+    await this.query(sql);
   }
   prepare(sql: string) {
     return {
-      get: (...params: unknown[]) => this.query(sql, params).rows[0],
-      all: (...params: unknown[]) => this.query(sql, params).rows,
+      get: async (...params: unknown[]) => (await this.query(sql, params)).rows[0],
+      all: async (...params: unknown[]) => (await this.query(sql, params)).rows,
       run: (...params: unknown[]) => this.query(sql, params),
     };
   }
-  close(): void {
+  async close(): Promise<void> {
+    await this.tail;
+    await this.ready.catch(() => undefined);
     this.failed = true;
-    void this.worker.terminate();
+    await this.client.end();
   }
 }

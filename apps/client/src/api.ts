@@ -1,4 +1,4 @@
-import type { ApiResult, GameView } from '@open-legend/protocol';
+import type { ApiResult, GamePatch, GameView } from '@open-legend/protocol';
 
 // One identity for this page's heartbeats and explicit Resume actions. A delayed
 // pagehide notification must not erase a newer return/resume notification.
@@ -16,6 +16,37 @@ export async function getState(): Promise<GameView> {
   const response = await fetch('/api/state', { credentials: 'same-origin', cache: 'no-store' });
   if (!response.ok) throw new Error(`The world could not be loaded (${response.status}).`);
   return response.json() as Promise<GameView>;
+}
+export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
+  if (patch.baseRevision !== current.revision || patch.revision <= current.revision)
+    throw new Error('Game update revision mismatch.');
+  let entities = current.entities;
+  if (patch.entities) {
+    const removed = new Set(patch.entities.remove);
+    const byId = new Map(
+      current.entities
+        .filter((entity) => !removed.has(entity.id))
+        .map((entity) => [entity.id, entity]),
+    );
+    for (const entity of patch.entities.upsert) byId.set(entity.id, entity);
+    entities = patch.entities.order
+      ? patch.entities.order.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []))
+      : [...byId.values()];
+  }
+  return {
+    ...current,
+    revision: patch.revision,
+    ...(patch.profile ? { profile: patch.profile } : {}),
+    ...(patch.clock ? { clock: { ...current.clock, ...patch.clock } } : {}),
+    ...(patch.player ? { player: { ...current.player, ...patch.player } } : {}),
+    ...(patch.entities ? { entities } : {}),
+    ...(patch.recipes ? { recipes: patch.recipes } : {}),
+    ...(patch.events ? { events: patch.events } : {}),
+    ...(patch.conversation ? { conversation: patch.conversation } : {}),
+    ...(patch.ai ? { ai: { ...current.ai, ...patch.ai } } : {}),
+    ...(patch.milestones ? { milestones: patch.milestones } : {}),
+    ...(patch.persistence ? { persistence: patch.persistence } : {}),
+  };
 }
 export async function post<T extends { ok: boolean; message?: string } = ApiResult>(
   path: string,

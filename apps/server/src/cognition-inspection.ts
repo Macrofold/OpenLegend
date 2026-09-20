@@ -10,9 +10,9 @@ export interface TraceFilter {
   from?: string;
   to?: string;
 }
-export function traceHistory(store: GameRepository, filter: TraceFilter) {
+export async function traceHistory(store: GameRepository, filter: TraceFilter) {
   const { offset, ...filters } = filter;
-  const roots = store.diagnosticRoots(
+  const roots = await store.diagnosticRoots(
     offset,
     Object.fromEntries(
       Object.entries(filters).filter(
@@ -20,7 +20,7 @@ export function traceHistory(store: GameRepository, filter: TraceFilter) {
       ),
     ),
   );
-  const all = store.diagnosticStages(roots.slice(0, 25).map((c) => c.id));
+  const all = await store.diagnosticStages(roots.slice(0, 25).map((c) => c.id));
   const children = new Map<string, IntelligenceCall[]>();
   for (const call of all)
     if (call.parentId) children.set(call.parentId, [...(children.get(call.parentId) ?? []), call]);
@@ -50,10 +50,10 @@ export function traceHistory(store: GameRepository, filter: TraceFilter) {
     retentionLimit: 1000,
   };
 }
-export function traceDetails(store: GameRepository, id: string) {
-  const root = store.intelligenceCall(id);
+export async function traceDetails(store: GameRepository, id: string) {
+  const root = await store.intelligenceCall(id);
   if (!root) return null;
-  const children = store.diagnosticStages([id], true);
+  const children = await store.diagnosticStages([id], true);
   return {
     root,
     children: children.sort((a, b) => a.startedAt.localeCompare(b.startedAt)),

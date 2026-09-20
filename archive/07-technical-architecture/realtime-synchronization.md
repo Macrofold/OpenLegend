@@ -1,5 +1,7 @@
 # Real-time synchronization, prediction and persistence
 
+Current local runtime note (September 20): the prototype uses a private SQL-transactional change journal with periodic snapshots, and public bootstrap/SSE typed patches with bounded replay. See the [canonical implemented architecture](../../docs/architecture.md#state-and-transitions). This is not the optional future external journal-first authority migration or the complete normalized/multiplayer design below; SQL commit remains the durability boundary, while routine local timer progress may be published before its one-second flush.
+
 Status: **accepted architectural direction; proposed implementation contract**, September 19, 2026. The user approved server-side queued/batched updates, responsive browser prediction, authoritative multiplayer outcomes, selective replication and the future improvement path described here. No networking, storage or gameplay code is implemented by this document. Numerical tuning, transport rollout and capacity remain subject to measurement.
 
 This document owns the real-time command/view protocol, client prediction, reconnect behavior, replication and network queue policies. The [production data model](production-data-model.md) owns canonical records and atomic changes; [data queries and MCP](data-queries-and-mcp.md) owns historical/current data queries; [data delivery and scale](data-delivery-and-scale.md) owns migration, retention, database recovery and shard rollout. These interfaces share identities and commit references without becoming the same protocol.

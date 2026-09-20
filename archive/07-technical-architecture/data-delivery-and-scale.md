@@ -1,5 +1,7 @@
 # Production data delivery, operations and scale
 
+Current local runtime note (September 20): the prototype uses a private SQL-transactional change journal with periodic snapshots, and public bootstrap/SSE typed patches with bounded replay. See the [canonical implemented architecture](../../docs/architecture.md#state-and-transitions). This is not the optional future external journal-first authority migration or the complete normalized/multiplayer design below; SQL commit remains the durability boundary, while routine local timer progress may be published before its one-second flush.
+
 Status: **proposed implementation and acceptance plan**, September 19, 2026. Companion to the [production data model](production-data-model.md) and [query/MCP contract](data-queries-and-mcp.md). No migration, provisioned service, load test or production capability is claimed here.
 
 ## 1. What scaling means for this product
@@ -74,7 +76,8 @@ Define retention by record class and product promise, not by the number of lines
 | Current canonical state and active processes                        | Retain while world/entity needs it; tombstone consumed/dead identities while retained references exist                                                                                                       |
 | Active definitions and pinned dependencies                          | Retain while any world, process, checkpoint, pack or valid creator capsule requires them                                                                                                                     |
 | Invention authorship, activation, major lifecycle/ownership history | Retain for world/product lifetime under explicit account/content retention terms; archive rather than silently truncate                                                                                      |
-| Actor-witnessed experiential world journal                                   | 30 days of real-time hot data, then compressed queryable archive while the world exists and its configured storage policy permits; no complete-history claim if older coverage expires                       |
+| Experiential world journal: witnessed or configured notable unseen events | 30 days of real-time hot data, then compressed queryable archive while the world exists and policy permits; the future NC notable-unseen exception grants no awareness; no complete-history claim if coverage expires |
+| Future player-private narration and source links | Separate finite owner-scoped retention, selected in NC11; retain permitted source capsules or explicit unavailable/redacted locators, propagate disclosure revocations, and never regenerate prose or paid work on reads |
 | Fine-grained state changes                                          | Keep after the oldest supported recovery checkpoint, with an initial 24-hour replay target; compact only after verifying a durable covering checkpoint and all consumer prerequisites                        |
 | Checkpoints                                                         | Initial hourly verified checkpoints, with a 24-hour fine-grained recovery window and daily checkpoints for 30 days; historical snapshots outside change coverage do not imply exact between-checkpoint state |
 | NPC observations and recallable memories                            | Six-game-hour raw recall; hourly small-model cleanup of older personal/aware-event experience; separate bounded summaries, backlog and authored text. Protected commitments have finite native quotas; creator archive is not NPC recall                                            |
@@ -103,13 +106,13 @@ A database disaster restore can also roll back `work` rows if they share that da
 
 Alerts cover backup age, failed archive verification, replication lag, writer fencing failures, commit ambiguity, unprocessed outbox age, missing artifact pins, command/receipt compaction safety and restore-test age. Never continue reporting successful world progress when storage cannot commit it.
 
-## 6. Migration from the current SQLite snapshot
+## 6. Migration from the local snapshot and change journal
 
 Apply this importer to the records consumed by each baseline feature. Checkpoint/replay exports, content-rights records and distributed routing steps apply only when those capabilities are enabled; preserve all existing source information even when its target feature is deferred.
 
 This is a one-time explicit importer into a new target, not an in-place silent rewrite. The original save remains intact until an approved operational cutover and backup policy say otherwise. The September 20 local save cutover used the preserved-source importer and verified complete world digests, accepted text and accounting counts; broader production normalization and disaster recovery remain separate work. See [actual evidence](../../docs/maintainers/TODO.md).
 
-1. Freeze the source world for export or use a verified consistent SQLite backup. Capture its schema/revision, source checksum, AI ledgers and configuration inputs required to interpret the save. Never copy a live main SQLite file while omitting uncheckpointed WAL.
+1. Freeze the source world for export or use a verified consistent SQLite backup. Capture its schema/revision, source checksum, AI ledgers and configuration inputs required to interpret the save. Never copy a live main SQLite file while omitting uncheckpointed WAL. Materialize all contiguous `world_journal` entries over the saved snapshot before exporting its latest revision; the current backup/import tools do this inside the source read transaction.
 2. Create an import identity and deterministic ID mapping for world, entities, items, recipes, memories, events and legacy request IDs. Keep `legacy_id_aliases`/import provenance in the target. Do not assume local `player` has a verified platform account; require explicit owner linkage or preserve unattributed origin.
 3. Parse and validate source data using its original schema. Import map into chunks; entity headers/vitals/components; item lots and containment; reservoirs/yields; current paths/actions; definitions and pins; actor knowledge/memories; retained events and receipts; controls and milestones.
 4. Convert current simulated seconds to the selected integer time unit exactly. Preserve seed/RNG, consumed materials, remaining work, ownership and equipped identity. New schema fields use explicit initialization/unknown policies; do not reinterpret old condition defaults.
@@ -123,7 +126,7 @@ This is a one-time explicit importer into a new target, not an in-place silent r
 
 If rollback is needed before target writes, reopen the preserved source under a fresh generation. After target writes, rollback needs an explicit supported reverse migration or deliberate declared loss/restore; it cannot silently return to an old snapshot. Import rollback never erases external provider usage.
 
-The memory import must preserve authored identity, beliefs, relationships, goals and concerns in the actor workspace and initial accepted PostgreSQL text row. Preserve native commitments and knowledge independently. Deduplicate known event/memory copies by source identity, never by guessing missing historical audiences. Import god-only thoughts separately. The prototype's bounded 300-event journal cannot reconstruct lost history. Verify recovery before changing active retention; six-hour recall and hourly cleanup are simulated-time policy, distinct from real-time archive/checkpoint retention.
+The memory import must preserve authored identity, beliefs, relationships, goals and concerns in the actor workspace and initial accepted PostgreSQL text row. Preserve native commitments and knowledge independently. Deduplicate known event/memory copies by source identity, never by guessing missing historical audiences. Import god-only thoughts separately. The legacy prototype's bounded 300-event feed cannot reconstruct lost history. The current persistence change journal is a snapshot-recovery mechanism, not a historical event archive. Verify recovery before changing active retention; six-hour recall and hourly cleanup are simulated-time policy, distinct from real-time archive/checkpoint retention.
 
 ## 7. Storage evolution after launch
 
@@ -134,6 +137,8 @@ Keep checksummed schema migrations per module and pin minimum/maximum supported 
 Indexes are migrations too: assess lock/build/disk impact and use appropriate concurrent construction where supported. Event partition maintenance is automated and tested, with future partitions prepared before writes require them. Physical shard migration and component semantic migration are separate procedures; do not combine them into an unreviewable global rollout.
 
 ## 8. Sequenced implementation and exit gates
+
+The future [NC01–NC13 narration/conversation track](../../docs/narration-and-conversations.md#13-implementation-tasks) consumes D2 history/awareness and incremental PostgreSQL story storage. Deliver only the tables needed for that slice, with explicit adapter capabilities, conservative legacy conversation import, source-coverage markers and verified restore. Do not infer historical audiences, turn old god-only reflection thoughts into private experience, or require the full distributed production catalogue before narration. On-the-spot invention remains a later INV-dependent task.
 
 The [real-time synchronization rollout](realtime-synchronization.md#10-implementation-sequence-and-acceptance) complements these data phases with two-client conflict tests, durable confirmations, prediction/reconciliation, scoped replication and bounded queues. Its advanced transport and journal-first alternatives require separate measured gates; they are not prerequisites for the initial PostgreSQL adapter.
 

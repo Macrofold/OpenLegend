@@ -77,7 +77,7 @@ export function buildContext(service: WorldService, actorId: string, query: stri
     nearby: observed.visibleEntities.map((entity) => ({
       id: entity.id,
       name: excerpt(entity.name, 40),
-      kind: entity.kind,
+      kind: entity.actor ? 'person' : entity.kind,
       position: entity.position,
       ...(entity.resource ? { resource: entity.resource } : {}),
       ...(entity.animal

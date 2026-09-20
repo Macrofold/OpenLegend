@@ -14,17 +14,17 @@ if (!config.macrofoldKey || config.budgetUsd <= 0 || config.macrofoldComputeUsd 
   throw new Error('Configured credentials and nonzero caps required.');
 const store = new SqliteStore(database);
 try {
-  const world = store.load()?.state.world;
+  const world = (await store.load())?.state.world;
   if (!world?.entities[actorId]?.actor) throw new Error('No saved actor.');
   const prefix = `macrofold:${digest(config.macrofoldUrl)}:${world.id}:`;
-  const lane = store.getIntegration(prefix + `lane:${actorId}`) as
+  const lane = (await store.getIntegration(prefix + `lane:${actorId}`)) as
     | { worktree?: string; sandbox?: string }
     | undefined;
   const key = prefix + `operation:sandbox:${actorId}`;
-  const previous = store.getIntegration(key) as
+  const previous = (await store.getIntegration(key)) as
     | { fingerprint: string; response?: Record<string, unknown> }
     | undefined;
-  if (!previous || !lane?.worktree || !store.getIntegration(prefix + `compute:${actorId}`))
+  if (!previous || !lane?.worktree || !(await store.getIntegration(prefix + `compute:${actorId}`)))
     throw new Error('No reserved interrupted setup to reconcile.');
   if (previous.response || lane.sandbox)
     throw new Error('Setup already has a result; inspect its sandbox instead.');
@@ -45,9 +45,9 @@ try {
   >;
   if (typeof response.id !== 'string')
     throw new Error('Missing sandbox identity; admission remains uncertain.');
-  store.putIntegration(key, { ...previous, response });
-  store.putIntegration(prefix + `lane:${actorId}`, { ...lane, sandbox: response.id });
+  await store.putIntegration(key, { ...previous, response });
+  await store.putIntegration(prefix + `lane:${actorId}`, { ...lane, sandbox: response.id });
   console.log(JSON.stringify({ actorId, sandboxId: response.id, status: response.status }));
 } finally {
-  store.close();
+  await store.close();
 }

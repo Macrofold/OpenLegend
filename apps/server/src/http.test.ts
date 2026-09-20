@@ -55,6 +55,70 @@ describe('local HTTP boundary', () => {
     expect(noCookie.status).toBe(403);
     expect(JSON.stringify(god.initial)).not.toContain('My beginnings');
   });
+  it('gates god world editing and persists spawned people and revival while paused', async () => {
+    const ordinary = await start();
+    expect(
+      (await ordinary.post('/api/god/spawn', { type: 'hare', position: { x: 24, z: 5 } })).status,
+    ).toBe(403);
+    const { post, game, initial } = await start(true);
+    expect(initial.godTools?.spawnOptions[0]).toEqual({ id: 'person', label: 'Person' });
+    expect(initial.godTools?.spawnOptions.slice(1).map((option) => option.label)).toEqual(
+      [...initial.godTools!.spawnOptions.slice(1).map((option) => option.label)].sort(),
+    );
+    expect(game.service.paused).toBe(true);
+    expect(
+      (
+        await (
+          await post('/api/god/spawn', {
+            type: 'hare',
+            position: { x: 24, z: 5 },
+          })
+        ).json()
+      ).code,
+    ).toBe('spawned');
+    const created = await (
+      await post('/api/god/person', {
+        position: { x: 25, z: 5 },
+        name: 'Mira',
+        personality: 'Warm and direct.',
+        backstory: 'A patient traveler.',
+        traitIds: ['curious', 'steadfast'],
+        initialGoals: ['Find a safe route home.'],
+      })
+    ).json();
+    expect(created).toMatchObject({ ok: true, code: 'spawned' });
+    const person = Object.values(game.service.world.entities).find(
+      (entity) => entity.name === 'Mira',
+    )!;
+    expect(person.actor).toMatchObject({
+      personality: 'Warm and direct.',
+      backstory: 'A patient traveler.',
+      initialGoals: ['Find a safe route home.'],
+    });
+    expect(game.service.world.minds?.[person.id]?.documents[0]?.text).toContain(
+      'A patient traveler.',
+    );
+    person.actor!.alive = false;
+    person.actor!.health = 0;
+    expect((await (await post('/api/god/revive', { actorId: person.id })).json()).code).toBe(
+      'revived',
+    );
+    expect(person.actor!.alive).toBe(false);
+    expect(game.service.world.entities[person.id]!.actor!.alive).toBe(true);
+    expect(
+      (
+        await post('/api/god/person', {
+          position: { x: 26, z: 5 },
+          name: 'Extra',
+          personality: '',
+          backstory: '',
+          traitIds: [],
+          initialGoals: [],
+          stats: { health: 1000 },
+        })
+      ).status,
+    ).toBe(400);
+  });
   it('uses the event connection for opted-in background play and pauses when it closes', async () => {
     const { game, base, cookie, post } = await start();
     const controller = new AbortController();

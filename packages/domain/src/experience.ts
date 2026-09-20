@@ -1,9 +1,13 @@
+import { draftWorld, cloneValue } from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { finish, outcome } from './events.js';
+import { memoryPerspective } from './memory-perspective.js';
 import type { MemoryRecord, Transition, WorldState } from './types.js';
 
 export const EXPERIENCE_LIMITS = {
   rawHours: 6,
+  recallRaw: 512,
+  protectedImportance: 8,
   backlog: 8192,
   summaries: 256,
   summaryBytes: 1200,
@@ -20,6 +24,17 @@ export interface Awareness {
   intelligible: boolean;
   entityIds: string[];
   importance: number;
+  /** Stable event-time trigger semantics survive rotation of the bounded world-event feed. */
+  eventType?: string;
+  sourceId?: string;
+  targetId?: string;
+  triggerKind?:
+    | 'addressed_speech'
+    | 'overheard_speech'
+    | 'self_event'
+    | 'directed_action'
+    | 'observed_event';
+  content?: string;
 }
 export interface ExperienceSummary {
   id: string;
@@ -29,9 +44,12 @@ export interface ExperienceSummary {
   sourceIds: string[];
   entityIds: string[];
   importance: number;
+  sequence?: number;
+  revision?: number;
 }
 export interface ExperienceState {
   version: 1;
+  perspectiveVersion?: 1;
   corrections?: Record<string, Record<string, string>>;
   awareness: Record<string, Awareness[]>;
   summaries: Record<string, ExperienceSummary[]>;
@@ -67,6 +85,8 @@ export function flattenFiles(files: InnerWorld['files']): string {
 }
 /** Additive migration: legacy payloads remain audit data; only proven event copies are deduplicated. */
 export function migrateCognition(world: WorldState): void {
+  const player = world.entities['player'];
+  if (player && ['You', 'Player', 'player'].includes(player.name)) player.name = 'Mike';
   const initial = !world.experience;
   world.schemaVersion = 2;
   world.experience ??= {
@@ -108,7 +128,7 @@ export function migrateCognition(world: WorldState): void {
       .map((e) => ({
         eventId: e.id,
         actorId: entity.id,
-        text: e.text,
+        text: memoryPerspective(world, entity.id, e.text, e.type === 'speech'),
         at: e.at,
         sequence: Number(e.id.split('-').at(-1)) || 0,
         modality: e.type === 'speech' ? 'heard' : 'observed',
@@ -116,8 +136,102 @@ export function migrateCognition(world: WorldState): void {
         intelligible: true,
         entityIds: [e.actorId, e.targetId].filter((id): id is string => !!id),
         importance: e.type === 'speech' ? 7 : 3,
+        eventType: e.type,
+        ...(e.actorId ? { sourceId: e.actorId } : {}),
+        ...(e.targetId ? { targetId: e.targetId } : {}),
+        triggerKind:
+          e.actorId === entity.id
+            ? 'self_event'
+            : e.type === 'speech'
+              ? e.targetId === entity.id
+                ? 'addressed_speech'
+                : 'overheard_speech'
+              : e.targetId === entity.id
+                ? 'directed_action'
+                : 'observed_event',
+        content: typeof e.data?.['text'] === 'string' ? e.data['text'] : e.text,
       }));
   }
+  const events = new Map(world.events.map((event) => [event.id, event]));
+  // Trigger metadata is an additive idempotent migration independent of the older
+  // perspective rewrite version, so already-migrated saves receive it too.
+  for (const entity of Object.values(world.entities)) {
+    if (!entity.actor) continue;
+    for (const aware of world.experience.awareness[entity.id] ?? []) {
+      const event = events.get(aware.eventId);
+      if (event) {
+        aware.eventType ??= event.type;
+        aware.sourceId ??= event.actorId;
+        aware.targetId ??= event.targetId;
+        if (aware.intelligible)
+          aware.content ??=
+            typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text;
+        aware.triggerKind ??=
+          event.actorId === entity.id
+            ? 'self_event'
+            : event.type === 'speech'
+              ? event.targetId === entity.id
+                ? 'addressed_speech'
+                : 'overheard_speech'
+              : event.targetId === entity.id
+                ? 'directed_action'
+                : 'observed_event';
+      }
+    }
+  }
+  // Perspective rewrites are idempotent and retain original event IDs and acquisition metadata.
+  if (world.experience.perspectiveVersion === 1) return;
+  for (const entity of Object.values(world.entities)) {
+    if (!entity.actor) continue;
+    for (const aware of world.experience.awareness[entity.id] ?? []) {
+      aware.text = memoryPerspective(world, entity.id, aware.text, aware.modality === 'heard');
+    }
+    for (const memory of world.memories[entity.id] ?? [])
+      memory.summary = memoryPerspective(
+        world,
+        entity.id,
+        memory.summary,
+        memory.eventType === 'speech' || events.get(memory.eventId ?? '')?.type === 'speech',
+      );
+    for (const summary of world.experience.summaries[entity.id] ?? []) {
+      const text = memoryPerspective(world, entity.id, summary.text);
+      if (text !== summary.text) {
+        summary.text = text;
+        summary.revision = (summary.revision ?? 0) + 1;
+      }
+    }
+    const inner = world.innerWorlds[entity.id];
+    if (inner) {
+      let changed = false;
+      for (const file of inner.files) {
+        const text = memoryPerspective(world, entity.id, file.text);
+        if (text !== file.text) {
+          file.text = text;
+          changed = true;
+        }
+      }
+      if (changed) {
+        inner.text = [...inner.files]
+          .sort((a, b) => a.path.localeCompare(b.path, 'en'))
+          .map((file) => `# ${file.path}\n${file.text}`)
+          .join('\n\n');
+        inner.revision++;
+        inner.reconsiderationRequired = true;
+      }
+    }
+    const mind = world.minds?.[entity.id];
+    if (mind) {
+      for (const doc of mind.documents) {
+        const text = memoryPerspective(world, entity.id, doc.text);
+        if (text !== doc.text) {
+          doc.text = text;
+          doc.revision++;
+          mind.revision++;
+        }
+      }
+    }
+  }
+  world.experience.perspectiveVersion = 1;
 }
 export function experiences(
   world: WorldState,
@@ -130,17 +244,15 @@ export function experiences(
   const forgotten = new Set(state?.forgotten[actorId] ?? []);
   const aware = state?.awareness[actorId] ?? [];
   const eventIds = new Set(aware.map((a) => a.eventId));
-  const cutoff = world.simTime - EXPERIENCE_LIMITS.rawHours * 3600;
   const personal = (world.memories[actorId] ?? []).filter(
     (m) =>
       !forgotten.has(m.id) &&
       !forgotten.has(m.eventId ?? '') &&
       !(m.eventId && eventIds.has(m.eventId) && m.kind === 'episode') &&
-      (m.kind === 'commitment' || (m.kind === 'episode' && m.source !== 'inferred')) &&
-      (includeBacklog || m.kind === 'commitment' || m.at >= cutoff),
+      (m.kind === 'commitment' || (m.kind === 'episode' && m.source !== 'inferred')),
   );
   const events: MemoryRecord[] = aware
-    .filter((a) => !forgotten.has(a.eventId) && (includeBacklog || a.at >= cutoff))
+    .filter((a) => !forgotten.has(a.eventId))
     .map((a) => ({
       id: a.eventId,
       eventId: a.eventId,
@@ -166,116 +278,191 @@ export function experiences(
       summary: `Summary of remembered experience: ${s.text}`,
       entityIds: s.entityIds,
       importance: s.importance,
+      sequence: s.sequence,
     }));
-  return [...personal, ...events, ...summaries];
+  const raw = [...personal.filter((m) => m.kind !== 'commitment'), ...events];
+  // Age makes a source eligible for consolidation, not ineligible for remembering.
+  // Bound initial context candidates while retaining the full backlog for maintenance.
+  const eligible = includeBacklog
+    ? raw
+    : raw
+        .sort(
+          (a, b) =>
+            Number(b.importance >= EXPERIENCE_LIMITS.protectedImportance) -
+              Number(a.importance >= EXPERIENCE_LIMITS.protectedImportance) ||
+            b.at - a.at ||
+            b.importance - a.importance,
+        )
+        .slice(0, EXPERIENCE_LIMITS.recallRaw);
+  return [...personal.filter((m) => m.kind === 'commitment'), ...eligible, ...summaries];
 }
+export interface MemoryGroup {
+  sourceIds: string[];
+  text: string;
+}
+/** Apply an explicit partition of the supplied sources. Uncovered sources never retire.
+ * Important incidents are copied exactly and individually; only routine memories merge.
+ */
 export function acceptConsolidation(
   input: WorldState,
   actorId: string,
   id: string,
   sources: MemoryRecord[],
-  text: string,
+  groups: MemoryGroup[],
 ): Transition {
-  const reject = (message: string) => ({
+  const reject = (message: string): Transition => ({
     world: input,
     events: [],
     outcome: outcome(false, 'consolidation-rejected', message),
   });
-  if (
-    !input.experience ||
-    !sources.length ||
-    byteCount(text) > EXPERIENCE_LIMITS.summaryBytes ||
-    !text.trim()
-  )
-    return reject('Invalid summary.');
-  if (input.experience.summaries[actorId]?.some((s) => s.id === id))
+  if (!input.experience || !sources.length || !groups.length || groups.length > 256)
+    return reject('Invalid memory groups.');
+  if (input.experience.summaries[actorId]?.some((s) => s.id.startsWith(`${id}:`)))
     return {
       world: input,
       events: [],
-      outcome: outcome(true, 'duplicate', 'Summary already accepted.'),
+      outcome: outcome(true, 'duplicate', 'Memory groups already accepted.'),
     };
-  const current = experiences(input, actorId, true);
+  const current = new Map(experiences(input, actorId, true).map((m) => [m.id, m]));
+  const expected = new Map(sources.map((m) => [m.id, m]));
   if (
+    expected.size !== sources.length ||
     sources.some(
       (s) =>
-        s.kind !== 'episode' ||
-        s.at >= input.simTime - 21600 ||
-        !current.some((c) => c.id === s.id && c.summary === s.summary),
+        !['episode', 'reflection'].includes(s.kind) ||
+        JSON.stringify(current.get(s.id)) !== JSON.stringify(s),
     )
   )
     return reject('Source coverage changed.');
-  const world = structuredClone(input);
+  const used = new Set<string>();
+  for (const group of groups) {
+    if (
+      !group.sourceIds.length ||
+      !group.text.trim() ||
+      byteCount(group.text) > EXPERIENCE_LIMITS.summaryBytes
+    )
+      return reject('Invalid memory group.');
+    for (const sourceId of group.sourceIds) {
+      if (!expected.has(sourceId) || used.has(sourceId))
+        return reject('Unknown or repeated source.');
+      used.add(sourceId);
+    }
+    const important = group.sourceIds
+      .map((id) => expected.get(id)!)
+      .filter((s) => s.importance >= EXPERIENCE_LIMITS.protectedImportance);
+    if (important.length && (group.sourceIds.length !== 1 || group.text !== important[0]!.summary))
+      return reject('Important incidents must remain separate and unchanged.');
+  }
+  if (used.size !== sources.length)
+    return reject('Every supplied source requires explicit coverage.');
+  const world = draftWorld(input);
   const state = world.experience!;
-  const covered = new Set(sources.map((s) => s.id));
-  state.summaries[actorId] = (state.summaries[actorId] ?? []).filter(
-    (s) => s.to >= world.simTime - EXPERIENCE_LIMITS.historyDays * 86400 || s.importance >= 9,
-  );
-  const list = (state.summaries[actorId] ??= []);
-  if (list.length >= EXPERIENCE_LIMITS.summaries)
-    return reject('Summary capacity requires retention review.');
-  list.push({
-    id,
-    text,
-    from: Math.min(...sources.map((s) => s.at)),
-    to: Math.max(...sources.map((s) => s.at)),
-    sourceIds: [...covered],
-    entityIds: [...new Set(sources.flatMap((s) => s.entityIds))],
-    importance: Math.max(...sources.map((s) => s.importance)),
+  const previous = new Map((state.summaries[actorId] ?? []).map((s) => [s.id, s]));
+  const retained = [...previous.values()].filter((s) => !used.has(s.id));
+  if (retained.length + groups.length > EXPERIENCE_LIMITS.summaries)
+    return reject('Consolidate routine summaries before adding more distinct memories.');
+  const replacements = groups.map((group, i): ExperienceSummary => {
+    const entries = group.sourceIds.map((id) => expected.get(id)!);
+    const existing = group.sourceIds
+      .map((id) => previous.get(id))
+      .filter((s): s is ExperienceSummary => !!s);
+    // Keep an existing identity when revising a memory, instead of appending one per job.
+    return {
+      id: existing[0]?.id ?? `${id}:${i}`,
+      revision: Math.max(0, ...existing.map((s) => s.revision ?? 0)) + 1,
+      text: memoryPerspective(world, actorId, group.text),
+      from: Math.min(...entries.map((s) => previous.get(s.id)?.from ?? s.at)),
+      to: Math.max(...entries.map((s) => s.at)),
+      sourceIds: [...new Set(entries.flatMap((s) => previous.get(s.id)?.sourceIds ?? [s.id]))],
+      entityIds: [...new Set(entries.flatMap((s) => s.entityIds))],
+      importance: Math.max(...entries.map((s) => s.importance)),
+      sequence: Math.max(0, ...entries.map((s) => s.sequence ?? 0)),
+    };
   });
-  state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(
-    (a) => !covered.has(a.eventId),
+  state.summaries[actorId] = [...retained, ...replacements].sort(
+    (a, b) => a.to - b.to || a.id.localeCompare(b.id),
   );
+  state.awareness[actorId] = (state.awareness[actorId] ?? []).filter((a) => !used.has(a.eventId));
   world.memories[actorId] = (world.memories[actorId] ?? []).filter(
-    (m) => m.kind !== 'episode' || (!covered.has(m.id) && !covered.has(m.eventId ?? '')),
+    (m) => m.kind !== 'episode' || (!used.has(m.id) && !used.has(m.eventId ?? '')),
   );
   state.consolidatedAt[actorId] = world.simTime;
-  const retained = new Set(Object.values(state.awareness).flatMap((a) => a.map((e) => e.eventId)));
-  world.events = world.events.filter((e) => retained.has(e.id));
   return finish(
     world,
     [],
-    outcome(true, 'consolidated', 'Summary accepted and covered raw sources retired.'),
+    outcome(true, 'consolidated', 'Explicit memory groups accepted; covered sources retired.'),
   );
 }
 /** Forget derivatives conservatively; original evidence of other observers is untouched. */
 export function forgetExperience(input: WorldState, actorId: string, sourceId: string): Transition {
-  const world = structuredClone(input);
+  const world = draftWorld(input);
   migrateCognition(world);
+  const invalidated = invalidateExperience(world, actorId, [sourceId], true);
+  return {
+    ...finish(world, [], outcome(true, 'forgotten', 'Recall and derived inner world invalidated.')),
+    invalidatedMemoryIds: { [actorId]: invalidated },
+  };
+}
+
+/** Mutates a domain draft; callers commit cache invalidation with the resulting world. */
+export function invalidateExperience(
+  world: WorldState,
+  actorId: string,
+  sourceIds: string[],
+  forget = false,
+): string[] {
   const state = world.experience!;
-  const forgotten = new Set(state.forgotten[actorId] ?? []);
-  forgotten.add(sourceId);
-  for (const summary of state.summaries[actorId] ?? [])
-    if (summary.sourceIds.includes(sourceId)) forgotten.add(summary.id);
-  state.forgotten[actorId] = [...forgotten];
-  state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(
-    (a) => !forgotten.has(a.eventId),
-  );
-  state.summaries[actorId] = (state.summaries[actorId] ?? []).filter((s) => !forgotten.has(s.id));
-  world.memories[actorId] = (world.memories[actorId] ?? []).filter(
-    (m) =>
-      (m.kind === 'commitment' && !m.resolved) ||
-      (!forgotten.has(m.id) && !forgotten.has(m.eventId ?? '')),
-  );
+  const affected = new Set(sourceIds);
+  for (const memory of world.memories[actorId] ?? [])
+    if (memory.eventId && affected.has(memory.eventId)) affected.add(memory.id);
+  let expanded = true;
+  while (expanded) {
+    expanded = false;
+    for (const [source, correction] of Object.entries(state.corrections?.[actorId] ?? {}))
+      if (affected.has(correction) && !affected.has(source)) {
+        affected.add(source);
+        expanded = true;
+      }
+    for (const summary of state.summaries[actorId] ?? [])
+      if (!affected.has(summary.id) && summary.sourceIds.some((id) => affected.has(id))) {
+        affected.add(summary.id);
+        expanded = true;
+      }
+  }
+  if (forget) {
+    state.forgotten[actorId] = [...new Set([...(state.forgotten[actorId] ?? []), ...affected])];
+    state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(
+      (a) => !affected.has(a.eventId),
+    );
+    world.memories[actorId] = (world.memories[actorId] ?? []).filter(
+      (m) => (m.kind === 'commitment' && !m.resolved) || !affected.has(m.id),
+    );
+    const corrections = state.corrections?.[actorId];
+    if (corrections)
+      for (const [id, evidence] of Object.entries(corrections))
+        if (affected.has(id) || affected.has(evidence)) delete corrections[id];
+  }
+  const roots = new Set(sourceIds);
+  const summaries = state.summaries[actorId] ?? [];
+  const retained = summaries.filter((s) => !affected.has(s.id) || (!forget && roots.has(s.id)));
+  if (retained.length !== summaries.length) state.summaries[actorId] = retained;
   const inner = world.innerWorlds?.[actorId];
+  const mind = mindFor(world, actorId);
+  const identity = mind.documents.filter((d) => d.protected);
+  mind.documents = identity;
+  mind.records = mind.records.filter((r) => identity.some((d) => d.id === r.documentId));
+  mind.thoughts = [];
+  mind.revision++;
+  (world.minds ??= {})[actorId] = mind;
   if (inner) {
-    const identity = mindFor(world, actorId).documents.filter((d) => d.protected);
     inner.files = identity.map((d) => ({ path: `${d.id}.md`, text: `${d.title}\n${d.text}` }));
     inner.text = flattenFiles(inner.files);
     inner.revision++;
     inner.evidenceIds = [];
     inner.reconsiderationRequired = true;
-    const mind = mindFor(world, actorId);
-    mind.documents = identity;
-    mind.records = mind.records.filter((r) => identity.some((d) => d.id === r.documentId));
-    mind.thoughts = [];
     mind.revision = inner.revision;
-    (world.minds ??= {})[actorId] = mind;
   }
-  return finish(
-    world,
-    [],
-    outcome(true, 'forgotten', 'Recall and derived inner world invalidated.'),
-  );
+  return [...affected];
 }
 
 export function publishInnerWorld(
@@ -288,7 +475,7 @@ export function publishInnerWorld(
   thoughts: string[],
   evidenceIds: string[],
   dreamEpisode: string | null,
-  processedThrough = 0,
+  _processedThrough = 0,
 ): Transition {
   const reject = (message: string) => ({
     world: input,
@@ -336,10 +523,10 @@ export function publishInnerWorld(
   }
   const forgotten = new Set(input.experience?.forgotten[actorId] ?? []);
   if (evidenceIds.some((id) => forgotten.has(id))) return reject('Evidence was forgotten.');
-  const world = structuredClone(input);
+  const world = draftWorld(input);
   world.innerWorlds![actorId] = {
     text,
-    files: structuredClone(files),
+    files: cloneValue(files),
     revision: prior.revision + 1,
     sourceSnapshot: snapshot,
     publicationJobId: jobId,
@@ -370,13 +557,7 @@ export function publishInnerWorld(
   );
   mind.thoughts = mind.thoughts.slice(-100);
   mind.lastReflectionAt = world.simTime;
-  mind.processedWatermark = Math.max(
-    mind.processedWatermark,
-    processedThrough,
-    ...experiences(input, actorId, true)
-      .filter((m) => evidenceIds.includes(m.id))
-      .map((m) => m.sequence ?? 0),
-  );
+  // Reflection revisits memories; the legacy watermark is deliberately not advanced.
   if (dreamEpisode) mind.lastDreamEpisode = dreamEpisode;
   (world.minds ??= {})[actorId] = mind;
   return finish(
@@ -404,7 +585,7 @@ export function correctExperience(
         'Correction requires newly perceived evidence and a retained source.',
       ),
     };
-  const world = structuredClone(input);
+  const world = draftWorld(input);
   const state = world.experience!;
   ((state.corrections ??= {})[actorId] ??= {})[sourceId] = correctionEventId;
   // Historical witnessing is unchanged; derived summaries are now ineligible.

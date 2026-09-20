@@ -123,12 +123,31 @@ The [source request](../00-source/cognition-context-followup.md) explicitly asks
 | --- | --- | --- |
 | F68 | Minimal English context and tiny purpose-specific output; remove storage metadata, redundant catalogues, empty scaffolding and ordinary mind-patch responses | CR01–CR03, CR12 |
 | F69 | Native behavior plus Jev level 1, mini level 2, complex low/high levels 3/4 and harness level 5; speech defaults to level 2; Jev evaluates escalation; inventions can configure trusted trigger mechanics | CR02, CR08, CR10 |
-| F70 | Jev yes/no attention selects actor-permitted nearby entities, possessions, recipes and recall; all actors including the player have event-time awareness; no unwitnessed experiential log requirement | CR04–CR05 |
+| F70 | Jev yes/no attention selects actor-permitted nearby entities, possessions, recipes and recall; all actors including the player have event-time awareness; ordinary unwitnessed experiential events need not be logged, with the later F77 notable-event exception | CR04–CR05; NC04 for the later exception |
 | F71 | Store English memory text; combine aware events and personal memories without duplicates; raw context covers six game hours; hourly small-model cleanup groups old routines and preserves important experiences | CR03, CR05–CR06 |
 | F72 | Reflection runs in the background during downtime, dreams and significant events; edit persistent workspace files, publish one PostgreSQL inner-world text row per actor, include it in every decision, and return god-only presentation thoughts of at most 20 words each | CR07–CR08, CR11 |
 | F73 | Eight in-game hours of daily rest; dreams only after at least two in-game hours asleep | CR09 |
 
 These settle behavior, not exact provider availability, budgets, daily rest accounting or measured latency. The full-snapshot requirement versus a few-hundred-token greeting remains an explicit sizing tradeoff, not permission to silently drop About me.
+
+## Living actor model — F74
+
+| ID | User requirement | Status / interpretation | Design home |
+|---|---|---|---|
+| F74 | Treat every living being, including animals, as an actor; let lifecycle actions such as Revive and compatible conditions/effects such as wetness, fire and health changes apply across species; allow selected animals to gain intelligence, memory, inner worlds or speech | Accepted direction; current animals remain a separate implementation component, current revival is person-only, and shared cross-species status effects are not implemented | [Canonical actor model](../../docs/architecture.md#actor-means-any-living-being), [agent design](../03-design-proposals/agents-and-social-simulation.md#one-character-model-two-controllers), [source](../00-source/actor-model-followup.md) |
+
+## Narration and conversation follow-up — F75–F80
+
+Accepted September 20, 2026 from the [narration request](../00-source/narration-and-conversation-followup.md). **Document and plan only; no implementation requested.** The [technical design](../../docs/narration-and-conversations.md) owns proposed contracts and its bottom NC tracker owns delivery.
+
+| ID | User requirement | Delivery tasks |
+| --- | --- | --- |
+| F75 | Any trigger may elicit talk, act and/or think, with proper entity targets; every accepted component becomes the actor's own experience, including private thoughts | NC01–NC03 |
+| F76 | Narrate non-speech actions/reactions and relevant world consequences in conversation, excluding thoughts; show actual impacts below in smaller distinct text; allow unsupported expressions without mechanics initially, defer invention of missing conditional effects | NC03, NC08–NC10; NC13 deferred |
+| F77 | One external world-event catalogue with actor awareness joins; retain witnessed events and score-defined notable unseen events, discard ordinary unseen experiential records without discarding simulation state | NC04, NC11 |
+| F78 | The Narrator uses bounded scoped context/retrieval for one or several perspectives; explicitly permitted single-actor thoughts and distant notable cutaways are separate modes; standalone story appears atop the screen and in a private Journal, with player-selected voice | NC07–NC10 |
+| F79 | Durable conversations support changing membership, self-talk, overhearing without joining, no retroactive history awareness, last-member closure and source-to-destination merges with a terminal join notice | NC05–NC06, NC10–NC11 |
+| F80 | Narration is separate player-private storage, never a world event; explicit links include a many-to-many event join; reconstruct scoped conversation history chronologically, including separate narrations of a global event across conversations | NC07–NC12 |
 
 ## What this baseline does not settle
 
@@ -142,7 +161,7 @@ The phrase “entirety of their state” establishes that all relevant systems s
 
 1. **Freedom versus shared consistency.** A first-time invention must be creative without allowing an arbitrary sentence to mint resources or change another player's body.
 2. **Life simulation versus player availability.** Hunger, aging, pregnancy, offline time, and revival need a common clock and absence policy.
-3. **Mystery versus explainability.** Players deserve causal feedback without access to NPC thoughts or unseen events.
+3. **Mystery versus explainability.** Ordinary actor-perspective feedback must not reveal NPC thoughts or unseen events. F78 adds explicitly permissioned single-actor narration and notable-event cutaways; those never silently become character knowledge.
 4. **Persistence versus correction.** A broken mechanic can be disabled; historical injuries, trades, and memories may need compensating changes rather than rewinding the shared world.
 5. **Accessible resources versus guaranteed survival.** Seed usable opportunities and knowledge while allowing depletion, mistakes, conflict and death; do not turn accessible resources into automatic subsistence.
 6. **Novelty versus affordability.** Paid usage can fund exploration without making ordinary subsistence or human safety dependent on an LLM quota.

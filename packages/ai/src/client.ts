@@ -322,7 +322,7 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
         const body: Record<string, unknown> = {
           model,
           instructions: request.instructions,
-          input: contextJson,
+          input: typeof request.context === 'string' ? request.context : contextJson,
           store: false,
           service_tier: 'default',
           max_output_tokens: outputLimit,

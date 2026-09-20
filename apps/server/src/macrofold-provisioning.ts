@@ -29,7 +29,7 @@ export class MacrofoldProvisioner {
   ) {
     this.api = new MacrofoldTransport(config.macrofoldUrl, config.macrofoldKey);
   }
-  ensure(actorId: string, name: string): Promise<ActorWorkspace> {
+  async ensure(actorId: string, name: string): Promise<ActorWorkspace> {
     const previous = this.inFlight.get(actorId);
     if (previous) return previous;
     const promise = this.create(actorId, name).finally(() => this.inFlight.delete(actorId));
@@ -38,14 +38,14 @@ export class MacrofoldProvisioner {
   }
   private async create(actorId: string, name: string): Promise<ActorWorkspace> {
     const key = `macrofold-actor-v2:${digest(this.config.macrofoldUrl)}:${this.worldId}:${actorId}`;
-    const state = this.store.getIntegration(key) as
+    const state = (await this.store.getIntegration(key)) as
       | { operationId: string; pending?: boolean; result?: ActorWorkspace }
       | undefined;
     if (state?.result) return state.result;
     if (state?.pending)
       throw new Error('Workspace creation admission uncertain; reconcile before creating another.');
     const operationId = digest({ key, version: 1 });
-    this.store.putIntegration(key, { operationId, pending: true });
+    await this.store.putIntegration(key, { operationId, pending: true });
     const created = object(
       await this.api.request(
         '/v1/workspaces',
@@ -61,7 +61,7 @@ export class MacrofoldProvisioner {
       workspaceId: string(created['id']),
       worktreeId: string(created['default_worktree_id']),
     };
-    this.store.putIntegration(key, { operationId, result });
+    await this.store.putIntegration(key, { operationId, result });
     return result;
   }
 }

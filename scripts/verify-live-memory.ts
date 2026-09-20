@@ -21,17 +21,18 @@ if (!config.macrofoldKey || config.budgetUsd <= 0 || config.macrofoldComputeUsd 
   throw new Error('Explicit backend credentials and caps required.');
 let store = new SqliteStore(config.databasePath);
 let service = new WorldService(store, config);
-service.setPresence('live-acceptance', true, 1);
-service.control({ paused: false });
+await service.ready;
+await service.setPresence('live-acceptance', true, 1);
+await service.control({ paused: false });
 if (!service.world.id.startsWith('live-memory-'))
-  service.transition((world) => ({
+  await service.transition((world) => ({
     world: { ...world, id: `live-memory-${randomUUID()}` },
     events: [],
     outcome: { ok: true, code: 'verification-world', message: 'Isolated acceptance identity.' },
   }));
 const backend = new MacrofoldBackend(service);
 const id = randomUUID();
-const speech = service.say(
+const speech = await service.say(
   `encounter-${id}`,
   'player',
   'I would like us to help each other survive. I have noticed you working here. What do you make of me?',
@@ -48,7 +49,7 @@ async function deliberate(
 ) {
   const id = randomUUID();
   const prepared = cognitionContext(service, 'ada', id, purpose, 'full');
-  if (!service.store.reserve(id, 'openai', config.macrofoldRunUsd, config.budgetUsd))
+  if (!(await service.store.reserve(id, 'openai', config.macrofoldRunUsd, config.budgetUsd)))
     throw new Error('Acceptance run budget exhausted.');
   const result = await backend.generate<unknown>({
     requestId: id,
@@ -59,7 +60,7 @@ async function deliberate(
     context: prepared.context,
     schema: fullCognitionJsonSchema,
   });
-  service.store.settle(id, result.receipt);
+  await service.store.settle(id, result.receipt);
   console.log(
     JSON.stringify({
       requestId: id,
@@ -73,13 +74,13 @@ async function deliberate(
   if (result.outcome !== 'value')
     throw new Error('Live harness did not return a valid proposal. No retry.');
   const proposal = proposalSchema.parse(result.value);
-  const committed = service.transition((world) =>
+  const committed = await service.transition((world) =>
     commitCognition(world, prepared.binding, proposal),
   );
   if (!committed.ok) throw new Error(committed.message);
-  const lane = service.store.getIntegration(
+  const lane = (await service.store.getIntegration(
     `macrofold:${digest(config.macrofoldUrl)}:${service.world.id}:lane:ada`,
-  ) as { session?: string; sandbox?: string };
+  )) as { session?: string; sandbox?: string };
   if (!lane.session || !lane.sandbox) throw new Error('Missing execution identities.');
   sessions.push(lane.session);
   sandboxes.push(lane.sandbox);
@@ -99,11 +100,12 @@ try {
   )
     throw new Error('Encounter did not produce the required relationship and belief.');
   const revision = first.revision;
-  store.close();
+  await store.close();
   store = new SqliteStore(config.databasePath);
   service = new WorldService(store, config);
-  service.setPresence('live-acceptance-restart', true, 1);
-  service.control({ paused: false });
+  await service.ready;
+  await service.setPresence('live-acceptance-restart', true, 1);
+  await service.control({ paused: false });
   if (mindFor(service.world, 'ada').revision !== revision)
     throw new Error('Mind did not survive restart.');
   const continued = new MacrofoldBackend(service);
@@ -112,7 +114,7 @@ try {
     service,
     'Consider your next decision using your accepted relationship and belief from the encounter. Explain their influence in your short private thought. You may leave documents unchanged and use actionId null.',
   );
-  service.say(
+  await service.say(
     `reflect-evidence-${id}`,
     'player',
     'I am still here and interested in working together.',
@@ -124,8 +126,8 @@ try {
     'Use this safe downtime to reconsider the conversation. You may leave the mind unchanged. Do not start a physical action.',
     'reflection',
   );
-  service.say(`dream-evidence-${id}`, 'player', 'Rest well. We can continue later.', 'ada');
-  const rest = service.command(`dream-rest-${id}`, { type: 'rest' }, 'ada');
+  await service.say(`dream-evidence-${id}`, 'player', 'Rest well. We can continue later.', 'ada');
+  const rest = await service.command(`dream-rest-${id}`, { type: 'rest' }, 'ada');
   if (!rest.ok) throw new Error(rest.message);
   const dreamed = await deliberate(
     continued,
@@ -152,5 +154,5 @@ try {
     }),
   );
 } finally {
-  store.close();
+  await store.close();
 }

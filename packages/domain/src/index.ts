@@ -8,7 +8,16 @@ export {
   NATIVE_PREPARATIONS,
   PLAYER_ID,
   NPC_ID,
+  TRAIT_BANK,
 } from './data.js';
+export {
+  GOD_SPAWN_OPTIONS,
+  editPerson,
+  personMemory,
+  editWorldEvents,
+  reviveActor,
+  spawnWorldEntity,
+} from './god-tools.js';
 export {
   canRecoverAtCamp,
   executeCommand,
@@ -29,3 +38,6 @@ export * from './experience.js';
 export * from './sleep.js';
 export * from './cognition-policy.js';
 export * from './commitments.js';
+export * from './response.js';
+
+export { updateWorld } from './draft.js';

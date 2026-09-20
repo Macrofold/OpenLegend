@@ -8,6 +8,8 @@ Accepted technical/visual direction: PlayCanvas browser presentation, an indepen
 
 ## Product and technical loops
 
+The September 20 [narration/conversation follow-up](00-source/narration-and-conversation-followup.md) adds future optional talk/act/think responses and private storytelling over source-linked events. Feature homes are [agent reactions](03-design-proposals/agents-and-social-simulation.md#talk-act-think-and-narration) and [personal story](03-design-proposals/world-and-player-experience.md#the-narrator-and-personal-story); the [technical design and NC01–NC13 tracker](../docs/narration-and-conversations.md) own implementation planning. Missing action/effect invention is a separately deferred extension.
+
 ```mermaid
 flowchart TD
     E[World: resources, places, hazards, other actors] --> P[Limited perception]

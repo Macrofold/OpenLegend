@@ -4,10 +4,11 @@ import type {
   ActionOption,
   CatalogueAction,
   EntityView,
+  GamePatch,
   GameView,
   PlayerProfile,
 } from '@open-legend/protocol';
-import { getState, post, setWorldPaused, startPresence } from './api';
+import { applyGamePatch, getState, post, setWorldPaused, startPresence } from './api';
 import { aiSetupReason } from './ai-readiness';
 import { playerEntity } from './entity-view';
 import { WildernessScene } from './scene';
@@ -26,11 +27,18 @@ import {
   symbol,
 } from './design-system/components';
 import { ActionPicker, type PickerContext } from './ui/action-picker';
+import {
+  PersonCreationModal,
+  PersonEditor,
+  WorldEventsEditor,
+  type PersonDraft,
+} from './ui/god-tools';
 import { QuickActions } from './ui/quick-actions';
 import { WorldAgent } from './ui/world-agent';
 import { Composer } from './ui/composer';
+import { EventTime } from './ui/event-time';
 import { AiSettings, Character, Crafting, EntityDetail, Inventory } from './ui/panels';
-import { Diagnostics, Mind } from './ui/diagnostics';
+import { Diagnostics, Mind, type DiagnosticSelection } from './ui/diagnostics';
 import { useLocal } from './ui/storage';
 import { readDraft, type ComposerDraft } from './draft';
 import icons from './design-system/icons/icons.json';
@@ -63,6 +71,9 @@ const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?:
   help: { title: 'Settings & help', side: 'right' },
   mind: { title: 'Private mind', side: 'right', wide: true },
 };
+type GodEditorWindow =
+  | { id: string; type: 'person'; actorId: string }
+  | { id: string; type: 'world-events' };
 function App() {
   const [view, setView] = useState<GameView | null>(null),
     [connected, setConnected] = useState(false),
@@ -78,6 +89,9 @@ function App() {
   const [npcId, setNpcId] = useState<string | null>(null),
     [seed, setSeed] = useState<ComposerDraft | null>(null),
     [mindId, setMindId] = useState<string | null>(null),
+    [intelligenceSelection, setIntelligenceSelection] = useState<DiagnosticSelection | null>(null),
+    [personPosition, setPersonPosition] = useState<{ x: number; z: number } | null>(null),
+    [godEditors, setGodEditors] = useState<GodEditorWindow[]>([]),
     [timeSettings, setTimeSettings] = useState(false),
     [pausePending, setPausePending] = useState(false),
     [preferencePending, setPreferencePending] = useState(false),
@@ -120,9 +134,9 @@ function App() {
     document.documentElement.dataset.reduceMotion = String(reduce);
   }, [theme, reduce]);
   const accept = useCallback(
-    (next: GameView) =>
+    (next: GameView, reset = false) =>
       setView((previous) => {
-        if (previous?.worldId === next.worldId) {
+        if (!reset && previous?.worldId === next.worldId) {
           if (next.revision < previous.revision) return previous;
           if (next.profile.revision < previous.profile.revision)
             next = { ...next, profile: previous.profile };
@@ -132,52 +146,90 @@ function App() {
     [],
   );
   useEffect(() => {
+    let streamView: GameView | undefined;
+    let bootstrapVersion = 0;
     let active = true,
       source: EventSource | undefined,
       timer: ReturnType<typeof setTimeout> | undefined,
       stop: (() => void) | undefined;
-    async function connect() {
+    const schedule = (delay: number) => {
+      if (!active) return;
+      source?.close();
+      setConnected(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => void bootstrap(), delay);
+    };
+    function connectEvents() {
+      const current = streamView;
+      if (!active || !current) return;
+      clearTimeout(timer);
+      source?.close();
+      const connection = new EventSource(`/api/events?revision=${current.revision}`);
+      source = connection;
+      source.onopen = () => {
+        if (active && source === connection) {
+          clearTimeout(timer);
+          setConnected(true);
+        }
+      };
+      source.addEventListener('reset', (event) => {
+        try {
+          if (!active || source !== connection) return;
+          const reset = JSON.parse((event as MessageEvent<string>).data) as GameView;
+          streamView = reset;
+          accept(reset, true);
+        } catch {
+          notify('A world update could not be read. Reconnecting…');
+          schedule(250);
+        }
+      });
+      source.addEventListener('patch', (event) => {
+        try {
+          if (!active || source !== connection || !streamView) return;
+          const patch = JSON.parse((event as MessageEvent<string>).data) as GamePatch;
+          const next = applyGamePatch(streamView, patch);
+          streamView = next;
+          accept(next);
+        } catch {
+          schedule(250);
+        }
+      });
+      source.onerror = () => {
+        if (source === connection) schedule(6000);
+      };
+    }
+    async function bootstrap() {
+      const attempt = ++bootstrapVersion;
+      clearTimeout(timer);
+      source?.close();
+      source = undefined;
       try {
         const initial = await getState();
-        if (!active) return;
-        accept(initial);
+        if (!active || attempt !== bootstrapVersion) return;
+        streamView = initial;
+        accept(initial, true);
         setConnected(true);
         setError('');
         stop ??= startPresence();
-        source?.close();
-        source = new EventSource('/api/events');
-        source.onopen = () => {
-          if (active) {
-            clearTimeout(timer);
-            setConnected(true);
-          }
-        };
-        source.addEventListener('state', (e) => {
-          try {
-            if (active) accept(JSON.parse((e as MessageEvent<string>).data));
-          } catch {
-            notify('A world update could not be read. Reconnecting…');
-          }
-        });
-        source.onerror = () => {
-          if (active) {
-            setConnected(false);
-            clearTimeout(timer);
-            timer = setTimeout(() => void connect(), 6000);
-          }
-        };
+        connectEvents();
       } catch (e) {
-        if (active) {
+        if (active && attempt === bootstrapVersion) {
           setConnected(false);
           setError(String(e));
+          schedule(6000);
         }
       }
     }
-    retry.current = () => void connect();
-    void connect();
-    const hide = () => source?.close(),
+    retry.current = () => void bootstrap();
+    void bootstrap();
+    const hide = () => {
+        clearTimeout(timer);
+        source?.close();
+        source = undefined;
+        bootstrapVersion++;
+      },
       show = (e: PageTransitionEvent) => {
-        if (e.persisted) void connect();
+        if (e.persisted) void bootstrap();
       };
     window.addEventListener('pagehide', hide);
     window.addEventListener('pageshow', show);
@@ -310,7 +362,9 @@ function App() {
     const dismiss = (e: PointerEvent) => {
       if (
         currentPicker.current &&
-        !(e.target as HTMLElement).closest('#contextMenu,[role="tooltip"]')
+        !(e.target as HTMLElement).closest(
+          '#contextMenu,[role="tooltip"],.ol-select-popover,.ol-pullout-popover,.ol-modal-overlay,.ol-editor',
+        )
       ) {
         setPicker(null);
         if (e.button === 0 && e.target === canvas.current) {
@@ -412,13 +466,45 @@ function App() {
       else talk(a.intent.npcId ?? '');
     }
   }
+  async function revive(entity: EntityView) {
+    if (!connected) return notify('Reconnect to the world.');
+    try {
+      const result = await post('/api/god/act', { action: 'revive', targetId: entity.id });
+      notify(result.message);
+      if (result.ok) setPicker(null);
+    } catch (reason) {
+      notify(String(reason));
+    }
+  }
+  async function spawn(type: string, position: { x: number; z: number }) {
+    if (!connected) return notify('Reconnect to the world.');
+    try {
+      const result = await post('/api/god/spawn', { type, position });
+      notify(result.message);
+      if (result.ok) setPicker(null);
+    } catch (reason) {
+      notify(String(reason));
+    }
+  }
+  async function createPerson(position: { x: number; z: number }, draft: PersonDraft) {
+    if (!connected)
+      return { ok: false, code: 'offline', message: 'Reconnect to the world.' } as const;
+    const result = await post('/api/god/person', { position, ...draft });
+    notify(result.message);
+    return result;
+  }
   const entity =
     view &&
     (selected === view.player.id
       ? playerEntity(view)
       : view.entities.find((e) => e.id === selected));
   const narrow = width / scale < 720;
-  const title = (id: PanelId) => (id === 'nearby' && entity ? entity.name : panelInfo[id].title);
+  const title = (id: PanelId) =>
+    id === 'nearby' && entity
+      ? entity.name
+      : id === 'intelligence' && intelligenceSelection
+        ? `${intelligenceSelection.actorName ?? 'World agent'} request`
+        : panelInfo[id].title;
   function content(id: PanelId) {
     if (!view) return null;
     const props = { view, connected, command: (a: ActionOption) => void command(a) };
@@ -435,6 +521,15 @@ function App() {
             entity={entity}
             {...props}
             talk={talk}
+            editPerson={
+              view.godMode && entity.kind === 'actor'
+                ? () =>
+                    setGodEditors((current) => [
+                      ...current,
+                      { id: crypto.randomUUID(), type: 'person', actorId: entity.id },
+                    ])
+                : undefined
+            }
             inspectMind={
               view.godMode && entity.kind === 'actor'
                 ? () => {
@@ -492,7 +587,7 @@ function App() {
             <Section title="Your story">
               {[...view.events].reverse().map((e) => (
                 <article key={e.id}>
-                  <time className="ol-caption">Day {Math.floor(e.time / 86400) + 1}</time>
+                  <EventTime time={e.time} />
                   <p>{e.text}</p>
                 </article>
               ))}
@@ -501,7 +596,12 @@ function App() {
         );
       case 'intelligence':
         return view.godMode ? (
-          <Diagnostics key={view.worldId} worldId={view.worldId} />
+          <Diagnostics
+            key={view.worldId}
+            worldId={view.worldId}
+            selection={intelligenceSelection}
+            onSelect={setIntelligenceSelection}
+          />
         ) : (
           <p>God inspection is disabled.</p>
         );
@@ -614,9 +714,9 @@ function App() {
           </div>
         ) : (
           <>
+            <h1 className="ol-wordmark t-wordmark">OPEN LEGEND</h1>
             <section className="ol-card ol-survival" aria-label="Your condition">
               <div className="ol-survival-top">
-                <h1 className="ol-eyebrow">OPEN LEGEND</h1>
                 <span id="saveStatus" className="ol-caption" title={view.persistence.message}>
                   {view.persistence.status === 'saved' ? 'Saved' : 'Save error'}
                 </span>
@@ -777,9 +877,16 @@ function App() {
                         title={title(id)}
                         id={id === 'nearby' ? 'nearbyPanel' : `${id}Panel`}
                         wide={panelInfo[id].wide}
+                        draggable={!narrow && (id === 'agent' || id === 'composer')}
                         onClose={() => hide(id)}
-                        onBack={id === 'nearby' && entity ? () => setSelected(null) : undefined}
-                        backLabel="In view"
+                        onBack={
+                          id === 'nearby' && entity
+                            ? () => setSelected(null)
+                            : id === 'intelligence' && intelligenceSelection
+                              ? () => setIntelligenceSelection(null)
+                              : undefined
+                        }
+                        backLabel={id === 'intelligence' ? 'Intelligence' : 'In view'}
                       >
                         {id === 'agent' || id === 'composer' || open.includes(id)
                           ? content(id)
@@ -827,8 +934,48 @@ function App() {
                 invent={invent}
                 inspect={inspect}
                 preference={preference}
+                revive={(target) => void revive(target)}
+                spawn={(type, position) => void spawn(type, position)}
+                createPerson={(position) => {
+                  setPicker(null);
+                  setPersonPosition(position);
+                }}
               />
             )}
+            {personPosition && view.godMode && (
+              <PersonCreationModal
+                position={personPosition}
+                traits={view.godTools?.traits ?? []}
+                create={(draft) => createPerson(personPosition, draft)}
+                close={() => setPersonPosition(null)}
+              />
+            )}
+            {view.godMode &&
+              godEditors.map((editor) =>
+                editor.type === 'person' ? (
+                  <PersonEditor
+                    key={editor.id}
+                    actorId={editor.actorId}
+                    traits={view.godTools?.traits ?? []}
+                    close={() =>
+                      setGodEditors((current) => current.filter((item) => item.id !== editor.id))
+                    }
+                    openWorldEvents={() =>
+                      setGodEditors((current) => [
+                        ...current,
+                        { id: crypto.randomUUID(), type: 'world-events' },
+                      ])
+                    }
+                  />
+                ) : (
+                  <WorldEventsEditor
+                    key={editor.id}
+                    close={() =>
+                      setGodEditors((current) => current.filter((item) => item.id !== editor.id))
+                    }
+                  />
+                ),
+              )}
           </>
         )}
         <div id="toast" role="status" className="ol-toast" hidden={!notice}>

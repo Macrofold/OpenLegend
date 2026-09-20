@@ -3,6 +3,52 @@ import { Button as AriaButton } from 'react-aria-components';
 import type { ActionOption, GameView } from '@open-legend/protocol';
 import { Icon, IconButton, SelectField, Toolbar, symbol } from '../design-system/components';
 import { useLocal } from './storage';
+
+export function gatherQuickActions(view: GameView, pins: string[]): ActionOption[] {
+  const resources = view.entities.filter((e) => e.kind === 'resource');
+  const types = new Set([
+    ...resources.map((e) => e.subtype),
+    ...pins.filter((id) => id.startsWith('gather-type:')).map((id) => id.slice(12)),
+  ]);
+  return [...types].map((type) => {
+    const sources = resources
+      .filter(
+        (e) =>
+          e.subtype === type &&
+          Math.hypot(
+            e.position.x - view.player.position.x,
+            e.position.z - view.player.position.z,
+          ) <= view.vision.radius,
+      )
+      .sort(
+        (a, b) =>
+          Math.hypot(a.position.x - view.player.position.x, a.position.z - view.player.position.z) -
+            Math.hypot(
+              b.position.x - view.player.position.x,
+              b.position.z - view.player.position.z,
+            ) || a.id.localeCompare(b.id),
+      );
+    const stocked = sources.filter((e) => (e.quantity ?? 0) > 0);
+    const target =
+      stocked.find((e) => e.actions.some((a) => a.command.type === 'gather' && a.enabled)) ??
+      stocked[0];
+    const action = target?.actions.find((a) => a.command.type === 'gather');
+    return {
+      id: `gather-type:${type}`,
+      label: `Gather ${type.replaceAll('_', ' ')}`,
+      command: action?.command ?? { type: 'gather', targetId: '' },
+      enabled: action?.enabled ?? false,
+      reason:
+        action?.reason ??
+        (!target
+          ? sources.length
+            ? 'All sources in range are depleted.'
+            : 'No sources in range.'
+          : undefined),
+    };
+  });
+}
+
 export function QuickActions({
   view,
   connected,
@@ -20,6 +66,15 @@ export function QuickActions({
     (v): v is string[] =>
       Array.isArray(v) && v.length === 3 && v.every((s) => typeof s === 'string'),
   );
+  const resolvedPins = pins.map((id) => {
+    const source = view.entities.find((e) =>
+      e.actions.some((a) => a.id === id && a.command.type === 'gather'),
+    );
+    return source ? `gather-type:${source.subtype}` : id;
+  });
+  useEffect(() => {
+    if (resolvedPins.some((id, i) => id !== pins[i])) setPins(resolvedPins);
+  }, [pins, resolvedPins, setPins]);
   const [editing, setEditing] = useState<number | null>(null);
   const native = [
     ...view.player.actions,
@@ -27,8 +82,14 @@ export function QuickActions({
       i.actions.map((a) => ({ ...a, label: `${a.label} · ${i.name}` })),
     ),
     ...view.entities.flatMap((e) =>
-      e.actions.map((a) => ({ ...a, label: `${a.label} · ${e.name}` })),
+      e.actions
+        .filter((a) => a.command.type !== 'gather')
+        .map((a) => ({
+          ...a,
+          label: `${a.label} · ${e.name}`,
+        })),
     ),
+    ...gatherQuickActions(view, resolvedPins),
     ...view.recipes.flatMap((r) =>
       r.actions.map((a) => ({ ...a, label: `${a.label} · ${r.name}` })),
     ),
@@ -41,10 +102,13 @@ export function QuickActions({
     return {
       id: a.id,
       label: a.label,
+      description: undefined,
       enabled: connected && a.enabled,
       reason: a.reason,
-      icon: symbol(resource?.subtype ?? a.command.type),
-      badge: resource ? 'action.gather' : undefined,
+      icon: symbol(
+        a.id.startsWith('gather-type:') ? a.id.slice(12) : (resource?.subtype ?? a.command.type),
+      ),
+      badge: a.command.type === 'gather' ? 'action.gather' : undefined,
       run: () => command(a),
     };
   });
@@ -53,6 +117,7 @@ export function QuickActions({
     .map((e) => ({
       id: `talk-${e.id}`,
       label: `Talk to ${e.name}`,
+      description: undefined,
       enabled: connected,
       reason: undefined,
       icon: 'action.talk',
@@ -86,7 +151,7 @@ export function QuickActions({
         return;
       const i = Number(e.key) - 1;
       if (i >= 0 && i < 3) {
-        const a = options.find((a) => a.id === pins[i]);
+        const a = options.find((a) => a.id === resolvedPins[i]);
         if (a?.enabled) a.run();
       }
     };
@@ -108,13 +173,15 @@ export function QuickActions({
               >
                 <Icon name={a.icon} badge={a.badge} size={24} />
               </AriaButton>
-              <span className="ol-hover-label">{a.reason ?? a.label}</span>
+              <span className="ol-hover-label">
+                {[a.label, a.description, a.reason].filter(Boolean).join(' · ')}
+              </span>
             </div>
           ))}
         </div>
         {!!suggested.length && <span className="ol-qadivider" />}
         <div className="ol-qagroup">
-          {pins.map((id, i) => {
+          {resolvedPins.map((id, i) => {
             const a = options.find((a) => a.id === id);
             return (
               <div key={i} className="ol-qa-wrap">
@@ -128,7 +195,9 @@ export function QuickActions({
                   <span className="ol-qa-key">{i + 1}</span>
                 </AriaButton>
                 <span className="ol-hover-label">
-                  {a?.reason ?? a?.label ?? 'Assign a shortcut'}
+                  {a
+                    ? [a.label, a.description, a.reason].filter(Boolean).join(' · ')
+                    : 'Assign a shortcut'}
                 </span>
                 <div className="ol-qa-edit">
                   <IconButton
@@ -147,7 +216,7 @@ export function QuickActions({
           <SelectField
             autoFocus
             label={`Shortcut ${editing + 1}`}
-            value={pins[editing] || 'empty'}
+            value={resolvedPins[editing] || 'empty'}
             options={[
               { id: 'empty', label: 'Empty slot', icon: 'ui.close' },
               ...options.map((a) => ({
@@ -155,10 +224,11 @@ export function QuickActions({
                 label: a.label,
                 icon: a.icon,
                 badge: a.badge,
+                description: [a.description, a.reason].filter(Boolean).join(' · '),
               })),
             ]}
             onChange={(value) => {
-              const next = [...pins];
+              const next = [...resolvedPins];
               next[editing] = value === 'empty' ? '' : value;
               setPins(next);
               setEditing(null);

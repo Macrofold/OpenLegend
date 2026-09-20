@@ -1,9 +1,16 @@
 import traitBank from '../config/traits.json' with { type: 'json' };
 import { migrateCognition } from './experience.js';
-import type { ActorComponent, Entity, ItemDefinition, WorldState } from './types.js';
+import type {
+  ActorComponent,
+  CharacterTrait,
+  Entity,
+  ItemDefinition,
+  WorldState,
+} from './types.js';
 
 export const PLAYER_ID = 'player';
 export const NPC_ID = 'ada';
+export const TRAIT_BANK: readonly CharacterTrait[] = traitBank;
 export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
   raw_fiber: {
     id: 'raw_fiber',
@@ -132,9 +139,19 @@ export function createActor(
   world: WorldState,
   controller: 'player' | 'npc',
   fullness: number,
+  identity: {
+    traits?: CharacterTrait[];
+    personality?: string;
+    backstory?: string;
+    initialGoals?: string[];
+  } = {},
 ): ActorComponent {
+  const initialGoals = identity.initialGoals?.map((goal) => goal.trim()).filter(Boolean);
   return {
-    traits: sampleTraits(world),
+    traits: identity.traits?.map((trait) => ({ ...trait })) ?? sampleTraits(world),
+    ...(identity.personality ? { personality: identity.personality } : {}),
+    ...(identity.backstory ? { backstory: identity.backstory } : {}),
+    ...(initialGoals?.length ? { initialGoals } : {}),
     controller,
     health: 100,
     fullness,
@@ -145,9 +162,10 @@ export function createActor(
     action: null,
     equippedItemId: null,
     goal:
-      controller === 'npc'
+      initialGoals?.[0] ??
+      (controller === 'npc'
         ? 'Stay fed, learn useful techniques, and get to know the newcomer.'
-        : 'Make a life in the wild.',
+        : 'Make a life in the wild.'),
     planGeneration: 0,
   };
 }
@@ -199,7 +217,7 @@ export function createWorld(seed = 73): WorldState {
   const entities: Entity[] = [
     {
       id: PLAYER_ID,
-      name: 'You',
+      name: 'Mike',
       kind: 'player',
       position: { x: 11, z: 13 },
       actor: createActor(world, 'player', 76),

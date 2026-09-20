@@ -1,3 +1,4 @@
+import { draftWorld } from './draft.js';
 import { appendMemory, finish, outcome } from './events.js';
 import type { Transition, WorldEvent, WorldState } from './types.js';
 export interface Obligation {
@@ -63,7 +64,7 @@ export function amendCommitment(
       events: [],
       outcome: outcome(false, 'commitment-rejected', 'Stale or unsupported obligation change.'),
     };
-  const world = structuredClone(input);
+  const world = draftWorld(input);
   const target = world.memories[actorId]!.find((m) => m.id === id)!;
   target.obligation = {
     ...target.obligation!,

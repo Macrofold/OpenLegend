@@ -15,7 +15,7 @@ export function inspectGodMind(service: WorldService, actorId: string): GodMindV
     acceptedText: service.world.innerWorlds?.[actorId]?.text,
     experiences: experiences(service.world, actorId, true)
       .slice(-100)
-      .map((m) => ({ id: m.id, text: m.summary, at: m.at, kind: m.kind })),
+      .map((m) => ({ id: m.id, text: m.summary, at: m.at, kind: m.kind, source: m.source })),
     commitments: (service.world.memories[actorId] ?? [])
       .filter((m) => m.kind === 'commitment')
       .map((m) => ({ id: m.id, text: m.summary, resolved: !!m.resolved })),

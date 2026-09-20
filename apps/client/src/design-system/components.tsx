@@ -1,4 +1,12 @@
-import { useId, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import {
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import {
   Button as AriaButton,
   Tooltip,
@@ -6,8 +14,8 @@ import {
   Radio,
   RadioGroup,
   Toolbar,
-  Select as AriaSelect,
-  SelectValue,
+  ComboBox,
+  Input,
   Label,
   Popover,
   ListBox,
@@ -132,6 +140,7 @@ export type SelectOption = {
   label: string;
   icon?: string;
   badge?: string;
+  description?: string;
 };
 
 export function SelectField({
@@ -140,39 +149,75 @@ export function SelectField({
   options,
   onChange,
   autoFocus,
+  placeholder = 'Search quick actions…',
+  placement = 'top start',
 }: {
   label: string;
-  value: string;
+  value?: string | null;
   options: SelectOption[];
   onChange(value: string): void;
   autoFocus?: boolean;
+  placeholder?: string;
+  placement?: 'top start' | 'bottom start';
 }) {
+  const trigger = useRef<HTMLDivElement>(null);
+  const [popupWidth, setPopupWidth] = useState<number>();
+  useLayoutEffect(() => {
+    const element = trigger.current;
+    if (!element) return;
+    const resize = () => setPopupWidth(element.getBoundingClientRect().width);
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   return (
-    <AriaSelect
+    <ComboBox<SelectOption>
       className="ol-select"
       selectedKey={value}
-      onSelectionChange={(key) => onChange(String(key))}
-      autoFocus={autoFocus}
+      onSelectionChange={(key) => key !== null && onChange(String(key))}
+      defaultItems={options}
+      menuTrigger="focus"
+      defaultFilter={(text, query) =>
+        query
+          .normalize('NFKC')
+          .toLocaleLowerCase()
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .every((word) => text.normalize('NFKC').toLocaleLowerCase().includes(word))
+      }
     >
       <Label className="ol-select-label">{label}</Label>
-      <AriaButton className="ol-select-trigger">
-        <SelectValue className="ol-select-value">
-          {options.find((option) => option.id === value)?.label}
-        </SelectValue>
-        <span className="ol-select-chevron" aria-hidden="true" />
-      </AriaButton>
-      <Popover className="ol-select-popover" placement="top start">
-        <ListBox className="ol-select-list" items={options}>
+      <div className="ol-select-trigger" ref={trigger}>
+        <Icon name="ui.search" size={16} />
+        <Input className="ol-select-input" autoFocus={autoFocus} placeholder={placeholder} />
+        <AriaButton className="ol-select-toggle" aria-label={`Show ${label.toLowerCase()} actions`}>
+          <span className="ol-select-chevron" aria-hidden="true" />
+        </AriaButton>
+      </div>
+      <Popover
+        className="ol-root ol-select-popover"
+        triggerRef={trigger}
+        placement={placement}
+        style={{ width: popupWidth }}
+      >
+        <ListBox<SelectOption> className="ol-select-list">
           {(option) => (
             <ListBoxItem className="ol-select-option" id={option.id} textValue={option.label}>
               {option.icon ? <Icon name={option.icon} badge={option.badge} size={18} /> : <span />}
-              <span>{option.label}</span>
+              <span>
+                <strong>{option.label}</strong>
+                {option.description && (
+                  <small className="ol-option-description">{option.description}</small>
+                )}
+              </span>
               <Icon name="ui.check" size={16} />
             </ListBoxItem>
           )}
         </ListBox>
       </Popover>
-    </AriaSelect>
+    </ComboBox>
   );
 }
 export function Launcher({
@@ -265,6 +310,7 @@ export function Panel({
   wide,
   id,
   hidden,
+  draggable = false,
 }: {
   title: string;
   onClose(): void;
@@ -276,10 +322,23 @@ export function Panel({
   wide?: boolean;
   id?: string;
   hidden?: boolean;
+  draggable?: boolean;
 }) {
   const titleId = useId();
   const body = useRef<HTMLDivElement>(null),
     listScroll = useRef(0);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const drag = useRef<
+    | {
+        pointerX: number;
+        pointerY: number;
+        offsetX: number;
+        offsetY: number;
+        left: number;
+        top: number;
+      }
+    | undefined
+  >(undefined);
   const detail = !!onBack;
   useLayoutEffect(() => {
     const element = body.current;
@@ -289,6 +348,34 @@ export function Panel({
       if (!detail) listScroll.current = element.scrollTop;
     };
   }, [detail]);
+  const startDrag = (event: PointerEvent<HTMLElement>) => {
+    if (!draggable || (event.target as HTMLElement).closest('button, a, [role="button"]')) return;
+    const panel = event.currentTarget.closest<HTMLElement>('.ol-panel');
+    if (!panel) return;
+    const bounds = panel.getBoundingClientRect();
+    drag.current = {
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      offsetX: offset.x,
+      offsetY: offset.y,
+      left: bounds.left,
+      top: bounds.top,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const moveDrag = (event: PointerEvent<HTMLElement>) => {
+    const active = drag.current;
+    if (!active) return;
+    const dx = Math.max(
+      8 - active.left,
+      Math.min(innerWidth - 120 - active.left, event.clientX - active.pointerX),
+    );
+    const dy = Math.max(
+      8 - active.top,
+      Math.min(innerHeight - 56 - active.top, event.clientY - active.pointerY),
+    );
+    setOffset({ x: active.offsetX + dx, y: active.offsetY + dy });
+  };
   return (
     <section
       id={id}
@@ -297,8 +384,16 @@ export function Panel({
       role="region"
       aria-labelledby={titleId}
       hidden={hidden}
+      data-draggable={draggable || undefined}
+      style={{ translate: `${offset.x}px ${offset.y}px` }}
     >
-      <header className="ol-panel-head">
+      <header
+        className="ol-panel-head"
+        onPointerDown={startDrag}
+        onPointerMove={moveDrag}
+        onPointerUp={() => (drag.current = undefined)}
+        onPointerCancel={() => (drag.current = undefined)}
+      >
         <div>
           {onBack && (
             <Button

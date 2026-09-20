@@ -8,6 +8,10 @@ Status: **design proposal**, updated for accepted primitive survival direction. 
 
 Human and NPC characters share identity, anatomy, needs, equipment, location, perception, relationships, knowledge, and lifecycle records. A controller supplies intents: a player uses input; an NPC uses utility rules and bounded reasoning. Creator controls use a separate administrative permission model.
 
+The broader term **actor** includes every living being, not only human characters. Species and body plan are capabilities/data on an actor rather than a boundary around which beings may receive actions or effects. Animals can use lightweight native behavior by default while a particular animal later gains memory, a richer inner world, intelligence or speech. An intelligent talking deer remains a deer and does not need a parallel character system.
+
+Lifecycle and bodily effects should therefore use relevant capabilities. Revive targets any dead actor, including an animal; wetness, fire, injury and healing can affect any compatible living body and its health, with species-specific susceptibility where needed. The current prototype has separate person and animal components, revives only dead people and converts dead animals to remains. The [canonical architecture](../../docs/architecture.md#actor-means-any-living-being) records the required future unification and migration boundary.
+
 For players, personality can shape optional expression, preferences, and descriptive feedback without seizing movement or writing speech on the player's behalf. Whether traits confer mechanical bonuses is an open design decision. An empty social meter should not force a player to speak, and a proposed personality label should not classify the real person.
 
 The most useful initial observable behaviors are gathering accessible resources, eating when hungry, sleeping when tired, approaching a known acquaintance, keeping or breaking a promise, reacting to discomfort or danger, and remembering what happened. These use seeded mechanics and some initial procedural knowledge. NPCs can fail and die; the user does not require artificially forgiving needs. [Survival baseline](survival-baseline.md)
@@ -64,7 +68,7 @@ Use distinct records:
 | Working context | Current activity, recent turns, immediate observations | Short and replaceable |
 | Episodic memory | Who, what, where, when, observed/heard/inferred, affect, evidence | Salience-weighted finite budget |
 | Subjective beliefs | Authored inner-world prose with meaningful uncertainty and attribution | Reflection updates accepted text; never silently convert rumor to fact |
-| Relationship assessment | Directional authored perspective; supported native facets and obligations stay separate | Accepted inner-world text; derived query projections do not own another prose copy |
+| Relationship assessment | Freely revisable directional descriptions informed by memories, without points; structured kinship and obligations stay separate | Accepted inner-world text; derived query projections do not own another prose copy |
 | Procedural knowledge | Known recipes, skills, routes, habits | Versioned references rather than copied scripts |
 | Protected commitments | Active promise, debt, appointment, caregiving obligation | Keep until resolved; bounded creation |
 
@@ -105,19 +109,40 @@ Use the existing perception/attention/memory pipeline rather than a model call f
 3. Score eligible actions using needs, values, relationships, effort, risk, and commitments. Commit to short plans with interruption rules.
 4. Native code continues familiar actions; Jev evaluates attention and escalation for each admitted semantic opportunity in bounded batches.
 5. Speech defaults to level 2; Jev can select complex low/high reasoning (levels 3/4) and independently enqueue background level-5 reflection.
-6. Return only speech or the offered action handle required by that immediate route. Commit through native admission. Reflection separately edits bounded files and publishes accepted text with short god-only thoughts.
+6. Under the accepted future [talk/act/think contract](../../docs/narration-and-conversations.md#3-talk-act-and-think-response-contract), return any optional combination of speech, an admitted action/expression and a brief private thought, or choose no new response. Commit components through native admission with separate receipts and remembered experience. Current runtime routes still return speech or an offered action separately. Reflection continues to edit bounded files independently and publishes accepted text with short god-only presentation thoughts.
 
 The scheduler creates meaningful opportunities without polling every tick. Jev routing does not recursively route itself or require a call per object. Unknown/unavailable outcomes defer semantic work while native survival continues. Do not fan out expensive planners speculatively or require mind patches to speak.
 
 Thoughts stored for characterization should be brief in-world reflections, intentions, and appraisals—not raw hidden model reasoning. Players see expression and speech, not private thought traces. Creator debugging can show structured causes and decisions without relying on verbose internal prose.
 
+## Talk, act, think and narration
+
+Accepted future direction, September 20, 2026; documentation only. Any triggered situation can elicit talking, acting and/or thinking, not just a spoken answer to speech. An insult might make Ada silently frown. She could instead say “Screw you,” slap Mike and privately think “I don't like Mike,” with each component's actor, entity targets and source recorded. Every accepted component becomes her own experience: speech/action through self-awareness, thought through private recallable memory. These fictional thoughts are not provider reasoning and do not require a full reflection job.
+
+Conversation narration describes observed non-speech reactions/actions and relevant world consequences, excluding internal thoughts. **The Narrator** renders committed evidence in a player's chosen voice; it cannot decide effects. The first future slice supports expressive gestures/contact fiction with no new mechanical effects: an unsupported slap can be shown and remembered, but causes no health loss or bleeding. Known mechanical actions retain their real effects. Missing action/effect invention during play is a later extension through the normal declaration boundary, not generated prose becoming physics. See the [technical design and NC tasks](../../docs/narration-and-conversations.md).
+
 ## Social continuity
 
-Relationships are directional: Ada can trust Bo more than Bo trusts Ada. Track familiarity, trust, affection, fear, and outstanding obligations sparsely for meaningful relationships, not as a dense all-to-all matrix. Store group membership separately from personal liking.
+Accepted character design, September 20, 2026 (future implementation): relationships have two forms.
 
-Conversation has turn-taking, speaker identity, audience, interruption, and topic continuity. NPCs should sometimes decline, continue work while talking, ask clarifying questions, or refer back to unfinished plans. A conversation can create a promise intent; promising and completing a task are different events.
+- **Structured relationships** record defined, unchanging facts such as blood relations. A change in someone's feelings does not change their kinship.
+- **Unstructured relationships** map another person to free text, such as “friend,” “good friend,” or “lover.” Each person owns their own description and may change it freely at any point according to how they perceive the other person. These assessments come from memories, with no relationship points, score thresholds or required progression. They are directional: Ada's description of Bo need not match Bo's description of Ada.
+
+Subjective descriptions belong to the accepted inner world; any query projection derives from that revision. The freedom to revise one's assessment is not restricted to god mode. It does not rewrite the other person's assessment or objective relationship facts. Keep group membership and outstanding obligations separate from personal liking; changing a description does not erase a promise. Exact editing and publication mechanics remain to be designed.
+
+Conversation has a durable identity, turn-taking, speaker identity, event-time audience, interruption and topic continuity. First directed speech starts a conversation with speaker and addressed actor(s); self-talk has one participant. Later actors join by speaking, while mere overhearing creates awareness without membership. Participants can leave independently; the conversation ends when everyone has closed/left. Earlier speech is visible only where actual awareness permits it. A conversation can grow from two to five people and finish with two different people.
+
+When a current participant engages another conversation, the source conversation ends with a “Joined conversation #123” narration and all its current participants join the destination. Earlier events retain their original conversation IDs and audiences. NPCs can decline, continue work while talking, ask clarifying questions or refer back to unfinished plans. A conversation can create a promise intent; promising and completing a task are different events. Exact lifecycle, merging and concurrency rules are proposed in the [conversation design](../../docs/narration-and-conversations.md#6-durable-conversation-lifecycle).
 
 Start with one-on-one text, then nearby group text, then voice. Scale social believability before adding voice cost. Keep text captions for accessibility and as a fall-back during media failure. Prevent paid interaction quotas from making an NPC abandon already-accepted world obligations unpredictably.
+
+## Player-designed stats
+
+Accepted direction, September 20, 2026; detailed design and implementation remain future work. Players may invent stats and their effects **only in god mode**. For example, if someone wants to attempt seduction and no charisma stat exists, an authorized player in god mode can design charisma. An ordinary character's action request does not itself authorize creating a stat.
+
+Stats and their effects must live in declarative configurations, not hard-coded stat names or special cases in gameplay or UI. A definition must specify all parameters governing what the stat can affect, when stat checks run, how checks resolve and what their outcomes can change. Exact schemas, value ranges, defaults, modifiers and balancing are deferred. Existing native prototype needs are not evidence that this configurable stat system is implemented.
+
+Use the shared declaration/admission boundary: trusted generic code validates and executes supported configuration rules, while the server verifies god-mode authority. Freeform design is authoring freedom, not permission to execute generated code or give unknown fields automatic effects. Unsupported effect/check capabilities require explicit engine support. Relationship descriptions remain memory-based prose and must not become stat-derived scores or forced labels.
 
 ## Later tool-assisted planning and interaction
 

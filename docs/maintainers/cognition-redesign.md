@@ -6,6 +6,8 @@ Each task must update implementation status with actual evidence when delivered.
 
 ## Delivery order
 
+The subsequent [NC01–NC13 narration/conversation track](../narration-and-conversations.md#13-implementation-tasks) extends these delivered foundations without changing their historical completion evidence: optional talk/act/think replaces exclusive immediate speech/action contracts when NC02 lands, recallable private immediate thoughts remain distinct from god-only reflection presentation, and NC04 adds notable unseen-event retention without granting awareness. The NC work is future and unchecked in its own tracker; existing CR failure/acceptance tasks remain open.
+
 Keep CR identifiers stable for existing links. Execute in the following dependency order; a task's number does not imply that its integrations can precede their prerequisites:
 
 1. **CR01:** contracts, budgets, repository interfaces and failure boundaries.
@@ -55,7 +57,7 @@ Owner: `apps/server` context/cognition; generic limits in `packages/ai`. Depends
 
 - [x] Implement native level 0 and Jev level 1 routing to level 2 mini, level 3 complex/low, level 4 complex/high, or level 5 reflection harness. Provider bindings must distinguish levels 3 and 4; the current fast/complex/full labels are insufficient.
 - [x] Directed speech admits level 2 by default. Jev always evaluates escalation for an admitted semantic opportunity; it may raise the immediate reasoning level and/or enqueue reflection. Ordinary speech must not request mind updates or wait for reflection.
-- [x] Give speech a speech-only contract, immediate action decisions only the fields they need, and reflection only short presentation thoughts as final output. Remove required `policy`, `expectedRevision`, `thought`, `documents`, `removeDocuments`, `records` and companion patch arrays from ordinary responses.
+- [x] Keep ordinary response components minimal and reflection limited to short presentation thoughts as final output. The original speech-only slice is superseded by the September 20 NC00 nullable talk/act/think envelope; no component is mandatory. Remove required `policy`, `expectedRevision`, `thought`, `documents`, `removeDocuments`, `records` and companion patch arrays from ordinary responses.
 - [ ] Verify a greeting causes no harness run, relationship-writing requirement or default high-effort reasoning; an exceptional event can request reflection while conversation and simulation progress. Provider refusal, unavailable credentials, invalid data and uncertain completion remain distinct.
 
 - [x] Apply routing to every admitted semantic trigger, including notable events, hazards, encounters, need/goal changes and speech. Reject unoffered routes; native urgency acts immediately, and unavailable semantic work is explicitly deferred.
@@ -109,14 +111,14 @@ Owner: server attention/retrieval, generic Jev execution. Depends on: CR01–CR0
 ### CR05 — Awareness and one experience source
 
 - [x] Add event-time awareness links for every actor, including the player. Store one shared event plus actor-specific perceived text/detail when needed; never expose a raw event through the join.
-- [x] Retain experiential world events only when at least one actor was aware. Keep deterministic state commits, idempotency, billing and recovery records independently; an unwitnessed action still changes the world.
+- [x] Delivered CR baseline: retain experiential world events when at least one actor was aware. Keep deterministic state commits, idempotency, billing and recovery records independently; an unwitnessed action still changes the world. Future NC04 adds the configured notable-unseen exception; this checked item does not claim that extension is implemented.
 - [x] Require a stored English text field for every memory and permitted awareness projection, preferring native templates. Do not copy each shared aware event into another raw memory row for that actor.
 - [ ] Specify indexes, retention/evidence capsules, delivery deduplication and journal/query coverage. Later testimony creates a newly heard experience; it cannot invent historical witnessing.
 
 - [x] Commit witnessed events and awareness delivery recoverably together; provide bounded pending-delivery/direct lookup for fresh speech and promises while indexes lag. Retain modality, recognition, intelligibility and event-time detail without retrospective upgrades.
 - [x] Implement finite native obligation creation, fulfillment, deadlines and supported cancellation independent of prose. Preserve evidence-backed learning/proficiency and compatible learned-version mappings; neither partial observation nor reflection grants hidden recipe steps.
 
-Owner: domain event/perception transitions; server repository/query projection. Depends on: CR01. Exit evidence: different observers see different detail, hidden events are absent from recall, and unwitnessed state changes survive restart without an experiential event row.
+Owner: domain event/perception transitions; server repository/query projection. Depends on: CR01. Exit evidence: different observers see different detail, hidden events are absent from recall, and unwitnessed state changes survive restart independently of experiential retention. NC04 separately verifies notable unseen-event retention without awareness; ordinary unwitnessed events remain unretained.
 
 ### CR06 — Six-hour raw window and hourly cleanup
 

@@ -1,6 +1,8 @@
+import { finishWorld, cloneValue } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { canHear, canSee } from './perception.js';
+import { memoryPerspective } from './memory-perspective.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import type { Entity, MemoryRecord, Outcome, Transition, WorldEvent, WorldState } from './types.js';
 
@@ -37,7 +39,7 @@ export function appendMemory(
     return;
   records.push({
     ...memory,
-    summary: memory.summary,
+    summary: memoryPerspective(world, actorId, memory.summary, memory.eventType === 'speech'),
     id: nextId(world, 'memory'),
     actorId,
     at: world.simTime,
@@ -86,7 +88,7 @@ export function emit(
       awareness.push({
         eventId: event.id,
         actorId,
-        text,
+        text: memoryPerspective(world, actorId, text, type === 'speech'),
         at: event.at,
         sequence: world.nextId,
         modality: type === 'speech' ? 'heard' : 'observed',
@@ -102,6 +104,20 @@ export function emit(
                   ['crafted', 'declaration-admitted', 'shot', 'fire-out', 'rested'].includes(type)
                 ? 6
                 : 3,
+        eventType: type,
+        ...(source ? { sourceId: source.id } : {}),
+        ...(targetId ? { targetId } : {}),
+        triggerKind:
+          source?.id === actorId
+            ? 'self_event'
+            : type === 'speech'
+              ? targetId === actorId
+                ? 'addressed_speech'
+                : 'overheard_speech'
+              : targetId === actorId
+                ? 'directed_action'
+                : 'observed_event',
+        content: typeof data?.['text'] === 'string' ? data['text'] : text,
       });
     }
   }
@@ -112,5 +128,6 @@ export function emit(
 export function finish(world: WorldState, events: WorldEvent[], result: Outcome): Transition {
   advanceCommitments(world, events);
   world.sequence++;
-  return { world, events, outcome: result };
+  const committedEvents = cloneValue(events);
+  return { world: finishWorld(world), events: committedEvents, outcome: result };
 }

@@ -6,6 +6,8 @@ Status: **technical proposal**, September 19, 2026. This is the broader contract
 
 ## 1. Context is a versioned product of the application
 
+The accepted future [Narrator context contract](../../docs/narration-and-conversations.md#8-the-narrator-and-context-assembly) reuses this pipeline with a presentation purpose: actor-set/perspective, conversation/type/time filters, event-time awareness, mandatory causal evidence and scoped semantic retrieval. It does not inherit full NPC About me text or the union of participants' private knowledge. Ordinary conversation excludes internal thoughts; explicit single-actor grants and policy-approved notable-event cutaways are separate modes. One bounded generation returns source-linked prose, never effects; narrator voice is style only. The [composed-response contract](../../docs/narration-and-conversations.md#3-talk-act-and-think-response-contract) also extends immediate NPC routes to optional talk/act/think at any admitted trigger, with independently admitted components and no mandatory mind patch. NC01–NC13 track this future extension separately from delivered CR work.
+
 The [perception and attention specification](perception-and-attention.md) extends this proposal with exposure-specific descriptions, event-time sound, embodied screen parity, semantic interest subscriptions and batched decision opportunities. It also audits the simpler current prototype; these richer contracts are not implemented by the documentation update. All retrieval and tools below must preserve the actor's actual detail/intelligibility, not merely check that an entity or event ID is accessible.
 
 The central responsibility is to bring the right evidence to a particular question, under the right authority and within a measured budget. A larger prompt is not the definition of better context. Each decision must be explainable in terms of the evidence available, evidence missing, permitted operations and versions used.
@@ -14,7 +16,7 @@ Separate a **context contract** from an **assembled context**. The contract belo
 
 Open Legend owns game relevance, perception and required dependencies. Macrofold supplies generic context transport, authorized resource/tool access, immutable references, execution limits and diagnostics. The game-specific context builder may be deployed beside the game or exposed as an authorized provider to Macrofold; where it runs does not transfer ownership of its policy.
 
-## 2. Four audiences, different views
+## 2. Context audiences and permitted views
 
 | Audience | Permitted evidence | Prohibited shortcut |
 |---|---|---|
@@ -22,6 +24,7 @@ Open Legend owns game relevance, perception and required dependencies. Macrofold
 | Trusted interaction resolver | Authoritative facts needed to determine a valid effect, current permissions and effective rules | Returning hidden adjudication facts verbatim in speech or player explanations |
 | Declaration builder/evaluator | Approved primitive contracts, authorized definitions, sanitized failure cases and sandbox fixture snapshots | Receiving all private histories because it works on world mechanics |
 | Creator/admin | Explicitly granted diagnostic and world-management resources | Passing admin authority to ordinary actor jobs or silently publishing private evidence |
+| Future Narrator | Recipient-permitted source events/awareness, actual effects and separately granted private/cutaway material for the selected mode | Treating participant knowledge as an unredacted union, creating facts/effects, or exposing thoughts in conversation |
 
 Public explanation is a separate output projection. It receives structured outcome/reason codes and observer-permitted facts, with a deterministic fallback. Do not make a model that has seen a private fact solely responsible for concealing it from a lower-privilege recipient. If a workflow changes audience, build a new approved projection and fresh execution context instead of continuing a privileged transcript.
 
@@ -141,7 +144,8 @@ An agent is a bounded loop of model calls and tools, not a different species of 
 | Movement, need decay, fuel use, rain transmission, ordinary process update | Standard code/admitted formula or algorithm | Defined process recovery; no model-per-tick repair |
 | Exact fact or missing retrievable dependency | Authorized data query | Essential unavailable data → explicit approximation policy, clarification or defer |
 | Closed set of plausible interpretations or activities | Jev or equivalent typed inference | Unknown/uncertain → bounded additional context, single LLM when meaning needs generation, or clarify |
-| NPC speech or immediate decision | Jev attention/escalation; level 2 mini by default, level 3 low or level 4 high for complexity | Minimal speech/action result; independently enqueue reflection when warranted; no automatic paid repair |
+| NPC speech or immediate decision | Jev attention/escalation; level 2 mini by default, level 3 low or level 4 high for complexity | Current minimal speech/action result; future NC contract permits optional talk/act/think or no response; independently enqueue reflection, no automatic paid repair |
+| Future Narrator presentation | Scoped event/awareness selection and semantic retrieval, then one bounded LLM generation | Player-private grounded prose with source links; no effects, new awareness or recursive narration triggers; deterministic fallback |
 | Simple declaration draft with sufficient evidence | One typed LLM call | Invalid output stays unresolved; any further paid authoring requires separate admission and authorization |
 | Subjective reflection or eligible dream | Background level-5 bounded workspace harness | Publish accepted inner-world text and short thoughts atomically; preserve previous snapshot on failure |
 | Multi-step investigation, retrieving related evidence, designing/testing a novel composition | Bounded agent job with approved tools | Return evidence and draft; independent validators decide admission |

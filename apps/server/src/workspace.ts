@@ -36,7 +36,7 @@ export class ActorWorkspaceFiles {
   ) {
     const id = digest({ worktree, path, revision, jobId, text });
     const key = `workspace-write:${id}`;
-    const previous = this.store.getIntegration(key) as
+    const previous = (await this.store.getIntegration(key)) as
       | { operation?: string; complete?: boolean }
       | undefined;
     if (previous?.complete) return;
@@ -44,7 +44,7 @@ export class ActorWorkspaceFiles {
       throw new Error('Workspace file admission uncertain; reconcile before retrying.');
     let operation = previous?.operation;
     if (!operation) {
-      this.store.putIntegration(key, {});
+      await this.store.putIntegration(key, {});
       const result = await this.api.file(worktree, path, text === undefined ? 'DELETE' : 'PUT', {
         revision,
         operationId: id,
@@ -52,7 +52,7 @@ export class ActorWorkspaceFiles {
         signal,
       });
       operation = string(object(JSON.parse(result.text))['id']);
-      this.store.putIntegration(key, { operation });
+      await this.store.putIntegration(key, { operation });
     }
     for (;;) {
       signal.throwIfAborted();
@@ -60,7 +60,7 @@ export class ActorWorkspaceFiles {
         await this.api.request(`/v1/operations/${operation}`, undefined, undefined, signal),
       );
       if (result['status'] === 'succeeded') {
-        this.store.putIntegration(key, { operation, complete: true });
+        await this.store.putIntegration(key, { operation, complete: true });
         return;
       }
       if (result['status'] === 'failed') throw new Error('Workspace write failed.');

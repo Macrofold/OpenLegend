@@ -6,6 +6,8 @@ M10/M11 clarify the accepted release boundary: the [first playable MVP](../05-pr
 
 ## Read in this order
 
+The later [Narrator and conversation design](../../docs/narration-and-conversations.md) specifies optional response components, durable group conversation lifecycle, scoped narration context and private PostgreSQL story records. Its [NC01–NC13 tracker](../../docs/narration-and-conversations.md#13-implementation-tasks) is documentation-only future work; it reuses memory, production-data and declaration contracts rather than changing runtime behavior here.
+
 Start with the [architecture review and delivery plan](review-and-delivery-plan.md) for the critique, changes, S0–S5 implementation sequence, later feature gates and requirement coverage. The documents below contain the revised contracts. The review tightened the initial scope and failure behavior; it did not convert proposed choices into accepted or implemented features.
 
 | Document | What it specifies |

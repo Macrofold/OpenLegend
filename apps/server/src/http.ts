@@ -12,7 +12,8 @@ import { readConfig, type AppConfig } from './config.js';
 import { PostgresDatabase } from './postgres.js';
 import { SqliteStore } from './store.js';
 import { WorldService, commandInputSchema, requestIdSchema } from './world-service.js';
-import { projectView } from './view.js';
+import { projectPatch, projectView } from './view.js';
+import type { GameView } from '@open-legend/protocol';
 import { actionCatalogue } from './action-catalogue.js';
 
 const clientId = z
@@ -26,7 +27,7 @@ const interaction = z
   .object({
     requestId: requestIdSchema,
     text: z.string().trim().min(1).max(1000),
-    npcId: z.literal('ada').optional(),
+    npcId: requestIdSchema.optional(),
   })
   .strict();
 const worldAgentMessage = z
@@ -61,14 +62,126 @@ const preferences = z
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, 'Choose a preference to update.');
+const position = z.object({ x: z.number().finite(), z: z.number().finite() }).strict();
+const godSpawnType = z.enum([
+  'banked-campfire',
+  'berry-bush',
+  'berry-thicket',
+  'deer',
+  'dry-grass-fibers',
+  'fallen-branches',
+  'hare',
+  'river-reeds',
+  'river-stones',
+]);
+const godPerson = z
+  .object({
+    name: z.string().trim().min(1).max(80),
+    personality: z.string().trim().max(1000),
+    backstory: z.string().trim().max(4000),
+    traitIds: z.array(requestIdSchema).max(8),
+    initialGoals: z.array(z.string().trim().min(1).max(500)).max(8),
+  })
+  .strict();
+const godAwareness = z
+  .object({
+    eventType: z.string().max(200).optional(),
+    sourceId: requestIdSchema.optional(),
+    targetId: requestIdSchema.optional(),
+    triggerKind: z
+      .enum([
+        'addressed_speech',
+        'overheard_speech',
+        'self_event',
+        'directed_action',
+        'observed_event',
+      ])
+      .optional(),
+    content: z.string().max(20_000).optional(),
+    eventId: requestIdSchema,
+    actorId: requestIdSchema,
+    text: z.string().max(20_000),
+    at: z.number().finite().min(0),
+    sequence: z.number().int().min(0),
+    modality: z.enum(['heard', 'observed']),
+    recognized: z.boolean(),
+    intelligible: z.boolean(),
+    entityIds: z.array(requestIdSchema).max(100),
+    importance: z.number().finite(),
+  })
+  .strict();
+const godMemory = z
+  .object({
+    obligation: z
+      .object({
+        revision: z.number().int().min(0),
+        status: z.enum(['active', 'fulfilled', 'cancelled', 'overdue']),
+        dueAt: z.number().finite().min(0).optional(),
+        completion: z
+          .object({ eventType: z.string().max(200), targetId: requestIdSchema.optional() })
+          .strict()
+          .optional(),
+        evidenceId: requestIdSchema,
+      })
+      .strict()
+      .optional(),
+    eventType: z.string().max(200).optional(),
+    speakerId: requestIdSchema.optional(),
+    sequence: z.number().int().min(0).optional(),
+    id: requestIdSchema,
+    actorId: requestIdSchema,
+    kind: z.enum(['episode', 'belief', 'commitment', 'reflection']),
+    source: z.enum(['observed', 'heard', 'inferred', 'self_thought']),
+    responseId: requestIdSchema.optional(),
+    summary: z.string().max(20_000),
+    at: z.number().finite().min(0),
+    entityIds: z.array(requestIdSchema).max(100),
+    eventId: requestIdSchema.optional(),
+    importance: z.number().finite(),
+    resolved: z.boolean().optional(),
+  })
+  .strict();
+const godSummary = z
+  .object({
+    id: requestIdSchema,
+    text: z.string().max(20_000),
+    sequence: z.number().int().min(0).optional(),
+    from: z.number().finite().min(0),
+    to: z.number().finite().min(0),
+    sourceIds: z.array(requestIdSchema).max(1000),
+    entityIds: z.array(requestIdSchema).max(100),
+    importance: z.number().finite(),
+    revision: z.number().int().min(0).optional(),
+  })
+  .strict();
+const godMemoryEdit = z.discriminatedUnion('source', [
+  z.object({ source: z.literal('awareness'), value: godAwareness }).strict(),
+  z.object({ source: z.literal('memory'), value: godMemory }).strict(),
+  z.object({ source: z.literal('summary'), value: godSummary }).strict(),
+]);
+const editorHash = z.string().regex(/^[a-f0-9]{64}$/);
+const godWorldEvent = z
+  .object({
+    id: requestIdSchema,
+    sequence: z.number().int().min(0),
+    at: z.number().finite().min(0),
+    type: z.string().trim().min(1).max(200),
+    text: z.string().max(20_000),
+    actorId: requestIdSchema.optional(),
+    targetId: requestIdSchema.optional(),
+    audience: z.array(requestIdSchema).max(1000),
+    data: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
+  })
+  .strict();
 
 async function jsonBody(request: IncomingMessage): Promise<unknown> {
   let bytes = 0;
   const chunks: Buffer[] = [];
+  const limit = request.url?.startsWith('/api/god/editor/') ? 1_048_576 : 16_384;
   for await (const chunk of request) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string);
     bytes += buffer.length;
-    if (bytes > 16_384) throw new Error('body-limit');
+    if (bytes > limit) throw new Error('body-limit');
     chunks.push(buffer);
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
@@ -101,22 +214,90 @@ export async function createGameServer(
       config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
     );
   const service = new WorldService(store, config, options.now);
+  await service.ready;
   const director = new AiDirector(service, options.aiClient, options.now);
   const session = randomBytes(32).toString('hex');
-  const streams = new Set<ServerResponse>();
+  type StreamState = {
+    revision: number;
+    blocked: boolean;
+    timeout?: ReturnType<typeof setTimeout>;
+  };
+  const streams = new Map<ServerResponse, StreamState>();
+  let publicView: GameView | undefined;
+  const patches = new Map<number, { revision: number; message: string }>();
+  let patchBytes = 0;
+  let projectionQueue: Promise<unknown> = Promise.resolve();
+  const currentView = (): Promise<GameView> => {
+    const pending = projectionQueue.then(async () => {
+      if (publicView?.revision === service.version) return publicView;
+      const next = await projectView(service, director.executionSource);
+      if (publicView) {
+        const patch = projectPatch(publicView, next);
+        if (patch) {
+          const message = `event: patch\ndata: ${JSON.stringify(patch)}\n\n`;
+          patches.set(publicView.revision, { revision: next.revision, message });
+          patchBytes += Buffer.byteLength(message);
+        } else {
+          patches.clear();
+          patchBytes = 0;
+        }
+        while (patches.size > 64 || patchBytes > 1_048_576) {
+          const oldest = patches.keys().next().value!;
+          patchBytes -= Buffer.byteLength(patches.get(oldest)!.message);
+          patches.delete(oldest);
+        }
+      }
+      publicView = next;
+      return next;
+    });
+    projectionQueue = pending.catch(() => undefined);
+    return pending;
+  };
+  const pump = (stream: ServerResponse) => {
+    const state = streams.get(stream);
+    if (!state || state.blocked || !publicView || stream.destroyed) return;
+    while (state.revision !== publicView.revision) {
+      const patch = patches.get(state.revision);
+      const message = patch?.message ?? `event: reset\ndata: ${JSON.stringify(publicView)}\n\n`;
+      state.revision = patch?.revision ?? publicView.revision;
+      // false means accepted into Node's buffer. Resume after drain; never resend it.
+      if (!stream.write(message)) {
+        state.blocked = true;
+        state.timeout = setTimeout(() => stream.destroy(), 30_000);
+        break;
+      }
+    }
+  };
   let publishTimer: ReturnType<typeof setTimeout> | undefined;
+  let publishing = false;
+  let publishQueued = false;
   let disposed = false;
   const publish = () => {
-    if (publishTimer || disposed) return;
-    publishTimer = setTimeout(() => {
+    if (disposed) return;
+    if (publishTimer) return;
+    if (publishing) {
+      publishQueued = true;
+      return;
+    }
+    publishTimer = setTimeout(async () => {
       publishTimer = undefined;
-      if (!streams.size) return;
-      const message = `event: state\ndata: ${JSON.stringify(projectView(service, director.executionSource))}\n\n`;
-      for (const stream of streams)
-        if (!stream.write(message)) {
-          streams.delete(stream);
-          stream.end();
+      publishing = true;
+      try {
+        if (!streams.size) return;
+        await currentView();
+        for (const stream of streams.keys()) pump(stream);
+      } catch {
+        service.storageError =
+          'State publication failed; simulation paused. Restart and reconcile storage.';
+        for (const stream of streams.keys()) stream.end();
+        streams.clear();
+      } finally {
+        publishing = false;
+        if (publishQueued || (streams.size > 0 && publicView?.revision !== service.version)) {
+          publishQueued = false;
+          publish();
         }
+      }
     }, 100);
   };
   const unsubscribe = service.subscribe(publish);
@@ -170,7 +351,8 @@ export async function createGameServer(
             'Set-Cookie',
             `ol_session=${session}; HttpOnly; SameSite=Strict; Path=/`,
           );
-          return send(response, 200, projectView(service, director.executionSource));
+          const view = await currentView();
+          return send(response, 200, view);
         }
         if (!authenticated(request))
           return send(response, 401, {
@@ -186,10 +368,11 @@ export async function createGameServer(
               message: 'Too many open game tabs.',
             });
           const connectionId = randomBytes(16).toString('hex');
-          service.setConnection(connectionId, true);
-          response.on('close', () => {
+          await service.setConnection(connectionId, true);
+          response.on('close', async () => {
+            clearTimeout(streams.get(response)?.timeout);
             streams.delete(response);
-            if (!disposed) service.setConnection(connectionId, false);
+            if (!disposed) await service.setConnection(connectionId, false);
           });
           response.writeHead(200, {
             'Content-Type': 'text/event-stream',
@@ -197,10 +380,26 @@ export async function createGameServer(
             Connection: 'keep-alive',
             'X-Accel-Buffering': 'no',
           });
-          response.write(
-            `event: state\ndata: ${JSON.stringify(projectView(service, director.executionSource))}\n\n`,
-          );
-          streams.add(response);
+          await currentView();
+          if (response.destroyed) return;
+          const requested = url.searchParams.get('revision');
+          const requestedRevision = requested === null ? NaN : Number(requested);
+          streams.set(response, {
+            revision: Number.isSafeInteger(requestedRevision) ? requestedRevision : -1,
+            blocked: false,
+          });
+          response.on('drain', () => {
+            const state = streams.get(response);
+            if (!state) return;
+            clearTimeout(state.timeout);
+            state.blocked = false;
+            pump(response);
+          });
+          response.flushHeaders();
+          // An up-to-date paused world still needs a live, established stream.
+          response.write(': connected\n\n');
+          pump(response);
+          if (publicView?.revision !== service.version) publish();
           return;
         }
         if (request.method !== 'POST')
@@ -231,11 +430,128 @@ export async function createGameServer(
           case '/api/profile/preferences':
             return send(response, 200, {
               ok: true,
-              profile: service.setPreferences(preferences.parse(body)),
+              profile: await service.setPreferences(preferences.parse(body)),
             });
           case '/api/command': {
             const value = command.parse(body);
-            return send(response, 200, service.command(value.commandId, value.command));
+            return send(response, 200, await service.command(value.commandId, value.command));
+          }
+          case '/api/god/act': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({ action: z.literal('revive'), targetId: requestIdSchema })
+              .strict()
+              .parse(body);
+            return send(response, 200, await service.godAct(value.action, value.targetId));
+          }
+          case '/api/god/spawn': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z.object({ type: godSpawnType, position }).strict().parse(body);
+            return send(response, 200, await service.spawn(value));
+          }
+          case '/api/god/person': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = godPerson.extend({ position }).strict().parse(body);
+            return send(
+              response,
+              200,
+              await service.spawn({
+                type: 'person',
+                position: value.position,
+                person: {
+                  name: value.name,
+                  personality: value.personality,
+                  backstory: value.backstory,
+                  traitIds: value.traitIds,
+                  initialGoals: value.initialGoals,
+                },
+              }),
+            );
+          }
+          case '/api/god/editor/person': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const { actorId } = z.object({ actorId: requestIdSchema }).strict().parse(body);
+            const result = await service.personEditor(actorId);
+            return send(response, result.ok ? 200 : 404, result);
+          }
+          case '/api/god/editor/person/memory': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({ actorId: requestIdSchema, entryId: z.string().min(1).max(200) })
+              .strict()
+              .parse(body);
+            const result = await service.personMemoryJson(value.actorId, value.entryId);
+            return send(response, result.ok ? 200 : 404, result);
+          }
+          case '/api/god/editor/person/save': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({
+                actorId: requestIdSchema,
+                basePerson: godPerson,
+                person: godPerson,
+                memoryChanges: z
+                  .array(
+                    z
+                      .object({
+                        entryId: z.string().min(1).max(200),
+                        expectedHash: editorHash,
+                        replacement: godMemoryEdit.nullable(),
+                      })
+                      .strict(),
+                  )
+                  .max(10_000),
+              })
+              .strict()
+              .parse(body);
+            const result = await service.savePersonEditor(
+              value.actorId,
+              value.basePerson,
+              value.person,
+              value.memoryChanges,
+            );
+            return send(response, result.ok ? 200 : result.code === 'stale' ? 409 : 400, result);
+          }
+          case '/api/god/editor/world-events': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            z.object({}).strict().parse(body);
+            return send(response, 200, await service.worldEventsEditor());
+          }
+          case '/api/god/editor/world-event': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const { id } = z.object({ id: requestIdSchema }).strict().parse(body);
+            const result = await service.worldEventJson(id);
+            return send(response, result.ok ? 200 : 404, result);
+          }
+          case '/api/god/editor/world-events/save': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({
+                changes: z
+                  .array(
+                    z
+                      .object({
+                        id: requestIdSchema,
+                        expectedHash: editorHash,
+                        replacement: godWorldEvent.nullable(),
+                      })
+                      .strict(),
+                  )
+                  .max(10_000),
+              })
+              .strict()
+              .parse(body);
+            const result = await service.saveWorldEventsEditor(value.changes);
+            return send(response, result.ok ? 200 : result.code === 'stale' ? 409 : 400, result);
           }
           case '/api/god/correct-memory': {
             if (!config.godMode)
@@ -251,7 +567,7 @@ export async function createGameServer(
             return send(
               response,
               200,
-              service.correctMemory(value.actorId, value.sourceId, value.correctionEventId),
+              await service.correctMemory(value.actorId, value.sourceId, value.correctionEventId),
             );
           }
           case '/api/god/forget-memory': {
@@ -261,8 +577,8 @@ export async function createGameServer(
               .object({ actorId: requestIdSchema, sourceId: requestIdSchema })
               .strict()
               .parse(body);
-            const result = service.forgetMemory(value.actorId, value.sourceId);
-            if (result.ok) store.db.exec('DELETE FROM intelligence_calls');
+            const result = await service.forgetMemory(value.actorId, value.sourceId);
+            if (result.ok) await store.db.exec('DELETE FROM intelligence_calls');
             return send(response, 200, result);
           }
           case '/api/god/cognition-policy': {
@@ -275,7 +591,7 @@ export async function createGameServer(
             return send(
               response,
               200,
-              service.transition((world) =>
+              await service.transition((world) =>
                 admitCognitionPolicy(world, value.policy, value.expectedRevision),
               ),
             );
@@ -299,14 +615,14 @@ export async function createGameServer(
             return send(response, 200, {
               ok: true,
               worldId: service.world.id,
-              ...traceHistory(store, filter),
+              ...(await traceHistory(store, filter)),
             });
           }
           case '/api/god/trigger': {
             if (!config.godMode)
               return send(response, 403, { ok: false, message: 'God access required.' });
             const { id } = z.object({ id: requestIdSchema }).strict().parse(body);
-            const details = traceDetails(store, id);
+            const details = await traceDetails(store, id);
             return send(response, details ? 200 : 404, { ok: !!details, details });
           }
           case '/api/god/intelligence-details': {
@@ -333,38 +649,40 @@ export async function createGameServer(
               .parse(body);
             return send(response, 200, {
               ok: true,
-              calls: store.intelligenceCalls(offset).map((call) => {
-                const input = call.input as { requestId?: string; actorScope?: string };
-                const requestId = input?.requestId;
-                const job = requestId
-                  ? store.getJob(requestId.slice(0, requestId.lastIndexOf(':')))
-                  : undefined;
-                const worldAgent = call.kind.includes('world agent');
-                const actorId =
-                  input?.actorScope ??
-                  (job
-                    ? job.kind === 'invention'
-                      ? 'player'
-                      : (job.request.npcId ?? 'ada')
-                    : undefined);
-                return {
-                  ...call,
-                  actorName: worldAgent
-                    ? 'World agent'
-                    : actorId
-                      ? (service.world.entities[actorId]?.name ?? actorId)
-                      : call.actorName,
-                  trigger: worldAgent
-                    ? 'Message'
-                    : job?.kind === 'chat'
-                      ? 'Speech'
-                      : job?.kind === 'invention'
-                        ? 'Invention'
-                        : job?.kind === 'thought'
-                          ? job.request.text
-                          : call.trigger,
-                };
-              }),
+              calls: await Promise.all(
+                (await store.intelligenceCalls(offset)).map(async (call) => {
+                  const input = call.input as { requestId?: string; actorScope?: string };
+                  const requestId = input?.requestId;
+                  const job = requestId
+                    ? await store.getJob(requestId.slice(0, requestId.lastIndexOf(':')))
+                    : undefined;
+                  const worldAgent = call.kind.includes('world agent');
+                  const actorId =
+                    input?.actorScope ??
+                    (job
+                      ? job.kind === 'invention'
+                        ? 'player'
+                        : (job.request.npcId ?? 'ada')
+                      : undefined);
+                  return {
+                    ...call,
+                    actorName: worldAgent
+                      ? 'World agent'
+                      : actorId
+                        ? (service.world.entities[actorId]?.name ?? actorId)
+                        : call.actorName,
+                    trigger: worldAgent
+                      ? 'Message'
+                      : job?.kind === 'chat'
+                        ? 'Speech'
+                        : job?.kind === 'invention'
+                          ? 'Invention'
+                          : job?.kind === 'thought'
+                            ? job.request.text
+                            : call.trigger,
+                  };
+                }),
+              ),
             });
           }
           case '/api/god/mind': {
@@ -377,10 +695,10 @@ export async function createGameServer(
             return send(response, 200, { ok: true, mind: inspectGodMind(service, actorId) });
           }
           case '/api/control':
-            return send(response, 200, service.control(controls.parse(body)));
+            return send(response, 200, await service.control(controls.parse(body)));
           case '/api/presence': {
             const value = presence.parse(body);
-            service.setPresence(value.clientId, value.visible, value.sequence);
+            await service.setPresence(value.clientId, value.visible, value.sequence);
             return send(response, 200, {
               ok: true,
               code: 'presence',
@@ -413,7 +731,7 @@ export async function createGameServer(
           }
           case '/api/ai/cancel': {
             const value = z.object({ jobId: requestIdSchema }).strict().parse(body);
-            return send(response, 200, director.cancel(value.jobId));
+            return send(response, 200, await director.cancel(value.jobId));
           }
           case '/api/chat':
           case '/api/invent': {
@@ -425,6 +743,7 @@ export async function createGameServer(
                 url.pathname === '/api/chat' ? 'chat' : 'invention',
                 value.requestId,
                 value.text,
+                value.npcId,
               ),
             );
           }
@@ -486,14 +805,29 @@ export async function createGameServer(
   server.requestTimeout = 10_000;
   server.headersTimeout = 10_000;
   let previous = performance.now();
+  let ticking = false;
+  let activeTick: Promise<void> | undefined;
   const interval =
     options.tick === false
       ? undefined
       : setInterval(() => {
+          if (ticking || disposed) return;
+          ticking = true;
           const current = performance.now();
-          service.tick((current - previous) / 1000);
+          const elapsed = (current - previous) / 1000;
           previous = current;
-          director.considerThought();
+          activeTick = (async () => {
+            await service.tick(elapsed);
+            await director.considerThought();
+          })()
+            .catch(() => {
+              service.storageError =
+                'Background persistence failed; simulation paused. Restart and reconcile storage.';
+              service.notify();
+            })
+            .finally(() => {
+              ticking = false;
+            });
         }, 250);
 
   return {
@@ -507,14 +841,20 @@ export async function createGameServer(
       if (publishTimer) clearTimeout(publishTimer);
       unsubscribe();
       director.macrofold.stop();
+      await activeTick;
       await director.close();
-      for (const stream of streams) stream.end();
+      await service.flush();
+      await projectionQueue;
+      for (const [stream, state] of streams) {
+        clearTimeout(state.timeout);
+        stream.end();
+      }
       streams.clear();
       await new Promise<void>((resolveClose, reject) =>
         server.close((error) => (error ? reject(error) : resolveClose())),
       );
       await vite?.close();
-      store.close();
+      await store.close();
     },
   };
 }

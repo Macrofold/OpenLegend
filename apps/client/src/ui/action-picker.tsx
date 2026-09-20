@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import type {
   ActionCatalogue,
@@ -11,6 +11,8 @@ import type {
 import { filterActions } from '../action-browser';
 import { post } from '../api';
 import { Explanation, Icon, IconButton, symbol } from '../design-system/components';
+import { spawnIcons } from './god-tools';
+import { PulloutPicker } from './pullout';
 export type PickerContext = {
   context: ActionContext;
   point: { x: number; y: number };
@@ -25,6 +27,9 @@ export function ActionPicker({
   invent,
   inspect,
   preference,
+  revive,
+  spawn,
+  createPerson,
 }: {
   picker: PickerContext;
   view: GameView;
@@ -34,49 +39,68 @@ export function ActionPicker({
   invent(text: string): void;
   inspect(entity: EntityView): void;
   preference(profile: PlayerProfile): void;
+  revive(entity: EntityView): void;
+  spawn(type: string, position: { x: number; z: number }): void;
+  createPerson(position: { x: number; z: number }): void;
 }) {
   const [query, setQuery] = useState(''),
     [actions, setActions] = useState<CatalogueAction[]>([]),
     [error, setError] = useState('Loading actions…'),
-    [saving, setSaving] = useState(false);
+    [refreshing, setRefreshing] = useState(false),
+    [saving, setSaving] = useState(false),
+    [showUnavailable, setShowUnavailable] = useState(
+      view.profile.preferences.showUnavailableActions,
+    );
   const menu = useRef<HTMLDivElement>(null),
-    input = useRef<HTMLInputElement>(null);
+    input = useRef<HTMLInputElement>(null),
+    refreshRequest = useRef(0);
   const [position, setPosition] = useState(picker.point);
+  const refresh = useCallback(async () => {
+    const request = ++refreshRequest.current;
+    setRefreshing(true);
+    try {
+      const result = await post<{ ok: boolean; message?: string; catalogue: ActionCatalogue }>(
+        '/api/actions',
+        picker.context,
+      );
+      if (request !== refreshRequest.current) return;
+      if (!result.ok) throw new Error(result.message);
+      setActions(result.catalogue.actions);
+      setError('');
+    } catch (reason) {
+      if (request === refreshRequest.current) setError(String(reason));
+    } finally {
+      if (request === refreshRequest.current) setRefreshing(false);
+    }
+  }, [picker.context]);
   useEffect(() => {
     input.current?.focus();
-    let active = true,
-      timer: ReturnType<typeof setTimeout>;
-    async function refresh() {
-      try {
-        const result = await post<{ ok: boolean; message?: string; catalogue: ActionCatalogue }>(
-          '/api/actions',
-          picker.context,
-        );
-        if (!active) return;
-        if (!result.ok) throw new Error(result.message);
-        setActions(result.catalogue.actions);
-        setError('');
-      } catch (e) {
-        if (active) setError(String(e));
-      } finally {
-        if (active) timer = setTimeout(refresh, 750);
-      }
-    }
     void refresh();
     return () => {
-      active = false;
-      clearTimeout(timer);
+      refreshRequest.current++;
     };
-  }, [picker]);
+  }, [refresh]);
   const matches = filterActions(
     actions.map((a) =>
       connected ? a : { ...a, enabled: false, reason: 'Reconnect to the world.' },
     ),
     query,
-    view.profile.preferences.showUnavailableActions,
+    showUnavailable,
     picker.context.targetId,
   );
   const canInvent = connected && !error && !!query.trim() && !matches.some((a) => a.enabled);
+  const showInspect =
+    !!picker.entity && (!query || 'look closer description inspect'.includes(query.toLowerCase()));
+  const showRevive =
+    view.godMode &&
+    picker.entity?.kind === 'actor' &&
+    picker.entity.status === 'Dead' &&
+    (!query || 'revive god mode'.includes(query.toLowerCase()));
+  const showAdd =
+    view.godMode &&
+    !picker.entity &&
+    !!picker.context.position &&
+    (!query || 'add something spawn god mode'.includes(query.toLowerCase()));
   useLayoutEffect(() => {
     const place = () => {
       const bounds = menu.current?.getBoundingClientRect();
@@ -91,15 +115,19 @@ export function ActionPicker({
     return () => window.removeEventListener('resize', place);
   }, [picker, matches.length, error]);
   async function toggle() {
+    const previous = showUnavailable;
+    const next = !previous;
+    setShowUnavailable(next);
     setSaving(true);
     try {
       const result = await post<{ ok: boolean; message?: string; profile: PlayerProfile }>(
         '/api/profile/preferences',
-        { showUnavailableActions: !view.profile.preferences.showUnavailableActions },
+        { showUnavailableActions: next },
       );
       if (!result.ok) throw new Error(result.message);
       preference(result.profile);
     } catch (e) {
+      setShowUnavailable(previous);
       setError(String(e));
     } finally {
       setSaving(false);
@@ -138,6 +166,12 @@ export function ActionPicker({
       <div className="ol-picker-head">
         <Icon name={symbol(picker.entity?.subtype ?? 'ui.inview')} />
         <strong id="contextTitle">{picker.entity?.name ?? 'The clearing'}</strong>
+        <IconButton
+          icon="ui.refresh"
+          label="Refresh actions"
+          disabled={refreshing}
+          onPress={() => void refresh()}
+        />
         <IconButton icon="ui.close" label="Close action picker" onPress={close} />
       </div>
       <div className="ol-search">
@@ -174,14 +208,40 @@ export function ActionPicker({
         )}
       </div>
       <div className="ol-menu-scroll">
-        {picker.entity &&
-          (!query || 'look closer description inspect'.includes(query.toLowerCase())) && (
-            <AriaButton data-picker-row className="ol-item" onPress={() => inspect(picker.entity!)}>
-              <Icon name="ui.inview" />
-              <span>Look closer</span>
-              <small className="ol-item-hint">Inspect</small>
-            </AriaButton>
-          )}
+        {showRevive && (
+          <AriaButton
+            data-picker-row
+            className="ol-item ol-god-action"
+            onPress={() => revive(picker.entity!)}
+          >
+            <Icon name="ui.star" />
+            <span>Revive</span>
+            <small className="ol-item-hint">God mode</small>
+          </AriaButton>
+        )}
+        {showAdd && (
+          <PulloutPicker
+            label="Add something"
+            icon="ui.plus"
+            badge="God mode"
+            placeholder="Search objects…"
+            options={(view.godTools?.spawnOptions ?? []).map((option) => ({
+              ...option,
+              icon: spawnIcons[option.id] ?? 'ui.plus',
+            }))}
+            onSelect={(type) => {
+              if (type === 'person') createPerson(picker.context.position!);
+              else spawn(type, picker.context.position!);
+            }}
+          />
+        )}
+        {showInspect && (
+          <AriaButton data-picker-row className="ol-item" onPress={() => inspect(picker.entity!)}>
+            <Icon name="ui.inview" />
+            <span>Look closer</span>
+            <small className="ol-item-hint">Inspect</small>
+          </AriaButton>
+        )}
         {matches.map((a) => (
           <Explanation
             key={a.id}
@@ -227,25 +287,24 @@ export function ActionPicker({
             {error}
           </p>
         )}
-        {!error && !matches.length && (
+        {!error && !matches.length && !showInspect && !showRevive && !showAdd && (
           <p className="ol-meta">
             {query
               ? 'No matching actions. Press Enter to invent this idea.'
-              : 'No actions here yet.'}
+              : actions.length
+                ? 'Available actions are hidden. Show unavailable actions to see why.'
+                : 'No actions here yet.'}
           </p>
         )}
       </div>
       {actions.some((a) => !a.enabled) && (
         <AriaButton
           className="ol-menu-toggle"
-          aria-expanded={view.profile.preferences.showUnavailableActions}
+          aria-expanded={showUnavailable}
           isDisabled={saving || !connected}
           onPress={() => void toggle()}
         >
-          {view.profile.preferences.showUnavailableActions
-            ? 'Hide Unavailable Actions'
-            : 'Show Unavailable Actions'}
-          {saving ? ' · Saving…' : ''}
+          {showUnavailable ? 'Hide Unavailable Actions' : 'Show Unavailable Actions'}
         </AriaButton>
       )}
     </div>

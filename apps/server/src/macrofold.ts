@@ -65,11 +65,11 @@ export class MacrofoldBackend implements AiClient {
   private key(name: string): string {
     return `macrofold:${digest(this.service.config.macrofoldUrl)}:${this.service.world.id}:${name}`;
   }
-  private load<T>(name: string): T | undefined {
-    return this.service.store.getIntegration(this.key(name)) as T | undefined;
+  private async load<T>(name: string): Promise<T | undefined> {
+    return (await this.service.store.getIntegration(this.key(name))) as T | undefined;
   }
-  private save(name: string, value: unknown): void {
-    this.service.store.putIntegration(this.key(name), value);
+  private async save(name: string, value: unknown): Promise<void> {
+    await this.service.store.putIntegration(this.key(name), value);
   }
   private receipt(
     id: string,
@@ -99,7 +99,7 @@ export class MacrofoldBackend implements AiClient {
     signal?: AbortSignal,
   ): Promise<Record<string, unknown>> {
     const fingerprint = digest({ path, body });
-    const previous = this.load<{ fingerprint: string; response?: Record<string, unknown> }>(
+    const previous = await this.load<{ fingerprint: string; response?: Record<string, unknown> }>(
       `operation:${name}`,
     );
     if (previous) {
@@ -111,9 +111,9 @@ export class MacrofoldBackend implements AiClient {
       );
     }
     signal?.throwIfAborted();
-    this.save(`operation:${name}`, { fingerprint });
+    await this.save(`operation:${name}`, { fingerprint });
     const result = object(await this.api.request(path, body, digest(this.key(name)), signal));
-    this.save(`operation:${name}`, { fingerprint, response: result });
+    await this.save(`operation:${name}`, { fingerprint, response: result });
     return result;
   }
   private async waitSandbox(id: string, signal: AbortSignal): Promise<void> {
@@ -180,7 +180,7 @@ export class MacrofoldBackend implements AiClient {
         );
         if (result['run_id'] !== id || result['final'] !== true)
           throw new Error('Macrofold result is not final.');
-        this.save(`result:${id}`, { status, result });
+        await this.save(`result:${id}`, { status, result });
         return { status, result };
       }
       if (status['status'] === 'waiting_for_input')
@@ -248,21 +248,21 @@ export class MacrofoldBackend implements AiClient {
       // Missing reporting permission or delayed usage leaves the reserve intact.
     }
   }
-  private reserveCompute(name: string, background = false): void {
+  private async reserveCompute(name: string, background = false): Promise<void> {
     const config = this.service.config;
-    if (this.load(`compute:${name}`)) return;
+    if (await this.load(`compute:${name}`)) return;
     if (!config.macrofoldComputeUsd)
       throw new Error(
         'Set MACROFOLD_COMPUTE_MAX_USD to a nonzero compute allocation before starting a warm worker.',
       );
     const id = this.key(`compute:${name}`);
     if (
-      !this.service.store.reserve(
+      !(await this.service.store.reserve(
         id,
         'macrofold',
         config.macrofoldComputeUsd,
         Math.max(0, config.budgetUsd - (background ? interactiveAllowance(config) : 0)),
-      )
+      ))
     )
       throw new Error('AI spending cap cannot cover the compute allocation.');
     // Reserve the full allocation conservatively, including idle time. Never
@@ -270,8 +270,8 @@ export class MacrofoldBackend implements AiClient {
     const receipt = this.receipt(id, 'macrofold', 'long-running-compute', {});
     receipt.dispatched = true;
     receipt.completionUncertain = true;
-    this.service.store.settle(id, receipt);
-    this.save(`compute:${name}`, true);
+    await this.service.store.settle(id, receipt);
+    await this.save(`compute:${name}`, true);
   }
   private async native(
     name: string,
@@ -284,10 +284,10 @@ export class MacrofoldBackend implements AiClient {
   ): Promise<string> {
     if (this.busy.has(name)) throw new Error('This agent already has work in progress.');
     this.busy.add(name);
-    const lane = this.load<Lane>(`lane:${name}`) ?? {};
-    const save = () => {
-      if (this.load<Lane>(`lane:${name}`)?.closed) lane.closed = true;
-      this.save(`lane:${name}`, lane);
+    const lane = (await this.load<Lane>(`lane:${name}`)) ?? {};
+    const save = async () => {
+      if ((await this.load<Lane>(`lane:${name}`))?.closed) lane.closed = true;
+      await this.save(`lane:${name}`, lane);
     };
     try {
       if (lane.closed) throw new Error('This conversation has ended. Start a new tab.');
@@ -306,7 +306,7 @@ export class MacrofoldBackend implements AiClient {
         ) {
           lane.blocked = false;
           delete lane.run;
-          save();
+          await save();
         }
       }
       if (lane.blocked)
@@ -342,10 +342,10 @@ export class MacrofoldBackend implements AiClient {
           this.service.world.entities[name]?.name ?? name,
         );
         lane.worktree = resource.worktreeId;
-        save();
+        await save();
       }
       if (!lane.sandbox) {
-        this.reserveCompute(name, reflection);
+        await this.reserveCompute(name, reflection);
         const sandbox = await this.mutation(
           `sandbox:${name}`,
           '/v1/sandboxes',
@@ -364,15 +364,15 @@ export class MacrofoldBackend implements AiClient {
           const computeReceipt = this.receipt(computeId, 'macrofold', 'long-running-compute', {});
           computeReceipt.dispatched = true;
           computeReceipt.estimatedCostUsd = 0;
-          this.service.store.settle(computeId, computeReceipt);
+          await this.service.store.settle(computeId, computeReceipt);
         }
-        save();
+        await save();
       }
       await this.waitSandbox(lane.sandbox, signal);
       signal.throwIfAborted();
       // A crash between admission and saving IDs cannot admit a second run.
       lane.blocked = true;
-      save();
+      await save();
       receipt.dispatched = true;
       const accepted = await this.mutation(
         `run:${id}`,
@@ -408,7 +408,7 @@ export class MacrofoldBackend implements AiClient {
       if (accepted['sandbox_id'] !== lane.sandbox)
         throw new Error('Macrofold returned an unexpected compute identity.');
       receipt.providerRequestId = lane.run;
-      save();
+      await save();
       const { status, result } = await this.waitRun(
         lane.run,
         object(accepted['urls']),
@@ -428,7 +428,7 @@ export class MacrofoldBackend implements AiClient {
         );
       lane.blocked = false;
       delete lane.run;
-      save();
+      await save();
       if (status['status'] !== 'succeeded' || result['execution_outcome'] !== 'success')
         throw new Error(`Macrofold execution ended with ${String(result['execution_outcome'])}.`);
       return string(result['output_text']);
@@ -614,7 +614,13 @@ export class MacrofoldBackend implements AiClient {
         input: {
           messages: [
             { role: 'system', content: request.instructions },
-            { role: 'user', content: JSON.stringify(request.context) },
+            {
+              role: 'user',
+              content:
+                typeof request.context === 'string'
+                  ? request.context
+                  : JSON.stringify(request.context),
+            },
           ],
           response_format: {
             type: 'json_schema',
@@ -803,18 +809,18 @@ export class MacrofoldBackend implements AiClient {
       receipt.model = inference['model_revision'];
       receipt.modelVersionStatus = 'reported';
     }
-    this.save(`result:${run}`, resolved);
+    await this.save(`result:${run}`, resolved);
     return inference;
   }
-  message(value: {
+  async message(value: {
     requestId: string;
     conversationId: string;
     worldId: string;
     text: string;
   }): Promise<{ ok: boolean; code: string; message: string }> {
     return this.log
-      ? this.log.run('Full harness · world agent', value, () => this.messageImpl(value))
-      : this.messageImpl(value);
+      ? this.log.run('Full harness · world agent', value, async () => await this.messageImpl(value))
+      : await this.messageImpl(value);
   }
   private async messageImpl(value: {
     requestId: string;
@@ -824,7 +830,7 @@ export class MacrofoldBackend implements AiClient {
   }): Promise<{ ok: boolean; code: string; message: string }> {
     const key = `message:${value.requestId}`;
     const fingerprint = digest(value);
-    const prior = this.load<{
+    const prior = await this.load<{
       fingerprint: string;
       response?: { ok: boolean; code: string; message: string };
     }>(key);
@@ -848,15 +854,15 @@ export class MacrofoldBackend implements AiClient {
       return { ok: false, code: 'busy', message: 'This conversation is already running.' };
     const id = this.key(key);
     if (
-      !this.service.store.reserve(
+      !(await this.service.store.reserve(
         id,
         'openai',
         this.service.config.macrofoldRunUsd,
         this.service.config.budgetUsd,
-      )
+      ))
     )
       return { ok: false, code: 'budget', message: 'AI spending cap reached.' };
-    this.save(key, { fingerprint });
+    await this.save(key, { fingerprint });
     const controller = new AbortController();
     this.controllers.set(name, controller);
     const receipt = this.receipt(id, 'macrofold', this.service.config.macrofoldModel, value.text);
@@ -890,14 +896,14 @@ export class MacrofoldBackend implements AiClient {
     } finally {
       receipt.completedAt = new Date().toISOString();
       receipt.latencyMs = Date.now() - Date.parse(receipt.startedAt);
-      this.service.store.settle(id, receipt);
+      await this.service.store.settle(id, receipt);
       this.controllers.delete(name);
     }
-    this.save(key, { fingerprint, response });
+    await this.save(key, { fingerprint, response });
     return response;
   }
   async inspectCall(id: string): Promise<unknown> {
-    const call = this.service.store.intelligenceCall(id);
+    const call = await this.service.store.intelligenceCall(id);
     if (!call) throw new Error('Unknown intelligence call.');
     const runs = new Set<string>();
     for (const exchange of call.exchanges) {
@@ -936,8 +942,8 @@ export class MacrofoldBackend implements AiClient {
         to: new Date().toISOString(),
       });
       const [events, billing] = await Promise.allSettled([
-        readPages(`/v1/runs/${encodeURIComponent(run)}/events`),
-        readPages(`/v1/billing/usage?${query}`),
+        await readPages(`/v1/runs/${encodeURIComponent(run)}/events`),
+        await readPages(`/v1/billing/usage?${query}`),
       ]);
       const value = (result: PromiseSettledResult<unknown>) =>
         result.status === 'fulfilled'
@@ -965,7 +971,7 @@ export class MacrofoldBackend implements AiClient {
           await this.captureRunUsage(receipt, signal);
           if (receipt.estimatedCostUsd !== undefined) {
             receipt.completionUncertain = false;
-            this.service.store.settle(receipt.requestId, receipt);
+            await this.service.store.settle(receipt.requestId, receipt);
             this.log?.save({ ...call, output: { ...output, receipt } });
             this.service.notify();
           }
@@ -985,9 +991,9 @@ export class MacrofoldBackend implements AiClient {
   async closeConversation(id: string): Promise<void> {
     const name = `conversation:${id}`;
     this.controllers.get(name)?.abort();
-    const lane = this.load<Lane>(`lane:${name}`) ?? {};
+    const lane = (await this.load<Lane>(`lane:${name}`)) ?? {};
     lane.closed = true;
-    this.save(`lane:${name}`, lane);
+    await this.save(`lane:${name}`, lane);
     if (lane.run) await this.cancel(lane.run);
     if (lane.sandbox)
       await this.mutation(

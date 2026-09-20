@@ -16,6 +16,7 @@ export interface AttentionCandidate {
   text: string;
   revision: string;
   required: boolean;
+  automatic: boolean;
   entityIds: string[];
   at: number;
   salience: number;
@@ -34,11 +35,25 @@ export function candidateSet(
   actorId: string,
   observed: NonNullable<ReturnType<WorldService['observe']>>,
   requiredIds: string[],
+  automaticIds: string[] = [],
 ): AttentionCandidate[] {
-  const candidates: AttentionCandidate[] = experiences(world, actorId).map((m) => ({
+  const recallable = experiences(world, actorId);
+  const included = new Set(recallable.map((m) => m.id));
+  // The normal raw-source cap must not hide the event that triggered this decision.
+  for (const memory of experiences(world, actorId, true)) {
+    const required =
+      requiredIds.includes(memory.id) ||
+      requiredIds.includes(memory.eventId ?? '') ||
+      automaticIds.includes(memory.id) ||
+      automaticIds.includes(memory.eventId ?? '') ||
+      !!world.experience?.corrections?.[actorId]?.[memory.id] ||
+      Object.values(world.experience?.corrections?.[actorId] ?? {}).includes(memory.id);
+    if (required && !included.has(memory.id)) recallable.push(memory);
+  }
+  const candidates: AttentionCandidate[] = recallable.map((m) => ({
     id: m.id,
     kind: 'memory',
-    text: `${gameTime(m.at)}: ${m.source === 'heard' ? 'I heard: ' : m.source === 'inferred' ? 'Remembered summary: ' : ''}${m.summary}`,
+    text: `${gameTime(m.at)} [${m.source}]: ${m.summary}`,
     revision: digest(m),
     required:
       requiredIds.includes(m.id) ||
@@ -46,6 +61,7 @@ export function candidateSet(
       (m.kind === 'commitment' && !m.resolved) ||
       !!world.experience?.corrections?.[actorId]?.[m.id] ||
       Object.values(world.experience?.corrections?.[actorId] ?? {}).includes(m.id),
+    automatic: automaticIds.includes(m.id) || automaticIds.includes(m.eventId ?? ''),
     entityIds: m.entityIds,
     at: m.at,
     salience: m.importance,
@@ -54,7 +70,7 @@ export function candidateSet(
     candidates.push({
       id: `entity:${e.id}`,
       kind: 'entity',
-      text: `${e.name}: ${e.kind}${e.actor ? `, ${e.actor.action?.type ?? 'idle'}` : ''}${e.resource ? `, ${e.resource.quantity} available` : ''}`,
+      text: `${e.name}: ${e.actor ? 'person' : e.kind}${e.actor ? `, ${e.actor.action?.type ?? 'idle'}` : ''}${e.resource ? `, ${e.resource.quantity} available` : ''}`,
       revision: digest({
         name: e.name,
         kind: e.kind,
@@ -62,6 +78,7 @@ export function candidateSet(
         activity: e.actor?.action?.type,
       }),
       required: false,
+      automatic: false,
       entityIds: [e.id],
       at: world.simTime,
       salience: 3,
@@ -74,6 +91,7 @@ export function candidateSet(
       text: `${item.quantity} ${definition.name}; ${definition.properties.join(', ')}`,
       revision: digest({ item, definition }),
       required: false,
+      automatic: false,
       entityIds: [],
       at: world.simTime,
       salience: 2,
@@ -86,6 +104,7 @@ export function candidateSet(
       text: `I know ${recipe.name}: ${recipe.description}`,
       revision: digest(recipe),
       required: false,
+      automatic: false,
       entityIds: [],
       at: world.simTime,
       salience: 3,
@@ -125,13 +144,20 @@ export class RecallService {
     judge: (request: Omit<JudgeRequest, 'requestId' | 'signal'>) => Promise<JudgeValue>,
     signal: AbortSignal,
     budgetCeiling = this.service.config.budgetUsd,
+    optionalByteBudget = Number.MAX_SAFE_INTEGER,
   ) {
     const config = this.service.config;
     const inner = world.innerWorlds?.[actorId];
     const records = mindFor(world, actorId).records;
     const people = Object.values(world.entities)
-      .filter((e) => candidates.some((c) => c.kind === 'entity' && c.entityIds.includes(e.id)))
-      .map((e) => e.id);
+      .filter(
+        (entity) =>
+          !!entity.actor &&
+          candidates.some(
+            (candidate) => candidate.kind === 'entity' && candidate.entityIds.includes(entity.id),
+          ),
+      )
+      .map((entity) => entity.id);
     // Cues are derived from the accepted text, never a second writable biography.
     const cues = (inner?.text ?? '')
       .split(/\n+/)
@@ -146,7 +172,7 @@ export class RecallService {
       );
     const key = `vectors:${world.id}:${actorId}`;
     const vectors = this.service.store.vectors;
-    let cache = (vectors ? this.service.store.getIntegration(key) : undefined) as
+    let cache = (vectors ? await this.service.store.getIntegration(key) : undefined) as
       | VectorCache
       | undefined;
     if (cache?.model !== config.embeddingModel || cache.dimensions !== config.embeddingDimensions)
@@ -155,10 +181,17 @@ export class RecallService {
         dimensions: config.embeddingDimensions,
         queries: {},
       };
+    const automatic = candidates.filter((candidate) => candidate.automatic);
+    for (const candidate of automatic) {
+      candidate.selected = true;
+      candidate.reason = 'current conversation';
+    }
+    const searchable = candidates.filter((candidate) => !candidate.automatic);
     const scope = { key, model: config.embeddingModel, dimensions: config.embeddingDimensions };
-    const sources = candidates.map(({ id, revision }) => ({ id, revision }));
-    const indexed = vectors?.reconcile(scope, sources) ?? new Set<string>();
-    const ranked = [...candidates].sort(
+    const retainedSources = candidates.map(({ id, revision }) => ({ id, revision }));
+    const sources = searchable.map(({ id, revision }) => ({ id, revision }));
+    const indexed = (await vectors?.reconcile(scope, retainedSources)) ?? new Set<string>();
+    const ranked = [...searchable].sort(
       (a, b) =>
         Number(b.required) -
           Number(a.required) +
@@ -179,7 +212,9 @@ export class RecallService {
     if (vectors && (missing.length || !cachedQuery)) {
       const id = `${jobId}:embeddings`;
       if (!config.embeddingKey) embeddingStatus = 'unavailable: no embedding credentials';
-      else if (!this.service.store.reserve(id, 'openai', config.embeddingReserveUsd, budgetCeiling))
+      else if (
+        !(await this.service.store.reserve(id, 'openai', config.embeddingReserveUsd, budgetCeiling))
+      )
         embeddingStatus = 'deferred: spending cap';
       else {
         const texts = [...(!cachedQuery ? [query] : []), ...missing.map((c) => c.text)];
@@ -191,9 +226,9 @@ export class RecallService {
             dimensions: config.embeddingDimensions,
             texts,
           },
-          () => this.embeddings.embed({ requestId: id, texts, signal }),
+          async () => await this.embeddings.embed({ requestId: id, texts, signal }),
         );
-        this.service.store.settle(id, result.receipt);
+        await this.service.store.settle(id, result.receipt);
         embeddingStatus = result.outcome;
         if (result.outcome === 'value') {
           let i = 0;
@@ -212,17 +247,17 @@ export class RecallService {
         digest(world.experience?.corrections?.[actorId] ?? {})
     ) {
       if (vectors && additions.length) {
-        vectors.put(scope, additions);
+        await vectors.put(scope, additions);
         for (const source of additions) indexed.add(source.id);
       }
-      if (vectors) this.service.store.putIntegration(key, cache);
+      if (vectors) await this.service.store.putIntegration(key, cache);
     } else {
       // Rebuilding from a changed privacy snapshot belongs to a fresh decision.
       throw new Error('Recall sources changed during embedding; discard stale context.');
     }
     const q = cache.queries[queryKey];
-    const matches = q && vectors ? vectors.search(scope, q, sources, 24) : [];
-    const byId = new Map(candidates.map((c) => [c.id, c]));
+    const matches = q && vectors ? await vectors.search(scope, q, sources, 24) : [];
+    const byId = new Map(searchable.map((c) => [c.id, c]));
     const semantic = matches.map(({ id, score }) => {
       const candidate = byId.get(id)!;
       candidate.score = score;
@@ -241,10 +276,21 @@ export class RecallService {
     const mandatory = ranked.filter((c) => c.required);
     if (mandatory.length > 24)
       throw new Error('Required recall exceeds bounded attention capacity.');
-    const batch = [
-      ...mandatory,
-      ...ordered.filter((c) => !c.required).slice(0, 24 - mandatory.length),
-    ];
+    const candidateBytes = (candidate: AttentionCandidate) =>
+      Buffer.byteLength(candidate.text) + Buffer.byteLength(candidate.id) + 32;
+    const mandatoryBytes = mandatory.reduce((sum, candidate) => sum + candidateBytes(candidate), 0);
+    if (mandatoryBytes > optionalByteBudget)
+      throw new Error('Required recall exceeds the remaining context budget.');
+    let remainingBytes = optionalByteBudget - mandatoryBytes;
+    const optional: AttentionCandidate[] = [];
+    for (const candidate of ordered.filter((entry) => !entry.required)) {
+      if (mandatory.length + optional.length >= 24) break;
+      const bytes = candidateBytes(candidate);
+      if (bytes > remainingBytes) continue;
+      optional.push(candidate);
+      remainingBytes -= bytes;
+    }
+    const batch = [...mandatory, ...optional];
     const candidateTexts = Object.fromEntries(batch.map((c, i) => [`c${i}`, c.text]));
     const questions = attentionQuestions(Object.keys(candidateTexts));
     let attentionStatus = 'no candidates';
@@ -292,7 +338,9 @@ export class RecallService {
         }
       }
     }
-    const selected = batch.filter((c) => c.selected);
+    const selected = [...automatic, ...batch.filter((c) => c.selected)].sort(
+      (a, b) => a.at - b.at || a.id.localeCompare(b.id),
+    );
     return {
       selected,
       diagnostics: {
@@ -315,13 +363,15 @@ export class RecallService {
           status: embeddingStatus,
           cachedQuery: !!cachedQuery,
           storage: vectors ? 'pgvector' : 'unavailable',
+          table: vectors ? 'recall_vectors' : 'unavailable',
           search: 'database exact top-24',
           indexed: indexed.size,
           lag: ranked.filter((c) => !indexed.has(c.id)).length,
         },
+        automatic,
         candidates: batch,
         eligible: candidates.length,
-        unexamined: candidates.length - batch.length,
+        unexamined: candidates.length - automatic.length - batch.length,
       },
     };
   }

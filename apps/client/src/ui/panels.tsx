@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { EventTime } from './event-time';
 import { Button as AriaButton } from 'react-aria-components';
 import type { ActionOption, EntityView, GameView, InventoryItemView } from '@open-legend/protocol';
 import {
@@ -178,12 +179,14 @@ export function EntityDetail({
   command,
   talk,
   inspectMind,
+  editPerson,
 }: {
   entity: EntityView;
   connected: boolean;
   command(a: ActionOption): void;
   talk(id: string): void;
   inspectMind?(): void;
+  editPerson?(): void;
 }) {
   return (
     <>
@@ -201,9 +204,14 @@ export function EntityDetail({
         </Button>
       )}
       <Actions actions={entity.actions} command={command} connected={connected} />
+      {editPerson && (
+        <Button variant="quiet" size="sm" icon="ui.character" onPress={editPerson}>
+          Edit Person · God mode
+        </Button>
+      )}
       {inspectMind && (
         <Button variant="quiet" size="sm" onPress={inspectMind}>
-          Inspect private mind
+          Inspect private mind · God mode
         </Button>
       )}
     </>
@@ -232,25 +240,13 @@ export function Character({
         {view.player.memories?.length ? (
           view.player.memories.map((m) => (
             <div className="ol-memory" key={m.id}>
-              <time>Day {Math.floor(m.time / 86400) + 1}</time>
+              <EventTime time={m.time} />
               <span>{m.text}</span>
             </div>
           ))
         ) : (
           <p className="ol-meta">Your experiences will leave memories here.</p>
         )}
-      </Section>
-      <Section title="History">
-        <p className="ol-narrative">{view.player.history}</p>
-        {view.events
-          .filter((e) => e.actorId === view.player.id)
-          .slice(-8)
-          .reverse()
-          .map((e) => (
-            <p className="ol-meta" key={e.id}>
-              {e.text}
-            </p>
-          ))}
       </Section>
     </>
   );
@@ -301,11 +297,13 @@ export function AiSettings({ view }: { view: GameView }) {
           <br />
           Last latency {(ai.usage.lastLatencyMs / 1000).toFixed(1)}s
         </p>
-        {ai.jobs.map((j) => (
-          <p key={j.id}>
-            <Tag>{j.status}</Tag> {j.message}
-          </p>
-        ))}
+        {ai.jobs
+          .filter((job) => job.status === 'failed')
+          .map((job) => (
+            <p key={job.id}>
+              <Tag>Failed</Tag> {job.message}
+            </p>
+          ))}
       </details>
     </>
   );

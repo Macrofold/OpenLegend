@@ -10,6 +10,8 @@ See the [master TODO and implementation-plan index](README.md) for cognition, wo
 
 ## Queue navigation
 
+- [Narration and conversations — future work](#narration-and-conversations--future-work)
+- [Living actor model — ACT01–ACT06](#living-actor-model--act01act06)
 - [React design-system adoption](#react-design-system-adoption--september-20)
 - [Active cognition redesign plan](#active-cognition-redesign-plan)
 - [NPC memory and Macrofold integration](#npc-memory-and-macrofold-integration)
@@ -17,6 +19,48 @@ See the [master TODO and implementation-plan index](README.md) for cognition, wo
 - [Pause handling](#conversations-across-simulation-pauses), [cancellation](#manual-ai-cancellation-and-player-priority), and subsequent message/status checks
 - [UI and earlier runtime queue](#ui-and-earlier-runtime-queue), including detailed change/check/gap records
 - [Recorded batch completion notes](#recorded-batch-completion-notes)
+
+## Narration and conversations — future work
+
+The original September 20 request authorized documentation only; its follow-up authorized the immediate context/response implementation. [Narration, agent responses and conversations](../narration-and-conversations.md) owns the design and NC tracker. NC00 now implements readable context, explicit triggers and composed responses; NC01–NC03 remain partially delivered and NC04–NC13 remain pending. Group lifecycle, Narrator storage/prose and automatic mechanical invention are not implemented by the immediate response slice.
+
+### Immediate response follow-up — deferred validation
+
+Per request, no automated tests were written or run. Native in-memory execution constructed the direct-address prompt and committed/persisted speech, a nod and an owner-private thought. Production TypeScript compilation and Vite build passed. A localhost application smoke attempt was blocked by sandbox `EPERM` on port binding, so HTTP/browser verification remains pending. These are separate checks, not live model acceptance. The follow-up fixes add durable trigger metadata, a conservative speech action-context gate, a flat provider action object, component-level response status, bounded exchange selection and a 300-entry saved response-receipt window; their automated coverage remains deferred below.
+
+- [ ] Add/run direct-address versus overhearing, unknown/recognized speaker, acted-on/environment/need triggers, bounded transcript and current-event retention coverage. Include late arrival, forgetting/correction during retrieval, and prompt injection in quoted text.
+- [ ] Add/run all talk/act/think combinations and all-null silence, thought privacy/recall/consolidation, independent failed components, invalid handles, expression reach/line-of-sight, exact-once replay, saved receipts, action start versus completion, and public transcript action rendering.
+- [ ] Verify generated OpenAI response JSON Schema contains no nested `oneOf`, requires the flat action object's complete key set, accepts each valid kind/null combination and rejects mismatched kind-specific nullability at domain admission.
+- [ ] Verify durable awareness trigger metadata preserves addressed, overheard, self, directed-action and observed-event wording after recent world events rotate. Cover additive migration when the source event still exists and honest fallback when legacy detail is already unavailable.
+- [ ] Verify the speech action-context gate opens for `yes`, missing and uncertain results; closes only for `no` probability at least 0.8; and, when closed, issues no action-attention call, omits the Actions section and requires `act: null`. Confirm non-speech decisions still receive action context and action-filter failure conservatively exposes only the bounded candidates.
+- [ ] Verify the temporary exchange heuristic starts at the triggering speech, includes only actor-permitted speech between its participants, stops after 32 speech events, a two-simulation-hour gap or either participant addressing somebody else, and is replaced by durable conversation IDs under NC05.
+- [ ] Verify full acceptance, partial acceptance, total rejection and all-null response outcomes. Confirm fully rejected responses fail their AI job, accepted components remain visible on partial responses, rejected-component explanations project as interruptions, and stale/cancelled jobs retain their distinct status.
+- [ ] Verify the newest-300 response-receipt eviction order, duplicate/conflict behavior inside the window, additive replay of legacy receipts without aggregate outcomes, and durable job admission after eviction. Confirm receipt eviction does not remove actor memories, world events, provider/accounting receipts, persisted jobs or durable story/conversation history.
+- [ ] Add/run cancellation, pause/resume, death/incapacitation, plan/context changes and newer speech supersession across retrieval/generation/commit. Verify no paid regeneration after stale output and unique accounting IDs for attention batches.
+- [ ] Update older fixtures for `npc_response`, nullable components, readable provider input and the extra bounded action-attention batch; do not treat existing speech/action fixture expectations as current contracts. Run full checks when authorized.
+- [ ] With an explicitly authorized spending cap, assess natural direct replies, appropriate overhearing/intervention/silence, action-list bias and latency/cost using real models. The manually authored native smoke response establishes no model quality.
+- [ ] Complete generalized unlisted action admission and NC13 mechanics separately; currently unlisted proposals are explicitly rejected, while supported gestures and native actions execute. Revisit the 300-entry immediate-response receipt horizon with production traffic/retry evidence; command receipts retain their separate saved-snapshot growth limitation.
+
+The NC tracker owns implementation and acceptance; existing CR validation and dated findings remain intact. This extension adds recallable immediate private thoughts without turning reflection's presentation history into recall. Actual contextual reactions are remembered events even when their overhead display fades; technical loading indicators are not events.
+
+## Living actor model — ACT01–ACT06
+
+All tasks are pending. [F74](../../archive/01-requirements/product-baseline.md#living-actor-model--f74), [D56](../../archive/05-project/open-decisions.md#d56--actors-include-animals) and the [canonical actor model](../architecture.md#actor-means-any-living-being) own the accepted behavior. The current separate person-style `actor` and `animal` components remain valid until this work is deliberately migrated.
+
+- [ ] **ACT01 — Define the capability model and migration.** Specify shared lifecycle/body components plus independent species, body plan, controller, cognition, memory, inner-world and speech capabilities. Version and migrate saves without changing stable entity IDs, losing animal state or granting every animal human cognition.
+- [ ] **ACT02 — Preserve animal identity through death.** Replace or adapt the destructive animal-to-remains conversion so a dead animal remains a revivable actor while still supporting finite, idempotent harvesting. Define and test what revival means before and after partial or complete harvesting.
+- [ ] **ACT03 — Generalize lifecycle actions.** Make Revive admit any dead actor with the required lifecycle/body capabilities, including animals, through the same authoritative domain transition and god-mode action path. Reject living, missing, incompatible and stale targets without mutation.
+- [ ] **ACT04 — Generalize living-body effects.** Introduce bounded condition/effect contracts for wetness, fire, injury, healing and health changes that target capabilities rather than human-only types. Express species/body susceptibility explicitly, compose simultaneous effects deterministically and keep generated prose from becoming effect authority.
+- [ ] **ACT05 — Support optional animal minds and communication.** Allow a selected animal to receive an intelligent controller, memory, scoped inner world and speech without changing its species or exposing private state. Native lightweight animal behavior remains the default and ordinary animals require no model calls.
+- [ ] **ACT06 — Verify compatibility and projections.** Add migration/restart, revival, harvesting, status-effect, cognition/privacy, action-catalogue, protocol/client projection and rollback coverage. Confirm existing wilderness animals continue wandering, fleeing, taking damage, dying and yielding finite resources through migration; update architecture, extension guidance, implementation status and verification with actual evidence before marking the track complete.
+
+## Individual memory perspective — September 20
+
+Per request, automated tests and broader documentation work are deferred; the canonical memory document is the explicitly requested exception. Native runtime execution is the immediate check, not live model acceptance.
+
+- [ ] Add/run regression coverage for owner versus observer wording, named Mike identity, heard testimony, exact quoted dialogue, object/possessive references, repeated save migration, promise attribution, retained source tags and consolidation/reflection outputs. Run static/full checks when requested.
+- [ ] Reconcile architecture, domain/extension guidance and implementation status with actor-perspective storage and named character identity; review related memory documents and links. Validate varied legacy free prose and model-authored summaries/reflections before claiming universal first-person compliance.
+- [ ] Verify the existing local save after server restart: Mike's displayed name, Ada's migrated memories, persistence and scoped embedding/workspace refresh. Do not claim a running-save migration or paid-model acceptance from an isolated native execution.
 
 ## React design-system adoption — September 20
 
@@ -51,8 +95,8 @@ From September 19: do not add or run tests or update other documentation for inc
 - [x] Reconcile implementation status and the recorded HTTP 402 blocker with eventual live outcomes. September 20 native inference and reflection succeeded; current architecture, setup and task bodies now describe those routes. Keep actual execution evidence in status/TODO rather than a competing architecture audit.
 - [ ] Verify newly admitted actors receive seed identity atomically with their first saved transition and one separately scoped Macrofold workspace. Verify unexpected Jev routes abstain rather than selecting unoffered cognition opportunities.
 - [ ] Fix new god-endpoint fixture's no-cookie expectation: HTTP 401 is the actual unauthenticated contract; 403 remains the unauthorized-origin/god-disabled contract. This assertion failed before the instruction to stop tests; runtime rejected the request correctly.
-- [ ] Refresh six existing menu assertions (five catalogue tests and one HTTP catalogue test) for the previously requested target-specific/empty-grass behavior. Last full check before test suspension: formatting/typecheck passed; 166 tests passed, six outdated menu assertions failed. A later god-route fixture exposed the 401/403 expectation above. Build passed before the newest small runtime refinements.
-- [ ] Run formatting, typecheck, focused cognition/privacy/retention/atomicity fixtures and full checks in the next explicitly requested batch. Do not interpret the latest untested refinements as passing those checks.
+- [ ] Refresh six existing menu assertions (five catalogue tests and one HTTP catalogue test) for the previously requested target-specific/empty-grass behavior. The latest localhost-enabled full check passed 171 scenarios and retained these six failures alongside the tracked 401/403, context-ordering, schema-version and journal expectations.
+- [x] Run formatting, typecheck, focused native/god-route fixtures and the full check in the next requested implementation batch. September 20 god-world-editing run: formatting/typecheck passed; the separate production build passed; three domain, one same-origin HTTP and one Chromium scenario passed; the full suite reported 171 passed / 10 tracked failures. No provider calls were made.
 - [ ] Expand rejection checks for byte limits, stale evidence/policies, quota-preserving commitment summaries, async provisioning shutdown, and exactly-once recovery after uncertain sandbox admission.
 - [ ] Extend full-harness memory tools/files only through actor-scoped bounded interfaces. Accepted About me text travels inline; reflection edits scoped files directly and publishes validated snapshots. Extra MCP recall tools remain gated on demonstrated omissions.
 - [ ] Add native obligation fulfillment/deadlines and richer relationship/emotion mechanics through typed rules. Current commitment facets require actual self-attributed promise speech and cannot erase active obligations.
@@ -89,6 +133,10 @@ Earlier deferred UI batches are included in [UI and earlier runtime queue](#ui-a
 - [ ] Explicit chat/invention requests no longer abort merely because the game pauses or the tab is hidden. An admitted provider stage may finish; successful results wait for resume before another paid stage or deterministic commit. Background NPC cognition still cancels on pause. Shutdown cancels pending resume waits; process-restart recovery of held responses remains follow-up work.
 - [ ] Check pause during Jev, harness execution and after completion; repeated blur/resume; no new stage while paused; stale actor/action/evidence rejection after resume; no duplicate billing or dispatch; shutdown cleanup and actual provider failure messages.
 - [ ] Verify pause-policy documentation against runtime acceptance; architecture/time/setup guidance now reflects held explicit responses. Update remaining UI wording in its own pending batch. Thinking text now explains that detailed responses can take about a minute; completed held responses say to resume. No automated tests or paid calls run for this change.
+- [ ] Add automated coverage for guaranteed current-conversation recall: every actor-aware directed event between the player and addressed NPC bypasses embeddings and Jev, appears once in chronological order, survives the normal 24-candidate attention bound, and remains private to actors with awareness. Cover forgotten/corrected evidence, large transcripts, multiple NPCs, untargeted overhearing, restart, and context-budget failure. Tests were deferred at the user's request.
+- [ ] Add automated coverage for the conversation-context fixes: more than 32 directed events remain present; speech and directed non-speech events render once; the current trigger appears only in the Trigger section; non-person objects never enter `peoplePresent`; required context fails before embedding/Jev dispatch; and semantic candidates are bounded by the remaining context allowance. No test files or suites were added or run at the user's request.
+- [ ] Reconcile conversation/retrieval documentation after runtime acceptance, including the interim participant-pair/time-gap boundary, retained-event lifetime, required-versus-semantic byte allocation, and eventual replacement by durable conversation IDs. Documentation beyond this TODO was deferred at the user's request.
+- [ ] Document the interim conversation-recall boundary and replace it with durable `conversation_id` membership when NC05 lands. The current runtime can guarantee actor-aware directed player/NPC events, but cannot associate untargeted actions or ambient events with a conversation until event conversation binding exists. Documentation beyond this TODO was deferred at the user's request.
 
 ## Manual AI cancellation and player priority
 
@@ -103,8 +151,18 @@ Earlier deferred UI batches are included in [UI and earlier runtime queue](#ui-a
 
 ## Message-local reply outcomes
 
-- [ ] Verify new chat jobs persist the exact player speech event ID and cancellation/failure labels appear only alongside that message, including repeated identical text and reloads. Terminal statuses no longer linger above the composer. Legacy unlinked messages intentionally receive no guessed status.
-- [ ] Add an index for speech-event job lookup if chat history/job counts grow; verify actor visibility boundaries and terminal status persistence. Update conversation UX docs in the next batch. No automated tests run.
+- [ ] Verify chat jobs persist the exact player speech event ID; animated dots and failure labels appear only alongside that message, including repeated identical text and reloads. Completed turns have no label. Legacy unlinked messages intentionally receive no guessed status.
+- [ ] Add an index for speech-event job lookup if chat history/job counts grow; verify actor visibility boundaries, repeated identical text, reload behavior and terminal status persistence. Focused projection and browser scenarios cover the current state mapping, one-line growth, pending dots, successful replies and failures; broader recovery coverage remains open.
+- [ ] Add automated regression coverage for pending dots occupying a separate incoming-response row, failure reasons remaining inside the originating message, and legacy saved identity/provenance errors being normalized into a plain-language failure tooltip. This correction was runtime-checked without adding or running automated tests at the user's request.
+- [ ] Add automated regression coverage: every terminal chat job without an agent reply (`failed`, `cancelled`, or `stale`) must project only as **Failed** inside the originating player message, with its reason on hover/focus. No failure, cancellation, stale-context, pause, admission, or generation explanation may appear as a standalone transcript row. Active work alone gets the separate incoming dot placeholder.
+- [ ] Add automated regression coverage for conversational context races: the first dependency change before or during generation refreshes context and retries once with distinct admitted provider IDs; a second ordinary dependency change accepts that retry's response; pause races wait and commit the generated response after resume. Provider, schema, storage, actor-availability and spending failures must remain terminal and visible only through the message-local **Failed** state.
+- [ ] Add automated and accessibility coverage for the shared character/world-agent conversation components: incoming and outgoing messages scroll to the bottom while either of the latest two messages remains visible; readers scrolled far enough that both are offscreen retain their position and receive the keyboard-operable **New Message** down-arrow control; activating it reaches the bottom and clears the indicator. Cover tab switching, empty/short/long threads, rapid messages, pending-to-response replacement, failure updates, narrow screens, reduced motion and screen-reader announcements.
+- [ ] Cover opening and switching character or World Agent conversations with existing long histories: initial mount and every conversation-key change must land on the most recent message without showing the **New Message** indicator; only messages arriving after the conversation is open may preserve a deliberately scrolled-up reading position.
+- [ ] Add interaction coverage for draggable character-conversation and World Agent panels: header-only pointer dragging, interactive header controls, viewport bounds, focus, overlapping panels, UI scaling and the fixed narrow-screen sheet behavior. Reconcile the draggable panel contract in design-system documentation when documentation work resumes.
+
+## Future character reaction bubbles
+
+- [ ] Deliver optional transient overhead presentations of accepted reactions through [NC02/NC03/NC10/NC12](../narration-and-conversations.md#13-implementation-tasks), without a duplicate implementation track. Brief “Hmm” or gesture variants must adapt to the player, current exchange, character disposition and nearby events, with explicit triggers, short display lifetimes and accessible presentation. The September 20 narration request supersedes the earlier no-memory rule for actual speech/expressions: accepted reactions are remembered, private thoughts stay private, and fading UI does not erase experience. Work progress and technical AI request status remain distinct. Preserve behavioral, timing, reduced-motion, overlap and privacy acceptance in the [UI brief](../ui-design-brief.md#future-character-reactions).
 
 ## AI status from request history
 
@@ -138,6 +196,14 @@ For each subsequent change, append:
 - **Tests deferred:** meaningful cases to add/update, including existing tests made stale.
 - **Documentation deferred:** affected documents and decisions to record.
 - **Known gaps:** unresolved behavior or verification limits, if any.
+
+### Action selector pullout-row alignment
+
+- **Change:** keep the Add something icon, label, God mode badge and chevron on one row by grouping the trailing badge and chevron within the action row's third grid column.
+- **Checks performed:** loaded the running local app and visually confirmed the corrected row plus its working pullout; no automated tests written or run at the user's request.
+- **Tests deferred:** add action-picker coverage confirming pullout rows keep their leading icon and trailing chevron aligned at supported HUD scales and narrow viewport widths.
+- **Documentation deferred:** document the corrected action-selector pullout layout in the next UI documentation batch.
+- **Known gaps:** broader cross-browser and responsive screenshot comparison remains deferred.
 
 ### Action search placeholder
 
@@ -275,6 +341,12 @@ The grouped semantic-trigger debugger is implemented through [CR01–CR12](cogni
 
 - [ ] Verify JSON Copy buttons copy full displayed contents, including refreshed Macrofold details, preserve disclosure/scroll state, and report clipboard failures; document controls in the next documentation batch.
 
+- [ ] Add and run regression coverage for list-to-detail navigation, Back to Intelligence, independently collapsed stage accordions, JSON controls remaining visible while stages are collapsed, and combined provider-exchange JSON.
+- [ ] Update the canonical architecture, UI, verification, and implementation-status documentation for the stage accordions and persistent JSON controls after runtime validation.
+- [ ] Add regression coverage for grouped Jev rubrics: render shared question text and options once, resolve candidate handles to target text, and show one compact target/selection/probability row per answer across choice, score, Noul, missing-answer, and non-candidate question shapes.
+- [ ] Document grouped Jev target results and the distinction between display labels such as `Mike (player)` and admissible entity handles such as `player` in the next Intelligence-inspector documentation batch.
+- [ ] Add response-admission coverage proving nearby display names cannot be mistaken for handles: generated talk, expression, and thought references must use the exact advertised entity ID, while label-shaped values such as `Mike (player)` remain rejected and visibly diagnosable.
+
 - [ ] Verify compact intelligence headers display time, friendly model, actor, trigger, and accessible success/failure/pending icons across old/new records; document header fields in the next batch.
 
 ## September 20 — CR01–CR11 runtime implementation follow-up
@@ -349,5 +421,67 @@ The playable server responds on port 3211 with its original `wilderness-1086` sa
 
 ### Shared input interaction follow-up
 
-- [ ] Add deferred accessibility regression coverage for shared selects: keyboard selection, focus-visible behavior, dismissal, bounded scrolling, and reduced-motion behavior.
-- [ ] Reconcile the UI design-system documentation after the shared select and calmer interaction tokens have been accepted in a visual review.
+- [ ] Add regression coverage and reconcile design-system guidance for shared shortcut/spawn/trait ComboBox, portal typography, heading/body hierarchy, universal content spacing, corner wordmark, and starvation-driven gathering/resting oscillation. Verify ongoing food gathering is not replaced by rest each native tick.
+
+- [ ] Add coverage and reconcile UI guidance for non-redundant animal descriptions, pointer-only hover labels after clicks, borderless inner action-search inputs, and empty states that count inspection/god rows and hidden unavailable actions.
+
+- [ ] Cover and document shortcut combo-box layout: one input border/focus ring, full-control popup anchoring, inherited UI font/box sizing, wrapped labels, and scrolling at supported HUD scales.
+
+- [ ] Add deferred accessibility regression coverage for shared typeahead selects: filtering, keyboard selection, focus-visible behavior, dismissal, eight-row scrolling, and explicit reduced-motion behavior.
+- [ ] Add deferred preference coverage for unavailable-action filtering without post-save flashing, persistence success/failure, rollback, and refresh ordering.
+- [ ] Reconcile the design-system documentation for the quick-action typeahead, eight-row scrolling, explicit motion preference, and unavailable-action interaction after visual acceptance.
+
+### Cognition persistence and consolidation follow-up — September 20
+
+- [ ] Migrate existing fixtures to asynchronous repository/service APIs (`await service.ready`, mutations, reads and close); add transaction isolation, concurrent world commands, budget admission, rollback/disconnection and shutdown coverage. No tests were authored or run for this refactor. Production builds use `tsconfig.build.json`; the full test-inclusive typecheck still requires fixture migration.
+- [ ] Add consolidation coverage for explicit source partitions, updating existing memory identities, unrelated routine incidents, unchanged individual important incidents, missing/duplicate/stale sources, capacity preflight, hourly same-day batches, daily review of every consolidated and remaining raw memory from the previous completed day, and cancellation/provider failure preserving originals. Reject reordered groups and groups spanning an intervening memory. Verify useful recall from overdue raw sources within the 512-source initial retrieval limit and independent required-evidence selection.
+- [ ] Verify repeated overlapping reflections: memories never become “done reflecting”; legacy processed watermarks are ignored by scheduling and no longer advanced. Verify intentional idle-only scheduling, one dispatched reflection maximum per actor/game day, queued later opportunities, and real-time budget limits independently of memory reuse. Dream consolidation is separate from reflection.
+- [ ] **Known limitation, explicitly deferred:** forgetting/correcting evidence during Jev attention can leave stale selected text in the next model request, certified against a newer dependency snapshot. Rebuild or reject selection when its original dependencies change; do not silently refresh the dependency stamp. User accepted deferring this uncommon race.
+- [ ] Synchronize memory architecture, implemented architecture, cognition-redesign tasks, production-data model, setup and verification docs with this implementation: asynchronous PostgreSQL transactions/serialized world mutations, changed-row writes, explicit reusable memory groups, individually protected incidents, chronology-safe hourly batches, one daily dream review of the previous completed day, no age-only loss of unconsolidated recall, and once-daily intentional idle reflection without processed-memory semantics. Documentation propagation was deferred at the user's request; preserve unique requirements and dated evidence.
+- [ ] Add semantic-scheduler coverage proving evidence watermarks advance only after a completed route/action, failed/stale/cancelled work remains eligible without automatically retrying the identical paid opportunity, sleeping defers evidence, and newly consolidated summaries retain source sequence.
+- [ ] Add pgvector coverage proving ordinary bounded recall never deletes vectors outside its candidate window; consolidation, correction and forgetting explicitly invalidate affected source/summary rows; revision filtering prevents stale vectors from matching; and returning candidates reuse their existing embeddings.
+
+Implementation check for the daily-consolidation/reflection/cursor/vector follow-up: the production build passed. A disposable one-off runtime script confirmed that daily selection included a consolidated summary and both remaining raw memories from only the requested completed day, hourly selection did not cross midnight, accepted replacements retained source sequence, ordinary vector reconciliation issued no deletion, and explicit source invalidation did. The full test-inclusive TypeScript check still fails on the already-deferred asynchronous fixture migration; no test files or suites were added or run.
+
+- [ ] Complete live model-quality validation when Macrofold capacity is available. The one capped BYOK attempt returned HTTP 429 `inference_capacity_unavailable`; no retry was sent and no source memories were retired. Its isolated $1 ledger conservatively charged the $0.25 reservation as uncertain, not confirmed provider spend.
+
+Manual runtime evidence (synthetic data, no new repository tests): PostgreSQL `pg_sleep(0.25)` left a 10 ms timer responsive at 11 ms; concurrent world updates both persisted, unchanged mind-row transaction IDs stayed unchanged, and competing $0.75 reservations against a $1 cap admitted only one. Database top-N retrieval and the actual server's state/concurrent-controls/god-inspection endpoints passed. Two consolidation applications retained two distinct memories (an updated recurring gathering memory and an unchanged important incident); two overlapping reflections preserved recall and did not advance the legacy watermark. These checks do not establish broad model quality or complete recovery acceptance.
+
+- [ ] Add regression coverage and UI guidance for resource-based gathering shortcuts: one option per resource type, nearest stocked visible target, retargeting after depletion/movement, unavailable only when no eligible sources remain, and migration of old object-specific pins.
+
+- [ ] Add deferred movement-memory coverage for destination details, arrival versus interrupted movement, and first-person narration; cover Memories/Journey game-time labels (08:00 origin, day boundaries, narrow layouts) and removal of character History. Reconcile architecture and UI documentation for these changes. Manual domain execution and React rendering succeeded; finish browser acceptance once concurrent client/server compile errors are resolved. No test files were authored or test suites run for this change.
+
+### God-mode editors and pullouts — September 20
+
+- [ ] Add regression coverage for delta-only editor requests with mature characters: a one-line memory edit or single deletion must send only the changed before/after entry, remain under the bounded body limit, preserve thousands of untouched memories, and report field-specific validation errors for malformed edited JSON.
+- [ ] Add regression coverage for dirty-editor discard/reset and three-way save merging: preserve simulation-created memories/events, apply only user-edited/deleted entries, reject a conflict on the same entry, and allow refresh immediately after discard. Reconcile editor guidance with this behavior in the deferred documentation batch.
+- [ ] Add automated coverage for the reusable right-hand pullout: alphabetical options, filtering, keyboard operation, focus/dismissal, viewport flipping and scrolling after eight rows. Reconcile the design-system component guidance after visual acceptance.
+- [ ] Add editor-window coverage for fresh centering, independent dragging and stacking, non-resizability, tab focus, concurrent windows, refresh timestamps, atomic save, stale revisions, JSON/input validation, save-without-close and the Save and Close / Discard and Close warning. Document the reusable draggable/editor contracts and god-mode owner boundary.
+- [ ] Add domain/API regression coverage for `/api/god/act` revive admission, actor-only behavior, person creation/editing, identity-mind synchronization, raw/consolidated memory updates, actor awareness removal, global world-event editing, request size limits, authorization and transaction rollback. Update the existing `/api/god/revive` fixtures to the general action route.
+- [ ] Run browser accessibility and narrow-viewport acceptance for person creation/editing, trait descriptions/tags, memory/event JSON detail panes, multiple overlapping editors and game-time versus real-time labels. No automated tests or product documentation were written or run for this implementation per session instruction.
+
+### Journal persistence, public patches and editor scaling — September 20
+
+- [ ] Add crash/restart, incomplete-journal, compare-and-swap, periodic-snapshot compaction and shutdown-flush coverage for transactional world change journals. Measure journal growth and recovery time on mature saves, and document snapshot/retention policy after acceptance.
+- [ ] Add public `GamePatch` coverage for ordered delivery, reconnect from a retained revision, reset fallback, entity upsert/removal/order, revision mismatch recovery and strict exclusion of private world or actor-memory data. Measure patch sizes and browser work during routine simulation on mature worlds.
+- [ ] Add editor coverage for summary-only list loads, one-record JSON fetches, hash conflicts, constant-time dirty tracking, discard/refresh, and fixed JSON panes while long memory/event lists scroll. Reconcile the person-awareness and global-world-event UI guidance after visual acceptance.
+- [ ] Add interaction coverage and design-system guidance for the action picker's explicit refresh control, including loading, failure, repeated refresh and stale-response handling. The action picker must not poll; the diagnostics trace page keeps its accepted three-second polling cadence.
+
+### Review fixes — September 20
+
+No automated tests were authored or run for this follow-up, as requested. Current behavior and limitations are documented in the canonical architecture, extension, memory and UI guides; earlier dated documentation-deferral notes remain historical evidence.
+
+- [ ] Add/run domain structural-sharing and nested-transition regression coverage, including immutable inputs, event DTOs without draft proxies, migration, deterministic command/response composition, and all existing native survival paths.
+- [ ] Cover person-editor forgetting of raw evidence, awareness and dependent summaries; transitive dependencies, unresolved commitments, durable ledger restoration, concurrent reflection, vector invalidation failures and no resurrection after restart.
+- [ ] Add automated coverage for the editor invariant guards: immutable identity/source-kind/evidence links, protected commitment/knowledge evidence, dependent summaries/corrections, global narration and retained observations. Extend the deliberately restricted editable fields only with explicit reconciliation rules.
+- [ ] Cover constant-time memory/event typing with thousands of records, draft restoration across selection/tabs, discard/refresh, stale JSON fetches and save interaction locking. Measure long-list opening/scrolling separately; list virtualization remains a possible later optimization.
+- [ ] Cover journal splice/replay, full snapshot thresholds, compare-and-swap, backup/restore/import with uncheckpointed journal entries, interrupted commits and shutdown. Measure mature-save CPU, bytes and recovery time; changed collection traversal and periodic full snapshots remain intentional.
+- [ ] Cover memoized public projection dependencies/privacy, telemetry invalidation, ordered SSE replay/reset, byte/count bounds, slow-reader drain/timeout, server restart session refresh, stale callbacks, React-render/reconnect races, paused initial connections and concurrent bootstraps.
+- [ ] Run browser acceptance and full repository checks when authorized. No paid/model-quality acceptance is claimed by native runtime checks.
+
+### Editor and delivery follow-up — September 20
+
+- [ ] Add automated coverage for transactional editor/cache invalidation (including rollback), unchanged-record identity, delayed JSON replies after refresh/discard/unmount, and first/reconnect SSE changes during projection. Verify indexed batch speech-job lookup on SQLite and PostgreSQL.
+- [ ] Cover independent global event retention after actor consolidation, event deletion/edits with transitive summaries and correction evidence, attributed speech content, and successful saves followed by failed editor reloads.
+- [ ] Reconcile canonical documentation: architecture introduction/diagram must describe the change journal plus periodic snapshots; action-picker guidance must describe explicit refresh and immutable shared snapshots, not polling/full-world clones. Update editor field restrictions, atomic cache invalidation, batch reply lookup and global-history retention guidance across related documents. Documentation and automated tests were deferred for this change at the user's request.
+- [ ] Measure long-lived global history growth and add bounded/paged history storage and editor retrieval when needed; recall consolidation must never silently delete global history.

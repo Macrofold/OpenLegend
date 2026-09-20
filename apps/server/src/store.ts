@@ -1,6 +1,6 @@
 import { VectorStore } from './vector-store.js';
 import type { IntelligenceCall } from '@open-legend/protocol';
-import { DatabaseSync } from 'node:sqlite';
+import { SqliteDatabase } from './sqlite-database.js';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -10,13 +10,14 @@ import type { AiJobView, PlayerProfile, PlayerPreferencePatch } from '@open-lege
 
 export interface SqlDatabase {
   dialect?: 'postgres';
-  exec(sql: string): void;
+  transaction<T>(operation: () => Promise<T>): Promise<T>;
+  exec(sql: string): Promise<void>;
   prepare(sql: string): {
-    get(...params: any[]): Record<string, unknown> | undefined;
-    all(...params: any[]): Record<string, unknown>[];
-    run(...params: any[]): unknown;
+    get(...params: any[]): Promise<Record<string, unknown> | undefined>;
+    all(...params: any[]): Promise<Record<string, unknown>[]>;
+    run(...params: any[]): Promise<unknown>;
   };
-  close(): void;
+  close(): Promise<void>;
 }
 
 export interface SavedWorld {
@@ -24,6 +25,19 @@ export interface SavedWorld {
   speed: number;
   manuallyPaused: boolean;
   milestones?: Record<string, boolean>;
+}
+export type WorldChange =
+  | { op: 'set'; path: Array<string | number>; value: unknown }
+  | {
+      op: 'splice';
+      path: Array<string | number>;
+      index: number;
+      deleteCount: number;
+      values: unknown[];
+    }
+  | { op: 'remove'; path: Array<string | number> };
+export interface WorldChanges {
+  operations: WorldChange[];
 }
 export interface JobRecord extends AiJobView {
   playerSpeechEventId?: string;
@@ -42,38 +56,142 @@ const micro = (usd: number): number => Math.ceil(usd * 1_000_000);
 export const digest = (value: unknown): string =>
   createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
+function samePrimitive(left: unknown, right: unknown): boolean {
+  return left === right || (Number.isNaN(left) && Number.isNaN(right));
+}
+
+function collectChanges(
+  previous: unknown,
+  next: unknown,
+  path: Array<string | number>,
+  operations: WorldChange[],
+): void {
+  if (samePrimitive(previous, next)) return;
+  if (
+    previous === null ||
+    next === null ||
+    typeof previous !== 'object' ||
+    typeof next !== 'object' ||
+    Array.isArray(previous) !== Array.isArray(next)
+  ) {
+    operations.push({ op: 'set', path, value: structuredClone(next) });
+    return;
+  }
+  if (Array.isArray(previous) && Array.isArray(next)) {
+    if (previous.length !== next.length) {
+      let start = 0;
+      while (start < Math.min(previous.length, next.length) && previous[start] === next[start])
+        start++;
+      let end = 0;
+      while (
+        end < Math.min(previous.length, next.length) - start &&
+        previous[previous.length - 1 - end] === next[next.length - 1 - end]
+      )
+        end++;
+      operations.push({
+        op: 'splice',
+        path,
+        index: start,
+        deleteCount: previous.length - start - end,
+        values: next.slice(start, next.length - end),
+      });
+      return;
+    }
+    const shared = Math.min(previous.length, next.length);
+    for (let index = 0; index < shared; index++)
+      collectChanges(previous[index], next[index], [...path, index], operations);
+    for (let index = shared; index < next.length; index++)
+      operations.push({ op: 'set', path: [...path, index], value: structuredClone(next[index]) });
+    if (previous.length !== next.length)
+      operations.push({ op: 'set', path: [...path, 'length'], value: next.length });
+    return;
+  }
+  const before = previous as Record<string, unknown>;
+  const after = next as Record<string, unknown>;
+  for (const key of Object.keys(before))
+    if (!Object.hasOwn(after, key)) operations.push({ op: 'remove', path: [...path, key] });
+  for (const [key, value] of Object.entries(after))
+    if (value === undefined) {
+      if (before[key] !== undefined) operations.push({ op: 'remove', path: [...path, key] });
+    } else if (!Object.hasOwn(before, key))
+      operations.push({ op: 'set', path: [...path, key], value: structuredClone(value) });
+    else collectChanges(before[key], value, [...path, key], operations);
+}
+
+export function diffSavedWorld(previous: SavedWorld | null, next: SavedWorld): WorldChanges {
+  if (!previous) return { operations: [{ op: 'set', path: [], value: structuredClone(next) }] };
+  const operations: WorldChange[] = [];
+  collectChanges(previous, next, [], operations);
+  return { operations };
+}
+
+export function applyWorldChanges(state: SavedWorld, changes: WorldChanges): SavedWorld {
+  let result: unknown = structuredClone(state);
+  for (const change of changes.operations) {
+    if (change.op === 'splice') {
+      let target: any = result;
+      for (const key of change.path) target = target[key];
+      if (!Array.isArray(target)) throw new Error('Journal splice requires an array.');
+      target.splice(change.index, change.deleteCount, ...structuredClone(change.values));
+      continue;
+    }
+    if (!change.path.length) {
+      if (change.op === 'remove') throw new Error('A world journal cannot remove its root.');
+      result = structuredClone(change.value);
+      continue;
+    }
+    let parent = result as Record<string | number, unknown>;
+    for (const key of change.path.slice(0, -1)) {
+      const child = parent[key];
+      if (!child || typeof child !== 'object')
+        throw new Error('World journal references a missing parent.');
+      parent = child as Record<string | number, unknown>;
+    }
+    const key = change.path.at(-1)!;
+    if (change.op === 'remove') delete parent[key];
+    else parent[key] = structuredClone(change.value);
+  }
+  return result as SavedWorld;
+}
+
 /** Replaceable persistence boundary; SQLite is intentionally a single-process MVP adapter. */
 export interface WorldStore {
-  load(): { revision: number; state: SavedWorld } | null;
-  commit(expectedRevision: number, state: SavedWorld): number;
-  close(): void;
+  load(): Promise<{ revision: number; state: SavedWorld } | null>;
+  commit(
+    expectedRevision: number,
+    state: SavedWorld,
+    invalidatedMemoryIds?: Record<string, string[]>,
+  ): Promise<number>;
+  close(): Promise<void>;
 }
 
 export interface GameRepository extends WorldStore {
-  readonly vectors?: VectorStore;
+  readonly ready: Promise<void>;
+  vectors?: VectorStore;
   readonly persistence?: 'postgres' | 'sqlite';
-  putIntelligenceCall(call: IntelligenceCall): void;
-  intelligenceCalls(offset: number): IntelligenceCall[];
-  intelligenceCall(id: string): IntelligenceCall | undefined;
-  diagnosticRoots(offset: number, filters: Record<string, string>): IntelligenceCall[];
-  diagnosticStages(parentIds: string[], details?: boolean): IntelligenceCall[];
-  getIntegration(key: string): unknown;
-  putIntegration(key: string, value: unknown): void;
-  getProfile(id: string): PlayerProfile;
-  setPreferences(id: string, preferences: PlayerPreferencePatch): PlayerProfile;
-  getJob(id: string): JobRecord | undefined;
-  getSpeechJob(eventId: string): JobRecord | undefined;
-  putJob(job: JobRecord): void;
-  recentJobs(limit?: number): JobRecord[];
+  putIntelligenceCall(call: IntelligenceCall): Promise<void>;
+  intelligenceCalls(offset: number): Promise<IntelligenceCall[]>;
+  intelligenceCall(id: string): Promise<IntelligenceCall | undefined>;
+  diagnosticRoots(offset: number, filters: Record<string, string>): Promise<IntelligenceCall[]>;
+  diagnosticStages(parentIds: string[], details?: boolean): Promise<IntelligenceCall[]>;
+  getIntegration(key: string): Promise<unknown>;
+  putIntegration(key: string, value: unknown): Promise<void>;
+  getProfile(id: string): Promise<PlayerProfile>;
+  setPreferences(id: string, preferences: PlayerPreferencePatch): Promise<PlayerProfile>;
+  getJob(id: string): Promise<JobRecord | undefined>;
+  getSpeechJob(eventId: string): Promise<JobRecord | undefined>;
+  getSpeechJobs(eventIds: string[]): Promise<Map<string, JobRecord>>;
+  putJob(job: JobRecord): Promise<void>;
+  recentJobs(limit?: number): Promise<JobRecord[]>;
   reserve(
     id: string,
     provider: 'jev' | 'openai' | 'macrofold',
     amountUsd: number,
     ceilingUsd: number,
-  ): boolean;
-  settle(id: string, receipt: AiReceipt): void;
-  recoverInterruptedWork(): void;
-  usage(ceilingUsd: number): {
+  ): Promise<boolean>;
+  settle(id: string, receipt: AiReceipt): Promise<void>;
+  recoverInterruptedWork(): Promise<void>;
+  usage(ceilingUsd: number): Promise<{
     budget: { limitUsd: number; spentUsd: number; reservedUsd: number; estimated: boolean };
     usage: {
       jevCalls: number;
@@ -82,7 +200,7 @@ export interface GameRepository extends WorldStore {
       outputTokens: number;
       lastLatencyMs: number;
     };
-  };
+  }>;
 }
 
 /**
@@ -91,35 +209,52 @@ export interface GameRepository extends WorldStore {
  */
 export class SqliteStore implements GameRepository {
   readonly db: SqlDatabase;
-  readonly vectors?: VectorStore;
+  private acceptedRows = new Map<string, string>();
+  private acceptedRevision = -1;
+  private acceptedState: SavedWorld | null = null;
+  vectors?: VectorStore;
   get persistence() {
     return this.db.dialect === 'postgres' ? ('postgres' as const) : ('sqlite' as const);
   }
 
-  intelligenceCall(id: string): IntelligenceCall | undefined {
-    const row = this.db.prepare('SELECT payload FROM intelligence_calls WHERE id = ?').get(id);
+  async intelligenceCall(id: string): Promise<IntelligenceCall | undefined> {
+    await this.ready;
+
+    const row = await this.db
+      .prepare('SELECT payload FROM intelligence_calls WHERE id = ?')
+      .get(id);
     return row ? (JSON.parse(String(row['payload'])) as IntelligenceCall) : undefined;
   }
-  putIntelligenceCall(call: IntelligenceCall): void {
-    this.db
+  async putIntelligenceCall(call: IntelligenceCall): Promise<void> {
+    await this.ready;
+
+    await this.db
       .prepare(
         'INSERT INTO intelligence_calls (id, started_at, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload',
       )
       .run(call.id, call.startedAt, JSON.stringify(call));
-    this.db.exec(
+    await this.db.exec(
       'DELETE FROM intelligence_calls WHERE id IN (SELECT id FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 1000000 OFFSET 1000)',
     );
   }
-  intelligenceCalls(offset: number): IntelligenceCall[] {
-    return this.db
-      .prepare(
-        'SELECT payload FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 25 OFFSET ?',
-      )
-      .all(offset)
-      .map((row) => JSON.parse(String(row['payload'])) as IntelligenceCall);
+  async intelligenceCalls(offset: number): Promise<IntelligenceCall[]> {
+    await this.ready;
+
+    return (
+      await this.db
+        .prepare(
+          'SELECT payload FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 25 OFFSET ?',
+        )
+        .all(offset)
+    ).map((row) => JSON.parse(String(row['payload'])) as IntelligenceCall);
   }
 
-  diagnosticRoots(offset: number, filters: Record<string, string>): IntelligenceCall[] {
+  async diagnosticRoots(
+    offset: number,
+    filters: Record<string, string>,
+  ): Promise<IntelligenceCall[]> {
+    await this.ready;
+
     const clauses = ["json_extract(payload, '$.parentId') IS NULL"];
     const params: unknown[] = [];
     const fields: Record<string, string> = {
@@ -145,21 +280,24 @@ export class SqliteStore implements GameRepository {
         params.push(`%${value}%`);
       }
     }
-    return this.db
-      .prepare(
-        `SELECT payload FROM intelligence_calls WHERE ${clauses.join(' AND ')} ORDER BY started_at DESC,id DESC LIMIT 26 OFFSET ?`,
-      )
-      .all(...params, offset)
-      .map((row) => JSON.parse(String(row['payload'])) as IntelligenceCall);
+    return (
+      await this.db
+        .prepare(
+          `SELECT payload FROM intelligence_calls WHERE ${clauses.join(' AND ')} ORDER BY started_at DESC,id DESC LIMIT 26 OFFSET ?`,
+        )
+        .all(...params, offset)
+    ).map((row) => JSON.parse(String(row['payload'])) as IntelligenceCall);
   }
-  diagnosticStages(parentIds: string[], details = false): IntelligenceCall[] {
+  async diagnosticStages(parentIds: string[], details = false): Promise<IntelligenceCall[]> {
+    await this.ready;
+
     if (!parentIds.length) return [];
     const fields = details
       ? 'payload'
       : `id,started_at,json_extract(payload, '$.parentId') AS parent_id,json_extract(payload, '$.kind') AS kind,json_extract(payload, '$.status') AS status,json_extract(payload, '$.output.receipt') AS receipt`;
     const records: IntelligenceCall[] = [];
     for (let offset = 0; offset < 1000; offset += 16) {
-      const rows = this.db
+      const rows = await this.db
         .prepare(
           `SELECT ${fields} FROM intelligence_calls WHERE json_extract(payload, '$.parentId') IN (${parentIds.map(() => '?').join(',')}) ORDER BY started_at,id LIMIT 16 OFFSET ?`,
         )
@@ -188,7 +326,12 @@ export class SqliteStore implements GameRepository {
 
   constructor(path: string, database?: SqlDatabase) {
     if (!database && path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
-    this.db = database ?? new DatabaseSync(path);
+    this.db = database ?? new SqliteDatabase(path);
+    this.ready = this.initialize(!!database);
+  }
+
+  readonly ready: Promise<void>;
+  private async initialize(database: boolean) {
     const schema = `
       PRAGMA journal_mode = WAL;
       PRAGMA busy_timeout = 3000;
@@ -196,9 +339,13 @@ export class SqliteStore implements GameRepository {
       CREATE TABLE IF NOT EXISTS world (
         id INTEGER PRIMARY KEY CHECK (id = 1), revision INTEGER NOT NULL, payload TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS world_journal (
+        revision INTEGER PRIMARY KEY, payload TEXT NOT NULL, created_at INTEGER NOT NULL
+      );
       CREATE TABLE IF NOT EXISTS jobs (
         id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, created_at INTEGER NOT NULL
       );
+      CREATE INDEX IF NOT EXISTS jobs_speech_event ON jobs (json_extract(payload, '$.playerSpeechEventId')) WHERE json_extract(payload, '$.kind') = 'chat';
       CREATE TABLE IF NOT EXISTS attempts (
         id TEXT PRIMARY KEY, provider TEXT NOT NULL, status TEXT NOT NULL,
         reserved INTEGER NOT NULL CHECK (reserved >= 0), spent INTEGER NOT NULL DEFAULT 0 CHECK (spent >= 0),
@@ -213,41 +360,56 @@ export class SqliteStore implements GameRepository {
         pause_when_hidden INTEGER NOT NULL DEFAULT 1 CHECK (pause_when_hidden IN (0, 1))
       );
     `;
-    this.db.exec(
+    await this.db.exec(
       database ? schema.replace(/PRAGMA[^;]+;/g, '').replace(/\bINTEGER\b/g, 'BIGINT') : schema,
     );
     if (database)
-      this.db.exec(
+      await this.db.exec(
         `CREATE TABLE IF NOT EXISTS mind.inner_world (world_id TEXT NOT NULL, actor_id TEXT NOT NULL, revision BIGINT NOT NULL, text TEXT NOT NULL, source_snapshot TEXT NOT NULL, publication_job_id TEXT NOT NULL, PRIMARY KEY(world_id,actor_id))`,
       );
-    if (this.db.dialect === 'postgres') this.vectors = new VectorStore(this.db);
-    const version = this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema');
+    if (this.db.dialect === 'postgres') {
+      this.vectors = new VectorStore(this.db);
+      await this.vectors.initialize();
+    }
+    const version = await this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema');
     if (version && version['value'] !== '1')
       throw new Error('Unsupported save schema. Keep this save and use a compatible version.');
-    this.db
+    await this.db
       .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
       .run('schema', '1');
     // Additive migration preserves old profiles and their unavailable-action choice.
     if (
       !database &&
-      !this.db
-        .prepare('PRAGMA table_info(player_profiles)')
-        .all()
-        .some((column) => column['name'] === 'pause_when_hidden')
+      !(await this.db.prepare('PRAGMA table_info(player_profiles)').all()).some(
+        (column) => column['name'] === 'pause_when_hidden',
+      )
     )
-      this.db.exec(
+      await this.db.exec(
         'ALTER TABLE player_profiles ADD COLUMN pause_when_hidden INTEGER NOT NULL DEFAULT 1 CHECK (pause_when_hidden IN (0, 1))',
       );
   }
 
-  load(): { revision: number; state: SavedWorld } | null {
-    const row = this.db.prepare('SELECT revision, payload FROM world WHERE id = 1').get();
+  async load(): Promise<{ revision: number; state: SavedWorld } | null> {
+    await this.ready;
+
+    const row = await this.db.prepare('SELECT revision, payload FROM world WHERE id = 1').get();
     if (!row) return null;
-    const state = JSON.parse(String(row['payload'])) as SavedWorld;
+    let state = JSON.parse(String(row['payload'])) as SavedWorld;
+    let revision = Number(row['revision']);
+    const journal = await this.db
+      .prepare('SELECT revision,payload FROM world_journal WHERE revision > ? ORDER BY revision')
+      .all(revision);
+    for (const entry of journal) {
+      const next = Number(entry['revision']);
+      if (next !== revision + 1)
+        throw new Error('World journal is incomplete; refusing partial recovery.');
+      state = applyWorldChanges(state, JSON.parse(String(entry['payload'])) as WorldChanges);
+      revision = next;
+    }
     if (![1, 2].includes(state.world?.schemaVersion))
       throw new Error('Unsupported world schema; refusing to overwrite your save.');
     if (this.db.dialect === 'postgres' && state.world.schemaVersion === 2) {
-      const rows = this.db
+      const rows = await this.db
         .prepare('SELECT actor_id,revision,text FROM mind.inner_world WHERE world_id=?')
         .all(state.world.id);
       for (const [actorId, inner] of Object.entries(state.world.innerWorlds ?? {})) {
@@ -262,204 +424,294 @@ export class SqliteStore implements GameRepository {
           );
       }
     }
-    return { revision: Number(row['revision']), state };
+    this.acceptedState = structuredClone(state);
+    this.acceptedRevision = revision;
+    return { revision, state };
   }
 
-  commit(expectedRevision: number, state: SavedWorld): number {
-    const payload = JSON.stringify(state);
-    this.db.exec('BEGIN IMMEDIATE');
-    try {
-      const row = this.db.prepare('SELECT revision FROM world WHERE id = 1').get();
-      const current = row ? Number(row['revision']) : 0;
+  async commit(
+    expectedRevision: number,
+    state: SavedWorld,
+    invalidatedMemoryIds?: Record<string, string[]>,
+  ): Promise<number> {
+    await this.ready;
+
+    const changes = this.acceptedState
+      ? diffSavedWorld(this.acceptedState, state)
+      : { operations: [] };
+    const changesPayload = JSON.stringify(changes);
+    const changedRows = Object.entries(state.world.innerWorlds ?? {})
+      .filter(
+        ([actorId, inner]) =>
+          this.acceptedRevision !== expectedRevision ||
+          inner !== this.acceptedState?.world.innerWorlds?.[actorId],
+      )
+      .map(([actorId, inner]) => ({
+        key: `${state.world.id}:${actorId}`,
+        values: [
+          state.world.id,
+          actorId,
+          inner.revision,
+          inner.text,
+          inner.sourceSnapshot,
+          inner.publicationJobId,
+        ],
+      }))
+      .filter(
+        (row) =>
+          this.acceptedRevision !== expectedRevision ||
+          this.acceptedRows.get(row.key) !== JSON.stringify(row.values),
+      );
+    const revision = await this.db.transaction(async () => {
+      const row = await this.db
+        .prepare(
+          'SELECT MAX(revision) AS revision FROM (SELECT revision FROM world WHERE id = 1 UNION ALL SELECT revision FROM world_journal) AS revisions',
+        )
+        .get();
+      const current =
+        row?.['revision'] === null || row?.['revision'] === undefined ? 0 : Number(row['revision']);
       if (current !== expectedRevision)
         throw new Error('Save conflict: another writer changed this world.');
       const ledgerKey = `forget-ledger:${state.world.id}`;
-      const ledger = (this.getIntegration(ledgerKey) ?? {}) as Record<string, string[]>;
+      const forgettingChanged =
+        this.acceptedRevision !== expectedRevision ||
+        this.acceptedState?.world.experience?.forgotten !== state.world.experience?.forgotten;
+      const ledger = (
+        forgettingChanged ? ((await this.getIntegration(ledgerKey)) ?? {}) : {}
+      ) as Record<string, string[]>;
       for (const [actorId, ids] of Object.entries(ledger))
         if (ids.some((id) => !state.world.experience?.forgotten[actorId]?.includes(id)))
           throw new Error(
             'Restore would resurrect forgotten evidence; reapply the current forgetting ledger first.',
           );
-      if (state.world.experience) this.putIntegration(ledgerKey, state.world.experience.forgotten);
+      if (
+        state.world.experience &&
+        this.acceptedState?.world.experience?.forgotten !== state.world.experience.forgotten
+      )
+        await this.putIntegration(ledgerKey, state.world.experience.forgotten);
+      for (const [actorId, ids] of Object.entries(invalidatedMemoryIds ?? {})) {
+        await this.vectors?.invalidate(`vectors:${state.world.id}:${actorId}`, ids);
+        await this.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
+        await this.putIntegration(`interests:${state.world.id}:${actorId}`, null);
+      }
       const revision = current + 1;
-      this.db
-        .prepare(
-          'INSERT INTO world VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision, payload=excluded.payload',
-        )
-        .run(revision, payload);
+      const snapshot =
+        !this.acceptedState || revision % 120 === 0 || changesPayload.length >= 1_048_576;
+      if (snapshot) {
+        await this.db
+          .prepare(
+            'INSERT INTO world VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision, payload=excluded.payload',
+          )
+          .run(revision, JSON.stringify(state));
+        await this.db.prepare('DELETE FROM world_journal WHERE revision <= ?').run(revision);
+      } else {
+        await this.db
+          .prepare('INSERT INTO world_journal (revision,payload,created_at) VALUES (?,?,?)')
+          .run(revision, changesPayload, Date.now());
+      }
       if (this.db.dialect === 'postgres')
-        for (const [actorId, inner] of Object.entries(state.world.innerWorlds ?? {})) {
-          this.db
+        for (const row of changedRows) {
+          await this.db
             .prepare(
-              `INSERT INTO mind.inner_world VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(world_id,actor_id) DO UPDATE SET revision=excluded.revision,text=excluded.text,source_snapshot=excluded.source_snapshot,publication_job_id=excluded.publication_job_id`,
+              `INSERT INTO mind.inner_world VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(world_id,actor_id) DO UPDATE SET revision=excluded.revision,text=excluded.text,source_snapshot=excluded.source_snapshot,publication_job_id=excluded.publication_job_id WHERE (inner_world.revision,inner_world.text,inner_world.source_snapshot,inner_world.publication_job_id) IS DISTINCT FROM (excluded.revision,excluded.text,excluded.source_snapshot,excluded.publication_job_id)`,
             )
-            .run(
-              state.world.id,
-              actorId,
-              inner.revision,
-              inner.text,
-              inner.sourceSnapshot,
-              inner.publicationJobId,
-            );
+            .run(...row.values);
         }
-      this.db.exec('COMMIT');
       return revision;
-    } catch (error) {
-      this.db.exec('ROLLBACK');
-      throw error;
-    }
+    });
+    // Cache only after COMMIT acknowledgement; failed writes never certify a row.
+    for (const row of changedRows) this.acceptedRows.set(row.key, JSON.stringify(row.values));
+    this.acceptedRevision = revision;
+    this.acceptedState = state;
+    return revision;
   }
 
   /** UI preferences live outside world snapshots, so restoring a world cannot rewind them. */
-  getProfile(id: string): PlayerProfile {
-    const row = this.db.prepare('SELECT * FROM player_profiles WHERE id = ?').get(id);
+  async getProfile(id: string): Promise<PlayerProfile> {
+    await this.ready;
+
+    const row = await this.db.prepare('SELECT * FROM player_profiles WHERE id = ?').get(id);
     return {
       id,
       revision: row ? Number(row['revision']) : 0,
       preferences: {
-        showUnavailableActions: row?.['show_unavailable_actions'] === 1,
-        pauseWhenHidden: row ? row['pause_when_hidden'] === 1 : true,
+        showUnavailableActions: Number(row?.['show_unavailable_actions']) === 1,
+        pauseWhenHidden: row ? Number(row['pause_when_hidden']) === 1 : true,
       },
     };
   }
 
-  setPreferences(id: string, preferences: PlayerPreferencePatch): PlayerProfile {
-    const unavailable =
-      preferences.showUnavailableActions === undefined
-        ? null
-        : Number(preferences.showUnavailableActions);
-    const pause =
-      preferences.pauseWhenHidden === undefined ? null : Number(preferences.pauseWhenHidden);
-    this.db
-      .prepare(
-        `INSERT INTO player_profiles (id, revision, show_unavailable_actions, pause_when_hidden)
+  async setPreferences(id: string, preferences: PlayerPreferencePatch): Promise<PlayerProfile> {
+    await this.ready;
+    return this.db.transaction(async () => {
+      const unavailable =
+        preferences.showUnavailableActions === undefined
+          ? null
+          : Number(preferences.showUnavailableActions);
+      const pause =
+        preferences.pauseWhenHidden === undefined ? null : Number(preferences.pauseWhenHidden);
+      await this.db
+        .prepare(
+          `INSERT INTO player_profiles (id, revision, show_unavailable_actions, pause_when_hidden)
       VALUES (?, 1, COALESCE(?, 0), COALESCE(?, 1))
       ON CONFLICT(id) DO UPDATE SET revision=player_profiles.revision+1,
       show_unavailable_actions=COALESCE(?, player_profiles.show_unavailable_actions),
       pause_when_hidden=COALESCE(?, player_profiles.pause_when_hidden)`,
-      )
-      .run(id, unavailable, pause, unavailable, pause);
-    return this.getProfile(id);
+        )
+        .run(id, unavailable, pause, unavailable, pause);
+      return await this.getProfile(id);
+    });
   }
 
-  getJob(id: string): JobRecord | undefined {
-    const row = this.db.prepare('SELECT payload FROM jobs WHERE id = ?').get(id);
+  async getJob(id: string): Promise<JobRecord | undefined> {
+    await this.ready;
+
+    const row = await this.db.prepare('SELECT payload FROM jobs WHERE id = ?').get(id);
     return row ? (JSON.parse(String(row['payload'])) as JobRecord) : undefined;
   }
 
-  getSpeechJob(eventId: string): JobRecord | undefined {
-    const row = this.db
+  async getSpeechJob(eventId: string): Promise<JobRecord | undefined> {
+    return (await this.getSpeechJobs([eventId])).get(eventId);
+  }
+
+  async getSpeechJobs(eventIds: string[]): Promise<Map<string, JobRecord>> {
+    await this.ready;
+    const ids = [...new Set(eventIds)];
+    const jobs = new Map<string, JobRecord>();
+    if (!ids.length) return jobs;
+    const rows = await this.db
       .prepare(
-        "SELECT payload FROM jobs WHERE json_extract(payload, '$.playerSpeechEventId') = ? AND json_extract(payload, '$.kind') = 'chat' LIMIT 1",
+        `SELECT payload FROM jobs WHERE json_extract(payload, '$.playerSpeechEventId') IN (${ids.map(() => '?').join(',')}) AND json_extract(payload, '$.kind') = 'chat' ORDER BY created_at DESC, id DESC`,
       )
-      .get(eventId);
-    return row ? (JSON.parse(String(row['payload'])) as JobRecord) : undefined;
+      .all(...ids);
+    for (const row of rows) {
+      const job = JSON.parse(String(row['payload'])) as JobRecord;
+      if (job.playerSpeechEventId && !jobs.has(job.playerSpeechEventId))
+        jobs.set(job.playerSpeechEventId, job);
+    }
+    return jobs;
   }
 
-  putJob(job: JobRecord): void {
-    const previous = this.getJob(job.id);
+  async putJob(job: JobRecord): Promise<void> {
+    await this.ready;
+
+    const previous = await this.getJob(job.id);
     if (previous && previous.fingerprint !== job.fingerprint)
       throw new Error('A request ID cannot be reused with different input.');
-    this.db
+    await this.db
       .prepare(
         'INSERT INTO jobs VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload',
       )
       .run(job.id, job.fingerprint, JSON.stringify(job), job.createdAt);
   }
 
-  recentJobs(limit = 12): JobRecord[] {
-    return this.db
-      .prepare('SELECT payload FROM jobs ORDER BY created_at DESC, rowid DESC LIMIT ?')
-      .all(limit)
-      .map((row) => JSON.parse(String(row['payload'])) as JobRecord);
+  async recentJobs(limit = 12): Promise<JobRecord[]> {
+    await this.ready;
+
+    return (
+      await this.db
+        .prepare('SELECT payload FROM jobs ORDER BY created_at DESC, rowid DESC LIMIT ?')
+        .all(limit)
+    ).map((row) => JSON.parse(String(row['payload'])) as JobRecord);
   }
 
-  getIntegration(key: string): unknown {
-    const row = this.db.prepare('SELECT value FROM meta WHERE key = ?').get(`integration:${key}`);
+  async getIntegration(key: string): Promise<unknown> {
+    await this.ready;
+
+    const row = await this.db
+      .prepare('SELECT value FROM meta WHERE key = ?')
+      .get(`integration:${key}`);
     return row ? JSON.parse(String(row['value'])) : undefined;
   }
-  putIntegration(key: string, value: unknown): void {
-    this.db
+  async putIntegration(key: string, value: unknown): Promise<void> {
+    await this.ready;
+
+    await this.db
       .prepare(
-        'INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+        'INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE meta.value IS DISTINCT FROM excluded.value',
       )
       .run(`integration:${key}`, JSON.stringify(value));
   }
 
-  reserve(
+  async reserve(
     id: string,
     provider: 'jev' | 'openai' | 'macrofold',
     amountUsd: number,
     ceilingUsd: number,
-  ): boolean {
-    this.db.exec('BEGIN IMMEDIATE');
-    try {
-      if (this.db.prepare('SELECT id FROM attempts WHERE id = ?').get(id))
+  ): Promise<boolean> {
+    await this.ready;
+
+    return this.db.transaction(async () => {
+      if (await this.db.prepare('SELECT id FROM attempts WHERE id = ?').get(id))
         throw new Error('Attempt already admitted; do not dispatch it again.');
-      const row = this.db
+      const row = await this.db
         .prepare(
           "SELECT COALESCE(SUM(spent + CASE WHEN status = 'reserved' THEN reserved ELSE 0 END), 0) AS total FROM attempts",
         )
         .get();
       const amount = micro(amountUsd);
       if (Number(row?.['total'] ?? 0) + amount > micro(ceilingUsd)) {
-        this.db.exec('ROLLBACK');
         return false;
       }
-      this.db
+      await this.db
         .prepare(
           "INSERT INTO attempts (id,provider,status,reserved,created_at) VALUES (?,?,'reserved',?,?)",
         )
         .run(id, provider, amount, Date.now());
-      this.db.exec('COMMIT');
       return true;
-    } catch (error) {
-      this.db.exec('ROLLBACK');
-      throw error;
-    }
+    });
   }
 
-  settle(id: string, receipt: AiReceipt): void {
-    const row = this.db
-      .prepare('SELECT status,reserved,receipt FROM attempts WHERE id = ?')
-      .get(id);
-    if (!row) return;
-    if (row['status'] === 'settled') {
-      // Older saves marked unpriced successful calls settled. Their conservative
-      // reserve may still be replaced by a definitive late billing receipt.
-      const prior = row['receipt'] ? (JSON.parse(String(row['receipt'])) as AiReceipt) : undefined;
-      if (!prior?.dispatched || prior.estimatedCostUsd !== undefined) return;
-    }
-    if (row['status'] === 'uncertain' && receipt.completionUncertain) return;
-    const reserve = Number(row['reserved']);
-    const estimated = receipt.estimatedCostUsd;
-    // Missing/ambiguous provider evidence conservatively consumes the reservation.
-    const spent = !receipt.dispatched
-      ? 0
-      : receipt.completionUncertain || estimated === undefined
-        ? reserve
-        : micro(estimated);
-    this.db
-      .prepare(
-        "UPDATE attempts SET status=?,spent=?,receipt=? WHERE id=? AND status IN ('reserved','uncertain','settled')",
-      )
-      .run(
-        receipt.dispatched && (receipt.completionUncertain || estimated === undefined)
-          ? 'uncertain'
-          : 'settled',
-        spent,
-        JSON.stringify(receipt),
-        id,
-      );
+  async settle(id: string, receipt: AiReceipt): Promise<void> {
+    await this.ready;
+    return this.db.transaction(async () => {
+      const row = await this.db
+        .prepare('SELECT status,reserved,receipt FROM attempts WHERE id = ?')
+        .get(id);
+      if (!row) return;
+      if (row['status'] === 'settled') {
+        // Older saves marked unpriced successful calls settled. Their conservative
+        // reserve may still be replaced by a definitive late billing receipt.
+        const prior = row['receipt']
+          ? (JSON.parse(String(row['receipt'])) as AiReceipt)
+          : undefined;
+        if (!prior?.dispatched || prior.estimatedCostUsd !== undefined) return;
+      }
+      if (row['status'] === 'uncertain' && receipt.completionUncertain) return;
+      const reserve = Number(row['reserved']);
+      const estimated = receipt.estimatedCostUsd;
+      // Missing/ambiguous provider evidence conservatively consumes the reservation.
+      const spent = !receipt.dispatched
+        ? 0
+        : receipt.completionUncertain || estimated === undefined
+          ? reserve
+          : micro(estimated);
+      await this.db
+        .prepare(
+          "UPDATE attempts SET status=?,spent=?,receipt=? WHERE id=? AND status IN ('reserved','uncertain','settled')",
+        )
+        .run(
+          receipt.dispatched && (receipt.completionUncertain || estimated === undefined)
+            ? 'uncertain'
+            : 'settled',
+          spent,
+          JSON.stringify(receipt),
+          id,
+        );
+    });
   }
 
   /** A restart never resends an admitted call whose external outcome is unknown. */
-  recoverInterruptedWork(): void {
-    this.db.exec("UPDATE attempts SET status='uncertain', spent=reserved WHERE status='reserved'");
-    for (const row of this.db.prepare('SELECT payload FROM jobs').all()) {
+  async recoverInterruptedWork(): Promise<void> {
+    await this.ready;
+
+    await this.db.exec(
+      "UPDATE attempts SET status='uncertain', spent=reserved WHERE status='reserved'",
+    );
+    for (const row of await this.db.prepare('SELECT payload FROM jobs').all()) {
       const job = JSON.parse(String(row['payload'])) as JobRecord;
       if (['queued', 'judging', 'generating'].includes(job.status)) {
-        this.putJob({
+        await this.putJob({
           ...job,
           status: 'stale',
           message: 'Interrupted by restart; no paid request or world effect was repeated.',
@@ -468,8 +720,10 @@ export class SqliteStore implements GameRepository {
     }
   }
 
-  usage(ceilingUsd: number) {
-    const rows = this.db
+  async usage(ceilingUsd: number) {
+    await this.ready;
+
+    const rows = await this.db
       .prepare('SELECT provider,status,reserved,spent,receipt FROM attempts')
       .all();
     let spent = 0,
@@ -504,7 +758,8 @@ export class SqliteStore implements GameRepository {
     };
   }
 
-  close(): void {
-    this.db.close();
+  async close(): Promise<void> {
+    await this.ready.catch(() => undefined);
+    await this.db.close();
   }
 }

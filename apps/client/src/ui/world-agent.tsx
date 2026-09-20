@@ -3,7 +3,19 @@ import { Button as AriaButton, Tabs, TabList, Tab, TabPanel } from 'react-aria-c
 import { Button, EmptyState, Icon, IconButton, Tag } from '../design-system/components';
 import { post } from '../api';
 import { readLocal, writeLocal } from './storage';
-type Message = { role: 'you' | 'status' | 'agent'; text: string };
+import {
+  ConversationComposer,
+  ConversationMessage,
+  ConversationThread,
+  type ConversationItem,
+} from './conversation';
+type Message = {
+  id?: string;
+  role: 'you' | 'status' | 'agent';
+  text: string;
+  status?: 'sending' | 'failed';
+  failureReason?: string;
+};
 type Conversation = { id: string; title: string; draft: string; messages: Message[] };
 const valid = (v: unknown): v is Conversation[] =>
   Array.isArray(v) &&
@@ -27,8 +39,7 @@ export function WorldAgent({ worldId, invent }: { worldId: string; invent(text: 
     [ended, setEnded] = useState<Conversation | null>(null);
   const [error, setError] = useState('');
   const alive = useRef(true),
-    textarea = useRef<HTMLTextAreaElement>(null),
-    log = useRef<HTMLDivElement>(null);
+    textarea = useRef<HTMLTextAreaElement>(null);
   useEffect(
     () => () => {
       alive.current = false;
@@ -37,9 +48,6 @@ export function WorldAgent({ worldId, invent }: { worldId: string; invent(text: 
   );
   useEffect(() => writeLocal(key, tabs), [key, tabs]);
   const tab = tabs.find((t) => t.id === active);
-  useEffect(() => {
-    if (log.current) log.current.scrollTop = tab?.messages.length ? log.current.scrollHeight : 0;
-  }, [active, tab?.messages.length]);
   function create() {
     const t = {
       id: crypto.randomUUID(),
@@ -56,17 +64,18 @@ export function WorldAgent({ worldId, invent }: { worldId: string; invent(text: 
   async function send() {
     if (!tab || pending.includes(tab.id) || !tab.draft.trim()) return;
     const id = tab.id,
-      text = tab.draft.trim();
+      text = tab.draft.trim(),
+      requestId = crypto.randomUUID();
     update(id, (t) => ({
       ...t,
       title: t.messages.length ? t.title : text.slice(0, 36),
       draft: '',
-      messages: [...t.messages, { role: 'you', text }],
+      messages: [...t.messages, { id: requestId, role: 'you', text, status: 'sending' }],
     }));
     setPending((v) => [...v, id]);
     try {
       const result = await post('/api/world-agent/messages', {
-        requestId: crypto.randomUUID(),
+        requestId,
         conversationId: id,
         worldId,
         text,
@@ -74,19 +83,28 @@ export function WorldAgent({ worldId, invent }: { worldId: string; invent(text: 
       if (alive.current)
         update(id, (t) => ({
           ...t,
-          messages: [...t.messages, { role: result.ok ? 'agent' : 'status', text: result.message }],
+          messages: result.ok
+            ? [
+                ...t.messages.map((message) =>
+                  message.id === requestId ? { ...message, status: undefined } : message,
+                ),
+                { role: 'agent', text: result.message },
+              ]
+            : t.messages.map((message) =>
+                message.id === requestId
+                  ? { ...message, status: 'failed', failureReason: result.message }
+                  : message,
+              ),
         }));
-    } catch {
+    } catch (error) {
       if (alive.current)
         update(id, (t) => ({
           ...t,
-          messages: [
-            ...t.messages,
-            {
-              role: 'status',
-              text: 'Delivery is unconfirmed. Check recent activity before sending again; no automatic retry was made.',
-            },
-          ],
+          messages: t.messages.map((message) =>
+            message.id === requestId
+              ? { ...message, status: 'failed', failureReason: String(error) }
+              : message,
+          ),
         }));
     } finally {
       if (alive.current) setPending((v) => v.filter((x) => x !== id));
@@ -122,6 +140,27 @@ export function WorldAgent({ worldId, invent }: { worldId: string; invent(text: 
     setActive(restored.id);
     setEnded(null);
   }
+  const messages: ConversationItem[] = (tab?.messages ?? []).map((message, index) => ({
+    id: message.id ?? `${message.role}:${index}`,
+    content: (
+      <ConversationMessage
+        role={message.role}
+        label={message.role === 'you' ? 'You' : message.role === 'agent' ? 'World agent' : 'Status'}
+        text={message.text}
+        failureReason={message.status === 'failed' ? message.failureReason : undefined}
+        pending={message.status === 'sending'}
+      >
+        {message.role === 'agent' && /\?\s*$/.test(message.text) && (
+          <div className="ol-question-card">
+            <Tag>Question</Tag>
+            <Button size="sm" variant="quiet" onPress={() => textarea.current?.focus()}>
+              Write an answer
+            </Button>
+          </div>
+        )}
+      </ConversationMessage>
+    ),
+  }));
   return (
     <div className="ol-agent">
       <Tabs
@@ -134,7 +173,6 @@ export function WorldAgent({ worldId, invent }: { worldId: string; invent(text: 
             {(t) => (
               <Tab id={t.id} className="ol-conversation-tab">
                 <span>{t.title}</span>
-                {pending.includes(t.id) && <span aria-label="Working">•</span>}
                 <AriaButton
                   className="ol-ibtn"
                   aria-label={`End conversation: ${t.title}`}
@@ -149,39 +187,18 @@ export function WorldAgent({ worldId, invent }: { worldId: string; invent(text: 
         </div>
         {tabs.map((t) => (
           <TabPanel key={t.id} id={t.id} className="ol-conversation-panel">
-            <div
-              ref={t.id === active ? log : undefined}
-              className="ol-thread"
-              role="log"
-              aria-live="polite"
-            >
-              {!t.messages.length && (
-                <EmptyState title="What might this world become?">
-                  Ask about the clearing, explore a possibility, or discuss an invention.
-                </EmptyState>
-              )}
-              {t.messages.map((m, i) => (
-                <div key={i} className={`ol-message ol-message-${m.role}`}>
-                  <span className="ol-eyebrow">
-                    {m.role === 'you' ? 'You' : m.role === 'agent' ? 'World agent' : 'Status'}
-                  </span>
-                  <div className="ol-prose">{m.text}</div>
-                  {m.role === 'agent' && /\?\s*$/.test(m.text) && (
-                    <div className="ol-question-card">
-                      <Tag>Question</Tag>
-                      <Button size="sm" variant="quiet" onPress={() => textarea.current?.focus()}>
-                        Write an answer
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-              {pending.includes(t.id) && (
-                <p role="status" className="ol-meta">
-                  The world agent is considering your message…
-                </p>
-              )}
-            </div>
+            {t.id === active && (
+              <ConversationThread
+                conversationKey={`${worldId}:${t.id}`}
+                items={messages}
+                ariaLabel={t.title}
+                empty={
+                  <EmptyState title="What might this world become?">
+                    Ask about the clearing, explore a possibility, or discuss an invention.
+                  </EmptyState>
+                }
+              />
+            )}
           </TabPanel>
         ))}
       </Tabs>
@@ -219,38 +236,16 @@ export function WorldAgent({ worldId, invent }: { worldId: string; invent(text: 
             </Button>
             <span className="ol-caption">Discussing an idea does not create it.</span>
           </div>
-          <form
-            className="ol-composer"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void send();
-            }}
-          >
-            <textarea
-              ref={textarea}
-              aria-label="Message to world agent"
-              placeholder="Ask about the world or explore an idea…"
-              maxLength={2000}
-              rows={3}
-              value={tab.draft}
-              onChange={(e) => update(tab.id, (t) => ({ ...t, draft: e.target.value }))}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-                  e.preventDefault();
-                  void send();
-                }
-              }}
-            />
-            <Button
-              type="submit"
-              icon="ui.send"
-              variant="primary"
-              busy={pending.includes(tab.id)}
-              disabled={!tab.draft.trim()}
-            >
-              Send
-            </Button>
-          </form>
+          <ConversationComposer
+            inputRef={textarea}
+            ariaLabel="Message to world agent"
+            placeholder="Ask about the world or explore an idea…"
+            maxLength={2000}
+            value={tab.draft}
+            onChange={(draft) => update(tab.id, (value) => ({ ...value, draft }))}
+            onSubmit={send}
+            disabled={pending.includes(tab.id) || !tab.draft.trim()}
+          />
         </>
       )}
     </div>

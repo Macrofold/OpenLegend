@@ -24,8 +24,8 @@ export class IntelligenceLog {
   withTrigger<T>(id: string, execute: () => Promise<T>): Promise<T> {
     return this.triggerContext.run(id, execute);
   }
-  record(id: string, kind: string, input: unknown, output?: unknown): void {
-    this.save({
+  async record(id: string, kind: string, input: unknown, output?: unknown): Promise<void> {
+    await this.save({
       id,
       parentId: this.triggerContext.getStore(),
       kind,
@@ -38,14 +38,14 @@ export class IntelligenceLog {
   }
   private context = new AsyncLocalStorage<IntelligenceCall>();
   constructor(private store: GameRepository) {}
-  save(call: IntelligenceCall): void {
+  async save(call: IntelligenceCall): Promise<void> {
     try {
       const captured = structuredClone(call);
       if (Buffer.byteLength(JSON.stringify(captured)) > 500000) {
         captured.exchanges = [];
         captured.output = { unavailable: 'Capture limit exceeded; receipt remains in accounting.' };
       }
-      this.store.putIntelligenceCall(captured);
+      await this.store.putIntelligenceCall(captured);
     } catch {
       console.error('Could not persist intelligence diagnostics.');
     }
@@ -62,7 +62,7 @@ export class IntelligenceLog {
     };
     if (Buffer.byteLength(JSON.stringify(call.input)) > 150000)
       call.input = { unavailable: 'Diagnostic input exceeded capture limit.' };
-    this.save(call);
+    await this.save(call);
     return this.context.run(call, async () => {
       try {
         const output = await execute();
@@ -93,22 +93,24 @@ export class IntelligenceLog {
         throw error;
       } finally {
         call.completedAt = new Date().toISOString();
-        this.save(call);
+        await this.save(call);
       }
     });
   }
   wrap(client: AiClient): AiClient {
     return {
-      judge: (request) => this.run('Jev', request, () => client.judge(request)),
+      judge: (request) => this.run('Jev', request, async () => await client.judge(request)),
       generate: (request) =>
-        this.run(`LM · ${request.execution ?? 'default'} · ${request.task}`, request, () =>
-          client.generate(request),
+        this.run(
+          `LM · ${request.execution ?? 'default'} · ${request.task}`,
+          request,
+          async () => await client.generate(request),
         ),
     };
   }
   readonly fetch: FetchTransport = async (url, init) => {
     const call = this.context.getStore();
-    if (!call) return fetch(url, init);
+    if (!call) return await fetch(url, init);
     const path = new URL(url).pathname;
     const exchange: IntelligenceCall['exchanges'][number] = {
       path,
@@ -123,7 +125,7 @@ export class IntelligenceLog {
         : -1;
     if (previous >= 0) call.exchanges[previous] = exchange;
     else call.exchanges.push(exchange);
-    this.save(call);
+    await this.save(call);
     try {
       const response = await fetch(url, init);
       exchange.httpStatus = response.status;
@@ -156,7 +158,7 @@ export class IntelligenceLog {
       exchange.output = { error: error instanceof Error ? error.message : String(error) };
       throw error;
     } finally {
-      this.save(call);
+      await this.save(call);
     }
   };
   private decode(text: string): unknown {

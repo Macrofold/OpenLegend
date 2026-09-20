@@ -10,24 +10,29 @@ const store = new SqliteStore(
   config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
 );
 try {
-  store.db.exec('BEGIN IMMEDIATE');
+  await store.ready;
+  await store.db.exec('BEGIN IMMEDIATE');
   const tables = Object.fromEntries(
-    ['world', 'jobs', 'attempts', 'intelligence_calls', 'meta', 'player_profiles'].map((name) => [
-      name,
-      store.db.prepare(`SELECT * FROM ${name}`).all(),
-    ]),
+    await Promise.all(
+      ['world', 'jobs', 'attempts', 'intelligence_calls', 'meta', 'player_profiles'].map(
+        async (name) => [name, await store.db.prepare(`SELECT * FROM ${name}`).all()] as const,
+      ),
+    ),
   );
+  const latest = await store.load();
+  if (latest)
+    tables['world'] = [{ id: 1, revision: latest.revision, payload: JSON.stringify(latest.state) }];
   writeFileSync(destination, JSON.stringify({ version: 1, digest: digest(tables), tables }), {
     flag: 'wx',
     mode: 0o600,
   });
-  store.db.exec('COMMIT');
+  await store.db.exec('COMMIT');
   console.log('Consistent world, spending, integration and forgetting backup written.');
 } catch (error) {
   try {
-    store.db.exec('ROLLBACK');
+    await store.db.exec('ROLLBACK');
   } catch {}
   throw error;
 } finally {
-  store.close();
+  await store.close();
 }

@@ -30,6 +30,8 @@ Open Talk through a nearby person or quick suggestion. Until AI is configured, i
 
 Click the ground to walk; click a thing to **Look closer**, or right-click / Control-click for its actions. Object menus stay scoped to that object, self menus contain personal work, and empty-ground menus offer walking. **Show Unavailable Actions** reveals blocked options and saves that preference. Hover or keyboard-focus an action for a one-second explanation with actual material/time facts. Search retains **Search actions or invent something…**: unmatched Enter opens an editable invention draft, and only **Send** dispatches it.
 
+With `OPEN_LEGEND_GOD_MODE=true`, right-click a dead character to **Revive**, or right-click blank walkable ground and choose **Add something**. The searchable list contains every currently supported placeable world entity, with Person first and the remainder alphabetized; it shows eight rows before scrolling. Creating a person accepts a name, personality, backstory, described trait tags and initial goals. Leaving traits empty assigns the usual three saved random traits. These owner-only mutations work while paused and are labeled **God mode**.
+
 Drag with the primary, right or middle mouse button to pan. A stationary right-click opens actions on release. Scroll to zoom or use the camera buttons to zoom and recenter. Dismissing a menu by clicking the world never walks.
 
 The React interface uses the [new design system](apps/client/src/design-system/README.md): Inventory (I), Crafting (C), Character (K), World agent (W), In view (V) and Journal (J). Panels open beside their launchers and share a bottom sheet on narrow screens. **Settings and help** offers Wilderness/Fantasy/Sci-fi skins, 90–130% HUD scale, reduced motion and asset credits. Themes never change game rules. Character traits are sampled from a configurable bank and saved; hover or focus a trait for its description.
@@ -46,6 +48,8 @@ pnpm start
 ```
 
 This server binds to loopback. It is not a public multiplayer deployment.
+
+World saves use a transactional change journal with periodic snapshots. Explicit actions save immediately; routine simulation flushes once per real second and on clean shutdown. The browser bootstraps once and receives typed SSE updates. God-mode Person/World Events editors support atomic delta saves, discard, and independent draggable windows; see [current architecture and limits](docs/architecture.md#public-updates-and-owner-editors).
 
 ## Develop
 
@@ -66,6 +70,8 @@ The browser check needs Playwright Chromium (`pnpm exec playwright install chrom
 | `apps/client`       | PlayCanvas world and React / React Aria HUD                                            |
 
 ## Explore the project
+
+The [Narrator and conversation design](docs/narration-and-conversations.md) now includes readable actor context, explicit direct-address/overhearing triggers and optional talk/act/think reactions. Supported expressions have no mechanical effects; private thoughts stay private. Its broader [NC01–NC13 tasks](docs/narration-and-conversations.md#13-implementation-tasks), including durable group membership and private Narrator prose, remain open; automatic action/effect invention is deferred.
 
 The [perception and attention design](archive/07-technical-architecture/perception-and-attention.md) now has an initial visual experiment: sight reaches 28 map units, with a clear central field and a strongly blurred outer band instead of a dark fog. Previously seen objects can remain as frozen, non-interactive blurred images after leaving sight. Detailed occlusion, distance-specific descriptions, hearing gradients remain future work; scoped semantic attention and embeddings are implemented.
 

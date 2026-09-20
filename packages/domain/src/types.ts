@@ -123,6 +123,10 @@ export interface CharacterTrait {
 export interface ActorComponent {
   /** Descriptive starting traits, not mechanical bonuses. Saved with the actor. */
   traits?: CharacterTrait[];
+  /** God-authored identity seeds are descriptive context, never mechanical authority. */
+  personality?: string;
+  backstory?: string;
+  initialGoals?: string[];
   rest?: import('./sleep.js').RestState;
   controller: 'player' | 'npc';
   health: number;
@@ -178,7 +182,8 @@ export interface MemoryRecord {
   id: string;
   actorId: string;
   kind: 'episode' | 'belief' | 'commitment' | 'reflection';
-  source: 'observed' | 'heard' | 'inferred';
+  source: 'observed' | 'heard' | 'inferred' | 'self_thought';
+  responseId?: string;
   summary: string;
   at: number;
   entityIds: string[];
@@ -215,6 +220,7 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  responseReceipts?: Record<string, import('./response.js').ResponseReceipt>;
   experience?: import('./experience.js').ExperienceState;
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
@@ -262,6 +268,44 @@ export interface Transition {
   world: WorldState;
   events: WorldEvent[];
   outcome: Outcome;
+  invalidatedMemoryIds?: Record<string, string[]>;
+}
+
+export type GodSpawnType =
+  | 'person'
+  | 'banked-campfire'
+  | 'berry-bush'
+  | 'berry-thicket'
+  | 'deer'
+  | 'dry-grass-fibers'
+  | 'fallen-branches'
+  | 'hare'
+  | 'river-reeds'
+  | 'river-stones';
+
+export interface GodPersonDraft {
+  name: string;
+  personality: string;
+  backstory: string;
+  traitIds: string[];
+  initialGoals: string[];
+}
+
+export interface GodSpawnDraft {
+  type: GodSpawnType;
+  position: Position;
+  person?: GodPersonDraft;
+}
+
+export type GodMemoryEdit =
+  | { source: 'awareness'; value: import('./experience.js').Awareness }
+  | { source: 'memory'; value: MemoryRecord }
+  | { source: 'summary'; value: import('./experience.js').ExperienceSummary };
+
+export interface GodPersonEdit {
+  actorId: string;
+  person: GodPersonDraft;
+  memoryChanges: Array<{ entryId: string; replacement: GodMemoryEdit | null }>;
 }
 export interface ActorObservation {
   worldId: string;

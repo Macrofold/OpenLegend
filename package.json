@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=.env apps/server/src/main.ts",
     "start": "node --import tsx --env-file-if-exists=.env apps/server/src/main.ts --production",
-    "build": "tsc --noEmit && vite build --config apps/client/vite.config.ts",
+    "build": "tsc --noEmit -p tsconfig.build.json && vite build --config apps/client/vite.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -1,6 +1,6 @@
 # Perception, descriptions and attention
 
-> **Later cognition direction:** [Memory architecture](../../docs/memory-architecture.md) adds Jev yes/no attention over actor-permitted nearby objects, possessions, known recipes and recall candidates, plus Jev escalation on semantic opportunities. Native scope/index filtering bounds the candidates; batching avoids one call per object or tick. Event-time awareness includes the player; only witnessed experiential events need journal retention. The contract below preserves mandatory Jev routing for admitted semantic opportunities, sensory scope and immediate native reactions. Build tasks: [CR04–CR06](../../docs/maintainers/cognition-redesign.md).
+> **Later cognition direction:** [Memory architecture](../../docs/memory-architecture.md) adds Jev yes/no attention over actor-permitted nearby objects, possessions, known recipes and recall candidates, plus Jev escalation on semantic opportunities. Native scope/index filtering bounds the candidates; batching avoids one call per object or tick. Event-time awareness includes the player. Experiential retention covers witnessed events plus the future [NC notable-unseen exception](../../docs/narration-and-conversations.md#5-external-world-events-and-awareness); retaining an unseen event never grants perception. The contract below preserves mandatory Jev routing for admitted semantic opportunities, sensory scope and immediate native reactions. Build tasks: [CR04–CR06](../../docs/maintainers/cognition-redesign.md), with the narration extension tracked separately as NC01–NC13.
 
 Status: **documentation-only proposal**, September 19, 2026. The [user follow-up](../00-source/perception-and-attention-followup.md) establishes the requested direction; algorithms, record names, tuning and delivery stages below are recommendations. None of this update implements overlays, acoustic propagation, description tiers, semantic indexes or new AI triggers. F62–F67 and D51–D54 record requirements and open choices.
 
@@ -121,7 +121,7 @@ Persist historical observation payloads, or sufficient immutable versioned facts
 
 ## 7. Semantic indexing and interest subscriptions
 
-Build a world-scoped searchable representation of objects, but separate its **canonical coverage** from what any actor may retrieve. An index containing all world objects does not grant every actor knowledge of all objects. Apply audience/knowledge/perception filters before model-facing search, ranking, snippets and counts, as required by [context assembly](context-and-inference.md#2-four-audiences-different-views).
+Build a world-scoped searchable representation of objects, but separate its **canonical coverage** from what any actor may retrieve. An index containing all world objects does not grant every actor knowledge of all objects. Apply audience/knowledge/perception filters before model-facing search, ranking, snippets and counts, as required by [context assembly](context-and-inference.md#2-context-audiences-and-permitted-views).
 
 Recommended layers:
 
