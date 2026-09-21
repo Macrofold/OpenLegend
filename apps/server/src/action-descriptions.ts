@@ -4,6 +4,8 @@ import type { CommandInput } from '@open-legend/protocol';
 /** Common explanations also cover families with no eligible target. Prose is
  * presentation data; command previews and the kernel still own every prerequisite. */
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
+  conversation:
+    'Join or leave a nearby conversation. Membership never grants earlier unheard speech.',
   move: 'Walk to the chosen location along a traversable route. This replaces your current work.',
   gather:
     'Approach a resource and collect a small batch into your inventory. Supplies at each source are finite.',
@@ -68,8 +70,8 @@ export function describeCommand(command: CommandInput, observation: ActorObserva
       );
       const weapon = equipped && definition(equipped.definitionId);
       const subject = target?.animal
-        ? target.name.trim().toLowerCase() === target.animal.species.trim().toLowerCase()
-          ? `the ${target.animal.species}`
+        ? target.name.trim().toLowerCase() === target.actor!.species!.trim().toLowerCase()
+          ? `the ${target.actor!.species!}`
           : target.name
         : 'a living animal';
       return `Attempt one shot at ${subject}. ${weapon?.launcher ? `Your equipped ${weapon.name} uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} A shot can miss or wound the animal without killing it. Killed animals leave remains to harvest.`;

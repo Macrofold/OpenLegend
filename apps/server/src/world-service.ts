@@ -1,3 +1,8 @@
+import { changeConversation, leaveConversation } from '@open-legend/domain';
+import { establishKinship, type Kinship } from '@open-legend/domain';
+import { applyBodyEffects, type BodyEffect } from '@open-legend/domain';
+import { enableActorCognition } from '@open-legend/domain';
+import { migrateActors, hasMemory } from '@open-legend/domain';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -50,6 +55,7 @@ const id = z
 export const commandInputSchema = z
   .object({
     type: z.enum([
+      'conversation',
       'move',
       'gather',
       'prepare',
@@ -64,6 +70,9 @@ export const commandInputSchema = z
       'recover',
       'teach',
     ]),
+    conversationId: id.optional(),
+    generation: z.number().int().nonnegative().optional(),
+    operation: z.enum(['join', 'leave']).optional(),
     targetId: id.optional(),
     itemId: id.optional(),
     recipeId: id.optional(),
@@ -157,7 +166,8 @@ export class WorldService {
     this.currentProfile = await store.getProfile('local-player');
     const existing = await store.load();
     if (
-      existing?.state.world.schemaVersion === 1 &&
+      existing &&
+      existing.state.world.schemaVersion !== 3 &&
       !(await store.getIntegration(`legacy-backup:${existing.state.world.id}`))
     )
       await store.putIntegration(
@@ -176,9 +186,10 @@ export class WorldService {
     this.saved = {
       ...this.saved,
       world: updateWorld(this.saved.world, (world) => {
+        migrateActors(world);
         world.minds ??= {};
         for (const entity of Object.values(world.entities))
-          if (entity.actor) world.minds[entity.id] ??= mindFor(world, entity.id);
+          if (hasMemory(entity)) world.minds[entity.id] ??= mindFor(world, entity.id);
         migrateCognition(world);
         initializeActorTraits(world);
         world.paused = true;
@@ -241,8 +252,23 @@ export class WorldService {
 
       if (connected) this.connections.add(connectionId);
       else this.connections.delete(connectionId);
+      await this.reconcileDisconnectedConversation();
       if (this.world.paused !== this.paused) await this.syncPause();
     });
+  }
+  private async reconcileDisconnectedConversation(): Promise<void> {
+    if (this.present || this.connections.size > 0) this.disconnectedAt = null;
+    else this.disconnectedAt ??= this.now();
+    if (
+      this.disconnectedAt !== null &&
+      this.now() - this.disconnectedAt >= this.config.conversationDisconnectMs &&
+      this.world.conversations?.active['player']
+    ) {
+      const world = updateWorld(this.world, (draft) =>
+        leaveConversation(draft, 'player', 'disconnect'),
+      );
+      if (!(await this.commit({ ...this.saved, world }, undefined, 'unchanged'))) return;
+    }
   }
   get present(): boolean {
     const cutoff = this.now() - 12_000;
@@ -265,6 +291,7 @@ export class WorldService {
       this.listeners.delete(listener);
     };
   }
+  private disconnectedAt: number | null = null;
   telemetryRevision = 0;
   notify(telemetry = true): void {
     if (telemetry) this.telemetryRevision++;
@@ -285,8 +312,12 @@ export class WorldService {
         ...saved,
         world: updateWorld(saved.world, (world) => {
           for (const entity of Object.values(world.entities))
-            if (entity.actor && !world.minds?.[entity.id])
+            if (hasMemory(entity) && !world.minds?.[entity.id])
               (world.minds ??= {})[entity.id] = mindFor(world, entity.id);
+          world.socialPolicy = {
+            conversationInactivitySeconds: this.config.conversationInactivitySeconds,
+            notableThreshold: 8,
+          };
           migrateCognition(world);
           initializeActorTraits(world);
         }),
@@ -436,6 +467,7 @@ export class WorldService {
     return this.mutate(async () => {
       await this.ready;
 
+      await this.reconcileDisconnectedConversation();
       if (this.world.paused !== this.paused) await this.syncPause();
       if (this.paused || elapsedRealSeconds <= 0) return;
       // A long event-loop suspension is absence, not permission to catch up offline time.
@@ -480,6 +512,30 @@ export class WorldService {
     });
   }
 
+  async conversation(
+    requestId: string,
+    operation: 'join' | 'leave',
+    conversationId: string,
+    generation: number,
+  ): Promise<ApiResult> {
+    return this.mutate(async () => {
+      await this.ready;
+      if (operation === 'join' && this.paused)
+        return { ok: false, code: 'paused', message: 'Resume before joining.' };
+      const result = changeConversation(
+        this.world,
+        requestId,
+        'player',
+        operation,
+        conversationId,
+        generation,
+      );
+      if (!result.outcome.ok) return result.outcome;
+      if (!(await this.commit({ ...this.saved, world: result.world }, undefined, 'unchanged')))
+        return { ok: false, code: 'storage', message: this.storageError! };
+      return result.outcome;
+    });
+  }
   async transition(operation: (world: WorldState) => Transition): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
@@ -517,23 +573,42 @@ export class WorldService {
     });
   }
 
-  async godAct(action: 'revive', targetId: string): Promise<ApiResult> {
+  async godAct(
+    action: 'revive' | 'enable-cognition',
+    targetId: string,
+    requestId?: string,
+    expectedRevision?: number,
+  ): Promise<ApiResult> {
     return await this.godTransition((world) => {
       switch (action) {
         case 'revive':
-          return reviveActor(world, targetId);
+          return reviveActor(world, targetId, requestId, expectedRevision);
+        case 'enable-cognition':
+          return enableActorCognition(world, targetId);
       }
     });
+  }
+
+  async godKinship(fact: Kinship): Promise<ApiResult> {
+    return this.godTransition((world) => establishKinship(world, fact));
+  }
+
+  async godEffects(
+    id: string,
+    effects: BodyEffect[],
+    expected: Record<string, number>,
+  ): Promise<ApiResult> {
+    return this.godTransition((world) => applyBodyEffects(world, id, effects, expected));
   }
 
   async spawn(draft: GodSpawnDraft): Promise<ApiResult> {
     return await this.godTransition((world) => spawnWorldEntity(world, draft));
   }
 
-  async personEditor(actorId: string): Promise<GodPersonEditorView | ApiResult> {
+  async personEditor(actorId: string, before?: string): Promise<GodPersonEditorView | ApiResult> {
     await this.ready;
     const entity = this.world.entities[actorId];
-    if (!entity?.actor || entity.kind !== 'npc')
+    if (!entity?.actor || !hasMemory(entity))
       return { ok: false, code: 'actor', message: 'Choose a person.' };
     const byId = new Map(this.world.events.map((event) => [event.id, event]));
     const awareness = (this.world.experience?.awareness[actorId] ?? []).map((value) => ({
@@ -564,7 +639,15 @@ export class WorldService {
       tags: ['reflection', ...value.entityIds],
       hash: digest(value),
     }));
+    const all = [...awareness, ...memories, ...summaries].sort(
+      (a, b) => b.time - a.time || a.id.localeCompare(b.id),
+    );
+    const index = before ? all.findIndex((entry) => entry.id === before) : -1;
+    if (before && index < 0)
+      return { ok: false, code: 'stale', message: 'History changed; refresh before paging.' };
+    const page = all.slice(index + 1, index + 101);
     return {
+      before: index + 101 < all.length ? page.at(-1)?.id : undefined,
       ok: true,
       revision: this.viewRevision,
       actorId,
@@ -575,9 +658,7 @@ export class WorldService {
         traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
         initialGoals: [...(entity.actor.initialGoals ?? [])],
       },
-      memories: [...awareness, ...memories, ...summaries].sort(
-        (a, b) => b.time - a.time || a.id.localeCompare(b.id),
-      ),
+      memories: page,
     };
   }
 
@@ -652,21 +733,21 @@ export class WorldService {
     });
   }
 
-  async worldEventsEditor(): Promise<GodWorldEventsEditorView> {
+  async worldEventsEditor(before?: number): Promise<GodWorldEventsEditorView> {
     await this.ready;
+    const page = await this.store.history?.eventPage(this.world.id, before);
     return {
+      before: page?.before,
       ok: true,
       revision: this.viewRevision,
-      events: this.world.events
-        .map((event) => ({
-          id: event.id,
-          type: event.type,
-          text: event.text,
-          time: event.at,
-          actors: [event.actorId, event.targetId].filter((value): value is string => !!value),
-          hash: digest(event),
-        }))
-        .sort((a, b) => b.time - a.time || b.id.localeCompare(a.id)),
+      events: (page?.events ?? this.world.events.slice(-100)).map((event) => ({
+        id: event.id,
+        type: event.type,
+        text: event.text,
+        time: event.at,
+        actors: [event.actorId, event.targetId].filter((value): value is string => !!value),
+        hash: digest(event),
+      })),
     };
   }
 
@@ -725,6 +806,17 @@ export class WorldService {
     const envelope = { id: commandId, actorId };
     let command: Command;
     switch (input.type) {
+      case 'conversation':
+        if (!input.conversationId || input.generation === undefined || !input.operation)
+          return { ok: false, code: 'conversation', message: 'Choose a current conversation.' };
+        command = {
+          ...envelope,
+          type: 'conversation',
+          operation: input.operation,
+          conversationId: input.conversationId,
+          generation: input.generation,
+        };
+        break;
       case 'move':
         if (!input.position)
           return { ok: false, code: 'position', message: 'Choose a destination.' };

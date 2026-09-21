@@ -1,3 +1,4 @@
+import { hasMemory } from '@open-legend/domain';
 import {
   consolidationBatch,
   CONSOLIDATION_INSTRUCTIONS,
@@ -28,6 +29,7 @@ interface ReflectionRequest {
   at: number;
 }
 export class CognitionMaintenance {
+  private budgetActor = 'world-agent';
   private active: AbortController | null = null;
   private pending: Promise<void> | null = null;
   private stopped = false;
@@ -100,7 +102,9 @@ export class CognitionMaintenance {
       return;
     this.scheduling = true;
     try {
-      const actors = Object.values(this.service.world.entities).filter((e) => e.actor?.alive);
+      const actors = Object.values(this.service.world.entities).filter(
+        (e) => e.actor?.alive && hasMemory(e),
+      );
       const times = new Map(
         await Promise.all(actors.map(async (e) => [e.id, await this.last(e.id)] as const)),
       );
@@ -112,7 +116,7 @@ export class CognitionMaintenance {
           actor = world.entities[entity.id]!.actor!;
         const safe =
           actor.controller === 'npc' &&
-          actor.health >= 40 &&
+          actor.health >= 0.4 * (actor.body?.maxHealth ?? 100) &&
           actor.fullness >= 30 &&
           !actor.incapacitated &&
           (!actor.action || actor.action.type === 'rest');
@@ -261,6 +265,7 @@ export class CognitionMaintenance {
     execute: (job: JobRecord) => Promise<void>,
   ) {
     const id = `maintenance-${randomUUID()}`;
+    this.budgetActor = actorId;
     const job: JobRecord = {
       id,
       kind: 'thought',
@@ -271,9 +276,7 @@ export class CognitionMaintenance {
       createdAt: this.now(),
     };
     await this.service.store.putJob(job);
-    const queueTrace = await this.service.store.intelligenceCall(
-      `reflection-queued:${this.service.world.id}:${actorId}`,
-    );
+    const queueTrace = this.log.get(`reflection-queued:${this.service.world.id}:${actorId}`);
     if (!['Hourly consolidation', 'Daily dream review'].includes(trigger) && queueTrace)
       await this.log.save({
         ...queueTrace,
@@ -333,7 +336,7 @@ export class CognitionMaintenance {
           : Math.max(c.llmReserveUsd, 0.25);
     // Leave one interactive request allowance untouched by background admission.
     const ceiling = Math.max(0, c.budgetUsd - interactiveAllowance(c));
-    if (!(await this.service.store.reserve(id, provider, amount, ceiling)))
+    if (!(await this.service.store.reserve(id, provider, amount, ceiling, this.budgetActor)))
       throw new Error('Background allowance exhausted.');
     const result = await execute();
     await this.service.store.settle(id, result.receipt);
@@ -460,18 +463,6 @@ export class CognitionMaintenance {
         );
         if (!accepted.ok) throw new Error(accepted.message);
         committed = true;
-        try {
-          await this.service.store.vectors?.invalidate(
-            `vectors:${this.service.world.id}:${actorId}`,
-            batch.sources.map((source) => source.id),
-          );
-        } catch (error) {
-          // Retired/revised rows cannot match the current permission/revision filter.
-          // Record derived-index cleanup failure without misreporting the committed memory update.
-          await this.log.record(`${job.id}:vector-invalidation`, 'Vector invalidation failure', {
-            reason: error instanceof Error ? error.message : 'Unknown vector-store failure',
-          });
-        }
         await this.log.record(`${job.id}:publication`, 'Summary publication', {}, accepted);
       },
     );

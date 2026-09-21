@@ -1,3 +1,4 @@
+import { amendCommitment } from '@open-legend/domain';
 import { traceHistory, traceDetails } from './cognition-inspection.js';
 import { admitCognitionPolicy } from '@open-legend/domain';
 import { inspectGodMind } from './god-mind.js';
@@ -59,6 +60,7 @@ const preferences = z
   .object({
     showUnavailableActions: z.boolean().optional(),
     pauseWhenHidden: z.boolean().optional(),
+    narratorVoice: z.enum(['restrained', 'lyrical', 'wry']).optional(),
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, 'Choose a preference to update.');
@@ -364,6 +366,49 @@ export async function createGameServer(
             code: 'session',
             message: 'Reload the game to establish a local session.',
           });
+        if (request.method === 'GET' && url.pathname === '/api/history') {
+          const options = z
+            .object({
+              conversationId: requestIdSchema.optional(),
+              active: z.literal('true').optional(),
+              before: z.coerce.number().int().nonnegative().optional(),
+              watermark: z.coerce.number().int().nonnegative().optional(),
+              limit: z.coerce.number().int().min(1).max(100).optional(),
+            })
+            .strict()
+            .parse(Object.fromEntries(url.searchParams));
+          if (!store.history)
+            return send(response, 503, { message: 'History repository unavailable.' });
+          const scopedId = options.active
+            ? service.world.conversations?.active['player']
+            : options.conversationId;
+          const page = await store.history.transcript(
+            service.world.id,
+            service.profile.id,
+            'player',
+            { ...options, conversationId: scopedId },
+          );
+          if (options.active && !scopedId) page.items = [];
+          const activeId = service.world.conversations?.active['player'];
+          const active = activeId ? service.world.conversations?.records[activeId] : undefined;
+          return send(response, 200, {
+            ...page,
+            voice: service.profile.preferences.narratorVoice,
+            scope: scopedId,
+            active: active
+              ? {
+                  id: active.id,
+                  generation: active.generation,
+                  members: active.intervals
+                    .filter((i) => i.leftAt === undefined)
+                    .map((i) => ({
+                      id: i.actorId,
+                      name: service.world.entities[i.actorId]?.name ?? 'Someone',
+                    })),
+                }
+              : null,
+          });
+        }
         if (request.method === 'GET' && url.pathname === '/api/events') {
           if (streams.size + pendingStreams >= 8)
             return send(response, 429, {
@@ -459,14 +504,138 @@ export async function createGameServer(
             const value = command.parse(body);
             return send(response, 200, await service.command(value.commandId, value.command));
           }
+          case '/api/narration/regenerate': {
+            const value = z
+              .object({ id: z.string().min(1).max(300), requestId: requestIdSchema })
+              .strict()
+              .parse(body);
+            const ok =
+              (await store.history?.regenerate(
+                service.world.id,
+                service.profile.id,
+                value.id,
+                value.requestId,
+              )) ?? false;
+            service.notify();
+            return send(response, 200, {
+              ok,
+              code: ok ? 'queued' : 'unavailable',
+              message: ok
+                ? 'Narration revision queued.'
+                : 'Narration is unavailable or already in progress.',
+            });
+          }
+          case '/api/commitment': {
+            const value = z
+              .object({
+                id: requestIdSchema,
+                revision: z.number().int().nonnegative(),
+                cancel: z.boolean().optional(),
+                dueAt: z.number().finite().optional(),
+                completion: z
+                  .object({
+                    eventType: z.string().max(64),
+                    targetId: requestIdSchema.optional(),
+                    definitionId: requestIdSchema.optional(),
+                  })
+                  .strict()
+                  .optional(),
+              })
+              .strict()
+              .parse(body);
+            return send(
+              response,
+              200,
+              await service.transition((world) =>
+                amendCommitment(world, 'player', value.id, value.revision, value),
+              ),
+            );
+          }
+          case '/api/conversation': {
+            const value = z
+              .object({
+                requestId: requestIdSchema,
+                operation: z.enum(['join', 'leave']),
+                conversationId: requestIdSchema,
+                generation: z.number().int().nonnegative(),
+              })
+              .strict()
+              .parse(body);
+            return send(
+              response,
+              200,
+              await service.conversation(
+                value.requestId,
+                value.operation,
+                value.conversationId,
+                value.generation,
+              ),
+            );
+          }
+          case '/api/god/kinship': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({
+                id: requestIdSchema,
+                firstId: requestIdSchema,
+                secondId: requestIdSchema,
+                kind: z.enum(['parent', 'sibling']),
+              })
+              .strict()
+              .parse(body);
+            return send(response, 200, await service.godKinship(value));
+          }
+          case '/api/god/effects': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({
+                requestId: requestIdSchema,
+                effects: z
+                  .array(
+                    z
+                      .object({
+                        targetId: requestIdSchema,
+                        kind: z.enum(['health', 'injury', 'healing', 'wetness', 'burning']),
+                        amount: z.number().min(-100).max(100),
+                      })
+                      .strict(),
+                  )
+                  .min(1)
+                  .max(64),
+                expected: z.record(z.string(), z.number().int().nonnegative()),
+              })
+              .strict()
+              .parse(body);
+            return send(
+              response,
+              200,
+              await service.godEffects(value.requestId, value.effects, value.expected),
+            );
+          }
           case '/api/god/act': {
             if (!config.godMode)
               return send(response, 403, { ok: false, message: 'God access required.' });
             const value = z
-              .object({ action: z.literal('revive'), targetId: requestIdSchema })
+              .object({
+                action: z.enum(['revive', 'enable-cognition']),
+                targetId: requestIdSchema,
+                requestId: requestIdSchema.optional(),
+                expectedRevision: z.number().int().nonnegative().optional(),
+              })
               .strict()
               .parse(body);
-            return send(response, 200, await service.godAct(value.action, value.targetId));
+            return send(
+              response,
+              200,
+              await service.godAct(
+                value.action,
+                value.targetId,
+                value.requestId,
+                value.expectedRevision,
+              ),
+            );
           }
           case '/api/god/spawn': {
             if (!config.godMode)
@@ -497,8 +666,11 @@ export async function createGameServer(
           case '/api/god/editor/person': {
             if (!config.godMode)
               return send(response, 403, { ok: false, message: 'God access required.' });
-            const { actorId } = z.object({ actorId: requestIdSchema }).strict().parse(body);
-            const result = await service.personEditor(actorId);
+            const { actorId, before } = z
+              .object({ actorId: requestIdSchema, before: z.string().max(240).optional() })
+              .strict()
+              .parse(body);
+            const result = await service.personEditor(actorId, before);
             return send(response, result.ok ? 200 : 404, result);
           }
           case '/api/god/editor/person/memory': {
@@ -544,8 +716,11 @@ export async function createGameServer(
           case '/api/god/editor/world-events': {
             if (!config.godMode)
               return send(response, 403, { ok: false, message: 'God access required.' });
-            z.object({}).strict().parse(body);
-            return send(response, 200, await service.worldEventsEditor());
+            const { before } = z
+              .object({ before: z.number().int().nonnegative().optional() })
+              .strict()
+              .parse(body);
+            return send(response, 200, await service.worldEventsEditor(before));
           }
           case '/api/god/editor/world-event': {
             if (!config.godMode)
@@ -841,6 +1016,7 @@ export async function createGameServer(
           previous = current;
           activeTick = (async () => {
             await service.tick(elapsed);
+            director.narrator.tick();
             await director.considerThought();
           })()
             .catch(() => {

@@ -354,6 +354,36 @@ export function PersonEditor({
   const personDirty =
     !!loaded && !!person && JSON.stringify(person) !== JSON.stringify(loaded.person);
   const dirty = personDirty || dirtyMemoryIds.size > 0;
+  async function older() {
+    if (!loaded?.before || loading) return;
+    setLoading(true);
+    try {
+      const next = await post<GodPersonEditorView>('/api/god/editor/person', {
+        actorId,
+        before: loaded.before,
+      });
+      setLoaded((current) =>
+        current
+          ? {
+              ...current,
+              before: next.before,
+              memories: [
+                ...current.memories,
+                ...next.memories.filter((m) => !current.memories.some((c) => c.id === m.id)),
+              ],
+            }
+          : current,
+      );
+      setMemories((current) => [
+        ...current,
+        ...next.memories.filter((m) => !current.some((c) => c.id === m.id)),
+      ]);
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      setLoading(false);
+    }
+  }
   const load = useCallback(async () => {
     const requestGeneration = ++generation.current;
     setLoading(true);
@@ -507,6 +537,11 @@ export function PersonEditor({
           content: (
             <div className="ol-editor-fixed-tab">
               <RefreshHead refreshedAt={refreshedAt} refresh={refresh} />
+              {loaded?.before && (
+                <Button disabled={loading} onPress={() => void older()}>
+                  Older memories
+                </Button>
+              )}
               <MemoryEditor
                 drafts={drafts.current}
                 entries={memories}
@@ -579,6 +614,35 @@ export function WorldEventsEditor({ close }: { close(): void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const dirty = dirtyEventIds.size > 0;
+  async function older() {
+    if (loaded?.before === undefined || loading) return;
+    setLoading(true);
+    try {
+      const next = await post<GodWorldEventsEditorView>('/api/god/editor/world-events', {
+        before: loaded.before,
+      });
+      setLoaded((current) =>
+        current
+          ? {
+              ...current,
+              before: next.before,
+              events: [
+                ...current.events,
+                ...next.events.filter((e) => !current.events.some((c) => c.id === e.id)),
+              ],
+            }
+          : current,
+      );
+      setEvents((current) => [
+        ...current,
+        ...next.events.filter((e) => !current.some((c) => c.id === e.id)),
+      ]);
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      setLoading(false);
+    }
+  }
   const load = useCallback(async () => {
     const requestGeneration = ++generation.current;
     setLoading(true);
@@ -710,6 +774,11 @@ export function WorldEventsEditor({ close }: { close(): void }) {
                   dirty ? setError('Save or discard your changes before refreshing.') : void load()
                 }
               />
+              {loaded?.before !== undefined && (
+                <Button disabled={loading} onPress={() => void older()}>
+                  Older events
+                </Button>
+              )}
               <div className="ol-entry-editor" data-detail={!!current || undefined}>
                 <div className="ol-entry-list">
                   {events.map((event) => (

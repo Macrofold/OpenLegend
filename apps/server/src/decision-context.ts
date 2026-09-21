@@ -1,3 +1,5 @@
+import { activeAppraisals } from '@open-legend/domain';
+
 import { compileInterests } from './interests.js';
 import { observeActor, type CognitionBinding, MIND_POLICY, mindFor } from '@open-legend/domain';
 import type { JudgeRequest, JudgeValue } from '@open-legend/ai';
@@ -16,60 +18,25 @@ function currentConversationEvidenceIds(
   requiredIds: string[],
 ): { recent: string[]; older: string[] } {
   const required = new Set(requiredIds);
+  const events = new Map(world.events.map((event) => [event.id, event]));
   const awareness = world.experience?.awareness[actorId] ?? [];
-  const recentEvents = new Map(world.events.map((event) => [event.id, event]));
-  let triggerIndex = -1;
-  for (let index = awareness.length - 1; index >= 0; index--) {
-    const entry = awareness[index]!;
-    if (
-      required.has(entry.eventId) &&
-      (entry.eventType === 'speech' || recentEvents.get(entry.eventId)?.type === 'speech')
-    ) {
-      triggerIndex = index;
-      break;
-    }
-  }
-  const trigger = triggerIndex >= 0 ? awareness[triggerIndex] : undefined;
-  const triggerEvent = trigger ? recentEvents.get(trigger.eventId) : undefined;
-  const participants = new Set(
-    [
-      actorId,
-      trigger?.sourceId ?? triggerEvent?.actorId,
-      trigger?.targetId ?? triggerEvent?.targetId,
-    ].filter((id): id is string => !!id),
-  );
-  if (!trigger) return { recent: [], older: [] };
-  const ids: string[] = [];
-  let previousAt = trigger.at;
-  for (let index = triggerIndex; index >= 0; index--) {
-    const entry = awareness[index]!;
-    const event = recentEvents.get(entry.eventId);
-    const sourceId = entry.sourceId ?? event?.actorId;
-    const targetId = entry.targetId ?? event?.targetId;
-    const speech = entry.eventType === 'speech' || event?.type === 'speech';
-    // Until durable conversation IDs exist, a two-hour gap is an explicit heuristic
-    // boundary. It tolerates provider latency at accelerated simulation speeds.
-    if (previousAt - entry.at > 7200) break;
-    if (
-      speech &&
-      sourceId &&
-      targetId &&
-      sourceId !== targetId &&
-      participants.has(sourceId) &&
-      participants.has(targetId)
-    ) {
-      ids.push(entry.eventId);
-      previousAt = entry.at;
-    } else if (
-      speech &&
-      ((sourceId && participants.has(sourceId)) || (targetId && participants.has(targetId)))
-    ) {
-      // A participant addressing somebody else starts another exchange.
-      break;
-    }
-  }
-  ids.reverse();
-  const historyIds = ids.filter((id) => !required.has(id));
+  const trigger = [...awareness]
+    .reverse()
+    .find((entry) => required.has(entry.eventId) && events.get(entry.eventId)?.type === 'speech');
+  const conversationId = trigger && events.get(trigger.eventId)?.conversationId;
+  // Legacy association is unknown; membership never grants earlier awareness.
+  if (!conversationId) return { recent: [], older: [] };
+  const historyIds = awareness
+    .filter((entry) => {
+      const event = events.get(entry.eventId);
+      return (
+        event?.type === 'speech' &&
+        event.conversationId === conversationId &&
+        entry.sequence <= trigger!.sequence &&
+        !required.has(entry.eventId)
+      );
+    })
+    .map((entry) => entry.eventId);
   return {
     recent: historyIds.slice(-RECENT_CONVERSATION_EVENTS),
     older: historyIds.slice(0, -RECENT_CONVERSATION_EVENTS),
@@ -114,13 +81,26 @@ export async function prepareDecision(
   const requiredContext: Record<string, unknown> = {
     stimulus,
     identity: `I am ${observed.actor.name} (${actorId}).${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
+    feelings: activeAppraisals(world, actorId)
+      .map(
+        (value) =>
+          `I feel ${value.feeling} concerning ${world.entities[value.targetId]?.name ?? 'an unknown cause'}.`,
+      )
+      .join(' '),
+    kinship: Object.values(world.kinships ?? {})
+      .filter((value) => [value.firstId, value.secondId].includes(actorId))
+      .map(
+        (value) =>
+          `${world.entities[value.firstId]?.name} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${world.entities[value.secondId]?.name}.`,
+      )
+      .join(' '),
     aboutMe:
       world.innerWorlds?.[actorId]?.text ??
       mindFor(world, actorId)
         .documents.map((document) => `${document.title}\n${document.text}`)
         .join('\n'),
     now: gameTime(world.simTime),
-    body: `${snapshotActor.fullness < 30 ? 'I am very hungry. ' : ''}${snapshotActor.energy < 25 ? 'I am exhausted. ' : ''}${snapshotActor.health < 40 ? 'I am seriously injured. ' : ''}${snapshotActor.rest?.asleep ? 'I am asleep.' : `I am ${snapshotActor.action?.type ?? 'idle'}.`}`,
+    body: `${snapshotActor.fullness < 30 ? 'I am very hungry. ' : ''}${snapshotActor.energy < 25 ? 'I am exhausted. ' : ''}${snapshotActor.health < 0.4 * (snapshotActor.body?.maxHealth ?? 100) ? 'I am seriously injured. ' : ''}${snapshotActor.rest?.asleep ? 'I am asleep.' : `I am ${snapshotActor.action?.type ?? 'idle'}.`}`,
     goal: snapshotActor.goal,
     conversation: candidates
       .filter(
@@ -180,13 +160,26 @@ export async function prepareDecision(
   const context: Record<string, unknown> = {
     stimulus,
     identity: `I am ${currentObserved.actor.name} (${actorId}).${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
+    feelings: activeAppraisals(world, actorId)
+      .map(
+        (value) =>
+          `I feel ${value.feeling} concerning ${world.entities[value.targetId]?.name ?? 'an unknown cause'}.`,
+      )
+      .join(' '),
+    kinship: Object.values(world.kinships ?? {})
+      .filter((value) => [value.firstId, value.secondId].includes(actorId))
+      .map(
+        (value) =>
+          `${world.entities[value.firstId]?.name} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${world.entities[value.secondId]?.name}.`,
+      )
+      .join(' '),
     aboutMe:
       currentWorld.innerWorlds?.[actorId]?.text ??
       mindFor(currentWorld, actorId)
         .documents.map((d) => `${d.title}\n${d.text}`)
         .join('\n'),
     now: gameTime(currentWorld.simTime),
-    body: `${actor.fullness < 30 ? 'I am very hungry. ' : ''}${actor.energy < 25 ? 'I am exhausted. ' : ''}${actor.health < 40 ? 'I am seriously injured. ' : ''}${actor.rest?.asleep ? 'I am asleep.' : `I am ${actor.action?.type ?? 'idle'}.`}`,
+    body: `${actor.fullness < 30 ? 'I am very hungry. ' : ''}${actor.energy < 25 ? 'I am exhausted. ' : ''}${actor.health < 0.4 * (actor.body?.maxHealth ?? 100) ? 'I am seriously injured. ' : ''}${actor.rest?.asleep ? 'I am asleep.' : `I am ${actor.action?.type ?? 'idle'}.`}`,
     goal: actor.goal,
   };
   context['conversation'] = selection.selected

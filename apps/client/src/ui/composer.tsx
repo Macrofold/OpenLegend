@@ -1,18 +1,11 @@
+import { History } from './history';
 import { useEffect, useRef, useState } from 'react';
 import type { GameView } from '@open-legend/protocol';
 import { Button, Tag, SegmentedControl } from '../design-system/components';
 import { aiSetupReason } from '../ai-readiness';
 import { post } from '../api';
 import { readDraft, saveDraft, type ComposerDraft } from '../draft';
-import {
-  ConversationComposer,
-  ConversationMessage,
-  ConversationThread,
-  type ConversationItem,
-} from './conversation';
-
-const activeReply = (status: string | undefined) =>
-  status !== undefined && ['queued', 'judging', 'generating'].includes(status);
+import { ConversationComposer } from './conversation';
 
 export function Composer({
   view,
@@ -57,32 +50,6 @@ export function Composer({
         : !view.player.alive
           ? 'Recover at camp to continue.'
           : null;
-  const messages: ConversationItem[] = view.conversation.map((message) => ({
-    id: message.id,
-    content:
-      message.kind === 'action' ? (
-        <div className="ol-meta">
-          <p>{message.text}</p>
-        </div>
-      ) : (
-        <ConversationMessage
-          role={message.speakerId === view.player.id ? 'you' : 'agent'}
-          label={message.speaker}
-          text={message.text}
-          failureReason={message.replyStatus === 'failed' ? message.replyFailure : undefined}
-          pending={activeReply(message.replyStatus)}
-        >
-          {message.speakerId !== view.player.id && /\?\s*$/.test(message.text) && (
-            <div className="ol-question-card">
-              <Tag>Question</Tag>
-              <Button size="sm" variant="quiet" onPress={() => input.current?.focus()}>
-                Write an answer
-              </Button>
-            </div>
-          )}
-        </ConversationMessage>
-      ),
-  }));
   async function submit() {
     if (reason) {
       setup();
@@ -126,13 +93,7 @@ export function Composer({
           <p className="ol-meta">
             {npc ? `Talk with ${npc.name}` : 'Find someone in the clearing.'}
           </p>
-          <ConversationThread
-            id="conversation"
-            conversationKey={`${view.worldId}:${npc?.id ?? 'nearby'}`}
-            items={messages}
-            ariaLabel={npc ? `Conversation with ${npc.name}` : 'Conversation'}
-            visible={visible}
-          />
+          <History conversation visible={visible} />
         </>
       ) : (
         <div className="ol-proposal">

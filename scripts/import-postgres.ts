@@ -1,3 +1,4 @@
+import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { DatabaseSync } from 'node:sqlite';
 import { resolve } from 'node:path';
 import { writeFileSync } from 'node:fs';
@@ -9,7 +10,7 @@ import {
   type WorldChanges,
 } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
-import { migrateCognition } from '@open-legend/domain';
+import { migrateActors, migrateCognition } from '@open-legend/domain';
 const [source, destination] = process.argv.slice(2);
 if (!source || !destination || !process.env['OPEN_LEGEND_DATABASE_URL'])
   throw new Error(
@@ -24,6 +25,9 @@ const tables = [
   'intelligence_calls',
   'meta',
   'player_profiles',
+  ...['attempt_scopes', ...HISTORY_TABLES].filter((name) =>
+    sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name),
+  ),
 ] as const;
 const data = Object.fromEntries(
   tables.map((name) => [name, sqlite.prepare(`SELECT * FROM ${name}`).all()]),
@@ -49,6 +53,12 @@ if (
   row['payload'] = JSON.stringify(state);
   row['revision'] = revision;
 }
+const savedHead = data.meta?.find((row) => row['key'] === 'world-journal-head');
+if (
+  savedHead &&
+  Number(JSON.parse(String(savedHead['value']))) !== Number(data.world[0]!['revision'])
+)
+  throw new Error('Source journal head mismatch; import refused.');
 writeFileSync(
   resolve(destination),
   JSON.stringify({ version: 1, digest: digest(data), tables: data }),
@@ -61,7 +71,13 @@ const target = new SqliteStore(':memory:', db);
 try {
   await target.ready;
   if (await target.load()) throw new Error('Destination already has a world. Import refused.');
-  for (const table of ['jobs', 'attempts', 'intelligence_calls', 'player_profiles'])
+  for (const table of [
+    'jobs',
+    'attempts',
+    'intelligence_calls',
+    'player_profiles',
+    ...['attempt_scopes', ...HISTORY_TABLES],
+  ])
     if (Number((await db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get())?.['count']))
       throw new Error('Destination has existing accounting or profiles; import refused.');
   await db.exec('BEGIN');
@@ -78,8 +94,42 @@ try {
     const total = await db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get();
     if (Number(total?.['count']) !== data[table]!.length) throw new Error('Import count mismatch.');
   }
+  for (const table of tables.filter((name) => name !== 'world')) {
+    const rows = await db.prepare(`SELECT * FROM ${table}`).all();
+    const normalized = (values: Record<string, unknown>[]) =>
+      values
+        .map((row) =>
+          JSON.stringify(
+            Object.fromEntries(
+              Object.entries(row)
+                .map(
+                  ([key, value]) =>
+                    [
+                      key,
+                      [
+                        'revision',
+                        'created_at',
+                        'reserved',
+                        'spent',
+                        'position',
+                        'show_unavailable_actions',
+                        'pause_when_hidden',
+                      ].includes(key)
+                        ? Number(value)
+                        : value,
+                    ] as const,
+                )
+                .sort(([a], [b]) => a.localeCompare(b)),
+            ),
+          ),
+        )
+        .sort();
+    if (digest(normalized(rows)) !== digest(normalized(data[table]!)))
+      throw new Error(`Imported ${table} digest mismatch.`);
+  }
   const preserved = JSON.parse(String(data.world![0]!['payload'])) as SavedWorld;
   const imported = structuredClone(preserved);
+  migrateActors(imported.world);
   migrateCognition(imported.world);
   const revision = Number(data.world![0]!['revision']);
   if (!(await target.getIntegration(`legacy-backup:${imported.world.id}`)))
@@ -101,6 +151,7 @@ try {
         inner.sourceSnapshot,
         inner.publicationJobId,
       );
+  await target.putIntegration('world-journal-head', revision + 1);
   const loaded = (await target.load())!;
   if (digest(loaded.state) !== digest(imported)) throw new Error('Imported world digest mismatch.');
   await target.recoverInterruptedWork();

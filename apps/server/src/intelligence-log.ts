@@ -5,24 +5,54 @@ import type { IntelligenceCall } from '@open-legend/protocol';
 import type { GameRepository } from './store.js';
 
 function clean(value: unknown): unknown {
-  return JSON.parse(
-    JSON.stringify(value ?? null, (key, item: unknown) =>
-      /authorization|api[_-]?key|secret|password|access[_-]?token|refresh[_-]?token/i.test(key)
-        ? '[redacted]'
-        : key === 'signal'
-          ? undefined
-          : key === 'embedding' && Array.isArray(item)
-            ? { dimensions: item.length }
-            : item,
-    ),
-  );
+  const ancestors = new WeakSet<object>();
+  const visit = (item: unknown, key = '', embeddingContext = false): unknown => {
+    if (/authorization|api[_-]?key|secret|password|access[_-]?token|refresh[_-]?token/i.test(key))
+      return '[redacted]';
+    if (/signal|abort/i.test(key) || item instanceof AbortSignal || item instanceof AbortController)
+      return undefined;
+    if (typeof item === 'string') {
+      // Provider bodies can themselves be encoded JSON; sanitize those before capture too.
+      if (/^\s*[\[{]/.test(item)) {
+        try {
+          return visit(JSON.parse(item), key, embeddingContext);
+        } catch {}
+      }
+      return item
+        .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+=*/gi, 'Bearer [redacted]')
+        .replace(
+          /((?:api[_-]?key|password|secret|access[_-]?token|refresh[_-]?token)\s*[=:]\s*)[^\s&,;]+/gi,
+          '$1[redacted]',
+        );
+    }
+    if (!item || typeof item !== 'object') return item ?? null;
+    if (ancestors.has(item)) return '[circular]';
+    if (ArrayBuffer.isView(item))
+      return { dimensions: item.byteLength, unavailable: 'Binary capture omitted.' };
+    if (
+      Array.isArray(item) &&
+      (/embedding|vectors?/i.test(key) ||
+        ((embeddingContext || item.length > 32) && item.every((v) => typeof v === 'number')))
+    )
+      return { dimensions: item.length };
+    embeddingContext ||= 'kind' in item && /embedding/i.test(String(item.kind));
+    ancestors.add(item);
+    const result = Array.isArray(item)
+      ? item.map((value) => visit(value, '', embeddingContext))
+      : Object.fromEntries(
+          Object.entries(item)
+            .map(([name, value]) => [name, visit(value, name, embeddingContext)])
+            .filter(([, value]) => value !== undefined),
+        );
+    ancestors.delete(item);
+    return result;
+  };
+  return visit(value);
 }
 
 /** Private diagnostic records, separate from simulation state and public projections. */
 export class IntelligenceLog {
   private triggerContext = new AsyncLocalStorage<string>();
-  private latest = new Map<string, IntelligenceCall>();
-  private pendingWrites = new Set<Promise<void>>();
   withTrigger<T>(id: string, execute: () => Promise<T>): Promise<T> {
     return this.triggerContext.run(id, execute);
   }
@@ -55,30 +85,49 @@ export class IntelligenceLog {
   }
   private context = new AsyncLocalStorage<IntelligenceCall>();
   constructor(private store: GameRepository) {}
+  private lane: Promise<void> = Promise.resolve();
+  private latest = new Map<string, IntelligenceCall>();
+  private closed = false;
+  /** Workflow updates use log-owned state; durable diagnostics are eventually consistent. */
+  get(id: string): IntelligenceCall | undefined {
+    const call = this.latest.get(id);
+    return call ? structuredClone(call) : undefined;
+  }
   async save(call: IntelligenceCall): Promise<void> {
+    if (this.closed) return;
     try {
-      const captured = structuredClone(call);
+      const captured = clean(call) as IntelligenceCall;
+      if (Buffer.byteLength(JSON.stringify(captured.input ?? null)) > 150000)
+        captured.input = { unavailable: 'Diagnostic input exceeded capture limit.' };
       if (Buffer.byteLength(JSON.stringify(captured)) > 500000) {
         captured.exchanges = [];
         captured.output = { unavailable: 'Capture limit exceeded; receipt remains in accounting.' };
       }
       this.latest.delete(captured.id);
-      this.latest.set(captured.id, captured);
-      for (const id of [...this.latest.keys()].slice(0, -100)) this.latest.delete(id);
-      const write = this.store
-        .putIntelligenceCall(captured)
-        .catch(() => console.error('Could not persist intelligence diagnostics.'));
-      this.pendingWrites.add(write);
-      void write.then(() => this.pendingWrites.delete(write));
+      this.latest.set(captured.id, structuredClone(captured));
+      // Preserve running workflow roots while bounding completed diagnostic lookup state.
+      if (this.latest.size > 1000) {
+        const completed = [...this.latest].find(([, value]) => value.status !== 'running');
+        if (completed) this.latest.delete(completed[0]);
+      }
+      this.lane = this.lane.then(async () => {
+        try {
+          await this.store.putIntelligenceCall(captured);
+        } catch {
+          console.error('Could not persist intelligence diagnostics.');
+        }
+      });
     } catch {
-      console.error('Could not persist intelligence diagnostics.');
+      console.error('Could not capture intelligence diagnostics.');
     }
   }
-  async read(id: string): Promise<IntelligenceCall | undefined> {
-    return this.latest.get(id) ?? (await this.store.intelligenceCall(id));
-  }
   async flush(): Promise<void> {
-    await Promise.allSettled([...this.pendingWrites]);
+    await this.lane;
+  }
+  async close(): Promise<void> {
+    this.closed = true;
+    await this.flush();
+    this.latest.clear();
   }
   async run<T>(kind: string, input: unknown, execute: () => Promise<T>): Promise<T> {
     const call: IntelligenceCall = {

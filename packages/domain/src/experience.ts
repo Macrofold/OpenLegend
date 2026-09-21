@@ -1,4 +1,5 @@
-import { draftWorld, cloneValue } from './draft.js';
+import { hasMemory } from './living.js';
+import { draftWorld, finishWorld, cloneValue } from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { memoryPerspective } from './memory-perspective.js';
@@ -130,14 +131,100 @@ function stableExperienceUpdate(previous: ExperienceEntry, next: ExperienceEntry
 export function mutateExperience(
   world: WorldState,
   actorId: string,
-  mutation: ExperienceMutation | ExperienceMutation[],
+  mutation:
+    | ExperienceMutation
+    | ExperienceMutation[]
+    | { operation: 'consolidate'; retiredIds: string[]; summaries: ExperienceSummary[] }
+    | { operation: 'correct'; sourceId: string; correctionEventId: string }
+    | {
+        operation: 'obligation';
+        id: string;
+        expectedRevision: number;
+        obligation: NonNullable<MemoryRecord['obligation']>;
+      },
 ): string[] | null {
-  migrateCognition(world);
+  if (!world.experience) migrateCognition(world);
+  if (!hasMemory(world.entities[actorId])) return null;
+  if (!Array.isArray(mutation) && mutation.operation === 'consolidate') {
+    const used = new Set(mutation.retiredIds);
+    if (
+      (world.memories[actorId] ?? []).some(
+        (m) =>
+          m.kind === 'commitment' && !m.resolved && (used.has(m.id) || used.has(m.eventId ?? '')),
+      )
+    )
+      return null;
+    if (
+      mutation.summaries.some((s) =>
+        s.sourceIds.some((id) => world.experience!.forgotten[actorId]?.includes(id)),
+      )
+    )
+      return null;
+    const state = world.experience!;
+    state.summaries[actorId] = cloneValue(mutation.summaries);
+    state.awareness[actorId] = (state.awareness[actorId] ?? []).filter((a) => !used.has(a.eventId));
+    world.memories[actorId] = (world.memories[actorId] ?? []).filter(
+      (m) => m.kind !== 'episode' || (!used.has(m.id) && !used.has(m.eventId ?? '')),
+    );
+    state.consolidatedAt[actorId] = world.simTime;
+    return [...used];
+  }
+  if (!Array.isArray(mutation) && mutation.operation === 'correct') {
+    if (
+      !world.experience!.awareness[actorId]?.some(
+        (a) => a.eventId === mutation.correctionEventId,
+      ) ||
+      mutation.sourceId === mutation.correctionEventId
+    )
+      return null;
+    const invalidated = invalidateExperience(world, actorId, [mutation.sourceId]);
+    ((world.experience!.corrections ??= {})[actorId] ??= {})[mutation.sourceId] =
+      mutation.correctionEventId;
+    return invalidated;
+  }
+  if (!Array.isArray(mutation) && mutation.operation === 'obligation') {
+    const memory = world.memories[actorId]?.find(
+      (m) => m.id === mutation.id && m.kind === 'commitment',
+    );
+    if (
+      !memory?.obligation ||
+      memory.resolved ||
+      memory.obligation.revision !== mutation.expectedRevision ||
+      mutation.obligation.revision !== mutation.expectedRevision + 1 ||
+      mutation.obligation.evidenceId !== memory.obligation.evidenceId
+    )
+      return null;
+    memory.obligation = cloneValue(mutation.obligation);
+    memory.resolved = ['fulfilled', 'cancelled'].includes(mutation.obligation.status);
+    const inner = world.innerWorlds?.[actorId];
+    if (inner) inner.reconsiderationRequired = true;
+    return [memory.id];
+  }
   const mutations = Array.isArray(mutation) ? mutation : [mutation];
   if (!mutations.length) return [];
   const entries = experienceEntries(world, actorId);
   if (mutations.some((change) => change.operation === 'add')) {
-    if (mutations.some((change) => change.operation !== 'add')) return null;
+    if (mutations.some((change) => change.operation !== 'add')) {
+      const candidate = draftWorld(world);
+      const updates = mutateExperience(
+        candidate,
+        actorId,
+        mutations.filter((change) => change.operation !== 'add'),
+      );
+      if (!updates) return null;
+      const additions = mutateExperience(
+        candidate,
+        actorId,
+        mutations.filter((change) => change.operation === 'add'),
+      );
+      if (!additions) return null;
+      const committed = finishWorld(candidate);
+      world.experience = committed.experience;
+      world.memories = committed.memories;
+      world.minds = committed.minds;
+      world.innerWorlds = committed.innerWorlds;
+      return [...new Set([...updates, ...additions])];
+    }
     const additions = mutations.map((change) => {
       if (change.operation !== 'add') throw new Error('Mixed experience mutation batch.');
       return cloneValue(change.entry);
@@ -149,7 +236,17 @@ export function mutateExperience(
     );
     if (
       new Set(keys).size !== keys.length ||
-      keys.some((key) => entries.has(key)) ||
+      keys.some(
+        (key) =>
+          entries.has(key) ||
+          world.experience?.forgotten[actorId]?.includes(key.slice(key.indexOf(':') + 1)),
+      ) ||
+      additions.some(
+        (entry) =>
+          entry.source === 'memory' &&
+          entry.value.eventId &&
+          world.experience?.forgotten[actorId]?.includes(entry.value.eventId),
+      ) ||
       additions.some((entry) => 'actorId' in entry.value && entry.value.actorId !== actorId)
     )
       return null;
@@ -180,6 +277,24 @@ export function mutateExperience(
     if ('actorId' in replacement && replacement.actorId !== actorId) return null;
     replacements.set(previous, replacement);
   }
+  const removed = new Set(
+    resolved
+      .filter(({ change }) => change.operation === 'delete')
+      .map(({ previous }) =>
+        previous!.source === 'awareness' ? previous!.value.eventId : previous!.value.id,
+      ),
+  );
+  if (
+    (world.memories[actorId] ?? []).some(
+      (memory) =>
+        memory.kind === 'commitment' &&
+        !memory.resolved &&
+        [memory.id, memory.eventId, memory.obligation?.evidenceId].some(
+          (id) => !!id && removed.has(id),
+        ),
+    )
+  )
+    return null;
   const updatedSources: string[] = [];
   const deletedSources: string[] = [];
   for (const { change, previous } of resolved) {
@@ -238,7 +353,7 @@ export function migrateCognition(world: WorldState): void {
   const player = world.entities['player'];
   if (player && ['You', 'Player', 'player'].includes(player.name)) player.name = 'Mike';
   const initial = !world.experience;
-  world.schemaVersion = 2;
+  if (world.schemaVersion === 1) world.schemaVersion = 2;
   world.experience ??= {
     version: 1,
     awareness: {},
@@ -248,7 +363,7 @@ export function migrateCognition(world: WorldState): void {
   };
   world.innerWorlds ??= {};
   for (const entity of Object.values(world.entities)) {
-    if (!entity.actor || world.innerWorlds[entity.id]) continue;
+    if (!hasMemory(entity) || world.innerWorlds[entity.id]) continue;
     const mind = mindFor(world, entity.id);
     const files = mind.documents.map((doc) => ({
       path: `${doc.id}.md`,
@@ -309,7 +424,7 @@ export function migrateCognition(world: WorldState): void {
   // Trigger metadata is an additive idempotent migration independent of the older
   // perspective rewrite version, so already-migrated saves receive it too.
   for (const entity of Object.values(world.entities)) {
-    if (!entity.actor) continue;
+    if (!hasMemory(entity)) continue;
     for (const aware of world.experience.awareness[entity.id] ?? []) {
       const event = events.get(aware.eventId);
       if (event) {
@@ -335,7 +450,7 @@ export function migrateCognition(world: WorldState): void {
   // Perspective rewrites are idempotent and retain original event IDs and acquisition metadata.
   if (world.experience.perspectiveVersion === 1) return;
   for (const entity of Object.values(world.entities)) {
-    if (!entity.actor) continue;
+    if (!hasMemory(entity)) continue;
     for (const aware of world.experience.awareness[entity.id] ?? []) {
       aware.text = memoryPerspective(world, entity.id, aware.text, aware.modality === 'heard');
     }
@@ -534,22 +649,40 @@ export function acceptConsolidation(
       sequence: Math.max(0, ...entries.map((s) => s.sequence ?? 0)),
     };
   });
-  state.summaries[actorId] = [...retained, ...replacements].sort(
-    (a, b) => a.to - b.to || a.id.localeCompare(b.id),
-  );
-  state.awareness[actorId] = (state.awareness[actorId] ?? []).filter((a) => !used.has(a.eventId));
-  world.memories[actorId] = (world.memories[actorId] ?? []).filter(
-    (m) => m.kind !== 'episode' || (!used.has(m.id) && !used.has(m.eventId ?? '')),
-  );
-  state.consolidatedAt[actorId] = world.simTime;
-  return finish(
+  const invalidated = mutateExperience(world, actorId, {
+    operation: 'consolidate',
+    retiredIds: [...used],
+    summaries: [...retained, ...replacements].sort(
+      (a, b) => a.to - b.to || a.id.localeCompare(b.id),
+    ),
+  });
+  if (!invalidated) return reject('Protected or forgotten sources changed.');
+  const result = finish(
     world,
     [],
     outcome(true, 'consolidated', 'Explicit memory groups accepted; covered sources retired.'),
   );
+  return { ...result, invalidatedMemoryIds: { [actorId]: invalidated } };
 }
 /** Forget derivatives conservatively; original evidence of other observers is untouched. */
 export function forgetExperience(input: WorldState, actorId: string, sourceId: string): Transition {
+  if (
+    (input.memories[actorId] ?? []).some(
+      (memory) =>
+        memory.kind === 'commitment' &&
+        !memory.resolved &&
+        [memory.id, memory.eventId, memory.obligation?.evidenceId].includes(sourceId),
+    )
+  )
+    return {
+      world: input,
+      events: [],
+      outcome: outcome(
+        false,
+        'commitment',
+        'Resolve protected obligations before forgetting their evidence.',
+      ),
+    };
   const world = draftWorld(input);
   migrateCognition(world);
   const key = world.experience!.awareness[actorId]?.some((entry) => entry.eventId === sourceId)
@@ -562,6 +695,16 @@ export function forgetExperience(input: WorldState, actorId: string, sourceId: s
   const invalidated = key
     ? mutateExperience(world, actorId, { operation: 'delete', entryId: key })!
     : invalidateExperience(world, actorId, [sourceId], true);
+  if (!invalidated)
+    return {
+      world: input,
+      events: [],
+      outcome: outcome(
+        false,
+        'commitment',
+        'Resolve protected obligations before forgetting their evidence.',
+      ),
+    };
   return {
     ...finish(world, [], outcome(true, 'forgotten', 'Recall and derived inner world invalidated.')),
     invalidatedMemoryIds: { [actorId]: invalidated },
@@ -750,21 +893,21 @@ export function correctExperience(
       ),
     };
   const world = draftWorld(input);
-  const state = world.experience!;
-  ((state.corrections ??= {})[actorId] ??= {})[sourceId] = correctionEventId;
-  // Historical witnessing is unchanged; derived summaries are now ineligible.
-  const inner = world.innerWorlds?.[actorId];
-  if (inner) {
-    inner.reconsiderationRequired = true;
-    inner.revision++;
-  }
-  return finish(
-    world,
-    [],
-    outcome(
-      true,
-      'corrected',
-      'Correction linked; affected summaries invalidated and beliefs flagged for reconsideration.',
+  const invalidated = mutateExperience(world, actorId, {
+    operation: 'correct',
+    sourceId,
+    correctionEventId,
+  })!;
+  return {
+    ...finish(
+      world,
+      [],
+      outcome(
+        true,
+        'corrected',
+        'Correction linked; affected summaries invalidated and beliefs flagged for reconsideration.',
+      ),
     ),
-  );
+    invalidatedMemoryIds: { [actorId]: invalidated },
+  };
 }

@@ -1,3 +1,4 @@
+import { HistoryRepository } from './history.js';
 import { VectorStore } from './vector-store.js';
 import type { IntelligenceCall } from '@open-legend/protocol';
 import { SqliteDatabase } from './sqlite-database.js';
@@ -153,11 +154,36 @@ export function diffSavedWorld(
 
 export function applyWorldChanges(state: SavedWorld, changes: WorldChanges): SavedWorld {
   let result: unknown = structuredClone(state);
+  if (!Array.isArray(changes.operations)) throw new Error('Invalid world journal operations.');
   for (const change of changes.operations) {
+    if (
+      !['set', 'remove', 'splice'].includes(change.op) ||
+      !Array.isArray(change.path) ||
+      change.path.some(
+        (key) =>
+          (typeof key !== 'string' && (!Number.isSafeInteger(key) || key < 0)) ||
+          ['__proto__', 'prototype', 'constructor'].includes(String(key)),
+      )
+    )
+      throw new Error('Invalid world journal operation/path.');
     if (change.op === 'splice') {
       let target: any = result;
-      for (const key of change.path) target = target[key];
+      for (const key of change.path) {
+        if (!target || typeof target !== 'object' || !Object.hasOwn(target, key))
+          throw new Error('Missing journal splice parent.');
+        target = target[key];
+      }
       if (!Array.isArray(target)) throw new Error('Journal splice requires an array.');
+      if (
+        !Number.isSafeInteger(change.index) ||
+        !Number.isSafeInteger(change.deleteCount) ||
+        change.index < 0 ||
+        change.deleteCount < 0 ||
+        change.index > target.length ||
+        change.index + change.deleteCount > target.length ||
+        !Array.isArray(change.values)
+      )
+        throw new Error('Invalid journal splice bounds.');
       target.splice(change.index, change.deleteCount, ...structuredClone(change.values));
       continue;
     }
@@ -194,6 +220,7 @@ export interface WorldStore {
 
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
+  history?: HistoryRepository;
   vectors?: VectorStore;
   readonly persistence?: 'postgres' | 'sqlite';
   putIntelligenceCall(call: IntelligenceCall): Promise<void>;
@@ -215,6 +242,7 @@ export interface GameRepository extends WorldStore {
     provider: 'jev' | 'openai' | 'macrofold',
     amountUsd: number,
     ceilingUsd: number,
+    actorId?: string,
   ): Promise<boolean>;
   settle(id: string, receipt: AiReceipt): Promise<void>;
   recoverInterruptedWork(): Promise<void>;
@@ -346,9 +374,11 @@ export class SqliteStore implements GameRepository {
     );
   }
 
+  readonly history: HistoryRepository;
   constructor(path: string, database?: SqlDatabase) {
     if (!database && path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = database ?? new SqliteDatabase(path);
+    this.history = new HistoryRepository(this.db);
     this.ready = this.initialize(!!database);
   }
 
@@ -373,6 +403,9 @@ export class SqliteStore implements GameRepository {
         reserved INTEGER NOT NULL CHECK (reserved >= 0), spent INTEGER NOT NULL DEFAULT 0 CHECK (spent >= 0),
         receipt TEXT, created_at INTEGER NOT NULL
       );
+      CREATE INDEX IF NOT EXISTS attempts_created ON attempts(created_at,id);
+      CREATE TABLE IF NOT EXISTS attempt_scopes (attempt_id TEXT PRIMARY KEY, actor_id TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS attempt_actor ON attempt_scopes(actor_id,attempt_id);
       CREATE TABLE IF NOT EXISTS intelligence_calls (id TEXT PRIMARY KEY, started_at TEXT NOT NULL, payload TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS intelligence_calls_time ON intelligence_calls(started_at DESC, id DESC);
       CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -393,6 +426,7 @@ export class SqliteStore implements GameRepository {
       this.vectors = new VectorStore(this.db);
       await this.vectors.initialize();
     }
+    await this.history.initialize();
     const version = await this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema');
     if (version && version['value'] !== '1')
       throw new Error('Unsupported save schema. Keep this save and use a compatible version.');
@@ -428,9 +462,12 @@ export class SqliteStore implements GameRepository {
       state = applyWorldChanges(state, JSON.parse(String(entry['payload'])) as WorldChanges);
       revision = next;
     }
-    if (![1, 2].includes(state.world?.schemaVersion))
+    const head = await this.getIntegration('world-journal-head');
+    if (head !== undefined && head !== null && Number(head) !== revision)
+      throw new Error('World journal head mismatch; refusing incomplete recovery.');
+    if (![1, 2, 3].includes(state.world?.schemaVersion))
       throw new Error('Unsupported world schema; refusing to overwrite your save.');
-    if (this.db.dialect === 'postgres' && state.world.schemaVersion === 2) {
+    if (this.db.dialect === 'postgres' && state.world.schemaVersion >= 2) {
       const rows = await this.db
         .prepare('SELECT actor_id,revision,text FROM mind.inner_world WHERE world_id=?')
         .all(state.world.id);
@@ -512,14 +549,69 @@ export class SqliteStore implements GameRepository {
         this.acceptedState?.world.experience?.forgotten !== state.world.experience.forgotten
       )
         await this.putIntegration(ledgerKey, state.world.experience.forgotten);
-      for (const [actorId, ids] of Object.entries(invalidatedMemoryIds ?? {})) {
+      const invalidations: Record<string, string[]> = structuredClone(invalidatedMemoryIds ?? {});
+      for (const [actorId, records] of Object.entries(state.world.memories)) {
+        const prior = this.acceptedState?.world.memories[actorId];
+        if (!prior || prior === records) continue;
+        const current = new Map(records.map((m) => [m.id, m]));
+        const ids = prior
+          .filter(
+            (m) =>
+              !current.has(m.id) ||
+              (current.get(m.id) !== m && JSON.stringify(current.get(m.id)) !== JSON.stringify(m)),
+          )
+          .map((m) => m.id);
+        if (ids.length)
+          invalidations[actorId] = [...new Set([...(invalidations[actorId] ?? []), ...ids])];
+      }
+      for (const [actorId, ids] of Object.entries(invalidations)) {
         await this.vectors?.invalidate(`vectors:${state.world.id}:${actorId}`, ids);
         await this.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
         await this.putIntegration(`interests:${state.world.id}:${actorId}`, null);
       }
+      const historyKey = `history-schema:${state.world.id}`;
+      const historyReady = await this.getIntegration(historyKey);
+      await this.history.project(
+        historyReady ? this.acceptedState?.world : undefined,
+        state.world,
+        historyReady ? appendEventCount : undefined,
+      );
+      if (!historyReady) await this.putIntegration(historyKey, 1);
+      const outcomes = new Map<string, { ok: boolean; message: string; code: string }>();
+      for (const [id, receipt] of Object.entries(state.world.responseReceipts ?? {}))
+        if (receipt !== this.acceptedState?.world.responseReceipts?.[id] && receipt.outcome)
+          outcomes.set(id, receipt.outcome);
+      for (const [id, receipt] of Object.entries(state.world.declarationReceipts))
+        if (receipt !== this.acceptedState?.world.declarationReceipts[id])
+          outcomes.set(id, { ok: true, code: 'admitted', message: 'Definition admitted.' });
+      for (const [actorId, inner] of Object.entries(state.world.innerWorlds ?? {}))
+        if (
+          inner.publicationJobId &&
+          inner.publicationJobId !==
+            this.acceptedState?.world.innerWorlds?.[actorId]?.publicationJobId
+        )
+          outcomes.set(inner.publicationJobId, {
+            ok: true,
+            code: 'snapshot-published',
+            message: 'Inner world published.',
+          });
+      for (const [id, result] of outcomes) {
+        const job = await this.getJob(id);
+        if (job)
+          await this.putJob({
+            ...job,
+            status: result.ok ? 'completed' : 'failed',
+            message: result.message,
+            result,
+            completedAt: Date.now(),
+          });
+      }
       const revision = current + 1;
+      await this.putIntegration('world-journal-head', revision);
       const snapshot =
-        !this.acceptedState || revision % 120 === 0 || changesPayload.length >= 1_048_576;
+        !this.acceptedState ||
+        revision % 120 === 0 ||
+        Buffer.byteLength(changesPayload) >= 1_048_576;
       if (snapshot) {
         await this.db
           .prepare(
@@ -560,6 +652,10 @@ export class SqliteStore implements GameRepository {
       preferences: {
         showUnavailableActions: Number(row?.['show_unavailable_actions']) === 1,
         pauseWhenHidden: row ? Number(row['pause_when_hidden']) === 1 : true,
+        narratorVoice: ((await this.getIntegration(`narrator-voice:${id}`)) ?? 'restrained') as
+          | 'restrained'
+          | 'lyrical'
+          | 'wry',
       },
     };
   }
@@ -582,6 +678,8 @@ export class SqliteStore implements GameRepository {
       pause_when_hidden=COALESCE(?, player_profiles.pause_when_hidden)`,
         )
         .run(id, unavailable, pause, unavailable, pause);
+      if (preferences.narratorVoice)
+        await this.putIntegration(`narrator-voice:${id}`, preferences.narratorVoice);
       return await this.getProfile(id);
     });
   }
@@ -621,6 +719,7 @@ export class SqliteStore implements GameRepository {
     const previous = await this.getJob(job.id);
     if (previous && previous.fingerprint !== job.fingerprint)
       throw new Error('A request ID cannot be reused with different input.');
+    if (previous?.status === 'completed' && job.status !== 'completed') return;
     await this.db
       .prepare(
         'INSERT INTO jobs VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload',
@@ -661,19 +760,31 @@ export class SqliteStore implements GameRepository {
     provider: 'jev' | 'openai' | 'macrofold',
     amountUsd: number,
     ceilingUsd: number,
+    actorId = 'world-agent',
   ): Promise<boolean> {
     await this.ready;
 
+    if (
+      !Number.isFinite(amountUsd) ||
+      amountUsd <= 0 ||
+      !Number.isFinite(ceilingUsd) ||
+      ceilingUsd < 0 ||
+      !actorId ||
+      actorId.length > 160
+    )
+      throw new Error('Invalid spending reservation.');
+    const monthStart = new Date();
+    const start = Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth(), 1);
     return this.db.transaction(async () => {
       if (await this.db.prepare('SELECT id FROM attempts WHERE id = ?').get(id))
         throw new Error('Attempt already admitted; do not dispatch it again.');
       const row = await this.db
         .prepare(
-          "SELECT COALESCE(SUM(spent + CASE WHEN status = 'reserved' THEN reserved ELSE 0 END), 0) AS total FROM attempts",
+          "SELECT COALESCE(SUM(spent + CASE WHEN status = 'reserved' THEN reserved ELSE 0 END), 0) AS total FROM attempts a LEFT JOIN attempt_scopes s ON s.attempt_id=a.id WHERE a.created_at>=? AND (s.actor_id=? OR s.actor_id IS NULL)",
         )
-        .get();
+        .get(start, actorId);
       const amount = micro(amountUsd);
-      if (Number(row?.['total'] ?? 0) + amount > micro(ceilingUsd)) {
+      if (Number(row?.['total'] ?? 0) + amount > micro(Math.min(50, ceilingUsd))) {
         return false;
       }
       await this.db
@@ -681,6 +792,7 @@ export class SqliteStore implements GameRepository {
           "INSERT INTO attempts (id,provider,status,reserved,created_at) VALUES (?,?,'reserved',?,?)",
         )
         .run(id, provider, amount, Date.now());
+      await this.db.prepare('INSERT INTO attempt_scopes VALUES (?,?)').run(id, actorId);
       return true;
     });
   }
@@ -747,8 +859,11 @@ export class SqliteStore implements GameRepository {
     await this.ready;
 
     const rows = await this.db
-      .prepare('SELECT provider,status,reserved,spent,receipt FROM attempts')
-      .all();
+      .prepare(
+        "SELECT a.provider,a.status,a.reserved,a.spent,a.receipt,COALESCE(s.actor_id,'legacy') AS actor_id FROM attempts a LEFT JOIN attempt_scopes s ON s.attempt_id=a.id WHERE a.created_at>=?",
+      )
+      .all(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1));
+    const accounts: Record<string, { spentUsd: number; reservedUsd: number }> = {};
     let spent = 0,
       reserved = 0,
       jevCalls = 0,
@@ -757,6 +872,9 @@ export class SqliteStore implements GameRepository {
       outputTokens = 0,
       lastLatencyMs = 0;
     for (const row of rows) {
+      const account = (accounts[String(row['actor_id'])] ??= { spentUsd: 0, reservedUsd: 0 });
+      account.spentUsd += Number(row['spent']) / 1e6;
+      if (row['status'] === 'reserved') account.reservedUsd += Number(row['reserved']) / 1e6;
       spent += Number(row['spent']);
       if (row['status'] === 'reserved') reserved += Number(row['reserved']);
       if (row['receipt']) {
@@ -773,6 +891,9 @@ export class SqliteStore implements GameRepository {
     return {
       budget: {
         limitUsd: ceilingUsd,
+        period: new Date().toISOString().slice(0, 7),
+        perAgent: true,
+        accounts,
         spentUsd: spent / 1e6,
         reservedUsd: reserved / 1e6,
         estimated: true,

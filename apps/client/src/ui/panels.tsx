@@ -273,16 +273,22 @@ export function AiSettings({ view }: { view: GameView }) {
           Jev: {ai.jevConfigured ? 'Configured' : 'Not configured'}
         </p>
       </Section>
-      <Section title="World allowance">
+      <Section title="Monthly agent allowances">
         <h3 className="ol-heading">
-          ${Math.max(0, b.limitUsd - b.spentUsd - b.reservedUsd).toFixed(2)} remaining
+          ${b.limitUsd.toFixed(2)} per agent · {b.period ?? 'current month'}
         </h3>
         <p>
-          Limit ${b.limitUsd.toFixed(2)} · Spent ${b.spentUsd.toFixed(4)}
+          Total spent ${b.spentUsd.toFixed(4)}
           {b.estimated ? ' (estimated)' : ''}
           <br />
           Reserved ${b.reservedUsd.toFixed(4)}
         </p>
+        {Object.entries(b.accounts ?? {}).map(([id, account]) => (
+          <p key={id}>
+            {view.entities.find((e) => e.id === id)?.name ?? id}: $
+            {Math.max(0, b.limitUsd - account.spentUsd - account.reservedUsd).toFixed(2)} remaining
+          </p>
+        ))}
         <p className="ol-caption">
           Connected background play follows your time settings. Requests already sent may still
           incur usage while paused.

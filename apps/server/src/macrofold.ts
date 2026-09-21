@@ -272,6 +272,7 @@ export class MacrofoldBackend implements AiClient {
         'macrofold',
         config.macrofoldComputeUsd,
         Math.max(0, config.budgetUsd - (background ? interactiveAllowance(config) : 0)),
+        name.startsWith('reflection-v2:') ? name.slice('reflection-v2:'.length) : 'world-agent',
       ))
     )
       throw new Error('AI spending cap cannot cover the compute allocation.');

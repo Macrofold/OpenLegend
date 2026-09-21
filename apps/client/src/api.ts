@@ -36,6 +36,7 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
   return {
     ...current,
     revision: patch.revision,
+    ...(Object.hasOwn(patch, 'narrator') ? { narrator: patch.narrator } : {}),
     ...(patch.profile ? { profile: patch.profile } : {}),
     ...(patch.clock ? { clock: { ...current.clock, ...patch.clock } } : {}),
     ...(patch.player ? { player: { ...current.player, ...patch.player } } : {}),

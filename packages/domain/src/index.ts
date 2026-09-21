@@ -15,6 +15,7 @@ export {
   editPerson,
   editWorldEvents,
   reviveActor,
+  enableActorCognition,
   spawnWorldEntity,
 } from './god-tools.js';
 export {
@@ -40,3 +41,11 @@ export * from './commitments.js';
 export * from './response.js';
 
 export { updateWorld } from './draft.js';
+
+export * from './living.js';
+
+export * from './conversations.js';
+
+export * from './social.js';
+
+export { leaveConversation } from './conversations.js';

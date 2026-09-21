@@ -202,7 +202,7 @@ export function commitCognition(
     binding.purpose !== 'thought' &&
     (actor.fullness < 30 ||
       (actor.energy < 15 && actor.action?.type !== 'rest') ||
-      actor.health < 40 ||
+      actor.health < 0.4 * (actor.body?.maxHealth ?? 100) ||
       (actor.action && actor.action.type !== 'rest'))
   )
     return reject('Urgency or active work superseded consolidation.');

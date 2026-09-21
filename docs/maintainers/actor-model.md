@@ -4,7 +4,7 @@ This is the sole implementation tracker for the living-actor migration. Canonica
 
 ## Tasks
 
-All tasks are pending. [F74](../../archive/01-requirements/product-baseline.md#living-actor-model--f74) and the [canonical actor model](../architecture.md#actor-means-any-living-being) own the accepted behavior; [D56](../../archive/05-project/open-decisions.md#d56--residual-living-actor-lifecycle-semantics) retains only the unresolved harvesting/revival semantics. The current separate person-style `actor` and `animal` components remain valid until this work is deliberately migrated.
+ACT01–ACT05 are implemented; acceptance gates remain open with automated coverage deferred to [TODO](TODO.md#three-program-deferred-validation). God revival now follows the accepted [actor model](../architecture.md#actor-means-any-living-being), including harvested bodies. Schema 3 migrates physical state without resetting identity; legacy animal fields are import-only.
 
 - [ ] **ACT01 — Define the capability model and migration.** Specify shared lifecycle/body components plus independent species, body plan, controller, cognition, memory, inner-world and speech capabilities. Version and migrate saves without changing stable entity IDs, losing animal state or granting every animal human cognition.
 - [ ] **ACT02 — Preserve animal identity through death.** Replace or adapt the destructive animal-to-remains conversion so a dead animal remains a revivable actor while still supporting finite, idempotent harvesting. Define and test what revival means before and after partial or complete harvesting.

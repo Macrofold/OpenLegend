@@ -309,3 +309,23 @@
   line-height: 18px;
   font-weight: 500;
 }
+
+.ol-narrator {
+  position: absolute;
+  top: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(34rem, 75vw);
+  padding: 0.75rem 1rem;
+  text-align: center;
+  pointer-events: auto;
+  font-family: Georgia, serif;
+}
+
+.ol-history > label {
+  display: block;
+  margin-block: 0.75rem;
+}
+.ol-history > article {
+  padding-block: 0.75rem;
+}

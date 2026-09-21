@@ -1,3 +1,4 @@
+import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { writeFileSync } from 'node:fs';
 import { readConfig } from '../apps/server/src/config.js';
 import { SqliteStore, digest } from '../apps/server/src/store.js';
@@ -14,9 +15,15 @@ try {
   await store.db.exec('BEGIN IMMEDIATE');
   const tables = Object.fromEntries(
     await Promise.all(
-      ['world', 'jobs', 'attempts', 'intelligence_calls', 'meta', 'player_profiles'].map(
-        async (name) => [name, await store.db.prepare(`SELECT * FROM ${name}`).all()] as const,
-      ),
+      [
+        'world',
+        'jobs',
+        'attempts',
+        'intelligence_calls',
+        'meta',
+        'player_profiles',
+        ...['attempt_scopes', ...HISTORY_TABLES],
+      ].map(async (name) => [name, await store.db.prepare(`SELECT * FROM ${name}`).all()] as const),
     ),
   );
   const latest = await store.load();
