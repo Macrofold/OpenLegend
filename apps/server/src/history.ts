@@ -108,18 +108,20 @@ export class HistoryRepository {
     rows: unknown[][],
   ) {
     // Stay below SQLite's portable parameter limit and bound encoded statement payloads.
-    while (rows.length) {
+    for (let offset = 0; offset < rows.length; ) {
       let bytes = 0,
         count = 0,
         parameters = 0;
-      for (const row of rows) {
+      for (let index = offset; index < rows.length; index++) {
+        const row = rows[index]!;
         const size = Buffer.byteLength(JSON.stringify(row));
         if (count && (bytes + size > 262144 || parameters + row.length > 900)) break;
         bytes += size;
         parameters += row.length;
         count++;
       }
-      const chunk = rows.splice(0, count);
+      const chunk = rows.slice(offset, offset + count);
+      offset += count;
       await this.db
         .prepare(
           `INSERT INTO ${table} VALUES ${chunk.map((row) => `(${row.map(() => '?').join(',')})`).join(',')}`,

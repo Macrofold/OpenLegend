@@ -80,7 +80,7 @@ export class Narrator {
       this.dirty = false;
       if (this.stopped || this.service.paused) return;
       const due = await this.service.store.history?.nextDue(this.service.world.id);
-      if (due == null) return;
+      if (due == null || this.stopped || this.service.paused) return;
       const delay = due + this.service.config.narrationBatchMs - Date.now();
       if (delay > 0) {
         this.timer = setTimeout(() => this.tick(), delay);
@@ -94,13 +94,15 @@ export class Narrator {
     await this.ready;
     const repository = this.service.store.history;
     if (!repository || this.stopped || this.service.paused) return;
+    // Register cancellation before claim I/O; pause/shutdown can happen during that await.
+    // See docs/architecture.md#paid-work-absence-and-recovery.
+    this.controller = new AbortController();
     const job = await repository.claim(
       this.service.world.id,
       Date.now() - this.service.config.narrationBatchMs,
       this.service.world,
     );
     if (!job) return;
-    this.controller = new AbortController();
     const id = `${this.service.world.id}:${job.id}:generation:${job.item.revision ?? 1}`;
     const root = {
       id,
@@ -127,7 +129,7 @@ export class Narrator {
         completedAt: new Date().toISOString(),
         output: { reason: job.reason, sourceIds: job.item.sourceIds },
       });
-      this.service.notify();
+      this.service.notifyHistory();
     }
   }
   private async generate(job: StoryJob, id: string) {
@@ -135,6 +137,10 @@ export class Narrator {
     const repository = store.history!;
     if (!(await repository.selectionCurrent(this.service.world, job))) {
       await repository.cancel(world.id, job);
+      return;
+    }
+    if (this.stopped || this.service.paused || this.controller?.signal.aborted) {
+      await repository.publish(world.id, job, null, 'Cancelled before generation.');
       return;
     }
     if (!(config.macrofoldKey || config.llmKey)) {
@@ -183,6 +189,10 @@ export class Narrator {
         );
     if (!(await repository.selectionCurrent(this.service.world, job))) {
       await repository.cancel(world.id, job);
+      return;
+    }
+    if (this.stopped || this.service.paused || this.controller?.signal.aborted) {
+      await repository.publish(world.id, job, null, 'Cancelled before reservation.');
       return;
     }
     if (!(await store.reserve(id, 'openai', amount, config.budgetUsd, 'narrator'))) {

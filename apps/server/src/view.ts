@@ -12,6 +12,7 @@ import {
   PERCEPTION_RULES,
   canHear,
   canSee,
+  nearbyEntities,
   inventoryFor,
   canRecoverAtCamp,
   GOD_SPAWN_OPTIONS,
@@ -97,7 +98,11 @@ export async function projectView(
       inventoryFor(world, service.controlledEntityId),
     ),
     visibleEntities: memo('visibleEntities', [world.entities], () =>
-      Object.values(world.entities).filter(
+      nearbyEntities(
+        world,
+        world.entities[service.controlledEntityId]!.position,
+        PERCEPTION_RULES.sightRadius,
+      ).filter(
         (entity) =>
           entity.id !== service.controlledEntityId &&
           canSee(world.entities[service.controlledEntityId]!.position, entity.position),
@@ -385,6 +390,25 @@ export async function projectView(
     queueLatencyMs,
     totalLatencyMs,
   }));
+  const conversationId = world.conversations?.active[service.controlledEntityId];
+  const conversationEntries = events
+    .filter((event) => !conversationId || event.conversationId === conversationId)
+    .filter((event) => event.type === 'speech' || typeof event.data?.['responseId'] === 'string')
+    .slice(-30);
+  // Text is authoritative in memory; optional job reads must never hide it while refreshing.
+  // See docs/architecture.md#performance-critical-path.
+  const replies = optional(
+    service,
+    'speechJobs',
+    memo('speechJobs', [service.historyEpoch, telemetryRevision, ...conversationEntries], () =>
+      service.store.getSpeechJobs(
+        conversationEntries
+          .filter((event) => event.actorId === service.controlledEntityId)
+          .map((event) => event.id),
+      ),
+    ),
+    new Map<string, never>(),
+  );
   const jevConfigured = service.config.macrofoldKey ? true : !!service.config.jevKey;
   const llmConfigured = service.config.macrofoldKey ? true : !!service.config.llmKey;
   // Job history is not a service-health probe. A later completed request
@@ -579,74 +603,38 @@ export async function projectView(
           ...(event.targetId ? { targetId: event.targetId } : {}),
         })),
     ),
-    conversation: optional(
-      service,
-      'conversation',
-      memo<Promise<GameView['conversation']>>(
-        'conversation',
-        [
-          JSON.stringify(
-            events.filter(
-              (event) => event.type === 'speech' || typeof event.data?.['responseId'] === 'string',
-            ),
-          ),
-          world.conversations?.active[service.controlledEntityId],
-          telemetryRevision,
-          ...events
-            .filter(
-              (event) => event.type === 'speech' || typeof event.data?.['responseId'] === 'string',
-            )
-            .map((event) => world.entities[event.actorId ?? '']?.name),
-        ],
-        async () => {
-          const conversationId = world.conversations?.active[service.controlledEntityId];
-          const entries = events
-            .filter((event) => !conversationId || event.conversationId === conversationId)
-            .filter(
-              (event) => event.type === 'speech' || typeof event.data?.['responseId'] === 'string',
-            )
-            .slice(-30);
-          const replies = await service.store.getSpeechJobs(
-            entries
-              .filter((event) => event.actorId === service.controlledEntityId)
-              .map((event) => event.id),
-          );
-          return entries.map((event) => {
-            const reply = replies.get(event.id);
-            const legacyIdentityFailure =
-              reply?.message === 'Models cannot author identity or seed provenance.' ||
-              reply?.message ===
-                "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.";
-            // Only an actual failed job is a failed message. Cancellation and stale
-            // work end pending UI without relabeling an interaction as a technical failure.
-            // See docs/architecture.md#react-ui-and-design-system.
-            const terminalFailure = legacyIdentityFailure || reply?.status === 'failed';
-            const replyStatus = terminalFailure ? 'failed' : reply?.status;
-            const replyMessage = legacyIdentityFailure
-              ? "The response tried to change the character's fixed identity or treat generated material as part of their original history."
-              : reply?.message;
-            return {
-              id: event.id,
-              kind: event.type === 'speech' ? ('speech' as const) : ('action' as const),
-              ...(event.data?.['mechanical'] === false ? { mechanical: false } : {}),
-              ...(replyStatus && replyMessage
-                ? {
-                    replyStatus,
-                    replyRequestId: reply?.id,
-                    retryable: reply?.status === 'failed',
-                    ...(replyStatus === 'failed' ? { replyFailure: replyMessage } : {}),
-                  }
-                : {}),
-              speakerId: event.actorId!,
-              speaker: world.entities[event.actorId!]?.name ?? 'Someone',
-              text: String(event.data?.['text'] ?? event.text),
-              time: event.at,
-            };
-          });
-        },
-      ),
-      [],
-    ),
+    conversation: conversationEntries.map((event) => {
+      const reply = replies.get(event.id);
+      const legacyIdentityFailure =
+        reply?.message === 'Models cannot author identity or seed provenance.' ||
+        reply?.message ===
+          "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.";
+      // Only an actual failed job is a failed message. Cancellation and stale
+      // work end pending UI without relabeling an interaction as a technical failure.
+      // See docs/architecture.md#react-ui-and-design-system.
+      const terminalFailure = legacyIdentityFailure || reply?.status === 'failed';
+      const replyStatus = terminalFailure ? 'failed' : reply?.status;
+      const replyMessage = legacyIdentityFailure
+        ? "The response tried to change the character's fixed identity or treat generated material as part of their original history."
+        : reply?.message;
+      return {
+        id: event.id,
+        kind: event.type === 'speech' ? ('speech' as const) : ('action' as const),
+        ...(event.data?.['mechanical'] === false ? { mechanical: false } : {}),
+        ...(replyStatus && replyMessage
+          ? {
+              replyStatus,
+              replyRequestId: reply?.id,
+              retryable: reply?.status === 'failed',
+              ...(replyStatus === 'failed' ? { replyFailure: replyMessage } : {}),
+            }
+          : {}),
+        speakerId: event.actorId!,
+        speaker: world.entities[event.actorId!]?.name ?? 'Someone',
+        text: String(event.data?.['text'] ?? event.text),
+        time: event.at,
+      };
+    }),
     ai: {
       mode: aiMode,
       jevConfigured,

@@ -20,6 +20,10 @@ A sandboxed full run also encountered ten loopback `listen EPERM` setup failures
 
 ## Performance investigation
 
+### Review runtime observations
+
+A disposable native SQLite world ran through the production HTTP server with no provider credentials and zero AI budget. It accepted movement, returned the same result on duplicate and paused retries, reached `(12,13)`, delivered native speech, and exposed that speech in the first direct public projection while optional status was unresolved. The public view reported saved persistence and 11 visible entities. The history revision advanced after native narration fallback; explicit regeneration succeeded and advanced it again. The server closed cleanly. This verifies the no-provider fallback path, not generated prose, browser rendering, PostgreSQL or scale. The production build passes; no automated tests were written or run. The native run was repeated after the cancellation and Talk opening-signal fixes with the same successful command/speech outcomes and clean shutdown. Browser opening-scroll behavior and pending-read cancellation/edit races remain in [deferred coverage](maintainers/TODO.md#deferred-performance-validation).
+
 ### Continued implementation runtime observations
 
 The production build passes. No automated tests were written or run. Native verification used Node 22.23.2 on an Apple M1 Pro, local SQLite, isolated saves, no provider credentials and zero AI budget. [Raw samples](verification/performance-continued.json) retain successful outcomes and timing data. These are small runtime observations, not browser, PostgreSQL, soak, AI-quality or population acceptance.

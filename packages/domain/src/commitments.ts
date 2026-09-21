@@ -165,27 +165,18 @@ export function advanceCommitments(world: WorldState, events: WorldEvent[]): voi
   for (const { actorId, record } of [...candidates].sort((a, b) => a.order - b.order)) {
     const obligation = record.obligation;
     if (!obligation || record.resolved) continue;
-    if (
-      obligation.completion &&
-      events.some(
-        (e) =>
-          e.actorId === actorId &&
-          e.id !== obligation.evidenceId &&
-          e.type === obligation.completion!.eventType &&
-          (!obligation.completion!.targetId || e.targetId === obligation.completion!.targetId) &&
-          (!obligation.completion!.definitionId ||
-            e.data?.['definitionId'] === obligation.completion!.definitionId),
-      )
-    ) {
-      const evidence = events.find(
-        (e) =>
-          e.actorId === actorId &&
-          e.id !== obligation.evidenceId &&
-          e.type === obligation.completion!.eventType &&
-          (!obligation.completion!.targetId || e.targetId === obligation.completion!.targetId) &&
-          (!obligation.completion!.definitionId ||
-            e.data?.['definitionId'] === obligation.completion!.definitionId),
-      )!;
+    const evidence = obligation.completion
+      ? events.find(
+          (e) =>
+            e.actorId === actorId &&
+            e.id !== obligation.evidenceId &&
+            e.type === obligation.completion!.eventType &&
+            (!obligation.completion!.targetId || e.targetId === obligation.completion!.targetId) &&
+            (!obligation.completion!.definitionId ||
+              e.data?.['definitionId'] === obligation.completion!.definitionId),
+        )
+      : undefined;
+    if (evidence) {
       mutateExperience(world, actorId, {
         operation: 'obligation',
         id: record.id,

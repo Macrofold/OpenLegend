@@ -392,6 +392,11 @@ export class WorldService {
       if (count === undefined) this.transcriptEpoch++;
     }
   }
+  /** Presentation changes need the same refresh signal as committed journal sources. */
+  notifyHistory(): void {
+    this.transcriptRevision++;
+    this.notify();
+  }
   notify(telemetry = true): void {
     if (telemetry) this.telemetryRevision++;
     this.viewRevision++;

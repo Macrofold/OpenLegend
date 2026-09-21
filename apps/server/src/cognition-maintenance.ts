@@ -139,8 +139,10 @@ export class CognitionMaintenance {
           this.work.defer(entity.id, times.get(entity.id)! + 60000);
           continue;
         }
-        const world = this.service.world,
-          actor = world.entities[entity.id]!.actor!;
+        const world = this.service.world;
+        const actor = world.entities[entity.id]?.actor;
+        // Owner edits can remove an actor while schedule records are loading.
+        if (!actor?.alive) continue;
         const safe =
           actor.controller === 'npc' &&
           actor.health >= 0.4 * (actor.body?.maxHealth ?? 100) &&

@@ -590,7 +590,7 @@ export async function createGameServer(
                 value.id,
                 value.requestId,
               )) ?? false;
-            service.notify();
+            service.notifyHistory();
             return send(response, 200, {
               ok,
               code: ok ? 'queued' : 'unavailable',

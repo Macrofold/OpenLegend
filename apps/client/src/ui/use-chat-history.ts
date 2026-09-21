@@ -16,11 +16,12 @@ export function useChatHistory(
   const [error, setError] = useState('');
   const request = useRef(0);
   const busy = useRef(false);
+  const openingPending = useRef(false);
   const historyRevision = useRef(view.historyRevision);
   const page = saved?.key === key ? saved.page : undefined;
   const latestPage = useRef(page);
   latestPage.current = page;
-  async function load(older = false, opening = false) {
+  async function load(older = false) {
     if (!participantId || busy.current) return;
     const generation = ++request.current;
     busy.current = true;
@@ -42,7 +43,11 @@ export function useChatHistory(
       if (generation !== request.current) return;
       setError('');
       // Tell the thread when this opening's asynchronous history has actually arrived.
-      if (opening) setOpeningRevision((revision) => revision + 1);
+      // A scoped refresh may supersede the opening request before it finishes.
+      if (openingPending.current) {
+        openingPending.current = false;
+        setOpeningRevision((revision) => revision + 1);
+      }
       setSaved((current) => {
         const old = current?.key === key ? current.page : undefined;
         const merged = new Map((old?.messages ?? []).map((message) => [message.id, message]));
@@ -73,9 +78,10 @@ export function useChatHistory(
     busy.current = false;
     setError('');
     setLoading(false);
+    openingPending.current = visible && !!participantId;
     if (!visible || !participantId) return;
     historyRevision.current = view.historyRevision;
-    void load(false, true);
+    void load();
     return () => {
       request.current++;
       busy.current = false;
