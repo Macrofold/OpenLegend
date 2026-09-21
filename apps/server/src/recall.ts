@@ -1,5 +1,11 @@
 import { batchedAttentionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
-import { experiences, mindFor, type WorldState } from '@open-legend/domain';
+import {
+  EXPERIENCE_LIMITS,
+  experiences,
+  mindFor,
+  type MemoryRecord,
+  type WorldState,
+} from '@open-legend/domain';
 import {
   createEmbeddingClient,
   type EmbeddingClient,
@@ -10,6 +16,8 @@ import {
 import { digest } from './store.js';
 import type { WorldService } from './world-service.js';
 import type { IntelligenceLog } from './intelligence-log.js';
+import { randomUUID } from 'node:crypto';
+import { interactiveAllowance } from './cognition-budget.js';
 export interface AttentionCandidate {
   id: string;
   kind: 'memory' | 'conversation' | 'entity' | 'possession' | 'knowledge' | 'action';
@@ -30,6 +38,52 @@ export function gameTime(at: number): string {
   // The world clock starts at 08:00; match the player-facing calendar.
   const hour = (8 + Math.floor(at / 3600)) % 24;
   return `Day ${Math.floor(at / 86400) + 1}, ${hour.toString().padStart(2, '0')}:${Math.floor(at / 60) % 60 < 10 ? '0' : ''}${Math.floor(at / 60) % 60}`;
+}
+function memoryCandidate(
+  memory: MemoryRecord,
+  requiredIds: Set<string>,
+  automaticIds: Set<string>,
+  conversationIds: Set<string>,
+  corrections: Record<string, string>,
+  correctedIds: Set<string>,
+): AttentionCandidate {
+  const matches = (ids: Set<string>) =>
+    ids.has(memory.id) || (memory.eventId ? ids.has(memory.eventId) : false);
+  return {
+    id: memory.id,
+    kind: matches(conversationIds) ? 'conversation' : 'memory',
+    text: `${gameTime(memory.at)} [${memory.source}]: ${memory.summary}`,
+    revision: digest(memory),
+    required:
+      matches(requiredIds) ||
+      (memory.kind === 'commitment' && !memory.resolved) ||
+      !!corrections[memory.id] ||
+      correctedIds.has(memory.id),
+    automatic: matches(automaticIds),
+    entityIds: memory.entityIds,
+    at: memory.at,
+    salience: memory.importance,
+    sourceIds: [memory.id],
+  };
+}
+
+function speechCandidates(world: WorldState, actorId: string): AttentionCandidate[] {
+  const speech = experiences(world, actorId, true)
+    .filter((memory) => memory.eventType === 'speech')
+    .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0) || a.at - b.at)
+    .slice(-EXPERIENCE_LIMITS.conversationSpeech);
+  const ids = new Set(speech.map((memory) => memory.eventId ?? memory.id));
+  const corrections = world.experience?.corrections?.[actorId] ?? {};
+  return speech.map((memory) =>
+    memoryCandidate(
+      memory,
+      new Set(),
+      new Set(),
+      ids,
+      corrections,
+      new Set(Object.values(corrections)),
+    ),
+  );
 }
 export function candidateSet(
   world: WorldState,
@@ -58,22 +112,16 @@ export function candidateSet(
       correctedIdSet.has(memory.id);
     if (include && !included.has(memory.id)) recallable.push(memory);
   }
-  const memories: AttentionCandidate[] = recallable.map((m) => ({
-    id: m.id,
-    kind: matches(conversationIdSet, m) ? 'conversation' : 'memory',
-    text: `${gameTime(m.at)} [${m.source}]: ${m.summary}`,
-    revision: digest(m),
-    required:
-      matches(requiredIdSet, m) ||
-      (m.kind === 'commitment' && !m.resolved) ||
-      !!corrections[m.id] ||
-      correctedIdSet.has(m.id),
-    automatic: matches(automaticIdSet, m),
-    entityIds: m.entityIds,
-    at: m.at,
-    salience: m.importance,
-    sourceIds: [m.id],
-  }));
+  const memories = recallable.map((memory) =>
+    memoryCandidate(
+      memory,
+      requiredIdSet,
+      automaticIdSet,
+      conversationIdSet,
+      corrections,
+      correctedIdSet,
+    ),
+  );
   const candidates: AttentionCandidate[] = [];
   const duplicateMemories = new Map<string, AttentionCandidate>();
   for (const memory of memories) {
@@ -81,12 +129,13 @@ export function candidateSet(
       candidates.push(memory);
       continue;
     }
+    // Repeated speech is still a distinct turn in a conversation.
     const key = `${memory.kind}:${memory.text
       .replace(/^Day \d+, \d\d:\d\d /, '')
       .trim()
       .replace(/\s+/g, ' ')
       .toLocaleLowerCase()}`;
-    const existing = duplicateMemories.get(key);
+    const existing = memory.kind === 'conversation' ? undefined : duplicateMemories.get(key);
     if (!existing) {
       duplicateMemories.set(key, memory);
       candidates.push(memory);
@@ -154,9 +203,21 @@ interface VectorCache {
   dimensions: number;
   queries: Record<string, number[]>;
 }
+const backgroundSourceKey = (
+  actorId: string,
+  candidate: Pick<AttentionCandidate, 'id' | 'revision'>,
+) => `${actorId}\u0000${candidate.id}\u0000${candidate.revision}`;
 /** Scope is resolved before vector lookup. Every batch and result is bounded and revision-keyed. */
 export class RecallService {
   private embeddings: EmbeddingClient;
+  private readonly unsubscribe: () => void;
+  private observedEvents: WorldState['events'];
+  private indexQueued = false;
+  private indexWork: Promise<void> = Promise.resolve();
+  private readonly indexController = new AbortController();
+  private readonly attemptedBackgroundSources = new Set<string>();
+  private readonly backgroundInFlight = new Set<string>();
+  private closed = false;
   constructor(
     private service: WorldService,
     private log: IntelligenceLog,
@@ -172,6 +233,130 @@ export class RecallService {
         fetch: log.fetch,
         timeoutMs: c.aiTimeoutMs,
       });
+    this.observedEvents = service.world.events;
+    this.unsubscribe = service.subscribe(() => {
+      const events = service.world.events;
+      const previous = this.observedEvents;
+      this.observedEvents = events;
+      if (events === previous) return;
+      const appendedSpeech =
+        events.length >= previous.length &&
+        events.slice(previous.length).some((event) => event.type === 'speech');
+      // A shorter/replaced history may change which retained speech belongs in the pool.
+      if (appendedSpeech || events.length <= previous.length) this.scheduleSpeechIndex();
+    });
+    this.scheduleSpeechIndex();
+  }
+
+  private scheduleSpeechIndex(): void {
+    if (
+      this.closed ||
+      this.indexQueued ||
+      !this.service.store.vectors ||
+      !this.service.config.embeddingKey ||
+      this.service.config.budgetUsd <= 0
+    )
+      return;
+    this.indexQueued = true;
+    this.indexWork = this.indexWork
+      .then(async () => {
+        while (this.indexQueued && !this.closed) {
+          this.indexQueued = false;
+          await this.indexSpeech();
+        }
+      })
+      .catch(() => undefined);
+  }
+
+  private async indexSpeech(): Promise<void> {
+    const vectors = this.service.store.vectors;
+    if (!vectors) return;
+    const config = this.service.config;
+    const world = this.service.world;
+    for (const actorId of Object.keys(world.experience?.awareness ?? {})) {
+      if (this.closed) return;
+      // Player memory is rendered from history; only autonomous decision makers need vectors.
+      if (world.entities[actorId]?.actor?.controller !== 'npc') continue;
+      const scope = {
+        key: `vectors:${world.id}:${actorId}`,
+        model: config.embeddingModel,
+        dimensions: config.embeddingDimensions,
+      };
+      const candidates = speechCandidates(world, actorId);
+      const activeKeys = new Set(
+        candidates.map((candidate) => backgroundSourceKey(actorId, candidate)),
+      );
+      for (const key of this.attemptedBackgroundSources)
+        if (key.startsWith(`${actorId}\u0000`) && !activeKeys.has(key))
+          this.attemptedBackgroundSources.delete(key);
+      const sources = candidates.map(({ id, revision }) => ({ id, revision }));
+      const indexed = await vectors.reconcile(scope, sources);
+      const missing = candidates.filter((candidate) => {
+        const key = backgroundSourceKey(actorId, candidate);
+        return !indexed.has(candidate.id) && !this.attemptedBackgroundSources.has(key);
+      });
+      for (let offset = 0; offset < missing.length && !this.closed; offset += 32) {
+        const batch = missing.slice(offset, offset + 32);
+        const sourceKeys = batch.map((candidate) => backgroundSourceKey(actorId, candidate));
+        sourceKeys.forEach((key) => this.backgroundInFlight.add(key));
+        const requestId = `speech-index:${randomUUID()}`;
+        try {
+          if (
+            !(await this.service.store.reserve(
+              requestId,
+              'openai',
+              config.embeddingReserveUsd,
+              Math.max(0, config.budgetUsd - interactiveAllowance(config)),
+              actorId,
+            ))
+          )
+            return;
+          // Do not automatically repurchase a failed or uncertain derived-data call.
+          sourceKeys.forEach((key) => this.attemptedBackgroundSources.add(key));
+          const result = await this.log.run(
+            'Background speech embeddings',
+            {
+              requestId,
+              actorId,
+              model: config.embeddingModel,
+              dimensions: config.embeddingDimensions,
+              sourceIds: batch.map((candidate) => candidate.id),
+            },
+            async () =>
+              await this.embeddings.embed({
+                requestId,
+                texts: batch.map((candidate) => candidate.text),
+                signal: this.indexController.signal,
+              }),
+          );
+          await this.service.store.settle(requestId, result.receipt);
+          if (result.outcome !== 'value') return;
+          // Provider work is derived data: only publish rows that still match current speech.
+          const current = new Map(
+            speechCandidates(this.service.world, actorId).map((candidate) => [
+              candidate.id,
+              candidate,
+            ]),
+          );
+          const additions = batch.flatMap((candidate, index) => {
+            const latest = current.get(candidate.id);
+            return latest?.revision === candidate.revision
+              ? [{ id: candidate.id, revision: candidate.revision, vector: result.value[index]! }]
+              : [];
+          });
+          if (additions.length) await vectors.put(scope, additions);
+        } finally {
+          sourceKeys.forEach((key) => this.backgroundInFlight.delete(key));
+        }
+      }
+    }
+  }
+
+  async close(): Promise<void> {
+    this.closed = true;
+    this.unsubscribe();
+    this.indexController.abort();
+    await this.indexWork;
   }
   async select(
     world: WorldState,
@@ -271,9 +456,17 @@ export class RecallService {
       semanticPool.length && vectors
         ? await vectors.reconcile(scope, retainedSources)
         : new Set<string>();
+    const backgroundPending = semanticPool.some((candidate) =>
+      this.backgroundInFlight.has(backgroundSourceKey(actorId, candidate)),
+    );
     // Preserve structured priority while indexing only sections large enough to need semantic top-N.
     const missing = ranked
-      .filter((candidate) => semanticIds.has(candidate.id) && !indexed.has(candidate.id))
+      .filter(
+        (candidate) =>
+          semanticIds.has(candidate.id) &&
+          !indexed.has(candidate.id) &&
+          !this.backgroundInFlight.has(backgroundSourceKey(actorId, candidate)),
+      )
       .slice(0, 32);
     const queryKey = digest({
       query: query.trim().replace(/\s+/g, ' ').toLocaleLowerCase(),
@@ -284,7 +477,9 @@ export class RecallService {
     let embeddingStatus = !semanticPool.length
       ? 'skipped: every section is within the direct-Jev limit'
       : vectors
-        ? 'cache'
+        ? backgroundPending
+          ? 'background indexing in progress'
+          : 'cache'
         : 'unavailable: PostgreSQL with pgvector required';
     const additions: { id: string; revision: string; vector: number[] }[] = [];
     if (semanticPool.length && vectors && (missing.length || !cachedQuery)) {

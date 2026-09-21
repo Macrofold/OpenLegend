@@ -33,6 +33,7 @@ const interaction = z
   .strict();
 const worldAgentMessage = z
   .object({
+    retryOf: requestIdSchema.optional(),
     requestId: requestIdSchema,
     conversationId: requestIdSchema,
     worldId: requestIdSchema,
@@ -83,6 +84,16 @@ const godPerson = z
     backstory: z.string().trim().max(4000),
     traitIds: z.array(requestIdSchema).max(8),
     initialGoals: z.array(z.string().trim().min(1).max(500)).max(8),
+  })
+  .strict();
+const godPersonEditor = z
+  .object({
+    name: z.string().trim().min(1).max(80),
+    description: z.string().trim().max(2000),
+    personality: z.string().trim().max(1000),
+    backstory: z.string().trim().max(4000),
+    traitIds: z.array(requestIdSchema).max(8),
+    goals: z.array(z.string().trim().min(1).max(500)).max(8),
   })
   .strict();
 const godAwareness = z
@@ -372,6 +383,7 @@ export async function createGameServer(
               conversationId: requestIdSchema.optional(),
               active: z.literal('true').optional(),
               speechOnly: z.literal('true').optional(),
+              responseActions: z.literal('true').optional(),
               participantId: requestIdSchema.optional(),
               before: z.coerce.number().int().nonnegative().optional(),
               watermark: z.coerce.number().int().nonnegative().optional(),
@@ -388,7 +400,12 @@ export async function createGameServer(
             service.world.id,
             service.profile.id,
             service.controlledEntityId,
-            { ...options, speechOnly: options.speechOnly === 'true', conversationId: scopedId },
+            {
+              ...options,
+              speechOnly: options.speechOnly === 'true',
+              responseActions: options.responseActions === 'true',
+              conversationId: scopedId,
+            },
           );
           if (options.active && !scopedId) page.items = [];
           const speechJobs = options.speechOnly
@@ -404,7 +421,7 @@ export async function createGameServer(
                 const failed = job?.status === 'failed';
                 return {
                   id: item.id,
-                  kind: 'speech',
+                  kind: item.kind === 'speech' ? 'speech' : 'action',
                   speakerId: item.speakerId,
                   speaker: service.world.entities[item.speakerId ?? '']?.name ?? 'Someone',
                   text: item.text,
@@ -754,8 +771,8 @@ export async function createGameServer(
             const value = z
               .object({
                 actorId: requestIdSchema,
-                basePerson: godPerson,
-                person: godPerson,
+                basePerson: godPersonEditor,
+                person: godPersonEditor,
                 memoryChanges: z
                   .array(
                     z

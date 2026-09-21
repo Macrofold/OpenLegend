@@ -124,9 +124,12 @@ export interface ActorComponent {
   /** Descriptive starting traits, not mechanical bonuses. Saved with the actor. */
   traits?: CharacterTrait[];
   /** God-authored identity seeds are descriptive context, never mechanical authority. */
+  description?: string;
   personality?: string;
   backstory?: string;
   initialGoals?: string[];
+  /** Current authored goals; the first is the native goal used by action planning. */
+  goals?: string[];
   rest?: import('./sleep.js').RestState;
   controller: 'player' | 'npc' | 'native';
   species?: 'human' | 'hare' | 'deer';
@@ -322,6 +325,15 @@ export interface GodPersonDraft {
   initialGoals: string[];
 }
 
+export interface GodPersonEditorDraft {
+  name: string;
+  description: string;
+  personality: string;
+  backstory: string;
+  traitIds: string[];
+  goals: string[];
+}
+
 export interface GodSpawnDraft {
   type: GodSpawnType;
   position: Position;
@@ -336,7 +348,7 @@ export type GodMemoryEdit = ExperienceEntry;
 
 export interface GodPersonEdit {
   actorId: string;
-  person: GodPersonDraft;
+  person: GodPersonEditorDraft;
   memoryChanges: Array<{ entryId: string; replacement: GodMemoryEdit | null }>;
 }
 export interface ActorObservation {

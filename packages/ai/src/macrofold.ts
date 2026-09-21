@@ -1,6 +1,21 @@
 import { serialize, record, compileSchema } from './validation.js';
 import type { FetchTransport } from './types.js';
 
+/** Structured HTTP failure; application code decides whether admission was rejected. */
+export class MacrofoldHttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+  ) {
+    super(`Macrofold request failed (HTTP ${status}${code ? `: ${code}` : ''}).`);
+  }
+  get admissionRejected(): boolean {
+    return (
+      this.code === 'execution_disabled' || [400, 401, 403, 404, 422, 429].includes(this.status)
+    );
+  }
+}
+
 /** Authenticated transport only: no game policy, world state or automatic retries. */
 export class MacrofoldTransport {
   private base: URL;
@@ -109,12 +124,11 @@ export class MacrofoldTransport {
       try {
         const body = JSON.parse(raw);
         const candidate = body?.error?.code;
-        if (typeof candidate === 'string' && /^[a-z_]{1,80}$/.test(candidate))
-          code = `: ${candidate}`;
+        if (typeof candidate === 'string' && /^[a-z_]{1,80}$/.test(candidate)) code = candidate;
       } catch {
         /* No untrusted response prose in errors or logs. */
       }
-      throw new Error(`Macrofold request failed (HTTP ${response.status}${code}).`);
+      throw new MacrofoldHttpError(response.status, code);
     }
     return JSON.parse(raw) as unknown;
   }

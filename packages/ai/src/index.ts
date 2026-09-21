@@ -3,6 +3,7 @@ export { estimateCostUsd } from './usage.js';
 export type * from './types.js';
 export {
   MacrofoldTransport,
+  MacrofoldHttpError,
   macrofoldObject,
   macrofoldString,
   validateMacrofoldValue,

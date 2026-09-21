@@ -757,8 +757,13 @@ body,
   background: var(--surface-raised);
 }
 .ol-diagnostic-overview .ol-diagnostic-field:first-child,
+.ol-diagnostic-overview .ol-diagnostic-field:nth-child(3),
 .ol-diagnostic-overview .ol-diagnostic-field:last-child {
   grid-column: 1 / -1;
+}
+.ol-diagnostic-id {
+  font-family: var(--font-code);
+  overflow-wrap: anywhere;
 }
 .ol-diagnostic-field {
   min-width: 0;

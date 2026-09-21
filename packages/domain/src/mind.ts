@@ -107,6 +107,7 @@ export function mindFor(world: WorldState, actorId: string): ActorMind {
   const component = actor?.actor;
   const identity = [
     `I am ${actor?.name ?? actorId}.`,
+    component?.description,
     component?.personality,
     component?.backstory,
     component?.initialGoals?.length

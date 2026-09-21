@@ -41,6 +41,8 @@ export interface WorldChanges {
   operations: WorldChange[];
 }
 export interface JobRecord extends AiJobView {
+  diagnosticTrigger?: string;
+  diagnosticTriggerType?: string;
   retryOf?: string;
   playerSpeechEventId?: string;
   stimulusEvidenceIds?: string[];

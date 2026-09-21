@@ -28,7 +28,15 @@ export const spawnIcons: Record<string, string> = {
   'river-stones': 'resource.stone',
 };
 
-export type PersonDraft = GodPersonFields;
+type PersonCreationDraft = {
+  name: string;
+  personality: string;
+  backstory: string;
+  traitIds: string[];
+  initialGoals: string[];
+};
+
+export type PersonDraft = PersonCreationDraft;
 
 function normalizedPerson(person: PersonDraft): PersonDraft {
   return {
@@ -51,6 +59,80 @@ function validatePerson(person: PersonDraft): string {
   if (value.initialGoals.some((goal) => goal.length > 500))
     return 'Each initial goal must be 500 characters or fewer.';
   return '';
+}
+
+function normalizedEditorPerson(person: GodPersonFields): GodPersonFields {
+  return {
+    name: person.name.trim(),
+    description: person.description.trim(),
+    personality: person.personality.trim(),
+    backstory: person.backstory.trim(),
+    traitIds: [...new Set(person.traitIds)],
+    goals: person.goals.map((goal) => goal.trim()).filter(Boolean),
+  };
+}
+
+function validateEditorPerson(person: GodPersonFields): string {
+  const value = normalizedEditorPerson(person);
+  if (!value.name) return 'Name is required.';
+  if (value.name.length > 80) return 'Name must be 80 characters or fewer.';
+  if (value.description.length > 2000) return 'Description must be 2,000 characters or fewer.';
+  if (value.personality.length > 1000) return 'Personality must be 1,000 characters or fewer.';
+  if (value.backstory.length > 4000) return 'Backstory must be 4,000 characters or fewer.';
+  if (value.traitIds.length > 8) return 'Choose no more than eight traits.';
+  if (value.goals.length > 8) return 'Add no more than eight goals.';
+  if (value.goals.some((goal) => goal.length > 500))
+    return 'Each goal must be 500 characters or fewer.';
+  return '';
+}
+
+function TraitFields({
+  selected,
+  traits,
+  onChange,
+  creation,
+}: {
+  selected: string[];
+  traits: TraitOption[];
+  onChange(ids: string[]): void;
+  creation?: boolean;
+}) {
+  return (
+    <>
+      <SelectField
+        key={selected.join(',')}
+        label="Traits"
+        placeholder="Search traits…"
+        placement="bottom start"
+        value={null}
+        options={traits
+          .filter((trait) => !selected.includes(trait.id))
+          .map((trait) => ({ id: trait.id, label: trait.name, description: trait.description }))}
+        onChange={(id) => onChange([...selected, id])}
+      />
+      <div className="ol-person-trait-tags" aria-label="Selected traits">
+        {selected.map((id) => {
+          const trait = traits.find((option) => option.id === id);
+          if (!trait) return null;
+          return (
+            <span className="ol-tag ol-person-trait-tag" key={id} title={trait.description}>
+              {trait.name}
+              <button
+                type="button"
+                aria-label={`Remove ${trait.name}`}
+                onClick={() => onChange(selected.filter((value) => value !== id))}
+              >
+                ×
+              </button>
+            </span>
+          );
+        })}
+        {creation && !selected.length && (
+          <span className="ol-caption">Leave empty to assign three random traits.</span>
+        )}
+      </div>
+    </>
+  );
 }
 
 function PersonFields({
@@ -98,43 +180,12 @@ function PersonFields({
           placeholder="What shaped them before they arrived here?"
         />
       </label>
-      <SelectField
-        key={person.traitIds.join(',')}
-        label="Traits"
-        placeholder="Search traits…"
-        placement="bottom start"
-        value={null}
-        options={traits
-          .filter((trait) => !person.traitIds.includes(trait.id))
-          .map((trait) => ({ id: trait.id, label: trait.name, description: trait.description }))}
-        onChange={(id) => update('traitIds', [...person.traitIds, id])}
+      <TraitFields
+        creation
+        selected={person.traitIds}
+        traits={traits}
+        onChange={(ids) => update('traitIds', ids)}
       />
-      <div className="ol-person-trait-tags" aria-label="Selected traits">
-        {person.traitIds.map((id) => {
-          const trait = traits.find((option) => option.id === id);
-          if (!trait) return null;
-          return (
-            <span className="ol-tag ol-person-trait-tag" key={id} title={trait.description}>
-              {trait.name}
-              <button
-                type="button"
-                aria-label={`Remove ${trait.name}`}
-                onClick={() =>
-                  update(
-                    'traitIds',
-                    person.traitIds.filter((value) => value !== id),
-                  )
-                }
-              >
-                ×
-              </button>
-            </span>
-          );
-        })}
-        {!person.traitIds.length && (
-          <span className="ol-caption">Leave empty to assign three random traits.</span>
-        )}
-      </div>
       <label>
         Initial goals
         <textarea
@@ -143,6 +194,77 @@ function PersonFields({
           value={person.initialGoals.join('\n')}
           onChange={(event) => update('initialGoals', event.target.value.split('\n'))}
           placeholder="One goal per line"
+        />
+      </label>
+    </div>
+  );
+}
+
+function PersonEditorFields({
+  person,
+  traits,
+  onChange,
+}: {
+  person: GodPersonFields;
+  traits: TraitOption[];
+  onChange(person: GodPersonFields): void;
+}) {
+  const update = <K extends keyof GodPersonFields>(key: K, value: GodPersonFields[K]) =>
+    onChange({ ...person, [key]: value });
+  return (
+    <div className="ol-person-form">
+      <label>
+        Name
+        <input
+          required
+          maxLength={80}
+          value={person.name}
+          onChange={(event) => update('name', event.target.value)}
+        />
+      </label>
+      <label>
+        Description
+        <textarea
+          rows={3}
+          maxLength={2000}
+          value={person.description}
+          onChange={(event) => update('description', event.target.value)}
+          placeholder="How this person is described in the world"
+        />
+      </label>
+      <label>
+        Personality
+        <textarea
+          rows={3}
+          maxLength={1000}
+          value={person.personality}
+          onChange={(event) => update('personality', event.target.value)}
+          placeholder="How they tend to think, feel, and relate to others"
+        />
+      </label>
+      <label>
+        Backstory
+        <textarea
+          rows={5}
+          maxLength={4000}
+          value={person.backstory}
+          onChange={(event) => update('backstory', event.target.value)}
+          placeholder="The history that shaped them"
+        />
+      </label>
+      <TraitFields
+        selected={person.traitIds}
+        traits={traits}
+        onChange={(ids) => update('traitIds', ids)}
+      />
+      <label>
+        Goals
+        <textarea
+          rows={4}
+          maxLength={4000}
+          value={person.goals.join('\n')}
+          onChange={(event) => update('goals', event.target.value.split('\n'))}
+          placeholder="One current goal per line; the first drives immediate planning"
         />
       </label>
     </div>
@@ -344,7 +466,7 @@ export function PersonEditor({
   const [loading, setLoading] = useState(false);
   const [needsReload, setNeedsReload] = useState(false);
   const [loaded, setLoaded] = useState<GodPersonEditorView | null>(null);
-  const [person, setPerson] = useState<PersonDraft | null>(null);
+  const [person, setPerson] = useState<GodPersonFields | null>(null);
   const [memories, setMemories] = useState<GodMemoryEditorEntry[]>([]);
   const [selectedMemory, setSelectedMemory] = useState<string | null>(null);
   const [dirtyMemoryIds, setDirtyMemoryIds] = useState<Set<string>>(() => new Set());
@@ -421,7 +543,7 @@ export function PersonEditor({
   };
   const save = async () => {
     if (!loaded || !person || loading || saving || needsReload) return false;
-    const invalid = validatePerson(person);
+    const invalid = validateEditorPerson(person);
     if (invalid) {
       setError(invalid);
       return false;
@@ -454,7 +576,7 @@ export function PersonEditor({
       const result = await post<ApiResult>('/api/god/editor/person/save', {
         actorId,
         basePerson: loaded.person,
-        person: normalizedPerson(person),
+        person: normalizedEditorPerson(person),
         memoryChanges,
       });
       if (!result.ok) throw new Error(result.message);
@@ -528,7 +650,7 @@ export function PersonEditor({
           id: 'person',
           label: 'Person',
           icon: 'ui.character',
-          content: <PersonFields person={person} traits={traits} onChange={setPerson} />,
+          content: <PersonEditorFields person={person} traits={traits} onChange={setPerson} />,
         },
         {
           id: 'memories',

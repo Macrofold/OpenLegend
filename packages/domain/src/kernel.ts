@@ -415,6 +415,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       if (typeof command.text !== 'string' || !command.text.trim() || command.text.length > 350)
         return reject('invalid-goal', 'Goal must contain 1–350 characters.');
       component.goal = command.text.trim();
+      component.goals = [component.goal];
       component.planGeneration++;
       result = outcome(true, 'goal-set', 'Goal updated.');
       break;

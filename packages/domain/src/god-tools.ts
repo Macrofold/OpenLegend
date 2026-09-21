@@ -17,6 +17,7 @@ import type {
   Entity,
   GodPersonEdit,
   GodPersonDraft,
+  GodPersonEditorDraft,
   GodSpawnDraft,
   GodSpawnType,
   MemoryRecord,
@@ -42,7 +43,7 @@ function reject(world: WorldState, code: string, message: string): Transition {
   return { world, events: [], outcome: outcome(false, code, message) };
 }
 
-function personTraits(draft: GodPersonDraft) {
+function personTraits(draft: Pick<GodPersonDraft | GodPersonEditorDraft, 'traitIds'>) {
   const ids = [...new Set(draft.traitIds)];
   if (ids.length > 8) return null;
   const traits = ids.map((id) => TRAIT_BANK.find((trait) => trait.id === id));
@@ -267,10 +268,11 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   if (
     !draft.person.name.trim() ||
     draft.person.name.trim().length > 80 ||
+    draft.person.description.trim().length > 2000 ||
     draft.person.personality.trim().length > 1000 ||
     draft.person.backstory.trim().length > 4000 ||
-    draft.person.initialGoals.length > 8 ||
-    draft.person.initialGoals.some((goal) => !goal.trim() || goal.trim().length > 500) ||
+    draft.person.goals.length > 8 ||
+    draft.person.goals.some((goal) => !goal.trim() || goal.trim().length > 500) ||
     !traits
   )
     return reject(original, 'invalid-person', 'The person details are not valid.');
@@ -312,21 +314,28 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
 
   const world = draftWorld(original);
   const entity = world.entities[draft.actorId]!;
-  const goals = draft.person.initialGoals.map((goal) => goal.trim());
+  const goals = draft.person.goals.map((goal) => goal.trim());
   const personChanged =
     entity.name !== draft.person.name.trim() ||
+    entity.actor!.description !== draft.person.description.trim() ||
     entity.actor!.personality !== draft.person.personality.trim() ||
     entity.actor!.backstory !== draft.person.backstory.trim() ||
     JSON.stringify(entity.actor!.traits ?? []) !== JSON.stringify(traits) ||
-    JSON.stringify(entity.actor!.initialGoals ?? []) !== JSON.stringify(goals);
+    JSON.stringify(entity.actor!.goals ?? [entity.actor!.goal].filter(Boolean)) !==
+      JSON.stringify(goals);
   if (personChanged) {
     entity.name = draft.person.name.trim();
+    entity.actor!.description = draft.person.description.trim();
     entity.actor!.personality = draft.person.personality.trim();
     entity.actor!.backstory = draft.person.backstory.trim();
     entity.actor!.traits = traits;
-    if (JSON.stringify(entity.actor!.initialGoals ?? []) !== JSON.stringify(goals)) {
-      entity.actor!.initialGoals = goals;
-      entity.actor!.goal = goals[0] ?? entity.actor!.goal;
+    if (
+      JSON.stringify(entity.actor!.goals ?? [entity.actor!.goal].filter(Boolean)) !==
+      JSON.stringify(goals)
+    ) {
+      entity.actor!.goals = goals;
+      entity.actor!.goal = goals[0] ?? '';
+      entity.actor!.planGeneration++;
     }
   }
   migrateCognition(world);
@@ -385,10 +394,11 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     if (identity) {
       identity.text = [
         `I am ${entity.name}.`,
+        entity.actor!.description,
         entity.actor!.personality,
         entity.actor!.backstory,
-        (entity.actor!.initialGoals ?? []).length
-          ? `My starting goals are: ${(entity.actor!.initialGoals ?? []).join('; ')}.`
+        (entity.actor!.goals ?? []).length
+          ? `My goals are: ${(entity.actor!.goals ?? []).join('; ')}.`
           : entity.actor!.goal,
       ]
         .filter(Boolean)

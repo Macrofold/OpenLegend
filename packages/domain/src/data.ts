@@ -155,6 +155,7 @@ export function createActor(
     ...(identity.personality ? { personality: identity.personality } : {}),
     ...(identity.backstory ? { backstory: identity.backstory } : {}),
     ...(initialGoals?.length ? { initialGoals } : {}),
+    ...(initialGoals?.length ? { goals: [...initialGoals] } : {}),
     controller,
     species: 'human',
     body: livingBody('human'),

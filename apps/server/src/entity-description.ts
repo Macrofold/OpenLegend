@@ -7,7 +7,7 @@ export function describeEntity(
   if (entity.resource)
     return `${entity.name}. ${definitions[entity.resource.definitionId]?.description ?? 'A source of gathering materials.'} ${entity.resource.quantity} units remain.`;
   if (entity.actor && !entity.animal)
-    return `${entity.name} is a person in the clearing. ${entity.actor.alive ? 'Select Talk to begin a conversation.' : 'Their life has ended.'}`;
+    return `${entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`} ${entity.actor.alive ? 'Select Talk to begin a conversation.' : 'Their life has ended.'}`;
   if (entity.remains)
     return entity.remains.harvested
       ? `The remains of ${entity.name} have been harvested.`

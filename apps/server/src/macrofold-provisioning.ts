@@ -1,5 +1,6 @@
 import {
   MacrofoldTransport,
+  MacrofoldHttpError,
   macrofoldObject as object,
   macrofoldString as string,
 } from '@open-legend/ai';
@@ -39,29 +40,42 @@ export class MacrofoldProvisioner {
   private async create(actorId: string, name: string): Promise<ActorWorkspace> {
     const key = `macrofold-actor-v2:${digest(this.config.macrofoldUrl)}:${this.worldId}:${actorId}`;
     const state = (await this.store.getIntegration(key)) as
-      | { operationId: string; pending?: boolean; result?: ActorWorkspace }
+      | { operationId: string; pending?: boolean; attempt?: number; result?: ActorWorkspace }
       | undefined;
     if (state?.result) return state.result;
     if (state?.pending)
       throw new Error('Workspace creation admission uncertain; reconcile before creating another.');
-    const operationId = digest({ key, version: 1 });
-    await this.store.putIntegration(key, { operationId, pending: true });
-    const created = object(
-      await this.api.request(
-        '/v1/workspaces',
-        {
-          name: `Open Legend · ${name} · ${digest(this.worldId).slice(0, 8)}`.slice(0, 120),
-          persistence: 'persistent',
-          permissions: COGNITION_PERMISSIONS,
-        },
-        operationId,
-      ),
-    );
-    const result = {
-      workspaceId: string(created['id']),
-      worktreeId: string(created['default_worktree_id']),
-    };
-    await this.store.putIntegration(key, { operationId, result });
-    return result;
+    const attempt = state ? (state.attempt ?? 0) + 1 : 0;
+    const operationId = digest({ key, version: 1, ...(attempt ? { attempt } : {}) });
+    await this.store.putIntegration(key, { operationId, attempt, pending: true });
+    try {
+      const created = object(
+        await this.api.request(
+          '/v1/workspaces',
+          {
+            name: `Open Legend · ${name} · ${digest(this.worldId).slice(0, 8)}`.slice(0, 120),
+            persistence: 'persistent',
+            permissions: COGNITION_PERMISSIONS,
+          },
+          operationId,
+        ),
+      );
+      const result = {
+        workspaceId: string(created['id']),
+        worktreeId: string(created['default_worktree_id']),
+      };
+      await this.store.putIntegration(key, { operationId, result });
+      return result;
+    } catch (error) {
+      if (error instanceof MacrofoldHttpError && error.admissionRejected)
+        await this.store.putIntegration(key, {
+          operationId,
+          attempt,
+          pending: false,
+          status: error.status,
+          code: error.code,
+        });
+      throw error;
+    }
   }
 }

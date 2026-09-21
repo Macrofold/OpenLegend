@@ -24,7 +24,11 @@ export function useChatHistory(
     const generation = ++request.current;
     busy.current = true;
     setLoading(true);
-    const query = new URLSearchParams({ speechOnly: 'true', participantId });
+    const query = new URLSearchParams({
+      speechOnly: 'true',
+      responseActions: 'true',
+      participantId,
+    });
     const prior = latestPage.current;
     if (older && prior?.before !== undefined) {
       query.set('before', String(prior.before));

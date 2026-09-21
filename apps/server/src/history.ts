@@ -750,6 +750,7 @@ export class HistoryRepository {
       conversationId?: string;
       participantId?: string;
       speechOnly?: boolean;
+      responseActions?: boolean;
       before?: number;
       watermark?: number;
       limit?: number;
@@ -777,10 +778,29 @@ export class HistoryRepository {
       this.db.dialect === 'postgres'
         ? `(e.payload::jsonb->>'${key}')`
         : `json_extract(e.payload, '$.${key}')`;
-    if (options.speechOnly || options.participantId) filter += ` AND ${field('type')}='speech'`;
+    const responseId =
+      this.db.dialect === 'postgres'
+        ? `(e.payload::jsonb #>> '{data,responseId}')`
+        : `json_extract(e.payload, '$.data.responseId')`;
     if (options.participantId) {
-      filter += ` AND ((${field('actorId')}=? AND ${field('targetId')}=?) OR (${field('actorId')}=? AND (${field('targetId')}=? OR ${field('targetId')} IS NULL)))`;
-      args.push(actorId, options.participantId, options.participantId, actorId);
+      const speechParticipants = `((${field('actorId')}=? AND ${field('targetId')}=?) OR (${field('actorId')}=? AND (${field('targetId')}=? OR ${field('targetId')} IS NULL)))`;
+      if (options.responseActions) {
+        filter += ` AND ((${field('type')}='speech' AND ${speechParticipants}) OR (${responseId} IS NOT NULL AND ${field('actorId')}=?))`;
+        args.push(
+          actorId,
+          options.participantId,
+          options.participantId,
+          actorId,
+          options.participantId,
+        );
+      } else {
+        filter += ` AND ${field('type')}='speech' AND ${speechParticipants}`;
+        args.push(actorId, options.participantId, options.participantId, actorId);
+      }
+    } else if (options.speechOnly) {
+      filter += options.responseActions
+        ? ` AND (${field('type')}='speech' OR ${responseId} IS NOT NULL)`
+        : ` AND ${field('type')}='speech'`;
     }
     const events = await this.db
       .prepare(

@@ -43,6 +43,7 @@ import {
   type GodSpawnDraft,
   type GodMemoryEdit,
   type GodPersonDraft,
+  type GodPersonEditorDraft,
   type WorldEvent,
   type WorldState,
 } from '@open-legend/domain';
@@ -656,10 +657,14 @@ export class WorldService {
       actorId,
       person: {
         name: entity.name,
+        description:
+          entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
         personality: entity.actor.personality ?? '',
         backstory: entity.actor.backstory ?? '',
         traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
-        initialGoals: [...(entity.actor.initialGoals ?? [])],
+        goals: [...(entity.actor.goals?.length ? entity.actor.goals : [entity.actor.goal])].filter(
+          Boolean,
+        ),
       },
     };
   }
@@ -674,8 +679,8 @@ export class WorldService {
 
   async savePersonEditor(
     actorId: string,
-    basePerson: GodPersonDraft,
-    person: GodPersonDraft,
+    basePerson: GodPersonEditorDraft,
+    person: GodPersonEditorDraft,
     memoryChanges: Array<{
       entryId: string;
       expectedHash: string;
@@ -687,12 +692,16 @@ export class WorldService {
       const entity = this.world.entities[actorId];
       if (!entity?.actor || entity.kind !== 'npc')
         return { ok: false, code: 'actor', message: 'Choose a person.' };
-      const currentPerson: GodPersonDraft = {
+      const currentPerson: GodPersonEditorDraft = {
         name: entity.name,
+        description:
+          entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
         personality: entity.actor.personality ?? '',
         backstory: entity.actor.backstory ?? '',
         traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
-        initialGoals: [...(entity.actor.initialGoals ?? [])],
+        goals: [...(entity.actor.goals?.length ? entity.actor.goals : [entity.actor.goal])].filter(
+          Boolean,
+        ),
       };
       const personChanged = JSON.stringify(person) !== JSON.stringify(basePerson);
       if (personChanged && JSON.stringify(currentPerson) !== JSON.stringify(basePerson))

@@ -8,6 +8,7 @@ import { buildContext } from './context.js';
 import { setTimeout as delay } from 'node:timers/promises';
 import {
   MacrofoldTransport,
+  MacrofoldHttpError,
   macrofoldObject as object,
   macrofoldString as string,
   validateMacrofoldValue,
@@ -50,6 +51,7 @@ export class MacrofoldBackend implements AiClient {
   private api: MacrofoldTransport;
   readonly provisioner: MacrofoldProvisioner;
   private busy = new Set<string>();
+  private messagesInFlight = new Set<string>();
   private controllers = new Map<string, AbortController>();
   constructor(
     private service: WorldService,
@@ -109,22 +111,46 @@ export class MacrofoldBackend implements AiClient {
     signal?: AbortSignal,
   ): Promise<Record<string, unknown>> {
     const fingerprint = digest({ path, body });
-    const previous = await this.load<{ fingerprint: string; response?: Record<string, unknown> }>(
-      `operation:${name}`,
-    );
+    const previous = await this.load<{
+      fingerprint: string;
+      response?: Record<string, unknown>;
+      rejected?: boolean;
+      attempt?: number;
+    }>(`operation:${name}`);
     if (previous) {
       if (previous.fingerprint !== fingerprint)
         throw new Error('Macrofold operation ID conflicts with earlier input.');
       if (previous.response) return previous.response;
-      throw new Error(
-        'Earlier Macrofold admission is uncertain. Reconcile it in Macrofold; no duplicate was dispatched.',
-      );
+      if (!previous.rejected)
+        throw new Error(
+          'World Agent could not confirm whether its earlier request started. No duplicate was sent.',
+        );
     }
     signal?.throwIfAborted();
-    await this.save(`operation:${name}`, { fingerprint });
-    const result = object(await this.api.request(path, body, digest(this.key(name)), signal));
-    await this.save(`operation:${name}`, { fingerprint, response: result });
-    return result;
+    const attempt = previous ? (previous.attempt ?? 0) + 1 : 0;
+    await this.save(`operation:${name}`, { fingerprint, attempt });
+    try {
+      const result = object(
+        await this.api.request(
+          path,
+          body,
+          digest(this.key(attempt ? `${name}:retry:${attempt}` : name)),
+          signal,
+        ),
+      );
+      await this.save(`operation:${name}`, { fingerprint, attempt, response: result });
+      return result;
+    } catch (error) {
+      if (error instanceof MacrofoldHttpError && error.admissionRejected)
+        await this.save(`operation:${name}`, {
+          fingerprint,
+          attempt,
+          rejected: true,
+          status: error.status,
+          code: error.code,
+        });
+      throw error;
+    }
   }
   private async waitSandbox(id: string, signal: AbortSignal): Promise<void> {
     for (;;) {
@@ -322,29 +348,33 @@ export class MacrofoldBackend implements AiClient {
       }
       if (lane.blocked)
         throw new Error(
-          'This worker has uncertain or unfinished prior work. Reconcile it before continuing.',
+          'World Agent is waiting for confirmation of its earlier run. No duplicate will be started.',
         );
-      const models = object(
-        await this.api.request('/v1/models?limit=100', undefined, undefined, signal),
-      );
       const config = this.service.config;
-      const enabled =
-        Array.isArray(models['data']) &&
-        models['data'].some((value) => {
-          const model = object(value);
-          return (
-            model['id'] === config.macrofoldModel &&
-            model['enabled'] === true &&
-            Array.isArray(model['harnesses']) &&
-            model['harnesses'].includes(config.macrofoldHarness) &&
-            Array.isArray(model['billing_modes']) &&
-            model['billing_modes'].includes(config.macrofoldBillingMode)
-          );
-        });
-      if (!enabled)
-        throw new Error(
-          `Configured Macrofold model/harness is not enabled for ${config.macrofoldBillingMode} billing.`,
+      const continuingSession = persistent ? lane.session : undefined;
+      // Existing sessions retain the configuration accepted at creation.
+      if (!continuingSession) {
+        const models = object(
+          await this.api.request('/v1/models?limit=100', undefined, undefined, signal),
         );
+        const enabled =
+          Array.isArray(models['data']) &&
+          models['data'].some((value) => {
+            const model = object(value);
+            return (
+              model['id'] === config.macrofoldModel &&
+              model['enabled'] === true &&
+              Array.isArray(model['harnesses']) &&
+              model['harnesses'].includes(config.macrofoldHarness) &&
+              Array.isArray(model['billing_modes']) &&
+              model['billing_modes'].includes(config.macrofoldBillingMode)
+            );
+          });
+        if (!enabled)
+          throw new Error(
+            `Configured Macrofold model/harness is not enabled for ${config.macrofoldBillingMode} billing.`,
+          );
+      }
       if (!config.macrofoldComputeUsd)
         throw new Error('Set MACROFOLD_COMPUTE_MAX_USD before starting warm compute.');
       if (!lane.worktree) {
@@ -389,21 +419,22 @@ export class MacrofoldBackend implements AiClient {
         `run:${id}`,
         '/v1/runs',
         {
-          ...(persistent && lane.session
-            ? { session_id: lane.session }
-            : { worktree_id: lane.worktree }),
-          // Explicit on continuations too: never inherit an obsolete model/effort.
-          harness: config.macrofoldHarness,
-          model: config.macrofoldModel,
-          billing_mode: config.macrofoldBillingMode,
-          ...(config.macrofoldProviderConnectionId
-            ? { provider_connection_id: config.macrofoldProviderConnectionId }
-            : {}),
-          model_parameters: macrofoldModelParameters('full'),
+          ...(continuingSession
+            ? { session_id: continuingSession }
+            : {
+                worktree_id: lane.worktree,
+                harness: config.macrofoldHarness,
+                model: config.macrofoldModel,
+                billing_mode: config.macrofoldBillingMode,
+                ...(config.macrofoldProviderConnectionId
+                  ? { provider_connection_id: config.macrofoldProviderConnectionId }
+                  : {}),
+                model_parameters: macrofoldModelParameters('full'),
+                permissions: reflection ? COGNITION_PERMISSIONS : permissions,
+                connection_grants: [],
+              }),
           sandbox_id: lane.sandbox,
           prompt,
-          permissions: reflection ? COGNITION_PERMISSIONS : permissions,
-          connection_grants: [],
           queue_if_busy: false,
           scheduling_class: reflection ? 'background' : 'interactive',
           queue_timeout_seconds: config.macrofoldTimeoutSeconds,
@@ -445,6 +476,12 @@ export class MacrofoldBackend implements AiClient {
         throw new Error(`Macrofold execution ended with ${String(result['execution_outcome'])}.`);
       return string(result['output_text']);
     } catch (error) {
+      if (!lane.run && error instanceof MacrofoldHttpError && error.admissionRejected) {
+        lane.blocked = false;
+        receipt.dispatched = false;
+        receipt.completionUncertain = false;
+        await save();
+      }
       if (lane.run) {
         try {
           await this.cancel(lane.run);
@@ -830,19 +867,46 @@ export class MacrofoldBackend implements AiClient {
     conversationId: string;
     worldId: string;
     text: string;
-  }): Promise<{ ok: boolean; code: string; message: string }> {
-    return this.log
-      ? this.log.run('Full harness · world agent', value, async () => await this.messageImpl(value))
-      : await this.messageImpl(value);
+    retryOf?: string;
+  }): Promise<{ ok: boolean; code: string; message: string; jobId?: string }> {
+    if (this.messagesInFlight.has(value.conversationId))
+      return { ok: false, code: 'busy', message: 'This conversation is already running.' };
+    this.messagesInFlight.add(value.conversationId);
+    try {
+      return this.log
+        ? await this.log.run(
+            'Full harness · world agent',
+            value,
+            async () => await this.messageImpl(value),
+            {
+              id: value.requestId,
+              worldId: value.worldId,
+              actorName: 'World agent',
+              trigger: value.text,
+              triggerType: 'Player world-agent message',
+              route: 'full-harness',
+            },
+          )
+        : await this.messageImpl(value);
+    } finally {
+      this.messagesInFlight.delete(value.conversationId);
+    }
   }
+
   private async messageImpl(value: {
     requestId: string;
     conversationId: string;
     worldId: string;
     text: string;
-  }): Promise<{ ok: boolean; code: string; message: string }> {
+    retryOf?: string;
+  }): Promise<{ ok: boolean; code: string; message: string; jobId?: string }> {
     const key = `message:${value.requestId}`;
-    const fingerprint = digest(value);
+    const fingerprint = digest({
+      requestId: value.requestId,
+      conversationId: value.conversationId,
+      worldId: value.worldId,
+      text: value.text,
+    });
     const prior = await this.load<{
       fingerprint: string;
       response?: { ok: boolean; code: string; message: string };
@@ -856,6 +920,35 @@ export class MacrofoldBackend implements AiClient {
             message:
               'This message is already running or its completion is uncertain. It was not resubmitted.',
           });
+    let original:
+      | {
+          fingerprint: string;
+          response?: { ok: boolean; code: string; message: string };
+          retryId?: string;
+        }
+      | undefined;
+    if (value.retryOf) {
+      original = await this.load(`message:${value.retryOf}`);
+      const expected = digest({
+        requestId: value.retryOf,
+        conversationId: value.conversationId,
+        worldId: value.worldId,
+        text: value.text,
+      });
+      if (
+        !original ||
+        original.fingerprint !== expected ||
+        original.response?.ok ||
+        !original.response ||
+        original.response.code === 'uncertain' ||
+        original.retryId
+      )
+        return {
+          ok: false,
+          code: 'retry-unavailable',
+          message: 'This message is already running, completed, or has a newer attempt.',
+        };
+    }
     if (!this.service.config.macrofoldKey)
       return {
         ok: false,
@@ -872,10 +965,13 @@ export class MacrofoldBackend implements AiClient {
         'openai',
         this.service.config.macrofoldRunUsd,
         this.service.config.budgetUsd,
+        'world-agent',
       ))
     )
       return { ok: false, code: 'budget', message: 'AI spending cap reached.' };
-    await this.save(key, { fingerprint });
+    if (original)
+      await this.save(`message:${value.retryOf}`, { ...original, retryId: value.requestId });
+    await this.save(key, { fingerprint, retryOf: value.retryOf });
     const controller = new AbortController();
     this.controllers.set(name, controller);
     const receipt = this.receipt(id, 'macrofold', this.service.config.macrofoldModel, value.text);
@@ -904,7 +1000,12 @@ export class MacrofoldBackend implements AiClient {
       response = {
         ok: false,
         code: receipt.completionUncertain ? 'uncertain' : 'failed',
-        message: error instanceof Error ? error.message : 'Macrofold world agent failed.',
+        message:
+          error instanceof MacrofoldHttpError && error.code === 'execution_disabled'
+            ? 'World Agent execution is disabled in Macrofold. Enable execution there, then retry this message.'
+            : error instanceof Error
+              ? error.message
+              : 'Macrofold world agent failed.',
       };
     } finally {
       receipt.completedAt = new Date().toISOString();
@@ -912,8 +1013,9 @@ export class MacrofoldBackend implements AiClient {
       await this.service.store.settle(id, receipt);
       this.controllers.delete(name);
     }
-    await this.save(key, { fingerprint, response });
-    return response;
+    const result = { ...response, jobId: value.requestId };
+    await this.save(key, { fingerprint, response: result, retryOf: value.retryOf });
+    return result;
   }
   async inspectCall(id: string): Promise<unknown> {
     const call = await this.service.store.intelligenceCall(id);

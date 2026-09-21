@@ -15,6 +15,9 @@ type Message = {
   text: string;
   status?: 'sending' | 'failed';
   failureReason?: string;
+  attemptId?: string;
+  pendingAttemptId?: string;
+  pendingRetryOf?: string;
 };
 type Conversation = { id: string; title: string; draft: string; messages: Message[] };
 const valid = (v: unknown): v is Conversation[] =>
@@ -46,6 +49,7 @@ export function WorldAgent({
   const [pending, setPending] = useState<string[]>([]),
     [ended, setEnded] = useState<Conversation | null>(null);
   const [error, setError] = useState('');
+  const sending = useRef(new Set<string>());
   const alive = useRef(true),
     textarea = useRef<HTMLTextAreaElement>(null);
   useEffect(
@@ -69,16 +73,35 @@ export function WorldAgent({
   function update(id: string, fn: (t: Conversation) => Conversation) {
     setTabs((v) => v.map((t) => (t.id === id ? fn(t) : t)));
   }
-  async function send() {
-    if (!tab || pending.includes(tab.id) || !tab.draft.trim()) return;
-    const id = tab.id,
-      text = tab.draft.trim(),
-      requestId = crypto.randomUUID();
+  async function send(retryMessage?: Message) {
+    if (!tab || sending.current.has(tab.id) || (!retryMessage && !tab.draft.trim())) return;
+    const id = tab.id;
+    const text = retryMessage?.text ?? tab.draft.trim();
+    const requestId = retryMessage?.pendingAttemptId ?? crypto.randomUUID();
+    const retryOf = retryMessage?.pendingAttemptId
+      ? retryMessage.pendingRetryOf
+      : (retryMessage?.attemptId ?? retryMessage?.id);
+    const messageId = retryMessage?.id ?? requestId;
+    sending.current.add(id);
     update(id, (t) => ({
       ...t,
       title: t.messages.length ? t.title : text.slice(0, 36),
-      draft: '',
-      messages: [...t.messages, { id: requestId, role: 'you', text, status: 'sending' }],
+      draft: retryMessage ? t.draft : '',
+      messages: retryMessage
+        ? t.messages.map((message) =>
+            message.id === messageId
+              ? {
+                  ...message,
+                  status: 'sending',
+                  pendingAttemptId: requestId,
+                  pendingRetryOf: retryOf,
+                }
+              : message,
+          )
+        : [
+            ...t.messages,
+            { id: messageId, role: 'you', text, status: 'sending', pendingAttemptId: requestId },
+          ],
     }));
     setPending((v) => [...v, id]);
     try {
@@ -87,34 +110,41 @@ export function WorldAgent({
         conversationId: id,
         worldId,
         text,
+        ...(retryOf ? { retryOf } : {}),
       });
       if (alive.current)
-        update(id, (t) => ({
-          ...t,
-          messages: result.ok
-            ? [
-                ...t.messages.map((message) =>
-                  message.id === requestId ? { ...message, status: undefined } : message,
-                ),
-                { role: 'agent', text: result.message },
-              ]
-            : t.messages.map((message) =>
-                message.id === requestId
-                  ? { ...message, status: 'failed', failureReason: result.message }
-                  : message,
-              ),
-        }));
+        update(id, (t) => {
+          const messages = t.messages.map((message) =>
+            message.id === messageId
+              ? {
+                  ...message,
+                  status: result.ok ? undefined : ('failed' as const),
+                  failureReason: result.ok ? undefined : result.message,
+                  attemptId: result.jobId ?? message.attemptId ?? message.id,
+                  pendingAttemptId: !result.ok && !result.jobId ? requestId : undefined,
+                  pendingRetryOf: !result.ok && !result.jobId ? retryOf : undefined,
+                }
+              : message,
+          );
+          return {
+            ...t,
+            messages: result.ok
+              ? [...messages, { id: `${requestId}:reply`, role: 'agent', text: result.message }]
+              : messages,
+          };
+        });
     } catch (error) {
       if (alive.current)
         update(id, (t) => ({
           ...t,
           messages: t.messages.map((message) =>
-            message.id === requestId
+            message.id === messageId
               ? { ...message, status: 'failed', failureReason: String(error) }
               : message,
           ),
         }));
     } finally {
+      sending.current.delete(id);
       if (alive.current) setPending((v) => v.filter((x) => x !== id));
     }
   }
@@ -157,6 +187,11 @@ export function WorldAgent({
         text={message.text}
         failureReason={message.status === 'failed' ? message.failureReason : undefined}
         pending={message.status === 'sending'}
+        onRetry={
+          message.role === 'you' && message.id && message.status === 'failed'
+            ? () => void send(message)
+            : undefined
+        }
       >
         {message.role === 'agent' && /\?\s*$/.test(message.text) && (
           <div className="ol-question-card">
@@ -252,7 +287,7 @@ export function WorldAgent({
             maxLength={2000}
             value={tab.draft}
             onChange={(draft) => update(tab.id, (value) => ({ ...value, draft }))}
-            onSubmit={send}
+            onSubmit={() => send()}
             disabled={pending.includes(tab.id) || !tab.draft.trim()}
           />
         </>

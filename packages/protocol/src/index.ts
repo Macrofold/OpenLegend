@@ -264,10 +264,11 @@ export interface ApiResult {
 
 export interface GodPersonFields {
   name: string;
+  description: string;
   personality: string;
   backstory: string;
   traitIds: string[];
-  initialGoals: string[];
+  goals: string[];
 }
 
 export interface GodMemoryEditorEntry {
@@ -359,6 +360,8 @@ export interface IntelligenceCall {
   gameTime?: number;
   actorName?: string;
   trigger?: string;
+  /** Concise owner-facing classification of what initiated this request. */
+  triggerType?: string;
   id: string;
   kind: string;
   startedAt: string;

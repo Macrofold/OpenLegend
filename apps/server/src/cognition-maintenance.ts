@@ -77,11 +77,12 @@ export class CognitionMaintenance {
       worldId: world.id,
       actorId,
       actorName: world.entities[actorId]!.name,
-      trigger: reason,
+      trigger: 'A meaningful new experience was queued for reflection.',
+      triggerType: 'Background reflection opportunity',
       startedAt: new Date(request.at).toISOString(),
       status: unavailable ? 'completed' : 'running',
       disposition: unavailable ? 'deferred' : current ? 'coalesced' : 'queued',
-      input: { origin },
+      input: { origin, reason },
       output: { reason: unavailable ?? 'Waiting for safe downtime and background capacity.' },
       exchanges: [],
     });
@@ -284,20 +285,25 @@ export class CognitionMaintenance {
         disposition: 'dispatched',
         output: { jobId: id },
       });
+    const recurring = ['Hourly consolidation', 'Daily dream review'].includes(trigger);
     const root = {
       id,
       worldId: this.service.world.id,
       actorId,
       actorName: this.service.world.entities[actorId]!.name,
-      trigger,
+      trigger: recurring ? trigger : 'A queued experience is being reconsidered.',
+      triggerType:
+        trigger === 'Daily dream review'
+          ? 'Dream review'
+          : trigger === 'Hourly consolidation'
+            ? 'Memory maintenance'
+            : 'Background reflection',
       kind: 'Semantic trigger',
-      route: ['Hourly consolidation', 'Daily dream review'].includes(trigger)
-        ? 'summary'
-        : 'level5',
+      route: recurring ? 'summary' : 'level5',
       gameTime: this.service.world.simTime,
       startedAt: new Date().toISOString(),
       status: 'running' as const,
-      input: { origin },
+      input: { origin, stimulus: trigger },
       exchanges: [],
     };
     await this.log.save(root);

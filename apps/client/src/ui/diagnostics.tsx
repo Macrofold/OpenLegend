@@ -115,6 +115,41 @@ export type DiagnosticSelection = IntelligenceCall & {
 type Row = DiagnosticSelection;
 type RawView = { title: string; value: unknown };
 
+function shortDiagnosticId(id: string): string {
+  const parts = id.split(':');
+  const root = parts[0] ?? id;
+  const suffix = parts.slice(1);
+  const compact = root.length > 12 ? `${root.slice(0, 8)}…${root.slice(-4)}` : root;
+  return suffix.length ? `${compact}:${suffix.join(':')}` : compact;
+}
+
+function stageTitle(call: IntelligenceCall): string {
+  if (call.kind === 'Jev') return `Jev · ${jevPurpose(call)}`;
+  if (call.kind.startsWith('LM ·')) return `LM · ${lmPurposeTitle(textAt(call.input, 'task'))}`;
+  switch (call.kind) {
+    case 'Embeddings':
+      return 'Semantic retrieval · Query embedding';
+    case 'Context and retrieval':
+      return 'Semantic retrieval · Memory context';
+    case 'Semantic decision':
+      return 'Routing · Selected response level';
+    case 'Response admission':
+      return 'Response · Admission';
+    case 'Workflow failure':
+      return 'Workflow · Failure';
+    case 'Full harness · world agent':
+      return 'World agent · Conversation';
+    case 'Reflection context':
+      return 'Reflection · Context';
+    case 'Consolidation coverage':
+      return 'Memory consolidation · Coverage';
+    case 'Summary publication':
+      return 'Memory consolidation · Publication';
+    default:
+      return call.kind;
+  }
+}
+
 function stageSummary(call: IntelligenceCall) {
   const receipt = object(call.output)?.['receipt'] as
     | {
@@ -125,12 +160,7 @@ function stageSummary(call: IntelligenceCall) {
         usage?: { inputTokens: number; outputTokens: number };
       }
     | undefined;
-  const kind =
-    call.kind === 'Jev'
-      ? `Jev · ${jevPurpose(call)}`
-      : call.kind.startsWith('LM ·')
-        ? `LM · ${lmPurposeTitle(textAt(call.input, 'task'))}`
-        : call.kind;
+  const kind = stageTitle(call);
   const applicationLatency =
     call.completedAt === undefined
       ? receipt?.latencyMs
@@ -138,7 +168,7 @@ function stageSummary(call: IntelligenceCall) {
   const latency = receipt
     ? ` · OpenLegend ${applicationLatency ?? '?'} ms${receipt.providerLatencyMs === undefined ? '' : ` · Macrofold run ${receipt.providerLatencyMs} ms · queue ${receipt.providerQueueLatencyMs ?? '?'} ms`}`
     : '';
-  return `${kind} · ${call.status}${latency}${receipt ? ` · ${receipt.usage ? `${receipt.usage.inputTokens} input tokens / ${receipt.usage.outputTokens} output tokens` : 'tokens unknown'} · ${receipt.estimatedCostUsd === undefined ? 'cost unknown' : `$${receipt.estimatedCostUsd.toFixed(6)}`}` : ''}`;
+  return `${kind} · ${call.status}${latency}${receipt ? ` · ${receipt.usage ? `${receipt.usage.inputTokens} input tokens / ${receipt.usage.outputTokens} output tokens` : 'tokens unknown'} · ${receipt.estimatedCostUsd === undefined ? 'cost unknown' : `$${receipt.estimatedCostUsd.toFixed(6)}`}` : ''} · ${shortDiagnosticId(call.id)}`;
 }
 
 function Labeled({ label, children }: { label: string; children: ReactNode }) {
@@ -497,6 +527,33 @@ function LmSummary({ call, trigger }: { call: IntelligenceCall; trigger?: string
   );
 }
 
+function WorldAgentSummary({ call }: { call: IntelligenceCall }) {
+  const input = object(call.input);
+  const output = object(call.output);
+  const failed = output?.['ok'] === false || call.status === 'failed';
+  return (
+    <div className="ol-lm-summary">
+      <dl className="ol-diagnostic-fields">
+        <Labeled label="Purpose">
+          Answer the player’s world question or discuss an idea using public observations.
+        </Labeled>
+        {valueText(input?.['conversationId']) && (
+          <Labeled label="Conversation">{valueText(input?.['conversationId'])}</Labeled>
+        )}
+        {valueText(input?.['text']) && (
+          <Labeled label="Player message">“{valueText(input?.['text'])}”</Labeled>
+        )}
+        {valueText(output?.['message']) && (
+          <Labeled label={failed ? 'Error' : 'Response'}>{valueText(output?.['message'])}</Labeled>
+        )}
+        {valueText(output?.['code']) && (
+          <Labeled label="Result code">{valueText(output?.['code'])}</Labeled>
+        )}
+      </dl>
+    </div>
+  );
+}
+
 type Retrieval = {
   query?: string;
   embedding?: JsonObject;
@@ -592,6 +649,7 @@ function StageReadable({
 }) {
   const jev = call.kind === 'Jev' || !!path(call.input, 'questions');
   const lm = call.kind.startsWith('LM ·');
+  const worldAgent = call.kind.toLowerCase().includes('world agent');
   const speech =
     textAt(call.input, 'proposed', 'speech') ??
     textAt(call.input, 'proposed', 'talk', 'text') ??
@@ -608,23 +666,43 @@ function StageReadable({
     textAt(call.output, 'error') ??
     textAt(call.input, 'reason');
   const task = textAt(call.input, 'task');
-  const showRetrieval = call.kind === 'Embeddings' || call.kind === 'Context and retrieval';
+  const embedding = call.kind === 'Embeddings';
+  const showRetrieval = call.kind === 'Context and retrieval';
+  const embeddingTexts = path(call.input, 'texts');
   const failureStage = /failure|error/i.test(call.kind);
   return (
     <div className="ol-stage-readable">
-      {(stimulus || (!lm && task) || speech || proposedAction || (!lm && message)) && (
+      {(stimulus ||
+        (!lm && task) ||
+        speech ||
+        proposedAction ||
+        (!lm && !worldAgent && message)) && (
         <dl className="ol-diagnostic-fields">
           {stimulus && <Labeled label="Trigger">{stimulus}</Labeled>}
           {!lm && task && <Labeled label="Task">{humanize(task)}</Labeled>}
           {speech && <Labeled label="Actor response">“{speech}”</Labeled>}
           {proposedAction && <Labeled label="Decision">{proposedAction}</Labeled>}
-          {!lm && message && (
+          {!lm && !worldAgent && message && (
             <Labeled label={failureStage ? 'Error' : 'Outcome'}>{message}</Labeled>
           )}
         </dl>
       )}
       {jev && <JevSummary call={call} />}
       {lm && <LmSummary call={call} trigger={trigger} />}
+      {worldAgent && <WorldAgentSummary call={call} />}
+      {embedding && (
+        <dl className="ol-diagnostic-fields">
+          <Labeled label="Purpose">
+            Create vectors for the semantic query and any candidates missing from the index.
+          </Labeled>
+          {textAt(call.input, 'model') && (
+            <Labeled label="Embedding model">{textAt(call.input, 'model')}</Labeled>
+          )}
+          {Array.isArray(embeddingTexts) && (
+            <Labeled label="Inputs embedded">{embeddingTexts.length}</Labeled>
+          )}
+        </dl>
+      )}
       {showRetrieval && retrieval && <RetrievalSummary retrieval={retrieval} />}
       {!stimulus &&
         !task &&
@@ -633,6 +711,8 @@ function StageReadable({
         !message &&
         !jev &&
         !lm &&
+        !worldAgent &&
+        !embedding &&
         !showRetrieval && (
           <p className="ol-caption">No additional rendered fields were recorded for this stage.</p>
         )}
@@ -725,6 +805,7 @@ function Stage({
     <section className="ol-diagnostic-stage">
       <details>
         <summary>{stageSummary(call)}</summary>
+        <p className="ol-caption ol-diagnostic-id">Stage ID: {call.id}</p>
         <StageReadable call={call} retrieval={retrieval} trigger={trigger} />
         {hasProviderDetails && (
           <div className="ol-diagnostic-stage-actions">
@@ -787,8 +868,9 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
     }
   }
   useEffect(() => void load(), [row.id]);
-  const retrieval = detail ? retrievalFrom(detail.children) : undefined;
-  const response = detail ? responseFrom(detail.children) : undefined;
+  const calls = detail ? (detail.children.length ? detail.children : [detail.root]) : [];
+  const retrieval = detail ? retrievalFrom(calls) : undefined;
+  const response = detail ? responseFrom(calls) : undefined;
   return (
     <div className="ol-trace-detail">
       {error && <p role="alert">{error}</p>}
@@ -815,13 +897,23 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
             </div>
           </div>
           <dl className="ol-diagnostic-overview">
+            <Labeled label="Trace ID">
+              <span className="ol-diagnostic-id">{detail.root.id}</span>
+            </Labeled>
+            <Labeled label="Trigger type">
+              {detail.root.triggerType ?? 'Unclassified trigger'}
+            </Labeled>
             <Labeled label="Trigger">{detail.root.trigger ?? detail.root.kind}</Labeled>
             <Labeled label="Actor">{detail.root.actorName ?? 'World agent'}</Labeled>
             <Labeled label="Route">{detail.root.route ?? 'No route recorded'}</Labeled>
             <Labeled label="Outcome">{detail.root.disposition ?? detail.root.status}</Labeled>
-            {response && <Labeled label="Response">“{response}”</Labeled>}
+            {response && (
+              <Labeled label={detail.root.status === 'failed' ? 'Error' : 'Response'}>
+                “{response}”
+              </Labeled>
+            )}
           </dl>
-          {detail.children.map((call) => (
+          {calls.map((call) => (
             <Stage
               key={call.id}
               call={call}
@@ -845,7 +937,7 @@ function TraceRow({ row, onSelect }: { row: Row; onSelect(row: Row): void }) {
     <div className="ol-trace">
       <EntityRow
         name={`${new Date(row.startedAt).toLocaleTimeString()} · ${row.actorName ?? 'World agent'} · ${row.trigger ?? row.kind}`}
-        meta={`${row.route ?? '—'} · ${row.disposition ?? row.status} · $${row.knownCostUsd.toFixed(4)}${row.costIncomplete ? ' + unknown' : ''}`}
+        meta={`${row.route ?? '—'} · ${row.disposition ?? row.status} · ${shortDiagnosticId(row.id)} · $${row.knownCostUsd.toFixed(4)}${row.costIncomplete ? ' + unknown' : ''}`}
         icon="ui.star"
         onPress={() => onSelect(row)}
       />

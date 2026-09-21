@@ -13,22 +13,25 @@ import { batchedAttentionQuestions } from './jev-questions.js';
 const RECENT_CONVERSATION_EVENTS = 32;
 
 function currentConversationEvidenceIds(
-  world: WorldService['world'],
+  service: WorldService,
   actorId: string,
   requiredIds: string[],
 ): { recent: string[]; older: string[] } {
+  const world = service.world;
   const required = new Set(requiredIds);
-  const events = new Map(world.events.map((event) => [event.id, event]));
   const awareness = world.experience?.awareness[actorId] ?? [];
   const trigger = [...awareness]
     .reverse()
-    .find((entry) => required.has(entry.eventId) && events.get(entry.eventId)?.type === 'speech');
-  const conversationId = trigger && events.get(trigger.eventId)?.conversationId;
+    .find(
+      (entry) =>
+        required.has(entry.eventId) && service.worldEvent(entry.eventId)?.type === 'speech',
+    );
+  const conversationId = trigger && service.worldEvent(trigger.eventId)?.conversationId;
   // Legacy association is unknown; membership never grants earlier awareness.
   if (!conversationId) return { recent: [], older: [] };
   const historyIds = awareness
     .filter((entry) => {
-      const event = events.get(entry.eventId);
+      const event = service.worldEvent(entry.eventId);
       return (
         event?.type === 'speech' &&
         event.conversationId === conversationId &&
@@ -64,10 +67,8 @@ export async function prepareDecision(
   );
   const conversation =
     includeCurrentConversation ||
-    requiredIds.some((id) =>
-      world.events.some((event) => event.id === id && event.type === 'speech'),
-    )
-      ? currentConversationEvidenceIds(world, actorId, requiredIds)
+    requiredIds.some((id) => service.worldEvent(id)?.type === 'speech')
+      ? currentConversationEvidenceIds(service, actorId, requiredIds)
       : { recent: [], older: [] };
   const automaticIds = conversation.recent;
   const availableActions = npcCandidates(service, actorId);

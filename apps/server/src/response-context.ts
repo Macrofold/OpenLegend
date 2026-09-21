@@ -1,20 +1,21 @@
 import type { WorldState } from '@open-legend/domain';
 import { gameTime } from './recall.js';
+import type { WorldService } from './world-service.js';
 
 /** Attribution comes from event-time awareness, never a name guessed from a quote. */
 export function responseTrigger(
-  world: WorldState,
+  service: WorldService,
   actorId: string,
   evidenceIds: string[],
   fallback: string,
 ): string {
+  const world = service.world;
   const awareness = new Map(
     (world.experience?.awareness[actorId] ?? []).map((entry) => [entry.eventId, entry]),
   );
-  const events = new Map(world.events.map((event) => [event.id, event]));
   const lines = evidenceIds.flatMap((id) => {
     const aware = awareness.get(id);
-    const event = events.get(id);
+    const event = service.worldEvent(id);
     if (!aware) return [];
     const sourceId = aware.sourceId ?? event?.actorId;
     const targetId = aware.targetId ?? event?.targetId;

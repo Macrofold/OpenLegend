@@ -129,9 +129,20 @@ export class IntelligenceLog {
     await this.flush();
     this.latest.clear();
   }
-  async run<T>(kind: string, input: unknown, execute: () => Promise<T>): Promise<T> {
+  async run<T>(
+    kind: string,
+    input: unknown,
+    execute: () => Promise<T>,
+    metadata: Partial<
+      Pick<
+        IntelligenceCall,
+        'id' | 'worldId' | 'actorId' | 'actorName' | 'trigger' | 'triggerType' | 'route'
+      >
+    > = {},
+  ): Promise<T> {
     const call: IntelligenceCall = {
-      id: randomUUID(),
+      ...metadata,
+      id: metadata.id ?? randomUUID(),
       parentId: this.triggerContext.getStore(),
       kind,
       startedAt: new Date().toISOString(),
@@ -164,8 +175,14 @@ export class IntelligenceLog {
           output && typeof output === 'object' && 'outcome' in output
             ? String(output.outcome)
             : undefined;
-        call.status = outcome && outcome !== 'value' ? 'failed' : 'completed';
-        call.disposition = outcome ?? 'completed';
+        const rejected =
+          output && typeof output === 'object' && 'ok' in output && output.ok === false;
+        call.status = rejected || (outcome && outcome !== 'value') ? 'failed' : 'completed';
+        call.disposition = rejected
+          ? 'code' in output
+            ? String(output.code)
+            : 'failed'
+          : (outcome ?? 'completed');
         return output;
       } catch (error) {
         call.status = 'failed';
