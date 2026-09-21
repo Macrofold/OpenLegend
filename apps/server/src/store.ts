@@ -1,4 +1,5 @@
 import { HistoryRepository } from './history.js';
+import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
 import type { IntelligenceCall } from '@open-legend/protocol';
 import { SqliteDatabase } from './sqlite-database.js';
@@ -223,6 +224,7 @@ export interface WorldStore {
     state: SavedWorld,
     invalidatedMemoryIds?: Record<string, string[]>,
     appendEventCount?: number,
+    historyProjection?: { before?: WorldState; after: WorldState; receipt?: GameplayReceipt },
   ): Promise<number>;
   close(): Promise<void>;
 }
@@ -230,6 +232,7 @@ export interface WorldStore {
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
   history?: HistoryRepository;
+  commands?: CommandReceipts;
   vectors?: VectorStore;
   readonly persistence?: 'postgres' | 'sqlite';
   putIntelligenceCall(call: IntelligenceCall): Promise<void>;
@@ -272,6 +275,7 @@ export interface GameRepository extends WorldStore {
  * simulated timeline, so reopening a save cannot repeat or erase provider usage.
  */
 export class SqliteStore implements GameRepository {
+  readonly commands: CommandReceipts;
   readonly db: SqlDatabase;
   private acceptedRows = new Map<string, string>();
   private acceptedRevision = -1;
@@ -388,6 +392,7 @@ export class SqliteStore implements GameRepository {
     if (!database && path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = database ?? new SqliteDatabase(path);
     this.history = new HistoryRepository(this.db);
+    this.commands = new CommandReceipts(this.db);
     this.ready = this.initialize(!!database);
   }
 
@@ -436,6 +441,7 @@ export class SqliteStore implements GameRepository {
       await this.vectors.initialize();
     }
     await this.history.initialize();
+    await this.commands.initialize();
     const version = await this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema');
     if (version && version['value'] !== '1')
       throw new Error('Unsupported save schema. Keep this save and use a compatible version.');
@@ -476,6 +482,14 @@ export class SqliteStore implements GameRepository {
       throw new Error('World journal head mismatch; refusing incomplete recovery.');
     if (![1, 2, 3].includes(state.world?.schemaVersion))
       throw new Error('Unsupported world schema; refusing to overwrite your save.');
+    if (
+      state.world.archivedEventCount &&
+      (await this.history.eventCount(state.world.id)) !==
+        state.world.archivedEventCount + state.world.events.length
+    )
+      throw new Error(
+        'Archived history coverage disagrees with the save; restore the complete database.',
+      );
     if (this.db.dialect === 'postgres' && state.world.schemaVersion >= 2) {
       const rows = await this.db
         .prepare('SELECT actor_id,revision,text FROM mind.inner_world WHERE world_id=?')
@@ -497,11 +511,13 @@ export class SqliteStore implements GameRepository {
     return { revision, state };
   }
 
+  private readonly readyHistoryWorlds = new Set<string>();
   async commit(
     expectedRevision: number,
     state: SavedWorld,
     invalidatedMemoryIds?: Record<string, string[]>,
     appendEventCount?: number,
+    historyProjection?: { before?: WorldState; after: WorldState; receipt?: GameplayReceipt },
   ): Promise<number> {
     await this.ready;
 
@@ -512,6 +528,12 @@ export class SqliteStore implements GameRepository {
       ? diffSavedWorld(this.acceptedState, state, appendEventCount)
       : { operations: [] };
     const changesPayload = JSON.stringify(changes);
+    // Prepare the fixed candidate revision before acquiring the database transaction.
+    const snapshot =
+      !this.acceptedState ||
+      (expectedRevision + 1) % 120 === 0 ||
+      Buffer.byteLength(changesPayload) >= 1_048_576;
+    const snapshotPayload = snapshot ? JSON.stringify(state) : undefined;
     const changedRows = Object.entries(state.world.innerWorlds ?? {})
       .filter(
         ([actorId, inner]) =>
@@ -544,6 +566,8 @@ export class SqliteStore implements GameRepository {
         row?.['revision'] === null || row?.['revision'] === undefined ? 0 : Number(row['revision']);
       if (current !== expectedRevision)
         throw new Error('Save conflict: another writer changed this world.');
+      if (historyProjection?.receipt)
+        await this.commands.save(state.world.id, historyProjection.receipt);
       const ledgerKey = `forget-ledger:${state.world.id}`;
       const forgettingChanged =
         this.acceptedRevision !== expectedRevision ||
@@ -582,11 +606,17 @@ export class SqliteStore implements GameRepository {
         await this.putIntegration(`interests:${state.world.id}:${actorId}`, null);
       }
       const historyKey = `history-schema:${state.world.id}`;
-      const historyReady = await this.getIntegration(historyKey);
+      const historyReady =
+        this.readyHistoryWorlds.has(state.world.id) || (await this.getIntegration(historyKey));
       await this.history.project(
-        historyReady ? this.acceptedState?.world : undefined,
-        state.world,
-        historyReady ? appendEventCount : undefined,
+        historyReady ? (historyProjection?.before ?? this.acceptedState?.world) : undefined,
+        historyProjection?.after ?? state.world,
+        historyReady
+          ? provenAppendCount(
+              (historyProjection?.before ?? this.acceptedState?.world)?.events ?? [],
+              (historyProjection?.after ?? state.world).events,
+            )
+          : undefined,
       );
       if (!historyReady) await this.putIntegration(historyKey, 1);
       const outcomes = new Map<string, { ok: boolean; message: string; code: string }>();
@@ -620,16 +650,12 @@ export class SqliteStore implements GameRepository {
       }
       const revision = current + 1;
       await this.putIntegration('world-journal-head', revision);
-      const snapshot =
-        !this.acceptedState ||
-        revision % 120 === 0 ||
-        Buffer.byteLength(changesPayload) >= 1_048_576;
       if (snapshot) {
         await this.db
           .prepare(
             'INSERT INTO world VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision, payload=excluded.payload',
           )
-          .run(revision, JSON.stringify(state));
+          .run(revision, snapshotPayload!);
         await this.db.prepare('DELETE FROM world_journal WHERE revision <= ?').run(revision);
       } else {
         await this.db
@@ -650,6 +676,8 @@ export class SqliteStore implements GameRepository {
     for (const row of changedRows) this.acceptedRows.set(row.key, JSON.stringify(row.values));
     this.acceptedRevision = revision;
     this.acceptedState = state;
+    this.readyHistoryWorlds.add(state.world.id);
+    this.history.committed();
     return revision;
   }
 

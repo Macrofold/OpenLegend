@@ -1,4 +1,4 @@
-import { hasMemory } from '@open-legend/domain';
+import { ActorWork } from './actor-work.js';
 import {
   consolidationBatch,
   CONSOLIDATION_INSTRUCTIONS,
@@ -13,6 +13,7 @@ import {
   publishInnerWorld,
   mindFor,
   DEFAULT_COGNITION_POLICY,
+  EXPERIENCE_LIMITS,
 } from '@open-legend/domain';
 import type { AiClient, AiResult, GenerateRequest } from '@open-legend/ai';
 import { summarySchema, reflectionSchema, REFLECTION_INSTRUCTIONS } from './cognition-contracts.js';
@@ -29,6 +30,8 @@ interface ReflectionRequest {
   at: number;
 }
 export class CognitionMaintenance {
+  private readonly work = new ActorWork();
+  private readonly lastStarted = new Map<string, number>();
   private budgetActor = 'world-agent';
   private active: AbortController | null = null;
   private pending: Promise<void> | null = null;
@@ -65,6 +68,7 @@ export class CognitionMaintenance {
     };
     if (current?.reason === reason) return;
     await this.service.store.putIntegration(this.key(actorId), request);
+    this.work.wake(actorId);
     const unavailable =
       this.service.store.persistence !== 'postgres'
         ? 'PostgreSQL is required for accepted workspace publication.'
@@ -103,16 +107,38 @@ export class CognitionMaintenance {
       return;
     this.scheduling = true;
     try {
-      const actors = Object.values(this.service.world.entities).filter(
-        (e) => e.actor?.alive && hasMemory(e),
-      );
+      const current = this.service.world;
+      this.work.refresh(current, (id) => {
+        const actor = current.entities[id]!.actor!;
+        return [
+          actor.controller,
+          actor.incapacitated,
+          actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
+          actor.fullness >= 30,
+          actor.action?.type,
+          actor.rest?.asleep,
+          current.memories[id],
+          current.experience?.awareness[id],
+          current.experience?.summaries[id],
+          current.minds?.[id],
+          current.innerWorlds?.[id],
+          current.cognitionPolicy,
+          this.service.memoryBacklog,
+        ];
+      });
+      const actors = this.work
+        .ready(this.now(), current.simTime)
+        .map((id) => current.entities[id]!);
       const times = new Map(
         await Promise.all(actors.map(async (e) => [e.id, await this.last(e.id)] as const)),
       );
       actors.sort((a, b) => times.get(a.id)! - times.get(b.id)!);
       for (const entity of actors) {
         if (this.stopped || this.service.paused || this.active) return;
-        if (this.now() - times.get(entity.id)! < 60000) continue;
+        if (this.now() - times.get(entity.id)! < 60000) {
+          this.work.defer(entity.id, times.get(entity.id)! + 60000);
+          continue;
+        }
         const world = this.service.world,
           actor = world.entities[entity.id]!.actor!;
         const safe =
@@ -122,6 +148,19 @@ export class CognitionMaintenance {
           !actor.incapacitated &&
           (!actor.action || actor.action.type === 'rest');
         const mind = mindFor(world, entity.id);
+        // Sim-time deadlines follow pause/speed naturally; wall time only gates paid admission.
+        const future = [
+          (Math.floor(world.simTime / 3600) + 1) * 3600,
+          mind.lastReflectionAt + 3600,
+          ...(actor.rest?.asleep ? [world.simTime + 7200 - actor.rest.sleepingSeconds] : []),
+          ...(world.experience?.awareness[entity.id] ?? []).map(
+            (entry) => entry.at + EXPERIENCE_LIMITS.rawHours * 3600,
+          ),
+          ...(world.memories[entity.id] ?? []).map(
+            (entry) => entry.at + EXPERIENCE_LIMITS.rawHours * 3600,
+          ),
+        ].filter((at) => at > world.simTime);
+        this.work.inspected(entity.id, Math.min(...future));
         const sleeping =
           safe &&
           actor.action?.type === 'rest' &&
@@ -227,11 +266,10 @@ export class CognitionMaintenance {
     }
   }
   private async last(actorId: string): Promise<number> {
-    return Number(
-      (await this.service.store.getIntegration(
-        `maintenance-at:${this.service.world.id}:${actorId}`,
-      )) ?? 0,
-    );
+    const key = `maintenance-at:${this.service.world.id}:${actorId}`;
+    if (!this.lastStarted.has(key))
+      this.lastStarted.set(key, Number((await this.service.store.getIntegration(key)) ?? 0));
+    return this.lastStarted.get(key)!;
   }
   private async start(
     actorId: string,
@@ -245,10 +283,11 @@ export class CognitionMaintenance {
       `maintenance-kind:${this.service.world.id}:${actorId}`,
       reason === 'consolidation' ? 'consolidation' : 'reflection',
     );
-    await this.service.store.putIntegration(
-      `maintenance-at:${this.service.world.id}:${actorId}`,
-      this.now(),
-    );
+    const key = `maintenance-at:${this.service.world.id}:${actorId}`;
+    const startedAt = this.now();
+    await this.service.store.putIntegration(key, startedAt);
+    this.lastStarted.set(key, startedAt);
+    this.work.defer(actorId, startedAt + 60000);
     this.pending = execute(controller)
       .catch(() => {
         /* Job receipt records failure; no paid retry. */

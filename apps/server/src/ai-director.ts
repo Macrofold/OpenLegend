@@ -1,4 +1,6 @@
 import { Narrator } from './narrator.js';
+import { ActorWork } from './actor-work.js';
+import { nearbyEntities, canSee, PERCEPTION_RULES } from '@open-legend/domain';
 import { decisionQuestions, inventionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
 import { interestMatches, type InterestSubscription } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
@@ -78,6 +80,13 @@ function diagnosticExcerpt(value: string, limit = 120): string {
   return clean.length <= limit ? clean : `${clean.slice(0, limit - 1).trimEnd()}…`;
 }
 
+interface ThoughtSchedule {
+  fingerprint: string;
+  at: number;
+  watermark?: number;
+  attemptedOpportunity?: string;
+}
+
 /** One bounded actor workflow at a time; provider completions never bypass authoritative rules. */
 export class AiDirector {
   private running: Running | null = null;
@@ -91,6 +100,8 @@ export class AiDirector {
   }
 
   private nextThoughtAt = 0;
+  private readonly schedules = new Map<string, ThoughtSchedule | undefined>();
+  private readonly thoughtWork = new ActorWork();
   private readonly unsubscribe: () => void;
   private stopped = false;
   readonly client: AiClient;
@@ -206,7 +217,12 @@ export class AiDirector {
             code: 'retry-unavailable',
             message: 'The original conversation request is unavailable.',
           };
-        const speech = this.service.worldEvent(original.playerSpeechEventId);
+        const speech =
+          this.service.worldEvent(original.playerSpeechEventId) ??
+          (await this.service.store.history?.event(
+            this.service.world.id,
+            original.playerSpeechEventId,
+          ));
         if (
           !speech ||
           speech.actorId !== this.service.controlledEntityId ||
@@ -243,7 +259,8 @@ export class AiDirector {
         const receipt = this.service.world.responseReceipts?.[original.id];
         const applied =
           Object.values(receipt?.components ?? {}).some((component) => component.ok) ||
-          this.service.world.events.some((event) => event.data?.['responseId'] === original!.id);
+          this.service.world.events.some((event) => event.data?.['responseId'] === original!.id) ||
+          (await this.service.store.history?.hasResponse(this.service.world.id, original.id));
         if (original.status !== 'failed' || latest?.id !== original.id || applied)
           return {
             ok: false,
@@ -1156,29 +1173,63 @@ export class AiDirector {
         (!this.service.config.jevKey || !this.service.config.llmKey)
       )
         return;
-      await this.maintenance.tick(!!this.running);
+      void this.maintenance.tick(!!this.running).catch(() => {
+        this.service.storageError =
+          'Cognition maintenance scheduling failed; simulation paused. Restart and reconcile storage.';
+        this.service.notify();
+      });
       if (this.running || this.stopped || this.service.paused || this.now() < this.nextThoughtAt)
         return;
       const world = this.service.world;
       const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
-      const actors = Object.values(world.entities).filter((e) => e.actor?.controller === 'npc');
+      const visible = new Map<string, string[]>();
+      this.thoughtWork.refresh(world, (id) => {
+        const entity = world.entities[id]!,
+          actor = entity.actor!;
+        const ids = nearbyEntities(world, entity.position, PERCEPTION_RULES.sightRadius)
+          .filter((other) => other.id !== id && canSee(entity.position, other.position))
+          .map((other) => other.id);
+        visible.set(id, ids);
+        return [
+          actor.controller,
+          actor.incapacitated,
+          actor.goal,
+          actor.fullness < 20,
+          actor.energy < 15,
+          actor.energy < 10,
+          actor.rest?.asleep,
+          ids.join('\0'),
+          world.memories[id],
+          world.experience?.awareness[id],
+          world.experience?.summaries[id],
+          world.innerWorlds?.[id],
+          world.cognitionPolicy,
+          this.service.telemetryRevision,
+        ];
+      });
+      const actors = this.thoughtWork
+        .ready(this.now(), world.simTime)
+        .map((id) => world.entities[id]!)
+        .filter((entity) => entity.actor?.controller === 'npc');
       const scheduled = new Map(
-        await Promise.all(actors.map(async (e) => [e.id, await this.scheduledAt(e.id)] as const)),
+        await Promise.all(
+          actors.map(
+            async (e) =>
+              [e.id, await this.readSchedule(`semantic-schedule:${world.id}:${e.id}`)] as const,
+          ),
+        ),
       );
-      actors.sort((a, b) => scheduled.get(a.id)! - scheduled.get(b.id)!);
+      actors.sort((a, b) => (scheduled.get(a.id)?.at ?? 0) - (scheduled.get(b.id)?.at ?? 0));
       for (const entity of actors) {
         const actor = entity.actor!;
         if (!actor.alive || actor.incapacitated) continue;
-        const all = experiences(world, entity.id);
         const key = `semantic-schedule:${world.id}:${entity.id}`;
-        const last = (await this.service.store.getIntegration(key)) as
-          | {
-              fingerprint: string;
-              at: number;
-              watermark?: number;
-              attemptedOpportunity?: string;
-            }
-          | undefined;
+        const last = scheduled.get(entity.id);
+        if (last && this.now() - last.at < policy.cooldownSeconds * 1000) {
+          this.thoughtWork.defer(entity.id, last.at + policy.cooldownSeconds * 1000);
+          continue;
+        }
+        const all = experiences(world, entity.id);
         const unseen = all
           .filter((memory) => {
             const event = this.service.worldEvent(memory.eventId ?? '');
@@ -1193,13 +1244,20 @@ export class AiDirector {
           })
           .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
         const latest = unseen.slice(0, 8);
+        const subscription = (await this.service.store.getIntegration(
+          `interests:${world.id}:${entity.id}`,
+        )) as InterestSubscription | undefined;
+        this.thoughtWork.inspected(
+          entity.id,
+          subscription && subscription.expiresAt > world.simTime
+            ? subscription.expiresAt
+            : Infinity,
+        );
         const matches = interestMatches(
           world,
           entity.id,
-          (await this.service.store.getIntegration(`interests:${world.id}:${entity.id}`)) as
-            | InterestSubscription
-            | undefined,
-          this.service.observe(entity.id)?.visibleEntities.map((e) => e.id) ?? [],
+          subscription,
+          visible.get(entity.id) ?? [],
         );
         const fingerprint = digest({
           matches,
@@ -1270,7 +1328,7 @@ export class AiDirector {
             },
             exchanges: [],
           });
-          await this.service.store.putIntegration(key, {
+          await this.writeSchedule(key, {
             fingerprint,
             at: this.now(),
             watermark: actor.rest?.asleep
@@ -1284,7 +1342,7 @@ export class AiDirector {
         }
         // Persist dispatch deduplication before paid work, but consume evidence only
         // after routing/generation reaches a completed disposition.
-        await this.service.store.putIntegration(key, {
+        await this.writeSchedule(key, {
           fingerprint,
           at: this.now(),
           watermark: last?.watermark ?? 0,
@@ -1311,15 +1369,8 @@ export class AiDirector {
             createdAt: this.now(),
           },
           async () => {
-            const current = (await this.service.store.getIntegration(key)) as
-              | {
-                  fingerprint: string;
-                  at: number;
-                  watermark?: number;
-                  attemptedOpportunity?: string;
-                }
-              | undefined;
-            await this.service.store.putIntegration(key, {
+            const current = await this.readSchedule(key);
+            await this.writeSchedule(key, {
               fingerprint,
               at: this.now(),
               watermark: Math.max(
@@ -1346,13 +1397,22 @@ export class AiDirector {
       }
     });
   }
-  private async scheduledAt(actorId: string): Promise<number> {
-    return (
-      (
-        (await this.service.store.getIntegration(
-          `semantic-schedule:${this.service.world.id}:${actorId}`,
-        )) as { at?: number } | undefined
-      )?.at ?? 0
+  private async readSchedule(key: string): Promise<ThoughtSchedule | undefined> {
+    if (!this.schedules.has(key))
+      this.schedules.set(
+        key,
+        (await this.service.store.getIntegration(key)) as ThoughtSchedule | undefined,
+      );
+    return this.schedules.get(key);
+  }
+  private async writeSchedule(key: string, value: ThoughtSchedule): Promise<void> {
+    // This director is the sole schedule writer. Failed writes never update its cache.
+    await this.service.store.putIntegration(key, value);
+    this.schedules.set(key, value);
+    this.thoughtWork.defer(
+      key.slice(`semantic-schedule:${this.service.world.id}:`.length),
+      value.at +
+        (this.service.world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).cooldownSeconds * 1000,
     );
   }
   private async think(run: Running): Promise<void> {

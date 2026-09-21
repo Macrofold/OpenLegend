@@ -2,6 +2,48 @@ import { mutateExperience } from './experience.js';
 import { draftWorld } from './draft.js';
 import { appendMemory, finish, outcome } from './events.js';
 import type { Transition, WorldEvent, WorldState } from './types.js';
+import { current, isDraft } from 'immer';
+import type { MemoryRecord } from './types.js';
+
+type Pending = { actorId: string; record: MemoryRecord; order: number };
+const activeRecords = new WeakMap<MemoryRecord[], MemoryRecord[]>();
+const indexes = new WeakMap<
+  WorldState['memories'],
+  {
+    completions: Map<string, Pending[]>;
+    deadlines: Pending[];
+  }
+>();
+
+function commitmentIndex(world: WorldState) {
+  const memories = isDraft(world.memories) ? current(world.memories) : world.memories;
+  let index = indexes.get(memories);
+  if (index) return index;
+  index = { completions: new Map(), deadlines: [] };
+  let order = 0;
+  for (const [actorId, records] of Object.entries(memories)) {
+    let pending = activeRecords.get(records);
+    if (!pending) {
+      pending = records.filter((record) => record.obligation && !record.resolved);
+      activeRecords.set(records, pending);
+    }
+    for (const record of pending) {
+      const entry = { actorId, record, order: order++ },
+        obligation = record.obligation!;
+      if (obligation.completion) {
+        const key = JSON.stringify([actorId, obligation.completion.eventType]);
+        const group = index.completions.get(key) ?? [];
+        group.push(entry);
+        index.completions.set(key, group);
+      }
+      if (obligation.status === 'active' && obligation.dueAt !== undefined)
+        index.deadlines.push(entry);
+    }
+  }
+  index.deadlines.sort((a, b) => a.record.obligation!.dueAt! - b.record.obligation!.dueAt!);
+  indexes.set(memories, index);
+  return index;
+}
 export interface Obligation {
   revision: number;
   status: 'active' | 'fulfilled' | 'cancelled' | 'overdue';
@@ -110,54 +152,63 @@ export function amendCommitment(
   };
 }
 export function advanceCommitments(world: WorldState, events: WorldEvent[]): void {
-  for (const [actorId, records] of Object.entries(world.memories))
-    for (const record of records) {
-      const obligation = record.obligation;
-      if (!obligation || record.resolved) continue;
-      if (
-        obligation.completion &&
-        events.some(
-          (e) =>
-            e.actorId === actorId &&
-            e.id !== obligation.evidenceId &&
-            e.type === obligation.completion!.eventType &&
-            (!obligation.completion!.targetId || e.targetId === obligation.completion!.targetId) &&
-            (!obligation.completion!.definitionId ||
-              e.data?.['definitionId'] === obligation.completion!.definitionId),
-        )
-      ) {
-        const evidence = events.find(
-          (e) =>
-            e.actorId === actorId &&
-            e.id !== obligation.evidenceId &&
-            e.type === obligation.completion!.eventType &&
-            (!obligation.completion!.targetId || e.targetId === obligation.completion!.targetId) &&
-            (!obligation.completion!.definitionId ||
-              e.data?.['definitionId'] === obligation.completion!.definitionId),
-        )!;
-        mutateExperience(world, actorId, {
-          operation: 'obligation',
-          id: record.id,
-          expectedRevision: obligation.revision,
-          obligation: {
-            ...obligation,
-            fulfilledBy: evidence.id,
-            fulfilledAt: evidence.at,
-            status: 'fulfilled',
-            revision: obligation.revision + 1,
-          },
-        });
-      } else if (
-        obligation.status === 'active' &&
-        obligation.dueAt !== undefined &&
-        world.simTime >= obligation.dueAt
-      ) {
-        mutateExperience(world, actorId, {
-          operation: 'obligation',
-          id: record.id,
-          expectedRevision: obligation.revision,
-          obligation: { ...obligation, status: 'overdue', revision: obligation.revision + 1 },
-        });
-      }
+  // Indexes follow immutable source identities, including edits/recovery; ordering stays native.
+  const index = commitmentIndex(world),
+    candidates = new Set<Pending>();
+  for (const event of events)
+    for (const entry of index.completions.get(JSON.stringify([event.actorId, event.type])) ?? [])
+      candidates.add(entry);
+  for (const entry of index.deadlines) {
+    if (entry.record.obligation!.dueAt! > world.simTime) break;
+    candidates.add(entry);
+  }
+  for (const { actorId, record } of [...candidates].sort((a, b) => a.order - b.order)) {
+    const obligation = record.obligation;
+    if (!obligation || record.resolved) continue;
+    if (
+      obligation.completion &&
+      events.some(
+        (e) =>
+          e.actorId === actorId &&
+          e.id !== obligation.evidenceId &&
+          e.type === obligation.completion!.eventType &&
+          (!obligation.completion!.targetId || e.targetId === obligation.completion!.targetId) &&
+          (!obligation.completion!.definitionId ||
+            e.data?.['definitionId'] === obligation.completion!.definitionId),
+      )
+    ) {
+      const evidence = events.find(
+        (e) =>
+          e.actorId === actorId &&
+          e.id !== obligation.evidenceId &&
+          e.type === obligation.completion!.eventType &&
+          (!obligation.completion!.targetId || e.targetId === obligation.completion!.targetId) &&
+          (!obligation.completion!.definitionId ||
+            e.data?.['definitionId'] === obligation.completion!.definitionId),
+      )!;
+      mutateExperience(world, actorId, {
+        operation: 'obligation',
+        id: record.id,
+        expectedRevision: obligation.revision,
+        obligation: {
+          ...obligation,
+          fulfilledBy: evidence.id,
+          fulfilledAt: evidence.at,
+          status: 'fulfilled',
+          revision: obligation.revision + 1,
+        },
+      });
+    } else if (
+      obligation.status === 'active' &&
+      obligation.dueAt !== undefined &&
+      world.simTime >= obligation.dueAt
+    ) {
+      mutateExperience(world, actorId, {
+        operation: 'obligation',
+        id: record.id,
+        expectedRevision: obligation.revision,
+        obligation: { ...obligation, status: 'overdue', revision: obligation.revision + 1 },
+      });
     }
+  }
 }

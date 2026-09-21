@@ -1,3 +1,4 @@
+import { performanceSnapshot, timed } from './performance.js';
 import { amendCommitment } from '@open-legend/domain';
 import { traceHistory, traceDetails } from './cognition-inspection.js';
 import { admitCognitionPolicy } from '@open-legend/domain';
@@ -23,7 +24,13 @@ const clientId = z
   .max(100)
   .regex(/^[a-zA-Z0-9_-]+$/);
 const sequence = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
-const command = z.object({ commandId: requestIdSchema, command: commandInputSchema }).strict();
+const command = z
+  .object({
+    commandId: requestIdSchema,
+    commandEpoch: z.string().uuid().optional(),
+    command: commandInputSchema,
+  })
+  .strict();
 const interaction = z
   .object({
     requestId: requestIdSchema,
@@ -254,7 +261,9 @@ export async function createGameServer(
   const currentView = (): Promise<GameView> => {
     const pending = projectionQueue.then(async () => {
       if (publicView?.revision === service.version) return publicView;
-      const next = await projectView(service, director.executionSource);
+      const next = await timed('public.projection', () =>
+        projectView(service, director.executionSource),
+      );
       if (publicView) {
         const patch = projectPatch(publicView, next);
         if (patch) {
@@ -322,7 +331,7 @@ export async function createGameServer(
           publish();
         }
       }
-    }, 100);
+    }, 0);
   };
   const unsubscribe = service.subscribe(publish);
   const authenticated = (request: IncomingMessage) => {
@@ -384,6 +393,8 @@ export async function createGameServer(
             code: 'session',
             message: 'Reload the game to establish a local session.',
           });
+        if (request.method === 'GET' && url.pathname === '/api/performance')
+          return send(response, 200, performanceSnapshot());
         if (request.method === 'GET' && url.pathname === '/api/history') {
           const options = z
             .object({
@@ -559,7 +570,13 @@ export async function createGameServer(
             });
           case '/api/command': {
             const value = command.parse(body);
-            return send(response, 200, await service.command(value.commandId, value.command));
+            return send(
+              response,
+              200,
+              await timed('command.durable', () =>
+                service.command(value.commandId, value.command, undefined, value.commandEpoch),
+              ),
+            );
           }
           case '/api/narration/regenerate': {
             const value = z
@@ -1111,6 +1128,7 @@ export async function createGameServer(
   let previous = performance.now();
   let ticking = false;
   let activeTick: Promise<void> | undefined;
+  let thinking: Promise<void> | undefined;
   const interval =
     options.tick === false
       ? undefined
@@ -1122,8 +1140,18 @@ export async function createGameServer(
           previous = current;
           activeTick = (async () => {
             await service.tick(elapsed);
-            director.narrator.tick();
-            await director.considerThought();
+            // Background admission must not hold the native clock (docs/performance.md#triggered-background-work).
+            if (!thinking)
+              thinking = director
+                .considerThought()
+                .catch(() => {
+                  service.storageError =
+                    'Background admission failed; simulation paused. Restart and reconcile storage.';
+                  service.notify();
+                })
+                .finally(() => {
+                  thinking = undefined;
+                });
           })()
             .catch(() => {
               service.storageError =
@@ -1133,7 +1161,7 @@ export async function createGameServer(
             .finally(() => {
               ticking = false;
             });
-        }, 250);
+        }, 50);
 
   return {
     server,
@@ -1147,6 +1175,7 @@ export async function createGameServer(
       unsubscribe();
       director.macrofold.stop();
       await activeTick;
+      await thinking;
       await director.close();
       await service.flush();
       await projectionQueue;

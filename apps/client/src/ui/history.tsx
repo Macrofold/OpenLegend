@@ -12,15 +12,19 @@ type HistoryPage = TranscriptPage & {
 export function History({
   conversation = false,
   visible = true,
+  revision,
+  epoch,
 }: {
   conversation?: boolean;
   visible?: boolean;
+  revision?: string;
+  epoch?: string;
 }) {
   const [page, setPage] = useState<HistoryPage | null>(null);
   const [items, setItems] = useState<TranscriptItem[]>([]);
   const [error, setError] = useState('');
   const [newEntries, setNewEntries] = useState(false);
-  const latest = useRef('');
+  const lastRevision = useRef(revision);
   const [busy, setBusy] = useState(false);
   const section = useRef<HTMLElement>(null);
   const anchor = useRef<{ element: HTMLElement; top: number; height: number } | null>(null);
@@ -64,7 +68,6 @@ export function History({
           top: scrolling.scrollTop,
           height: scrolling.scrollHeight,
         };
-      latest.current = JSON.stringify([next.scope, next.items]);
       setNewEntries(false);
       setPage(next);
       setItems((current) =>
@@ -78,29 +81,21 @@ export function History({
       if (mounted.current && generation === request.current) setBusy(false);
     }
   }
-  // Refresh is explicit so arriving entries cannot move the reader's position.
+  // Ordinary arrivals only mark newer content. Revocation/reset clears stale retained prose.
   useEffect(() => {
-    void load();
-  }, [conversation]);
-  useEffect(() => {
-    if (!visible) return;
-    let stopped = false;
-    const poll = setInterval(async () => {
-      try {
-        const response = await fetch(`/api/history${conversation ? '?active=true' : ''}`);
-        if (!response.ok || stopped) return;
-        const next = (await response.json()) as HistoryPage;
-        if (!stopped && JSON.stringify([next.scope, next.items]) !== latest.current)
-          setNewEntries(true);
-      } catch {
-        /* Explicit refresh surfaces connection errors. */
-      }
-    }, 3000);
+    request.current++;
+    setItems([]);
+    setPage(null);
+    if (visible) void load();
     return () => {
-      stopped = true;
-      clearInterval(poll);
+      request.current++;
     };
-  }, [visible, conversation]);
+  }, [conversation, visible, epoch]);
+  useEffect(() => {
+    if (lastRevision.current === revision) return;
+    lastRevision.current = revision;
+    if (visible) setNewEntries(true);
+  }, [visible, revision]);
   async function voice(value: string) {
     const result = await post('/api/profile/preferences', { narratorVoice: value });
     if (!result.ok) setError(result.message);

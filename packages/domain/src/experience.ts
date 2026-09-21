@@ -203,7 +203,6 @@ export function mutateExperience(
   }
   const mutations = Array.isArray(mutation) ? mutation : [mutation];
   if (!mutations.length) return [];
-  const entries = experienceEntries(world, actorId);
   if (mutations.some((change) => change.operation === 'add')) {
     if (mutations.some((change) => change.operation !== 'add')) {
       const candidate = draftWorld(world);
@@ -239,7 +238,7 @@ export function mutateExperience(
       new Set(keys).size !== keys.length ||
       keys.some(
         (key) =>
-          entries.has(key) ||
+          !!experienceEntry(world, actorId, key) ||
           world.experience?.forgotten[actorId]?.includes(key.slice(key.indexOf(':') + 1)),
       ) ||
       additions.some(
@@ -265,6 +264,7 @@ export function mutateExperience(
     mutations.length
   )
     return null;
+  const entries = experienceEntries(world, actorId);
   const resolved = mutations.map((change) => ({
     change,
     previous: change.operation === 'add' ? undefined : entries.get(change.entryId),
@@ -373,7 +373,7 @@ export function migrateCognition(world: WorldState): void {
   world.innerWorlds ??= {};
   for (const entity of Object.values(world.entities)) {
     if (!hasMemory(entity) || world.innerWorlds[entity.id]) continue;
-    const mind = mindFor(world, entity.id);
+    const mind = ((world.minds ??= {})[entity.id] ??= mindFor(world, entity.id));
     const files = mind.documents.map((doc) => ({
       path: `${doc.id}.md`,
       text: `${doc.title}\n\n${doc.text}${mind.records

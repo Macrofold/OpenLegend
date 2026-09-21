@@ -155,6 +155,9 @@ export interface AiJobView {
 }
 
 export interface GameView {
+  commandEpoch?: string;
+  historyRevision?: string;
+  historyEpoch?: string;
   narrator?: TranscriptItem | null;
   godMode?: boolean;
   godTools?: {
@@ -239,6 +242,9 @@ export interface GameView {
 }
 
 export interface GamePatch {
+  commandEpoch?: string;
+  historyRevision?: string;
+  historyEpoch?: string;
   schemaVersion: 1;
   baseRevision: number;
   revision: number;

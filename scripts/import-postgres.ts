@@ -1,4 +1,5 @@
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
+import { COMMAND_TABLES } from '../apps/server/src/command-receipts.js';
 import { DatabaseSync } from 'node:sqlite';
 import { resolve } from 'node:path';
 import { writeFileSync } from 'node:fs';
@@ -25,7 +26,7 @@ const tables = [
   'intelligence_calls',
   'meta',
   'player_profiles',
-  ...['attempt_scopes', ...HISTORY_TABLES].filter((name) =>
+  ...['attempt_scopes', ...HISTORY_TABLES, ...COMMAND_TABLES].filter((name) =>
     sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name),
   ),
 ] as const;
@@ -76,7 +77,7 @@ try {
     'attempts',
     'intelligence_calls',
     'player_profiles',
-    ...['attempt_scopes', ...HISTORY_TABLES],
+    ...['attempt_scopes', ...HISTORY_TABLES, ...COMMAND_TABLES],
   ])
     if (Number((await db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get())?.['count']))
       throw new Error('Destination has existing accounting or profiles; import refused.');
@@ -114,6 +115,8 @@ try {
                         'position',
                         'show_unavailable_actions',
                         'pause_when_hidden',
+                        'epoch',
+                        'expires_at',
                       ].includes(key)
                         ? Number(value)
                         : value,

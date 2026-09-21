@@ -1,3 +1,4 @@
+import { timed, recordDuration } from './performance.js';
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';
@@ -33,7 +34,11 @@ export class PostgresDatabase implements SqlDatabase {
     );
   }
   private serial<T>(operation: () => Promise<T>): Promise<T> {
-    const next = this.tail.then(operation);
+    const queuedAt = performance.now();
+    const next = this.tail.then(() => {
+      recordDuration('postgres.wait', performance.now() - queuedAt);
+      return operation();
+    });
     this.tail = next.catch(() => undefined);
     return next;
   }
@@ -70,7 +75,9 @@ export class PostgresDatabase implements SqlDatabase {
           (_, path: string) => `(payload::jsonb #>> '{${path.split('.').join(',')}}')`,
         );
       try {
-        const result = await this.client.query(translated, params);
+        const result = await timed('postgres.statement', () =>
+          this.client.query(translated, params),
+        );
         return { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
       } catch (error) {
         const code = (error as { code?: string }).code;

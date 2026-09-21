@@ -1,4 +1,8 @@
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
+import { randomUUID } from 'node:crypto';
+import { COMMAND_TABLES, type CommandEpoch } from '../apps/server/src/command-receipts.js';
+import { retainHotEvents } from '../apps/server/src/hot-events.js';
+import type { WorldEvent } from '@open-legend/domain';
 import { readFileSync } from 'node:fs';
 import { readConfig } from '../apps/server/src/config.js';
 import { SqliteStore, digest, type SavedWorld } from '../apps/server/src/store.js';
@@ -28,6 +32,23 @@ const store = new SqliteStore(
 try {
   let current = await store.load();
   const state = JSON.parse(backup.tables.world[0]!.payload) as SavedWorld;
+  const fenceCommands = async () => {
+    const key = `command-epoch:${state.world.id}`;
+    const epoch = (await store.getIntegration(key)) as CommandEpoch | undefined;
+    await store.putIntegration(key, {
+      generation: (epoch?.generation ?? 0) + 1,
+      openedAt: Date.now(),
+      token: randomUUID(),
+    });
+  };
+  const archived = (backup.tables['history_events'] ?? []).filter(
+    (row) => row['world_id'] === state.world.id,
+  );
+  if (
+    state.world.archivedEventCount &&
+    archived.length !== state.world.archivedEventCount + state.world.events.length
+  )
+    throw new Error('Backup is missing archived history; full restore refused.');
   if (current && state.world.id !== current.state.world.id)
     throw new Error('World identity mismatch.');
   if (!current) {
@@ -36,6 +57,7 @@ try {
       'attempts',
       'intelligence_calls',
       'player_profiles',
+      ...COMMAND_TABLES,
       ...['attempt_scopes', ...HISTORY_TABLES],
     ];
     for (const table of tables)
@@ -62,6 +84,7 @@ try {
       migrateCognition(state.world);
       state.manuallyPaused = true;
       state.world.paused = true;
+      await fenceCommands();
       await store.commit(0, state);
     });
     current = await store.load();
@@ -82,7 +105,32 @@ try {
     await store.putIntegration(`pre-restore:${current.revision}`, current);
     state.manuallyPaused = true;
     state.world.paused = true;
-    await store.commit(current.revision, state);
+    const before = {
+      ...current.state.world,
+      events: await store.history.allEvents(state.world.id),
+    };
+    const hotIds = new Set(state.world.events.map((event) => event.id));
+    const after = state.world.archivedEventCount
+      ? {
+          ...state.world,
+          events: [
+            ...archived
+              .map((row) => JSON.parse(String(row['payload'])) as WorldEvent)
+              .filter((event) => !hotIds.has(event.id)),
+            ...state.world.events,
+          ].sort((a, b) => (a.order ?? a.sequence) - (b.order ?? b.sequence)),
+          archivedEventCount: 0,
+        }
+      : state.world;
+    state.world = retainHotEvents(after);
+    await store.db.transaction(async () => {
+      for (const row of backup.tables['gameplay_receipts'] ?? [])
+        await store.db
+          .prepare('INSERT INTO gameplay_receipts VALUES (?,?,?,?,?) ON CONFLICT DO NOTHING')
+          .run(row['world_id'], row['id'], row['epoch'], row['expires_at'], row['payload']);
+      await fenceCommands();
+      await store.commit(current!.revision, state, undefined, undefined, { before, after });
+    });
     for (const actorId of Object.keys(state.world.entities)) {
       await store.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
       await store.putIntegration(`interests:${state.world.id}:${actorId}`, null);

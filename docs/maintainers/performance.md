@@ -1,6 +1,12 @@
 # Performance implementation tracker
 
-This is the sole tracker for runtime performance optimization. [Runtime performance design](../performance.md) owns the selected approach; [Architecture](../architecture.md#performance-critical-path) owns current implementation, [Verification](../verification.md#performance-investigation) owns measurements, and [open decisions](../../archive/05-project/open-decisions.md#d58--durability-and-storage-placement) owns unresolved policy. All tasks remain open. Documentation does not implement or validate a fix.
+This is the sole tracker for runtime performance optimization. [Runtime performance design](../performance.md) owns the approach; [Architecture](../architecture.md#performance-critical-path) owns implementation facts and [Verification](../verification.md#performance-investigation) owns evidence. Checked items identify delivered implementation or explicitly named runtime observations. Unchecked acceptance and regression items remain open; implementation is not scale qualification.
+
+## Delivery status
+
+PF00/PF01/PF02/PF03/PF05/PF08/PF09 now include delivered work below. Remaining measurement, failure coverage and legacy compatibility work stay unchecked. PF04/PF06/PF07/PF10 remain conditional without evidence justifying their extra mechanisms. PF11 is explicitly deferred.
+
+This pass stops before multiplayer admission, per-player replication, the unattended-world toggle and verification with 100 agents, 100 players and thousands of animals. The local host's gameplay epoch mechanism is independent of future multiplayer controller admission. Native animals retain full simulation fidelity; dormancy and analytic updates remain gated on semantic equivalence.
 
 ## Order and stop rule
 
@@ -50,7 +56,8 @@ An injected slow database may exceed normal latency budgets. Correct behavior is
 
 ## PF00 — Baseline and attribution
 
-- [ ] Instrument monotonic durations for request arrival, mutation-queue wait, domain transition, persistence preparation, database-lane wait, statement execution, commit acknowledgement, public projection, SSE send and browser receipt/render. Record input-to-action-acceptance and input-to-first-position separately. Keep telemetry in bounded memory; no per-span SQL write on the measured path.
+- [x] Record bounded, monotonic mutation wait, native-step, commit, command durability, projection and SQLite/PostgreSQL statement/lane timings without per-span SQL writes. Record native action acknowledgement and first SSE position separately.
+- [ ] Complete request-arrival, persistence-preparation, commit-acknowledgement, SSE-send and browser receipt/render attribution. Preserve bounded telemetry and separate action acceptance from first rendered movement.
 - [ ] Reproduce walking, gather, eat, rest/stop, pause/resume, a mature-history view and a first encounter. Compare fresh and preserved mature saves; replay equivalent streams against the baseline and candidate build. Verify outcome codes so a rejected walk is not counted as a successful-action sample.
 - [ ] Measure actual PostgreSQL location/RTT, query count, locks, idle queries, event-loop delay, CPU profile, allocations/GC, heap, journal bytes, snapshot latency and view bytes. Use zero-cost provider fixtures and explicit empty credentials/zero spending. Provider-quality acceptance stays separate.
 - [ ] Measure the asynchronous PostgreSQL adapter before population growth. Preserve immediate command durability and one world writer. Do not describe the adapter as distributed/scalable persistence; specialized repositories remain gated production work.
@@ -62,8 +69,9 @@ Attribution exit: stage timings, query count and a short reproducible baseline i
 
 Dependencies: PF00. Primary files: `apps/server/src/history.ts`, `store.ts`, `postgres.ts`.
 
-- [ ] Add a validated append path that avoids existing-row reads and remove/revoke cascades for genuinely new event IDs. Preserve the existing edit/delete/forget path, duplicate/conflict checks and history backfill.
-- [ ] Prepare event encodings and perspectives once, bulk write bounded rows per table, group metadata writes, and cache schema readiness only after commit. Keep CAS, command results, required history, revocation, accepted mind and job outcomes atomic.
+- [x] Add a validated append path that avoids existing-row reads and remove/revoke cascades for genuinely new event IDs. Preserve the existing edit/delete/forget path, duplicate/conflict checks and history backfill.
+- [x] Prepare event encodings/perspectives once, bulk write bounded rows per table, and cache schema readiness only after commit. Keep CAS, command results, required history, revocation, accepted mind and job outcomes atomic.
+- [ ] Compact remaining metadata/edit-path statements where measurements justify it.
 - [ ] Verify 1/10/100-event batches and 1/10/100 audiences increase statements only at configured chunk boundaries. Compare complete persisted/recovered data, not just query counts.
 - [ ] Exercise append versus edit/delete, failed transaction, ambiguous COMMIT with original-ID reconciliation, schema backfill, restore and permission revocation. Do not repeat paid calls on recovery.
 
@@ -73,10 +81,11 @@ Exit: ordinary walk meets the SQL budget; append cost depends on new rows; editi
 
 Dependencies: PF00; coordinate signal metadata with PF01. Primary files: `history.ts`, `narrator.ts`, `http.ts`, `ai-director.ts`, `cognition-maintenance.ts`.
 
-- [ ] Return queued-story/next-due information from successful commit/regeneration and wake the existing story-job runner. Use one earliest-deadline timer; preserve causal batching and finite concurrency.
-- [ ] Recover once at startup, wake on resume, and drain safely when a commit arrives during claim/provider completion/runner cleanup. Cover rollback, commit-before-notification crash, cancellation, explicit regeneration, source revocation, uncertain paid completion and shutdown. Queued work survives; uncertain dispatched work does not automatically retry.
-- [ ] Remove Narrator's per-tick empty claim. Rebuild due state from persisted jobs after restart; no extra queue table or broker.
-- [ ] Decouple cognition-maintenance scheduling from the awaited simulation timer. Use dirty actors, cached schedule values and due deadlines. Preserve significant events, recurring needs, sleep/day boundaries, cooldowns, pause/speed changes, cancellation and spending limits.
+- [x] Return queued-story/next-due information from successful commit/regeneration and wake the existing story-job runner. Use one earliest-deadline timer; preserve causal batching and finite concurrency.
+- [x] Recover once at startup, wake on resume, and coalesce commits arriving during the existing runner. Preserve regeneration, cancellation, source revocation and uncertain-work recovery behavior.
+- [ ] Qualify rollback, commit-before-notification crash, concurrent claim/provider completion/cleanup, pause, shutdown and uncertain paid completion; queued work survives and uncertain dispatched work never automatically retries.
+- [x] Remove Narrator's per-tick empty claim. Rebuild due state from persisted jobs after restart; no extra queue table or broker.
+- [x] Decouple cognition-maintenance scheduling from the awaited simulation timer. Use dirty actors, cached schedule values and due deadlines. Preserve significant events, recurring needs, sleep/day boundaries, cooldowns, pause/speed changes, cancellation and spending limits.
 
 Exit: idle narrator has no claim traffic, eligible committed jobs execute once through the existing attempt policy, and slow maintenance/provider fixtures do not prevent native timer scheduling. Compare background query rates and command tails.
 
@@ -84,10 +93,12 @@ Exit: idle narrator has no claim traffic, eligible committed jobs execute once t
 
 Dependencies: PF00. Primary files: domain `draft.ts`, `events.ts`, `experience.ts`, `kernel.ts`; server `world-service.ts`.
 
-- [ ] Profile and remove repeated startup/actor initialization scans and unchanged policy replacement from each commit. Startup, spawn and capability changes retain complete authoritative initialization.
-- [ ] Make ordinary experience additions proportional to changed actor/source entries; reuse or incrementally maintain indexes instead of materializing all retained experience for each add. Preserve validation, duplicate prevention, forgotten-source and obligation protections.
-- [ ] Optimize the measured Immer/finalization or diff hotspot with the smallest equivalent change. Evaluate narrower drafts/targeted immutable branches; retain input immutability and serializable saved state.
-- [ ] If needed, finalize several fixed steps together and yield between bounded chunks. Preserve per-step ordering, sequences, RNG draws, perception, commitments, conversations, transitions and timer-gap/absence semantics. Do not substitute the existing multi-second call without proving equivalence.
+- [x] Remove repeated startup/actor initialization scans and unchanged policy replacement from each commit. Startup, spawn and capability changes retain complete authoritative initialization; broader CPU profiling remains in PF00.
+- [x] Make ordinary experience additions proportional to changed actor/source entries; reuse or incrementally maintain indexes instead of materializing all retained experience for each add. Preserve validation, duplicate prevention, forgotten-source and obligation protections.
+- [x] Replace repeated commitment scans with source-identity/event/deadline indexes and navigation string-map allocation with cached walkability and numeric breadth-first queues.
+- [ ] Profile residual Immer/finalization and diff costs; evaluate narrower drafts/targeted immutable branches only where needed, retaining input immutability and serializable state.
+- [x] Yield between fixed steps after eight milliseconds without changing transition boundaries, ordering, sequences or RNG draws.
+- [ ] If needed, finalize several fixed steps together after proving equivalence for perception, commitments, conversations and timer-gap/absence semantics; do not substitute the existing multi-second call.
 - [ ] Differentially replay movement, survival, changing visibility, death/revival and promises through baseline/candidate kernels at all speeds. Compare events and intermediate outcomes as well as final world/RNG.
 
 Exit: native CPU and event-loop budgets pass with mature tiny-world history; recorded replay differences are zero or explicitly reviewed gameplay changes. Large cold-history separation belongs to PF08.
@@ -107,10 +118,11 @@ Exit: optional load stays within its latency budget, with ownership/revocation t
 
 Dependencies: PF00; PF02 supplies scoped background notifications.
 
-- [ ] Publish explicit action/control outcomes and affected in-memory view fields promptly after commit, coalesced per event-loop turn. Keep routine publication independently scheduled and preserve SSE baseline/replay/privacy rules.
-- [ ] After PF03, measure a 50 ms native/replication cadence during active movement against the 250 ms baseline. Preserve due-step/RNG order, pause/speed semantics, one-second routine saves and background scheduling isolation. Adopt only when first-position latency improves within CPU/query budgets.
-- [ ] Remove narrator/history/usage reads from the position/action publication dependency chain. Cache optional sections with scoped revisions and publish their changes independently through compatible patches. Prevent stale asynchronous results from overwriting newer sections.
-- [ ] Replace visible-chat 1.5-second history polling with scoped change invalidation plus opening/reconnect loads. Preserve pagination watermarks, revocation, selected-person switching, message merging and scroll position. Keep presence liveness and the existing diagnostics cadence.
+- [x] Publish explicit action/control outcomes and affected in-memory view fields promptly after commit, coalesced per event-loop turn. Keep routine publication independently scheduled and preserve SSE baseline/replay/privacy rules.
+- [x] Compare 50 ms native/replication cadence with the 250 ms baseline on cloned small-world saves; adopt 50 ms for improved first-position delivery while preserving fixed-step/RNG order, pause/speed semantics, one-second saves and independent background scheduling.
+- [ ] Qualify cadence under browser rendering, long runs and CPU/query budgets; short runtime samples do not establish tail-latency acceptance.
+- [x] Remove narrator/history/usage reads from the position/action publication dependency chain. Cache optional sections with scoped revisions and publish their changes independently through compatible patches. Prevent stale asynchronous results from overwriting newer sections.
+- [x] Replace visible-chat 1.5-second history polling with scoped change invalidation plus opening/reconnect loads. Preserve pagination watermarks, revocation, selected-person switching, message merging and scroll position. Keep presence liveness and the existing diagnostics cadence.
 - [ ] Measure scene updates and React commits. Skip unchanged sections/entities; virtualize only lists with measured rendering cost. Extract pure action eligibility guards only if catalogue/AI preview cost is material, sharing admission logic rather than creating client authority.
 
 Exit: publication/input budgets pass; no history reads for unrelated movement or hidden panels, no leaked scope, broken patch baseline or lost reliable outcome. Server confirmation must remain measurable separately from immediate marker feedback.
@@ -137,22 +149,27 @@ Exit: better burst throughput within single-command latency budgets, finite pend
 
 ## PF08 — Long-lived worlds, hot state and checkpoints
 
-Dependencies: PF00/PF03 and applicable production-data D1/D2 recovery contracts; D59 before any deletion/receipt-expiry policy.
+Dependencies: PF00/PF03 and applicable production-data D1/D2 recovery contracts; D59's accepted 24-hour command policy and its epoch boundary before any receipt expiry.
 
-- [ ] Separate cold durable event/history/job/receipt data from per-step state only where profiling proves the dependency. Keep current actor working memory bounded without deleting protected evidence or changing recall policy. Maintain indexed lookup for retained obligations and source references.
-- [ ] Migrate and restore source-preserving snapshots and journal state; verify coverage before eviction from RAM. Move snapshot serialization to fixed-revision work if it exceeds CPU budgets, and prune only a committed covered journal prefix.
-- [ ] Measure long-lived global history growth and add bounded/paged history storage and editor retrieval when needed; recall consolidation must never silently delete global history.
+- [x] Separate unreferenced global events and new epoch-bound gameplay outcomes from per-step state. Retain active memory, obligation/knowledge sources and complete cold history; jobs remain in their existing durable tables.
+- [ ] Migrate unbounded legacy gameplay receipts without losing old ID/body deduplication. Do not expire legacy, provider, invention, billing or admin identities through the new gameplay policy.
+- [x] Add local server-issued command epochs and admission expiry, retain complete new gameplay outcomes for 24 hours, then return `expired` before domain evaluation. Persist the next generation/token before pruning. Restore fences fresh admission with a new token; other workflow identities retain their policies.
+- [x] Migrate and restore source-preserving cold event snapshots/journals, check row coverage on load, and preserve cold references in owner edits. Prepare fixed-revision snapshot JSON before the transaction; prune only a committed covered journal prefix.
+- [ ] Qualify corrupt/missing archive data, ambiguous commits and PostgreSQL migration/recovery. Move serialization off-thread only if measured CPU budgets still require it.
+- [x] Keep paged history/editor reads and indexed individual cold-event retrieval; recall consolidation never silently deletes global history.
+- [ ] Measure naturally mature history growth and rare full-dependency owner-save memory/latency before replacing that explicit slow path.
 - [ ] Verify backlog backpressure stops simulation growth while allowing cleanup commits and further distinct cleanup batches within the same game hour. Failed unchanged batches must not retry automatically; a backlog consisting entirely of recent or protected evidence needs operator resolution. Profile fixed-step cloning with large retained histories before raising population or speed limits.
 
-Exit: same active tiny world at increasing cold-history sizes meets per-step budgets; backup/recovery retains complete permitted history and forgetting/spending state. Historical deletion remains blocked without its policy decision.
+Exit: same active tiny world at increasing cold-history sizes meets per-step budgets; backup/recovery retains complete permitted history and forgetting/spending state. Command receipt expiry additionally requires the implemented and verified epoch watermark. Other historical deletion remains blocked until its own retention policy is accepted.
 
 ## PF09 — Population work follows relevance
 
 Dependencies: PF03/PF08 and PF00 population profile; reuse real-time interest and D6 boundaries.
 
-- [ ] Add spatial candidates, outstanding-commitment/deadline indexes, dirty-actor scheduling and cached static geometry where scans dominate. Rebuild indexes on load/restore and validate through the authoritative mutation path.
+- [x] Add spatial candidates, outstanding-commitment/deadline indexes, dirty-actor scheduling and cached static geometry where scans dominate. Rebuild indexes on load/restore and validate through the authoritative mutation path.
 - [ ] Evaluate dormancy/analytic updates only with preserved needs crossings, actual event-time witnesses, action ordering and RNG semantics. Include moving observers and dense crowds; indexes cannot discard real audience work.
-- [ ] Bound AI/context concurrency and pending opportunities across the host; reserve per-agent spending before dispatch and preserve mandatory triggers under the memory policy. Batch eligible embedding inputs without merging private model contexts across actors.
+- [x] Keep existing bounded AI/context execution and one coalesced opportunity per cognitive actor; preserve per-agent spending reservation and mandatory evidence policy.
+- [ ] Batch eligible embedding inputs only with measured benefit, without merging private contexts across actors; qualify dense-crowd fairness/backpressure.
 
 Exit: cost follows active changes and relevant neighbors in sparse worlds; dense cases have explicit limits and backpressure. Broader gameplay/AI-quality acceptance remains in ACT/CR/NC.
 

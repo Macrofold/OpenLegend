@@ -1,3 +1,6 @@
+import { recordDuration, timed } from './performance.js';
+import { retainHotEvents } from './hot-events.js';
+import { COMMAND_RETRY_MS, type CommandEpoch, type GameplayReceipt } from './command-receipts.js';
 import { createPersonMemoryPager } from './person-memory-page.js';
 import {
   controlledEntityId,
@@ -152,6 +155,22 @@ export class WorldService {
   private worldEventsById = new Map<string, WorldEvent>();
   private persistedRevision = 0;
   private persistedEvents: WorldEvent[] = [];
+  private epoch: CommandEpoch = { generation: 0, openedAt: 0, token: '' };
+  get commandEpoch(): string {
+    return this.epoch.token;
+  }
+  private async refreshCommandEpoch(): Promise<void> {
+    if (this.epoch.token && this.now() - this.epoch.openedAt < COMMAND_RETRY_MS) return;
+    const next = {
+      generation: this.epoch.generation + 1,
+      openedAt: this.now(),
+      token: randomUUID(),
+    };
+    await this.store.putIntegration(`command-epoch:${this.world.id}`, next);
+    this.epoch = next;
+    await this.store.commands?.prune(this.world.id, next.generation, this.now());
+    this.notify(false);
+  }
   private viewRevision = 0;
   private lastRoutinePersistAt = 0;
   private unpersisted = false;
@@ -166,7 +185,11 @@ export class WorldService {
   private mutationContext = new AsyncLocalStorage<boolean>();
   private async mutate<T>(operation: () => Promise<T>): Promise<T> {
     if (this.mutationContext.getStore()) return await operation();
-    const next = this.mutationTail.then(() => this.mutationContext.run(true, operation));
+    const queuedAt = performance.now();
+    const next = this.mutationTail.then(() => {
+      recordDuration('mutation.wait', performance.now() - queuedAt);
+      return this.mutationContext.run(true, operation);
+    });
     this.mutationTail = next.catch(() => undefined);
     return next;
   }
@@ -216,14 +239,30 @@ export class WorldService {
           if (hasMemory(entity)) world.minds[entity.id] ??= mindFor(world, entity.id);
         migrateCognition(world);
         initializeActorTraits(world);
+        world.socialPolicy = {
+          conversationInactivitySeconds: config.conversationInactivitySeconds,
+          notableThreshold: 8,
+        };
         world.paused = true;
       }),
     };
     this.saved = updateMilestones(this.saved, this.saved.world.events);
     // Startup migrations may replace historical branches, so use the ordinary diff once.
-    this.persistedRevision = await store.commit(this.persistedRevision, this.saved);
+    const startupHistory = this.saved.world;
+    if (store.history) this.saved = { ...this.saved, world: retainHotEvents(startupHistory) };
+    this.persistedRevision = await store.commit(
+      this.persistedRevision,
+      this.saved,
+      undefined,
+      undefined,
+      { after: startupHistory },
+    );
     this.persistedEvents = this.saved.world.events;
     this.worldEventsById = new Map(this.saved.world.events.map((event) => [event.id, event]));
+    this.epoch =
+      ((await store.getIntegration(`command-epoch:${this.world.id}`)) as CommandEpoch) ??
+      this.epoch;
+    await this.refreshCommandEpoch();
     this.viewRevision = this.persistedRevision;
     this.lastRoutinePersistAt = this.now();
     await store.recoverInterruptedWork();
@@ -324,6 +363,35 @@ export class WorldService {
   }
   private disconnectedAt: number | null = null;
   telemetryRevision = 0;
+  private transcriptRevision = 0;
+  private transcriptEpoch = 0;
+  get historyEpoch(): string {
+    return `${this.generation}:${this.transcriptEpoch}`;
+  }
+  get historyRevision(): string {
+    return `${this.generation}:${this.transcriptRevision}`;
+  }
+  private updateHistoryRevision(
+    before: WorldEvent[],
+    after: WorldEvent[],
+    count: number | undefined,
+  ) {
+    const actorId = this.controlledEntityId;
+    const relevant = (event: WorldEvent) =>
+      event.audience.includes(actorId) &&
+      !(
+        event.type === 'action-started' &&
+        (event.data?.['actionType'] === 'move' || event.text.endsWith(' started move.'))
+      );
+    const changed =
+      count === undefined
+        ? JSON.stringify(before.filter(relevant)) !== JSON.stringify(after.filter(relevant))
+        : after.slice(after.length - count).some(relevant);
+    if (changed) {
+      this.transcriptRevision++;
+      if (count === undefined) this.transcriptEpoch++;
+    }
+  }
   notify(telemetry = true): void {
     if (telemetry) this.telemetryRevision++;
     this.viewRevision++;
@@ -334,25 +402,11 @@ export class WorldService {
     saved: SavedWorld,
     invalidatedMemoryIds: Record<string, string[]> | undefined,
     eventMode: 'unchanged' | 'append' | 'diff',
+    historyBefore?: WorldState,
+    receipt?: GameplayReceipt,
   ): Promise<boolean> {
     if (this.storageError) return false;
     try {
-      // A newly admitted actor receives its seed mind in the same saved transition.
-      // Later context construction must never redefine identity from a changed goal.
-      saved = {
-        ...saved,
-        world: updateWorld(saved.world, (world) => {
-          for (const entity of Object.values(world.entities))
-            if (hasMemory(entity) && !world.minds?.[entity.id])
-              (world.minds ??= {})[entity.id] = mindFor(world, entity.id);
-          world.socialPolicy = {
-            conversationInactivitySeconds: this.config.conversationInactivitySeconds,
-            notableThreshold: 8,
-          };
-          migrateCognition(world);
-          initializeActorTraits(world);
-        }),
-      };
       if (eventMode === 'unchanged' && saved.world.events !== this.saved.world.events)
         throw new Error(
           'A transition declared unchanged events but replaced the event collection.',
@@ -368,14 +422,33 @@ export class WorldService {
             ? saved.world.events.slice(-currentAppendCount)
             : [],
       );
-      this.persistedRevision = await this.store.commit(
-        this.persistedRevision,
-        saved,
-        invalidatedMemoryIds,
-        appendEventCount,
+      const historyWorld = saved.world;
+      if (this.store.history) saved = { ...saved, world: retainHotEvents(historyWorld) };
+      this.persistedRevision = await timed('world.commit', () =>
+        this.store.commit(this.persistedRevision, saved, invalidatedMemoryIds, appendEventCount, {
+          before: historyBefore,
+          after: historyWorld,
+          receipt,
+        }),
       );
+      this.updateHistoryRevision(
+        historyBefore?.events ?? this.persistedEvents,
+        historyWorld.events,
+        historyBefore ? undefined : appendEventCount,
+      );
+      if (
+        this.saved.world.experience?.forgotten[this.controlledEntityId] !==
+        saved.world.experience?.forgotten[this.controlledEntityId]
+      ) {
+        this.transcriptRevision++;
+        this.transcriptEpoch++;
+      }
+      if (invalidatedMemoryIds?.[this.controlledEntityId]?.length) {
+        this.transcriptRevision++;
+        this.transcriptEpoch++;
+      }
       this.saved = saved;
-      if (currentAppendCount === undefined)
+      if (currentAppendCount === undefined || saved.world.events !== historyWorld.events)
         this.worldEventsById = new Map(saved.world.events.map((event) => [event.id, event]));
       else
         for (const event of saved.world.events.slice(this.worldEventsById.size))
@@ -503,6 +576,7 @@ export class WorldService {
   async tick(elapsedRealSeconds: number): Promise<void> {
     return this.mutate(async () => {
       await this.ready;
+      await this.refreshCommandEpoch();
 
       await this.reconcileDisconnectedConversation();
       if (this.world.paused !== this.paused) await this.syncPause();
@@ -538,7 +612,17 @@ export class WorldService {
       const steps = Math.floor(this.debtSeconds);
       if (!steps) return;
       let world = this.world;
-      for (let step = 0; step < steps; step++) world = advanceWorld(world, 1).world;
+      let sliceStarted = performance.now();
+      for (let step = 0; step < steps; step++) {
+        const stepStarted = performance.now();
+        world = advanceWorld(world, 1).world;
+        recordDuration('native.step', performance.now() - stepStarted);
+        // Yield only between original fixed steps; mutation ownership preserves RNG/event order.
+        if (performance.now() - sliceStarted >= 8 && step + 1 < steps) {
+          await new Promise<void>((resolve) => setImmediate(resolve));
+          sliceStarted = performance.now();
+        }
+      }
       const saved = { ...this.saved, world };
       if (this.now() - this.lastRoutinePersistAt >= 1000) {
         if (await this.commit(saved, undefined, 'append')) this.debtSeconds -= steps;
@@ -573,18 +657,29 @@ export class WorldService {
       return result.outcome;
     });
   }
-  async transition(operation: (world: WorldState) => Transition): Promise<ApiResult> {
+  async transition(
+    operation: (world: WorldState) => Transition,
+    gameplay?: Omit<GameplayReceipt, 'result'>,
+  ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
 
       if (this.paused)
         return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
       const result = operation(this.world);
+      const receipt = gameplay ? { ...gameplay, result: result.outcome } : undefined;
+      const world = receipt
+        ? updateWorld(result.world, (draft) => {
+            delete draft.commandReceipts[receipt.id];
+          })
+        : result.world;
       if (
         !(await this.commit(
-          { ...this.saved, world: result.world },
+          { ...this.saved, world },
           result.invalidatedMemoryIds,
           'append',
+          undefined,
+          receipt,
         ))
       )
         return { ok: false, code: 'storage', message: this.storageError! };
@@ -819,7 +914,7 @@ export class WorldService {
 
   async worldEventJson(id: string) {
     await this.ready;
-    const event = this.worldEvent(id);
+    const event = this.worldEvent(id) ?? (await this.store.history?.event(this.world.id, id));
     return event
       ? { ok: true as const, hash: digest(event), json: JSON.stringify(event, null, 2) }
       : { ok: false as const, code: 'event', message: 'That world event no longer exists.' };
@@ -830,8 +925,23 @@ export class WorldService {
   ): Promise<ApiResult & { revision?: number }> {
     return this.mutate(async () => {
       await this.ready;
+      // Load cold dependencies only for an explicit owner edit, under mutation ownership.
+      const original =
+        this.world.archivedEventCount && this.store.history
+          ? {
+              ...this.world,
+              events: [
+                ...(await this.store.history.allEvents(this.world.id)).filter(
+                  (event) => !this.worldEventsById.has(event.id),
+                ),
+                ...this.world.events,
+              ].sort((a, b) => (a.order ?? a.sequence) - (b.order ?? b.sequence)),
+              archivedEventCount: 0,
+            }
+          : this.world;
+      const eventsById = new Map(original.events.map((event) => [event.id, event]));
       for (const change of changes) {
-        const event = this.worldEvent(change.id);
+        const event = eventsById.get(change.id);
         if (!event || digest(event) !== change.expectedHash)
           return {
             ok: false,
@@ -840,13 +950,14 @@ export class WorldService {
             revision: this.viewRevision,
           };
       }
-      const result = editWorldEventsState(this.world, changes);
+      const result = editWorldEventsState(original, changes);
       if (!result.outcome.ok) return result.outcome;
       if (
         !(await this.commit(
           { ...this.saved, world: result.world },
           result.invalidatedMemoryIds,
           'diff',
+          original,
         ))
       )
         return { ok: false, code: 'storage', message: this.storageError! };
@@ -854,9 +965,52 @@ export class WorldService {
     });
   }
 
-  async command(commandId: string, input: CommandInput, actorId?: string): Promise<ApiResult> {
-    await this.ready;
-    return await this.evaluateCommand(commandId, input, actorId ?? this.controlledEntityId, false);
+  async command(
+    commandId: string,
+    input: CommandInput,
+    actorId?: string,
+    epoch?: string,
+  ): Promise<ApiResult> {
+    return this.mutate(async () => {
+      await this.ready;
+      const actor = actorId ?? this.controlledEntityId;
+      if (commandId.startsWith('gameplay:'))
+        return {
+          ok: false,
+          code: 'invalid-command',
+          message: 'Command IDs cannot use the reserved gameplay namespace.',
+        };
+      // Legacy callers retain their old identity rules; new clients bind retries to their issued epoch.
+      if (epoch === undefined || !this.store.commands)
+        return await this.evaluateCommand(commandId, input, actor, false);
+      await this.refreshCommandEpoch();
+      const id = `gameplay:${epoch}:${digest(commandId)}`;
+      const fingerprint = digest({ actor, input });
+      const prior = await this.store.commands.get(this.world.id, id);
+      if (prior) {
+        if (this.now() >= prior.expiresAt)
+          return { ok: false, code: 'expired', message: 'This command retry window has expired.' };
+        return prior.fingerprint === fingerprint
+          ? prior.result
+          : {
+              ok: false,
+              code: 'idempotency-conflict',
+              message: 'That command ID was used for different input.',
+            };
+      }
+      if (epoch !== this.commandEpoch)
+        return {
+          ok: false,
+          code: 'expired',
+          message: 'This command epoch has closed. Refresh before issuing a new action.',
+        };
+      return await this.evaluateCommand(id, input, actor, false, {
+        id,
+        epoch: this.epoch.generation,
+        fingerprint,
+        expiresAt: this.now() + COMMAND_RETRY_MS,
+      });
+    });
   }
 
   /** Run the actual admission rules on a disposable transition; never commit preview effects. */
@@ -869,6 +1023,7 @@ export class WorldService {
     input: CommandInput,
     actorId: string,
     preview: boolean,
+    gameplay?: Omit<GameplayReceipt, 'result'>,
   ): ApiResult | Promise<ApiResult> {
     const envelope = { id: commandId, actorId };
     let command: Command;
@@ -945,7 +1100,7 @@ export class WorldService {
       const { outcome } = executeCommand(this.world, command);
       return { ok: outcome.ok, code: outcome.code, message: outcome.message };
     }
-    return this.transition((world) => executeCommand(world, command));
+    return this.transition((world) => executeCommand(world, command), gameplay);
   }
 
   async say(

@@ -270,6 +270,8 @@ export interface WorldState {
   visiblePeople?: Record<string, string[]>;
   knowledge: Record<string, KnowledgeRecord[]>;
   events: WorldEvent[];
+  /** Durable history rows outside the active event working set; not deleted evidence. */
+  archivedEventCount?: number;
   commandReceipts: Record<string, CommandReceipt>;
   declarationReceipts: Record<string, { digest: string; recipeId: string }>;
   nextId: number;

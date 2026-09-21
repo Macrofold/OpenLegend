@@ -40,6 +40,31 @@ function memoizer(service: WorldService) {
   };
 }
 
+const optionalSections = new WeakMap<
+  WorldService,
+  Map<string, { token: unknown; value?: unknown }>
+>();
+/** Refresh optional sections independently; changed scope immediately hides stale private data. */
+function optional<T>(service: WorldService, key: string, token: Promise<T>, fallback: T): T {
+  let sections = optionalSections.get(service);
+  if (!sections) optionalSections.set(service, (sections = new Map()));
+  const old = sections.get(key);
+  if (old?.token === token) return (old.value as T | undefined) ?? fallback;
+  const entry: { token: unknown; value?: unknown } = {
+    token,
+    ...(key === 'usage' && old ? { value: old.value } : {}),
+  };
+  sections.set(key, entry);
+  void token
+    .then((value) => {
+      if (sections.get(key) !== entry) return;
+      entry.value = value;
+      service.notify(false);
+    })
+    .catch(() => {});
+  return (entry.value as T | undefined) ?? fallback;
+}
+
 function isJournalEvent(event: { type: string; text: string; data?: Record<string, unknown> }) {
   return !(
     event.type === 'action-started' &&
@@ -337,20 +362,29 @@ export async function projectView(
       return bounded.reverse();
     },
   );
-  const usage = await memo('usage', [telemetryRevision], () =>
-    service.store.usage(service.config.budgetUsd),
+  const usage = optional(
+    service,
+    'usage',
+    memo('usage', [telemetryRevision], () => service.store.usage(service.config.budgetUsd)),
+    {
+      budget: { limitUsd: service.config.budgetUsd, spentUsd: 0, reservedUsd: 0, estimated: true },
+      usage: { jevCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0, lastLatencyMs: 0 },
+    },
   );
-  const jobs = (await memo('jobs', [telemetryRevision], () => service.store.recentJobs())).map(
-    ({ id, kind, status, message, queueLatencyMs, totalLatencyMs }) => ({
-      id,
-      kind,
-      status,
-      // Operational telemetry must not reveal a resident's private selected plan.
-      message: kind === 'thought' ? `Resident reconsideration: ${status}.` : message,
-      queueLatencyMs,
-      totalLatencyMs,
-    }),
-  );
+  const jobs = optional(
+    service,
+    'jobs',
+    memo('jobs', [telemetryRevision], () => service.store.recentJobs()),
+    [],
+  ).map(({ id, kind, status, message, queueLatencyMs, totalLatencyMs }) => ({
+    id,
+    kind,
+    status,
+    // Operational telemetry must not reveal a resident's private selected plan.
+    message: kind === 'thought' ? `Resident reconsideration: ${status}.` : message,
+    queueLatencyMs,
+    totalLatencyMs,
+  }));
   const jevConfigured = service.config.macrofoldKey ? true : !!service.config.jevKey;
   const llmConfigured = service.config.macrofoldKey ? true : !!service.config.llmKey;
   // Job history is not a service-health probe. A later completed request
@@ -393,15 +427,23 @@ export async function projectView(
   };
   return {
     schemaVersion: 1,
-    narrator: await memo(
+    historyRevision: service.historyRevision,
+    historyEpoch: service.historyEpoch,
+    narrator: optional(
+      service,
       'narrator',
-      [world.events, world.experience?.forgotten, telemetryRevision],
-      () =>
-        service.store.history?.latestNarration(world.id, service.profile.id) ??
-        Promise.resolve(null),
+      memo(
+        'narrator',
+        [service.historyRevision, telemetryRevision],
+        () =>
+          service.store.history?.latestNarration(world.id, service.profile.id) ??
+          Promise.resolve(null),
+      ),
+      null,
     ),
     revision,
     worldId: world.id,
+    commandEpoch: service.commandEpoch,
     godMode: service.config.godMode,
     ...(service.config.godMode
       ? {
@@ -537,60 +579,73 @@ export async function projectView(
           ...(event.targetId ? { targetId: event.targetId } : {}),
         })),
     ),
-    conversation: await memo<Promise<GameView['conversation']>>(
+    conversation: optional(
+      service,
       'conversation',
-      [
-        events,
-        world.conversations,
-        telemetryRevision,
-        ...Object.values(world.entities).flatMap((entity) => [entity.id, entity.name]),
-      ],
-      async () => {
-        const conversationId = world.conversations?.active[service.controlledEntityId];
-        const entries = events
-          .filter((event) => !conversationId || event.conversationId === conversationId)
-          .filter(
-            (event) => event.type === 'speech' || typeof event.data?.['responseId'] === 'string',
-          )
-          .slice(-30);
-        const replies = await service.store.getSpeechJobs(
-          entries
-            .filter((event) => event.actorId === service.controlledEntityId)
-            .map((event) => event.id),
-        );
-        return entries.map((event) => {
-          const reply = replies.get(event.id);
-          const legacyIdentityFailure =
-            reply?.message === 'Models cannot author identity or seed provenance.' ||
-            reply?.message ===
-              "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.";
-          // Only an actual failed job is a failed message. Cancellation and stale
-          // work end pending UI without relabeling an interaction as a technical failure.
-          // See docs/architecture.md#react-ui-and-design-system.
-          const terminalFailure = legacyIdentityFailure || reply?.status === 'failed';
-          const replyStatus = terminalFailure ? 'failed' : reply?.status;
-          const replyMessage = legacyIdentityFailure
-            ? "The response tried to change the character's fixed identity or treat generated material as part of their original history."
-            : reply?.message;
-          return {
-            id: event.id,
-            kind: event.type === 'speech' ? ('speech' as const) : ('action' as const),
-            ...(event.data?.['mechanical'] === false ? { mechanical: false } : {}),
-            ...(replyStatus && replyMessage
-              ? {
-                  replyStatus,
-                  replyRequestId: reply?.id,
-                  retryable: reply?.status === 'failed',
-                  ...(replyStatus === 'failed' ? { replyFailure: replyMessage } : {}),
-                }
-              : {}),
-            speakerId: event.actorId!,
-            speaker: world.entities[event.actorId!]?.name ?? 'Someone',
-            text: String(event.data?.['text'] ?? event.text),
-            time: event.at,
-          };
-        });
-      },
+      memo<Promise<GameView['conversation']>>(
+        'conversation',
+        [
+          JSON.stringify(
+            events.filter(
+              (event) => event.type === 'speech' || typeof event.data?.['responseId'] === 'string',
+            ),
+          ),
+          world.conversations?.active[service.controlledEntityId],
+          telemetryRevision,
+          ...events
+            .filter(
+              (event) => event.type === 'speech' || typeof event.data?.['responseId'] === 'string',
+            )
+            .map((event) => world.entities[event.actorId ?? '']?.name),
+        ],
+        async () => {
+          const conversationId = world.conversations?.active[service.controlledEntityId];
+          const entries = events
+            .filter((event) => !conversationId || event.conversationId === conversationId)
+            .filter(
+              (event) => event.type === 'speech' || typeof event.data?.['responseId'] === 'string',
+            )
+            .slice(-30);
+          const replies = await service.store.getSpeechJobs(
+            entries
+              .filter((event) => event.actorId === service.controlledEntityId)
+              .map((event) => event.id),
+          );
+          return entries.map((event) => {
+            const reply = replies.get(event.id);
+            const legacyIdentityFailure =
+              reply?.message === 'Models cannot author identity or seed provenance.' ||
+              reply?.message ===
+                "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.";
+            // Only an actual failed job is a failed message. Cancellation and stale
+            // work end pending UI without relabeling an interaction as a technical failure.
+            // See docs/architecture.md#react-ui-and-design-system.
+            const terminalFailure = legacyIdentityFailure || reply?.status === 'failed';
+            const replyStatus = terminalFailure ? 'failed' : reply?.status;
+            const replyMessage = legacyIdentityFailure
+              ? "The response tried to change the character's fixed identity or treat generated material as part of their original history."
+              : reply?.message;
+            return {
+              id: event.id,
+              kind: event.type === 'speech' ? ('speech' as const) : ('action' as const),
+              ...(event.data?.['mechanical'] === false ? { mechanical: false } : {}),
+              ...(replyStatus && replyMessage
+                ? {
+                    replyStatus,
+                    replyRequestId: reply?.id,
+                    retryable: reply?.status === 'failed',
+                    ...(replyStatus === 'failed' ? { replyFailure: replyMessage } : {}),
+                  }
+                : {}),
+              speakerId: event.actorId!,
+              speaker: world.entities[event.actorId!]?.name ?? 'Someone',
+              text: String(event.data?.['text'] ?? event.text),
+              time: event.at,
+            };
+          });
+        },
+      ),
+      [],
     ),
     ai: {
       mode: aiMode,
@@ -702,8 +757,13 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
   const ai = changedFields(previous.ai, next.ai);
   return {
     schemaVersion: 1,
+    ...(previous.commandEpoch !== next.commandEpoch ? { commandEpoch: next.commandEpoch } : {}),
     baseRevision: previous.revision,
     revision: next.revision,
+    ...(previous.historyRevision !== next.historyRevision
+      ? { historyRevision: next.historyRevision }
+      : {}),
+    ...(previous.historyEpoch !== next.historyEpoch ? { historyEpoch: next.historyEpoch } : {}),
     ...(!same(previous.narrator, next.narrator) ? { narrator: next.narrator ?? null } : {}),
     ...(!same(previous.profile, next.profile) ? { profile: next.profile } : {}),
     ...(clock ? { clock } : {}),

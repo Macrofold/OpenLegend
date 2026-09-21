@@ -159,6 +159,8 @@ export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Tr
     world.knowledge[entity.id] = [];
     addItem(world, entity.id, 'stone_tool', 1);
     addItem(world, entity.id, 'berries', 3);
+    // Actor admission owns initialization; ordinary saves do not rerun migrations.
+    migrateCognition(world);
   }
   const events: WorldEvent[] = [];
   emit(

@@ -9,13 +9,14 @@ export function useChatHistory(
   participantId: string | undefined,
   visible: boolean,
 ) {
-  const key = `${view.worldId}:${participantId ?? ''}`;
+  const key = `${view.worldId}:${view.historyEpoch ?? ''}:${participantId ?? ''}`;
   const [saved, setSaved] = useState<{ key: string; page: ChatPage } | null>(null);
   const [loading, setLoading] = useState(false);
   const [openingRevision, setOpeningRevision] = useState(0);
   const [error, setError] = useState('');
   const request = useRef(0);
   const busy = useRef(false);
+  const historyRevision = useRef(view.historyRevision);
   const page = saved?.key === key ? saved.page : undefined;
   const latestPage = useRef(page);
   latestPage.current = page;
@@ -66,21 +67,32 @@ export function useChatHistory(
       }
     }
   }
-  // Poll only the visible person; stale responses cannot cross world/person boundaries.
+  // Scoped SSE invalidation replaces polling; stale responses cannot cross world/person boundaries.
   useEffect(() => {
     request.current++;
     busy.current = false;
     setError('');
     setLoading(false);
     if (!visible || !participantId) return;
+    historyRevision.current = view.historyRevision;
     void load(false, true);
-    const timer = setInterval(() => void load(), 1500);
     return () => {
-      clearInterval(timer);
       request.current++;
       busy.current = false;
     };
   }, [key, visible]);
+  useEffect(() => {
+    if (historyRevision.current === view.historyRevision) return;
+    historyRevision.current = view.historyRevision;
+    if (!visible || !participantId) return;
+    request.current++;
+    busy.current = false;
+    void load();
+    return () => {
+      request.current++;
+      busy.current = false;
+    };
+  }, [view.historyRevision]);
   const live = new Map(view.conversation.map((message) => [message.id, message]));
   return {
     messages: (page?.messages ?? []).map((message) => {

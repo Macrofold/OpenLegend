@@ -60,7 +60,7 @@ Expose requested/achieved simulation speed, queue age and storage/network lag se
 
 ### Intention envelope
 
-Define a versioned `ol.realtime/v1` envelope carrying protocol version, world ID, controller/session generation, stable command ID, client input sequence, input kind/body, declared dependencies where needed and a bounded admission/expiry token. Resolve account, actor authority and world scope on the server; supplied IDs cannot widen them. Client timestamps are latency evidence and advisory input timing, not permission to backdate a harvest or rewrite the shared clock.
+Define a versioned `ol.realtime/v1` envelope carrying protocol version, world ID, server-issued command epoch/controller generation, stable command ID, client input sequence, input kind/body, declared dependencies where needed and a bounded admission/expiry token. Ordinary gameplay commands have a 24-hour retry horizon: retain their full terminal outcomes for that period, then reject the expired epoch/ID rather than evaluating it again. A compact durable current-generation/watermark makes rejection independent of retaining every old outcome row. Resolve account, actor authority and world scope on the server; supplied IDs cannot widen them. Client timestamps are latency evidence and advisory input timing, not permission to extend expiry, backdate a harvest or rewrite the shared clock.
 
 Use distinct input semantics:
 
@@ -161,7 +161,7 @@ On reconnect:
 
 A disconnected shared-world browser cannot accumulate successful harvesting, inventory edits or simulated time for later upload. A future standalone offline world would use a separate authority namespace and an explicit import/transfer policy; it cannot automatically merge its physical state into a running shared world.
 
-Networking reconnection does not decide whether a disconnected character rests, remains exposed or is removed. That is a recorded world/controller policy. Respect the personal-world hidden/background setting and manual pause contract; multiplayer visibility changes must not automatically pause everyone else's world. Shared pause, abandonment and unattended progression policies require their own product decisions. No network packet triggers offline catch-up implicitly.
+Networking reconnection does not decide whether a disconnected character rests, remains exposed or is removed. That is a recorded world/controller policy. Respect the personal-world hidden/background setting and manual pause contract; multiplayer visibility changes must not automatically pause everyone else's world. A shared world's saved **Continue while unattended** setting controls aggregate world time: when enabled, no-player absence does not pause it; when disabled, it pauses only after every admitted player is disconnected or unfocused. One remaining present and focused player keeps it running. Server downtime never becomes implicit catch-up. Character absence/exposure behavior remains a separate product decision.
 
 ## 8. Bounded queues and slow clients
 

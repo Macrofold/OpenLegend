@@ -1,3 +1,4 @@
+import { timed } from './performance.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { DatabaseSync } from 'node:sqlite';
 import type { SqlDatabase } from './store.js';
@@ -36,9 +37,12 @@ export class SqliteDatabase implements SqlDatabase {
   }
   prepare(sql: string) {
     return {
-      get: (...params: any[]) => this.run(() => this.db.prepare(sql).get(...params)),
-      all: (...params: any[]) => this.run(() => this.db.prepare(sql).all(...params)),
-      run: (...params: any[]) => this.run(() => this.db.prepare(sql).run(...params)),
+      get: (...params: any[]) =>
+        this.run(() => timed('sqlite.statement', async () => this.db.prepare(sql).get(...params))),
+      all: (...params: any[]) =>
+        this.run(() => timed('sqlite.statement', async () => this.db.prepare(sql).all(...params))),
+      run: (...params: any[]) =>
+        this.run(() => timed('sqlite.statement', async () => this.db.prepare(sql).run(...params))),
     };
   }
   async close() {

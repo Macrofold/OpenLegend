@@ -30,7 +30,7 @@ export {
   SIMULATION_RULES,
 } from './kernel.js';
 export { admitDeclaration, validateDeclaration, DECLARATION_CONTRACT } from './declarations.js';
-export { distance, findPath, hasLineOfSight, isWalkable } from './spatial.js';
+export { distance, findPath, hasLineOfSight, isWalkable, nearbyEntities } from './spatial.js';
 
 export * from './mind.js';
 

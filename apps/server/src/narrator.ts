@@ -32,24 +32,63 @@ export class Narrator {
   private controller: AbortController | null = null;
   private stopped = false;
   private ready: Promise<void>;
+  private timer: ReturnType<typeof setTimeout> | undefined;
+  private dirty = false;
+  private unsubscribe: () => void;
+  private unsubscribeHistory: () => void;
   constructor(
     private service: WorldService,
     private client: AiClient,
     private log: IntelligenceLog,
   ) {
+    this.unsubscribeHistory = service.store.history?.subscribe(() => this.tick()) ?? (() => {});
+    let paused = true;
+    this.unsubscribe = service.subscribe(() => {
+      const resumed = paused && !service.paused;
+      paused = service.paused;
+      if (paused) {
+        clearTimeout(this.timer);
+        this.controller?.abort();
+      }
+      if (resumed) this.tick();
+    });
     this.ready = service.ready.then(() => service.store.history?.recover(service.world.id));
+    void this.ready.then(() => this.tick()).catch(() => {});
   }
+  /** Commit/resume wakeups coalesce; the persisted queue owns deadlines and recovery. */
   tick(): void {
-    if (this.stopped || this.pending || this.service.paused) return;
-    this.pending = this.run()
+    if (this.stopped) return;
+    this.dirty = true;
+    if (this.pending || this.service.paused) return;
+    clearTimeout(this.timer);
+    this.pending = this.drain()
       .catch(async () => {
-        // A storage/transport exception leaves the claim uncertain, never eligible for retry.
         await this.service.store.history?.recover(this.service.world.id);
+      })
+      .catch(() => {
+        // A failed store is retried only by a later explicit wakeup or restart.
       })
       .finally(() => {
         this.pending = null;
         this.controller = null;
+        if (this.dirty && !this.stopped && !this.service.paused) this.tick();
       });
+  }
+  private async drain() {
+    await this.ready;
+    do {
+      this.dirty = false;
+      if (this.stopped || this.service.paused) return;
+      const due = await this.service.store.history?.nextDue(this.service.world.id);
+      if (due == null) return;
+      const delay = due + this.service.config.narrationBatchMs - Date.now();
+      if (delay > 0) {
+        this.timer = setTimeout(() => this.tick(), delay);
+        return;
+      }
+      await this.run();
+      this.dirty = true;
+    } while (!this.stopped && !this.service.paused);
   }
   private async run() {
     await this.ready;
@@ -228,6 +267,9 @@ export class Narrator {
   }
   async close() {
     this.stopped = true;
+    clearTimeout(this.timer);
+    this.unsubscribe();
+    this.unsubscribeHistory();
     this.controller?.abort();
     await this.ready;
     await this.pending;

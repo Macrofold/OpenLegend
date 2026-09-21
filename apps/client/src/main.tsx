@@ -287,6 +287,7 @@ function App() {
     try {
       const r = await post('/api/command', {
         commandId: crypto.randomUUID(),
+        commandEpoch: view?.commandEpoch,
         command: action.command,
       });
       if (!r.ok || r.code !== 'accepted') notify(r.message);
@@ -605,7 +606,10 @@ function App() {
               ))}
             </Section>
             <Section title="Your story">
-              <History />
+              <History
+                epoch={view.historyEpoch}
+                revision={`${view.historyRevision}:${JSON.stringify(view.narrator)}`}
+              />
             </Section>
           </>
         );

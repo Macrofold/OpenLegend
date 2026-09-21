@@ -1,3 +1,4 @@
+import { spatialCandidates, nearbyEntities } from './spatial.js';
 import { changeConversation } from './conversations.js';
 import { canSpeak, hasMemory, reconcileBody, commitBodyEffects } from './living.js';
 import { draftWorld, cloneValue } from './draft.js';
@@ -920,8 +921,11 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
     }
   }
   const hadObjectExposures = world.visibleObjects !== undefined;
+
+  // Positions are stable during encounter projection; never reuse this index across movement.
+  const nearby = spatialCandidates(Object.values(world.entities).filter((e) => e.actor?.alive));
   for (const actor of Object.values(world.entities).filter((e) => e.actor?.alive && hasMemory(e))) {
-    const seen = Object.values(world.entities)
+    const seen = nearby(actor.position, PERCEPTION_RULES.sightRadius + 2)
       .filter(
         (e) =>
           e.id !== actor.id &&
@@ -1018,7 +1022,7 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
     .map((record) => world.recipes[record.recipeId])
     .filter((recipe) => !!recipe);
   const definitionIds = new Set(inventory.map((item) => item.definitionId));
-  const visibleEntities = Object.values(world.entities)
+  const visibleEntities = nearbyEntities(world, actor.position, PERCEPTION_RULES.sightRadius)
     .filter((entity) => entity.id !== actorId && visible(actor, entity))
     .map((entity) => {
       const copy = cloneValue(entity);
