@@ -337,6 +337,7 @@ export interface IntelligenceCall {
   kind: string;
   startedAt: string;
   completedAt?: string;
+  timings?: Record<string, { startedAt: string; completedAt?: string; durationMs?: number }>;
   status: 'running' | 'completed' | 'failed';
   input: unknown;
   output?: unknown;
@@ -344,6 +345,8 @@ export interface IntelligenceCall {
     path: string;
     method: string;
     startedAt: string;
+    completedAt?: string;
+    durationMs?: number;
     input: unknown;
     output?: unknown;
     httpStatus?: number;

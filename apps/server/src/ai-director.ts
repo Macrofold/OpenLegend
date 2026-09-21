@@ -2,11 +2,7 @@ import { decisionQuestions, inventionQuestions, JEV_QUESTIONS_VERSION } from './
 import { interestMatches, type InterestSubscription } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
-import {
-  prepareDecision,
-  decisionDependencies,
-  selectDecisionActions,
-} from './decision-context.js';
+import { prepareDecision, selectDecisionActions } from './decision-context.js';
 import { responseTrigger } from './response-context.js';
 import {
   RESPONSE_INSTRUCTIONS,
@@ -246,7 +242,7 @@ export class AiDirector {
       ...(result !== undefined ? { result } : {}),
     };
     await this.service.store.putJob(run.job);
-    const trace = await this.service.store.intelligenceCall(run.job.id);
+    const trace = await this.log.read(run.job.id);
     if (trace)
       await this.log.save({
         ...trace,
@@ -470,7 +466,15 @@ export class AiDirector {
           : 'Ada is thinking. Detailed responses may take about a minute.',
     );
     const result = await dispatch(id);
+    const accountingStartedAt = new Date().toISOString();
     await this.service.store.settle(id, result.receipt);
+    await this.log.record(
+      `${id}:accounting`,
+      'Accounting',
+      { provider, requestId: result.receipt.requestId },
+      { settled: true, receipt: result.receipt },
+      accountingStartedAt,
+    );
     if (result.outcome === 'value' && this.service.paused) await this.awaitResume(run, true);
     if (run.cancelReason) throw new StopJob('cancelled', run.cancelReason);
     // Surface actual provider failures even when an explicit request is paused.
@@ -559,6 +563,7 @@ export class AiDirector {
         ) || this.service.world.events.some((event) => event.id === id && event.type === 'speech'),
     );
     let attentionCall = 0;
+    const contextStartedAt = new Date().toISOString();
     let prepared = await prepareDecision(
       this.service,
       this.recall,
@@ -580,6 +585,13 @@ export class AiDirector {
       attempt,
     );
     this.current(run);
+    await this.log.record(
+      `${run.job.id}:context`,
+      'Context and retrieval',
+      prepared.diagnostics,
+      prepared.prompt,
+      contextStartedAt,
+    );
     const urgentInterruptions = () =>
       (this.service.world.experience?.awareness[actorId] ?? [])
         .filter(
@@ -588,12 +600,33 @@ export class AiDirector {
             entry.importance >= RESPONSE_INTERRUPTION.importance &&
             (entry.urgency ?? 0) >= RESPONSE_INTERRUPTION.urgency,
         )
-        .map((entry) => entry.eventId);
+        .map((entry) => ({
+          eventId: entry.eventId,
+          sequence: entry.sequence,
+          importance: entry.importance,
+          urgency: entry.urgency ?? 0,
+          triggerKind: entry.triggerKind,
+          text: entry.text,
+        }));
     const retryForUrgentAwareness = async () => {
       if (attempt > 0) return false;
-      const ids = urgentInterruptions();
-      if (!ids.length) return false;
-      await this.decide(run, speech, attempt + 1, ids);
+      const interruptions = urgentInterruptions();
+      if (!interruptions.length) return false;
+      await this.log.record(
+        `${run.job.id}:attempt:${attempt}:superseded`,
+        'Generation superseded',
+        {
+          threshold: RESPONSE_INTERRUPTION,
+          interruptions,
+          decision: 'retry once with the interrupting triggers included',
+        },
+      );
+      await this.decide(
+        run,
+        speech,
+        attempt + 1,
+        interruptions.map((entry) => entry.eventId),
+      );
       return true;
     };
     if (await retryForUrgentAwareness()) return;
@@ -602,6 +635,7 @@ export class AiDirector {
     const routeQuestion = questions['route'];
     if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
     const criteria = routeQuestion.criteria;
+    const routingStartedAt = new Date().toISOString();
     const judged = await this.call(
       run,
       'jev',
@@ -662,8 +696,9 @@ export class AiDirector {
         trigger: semanticTrigger,
       },
       judged,
+      routingStartedAt,
     );
-    const trace = await this.service.store.intelligenceCall(run.job.id);
+    const trace = await this.log.read(run.job.id);
     if (trace) await this.log.save({ ...trace, route: route ?? 'deferred' });
     if (!route || !Object.hasOwn(criteria, route) || route === 'native') {
       await this.update(
@@ -679,18 +714,29 @@ export class AiDirector {
       );
       return;
     }
-    if (decisionDependencies(this.service, actorId) !== prepared.dependencies)
-      throw new StopJob('stale', 'Relevant context changed before generation.');
-    if (semanticTrigger.checkActionSelection) prepared = await selectDecisionActions(prepared);
-    await this.log.record(
-      `${run.job.id}:context`,
-      'Context and retrieval',
-      {
-        ...prepared.diagnostics,
-        trigger: semanticTrigger,
-      },
-      prepared.prompt,
-    );
+    if (semanticTrigger.checkActionSelection) {
+      const actionsStartedAt = new Date().toISOString();
+      const withActions = await selectDecisionActions(
+        prepared,
+        async (request) =>
+          await this.call(
+            run,
+            'jev',
+            `attempt:${attempt}:action-attention`,
+            async (id) =>
+              await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+          ),
+      );
+      prepared = withActions;
+      await this.log.record(
+        `${run.job.id}:action-context`,
+        'Action context',
+        { actionSelection: withActions.diagnostics.actionSelection, trigger: semanticTrigger },
+        prepared.offered,
+        actionsStartedAt,
+      );
+      if (await retryForUrgentAwareness()) return;
+    }
     const level = route === 'level4' ? 4 : route === 'level3' ? 3 : 2;
     const limits = LEVEL_LIMITS[level];
     const c = this.service.config;
@@ -718,15 +764,19 @@ export class AiDirector {
     );
     this.current(run);
     if (await retryForUrgentAwareness()) return;
+    const parsingStartedAt = new Date().toISOString();
     const reply = responseSchema.parse(value);
+    await this.log.record(
+      `${run.job.id}:attempt:${attempt}:parse`,
+      'Response parsing',
+      { schema: 'actor-response' },
+      { accepted: true },
+      parsingStartedAt,
+    );
+    const commitStartedAt = new Date().toISOString();
     const commit = () =>
       this.service.transition((world) => {
         this.current(run);
-        if (decisionDependencies(this.service, actorId) !== prepared.dependencies)
-          throw new StopJob(
-            'stale',
-            'Relevant mind, policy, body, plan, audience or knowledge changed.',
-          );
         return commitActorResponse(
           world,
           run.job.id,
@@ -749,6 +799,7 @@ export class AiDirector {
       'Response admission',
       { proposed: reply },
       { ...result, components: receipt?.components },
+      commitStartedAt,
     );
     await this.update(run, result.ok ? 'completed' : 'failed', result.message, {
       disposition: result.code,
@@ -1020,7 +1071,7 @@ export class AiDirector {
             });
           },
         );
-        const trace = await this.service.store.intelligenceCall(id);
+        const trace = await this.log.read(id);
         if (trace)
           await this.log.save({
             ...trace,
@@ -1058,5 +1109,6 @@ export class AiDirector {
     await this.admissionTail;
     await Promise.allSettled([...this.pendingWork]);
     await this.maintenance.close();
+    await this.log.flush();
   }
 }

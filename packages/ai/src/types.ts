@@ -106,7 +106,12 @@ export interface AiReceipt {
   providerRequestDigest?: string;
   startedAt: string;
   completedAt: string;
+  /** Open Legend wall time around the adapter call. */
   latencyMs: number;
+  /** Provider execution time when the intermediary reports authoritative timestamps. */
+  providerLatencyMs?: number;
+  /** Provider queue time before execution, when reported separately. */
+  providerQueueLatencyMs?: number;
   dispatched: boolean;
   completionUncertain: boolean;
   httpStatus?: number;

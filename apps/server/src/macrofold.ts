@@ -92,6 +92,16 @@ export class MacrofoldBackend implements AiClient {
       completionUncertain: false,
     };
   }
+  private captureProviderTiming(status: Record<string, unknown>, receipt: AiReceipt): void {
+    const started =
+      typeof status['started_at'] === 'string' ? Date.parse(status['started_at']) : NaN;
+    const completed =
+      typeof status['completed_at'] === 'string' ? Date.parse(status['completed_at']) : NaN;
+    if (Number.isFinite(started) && Number.isFinite(completed))
+      receipt.providerLatencyMs = Math.max(0, Math.round(completed - started));
+    if (typeof status['wait_seconds'] === 'number' && Number.isFinite(status['wait_seconds']))
+      receipt.providerQueueLatencyMs = Math.max(0, Math.round(status['wait_seconds'] * 1000));
+  }
   private async mutation(
     name: string,
     path: string,
@@ -415,6 +425,7 @@ export class MacrofoldBackend implements AiClient {
         signal,
         reflection ? 8 : undefined,
       );
+      this.captureProviderTiming(status, receipt);
       if (
         config.macrofoldBillingMode === 'managed' &&
         typeof status['cost_micro_usd'] === 'string' &&
@@ -780,6 +791,7 @@ export class MacrofoldBackend implements AiClient {
       : await this.waitRun(run, object(accepted['urls']), signal);
     if (resolved.result['run_id'] !== run || resolved.result['final'] !== true)
       throw new Error('Macrofold inference result is not final or belongs to another run.');
+    this.captureProviderTiming(resolved.status, receipt);
     const inference = object(resolved.result['inference']);
     receipt.completionUncertain = inference['outcome'] === 'uncertain';
     // BYOK platform cost is not the provider invoice. Prefer reported provider

@@ -47,7 +47,7 @@ export async function traceHistory(store: GameRepository, filter: TraceFilter) {
       };
     }),
     hasMore: roots.length > 25,
-    retentionLimit: 1000,
+    retention: { records: 1000, scope: 'trigger roots and stages', enforcement: 'periodic' },
   };
 }
 export async function traceDetails(store: GameRepository, id: string) {
@@ -57,6 +57,7 @@ export async function traceDetails(store: GameRepository, id: string) {
   return {
     root,
     children: children.sort((a, b) => a.startedAt.localeCompare(b.startedAt)),
-    coverage: 'Retained diagnostic stages only; expired or failed captures may be unavailable.',
+    coverage:
+      'Retained diagnostic records only; the periodic 1,000-record target includes trigger roots and stages, and failed captures may be unavailable.',
   };
 }

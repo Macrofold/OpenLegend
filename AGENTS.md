@@ -11,6 +11,7 @@ Keep every implementation as small and obvious as possible.
 Guidelines
 
 - Simplicity first – Prefer the simplest data structures and APIs that work
+- Remove the measured bottleneck first – Use the smallest change that achieves the goal. For example, move non-authoritative diagnostics off the critical path with direct asynchronous writes before adding batching, buffering or another queue; introduce coordination only when ordering, backpressure or measured scale requires it.
 - Avoid needless abstractions – Refactor only when duplication hurts
 - Remove dead code early – pnpm tidy scans for unused files/deps and lets you delete them in one command
 - Minimize dependencies – Before adding a dependency, ask "Can we do this with what we already have?"

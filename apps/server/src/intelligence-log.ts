@@ -21,15 +21,32 @@ function clean(value: unknown): unknown {
 /** Private diagnostic records, separate from simulation state and public projections. */
 export class IntelligenceLog {
   private triggerContext = new AsyncLocalStorage<string>();
+  private latest = new Map<string, IntelligenceCall>();
+  private pendingWrites = new Set<Promise<void>>();
   withTrigger<T>(id: string, execute: () => Promise<T>): Promise<T> {
     return this.triggerContext.run(id, execute);
   }
-  async record(id: string, kind: string, input: unknown, output?: unknown): Promise<void> {
+  async record(
+    id: string,
+    kind: string,
+    input: unknown,
+    output?: unknown,
+    startedAt = new Date().toISOString(),
+  ): Promise<void> {
+    const completedAt = new Date().toISOString();
     await this.save({
       id,
       parentId: this.triggerContext.getStore(),
       kind,
-      startedAt: new Date().toISOString(),
+      startedAt,
+      completedAt,
+      timings: {
+        application: {
+          startedAt,
+          completedAt,
+          durationMs: Math.max(0, Date.parse(completedAt) - Date.parse(startedAt)),
+        },
+      },
       status: 'completed',
       input: clean(input),
       output: clean(output),
@@ -45,10 +62,23 @@ export class IntelligenceLog {
         captured.exchanges = [];
         captured.output = { unavailable: 'Capture limit exceeded; receipt remains in accounting.' };
       }
-      await this.store.putIntelligenceCall(captured);
+      this.latest.delete(captured.id);
+      this.latest.set(captured.id, captured);
+      for (const id of [...this.latest.keys()].slice(0, -100)) this.latest.delete(id);
+      const write = this.store
+        .putIntelligenceCall(captured)
+        .catch(() => console.error('Could not persist intelligence diagnostics.'));
+      this.pendingWrites.add(write);
+      void write.then(() => this.pendingWrites.delete(write));
     } catch {
       console.error('Could not persist intelligence diagnostics.');
     }
+  }
+  async read(id: string): Promise<IntelligenceCall | undefined> {
+    return this.latest.get(id) ?? (await this.store.intelligenceCall(id));
+  }
+  async flush(): Promise<void> {
+    await Promise.allSettled([...this.pendingWrites]);
   }
   async run<T>(kind: string, input: unknown, execute: () => Promise<T>): Promise<T> {
     const call: IntelligenceCall = {
@@ -59,6 +89,7 @@ export class IntelligenceLog {
       status: 'running',
       input: clean(input),
       exchanges: [],
+      timings: {},
     };
     if (Buffer.byteLength(JSON.stringify(call.input)) > 150000)
       call.input = { unavailable: 'Diagnostic input exceeded capture limit.' };
@@ -93,6 +124,11 @@ export class IntelligenceLog {
         throw error;
       } finally {
         call.completedAt = new Date().toISOString();
+        call.timings!['application'] = {
+          startedAt: call.startedAt,
+          completedAt: call.completedAt,
+          durationMs: Math.max(0, Date.parse(call.completedAt) - Date.parse(call.startedAt)),
+        };
         await this.save(call);
       }
     });
@@ -118,14 +154,11 @@ export class IntelligenceLog {
       startedAt: new Date().toISOString(),
       input: typeof init.body === 'string' ? this.decode(init.body) : null,
     };
-    // Repeated status polls update one record; inference submissions remain separate.
-    const previous =
-      exchange.method === 'GET'
-        ? call.exchanges.findIndex((item) => item.path === path && item.method === 'GET')
-        : -1;
-    if (previous >= 0) call.exchanges[previous] = exchange;
-    else call.exchanges.push(exchange);
-    await this.save(call);
+    call.exchanges.push(exchange);
+    if (call.exchanges.length > 100) {
+      const oldestPoll = call.exchanges.findIndex((item) => item.method === 'GET');
+      call.exchanges.splice(oldestPoll >= 0 ? oldestPoll : 0, 1);
+    }
     try {
       const response = await fetch(url, init);
       exchange.httpStatus = response.status;
@@ -158,7 +191,11 @@ export class IntelligenceLog {
       exchange.output = { error: error instanceof Error ? error.message : String(error) };
       throw error;
     } finally {
-      await this.save(call);
+      exchange.completedAt = new Date().toISOString();
+      exchange.durationMs = Math.max(
+        0,
+        Date.parse(exchange.completedAt) - Date.parse(exchange.startedAt),
+      );
     }
   };
   private decode(text: string): unknown {

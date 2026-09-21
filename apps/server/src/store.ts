@@ -237,6 +237,7 @@ export class SqliteStore implements GameRepository {
   private acceptedRows = new Map<string, string>();
   private acceptedRevision = -1;
   private acceptedState: SavedWorld | null = null;
+  private intelligenceWrites = 0;
   vectors?: VectorStore;
   get persistence() {
     return this.db.dialect === 'postgres' ? ('postgres' as const) : ('sqlite' as const);
@@ -258,9 +259,11 @@ export class SqliteStore implements GameRepository {
         'INSERT INTO intelligence_calls (id, started_at, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload',
       )
       .run(call.id, call.startedAt, JSON.stringify(call));
-    await this.db.exec(
-      'DELETE FROM intelligence_calls WHERE id IN (SELECT id FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 1000000 OFFSET 1000)',
-    );
+    // Diagnostic retention is approximate between periodic pruning passes.
+    if (++this.intelligenceWrites % 25 === 0)
+      await this.db.exec(
+        'DELETE FROM intelligence_calls WHERE id IN (SELECT id FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 1000000 OFFSET 1000)',
+      );
   }
   async intelligenceCalls(offset: number): Promise<IntelligenceCall[]> {
     await this.ready;
@@ -320,33 +323,25 @@ export class SqliteStore implements GameRepository {
     const fields = details
       ? 'payload'
       : `id,started_at,json_extract(payload, '$.parentId') AS parent_id,json_extract(payload, '$.kind') AS kind,json_extract(payload, '$.status') AS status,json_extract(payload, '$.output.receipt') AS receipt`;
-    const records: IntelligenceCall[] = [];
-    for (let offset = 0; offset < 1000; offset += 16) {
-      const rows = await this.db
-        .prepare(
-          `SELECT ${fields} FROM intelligence_calls WHERE json_extract(payload, '$.parentId') IN (${parentIds.map(() => '?').join(',')}) ORDER BY started_at,id LIMIT 16 OFFSET ?`,
-        )
-        .all(...parentIds, offset);
-      for (const row of rows)
-        records.push(
-          details
-            ? (JSON.parse(String(row['payload'])) as IntelligenceCall)
-            : {
-                id: String(row['id']),
-                parentId: String(row['parent_id']),
-                kind: String(row['kind']),
-                startedAt: String(row['started_at']),
-                status: String(row['status']) as IntelligenceCall['status'],
-                input: null,
-                output: row['receipt']
-                  ? { receipt: JSON.parse(String(row['receipt'])) }
-                  : undefined,
-                exchanges: [],
-              },
-        );
-      if (rows.length < 16) break;
-    }
-    return records;
+    const rows = await this.db
+      .prepare(
+        `SELECT ${fields} FROM intelligence_calls WHERE json_extract(payload, '$.parentId') IN (${parentIds.map(() => '?').join(',')}) ORDER BY started_at,id LIMIT 1000`,
+      )
+      .all(...parentIds);
+    return rows.map((row) =>
+      details
+        ? (JSON.parse(String(row['payload'])) as IntelligenceCall)
+        : {
+            id: String(row['id']),
+            parentId: String(row['parent_id']),
+            kind: String(row['kind']),
+            startedAt: String(row['started_at']),
+            status: String(row['status']) as IntelligenceCall['status'],
+            input: null,
+            output: row['receipt'] ? { receipt: JSON.parse(String(row['receipt'])) } : undefined,
+            exchanges: [],
+          },
+    );
   }
 
   constructor(path: string, database?: SqlDatabase) {

@@ -119,6 +119,8 @@ function stageSummary(call: IntelligenceCall) {
   const receipt = object(call.output)?.['receipt'] as
     | {
         latencyMs?: number;
+        providerLatencyMs?: number;
+        providerQueueLatencyMs?: number;
         estimatedCostUsd?: number;
         usage?: { inputTokens: number; outputTokens: number };
       }
@@ -129,7 +131,14 @@ function stageSummary(call: IntelligenceCall) {
       : call.kind.startsWith('LM ·')
         ? `LM · ${lmPurposeTitle(textAt(call.input, 'task'))}`
         : call.kind;
-  return `${kind} · ${call.status}${receipt ? ` · ${receipt.latencyMs ?? '?'} ms · ${receipt.usage ? `${receipt.usage.inputTokens} in / ${receipt.usage.outputTokens} out` : 'tokens unknown'} · ${receipt.estimatedCostUsd === undefined ? 'cost unknown' : `$${receipt.estimatedCostUsd.toFixed(6)}`}` : ''}`;
+  const applicationLatency =
+    call.completedAt === undefined
+      ? receipt?.latencyMs
+      : Math.max(0, Date.parse(call.completedAt) - Date.parse(call.startedAt));
+  const latency = receipt
+    ? ` · OpenLegend ${applicationLatency ?? '?'} ms${receipt.providerLatencyMs === undefined ? '' : ` · Macrofold run ${receipt.providerLatencyMs} ms · queue ${receipt.providerQueueLatencyMs ?? '?'} ms`}`
+    : '';
+  return `${kind} · ${call.status}${latency}${receipt ? ` · ${receipt.usage ? `${receipt.usage.inputTokens} input tokens / ${receipt.usage.outputTokens} output tokens` : 'tokens unknown'} · ${receipt.estimatedCostUsd === undefined ? 'cost unknown' : `$${receipt.estimatedCostUsd.toFixed(6)}`}` : ''}`;
 }
 
 function Labeled({ label, children }: { label: string; children: ReactNode }) {
@@ -157,11 +166,12 @@ function humanize(value: string): string {
 
 function jevPurpose(call: IntelligenceCall): string {
   const ids = Object.keys(object(path(call.input, 'questions')) ?? {});
+  const requestId = textAt(call.input, 'requestId') ?? '';
   if (ids.includes('admissibility')) return 'Invention judgment';
   if (ids.includes('route')) return 'Response routing';
-  if (ids.some((id) => /^action\d+$/.test(id))) return 'Action relevance';
-  if (ids.some((id) => /^c\d+$/.test(id))) return 'Memory relevance';
-  const requestId = textAt(call.input, 'requestId') ?? '';
+  if (requestId.includes('action-attention') || ids.some((id) => /^a\d+$/.test(id)))
+    return 'Action relevance';
+  if (ids.some((id) => /^c\d+$/.test(id))) return 'Context relevance';
   if (requestId.endsWith(':route')) return 'Semantic routing';
   if (requestId.includes(':attention')) return 'Context relevance';
   return 'Semantic judgment';
@@ -214,10 +224,12 @@ function answerLabel(answer: unknown): string {
 
 function jevQuestionText(question: JsonObject | undefined, id: string): string {
   const instructions = valueText(question?.['instructions']) ?? 'No question text was recorded.';
-  return instructions.replace(
-    `For candidate ${id} in candidates, would including it`,
-    'Would including each candidate',
-  );
+  return instructions
+    .replace(`Would candidate ${id}`, 'Would each candidate')
+    .replace(
+      `For candidate ${id} in candidates, would including it`,
+      'Would including each candidate',
+    );
 }
 
 function jevOptions(question: JsonObject | undefined): [string, string | undefined][] {
@@ -902,6 +914,7 @@ export function Diagnostics({
     };
   }, [offset, worldId, filters]);
   useEffect(() => {
+    if (selection) return;
     let active = true;
     const id = setInterval(async () => {
       if (follow && offset === 0 && !panel.current?.contains(document.activeElement)) {
@@ -926,7 +939,7 @@ export function Diagnostics({
       active = false;
       clearInterval(id);
     };
-  }, [follow, offset, filters, worldId]);
+  }, [follow, offset, filters, worldId, selection]);
   useEffect(() => setRaw(null), [worldId, selection?.id]);
   if (selection)
     return (
