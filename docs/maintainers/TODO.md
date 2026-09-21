@@ -143,3 +143,13 @@ No test files or suites were written or run for this change, as requested. [Iden
 - [ ] Verify shared TextTooltip on hover and keyboard focus: compact text-only Retry label, disabled composer explanation, viewport wrapping and portal layering across themes.
 
 - [ ] Verify the shared composer input fills available width and Send stays at the right edge across disabled tooltips, multiline text and narrow panels.
+
+## Story selection deferred validation
+
+Automated tests were not written or run for this change at user request. These are validation gaps for [NC09–NC12](narration-and-conversations.md), not new implementation ownership.
+
+- [ ] Cover ordinary hare/deer/person/object silence, high cognition importance/urgency silence, designated introduction once, reentry/version replacement, routine special-entity actions, and explicit consequential rules for ordinary entities.
+- [ ] Cover hidden/private source exclusion, invalid values and unknown predicates, unauthorized editor access, atomic invalid field batches, defaults/removal/persistence, unused fields, and replacement evaluator behavior.
+- [ ] Cover response grouping/source bounds, significance ordering, cooldown/drop/expiry, concurrent duplicate admission, restart and queued revocation, no automatic paid resend, provider failure, cancelled receipts and published-history stability.
+- [ ] Cover migration with old queued/running/completed records, awareness/memory/accounting preservation, backup/restore including banner/frequency tables, owner-scoped SQL projection on SQLite/PostgreSQL, reload/dismissal/pending/legacy banner exclusion and editor accessibility.
+- [ ] Repair existing full-typecheck failures in asynchronous store/service/view test callers; rerun full repository checks after restoring that baseline.

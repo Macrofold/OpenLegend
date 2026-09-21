@@ -175,6 +175,7 @@ export interface HeatComponent {
   lit: boolean;
 }
 export interface Entity {
+  mechanismFields?: Record<string, Record<string, number>>;
   id: string;
   name: string;
   kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains';
@@ -236,6 +237,8 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  storyPolicy?: import('./story-selection.js').StoryPolicy;
+  storyPolicyRevision?: number;
   socialPolicy?: { conversationInactivitySeconds: number; notableThreshold: number };
   appraisals?: Record<string, import('./social.js').Appraisal[]>;
   kinships?: Record<string, import('./social.js').Kinship>;
@@ -260,6 +263,7 @@ export interface WorldState {
   recipes: Record<string, RecipeDefinition>;
   memories: Record<string, MemoryRecord[]>;
   minds?: Record<string, ActorMind>;
+  visibleObjects?: Record<string, string[]>;
   visiblePeople?: Record<string, string[]>;
   knowledge: Record<string, KnowledgeRecord[]>;
   events: WorldEvent[];

@@ -200,7 +200,11 @@ export function History({
 
 export function Narrator({ item }: { item: TranscriptItem | null | undefined }) {
   const [dismissed, setDismissed] = useState<string | null>(null);
-  if (!item || dismissed === item.id) return null;
+  const initial = useRef<string | null | undefined>(undefined);
+  // The initial snapshot is history, not a new announcement after reload.
+  if (initial.current === undefined && item !== undefined) initial.current = item?.id ?? null;
+  if (!item || item.status === 'pending' || dismissed === item.id || initial.current === item.id)
+    return null;
   return (
     <aside className="ol-narrator ol-card" aria-label="Narrator">
       <p role="status">{item.text}</p>

@@ -1,4 +1,5 @@
 import { initializeIdentity } from './identity.js';
+import { defaultStoryPolicy } from './story-selection.js';
 import { livingBody, nativeActor, migrateActors, hasMemory } from './living.js';
 import traitBank from '../config/traits.json' with { type: 'json' };
 import { migrateCognition } from './experience.js';
@@ -180,6 +181,8 @@ export function createWorld(seed = 73): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
     schemaVersion: 3,
+    storyPolicy: defaultStoryPolicy(),
+    visibleObjects: {},
     id: `wilderness-${normalizedSeed}`,
     seed: normalizedSeed,
     rngState: normalizedSeed || 0x6d2b79f5,

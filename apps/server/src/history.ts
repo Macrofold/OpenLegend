@@ -1,10 +1,17 @@
-import { controlledEntityId } from '@open-legend/domain';
+import {
+  controlledEntityId,
+  defaultStoryPolicy,
+  selectStory,
+  type StorySelection,
+} from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import type { WorldState, WorldEvent, ConversationTransition } from '@open-legend/domain';
 import type { TranscriptPage, TranscriptItem } from '@open-legend/protocol';
 import type { SqlDatabase } from './store.js';
 
 export const HISTORY_TABLES = [
+  'story_banners',
+  'story_delivery',
   'history_perspectives',
   'story_jobs',
   'story_context_sources',
@@ -35,6 +42,8 @@ export interface StoryJob {
   state: 'queued' | 'running' | 'completed' | 'fallback' | 'uncertain' | 'cancelled';
   reason?: string;
   receipt?: unknown;
+  previousItem?: TranscriptItem;
+  selection?: { mechanism: string; version: number; policyRevision: number; policyDigest: string };
 }
 const revisionOf = (text: string) => createHash('sha256').update(text).digest('hex');
 /** Scoped durable history repository. Only the application binds owner and perspective. */
@@ -48,6 +57,13 @@ export class HistoryRepository {
   private readonly bindLocalPrincipal: boolean;
   async initialize() {
     await this.db.exec(`
+      CREATE TABLE IF NOT EXISTS story_banners (
+        world_id TEXT NOT NULL, owner_id TEXT NOT NULL, id TEXT NOT NULL, position BIGINT NOT NULL, payload TEXT NOT NULL,
+        PRIMARY KEY(world_id,owner_id,id));
+      CREATE INDEX IF NOT EXISTS story_banner_order ON story_banners(world_id,owner_id,position,id);
+      CREATE TABLE IF NOT EXISTS story_delivery (
+        world_id TEXT NOT NULL, owner_id TEXT NOT NULL, game_time DOUBLE PRECISION NOT NULL,
+        PRIMARY KEY(world_id,owner_id));
       CREATE TABLE IF NOT EXISTS history_perspectives (
         world_id TEXT NOT NULL,event_id TEXT NOT NULL,actor_id TEXT NOT NULL,payload TEXT NOT NULL,
         PRIMARY KEY(world_id,event_id,actor_id));
@@ -59,6 +75,7 @@ export class HistoryRepository {
         world_id TEXT NOT NULL,id TEXT NOT NULL,owner_id TEXT NOT NULL,state TEXT NOT NULL,
         created_at BIGINT NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(world_id,id,owner_id));
       CREATE INDEX IF NOT EXISTS story_queue ON story_jobs(world_id,state,created_at,id);
+      CREATE INDEX IF NOT EXISTS story_owner_queue ON story_jobs(world_id,owner_id,state);
       CREATE TABLE IF NOT EXISTS story_milestones (
         world_id TEXT NOT NULL,owner_id TEXT NOT NULL,milestone TEXT NOT NULL,event_id TEXT NOT NULL,
         PRIMARY KEY(world_id,owner_id,milestone));
@@ -94,6 +111,9 @@ export class HistoryRepository {
     for (const row of rows) {
       const story = String(row['narration_id']),
         owner = String(row['owner_id']);
+      await this.db
+        .prepare('DELETE FROM story_banners WHERE world_id=? AND id=? AND owner_id=?')
+        .run(worldId, story, owner);
       await this.db
         .prepare('DELETE FROM story_narrations WHERE world_id=? AND id=? AND owner_id=?')
         .run(worldId, story, owner);
@@ -137,6 +157,18 @@ export class HistoryRepository {
     if (this.bindLocalPrincipal) {
       this.principals = [{ ownerId: 'local-player', actorId: controlledEntityId(world) }];
     }
+    if (previous && previous.storyPolicyRevision !== world.storyPolicyRevision) {
+      for (const row of await this.db
+        .prepare(
+          "SELECT payload FROM story_jobs WHERE world_id=? AND state IN ('queued','running')",
+        )
+        .all(world.id)) {
+        const job = JSON.parse(String(row['payload'])) as StoryJob;
+        job.state = 'cancelled';
+        job.reason = 'Story policy changed.';
+        await this.saveStory(world.id, job);
+      }
+    }
     let changed: WorldEvent[];
     if (
       previous &&
@@ -150,6 +182,15 @@ export class HistoryRepository {
       for (const id of old.keys()) if (!current.has(id)) await this.removeEvent(world.id, id);
       changed = world.events.filter((event) => old.get(event.id) !== event);
     }
+    const previousIds =
+      appendCount === undefined ? new Set(previous?.events.map((event) => event.id)) : undefined;
+    const candidates: {
+      event: WorldEvent;
+      position: number;
+      principal: { ownerId: string; actorId: string };
+      selection: Extract<StorySelection, { kind: 'candidate' }>;
+    }[] = [];
+    const policy = world.storyPolicy ?? defaultStoryPolicy();
     for (const event of changed) {
       const retained = await this.db
         .prepare('SELECT payload FROM history_events WHERE world_id=? AND id=?')
@@ -166,6 +207,7 @@ export class HistoryRepository {
           .prepare('INSERT INTO history_audiences VALUES (?,?,?) ON CONFLICT DO NOTHING')
           .run(world.id, event.id, actorId);
       }
+      const perspectives = new Map<string, StorySource>();
       for (const actorId of event.audience) {
         if (world.experience?.forgotten[actorId]?.includes(event.id)) continue;
         const awareness = world.experience?.awareness[actorId]?.find((a) => a.eventId === event.id);
@@ -178,41 +220,53 @@ export class HistoryRepository {
           order: position,
           type: event.type,
         };
+        perspectives.set(actorId, source);
         await this.db
           .prepare('INSERT INTO history_perspectives VALUES (?,?,?,?)')
           .run(world.id, event.id, actorId, JSON.stringify(source));
       }
-      for (const principal of this.principals)
-        if (
-          event.audience.includes(principal.actorId) &&
-          !world.experience?.forgotten[principal.actorId]?.includes(event.id) &&
-          event.type !== 'speech' &&
-          ([
-            'expression',
-            'body-effect',
-            'death',
-            'god-revived',
-            'encounter',
-            'entered-place',
-          ].includes(event.type) ||
-            (event.importance ?? 0) >= 6)
-        ) {
-          const milestone = ['encounter', 'entered-place'].includes(event.type)
-            ? `${event.type}:${event.targetId ?? event.data?.['placeId'] ?? event.actorId}`
-            : undefined;
-          if (milestone) {
-            const prior = await this.db
-              .prepare(
-                'SELECT event_id FROM story_milestones WHERE world_id=? AND owner_id=? AND milestone=?',
-              )
-              .get(world.id, principal.ownerId, milestone);
-            if (prior) continue;
-            await this.db
-              .prepare('INSERT INTO story_milestones VALUES (?,?,?,?)')
-              .run(world.id, principal.ownerId, milestone, event.id);
-          }
-          await this.schedule(world, event, position, !!previous, principal);
+      // Only newly committed evidence can trigger a story; startup never replays history.
+      if (previous && !previousIds?.has(event.id))
+        for (const principal of this.principals) {
+          if (world.experience?.forgotten[principal.actorId]?.includes(event.id)) continue;
+          const source = perspectives.get(principal.actorId);
+          if (!source) continue;
+          const selection = selectStory(
+            {
+              viewerId: principal.actorId,
+              event,
+              sourceText: source.text,
+              source: world.entities[event.actorId ?? ''],
+              target: world.entities[event.targetId ?? ''],
+            },
+            policy,
+          );
+          if (selection.kind === 'candidate')
+            candidates.push({ event, position, principal, selection });
         }
+    }
+    candidates.sort(
+      (a, b) =>
+        b.selection.significance - a.selection.significance ||
+        a.position - b.position ||
+        a.event.id.localeCompare(b.event.id),
+    );
+    for (const { event, principal, selection } of candidates) {
+      if (
+        selection.milestoneKey &&
+        (await this.db
+          .prepare(
+            'SELECT event_id FROM story_milestones WHERE world_id=? AND owner_id=? AND milestone=?',
+          )
+          .get(world.id, principal.ownerId, selection.milestoneKey))
+      )
+        continue;
+      if (await this.schedule(world, event, principal, selection)) {
+        if (selection.milestoneKey)
+          await this.db
+            .prepare('INSERT INTO story_milestones VALUES (?,?,?,?) ON CONFLICT DO NOTHING')
+            .run(world.id, principal.ownerId, selection.milestoneKey, event.id);
+      }
     }
     for (const [actorId, ids] of Object.entries(world.experience?.forgotten ?? {})) {
       if (ids === previous?.experience?.forgotten[actorId]) continue;
@@ -292,31 +346,49 @@ export class HistoryRepository {
   private async schedule(
     world: WorldState,
     event: WorldEvent,
-    position: number,
-    generate: boolean,
     { ownerId, actorId }: { ownerId: string; actorId: string },
+    selection: Extract<StorySelection, { kind: 'candidate' }>,
   ) {
+    const policy = world.storyPolicy ?? defaultStoryPolicy();
     // Bind environmental events to the player's group at event time, never at dispatch.
     const conversationId = event.conversationId ?? world.conversations?.active[actorId];
-    const cause =
-      typeof event.data?.['responseId'] === 'string'
-        ? event.data['responseId']
-        : String(event.sequence);
-    const base = `story:${ownerId}:${conversationId ?? 'world'}:${cause}`;
+    const base = `story:${ownerId}:${conversationId ?? 'world'}:${selection.groupKey}`;
     const priorRow = await this.db
       .prepare('SELECT payload FROM story_jobs WHERE world_id=? AND id=? AND owner_id=?')
       .get(world.id, base, ownerId);
     const prior = priorRow ? (JSON.parse(String(priorRow['payload'])) as StoryJob) : undefined;
-    const combine = prior?.state === 'queued' && prior.sources.length < 16;
-    const id = !prior || combine ? base : `${base}:${event.id}`;
+    const combine =
+      prior?.state === 'queued' &&
+      prior.sources.length < policy.delivery.maximumSources &&
+      prior.selection?.policyRevision === (world.storyPolicyRevision ?? 0);
+    if (prior && (!combine || prior.sources.some((source) => source.id === event.id))) return false;
+    if (!combine) {
+      const delivery = await this.db
+        .prepare('SELECT game_time FROM story_delivery WHERE world_id=? AND owner_id=?')
+        .get(world.id, ownerId);
+      const waiting = await this.db
+        .prepare(
+          "SELECT id FROM story_jobs WHERE world_id=? AND owner_id=? AND state IN ('queued','running') LIMIT 1",
+        )
+        .get(world.id, ownerId);
+      if (
+        waiting ||
+        (delivery && event.at - Number(delivery['game_time']) < policy.delivery.minimumInterval)
+      )
+        return false;
+    }
+    const id = base;
     const row = await this.db
       .prepare(
         'SELECT payload FROM history_perspectives WHERE world_id=? AND event_id=? AND actor_id=?',
       )
       .get(world.id, event.id, actorId);
-    if (!row) return;
+    if (!row) return false;
     const source = JSON.parse(String(row['payload'])) as StorySource;
-    const sources = combine ? [...prior.sources, source] : [source];
+    const sources = (combine ? [...prior.sources, source] : [source]).sort(
+      (a, b) => a.order - b.order || a.id.localeCompare(b.id),
+    );
+    const anchor = sources.at(-1)!;
     const voiceRow = await this.db
       .prepare('SELECT value FROM meta WHERE key=?')
       .get(`integration:narrator-voice:${ownerId}`);
@@ -330,7 +402,7 @@ export class HistoryRepository {
         if (typeof delta === 'number' && delta !== 0)
           impacts.push({
             entityId: event.targetId ?? event.actorId!,
-            entityName: world.entities[event.targetId ?? event.actorId!]?.name,
+            // The permitted source capsule supplies names; current world state is not evidence.
             field: field.replace('Delta', ''),
             delta,
             sourceId: event.id,
@@ -340,12 +412,12 @@ export class HistoryRepository {
       id,
       kind: 'narration',
       text: sources.map((s) => s.text).join(' '),
-      time: event.at,
-      order: position,
+      time: anchor.time,
+      order: anchor.order,
       conversationId,
       sourceIds: sources.map((s) => s.id),
       impacts,
-      status: generate ? 'pending' : 'fallback',
+      status: 'pending',
       revision: combine ? prior.item.revision : 1,
       voice,
     };
@@ -357,20 +429,54 @@ export class HistoryRepository {
       sources,
       voice,
       createdAt: combine ? prior.createdAt : Date.now(),
-      state: generate ? 'queued' : 'fallback',
+      state: 'queued',
+      selection: {
+        mechanism: policy.id,
+        version: policy.version,
+        policyRevision: world.storyPolicyRevision ?? 0,
+        policyDigest: revisionOf(JSON.stringify(policy)),
+      },
     };
     await this.saveStory(world.id, job);
+    if (!combine)
+      await this.db
+        .prepare(
+          'INSERT INTO story_delivery VALUES (?,?,?) ON CONFLICT(world_id,owner_id) DO UPDATE SET game_time=excluded.game_time',
+        )
+        .run(world.id, ownerId, event.at);
     for (const source of sources)
       await this.db
         .prepare('INSERT INTO story_event_sources VALUES (?,?,?,?) ON CONFLICT DO NOTHING')
         .run(world.id, id, ownerId, source.id);
+    return true;
   }
   private async saveStory(worldId: string, job: StoryJob) {
+    if (
+      job.selection &&
+      !job.item.conversationId &&
+      ['completed', 'fallback', 'uncertain'].includes(job.state)
+    )
+      await this.db
+        .prepare(
+          'INSERT INTO story_banners VALUES (?,?,?,?,?) ON CONFLICT(world_id,owner_id,id) DO UPDATE SET position=excluded.position,payload=excluded.payload',
+        )
+        .run(worldId, job.ownerId, job.id, job.item.order, JSON.stringify(job.item));
+    else
+      await this.db
+        .prepare('DELETE FROM story_banners WHERE world_id=? AND owner_id=? AND id=?')
+        .run(worldId, job.ownerId, job.id);
     await this.db
       .prepare(
         'INSERT INTO story_jobs VALUES (?,?,?,?,?,?) ON CONFLICT(world_id,id,owner_id) DO UPDATE SET state=excluded.state,payload=excluded.payload',
       )
       .run(worldId, job.id, job.ownerId, job.state, job.createdAt, JSON.stringify(job));
+    if (job.state === 'cancelled' && !job.previousItem) {
+      await this.db
+        .prepare('DELETE FROM story_narrations WHERE world_id=? AND owner_id=? AND id=?')
+        .run(worldId, job.ownerId, job.id);
+      return;
+    }
+    const item = job.state === 'cancelled' ? job.previousItem! : job.item;
     await this.db
       .prepare(
         'INSERT INTO story_narrations VALUES (?,?,?,?,?,?,?) ON CONFLICT(world_id,id,owner_id) DO UPDATE SET position=excluded.position,revision=excluded.revision,payload=excluded.payload',
@@ -379,14 +485,14 @@ export class HistoryRepository {
         worldId,
         job.id,
         job.ownerId,
-        job.item.conversationId ?? null,
-        job.item.order,
-        job.item.revision ?? 1,
-        JSON.stringify(job.item),
+        item.conversationId ?? null,
+        item.order,
+        item.revision ?? 1,
+        JSON.stringify(item),
       );
   }
   /** Claim is persisted before any paid reservation; restarted claims never redispatch. */
-  async claim(worldId: string, before: number): Promise<StoryJob | null> {
+  async claim(worldId: string, before: number, world?: WorldState): Promise<StoryJob | null> {
     return this.db.transaction(async () => {
       const row = await this.db
         .prepare(
@@ -395,13 +501,80 @@ export class HistoryRepository {
         .get(worldId, before);
       if (!row) return null;
       const job = JSON.parse(String(row['payload'])) as StoryJob;
+      if (!world || !(await this.selectionCurrent(world, job))) {
+        job.state = 'cancelled';
+        job.reason = 'Story selection revoked or expired.';
+        await this.saveStory(worldId, job);
+        return null;
+      }
       job.state = 'running';
       await this.saveStory(worldId, job);
       return job;
     });
   }
+  async selectionCurrent(world: WorldState, job: StoryJob): Promise<boolean> {
+    const policy = world.storyPolicy ?? defaultStoryPolicy();
+    const row = await this.db
+      .prepare('SELECT state FROM story_jobs WHERE world_id=? AND owner_id=? AND id=?')
+      .get(world.id, job.ownerId, job.id);
+    if (!row || !['queued', 'running'].includes(String(row['state']))) return false;
+    if (
+      !job.selection ||
+      !policy.enabled ||
+      job.selection.policyRevision !== (world.storyPolicyRevision ?? 0) ||
+      job.selection.policyDigest !== revisionOf(JSON.stringify(policy)) ||
+      world.simTime - job.item.time > policy.delivery.maximumAge
+    )
+      return false;
+    if (!(await this.sourcesCurrent(world.id, job))) return false;
+    for (const id of job.item.sourceIds) {
+      const row = await this.db
+        .prepare('SELECT payload FROM history_events WHERE world_id=? AND id=?')
+        .get(world.id, id);
+      if (!row) return false;
+      const event = JSON.parse(String(row['payload'])) as WorldEvent;
+      if (
+        selectStory(
+          {
+            viewerId: job.actorId,
+            event,
+            sourceText: job.sources.find((s) => s.id === id)?.text ?? '',
+            source: world.entities[event.actorId ?? ''],
+            target: world.entities[event.targetId ?? ''],
+          },
+          policy,
+        ).kind !== 'candidate'
+      )
+        return false;
+    }
+    return true;
+  }
+  async cancel(worldId: string, job: StoryJob) {
+    await this.db.transaction(async () => {
+      const row = await this.db
+        .prepare('SELECT state FROM story_jobs WHERE world_id=? AND owner_id=? AND id=?')
+        .get(worldId, job.ownerId, job.id);
+      if (!row || !['queued', 'running'].includes(String(row['state']))) return;
+      job.state = 'cancelled';
+      job.reason = 'Story selection no longer valid before dispatch.';
+      await this.saveStory(worldId, job);
+    });
+  }
   async recover(worldId: string) {
     await this.db.transaction(async () => {
+      // Legacy rows remain private history. They never populate the new banner projection.
+      for (const row of await this.db
+        .prepare("SELECT payload FROM story_jobs WHERE world_id=? AND state='queued'")
+        .all(worldId)) {
+        const job = JSON.parse(String(row['payload'])) as StoryJob;
+        if (!job.selection) {
+          job.previousItem = { ...job.item, status: 'fallback' };
+          job.state = 'cancelled';
+          job.item.status = 'fallback';
+          job.reason = 'Legacy broad narration policy retired.';
+          await this.saveStory(worldId, job);
+        }
+      }
       for (const row of await this.db
         .prepare("SELECT payload FROM story_jobs WHERE world_id=? AND state='running'")
         .all(worldId)) {
@@ -447,7 +620,16 @@ export class HistoryRepository {
       const row = await this.db
         .prepare('SELECT state,payload FROM story_jobs WHERE world_id=? AND id=? AND owner_id=?')
         .get(worldId, job.id, job.ownerId);
-      if (row?.['state'] !== 'running') return false;
+      if (row?.['state'] !== 'running') {
+        if (row && receipt) {
+          const cancelled = JSON.parse(String(row['payload'])) as StoryJob;
+          cancelled.receipt = receipt;
+          await this.db
+            .prepare('UPDATE story_jobs SET payload=? WHERE world_id=? AND owner_id=? AND id=?')
+            .run(JSON.stringify(cancelled), worldId, job.ownerId, job.id);
+        }
+        return false;
+      }
       if (!(await this.sourcesCurrent(worldId, job))) {
         const original = JSON.parse(String(row['payload'])) as StoryJob;
         if (await this.sourcesCurrent(worldId, original)) {
@@ -459,6 +641,7 @@ export class HistoryRepository {
         } else await this.revokeStories(worldId, original.sources[0]!.id, original.ownerId);
         return false;
       }
+      delete job.previousItem;
       job.state = text ? 'completed' : 'fallback';
       job.item = {
         ...job.item,
@@ -496,10 +679,12 @@ export class HistoryRepository {
       if (!row) return false;
       const job = JSON.parse(String(row['payload'])) as StoryJob;
       if (
-        ['queued', 'running', 'uncertain'].includes(job.state) ||
+        !job.selection ||
+        ['queued', 'running', 'uncertain', 'cancelled'].includes(job.state) ||
         !(await this.sourcesCurrent(worldId, job))
       )
         return false;
+      job.previousItem = structuredClone(job.item);
       job.state = 'queued';
       job.item.revision = (job.item.revision ?? 1) + 1;
       job.item.status = 'pending';
@@ -552,7 +737,7 @@ export class HistoryRepository {
       throw new Error('Unsupported history principal.');
     const row = await this.db
       .prepare(
-        'SELECT payload FROM story_narrations WHERE world_id=? AND owner_id=? AND conversation_id IS NULL ORDER BY position DESC,id DESC LIMIT 1',
+        'SELECT payload FROM story_banners WHERE world_id=? AND owner_id=? ORDER BY position DESC,id DESC LIMIT 1',
       )
       .get(worldId, ownerId);
     return row ? (JSON.parse(String(row['payload'])) as TranscriptItem) : null;

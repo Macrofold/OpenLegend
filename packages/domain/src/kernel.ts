@@ -918,6 +918,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       }
     }
   }
+  const hadObjectExposures = world.visibleObjects !== undefined;
   for (const actor of Object.values(world.entities).filter((e) => e.actor?.alive && hasMemory(e))) {
     const seen = Object.values(world.entities)
       .filter(
@@ -952,6 +953,26 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       }
     }
     (world.visiblePeople ??= {})[actor.id] = seen;
+    // Object exposures use the same committed awareness path without a cognition trigger.
+    const objects = Object.values(world.entities).filter(
+      (entity) => !entity.actor && !entity.animal && canSee(actor.position, entity.position),
+    );
+    const priorObjects = new Set(
+      world.visibleObjects?.[actor.id] ??
+        (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
+    );
+    for (const entity of objects)
+      if (!priorObjects.has(entity.id))
+        emit(
+          world,
+          events,
+          'encounter',
+          `${actor.name} encountered ${entity.name}.`,
+          actor,
+          entity.id,
+          { importance: 0, urgency: 0, semanticTrigger: false },
+        );
+    (world.visibleObjects ??= {})[actor.id] = objects.map((entity) => entity.id);
   }
   return finish(
     world,

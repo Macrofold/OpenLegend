@@ -1,5 +1,12 @@
 import { createPersonMemoryPager } from './person-memory-page.js';
-import { controlledEntityId, defaultResidentEntityId } from '@open-legend/domain';
+import {
+  controlledEntityId,
+  defaultStoryPolicy,
+  defaultResidentEntityId,
+  validateStoryPolicy,
+  editStoryMechanism,
+  type StoryPolicy,
+} from '@open-legend/domain';
 import { changeConversation, leaveConversation } from '@open-legend/domain';
 import { establishKinship, type Kinship } from '@open-legend/domain';
 import { applyBodyEffects, type BodyEffect } from '@open-legend/domain';
@@ -200,6 +207,8 @@ export class WorldService {
     this.saved = {
       ...this.saved,
       world: updateWorld(this.saved.world, (world) => {
+        world.storyPolicy ??= defaultStoryPolicy();
+        validateStoryPolicy(world.storyPolicy);
         migrateActors(world);
         world.minds ??= {};
         for (const entity of Object.values(world.entities))
@@ -738,6 +747,43 @@ export class WorldService {
         hash: digest(event),
       })),
     };
+  }
+
+  async storyEditor() {
+    await this.ready;
+    return {
+      ok: true,
+      policy: this.world.storyPolicy ?? defaultStoryPolicy(),
+      revision: this.world.storyPolicyRevision ?? 0,
+    };
+  }
+  async saveStoryEditor(
+    revision: number,
+    policy: StoryPolicy,
+    changes: { entityId: string; values: Record<string, number> | null }[],
+  ) {
+    return this.mutate(async () => {
+      await this.ready;
+      if (revision !== (this.world.storyPolicyRevision ?? 0))
+        return {
+          ok: false,
+          code: 'stale',
+          message: 'Story configuration changed. Refresh before saving.',
+        };
+      let world: WorldState;
+      try {
+        world = editStoryMechanism(this.world, policy, changes);
+      } catch (error) {
+        return {
+          ok: false,
+          code: 'invalid',
+          message: error instanceof Error ? error.message : 'Invalid story configuration.',
+        };
+      }
+      if (!(await this.commit({ ...this.saved, world }, undefined, 'diff')))
+        return { ok: false, message: this.storageError! };
+      return { ok: true, message: 'Story mechanism saved.' };
+    });
   }
 
   async worldEventJson(id: string) {

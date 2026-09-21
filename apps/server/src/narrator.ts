@@ -58,6 +58,7 @@ export class Narrator {
     const job = await repository.claim(
       this.service.world.id,
       Date.now() - this.service.config.narrationBatchMs,
+      this.service.world,
     );
     if (!job) return;
     this.controller = new AbortController();
@@ -93,7 +94,10 @@ export class Narrator {
   private async generate(job: StoryJob, id: string) {
     const { store, config, world } = this.service;
     const repository = store.history!;
-    if (!(await repository.sourcesCurrent(world.id, job))) return;
+    if (!(await repository.selectionCurrent(this.service.world, job))) {
+      await repository.cancel(world.id, job);
+      return;
+    }
     if (!(config.macrofoldKey || config.llmKey)) {
       await repository.publish(
         world.id,
@@ -138,8 +142,34 @@ export class Narrator {
             1800 * config.llmPrices.outputUsdPerMillion) /
             1e6,
         );
+    if (!(await repository.selectionCurrent(this.service.world, job))) {
+      await repository.cancel(world.id, job);
+      return;
+    }
     if (!(await store.reserve(id, 'openai', amount, config.budgetUsd, 'narrator'))) {
       await repository.publish(world.id, job, null, 'Monthly Narrator allowance exhausted.');
+      return;
+    }
+    // Reservation awaits storage; recheck immediately before crossing the provider boundary.
+    if (
+      !(await repository.selectionCurrent(this.service.world, job)) ||
+      job.selection?.policyRevision !== (this.service.world.storyPolicyRevision ?? 0)
+    ) {
+      const at = new Date().toISOString();
+      await store.settle(id, {
+        requestId: id,
+        provider: 'openai',
+        requestedModel: config.miniModel,
+        model: config.miniModel,
+        modelVersionStatus: 'unavailable',
+        contextDigest: '',
+        startedAt: at,
+        completedAt: at,
+        latencyMs: 0,
+        dispatched: false,
+        completionUncertain: false,
+      });
+      await repository.cancel(world.id, job);
       return;
     }
     const result = await this.client.generate<unknown>({

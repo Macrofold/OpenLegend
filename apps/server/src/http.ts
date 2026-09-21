@@ -696,6 +696,38 @@ export async function createGameServer(
               }),
             );
           }
+          case '/api/god/editor/story': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            return send(response, 200, await service.storyEditor());
+          }
+          case '/api/god/editor/story/save': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({
+                revision: z.number().int().nonnegative(),
+                policy: z.unknown(),
+                changes: z
+                  .array(
+                    z
+                      .object({
+                        entityId: requestIdSchema,
+                        values: z.record(z.string(), z.number()).nullable(),
+                      })
+                      .strict(),
+                  )
+                  .max(100),
+              })
+              .strict()
+              .parse(body);
+            const result = await service.saveStoryEditor(
+              value.revision,
+              value.policy as import('@open-legend/domain').StoryPolicy,
+              value.changes,
+            );
+            return send(response, result.ok ? 200 : result.code === 'stale' ? 409 : 400, result);
+          }
           case '/api/god/editor/person': {
             if (!config.godMode)
               return send(response, 403, { ok: false, message: 'God access required.' });

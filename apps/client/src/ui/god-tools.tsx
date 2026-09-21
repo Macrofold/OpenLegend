@@ -601,6 +601,86 @@ export function PersonEditor({
   );
 }
 
+function StoryMechanismEditor() {
+  const [draft, setDraft] = useState('');
+  const [fields, setFields] = useState('[]');
+  const [revision, setRevision] = useState(0);
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  async function load() {
+    setBusy(true);
+    try {
+      const result = await post<{ ok: boolean; policy: unknown; revision: number }>(
+        '/api/god/editor/story',
+        {},
+      );
+      setDraft(JSON.stringify(result.policy, null, 2));
+      setRevision(result.revision);
+    } catch (error) {
+      setMessage(String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function save() {
+    setBusy(true);
+    try {
+      const result = await post<ApiResult>('/api/god/editor/story/save', {
+        revision,
+        policy: JSON.parse(draft),
+        changes: JSON.parse(fields),
+      });
+      setMessage(result.message);
+      if (result.ok) {
+        setFields('[]');
+        await load();
+      }
+    } catch (error) {
+      setMessage(String(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section>
+      <p>Story selection changes future narration. Actor and object fields default to zero.</p>
+      <Button onPress={() => void load()} disabled={busy}>
+        Load story mechanism
+      </Button>
+      {draft && (
+        <>
+          <label>
+            Mechanism configuration JSON
+            <textarea
+              aria-label="Story mechanism configuration"
+              value={draft}
+              rows={20}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+          </label>
+          <label>
+            Entity field changes JSON
+            <textarea
+              aria-label="Story entity field changes"
+              value={fields}
+              rows={6}
+              onChange={(event) => setFields(event.target.value)}
+            />
+          </label>
+          <p>
+            Each change contains entityId and values (field names to numbers). Use null values to
+            remove the active namespace.
+          </p>
+          <Button onPress={() => void save()} disabled={busy}>
+            Save story mechanism
+          </Button>
+        </>
+      )}
+      {message && <p role="status">{message}</p>}
+    </section>
+  );
+}
+
 export function WorldEventsEditor({ close }: { close(): void }) {
   const drafts = useRef(new Map<string, string>());
   const generation = useRef(0);
@@ -762,6 +842,12 @@ export function WorldEventsEditor({ close }: { close(): void }) {
       }}
       onClose={close}
       tabs={[
+        {
+          id: 'story',
+          label: 'Story mechanism',
+          icon: 'ui.inview',
+          content: <StoryMechanismEditor />,
+        },
         {
           id: 'events',
           label: 'World Events',

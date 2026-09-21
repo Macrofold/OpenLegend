@@ -26,3 +26,7 @@ Immediate response composition, durable conversation identity/intervals/atomic m
 NC01–NC11 now include bounded native response admission, generic notable retention, conversation inactivity/disconnect and NPC membership intentions, atomic merges, scoped source capsules, causal story grouping, first-encounter deduplication, bounded generated prose, voice preferences, explicit regeneration, private transcript paging and transactional revocation. Cutaways/private-NPC-thought modes and automatic historical expiry remain disabled. The application remains single-player; repository fan-out takes explicit server-owned principal mappings. NC12 and CR12 acceptance remain separate from implementation. Automated gates are deferred by request, and live checks may use at most $50 per agent per UTC month. NC13 stays out of scope.
 
 Automated coverage requested by these exit gates is deferred to [TODO](TODO.md#three-program-deferred-validation), not treated as completed evidence.
+
+## Selective mechanism delivery within NC09–NC12
+
+The replaceable selector, configuration/field admission, owner editor, milestone and frequency admission, revocation, legacy suppression and indexed standalone projection are implemented. NC09–NC12 remain open for the deferred acceptance work linked below. Place entities and inventory-item encounter support require a future exposure contract; this slice does not fabricate one. [Deferred automated acceptance](TODO.md#story-selection-deferred-validation) is not completed evidence.

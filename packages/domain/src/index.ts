@@ -51,3 +51,4 @@ export * from './social.js';
 export { leaveConversation } from './conversations.js';
 
 export * from './identity.js';
+export * from './story-selection.js';
