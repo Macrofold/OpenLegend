@@ -2,7 +2,12 @@ import { decisionQuestions, inventionQuestions, JEV_QUESTIONS_VERSION } from './
 import { interestMatches, type InterestSubscription } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
-import { prepareDecision, selectDecisionActions } from './decision-context.js';
+import {
+  fallbackDecisionActions,
+  prepareDecision,
+  refreshDecisionActions,
+  selectDecisionActions,
+} from './decision-context.js';
 import { responseTrigger } from './response-context.js';
 import {
   RESPONSE_INSTRUCTIONS,
@@ -44,14 +49,23 @@ class StopJob extends Error {
   }
 }
 const RESPONSE_INTERRUPTION = { importance: 8, urgency: 8 } as const;
+interface ResponseInterruption {
+  eventId: string;
+  sequence: number;
+  importance: number;
+  urgency: number;
+  triggerKind?: string;
+  text: string;
+}
 interface Running {
   job: JobRecord;
   controller: AbortController;
   generation: string;
-  planGeneration: number;
   generatedBy?: string;
   playerSpeechEventId?: string;
   cancelReason?: string;
+  responseWatch?: { actorId: string; afterSequence: number; attempt: number };
+  supersession?: { attempt: number; interruptions: ResponseInterruption[] };
 }
 const choice = (answer: JudgmentAnswer | undefined) =>
   answer && 'choice' in answer && answer.confidence >= 0.55 ? answer.choice : null;
@@ -119,7 +133,18 @@ export class AiDirector {
       now,
     );
     this.unsubscribe = service.subscribe(() => {
-      if (service.paused && this.running?.job.kind === 'thought') this.running.controller.abort();
+      const run = this.running;
+      if (service.paused && run?.job.kind === 'thought') {
+        run.controller.abort();
+        return;
+      }
+      const watch = run?.responseWatch;
+      if (!run || !watch || watch.attempt > 0 || run.supersession || run.cancelReason) return;
+      const interruptions = this.responseInterruptions(watch.actorId, watch.afterSequence);
+      if (!interruptions.length) return;
+      run.supersession = { attempt: watch.attempt, interruptions };
+      // Abort the provider stage promptly; the attempt wrapper rebuilds context once.
+      run.controller.abort();
     });
   }
 
@@ -300,8 +325,6 @@ export class AiDirector {
       job,
       controller: new AbortController(),
       generation: this.service.generation,
-      planGeneration:
-        this.service.world.entities[job.request.npcId ?? 'ada']?.actor?.planGeneration ?? 0,
     };
     if (job.kind === 'chat')
       run.playerSpeechEventId = [...this.service.world.events]
@@ -522,13 +545,96 @@ export class AiDirector {
     return await this.decide(run, true);
   }
 
+  private responseInterruptions(actorId: string, afterSequence: number): ResponseInterruption[] {
+    const awareness = this.service.world.experience?.awareness[actorId] ?? [];
+    const interruptions: ResponseInterruption[] = [];
+    for (let index = awareness.length - 1; index >= 0; index--) {
+      const entry = awareness[index]!;
+      if (entry.sequence <= afterSequence) break;
+      if (
+        entry.importance < RESPONSE_INTERRUPTION.importance ||
+        (entry.urgency ?? 0) < RESPONSE_INTERRUPTION.urgency
+      )
+        continue;
+      interruptions.push({
+        eventId: entry.eventId,
+        sequence: entry.sequence,
+        importance: entry.importance,
+        urgency: entry.urgency ?? 0,
+        triggerKind: entry.triggerKind,
+        text: entry.text,
+      });
+    }
+    return interruptions.reverse();
+  }
+
+  private async retrySupersededResponse(
+    run: Running,
+    speech: boolean,
+    attempt: number,
+    previousEvidenceIds: string[],
+    interruptions: ResponseInterruption[],
+  ): Promise<void> {
+    await this.log.record(`${run.job.id}:attempt:${attempt}:superseded`, 'Generation superseded', {
+      threshold: RESPONSE_INTERRUPTION,
+      interruptions,
+      decision: 'retry once with the interrupting triggers included',
+    });
+    run.responseWatch = undefined;
+    run.supersession = undefined;
+    if (run.controller.signal.aborted) run.controller = new AbortController();
+    await this.decide(run, speech, attempt + 1, [
+      ...new Set([...previousEvidenceIds, ...interruptions.map((entry) => entry.eventId)]),
+    ]);
+  }
+
   private async decide(
     run: Running,
     speech: boolean,
     attempt = 0,
     interruptionEvidenceIds: string[] = [],
   ): Promise<void> {
+    try {
+      await this.decideAttempt(run, speech, attempt, interruptionEvidenceIds);
+    } catch (error) {
+      const supersession = run.supersession;
+      if (
+        attempt === 0 &&
+        supersession?.attempt === attempt &&
+        !run.cancelReason &&
+        !this.stopped &&
+        !(this.service.paused && run.job.kind === 'thought')
+      ) {
+        await this.retrySupersededResponse(
+          run,
+          speech,
+          attempt,
+          interruptionEvidenceIds,
+          supersession.interruptions,
+        );
+        return;
+      }
+      throw error;
+    } finally {
+      if (run.responseWatch?.attempt === attempt) run.responseWatch = undefined;
+    }
+  }
+
+  private async decideAttempt(
+    run: Running,
+    speech: boolean,
+    attempt: number,
+    interruptionEvidenceIds: string[],
+  ): Promise<void> {
     const actorId = run.job.request.npcId ?? 'ada';
+    run.responseWatch = {
+      actorId,
+      afterSequence: Math.max(
+        0,
+        ...(this.service.world.experience?.awareness[actorId] ?? []).map((entry) => entry.sequence),
+      ),
+      attempt,
+    };
     const evidenceIds = [
       ...(run.playerSpeechEventId
         ? [run.playerSpeechEventId]
@@ -586,46 +692,25 @@ export class AiDirector {
     );
     this.current(run);
     await this.log.record(
-      `${run.job.id}:context`,
+      `${run.job.id}:attempt:${attempt}:context`,
       'Context and retrieval',
       prepared.diagnostics,
       prepared.prompt,
       contextStartedAt,
     );
-    const urgentInterruptions = () =>
-      (this.service.world.experience?.awareness[actorId] ?? [])
-        .filter(
-          (entry) =>
-            entry.sequence > prepared.awarenessSequence &&
-            entry.importance >= RESPONSE_INTERRUPTION.importance &&
-            (entry.urgency ?? 0) >= RESPONSE_INTERRUPTION.urgency,
-        )
-        .map((entry) => ({
-          eventId: entry.eventId,
-          sequence: entry.sequence,
-          importance: entry.importance,
-          urgency: entry.urgency ?? 0,
-          triggerKind: entry.triggerKind,
-          text: entry.text,
-        }));
     const retryForUrgentAwareness = async () => {
       if (attempt > 0) return false;
-      const interruptions = urgentInterruptions();
+      const interruptions =
+        run.supersession?.attempt === attempt
+          ? run.supersession.interruptions
+          : this.responseInterruptions(actorId, prepared.awarenessSequence);
       if (!interruptions.length) return false;
-      await this.log.record(
-        `${run.job.id}:attempt:${attempt}:superseded`,
-        'Generation superseded',
-        {
-          threshold: RESPONSE_INTERRUPTION,
-          interruptions,
-          decision: 'retry once with the interrupting triggers included',
-        },
-      );
-      await this.decide(
+      await this.retrySupersededResponse(
         run,
         speech,
-        attempt + 1,
-        interruptions.map((entry) => entry.eventId),
+        attempt,
+        interruptionEvidenceIds,
+        interruptions,
       );
       return true;
     };
@@ -686,7 +771,7 @@ export class AiDirector {
     if (policy.reflection && choice(judged.answers['reflection']) === 'yes')
       await this.maintenance.enqueue(actorId, run.job.id, stimulus);
     await this.log.record(
-      `${run.job.id}:routing`,
+      `${run.job.id}:attempt:${attempt}:routing`,
       'Semantic decision',
       {
         offeredRoutes: criteria,
@@ -700,7 +785,9 @@ export class AiDirector {
     );
     const trace = await this.log.read(run.job.id);
     if (trace) await this.log.save({ ...trace, route: route ?? 'deferred' });
+    if (await retryForUrgentAwareness()) return;
     if (!route || !Object.hasOwn(criteria, route) || route === 'native') {
+      run.responseWatch = undefined;
       await this.update(
         run,
         'completed',
@@ -716,20 +803,34 @@ export class AiDirector {
     }
     if (semanticTrigger.checkActionSelection) {
       const actionsStartedAt = new Date().toISOString();
-      const withActions = await selectDecisionActions(
-        prepared,
-        async (request) =>
-          await this.call(
-            run,
-            'jev',
-            `attempt:${attempt}:action-attention`,
-            async (id) =>
-              await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
-          ),
-      );
+      prepared = refreshDecisionActions(this.service, prepared);
+      let withActions: Awaited<ReturnType<typeof selectDecisionActions>>;
+      try {
+        withActions = await selectDecisionActions(
+          prepared,
+          async (request) =>
+            await this.call(
+              run,
+              'jev',
+              `attempt:${attempt}:action-attention`,
+              async (id) =>
+                await this.client.judge({
+                  ...request,
+                  requestId: id,
+                  signal: run.controller.signal,
+                }),
+            ),
+        );
+      } catch (error) {
+        if (run.controller.signal.aborted || run.cancelReason || run.supersession) throw error;
+        withActions = fallbackDecisionActions(
+          prepared,
+          error instanceof Error ? error.message : 'Action relevance unavailable',
+        );
+      }
       prepared = withActions;
       await this.log.record(
-        `${run.job.id}:action-context`,
+        `${run.job.id}:attempt:${attempt}:action-context`,
         'Action context',
         { actionSelection: withActions.diagnostics.actionSelection, trigger: semanticTrigger },
         prepared.offered,
@@ -773,6 +874,7 @@ export class AiDirector {
       { accepted: true },
       parsingStartedAt,
     );
+    run.responseWatch = undefined;
     const commitStartedAt = new Date().toISOString();
     const commit = () =>
       this.service.transition((world) => {

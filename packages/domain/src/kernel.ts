@@ -1013,6 +1013,8 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
           audience: [actorId],
           ...(aware.sourceId ? { actorId: aware.sourceId } : {}),
           ...(aware.targetId ? { targetId: aware.targetId } : {}),
+          // Actor context is prose-first. Structured event fields stay authoritative in
+          // world state; only the event's authored context text crosses this boundary.
           ...(aware.content !== undefined ? { data: { text: aware.content } } : {}),
         }))
       : world.events.filter((event) => event.audience.includes(actorId)).slice(-24),

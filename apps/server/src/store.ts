@@ -77,6 +77,8 @@ function collectChanges(
     Array.isArray(next) &&
     next.length === previous.length + appendEventCount
   ) {
+    // WorldService admits this fast path only for explicitly declared append-only
+    // transitions; ordinary and editor commits use the structural diff below.
     if (appendEventCount)
       operations.push({
         op: 'splice',

@@ -15,6 +15,7 @@ import {
   canRecoverAtCamp,
   GOD_SPAWN_OPTIONS,
   TRAIT_BANK,
+  type WorldEvent,
 } from '@open-legend/domain';
 import { describeEntity } from './entity-description.js';
 import type { WorldService } from './world-service.js';
@@ -35,6 +36,14 @@ function memoizer(service: WorldService) {
       });
     return value;
   };
+}
+
+function isJournalEvent(event: { type: string; text: string; data?: Record<string, unknown> }) {
+  return !(
+    event.type === 'action-started' &&
+    (event.data?.['actionType'] === 'move' ||
+      (event.data?.['actionType'] === undefined && event.text.endsWith(' started move.')))
+  );
 }
 
 /** This explicit projection is a security boundary: never serialize WorldState to the browser. */
@@ -268,10 +277,28 @@ export async function projectView(
     'visibleEvents',
     [world.events, world.experience?.awareness['player']],
     () => {
-      const aware = new Set(world.experience?.awareness['player']?.map((a) => a.eventId));
-      return world.events.filter((event) =>
-        world.experience ? aware.has(event.id) : event.audience.includes('player'),
-      );
+      const awareness = world.experience?.awareness['player'];
+      const visible = awareness
+        ? awareness
+            .slice(-512)
+            .reverse()
+            .map((entry) => service.worldEvent(entry.eventId))
+            .filter((event) => event !== undefined)
+        : world.events
+            .slice(-512)
+            .reverse()
+            .filter((event) => event.audience.includes('player'));
+      const bounded: WorldEvent[] = [];
+      let journal = 0;
+      let conversation = 0;
+      for (const event of visible) {
+        bounded.push(event);
+        if (isJournalEvent(event)) journal++;
+        if (event.type === 'speech' || typeof event.data?.['responseId'] === 'string')
+          conversation++;
+        if (journal >= 60 && conversation >= 30) break;
+      }
+      return bounded.reverse();
     },
   );
   const usage = await memo('usage', [telemetryRevision], () =>
@@ -455,15 +482,8 @@ export async function projectView(
     ),
     events: memo<GameView['events']>('events', [events], () =>
       events
-        .filter((event) => {
-          // Walking is routine journal noise. Retain internal events, and recognize
-          // old saves whose action-started records predate structured action types.
-          return !(
-            event.type === 'action-started' &&
-            (event.data?.['actionType'] === 'move' ||
-              (event.data?.['actionType'] === undefined && event.text.endsWith(' started move.')))
-          );
-        })
+        // Recognize legacy movement records that predate structured action types.
+        .filter(isJournalEvent)
         .slice(-60)
         .map((event) => ({
           id: event.id,

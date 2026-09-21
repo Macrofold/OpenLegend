@@ -7,6 +7,7 @@ import type { ExperienceEntry, MemoryRecord, Transition, WorldState } from './ty
 export const EXPERIENCE_LIMITS = {
   rawHours: 6,
   recallRaw: 512,
+  conversationSpeech: 512,
   protectedImportance: 8,
   backlog: 8192,
   summaries: 256,
@@ -96,6 +97,20 @@ export type ExperienceMutation =
   | { operation: 'update'; entryId: string; entry: ExperienceEntry }
   | { operation: 'delete'; entryId: string };
 
+export function experienceEntries(
+  world: WorldState,
+  actorId: string,
+): Map<string, ExperienceEntry> {
+  const entries = new Map<string, ExperienceEntry>();
+  for (const value of world.experience?.awareness[actorId] ?? [])
+    entries.set(`awareness:${value.eventId}`, { source: 'awareness', value });
+  for (const value of world.memories[actorId] ?? [])
+    entries.set(`memory:${value.id}`, { source: 'memory', value });
+  for (const value of world.experience?.summaries[actorId] ?? [])
+    entries.set(`summary:${value.id}`, { source: 'summary', value });
+  return entries;
+}
+
 function stableExperienceUpdate(previous: ExperienceEntry, next: ExperienceEntry): boolean {
   if (previous.source !== next.source) return false;
   const editable =
@@ -120,6 +135,7 @@ export function mutateExperience(
   migrateCognition(world);
   const mutations = Array.isArray(mutation) ? mutation : [mutation];
   if (!mutations.length) return [];
+  const entries = experienceEntries(world, actorId);
   if (mutations.some((change) => change.operation === 'add')) {
     if (mutations.some((change) => change.operation !== 'add')) return null;
     const additions = mutations.map((change) => {
@@ -133,7 +149,7 @@ export function mutateExperience(
     );
     if (
       new Set(keys).size !== keys.length ||
-      keys.some((key) => experienceEntry(world, actorId, key)) ||
+      keys.some((key) => entries.has(key)) ||
       additions.some((entry) => 'actorId' in entry.value && entry.value.actorId !== actorId)
     )
       return null;
@@ -146,19 +162,30 @@ export function mutateExperience(
     return [];
   }
 
+  if (
+    new Set(mutations.map((change) => (change.operation === 'add' ? '' : change.entryId))).size !==
+    mutations.length
+  )
+    return null;
   const resolved = mutations.map((change) => ({
     change,
-    previous:
-      change.operation === 'add' ? undefined : experienceEntry(world, actorId, change.entryId),
+    previous: change.operation === 'add' ? undefined : entries.get(change.entryId),
   }));
   if (resolved.some(({ previous }) => !previous)) return null;
+  const replacements = new Map<ExperienceEntry, ExperienceEntry['value']>();
+  for (const { change, previous } of resolved) {
+    if (!previous || change.operation !== 'update') continue;
+    if (!stableExperienceUpdate(previous, change.entry)) return null;
+    const replacement = cloneValue(change.entry.value);
+    if ('actorId' in replacement && replacement.actorId !== actorId) return null;
+    replacements.set(previous, replacement);
+  }
   const updatedSources: string[] = [];
   const deletedSources: string[] = [];
   for (const { change, previous } of resolved) {
     if (!previous || change.operation === 'add') return null;
     const sourceId = previous.source === 'awareness' ? previous.value.eventId : previous.value.id;
     if (change.operation === 'update') {
-      if (!stableExperienceUpdate(previous, change.entry)) return null;
       const awarenessTextChanged =
         previous.source === 'awareness' &&
         change.entry.source === 'awareness' &&
@@ -167,8 +194,7 @@ export function mutateExperience(
         previous.source === 'awareness' &&
         change.entry.source === 'awareness' &&
         previous.value.content !== change.entry.value.content;
-      const replacement = cloneValue(change.entry.value);
-      if ('actorId' in replacement && replacement.actorId !== actorId) return null;
+      const replacement = replacements.get(previous)!;
       Object.assign(previous.value, replacement);
       if (previous.source === 'awareness' && awarenessTextChanged && !awarenessContentChanged)
         previous.value.content = previous.value.text;
@@ -391,6 +417,8 @@ export function experiences(
       summary: a.text,
       entityIds: a.entityIds,
       importance: a.importance,
+      eventType: a.eventType,
+      speakerId: a.sourceId,
     }));
   const summaries: MemoryRecord[] = (state?.summaries[actorId] ?? [])
     .filter(

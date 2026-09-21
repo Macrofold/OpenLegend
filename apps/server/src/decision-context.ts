@@ -8,49 +8,72 @@ import type { WorldService } from './world-service.js';
 import { COGNITION_VERSION, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
 import { readableDecisionContext } from './response-context.js';
 import { batchedAttentionQuestions } from './jev-questions.js';
+const RECENT_CONVERSATION_EVENTS = 32;
+
 function currentConversationEvidenceIds(
   world: WorldService['world'],
   actorId: string,
   requiredIds: string[],
-): string[] {
-  const trigger = [...world.events]
-    .reverse()
-    .find((event) => requiredIds.includes(event.id) && event.type === 'speech');
+): { recent: string[]; older: string[] } {
+  const required = new Set(requiredIds);
+  const awareness = world.experience?.awareness[actorId] ?? [];
+  const recentEvents = new Map(world.events.map((event) => [event.id, event]));
+  let triggerIndex = -1;
+  for (let index = awareness.length - 1; index >= 0; index--) {
+    const entry = awareness[index]!;
+    if (
+      required.has(entry.eventId) &&
+      (entry.eventType === 'speech' || recentEvents.get(entry.eventId)?.type === 'speech')
+    ) {
+      triggerIndex = index;
+      break;
+    }
+  }
+  const trigger = triggerIndex >= 0 ? awareness[triggerIndex] : undefined;
+  const triggerEvent = trigger ? recentEvents.get(trigger.eventId) : undefined;
   const participants = new Set(
-    [actorId, trigger?.actorId, trigger?.targetId].filter((id): id is string => !!id),
+    [
+      actorId,
+      trigger?.sourceId ?? triggerEvent?.actorId,
+      trigger?.targetId ?? triggerEvent?.targetId,
+    ].filter((id): id is string => !!id),
   );
-  const aware = new Set(
-    (world.experience?.awareness[actorId] ?? []).map((experience) => experience.eventId),
-  );
-  if (!trigger) return [];
+  if (!trigger) return { recent: [], older: [] };
   const ids: string[] = [];
   let previousAt = trigger.at;
-  const triggerIndex = world.events.findIndex((event) => event.id === trigger.id);
   for (let index = triggerIndex; index >= 0; index--) {
-    const event = world.events[index]!;
+    const entry = awareness[index]!;
+    const event = recentEvents.get(entry.eventId);
+    const sourceId = entry.sourceId ?? event?.actorId;
+    const targetId = entry.targetId ?? event?.targetId;
+    const speech = entry.eventType === 'speech' || event?.type === 'speech';
     // Until durable conversation IDs exist, a two-hour gap is an explicit heuristic
     // boundary. It tolerates provider latency at accelerated simulation speeds.
-    if (previousAt - event.at > 7200) break;
+    if (previousAt - entry.at > 7200) break;
     if (
-      aware.has(event.id) &&
-      event.actorId &&
-      event.targetId &&
-      event.actorId !== event.targetId &&
-      participants.has(event.actorId) &&
-      participants.has(event.targetId)
+      speech &&
+      sourceId &&
+      targetId &&
+      sourceId !== targetId &&
+      participants.has(sourceId) &&
+      participants.has(targetId)
     ) {
-      ids.push(event.id);
-      previousAt = event.at;
+      ids.push(entry.eventId);
+      previousAt = entry.at;
     } else if (
-      event.type === 'speech' &&
-      ((event.actorId && participants.has(event.actorId)) ||
-        (event.targetId && participants.has(event.targetId)))
+      speech &&
+      ((sourceId && participants.has(sourceId)) || (targetId && participants.has(targetId)))
     ) {
       // A participant addressing somebody else starts another exchange.
       break;
     }
   }
-  return ids.reverse();
+  ids.reverse();
+  const historyIds = ids.filter((id) => !required.has(id));
+  return {
+    recent: historyIds.slice(-RECENT_CONVERSATION_EVENTS),
+    older: historyIds.slice(0, -RECENT_CONVERSATION_EVENTS),
+  };
 }
 export async function prepareDecision(
   service: WorldService,
@@ -72,15 +95,19 @@ export async function prepareDecision(
     0,
     ...(world.experience?.awareness[actorId] ?? []).map((entry) => entry.sequence),
   );
-  const automaticIds =
+  const conversation =
     includeCurrentConversation ||
     requiredIds.some((id) =>
       world.events.some((event) => event.id === id && event.type === 'speech'),
     )
       ? currentConversationEvidenceIds(world, actorId, requiredIds)
-      : [];
+      : { recent: [], older: [] };
+  const automaticIds = conversation.recent;
   const availableActions = npcCandidates(service, actorId);
-  const candidates = candidateSet(world, actorId, observed, requiredIds, automaticIds);
+  const candidates = candidateSet(world, actorId, observed, requiredIds, automaticIds, [
+    ...conversation.older,
+    ...conversation.recent,
+  ]);
   const snapshotActor = observed.actor.actor!;
   const automaticIdSet = new Set(automaticIds);
   const triggerIdSet = new Set(requiredIds);
@@ -98,7 +125,7 @@ export async function prepareDecision(
     conversation: candidates
       .filter(
         (candidate) =>
-          candidate.kind === 'memory' &&
+          candidate.kind === 'conversation' &&
           automaticIdSet.has(candidate.id) &&
           !triggerIdSet.has(candidate.id),
       )
@@ -162,13 +189,8 @@ export async function prepareDecision(
     body: `${actor.fullness < 30 ? 'I am very hungry. ' : ''}${actor.energy < 25 ? 'I am exhausted. ' : ''}${actor.health < 40 ? 'I am seriously injured. ' : ''}${actor.rest?.asleep ? 'I am asleep.' : `I am ${actor.action?.type ?? 'idle'}.`}`,
     goal: actor.goal,
   };
-  const conversationIds = new Set(automaticIds);
   context['conversation'] = selection.selected
-    .filter(
-      (entry) =>
-        entry.sourceIds?.some((id) => conversationIds.has(id) && !triggerIdSet.has(id)) ??
-        (conversationIds.has(entry.id) && !triggerIdSet.has(entry.id)),
-    )
+    .filter((entry) => entry.kind === 'conversation' && !triggerIdSet.has(entry.id))
     .map((entry) => entry.text);
   for (const [name, kind] of [
     ['surroundings', 'entity'],
@@ -177,7 +199,7 @@ export async function prepareDecision(
     ['recall', 'memory'],
   ]) {
     const texts = selection.selected
-      .filter((c) => c.kind === kind && (kind !== 'memory' || !conversationIds.has(c.id)))
+      .filter((c) => c.kind === kind)
       .map((c) => `${c.text} [${c.kind === 'entity' ? c.entityIds.join(', ') : c.id}]`);
     if (texts.length) context[name!] = texts;
   }
@@ -190,6 +212,10 @@ export async function prepareDecision(
     )
   )
     context['food'] = 'I have no food.';
+  const triggerEntityIds = (currentWorld.experience?.awareness[actorId] ?? [])
+    .filter((entry) => triggerIdSet.has(entry.eventId))
+    .flatMap((entry) => [entry.sourceId, entry.targetId, ...entry.entityIds])
+    .filter((id): id is string => !!id && Object.hasOwn(currentWorld.entities, id));
   const binding: CognitionBinding = {
     actorId,
     decisionId: jobId,
@@ -198,9 +224,15 @@ export async function prepareDecision(
     purpose: 'thought',
     watermark: Math.max(0, ...selection.selected.map((c) => c.at)),
     evidenceIds: selection.selected
-      .filter((c) => c.kind === 'memory')
+      .filter((c) => c.kind === 'memory' || c.kind === 'conversation')
       .flatMap((c) => c.sourceIds ?? [c.id]),
-    entityIds: [actorId, ...currentObserved.visibleEntities.map((e) => e.id)],
+    entityIds: [
+      ...new Set([
+        actorId,
+        ...currentObserved.visibleEntities.map((e) => e.id),
+        ...triggerEntityIds,
+      ]),
+    ],
     expectedPlan: actor.planGeneration,
     restEpisode: actor.action?.type === 'rest' ? actor.action.id : null,
     actions: {},
@@ -305,6 +337,62 @@ export async function selectDecisionActions(
         candidates: candidates.length,
         offered: offered.length,
         answers: judged.answers,
+      },
+    },
+  };
+}
+
+/** Refresh cheap native feasibility after provider latency without rebuilding recall. */
+export function refreshDecisionActions(
+  service: WorldService,
+  prepared: Awaited<ReturnType<typeof prepareDecision>>,
+) {
+  const actor = service.world.entities[prepared.binding.actorId]?.actor;
+  if (!actor) throw new Error('Actor unavailable.');
+  return {
+    ...prepared,
+    actionCandidates: npcCandidates(service, prepared.binding.actorId).slice(0, 24),
+    binding: { ...prepared.binding, expectedPlan: actor.planGeneration },
+  };
+}
+
+/** Optional action relevance must not turn an otherwise valid reply into a failure. */
+export function fallbackDecisionActions(
+  prepared: Awaited<ReturnType<typeof prepareDecision>>,
+  reason: string,
+) {
+  const candidates = prepared.actionCandidates;
+  const actions = Object.fromEntries(
+    candidates.map((candidate, index) => [
+      `a${index}`,
+      candidate.command
+        ? domainCommand(candidate.command, prepared.binding.actorId, prepared.binding.decisionId)
+        : null,
+    ]),
+  );
+  const offered = candidates.map((candidate, index) => ({
+    id: `a${index}`,
+    description: candidate.description,
+  }));
+  const prompt = readableDecisionContext(prepared.context, offered, true);
+  const inputBytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
+  if (inputBytes > 100000)
+    throw new Error('Complete accepted inner world and required context exceed the input budget.');
+  return {
+    ...prepared,
+    binding: { ...prepared.binding, actions },
+    offered,
+    prompt,
+    diagnostics: {
+      ...prepared.diagnostics,
+      inputBytes,
+      estimatedInputTokens: Math.ceil(inputBytes / 3),
+      actionSelection: {
+        status: 'fallback: action relevance unavailable',
+        reason,
+        candidates: candidates.length,
+        offered: offered.length,
+        answers: {},
       },
     },
   };

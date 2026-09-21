@@ -15,6 +15,7 @@ import {
   advanceWorld,
   admitDeclaration,
   experienceEntry,
+  experienceEntries,
   editPerson as editPersonState,
   editWorldEvents as editWorldEventsState,
   observeActor,
@@ -76,7 +77,13 @@ export const requestIdSchema = id;
 
 function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
   const flags = { ...saved.milestones };
-  if (!flags['talk'] && events.some((event) => event.type === 'speech' && event.actorId === 'ada'))
+  if (
+    !flags['talk'] &&
+    events.some(
+      (event) =>
+        event.type === 'speech' && event.actorId === 'ada' && event.audience.includes('player'),
+    )
+  )
     flags['talk'] = true;
   if (
     !flags['hunt'] &&
@@ -111,6 +118,7 @@ function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
 /** Application coordination only: pure rules live in domain; all I/O is through a store. */
 export class WorldService {
   private saved!: SavedWorld;
+  private worldEventsById = new Map<string, WorldEvent>();
   private persistedRevision = 0;
   private persistedEventCount = 0;
   private viewRevision = 0;
@@ -177,8 +185,10 @@ export class WorldService {
       }),
     };
     this.saved = updateMilestones(this.saved, this.saved.world.events);
-    this.persistedRevision = await store.commit(this.persistedRevision, this.saved, undefined, 0);
+    // Startup migrations may replace historical branches, so use the ordinary diff once.
+    this.persistedRevision = await store.commit(this.persistedRevision, this.saved);
     this.persistedEventCount = this.saved.world.events.length;
+    this.worldEventsById = new Map(this.saved.world.events.map((event) => [event.id, event]));
     this.viewRevision = this.persistedRevision;
     this.lastRoutinePersistAt = this.now();
     await store.recoverInterruptedWork();
@@ -186,6 +196,9 @@ export class WorldService {
 
   get world(): WorldState {
     return this.saved.world;
+  }
+  worldEvent(eventId: string): WorldEvent | undefined {
+    return this.worldEventsById.get(eventId);
   }
   // The current host has one local player. A future account adapter supplies this
   // principal; neither preferences nor action queries accept a client-selected actor.
@@ -261,8 +274,8 @@ export class WorldService {
 
   private async commit(
     saved: SavedWorld,
-    invalidatedMemoryIds?: Record<string, string[]>,
-    eventMode: 'append' | 'diff' = 'append',
+    invalidatedMemoryIds: Record<string, string[]> | undefined,
+    eventMode: 'unchanged' | 'append' | 'diff',
   ): Promise<boolean> {
     if (this.storageError) return false;
     try {
@@ -278,6 +291,18 @@ export class WorldService {
           initializeActorTraits(world);
         }),
       };
+      if (eventMode === 'unchanged' && saved.world.events !== this.saved.world.events)
+        throw new Error(
+          'A transition declared unchanged events but replaced the event collection.',
+        );
+      if (
+        eventMode === 'append' &&
+        (saved.world.events.length < this.saved.world.events.length ||
+          (this.saved.world.events.length > 0 &&
+            saved.world.events[this.saved.world.events.length - 1] !==
+              this.saved.world.events[this.saved.world.events.length - 1]))
+      )
+        throw new Error('A transition declared append-only events but changed retained history.');
       const appendEventCount =
         eventMode === 'append' && saved.world.events.length >= this.persistedEventCount
           ? saved.world.events.length - this.persistedEventCount
@@ -293,6 +318,11 @@ export class WorldService {
         appendEventCount,
       );
       this.saved = saved;
+      if (eventMode === 'diff')
+        this.worldEventsById = new Map(saved.world.events.map((event) => [event.id, event]));
+      else
+        for (const event of saved.world.events.slice(this.worldEventsById.size))
+          this.worldEventsById.set(event.id, event);
       this.persistedEventCount = saved.world.events.length;
       this.unpersisted = false;
       this.lastRoutinePersistAt = this.now();
@@ -307,6 +337,8 @@ export class WorldService {
   }
 
   private acceptRoutine(saved: SavedWorld): void {
+    for (const event of saved.world.events.slice(this.worldEventsById.size))
+      this.worldEventsById.set(event.id, event);
     this.saved = saved;
     this.unpersisted = true;
     this.notify(false);
@@ -315,7 +347,7 @@ export class WorldService {
   async flush(): Promise<void> {
     await this.mutate(async () => {
       await this.ready;
-      if (this.unpersisted && !(await this.commit(this.saved)))
+      if (this.unpersisted && !(await this.commit(this.saved, undefined, 'append')))
         throw new Error(this.storageError ?? 'The pending world changes could not be saved.');
     });
   }
@@ -371,7 +403,7 @@ export class WorldService {
         paused: next.manuallyPaused || this.absent || this.storageError !== null,
       };
       this.debtSeconds = 0;
-      const ok = await this.commit(next);
+      const ok = await this.commit(next, undefined, 'unchanged');
       return {
         ok,
         code: ok ? 'control' : 'storage',
@@ -390,7 +422,11 @@ export class WorldService {
 
       this.debtSeconds = 0;
       if (this.world.paused !== this.paused)
-        await this.commit({ ...this.saved, world: { ...this.world, paused: this.paused } });
+        await this.commit(
+          { ...this.saved, world: { ...this.world, paused: this.paused } },
+          undefined,
+          'unchanged',
+        );
       else this.notify(false);
     });
   }
@@ -436,7 +472,7 @@ export class WorldService {
       for (let step = 0; step < steps; step++) world = advanceWorld(world, 1).world;
       const saved = { ...this.saved, world };
       if (this.now() - this.lastRoutinePersistAt >= 1000) {
-        if (await this.commit(saved)) this.debtSeconds -= steps;
+        if (await this.commit(saved, undefined, 'append')) this.debtSeconds -= steps;
       } else {
         this.acceptRoutine(saved);
         this.debtSeconds -= steps;
@@ -451,7 +487,13 @@ export class WorldService {
       if (this.paused)
         return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
       const result = operation(this.world);
-      if (!(await this.commit({ ...this.saved, world: result.world }, result.invalidatedMemoryIds)))
+      if (
+        !(await this.commit(
+          { ...this.saved, world: result.world },
+          result.invalidatedMemoryIds,
+          'append',
+        ))
+      )
         return { ok: false, code: 'storage', message: this.storageError! };
       return { ok: result.outcome.ok, code: result.outcome.code, message: result.outcome.message };
     });
@@ -463,7 +505,13 @@ export class WorldService {
 
       const result = operation(this.world);
       if (!result.outcome.ok) return result.outcome;
-      if (!(await this.commit({ ...this.saved, world: result.world }, result.invalidatedMemoryIds)))
+      if (
+        !(await this.commit(
+          { ...this.saved, world: result.world },
+          result.invalidatedMemoryIds,
+          'append',
+        ))
+      )
         return { ok: false, code: 'storage', message: this.storageError! };
       return result.outcome;
     });
@@ -571,9 +619,14 @@ export class WorldService {
           message: 'This person was edited elsewhere. Refresh before saving these fields.',
           revision: this.viewRevision,
         };
+      const memoryHashes = new Map(
+        [...experienceEntries(this.world, actorId)].map(([key, entry]) => [
+          key,
+          digest(entry.value),
+        ]),
+      );
       for (const change of memoryChanges) {
-        const current = experienceEntry(this.world, actorId, change.entryId);
-        if (!current || digest(current.value) !== change.expectedHash)
+        if (memoryHashes.get(change.entryId) !== change.expectedHash)
           return {
             ok: false,
             code: 'stale',
@@ -587,7 +640,13 @@ export class WorldService {
         memoryChanges,
       });
       if (!result.outcome.ok) return result.outcome;
-      if (!(await this.commit({ ...this.saved, world: result.world }, result.invalidatedMemoryIds)))
+      if (
+        !(await this.commit(
+          { ...this.saved, world: result.world },
+          result.invalidatedMemoryIds,
+          'unchanged',
+        ))
+      )
         return { ok: false, code: 'storage', message: this.storageError! };
       return { ...result.outcome, revision: this.viewRevision };
     });
@@ -613,7 +672,7 @@ export class WorldService {
 
   async worldEventJson(id: string) {
     await this.ready;
-    const event = this.world.events.find((value) => value.id === id);
+    const event = this.worldEvent(id);
     return event
       ? { ok: true as const, hash: digest(event), json: JSON.stringify(event, null, 2) }
       : { ok: false as const, code: 'event', message: 'That world event no longer exists.' };
@@ -625,7 +684,7 @@ export class WorldService {
     return this.mutate(async () => {
       await this.ready;
       for (const change of changes) {
-        const event = this.world.events.find((event) => event.id === change.id);
+        const event = this.worldEvent(change.id);
         if (!event || digest(event) !== change.expectedHash)
           return {
             ok: false,
@@ -769,6 +828,7 @@ export class WorldService {
       const ok = await this.commit(
         { ...this.saved, world: corrected.world },
         { [actorId]: invalidated },
+        'unchanged',
       );
       return {
         ok,
@@ -798,6 +858,7 @@ export class WorldService {
       const ok = await this.commit(
         { ...this.saved, world: forgotten.world },
         forgotten.invalidatedMemoryIds,
+        'unchanged',
       );
       return {
         ok,

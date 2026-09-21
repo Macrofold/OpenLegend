@@ -73,7 +73,7 @@ export function readableDecisionContext(
     `## Me\n${context['identity']}\n${context['aboutMe']}\n${context['body']}\nMy current goal: ${context['goal']}${context['food'] ? `\n${context['food']}` : ''}`,
     `## Trigger\n${context['stimulus']}`,
     '## Task\nChoose whether to speak, act, think privately, or any combination. A direct question normally deserves a direct conversational reply; silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.',
-    `## Conversation so far\nRetained speech and directed events I personally experienced in this exchange:\n${list(context['conversation'])}`,
+    `## Conversation so far\nSpeech I personally experienced in this exchange:\n${list(context['conversation'])}`,
     `## Current time\n${context['now']}`,
     `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
     `## Nearby actors and objects\n${list(context['surroundings'])}`,

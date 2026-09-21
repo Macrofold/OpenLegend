@@ -21,6 +21,14 @@ export function consolidationBatch(
 ): ConsolidationBatch | null {
   const all = experiences(world, actorId, true);
   const summaries = all.filter((m) => m.kind === 'reflection');
+  // Keep a bounded verbatim source pool for active conversation retrieval.
+  const retainedSpeech = new Set(
+    all
+      .filter((memory) => memory.kind === 'episode' && memory.eventType === 'speech')
+      .sort((a, b) => b.at - a.at || (b.sequence ?? 0) - (a.sequence ?? 0))
+      .slice(0, EXPERIENCE_LIMITS.conversationSpeech)
+      .map((memory) => memory.id),
+  );
   let sources: MemoryRecord[];
   if (mode === 'daily') {
     if (reviewDay === undefined || reviewDay < 0) return null;
@@ -29,14 +37,24 @@ export function consolidationBatch(
     // One dream review sees the whole completed day: hourly summaries and any raw
     // evidence that maintenance has not yet safely replaced.
     sources = all
-      .filter((m) => (m.kind === 'episode' || m.kind === 'reflection') && m.at >= from && m.at < to)
+      .filter(
+        (m) =>
+          (m.kind === 'reflection' || (m.kind === 'episode' && !retainedSpeech.has(m.id))) &&
+          m.at >= from &&
+          m.at < to,
+      )
       .sort(
         (a, b) => a.at - b.at || (a.sequence ?? 0) - (b.sequence ?? 0) || a.id.localeCompare(b.id),
       );
     if (sources.length < 2) return null;
   } else {
     const raw = all
-      .filter((m) => m.kind === 'episode' && m.at <= world.simTime - 3600)
+      .filter(
+        (m) =>
+          m.kind === 'episode' &&
+          !retainedSpeech.has(m.id) &&
+          m.at <= world.simTime - EXPERIENCE_LIMITS.rawHours * 3600,
+      )
       .sort((a, b) => a.at - b.at);
     if (!raw.length) return null;
     // Keep each batch inside one six-hour neighborhood and one calendar day. Daily

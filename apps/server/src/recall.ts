@@ -12,7 +12,7 @@ import type { WorldService } from './world-service.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 export interface AttentionCandidate {
   id: string;
-  kind: 'memory' | 'entity' | 'possession' | 'knowledge' | 'action';
+  kind: 'memory' | 'conversation' | 'entity' | 'possession' | 'knowledge' | 'action';
   text: string;
   revision: string;
   required: boolean;
@@ -37,9 +37,11 @@ export function candidateSet(
   observed: NonNullable<ReturnType<WorldService['observe']>>,
   requiredIds: string[],
   automaticIds: string[] = [],
+  conversationIds: string[] = [],
 ): AttentionCandidate[] {
   const requiredIdSet = new Set(requiredIds);
   const automaticIdSet = new Set(automaticIds);
+  const conversationIdSet = new Set(conversationIds);
   const corrections = world.experience?.corrections?.[actorId] ?? {};
   const correctedIdSet = new Set(Object.values(corrections));
   const matches = (ids: Set<string>, memory: { id: string; eventId?: string }) =>
@@ -48,16 +50,17 @@ export function candidateSet(
   const included = new Set(recallable.map((m) => m.id));
   // The normal raw-source cap must not hide the event that triggered this decision.
   for (const memory of experiences(world, actorId, true)) {
-    const required =
+    const include =
       matches(requiredIdSet, memory) ||
       matches(automaticIdSet, memory) ||
+      matches(conversationIdSet, memory) ||
       !!corrections[memory.id] ||
       correctedIdSet.has(memory.id);
-    if (required && !included.has(memory.id)) recallable.push(memory);
+    if (include && !included.has(memory.id)) recallable.push(memory);
   }
   const memories: AttentionCandidate[] = recallable.map((m) => ({
     id: m.id,
-    kind: 'memory',
+    kind: matches(conversationIdSet, m) ? 'conversation' : 'memory',
     text: `${gameTime(m.at)} [${m.source}]: ${m.summary}`,
     revision: digest(m),
     required:
@@ -78,11 +81,11 @@ export function candidateSet(
       candidates.push(memory);
       continue;
     }
-    const key = memory.text
+    const key = `${memory.kind}:${memory.text
       .replace(/^Day \d+, \d\d:\d\d /, '')
       .trim()
       .replace(/\s+/g, ' ')
-      .toLocaleLowerCase();
+      .toLocaleLowerCase()}`;
     const existing = duplicateMemories.get(key);
     if (!existing) {
       duplicateMemories.set(key, memory);
@@ -229,6 +232,7 @@ export class RecallService {
       (candidate) => !candidate.required && contextBytes(candidate) <= remainingBytes,
     );
     const sectionKinds: AttentionCandidate['kind'][] = [
+      'conversation',
       'memory',
       'entity',
       'possession',
@@ -244,9 +248,10 @@ export class RecallService {
     const sections = new Map(
       sectionKinds.map((kind) => [kind, ranked.filter((candidate) => candidate.kind === kind)]),
     );
+    const sectionLimit = (kind: AttentionCandidate['kind']) => (kind === 'conversation' ? 32 : 24);
     const semanticPool = sectionKinds.flatMap((kind) => {
       const section = sections.get(kind)!;
-      return section.length > 24 ? section : [];
+      return section.length > sectionLimit(kind) ? section : [];
     });
     const semanticIds = new Set(semanticPool.map((candidate) => candidate.id));
     const key = `vectors:${world.id}:${actorId}`;
@@ -338,12 +343,13 @@ export class RecallService {
     const finalists: AttentionCandidate[] = [];
     for (const kind of sectionKinds) {
       const section = sections.get(kind)!;
-      if (section.length <= 24) {
+      const limit = sectionLimit(kind);
+      if (section.length <= limit) {
         finalists.push(...section);
         continue;
       }
       const sources = section.map(({ id, revision }) => ({ id, revision }));
-      const matches = q && vectors ? await vectors.search(scope, q, sources, 24) : [];
+      const matches = q && vectors ? await vectors.search(scope, q, sources, limit) : [];
       const semantic = matches
         .map(({ id, score }) => {
           const candidate = byId.get(id)!;
@@ -354,19 +360,31 @@ export class RecallService {
       finalists.push(
         ...Array.from(
           new Map([...semantic, ...section].map((candidate) => [candidate.id, candidate])).values(),
-        ).slice(0, 24),
+        ).slice(0, limit),
       );
     }
     const finalistsByKind = new Map(
       sectionKinds.map((kind) => [kind, finalists.filter((candidate) => candidate.kind === kind)]),
     );
     const boundedFinalists: AttentionCandidate[] = [];
-    const positions = new Map(sectionKinds.map((kind) => [kind, 0]));
     let judgeBytes = remainingBytes;
+    // Preserve room for the older exchange before sharing the remaining bounded
+    // question capacity across the other optional context sections.
+    for (const candidate of finalistsByKind.get('conversation') ?? []) {
+      const bytes = contextBytes(candidate);
+      if (bytes > judgeBytes) {
+        candidate.reason = 'omitted: shared context byte budget';
+        continue;
+      }
+      boundedFinalists.push(candidate);
+      judgeBytes -= bytes;
+    }
+    const sharedKinds = sectionKinds.filter((kind) => kind !== 'conversation');
+    const positions = new Map(sharedKinds.map((kind) => [kind, 0]));
     let advanced = true;
     while (advanced) {
       advanced = false;
-      for (const kind of sectionKinds) {
+      for (const kind of sharedKinds) {
         const section = finalistsByKind.get(kind)!;
         const position = positions.get(kind)!;
         if (position >= section.length) continue;
@@ -470,7 +488,8 @@ export class RecallService {
           cachedQuery: !!cachedQuery,
           storage: vectors ? 'pgvector' : 'unavailable',
           table: vectors ? 'recall_vectors' : 'unavailable',
-          search: 'per-section database exact top-24 above 24 entries; otherwise direct Jev',
+          search:
+            'database exact top-32 for older conversation and top-24 for other sections; otherwise direct Jev',
           indexed: indexed.size,
           lag: semanticPool.filter((c) => !indexed.has(c.id)).length,
         },
