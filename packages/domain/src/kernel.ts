@@ -1,3 +1,5 @@
+import { changeConversation } from './conversations.js';
+import { canSpeak, hasMemory, reconcileBody, commitBodyEffects } from './living.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import { accountRest, REST_RULES } from './sleep.js';
@@ -189,6 +191,15 @@ export function executeCommand(original: WorldState, command: Command): Transiti
   });
   if (!command || !validId(command.id) || !validId(command.actorId))
     return reject('invalid-command', 'A command needs bounded actor and command IDs.');
+  if (command.type === 'conversation')
+    return changeConversation(
+      original,
+      command.id,
+      command.actorId,
+      command.operation,
+      command.conversationId,
+      command.generation,
+    );
   const digest = canonicalJson(command);
   const receipt = getOwn(original.commandReceipts, command.id);
   if (receipt)
@@ -268,7 +279,8 @@ export function executeCommand(original: WorldState, command: Command): Transiti
     }
     case 'hunt': {
       const target = getOwn(world.entities, command.targetId);
-      if (!target?.animal?.alive) return reject('not-huntable', 'Choose a living animal.');
+      if (!(target?.animal && target.actor?.alive))
+        return reject('not-huntable', 'Choose a living animal.');
       if (!visible(actor, target)) return reject('not-visible', 'The animal is out of sight.');
       const weaponItemId = command.weaponItemId ?? component.equippedItemId ?? '';
       const item = getOwn(world.items, weaponItemId);
@@ -359,11 +371,13 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       component.alive = true;
       component.action = null;
       component.planGeneration++;
+      reconcileBody(world, actor, events, 'camp-recovery');
       emit(world, events, 'recovered', `${actor.name} recovered at camp.`, actor);
       result = outcome(true, 'recovered', 'Recovered at camp.');
       break;
     }
     case 'say': {
+      if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot speak.');
       if (
         typeof command.text !== 'string' ||
         command.text.trim().length < 1 ||
@@ -373,7 +387,9 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
       if (
         command.targetId &&
-        (!target?.actor?.alive || !canHear(world, actor.position, target.position))
+        (!target?.actor?.alive ||
+          !hasMemory(target) ||
+          !canHear(world, actor.position, target.position))
       )
         return reject('not-heard', 'The listener is not within hearing range.');
       if (target?.actor?.rest?.asleep) {
@@ -404,9 +420,14 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       break;
     }
     case 'teach': {
+      if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
       const target = getOwn(world.entities, command.targetId);
       const recipe = getOwn(world.recipes, command.recipeId);
-      if (!target?.actor?.alive || !canHear(world, actor.position, target.position))
+      if (
+        !target?.actor?.alive ||
+        !hasMemory(target) ||
+        !canHear(world, actor.position, target.position)
+      )
         return reject('not-heard', 'Teaching needs a nearby listener.');
       if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
         return reject('not-learned', 'You cannot teach a technique you do not know.');
@@ -463,29 +484,6 @@ export function executeCommand(original: WorldState, command: Command): Transiti
 function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reason: string): void {
   actor.actor!.action = null;
   emit(world, events, 'action-stopped', `${actor.name} stopped: ${reason}`, actor);
-}
-function killAnimal(world: WorldState, animal: Entity, events: WorldEvent[], source: Entity): void {
-  animal.animal!.alive = false;
-  animal.animal!.health = 0;
-  animal.animal!.fleeSeconds = 0;
-  animal.kind = 'remains';
-  animal.name = `${animal.animal!.species === 'hare' ? 'Hare' : 'Deer'} remains`;
-  animal.remains = {
-    sourceId: animal.id,
-    harvested: false,
-    yields: [
-      { definitionId: 'raw_meat', quantity: animal.animal!.species === 'hare' ? 2 : 4 },
-      { definitionId: 'bone', quantity: animal.animal!.species === 'hare' ? 2 : 3 },
-    ],
-  };
-  emit(
-    world,
-    events,
-    'animal-died',
-    `${source.name} killed the ${animal.animal!.species}. Its remains can be harvested.`,
-    source,
-    animal.id,
-  );
 }
 function completeAction(
   world: WorldState,
@@ -559,7 +557,12 @@ function completeAction(
       const target = world.entities[action.targetId ?? ''];
       const weapon = world.items[action.weaponItemId ?? ''];
       const launcher = weapon && world.itemDefinitions[weapon.definitionId]?.launcher;
-      if (!target?.animal?.alive || !weapon || weapon.ownerId !== actor.id || !launcher) {
+      if (
+        !(target?.animal && target.actor?.alive) ||
+        !weapon ||
+        weapon.ownerId !== actor.id ||
+        !launcher
+      ) {
         failAction(world, actor, events, 'the animal or ranged tool is no longer available.');
         return;
       }
@@ -580,19 +583,26 @@ function completeAction(
       const accuracy = launcher.accuracy * (target.animal.fleeSeconds > 0 ? 0.85 : 1);
       const hit = nextRandom(world) < accuracy;
       const damage = hit ? launcher.damage + bonus : 0;
-      target.animal.health = Math.max(0, target.animal.health - damage);
+      const actualDamage = Math.min(target.actor!.health, damage);
       target.animal.fleeFrom = { ...actor.position };
       target.animal.fleeSeconds = 110;
       emit(
         world,
         events,
         'shot',
-        `${actor.name} ${hit ? `hit the ${target.animal.species} for ${damage} damage` : `missed the ${target.animal.species}`}. One projectile was used.`,
+        `${actor.name} ${hit ? `hit the ${target.actor!.species} for ${actualDamage} damage` : `missed the ${target.actor!.species}`}. One projectile was used.`,
         actor,
         target.id,
-        { hit, damage, ammunitionKind: launcher.ammunitionKind },
+        { hit, damage: actualDamage, ammunitionKind: launcher.ammunitionKind },
       );
-      if (target.animal.health <= 0) killAnimal(world, target, events, actor);
+      if (actualDamage > 0)
+        commitBodyEffects(
+          world,
+          target,
+          [{ targetId: target.id, kind: 'injury', amount: actualDamage }],
+          action.id,
+          events,
+        );
       break;
     }
     case 'harvest': {
@@ -672,7 +682,7 @@ function advanceAction(
       failAction(world, actor, events, 'the target disappeared.');
       return;
     }
-    if (action.type === 'hunt' && !world.entities[action.targetId ?? '']?.animal?.alive) {
+    if (action.type === 'hunt' && !world.entities[action.targetId ?? '']?.actor?.alive) {
       failAction(world, actor, events, 'the animal is no longer alive.');
       return;
     }
@@ -690,7 +700,13 @@ function advanceAction(
         }
         action.path = path;
       }
-      moveAlongPath(actor, action.path, SIMULATION_RULES.movementTilesPerSecond * seconds);
+      moveAlongPath(
+        actor,
+        action.path,
+        SIMULATION_RULES.movementTilesPerSecond *
+          seconds *
+          (1 - (actor.actor?.body?.conditions.injury ?? 0) / 200),
+      );
       return;
     }
     if (action.type === 'move') {
@@ -713,7 +729,7 @@ function advanceAction(
 }
 function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void {
   const animal = entity.animal;
-  if (!animal?.alive) return;
+  if (!animal || !entity.actor?.alive || entity.actor.action) return;
   if (animal.fleeSeconds > 0 && animal.fleeFrom) {
     animal.fleeSeconds = Math.max(0, animal.fleeSeconds - seconds);
     let dx = entity.position.x - animal.fleeFrom.x;
@@ -727,8 +743,18 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
       { x: dz, z: -dx },
     ]) {
       const destination = {
-        x: entity.position.x + vector.x * SIMULATION_RULES.animalFleeTilesPerSecond * seconds,
-        z: entity.position.z + vector.z * SIMULATION_RULES.animalFleeTilesPerSecond * seconds,
+        x:
+          entity.position.x +
+          vector.x *
+            SIMULATION_RULES.animalFleeTilesPerSecond *
+            seconds *
+            (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200),
+        z:
+          entity.position.z +
+          vector.z *
+            SIMULATION_RULES.animalFleeTilesPerSecond *
+            seconds *
+            (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200),
       };
       if (isWalkable(world, destination)) {
         entity.position = destination;
@@ -850,47 +876,34 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       .sort((a, b) => a.id.localeCompare(b.id))) {
       const component = actor.actor!;
       if (!component.alive || component.incapacitated) continue;
-      component.fullness = Math.max(
-        0,
-        component.fullness - SIMULATION_RULES.fullnessPerSecond * seconds,
-      );
-      component.energy = Math.max(
-        0,
-        component.energy -
-          (component.action
-            ? SIMULATION_RULES.activeEnergyPerSecond
-            : SIMULATION_RULES.idleEnergyPerSecond) *
-            seconds,
-      );
-      if (component.fullness === 0)
-        component.health = Math.max(
+      if (component.capabilities?.needs !== false) {
+        const previousHealth = component.health;
+        component.fullness = Math.max(
           0,
-          component.health - SIMULATION_RULES.starvationDamagePerSecond * seconds,
+          component.fullness - SIMULATION_RULES.fullnessPerSecond * seconds,
         );
-      if (component.energy === 0)
-        component.health = Math.max(
+        component.energy = Math.max(
           0,
-          component.health - SIMULATION_RULES.exhaustionDamagePerSecond * seconds,
+          component.energy -
+            (component.action
+              ? SIMULATION_RULES.activeEnergyPerSecond
+              : SIMULATION_RULES.idleEnergyPerSecond) *
+              seconds,
         );
-      if (component.health === 0) {
-        component.action = null;
-        component.planGeneration++;
-        if (component.controller === 'player') {
-          component.incapacitated = true;
-          emit(
-            world,
-            events,
-            'incapacitated',
-            `${actor.name} collapsed and can recover at camp.`,
-            actor,
+        if (component.fullness === 0)
+          component.health = Math.max(
+            0,
+            component.health - SIMULATION_RULES.starvationDamagePerSecond * seconds,
           );
-        } else {
-          component.alive = false;
-          emit(world, events, 'death', `${actor.name} died in the wilderness.`, actor);
-        }
-        continue;
+        if (component.energy === 0)
+          component.health = Math.max(
+            0,
+            component.health - SIMULATION_RULES.exhaustionDamagePerSecond * seconds,
+          );
+        if (component.health !== previousHealth) reconcileBody(world, actor, events, 'needs');
+        if (component.health === 0) continue;
       }
-      nativeSurvival(world, actor, events);
+      if (component.capabilities?.needs !== false) nativeSurvival(world, actor, events);
       accountRest(component, world.simTime, seconds);
       advanceAction(world, actor, seconds, events);
     }
@@ -905,7 +918,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       }
     }
   }
-  for (const actor of Object.values(world.entities).filter((e) => e.actor?.alive)) {
+  for (const actor of Object.values(world.entities).filter((e) => e.actor?.alive && hasMemory(e))) {
     const seen = Object.values(world.entities)
       .filter(
         (e) =>
@@ -916,23 +929,27 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
               distance(actor.position, e.position) <= PERCEPTION_RULES.sightRadius + 2)),
       )
       .map((e) => e.id);
-    const previous = world.visiblePeople?.[actor.id] ?? seen;
+    const previous = world.visiblePeople?.[actor.id] ?? [];
     for (const id of seen.filter((id) => !previous.includes(id))) {
       const recent = (world.memories[actor.id] ?? []).some(
         (m) =>
           m.kind === 'episode' &&
           m.entityIds.includes(id) &&
-          m.summary.startsWith('I saw ') &&
+          (m.summary.startsWith('I saw ') || m.eventType === 'encounter') &&
           world.simTime - m.at < 3600,
       );
-      if (!recent)
-        appendMemory(world, actor.id, {
-          kind: 'episode',
-          source: 'observed',
-          summary: `I saw ${world.entities[id]!.name} nearby.`,
-          entityIds: [id],
-          importance: 6,
-        });
+      if (!recent) {
+        const encountered = world.entities[id]!;
+        emit(
+          world,
+          events,
+          'encounter',
+          `${actor.name} encountered ${encountered.name}.`,
+          actor,
+          id,
+          { importance: 6, semanticTrigger: true },
+        );
+      }
     }
     (world.visiblePeople ??= {})[actor.id] = seen;
   }

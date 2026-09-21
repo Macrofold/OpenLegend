@@ -70,7 +70,7 @@ export function readableDecisionContext(
       ? value.map((line) => `- ${String(line).replace(/\n/g, '\n  ')}`).join('\n')
       : 'None supplied.';
   const sections = [
-    `## Me\n${context['identity']}\n${context['aboutMe']}\n${context['body']}\nMy current goal: ${context['goal']}${context['food'] ? `\n${context['food']}` : ''}`,
+    `## Me\n${context['identity']}\n${context['aboutMe']}\n${context['body']} ${context['feelings'] ?? ''} ${context['kinship'] ?? ''}\nMy current goal: ${context['goal']}${context['food'] ? `\n${context['food']}` : ''}`,
     `## Trigger\n${context['stimulus']}`,
     '## Task\nChoose whether to speak, act, think privately, or any combination. A direct question normally deserves a direct conversational reply; silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.',
     `## Conversation so far\nSpeech I personally experienced in this exchange:\n${list(context['conversation'])}`,

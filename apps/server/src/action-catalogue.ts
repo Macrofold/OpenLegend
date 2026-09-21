@@ -1,3 +1,4 @@
+import { canSpeak } from '@open-legend/domain';
 import { NATIVE_PREPARATIONS } from '@open-legend/domain';
 import type {
   ActionCatalogue,
@@ -110,7 +111,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
         [world.itemDefinitions[target.resource.definitionId]!.name, 'collect'],
         target.id,
       );
-    if (target.animal?.alive)
+    if (target.animal && target.actor?.alive)
       add(
         `hunt-${target.id}`,
         `Hunt ${target.name}`,
@@ -128,7 +129,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
         ['butcher', 'meat', 'remains'],
         target.id,
       );
-    if (target.kind === 'npc' && target.actor?.alive) {
+    if (canSpeak(target) && target.actor?.alive && target.actor.controller === 'npc') {
       // Opening a composer is read-only, including while paused or AI is unconfigured.
       actions.push({
         id: `talk-${target.id}`,

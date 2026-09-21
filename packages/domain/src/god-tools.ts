@@ -1,3 +1,4 @@
+import { nativeActor, canSpeak, hasMemory, reconcileBody } from './living.js';
 import { draftWorld } from './draft.js';
 import { addItem, createActor, nextId, TRAIT_BANK } from './data.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
@@ -111,10 +112,8 @@ function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity | null {
         ...base,
         name: draft.type === 'hare' ? 'Hare' : 'Deer',
         kind: 'animal',
+        actor: nativeActor(draft.type, world.simTime),
         animal: {
-          species: draft.type,
-          health: draft.type === 'hare' ? 18 : 36,
-          alive: true,
           fleeFrom: null,
           fleeSeconds: 0,
           wanderSeconds: draft.type === 'hare' ? 150 : 200,
@@ -154,7 +153,7 @@ export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Tr
   const entity = spawnedEntity(world, draft);
   if (!entity) return reject(original, 'invalid-object', 'That object could not be added.');
   world.entities[entity.id] = entity;
-  if (entity.actor) {
+  if (hasMemory(entity)) {
     world.memories[entity.id] = [];
     world.knowledge[entity.id] = [];
     addItem(world, entity.id, 'stone_tool', 1);
@@ -176,25 +175,79 @@ export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Tr
   return finish(world, events, outcome(true, 'spawned', `${entity.name} added.`));
 }
 
-export function reviveActor(original: WorldState, actorId: string): Transition {
+export function reviveActor(
+  original: WorldState,
+  actorId: string,
+  requestId?: string,
+  expectedRevision?: number,
+): Transition {
+  const digest = canonicalJson({ operation: 'revive', actorId, expectedRevision });
+  const prior = requestId ? original.commandReceipts[requestId] : undefined;
+  if (prior)
+    return prior.digest === digest
+      ? { world: original, events: [], outcome: prior.outcome }
+      : reject(original, 'identity', 'Request identity reused.');
   const current = original.entities[actorId];
-  if (!current?.actor) return reject(original, 'actor', 'Choose a character.');
+  if (!current?.actor?.body)
+    return reject(original, 'actor', 'Choose an actor with a compatible body.');
+  if (expectedRevision !== undefined && current.actor.body.revision !== expectedRevision)
+    return reject(original, 'stale', 'The body changed.');
   if (current.actor.alive) return reject(original, 'alive', `${current.name} is already alive.`);
   const world = draftWorld(original);
   const entity = world.entities[actorId]!;
-  entity.actor!.alive = true;
-  entity.actor!.incapacitated = false;
-  entity.actor!.health = Math.max(25, entity.actor!.health);
-  entity.actor!.fullness = Math.max(25, entity.actor!.fullness);
-  entity.actor!.energy = Math.max(25, entity.actor!.energy);
-  entity.actor!.action = null;
-  if (entity.actor!.rest) entity.actor!.rest!.asleep = false;
+  const actor = entity.actor!;
+  actor.alive = true;
+  actor.incapacitated = false;
+  actor.health = actor.body!.maxHealth;
+  actor.fullness = 100;
+  actor.energy = 100;
+  actor.action = null;
+  actor.planGeneration++;
+  actor.body!.conditions = { injury: 0, wetness: 0, burning: 0 };
+  delete entity.remains;
+  if (actor.rest) actor.rest.asleep = false;
   const events: WorldEvent[] = [];
+  reconcileBody(world, entity, events, 'revival');
   emit(world, events, 'god-revived', `${entity.name} returned to life.`, entity, undefined, {
     significant: true,
     godMode: true,
   });
-  return finish(world, events, outcome(true, 'revived', `${entity.name} revived.`));
+  const result = outcome(true, 'revived', `${entity.name} revived.`);
+  if (requestId) world.commandReceipts[requestId] = { digest, outcome: result };
+  return finish(world, events, result);
+}
+
+/** Explicit owner admission; physical identity, species and needs policy do not change. */
+export function enableActorCognition(original: WorldState, actorId: string): Transition {
+  const current = original.entities[actorId];
+  if (!current?.actor?.body) return reject(original, 'actor', 'Choose a compatible actor.');
+  if (current.actor.capabilities?.cognition && canSpeak(current))
+    return reject(original, 'unchanged', 'These capabilities are already enabled.');
+  const world = draftWorld(original);
+  const entity = world.entities[actorId]!;
+  entity.actor!.capabilities = {
+    ...entity.actor!.capabilities!,
+    cognition: true,
+    memory: true,
+    innerWorld: true,
+    speech: true,
+  };
+  if (entity.actor!.controller === 'native') entity.actor!.controller = 'npc';
+  entity.actor!.planGeneration++;
+  world.memories[actorId] ??= [];
+  world.knowledge[actorId] ??= [];
+  migrateCognition(world);
+  const events: WorldEvent[] = [];
+  emit(
+    world,
+    events,
+    'god-cognition-enabled',
+    `${entity.name} gained cognition and speech.`,
+    entity,
+    undefined,
+    { significant: true, godMode: true },
+  );
+  return finish(world, events, outcome(true, 'cognition-enabled', 'Actor capabilities enabled.'));
 }
 
 function sameStructure(left: object, right: object, editable: string[]): boolean {
@@ -210,8 +263,7 @@ function sameStructure(left: object, right: object, editable: string[]): boolean
 export function editPerson(original: WorldState, draft: GodPersonEdit): Transition {
   const current = original.entities[draft.actorId];
   const traits = personTraits(draft.person);
-  if (!current?.actor || current.kind !== 'npc')
-    return reject(original, 'actor', 'Choose a person.');
+  if (!current?.actor || !hasMemory(current)) return reject(original, 'actor', 'Choose a person.');
   if (
     !draft.person.name.trim() ||
     draft.person.name.trim().length > 80 ||

@@ -58,7 +58,17 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     databasePath: resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data', 'world.sqlite'),
     seed: numberSetting(env, 'WORLD_SEED', 1086, 1, 0x7fffffff),
     baseRatio: 60,
-    budgetUsd: numberSetting(env, 'AI_BUDGET_USD', 0, 0, 100),
+    budgetUsd: Math.min(50, numberSetting(env, 'AI_BUDGET_USD', 50, 0, 100)),
+    conversationInactivitySeconds: numberSetting(
+      env,
+      'CONVERSATION_INACTIVITY_SECONDS',
+      1800,
+      60,
+      86400,
+    ),
+    conversationDisconnectMs:
+      numberSetting(env, 'CONVERSATION_DISCONNECT_SECONDS', 60, 5, 600) * 1000,
+    narrationBatchMs: numberSetting(env, 'NARRATION_BATCH_MS', 750, 0, 10000),
     jevReserveUsd: numberSetting(env, 'JEV_CALL_RESERVE_USD', 0.005, 0.000001, 1),
     llmReserveUsd: numberSetting(env, 'LLM_CALL_RESERVE_USD', 0.08, 0.000001, 10),
     thoughtIntervalMs: numberSetting(env, 'NPC_THOUGHT_INTERVAL_SECONDS', 45, 15, 3600) * 1000,

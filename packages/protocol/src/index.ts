@@ -4,6 +4,7 @@ export type Position = Readonly<{ x: number; z: number }>;
 /** Deliberately smaller than the domain command: the server supplies actor/authority. */
 export interface CommandInput {
   type:
+    | 'conversation'
     | 'move'
     | 'gather'
     | 'prepare'
@@ -17,6 +18,9 @@ export interface CommandInput {
     | 'cancel'
     | 'recover'
     | 'teach';
+  conversationId?: string;
+  generation?: number;
+  operation?: 'join' | 'leave';
   targetId?: string;
   itemId?: string;
   recipeId?: string;
@@ -65,7 +69,11 @@ export interface ActionCatalogue {
 export interface PlayerProfile {
   id: string;
   revision: number;
-  preferences: { showUnavailableActions: boolean; pauseWhenHidden: boolean };
+  preferences: {
+    showUnavailableActions: boolean;
+    pauseWhenHidden: boolean;
+    narratorVoice?: 'restrained' | 'lyrical' | 'wry';
+  };
 }
 /** A control changes only its own preference, preserving concurrent UI choices. */
 export type PlayerPreferencePatch = Partial<PlayerProfile['preferences']>;
@@ -81,7 +89,10 @@ export interface EntityView {
   description?: string;
   traits?: Array<{ id: string; name: string; description: string }>;
   canTalk?: boolean;
+  speechCapable?: boolean;
   health?: number;
+  bodyRevision?: number;
+  species?: 'human' | 'hare' | 'deer';
   quantity?: number;
   actions: ActionOption[];
 }
@@ -141,6 +152,7 @@ export interface AiJobView {
 }
 
 export interface GameView {
+  narrator?: TranscriptItem | null;
   godMode?: boolean;
   godTools?: {
     traits: Array<{ id: string; name: string; description: string }>;
@@ -202,7 +214,15 @@ export interface GameView {
     llmConfigured: boolean;
     message: string;
     jobs: AiJobView[];
-    budget: { limitUsd: number; spentUsd: number; reservedUsd: number; estimated: boolean };
+    budget: {
+      limitUsd: number;
+      spentUsd: number;
+      reservedUsd: number;
+      estimated: boolean;
+      perAgent?: boolean;
+      period?: string;
+      accounts?: Record<string, { spentUsd: number; reservedUsd: number }>;
+    };
     usage: {
       jevCalls: number;
       llmCalls: number;
@@ -219,6 +239,7 @@ export interface GamePatch {
   schemaVersion: 1;
   baseRevision: number;
   revision: number;
+  narrator?: GameView['narrator'];
   profile?: GameView['profile'];
   clock?: Partial<GameView['clock']>;
   player?: Partial<GameView['player']>;
@@ -259,6 +280,7 @@ export interface GodMemoryEditorEntry {
 }
 
 export interface GodPersonEditorView {
+  before?: string;
   ok: true;
   revision: number;
   actorId: string;
@@ -277,6 +299,7 @@ export interface GodWorldEventEditorEntry {
 }
 
 export interface GodWorldEventsEditorView {
+  before?: number;
   ok: true;
   revision: number;
   events: GodWorldEventEditorEntry[];
@@ -352,4 +375,32 @@ export interface IntelligenceCall {
     httpStatus?: number;
     truncated?: boolean;
   }[];
+}
+
+export interface TranscriptItem {
+  id: string;
+  kind: 'speech' | 'event' | 'narration';
+  text: string;
+  time: number;
+  order: number;
+  conversationId?: string;
+  speakerId?: string;
+  sourceIds: string[];
+  impacts: Array<{
+    entityId: string;
+    entityName?: string;
+    field: string;
+    delta: number;
+    sourceId: string;
+  }>;
+  status?: 'pending' | 'fallback' | 'completed';
+  voice?: 'restrained' | 'lyrical' | 'wry';
+  sourceStatus?: 'available' | 'unavailable';
+  revision?: number;
+  legacy?: boolean;
+}
+export interface TranscriptPage {
+  items: TranscriptItem[];
+  watermark: number;
+  before?: number;
 }

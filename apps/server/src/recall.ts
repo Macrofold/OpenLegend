@@ -291,7 +291,13 @@ export class RecallService {
       const id = `${jobId}:embeddings`;
       if (!config.embeddingKey) embeddingStatus = 'unavailable: no embedding credentials';
       else if (
-        !(await this.service.store.reserve(id, 'openai', config.embeddingReserveUsd, budgetCeiling))
+        !(await this.service.store.reserve(
+          id,
+          'openai',
+          config.embeddingReserveUsd,
+          budgetCeiling,
+          actorId,
+        ))
       )
         embeddingStatus = 'deferred: spending cap';
       else {

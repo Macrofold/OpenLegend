@@ -14,7 +14,7 @@ export function aiSetupReason(ai: GameView['ai']): string | null {
   }
   if (ai.budget.limitUsd <= 0)
     return 'AI is configured, but this world has no spending allowance. Set an allowance to use Talk and invention.';
-  if (ai.budget.spentUsd >= ai.budget.limitUsd)
+  if (!ai.budget.perAgent && ai.budget.spentUsd >= ai.budget.limitUsd)
     return 'This world’s AI allowance is used up. Review the allowance to continue.';
   return null;
 }

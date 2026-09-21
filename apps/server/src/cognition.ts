@@ -91,6 +91,14 @@ export const thoughtOnlySchema = z
 export function domainCommand(input: CommandInput, actorId: string, id: string): Command {
   const base = { actorId, id };
   switch (input.type) {
+    case 'conversation':
+      return {
+        ...base,
+        type: 'conversation',
+        operation: input.operation!,
+        conversationId: input.conversationId!,
+        generation: input.generation!,
+      };
     case 'move':
       return { ...base, type: 'move', destination: input.position! };
     case 'gather':
@@ -252,7 +260,13 @@ export function thoughtProposal(
 
 export function cognitionOpportunity(service: WorldService, actorId: string) {
   const actor = service.world.entities[actorId]?.actor;
-  if (!actor?.alive || actor.incapacitated || actor.health < 40 || actor.fullness < 30) return null;
+  if (
+    !actor?.alive ||
+    actor.incapacitated ||
+    actor.health < 0.4 * (actor.body?.maxHealth ?? 100) ||
+    actor.fullness < 30
+  )
+    return null;
   const mind = mindFor(service.world, actorId);
   const recall = get_memories(service.world, actorId, { limit: 0 });
   const fresh = recall.observationWatermark > mind.processedWatermark;

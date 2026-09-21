@@ -125,7 +125,7 @@ export function commitActorResponse(
     components.act = outcome(false, 'unoffered-action', 'The proposed action was not offered.');
   } else if (act?.kind === 'known') {
     const selected = actions[act.actionId!];
-    if (world.entities[actorId]!.actor!.planGeneration !== expectedPlan)
+    if (input.entities[actorId]!.actor!.planGeneration !== expectedPlan)
       components.act = outcome(false, 'stale-plan', 'The current task changed.');
     else if (selected) command('act', { ...selected, actorId, id: `${id}:act` });
     else components.act = outcome(true, 'continued', 'Existing behavior continues.');
@@ -155,7 +155,9 @@ export function commitActorResponse(
       invalidTarget ||
       !reachable ||
       (target &&
-        (!canSee(source.position, target.position) || (target.actor && !target.actor.alive)))
+        (!hasLineOfSight(world, source.position, target.position) ||
+          !canSee(source.position, target.position) ||
+          (target.actor && !target.actor.alive)))
     )
       components.act = outcome(
         false,

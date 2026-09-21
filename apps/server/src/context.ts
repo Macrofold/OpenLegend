@@ -1,3 +1,4 @@
+import { canHear } from '@open-legend/domain';
 import {
   findPath,
   NATIVE_PREPARATIONS,
@@ -77,11 +78,11 @@ export function buildContext(service: WorldService, actorId: string, query: stri
     nearby: observed.visibleEntities.map((entity) => ({
       id: entity.id,
       name: excerpt(entity.name, 40),
-      kind: entity.actor ? 'person' : entity.kind,
+      kind: entity.actor ? (entity.actor.species ?? 'human') : entity.kind,
       position: entity.position,
       ...(entity.resource ? { resource: entity.resource } : {}),
       ...(entity.animal
-        ? { animal: { alive: entity.animal.alive, fleeing: entity.animal.fleeSeconds > 0 } }
+        ? { animal: { alive: entity.actor!.alive, fleeing: entity.animal.fleeSeconds > 0 } }
         : {}),
       ...(entity.actor
         ? { activity: entity.actor.action?.type ?? 'idle', alive: entity.actor.alive }
@@ -196,6 +197,37 @@ export function npcCandidates(service: WorldService, actorId = 'ada'): Candidate
       command: null,
     },
   ];
+  const activeId = service.world.conversations?.active[actorId];
+  if (activeId) {
+    const active = service.world.conversations!.records[activeId]!;
+    actions.push({
+      id: 'leave-conversation',
+      description: 'Leave the current conversation while others may continue.',
+      command: {
+        type: 'conversation',
+        operation: 'leave',
+        conversationId: activeId,
+        generation: active.generation,
+      },
+    });
+  }
+  const nearbyConversations = new Map<string, string>();
+  for (const entity of observed.visibleEntities) {
+    const id = service.world.conversations?.active[entity.id];
+    if (id && id !== activeId && canHear(service.world, observed.actor.position, entity.position))
+      nearbyConversations.set(id, entity.name);
+  }
+  for (const [id, name] of [...nearbyConversations].slice(0, 4))
+    actions.push({
+      id: `join:${id}`,
+      description: `Join the conversation involving ${name}.`,
+      command: {
+        type: 'conversation',
+        operation: 'join',
+        conversationId: id,
+        generation: service.world.conversations!.records[id]!.generation,
+      },
+    });
   for (const item of inventory) {
     const definition = definitions.get(item.definitionId);
     if (definition?.nutrition && actor.fullness < (actor.action ? 30 : 85))
@@ -255,7 +287,7 @@ export function npcCandidates(service: WorldService, actorId = 'ada'): Candidate
         description: `Gather ${entity.name}.`,
         command: { type: 'gather', targetId: entity.id },
       });
-    if (entity.animal?.alive && equipped && launcher && ammunition)
+    if (entity.animal && entity.actor?.alive && equipped && launcher && ammunition)
       actions.push({
         id: `hunt:${entity.id}`,
         description: `Hunt the visible ${entity.name} using ${definitions.get(equipped.definitionId)!.name} and one ${launcher.ammunitionKind} projectile.`,

@@ -1,3 +1,4 @@
+import { livingBody, nativeActor, migrateActors, hasMemory } from './living.js';
 import traitBank from '../config/traits.json' with { type: 'json' };
 import { migrateCognition } from './experience.js';
 import type {
@@ -153,6 +154,9 @@ export function createActor(
     ...(identity.backstory ? { backstory: identity.backstory } : {}),
     ...(initialGoals?.length ? { initialGoals } : {}),
     controller,
+    species: 'human',
+    body: livingBody('human'),
+    capabilities: { cognition: true, memory: true, innerWorld: true, speech: true, needs: true },
     health: 100,
     fullness,
     energy: 85,
@@ -174,7 +178,7 @@ export function createActor(
 export function createWorld(seed = 73): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
-    schemaVersion: 1,
+    schemaVersion: 3,
     id: `wilderness-${normalizedSeed}`,
     seed: normalizedSeed,
     rngState: normalizedSeed || 0x6d2b79f5,
@@ -282,11 +286,9 @@ export function createWorld(seed = 73): WorldState {
       id: 'hare-1',
       name: 'Hare',
       kind: 'animal',
+      actor: nativeActor('hare', world.simTime),
       position: { x: 16, z: 13 },
       animal: {
-        species: 'hare',
-        health: 18,
-        alive: true,
         fleeFrom: null,
         fleeSeconds: 0,
         wanderSeconds: 150,
@@ -296,11 +298,9 @@ export function createWorld(seed = 73): WorldState {
       id: 'hare-2',
       name: 'Hare',
       kind: 'animal',
+      actor: nativeActor('hare', world.simTime),
       position: { x: 21, z: 11 },
       animal: {
-        species: 'hare',
-        health: 18,
-        alive: true,
         fleeFrom: null,
         fleeSeconds: 0,
         wanderSeconds: 100,
@@ -310,11 +310,9 @@ export function createWorld(seed = 73): WorldState {
       id: 'deer-1',
       name: 'Deer',
       kind: 'animal',
+      actor: nativeActor('deer', world.simTime),
       position: { x: 21, z: 19 },
       animal: {
-        species: 'deer',
-        health: 36,
-        alive: true,
         fleeFrom: null,
         fleeSeconds: 0,
         wanderSeconds: 200,
@@ -341,6 +339,7 @@ export function createWorld(seed = 73): WorldState {
     entityIds: ['campfire'],
     importance: 8,
   });
+  migrateActors(world);
   migrateCognition(world);
   return world;
 }
@@ -361,6 +360,11 @@ function sampleTraits(world: WorldState) {
 }
 export function initializeActorTraits(world: WorldState): void {
   for (const entity of Object.values(world.entities))
-    if (entity.actor && entity.actor.traits === undefined)
+    if (hasMemory(entity) && entity.actor && entity.actor.traits === undefined) {
+      const savedRng = world.rngState;
+      for (const character of entity.id)
+        world.rngState = Math.imul(world.rngState ^ character.charCodeAt(0), 16777619) >>> 0;
       entity.actor.traits = sampleTraits(world);
+      world.rngState = savedRng;
+    }
 }

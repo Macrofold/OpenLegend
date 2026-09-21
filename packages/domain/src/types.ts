@@ -128,22 +128,34 @@ export interface ActorComponent {
   backstory?: string;
   initialGoals?: string[];
   rest?: import('./sleep.js').RestState;
-  controller: 'player' | 'npc';
+  controller: 'player' | 'npc' | 'native';
+  species?: 'human' | 'hare' | 'deer';
+  body?: import('./living.js').LivingBody;
+  capabilities?: {
+    cognition: boolean;
+    memory: boolean;
+    innerWorld: boolean;
+    speech: boolean;
+    needs: boolean;
+  };
   health: number;
   fullness: number;
   energy: number;
   alive: boolean;
   incapacitated: boolean;
   bornAt: number;
+  /** Legacy animals have no recorded birth time; bornAt is only a placeholder then. */
+  birthTimeKnown?: boolean;
   action: Action | null;
   equippedItemId: string | null;
   goal: string;
   planGeneration: number;
 }
 export interface AnimalComponent {
-  species: 'hare' | 'deer';
-  health: number;
-  alive: boolean;
+  /** Legacy import fields only. Migration removes these; actor owns physical state. */
+  species?: 'hare' | 'deer';
+  health?: number;
+  alive?: boolean;
   fleeFrom: Position | null;
   fleeSeconds: number;
   wanderSeconds: number;
@@ -198,6 +210,8 @@ export interface KnowledgeRecord {
   evidenceId: string;
 }
 export interface WorldEvent {
+  order?: number;
+  conversationId?: string;
   id: string;
   sequence: number;
   at: number;
@@ -222,11 +236,15 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  socialPolicy?: { conversationInactivitySeconds: number; notableThreshold: number };
+  appraisals?: Record<string, import('./social.js').Appraisal[]>;
+  kinships?: Record<string, import('./social.js').Kinship>;
+  conversations?: import('./conversations.js').ConversationState;
   responseReceipts?: Record<string, import('./response.js').ResponseReceipt>;
   experience?: import('./experience.js').ExperienceState;
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
-  schemaVersion: 1 | 2;
+  schemaVersion: 1 | 2 | 3;
   id: string;
   seed: number;
   rngState: number;
@@ -254,6 +272,12 @@ interface Envelope {
 }
 export type Command = Envelope &
   (
+    | {
+        type: 'conversation';
+        operation: 'join' | 'leave';
+        conversationId: string;
+        generation: number;
+      }
     | { type: 'move'; destination: Position }
     | { type: 'gather' | 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }

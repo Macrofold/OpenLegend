@@ -1,3 +1,4 @@
+import { canSpeak } from '@open-legend/domain';
 import type {
   ActionOption,
   EntityView,
@@ -184,7 +185,7 @@ export async function projectView(
                 'This source is depleted.',
               ),
             );
-          if (entity.animal?.alive)
+          if (entity.animal && entity.actor?.alive)
             actions.push(
               action(
                 `hunt-${entity.id}`,
@@ -206,7 +207,7 @@ export async function projectView(
                 'These remains have already been harvested.',
               ),
             );
-          if (entity.kind === 'npc')
+          if (canSpeak(entity) && entity.actor?.controller === 'npc')
             for (const recipe of observation.knownRecipes)
               actions.push(
                 action(`teach-${recipe.id}`, `Teach ${recipe.name}`, {
@@ -215,12 +216,12 @@ export async function projectView(
                   recipeId: recipe.id,
                 }),
               );
-          const kind: EntityView['kind'] = entity.actor
-            ? 'actor'
-            : entity.remains
-              ? 'remains'
-              : entity.animal
-                ? 'animal'
+          const kind: EntityView['kind'] = entity.remains
+            ? 'remains'
+            : entity.animal
+              ? 'animal'
+              : entity.actor
+                ? 'actor'
                 : entity.resource
                   ? 'resource'
                   : 'station';
@@ -230,11 +231,17 @@ export async function projectView(
             description: describeEntity(entity, world.itemDefinitions),
             ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),
             kind,
-            subtype: entity.animal?.species ?? entity.resource?.definitionId ?? entity.kind,
+            subtype: entity.actor?.species ?? entity.resource?.definitionId ?? entity.kind,
             position: entity.position,
             radius: entity.kind === 'campfire' ? 0.5 : 0.35,
             ...(entity.actor
-              ? { canTalk: entity.actor.alive && canHear(world, player.position, entity.position) }
+              ? {
+                  speechCapable: canSpeak(entity),
+                  canTalk:
+                    canSpeak(entity) &&
+                    entity.actor.alive &&
+                    canHear(world, player.position, entity.position),
+                }
               : {}),
             status: entity.actor
               ? !entity.actor.alive
@@ -250,9 +257,13 @@ export async function projectView(
                       prepare: 'Preparing',
                       craft: 'Crafting',
                     }[entity.actor.action.type] ?? 'Working')
-                  : 'Watching the clearing'
+                  : entity.animal
+                    ? entity.animal.fleeSeconds > 0
+                      ? 'Fleeing'
+                      : 'Foraging'
+                    : 'Watching the clearing'
               : entity.animal
-                ? !entity.animal.alive
+                ? !entity.actor!.alive
                   ? 'Dead'
                   : entity.animal.fleeSeconds > 0
                     ? 'Fleeing'
@@ -267,7 +278,13 @@ export async function projectView(
                       : 'Cold'
                     : 'Gatherable',
             ...(entity.resource ? { quantity: entity.resource.quantity } : {}),
-            ...(entity.animal ? { health: entity.animal.health } : {}),
+            ...(entity.actor
+              ? {
+                  health: entity.actor.health,
+                  bodyRevision: entity.actor.body?.revision,
+                  species: entity.actor.species,
+                }
+              : {}),
             actions,
           };
         },
@@ -357,6 +374,13 @@ export async function projectView(
   };
   return {
     schemaVersion: 1,
+    narrator: await memo(
+      'narrator',
+      [world.events, world.experience?.forgotten, telemetryRevision],
+      () =>
+        service.store.history?.latestNarration(world.id, service.profile.id) ??
+        Promise.resolve(null),
+    ),
     revision,
     worldId: world.id,
     godMode: service.config.godMode,
@@ -498,11 +522,14 @@ export async function projectView(
       'conversation',
       [
         events,
+        world.conversations,
         telemetryRevision,
         ...Object.values(world.entities).flatMap((entity) => [entity.id, entity.name]),
       ],
       async () => {
+        const conversationId = world.conversations?.active['player'];
         const entries = events
+          .filter((event) => !conversationId || event.conversationId === conversationId)
           .filter(
             (event) => event.type === 'speech' || typeof event.data?.['responseId'] === 'string',
           )
@@ -646,6 +673,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
     schemaVersion: 1,
     baseRevision: previous.revision,
     revision: next.revision,
+    ...(!same(previous.narrator, next.narrator) ? { narrator: next.narrator ?? null } : {}),
     ...(!same(previous.profile, next.profile) ? { profile: next.profile } : {}),
     ...(clock ? { clock } : {}),
     ...(player ? { player } : {}),

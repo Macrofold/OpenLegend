@@ -28,6 +28,7 @@ export function ActionPicker({
   inspect,
   preference,
   revive,
+  enableCognition,
   spawn,
   createPerson,
 }: {
@@ -40,6 +41,7 @@ export function ActionPicker({
   inspect(entity: EntityView): void;
   preference(profile: PlayerProfile): void;
   revive(entity: EntityView): void;
+  enableCognition(entity: EntityView): void;
   spawn(type: string, position: { x: number; z: number }): void;
   createPerson(position: { x: number; z: number }): void;
 }) {
@@ -93,7 +95,7 @@ export function ActionPicker({
     !!picker.entity && (!query || 'look closer description inspect'.includes(query.toLowerCase()));
   const showRevive =
     view.godMode &&
-    picker.entity?.kind === 'actor' &&
+    picker.entity?.bodyRevision !== undefined &&
     picker.entity.status === 'Dead' &&
     (!query || 'revive god mode'.includes(query.toLowerCase()));
   const showAdd =
@@ -208,6 +210,21 @@ export function ActionPicker({
         )}
       </div>
       <div className="ol-menu-scroll">
+        {view.godMode &&
+          picker.entity?.kind === 'animal' &&
+          !picker.entity.speechCapable &&
+          picker.entity.status !== 'Dead' &&
+          (!query || 'grant cognition speech'.includes(query.toLowerCase())) && (
+            <AriaButton
+              data-picker-row
+              className="ol-item ol-god-action"
+              onPress={() => enableCognition(picker.entity!)}
+            >
+              <Icon name="ui.star" />
+              <span>Grant cognition and speech</span>
+              <small>God mode</small>
+            </AriaButton>
+          )}
         {showRevive && (
           <AriaButton
             data-picker-row

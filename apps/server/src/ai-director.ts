@@ -1,3 +1,4 @@
+import { Narrator } from './narrator.js';
 import { decisionQuestions, inventionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
 import { interestMatches, type InterestSubscription } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
@@ -91,6 +92,7 @@ export class AiDirector {
   private log: IntelligenceLog;
   private recall: RecallService;
   private maintenance: CognitionMaintenance;
+  readonly narrator: Narrator;
   readonly macrofold: MacrofoldBackend;
 
   constructor(
@@ -123,6 +125,7 @@ export class AiDirector {
               maxOutputTokens: 8192,
             })),
     );
+    this.narrator = new Narrator(service, this.client, log);
     this.recall = new RecallService(service, log);
     this.maintenance = new CognitionMaintenance(
       service,
@@ -267,7 +270,7 @@ export class AiDirector {
       ...(result !== undefined ? { result } : {}),
     };
     await this.service.store.putJob(run.job);
-    const trace = await this.log.read(run.job.id);
+    const trace = this.log.get(run.job.id);
     if (trace)
       await this.log.save({
         ...trace,
@@ -308,7 +311,7 @@ export class AiDirector {
       (resident.incapacitated ||
         resident.fullness < 20 ||
         resident.energy < 10 ||
-        resident.health < 10)
+        resident.health < 0.1 * (resident.body?.maxHealth ?? 100))
     )
       throw new StopJob('stale', 'Native urgent needs superseded semantic work.');
     if (run.job.kind === 'invention' && this.service.world.entities['player']?.actor?.incapacitated)
@@ -474,7 +477,15 @@ export class AiDirector {
           provider === 'jev' ? config.jevReserveUsd : Math.max(0.25, config.llmReserveUsd),
           boundedEstimate,
         );
-    if (!(await this.service.store.reserve(id, provider, reserve, config.budgetUsd)))
+    if (
+      !(await this.service.store.reserve(
+        id,
+        provider,
+        reserve,
+        config.budgetUsd,
+        run.job.kind === 'invention' ? 'world-agent' : (run.job.request.npcId ?? 'ada'),
+      ))
+    )
       throw new StopJob(
         'failed',
         'AI spending cap reached. Existing survival actions and learned recipes still work.',
@@ -783,7 +794,7 @@ export class AiDirector {
       judged,
       routingStartedAt,
     );
-    const trace = await this.log.read(run.job.id);
+    const trace = this.log.get(run.job.id);
     if (trace) await this.log.save({ ...trace, route: route ?? 'deferred' });
     if (await retryForUrgentAwareness()) return;
     if (!route || !Object.hasOwn(criteria, route) || route === 'native') {
@@ -1173,7 +1184,7 @@ export class AiDirector {
             });
           },
         );
-        const trace = await this.log.read(id);
+        const trace = this.log.get(id);
         if (trace)
           await this.log.save({
             ...trace,
@@ -1211,6 +1222,7 @@ export class AiDirector {
     await this.admissionTail;
     await Promise.allSettled([...this.pendingWork]);
     await this.maintenance.close();
-    await this.log.flush();
+    await this.narrator.close();
+    await this.log.close();
   }
 }

@@ -1,3 +1,7 @@
+import { appraiseEvent } from './social.js';
+import { mutateExperience } from './experience.js';
+import { engageConversation, reconcileConversations } from './conversations.js';
+import { hasMemory } from './living.js';
 import { finishWorld, cloneValue } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
@@ -30,14 +34,14 @@ export function appendMemory(
   actorId: string,
   memory: Omit<MemoryRecord, 'id' | 'actorId' | 'at'>,
 ): void {
-  if (!world.entities[actorId]?.actor || !memory.summary.trim()) return;
+  if (!hasMemory(world.entities[actorId]) || !memory.summary.trim()) return;
   const records = world.memories[actorId] ?? (world.memories[actorId] = []);
   if (
     memory.eventId &&
     records.some((record) => record.eventId === memory.eventId && record.kind === memory.kind)
   )
     return;
-  records.push({
+  const record: MemoryRecord = {
     ...memory,
     summary: memoryPerspective(world, actorId, memory.summary, memory.eventType === 'speech'),
     id: nextId(world, 'memory'),
@@ -46,6 +50,10 @@ export function appendMemory(
     sequence: world.nextId,
     entityIds: memory.entityIds.slice(0, 8),
     importance: Math.max(0, Math.min(10, memory.importance)),
+  };
+  mutateExperience(world, actorId, {
+    operation: 'add',
+    entry: { source: 'memory', value: record },
   });
 }
 export function emit(
@@ -79,6 +87,7 @@ export function emit(
   const audience = Object.values(world.entities)
     .filter(
       (entity) =>
+        hasMemory(entity) &&
         entity.actor?.alive &&
         !entity.actor.rest?.asleep &&
         !!source &&
@@ -87,9 +96,17 @@ export function emit(
           : canSee(entity.position, source.position)),
     )
     .map((entity) => entity.id);
-  if (source?.actor && !audience.includes(source.id)) audience.push(source.id);
+  if (source && hasMemory(source) && !audience.includes(source.id)) audience.push(source.id);
+  const conversationId =
+    type === 'speech' && source
+      ? engageConversation(world, source.id, targetId)
+      : type === 'expression' && source
+        ? world.conversations?.active[source.id]
+        : undefined;
   const event: WorldEvent = {
+    ...(conversationId ? { conversationId } : {}),
     id: nextId(world, 'event'),
+    order: world.nextId,
     sequence: world.sequence + 1,
     at: world.simTime,
     type,
@@ -100,47 +117,61 @@ export function emit(
   };
   if (source) event.actorId = source.id;
   if (targetId) event.targetId = targetId;
-  if (data) event.data = data;
-  if (audience.length) world.events.push(event);
+  event.data = {
+    ...data,
+    importancePolicy: 'native-v1',
+    importanceReason: data?.['significant'] ? 'significant' : type,
+  };
+  if (source && conversationId && world.conversations?.records[conversationId])
+    world.conversations.records[conversationId]!.lastActivityAt = world.simTime;
+  if (audience.length || importance >= (world.socialPolicy?.notableThreshold ?? 8))
+    world.events.push(event);
   events.push(event);
   if (world.experience) {
     for (const actorId of audience) {
-      const awareness = (world.experience.awareness[actorId] ??= []);
-      awareness.push({
-        eventId: event.id,
-        actorId,
-        text: memoryPerspective(world, actorId, text, type === 'speech'),
-        at: event.at,
-        sequence: world.nextId,
-        modality: type === 'speech' ? 'heard' : 'observed',
-        recognized: true,
-        intelligible: true,
-        entityIds: [source?.id, targetId].filter((id): id is string => !!id),
-        importance: event.importance ?? importance,
-        urgency: event.urgency ?? urgency,
-        eventType: type,
-        ...(source ? { sourceId: source.id } : {}),
-        ...(targetId ? { targetId } : {}),
-        triggerKind:
-          source?.id === actorId
-            ? 'self_event'
-            : type === 'speech'
-              ? targetId === actorId
-                ? 'addressed_speech'
-                : 'overheard_speech'
-              : targetId === actorId
-                ? 'directed_action'
-                : 'observed_event',
-        content: typeof data?.['text'] === 'string' ? data['text'] : text,
+      mutateExperience(world, actorId, {
+        operation: 'add',
+        entry: {
+          source: 'awareness',
+          value: {
+            eventId: event.id,
+            actorId,
+            text: memoryPerspective(world, actorId, text, type === 'speech'),
+            at: event.at,
+            sequence: world.nextId,
+            modality: type === 'speech' ? 'heard' : 'observed',
+            recognized: true,
+            intelligible: true,
+            entityIds: [source?.id, targetId].filter((id): id is string => !!id),
+            importance: event.importance ?? importance,
+            urgency: event.urgency ?? urgency,
+            eventType: type,
+            ...(source ? { sourceId: source.id } : {}),
+            ...(targetId ? { targetId } : {}),
+            triggerKind:
+              source?.id === actorId
+                ? 'self_event'
+                : type === 'speech'
+                  ? targetId === actorId
+                    ? 'addressed_speech'
+                    : 'overheard_speech'
+                  : targetId === actorId
+                    ? 'directed_action'
+                    : 'observed_event',
+            content: typeof data?.['text'] === 'string' ? data['text'] : text,
+          },
+        },
       });
     }
   }
+  appraiseEvent(world, event);
   recordSpokenPromise(world, event);
   advanceCommitments(world, [event]);
   return event;
 }
 export function finish(world: WorldState, events: WorldEvent[], result: Outcome): Transition {
   advanceCommitments(world, events);
+  reconcileConversations(world);
   world.sequence++;
   const committedEvents = cloneValue(events);
   return { world: finishWorld(world), events: committedEvents, outcome: result };

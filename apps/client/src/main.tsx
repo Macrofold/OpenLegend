@@ -1,3 +1,4 @@
+import { History, Narrator } from './ui/history';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type {
@@ -469,7 +470,12 @@ function App() {
   async function revive(entity: EntityView) {
     if (!connected) return notify('Reconnect to the world.');
     try {
-      const result = await post('/api/god/act', { action: 'revive', targetId: entity.id });
+      const result = await post('/api/god/act', {
+        action: 'revive',
+        targetId: entity.id,
+        requestId: crypto.randomUUID(),
+        expectedRevision: entity.bodyRevision,
+      });
       notify(result.message);
       if (result.ok) setPicker(null);
     } catch (reason) {
@@ -599,12 +605,7 @@ function App() {
               ))}
             </Section>
             <Section title="Your story">
-              {[...view.events].reverse().map((e) => (
-                <article key={e.id}>
-                  <EventTime time={e.time} />
-                  <p>{e.text}</p>
-                </article>
-              ))}
+              <History />
             </Section>
           </>
         );
@@ -917,6 +918,7 @@ function App() {
               command={(a) => void command(a)}
               talk={talk}
             />
+            <Narrator item={view.narrator} />
             <Toolbar className="ol-camera ol-card" aria-label="Camera">
               <IconButton
                 icon="ui.plus"
@@ -949,6 +951,14 @@ function App() {
                 inspect={inspect}
                 preference={preference}
                 revive={(target) => void revive(target)}
+                enableCognition={(target) => {
+                  void post('/api/god/act', { action: 'enable-cognition', targetId: target.id })
+                    .then((result) => {
+                      notify(result.message);
+                      if (result.ok) setPicker(null);
+                    })
+                    .catch((reason) => notify(String(reason)));
+                }}
                 spawn={(type, position) => void spawn(type, position)}
                 createPerson={(position) => {
                   setPicker(null);
