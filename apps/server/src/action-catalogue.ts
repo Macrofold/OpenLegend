@@ -14,12 +14,14 @@ import { ACTION_DESCRIPTIONS, describeCommand, commandFacts } from './action-des
  * same rules as execution; its disposable effects/receipts never enter the save.
  */
 export function actionCatalogue(service: WorldService, context: ActionContext): ActionCatalogue {
-  const observation = service.observe('player')!;
+  const observation = service.observe(service.controlledEntityId)!;
   const world = service.world;
-  const targets = observation.visibleEntities.filter((entity) => entity.id !== 'player');
+  const targets = observation.visibleEntities.filter(
+    (entity) => entity.id !== service.controlledEntityId,
+  );
   const selected =
-    context.targetId === 'player'
-      ? world.entities['player']
+    context.targetId === service.controlledEntityId
+      ? world.entities[service.controlledEntityId]
       : targets.find((entity) => entity.id === context.targetId);
   if (context.targetId && !selected) throw new Error('That target is no longer in view.');
   const actions: CatalogueAction[] = [];
@@ -34,7 +36,12 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
     // Ground exposes destination movement only. Personal work belongs to self;
     // resource and social actions belong to the specifically selected target.
     if (!selected && command.type !== 'move') return;
-    if (selected && targetId !== selected.id && !(selected.id === 'player' && !targetId)) return;
+    if (
+      selected &&
+      targetId !== selected.id &&
+      !(selected.id === service.controlledEntityId && !targetId)
+    )
+      return;
     const result = service.previewCommand(command);
     actions.push({
       id,
@@ -61,7 +68,10 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
       family,
     );
     if (!selected) return;
-    if (targetId !== selected.id && !(selected.id === 'player' && !targetId && personalFamily))
+    if (
+      targetId !== selected.id &&
+      !(selected.id === service.controlledEntityId && !targetId && personalFamily)
+    )
       return;
     actions.push({
       id,
@@ -87,7 +97,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
     );
   else missing('move', 'Walk', 'Movement', 'Right-click a destination in the world.');
   add('rest', 'Rest', 'Survival', { type: 'rest' }, ['sleep', 'energy']);
-  if (world.entities['player']!.actor!.action)
+  if (world.entities[service.controlledEntityId]!.actor!.action)
     add('cancel', 'Stop current work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
   else missing('cancel', 'Stop current work', 'Movement', 'No work to stop.');
   add('recover', 'Recover at camp', 'Survival', { type: 'recover' }, ['revive', 'recovery']);

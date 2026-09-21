@@ -12,7 +12,7 @@
 - `admitDeclaration(world, draft, provenance)`: independently validates a G1 recipe against `DECLARATION_CONTRACT`, records provenance, creates an immutable definition and teaches its inventor. Admission does not craft an item or teach observers. Exact candidate retries deduplicate; semantic paraphrase retrieval belongs in application intent routing.
 - `observeActor`, `queryMemories`: build actor-scoped evidence. Bind the requested actor ID to server authority. Never send a complete `WorldState` to a client or model. `remember` records application-validated private appraisal, requiring perceived event evidence for observed/heard sources.
 
-Positions use `{x,z}` and terrain uses `tiles[z][x]`. Player/NPC IDs are `player` and `ada`. Fullness is 0–100 (100 is full); energy/health are 0–100. Actors have a persisted birth time on the same simulation clock. NPCs can die; players collapse and use explicit camp recovery.
+Positions use `{x,z}` and terrain uses `tiles[z][x]`. Actor IDs are opaque; resolve the controlled actor and default resident through saved bindings. Fullness is 0–100 (100 is full); energy/health are 0–100. Actors have a persisted birth time on the same simulation clock. NPCs can die; players collapse and use explicit camp recovery.
 
 Generic native operations prepare raw fiber into usable fiber, twist cord, gather, move, rest, shoot compatible projectiles, harvest finite remains, cook raw meat and consume edible food. Timed work consumes inputs when actual work starts. Cancelling does not refund inputs already consumed. Shots spend one projectile only after fresh target/range/tool/ammunition checks. Live animals flee from shots and can be missed. Navigation and line of sight use authoritative terrain.
 
@@ -26,4 +26,6 @@ The kernel provides native urgent eating/foraging/rest to the NPC through provid
 
 Transitions now use `draftWorld`/`finishWorld` (or `updateWorld`) from `draft.ts`. Published state is immutable by contract: unchanged branches retain identity for incremental persistence and public projection. Never mutate a transition result in place; create a new draft when composing transitions. Immer is isolated with auto-freezing disabled for legacy seed/migration construction. No draft may escape through events or observation DTOs.
 
-Owner-editor deletions pass through `forgetExperience`, including dependent-summary removal, a durable forgetting ledger and derived mind invalidation. Unresolved commitments remain authoritative and cannot be deleted by the editor. See [current architecture](../../../docs/architecture.md#public-updates-and-owner-editors).
+Owner-editor additions, edits and deletions pass through `mutateExperience`; deletions apply authoritative forgetting, including dependent-summary removal, a durable forgetting ledger and derived mind invalidation. Unresolved commitments remain authoritative and cannot be deleted by the editor. See [current architecture](../../../docs/architecture.md#public-updates-and-owner-editors).
+
+Draft finalization records append-only event lineage for persistence. Retained-event edits and incompatible forks cannot reuse that shortcut; routine appends compose until durable flush. Importance-only experience edits invalidate retrieval metadata without discarding dependent prose.

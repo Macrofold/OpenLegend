@@ -8,6 +8,8 @@ Status: **accepted architectural direction; proposed implementation contract**, 
 
 This document owns the real-time command/view protocol, client prediction, reconnect behavior, replication and network queue policies. The [production data model](production-data-model.md) owns canonical records and atomic changes; [data queries and MCP](data-queries-and-mcp.md) owns historical/current data queries; [data delivery and scale](data-delivery-and-scale.md) owns migration, retention, database recovery and shard rollout. These interfaces share identities and commit references without becoming the same protocol.
 
+The [runtime performance design](../../docs/performance.md) owns immediate single-writer scheduling and persistence-cost improvements, with the prioritized [PF tracker](../../docs/maintainers/performance.md). It preserves this document's authority and confirmation contracts and does not require a transport replacement to fix local responsiveness.
+
 ## 1. Architectural decision
 
 Run the shared simulation on authoritative servers with loaded state in memory. Browsers submit intentions, display immediate local feedback and maintain a permitted replica of committed state. Servers resolve competing actions, persist bounded batches of changes and publish scoped confirmations/deltas. The browser is not an independently writable world that later merges inventory, damage or inventions into the server.

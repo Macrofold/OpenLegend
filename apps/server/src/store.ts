@@ -5,7 +5,7 @@ import { SqliteDatabase } from './sqlite-database.js';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createHash } from 'node:crypto';
-import type { WorldState } from '@open-legend/domain';
+import { appendedEventCount as provenAppendCount, type WorldState } from '@open-legend/domain';
 import type { AiReceipt } from '@open-legend/ai';
 import type { AiJobView, PlayerProfile, PlayerPreferencePatch } from '@open-legend/protocol';
 
@@ -41,6 +41,7 @@ export interface WorldChanges {
   operations: WorldChange[];
 }
 export interface JobRecord extends AiJobView {
+  retryOf?: string;
   playerSpeechEventId?: string;
   stimulusEvidenceIds?: string[];
   fingerprint: string;
@@ -78,8 +79,7 @@ function collectChanges(
     Array.isArray(next) &&
     next.length === previous.length + appendEventCount
   ) {
-    // WorldService admits this fast path only for explicitly declared append-only
-    // transitions; ordinary and editor commits use the structural diff below.
+    // Draft-proven appends skip retained history; unknown or edited arrays use the diff.
     if (appendEventCount)
       operations.push({
         op: 'splice',
@@ -144,11 +144,18 @@ function collectChanges(
 export function diffSavedWorld(
   previous: SavedWorld | null,
   next: SavedWorld,
-  appendEventCount?: number,
+  _legacyAppendEventCount?: number,
 ): WorldChanges {
   if (!previous) return { operations: [{ op: 'set', path: [], value: structuredClone(next) }] };
   const operations: WorldChange[] = [];
-  collectChanges(previous, next, [], operations, appendEventCount);
+  // A caller hint cannot certify an unchanged prefix; domain draft lineage can.
+  collectChanges(
+    previous,
+    next,
+    [],
+    operations,
+    provenAppendCount(previous.world.events, next.world.events),
+  );
   return { operations };
 }
 
@@ -496,6 +503,9 @@ export class SqliteStore implements GameRepository {
   ): Promise<number> {
     await this.ready;
 
+    appendEventCount = this.acceptedState
+      ? provenAppendCount(this.acceptedState.world.events, state.world.events)
+      : undefined;
     const changes = this.acceptedState
       ? diffSavedWorld(this.acceptedState, state, appendEventCount)
       : { operations: [] };

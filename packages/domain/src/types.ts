@@ -244,6 +244,7 @@ export interface WorldState {
   experience?: import('./experience.js').ExperienceState;
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
+  identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
   schemaVersion: 1 | 2 | 3;
   id: string;
   seed: number;

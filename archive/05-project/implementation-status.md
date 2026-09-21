@@ -16,3 +16,9 @@ This is the current subsystem snapshot. Architecture details belong to [Architec
 | Production data | SQLite supports personal play; PostgreSQL adds transactional cognition records and pgvector retrieval. Response receipts, journal recovery, patches and atomic editor writes are implemented. | Full production normalization, broader failure recovery, external hosting and measured scale remain pending. | [Persistence evidence](../../docs/verification.md) | [Production data tracker](../../docs/maintainers/production-data.md) |
 
 A documentation change does not advance a capability. Update this table only when current code and current evidence support the new state.
+
+## Identity references
+
+Saved control bindings replace hard-coded player/resident lookup across application routes and projections. New worlds seed opaque person IDs; older IDs remain unchanged. Immediate response fields explicitly identify entity IDs and use request-bound schema enums and a final reference table. See the [canonical contract](../../docs/identity-and-references.md) and [remaining verification](../../docs/maintainers/TODO.md). Build and disposable runtime observations are not live provider acceptance.
+
+Persistence append shortcuts now require domain-draft prefix proof, including coalesced routine transitions; routine milestone updates precede durable flush. Person memory pagination caches actor-local ordering and hashes only the page/edited rows. Importance-only experience edits preserve derived prose while invalidating retrieval metadata. Production build and isolated SQLite runtime checks are recorded in the verification log; deferred regression coverage remains in the maintainer TODO.

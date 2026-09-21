@@ -174,7 +174,10 @@ export interface CandidateAction {
   description: string;
   command: CommandInput | null;
 }
-export function npcCandidates(service: WorldService, actorId = 'ada'): CandidateAction[] {
+export function npcCandidates(
+  service: WorldService,
+  actorId = service.defaultResidentEntityId,
+): CandidateAction[] {
   const observed = service.observe(actorId);
   const actor = observed?.actor.actor;
   if (!observed || !actor?.alive || actor.incapacitated || service.paused) return [];

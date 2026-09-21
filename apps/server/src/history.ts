@@ -1,3 +1,4 @@
+import { controlledEntityId } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import type { WorldState, WorldEvent, ConversationTransition } from '@open-legend/domain';
 import type { TranscriptPage, TranscriptItem } from '@open-legend/protocol';
@@ -40,10 +41,11 @@ const revisionOf = (text: string) => createHash('sha256').update(text).digest('h
 export class HistoryRepository {
   constructor(
     private db: SqlDatabase,
-    private principals: ReadonlyArray<{ ownerId: string; actorId: string }> = [
-      { ownerId: 'local-player', actorId: 'player' },
-    ],
-  ) {}
+    private principals: ReadonlyArray<{ ownerId: string; actorId: string }> = [],
+  ) {
+    this.bindLocalPrincipal = principals.length === 0;
+  }
+  private readonly bindLocalPrincipal: boolean;
   async initialize() {
     await this.db.exec(`
       CREATE TABLE IF NOT EXISTS history_perspectives (
@@ -131,6 +133,10 @@ export class HistoryRepository {
   }
   /** Runs inside the authoritative commit transaction. No paid work and no imagined legacy sources. */
   async project(previous: WorldState | undefined, world: WorldState, appendCount?: number) {
+    // The current host has one principal; resolve its perspective from the saved binding.
+    if (this.bindLocalPrincipal) {
+      this.principals = [{ ownerId: 'local-player', actorId: controlledEntityId(world) }];
+    }
     let changed: WorldEvent[];
     if (
       previous &&
@@ -555,7 +561,14 @@ export class HistoryRepository {
     worldId: string,
     ownerId: string,
     actorId: string,
-    options: { conversationId?: string; before?: number; watermark?: number; limit?: number } = {},
+    options: {
+      conversationId?: string;
+      participantId?: string;
+      speechOnly?: boolean;
+      before?: number;
+      watermark?: number;
+      limit?: number;
+    } = {},
   ): Promise<TranscriptPage> {
     // This application currently has exactly one authenticated player principal.
     if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
@@ -571,27 +584,52 @@ export class HistoryRepository {
       Number(maximum?.['position'] ?? 0),
     );
     const boundary = Math.min(options.before ?? watermark + 1, watermark + 1);
-    const filter = options.conversationId ? ' AND e.conversation_id=?' : '';
+    let filter = options.conversationId ? ' AND e.conversation_id=?' : '';
     const storyFilter = options.conversationId ? ' AND conversation_id=?' : '';
     const args = options.conversationId ? [options.conversationId] : [];
+    // Filter before pagination so journal activity cannot crowd speech out of the page.
+    const field = (key: string) =>
+      this.db.dialect === 'postgres'
+        ? `(e.payload::jsonb->>'${key}')`
+        : `json_extract(e.payload, '$.${key}')`;
+    if (options.speechOnly || options.participantId) filter += ` AND ${field('type')}='speech'`;
+    if (options.participantId) {
+      filter += ` AND ((${field('actorId')}=? AND ${field('targetId')}=?) OR (${field('actorId')}=? AND (${field('targetId')}=? OR ${field('targetId')} IS NULL)))`;
+      args.push(actorId, options.participantId, options.participantId, actorId);
+    }
     const events = await this.db
       .prepare(
-        `SELECT e.position,e.payload,p.payload AS perspective FROM history_events e LEFT JOIN history_perspectives p ON p.world_id=e.world_id AND p.event_id=e.id AND p.actor_id=? JOIN history_audiences a ON a.world_id=e.world_id AND a.event_id=e.id WHERE e.world_id=? AND a.actor_id=? AND e.position<?${filter} AND NOT EXISTS (SELECT 1 FROM story_event_sources s JOIN story_narrations n ON n.world_id=s.world_id AND n.id=s.narration_id AND n.owner_id=s.owner_id WHERE s.world_id=e.world_id AND s.event_id=e.id AND s.owner_id=?) ORDER BY e.position DESC,e.id DESC LIMIT ?`,
+        `SELECT e.position,e.payload,p.payload AS perspective FROM history_events e LEFT JOIN history_perspectives p ON p.world_id=e.world_id AND p.event_id=e.id AND p.actor_id=? JOIN history_audiences a ON a.world_id=e.world_id AND a.event_id=e.id WHERE e.world_id=? AND a.actor_id=? AND e.position<?${filter} AND (?=1 OR NOT EXISTS (SELECT 1 FROM story_event_sources s JOIN story_narrations n ON n.world_id=s.world_id AND n.id=s.narration_id AND n.owner_id=s.owner_id WHERE s.world_id=e.world_id AND s.event_id=e.id AND s.owner_id=?)) ORDER BY e.position DESC,e.id DESC LIMIT ?`,
       )
-      .all(actorId, worldId, actorId, boundary, ...args, ownerId, limit + 1);
-    const stories = await this.db
-      .prepare(
-        `SELECT payload FROM story_narrations WHERE world_id=? AND owner_id=? AND position<?${storyFilter} ORDER BY position DESC,id DESC LIMIT ?`,
-      )
-      .all(worldId, ownerId, boundary, ...args, limit + 1);
+      .all(
+        actorId,
+        worldId,
+        actorId,
+        boundary,
+        ...args,
+        options.speechOnly || options.participantId ? 1 : 0,
+        ownerId,
+        limit + 1,
+      );
+    const stories =
+      options.speechOnly || options.participantId
+        ? []
+        : await this.db
+            .prepare(
+              `SELECT payload FROM story_narrations WHERE world_id=? AND owner_id=? AND position<?${storyFilter} ORDER BY position DESC,id DESC LIMIT ?`,
+            )
+            .all(worldId, ownerId, boundary, ...args, limit + 1);
     const items: TranscriptItem[] = events.map((row) => {
       const event = JSON.parse(String(row['payload'])) as WorldEvent;
       return {
         id: event.id,
         kind: event.type === 'speech' ? 'speech' : 'event',
-        text: row['perspective']
-          ? (JSON.parse(String(row['perspective'])) as StorySource).text
-          : event.text,
+        text:
+          (options.speechOnly || options.participantId) && typeof event.data?.['text'] === 'string'
+            ? event.data['text']
+            : row['perspective']
+              ? (JSON.parse(String(row['perspective'])) as StorySource).text
+              : event.text,
         time: event.at,
         order: Number(row['position']),
         conversationId: event.conversationId,

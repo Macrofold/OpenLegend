@@ -1,11 +1,19 @@
-import { History } from './history';
+import { useChatHistory } from './use-chat-history';
 import { useEffect, useRef, useState } from 'react';
 import type { GameView } from '@open-legend/protocol';
 import { Button, Tag, SegmentedControl } from '../design-system/components';
 import { aiSetupReason } from '../ai-readiness';
 import { post } from '../api';
 import { readDraft, saveDraft, type ComposerDraft } from '../draft';
-import { ConversationComposer } from './conversation';
+import {
+  ConversationComposer,
+  ConversationMessage,
+  ConversationThread,
+  type ConversationItem,
+} from './conversation';
+
+const activeReply = (status: string | undefined) =>
+  status !== undefined && ['queued', 'judging', 'generating'].includes(status);
 
 export function Composer({
   view,
@@ -27,6 +35,31 @@ export function Composer({
   const [draft, setDraft] = useState(readDraft),
     [sending, setSending] = useState(false);
   const input = useRef<HTMLTextAreaElement>(null);
+  const retryKeys = useRef(new Map<string, string>());
+  const retryLock = useRef(new Set<string>());
+  const [retrying, setRetrying] = useState<Record<string, boolean>>({});
+  async function retry(originalRequestId: string) {
+    if (retryLock.current.has(originalRequestId)) return;
+    retryLock.current.add(originalRequestId);
+    setRetrying((current) => ({ ...current, [originalRequestId]: true }));
+    const requestId = retryKeys.current.get(originalRequestId) ?? crypto.randomUUID();
+    retryKeys.current.set(originalRequestId, requestId);
+    try {
+      const result = await post('/api/chat/retry', { requestId, originalRequestId });
+      if (!result.ok) {
+        retryKeys.current.delete(originalRequestId);
+        notify(result.message);
+      } else {
+        if (result.jobId) history.markRetry(originalRequestId, result.jobId);
+        await history.refresh();
+      }
+    } catch (error) {
+      notify(`${String(error)} Retry again to check the same attempt.`);
+    } finally {
+      retryLock.current.delete(originalRequestId);
+      setRetrying((current) => ({ ...current, [originalRequestId]: false }));
+    }
+  }
   useEffect(() => {
     if (seed) {
       setDraft(seed);
@@ -35,21 +68,56 @@ export function Composer({
   }, [seed]);
   useEffect(() => saveDraft(draft), [draft]);
   const reason = aiSetupReason(view.ai),
-    npc = view.entities.find((e) => e.id === npcId) ?? view.entities.find((e) => e.canTalk);
+    npc = npcId ? view.entities.find((e) => e.id === npcId) : view.entities.find((e) => e.canTalk);
   const job = view.ai.jobs.find(
     (j) =>
       j.kind === (draft.mode === 'chat' ? 'chat' : 'invention') &&
       ['queued', 'judging', 'generating'].includes(j.status),
   );
+  const actorBlocked =
+    draft.mode !== 'chat'
+      ? null
+      : !npc
+        ? npcId
+          ? 'This person is no longer in view.'
+          : 'Move within hearing of someone to talk.'
+        : (npc.talkUnavailableReason ?? null);
   const blocked = !connected
     ? 'Reconnect to the world.'
     : view.clock.paused
-      ? 'Resume the world to send.'
-      : draft.mode === 'chat' && !npc?.canTalk
-        ? 'Move within hearing of someone to talk.'
+      ? 'Resume the world before sending a message.'
+      : actorBlocked
+        ? actorBlocked
         : !view.player.alive
           ? 'Recover at camp to continue.'
           : null;
+  const history = useChatHistory(view, npcId ?? npc?.id, visible && draft.mode === 'chat');
+  const messages: ConversationItem[] = history.messages.map((message) => ({
+    id: message.id,
+    content:
+      message.kind === 'action' ? (
+        <div className="ol-meta">
+          <p>{message.text}</p>
+        </div>
+      ) : (
+        <ConversationMessage
+          role={message.speakerId === view.player.id ? 'you' : 'agent'}
+          label={message.speaker}
+          text={message.text}
+          failureReason={
+            message.replyStatus === 'failed' && !retrying[message.replyRequestId ?? '']
+              ? message.replyFailure
+              : undefined
+          }
+          onRetry={
+            message.retryable && message.replyRequestId
+              ? () => void retry(message.replyRequestId!)
+              : undefined
+          }
+          pending={!!retrying[message.replyRequestId ?? ''] || activeReply(message.replyStatus)}
+        />
+      ),
+  }));
   async function submit() {
     if (reason) {
       setup();
@@ -93,7 +161,34 @@ export function Composer({
           <p className="ol-meta">
             {npc ? `Talk with ${npc.name}` : 'Find someone in the clearing.'}
           </p>
-          <History conversation visible={visible} />
+          {history.error && <p role="alert">{history.error}</p>}
+          <ConversationThread
+            id="conversation"
+            conversationKey={`${view.worldId}:${npcId ?? npc?.id ?? 'nearby'}`}
+            items={messages}
+            openingRevision={history.openingRevision}
+            before={
+              history.hasOlder ? (
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  onPress={history.loadOlder}
+                  isDisabled={history.loading}
+                >
+                  Older messages
+                </Button>
+              ) : undefined
+            }
+            empty={
+              <p className="ol-meta">
+                {history.loading
+                  ? 'Loading conversation…'
+                  : 'No saved messages with this person yet.'}
+              </p>
+            }
+            ariaLabel={npc ? `Conversation with ${npc.name}` : 'Conversation'}
+            visible={visible}
+          />
         </>
       ) : (
         <div className="ol-proposal">
@@ -131,6 +226,8 @@ export function Composer({
         submitIcon={reason ? 'ui.settings' : 'ui.send'}
         submitLabel={reason ? 'Set up AI' : 'Send'}
         disabled={!reason && (sending || !!blocked || !!job || !draft.text.trim())}
+        inputDisabled={!!actorBlocked}
+        inputDisabledReason={actorBlocked}
       />
       <p id="composerReadiness" className="ol-caption">
         {reason ?? blocked ?? 'Enter to send · Shift + Enter for a new line'}

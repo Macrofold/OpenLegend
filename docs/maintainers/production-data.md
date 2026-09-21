@@ -1,6 +1,6 @@
 # Production data implementation tracker
 
-This is the sole implementation tracker for production data, persistence and scale. Its design owners are the [production data model](../../archive/07-technical-architecture/production-data-model.md), [data queries and MCP](../../archive/07-technical-architecture/data-queries-and-mcp.md), and [data delivery and scale](../../archive/07-technical-architecture/data-delivery-and-scale.md). Current implemented behavior belongs to [Architecture](../architecture.md).
+This is the sole implementation tracker for production data contracts, migrations and scale rollout. Its design owners are the [production data model](../../archive/07-technical-architecture/production-data-model.md), [data queries and MCP](../../archive/07-technical-architecture/data-queries-and-mcp.md), and [data delivery and scale](../../archive/07-technical-architecture/data-delivery-and-scale.md). Current implemented behavior belongs to [Architecture](../architecture.md). Runtime optimization and performance qualification are tracked in [PF00–PF11](performance.md); their evidence feeds these phase gates without completing or duplicating them.
 
 All phases remain open unless current evidence and the phase exit gate establish completion. Implement only the records needed by the consuming feature while preserving the shared identity, permission and transaction contracts.
 

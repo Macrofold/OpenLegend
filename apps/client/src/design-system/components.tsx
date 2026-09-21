@@ -487,6 +487,18 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
     </div>
   );
 }
+/** Short hover/focus labels use plain text; rich action details use Explanation. */
+export function TextTooltip({ children, text }: { children: ReactNode; text?: string | null }) {
+  return (
+    <TooltipTrigger delay={300} closeDelay={100} isDisabled={!text}>
+      {children}
+      <Tooltip className="ol-text-tooltip ol-root" placement="top" offset={4}>
+        {text}
+      </Tooltip>
+    </TooltipTrigger>
+  );
+}
+
 export function Explanation({
   children,
   title,

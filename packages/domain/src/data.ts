@@ -1,3 +1,4 @@
+import { initializeIdentity } from './identity.js';
 import { livingBody, nativeActor, migrateActors, hasMemory } from './living.js';
 import traitBank from '../config/traits.json' with { type: 'json' };
 import { migrateCognition } from './experience.js';
@@ -9,8 +10,8 @@ import type {
   WorldState,
 } from './types.js';
 
-export const PLAYER_ID = 'player';
-export const NPC_ID = 'ada';
+export const PLAYER_ID = 'entity-0001';
+export const NPC_ID = 'entity-0002';
 export const TRAIT_BANK: readonly CharacterTrait[] = traitBank;
 export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
   raw_fiber: {
@@ -191,8 +192,8 @@ export function createWorld(seed = 73): WorldState {
     items: {},
     itemDefinitions: structuredClone(NATIVE_ITEMS),
     recipes: {},
-    memories: { player: [], ada: [] },
-    knowledge: { player: [], ada: [] },
+    memories: { [PLAYER_ID]: [], [NPC_ID]: [] },
+    knowledge: { [PLAYER_ID]: [], [NPC_ID]: [] },
     events: [],
     commandReceipts: {},
     declarationReceipts: {},
@@ -328,9 +329,9 @@ export function createWorld(seed = 73): WorldState {
     addItem(world, id, 'wood', 2);
     addItem(world, id, 'stone', 6);
   }
-  world.memories.ada!.push({
+  world.memories[NPC_ID]!.push({
     id: nextId(world, 'memory'),
-    actorId: 'ada',
+    actorId: NPC_ID,
     kind: 'belief',
     source: 'observed',
     summary:
@@ -340,6 +341,7 @@ export function createWorld(seed = 73): WorldState {
     importance: 8,
   });
   migrateActors(world);
+  initializeIdentity(world);
   migrateCognition(world);
   return world;
 }

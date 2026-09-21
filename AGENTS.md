@@ -19,6 +19,7 @@ Guidelines
 - Explicit over implicit – Favor clear, descriptive names and type annotations over clever tricks
 - Fail fast – Validate inputs, throw early, and surface actionable errors
 - Let the code speak – If you need a multi-paragraph comment, refactor until intent is obvious
+- Comment the why – When coding, add brief comments at important behavioral boundaries explaining the requirement, tradeoff or intended extension. Reference the canonical documentation file and a specific heading, for example `docs/architecture.md#state-and-transitions`. Place comments near the code they clarify, especially around authority, privacy, persistence, admission, recovery and non-obvious compatibility behavior. Do not narrate obvious syntax, restate the implementation, cite historical/source files or comment every line; prefer a few durable links that help future maintainers and coding agents recover design context. Update or remove these references when the behavior or documentation owner changes.
 - Centralize semantic mutations – Adding, updating or deleting a domain concept must go through one authoritative entrypoint that performs validation, dependent-state updates, invalidation and committed side effects. Parameterize legitimate variants instead of creating shortcut paths that can omit downstream work.
 
 ## Boundaries
@@ -38,6 +39,7 @@ Guidelines
 - Before consolidating or deleting a document, classify its contents and migrate every unique current requirement, task, implementation fact, acceptance criterion, unresolved decision, research question and needed reference to its canonical owner. Delete the source only after updating every inbound link.
 - Resolve implemented-state conflicts from code and current verification evidence. Resolve target behavior from the latest accepted requirement and designated design owner. If a material product or technical choice remains genuinely incompatible, record the unresolved choice in `open-decisions.md` instead of silently choosing a direction.
 - Preserve task IDs, checkbox state, dependencies, blockers and still-valid exit criteria when moving work. Documentation reorganization never completes an implementation or acceptance task.
+- Treat documentation references in code comments as part of the documentation system. Whenever a documentation file or heading changes, run a repository-wide full-text search for its path, name and affected heading anchors, inspect every matching code comment, and update or remove references whose behavior, owner or anchor changed. If the documentation change alters the reason for a behavior or introduces a new non-obvious boundary, update the nearby brief `why` comment as part of the same change.
 - After documentation changes, review the complete diff for information loss and run repository-wide checks for stale links, deleted owners, duplicate task bodies, competing canonical claims, misplaced decisions and broken relative links or anchors.
 
 ## Work discipline

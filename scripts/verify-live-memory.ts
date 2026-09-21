@@ -34,9 +34,9 @@ const backend = new MacrofoldBackend(service);
 const id = randomUUID();
 const speech = await service.say(
   `encounter-${id}`,
-  'player',
+  service.controlledEntityId,
   'I would like us to help each other survive. I have noticed you working here. What do you make of me?',
-  'ada',
+  service.defaultResidentEntityId,
 );
 if (!speech.ok) throw new Error(speech.message);
 const sessions: string[] = [];
@@ -48,12 +48,12 @@ async function deliberate(
   purpose: 'thought' | 'reflection' | 'dream' = 'thought',
 ) {
   const id = randomUUID();
-  const prepared = cognitionContext(service, 'ada', id, purpose, 'full');
+  const prepared = cognitionContext(service, service.defaultResidentEntityId, id, purpose, 'full');
   if (!(await service.store.reserve(id, 'openai', config.macrofoldRunUsd, config.budgetUsd)))
     throw new Error('Acceptance run budget exhausted.');
   const result = await backend.generate<unknown>({
     requestId: id,
-    actorScope: 'ada',
+    actorScope: service.defaultResidentEntityId,
     execution: 'full',
     task: 'npc_cognition',
     instructions: COGNITION_INSTRUCTIONS + ' ' + instructions,
@@ -86,7 +86,7 @@ async function deliberate(
   sandboxes.push(lane.sandbox);
   if (new Set(sessions).size !== sessions.length || new Set(sandboxes).size !== 1)
     throw new Error('Fresh conversation / warm compute acceptance failed.');
-  return mindFor(service.world, 'ada');
+  return mindFor(service.world, service.defaultResidentEntityId);
 }
 try {
   const first = await deliberate(
@@ -106,7 +106,7 @@ try {
   await service.ready;
   await service.setPresence('live-acceptance-restart', true, 1);
   await service.control({ paused: false });
-  if (mindFor(service.world, 'ada').revision !== revision)
+  if (mindFor(service.world, service.defaultResidentEntityId).revision !== revision)
     throw new Error('Mind did not survive restart.');
   const continued = new MacrofoldBackend(service);
   const second = await deliberate(
@@ -116,9 +116,9 @@ try {
   );
   await service.say(
     `reflect-evidence-${id}`,
-    'player',
+    service.controlledEntityId,
     'I am still here and interested in working together.',
-    'ada',
+    service.defaultResidentEntityId,
   );
   await deliberate(
     continued,
@@ -126,8 +126,17 @@ try {
     'Use this safe downtime to reconsider the conversation. You may leave the mind unchanged. Do not start a physical action.',
     'reflection',
   );
-  await service.say(`dream-evidence-${id}`, 'player', 'Rest well. We can continue later.', 'ada');
-  const rest = await service.command(`dream-rest-${id}`, { type: 'rest' }, 'ada');
+  await service.say(
+    `dream-evidence-${id}`,
+    service.controlledEntityId,
+    'Rest well. We can continue later.',
+    service.defaultResidentEntityId,
+  );
+  const rest = await service.command(
+    `dream-rest-${id}`,
+    { type: 'rest' },
+    service.defaultResidentEntityId,
+  );
   if (!rest.ok) throw new Error(rest.message);
   const dreamed = await deliberate(
     continued,

@@ -1,3 +1,5 @@
+import { createPersonMemoryPager } from './person-memory-page.js';
+import { controlledEntityId, defaultResidentEntityId } from '@open-legend/domain';
 import { changeConversation, leaveConversation } from '@open-legend/domain';
 import { establishKinship, type Kinship } from '@open-legend/domain';
 import { applyBodyEffects, type BodyEffect } from '@open-legend/domain';
@@ -9,6 +11,7 @@ import { z } from 'zod';
 import {
   createWorld,
   updateWorld,
+  appendedEventCount,
   initializeActorTraits,
   migrateCognition,
   forgetExperience,
@@ -90,24 +93,31 @@ function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
     !flags['talk'] &&
     events.some(
       (event) =>
-        event.type === 'speech' && event.actorId === 'ada' && event.audience.includes('player'),
+        event.type === 'speech' &&
+        event.actorId !== controlledEntityId(saved.world) &&
+        event.audience.includes(controlledEntityId(saved.world)),
     )
   )
     flags['talk'] = true;
   if (
     !flags['hunt'] &&
-    events.some((event) => event.type === 'harvested' && event.actorId === 'player')
+    events.some(
+      (event) => event.type === 'harvested' && event.actorId === controlledEntityId(saved.world),
+    )
   )
     flags['hunt'] = true;
   if (
     !flags['eat'] &&
     events.some(
-      (event) => event.type === 'ate' && event.actorId === 'player' && /meat/i.test(event.text),
+      (event) =>
+        event.type === 'ate' &&
+        event.actorId === controlledEntityId(saved.world) &&
+        /meat/i.test(event.text),
     )
   )
     flags['eat'] = true;
   if (!flags['invent'] || !flags['bow']) {
-    const known = (saved.world.knowledge['player'] ?? []).map(
+    const known = (saved.world.knowledge[controlledEntityId(saved.world)] ?? []).map(
       (record) => saved.world.recipes[record.recipeId],
     );
     if (!flags['invent'] && known.some((recipe) => recipe?.output.launcher?.mechanism === 'swing'))
@@ -119,7 +129,10 @@ function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
     )
       flags['bow'] = true;
   }
-  if (!flags['craft'] && saved.world.entities['player']?.actor?.equippedItemId)
+  if (
+    !flags['craft'] &&
+    saved.world.entities[controlledEntityId(saved.world)]?.actor?.equippedItemId
+  )
     flags['craft'] = true;
   return { ...saved, milestones: flags };
 }
@@ -127,9 +140,10 @@ function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
 /** Application coordination only: pure rules live in domain; all I/O is through a store. */
 export class WorldService {
   private saved!: SavedWorld;
+  private readonly personMemoryPage = createPersonMemoryPager();
   private worldEventsById = new Map<string, WorldEvent>();
   private persistedRevision = 0;
-  private persistedEventCount = 0;
+  private persistedEvents: WorldEvent[] = [];
   private viewRevision = 0;
   private lastRoutinePersistAt = 0;
   private unpersisted = false;
@@ -181,7 +195,7 @@ export class WorldService {
       manuallyPaused: false,
     };
     this.persistedRevision = existing?.revision ?? 0;
-    this.persistedEventCount = this.saved.world.events.length;
+    this.persistedEvents = this.saved.world.events;
     this.viewRevision = this.persistedRevision;
     this.saved = {
       ...this.saved,
@@ -198,11 +212,18 @@ export class WorldService {
     this.saved = updateMilestones(this.saved, this.saved.world.events);
     // Startup migrations may replace historical branches, so use the ordinary diff once.
     this.persistedRevision = await store.commit(this.persistedRevision, this.saved);
-    this.persistedEventCount = this.saved.world.events.length;
+    this.persistedEvents = this.saved.world.events;
     this.worldEventsById = new Map(this.saved.world.events.map((event) => [event.id, event]));
     this.viewRevision = this.persistedRevision;
     this.lastRoutinePersistAt = this.now();
     await store.recoverInterruptedWork();
+  }
+
+  get controlledEntityId(): string {
+    return controlledEntityId(this.world);
+  }
+  get defaultResidentEntityId(): string {
+    return defaultResidentEntityId(this.world);
   }
 
   get world(): WorldState {
@@ -262,10 +283,10 @@ export class WorldService {
     if (
       this.disconnectedAt !== null &&
       this.now() - this.disconnectedAt >= this.config.conversationDisconnectMs &&
-      this.world.conversations?.active['player']
+      this.world.conversations?.active[this.controlledEntityId]
     ) {
       const world = updateWorld(this.world, (draft) =>
-        leaveConversation(draft, 'player', 'disconnect'),
+        leaveConversation(draft, this.controlledEntityId, 'disconnect'),
       );
       if (!(await this.commit({ ...this.saved, world }, undefined, 'unchanged'))) return;
     }
@@ -326,21 +347,16 @@ export class WorldService {
         throw new Error(
           'A transition declared unchanged events but replaced the event collection.',
         );
-      if (
-        eventMode === 'append' &&
-        (saved.world.events.length < this.saved.world.events.length ||
-          (this.saved.world.events.length > 0 &&
-            saved.world.events[this.saved.world.events.length - 1] !==
-              this.saved.world.events[this.saved.world.events.length - 1]))
-      )
-        throw new Error('A transition declared append-only events but changed retained history.');
-      const appendEventCount =
-        eventMode === 'append' && saved.world.events.length >= this.persistedEventCount
-          ? saved.world.events.length - this.persistedEventCount
-          : undefined;
+      // Measure from durable state, including routine progress flushed by a control/editor save.
+      const appendEventCount = appendedEventCount(this.persistedEvents, saved.world.events);
+      const currentAppendCount = appendedEventCount(this.saved.world.events, saved.world.events);
       saved = updateMilestones(
         saved,
-        appendEventCount ? saved.world.events.slice(-appendEventCount) : [],
+        currentAppendCount === undefined
+          ? saved.world.events
+          : currentAppendCount
+            ? saved.world.events.slice(-currentAppendCount)
+            : [],
       );
       this.persistedRevision = await this.store.commit(
         this.persistedRevision,
@@ -349,12 +365,12 @@ export class WorldService {
         appendEventCount,
       );
       this.saved = saved;
-      if (eventMode === 'diff')
+      if (currentAppendCount === undefined)
         this.worldEventsById = new Map(saved.world.events.map((event) => [event.id, event]));
       else
         for (const event of saved.world.events.slice(this.worldEventsById.size))
           this.worldEventsById.set(event.id, event);
-      this.persistedEventCount = saved.world.events.length;
+      this.persistedEvents = saved.world.events;
       this.unpersisted = false;
       this.lastRoutinePersistAt = this.now();
       this.notify(false);
@@ -368,9 +384,20 @@ export class WorldService {
   }
 
   private acceptRoutine(saved: SavedWorld): void {
-    for (const event of saved.world.events.slice(this.worldEventsById.size))
-      this.worldEventsById.set(event.id, event);
-    this.saved = saved;
+    const appended = appendedEventCount(this.saved.world.events, saved.world.events);
+    if (appended === undefined)
+      this.worldEventsById = new Map(saved.world.events.map((event) => [event.id, event]));
+    else
+      for (const event of saved.world.events.slice(this.worldEventsById.size))
+        this.worldEventsById.set(event.id, event);
+    this.saved = updateMilestones(
+      saved,
+      appended === undefined
+        ? saved.world.events
+        : appended
+          ? saved.world.events.slice(-appended)
+          : [],
+    );
     this.unpersisted = true;
     this.notify(false);
   }
@@ -525,7 +552,7 @@ export class WorldService {
       const result = changeConversation(
         this.world,
         requestId,
-        'player',
+        this.controlledEntityId,
         operation,
         conversationId,
         generation,
@@ -610,44 +637,11 @@ export class WorldService {
     const entity = this.world.entities[actorId];
     if (!entity?.actor || !hasMemory(entity))
       return { ok: false, code: 'actor', message: 'Choose a person.' };
-    const byId = new Map(this.world.events.map((event) => [event.id, event]));
-    const awareness = (this.world.experience?.awareness[actorId] ?? []).map((value) => ({
-      id: `awareness:${value.eventId}`,
-      source: 'awareness' as const,
-      label: 'Raw' as const,
-      text: value.text,
-      time: value.at,
-      tags: [value.modality, ...(value.recognized ? ['recognized'] : []), ...value.entityIds],
-      hash: digest(value),
-      eventType: byId.get(value.eventId)?.type ?? value.modality,
-    }));
-    const memories = (this.world.memories[actorId] ?? []).map((value) => ({
-      id: `memory:${value.id}`,
-      source: 'memory' as const,
-      label: 'Raw' as const,
-      text: value.summary,
-      time: value.at,
-      tags: [value.kind, value.source, ...value.entityIds],
-      hash: digest(value),
-    }));
-    const summaries = (this.world.experience?.summaries[actorId] ?? []).map((value) => ({
-      id: `summary:${value.id}`,
-      source: 'summary' as const,
-      label: 'Consolidated' as const,
-      text: value.text,
-      time: value.to,
-      tags: ['reflection', ...value.entityIds],
-      hash: digest(value),
-    }));
-    const all = [...awareness, ...memories, ...summaries].sort(
-      (a, b) => b.time - a.time || a.id.localeCompare(b.id),
-    );
-    const index = before ? all.findIndex((entry) => entry.id === before) : -1;
-    if (before && index < 0)
+    const page = this.personMemoryPage(this.world, actorId, before);
+    if (!page)
       return { ok: false, code: 'stale', message: 'History changed; refresh before paging.' };
-    const page = all.slice(index + 1, index + 101);
     return {
-      before: index + 101 < all.length ? page.at(-1)?.id : undefined,
+      ...page,
       ok: true,
       revision: this.viewRevision,
       actorId,
@@ -658,7 +652,6 @@ export class WorldService {
         traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
         initialGoals: [...(entity.actor.initialGoals ?? [])],
       },
-      memories: page,
     };
   }
 
@@ -700,14 +693,10 @@ export class WorldService {
           message: 'This person was edited elsewhere. Refresh before saving these fields.',
           revision: this.viewRevision,
         };
-      const memoryHashes = new Map(
-        [...experienceEntries(this.world, actorId)].map(([key, entry]) => [
-          key,
-          digest(entry.value),
-        ]),
-      );
+      const entries = memoryChanges.length ? experienceEntries(this.world, actorId) : undefined;
       for (const change of memoryChanges) {
-        if (memoryHashes.get(change.entryId) !== change.expectedHash)
+        const entry = entries?.get(change.entryId);
+        if (!entry || digest(entry.value) !== change.expectedHash)
           return {
             ok: false,
             code: 'stale',
@@ -788,13 +777,14 @@ export class WorldService {
     });
   }
 
-  async command(commandId: string, input: CommandInput, actorId = 'player'): Promise<ApiResult> {
-    return await this.evaluateCommand(commandId, input, actorId, false);
+  async command(commandId: string, input: CommandInput, actorId?: string): Promise<ApiResult> {
+    await this.ready;
+    return await this.evaluateCommand(commandId, input, actorId ?? this.controlledEntityId, false);
   }
 
   /** Run the actual admission rules on a disposable transition; never commit preview effects. */
   previewCommand(input: CommandInput): ApiResult {
-    return this.evaluateCommand(randomUUID(), input, 'player', true) as ApiResult;
+    return this.evaluateCommand(randomUUID(), input, this.controlledEntityId, true) as ApiResult;
   }
 
   private evaluateCommand(
@@ -964,7 +954,12 @@ export class WorldService {
 
   async setGoal(requestId: string, text: string): Promise<ApiResult> {
     return await this.transition((world) =>
-      executeCommand(world, { id: requestId, actorId: 'ada', type: 'goal', text }),
+      executeCommand(world, {
+        id: requestId,
+        actorId: this.defaultResidentEntityId,
+        type: 'goal',
+        text,
+      }),
     );
   }
 

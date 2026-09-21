@@ -363,9 +363,12 @@ function LmResponse({ value }: { value: JsonObject }) {
   const talk = object(value['talk']);
   const act = object(value['act']);
   const think = object(value['think']);
+  const addressee = talk?.['addresseeEntityId'] ?? talk?.['addressee'];
+  const target = act?.['targetEntityId'] ?? act?.['target'];
+  const about = think?.['aboutEntityIds'] ?? think?.['about'];
   const action = act
     ? act['kind'] === 'expression'
-      ? `${humanize(String(act['verb'] ?? 'expression'))}${act['target'] ? ` → ${String(act['target'])}` : ''}`
+      ? `${humanize(String(act['verb'] ?? 'expression'))}${target ? ` → ${String(target)}` : ''}`
       : act['kind'] === 'known'
         ? `Use action ${String(act['actionId'] ?? 'unknown')}`
         : valueText(act['description'])
@@ -375,9 +378,7 @@ function LmResponse({ value }: { value: JsonObject }) {
       <section className="ol-diagnostic-card">
         <span className="ol-eyebrow">Spoken response</span>
         <p className="ol-prose">{valueText(talk?.['text']) ?? 'No speech proposed.'}</p>
-        {talk?.['addressee'] !== undefined && (
-          <p className="ol-caption">To: {String(talk['addressee'])}</p>
-        )}
+        {addressee !== undefined && <p className="ol-caption">To: {String(addressee)}</p>}
       </section>
       <section className="ol-diagnostic-card">
         <span className="ol-eyebrow">Action</span>
@@ -386,8 +387,8 @@ function LmResponse({ value }: { value: JsonObject }) {
       <section className="ol-diagnostic-card">
         <span className="ol-eyebrow">Private thought</span>
         <p className="ol-prose">{valueText(think?.['text']) ?? 'No private thought proposed.'}</p>
-        {Array.isArray(think?.['about']) && think['about'].length > 0 && (
-          <p className="ol-caption">About: {think['about'].map(String).join(', ')}</p>
+        {Array.isArray(about) && about.length > 0 && (
+          <p className="ol-caption">About: {about.map(String).join(', ')}</p>
         )}
       </section>
     </div>

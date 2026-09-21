@@ -2,6 +2,8 @@
 
 This file contains miscellaneous and cross-cutting deferred validation, integration blockers, documentation gaps and small follow-ups that do not belong to a focused feature tracker. Feature task state belongs in the focused trackers listed in the [maintainer work index](README.md).
 
+Runtime latency, database scheduling, native CPU, buffering and long-session optimization are tracked in [PF00–PF11](performance.md). Existing feature correctness checks below remain open; performance work does not complete them.
+
 ## React design-system adoption
 
 - [ ] Verify distinct gather resources show their resource icon plus hand badge in saved shortcuts and suggestions, including reload, unavailable targets, missing-target fallback and badge/key-label layout at supported UI scales; run the relevant checks.
@@ -15,7 +17,6 @@ This file contains miscellaneous and cross-cutting deferred validation, integrat
 - [ ] Deliver optional transient overhead presentations of accepted reactions through [NC02/NC03/NC10/NC12](../maintainers/narration-and-conversations.md), without a duplicate implementation track. Brief “Hmm” or gesture variants must adapt to the player, current exchange, character disposition and nearby events, with explicit triggers, short display lifetimes and accessible presentation. The September 20 narration request supersedes the earlier no-memory rule for actual speech/expressions: accepted reactions are remembered, private thoughts stay private, and fading UI does not erase experience. Work progress and technical AI request status remain distinct. Preserve behavioral, timing, reduced-motion, overlap and privacy acceptance in the [UI brief](../ui-design-brief.md#future-character-reactions).
 
 - [ ] Rehearse PostgreSQL import and recovery on preserved copies before switching a live world. `OPEN_LEGEND_DATABASE_URL` selects PostgreSQL; `scripts/import-postgres.ts SOURCE_SQLITE BACKUP_JSON` refuses an occupied destination and preserves the source. `scripts/backup-world.ts BACKUP_JSON` and `scripts/restore-world.ts BACKUP_JSON` require a stopped server; world restore preserves current spending and forgetting records. Use `pnpm exec tsx --env-file-if-exists=.env` to run these scripts. Validate record counts, full payloads, identities, knowledge, obligations, pending work and accounting. Never restore an older whole-database backup without replaying the newest forgetting ledger and spending records.
-- [ ] Measure the PostgreSQL worker bridge before population growth. It deliberately preserves the existing synchronous durable commit boundary and single-writer model; a slow database can stall the server. Query results are bounded to 16 MiB; do not describe this as a distributed/scalable persistence implementation. Dedicated relational repositories beyond consumed current-state records remain conditional production work.
 - [ ] Verify actual provider compatibility and costs under separately authorized caps: direct defaults are `gpt-5-mini` (level 2), `gpt-5` low/high (levels 3/4), `gpt-5-nano` (cleanup), and the existing configured Macrofold harness for reflection. Operator overrides are `COGNITION_MINI_MODEL`, `COGNITION_COMPLEX_MODEL`, `COGNITION_SUMMARY_MODEL` and their `MACROFOLD_*_MODEL` counterparts. Unknown costs conservatively consume reservations; model selection is not a price/quality measurement.
 - [ ] Evaluate `text-embedding-3-small`, 512 dimensions, cosine ranking and bounded repository-backed vectors against held-out paraphrase/privacy/latency cases. `OPENAI_EMBEDDING_API_KEY` falls back to `OPENAI_API_KEY`; Macrofold credentials alone do not configure embeddings. `EMBEDDING_MODEL`, `EMBEDDING_DIMENSIONS` and `EMBEDDING_CALL_RESERVE_USD` are explicit controls. The store now uses PostgreSQL pgvector exact top-24 search for ordinary optional sections and top-32 search for older current-conversation speech; only permitted/revision-compatible candidates are scored and only IDs/scores leave the database. Index batches are 32 sources and query caches 16; valid source vectors no longer have a 1,024-entry eviction cap. Inspect lag rather than claiming complete indexing. Add regression coverage for JSON-cache migration, database top-N ordering, actor/model isolation, corrections/forgetting, and SQLite unavailability; benchmark larger scopes and approximate indexes before changing search quality.
 - [x] Replace the interim six-question Cartesian-choice workaround with native `{state, questions}` Macrofold inference. Attention uses one bounded map; route/reflection and invention admissibility/mechanism are separate named questions. Live choice/score and eight rubric scenarios succeeded. Preserve native probabilities and confidence separately; broader calibration remains open.
@@ -24,7 +25,6 @@ This file contains miscellaneous and cross-cutting deferred validation, integrat
 - [ ] Validate retention/tuning assumptions: raw recall six hours; 8,192-record backlog safety pause; 256 summaries, ordinary summary expiry after thirty game days, protected high-salience summaries; 100 presentation thoughts; 1,000 diagnostic roots/stages combined. Exhausted protected capacity pauses rather than silently dropping important memory. Rest credit uses calendar game days and allows split rest, sleep starts after fifteen uninterrupted resting minutes, and debt modestly increases fatigue. Native promise recognition initially requires explicit “I promise to …” speech; broader paraphrases must use an admitted interpretation rather than invent obligations.
 - [ ] Exercise grouped god debugging entirely from the UI: routing, no-call/deferred/coalesced outcomes, candidate scores and unknowns, input/output/receipt details, background publication, late billing, filters, paging, follow/pause, new activity indicators, reading position/focus, revocation/world changes and bounded capture gaps. Verify private accepted text, thoughts and legacy audit history never enter ordinary actor/client recall. Inspection must issue no inference calls.
 - [ ] Keep selective-recall tools behind the documented demonstrated-omission gate. No validated omission case was produced in this no-test batch; existing scoped recall supports assembly, while model-facing recall tools remain gated. Reflection file access is independent and implemented.
-- [ ] Verify backlog backpressure stops simulation growth while allowing cleanup commits and further distinct cleanup batches within the same game hour. Failed unchanged batches must not retry automatically; a backlog consisting entirely of recent or protected evidence needs operator resolution. Profile fixed-step cloning with large retained histories before raising population or speed limits.
 - [ ] Reconcile cross-cutting documentation after validation where evidence changes several owners. Explain prerequisites, configuration, quotas, tuning and real adapter limitations; do not mark a task complete from static compilation or proposed behavior.
 
 ## September 20 follow-up — runtime checks authorized without new tests
@@ -38,6 +38,7 @@ This file contains miscellaneous and cross-cutting deferred validation, integrat
 
 ## Shared input interaction follow-up
 
+- [ ] Add deferred automated coverage for pause during response commit waiting through resume, actor unavailability during generation ending without a failed message, actor-specific Talk availability projection, and the disabled textarea's hover and keyboard explanation. Verify that only technical response failures receive message-local failure presentation. Tests were deferred at the user's request.
 - [ ] Add regression coverage and reconcile design-system guidance for shared shortcut/spawn/trait ComboBox, portal typography, heading/body hierarchy, universal content spacing, corner wordmark, and starvation-driven gathering/resting oscillation. Verify ongoing food gathering is not replaced by rest each native tick.
 - [ ] Add coverage and reconcile UI guidance for non-redundant animal descriptions, pointer-only hover labels after clicks, borderless inner action-search inputs, and empty states that count inspection/god rows and hidden unavailable actions.
 - [ ] Cover and document shortcut combo-box layout: one input border/focus ring, full-control popup anchoring, inherited UI font/box sizing, wrapped labels, and scrolling at supported HUD scales.
@@ -76,7 +77,6 @@ This file contains miscellaneous and cross-cutting deferred validation, integrat
 
 - [ ] Add automated coverage for transactional editor/cache invalidation (including rollback), unchanged-record identity, delayed JSON replies after refresh/discard/unmount, and first/reconnect SSE changes during projection. Verify indexed batch speech-job lookup on SQLite and PostgreSQL.
 - [ ] Cover independent global event retention after actor consolidation, event deletion/edits with transitive summaries and correction evidence, attributed speech content, and successful saves followed by failed editor reloads.
-- [ ] Measure long-lived global history growth and add bounded/paged history storage and editor retrieval when needed; recall consolidation must never silently delete global history.
 
 ## Central mutation and scaling follow-up
 
@@ -92,9 +92,7 @@ This file contains miscellaneous and cross-cutting deferred validation, integrat
 - [ ] Add automated coverage for the prompt conversation window: newest 32 speech events are always included; up to 32 older events from the same actor-permitted durably associated conversation use vector ranking and Jev relevance; missing legacy association, group membership, event-time privacy, embedding outage, deduplication and the shared 100-question/global-byte limits remain correct. Verify hourly and daily consolidation retain only the newest 512 verbatim speech sources per actor, older displaced speech becomes eligible again, and this prompt policy does not alter the independently bounded player projection. Automated tests were deferred at the user's request.
 - [ ] Add automated coverage for post-route action selection: a confident closed gate performs no action query; an open or uncertain gate refreshes native feasibility; optional Jev failure exposes only that fresh bounded set; and commit-time target, range, inventory, cost and plan validation can reject the action without discarding valid speech or thought. Validate the revised Jev rubrics with live sampled outcomes before claiming quality. Automated and live tests were deferred at the user's request.
 - [ ] Add typed/indexed diagnostic metadata columns only if retained trace volume grows beyond the current 1,000-record bound or measured history-query latency remains material after the single-query stage load. Keep JSON as bounded detail rather than introducing a migration for the current scale.
-- [ ] Give diagnostics a separate database connection only if production measurements still show gameplay or inference persistence waiting on inspection reads after polling and query fixes.
 - [ ] Add proactive background vector indexing only if fresh-source lag regularly exceeds the existing 32-source incremental batch or recall latency shows that request-time reconciliation is material. Preserve explicit spending admission and privacy invalidation.
-- [ ] Add bounded diagnostic-write backpressure or batching only if observed pending writes grow during sustained tracing or shutdown flushes become material. The current implementation relies on asynchronous ordered writes and the database lane rather than adding another batching system preemptively.
 - [ ] Consider response-component provenance only if urgency/importance supersession plus deterministic action admission still discards useful speech or thought in observed play. Do not add sentence-level dependency tracking without a demonstrated failure.
 
 ## Three-program deferred validation
@@ -112,3 +110,36 @@ Automated tests were explicitly deferred for this implementation. These coverage
 - [ ] Add regression coverage for per-agent UTC month rollover, legacy ownership, concurrent reservations, uncertain prior-month billing, story claim/crash/restart, source revision races, causal coalescing/fan-out, explicit regeneration idempotency, voice permissions, transcript refresh/read position, editor paging and completion/job atomicity. No test files or suites were added or executed during this implementation.
 
 - [ ] Keep Narrator JSON Schema on the execution adapter’s supported dialect and cover validation before paid dispatch; exercise scoped source revocation during generation and diagnostic trigger/stage linkage.
+
+## Identity and reference verification
+
+No test files or suites were written or run for this change, as requested. [Identity contract](../identity-and-references.md).
+
+- [ ] Update existing fixtures that hard-code seeded `player`/`ada` IDs or old response fields; retain meaningful assertions and use saved bindings. Existing suites have not been validated against the new contract.
+- [ ] Add regression coverage for event-ID-based memory attribution, preserved unknown legacy subjects, duplicate names, renames during pending responses, wrong-kind/unknown/disallowed IDs, empty action enums, malformed component fields, partial admission and exact response replay.
+- [ ] Verify prompt/schema/binding parity, duplicate-name disambiguation, unrecognized-source privacy, reference budgeting and state changes while attention is running.
+- [ ] Exercise old saves, restore across different bindings, history ownership, cache invalidation, SSE reconnect, and stale pending jobs without paid replay. Verify audit payloads and receipt digests stay unchanged.
+- [ ] Plan and rehearse a coordinated migration if legacy IDs spelled `player`/`ada` must also disappear from existing saves. Cover database history, cognition/accounting/job references, integrations, backups and idempotency; do not rewrite arbitrary prose or digests. Current additive migration deliberately preserves those IDs.
+- [ ] Run capped live response acceptance with explicit spending authorization; no provider requests were made during this implementation.
+
+- [ ] Verify restored chat bubbles, pending/failure controls and older-message scroll anchoring across inactivity, leaving, disconnect/restart, new groups, legacy ungrouped speech, pagination and rapid person changes. Saved history must remain accessible without an active conversation.
+
+- [ ] Verify Talk history excludes movement, eating, narration and unrelated speakers before pagination on SQLite/PostgreSQL; verify selected-person changes, old ungrouped direct speech and untargeted audible replies.
+
+- [ ] Verify Talk scrolls to the latest message after asynchronous history loads on first opening and reopening, even with cached messages and a long new backlog; subsequent arrivals must still respect a reader scrolled upward.
+
+- [ ] Verify chat retry: one original bubble/speech event, preserved text/recipient IDs, latest-attempt status, double-click and transport idempotency, repeated failure, pause/unavailable actors, cross-world ownership, partial accepted effects, uncertain provider completion, restart recovery, keyboard access and Retry tooltip. No automated tests were written or run for this change.
+
+## Deferred regression coverage — persistence and owner editors
+
+- [ ] Migrate stale test fixtures/callers to asynchronous repository/service APIs and current opaque actor bindings; restore the full typecheck/test gate. Tests were intentionally neither edited nor run in this change.
+- [ ] Cover append proof across composed transitions, earlier-prefix edits, replacement/removal, divergent forks and forged caller hints; verify journal replay and durable history agree.
+- [ ] Cover milestones from routine state before flushing and after a control/editor flush and restart, including event index consistency.
+- [ ] Cover importance-only edits preserving dependent summaries/mind prose while refreshing retrieval metadata; text edits and deletion must still invalidate dependents.
+- [ ] Cover Person memory pagination ordering/cursor staleness, collection-reference invalidation and page-only hashing; save conflict checks should hash only changed records.
+
+- [ ] Verify a terminal actor-response rejection remains retryable with an uncertain provider receipt; preserve the old reservation, reject active/applied responses, and reject currently sleeping/incapacitated/dead recipients before dispatch.
+
+- [ ] Verify shared TextTooltip on hover and keyboard focus: compact text-only Retry label, disabled composer explanation, viewport wrapping and portal layering across themes.
+
+- [ ] Verify the shared composer input fills available width and Send stays at the right edge across disabled tooltips, multiline text and narrow panels.

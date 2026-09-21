@@ -26,6 +26,7 @@ function memoizer(service: WorldService) {
   let cache = projections.get(service);
   if (!cache) projections.set(service, (cache = new Map()));
   return <T>(key: string, deps: unknown[], build: () => T): T => {
+    deps = [service.controlledEntityId, ...deps];
     const old = cache!.get(key);
     if (old && old.deps.length === deps.length && deps.every((dep, i) => dep === old.deps[i]))
       return old.value as T;
@@ -67,20 +68,26 @@ export async function projectView(
   const memoryBacklog = service.memoryBacklog;
   const telemetryRevision = service.telemetryRevision;
   const observation = {
-    inventory: memo('ownedItems', [world.items], () => inventoryFor(world, 'player')),
+    inventory: memo('ownedItems', [world.items], () =>
+      inventoryFor(world, service.controlledEntityId),
+    ),
     visibleEntities: memo('visibleEntities', [world.entities], () =>
       Object.values(world.entities).filter(
         (entity) =>
-          entity.id !== 'player' && canSee(world.entities['player']!.position, entity.position),
+          entity.id !== service.controlledEntityId &&
+          canSee(world.entities[service.controlledEntityId]!.position, entity.position),
       ),
     ),
-    knownRecipes: memo('knownRecipes', [world.knowledge['player'], world.recipes], () =>
-      (world.knowledge['player'] ?? [])
-        .map((record) => world.recipes[record.recipeId])
-        .filter((recipe) => !!recipe),
+    knownRecipes: memo(
+      'knownRecipes',
+      [world.knowledge[service.controlledEntityId], world.recipes],
+      () =>
+        (world.knowledge[service.controlledEntityId] ?? [])
+          .map((record) => world.recipes[record.recipeId])
+          .filter((recipe) => !!recipe),
     ),
   };
-  const player = world.entities['player']!;
+  const player = world.entities[service.controlledEntityId]!;
   const actor = player.actor!;
   const quantity = (definitionId: string) =>
     observation.inventory
@@ -158,7 +165,7 @@ export async function projectView(
       }),
   );
   const entities: EntityView[] = observation.visibleEntities
-    .filter((entity) => entity.id !== 'player')
+    .filter((entity) => entity.id !== service.controlledEntityId)
     .map((entity) =>
       memo<EntityView>(
         `entity:${entity.id}`,
@@ -175,6 +182,20 @@ export async function projectView(
         ],
         () => {
           const actions: ActionOption[] = [];
+          const speechCapable = canSpeak(entity);
+          const talkUnavailableReason = !entity.actor
+            ? undefined
+            : !speechCapable
+              ? `${entity.name} cannot speak.`
+              : !entity.actor.alive
+                ? `${entity.name} is dead and cannot respond.`
+                : entity.actor.incapacitated
+                  ? `${entity.name} is incapacitated and cannot respond.`
+                  : entity.actor.rest?.asleep
+                    ? `${entity.name} is asleep and cannot respond.`
+                    : !canHear(world, player.position, entity.position)
+                      ? `Move within hearing range of ${entity.name} to talk.`
+                      : undefined;
           if (entity.resource)
             actions.push(
               action(
@@ -236,11 +257,9 @@ export async function projectView(
             radius: entity.kind === 'campfire' ? 0.5 : 0.35,
             ...(entity.actor
               ? {
-                  speechCapable: canSpeak(entity),
-                  canTalk:
-                    canSpeak(entity) &&
-                    entity.actor.alive &&
-                    canHear(world, player.position, entity.position),
+                  speechCapable,
+                  canTalk: !talkUnavailableReason,
+                  ...(talkUnavailableReason ? { talkUnavailableReason } : {}),
                 }
               : {}),
             status: entity.actor
@@ -292,9 +311,9 @@ export async function projectView(
     );
   const events = memo(
     'visibleEvents',
-    [world.events, world.experience?.awareness['player']],
+    [world.events, world.experience?.awareness[service.controlledEntityId]],
     () => {
-      const awareness = world.experience?.awareness['player'];
+      const awareness = world.experience?.awareness[service.controlledEntityId];
       const visible = awareness
         ? awareness
             .slice(-512)
@@ -304,7 +323,7 @@ export async function projectView(
         : world.events
             .slice(-512)
             .reverse()
-            .filter((event) => event.audience.includes('player'));
+            .filter((event) => event.audience.includes(service.controlledEntityId));
       const bounded: WorldEvent[] = [];
       let journal = 0;
       let conversation = 0;
@@ -527,7 +546,7 @@ export async function projectView(
         ...Object.values(world.entities).flatMap((entity) => [entity.id, entity.name]),
       ],
       async () => {
-        const conversationId = world.conversations?.active['player'];
+        const conversationId = world.conversations?.active[service.controlledEntityId];
         const entries = events
           .filter((event) => !conversationId || event.conversationId === conversationId)
           .filter(
@@ -535,7 +554,9 @@ export async function projectView(
           )
           .slice(-30);
         const replies = await service.store.getSpeechJobs(
-          entries.filter((event) => event.actorId === 'player').map((event) => event.id),
+          entries
+            .filter((event) => event.actorId === service.controlledEntityId)
+            .map((event) => event.id),
         );
         return entries.map((event) => {
           const reply = replies.get(event.id);
@@ -543,9 +564,10 @@ export async function projectView(
             reply?.message === 'Models cannot author identity or seed provenance.' ||
             reply?.message ===
               "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.";
-          const terminalFailure =
-            legacyIdentityFailure ||
-            (reply !== undefined && ['failed', 'cancelled', 'stale'].includes(reply.status));
+          // Only an actual failed job is a failed message. Cancellation and stale
+          // work end pending UI without relabeling an interaction as a technical failure.
+          // See docs/architecture.md#react-ui-and-design-system.
+          const terminalFailure = legacyIdentityFailure || reply?.status === 'failed';
           const replyStatus = terminalFailure ? 'failed' : reply?.status;
           const replyMessage = legacyIdentityFailure
             ? "The response tried to change the character's fixed identity or treat generated material as part of their original history."
@@ -557,6 +579,8 @@ export async function projectView(
             ...(replyStatus && replyMessage
               ? {
                   replyStatus,
+                  replyRequestId: reply?.id,
+                  retryable: reply?.status === 'failed',
                   ...(replyStatus === 'failed' ? { replyFailure: replyMessage } : {}),
                 }
               : {}),
@@ -586,7 +610,9 @@ export async function projectView(
       {
         id: 'talk',
         label: 'Talk with Ada',
-        done: events.some((event) => event.type === 'speech' && event.actorId === 'ada'),
+        done: events.some(
+          (event) => event.type === 'speech' && event.actorId !== service.controlledEntityId,
+        ),
       },
       {
         id: 'invent',
@@ -599,13 +625,18 @@ export async function projectView(
       {
         id: 'hunt',
         label: 'Hunt and harvest',
-        done: events.some((event) => event.type === 'harvested' && event.actorId === 'player'),
+        done: events.some(
+          (event) => event.type === 'harvested' && event.actorId === service.controlledEntityId,
+        ),
       },
       {
         id: 'eat',
         label: 'Cook and eat a meal',
         done: events.some(
-          (event) => event.type === 'ate' && event.actorId === 'player' && /meat/i.test(event.text),
+          (event) =>
+            event.type === 'ate' &&
+            event.actorId === service.controlledEntityId &&
+            /meat/i.test(event.text),
         ),
       },
       {

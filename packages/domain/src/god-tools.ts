@@ -527,6 +527,7 @@ export function editWorldEvents(
           actorId,
           change.replacement.text,
           change.replacement.type === 'speech',
+          change.replacement.actorId,
         );
         if (aware)
           mutations.push({

@@ -18,6 +18,14 @@ This file records current reproducible evidence and acceptance gaps. Fixture evi
 
 A sandboxed full run also encountered ten loopback `listen EPERM` setup failures; that run is not evidence about the HTTP assertions.
 
+## Performance investigation
+
+A direct execution fixture with seed 73, an in-memory SQLite store, explicit zero spending and no credentials admitted one movement intention for the controlled actor. Instrumenting repository statement execution after initialization/presence admission counted 16 SQL statements for its one `action-started` event with two audience members. The current PostgreSQL adapter additionally sends `BEGIN` and `COMMIT`: static path inspection therefore predicts 18 serial database operations for this ordinary non-checkpoint case. Of the 16 statements, 12 belong to history projection, including the existing-row check, revocation lookup and five deletions even for a new event. This is query-amplification evidence, not a measured PostgreSQL response time.
+
+Configuration inspection exposed only a loopback/non-loopback classification; the configured PostgreSQL address is loopback. It does not establish the physical backend topology or latency. Earlier reasoning that attributed the delay to a remote database was not verified. Exploratory CPU runs on a copy of the older local SQLite save showed substantial draft-finalization work and sensitivity to retained history, but were not a controlled current-save before/after benchmark. Some initial command samples were rejected because that saved player was incapacitated, so those timings are not successful-walk evidence.
+
+No live browser-to-PostgreSQL command trace was captured, no paid call was made, and no runtime optimization was implemented in this investigation. Reproduce with outcome validation, actual PostgreSQL timing and the same workload through [PF00](maintainers/performance.md#pf00--baseline-and-attribution) before assigning a dominant latency cause or claiming a speedup.
+
 ## Current live-provider evidence
 
 Capped isolated checks exercised native multi-question Jev, embeddings, immediate speech, summary generation and workspace-to-PostgreSQL publication. A need-event case selected a carried-berry memory, routed level 2 and committed eating. A dream became eligible after 7,200 sleeping seconds and published an imagined thought, but the content quality was minimal. These checks establish connectivity and lifecycle paths only. They do not establish broad conversational quality, recall quality, latency or sustainable cost.
@@ -31,6 +39,7 @@ No fixture, synthetic vector run or manually authored response counts as live-mo
 - The [actor tracker](maintainers/actor-model.md) owns cross-species migration, lifecycle, body effects, optional minds and compatibility evidence.
 - The [invention tracker](maintainers/inventions-and-world-evolution.md) owns the live invent-to-craft/use loop, semantic reuse, workshop, conjuring and mechanics-evolution evidence.
 - The [production-data tracker](maintainers/production-data.md) owns migration, restore, normalization, query, hosting and measured-scale gates.
+- The [performance tracker](maintainers/performance.md) owns native latency attribution, query/CPU reduction, scheduling and performance regression budgets.
 - Cross-cutting UI, editor, journal, patch and documentation checks remain in [Maintainer TODO](maintainers/TODO.md).
 
 ## Bounded live playtest protocol
@@ -60,3 +69,15 @@ Two explicit live Narrator revisions used a new fictional deer-only sample throu
 ## Rebase integration verification
 
 The merged runtime compiled and the production client build passed. An isolated SQLite world with zero spending admitted speech and a private thought while rejecting a stale action plan, persisted explicit conversation departure, drained ordered redacted diagnostics to their completed state, returned owner-scoped history and recovered an identical saved-state digest. No automated suites or paid calls were run. Conversation recall now combines durable association with the newest-32 plus semantic-32 policy; broad recall, supersession and privacy acceptance remains deferred.
+
+## Identity contract runtime observations
+
+The production build completed after the identity-binding and response-contract changes. Disposable direct execution admitted ID-addressed speech, a nod and a private thought; the bound parser rejected a display name and the player role string in a newly seeded world. A disposable SQLite application service projected the controlled actor, produced contextual actions, persisted its binding and reopened with the same ID. These were local runtime observations, not automated-suite or live-model acceptance. No test files or suites were written or run. Legacy fixture updates and migration/privacy regression coverage remain in [TODO](maintainers/TODO.md#identity-and-reference-verification).
+
+## Explicit chat retry runtime observation
+
+With a disposable SQLite save, injected no-network client and zero spending allowance, an initial chat failed and an explicit retry created a linked job retaining the same speech event. Speech count remained one. Repeating the retry request ID returned the same job; a distinct request to retry the superseded failure was rejected. The production build passed. No automated test files/suites or live provider requests were used; successful model completion, tooltip interaction and recovery boundaries remain in maintainer TODO.
+
+### 2026-09-20 — persistence/editor runtime follow-up
+
+Production build passed. Isolated in-memory SQLite execution with an explicit zero AI budget exercised composed append proof, incompatible fork rejection, earlier-prefix edit journal replay, Person summary paging/save/reload, importance-only edits preserving a dependent summary, and a routine milestone/event surviving a control flush. The latter scenarios used disposable synthetic records and the routine acceptance method directly; they do not establish browser, live-provider, native action-loop or PostgreSQL acceptance. An initial synthetic event omitted its required sequence and was rejected; rerunning with a complete event passed. No test files were added or edited and no test suite was run; async fixture migration and regression coverage remain in the maintainer TODO.

@@ -1316,6 +1316,16 @@
 .ol-composer:focus-within {
   border-color: var(--accent);
 }
+.ol-composer-input {
+  display: flex;
+  min-width: 0;
+}
+.ol-composer-input.is-disabled {
+  cursor: not-allowed;
+}
+.ol-composer-input.is-disabled textarea {
+  pointer-events: none;
+}
 .ol-composer textarea {
   resize: none;
   border: 0;
@@ -1326,6 +1336,13 @@
   max-height: 132px;
   padding: 4px 6px;
   outline: none;
+}
+.ol-composer-input textarea {
+  width: 100%;
+}
+.ol-composer textarea:disabled {
+  color: var(--ink-muted);
+  cursor: not-allowed;
 }
 .ol-composer textarea::placeholder {
   color: var(--ink-faint);

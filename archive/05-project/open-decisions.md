@@ -100,3 +100,15 @@ Resolve the remaining parts of D01–D04 through focused discussion and, after i
 ## D57 — Narration, composed responses and durable conversations
 
 The narration direction is accepted in [Narration, agent responses and conversations](../../docs/narration-and-conversations.md). Remaining choices are: one component of each type per response, one active conversation per actor, ordering/admission details, PostgreSQL table names and bounded generation. Exact importance weights, batching, lifecycle grace, retention, voices and cutaway disclosure policy require implementation tuning. This extends D55's compact cognition and observed-event retention without removing its independent reflection, privacy or bounded-execution requirements.
+
+## D58 — Durability and storage placement
+
+The [performance design](../../docs/performance.md) preserves PostgreSQL as the durable authority, immediate durability for explicit commands and the existing bounded routine-progress save interval. Its immediate optimizations do not require a new decision.
+
+If measured commit latency remains unacceptable after query reduction, choose whether to move application/database placement closer, introduce a recoverable durable local/replicated journal before SQL materialization, or explicitly accept losing recently acknowledged gameplay after a crash. The recommended default is to preserve durable confirmations and improve placement before changing authority. A local disk journal protects against process failure only to the extent of its tested flush/recovery policy; it does not inherently protect against host/disk loss. This needs the user's tolerated failure/loss window before any early-acknowledgement, offline-authority or durability-policy change. The existing [journal-first requirements](../07-technical-architecture/realtime-synchronization.md#optional-journal-first-persistence) remain prerequisites; an in-memory buffer cannot satisfy them.
+
+## D59 — Historical retention and command retry horizon
+
+The [performance design](../../docs/performance.md#simulation-cpu-and-growing-history) permits bounded active caches and source-preserving cold storage, without authorizing historical deletion. D14 continues to own actor recall/memory tuning.
+
+Choose durable retention/archive periods for global history, story jobs, diagnostics and command results; whether old history remains fully queryable; and the maximum supported retry/reconnect horizon. Recommended interim behavior retains gameplay history durably and pages it, while bounded optional diagnostics use their existing capture policy. Never evict idempotency evidence and then accept the same expired command as new: define an expired-ID/generation rejection or durable lookup before compacting receipts. These choices need the user's retention expectations and storage budget before destructive expiry. Hot-state/index/query optimizations can proceed without them.

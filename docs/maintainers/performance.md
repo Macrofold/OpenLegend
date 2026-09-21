@@ -1,0 +1,177 @@
+# Performance implementation tracker
+
+This is the sole tracker for runtime performance optimization. [Runtime performance design](../performance.md) owns the selected approach; [Architecture](../architecture.md#performance-critical-path) owns current implementation, [Verification](../verification.md#performance-investigation) owns measurements, and [open decisions](../../archive/05-project/open-decisions.md#d58--durability-and-storage-placement) owns unresolved policy. All tasks remain open. Documentation does not implement or validate a fix.
+
+## Order and stop rule
+
+Run PF00 as a short baseline pass, then take the highest measured cost per unit of implementation effort. The initial order below reflects the known query amplification and polling, not a measured ranking of live latency. After each task, repeat the same relevant workload, report before/after percentiles and costs, and rerank. Once the small-world budgets pass with headroom, stop adding mechanisms; retain later tasks as gated scale work.
+
+PF00's short attribution milestone unblocks the immediate fixes. Its larger percentile/soak qualification can follow those fixes; do not build a general benchmarking platform before removing the observed query amplification.
+
+Dependencies require the relevant interface or measurement, not final certification of an entire stage. If PF03 attributes remaining CPU cost to cold history, bring PF08 forward; do not require the CPU budget to pass before removing its measured cause.
+
+PF05's immediate publication change comes before larger CPU/isolation work because the debounce adds avoidable latency even when the server is otherwise fast. Its movement-cadence experiment still depends on PF03. Stable task IDs identify scope; the Order column controls initial execution priority.
+
+| Order | Task                                          | Expected benefit                                                          | Effort / gate                                             |
+| ----- | --------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 0     | PF00: reproducible baseline                   | Identify where a click actually waits; prevent optimizing the wrong layer | Small; required before changes                            |
+| 1     | PF01: compact history/commit SQL              | Remove the confirmed per-event/per-witness query amplification            | Small–medium; immediate                                   |
+| 2     | PF02: triggered narration and due work        | Eliminate idle story transactions and repeated actor scheduling reads     | Small narrator change, medium scheduler change; immediate |
+| 3     | PF05: prompt scoped publication               | Remove avoidable visual delay and history refresh traffic                 | Small–medium; immediate publication first                 |
+| 4     | PF03: cheap native steps and appends          | Reduce main-thread blocking and cost that grows with history              | Medium; choose measured hotspot first                     |
+| 5     | PF04: isolate optional database traffic       | Keep inspection/diagnostics/background activity out of the command queue  | Small–medium; only if contention remains after PF01/PF02  |
+| 6     | PF06: bound and coalesce optional diagnostics | Prevent trace bursts, large serialization and shutdown backlogs           | Small–medium; batching depends on measured growth         |
+| 7     | PF07: bounded command microbatches            | Amortize commits during bursts without delaying lone commands             | Medium; only if commit overhead still dominates bursts    |
+| 8     | PF08: bounded hot state and checkpoints       | Prevent aging worlds from increasing every-step cost                      | Medium–large; long-session gate                           |
+| 9     | PF09: population indexes and deadlines        | Replace world-wide scans with relevant actors/regions                     | Medium; population-profile gate                           |
+| 10    | PF10: worker isolation and prediction         | Keep rendering/I/O responsive when necessary work remains expensive       | Medium–large; explicit CPU or network gate                |
+| 11    | PF11: larger-world qualification              | Establish actual capacity and next partition boundary                     | Gated; follows the production-data scale track            |
+
+## Acceptance budgets
+
+These are initial engineering targets for a named desktop and healthy same-host PostgreSQL, not measured results or external promises. PF00 must record hardware, process/build mode, database version/topology, world data, workload and achieved simulation speed. D09 remains the product device decision. Report p50/p95/p99, counts and raw sampled timings; tiny samples do not establish tail percentiles.
+
+| Metric                                                                     | Small-world target                                                                                                      |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Click to local destination/pending feedback                                | p95 within one 60 Hz frame; no network dependency                                                                       |
+| Native command received to durable result                                  | p95 ≤100 ms, p99 ≤200 ms, including admission queue and database wait                                                   |
+| Durable commit to affected player view emission                            | p95 ≤16 ms, p99 ≤33 ms under normal output load                                                                         |
+| Click to first confirmed action update on local setup                      | p95 ≤150 ms, p99 ≤250 ms; also measure first changed position separately from accepted action                           |
+| Click to first changed position for an accepted, unobstructed walk         | p95 ≤200 ms, p99 ≤350 ms on the local setup; predicted pixels do not count as confirmation                              |
+| Native tick CPU at 1×                                                      | p95 ≤8 ms, p99 ≤16 ms per 250 ms batch on both fresh and mature tiny worlds                                             |
+| Main-thread simulation work at 8×                                          | No continuous slice >8 ms; sustain requested simulation speed without growing debt                                      |
+| Event-loop delay                                                           | p95 ≤10 ms, p99 ≤25 ms during ordinary play; record GC pauses separately                                                |
+| Ordinary walk commit without checkpoint, invalidation or narration trigger | ≤9 SQL round trips including transaction boundaries; witness count adds rows, not statements within a chunk             |
+| Idle Narrator                                                              | Zero periodic claim queries when no queued/due work exists                                                              |
+| Background contention                                                      | Optional inspection/tracing adds ≤10 ms to native command p95 at the small-world load                                   |
+| Long-session behavior                                                      | Pending queues and caches remain within declared caps; no linear per-step dependence on cold historical rows after PF08 |
+
+An injected slow database may exceed normal latency budgets. Correct behavior is bounded queues, responsive pending/paused UI and truthful durability state. Do not pass by dropping events, lowering requested speed silently, disabling relevant background load or hiding confirmed latency behind prediction.
+
+## PF00 — Baseline and attribution
+
+- [ ] Instrument monotonic durations for request arrival, mutation-queue wait, domain transition, persistence preparation, database-lane wait, statement execution, commit acknowledgement, public projection, SSE send and browser receipt/render. Record input-to-action-acceptance and input-to-first-position separately. Keep telemetry in bounded memory; no per-span SQL write on the measured path.
+- [ ] Reproduce walking, gather, eat, rest/stop, pause/resume, a mature-history view and a first encounter. Compare fresh and preserved mature saves; replay equivalent streams against the baseline and candidate build. Verify outcome codes so a rejected walk is not counted as a successful-action sample.
+- [ ] Measure actual PostgreSQL location/RTT, query count, locks, idle queries, event-loop delay, CPU profile, allocations/GC, heap, journal bytes, snapshot latency and view bytes. Use zero-cost provider fixtures and explicit empty credentials/zero spending. Provider-quality acceptance stays separate.
+- [ ] Measure the asynchronous PostgreSQL adapter before population growth. Preserve immediate command durability and one world writer. Do not describe the adapter as distributed/scalable persistence; specialized repositories remain gated production work.
+- [ ] Capture an initial short trace with at least 30 successful native commands and representative timer work to select the first bottleneck. Before final acceptance, run at least 1,000 native intentions per latency case after warm-up, a 30-minute mixed-load soak, and sampled database delay at 0/25/100 ms per operation. Include simulated provider delay, narration due/idle, diagnostics open/closed and periodic checkpoints. Use disposable databases and no paid calls. Keep cold-start/recovery measurements separate.
+
+Attribution exit: stage timings, query count and a short reproducible baseline identify the first intervention. Full exit: larger before/after samples and soak results are recorded in Verification. Fixture/native measurements do not establish live model latency. Broken legacy test assumptions are tracked in TODO; repair affected fixtures before using their assertions as evidence.
+
+## PF01 — Compact atomic history and world writes
+
+Dependencies: PF00. Primary files: `apps/server/src/history.ts`, `store.ts`, `postgres.ts`.
+
+- [ ] Add a validated append path that avoids existing-row reads and remove/revoke cascades for genuinely new event IDs. Preserve the existing edit/delete/forget path, duplicate/conflict checks and history backfill.
+- [ ] Prepare event encodings and perspectives once, bulk write bounded rows per table, group metadata writes, and cache schema readiness only after commit. Keep CAS, command results, required history, revocation, accepted mind and job outcomes atomic.
+- [ ] Verify 1/10/100-event batches and 1/10/100 audiences increase statements only at configured chunk boundaries. Compare complete persisted/recovered data, not just query counts.
+- [ ] Exercise append versus edit/delete, failed transaction, ambiguous COMMIT with original-ID reconciliation, schema backfill, restore and permission revocation. Do not repeat paid calls on recovery.
+
+Exit: ordinary walk meets the SQL budget; append cost depends on new rows; editing/forgetting still removes every dependent private record before success. Report local PostgreSQL latency before/after.
+
+## PF02 — Commit-triggered Narrator and deadline scheduling
+
+Dependencies: PF00; coordinate signal metadata with PF01. Primary files: `history.ts`, `narrator.ts`, `http.ts`, `ai-director.ts`, `cognition-maintenance.ts`.
+
+- [ ] Return queued-story/next-due information from successful commit/regeneration and wake the existing story-job runner. Use one earliest-deadline timer; preserve causal batching and finite concurrency.
+- [ ] Recover once at startup, wake on resume, and drain safely when a commit arrives during claim/provider completion/runner cleanup. Cover rollback, commit-before-notification crash, cancellation, explicit regeneration, source revocation, uncertain paid completion and shutdown. Queued work survives; uncertain dispatched work does not automatically retry.
+- [ ] Remove Narrator's per-tick empty claim. Rebuild due state from persisted jobs after restart; no extra queue table or broker.
+- [ ] Decouple cognition-maintenance scheduling from the awaited simulation timer. Use dirty actors, cached schedule values and due deadlines. Preserve significant events, recurring needs, sleep/day boundaries, cooldowns, pause/speed changes, cancellation and spending limits.
+
+Exit: idle narrator has no claim traffic, eligible committed jobs execute once through the existing attempt policy, and slow maintenance/provider fixtures do not prevent native timer scheduling. Compare background query rates and command tails.
+
+## PF03 — Native CPU and incremental admission
+
+Dependencies: PF00. Primary files: domain `draft.ts`, `events.ts`, `experience.ts`, `kernel.ts`; server `world-service.ts`.
+
+- [ ] Profile and remove repeated startup/actor initialization scans and unchanged policy replacement from each commit. Startup, spawn and capability changes retain complete authoritative initialization.
+- [ ] Make ordinary experience additions proportional to changed actor/source entries; reuse or incrementally maintain indexes instead of materializing all retained experience for each add. Preserve validation, duplicate prevention, forgotten-source and obligation protections.
+- [ ] Optimize the measured Immer/finalization or diff hotspot with the smallest equivalent change. Evaluate narrower drafts/targeted immutable branches; retain input immutability and serializable saved state.
+- [ ] If needed, finalize several fixed steps together and yield between bounded chunks. Preserve per-step ordering, sequences, RNG draws, perception, commitments, conversations, transitions and timer-gap/absence semantics. Do not substitute the existing multi-second call without proving equivalence.
+- [ ] Differentially replay movement, survival, changing visibility, death/revival and promises through baseline/candidate kernels at all speeds. Compare events and intermediate outcomes as well as final world/RNG.
+
+Exit: native CPU and event-loop budgets pass with mature tiny-world history; recorded replay differences are zero or explicitly reviewed gameplay changes. Large cold-history separation belongs to PF08.
+
+## PF04 — Optional database isolation
+
+Dependencies: PF01/PF02 and measured remaining contention.
+
+- [ ] Give diagnostics a separate database connection only if production measurements still show gameplay or inference persistence waiting on inspection reads after polling and query fixes.
+- [ ] Generalize that one bounded auxiliary lane only to appropriate history reads, diagnostics and independent job bookkeeping. Keep one world-writer/advisory owner. No second `PostgresDatabase` instance that acquires the same ownership lock; define connection purpose explicitly.
+- [ ] Bound query/transaction time and concurrency, preserve privacy/source revision validation across connections, and measure SQL lock contention. Authoritative world writes cannot enter the auxiliary path. Keep SQLite serialization explicit.
+- [ ] Verify an optional-query timeout, diagnostics failure and slow history reader cannot delay or alter world/accounting outcomes beyond the contention budget; reject stale cross-connection results.
+
+Exit: optional load stays within its latency budget, with ownership/revocation tests passing and no uncontrolled pool growth. If the gate is not met, leave this task open and skip it.
+
+## PF05 — Public view and browser responsiveness
+
+Dependencies: PF00; PF02 supplies scoped background notifications.
+
+- [ ] Publish explicit action/control outcomes and affected in-memory view fields promptly after commit, coalesced per event-loop turn. Keep routine publication independently scheduled and preserve SSE baseline/replay/privacy rules.
+- [ ] After PF03, measure a 50 ms native/replication cadence during active movement against the 250 ms baseline. Preserve due-step/RNG order, pause/speed semantics, one-second routine saves and background scheduling isolation. Adopt only when first-position latency improves within CPU/query budgets.
+- [ ] Remove narrator/history/usage reads from the position/action publication dependency chain. Cache optional sections with scoped revisions and publish their changes independently through compatible patches. Prevent stale asynchronous results from overwriting newer sections.
+- [ ] Replace visible-chat 1.5-second history polling with scoped change invalidation plus opening/reconnect loads. Preserve pagination watermarks, revocation, selected-person switching, message merging and scroll position. Keep presence liveness and the existing diagnostics cadence.
+- [ ] Measure scene updates and React commits. Skip unchanged sections/entities; virtualize only lists with measured rendering cost. Extract pure action eligibility guards only if catalogue/AI preview cost is material, sharing admission logic rather than creating client authority.
+
+Exit: publication/input budgets pass; no history reads for unrelated movement or hidden panels, no leaked scope, broken patch baseline or lost reliable outcome. Server confirmation must remain measurable separately from immediate marker feedback.
+
+## PF06 — Optional diagnostics and bounded buffers
+
+Dependencies: PF00; use PF04 only when its contention gate is met.
+
+- [ ] Add bounded diagnostic-write backpressure or batching only if observed pending writes grow during sustained tracing or shutdown flushes become material. The current implementation relies on asynchronous ordered writes and the database lane rather than adding another batching system preemptively.
+- [ ] Preserve enqueue-time sanitization/immutability, distinct trace identities, latest terminal snapshots and explicit capture gaps. Batch pending records by age/bytes/count, coalesce superseded versions of the same ID, and keep old versions from overwriting newer persisted values. Accounting receipts are never lossy diagnostics.
+- [ ] Bound capture/serialization CPU as well as queue memory; stream large exports and keep checkpoint work outside long SQL transactions. Drain within a finite shutdown policy and report any optional capture loss honestly.
+
+Exit: sustained fixture tracing cannot grow memory without bound or violate native latency budgets; failures affect diagnostics only. Existing redaction/FIFO/late-billing acceptance stays owned by the relevant TODO/CR checks.
+
+## PF07 — Group queued commands
+
+Dependencies: PF01, PF00 evidence that per-transaction cost still dominates bursts.
+
+- [ ] Evaluate already-queued discrete commands in deterministic order in a bounded candidate batch; preserve per-command receipts and causal intermediate events. Keep immediate flush for a lone idle command and one durable commit in flight.
+- [ ] Initially test upper bounds of 10 ms grouping delay, 64 commands and 256 KiB prepared changes, flushing at the first bound. Reject an oversized single command before admission rather than silently splitting its atomic effects; existing permitted larger editor operations need a separate explicit path. Tune only from recorded workloads.
+- [ ] Test lost replies, duplicate/conflicting IDs, pickup→craft, repeated consumption, pause/stop barriers, queue saturation and final-item contention. Movement supersession applies only to an explicit unsent-steering contract.
+
+Exit: better burst throughput within single-command latency budgets, finite pending bytes/age, fair admission and identical committed outcomes. No final success before durable commit. Skip if its added coordination buys no measured benefit.
+
+## PF08 — Long-lived worlds, hot state and checkpoints
+
+Dependencies: PF00/PF03 and applicable production-data D1/D2 recovery contracts; D59 before any deletion/receipt-expiry policy.
+
+- [ ] Separate cold durable event/history/job/receipt data from per-step state only where profiling proves the dependency. Keep current actor working memory bounded without deleting protected evidence or changing recall policy. Maintain indexed lookup for retained obligations and source references.
+- [ ] Migrate and restore source-preserving snapshots and journal state; verify coverage before eviction from RAM. Move snapshot serialization to fixed-revision work if it exceeds CPU budgets, and prune only a committed covered journal prefix.
+- [ ] Measure long-lived global history growth and add bounded/paged history storage and editor retrieval when needed; recall consolidation must never silently delete global history.
+- [ ] Verify backlog backpressure stops simulation growth while allowing cleanup commits and further distinct cleanup batches within the same game hour. Failed unchanged batches must not retry automatically; a backlog consisting entirely of recent or protected evidence needs operator resolution. Profile fixed-step cloning with large retained histories before raising population or speed limits.
+
+Exit: same active tiny world at increasing cold-history sizes meets per-step budgets; backup/recovery retains complete permitted history and forgetting/spending state. Historical deletion remains blocked without its policy decision.
+
+## PF09 — Population work follows relevance
+
+Dependencies: PF03/PF08 and PF00 population profile; reuse real-time interest and D6 boundaries.
+
+- [ ] Add spatial candidates, outstanding-commitment/deadline indexes, dirty-actor scheduling and cached static geometry where scans dominate. Rebuild indexes on load/restore and validate through the authoritative mutation path.
+- [ ] Evaluate dormancy/analytic updates only with preserved needs crossings, actual event-time witnesses, action ordering and RNG semantics. Include moving observers and dense crowds; indexes cannot discard real audience work.
+- [ ] Bound AI/context concurrency and pending opportunities across the host; reserve per-agent spending before dispatch and preserve mandatory triggers under the memory policy. Batch eligible embedding inputs without merging private model contexts across actors.
+
+Exit: cost follows active changes and relevant neighbors in sparse worlds; dense cases have explicit limits and backpressure. Broader gameplay/AI-quality acceptance remains in ACT/CR/NC.
+
+## PF10 — Workers and movement prediction
+
+Dependencies: PF03/PF05; measured residual event-loop CPU or unavoidable confirmation RTT.
+
+- [ ] If necessary, give a worker long-lived simulation ownership or offload a measured bounded path/serialization task. Send versioned compact messages, not full snapshots every frame. Revalidate results and define crash/recovery and ownership fencing.
+- [ ] Implement local movement prediction/reconciliation only through the real-time design's existing version/permission/receipt contract. Never use prediction to authorize reach, inventory or damage. Benchmark browser frame work and correction frequency.
+
+Exit: lower event-loop/render latency after message-copy overhead, unchanged authoritative results, tested stale-result/worker-failure recovery. No worker merely wrapping already asynchronous database/provider I/O.
+
+## PF11 — Scale qualification and continuous regression
+
+Dependencies: immediate budgets passing; coordinate D5/D6 and R12 rather than duplicate their rollout.
+
+- [ ] Publish reproducible profiles independently varying entities, active actors, observers, players, history and event rate. Include approximately 12/1,200/12,000 entities; 2/200/2,000 cognitively capable actors; and 100/1,000/10,000 events per real minute. These are experiment axes, not promises that every combination passes or that all NPCs call a model per event.
+- [ ] Include 1/10/100 simulated clients, sparse geography and a single crowded hotspot, 1×/8× speed, long history, slow consumers, storage stalls and optional inspection/AI fixture load. Record achieved speed, p95/p99 commands, bytes, CPU/heap, queue age and recovery. Add real clients only under the multiplayer implementation gate.
+- [ ] Add stable cost/scaling regression checks to CI and run noisy hardware-sensitive latency/soak checks on a named reference host. Gate per-event query amplification and idle polling directly; periodically qualify mature-save performance.
+- [ ] Before sectors, replicas or a durable external journal, demonstrate the saturated resource and satisfy the existing production/real-time migration contracts. Re-run privacy, conserved-resource and failure tests at the new boundary.
+
+Exit: a published measured capacity envelope and a justified next bottleneck. No unsupported 100×, 1,000× or 10,000× capacity claim.

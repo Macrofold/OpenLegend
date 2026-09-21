@@ -89,6 +89,7 @@ export interface EntityView {
   description?: string;
   traits?: Array<{ id: string; name: string; description: string }>;
   canTalk?: boolean;
+  talkUnavailableReason?: string;
   speechCapable?: boolean;
   health?: number;
   bodyRevision?: number;
@@ -130,6 +131,8 @@ export interface PublicEvent {
 }
 
 export interface ChatMessage {
+  replyRequestId?: string;
+  retryable?: boolean;
   kind?: 'speech' | 'action';
   mechanical?: boolean;
   replyStatus?: AiJobView['status'];

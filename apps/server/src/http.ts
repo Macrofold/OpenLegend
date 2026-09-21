@@ -371,6 +371,8 @@ export async function createGameServer(
             .object({
               conversationId: requestIdSchema.optional(),
               active: z.literal('true').optional(),
+              speechOnly: z.literal('true').optional(),
+              participantId: requestIdSchema.optional(),
               before: z.coerce.number().int().nonnegative().optional(),
               watermark: z.coerce.number().int().nonnegative().optional(),
               limit: z.coerce.number().int().min(1).max(100).optional(),
@@ -380,19 +382,50 @@ export async function createGameServer(
           if (!store.history)
             return send(response, 503, { message: 'History repository unavailable.' });
           const scopedId = options.active
-            ? service.world.conversations?.active['player']
+            ? service.world.conversations?.active[service.controlledEntityId]
             : options.conversationId;
           const page = await store.history.transcript(
             service.world.id,
             service.profile.id,
-            'player',
-            { ...options, conversationId: scopedId },
+            service.controlledEntityId,
+            { ...options, speechOnly: options.speechOnly === 'true', conversationId: scopedId },
           );
           if (options.active && !scopedId) page.items = [];
-          const activeId = service.world.conversations?.active['player'];
+          const speechJobs = options.speechOnly
+            ? await store.getSpeechJobs(
+                page.items
+                  .filter((item) => item.speakerId === service.controlledEntityId)
+                  .map((item) => item.id),
+              )
+            : new Map();
+          const messages = options.speechOnly
+            ? page.items.map((item) => {
+                const job = speechJobs.get(item.id);
+                const failed = job?.status === 'failed';
+                return {
+                  id: item.id,
+                  kind: 'speech',
+                  speakerId: item.speakerId,
+                  speaker: service.world.entities[item.speakerId ?? '']?.name ?? 'Someone',
+                  text: item.text,
+                  time: item.time,
+                  ...(job
+                    ? {
+                        replyStatus: job.status,
+                        replyRequestId: job.id,
+                        retryable: job.status === 'failed',
+                        ...(failed ? { replyFailure: job.message } : {}),
+                      }
+                    : {}),
+                };
+              })
+            : undefined;
+
+          const activeId = service.world.conversations?.active[service.controlledEntityId];
           const active = activeId ? service.world.conversations?.records[activeId] : undefined;
           return send(response, 200, {
             ...page,
+            ...(messages ? { messages } : {}),
             voice: service.profile.preferences.narratorVoice,
             scope: scopedId,
             active: active
@@ -547,7 +580,7 @@ export async function createGameServer(
               response,
               200,
               await service.transition((world) =>
-                amendCommitment(world, 'player', value.id, value.revision, value),
+                amendCommitment(world, service.controlledEntityId, value.id, value.revision, value),
               ),
             );
           }
@@ -859,8 +892,8 @@ export async function createGameServer(
                     input?.actorScope ??
                     (job
                       ? job.kind === 'invention'
-                        ? 'player'
-                        : (job.request.npcId ?? 'ada')
+                        ? service.controlledEntityId
+                        : (job.request.npcId ?? service.defaultResidentEntityId)
                       : undefined);
                   return {
                     ...call,
@@ -930,6 +963,23 @@ export async function createGameServer(
           case '/api/ai/cancel': {
             const value = z.object({ jobId: requestIdSchema }).strict().parse(body);
             return send(response, 200, await director.cancel(value.jobId));
+          }
+          case '/api/chat/retry': {
+            const value = z
+              .object({ requestId: requestIdSchema, originalRequestId: requestIdSchema })
+              .strict()
+              .parse(body);
+            return send(
+              response,
+              200,
+              await director.submit(
+                'chat',
+                value.requestId,
+                '',
+                undefined,
+                value.originalRequestId,
+              ),
+            );
           }
           case '/api/chat':
           case '/api/invent': {

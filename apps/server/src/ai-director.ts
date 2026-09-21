@@ -13,7 +13,7 @@ import { responseTrigger } from './response-context.js';
 import {
   RESPONSE_INSTRUCTIONS,
   LEVEL_LIMITS,
-  responseSchema,
+  boundResponseSchema,
   COGNITION_VERSION,
 } from './cognition-contracts.js';
 import { experiences, DEFAULT_COGNITION_POLICY, commitActorResponse } from '@open-legend/domain';
@@ -184,10 +184,43 @@ export class AiDirector {
     id: string,
     text: string,
     npcId?: string,
+    retryOf?: string,
   ): Promise<ApiResult> {
     return this.admission(async () => {
-      const targetId = kind === 'chat' ? (npcId ?? 'ada') : undefined;
-      const fingerprint = digest({ kind, text, targetId });
+      let original: JobRecord | undefined;
+      if (retryOf) {
+        original = await this.service.store.getJob(retryOf);
+        if (
+          !original ||
+          original.kind !== 'chat' ||
+          !original.playerSpeechEventId ||
+          !original.request.npcId
+        )
+          return {
+            ok: false,
+            code: 'retry-unavailable',
+            message: 'The original conversation request is unavailable.',
+          };
+        const speech = this.service.world.events.find(
+          (event) => event.id === original!.playerSpeechEventId,
+        );
+        if (
+          !speech ||
+          speech.actorId !== this.service.controlledEntityId ||
+          speech.targetId !== original.request.npcId
+        )
+          return {
+            ok: false,
+            code: 'retry-unavailable',
+            message: 'The original speech is not available to this player.',
+          };
+        kind = 'chat';
+        text = original.request.text;
+        npcId = original.request.npcId;
+      }
+      const targetId =
+        kind === 'chat' ? (npcId ?? this.service.defaultResidentEntityId) : undefined;
+      const fingerprint = digest({ kind, text, targetId, ...(retryOf ? { retryOf } : {}) });
       const previous = await this.service.store.getJob(id);
       if (previous)
         return previous.fingerprint === fingerprint
@@ -202,6 +235,21 @@ export class AiDirector {
               code: 'idempotency-conflict',
               message: 'That request ID was already used for different input.',
             };
+      if (original) {
+        const latest = await this.service.store.getSpeechJob(original.playerSpeechEventId!);
+        const receipt = this.service.world.responseReceipts?.[original.id];
+        const applied =
+          Object.values(receipt?.components ?? {}).some((component) => component.ok) ||
+          this.service.world.events.some((event) => event.data?.['responseId'] === original!.id);
+        if (original.status !== 'failed' || latest?.id !== original.id || applied)
+          return {
+            ok: false,
+            code: 'retry-unavailable',
+            message: 'Only the latest failed response with no accepted effects can be retried.',
+          };
+        // A terminal workflow cannot commit late effects. Uncertain billing stays
+        // reserved, but must not block a new, explicitly requested attempt.
+      }
       if (this.service.paused)
         return {
           ok: false,
@@ -209,8 +257,8 @@ export class AiDirector {
           message: 'Resume the world before talking or inventing.',
         };
       if (
-        !this.service.world.entities['player']?.actor?.alive ||
-        this.service.world.entities['player']?.actor?.incapacitated
+        !this.service.world.entities[this.service.controlledEntityId]?.actor?.alive ||
+        this.service.world.entities[this.service.controlledEntityId]?.actor?.incapacitated
       )
         return { ok: false, code: 'actor', message: 'Recover at camp before acting.' };
       if (
@@ -233,8 +281,24 @@ export class AiDirector {
         const target = this.service.world.entities[targetId!];
         if (!target?.actor || target.actor.controller !== 'npc')
           return { ok: false, code: 'target', message: 'Choose a person to talk with.' };
-        const spoken = await this.service.say(`${id}:player`, 'player', text, targetId);
-        if (!spoken.ok) return spoken;
+        if (
+          original &&
+          (!target.actor.alive || target.actor.incapacitated || target.actor.rest?.asleep)
+        )
+          return {
+            ok: false,
+            code: 'actor-unavailable',
+            message: `${target.name} cannot respond right now. Retry when they are awake and able to respond.`,
+          };
+        if (!original) {
+          const spoken = await this.service.say(
+            `${id}:player`,
+            this.service.controlledEntityId,
+            text,
+            targetId,
+          );
+          if (!spoken.ok) return spoken;
+        }
       }
       const job: JobRecord = {
         id,
@@ -246,7 +310,10 @@ export class AiDirector {
             ? `${this.service.world.entities[targetId!]?.name ?? 'The person'} is considering your words.`
             : 'Checking known techniques and supported mechanisms.',
         request: { text, ...(targetId ? { npcId: targetId } : {}) },
-        createdAt: this.now(),
+        ...(original
+          ? { retryOf: original.id, playerSpeechEventId: original.playerSpeechEventId }
+          : {}),
+        createdAt: Math.max(this.now(), (original?.createdAt ?? 0) + 1),
       };
       await this.begin(job);
       return { ok: true, code: 'queued', message: job.message, jobId: id };
@@ -300,11 +367,16 @@ export class AiDirector {
               ? 'This request was cancelled when the game paused.'
               : 'This request was cancelled before completion.'),
       );
-    const actorId = run.job.kind === 'invention' ? 'player' : (run.job.request.npcId ?? 'ada');
+    const actorId =
+      run.job.kind === 'invention'
+        ? this.service.controlledEntityId
+        : (run.job.request.npcId ?? this.service.defaultResidentEntityId);
     const actor = this.service.world.entities[actorId];
     if (run.generation !== this.service.generation || !actor?.actor?.alive)
       throw new StopJob('stale', 'The actor or world changed; the result was not applied.');
-    const resident = this.service.world.entities[run.job.request.npcId ?? 'ada']?.actor;
+    const resident =
+      this.service.world.entities[run.job.request.npcId ?? this.service.defaultResidentEntityId]
+        ?.actor;
     if (
       run.job.kind === 'thought' &&
       resident &&
@@ -314,7 +386,10 @@ export class AiDirector {
         resident.health < 0.1 * (resident.body?.maxHealth ?? 100))
     )
       throw new StopJob('stale', 'Native urgent needs superseded semantic work.');
-    if (run.job.kind === 'invention' && this.service.world.entities['player']?.actor?.incapacitated)
+    if (
+      run.job.kind === 'invention' &&
+      this.service.world.entities[this.service.controlledEntityId]?.actor?.incapacitated
+    )
       throw new StopJob('stale', 'The inventor became incapacitated; this result was not applied.');
   }
 
@@ -330,16 +405,18 @@ export class AiDirector {
       generation: this.service.generation,
     };
     if (job.kind === 'chat')
-      run.playerSpeechEventId = [...this.service.world.events]
-        .reverse()
-        .find(
-          (event) =>
-            event.type === 'speech' &&
-            event.actorId === 'player' &&
-            event.targetId === (job.request.npcId ?? 'ada') &&
-            event.data?.['text'] === job.request.text.trim() &&
-            event.audience.includes(job.request.npcId ?? 'ada'),
-        )?.id;
+      run.playerSpeechEventId =
+        job.playerSpeechEventId ??
+        [...this.service.world.events]
+          .reverse()
+          .find(
+            (event) =>
+              event.type === 'speech' &&
+              event.actorId === this.service.controlledEntityId &&
+              event.targetId === (job.request.npcId ?? this.service.defaultResidentEntityId) &&
+              event.data?.['text'] === job.request.text.trim() &&
+              event.audience.includes(job.request.npcId ?? this.service.defaultResidentEntityId),
+          )?.id;
     if (run.playerSpeechEventId) job.playerSpeechEventId = run.playerSpeechEventId;
     this.running = run;
     await this.service.store.putJob(job);
@@ -348,8 +425,13 @@ export class AiDirector {
       id: job.id,
       kind: 'Semantic trigger',
       worldId: this.service.world.id,
-      actorId: job.kind === 'invention' ? 'player' : (job.request.npcId ?? 'ada'),
-      actorName: this.service.world.entities[job.request.npcId ?? 'ada']?.name,
+      actorId:
+        job.kind === 'invention'
+          ? this.service.controlledEntityId
+          : (job.request.npcId ?? this.service.defaultResidentEntityId),
+      actorName:
+        this.service.world.entities[job.request.npcId ?? this.service.defaultResidentEntityId]
+          ?.name,
       trigger: job.request.text,
       gameTime: this.service.world.simTime,
       startedAt: new Date().toISOString(),
@@ -483,7 +565,9 @@ export class AiDirector {
         provider,
         reserve,
         config.budgetUsd,
-        run.job.kind === 'invention' ? 'world-agent' : (run.job.request.npcId ?? 'ada'),
+        run.job.kind === 'invention'
+          ? 'world-agent'
+          : (run.job.request.npcId ?? this.service.defaultResidentEntityId),
       ))
     )
       throw new StopJob(
@@ -637,7 +721,7 @@ export class AiDirector {
     attempt: number,
     interruptionEvidenceIds: string[],
   ): Promise<void> {
-    const actorId = run.job.request.npcId ?? 'ada';
+    const actorId = run.job.request.npcId ?? this.service.defaultResidentEntityId;
     run.responseWatch = {
       actorId,
       afterSequence: Math.max(
@@ -852,7 +936,10 @@ export class AiDirector {
     const level = route === 'level4' ? 4 : route === 'level3' ? 3 : 2;
     const limits = LEVEL_LIMITS[level];
     const c = this.service.config;
-    const schema = responseSchema;
+    const schema = boundResponseSchema(
+      prepared.binding.entityIds,
+      Object.keys(prepared.binding.actions),
+    );
     const value = await this.generate<unknown>(
       run,
       {
@@ -877,7 +964,7 @@ export class AiDirector {
     this.current(run);
     if (await retryForUrgentAwareness()) return;
     const parsingStartedAt = new Date().toISOString();
-    const reply = responseSchema.parse(value);
+    const reply = schema.parse(value);
     await this.log.record(
       `${run.job.id}:attempt:${attempt}:parse`,
       'Response parsing',
@@ -914,15 +1001,24 @@ export class AiDirector {
       { ...result, components: receipt?.components },
       commitStartedAt,
     );
-    await this.update(run, result.ok ? 'completed' : 'failed', result.message, {
-      disposition: result.code,
-      components: receipt?.components,
-      trigger: semanticTrigger,
-    });
+    await this.update(
+      run,
+      result.ok ? 'completed' : result.code === 'actor-unavailable' ? 'cancelled' : 'failed',
+      result.message,
+      {
+        disposition: result.code,
+        components: receipt?.components,
+        trigger: semanticTrigger,
+      },
+    );
   }
 
   private async invent(run: Running): Promise<void> {
-    const context = buildContext(this.service, 'player', run.job.request.text);
+    const context = buildContext(
+      this.service,
+      this.service.controlledEntityId,
+      run.job.request.text,
+    );
     const criteria: Record<string, string> = {
       swing: 'A new physical sling-like stone launcher using binding and a flexible pouch.',
       flex: 'A new physical bow-like launcher with flexible rigid body and binding, using arrows.',
@@ -981,7 +1077,11 @@ export class AiDirector {
         ammunition: DeclarationDraft['output']['ammunition'] | null;
       };
     };
-    const generationContext = buildContext(this.service, 'player', run.job.request.text);
+    const generationContext = buildContext(
+      this.service,
+      this.service.controlledEntityId,
+      run.job.request.text,
+    );
     const generated = await this.generate<Generated>(run, {
       task: 'invent_supported_technique',
       schema: declarationSchema,
@@ -1017,7 +1117,7 @@ export class AiDirector {
       );
     const outcome = await this.service.admit(draft, {
       requestId: run.job.id,
-      actorId: 'player',
+      actorId: this.service.controlledEntityId,
       source: this.executionSource,
       model: run.generatedBy ?? this.service.config.llmModel,
       evidence: [`Jev route ${route}; definition generated from scoped material evidence.`],

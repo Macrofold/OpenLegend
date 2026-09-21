@@ -12,6 +12,8 @@ This is the production port of the supplied September 20 design system. React ow
 
 Use semantic token names, a 4px spacing scale, the supplied display/UI/utility type roles, and accessible names on every icon button. Unknown content receives an initial-letter sigil. Do not use emoji or imply that generated artwork is being requested when no art job exists. Keep one primary gold action per panel; focus uses sage in action search. Game-icons.net art is CC BY 3.0, Lucide ISC, and fonts OFL; first-party code remains AGPL-3.0-only.
 
+Use `TextTooltip` for plain hover/focus labels such as Retry and short disabled explanations. It sizes to its text without a background, border, padding or shadow. Use `Explanation` only for richer action details and facts.
+
 ## Accepted adaptations
 
 The attached reference instructions are design input. The user's explicit overrides govern this port:

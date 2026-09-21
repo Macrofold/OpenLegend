@@ -8,7 +8,7 @@ import { domainCommand } from './cognition.js';
 import { candidateSet, gameTime, type RecallService } from './recall.js';
 import type { WorldService } from './world-service.js';
 import { COGNITION_VERSION, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
-import { readableDecisionContext } from './response-context.js';
+import { readableDecisionContext, responseReferences } from './response-context.js';
 import { batchedAttentionQuestions } from './jev-questions.js';
 const RECENT_CONVERSATION_EVENTS = 32;
 
@@ -80,7 +80,13 @@ export async function prepareDecision(
   const triggerIdSet = new Set(requiredIds);
   const requiredContext: Record<string, unknown> = {
     stimulus,
-    identity: `I am ${observed.actor.name} (${actorId}).${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
+    references: responseReferences(
+      world,
+      actorId,
+      observed.visibleEntities.map((entity) => entity.id),
+      requiredIds,
+    ).references,
+    identity: `I am ${observed.actor.name}.${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(world, actorId)
       .map(
         (value) =>
@@ -159,7 +165,7 @@ export async function prepareDecision(
   const actor = currentObserved.actor.actor!;
   const context: Record<string, unknown> = {
     stimulus,
-    identity: `I am ${currentObserved.actor.name} (${actorId}).${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
+    identity: `I am ${currentObserved.actor.name}.${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(world, actorId)
       .map(
         (value) =>
@@ -191,9 +197,7 @@ export async function prepareDecision(
     ['knowledge', 'knowledge'],
     ['recall', 'memory'],
   ]) {
-    const texts = selection.selected
-      .filter((c) => c.kind === kind)
-      .map((c) => `${c.text} [${c.kind === 'entity' ? c.entityIds.join(', ') : c.id}]`);
+    const texts = selection.selected.filter((c) => c.kind === kind).map((c) => c.text);
     if (texts.length) context[name!] = texts;
   }
   if (currentWorld.innerWorlds?.[actorId]?.reconsiderationRequired)
@@ -205,10 +209,13 @@ export async function prepareDecision(
     )
   )
     context['food'] = 'I have no food.';
-  const triggerEntityIds = (currentWorld.experience?.awareness[actorId] ?? [])
-    .filter((entry) => triggerIdSet.has(entry.eventId))
-    .flatMap((entry) => [entry.sourceId, entry.targetId, ...entry.entityIds])
-    .filter((id): id is string => !!id && Object.hasOwn(currentWorld.entities, id));
+  const references = responseReferences(
+    currentWorld,
+    actorId,
+    currentObserved.visibleEntities.map((entity) => entity.id),
+    requiredIds,
+  );
+  context['references'] = references.references;
   const binding: CognitionBinding = {
     actorId,
     decisionId: jobId,
@@ -219,13 +226,7 @@ export async function prepareDecision(
     evidenceIds: selection.selected
       .filter((c) => c.kind === 'memory' || c.kind === 'conversation')
       .flatMap((c) => c.sourceIds ?? [c.id]),
-    entityIds: [
-      ...new Set([
-        actorId,
-        ...currentObserved.visibleEntities.map((e) => e.id),
-        ...triggerEntityIds,
-      ]),
-    ],
+    entityIds: references.entityIds,
     expectedPlan: actor.planGeneration,
     restEpisode: actor.action?.type === 'rest' ? actor.action.id : null,
     actions: {},

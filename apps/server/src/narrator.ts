@@ -144,7 +144,7 @@ export class Narrator {
     }
     const result = await this.client.generate<unknown>({
       requestId: id,
-      actorScope: 'player',
+      actorScope: job.actorId,
       execution: 'fast',
       task: 'Private narration',
       instructions,

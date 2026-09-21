@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type ReactNode, type Ref } from 'react';
-import { Button, Icon } from '../design-system/components';
+import { Button, Icon, TextTooltip } from '../design-system/components';
 import { AutoTextarea } from './auto-textarea';
 import { FailureStatus } from './message-status';
 
@@ -25,6 +25,7 @@ export function ConversationMessage({
   label,
   text,
   failureReason,
+  onRetry,
   pending,
   children,
 }: {
@@ -32,6 +33,7 @@ export function ConversationMessage({
   label: string;
   text: string;
   failureReason?: string;
+  onRetry?: () => void;
   pending?: boolean;
   children?: ReactNode;
 }) {
@@ -40,7 +42,24 @@ export function ConversationMessage({
       <div className={`ol-message ol-message-${role}`}>
         <strong className="ol-message-author">{label}</strong>
         <div className="ol-prose">{text}</div>
-        {failureReason && <FailureStatus reason={failureReason} />}
+        {failureReason && (
+          <span className="ol-message-failure-actions">
+            <FailureStatus reason={failureReason} />
+            {onRetry && (
+              <TextTooltip text="Retry">
+                <Button
+                  className="ol-message-retry"
+                  size="sm"
+                  variant="quiet"
+                  aria-label="Retry"
+                  onPress={onRetry}
+                >
+                  ↻
+                </Button>
+              </TextTooltip>
+            )}
+          </span>
+        )}
         {children}
       </div>
       {pending && (
@@ -66,6 +85,8 @@ export function ConversationThread({
   conversationKey,
   items,
   empty,
+  before,
+  openingRevision = 0,
   ariaLabel = 'Conversation',
   id,
   visible = true,
@@ -73,6 +94,8 @@ export function ConversationThread({
   conversationKey: string;
   items: ConversationItem[];
   empty?: ReactNode;
+  before?: ReactNode;
+  openingRevision?: number;
   ariaLabel?: string;
   id?: string;
   visible?: boolean;
@@ -84,6 +107,9 @@ export function ConversationThread({
   const unread = useRef(false);
   const [showNewMessage, setShowNewMessage] = useState(false);
   const latestId = items.at(-1)?.id ?? '';
+  const previousHeight = useRef(0);
+  const previousFirst = useRef<string | undefined>(undefined);
+  const previousOpeningRevision = useRef(openingRevision);
 
   const scrollToBottom = () => {
     const element = log.current;
@@ -101,6 +127,16 @@ export function ConversationThread({
 
   useLayoutEffect(() => {
     const prior = previous.current;
+    const openingLoaded = previousOpeningRevision.current !== openingRevision;
+    previousOpeningRevision.current = openingRevision;
+    const prepended =
+      prior?.key === conversationKey &&
+      prior.latestId === latestId &&
+      previousFirst.current !== items[0]?.id &&
+      items.length > prior.count;
+    const oldHeight = previousHeight.current;
+    previousHeight.current = log.current?.scrollHeight ?? 0;
+    previousFirst.current = items[0]?.id;
     const openedConversation =
       visible && (!prior || prior.key !== conversationKey || !wasVisible.current);
     const addedMessage =
@@ -111,8 +147,12 @@ export function ConversationThread({
     previous.current = { key: conversationKey, count: items.length, latestId };
     wasVisible.current = visible;
     if (!visible) return;
-    if (openedConversation) {
+    if (openedConversation || openingLoaded || (prior?.count === 0 && items.length > 0)) {
       scrollToBottom();
+      return;
+    }
+    if (prepended && log.current) {
+      log.current.scrollTop += log.current.scrollHeight - oldHeight;
       return;
     }
     if (addedMessage) {
@@ -123,7 +163,7 @@ export function ConversationThread({
         scrollToBottom();
       }
     }
-  }, [conversationKey, items.length, latestId, visible]);
+  }, [conversationKey, items.length, latestId, visible, openingRevision]);
 
   useLayoutEffect(() => {
     return () => {
@@ -149,6 +189,7 @@ export function ConversationThread({
           }
         }}
       >
+        {before}
         {!items.length && empty}
         {items.map((item) => (
           <div key={item.id} className="ol-thread-entry" data-conversation-entry>
@@ -176,6 +217,8 @@ export function ConversationComposer({
   onChange,
   onSubmit,
   disabled,
+  inputDisabled,
+  inputDisabledReason,
   submitLabel = 'Send',
   submitIcon = 'ui.send',
 }: {
@@ -189,6 +232,8 @@ export function ConversationComposer({
   onChange(value: string): void;
   onSubmit(): void | Promise<void>;
   disabled?: boolean;
+  inputDisabled?: boolean;
+  inputDisabledReason?: string | null;
   submitLabel?: string;
   submitIcon?: string;
 }) {
@@ -201,21 +246,30 @@ export function ConversationComposer({
         void onSubmit();
       }}
     >
-      <AutoTextarea
-        id={textareaId}
-        ref={inputRef}
-        aria-label={ariaLabel}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-            event.preventDefault();
-            void onSubmit();
-          }
-        }}
-      />
+      <TextTooltip text={inputDisabledReason}>
+        <span
+          className={`ol-composer-input${inputDisabled ? ' is-disabled' : ''}`}
+          tabIndex={inputDisabledReason ? 0 : undefined}
+          aria-label={inputDisabledReason ?? undefined}
+        >
+          <AutoTextarea
+            id={textareaId}
+            ref={inputRef}
+            aria-label={ariaLabel}
+            placeholder={placeholder}
+            maxLength={maxLength}
+            value={value}
+            disabled={inputDisabled}
+            onChange={(event) => onChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                void onSubmit();
+              }
+            }}
+          />
+        </span>
+      </TextTooltip>
       <Button type="submit" variant="primary" icon={submitIcon} disabled={disabled}>
         {submitLabel}
       </Button>

@@ -1,3 +1,4 @@
+import { initializeIdentity } from './identity.js';
 import { hasMemory } from './living.js';
 import { draftWorld, finishWorld, cloneValue } from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
@@ -296,6 +297,7 @@ export function mutateExperience(
   )
     return null;
   const updatedSources: string[] = [];
+  const rankingSources: string[] = [];
   const deletedSources: string[] = [];
   for (const { change, previous } of resolved) {
     if (!previous || change.operation === 'add') return null;
@@ -310,19 +312,27 @@ export function mutateExperience(
         change.entry.source === 'awareness' &&
         previous.value.content !== change.entry.value.content;
       const replacement = replacements.get(previous)!;
+      const proseChanged =
+        previous.source === 'awareness'
+          ? awarenessTextChanged || awarenessContentChanged
+          : previous.source === 'memory'
+            ? previous.value.summary !== (replacement as MemoryRecord).summary
+            : previous.value.text !== (replacement as ExperienceSummary).text;
       Object.assign(previous.value, replacement);
       if (previous.source === 'awareness' && awarenessTextChanged && !awarenessContentChanged)
         previous.value.content = previous.value.text;
       if (previous.source === 'summary')
         previous.value.revision = (previous.value.revision ?? 0) + 1;
-      updatedSources.push(sourceId);
+      // Ranking edits refresh retrieval without erasing accepted prose or its dependencies.
+      // See docs/architecture.md#public-updates-and-owner-editors.
+      (proseChanged ? updatedSources : rankingSources).push(sourceId);
     } else {
       deletedSources.push(sourceId);
       if (previous.source === 'memory' && previous.value.eventId)
         deletedSources.push(previous.value.eventId);
     }
   }
-  const invalidated = new Set<string>();
+  const invalidated = new Set<string>(rankingSources);
   if (updatedSources.length)
     for (const id of invalidateExperience(world, actorId, updatedSources)) invalidated.add(id);
   if (deletedSources.length)
@@ -350,8 +360,7 @@ export function flattenFiles(files: InnerWorld['files']): string {
 }
 /** Additive migration: legacy payloads remain audit data; only proven event copies are deduplicated. */
 export function migrateCognition(world: WorldState): void {
-  const player = world.entities['player'];
-  if (player && ['You', 'Player', 'player'].includes(player.name)) player.name = 'Mike';
+  initializeIdentity(world);
   const initial = !world.experience;
   if (world.schemaVersion === 1) world.schemaVersion = 2;
   world.experience ??= {
@@ -393,7 +402,7 @@ export function migrateCognition(world: WorldState): void {
       .map((e) => ({
         eventId: e.id,
         actorId: entity.id,
-        text: memoryPerspective(world, entity.id, e.text, e.type === 'speech'),
+        text: memoryPerspective(world, entity.id, e.text, e.type === 'speech', e.actorId),
         at: e.at,
         sequence: Number(e.id.split('-').at(-1)) || 0,
         modality: e.type === 'speech' ? 'heard' : 'observed',
@@ -452,7 +461,13 @@ export function migrateCognition(world: WorldState): void {
   for (const entity of Object.values(world.entities)) {
     if (!hasMemory(entity)) continue;
     for (const aware of world.experience.awareness[entity.id] ?? []) {
-      aware.text = memoryPerspective(world, entity.id, aware.text, aware.modality === 'heard');
+      aware.text = memoryPerspective(
+        world,
+        entity.id,
+        aware.text,
+        aware.modality === 'heard',
+        aware.sourceId,
+      );
     }
     for (const memory of world.memories[entity.id] ?? [])
       memory.summary = memoryPerspective(
@@ -460,6 +475,7 @@ export function migrateCognition(world: WorldState): void {
         entity.id,
         memory.summary,
         memory.eventType === 'speech' || events.get(memory.eventId ?? '')?.type === 'speech',
+        events.get(memory.eventId ?? '')?.actorId,
       );
     for (const summary of world.experience.summaries[entity.id] ?? []) {
       const text = memoryPerspective(world, entity.id, summary.text);

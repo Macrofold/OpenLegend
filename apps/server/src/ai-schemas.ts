@@ -8,23 +8,6 @@ const object = (properties: Record<string, unknown>) => ({
   properties,
 });
 const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
-export const conversationSchema: JsonSchema = object({
-  speech: text(1200),
-  reflection: text(500),
-  commitment: nullable(
-    object({
-      summary: text(160),
-      eventEvidence: { type: 'string', enum: ['self', 'player'] },
-      quote: text(350),
-    }),
-  ),
-});
-export const thoughtSchema: JsonSchema = object({
-  goal: text(300),
-  reflection: text(500),
-  actionId: text(120),
-});
-
 /** Provider shape is strict and total; the application removes null, inapplicable components. */
 export const declarationSchema: JsonSchema = object({
   schemaVersion: { type: 'integer', const: 1 },

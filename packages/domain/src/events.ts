@@ -136,7 +136,7 @@ export function emit(
           value: {
             eventId: event.id,
             actorId,
-            text: memoryPerspective(world, actorId, text, type === 'speech'),
+            text: memoryPerspective(world, actorId, text, type === 'speech', source?.id),
             at: event.at,
             sequence: world.nextId,
             modality: type === 'speech' ? 'heard' : 'observed',
