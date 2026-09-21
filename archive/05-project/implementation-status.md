@@ -25,6 +25,8 @@ Persistence append shortcuts now require domain-draft prefix proof, including co
 
 The god Person editor now uses a live-character contract separate from creation: description, personality, backstory, traits and current goals are editable, while initial goals remain creation provenance. Saving synchronizes protected identity context; the first current goal remains the native planning goal.
 
+The Person tab also exposes editable health, fullness and energy snapshots, a fill-to-100 control and an explicit timestamped refresh. It does not poll. Field-level save merging preserves newer simulation values for untouched stats while applying deliberate god-stat overrides.
+
 ### Selective story narration
 
 The default replaceable story selector, namespaced actor/object fields, owner editor, semantic introduction milestones, bounded frequency/grouping, dispatch revocation and indexed banner projection are implemented. Ordinary encounters and cognition importance do not admit Narrator jobs. Legacy prose remains private history and pending raw evidence does not appear as a banner. Place entities and inventory-item encounters are unsupported. Native runtime exercise is recorded in [verification](../../docs/verification.md); automated/privacy/recovery acceptance remains open in the [NC tracker](../../docs/maintainers/narration-and-conversations.md).

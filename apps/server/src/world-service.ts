@@ -665,6 +665,11 @@ export class WorldService {
         goals: [...(entity.actor.goals?.length ? entity.actor.goals : [entity.actor.goal])].filter(
           Boolean,
         ),
+        stats: {
+          health: entity.actor.health,
+          fullness: entity.actor.fullness,
+          energy: entity.actor.energy,
+        },
       },
     };
   }
@@ -702,15 +707,32 @@ export class WorldService {
         goals: [...(entity.actor.goals?.length ? entity.actor.goals : [entity.actor.goal])].filter(
           Boolean,
         ),
+        stats: {
+          health: entity.actor.health,
+          fullness: entity.actor.fullness,
+          energy: entity.actor.energy,
+        },
       };
-      const personChanged = JSON.stringify(person) !== JSON.stringify(basePerson);
-      if (personChanged && JSON.stringify(currentPerson) !== JSON.stringify(basePerson))
-        return {
-          ok: false,
-          code: 'stale',
-          message: 'This person was edited elsewhere. Refresh before saving these fields.',
-          revision: this.viewRevision,
-        };
+      const changedFields = (Object.keys(person) as Array<keyof GodPersonEditorDraft>).filter(
+        (key) => JSON.stringify(person[key]) !== JSON.stringify(basePerson[key]),
+      );
+      for (const key of changedFields) {
+        // Simulation-owned stats may drift after opening; an explicit god edit overrides
+        // that snapshot. Other fields retain field-level optimistic concurrency.
+        if (
+          key !== 'stats' &&
+          JSON.stringify(currentPerson[key]) !== JSON.stringify(basePerson[key])
+        )
+          return {
+            ok: false,
+            code: 'stale',
+            message: `This person's ${key} changed elsewhere. Refresh before saving it.`,
+            revision: this.viewRevision,
+          };
+      }
+      const mergedPerson = { ...currentPerson };
+      for (const key of changedFields)
+        Object.assign(mergedPerson, { [key]: structuredClone(person[key]) });
       const entries = memoryChanges.length ? experienceEntries(this.world, actorId) : undefined;
       for (const change of memoryChanges) {
         const entry = entries?.get(change.entryId);
@@ -724,7 +746,7 @@ export class WorldService {
       }
       const result = editPersonState(this.world, {
         actorId,
-        person: personChanged ? person : currentPerson,
+        person: mergedPerson,
         memoryChanges,
       });
       if (!result.outcome.ok) return result.outcome;

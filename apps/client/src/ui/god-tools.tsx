@@ -69,6 +69,7 @@ function normalizedEditorPerson(person: GodPersonFields): GodPersonFields {
     backstory: person.backstory.trim(),
     traitIds: [...new Set(person.traitIds)],
     goals: person.goals.map((goal) => goal.trim()).filter(Boolean),
+    stats: { ...person.stats },
   };
 }
 
@@ -83,6 +84,8 @@ function validateEditorPerson(person: GodPersonFields): string {
   if (value.goals.length > 8) return 'Add no more than eight goals.';
   if (value.goals.some((goal) => goal.length > 500))
     return 'Each goal must be 500 characters or fewer.';
+  if (Object.values(value.stats).some((stat) => !Number.isFinite(stat) || stat < 0 || stat > 100))
+    return 'Health, fullness, and energy must each be between 0 and 100.';
   return '';
 }
 
@@ -267,6 +270,39 @@ function PersonEditorFields({
           placeholder="One current goal per line; the first drives immediate planning"
         />
       </label>
+      <fieldset className="ol-person-stats">
+        <legend>Stats</legend>
+        <div>
+          {(
+            [
+              ['health', 'Health'],
+              ['fullness', 'Fullness'],
+              ['energy', 'Energy'],
+            ] as const
+          ).map(([key, label]) => (
+            <label key={key}>
+              {label}
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={person.stats[key]}
+                onChange={(event) =>
+                  update('stats', { ...person.stats, [key]: Number(event.target.value) })
+                }
+              />
+            </label>
+          ))}
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          onPress={() => update('stats', { health: 100, fullness: 100, energy: 100 })}
+        >
+          Fill stats to 100
+        </Button>
+      </fieldset>
     </div>
   );
 }
@@ -356,14 +392,22 @@ function gameDate(time: number) {
   return `Day ${day}, ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
-function RefreshHead({ refreshedAt, refresh }: { refreshedAt: Date | null; refresh(): void }) {
+function RefreshHead({
+  refreshedAt,
+  refresh,
+  title = 'Latest saved entries',
+}: {
+  refreshedAt: Date | null;
+  refresh(): void;
+  title?: string;
+}) {
   return (
     <div className="ol-editor-section-head">
       <div>
-        <strong>Latest saved entries</strong>
+        <strong>{title}</strong>
         <small>{refreshedAt ? `Queried ${refreshedAt.toLocaleString()}` : 'Not queried yet'}</small>
       </div>
-      <IconButton icon="ui.refresh" label="Refresh entries" onPress={refresh} />
+      <IconButton icon="ui.refresh" label={`Refresh ${title.toLowerCase()}`} onPress={refresh} />
     </div>
   );
 }
@@ -650,7 +694,16 @@ export function PersonEditor({
           id: 'person',
           label: 'Person',
           icon: 'ui.character',
-          content: <PersonEditorFields person={person} traits={traits} onChange={setPerson} />,
+          content: (
+            <div className="ol-person-editor-tab">
+              <RefreshHead
+                refreshedAt={refreshedAt}
+                refresh={refresh}
+                title="Latest character state"
+              />
+              <PersonEditorFields person={person} traits={traits} onChange={setPerson} />
+            </div>
+          ),
         },
         {
           id: 'memories',

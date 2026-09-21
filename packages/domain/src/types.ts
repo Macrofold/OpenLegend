@@ -332,6 +332,11 @@ export interface GodPersonEditorDraft {
   backstory: string;
   traitIds: string[];
   goals: string[];
+  stats: {
+    health: number;
+    fullness: number;
+    energy: number;
+  };
 }
 
 export interface GodSpawnDraft {

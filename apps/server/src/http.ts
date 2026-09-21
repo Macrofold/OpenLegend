@@ -94,6 +94,13 @@ const godPersonEditor = z
     backstory: z.string().trim().max(4000),
     traitIds: z.array(requestIdSchema).max(8),
     goals: z.array(z.string().trim().min(1).max(500)).max(8),
+    stats: z
+      .object({
+        health: z.number().finite().min(0).max(100),
+        fullness: z.number().finite().min(0).max(100),
+        energy: z.number().finite().min(0).max(100),
+      })
+      .strict(),
   })
   .strict();
 const godAwareness = z

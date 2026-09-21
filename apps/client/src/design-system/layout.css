@@ -1405,6 +1405,39 @@ body,
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
+.ol-person-editor-tab {
+  display: grid;
+  gap: var(--space-4);
+}
+.ol-person-editor-tab > .ol-person-form {
+  padding: 0;
+}
+.ol-person-stats {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+}
+.ol-person-stats legend,
+.ol-person-stats label {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.ol-person-stats > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.ol-person-stats label {
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-person-stats .ol-btn {
+  justify-self: start;
+}
 .ol-person-trait-tags {
   display: flex;
   flex-wrap: wrap;

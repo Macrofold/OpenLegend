@@ -273,6 +273,9 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     draft.person.backstory.trim().length > 4000 ||
     draft.person.goals.length > 8 ||
     draft.person.goals.some((goal) => !goal.trim() || goal.trim().length > 500) ||
+    Object.values(draft.person.stats).some(
+      (value) => !Number.isFinite(value) || value < 0 || value > 100,
+    ) ||
     !traits
   )
     return reject(original, 'invalid-person', 'The person details are not valid.');
@@ -315,7 +318,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   const world = draftWorld(original);
   const entity = world.entities[draft.actorId]!;
   const goals = draft.person.goals.map((goal) => goal.trim());
-  const personChanged =
+  const identityChanged =
     entity.name !== draft.person.name.trim() ||
     entity.actor!.description !== draft.person.description.trim() ||
     entity.actor!.personality !== draft.person.personality.trim() ||
@@ -323,7 +326,11 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     JSON.stringify(entity.actor!.traits ?? []) !== JSON.stringify(traits) ||
     JSON.stringify(entity.actor!.goals ?? [entity.actor!.goal].filter(Boolean)) !==
       JSON.stringify(goals);
-  if (personChanged) {
+  const statsChanged =
+    entity.actor!.health !== draft.person.stats.health ||
+    entity.actor!.fullness !== draft.person.stats.fullness ||
+    entity.actor!.energy !== draft.person.stats.energy;
+  if (identityChanged) {
     entity.name = draft.person.name.trim();
     entity.actor!.description = draft.person.description.trim();
     entity.actor!.personality = draft.person.personality.trim();
@@ -337,6 +344,11 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
       entity.actor!.goal = goals[0] ?? '';
       entity.actor!.planGeneration++;
     }
+  }
+  if (statsChanged) {
+    entity.actor!.health = draft.person.stats.health;
+    entity.actor!.fullness = draft.person.stats.fullness;
+    entity.actor!.energy = draft.person.stats.energy;
   }
   migrateCognition(world);
   const invalidated = new Set<string>();
@@ -388,7 +400,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
       'Resolve an active commitment before forgetting its evidence.',
     );
 
-  if (personChanged) {
+  if (identityChanged) {
     const mind = mindFor(world, draft.actorId);
     const identity = mind.documents.find((document) => document.id === 'identity');
     if (identity) {

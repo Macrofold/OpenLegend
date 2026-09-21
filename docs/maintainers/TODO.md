@@ -136,6 +136,7 @@ No test files or suites were written or run for this change, as requested. [Iden
 ## Deferred regression coverage — persistence and owner editors
 
 - [ ] Cover the distinct person-creation and Person-editor schemas: creation keeps initial goals, editing round-trips description/current goals, the first goal drives native planning, and identity context receives every authored field without leaking it to another actor.
+- [ ] Cover Person-editor stat snapshots, manual refresh, 0–100 validation, fill-to-100, preservation of unedited simulation drift, and explicit stat overrides after drift.
 - [ ] Migrate stale test fixtures/callers to asynchronous repository/service APIs and current opaque actor bindings; restore the full typecheck/test gate. Tests were intentionally neither edited nor run in this change.
 - [ ] Cover append proof across composed transitions, earlier-prefix edits, replacement/removal, divergent forks and forged caller hints; verify journal replay and durable history agree.
 - [ ] Cover milestones from routine state before flushing and after a control/editor flush and restart, including event index consistency.
