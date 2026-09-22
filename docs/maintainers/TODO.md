@@ -167,6 +167,8 @@ Automated tests were not written or run for this change at user request. These a
 
 ## Deferred performance validation
 
+- [ ] Cover stress-runner option bounds, invalid material properties, input/output collisions, fixed-seed reproducibility, occupancy exhaustion, object stacking, timeout during setup/native execution, interruption cleanup, and private output permissions. Compare input bytes before/after and verify no provider/database access; automated coverage deferred by request.
+
 - [ ] Differentially replay optimized encounters across moving observers, sight/hysteresis boundaries, dead actors, ordinary/cognitive animals, static objects, initial missing visibility state and same-position spawn/remove/edit operations. Verify exact event/audience order and source privacy, plus unchanged-array identity. Qualify cognition refresh spans and fair scheduling under staggered eligibility, cancellation, provider latency and spending exhaustion. Dense first-arrival stress was interrupted before completion; add bounded execution and progress reporting before repeating it.
 
 No automated tests were written or run for these performance changes, by user request. [PF00–PF11](performance.md) marks delivered implementation and retains unfinished acceptance. The checks below remain deferred; small runtime observations are not capacity claims.

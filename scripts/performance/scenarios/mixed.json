@@ -1,0 +1,15 @@
+{
+  "seed": 73,
+  "people": 10,
+  "animals": 20,
+  "layout": "scattered",
+  "steps": 180,
+  "warmup": 0,
+  "speed": 3,
+  "timeoutSeconds": 60,
+  "objects": [
+    { "count": 100, "name": "Rare gem", "properties": ["rigid", "point"] },
+    { "count": 100, "name": "Food parcel", "properties": ["food"], "nutrition": 20 },
+    { "count": 100, "name": "Dry fuel", "properties": ["fuel"], "quantity": 5, "workSeconds": 10 }
+  ]
+}

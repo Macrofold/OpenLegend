@@ -1,24 +1,31 @@
+import { populateScenario, type Scenario } from './performance/scenario.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { Session } from 'node:inspector/promises';
 import { createHash } from 'node:crypto';
 import { advanceWorld, freezeWorld, type WorldState } from '../packages/domain/src/index.js';
 
-const [input, output, stepArgument = '180', experiment] = process.argv.slice(2);
+const [input, output, stepArgument = '180', experiment, scenarioArgument] = process.argv.slice(2);
 const steps = Number(stepArgument);
 if (
   !input ||
   !output ||
   !Number.isInteger(steps) ||
   steps < 1 ||
-  steps > 10000 ||
-  (experiment !== undefined && experiment !== '--mutable-snapshots')
+  steps > 100000 ||
+  (experiment !== undefined && experiment !== '--mutable-snapshots' && experiment !== '--scenario')
 )
   throw new Error(
     'Usage: pnpm exec tsx scripts/profile-native.ts SAVED_WORLD_OR_BACKUP OUTPUT.cpuprofile [STEPS=180] [--mutable-snapshots]',
   );
-const parsed = JSON.parse(await readFile(input, 'utf8'));
+const scenario: Scenario | undefined =
+  experiment === '--scenario' ? JSON.parse(scenarioArgument ?? 'null') : undefined;
+const mutable = experiment === '--mutable-snapshots';
+console.error('profile stage: loading/setup');
+const setupAt = performance.now();
+const parsed = input === '-' && scenario ? {} : JSON.parse(await readFile(input, 'utf8'));
 const saved = parsed.tables?.world?.[0]?.payload;
 let world: WorldState = (saved ? JSON.parse(saved) : parsed).world;
+if (scenario) world = populateScenario(world, scenario);
 if (!world || !Number.isFinite(world.simTime) || !world.entities || !Array.isArray(world.events))
   throw new Error('Expected a SavedWorld or backup-world.ts backup containing a world snapshot.');
 world.paused = false;
@@ -29,19 +36,24 @@ const initial = {
 };
 // Match the server ownership boundary; the optional baseline leaves snapshots mutable.
 const freezeStarted = performance.now();
-if (!experiment) freezeWorld(world);
+if (!mutable) freezeWorld(world);
 const initialFreezeMs = performance.now() - freezeStarted;
 const step = () => {
   world = advanceWorld(world, 1).world;
-  if (!experiment) freezeWorld(world);
+  if (!mutable) freezeWorld(world);
 };
-for (let index = 0; index < 30; index++) step();
+const setupMs = performance.now() - setupAt;
+const warmupSteps = scenario?.warmup ?? 30;
+console.error('profile stage: warmup');
+for (let index = 0; index < warmupSteps; index++) step();
+console.error('profile stage: measured steps');
 const session = new Session();
 session.connect();
 try {
   await session.post('Profiler.enable');
   await session.post('Profiler.start');
   const durations: number[] = [];
+  const cpuAt = process.cpuUsage();
   const started = performance.now();
   for (let index = 0; index < steps; index++) {
     const at = performance.now();
@@ -49,6 +61,8 @@ try {
     durations.push(performance.now() - at);
   }
   const totalMs = performance.now() - started;
+  const cpu = process.cpuUsage(cpuAt);
+  console.error('profile stage: writing results');
   const { profile } = await session.post('Profiler.stop');
   // Profiles can contain local paths. Keep them private, outside tracked evidence.
   await writeFile(output, JSON.stringify(profile), { mode: 0o600, flag: 'wx' });
@@ -66,13 +80,27 @@ try {
       {
         node: process.version,
         initial,
-        frozenSnapshots: !experiment,
+        frozenSnapshots: !mutable,
         initialFreezeMs,
-        warmupSteps: 30,
+        warmupSteps,
+        scenario,
+        setupMs,
+        cpuMs: (cpu.user + cpu.system) / 1000,
+        heapUsedBytes: process.memoryUsage().heapUsed,
+        nativeHeadroomAtRequestedSpeed: (steps * 1000) / totalMs / (60 * (scenario?.speed ?? 1)),
+        finalCounts: {
+          entities: Object.keys(world.entities).length,
+          events: world.events.length,
+          awareness: Object.values(world.experience?.awareness ?? {}).reduce(
+            (n, rows) => n + rows.length,
+            0,
+          ),
+        },
         steps,
         totalMs,
         p50Ms: durations[Math.ceil(steps * 0.5) - 1],
         p95Ms: durations[Math.ceil(steps * 0.95) - 1],
+        maxStepMs: durations.at(-1),
         nativeSecondsPerWallSecond: (steps * 1000) / totalMs,
         finalWorldDigest: createHash('sha256').update(JSON.stringify(world)).digest('hex'),
         hottestSelfMs: [...self].sort((a, b) => b[1] - a[1]).slice(0, 12),

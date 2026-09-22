@@ -60,6 +60,9 @@ PF03 snapshot freezing and bounded catch-up are implemented; [recorded profiling
 
 Proposed [EPR00](events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership) and [EPR09](events-perception-and-reactions.md#epr09--differential-and-performance-acceptance) consume this profiler and the PF acceptance budgets.
 
+- [x] Provide a reusable bounded native stress runner with saved-world/seed inputs, people/animal counts, crowded/scattered ground-object groups and native-speed headroom. See [usage and limits](performance-profiling.md).
+- [ ] Extend profiling only where needed to cover actual timer/debt, persistence and cognition scheduling workloads; native throughput alone is not whole-server capacity.
+
 - [x] Record bounded, monotonic mutation wait, native-step, commit, command durability, projection and SQLite/PostgreSQL statement/lane timings without per-span SQL writes. Record native action acknowledgement and first SSE position separately.
 - [x] Add tick wall/native-work/yield, persistence diff/encoding/transaction, CPU/heap, event-loop/GC, busy-callback and requested/accepted/excluded-clock diagnostics; provide an offline native CPU profiler.
 - [ ] Complete request-arrival, commit-acknowledgement, SSE-send and browser receipt/render attribution. Preserve bounded telemetry and separate action acceptance from first rendered movement.

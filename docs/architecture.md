@@ -18,6 +18,8 @@ Loading pauses admission, drains the AI director, retains the current world as â
 
 ## Performance critical path
 
+The offline [native stress runner](maintainers/performance-profiling.md) extends the CPU profiler with disposable population/object fixtures and a parent-process deadline. It measures native capacity without database, browser or provider execution.
+
 Ground clicks send movement intentions directly. Native commands and timer transitions share the `WorldService` mutation queue. Explicit commands await repository commit before their results return; routine simulation retains its one-real-second flush policy. Background thought admission and maintenance no longer hold the native timer. Fixed steps preserve their original transition/RNG boundaries; catch-up accepts a prefix and releases mutation ownership before yielding after about eight milliseconds of work; a single expensive step can still exceed that interval.
 
 Durable history uses a domain-proven append path with unique-key conflict rejection. Event encodings are reused; events, audiences and perspectives are inserted in parameterized chunks of at most 900 parameters or approximately 256 KiB, allowing one oversized row. Edits, revocation and forgetting retain their transactional cleanup. History schema readiness is cached only after commit. Actor migrations and trait initialization run at startup; actor creation/capability admission initializes cognition, and ordinary saves no longer scan actors for migration or replace unchanged social policy.

@@ -1,0 +1,17 @@
+{
+  "seed": 73,
+  "layout": "crowded",
+  "steps": 180,
+  "warmup": 0,
+  "speed": 3,
+  "timeoutSeconds": 30,
+  "objects": [
+    {
+      "count": 500,
+      "name": "Rare gem",
+      "properties": ["rigid", "point"],
+      "quantity": 1,
+      "workSeconds": 2
+    }
+  ]
+}
