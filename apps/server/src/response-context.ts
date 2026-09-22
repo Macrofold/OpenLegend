@@ -77,7 +77,7 @@ export function readableDecisionContext(
     `## Conversation so far\nSpeech I personally experienced in this exchange:\n${list(context['conversation'])}`,
     `## Current time\n${context['now']}`,
     `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
-    `## Nearby actors and objects\n${list(context['surroundings'])}`,
+    `## Nearby actors and objects\n${list(context['surroundings'])}${Array.isArray(context['contacts']) && context['contacts'].length ? `\nContact evidence:\n${list(context['contacts'])}` : ''}`,
     `## Inventory\n${list(context['possessions'])}`,
     `## Knowledge\n${list(context['knowledge'])}`,
   ];

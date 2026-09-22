@@ -4,6 +4,8 @@ This roadmap owns the P1–P7 product milestone sequence, scope boundaries and e
 
 The accepted first playable is a small wilderness world with live AI decisions and conversation, relevant memory, AI-generated usable crafting, and a resource-to-tool-to-hunting-to-food loop. Native fixtures are development evidence but do not replace live acceptance.
 
+The [extensibility roadmap](../../docs/extensibility-roadmap.md) sequences technical capabilities and evidence gates; detailed delivery remains in existing focused trackers.
+
 ## Milestones
 
 | Phase | Deliverable | Explicit scope boundary | Evidence to proceed |

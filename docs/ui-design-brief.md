@@ -28,7 +28,7 @@ Use **Lucide** for utility symbols such as close, back, search and settings. Use
 
 ## Interaction direction to preserve and refine
 
-- Floating survival meters remain on the upper left.
+- The default wilderness presentation places applicable condition/need indicators on the upper left; other installed worlds may use the permitted generic attribute presentation.
 - Circular left-side launchers open Inventory, Crafting and Character panels. Circular right-side launchers open the World Agent and In View panels. Hover labels are plain white text.
 - Panels toggle independently, have close buttons and open outward in opening order without overlapping. Provide a workable narrow-screen adaptation.
 - In View lists visible entities. Selecting one replaces the panel contents with its details and a Back button. Left-clicking a world item opens the same details.
@@ -39,6 +39,24 @@ Use **Lucide** for utility symbols such as close, back, search and settings. Use
 - Left-click selects or walks; left-drag pans. Clicking the map to dismiss an action menu must not also move the character.
 - Status text appears above the relevant character or object in white without a background. New notices stack above older ones. Work labels and smooth progress bars appear only when work begins, remain while incomplete and disappear immediately on completion. Walking gets no status. Keep a consistent gap above the subject, including beneath a progress bar.
 - Conversation composers begin as one line and grow to reveal wrapped text or explicit Shift+Enter newlines. An in-flight turn shows only a floating, animated three-dot wave where the reply will appear. Completed turns have no badge; failed turns retain a very small red **Failed** label inside the message at its lower right, with the specific reason available on hover or keyboard focus. Prioritize returning a useful response over rejecting one for small technical races: ordinary new awareness does not invalidate a reply. Refresh context and retry once only when a newly perceived event meets both the configured importance and urgency thresholds; do not loop if another qualifying event arrives during that retry. Wait through pauses rather than discarding an already generated reply. Reserve **Failed** for technical breakdowns such as provider, validation or storage failures. Actor availability disables the Talk input and exposes its specific reason on hover or keyboard focus instead of marking the message failed. Never insert technical state, retry, queue, generation, pause or timing details between conversation messages.
+
+## World-agent authoring and progressive technical detail
+
+The [world-agent authoring workflow](../archive/03-design-proposals/world-agent-and-workshop.md#natural-language-world-and-mechanic-authoring) owns meaning, permissions and activation. This section owns its presentation. Natural language is the primary path for supported creation and refinement; technical inspection is available without being mandatory.
+
+Keep the game visible. Use the existing World Agent conversation and reusable panels/pullouts rather than a separate engineering dashboard. A creator should see a compact explanation of the candidate: intended behavior, affected scope, reused parts, important defaults, unresolved decisions, and actual draft/validation/installation state. Use clear labels that distinguish a proposed change from a running mechanic; success styling must follow an authoritative receipt.
+
+Offer progressive detail: a plain-English summary first, a concise parameter/behavior view next, then dependencies, raw configuration/source when applicable, and validation evidence. These views represent one candidate revision. Unknown, unsupported, unbound and failed are distinct; do not hide a missing required mechanic behind an attractive preview.
+
+Clarification controls should ask about the experience in ordinary words. For a touch-only creature, ask about hearing, remembered places and affected creatures—not internal schema names. Defaults remain inspectable and can be revised conversationally. A user may choose raw editing, but it follows the same revision/validation flow and cannot directly commit arbitrary effects.
+
+For reusable constructs, show the choices intentionally exposed by the author and which have already been bound. Allow a request such as “Keep everything else, but make the effect instantaneous.” Explain a compatibility or permission change before implying that substitution is supported. A shared template with required unbound inputs must not display a working Use/Cast affordance.
+
+Preserve the existing Similar inventions modal and confirmed-conjuring flow. Avoid a new confirmation for every minor draft/tool step. A consequential scope/effect change requires the existing renewed review; a stale approval cannot activate a changed candidate. Show the relevant before/after behavior and any newly affected population or permissions.
+
+Technical details remain in the creator/workshop surface, not between in-world character utterances. Keep pending/failed execution, art status and installed mechanics distinguishable without excessive diagnostic clutter. Reopening a panel, refreshing details or selecting an older version is read-only and cannot restart generation or activation.
+
+Provide keyboard/focus support, readable validation errors and bounded views for long dependency lists. Render generated text as text, not executable markup. Accessibility and fallback presentation do not broaden actor knowledge. Validation and test results are labeled by their actual evidence; a preview is not a simulation result.
 
 ## Future character reactions
 

@@ -3,7 +3,7 @@ import { nextId } from './data.js';
 import { draftWorld } from './draft.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { canSpeak } from './living.js';
-import { canHear } from './perception.js';
+import { hearsEntity } from './perception.js';
 
 export interface Conversation {
   id: string;
@@ -197,7 +197,7 @@ export function changeConversation(
     (i) =>
       i.leftAt === undefined &&
       !!input.entities[i.actorId]?.actor?.alive &&
-      canHear(input, entity.position, input.entities[i.actorId]!.position),
+      hearsEntity(input, entity, input.entities[i.actorId]!),
   );
   if (operation === 'join' && !member) return reject('No participant is within hearing range.');
   if (operation === 'leave' && input.conversations!.active[actorId] !== conversationId)
@@ -231,9 +231,7 @@ export function reconcileConversations(world: WorldState): void {
     if (
       members.length &&
       !members.some(
-        (i) =>
-          world.entities[i.actorId] &&
-          canHear(world, entity.position, world.entities[i.actorId]!.position),
+        (i) => world.entities[i.actorId] && hearsEntity(world, entity, world.entities[i.actorId]!),
       )
     )
       leaveConversation(world, actorId, 'out-of-range');

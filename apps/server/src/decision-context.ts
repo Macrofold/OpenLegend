@@ -1,3 +1,4 @@
+import { bodyContext, hasWildernessNeeds } from '@open-legend/domain';
 import { activeAppraisals } from '@open-legend/domain';
 
 import { compileInterests } from './interests.js';
@@ -107,7 +108,8 @@ export async function prepareDecision(
         .documents.map((document) => `${document.title}\n${document.text}`)
         .join('\n'),
     now: gameTime(world.simTime),
-    body: `${snapshotActor.fullness < 30 ? 'I am very hungry. ' : ''}${snapshotActor.energy < 25 ? 'I am exhausted. ' : ''}${snapshotActor.health < 0.4 * (snapshotActor.body?.maxHealth ?? 100) ? 'I am seriously injured. ' : ''}${snapshotActor.rest?.asleep ? 'I am asleep.' : `I am ${snapshotActor.action?.type ?? 'idle'}.`}`,
+    body: bodyContext(world, observed.actor),
+    contacts: observed.contacts.map((c) => c.text),
     goal: snapshotActor.goal,
     conversation: candidates
       .filter(
@@ -122,6 +124,7 @@ export async function prepareDecision(
     possessions: [],
   };
   if (
+    hasWildernessNeeds(snapshotActor) &&
     !observed.inventory.some((item) =>
       world.itemDefinitions[item.definitionId]?.properties.includes('food'),
     )
@@ -186,7 +189,7 @@ export async function prepareDecision(
         .documents.map((d) => `${d.title}\n${d.text}`)
         .join('\n'),
     now: gameTime(currentWorld.simTime),
-    body: `${actor.fullness < 30 ? 'I am very hungry. ' : ''}${actor.energy < 25 ? 'I am exhausted. ' : ''}${actor.health < 0.4 * (actor.body?.maxHealth ?? 100) ? 'I am seriously injured. ' : ''}${actor.rest?.asleep ? 'I am asleep.' : `I am ${actor.action?.type ?? 'idle'}.`}`,
+    body: bodyContext(currentWorld, currentObserved.actor),
     goal: actor.goal,
   };
   context['conversation'] = selection.selected
@@ -205,6 +208,7 @@ export async function prepareDecision(
     context['reconsideration'] =
       'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
   if (
+    hasWildernessNeeds(actor) &&
     !currentObserved.inventory.some((i) =>
       currentWorld.itemDefinitions[i.definitionId]?.properties.includes('food'),
     )

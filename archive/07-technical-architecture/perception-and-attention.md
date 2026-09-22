@@ -4,6 +4,12 @@ This document owns future sensory design: visual exposure, hearing/acoustics, oc
 
 [Agency](../../docs/agent-agency.md) contributes private goal/need/result causes through [EPR reaction intake](../../docs/events-perception-and-reactions.md#9-reaction-intake-and-scheduling), without public sensory events. Its goal-derived interests respect actor knowledge and reevaluate bounded current exposures. Actual non-speech sound follows this sensory contract; it must not be relabeled speech to obtain hearing or create a conversation.
 
+## Extensible sense interfaces
+
+Vision and hearing are default supported senses, not the complete list of possible modalities. [World-module runtime](world-module-runtime.md#6-senses-and-observation-interfaces) defines sense registration, shared-source interpretation and typed evidence shapes. This document continues to own detector semantics, sensory quality/recognition, geometry, and disclosure. EPR owns acquisition/episode identity and reaction intake.
+
+A sense may detect an unidentified source, contact surface, region, field or authorized relation rather than a known entity at exact coordinates. Detail dimensions are sense-specific; visual near/medium/far and audible detection/recognition/intelligibility are not one mandatory global scale. Source response may inherit from definitions or be derived, without assigning a new field to every object. Unsupported physical calculations remain explicit host-capability gaps.
+
 ## 2. Separate physical exposure from attention and thought
 
 This document owns sensory production. The proposed [events/perception/reactions contract](../../docs/events-perception-and-reactions.md) owns how permitted evidence and perception changes reach reaction intake; the diagram spans these separate responsibilities.

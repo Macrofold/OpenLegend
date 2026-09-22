@@ -203,3 +203,16 @@ Automated tests were neither written nor run for the initial implementation, at 
 - [ ] Qualify live-provider cancellation/workspace context and PostgreSQL restore under separately authorized no-spend or capped conditions; current native browser evidence does not establish these boundaries.
 - [ ] Measure large saves and cold histories before changing the 64 MiB/20-slot limits. Defer streaming, compression, incremental snapshots, autosaves and portable/cloud saves to the focused tracker rather than adding speculative machinery.
 - [ ] Reconcile the pre-existing full-typecheck failures in test files that still treat asynchronous APIs as synchronous; the production build succeeds, but that is not a green full check.
+
+## Extensible attribute foundation — deferred automated validation
+
+No automated tests were written or run for this slice at the owner's request. Runtime observations live in [Verification](../verification.md#extensible-attribute-runtime); EWF/AG/EPR/INV remain the implementation owners.
+
+- [ ] Automate the attribute-slice failure cases specified by [EWF01–EWF04 and EWF07–EWF09](extensible-world-foundation.md): strict host/schema/units and namespace rejection, duplicate owners, private projection, same-version active continuation, missing pins, resource depletion/competition/cancellation, immutable snapshots, and current native behavior/RNG equivalence.
+- [ ] Cover atomic initialization/edit conflicts, duplicate declaration/edit requests, restore-generation fencing, presentation-only revisions, active-reference retirement rejection, definition-only reuse between worlds and exclusion of private instance state.
+- [ ] Cover private concern onset/clear and hysteresis through the existing event/awareness/ActorWork path, Narrator exclusion, restore without false novelty, and default urgency thresholds. Broader episode/sense/reminder cases stay in the EPR tracker.
+- [ ] Add browser coverage for arbitrary numeric ranges, categories, public versus owner inspection, unavailable/depleted replenishment, native continuation, cancellation and manual save/load; qualify accessibility and label injection.
+- [ ] Repair the pre-existing asynchronous API usage in test files before relying on full-repository typechecking. The untouched `dd40ad2` baseline reports 132 TypeScript diagnostics. The current typecheck reports 135 diagnostics, including three additional optional-need fixture errors. Adapt older mandatory-need fixture assumptions to optional applicable state as part of those test repairs; do not add legacy-save fixtures.
+- [ ] Run the existing full check and appropriate focused suites after the test repairs; compare the same PF population/history scenarios before claiming scale. No model-quality, paid-cost, or full EW-R1–EW-R3 acceptance follows from native runtime checks.
+
+- [ ] Automate contact onset/detail/end, stationary persistence, receiver hearing and teaching exclusion, unknown identity/provenance filtering, collision-limited probes, same-version episode continuation, missing sense pins and aggregate contact bounds. Include multiple moving sources, removal, sleep/incapacity and spatial candidate fairness; implementation remains EWF05/EPR-owned.

@@ -16,6 +16,8 @@ A one-line premise such as “mirrors reality” is useful authoring guidance bu
 
 ## Separate layers of configuration
 
+A profile chooses world premises and permitted domains; the installed module manifest binds the exact compatible implementations and definitions that realize them. Neither is actor knowledge or a platform permission grant. The [engine/world boundary](../../docs/engine-and-world-boundaries.md#4-what-must-remain-protected) separates world resource laws from host integrity and budgets.
+
 | Layer | What it controls | Examples and proposed treatment |
 |---|---|---|
 | Identity and versions | Which world and rules a request belongs to | World ID, profile revision, simulation/schema version, compatible capability set |
@@ -105,6 +107,8 @@ This is not a mandatory model call for every action. Known menus and supported r
 A decision record should identify world/profile revision, intent and referenced entities, proposed method/cause, candidate capability and its dependencies, decision/reason code, evidence references, uncertainty, permitted next action, expiration, and public explanation facts. Exact schemas and confidence thresholds remain open. Record admitted model decisions for replay rather than asking a model to decide past events again.
 
 ## Realistic world: fire, magic, and roleplay
+
+A fantasy profile may admit an explicitly supported resource-source operation. A premise flag or English spell alone cannot authorize state changes; real accounting and host ceilings remain outside world fiction.
 
 | Request or circumstance | Proposed result |
 |---|---|

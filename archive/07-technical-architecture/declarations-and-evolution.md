@@ -4,6 +4,8 @@ Definition activation, migration and cleanup must respect the [save/load design]
 
 This is the canonical technical design for declarations, G0–G3 mechanisms, state ownership, admission, activation, migration and mechanic evolution. Current finite-family behavior belongs to [Architecture](../../docs/architecture.md), delivery state to the [invention tracker](../../docs/maintainers/inventions-and-world-evolution.md), governance to [Invention governance](../03-design-proposals/invention-governance-and-ownership.md), creator UX to [World agent and workshop](../03-design-proposals/world-agent-and-workshop.md), and empirical questions to the [Research backlog](../05-project/research-backlog.md).
 
+[Engine/world boundaries](../../docs/engine-and-world-boundaries.md) defines which policies are replaceable. [World-module runtime](world-module-runtime.md) defines shared host binding, installed composition and subsystem integration. This document remains the owner of mechanical property meaning, G0–G3, state-owner contributions, admission and active-definition lifecycle; a module manifest is not a second invention registry or installer.
+
 ## What a declaration means
 
 A declaration is a versioned definition the simulation understands: a material profile, component schema, recipe, rule, semantic resolver, or reference to an admitted algorithm. It describes available behavior; it is not permission to execute every conceivable consequence of its prose. Live instances hold changing state. Actors hold beliefs and learned techniques. Keep these distinct even when one platform stores all three.
@@ -47,6 +49,14 @@ Independent player/NPC locks and origin revocation remain authoritative through 
 
 ## Definition and property contracts
 
+### Runtime integration metadata
+
+Runnable definitions also bind to the [shared runtime envelope](world-module-runtime.md#3-definition-envelope-and-composition): implementation interface, declared dependencies, owning state, allowed reads/effects, scheduling category, bounds and projections. Use a service-specific schema beneath common metadata rather than one universal effects map. Host function registrations remain reviewed code; artifacts select supported implementations but do not supply code paths, validators or authority grants.
+
+A previously admitted output can be an input to another supported family when its pinned capabilities, structure, provenance, rights and resource semantics satisfy that consumer. A native-only input restriction is a property of the current finite validator, not the long-term definition of composition. INV-3 must replace it with positive family validation, not remove constraints globally.
+
+Reusable content may include predicates, selectors, effects, lifetime policies, parameterized constructs, closed specializations, organisms, senses, and coherent module bundles—not only finished objects or recipes. The [shared construct contract](world-module-runtime.md#reusable-constructs-and-specialization) defines typed ports, binding phases, dependencies, and substitution requirements. This document continues to own candidate identity, admission, active versions, and installation. A template with required unbound ports is a valid reusable artifact but not executable behavior. Partial specialization and explicit forks preserve lineage; they do not mutate installed upstream definitions.
+
 The accepted [hybrid visual direction](../03-design-proposals/procedural-art-and-animation.md#proposed-contracts-caching-and-delivery) adds a separate presentation contract: versioned trusted primitive/rig references, bounded part hierarchies, materials, attachment points, pose/state mappings and density/style parameters. A generated visual description may compose supported shapes or reference approved artwork; it cannot supply executable JavaScript, add physical anatomy, extend reach or alter collision. Mechanical declarations and presentation bindings remain separately validated/versioned. Unsupported visual families use the existing asset fallback/authoring path rather than silently extending the interpreter.
 
 The following fields are illustrative requirements, not implemented syntax. An immutable artifact needs identity/version and digest, kind, typed parameters, compatible schema/runtime, dependency references, applicability, input/query contract, permitted effects, world-domain requirements, resource/work limits, failure policy, and provenance. Tests and admission results attach to the exact artifact digest.
@@ -71,6 +81,8 @@ This policy also applies when nobody requests an action and providers are unavai
 
 ## State ownership and dormant influences
 
+The following contribution model describes the target for compositional owner families. Extracting existing native modules must initially preserve their current phase and RNG order. Adopting a new simultaneous evaluation phase is a separately tested behavior change, not an automatic part of interface refactoring.
+
 A changing quantity has one authoritative owner, usually a small registered module. Other mechanics submit typed contributions declaring units, rate/event meaning, source identity, applicability, saturation/overflow and resource claims. Coordinated quantities may share an owner; derived display values remain read-only.
 
 The initial one-sector runtime uses fixed simulation steps. Read one immutable start-of-step state; calculate bounded proposals; resolve aggregate resource claims in a stable declared order; then commit accepted contributions and resulting events together. A rain rate integrates once over the step; a discrete splash applies once by contribution identity. No rule observes another rule's partially applied update. Heat affecting drying and dryness affecting burning read the same starting state, with their combined results available next step. Step size is versioned and tested against representative smaller steps; this is a coarse numerical model, not a proof of physical accuracy. Arbitrary same-step feedback solvers are deferred.
@@ -82,6 +94,8 @@ Before adding a variable or writer, look up registered family IDs and explicit a
 Authoring stores capped notes attached to relevant families: plausible influences/consumers, conditions, uncertainty, compatible profiles, missing dependencies, provenance and a relevance trigger. Keep `anticipated`, `uncertain` and `forbidden` distinct from executable `admitted`. Notes cause no updates, jobs, NPC learning or recursive subsystem generation. Retrieve a small relevant set when needed and follow normal admission. Explicit identities deduplicate records; uncertain matches remain proposals. An immersion note is neither evidence of past immersion nor proof that immersion is impossible until implemented. A separate speculative graph service is unnecessary.
 
 ## Generation levels and executable references
+
+The subject of a mechanic does not determine its level: a sense can configure an existing capability or require a new host evaluator.
 
 | Level | Permitted output | Boundary |
 |---|---|---|
@@ -101,6 +115,8 @@ Parameter changes within an admitted envelope can use its existing acceptance po
 G2 scripts reference immutable artifacts and receive scoped inputs through enforced interfaces, returning bounded effect proposals. An isolated Macrofold authoring/test harness can produce and evaluate them; starting that harness is not the runtime for each game tick. Live G2 requires a separately admitted game isolation runtime with no AI/network access, direct world mutation or ambient clock/randomness. Supply recorded time/random inputs where needed; enforce instruction/time, memory, query, output and scheduled-work limits, and measure execution latency under contention. Until that runtime is demonstrated, reuse G1/native mechanisms or defer G2 execution. Isolation limits authority; it does not establish game-rule correctness.
 
 ## Dependency bundles and activation
+
+The [installed module manifest](world-module-runtime.md#10-initialization-activation-disabling-and-failure) uses this same activation boundary. Affected consumers include dependent senses/controllers, agency frontiers, active effects and retained-save pins. Live definition transitions remain distinct from incompatible development-format rejection.
 
 A useful change often spans artifacts. Adding roof waterproofing may require a material parameter, a rainfall-to-moisture relationship, a coverage calculation, instance initialization, and presentation labels. Activating only one can produce inconsistent behavior.
 

@@ -42,6 +42,8 @@ These are concrete engineering recommendations for the next implementation, not 
 
 ## 2. Physical boundaries and module ownership
 
+The [world-module manifest](world-module-runtime.md#11-save-restore-and-storage-extension) uses existing exact definition identities and storage ownership. Module state joins current-world capture or an explicitly host-owned authoritative store; declarations cannot create arbitrary SQL access or tables. No universal EAV schema is required.
+
 | Namespace | Canonical owner                            | Initial placement                                | Later separation                                                            |
 | --------- | ------------------------------------------ | ------------------------------------------------ | --------------------------------------------------------------------------- |
 | `control` | Account/world directory service            | Same PostgreSQL cluster, separate schema         | Account/control database; partition by account or tenant as needed          |

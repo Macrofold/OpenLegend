@@ -1,3 +1,4 @@
+import { createModuleManifest } from './world-modules.js';
 import { initializeIdentity } from './identity.js';
 import { defaultStoryPolicy } from './story-selection.js';
 import { livingBody, nativeActor, migrateActors, hasMemory } from './living.js';
@@ -181,7 +182,8 @@ export function createActor(
 export function createWorld(seed = 73): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
-    schemaVersion: 3,
+    schemaVersion: 4,
+    moduleManifest: createModuleManifest(),
     storyPolicy: defaultStoryPolicy(),
     visibleObjects: {},
     id: `wilderness-${normalizedSeed}`,

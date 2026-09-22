@@ -1,3 +1,4 @@
+import { hasWildernessNeeds, setWildernessNeed } from './wilderness-needs.js';
 import type { ActorComponent } from './types.js';
 export const REST_RULES = {
   daySeconds: 86400,
@@ -16,6 +17,7 @@ export interface RestState {
   asleep: boolean;
 }
 export function accountRest(actor: ActorComponent, at: number, seconds: number): void {
+  if (!hasWildernessNeeds(actor)) return;
   const rest = (actor.rest ??= {
     day: Math.floor(at / 86400),
     restedSeconds: 0,
@@ -45,5 +47,9 @@ export function accountRest(actor: ActorComponent, at: number, seconds: number):
   }
   // Debt modestly increases fatigue; native rest always remains available.
   if (!episode && rest.debtSeconds)
-    actor.energy = Math.max(0, actor.energy - (seconds * 0.0005 * rest.debtSeconds) / 28800);
+    setWildernessNeed(
+      actor,
+      'energy',
+      actor.energy - (seconds * 0.0005 * rest.debtSeconds) / 28800,
+    );
 }

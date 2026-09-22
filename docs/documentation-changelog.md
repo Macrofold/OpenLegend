@@ -4,6 +4,10 @@ This file records material changes to OpenLegend's documentation structure and h
 
 It is historical context only. Current requirements, design, architecture, tasks, status and open decisions live in their canonical owner documents.
 
+## 2026-09-22 — Extensible-world foundation integration
+
+Added engine/world principles, shared reusable-construct/effect contracts, world-agent authoring guidance, staged roadmap/examples and EWF ownership. AG/EPR/INV retain subsystem ownership. Corrected obsolete full-scan/history descriptions and old-save extension guidance while preserving current permissions, native phase order and acceptance states. Documentation integration itself changed no runtime behavior; subsequent implementation and evidence are recorded in Architecture and Verification.
+
 ## 2026-09-22 — Level-1 action selection
 
 - Made Jev-only selection of a supplied native action explicit, alongside zero-call native continuation and generative immediate responses. Replaced mandatory routing-before-candidate ordering with the shared selection contract in the agency runtime; kept relevance filtering distinct from execution choice.

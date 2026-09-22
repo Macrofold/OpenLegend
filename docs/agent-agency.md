@@ -2,6 +2,10 @@
 
 **Specification status:** target behavior, not a statement that the runtime implements it. Delivery and acceptance belong to the [agency tracker](maintainers/agent-agency.md). The [runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md) owns serialization, admission, scheduling and execution details.
 
+Agency is the standard operational-controller contract, not a requirement that every organism maintain verbal thoughts or goals. [Engine/world boundaries](engine-and-world-boundaries.md#8-minds-agency-and-behavior) allows other compatible controllers while preserving native authority and the existing player/actor permission boundary.
+
+Future admitted mental effects require a [dedicated target-owner operation](../archive/07-technical-architecture/world-module-runtime.md#fictional-mental-effects-and-operational-ownership). Ordinary self-authored goal operations remain actor-bound and cannot be forged by another actor; no compulsion is enabled.
+
 ## 1. Purpose and ownership
 
 An actor should be able to notice an opportunity, have an idea, decide to pursue it, try something not listed in a menu, and adapt to what actually happens. An action shortlist helps the actor choose; it does not define the limits of the actor's imagination. The engine remains the authority over permitted operations, physical effects, resource use and time.

@@ -1,3 +1,4 @@
+import { nativeNeedBelow } from './wilderness-needs.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import type { Command, MemoryRecord, Transition, WorldState } from './types.js';
@@ -201,8 +202,8 @@ export function commitCognition(
     return reject('Thought exceeds its presentation limit.');
   if (
     binding.purpose !== 'thought' &&
-    (actor.fullness < 30 ||
-      (actor.energy < 15 && actor.action?.type !== 'rest') ||
+    (nativeNeedBelow(actor, 'fullness', 30) ||
+      (nativeNeedBelow(actor, 'energy', 15) && actor.action?.type !== 'rest') ||
       actor.health < 0.4 * (actor.body?.maxHealth ?? 100) ||
       (actor.action && actor.action.type !== 'rest'))
   )

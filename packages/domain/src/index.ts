@@ -1,5 +1,16 @@
 export * from './types.js';
-export { canSee, canHear, PERCEPTION_RULES } from './perception.js';
+export {
+  canSee,
+  canHear,
+  PERCEPTION_RULES,
+  sensesFor,
+  seesEntity,
+  hearsEntity,
+  visionRadius,
+  contactViews,
+  DEFAULT_SENSES,
+  COARSE_TOUCH,
+} from './perception.js';
 export {
   createWorld,
   createActor,
@@ -52,3 +63,9 @@ export { leaveConversation } from './conversations.js';
 
 export * from './identity.js';
 export * from './story-selection.js';
+
+export * from './world-modules.js';
+export * from './wilderness-needs.js';
+export * from './world-presets.js';
+export { admitAttributeDeclaration, type AttributeDeclarationRequest } from './declarations.js';
+export { editActorAttributes, type AttributeEditRequest } from './god-tools.js';

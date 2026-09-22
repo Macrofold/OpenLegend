@@ -1,3 +1,4 @@
+import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
 import { NATIVE_PREPARATIONS } from '@open-legend/domain';
 import type {
@@ -9,6 +10,8 @@ import type {
 import type { WorldService } from './world-service.js';
 import { ACTION_DESCRIPTIONS, describeCommand, commandFacts } from './action-descriptions.js';
 
+// Finite native family adapters remain here; INV-3 owns shared discovery/execution.
+// See archive/07-technical-architecture/world-module-runtime.md#7-action-families-and-agency-integration.
 /** Complete finite catalogue of learned techniques, possessions and perceived targets.
  * Queried only while browsing, not on every simulation tick. Previewing uses the
  * same rules as execution; its disposable effects/receipts never enter the save.
@@ -112,6 +115,21 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
   }
 
   for (const target of selected ? [selected] : []) {
+    if (target.replenisher) {
+      const definition = attributeDefinition(world, target.replenisher.attributeId);
+      if (
+        definition?.reservoir &&
+        readAttribute(observation.actor.actor!, definition) !== undefined
+      )
+        add(
+          `replenish-${target.id}`,
+          definition.reservoir.actionLabel,
+          'Survival',
+          { type: 'replenish', targetId: target.id, attributeId: definition.id },
+          [definition.name],
+          target.id,
+        );
+    }
     if (target.resource)
       add(
         `gather-${target.id}`,

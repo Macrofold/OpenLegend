@@ -9,6 +9,7 @@ This page is the master navigation index for active implementation work.
 | Maintenance / cross-cutting deferred validation         | [TODO](TODO.md)                                                     | Relevant canonical specifications                                                                                                                                                                                                                              |
 | Runtime performance and responsiveness                  | [Performance](performance.md)                                       | [Runtime performance design](../performance.md)                                                                                                                                                                                                                |
 | Gameplay save/load                                      | [Save/load](save-and-load.md)                                       | [Save/load design](../save-and-load.md)                                                                                                                                                                                                                        |
+| Extensible world foundation                             | [World foundation](extensible-world-foundation.md)                  | [Engine/world boundaries](../engine-and-world-boundaries.md) and [world-module runtime](../../archive/07-technical-architecture/world-module-runtime.md)                                                                                                       |
 | Living actors                                           | [Actor model](actor-model.md)                                       | [Architecture](../architecture.md#actor-means-any-living-being) and [agents/social simulation](../../archive/03-design-proposals/agents-and-social-simulation.md)                                                                                              |
 | Memory and cognition                                    | [Cognition redesign](cognition-redesign.md)                         | [Memory architecture](../memory-architecture.md)                                                                                                                                                                                                               |
 | Events, perception, and reaction intake (proposed)      | [Events and reactions](events-perception-and-reactions.md)          | [Proposed stimulus and reaction contract](../events-perception-and-reactions.md)                                                                                                                                                                               |
@@ -18,6 +19,9 @@ This page is the master navigation index for active implementation work.
 | Production data, persistence and scale                  | [Production data](production-data.md)                               | [Production data model](../../archive/07-technical-architecture/production-data-model.md), [queries](../../archive/07-technical-architecture/data-queries-and-mcp.md) and [delivery/scale](../../archive/07-technical-architecture/data-delivery-and-scale.md) |
 
 ## Supporting references
+
+- [Extensibility roadmap](../extensibility-roadmap.md)
+- [Extensible-world worked examples](../extensible-world-examples.md)
 
 - [Product baseline](../../archive/01-requirements/product-baseline.md)
 - [Product roadmap](../../archive/05-project/roadmap.md)

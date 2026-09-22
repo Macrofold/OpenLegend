@@ -4,6 +4,7 @@ Current implemented architecture is defined in [docs/architecture.md](../../docs
 
 | Design owner | Scope |
 | --- | --- |
+| [World-module runtime](world-module-runtime.md) | Shared host binding, installed composition and subsystem integration |
 | [Context and inference](context-and-inference.md) | Scoped context assembly, routing and execution boundaries |
 | [Agent agency runtime](agent-agency-runtime.md) | Decision encoding, operational goals/plans, admission and continuation; [behavior owner](../../docs/agent-agency.md) |
 | [Declarations and evolution](declarations-and-evolution.md) | Declarative mechanisms, admission, activation and evolution |
@@ -14,3 +15,5 @@ Current implemented architecture is defined in [docs/architecture.md](../../docs
 | [Perception and attention](perception-and-attention.md) | Sensory geometry, propagation, detail tiers and sensory evidence |
 | [Billing and usage reporting](billing-and-usage-reporting.md) | Scoped provider usage and reporting contract |
 | [Macrofold implementation brief](macrofold-implementation-brief.md) | Downstream execution-service requirements |
+
+Supporting context: [extensibility roadmap](../../docs/extensibility-roadmap.md) and [worked examples](../../docs/extensible-world-examples.md).

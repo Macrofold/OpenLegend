@@ -22,7 +22,7 @@ export interface Awareness {
   text: string;
   at: number;
   sequence: number;
-  modality: 'heard' | 'observed';
+  modality: 'heard' | 'observed' | 'felt' | 'internal';
   recognized: boolean;
   intelligible: boolean;
   entityIds: string[];

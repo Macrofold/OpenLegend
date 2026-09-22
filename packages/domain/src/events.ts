@@ -5,7 +5,7 @@ import { hasMemory } from './living.js';
 import { finishWorld, cloneValue } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
-import { canHear, canSee } from './perception.js';
+import { hearsEntity, seesEntity } from './perception.js';
 import { memoryPerspective } from './memory-perspective.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import type { Entity, MemoryRecord, Outcome, Transition, WorldEvent, WorldState } from './types.js';
@@ -64,6 +64,7 @@ export function emit(
   source?: Entity,
   targetId?: string,
   data?: WorldEvent['data'],
+  scope: 'external' | 'private' = 'external',
 ): WorldEvent {
   const boundedMetric = (value: unknown, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value)
@@ -84,18 +85,23 @@ export function emit(
     data?.['urgency'],
     ['death', 'incapacitated'].includes(type) ? 10 : type === 'speech' ? 4 : 2,
   );
-  const audience = Object.values(world.entities)
-    .filter(
-      (entity) =>
-        hasMemory(entity) &&
-        entity.actor?.alive &&
-        !entity.actor.rest?.asleep &&
-        !!source &&
-        (type === 'speech'
-          ? canHear(world, entity.position, source.position)
-          : canSee(entity.position, source.position)),
-    )
-    .map((entity) => entity.id);
+  const audience =
+    scope === 'private'
+      ? source && hasMemory(source)
+        ? [source.id]
+        : []
+      : Object.values(world.entities)
+          .filter(
+            (entity) =>
+              hasMemory(entity) &&
+              entity.actor?.alive &&
+              !entity.actor.rest?.asleep &&
+              !!source &&
+              (type === 'speech'
+                ? hearsEntity(world, entity, source)
+                : seesEntity(world, entity, source)),
+          )
+          .map((entity) => entity.id);
   if (source && hasMemory(source) && !audience.includes(source.id)) audience.push(source.id);
   const conversationId =
     type === 'speech' && source
@@ -104,6 +110,7 @@ export function emit(
         ? world.conversations?.active[source.id]
         : undefined;
   const event: WorldEvent = {
+    scope,
     ...(conversationId ? { conversationId } : {}),
     id: nextId(world, 'event'),
     order: world.nextId,
@@ -139,8 +146,15 @@ export function emit(
             text: memoryPerspective(world, actorId, text, type === 'speech', source?.id),
             at: event.at,
             sequence: world.nextId,
-            modality: type === 'speech' ? 'heard' : 'observed',
-            recognized: true,
+            modality:
+              scope === 'private'
+                ? type === 'contact'
+                  ? 'felt'
+                  : 'internal'
+                : type === 'speech'
+                  ? 'heard'
+                  : 'observed',
+            recognized: type !== 'contact',
             intelligible: true,
             entityIds: [source?.id, targetId].filter((id): id is string => !!id),
             importance: event.importance ?? importance,

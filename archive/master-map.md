@@ -6,6 +6,8 @@ Current accepted start: primitive wilderness people with some survival knowledge
 
 Accepted technical/visual direction: PlayCanvas browser presentation, an independent headless simulation and generative-rule interface, and grounded modern pixel art with 3D structure. Exact camera, engine version, editor adoption, asset pipeline and target devices remain open. [Visual brief](03-design-proposals/visual-direction.md), [D02/D29](05-project/open-decisions.md)
 
+- [Engine/world boundaries](../docs/engine-and-world-boundaries.md) and [EWF](../docs/maintainers/extensible-world-foundation.md) own foundation principles and delivery.
+
 ## Product and technical loops
 
 [Agent agency](../docs/agent-agency.md) owns optional decisions and operational goals/plans, with [AG delivery](../docs/maintainers/agent-agency.md) and [runtime semantics](07-technical-architecture/agent-agency-runtime.md). The [EPR contract](../docs/events-perception-and-reactions.md) owns reaction intake. [Narration/conversation design](../docs/narration-and-conversations.md) and [NC delivery](../docs/maintainers/narration-and-conversations.md) retain communication and private storytelling; missing mechanics remain INV/NC13 work. [Agency research](02-research/agency-cognition-and-planning.md) explains the design rationale and limits.

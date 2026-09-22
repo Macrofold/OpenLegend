@@ -1,3 +1,4 @@
+import { nativeNeedBelow } from '@open-legend/domain';
 import { z } from 'zod';
 import {
   get_memories,
@@ -108,6 +109,13 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     case 'cancel':
     case 'recover':
       return { ...base, type: input.type };
+    case 'replenish':
+      return {
+        ...base,
+        type: 'replenish',
+        targetId: input.targetId!,
+        attributeId: input.attributeId!,
+      };
     case 'prepare':
       return { ...base, type: 'prepare', preparation: input.preparation! };
     case 'craft':
@@ -264,7 +272,7 @@ export function cognitionOpportunity(service: WorldService, actorId: string) {
     !actor?.alive ||
     actor.incapacitated ||
     actor.health < 0.4 * (actor.body?.maxHealth ?? 100) ||
-    actor.fullness < 30
+    nativeNeedBelow(actor, 'fullness', 30)
   )
     return null;
   const mind = mindFor(service.world, actorId);
@@ -272,7 +280,7 @@ export function cognitionOpportunity(service: WorldService, actorId: string) {
   const fresh = recall.observationWatermark > mind.processedWatermark;
   if (actor.action?.type === 'rest')
     return actor.action.id !== mind.lastDreamEpisode && fresh ? ('dream' as const) : null;
-  if (actor.action || actor.energy < 30) return null;
+  if (actor.action || nativeNeedBelow(actor, 'energy', 30)) return null;
   return fresh && service.world.simTime - mind.lastReflectionAt >= 3600
     ? ('reflection' as const)
     : null;

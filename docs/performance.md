@@ -8,6 +8,8 @@ This document owns runtime work scheduling, persistence cost reduction, local bu
 
 The proposed [events, perception, and reactions contract](events-perception-and-reactions.md) owns stimulus scope and reaction intake; execution cadence, CPU/I/O budgets, measurement and scale gates remain here.
 
+Registered world modules declare relevant dependency keys, execution category and bounded work under the [shared runtime contract](../archive/07-technical-architecture/world-module-runtime.md#9-change-dependencies-and-work-budgets). Per-module bounds do not replace aggregate world/host limits. Reuse the existing dirty/deadline and spatial infrastructure; registration is not permission for global polling or an object-local queue.
+
 ## Selected approach
 
 Make the cost of an interaction follow the entities and records it changes, rather than total world age, history, observers elsewhere or background activity. Keep one authoritative writer per world initially. Retain PostgreSQL durability, use the existing journal and story jobs, and optimize them before adding infrastructure.

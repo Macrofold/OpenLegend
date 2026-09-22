@@ -101,6 +101,8 @@ Exit: idle narrator has no claim traffic, eligible committed jobs execute once t
 
 ## PF03 — Native CPU and incremental admission
 
+Coordinate module dependencies and aggregate admission with [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); PF retains implementation and qualification.
+
 Dependencies: PF00. Primary files: domain `draft.ts`, `events.ts`, `experience.ts`, `kernel.ts`; server `world-service.ts`.
 
 - [x] Remove repeated startup/actor initialization scans and unchanged policy replacement from each commit. Startup, spawn and capability changes retain complete authoritative initialization; broader CPU profiling remains in PF00.
@@ -180,6 +182,8 @@ Exit: same active tiny world at increasing cold-history sizes meets per-step bud
 [AG07](agent-agency.md#ag07--meaningful-feedback-survival-and-bounded-reconsideration) and [AG12](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) connect native continuation and fair cognition admission to measured behavior/cost. Qualify the existing global workflow before increasing concurrency; no population or price target is established by the agency design.
 
 ## PF09 — Population work follows relevance
+
+Coordinate module dependencies and aggregate admission with [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); PF retains implementation and qualification.
 
 Proposed [EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-full-world-sensory-scans) owns the specific object/audience scan integration; [EPR10](events-perception-and-reactions.md#epr10--conditional-incremental-spatialdeadline-infrastructure) owns its conditional incremental-index work. PF retains broader population qualification.
 

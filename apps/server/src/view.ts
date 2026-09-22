@@ -1,3 +1,5 @@
+import { hasWildernessNeeds } from '@open-legend/domain';
+import { projectAttributes, attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
 import type {
   ActionOption,
@@ -9,9 +11,9 @@ import type {
 import {
   NATIVE_PREPARATIONS,
   experiences,
-  PERCEPTION_RULES,
-  canHear,
-  canSee,
+  hearsEntity,
+  seesEntity,
+  visionRadius,
   nearbyEntities,
   inventoryFor,
   canRecoverAtCamp,
@@ -101,11 +103,11 @@ export async function projectView(
       nearbyEntities(
         world,
         world.entities[service.controlledEntityId]!.position,
-        PERCEPTION_RULES.sightRadius,
+        visionRadius(world, world.entities[service.controlledEntityId]!),
       ).filter(
         (entity) =>
           entity.id !== service.controlledEntityId &&
-          canSee(world.entities[service.controlledEntityId]!.position, entity.position),
+          seesEntity(world, world.entities[service.controlledEntityId]!, entity),
       ),
     ),
     knownRecipes: memo(
@@ -153,14 +155,21 @@ export async function projectView(
     );
   const inventory = memo<InventoryItemView[]>(
     'inventory',
-    [observation.inventory, world.itemDefinitions, actor.equippedItemId, active, paused],
+    [
+      observation.inventory,
+      world.itemDefinitions,
+      actor.equippedItemId,
+      actor.capabilities?.needs,
+      active,
+      paused,
+    ],
     () =>
       observation.inventory.map((item) => {
         const definition = world.itemDefinitions[item.definitionId]!;
         const actions: ActionOption[] = [];
         if (definition.launcher)
           actions.push(action(`equip-${item.id}`, 'Equip', { type: 'equip', itemId: item.id }));
-        if (definition.nutrition)
+        if (definition.nutrition && hasWildernessNeeds(actor))
           actions.push(action(`eat-${item.id}`, 'Eat one', { type: 'eat', itemId: item.id }));
         if (item.definitionId === 'raw_meat')
           actions.push(action(`cook-${item.id}`, 'Cook one', { type: 'cook', itemId: item.id }));
@@ -209,6 +218,8 @@ export async function projectView(
           observation.knownRecipes,
           player.position,
           world.map,
+          actor.attributes,
+          world.moduleManifest,
         ],
         () => {
           const actions: ActionOption[] = [];
@@ -223,9 +234,29 @@ export async function projectView(
                   ? `${entity.name} is incapacitated and cannot respond.`
                   : entity.actor.rest?.asleep
                     ? `${entity.name} is asleep and cannot respond.`
-                    : !canHear(world, player.position, entity.position)
+                    : !hearsEntity(world, entity, player)
                       ? `Move within hearing range of ${entity.name} to talk.`
                       : undefined;
+          if (entity.replenisher) {
+            const definition = attributeDefinition(world, entity.replenisher.attributeId);
+            if (definition?.reservoir && readAttribute(actor, definition) !== undefined) {
+              const command = {
+                type: 'replenish' as const,
+                targetId: entity.id,
+                attributeId: definition.id,
+              };
+              const preview = service.previewCommand(command);
+              actions.push(
+                action(
+                  `replenish-${entity.id}`,
+                  definition.reservoir.actionLabel,
+                  command,
+                  preview.ok,
+                  preview.message,
+                ),
+              );
+            }
+          }
           if (entity.resource)
             actions.push(
               action(
@@ -298,6 +329,7 @@ export async function projectView(
                 : entity.actor.action
                   ? ({
                       move: 'Walking',
+                      replenish: 'Replenishing',
                       gather: 'Gathering',
                       rest: 'Resting',
                       hunt: 'Hunting',
@@ -325,10 +357,13 @@ export async function projectView(
                     ? entity.heat.lit
                       ? 'Lit · cooking heat'
                       : 'Cold'
-                    : 'Gatherable',
+                    : entity.replenisher
+                      ? `${Math.round(entity.replenisher.remaining)} units of supply`
+                      : 'Gatherable',
             ...(entity.resource ? { quantity: entity.resource.quantity } : {}),
             ...(entity.actor
               ? {
+                  attributes: projectAttributes(world, entity, 'public'),
                   health: entity.actor.health,
                   bodyRevision: entity.actor.body?.revision,
                   species: entity.actor.species,
@@ -441,6 +476,7 @@ export async function projectView(
     observation.visibleEntities.find((entity) => entity.id === work.targetId)?.name;
   const workLabels: Record<string, string> = {
     move: 'Walking',
+    replenish: 'Replenishing',
     rest: 'Resting',
     gather: `Gathering${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
     harvest: `Harvesting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
@@ -479,7 +515,7 @@ export async function projectView(
         }
       : {}),
     profile: profile,
-    vision: { radius: PERCEPTION_RULES.sightRadius },
+    vision: { radius: visionRadius(world, player) },
     map: memo<GameView['map']>('map', [world.map, world.seed], () => ({
       ...world.map,
       seed: world.seed,
@@ -500,8 +536,9 @@ export async function projectView(
       id: player.id,
       name: player.name,
       position: player.position,
+      attributes: projectAttributes(world, player, 'owner'),
       health: actor.health,
-      hunger: 100 - actor.fullness,
+      hunger: actor.fullness === undefined ? undefined : 100 - actor.fullness,
       energy: actor.energy,
       alive: actor.alive,
       action: actor.action
@@ -510,9 +547,16 @@ export async function projectView(
             // Floating progress is opt-in; routine movement never gets a status.
             showStatus:
               actor.action.stage === 'working' &&
-              ['gather', 'prepare', 'craft', 'cook', 'harvest', 'rest', 'hunt'].includes(
-                actor.action.type,
-              ),
+              [
+                'gather',
+                'prepare',
+                'craft',
+                'cook',
+                'harvest',
+                'rest',
+                'hunt',
+                'replenish',
+              ].includes(actor.action.type),
             durationSeconds: actor.action.totalSeconds,
             elapsedSeconds:
               actor.action.stage === 'working'

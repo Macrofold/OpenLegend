@@ -111,8 +111,8 @@ const godPersonEditor = z
     stats: z
       .object({
         health: z.number().finite().min(0).max(100),
-        fullness: z.number().finite().min(0).max(100),
-        energy: z.number().finite().min(0).max(100),
+        fullness: z.number().finite().min(0).max(100).optional(),
+        energy: z.number().finite().min(0).max(100).optional(),
       })
       .strict(),
   })
@@ -137,7 +137,7 @@ const godAwareness = z
     text: z.string().max(20_000),
     at: z.number().finite().min(0),
     sequence: z.number().int().min(0),
-    modality: z.enum(['heard', 'observed']),
+    modality: z.enum(['heard', 'observed', 'felt', 'internal']),
     recognized: z.boolean(),
     intelligible: z.boolean(),
     entityIds: z.array(requestIdSchema).max(100),
@@ -166,7 +166,7 @@ const godMemory = z
     id: requestIdSchema,
     actorId: requestIdSchema,
     kind: z.enum(['episode', 'belief', 'commitment', 'reflection']),
-    source: z.enum(['observed', 'heard', 'inferred', 'self_thought']),
+    source: z.enum(['observed', 'heard', 'felt', 'internal', 'inferred', 'self_thought']),
     responseId: requestIdSchema.optional(),
     summary: z.string().max(20_000),
     at: z.number().finite().min(0),
@@ -844,6 +844,73 @@ export async function createGameServer(
                   initialGoals: value.initialGoals,
                 },
               }),
+            );
+          }
+          case '/api/god/editor/attributes': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z.object({ actorId: requestIdSchema }).strict().parse(body);
+            return send(response, 200, await service.attributeEditor(value.actorId));
+          }
+          case '/api/god/editor/attributes/save': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({
+                expectedGeneration: z.string().uuid(),
+                id: requestIdSchema,
+                actorId: requestIdSchema,
+                expectedManifestRevision: z.number().int().positive(),
+                changes: z
+                  .array(
+                    z
+                      .object({
+                        attributeId: requestIdSchema,
+                        expectedRevision: z.number().int().nonnegative().nullable(),
+                        value: z.union([z.number().finite(), z.string().min(1).max(64)]),
+                      })
+                      .strict(),
+                  )
+                  .min(1)
+                  .max(32),
+              })
+              .strict()
+              .parse(body);
+            const { expectedGeneration, ...request } = value;
+            return send(response, 200, await service.godAttributeEdit(request, expectedGeneration));
+          }
+          case '/api/god/definitions/attributes': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            z.object({}).strict().parse(body);
+            return send(response, 200, {
+              ok: true,
+              generation: service.generation,
+              manifest: service.world.moduleManifest,
+            });
+          }
+          case '/api/god/definitions/attribute': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({
+                expectedGeneration: z.string().uuid(),
+                id: requestIdSchema,
+                expectedManifestRevision: z.number().int().positive(),
+                definition: z.record(z.string(), z.unknown()).optional(),
+                removeId: requestIdSchema.optional(),
+              })
+              .strict()
+              .parse(body);
+            // Family validation remains domain-owned; JSON cannot select an executable path.
+            const { expectedGeneration, ...request } = value;
+            return send(
+              response,
+              200,
+              await service.godAttributeDeclaration(
+                request as import('@open-legend/domain').AttributeDeclarationRequest,
+                expectedGeneration,
+              ),
             );
           }
           case '/api/god/editor/story': {

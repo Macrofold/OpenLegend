@@ -279,26 +279,34 @@ function PersonEditorFields({
               ['fullness', 'Fullness'],
               ['energy', 'Energy'],
             ] as const
-          ).map(([key, label]) => (
-            <label key={key}>
-              {label}
-              <input
-                type="number"
-                min={0}
-                max={100}
-                step={1}
-                value={person.stats[key]}
-                onChange={(event) =>
-                  update('stats', { ...person.stats, [key]: Number(event.target.value) })
-                }
-              />
-            </label>
-          ))}
+          )
+            .filter(([key]) => person.stats[key] !== undefined)
+            .map(([key, label]) => (
+              <label key={key}>
+                {label}
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={person.stats[key]}
+                  onChange={(event) =>
+                    update('stats', { ...person.stats, [key]: Number(event.target.value) })
+                  }
+                />
+              </label>
+            ))}
         </div>
         <Button
           type="button"
           variant="secondary"
-          onPress={() => update('stats', { health: 100, fullness: 100, energy: 100 })}
+          onPress={() =>
+            update('stats', {
+              health: 100,
+              ...(person.stats.fullness === undefined ? {} : { fullness: 100 }),
+              ...(person.stats.energy === undefined ? {} : { energy: 100 }),
+            })
+          }
         >
           Fill stats to 100
         </Button>

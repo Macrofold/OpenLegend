@@ -1,3 +1,12 @@
+import { getOwn, isSafeRecordId } from './records.js';
+import {
+  attributeDefinition,
+  validateAttributeValue,
+  setAttribute,
+  initializeAttributes,
+  HOST_IMPLEMENTATIONS,
+} from './world-modules.js';
+import { hasWildernessNeeds, setWildernessNeed } from './wilderness-needs.js';
 import { nativeActor, canSpeak, hasMemory, reconcileBody } from './living.js';
 import { draftWorld } from './draft.js';
 import { addItem, createActor, nextId, TRAIT_BANK } from './data.js';
@@ -202,8 +211,10 @@ export function reviveActor(
   actor.alive = true;
   actor.incapacitated = false;
   actor.health = actor.body!.maxHealth;
-  actor.fullness = 100;
-  actor.energy = 100;
+  if (hasWildernessNeeds(actor)) {
+    setWildernessNeed(actor, 'fullness', 100);
+    setWildernessNeed(actor, 'energy', 100);
+  }
   actor.action = null;
   actor.planGeneration++;
   actor.body!.conditions = { injury: 0, wetness: 0, burning: 0 };
@@ -268,6 +279,9 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   const traits = personTraits(draft.person);
   if (!current?.actor || !hasMemory(current)) return reject(original, 'actor', 'Choose a person.');
   if (
+    (hasWildernessNeeds(current.actor)
+      ? draft.person.stats.fullness === undefined || draft.person.stats.energy === undefined
+      : draft.person.stats.fullness !== undefined || draft.person.stats.energy !== undefined) ||
     !draft.person.name.trim() ||
     draft.person.name.trim().length > 80 ||
     draft.person.description.trim().length > 2000 ||
@@ -349,8 +363,10 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   }
   if (statsChanged) {
     entity.actor!.health = draft.person.stats.health;
-    entity.actor!.fullness = draft.person.stats.fullness;
-    entity.actor!.energy = draft.person.stats.energy;
+    if (hasWildernessNeeds(entity.actor!)) {
+      setWildernessNeed(entity.actor!, 'fullness', draft.person.stats.fullness!);
+      setWildernessNeed(entity.actor!, 'energy', draft.person.stats.energy!);
+    }
   }
   migrateCognition(world);
   const invalidated = new Set<string>();
@@ -612,4 +628,68 @@ export function editWorldEvents(
     ...finish(world, [], outcome(true, 'world-events-saved', 'World events saved.')),
     invalidatedMemoryIds,
   };
+}
+
+export interface AttributeEditRequest {
+  id: string;
+  actorId: string;
+  expectedManifestRevision: number;
+  changes: { attributeId: string; expectedRevision: number | null; value: number | string }[];
+}
+/** God-only typed edits stay atomic and cannot claim another owner's state. */
+export function editActorAttributes(
+  original: WorldState,
+  request: AttributeEditRequest,
+): Transition {
+  if (!isSafeRecordId(request.id) || !isSafeRecordId(request.actorId))
+    return reject(original, 'invalid-id', 'Use bounded record identities.');
+  const digest = canonicalJson(request);
+  const prior = getOwn(original.commandReceipts, request.id);
+  if (prior)
+    return prior.digest === digest
+      ? { world: original, events: [], outcome: prior.outcome }
+      : reject(original, 'conflict', 'Request identity conflicts.');
+  const actor = original.entities[request.actorId]?.actor;
+  if (
+    !actor ||
+    original.moduleManifest?.revision !== request.expectedManifestRevision ||
+    request.changes.length < 1 ||
+    request.changes.length > 32 ||
+    new Set(request.changes.map((c) => c.attributeId)).size !== request.changes.length
+  )
+    return reject(original, 'invalid-attributes', 'Invalid or stale attribute edit.');
+  for (const change of request.changes) {
+    const definition = attributeDefinition(original, change.attributeId);
+    if (
+      !definition ||
+      HOST_IMPLEMENTATIONS[definition.implementation].storage !== 'attributes' ||
+      (change.expectedRevision === null
+        ? actor.attributes?.[change.attributeId] !== undefined
+        : actor.attributes?.[change.attributeId]?.revision !== change.expectedRevision)
+    )
+      return reject(original, 'conflict', 'Attribute changed or is not applicable.');
+    try {
+      validateAttributeValue(definition, change.value);
+    } catch {
+      return reject(original, 'invalid-value', 'Value does not match the attribute schema.');
+    }
+  }
+  const world = draftWorld(original);
+  const events: WorldEvent[] = [];
+  for (const change of request.changes) {
+    if (change.expectedRevision === null)
+      initializeAttributes(world.entities[request.actorId]!.actor!, [
+        attributeDefinition(world, change.attributeId)!,
+      ]);
+    setAttribute(
+      world,
+      world.entities[request.actorId]!,
+      attributeDefinition(world, change.attributeId)!,
+      change.value,
+      events,
+    );
+  }
+  const result = outcome(true, 'attributes-edited', 'Applicable attributes updated.');
+  world.commandReceipts[request.id] = { digest, outcome: result };
+  return finish(world, events, result);
 }

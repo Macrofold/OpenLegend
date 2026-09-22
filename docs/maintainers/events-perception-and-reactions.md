@@ -6,6 +6,8 @@ This tracker owns the new stimulus/perception/reaction integration. PF retains g
 
 [AG07](agent-agency.md#ag07--meaningful-feedback-survival-and-bounded-reconsideration) adds agency causes to EPR01/EPR05 intake. EPR owns common scope, episode identity, coalescing and cursor mechanics; AG owns operational goal/plan continuation and native-response adequacy. Basic AG01–AG04 state/admission work does not wait for all EPR performance gates.
 
+Attribute concerns now have a native private event/awareness path, saved hysteresis and band-fed ActorWork invalidation. This is a first EPR01/EPR04/EPR05 integration, not complete scope/episode/reminder delivery; see [Architecture](../architecture.md#extensible-attribute-foundation).
+
 ## Read first and establish the baseline
 
 Read `AGENTS.md`, `docs/architecture.md`, `docs/events-perception-and-reactions.md`, `docs/performance.md`, `docs/save-and-load.md`, `docs/memory-architecture.md`, and the existing PF, CR, NC, and SL trackers. Use `docs/maintainers/README.md` for current owners.
@@ -56,6 +58,8 @@ Run relevant tests as each slice lands. EPR08 save semantics must be considered 
 
 ## EPR01 — Typed stimulus scope and actor intake
 
+Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); existing native adapters suffice without full EWF qualification.
+
 **Dependencies:** EPR00. Design §§2–4, 9–11.
 
 - [ ] Add the smallest typed extension to existing event/experience records for external sensory, owner-private internal, and system-only sources. Do not add a parallel world-event table. A small domain module such as `stimuli.ts` is appropriate only if it makes ownership clearer than extending existing modules.
@@ -73,7 +77,7 @@ Run relevant tests as each slice lands. EPR08 save semantics must be considered 
 
 **Dependencies:** EPR01 contract sufficient; does not require new private-event behavior. Coordinate with PF09, not a second spatial implementation.
 
-- [ ] Replace ordinary-object `Object.values(world.entities)` filtering inside each observer's encounter loop with a shared spatial candidate query for that stable sensing phase.
+- [ ] Preserve and qualify the implemented phase-local scalar spatial candidate pass and unchanged visibility-array identity. Complete remaining audience reuse, exact event-time validity, private acquisition and differential acceptance; do not repeat the old scan rewrite.
 - [ ] Restrict external-event audience discovery to relevant listener candidates, then apply the exact existing hearing/sight, capability, life, and sleep rules. Preserve self handling deliberately.
 - [ ] Do not repeatedly call `nearbyEntities` on a mutable draft: its current implementation rebuilds. Introduce explicit phase-valid query context or equivalent reuse, with a safe rebuild/fallback when validity cannot be proved.
 - [ ] Invalidate candidate geometry after every relevant movement, teleport, spawn, removal, or sense-range change. An event's audience must use positions at that event's occurrence, not the end of a multi-step batch.
@@ -101,6 +105,8 @@ Run relevant tests as each slice lands. EPR08 save semantics must be considered 
 
 ## EPR04 — Private internal threshold events and native protection
 
+Coordinate EWF02 typed state through [EWF](extensible-world-foundation.md); existing native adapters suffice without full EWF qualification.
+
 **Dependencies:** EPR01. Can proceed alongside EPR03.
 
 - [ ] Centralize named threshold policies and their owning state updates; retain separate roles for eating, food seeking, rest, action interruption, and semantic protection. Do not replace them all with the user's illustrative health-20 threshold.
@@ -116,6 +122,8 @@ Run relevant tests as each slice lands. EPR08 save semantics must be considered 
 **Exit:** internal changes use the common stimulus contract while native survival remains at least as responsive and no more expensive in paid calls.
 
 ## EPR05 — Change-fed ActorWork and one reaction intake
+
+Coordinate EWF05 sense evidence through [EWF](extensible-world-foundation.md); existing native adapters suffice without full EWF qualification.
 
 **Dependencies:** EPR03–EPR04; coordinate PF02/PF09 and CR10.
 
@@ -230,3 +238,5 @@ Initial attribution can be short. Larger tail-percentile or soak claims require 
 ## Completion report
 
 Report the actual commit, completed EPR IDs, touched canonical docs, native/fixture checks, unrun live checks, measured before/after counters and timings, unresolved product policies, and deferred gates. Do not label a proposed system implemented because the documents were added.
+
+The coarse-contact slice adds saved private onset/detail/end episodes, receiver-aware default vision/hearing adapters and `felt`/`internal` awareness modalities through the existing intake path. This is partial EPR01/EPR04 integration, not the generalized episode, reaction-disposition, timer or change-fed scheduling service. [Current scope](../architecture.md#registered-senses-and-coarse-contact) and [native evidence](../verification.md#extensible-attribute-runtime) retain those distinctions; the existing task exit criteria remain open.

@@ -4,6 +4,8 @@
 
 ## 1. Purpose and ownership
 
+World modules supply registered state/sense policies through the [shared runtime contract](../archive/07-technical-architecture/world-module-runtime.md). EPR remains the sole owner of stimulus scope, perception episodes, threshold event delivery, reaction intake and cursors. Module extensibility adds no second event log, per-object queue, or permission channel.
+
 Give external stimuli, private internal changes, perception changes, and relevant deadlines one coherent path into actor reactions. Share contracts and infrastructure without forcing every engine operation through the same bus.
 
 This document owns **stimulus scope, perception-change identity, and reaction intake**. It does not replace these existing owners:
@@ -64,6 +66,8 @@ spatial candidates + exact sense       | owner-only exposure
 The diagram is a responsibility map, not permission to reorder existing native rules. A native emergency response remains inside the deterministic simulation boundary and cannot wait for the after-commit asynchronous path. Required awareness, commitments, and dependent invalidations remain atomic with their owning transition.
 
 ## 4. Scope and event identity
+
+External/private/system scope remains a closed trusted discriminant. Registered sense/event-family IDs cannot introduce privacy scopes or broaden their audience.
 
 ### A common logical envelope, not a mandatory new global table
 
@@ -133,7 +137,7 @@ Remembering and currently perceiving are independent. Forgetting a memory while 
 
 ### Initial implementation: reuse correct candidate indexes
 
-First replace full-entity object-exposure scans with a shared grid over the same stable sensing phase. Preserve exact current sense rules, deterministic recipient order, and existing fixed-step boundaries.
+Preserve and qualify the implemented phase-local scalar spatial candidate pass for object encounters and unchanged visibility-array identity. Complete remaining event-audience candidate reuse, exact event-time validity, private acquisition integration and differential acceptance. Do not recreate the old full-scan-to-grid rewrite or treat that partial improvement as complete EPR02 delivery.
 
 Optimize external-event audiences with listener candidates appropriate to the event's sense and maximum reach. An owner-private internal event must bypass spatial audience discovery entirely.
 
@@ -160,6 +164,8 @@ Movement within one grid cell still changes exact distance and can cross a sight
 Use the union of affected **old and new neighborhoods** for changed sources. A reverse observer relation can help route feature changes to current observers, but it is optional until profiling justifies its memory and maintenance costs.
 
 ## 7. Internal triggers and native survival
+
+Registered attribute policies supply [typed state and concerns](../archive/07-technical-architecture/world-module-runtime.md#4-typed-state-and-attributes); threshold episodes and native protection remain owned here.
 
 Treat meaningful internal changes as owner-private stimuli. Initial sources should be current native needs/body state, not inferred LLM diagnoses.
 
@@ -239,7 +245,7 @@ Preserve strict consumer boundaries:
 - Private reflection presentation is not automatically recallable intentional thought.
 - Unknown/generated metadata cannot register executable subscribers or change privacy/spending rules.
 
-Shared event identity can later support achievements, tool availability, and other consumers. Add one named consumer when a real feature needs it; do not build a generic plugin framework in this work.
+Shared event identity can later support achievements, tool availability, and other consumers. Add one named consumer when a real feature needs it; do not build a generic plugin framework in EPR. The shared EWF foundation has its separate scope; neither permits arbitrary callbacks, a broker or a universal bus.
 
 ## 11. Save/load, reset, and privacy
 

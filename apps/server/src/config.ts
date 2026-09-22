@@ -40,7 +40,11 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     env['JEV_INPUT_USD_PER_MILLION'] === undefined
   )
     throw new Error('A custom JEV_MODEL requires an explicit JEV_INPUT_USD_PER_MILLION.');
+  const worldPreset = env['OPEN_LEGEND_WORLD_PRESET'] ?? 'wilderness';
+  if (!['wilderness', 'reservoir-demo', 'touch-demo'].includes(worldPreset))
+    throw new Error('Unsupported OPEN_LEGEND_WORLD_PRESET.');
   return {
+    worldPreset,
     databaseUrl: env['OPEN_LEGEND_DATABASE_URL'] ?? '',
     embeddingKey: env['OPENAI_EMBEDDING_API_KEY'] ?? env['OPENAI_API_KEY'] ?? '',
     embeddingModel: env['EMBEDDING_MODEL'] ?? 'text-embedding-3-small',

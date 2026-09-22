@@ -192,6 +192,7 @@ export function EntityDetail({
     <>
       <p className="ol-narrative">{entity.description ?? entity.status}</p>
       <Tag>{entity.status}</Tag>
+      {!!entity.attributes?.length && <Condition attributes={entity.attributes} />}
       {entity.quantity !== undefined && <p>{entity.quantity} available</p>}
       {!!entity.traits?.length && (
         <Section title="Traits">

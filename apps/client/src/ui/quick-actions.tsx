@@ -127,8 +127,12 @@ export function QuickActions({
   options.push(...people);
   const candidateSuggestions = [
     options.find((a) => a.id === 'recover'),
-    ...(view.player.energy < 35 ? [options.find((a) => a.id === 'rest')] : []),
-    ...(view.player.hunger > 70 ? [options.find((a) => a.id.startsWith('eat-') && a.enabled)] : []),
+    ...(view.player.energy !== undefined && view.player.energy < 35
+      ? [options.find((a) => a.id === 'rest')]
+      : []),
+    ...(view.player.hunger !== undefined && view.player.hunger > 70
+      ? [options.find((a) => a.id.startsWith('eat-') && a.enabled)]
+      : []),
     ...people,
   ]
     .filter((a) => !!a)

@@ -189,6 +189,7 @@ const evaluators: Record<StoryPolicy['evaluator'], Evaluator> = {
 };
 export function selectStory(input: StorySelectionInput, p: StoryPolicy): StorySelection {
   if (
+    input.event.scope === 'private' ||
     !p.enabled ||
     !evaluators[p.evaluator] ||
     !input.event.audience.includes(input.viewerId) ||

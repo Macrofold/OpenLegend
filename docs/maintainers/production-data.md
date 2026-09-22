@@ -6,6 +6,8 @@ Gameplay checkpoint capture, retained saves and player-initiated restoration are
 
 All phases remain open unless current evidence and the phase exit gate establish completion. Implement only the records needed by the consuming feature while preserving the shared identity, permission and transaction contracts.
 
+Coordinate module dependency capture and load validation with [EWF07](extensible-world-foundation.md#ewf07--module-lifecycle-and-current-format-save-integration); module fixtures do not complete this tracker’s broader acceptance.
+
 ## D0–D6 phases
 
 | Phase                             | Concrete deliverable                                                                                                                                                                                   | Exit evidence                                                                                                                                              |

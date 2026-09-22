@@ -1,3 +1,10 @@
+import {
+  attributeDefinition,
+  HOST_IMPLEMENTATIONS,
+  definitionPin,
+  validateWorldModules,
+  type AttributeDefinition,
+} from './world-modules.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
@@ -308,4 +315,90 @@ export function admitDeclaration(
     message: `${draft.name} is now an available technique. It still needs materials and work.`,
     recipeId,
   });
+}
+
+export interface AttributeDeclarationRequest {
+  id: string;
+  expectedManifestRevision: number;
+  definition?: import('./world-modules.js').AttributeDefinition;
+  removeId?: string;
+}
+
+/** Owner authoring uses the declaration admission boundary, not a second installer.
+ * The initial revision path changes presentation only; INV-5 owns broader transitions.
+ * See archive/07-technical-architecture/world-module-runtime.md#10-initialization-activation-disabling-and-failure.
+ */
+export function admitAttributeDeclaration(
+  original: WorldState,
+  request: AttributeDeclarationRequest,
+): Transition {
+  const reject = (message: string): Transition => ({
+    world: original,
+    events: [],
+    outcome: outcome(false, 'attribute-rejected', message),
+  });
+  const digest = canonicalJson(request);
+  const prior = getOwn(original.commandReceipts, request.id);
+  if (prior)
+    return prior.digest === digest
+      ? { world: original, events: [], outcome: prior.outcome }
+      : reject('Request identity conflicts.');
+  if (
+    !isSafeRecordId(request.id) ||
+    !original.moduleManifest ||
+    original.moduleManifest.revision !== request.expectedManifestRevision ||
+    !!request.definition === !!request.removeId
+  )
+    return reject('Invalid or stale definition request.');
+  const id = request.definition?.id ?? request.removeId!;
+  const previous = attributeDefinition(original, id);
+  if (previous && HOST_IMPLEMENTATIONS[previous.implementation].storage !== 'attributes')
+    return reject('Native wilderness bindings cannot be edited.');
+  const users = Object.values(original.entities).filter(
+    (e) =>
+      e.actor?.attributes?.[id] ||
+      e.replenisher?.attributeId === id ||
+      e.actor?.action?.attributeId === id,
+  );
+  if (request.removeId && (!previous || users.length))
+    return reject('Missing definition or live state/action/source still depends on it.');
+  if (previous && request.definition) {
+    const meaning = (definition: AttributeDefinition) => {
+      const { version, name, presentation, ...rest } = definition;
+      return { ...rest, ...(rest.concern ? { concern: { ...rest.concern, text: '' } } : {}) };
+    };
+    if (
+      request.definition.version !== previous.version + 1 ||
+      canonicalJson(meaning(previous)) !== canonicalJson(meaning(request.definition))
+    )
+      return reject(
+        'Only a presentation revision is supported; state, units, ownership and mechanics must remain identical.',
+      );
+    if (users.some((e) => e.actor?.action?.attributeId === id))
+      return reject('Wait for dependent work to finish or cancel it before revision.');
+  } else if (request.definition?.version !== 1 && !request.removeId)
+    return reject('New definitions begin at version 1.');
+  const world = draftWorld(original);
+  const manifest = world.moduleManifest!;
+  manifest.definitions = request.definition
+    ? previous
+      ? manifest.definitions.map((d) => (d.id === id ? cloneValue(request.definition!) : d))
+      : [...manifest.definitions, cloneValue(request.definition)]
+    : manifest.definitions.filter((d) => d.id !== id);
+  manifest.pins = manifest.definitions.map(definitionPin);
+  manifest.revision++;
+  try {
+    validateWorldModules(world);
+  } catch (error) {
+    return reject(error instanceof Error ? error.message : 'Invalid module definition.');
+  }
+  const result = outcome(
+    true,
+    request.removeId ? 'attribute-removed' : 'attribute-admitted',
+    request.removeId
+      ? 'Unused definition removed.'
+      : 'Attribute definition admitted; existing instances were preserved.',
+  );
+  world.commandReceipts[request.id] = { digest, outcome: result };
+  return finish(world, [], result);
 }

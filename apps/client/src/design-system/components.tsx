@@ -253,49 +253,57 @@ export function Launcher({
     </div>
   );
 }
-export function Meter({ kind, value }: { kind: 'health' | 'food' | 'energy'; value: number }) {
-  const v = Math.round(Math.max(0, Math.min(100, value))),
-    critical = v <= 20;
-  const label = kind[0]!.toUpperCase() + kind.slice(1);
-  return (
-    <div
-      className="ol-meter"
-      data-critical={critical || undefined}
-      style={{ '--c': `var(--${critical ? 'danger' : kind})`, '--v': v } as CSSProperties}
-    >
-      <Icon name={`meter.${kind}`} />
-      <span className="ol-meter-label">{label}</span>
-      <span
-        className="ol-meter-track"
-        role="meter"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={v}
-        aria-valuetext={`${v}%${critical ? ', critical' : ''}`}
-      >
-        <span className="ol-meter-fill" />
-      </span>
-      <span className="ol-meter-value">
-        {v}%{critical && <span className="ol-sr"> critical</span>}
-      </span>
-    </div>
-  );
-}
+/** Only symbolic styles and text cross this boundary; definitions cannot supply CSS. */
 export function Condition({
-  health,
-  hunger,
-  energy,
+  attributes,
 }: {
-  health: number;
-  hunger: number;
-  energy: number;
+  attributes: import('@open-legend/protocol').AttributeView[];
 }) {
   return (
     <div className="ol-condition">
-      <Meter kind="health" value={health} />
-      <Meter kind="food" value={100 - hunger} />
-      <Meter kind="energy" value={energy} />
+      {attributes.map((attribute) => {
+        const { id, name, value, min = 0, max = 100, unit, presentation } = attribute;
+        if (
+          attribute.status !== 'known' ||
+          typeof value !== 'number' ||
+          attribute.display !== 'meter'
+        )
+          return (
+            <div className="ol-meter" key={id}>
+              <span className="ol-meter-label">{name}</span>
+              <span>{attribute.status === 'unknown' ? 'Unknown' : value}</span>
+            </div>
+          );
+        const percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+        const critical = !!attribute.critical;
+        const icon = presentation === 'neutral' ? 'energy' : presentation;
+        const display = `${unit === '%' ? Math.round(value) : Math.round(value * 10) / 10}${unit === '%' ? '%' : ` ${unit ?? ''}`}`;
+        return (
+          <div
+            className="ol-meter"
+            key={id}
+            data-critical={critical || undefined}
+            style={
+              { '--c': `var(--${critical ? 'danger' : icon})`, '--v': percentage } as CSSProperties
+            }
+          >
+            <Icon name={`meter.${icon}`} />
+            <span className="ol-meter-label">{name}</span>
+            <span
+              className="ol-meter-track"
+              role="meter"
+              aria-label={name}
+              aria-valuemin={min}
+              aria-valuemax={max}
+              aria-valuenow={value}
+              aria-valuetext={display}
+            >
+              <span className="ol-meter-fill" />
+            </span>
+            <span className="ol-meter-value">{display}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }

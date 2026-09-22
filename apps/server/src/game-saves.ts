@@ -1,3 +1,4 @@
+import { validateWorldModules } from '@open-legend/domain';
 import { HISTORY_TABLES } from './history.js';
 import { digest, type SavedWorld, type SqlDatabase } from './store.js';
 import type { GameSaveSummary } from '@open-legend/protocol';
@@ -6,7 +7,7 @@ import { SaveFiles } from './save-files.js';
 // 2026-09-21: no real players. No legacy readers or migrations until the owner lifts
 // docs/save-and-load.md#active-development-policy. Bump this on incompatible changes.
 export class GameSaveError extends Error {}
-export const SAVE_FORMAT = 'development-2026-09-21-1';
+export const SAVE_FORMAT = 'development-2026-09-22-ewf2';
 const MAX_SAVES = 20;
 const MAX_BYTES = 64 * 1024 * 1024;
 type Rows = Record<string, unknown>[];
@@ -62,6 +63,7 @@ export class GameSaves {
     return [...manual, ...recovery].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
   async capture(state: SavedWorld): Promise<SavePayload> {
+    validateWorldModules(state.world);
     const history = {} as SavePayload['history'];
     for (const table of HISTORY_TABLES)
       history[table] = await this.db
@@ -136,10 +138,11 @@ export class GameSaves {
       payload.format !== SAVE_FORMAT ||
       digest(payload) !== row['checksum'] ||
       payload.state?.world?.id !== worldId ||
-      payload.state.world.schemaVersion !== 3 ||
+      payload.state.world.schemaVersion !== 4 ||
       !HISTORY_TABLES.every((table) => Array.isArray(payload.history?.[table]))
     )
       throw new GameSaveError('Save integrity check failed.');
+    validateWorldModules(payload.state.world);
     return payload;
   }
   async delete(worldId: string, id: string) {
@@ -154,6 +157,7 @@ export class GameSaves {
   }
   /** Called inside the world commit. Keep accounting and external operation journals untouched. */
   async install(current: SavedWorld, restore: RestoreSave) {
+    validateWorldModules(restore.payload.state.world);
     const before = await this.capture(current);
     await this.delete(current.world.id, 'before-load');
     await this.insert('before-load', 'Before last load', before);

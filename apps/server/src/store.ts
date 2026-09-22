@@ -1,3 +1,4 @@
+import { validateWorldModules } from '@open-legend/domain';
 import { GameSaves, type RestoreSave } from './game-saves.js';
 import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
@@ -491,8 +492,7 @@ export class SqliteStore implements GameRepository {
     const head = await this.getIntegration('world-journal-head');
     if (head !== undefined && head !== null && Number(head) !== revision)
       throw new Error('World journal head mismatch; refusing incomplete recovery.');
-    if (![1, 2, 3].includes(state.world?.schemaVersion))
-      throw new Error('Unsupported world schema; refusing to overwrite your save.');
+    validateWorldModules(state.world);
     if (
       state.world.archivedEventCount &&
       (await this.history.eventCount(state.world.id)) !==

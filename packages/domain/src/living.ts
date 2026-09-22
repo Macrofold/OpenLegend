@@ -20,15 +20,17 @@ export function canSpeak(entity: Entity | undefined): boolean {
     !!entity?.actor && (entity.actor.capabilities?.speech ?? entity.actor.controller !== 'native')
   );
 }
-export function livingBody(species: 'human' | 'deer' | 'hare'): LivingBody {
+// Finite body/lifecycle policy; another body family expands through EWF03/INV.
+// See docs/engine-and-world-boundaries.md#intentional-v1-specificity.
+export function livingBody(species: 'human' | 'deer' | 'hare' | 'construct'): LivingBody {
   return {
-    plan: species === 'human' ? 'biped' : 'quadruped',
-    maxHealth: species === 'human' ? 100 : species === 'deer' ? 36 : 18,
+    plan: species === 'human' || species === 'construct' ? 'biped' : 'quadruped',
+    maxHealth: species === 'human' || species === 'construct' ? 100 : species === 'deer' ? 36 : 18,
     revision: 0,
     conditions: { injury: 0, wetness: 0, burning: 0 },
     susceptibility: { injury: 1, wetness: 1, burning: 1, healing: 1 },
     harvestYield:
-      species === 'human'
+      species === 'human' || species === 'construct'
         ? []
         : [
             { definitionId: 'raw_meat', quantity: species === 'hare' ? 2 : 4 },
@@ -62,7 +64,7 @@ export function nativeActor(species: 'hare' | 'deer', bornAt: number): ActorComp
 }
 /** The sole legacy physical conversion. Run inside the startup/create transaction. */
 export function migrateActors(world: WorldState): void {
-  if (world.schemaVersion === 3) return;
+  if (world.schemaVersion >= 3) return;
   for (const entity of Object.values(world.entities)) {
     const legacy = entity.animal;
     if (!entity.actor && legacy) {

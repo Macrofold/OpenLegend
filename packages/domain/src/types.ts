@@ -95,7 +95,8 @@ export type ActionType =
   | 'hunt'
   | 'harvest'
   | 'cook'
-  | 'rest';
+  | 'rest'
+  | 'replenish';
 export interface Action {
   id: string;
   type: ActionType;
@@ -105,6 +106,9 @@ export interface Action {
   path: Position[];
   remainingSeconds: number;
   totalSeconds: number;
+  attributeId?: string;
+  definitionVersion?: number;
+  transferred?: number;
   recipeId?: string;
   preparation?: NativePreparation;
   itemId?: string;
@@ -121,6 +125,10 @@ export interface CharacterTrait {
 }
 
 export interface ActorComponent {
+  senses?: string[];
+  /** Receiver-private provenance, never part of a contact projection. */
+  contacts?: Record<string, import('./perception.js').ContactEpisode>;
+  attributes?: Record<string, import('./world-modules.js').AttributeState>;
   /** Descriptive starting traits, not mechanical bonuses. Saved with the actor. */
   traits?: CharacterTrait[];
   /** God-authored identity seeds are descriptive context, never mechanical authority. */
@@ -132,7 +140,7 @@ export interface ActorComponent {
   goals?: string[];
   rest?: import('./sleep.js').RestState;
   controller: 'player' | 'npc' | 'native';
-  species?: 'human' | 'hare' | 'deer';
+  species?: 'human' | 'hare' | 'deer' | 'construct';
   body?: import('./living.js').LivingBody;
   capabilities?: {
     cognition: boolean;
@@ -142,8 +150,8 @@ export interface ActorComponent {
     needs: boolean;
   };
   health: number;
-  fullness: number;
-  energy: number;
+  fullness?: number;
+  energy?: number;
   alive: boolean;
   incapacitated: boolean;
   bornAt: number;
@@ -184,6 +192,7 @@ export interface Entity {
   kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains';
   position: Position;
   actor?: ActorComponent;
+  replenisher?: { attributeId: string; remaining: number };
   animal?: AnimalComponent;
   resource?: ResourceComponent;
   remains?: RemainsComponent;
@@ -198,7 +207,7 @@ export interface MemoryRecord {
   id: string;
   actorId: string;
   kind: 'episode' | 'belief' | 'commitment' | 'reflection';
-  source: 'observed' | 'heard' | 'inferred' | 'self_thought';
+  source: 'observed' | 'heard' | 'felt' | 'internal' | 'inferred' | 'self_thought';
   responseId?: string;
   summary: string;
   at: number;
@@ -214,6 +223,7 @@ export interface KnowledgeRecord {
   evidenceId: string;
 }
 export interface WorldEvent {
+  scope?: 'external' | 'private';
   order?: number;
   conversationId?: string;
   id: string;
@@ -240,6 +250,7 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  moduleManifest: import('./world-modules.js').WorldModuleManifest;
   storyPolicy?: import('./story-selection.js').StoryPolicy;
   storyPolicyRevision?: number;
   socialPolicy?: { conversationInactivitySeconds: number; notableThreshold: number };
@@ -251,7 +262,7 @@ export interface WorldState {
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
-  schemaVersion: 1 | 2 | 3;
+  schemaVersion: 1 | 2 | 3 | 4;
   id: string;
   seed: number;
   rngState: number;
@@ -292,6 +303,7 @@ export type Command = Envelope &
     | { type: 'gather' | 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }
     | { type: 'craft'; recipeId: string }
+    | { type: 'replenish'; targetId: string; attributeId: string }
     | { type: 'equip' | 'eat'; itemId: string }
     | { type: 'hunt'; targetId: string; weaponItemId?: string; ammoItemId?: string }
     | { type: 'cook'; itemId: string; heatId: string }
@@ -336,8 +348,8 @@ export interface GodPersonEditorDraft {
   goals: string[];
   stats: {
     health: number;
-    fullness: number;
-    energy: number;
+    fullness?: number;
+    energy?: number;
   };
 }
 
@@ -363,6 +375,7 @@ export interface ActorObservation {
   at: number;
   actor: Entity;
   visibleEntities: Entity[];
+  contacts: import('./perception.js').ContactView[];
   inventory: ItemInstance[];
   itemDefinitions: ItemDefinition[];
   knownRecipes: RecipeDefinition[];

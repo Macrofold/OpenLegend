@@ -4,6 +4,8 @@ This is the sole implementation tracker for gameplay save/load capabilities. The
 
 Tasks deliberately avoid enumerating object types, fields or physical layouts. Subsystem owners maintain their own serialization, validation and migration details as they evolve. Completing the framework does not automatically establish coverage for subsequently added state.
 
+Coordinate module dependency capture and load validation with [EWF07](extensible-world-foundation.md#ewf07--module-lifecycle-and-current-format-save-integration); module fixtures do not complete this tracker’s broader acceptance.
+
 ## Initial implemented slice
 
 - [x] SL00–SL03 foundations: a repository-owned current-format package captures `SavedWorld` plus durable history tables; manual slots publish atomically in the local save folder after transactional capture. No field-by-field world registry.

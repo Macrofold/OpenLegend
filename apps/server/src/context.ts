@@ -1,4 +1,6 @@
-import { canHear } from '@open-legend/domain';
+import { nativeNeedBelow } from '@open-legend/domain';
+import { attributeDefinition, readAttribute } from '@open-legend/domain';
+import { hearsEntity, visionRadius } from '@open-legend/domain';
 import {
   findPath,
   NATIVE_PREPARATIONS,
@@ -74,6 +76,7 @@ export function buildContext(service: WorldService, actorId: string, query: stri
     }));
   const context = {
     world: { id: observed.worldId, profile: service.world.profile, simulationSeconds: observed.at },
+    contacts: observed.contacts,
     self: { ...observed.actor, name: excerpt(observed.actor.name, 40) },
     nearby: observed.visibleEntities.map((entity) => ({
       id: entity.id,
@@ -191,12 +194,32 @@ export function npcCandidates(
     inventory
       .filter((item) => item.definitionId === definitionId)
       .reduce((sum, item) => sum + item.quantity, 0);
+  const replenishments: CandidateAction[] = observed.visibleEntities.flatMap((target) => {
+    const definition =
+      target.replenisher && attributeDefinition(service.world, target.replenisher.attributeId);
+    if (!definition?.reservoir || readAttribute(actor, definition) === undefined) return [];
+    const command: CommandInput = {
+      type: 'replenish',
+      targetId: target.id,
+      attributeId: definition.id,
+    };
+    return service.previewCommand(command, actorId).ok
+      ? [
+          {
+            id: `replenish-${target.id}`,
+            description: `${definition.reservoir.actionLabel} at ${target.name}.`,
+            command,
+          },
+        ]
+      : [];
+  });
   const actions: CandidateAction[] = [
+    ...replenishments,
     {
       id: 'continue',
       description: actor.action
         ? `Continue the ${actor.action.type} already in progress.`
-        : 'Watch the clearing while considering the next useful step.',
+        : 'Remain in place while considering the next useful step.',
       command: null,
     },
   ];
@@ -217,7 +240,7 @@ export function npcCandidates(
   const nearbyConversations = new Map<string, string>();
   for (const entity of observed.visibleEntities) {
     const id = service.world.conversations?.active[entity.id];
-    if (id && id !== activeId && canHear(service.world, observed.actor.position, entity.position))
+    if (id && id !== activeId && hearsEntity(service.world, observed.actor, entity))
       nearbyConversations.set(id, entity.name);
   }
   for (const [id, name] of [...nearbyConversations].slice(0, 4))
@@ -233,19 +256,37 @@ export function npcCandidates(
     });
   for (const item of inventory) {
     const definition = definitions.get(item.definitionId);
-    if (definition?.nutrition && actor.fullness < (actor.action ? 30 : 85))
+    if (definition?.nutrition && nativeNeedBelow(actor, 'fullness', actor.action ? 30 : 85))
       actions.push({
         id: `eat:${item.id}`,
         description: `Eat one ${definition.name} to restore fullness.`,
         command: { type: 'eat', itemId: item.id },
       });
   }
-  if (actor.energy < (actor.action ? 10 : 90) && actor.action?.type !== 'rest')
+  if (nativeNeedBelow(actor, 'energy', actor.action ? 10 : 90) && actor.action?.type !== 'rest')
     actions.push({ id: 'rest', description: 'Rest to recover energy.', command: { type: 'rest' } });
   // Starting another timed task would discard actual work/materials. Native survival
   // may still interrupt an emergency; ordinary thought preserves the existing plan.
   if (actor.action) return actions;
 
+  if (visionRadius(service.world, observed.actor) === 0) {
+    // Offer probes independently of hidden walkability; native admission supplies blocked feedback.
+    for (const [direction, dx, dz] of [
+      ['north', 0, -0.75],
+      ['east', 0.75, 0],
+      ['south', 0, 0.75],
+      ['west', -0.75, 0],
+    ] as const)
+      actions.push({
+        id: `probe-${direction}`,
+        description: `Probe a short distance ${direction}.`,
+        command: {
+          type: 'move',
+          position: { x: observed.actor.position.x + dx, z: observed.actor.position.z + dz },
+        },
+      });
+    return actions;
+  }
   for (const [preparation, recipe] of Object.entries(NATIVE_PREPARATIONS)) {
     if (quantity(recipe.input) >= recipe.inputQuantity)
       actions.push({

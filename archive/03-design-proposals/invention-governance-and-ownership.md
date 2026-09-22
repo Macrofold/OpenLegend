@@ -79,6 +79,10 @@ If the world is hosted separately, an authenticated publication/synchronization 
 
 ## Every world has an invention pack
 
+### Reusable constructs and specializations
+
+Eligible content includes selectors, predicates, effect/lifetime policies, templates, closed specializations, organism/sense/controller definitions and module bundles. Partially unbound templates declare required destination bindings and are labeled separately from runnable content. Specialization/forks preserve lineage, exact dependencies and recorded use/modification/redistribution rights; compatibility grants no rights. Destination adaptation requires a validated binding/adapter, not matching labels/units or automatic latest-version updates. Live targets, invocations, private actor state, creator inspiration and account permissions are excluded unless separately authorized for their proper purpose. See [construct semantics](../07-technical-architecture/world-module-runtime.md#reusable-constructs-and-specialization) and [EX10](../../docs/extensible-world-examples.md).
+
 Every world should have a logical invention pack containing the complete inventory of that world's inventions. Its inventory is world-associated and updated when definitions are admitted, revised or retired. A published/exported release is an **immutable versioned snapshot**, not a live link that silently changes recipients' worlds.
 
 A proposed pack release records the source world and snapshot revision, pack/version ID, manifest hash, every in-scope invention/version, contributor attribution, pinned dependency closure, compatible engine/schema versions, applicable terms, and export/redistribution eligibility. Preserve active definitions, dependencies and versions still needed by saved objects or processes; include a history/index of retired versions so “every invention” does not silently mean only the newest visible actions. The precise history-payload retention limit remains open and must be shown to the exporter.

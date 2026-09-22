@@ -1,7 +1,7 @@
 import { draftWorld } from './draft.js';
 import { executeCommand, SIMULATION_RULES } from './kernel.js';
 import { appendMemory, canonicalJson, emit, finish, outcome } from './events.js';
-import { canSee } from './perception.js';
+import { seesEntity } from './perception.js';
 import { distance, hasLineOfSight } from './spatial.js';
 import type { Command, Outcome, Transition, WorldState } from './types.js';
 
@@ -177,7 +177,7 @@ export function commitActorResponse(
       !reachable ||
       (target &&
         (!hasLineOfSight(world, source.position, target.position) ||
-          !canSee(source.position, target.position) ||
+          !seesEntity(world, source, target) ||
           (target.actor && !target.actor.alive)))
     )
       components.act = outcome(

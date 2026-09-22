@@ -4,6 +4,10 @@ This is the focused tracker for optional multi-operation decisions, actor-owned 
 
 Behavior belongs to [Agent agency](../agent-agency.md); the operational contract belongs to [Agent agency runtime](../../archive/07-technical-architecture/agent-agency-runtime.md). Existing [CR/CH](cognition-redesign.md), [NC](narration-and-conversations.md), [INV](inventions-and-world-evolution.md), [performance](performance.md) and [save/load](save-and-load.md) trackers retain their own work. Their IDs and valid acceptance requirements must not be silently replaced by AG tasks.
 
+[EWF06](extensible-world-foundation.md#ewf06--action-and-controller-integration-without-a-parallel-agency-system) supplies common integration; AG retains its delivery and AG01–AG04 need not wait for complete EWF/EPR qualification. AG05/AG06 consume family/concern interfaces; AG09 captures manifest dependencies.
+
+The attribute slice supplies generic concerns and replenishment candidates/native continuation through the existing single-action executor. It does not implement AG01 multi-operation decisions, AG02 goals or AG03/04 maintained plans; see [Architecture](../architecture.md#extensible-attribute-foundation).
+
 ## Ownership and delivery order
 
 AG owns the new decision envelope, operational goal/plan state, native continuation and actor-side integration. INV owns invention request policy, actor-method clarification/translation, definition admission, activation and mechanical family growth. EPR owns stimulus scope, perception-change identity and reaction intake; NC owns conversations, narration integration and expressive-impact behavior. CR owns the existing memory/attention/reflection substrate; CH owns an optional tool-using planning harness. A useful native plan does not depend on building CH01.

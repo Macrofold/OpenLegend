@@ -97,6 +97,8 @@ Deletion spans primary rows, replicas, search indexes, cached contexts, provider
 
 ## 5. Backup and recovery
 
+The [world-module manifest](world-module-runtime.md#11-save-restore-and-storage-extension) uses existing exact definition identities and storage ownership. Module state joins current-world capture or an explicitly host-owned authoritative store; declarations cannot create arbitrary SQL access or tables. No universal EAV schema is required.
+
 Use encrypted managed backups and PostgreSQL base backups plus WAL archival for point-in-time recovery. Verify object-store checkpoints/artifacts and metadata references together; database backup alone does not preserve external bytes. See [PostgreSQL continuous archiving](https://www.postgresql.org/docs/18/continuous-archiving.html).
 
 Before external launch, record concrete recovery point and recovery time objectives for process crash, database/zone failover, region loss and accidental deletion. Starting engineering targets: no acknowledged gameplay loss for a single application-process crash; database-failover behavior aligned to the selected replication policy; disaster recovery point at most 5 minutes and recovery time at most 1 hour for the chosen initial load profile. These targets require restoration drills and may change with deployment/cost decisions; they are not achieved guarantees.

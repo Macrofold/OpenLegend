@@ -1,7 +1,9 @@
+import { projectAttributes } from '@open-legend/domain';
+import { nativeNeedBelow } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
-import { nearbyEntities, canSee, PERCEPTION_RULES } from '@open-legend/domain';
+import { nearbyEntities, seesEntity, visionRadius } from '@open-legend/domain';
 import { decisionQuestions, inventionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
 import { interestMatches, type InterestSubscription } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
@@ -402,8 +404,8 @@ export class AiDirector {
       run.job.kind === 'thought' &&
       resident &&
       (resident.incapacitated ||
-        resident.fullness < 20 ||
-        resident.energy < 10 ||
+        nativeNeedBelow(resident, 'fullness', 20) ||
+        nativeNeedBelow(resident, 'energy', 10) ||
         resident.health < 0.1 * (resident.body?.maxHealth ?? 100))
     )
       throw new StopJob('stale', 'Native urgent needs superseded semantic work.');
@@ -1188,18 +1190,22 @@ export class AiDirector {
         this.thoughtWork.refresh(world, (id) => {
           const entity = world.entities[id]!,
             actor = entity.actor!;
-          const ids = nearbyEntities(world, entity.position, PERCEPTION_RULES.sightRadius)
-            .filter((other) => other.id !== id && canSee(entity.position, other.position))
+          const ids = nearbyEntities(world, entity.position, visionRadius(world, entity))
+            .filter((other) => other.id !== id && seesEntity(world, entity, other))
             .map((other) => other.id);
           visible.set(id, ids);
           return [
             actor.controller,
             actor.incapacitated,
             actor.goal,
-            actor.fullness < 20,
-            actor.energy < 15,
-            actor.energy < 10,
+            nativeNeedBelow(actor, 'fullness', 20),
+            nativeNeedBelow(actor, 'energy', 15),
+            nativeNeedBelow(actor, 'energy', 10),
             actor.rest?.asleep,
+            projectAttributes(world, entity, 'owner')
+              .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
+              .map((v) => v.id)
+              .join('|'),
             ids.join('\0'),
             world.memories[id],
             world.experience?.awareness[id],
@@ -1265,7 +1271,14 @@ export class AiDirector {
         const fingerprint = digest({
           matches,
           goal: actor.goal,
-          need: actor.fullness < 20 ? 'hungry' : actor.energy < 15 ? 'exhausted' : 'stable',
+          need: nativeNeedBelow(actor, 'fullness', 20)
+            ? 'hungry'
+            : nativeNeedBelow(actor, 'energy', 15)
+              ? 'exhausted'
+              : 'stable',
+          concerns: projectAttributes(world, entity, 'owner')
+            .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
+            .map((v) => [v.id, v.concern]),
           mind: world.innerWorlds?.[entity.id]?.revision,
           policy: policy.revision,
         });
@@ -1283,14 +1296,17 @@ export class AiDirector {
             (id) => `I notice ${world.entities[id]!.name}, relevant to my current interest.`,
           ),
           `My current goal is ${actor.goal}.`,
-          ...(actor.fullness < 20 ? ['I am critically hungry.'] : []),
-          ...(actor.energy < 15 ? ['I am exhausted.'] : []),
+          ...projectAttributes(world, entity, 'owner')
+            .filter((v) => Object.hasOwn(actor.attributes ?? {}, v.id))
+            .flatMap((v) => (v.concern ? [v.concern] : [])),
+          ...(nativeNeedBelow(actor, 'fullness', 20) ? ['I am critically hungry.'] : []),
+          ...(nativeNeedBelow(actor, 'energy', 15) ? ['I am exhausted.'] : []),
         ].join(' ');
         const urgentNeed = actor.rest?.asleep
           ? 'Sleep blocked autonomous cognition.'
-          : actor.fullness < 20
+          : nativeNeedBelow(actor, 'fullness', 20)
             ? 'Critical hunger required native survival behavior.'
-            : actor.energy < 10
+            : nativeNeedBelow(actor, 'energy', 10)
               ? 'Exhaustion required native survival behavior.'
               : undefined;
         const diagnosticTrigger = urgentNeed
@@ -1311,7 +1327,11 @@ export class AiDirector {
               ? 'Autonomous cognition · Interest cue'
               : 'Autonomous cognition · State change';
         const id = `thought-${randomUUID()}`;
-        if (actor.fullness < 20 || actor.energy < 10 || actor.rest?.asleep) {
+        if (
+          nativeNeedBelow(actor, 'fullness', 20) ||
+          nativeNeedBelow(actor, 'energy', 10) ||
+          actor.rest?.asleep
+        ) {
           await this.log.save({
             id,
             kind: 'Semantic trigger',

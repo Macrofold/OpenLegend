@@ -1,3 +1,16 @@
+import {
+  WILDERNESS_NEEDS,
+  hasWildernessNeeds,
+  nativeNeedBelow,
+  setWildernessNeed,
+  advanceWildernessNeeds,
+} from './wilderness-needs.js';
+import {
+  attributeDefinition,
+  readAttribute,
+  setAttribute,
+  advanceReservoirs,
+} from './world-modules.js';
 import { spatialCandidates, nearbyEntities } from './spatial.js';
 import { changeConversation } from './conversations.js';
 import { canSpeak, hasMemory, reconcileBody, commitBodyEffects } from './living.js';
@@ -8,9 +21,18 @@ import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
 import { appendMemory, canonicalJson, emit, finish, outcome } from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
-import { canHear, canSee, PERCEPTION_RULES } from './perception.js';
+import {
+  hearsEntity,
+  seesEntity,
+  visionRadius,
+  sensesFor,
+  contactViews,
+  directProbe,
+  PERCEPTION_RULES,
+} from './perception.js';
 import { distance, findPath, hasLineOfSight, isWalkable } from './spatial.js';
 import type {
+  ActorComponent,
   Action,
   ActorObservation,
   Command,
@@ -32,12 +54,7 @@ export const SIMULATION_RULES = {
   sightRadius: PERCEPTION_RULES.sightRadius,
   interactionRadius: 1.6,
   animalFleeTilesPerSecond: 0.055,
-  fullnessPerSecond: 0.003,
-  activeEnergyPerSecond: 0.0015,
-  idleEnergyPerSecond: 0.0005,
-  starvationDamagePerSecond: 0.009,
-  exhaustionDamagePerSecond: 0.003,
-  restEnergyPerSecond: 0.07,
+  ...WILDERNESS_NEEDS,
   nativeRestSeconds: 28800,
   harvestSeconds: 84,
   cookSeconds: 90,
@@ -85,8 +102,8 @@ function validPosition(value: unknown): value is Position {
     Number.isFinite((value as Position).z)
   );
 }
-function visible(actor: Entity, target: Entity): boolean {
-  return canSee(actor.position, target.position);
+function visible(world: WorldState, actor: Entity, target: Entity): boolean {
+  return seesEntity(world, actor, target);
 }
 function canCut(world: WorldState, actorId: string): boolean {
   return inventoryFor(world, actorId).some((item) =>
@@ -142,7 +159,10 @@ function approach(world: WorldState, actor: Entity, action: Action): Outcome | n
     hasLineOfSight(world, actor.position, destination)
   )
     return null;
-  const path = findPath(world, actor.position, destination);
+  const path =
+    visionRadius(world, actor) === 0
+      ? directProbe(world, actor.position, destination)
+      : findPath(world, actor.position, destination);
   if (!path) return outcome(false, 'unreachable', 'There is no walkable route to that target.');
   action.stage = 'approaching';
   action.path = path;
@@ -183,6 +203,35 @@ function startWork(world: WorldState, actor: Entity, action: Action): Outcome | 
   return null;
 }
 
+/** Shared admission for player intentions and native reservoir response. */
+function prepareReplenishment(
+  world: WorldState,
+  actor: Entity,
+  attributeId: string,
+  targetId: string,
+): Action | Outcome {
+  const definition = attributeDefinition(world, attributeId);
+  const target = getOwn(world.entities, targetId);
+  const value = definition && readAttribute(actor.actor!, definition);
+  if (!definition?.reservoir || definition.schema.kind !== 'number' || typeof value !== 'number')
+    return outcome(false, 'not-applicable', 'That reservoir is not installed on this actor.');
+  if (
+    !target?.replenisher ||
+    target.replenisher.attributeId !== definition.id ||
+    target.replenisher.remaining <= 0
+  )
+    return outcome(false, 'depleted', 'No compatible replenishment supply remains.');
+  if (!visible(world, actor, target))
+    return outcome(false, 'not-visible', 'The source is not perceived.');
+  if (value >= definition.schema.max)
+    return outcome(false, 'full', 'The reservoir is already full.');
+  const action = createAction(world, 'replenish', definition.reservoir.workSeconds);
+  action.targetId = target.id;
+  action.attributeId = definition.id;
+  action.definitionVersion = definition.version;
+  return action;
+}
+
 /** Accepted commands are idempotent by id+body. Rejections cause no physical effects. */
 export function executeCommand(original: WorldState, command: Command): Transition {
   const reject = (code: string, message: string): Transition => ({
@@ -220,6 +269,14 @@ export function executeCommand(original: WorldState, command: Command): Transiti
   let action: Action | undefined;
   switch (command.type) {
     case 'move': {
+      if (
+        visionRadius(world, actor) === 0 &&
+        (!validPosition(command.destination) || distance(actor.position, command.destination) > 1)
+      )
+        return reject(
+          'unsupported-navigation',
+          'Only a short direct probe is supported without vision.',
+        );
       if (!validPosition(command.destination) || !isWalkable(world, command.destination))
         return reject('blocked', 'Choose walkable ground.');
       action = createAction(world, 'move', 0);
@@ -230,10 +287,16 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       const target = getOwn(world.entities, command.targetId);
       if (!target?.resource || target.resource.quantity < 1)
         return reject('depleted', 'There is nothing left to gather here.');
-      if (!visible(actor, target))
+      if (!visible(world, actor, target))
         return reject('not-visible', 'Move close enough to see that resource.');
       action = createAction(world, 'gather', target.resource.workSeconds);
       action.targetId = target.id;
+      break;
+    }
+    case 'replenish': {
+      const prepared = prepareReplenishment(world, actor, command.attributeId, command.targetId);
+      if ('ok' in prepared) return { world: original, events: [], outcome: prepared };
+      action = prepared;
       break;
     }
     case 'prepare': {
@@ -282,7 +345,8 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       const target = getOwn(world.entities, command.targetId);
       if (!(target?.animal && target.actor?.alive))
         return reject('not-huntable', 'Choose a living animal.');
-      if (!visible(actor, target)) return reject('not-visible', 'The animal is out of sight.');
+      if (!visible(world, actor, target))
+        return reject('not-visible', 'The animal is out of sight.');
       const weaponItemId = command.weaponItemId ?? component.equippedItemId ?? '';
       const item = getOwn(world.items, weaponItemId);
       const launcher = item && world.itemDefinitions[item.definitionId]?.launcher;
@@ -301,7 +365,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       const target = getOwn(world.entities, command.targetId);
       if (!target?.remains || target.remains.harvested)
         return reject('not-harvestable', 'There are no unharvested remains there.');
-      if (!visible(actor, target))
+      if (!visible(world, actor, target))
         return reject('not-visible', 'Move within sight of the remains.');
       if (!canCut(world, actor.id))
         return reject('missing-tool', 'A cutting point is needed to prepare the remains.');
@@ -314,7 +378,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       const heat = getOwn(world.entities, command.heatId);
       if (!item || item.ownerId !== actor.id || item.definitionId !== 'raw_meat')
         return reject('not-cookable', 'Choose raw meat in this actor’s inventory.');
-      if (!heat?.heat?.lit || !visible(actor, heat))
+      if (!heat?.heat?.lit || !visible(world, actor, heat))
         return reject('no-heat', 'A visible lit campfire is needed.');
       action = createAction(world, 'cook', SIMULATION_RULES.cookSeconds);
       action.itemId = item.id;
@@ -322,6 +386,8 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       break;
     }
     case 'eat': {
+      if (!hasWildernessNeeds(component))
+        return reject('not-applicable', 'This body does not consume food.');
       const item = getOwn(world.items, command.itemId);
       const definition = item && world.itemDefinitions[item.definitionId];
       if (!item || item.ownerId !== actor.id || !definition?.nutrition)
@@ -332,7 +398,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
             : 'Choose prepared edible food.',
         );
       takeItem(world, actor.id, item.id);
-      component.fullness = Math.min(100, component.fullness + definition.nutrition);
+      setWildernessNeed(component, 'fullness', component.fullness! + definition.nutrition);
       emit(
         world,
         events,
@@ -346,6 +412,8 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       break;
     }
     case 'rest':
+      if (!hasWildernessNeeds(component))
+        return reject('not-applicable', 'This body does not use wilderness rest.');
       action = createAction(world, 'rest', SIMULATION_RULES.nativeRestSeconds);
       break;
     case 'cancel': {
@@ -366,8 +434,10 @@ export function executeCommand(original: WorldState, command: Command): Transiti
         );
       actor.position = { x: 11, z: 13 };
       component.health = Math.max(component.health, 65);
-      component.fullness = Math.max(component.fullness, 45);
-      component.energy = Math.max(component.energy, 65);
+      if (hasWildernessNeeds(component)) {
+        setWildernessNeed(component, 'fullness', Math.max(component.fullness, 45));
+        setWildernessNeed(component, 'energy', Math.max(component.energy, 65));
+      }
       component.incapacitated = false;
       component.alive = true;
       component.action = null;
@@ -388,9 +458,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
       if (
         command.targetId &&
-        (!target?.actor?.alive ||
-          !hasMemory(target) ||
-          !canHear(world, actor.position, target.position))
+        (!target?.actor?.alive || !hasMemory(target) || !hearsEntity(world, target, actor))
       )
         return reject('not-heard', 'The listener is not within hearing range.');
       if (target?.actor?.rest?.asleep) {
@@ -425,11 +493,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
       const target = getOwn(world.entities, command.targetId);
       const recipe = getOwn(world.recipes, command.recipeId);
-      if (
-        !target?.actor?.alive ||
-        !hasMemory(target) ||
-        !canHear(world, actor.position, target.position)
-      )
+      if (!target?.actor?.alive || !hasMemory(target) || !hearsEntity(world, target, actor))
         return reject('not-heard', 'Teaching needs a nearby listener.');
       if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
         return reject('not-learned', 'You cannot teach a technique you do not know.');
@@ -457,7 +521,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       return reject('unsupported', 'This command is not supported.');
   }
   if (action) {
-    if (['move', 'gather', 'hunt', 'harvest', 'cook'].includes(action.type)) {
+    if (['move', 'gather', 'hunt', 'harvest', 'cook', 'replenish'].includes(action.type)) {
       const error = approach(world, actor, action);
       if (error) return { world: original, events: [], outcome: error };
     }
@@ -503,6 +567,21 @@ function completeAction(
         'moved',
         `${actor.name} moved to ${Number(actor.position.x.toFixed(1))}, ${Number(actor.position.z.toFixed(1))}.`,
         actor,
+      );
+      break;
+    case 'replenish':
+      emit(
+        world,
+        events,
+        'replenished',
+        `${actor.name} finished replenishing.`,
+        actor,
+        action.targetId,
+        {
+          attributeId: action.attributeId!,
+          definitionVersion: action.definitionVersion!,
+          transferred: action.transferred ?? 0,
+        },
       );
       break;
     case 'gather': {
@@ -695,7 +774,10 @@ function advanceAction(
     ) {
       const last = action.path[action.path.length - 1];
       if (!last || distance(last, destination) > 0.6) {
-        const path = findPath(world, actor.position, destination);
+        const path =
+          visionRadius(world, actor) === 0
+            ? directProbe(world, actor.position, destination)
+            : findPath(world, actor.position, destination);
         if (!path) {
           failAction(world, actor, events, 'the route became blocked.');
           return;
@@ -721,10 +803,46 @@ function advanceAction(
       return;
     }
   }
-  if (action.type === 'rest')
-    actor.actor!.energy = Math.min(
-      100,
-      actor.actor!.energy + SIMULATION_RULES.restEnergyPerSecond * seconds,
+  if (action.type === 'replenish') {
+    const definition = attributeDefinition(world, action.attributeId ?? '');
+    const target = world.entities[action.targetId ?? ''];
+    const value = definition && readAttribute(actor.actor!, definition);
+    if (
+      !definition?.reservoir ||
+      definition.version !== action.definitionVersion ||
+      definition.schema.kind !== 'number' ||
+      typeof value !== 'number' ||
+      !target?.replenisher ||
+      target.replenisher.attributeId !== definition.id ||
+      distance(actor.position, target.position) > SIMULATION_RULES.interactionRadius ||
+      target.replenisher.remaining <= 0 ||
+      !hasLineOfSight(world, actor.position, target.position)
+    ) {
+      failAction(
+        world,
+        actor,
+        events,
+        'the replenishment binding or supply is no longer available.',
+      );
+      return;
+    }
+    // Debit and credit share one native transition; cancellation never refunds transferred supply.
+    const amount = Math.min(
+      target.replenisher.remaining,
+      definition.schema.max - value,
+      definition.reservoir.replenishPerSecond * Math.min(seconds, action.remainingSeconds),
+    );
+    setAttribute(world, actor, definition, value + amount, events);
+    target.replenisher.remaining -= amount;
+    action.transferred = (action.transferred ?? 0) + amount;
+    if (value + amount === definition.schema.max || target.replenisher.remaining === 0)
+      action.remainingSeconds = 0;
+  }
+  if (action.type === 'rest' && hasWildernessNeeds(actor.actor!))
+    setWildernessNeed(
+      actor.actor!,
+      'energy',
+      actor.actor!.energy! + SIMULATION_RULES.restEnergyPerSecond * seconds,
     );
   action.remainingSeconds = Math.max(0, action.remainingSeconds - seconds);
   if (action.remainingSeconds === 0) completeAction(world, actor, action, events);
@@ -780,7 +898,13 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
 /** Native urgency uses only carried food and currently visible resources; it is not an AI impersonation. */
 function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]): void {
   const component = actor.actor!;
-  if (component.controller !== 'npc' || !component.alive || component.incapacitated) return;
+  if (
+    !hasWildernessNeeds(component) ||
+    component.controller !== 'npc' ||
+    !component.alive ||
+    component.incapacitated
+  )
+    return;
   if (component.fullness < 38) {
     const food = inventoryFor(world, actor.id).find(
       (item) => !!world.itemDefinitions[item.definitionId]?.nutrition,
@@ -794,7 +918,7 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
       }
       const definition = world.itemDefinitions[food.definitionId]!;
       takeItem(world, actor.id, food.id);
-      component.fullness = Math.min(100, component.fullness + definition.nutrition!);
+      setWildernessNeed(component, 'fullness', component.fullness + definition.nutrition!);
       emit(
         world,
         events,
@@ -812,7 +936,7 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
         (entity) =>
           entity.resource?.definitionId === 'berries' &&
           entity.resource.quantity > 0 &&
-          visible(actor, entity),
+          visible(world, actor, entity),
       )
       .sort(
         (a, b) => distance(actor.position, a.position) - distance(actor.position, b.position),
@@ -836,6 +960,42 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
   ) {
     component.action = createAction(world, 'rest', SIMULATION_RULES.nativeRestSeconds);
     component.planGeneration++;
+  }
+}
+
+/** A low reservoir can use finite nearby supply without model calls or a goal record. */
+function nativeReservoirResponse(world: WorldState, actor: Entity): void {
+  const component = actor.actor!;
+  if (component.controller !== 'npc' || component.action || !component.attributes) return;
+  for (const [id, state] of Object.entries(component.attributes ?? {})) {
+    const definition = attributeDefinition(world, id)!;
+    if (
+      !definition.reservoir ||
+      !definition.concern ||
+      typeof state.value !== 'number' ||
+      state.value >= definition.concern.below
+    )
+      continue;
+    const sources = Object.values(world.entities)
+      .filter(
+        (target) =>
+          target.replenisher?.attributeId === id &&
+          target.replenisher.remaining > 0 &&
+          visible(world, actor, target),
+      )
+      .sort(
+        (a, b) =>
+          distance(actor.position, a.position) - distance(actor.position, b.position) ||
+          a.id.localeCompare(b.id),
+      );
+    for (const target of sources) {
+      const action = prepareReplenishment(world, actor, id, target.id);
+      if ('ok' in action) continue;
+      if (approach(world, actor, action)) continue;
+      component.action = action;
+      component.planGeneration++;
+      return;
+    }
   }
 }
 
@@ -878,35 +1038,14 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       .sort((a, b) => a.id.localeCompare(b.id))) {
       const component = actor.actor!;
       if (!component.alive || component.incapacitated) continue;
-      if (component.capabilities?.needs !== false) {
-        const previousHealth = component.health;
-        component.fullness = Math.max(
-          0,
-          component.fullness - SIMULATION_RULES.fullnessPerSecond * seconds,
-        );
-        component.energy = Math.max(
-          0,
-          component.energy -
-            (component.action
-              ? SIMULATION_RULES.activeEnergyPerSecond
-              : SIMULATION_RULES.idleEnergyPerSecond) *
-              seconds,
-        );
-        if (component.fullness === 0)
-          component.health = Math.max(
-            0,
-            component.health - SIMULATION_RULES.starvationDamagePerSecond * seconds,
-          );
-        if (component.energy === 0)
-          component.health = Math.max(
-            0,
-            component.health - SIMULATION_RULES.exhaustionDamagePerSecond * seconds,
-          );
-        if (component.health !== previousHealth) reconcileBody(world, actor, events, 'needs');
+      if (hasWildernessNeeds(component)) {
+        if (advanceWildernessNeeds(actor, seconds)) reconcileBody(world, actor, events, 'needs');
         if (component.health === 0) continue;
+        nativeSurvival(world, actor, events);
       }
-      if (component.capabilities?.needs !== false) nativeSurvival(world, actor, events);
-      accountRest(component, world.simTime, seconds);
+      advanceReservoirs(world, actor, seconds, events);
+      nativeReservoirResponse(world, actor);
+      if (hasWildernessNeeds(component)) accountRest(component, world.simTime, seconds);
       advanceAction(world, actor, seconds, events);
     }
     for (const entity of Object.values(world.entities).sort((a, b) => a.id.localeCompare(b.id))) {
@@ -943,18 +1082,91 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
     object: !entity.actor && !entity.animal,
   }));
   const nearby = spatialCandidates(entities.filter((e) => e.alive));
+  let nearbyAll: ReturnType<typeof spatialCandidates<(typeof entities)[number]>> | undefined;
   const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
   for (const actor of entities.filter((e) => e.alive && e.memory)) {
+    const radius = visionRadius(world, actor.entity);
+    const touch = sensesFor(world, actor.entity).find(
+      (s) => s.implementation === 'contact-proximity-v1',
+    );
+    if (touch) {
+      nearbyAll ??= spatialCandidates(entities);
+      const prior = actor.entity.actor!.contacts ?? {};
+      const contacts: NonNullable<ActorComponent['contacts']> = {};
+      // Source IDs stay in private state; acquisition is owner-scoped, never a public encounter.
+      // docs/events-perception-and-reactions.md#9-reaction-intake-and-scheduling owns intake.
+      for (const source of nearbyAll(actor.position, touch.radius)
+        .filter((e) => e.id !== actor.id && distance(actor.position, e.position) <= touch.radius)
+        .slice(0, 32)) {
+        const oldPosition = original.entities[source.id]?.position;
+        const detail =
+          oldPosition && distance(oldPosition, source.position) > 0.001 ? 'moving' : 'present';
+        const previous = prior[source.id];
+        contacts[source.id] =
+          previous && previous.detail === detail
+            ? previous
+            : {
+                id: previous?.id ?? nextId(world, 'contact'),
+                senseId: touch.id,
+                detail,
+                enteredAt: previous?.enteredAt ?? world.simTime,
+                changedAt: world.simTime,
+              };
+        if (!previous || previous.detail !== detail)
+          emit(
+            world,
+            events,
+            'contact',
+            detail === 'moving'
+              ? 'I feel an unidentified moving contact.'
+              : 'I feel an unidentified contact.',
+            actor.entity,
+            undefined,
+            {
+              contactId: contacts[source.id]!.id,
+              senseId: touch.id,
+              detail,
+              change: previous ? 'detail' : 'onset',
+              semanticTrigger: true,
+              importance: 6,
+            },
+            'private',
+          );
+      }
+      for (const [id, episode] of Object.entries(prior))
+        if (!contacts[id])
+          emit(
+            world,
+            events,
+            'contact',
+            'A contact is no longer present.',
+            actor.entity,
+            undefined,
+            {
+              contactId: episode.id,
+              senseId: episode.senseId,
+              change: 'end',
+              semanticTrigger: true,
+              importance: 6,
+            },
+            'private',
+          );
+      if (
+        Object.keys(contacts).length !== Object.keys(prior).length ||
+        Object.entries(contacts).some(([id, c]) => c !== prior[id])
+      )
+        actor.entity.actor!.contacts = contacts;
+    }
+    if (radius === 0) continue;
     const previous = original.visiblePeople?.[actor.id] ?? [];
     const previouslySeen = new Set(previous);
-    const seen = nearby(actor.position, PERCEPTION_RULES.sightRadius + 2)
+    const seen = nearby(actor.position, radius + 2)
       .filter(
         (e) =>
           e.id !== actor.id &&
           e.alive &&
-          (canSee(actor.position, e.position) ||
-            (previouslySeen.has(e.id) &&
-              distance(actor.position, e.position) <= PERCEPTION_RULES.sightRadius + 2)),
+          (distance(actor.position, e.position) <= radius ||
+            (previouslySeen.has(e.id) && distance(actor.position, e.position) <= radius + 2)),
       )
       .map((e) => e.id);
     for (const id of seen.filter((id) => !previouslySeen.has(id))) {
@@ -985,8 +1197,8 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
     )
       (world.visiblePeople ??= {})[actor.id] = seen;
     // Object exposures use the same committed awareness path without a cognition trigger.
-    const objects = nearbyObjects(actor.position, PERCEPTION_RULES.sightRadius).filter((entity) =>
-      canSee(actor.position, entity.position),
+    const objects = nearbyObjects(actor.position, radius).filter(
+      (entity) => distance(actor.position, entity.position) <= radius,
     );
     const priorObjects = new Set(
       original.visibleObjects?.[actor.id] ??
@@ -1051,11 +1263,14 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
     .map((record) => world.recipes[record.recipeId])
     .filter((recipe) => !!recipe);
   const definitionIds = new Set(inventory.map((item) => item.definitionId));
-  const visibleEntities = nearbyEntities(world, actor.position, PERCEPTION_RULES.sightRadius)
-    .filter((entity) => entity.id !== actorId && visible(actor, entity))
+  const visibleEntities = nearbyEntities(world, actor.position, visionRadius(world, actor))
+    .filter((entity) => entity.id !== actorId && visible(world, actor, entity))
     .map((entity) => {
       const copy = cloneValue(entity);
       if (copy.actor) {
+        // Sparse state is owner-private; explicit permitted projections carry public values.
+        delete copy.actor.attributes;
+        delete copy.actor.contacts;
         copy.actor.goal = '';
         copy.actor.planGeneration = 0;
       }
@@ -1066,10 +1281,13 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
     definitionIds.add(recipe.outputDefinitionId);
     for (const input of recipe.inputs) definitionIds.add(input.definitionId);
   }
+  const self = cloneValue(actor);
+  if (self.actor) delete self.actor.contacts;
   return cloneValue({
     worldId: world.id,
     at: world.simTime,
-    actor,
+    actor: self,
+    contacts: contactViews(actor),
     visibleEntities,
     inventory,
     itemDefinitions: [...definitionIds].map((id) => world.itemDefinitions[id]!).filter(Boolean),
@@ -1162,6 +1380,6 @@ export function canRecoverAtCamp(entity: Entity): boolean {
   return (
     !!actor &&
     actor.controller === 'player' &&
-    (actor.incapacitated || actor.health < 30 || actor.fullness < 20)
+    (actor.incapacitated || actor.health < 30 || nativeNeedBelow(actor, 'fullness', 20))
   );
 }

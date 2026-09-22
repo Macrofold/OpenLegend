@@ -6,6 +6,10 @@ This specification owns character memory, awareness, recall, attention, authored
 
 The CR01–CR11 runtime foundation is implemented; integrated acceptance and broader conditional features remain open. Build tasks are in [CR01–CR12](maintainers/cognition-redesign.md); current runtime facts belong in [Architecture](architecture.md#context-and-cognition) and [implementation status](../archive/05-project/implementation-status.md), with evidence in [Verification](verification.md). Immediate composed responses, durable conversations and selective Narrator execution are implemented; [NC acceptance](maintainers/narration-and-conversations.md) remains open. This document owns memory and attention behavior.
 
+This specifies OpenLegend's standard cognition and memory package. Alternate actor controllers or world-defined needs/senses integrate through typed, scoped interfaces; they do not inherit authority to rewrite this package's evidence, retention, or privacy rules. Shared integration is specified in [World-module runtime](../archive/07-technical-architecture/world-module-runtime.md#8-controller-and-context-boundaries).
+
+Bounded module-defined body/need/observation contributions share the existing compact-context budget. Complete accepted About me, required evidence, conversation guarantees and scope-before-relevance remain protected.
+
 ## 1. Intent and ownership
 
 A short exchange should receive a short, promptly generated answer. Speaking or making an immediate decision does not require the character to rewrite its relationships, beliefs, goals and concerns. Reflection is a separate background activity. Routine cleanup of remembered experience is lighter still.

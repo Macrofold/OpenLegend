@@ -4,6 +4,8 @@
 
 ## 1. Fit the existing authority boundary
 
+Use registered concern/observation/action adapters from the [shared runtime](world-module-runtime.md), not another engine or independent module registry.
+
 Keep one in-process simulation authority. The useful extension is a small operational layer between a model's proposal and the existing native commands, not a replacement engine.
 
 ```text
@@ -30,6 +32,8 @@ The domain owns serializable goals, plan execution state, authoritative action t
 Use the existing `WorldService` serialized mutation lane and repository transaction boundaries. No distributed event broker, global actor framework, second world copy, new engine-level scripting language or model call inside a fixed simulation step is required. Extract a module when a responsibility becomes difficult to test, not a new service for every box in the diagram.
 
 ## 2. Decision envelope and translation
+
+Registered action families extend `act` bindings, not privileged operation kinds. Unknown kinds still reject unless the host explicitly supports them.
 
 ### 2.1 Logical model contract
 
@@ -148,6 +152,10 @@ Do not watch hidden global state for the actor. “When Ada secretly finishes he
 
 A wait must have a bounded retention/review disposition. Expiry can produce one coalesced opportunity to reconsider; it is not permission for a retry loop. A goal waiting for an absent person may remain meaningful without repeatedly polling an LLM.
 
+### Future admitted mental effects
+
+[Source-linked imposed influences](world-module-runtime.md#fictional-mental-effects-and-operational-ownership) and self-authored intentions remain distinct under one agency owner. Expiry cannot restore an old goal list or undo completed work. No immediate cross-actor API or human-control permission is authorized; detailed effect delivery remains conditional under INV/EWF10.
+
 ## 4. Admission, ordering and physical execution
 
 ### 4.1 Two phases, not one giant asynchronous transaction
@@ -205,6 +213,8 @@ If two actors intend to take the same last resource, the single authoritative tr
 Use dependency-specific staleness. Mere passage of simulation time or unrelated awareness does not invalidate everything. A target's disappearance or a superseded plan can invalidate its affected action while leaving a valid utterance intact. Separate intent revision from the current broad `planGeneration` uses where those uses conflate a goal edit with replacing physical work.
 
 ## 5. Open action resolution
+
+[INV-3](../../docs/maintainers/inventions-and-world-evolution.md) owns family applicability/execution under [runtime §7](world-module-runtime.md#7-action-families-and-agency-integration).
 
 `ActionAttempt` accepts a known offered action handle, a supported expression reference, or a free-form attempt with scoped references and an optional proposed method. The request never contains authoritative effects.
 
@@ -274,6 +284,8 @@ Private needs, goals and invention feedback retain owner-private scope; applicat
 
 ### 7.2 Attention inputs
 
+Bounded module-defined concerns and sense evidence share this context budget; they add no compulsory category-selection call or mental-state extractor.
+
 Preserve the existing required-versus-optional context budget and scope-before-relevance rule. Add a compact active-intention projection, current plan frontier and fresh relevant results. Mandatory evidence already protected by memory/conversation contracts remains protected; do not reduce the current-conversation guarantee incidentally to fit new planner prose.
 
 Optional candidate construction combines perceived surroundings, possessions, known techniques, permitted memories and opportunities suggested by current needs or plan gaps. Compile bounded interests from explicit operational goals and known prerequisites as well as already-selected objects. The current selected-object-derived subscription should not be the only way to discover a needed material that has never entered attention.
@@ -307,6 +319,8 @@ Simulation time governs action durations, physical outcomes and adopted in-world
 If native scaling later requires dormant/far-agent approximations, gate it through the performance owner with equivalence/error evidence. This design does not authorize skipped RNG draws, fabricated offscreen outcomes or different facts for different observers.
 
 ## 8. Persistence, pause, restore and failure
+
+Continuation dependencies include exact manifest/definition versions. This is same-version integrity, not legacy support.
 
 Goals, plan frontier, pending native execution and actor-visible invention progress belong to same-version save integrity. Provider requests, uncertain charges, admission receipts and other real external operations retain the existing non-rewind/accounting rules.
 

@@ -1,6 +1,6 @@
 # World agent, durable world log, and invention workshop
 
-This document owns accepted product behavior for the creator agent, world inspection, workshop and confirmed conjuring experience. The current prototype has a bounded journal and immutable admitted G1 recipes, without a complete historical event store, privileged world agent or revision workshop.
+This document owns accepted product behavior for the creator agent, world inspection, workshop and confirmed conjuring experience. Current durable history, Narrator, finite invention and world-agent capabilities are described in [Architecture](../../docs/architecture.md); the complete privileged revision workshop remains target behavior.
 
 This document owns world-agent access, durable inspection and revision workflows. [Playability and controls](playability-and-controls.md) owns log/menu presentation; [invention governance and ownership](invention-governance-and-ownership.md) owns locks, authorship and pack rights. The [declaration architecture](../07-technical-architecture/declarations-and-evolution.md) owns authoritative activation and migration.
 
@@ -13,6 +13,57 @@ An invention opened from a log or account library offers Inspect, Workshop and, 
 Clicking **Invent** first searches permitted existing inventions using text embeddings and vector search. Similar matches open a new **Similar inventions** modal offering Use existing, Modify existing, Invent new or Cancel before candidate generation. Modification retains the selected version as a derived draft; use follows ordinary crafting/action prerequisites. No matches proceeds normally; search failure is visible. The [canonical search contract](../07-technical-architecture/declarations-and-evolution.md#similar-inventions-before-authoring) and INV-2.1a–2.1b own details and implementation status. This workflow is planned, not implemented.
 
 NPC invention uses the same backend service with actor-scoped method/feedback and [agency continuation](../../docs/agent-agency.md#6-actor-led-invention), without opening the player’s Similar inventions modal. Creator-only queries, persistent creator transcripts and public discovery rights do not become NPC permissions or private knowledge. An admitted method does not force construction.
+
+## Natural-language world and mechanic authoring
+
+The world agent is the primary interface between player/creator intent and the technical work of defining supported mechanics, organisms, senses, and subsystems. A creator should not need to learn schemas, edit scripts, or name storage tables to make an ordinary supported change. Technical artifacts remain fully inspectable under authorization, and all authoring surfaces use the same canonical draft, validation, and activation services.
+
+The [engine/world principles](../../docs/engine-and-world-boundaries.md#natural-language-authoring-with-inspectable-mechanics) define this interface goal. [Runtime contracts](../07-technical-architecture/world-module-runtime.md) define executable integration; [worked examples](../../docs/extensible-world-examples.md) illustrate scope without promising unsupported capabilities.
+
+### From intent to an inspectable candidate
+
+1. **Bind context and authority.** Identify whether the request is ordinary invention, creator workshop, installation, or instance creation. Resolve the authorized world, actor/origin, selected artifact/base revision, applicable locks, and spending scope. Asking in natural language grants no extra permission.
+2. **Understand the experience.** Preserve what the requester is trying to achieve. Distinguish a new reusable template, a specialized variant, a subsystem change, and one live instance. Ask only where ambiguity materially changes behavior, scope, rights, safety, or cost.
+3. **Find existing supported parts.** Query permitted constructs, definitions, host interfaces, and active world policy. Follow the existing similar-invention workflow where applicable. Reuse exact capabilities rather than copying whole systems, and distinguish unavailable search from no match.
+4. **Draft the smallest complete change.** Bind supported ports, propose defaults, declare required dependencies, and retain explicit unanswered choices. Routine technical details should be filled by the agent/compiler. A draft with unsupported required behavior remains incomplete; do not silently substitute another experience.
+5. **Validate and test.** Use native schema, compatibility, authority, dependency, resource, lifecycle, and independent scenario checks. The agent may propose tests, but its own test suite or confident explanation cannot certify correctness. Technical output and validation results attach to the exact candidate version/digest.
+6. **Explain and review.** Present what will change, who/what is affected, what was reused, important defaults, limitations, validation status, and remaining decisions in plain English. Separate design intent from demonstrated behavior. Offer technical drill-down without requiring it.
+7. **Activate under existing policy.** An already authorized low-impact invention may proceed within its declared envelope. Consequential shared-world changes and conjuring keep their existing explicit confirmation requirements. Material scope, permission, cost, or effect changes require renewed review; do not ask for confirmation after every harmless tool call.
+8. **Report the committed result and support refinement.** Say installed only after the authoritative receipt exists. Show pending art or blocked subparts separately. Keep the candidate/version and active installation distinguishable. “Make the effect shorter” creates a coherent parameter revision or specialization, not an untracked live mutation.
+
+These are responsibilities within the existing INV workflow, not a second state machine or a requirement for eight model calls. A complete simple request may use a short path. The world agent is not the runtime executor for ongoing effects, needs, or perception.
+
+### Consequential decisions versus routine defaults
+
+Ask about meaningful tradeoffs: new species versus existing population; touch only versus touch plus hearing; memory of explored locations; temporary influence versus enforced compulsion; unknown material assumptions; a newly required effect domain; irreversible changes; changed privacy or player control; and expansion of the cost/target envelope.
+
+Do not ask the creator to choose a JSON property name, internal repository interface, SQL table, or ordinary serialization layout. Use safe reviewed implementation defaults and expose them in technical details. If a missing host capability makes the requested result impossible now, explain the exact gap and offer only real supported narrower alternatives; do not relabel a rough substitute as the complete feature.
+
+### Example: touch-only creatures
+
+For “Make a mechanic for blind creatures that can only sense by touch,” identify whether only excludes hearing, which creatures are affected, and whether they retain remembered routes. Propose a supported contact approximation and state its limits. Check that the candidate removes inappropriate sensory feeds, reference leaks, and omniscient navigation cues—not merely darkens the screen. A fine pressure/texture model remains unsupported unless the host provides it.
+
+Explain the candidate before claiming success: “These creatures will have contact sensing but no sight or hearing; they can remember places already touched if you keep that setting. The first version uses coarse contact detection, not fine pressure.” If the actual validator finds a missing navigation or detector requirement, report the blocker and keep the candidate a draft.
+
+### Reuse and specialization
+
+A creator can request “Use this framework but replace its effect,” “Expose target selection so others can customize it,” or “Adapt this resource rule for my world.” Use [typed construct specialization](../07-technical-architecture/world-module-runtime.md#reusable-constructs-and-specialization). Show required unbound ports and compatibility/rights constraints. A larger effect domain or new lifetime cannot inherit authorization merely because a label was replaced.
+
+A creator may distribute a template with open choices. The agent labels it reusable-but-unbound rather than runnable. Derived versions preserve pinned dependencies and attribution; changes to the original do not silently update installed descendants.
+
+### One artifact across chat and technical inspection
+
+The current structured draft is authoritative. Plain-English summaries, generated diagrams if provided, forms, and raw technical views derive from that draft and its validation state. Chat and raw edits use the same expected revision and validation boundary. Do not let a conversation summary and a JSON editor maintain two conflicting specifications.
+
+Keep semantic traceability from requested behavior to chosen definitions, parameter bindings, defaults, and unresolved requirements. A changed draft invalidates an older preview when relevant. Concurrent edits report a conflict or produce a new reconciled candidate; an old approval cannot activate a stronger replacement. An explanation that generation succeeded does not mean installation succeeded.
+
+Technical inspection includes authorized parameters, units, effects and lifetime rules, dependencies, source/version lineage, schemas, code only where that artifact actually has code, validation results, and known limits. It excludes credentials, unrelated worlds, ungranted private inspirations, and host internals outside the granted inspection scope. Source viewing never executes code.
+
+### Delivery and evaluation
+
+Use INV-1/2/3/4 and the existing Macrofold handoff; EWF12 supplies runtime support/discovery and explanation metadata. Retain requests, drafts, decisions, and receipts independently of an expiring model session. Paused tasks resume only under fresh scope/revision checks; failed or uncertain paid requests do not retry automatically.
+
+A native fixture proves the contract, not that an AI can understand the creator. Separately evaluate capped live requests for meaningful clarification, accurate explanation, supported reuse, technical inspectability, unsupported-feature honesty, and the absence of manual JSON/script work for supported changes. Do not impose that live test as a prerequisite for every native compiler change.
 
 ## Confirmed god-mode conjuring
 

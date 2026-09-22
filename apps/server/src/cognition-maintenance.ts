@@ -1,3 +1,4 @@
+import { nativeNeedBelow } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { ActorWork } from './actor-work.js';
 import {
@@ -116,7 +117,7 @@ export class CognitionMaintenance {
             actor.controller,
             actor.incapacitated,
             actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
-            actor.fullness >= 30,
+            !nativeNeedBelow(actor, 'fullness', 30),
             actor.action?.type,
             actor.rest?.asleep,
             current.memories[id],
@@ -149,7 +150,7 @@ export class CognitionMaintenance {
         const safe =
           actor.controller === 'npc' &&
           actor.health >= 0.4 * (actor.body?.maxHealth ?? 100) &&
-          actor.fullness >= 30 &&
+          !nativeNeedBelow(actor, 'fullness', 30) &&
           !actor.incapacitated &&
           (!actor.action || actor.action.type === 'rest');
         const mind = mindFor(world, entity.id);

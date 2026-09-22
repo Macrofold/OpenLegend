@@ -14,6 +14,7 @@ export interface CommandInput {
     | 'harvest'
     | 'cook'
     | 'eat'
+    | 'replenish'
     | 'rest'
     | 'cancel'
     | 'recover'
@@ -24,6 +25,7 @@ export interface CommandInput {
   targetId?: string;
   itemId?: string;
   recipeId?: string;
+  attributeId?: string;
   ammunitionId?: string;
   position?: Position;
   quantity?: number;
@@ -79,6 +81,7 @@ export interface PlayerProfile {
 export type PlayerPreferencePatch = Partial<PlayerProfile['preferences']>;
 
 export interface EntityView {
+  attributes?: AttributeView[];
   id: string;
   kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station';
   name: string;
@@ -93,7 +96,7 @@ export interface EntityView {
   speechCapable?: boolean;
   health?: number;
   bodyRevision?: number;
-  species?: 'human' | 'hare' | 'deer';
+  species?: 'human' | 'hare' | 'deer' | 'construct';
   quantity?: number;
   actions: ActionOption[];
 }
@@ -191,10 +194,12 @@ export interface GameView {
     id: string;
     name: string;
     position: Position;
-    /** All meters use 0..100; hunger rises toward starvation, energy/health fall. */
+    /** Permitted applicable values, never a raw module state dump. */
+    attributes: AttributeView[];
+    /** Default-world convenience values; generic presentation uses attributes. */
     health: number;
-    hunger: number;
-    energy: number;
+    hunger?: number;
+    energy?: number;
     alive: boolean;
     action: {
       id: string;
@@ -278,8 +283,8 @@ export interface GodPersonFields {
   goals: string[];
   stats: {
     health: number;
-    fullness: number;
-    energy: number;
+    fullness?: number;
+    energy?: number;
   };
 }
 
@@ -430,4 +435,21 @@ export interface GameSaveSummary {
   createdAt: string;
   simTime: number;
   compatible: boolean;
+}
+
+/** Bounded attribute presentation projected by the server. */
+export interface AttributeView {
+  id: string;
+  version: number;
+  name: string;
+  display: 'meter' | 'category';
+  presentation: 'health' | 'food' | 'energy' | 'neutral';
+  value: number | string | null;
+  status: 'known' | 'unknown';
+  min?: number;
+  max?: number;
+  unit?: string;
+  concern?: string;
+  critical?: boolean;
+  revision: number;
 }

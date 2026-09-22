@@ -1,4 +1,9 @@
-import { NATIVE_ITEMS, NATIVE_PREPARATIONS, type ActorObservation } from '@open-legend/domain';
+import {
+  hasWildernessNeeds,
+  NATIVE_ITEMS,
+  NATIVE_PREPARATIONS,
+  type ActorObservation,
+} from '@open-legend/domain';
 import type { CommandInput } from '@open-legend/protocol';
 
 /** Common explanations also cover families with no eligible target. Prose is
@@ -19,6 +24,8 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
     'Use a cutting point to collect the remaining materials from animal remains. Each set of remains can be harvested once.',
   cook: 'Turn one portion of raw meat into cooked food at a lit campfire. The fire must stay lit until the work finishes.',
   eat: 'Eat one portion from your inventory to restore fullness immediately, up to full. Raw meat must be cooked first.',
+  replenish:
+    'Approach a compatible supply and transfer its finite resource into your reservoir over time. Stopping keeps only the amount already transferred.',
   rest: 'Rest where you are to regain energy over time. Resting replaces your current work, and hunger continues to increase.',
   cancel: 'Stop your current movement or work. Materials already consumed are not returned.',
   recover:
@@ -84,8 +91,9 @@ export function describeCommand(command: CommandInput, observation: ActorObserva
     case 'cook':
       return target ? `${common} Use ${target.name} for this portion.` : common;
     case 'eat':
+      if (!hasWildernessNeeds(observation.actor.actor!)) return 'This body has no fullness need.';
       return itemDefinition?.nutrition
-        ? `Eat one portion of ${itemDefinition.name.toLowerCase()}. Restores up to ${itemDefinition.nutrition} fullness, capped at full. You currently have ${Math.round(observation.actor.actor!.fullness)} / 100 fullness.`
+        ? `Eat one portion of ${itemDefinition.name.toLowerCase()}. Restores up to ${itemDefinition.nutrition} fullness, capped at full. You currently have ${Math.round(observation.actor.actor!.fullness!)} / 100 fullness.`
         : common;
     case 'teach':
       return recipe && target

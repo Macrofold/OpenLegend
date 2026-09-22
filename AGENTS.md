@@ -28,6 +28,14 @@ When making substantial changes to game-state management or adding/changing obje
 
 ## Boundaries
 
+### Authored-reality design principles
+
+OpenLegend should be an engine for running authored realities, with a strong default reality—not a fixed survival game with an ever-growing collection of mod hooks. Apply [P01–P12 and the boundary decision procedure](docs/engine-and-world-boundaries.md#design-principles-for-every-feature) when designing or substantially changing a subsystem. Preserve protected runtime integrity while treating world laws, physiology, senses, and controller policies as potentially replaceable behavior. Built-in or native code is not automatically a universal world rule.
+
+Build useful OpenLegend features first. A fixed v1 implementation is acceptable when its owner, present limitation, intended seam, and expansion trigger are recorded in the owning design and briefly linked near the important code boundary; see [intentional v1 specificity](docs/engine-and-world-boundaries.md#intentional-v1-specificity). Do not scatter named-mechanic assumptions through unrelated layers, create duplicate writable state, or introduce a speculative framework with no consumer.
+
+The world agent is the primary natural-language authoring surface; technical artifacts remain inspectable and changes still use the same validation and authority boundaries. Use the [shared runtime contract](archive/07-technical-architecture/world-module-runtime.md) only where implemented, and follow the [staged roadmap](docs/extensibility-roadmap.md). Existing AG/EPR/INV/CR/NC/PF/SL owners retain their work. The proposed architecture does not authorize arbitrary scripts, new permissions, or paid execution.
+
 - `packages/domain` is authoritative, deterministic, serializable and free of I/O, wall clocks, provider SDKs, browser APIs and renderer imports. Changes are pure transitions with explicit outcomes and committed events. Randomness belongs to saved state.
 - `apps/server` assembles permitted context, schedules bounded work, reserves spending, commits transitions and projects client DTOs. It owns game semantics and admission. Never send whole world state or another actor's private memory to a client or model.
 - `packages/ai` is generic typed execution. It never decides world policy or applies effects. Missing credentials, uncertain completion, refusal and invalid data remain distinct. Do not add automatic paid retries.

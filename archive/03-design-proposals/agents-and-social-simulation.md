@@ -4,6 +4,8 @@
 
 Status: **design proposal**, updated for accepted primitive survival direction. Requirements: F02–F10, F21–F24, F31, F35–F39. Research basis and its limitations: [human models](../02-research/human-models-and-memory.md), [comparable games](../02-research/games-and-emergence.md). The system is designed for believable play, not clinical realism or validated predictions of human behavior.
 
+The physiology and psychological models here describe default world systems, not mandatory state for every possible actor. [Engine/world boundaries](../../docs/engine-and-world-boundaries.md#6-attributes-needs-traits-skills-and-bodies) and the shared runtime contract define the replaceable-state boundary. The current actor implementation remains documented in Architecture.
+
 ## One character model, two controllers
 
 Human and NPC characters share identity, anatomy, needs, equipment, location, perception, relationships, knowledge, and lifecycle records. A controller supplies intents: a player uses input; an NPC uses utility rules and bounded reasoning. Creator controls use a separate administrative permission model.
@@ -17,6 +19,8 @@ For players, personality can shape optional expression, preferences, and descrip
 The most useful initial observable behaviors are gathering accessible resources, eating when hungry, sleeping when tired, approaching a known acquaintance, keeping or breaking a promise, reacting to discomfort or danger, and remembering what happened. These use seeded mechanics and some initial procedural knowledge. NPCs can fail and die; the user does not require artificially forgiving needs. [Survival baseline](survival-baseline.md)
 
 ## Physical state
+
+Health may be a derived summary or a chosen body model. World/species definitions select applicable needs; categories and dispositions need not be numeric. Native body consequences still require supported mechanics.
 
 | System | First useful version | Expansion seam |
 |---|---|---|
@@ -83,6 +87,8 @@ Subjective descriptions belong to the accepted inner world; any query projection
 Conversation lifecycle and merge semantics are defined only in [Narration, agent responses and conversations](../../docs/narration-and-conversations.md).
 
 ## Player-designed stats
+
+God-mode stat authoring must satisfy [typed-state ownership, concern and presentation](../07-technical-architecture/world-module-runtime.md#4-typed-state-and-attributes); a label alone supplies no behavior. This does not change ordinary NPC or relationship permissions.
 
 Accepted direction, September 20, 2026; detailed design and implementation remain future work. Players may invent stats and their effects **only in god mode**. For example, if someone wants to attempt seduction and no charisma stat exists, an authorized player in god mode can design charisma. An ordinary character's action request does not itself authorize creating a stat.
 

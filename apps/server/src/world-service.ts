@@ -1,3 +1,12 @@
+import {
+  admitAttributeDeclaration,
+  editActorAttributes,
+  projectAttributes,
+  type AttributeDeclarationRequest,
+  type AttributeEditRequest,
+} from '@open-legend/domain';
+import { createReservoirDemo, createTouchDemo } from '@open-legend/domain';
+import { validateWorldModules } from '@open-legend/domain';
 import type { SavePayload, RestoreSave } from './game-saves.js';
 import { recordDuration, timed, countMetric, gaugeMetric } from './performance.js';
 import { retainHotEvents } from './hot-events.js';
@@ -82,6 +91,7 @@ export const commandInputSchema = z
       'cook',
       'eat',
       'rest',
+      'replenish',
       'cancel',
       'recover',
       'teach',
@@ -92,6 +102,7 @@ export const commandInputSchema = z
     targetId: id.optional(),
     itemId: id.optional(),
     recipeId: id.optional(),
+    attributeId: id.optional(),
     ammunitionId: id.optional(),
     position: z.object({ x: z.number().finite(), z: z.number().finite() }).strict().optional(),
     quantity: z.number().int().min(1).max(20).optional(),
@@ -213,18 +224,15 @@ export class WorldService {
     await store.ready;
     this.currentProfile = await store.getProfile('local-player');
     const existing = await store.load();
-    if (
-      existing &&
-      existing.state.world.schemaVersion !== 3 &&
-      !(await store.getIntegration(`legacy-backup:${existing.state.world.id}`))
-    )
-      await store.putIntegration(
-        `legacy-backup:${existing.state.world.id}`,
-        structuredClone(existing),
-      );
+    if (existing) validateWorldModules(existing.state.world);
     this.pauseWhenHidden = this.profile.preferences.pauseWhenHidden;
     this.saved = existing?.state ?? {
-      world: createWorld(config.seed),
+      world:
+        config.worldPreset === 'touch-demo'
+          ? createTouchDemo(config.seed)
+          : config.worldPreset === 'reservoir-demo'
+            ? createReservoirDemo(config.seed)
+            : createWorld(config.seed),
       speed: 1,
       manuallyPaused: false,
     };
@@ -856,6 +864,60 @@ export class WorldService {
     return await this.godTransition((world) => spawnWorldEntity(world, draft));
   }
 
+  async godAttributeDeclaration(
+    request: AttributeDeclarationRequest,
+    expectedGeneration: string,
+  ): Promise<ApiResult> {
+    if (!this.config.godMode)
+      return { ok: false, code: 'forbidden', message: 'God access required.' };
+    return this.godTransition((world) =>
+      expectedGeneration !== this.generation
+        ? {
+            world,
+            events: [],
+            outcome: {
+              ok: false,
+              code: 'stale',
+              message: 'The world was restored; refresh before editing.',
+            },
+          }
+        : admitAttributeDeclaration(world, request),
+    );
+  }
+  async godAttributeEdit(
+    request: AttributeEditRequest,
+    expectedGeneration: string,
+  ): Promise<ApiResult> {
+    if (!this.config.godMode)
+      return { ok: false, code: 'forbidden', message: 'God access required.' };
+    return this.godTransition((world) =>
+      expectedGeneration !== this.generation
+        ? {
+            world,
+            events: [],
+            outcome: {
+              ok: false,
+              code: 'stale',
+              message: 'The world was restored; refresh before editing.',
+            },
+          }
+        : editActorAttributes(world, request),
+    );
+  }
+  async attributeEditor(actorId: string) {
+    await this.ready;
+    if (!this.config.godMode)
+      return { ok: false, code: 'forbidden', message: 'God access required.' };
+    const entity = this.world.entities[actorId];
+    if (!entity?.actor) return { ok: false, code: 'actor', message: 'Choose an actor.' };
+    return {
+      ok: true,
+      generation: this.generation,
+      manifestRevision: this.world.moduleManifest!.revision,
+      attributes: projectAttributes(this.world, entity, 'owner'),
+    };
+  }
+
   async personEditor(actorId: string, before?: string): Promise<GodPersonEditorView | ApiResult> {
     await this.ready;
     const entity = this.world.entities[actorId];
@@ -1133,8 +1195,8 @@ export class WorldService {
   }
 
   /** Run the actual admission rules on a disposable transition; never commit preview effects. */
-  previewCommand(input: CommandInput): ApiResult {
-    return this.evaluateCommand(randomUUID(), input, this.controlledEntityId, true) as ApiResult;
+  previewCommand(input: CommandInput, actorId = this.controlledEntityId): ApiResult {
+    return this.evaluateCommand(randomUUID(), input, actorId, true) as ApiResult;
   }
 
   private evaluateCommand(
@@ -1167,6 +1229,20 @@ export class WorldService {
       case 'harvest':
         if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a target.' };
         command = { ...envelope, type: input.type, targetId: input.targetId };
+        break;
+      case 'replenish':
+        if (!input.targetId || !input.attributeId)
+          return {
+            ok: false,
+            code: 'binding',
+            message: 'Choose a replenishment source and attribute.',
+          };
+        command = {
+          ...envelope,
+          type: 'replenish',
+          targetId: input.targetId,
+          attributeId: input.attributeId,
+        };
         break;
       case 'prepare':
         command = { ...envelope, type: 'prepare', preparation: input.preparation ?? 'fiber' };
