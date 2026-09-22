@@ -1,6 +1,6 @@
 # Agent agency runtime contract
 
-**Status:** proposed implementation contract for the [agent agency specification](../../docs/agent-agency.md). This document owns wire-to-domain translation, operational storage, admission, execution and continuation semantics. It does not own mechanical definition validation, memory retention or conversation membership. Implementation tasks and all acceptance criteria belong to the [agency tracker](../../docs/maintainers/agent-agency.md).
+**Status:** proposed implementation contract for the [agent agency specification](../../docs/agent-agency.md). This document owns wire-to-domain translation, operational storage, admission, execution and continuation semantics. It does not own mechanical definition validation, memory retention or conversation membership. Implementation tasks and acceptance criteria belong to the [agency tracker](../../docs/maintainers/agent-agency.md), with level-1 action selection owned by [CR02/CR12](../../docs/maintainers/cognition-redesign.md#cr02--semantic-levels-and-immediate-speech).
 
 ## 1. Fit the existing authority boundary
 
@@ -76,6 +76,22 @@ Keep the existing cognition route/attention selection unless separately changed.
 All limits are centralized, versioned, advertised before generation and validated again at admission. Reasonable starting **engineering hypotheses**, not biological measurements or performance claims, are: at most 16 operations per decision, 8 active/paused goals per actor, 8 explicit steps in one proposed plan frontier, 16 queued steps total per actor, one unresolved invention conversation per actor, and two actor clarification continuations per invention episode. Also enforce total bytes, provider tokens, work rounds, elapsed wall time and money independently.
 
 The implementation may choose smaller limits after fixture payload measurement. A limit change must not silently discard accepted active intentions or obligations. Refuse or explicitly consolidate through the relevant mutation boundary. There are no unlimited free-text scratch fields beside the accepted mind.
+
+### 2.4 Level-1 selection without generative escalation
+
+An actor-scoped opportunity may follow **Jev selection → normal response/action admission → native execution**, with no generative LLM. Native routines, urgent protection and valid ongoing plan steps remain level 0 and require no model call. Do not route an adequately handled native situation through Jev merely to describe its action.
+
+Reuse existing action discovery to prepare a bounded, actor-permitted set of fully specified bindings. Each server-owned binding retains the actual command, target/item references, parameters and relevant knowledge, scope and plan dependencies. Jev sees useful permitted descriptions and short request-bound handles; it returns a choice label, not executable commands, authored parameters or an operation list.
+
+When fresh candidates are available, combine route/action selection into one focused Choice question offering a supplied action handle, continue without a new intervention, or escalation to an offered higher semantic level. Candidates must exist before the question that selects them. If preparation depends on an earlier result, a bounded second Jev request may select the resulting candidates without requiring an LLM. Questions batched together must be independent of one another's answers. Action relevance filtering only identifies suggestions worth considering; positive relevance answers never authorize execution or combine into a new multi-step plan.
+
+Escalation remains available when no supplied action fits, including for unlisted attempts and invention proposals. Use levels 2–4 when a warranted reply, thought, goal revision or planning response requires generation; an available physical action must not suppress those needs. Level-5 reflection remains independently admitted and never follows automatically from successful action selection.
+
+Resolve the selected label to its original binding and translate it through the same response/action admission path as other controllers. Initially admit at most one selected action, or one already-supported native routine, per level-1 decision; do not create another executor. Continue translates to no new intervention and leaves ongoing work and goals unchanged. Selection cannot implicitly replace work, waive costs or introduce a goal or thought.
+
+Revalidate at admission and again before queued execution: actor scope and knowledge, lifecycle/capability, actual resources and prerequisites, current plan dependencies, pause/cancellation, world/load epochs and native interruption policy remain authoritative. Apply the shared [receipt contract](#42-receipts-are-not-interchangeable) and [readiness checks](#44-readiness-and-revalidation). Keep decision, offered-binding and child action identities connected for idempotent admission and recovery. A selected label records a proposal; only native receipts establish admission, start and completion. Remember actual occurrences through normal awareness, without fabricating a thought or goal.
+
+Selection thresholds are configurable and require evaluation; model probability is never proof of feasibility. Missing, uncertain, invalid or unoffered answers receive explicit deferred/escalated dispositions, distinct from deliberate continue. Any paid escalation needs the normal spending allowance; if unavailable, record deferral. Provider failure or a stale action cannot launch automatic paid repair/retry loops. Preserve native survival and valid ongoing work where permitted, and report failed/stale admission without claiming an effect.
 
 ## 3. Operational state
 

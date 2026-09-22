@@ -57,6 +57,10 @@ Owner: `apps/server` context/cognition; generic limits in `packages/ai`. Depends
 
 ### CR02 — Semantic levels and immediate speech
 
+- [ ] Implement the [level-1 selection contract](../../archive/07-technical-architecture/agent-agency-runtime.md#24-level-1-selection-without-generative-escalation) in `jev-questions.ts`, `ai-director.ts`, `decision-context.ts`, `context.ts` and domain response admission. Review routing/action-preparation order so bindings precede selection; support a combined Choice or a bounded dependent second request. Translate one selected binding through existing admission, with explicit continue/escalate and failure dispositions, configurable thresholds and linked receipts. No new executor or automatic paid repair.
+
+Coordinate response translation with [AG01](agent-agency.md#ag01--optional-bounded-multi-operation-decisions) and opportunity/native-adequacy integration with [AG07](agent-agency.md#ag07--meaningful-feedback-survival-and-bounded-reconsideration). Level-1 delivery and its acceptance remain owned here and in CR12; the existing checked routing foundation below does not establish this new path.
+
 - [x] Implement native level 0 and Jev level 1 routing to level 2 mini, level 3 complex/low, level 4 complex/high, or level 5 reflection harness. Provider bindings must distinguish levels 3 and 4; the current fast/complex/full labels are insufficient.
 - [x] Directed speech admits level 2 by default. Jev always evaluates escalation for an admitted semantic opportunity; it may raise the immediate reasoning level and/or enqueue reflection. Ordinary speech must not request mind updates or wait for reflection.
 - [x] Keep ordinary response components minimal and reflection limited to short presentation thoughts as final output. The original speech-only slice is superseded by the September 20 NC00 nullable talk/act/think envelope; no component is mandatory. Remove required `policy`, `expectedRevision`, `thought`, `documents`, `removeDocuments`, `records` and companion patch arrays from ordinary responses.
@@ -212,6 +216,13 @@ Owner: server repository/protocol/client projection and documentation. Depends o
 CR12 may reuse [AG12](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) scenarios while retaining its memory/recall acceptance scope.
 
 ### CR12 — Acceptance and token/latency evidence
+
+Level-1 selection fixtures (zero external requests; implementation remains pending under CR02):
+
+- [ ] Hungry actor with owned edible food: fixture Jev selects its supplied binding; native admission/execution consumes the item and applies nutrition with zero generative LLM calls and no fabricated thought, goal, speech or reflection.
+- [ ] Adequate native eating and valid ongoing work use zero model calls. Deliberate continue leaves work and goals unchanged; missing, uncertain and invalid answers have distinct dispositions.
+- [ ] No suitable candidate can escalate within its allowance rather than trapping the actor in the shortlist. An independently warranted conversational or planning response still reaches generation; successful simple selection never automatically schedules reflection. Exercise both combined Choice and dependent second-request routing without batching dependent questions.
+- [ ] Stale items, unauthorized handles, duplicate results, pause/load races and exhausted budgets cause no unauthorized or duplicate effects and no automatic paid retries. Assert actual action/decision receipts, resource changes and dispatch counts; relevance-only positive answers do not execute actions.
 
 Use [EPR09](events-perception-and-reactions.md#epr09--differential-and-performance-acceptance) for proposed stimulus privacy and ordering acceptance. Live cognition-quality acceptance remains CR12 work; native/fixture evidence cannot close it.
 

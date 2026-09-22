@@ -4,6 +4,11 @@ This file records material changes to OpenLegend's documentation structure and h
 
 It is historical context only. Current requirements, design, architecture, tasks, status and open decisions live in their canonical owner documents.
 
+## 2026-09-22 — Level-1 action selection
+
+- Made Jev-only selection of a supplied native action explicit, alongside zero-call native continuation and generative immediate responses. Replaced mandatory routing-before-candidate ordering with the shared selection contract in the agency runtime; kept relevance filtering distinct from execution choice.
+- Added pending CR02 implementation and CR12 fixture acceptance, linked AG01/AG07 integration, and documented the no-goal eating example. Runtime, implementation status and verification claims are unchanged.
+
 ## 2026-09-22 — Agency policy decisions and interruption
 
 - Accepted general-knowledge speculation with profile, traits and backstory as initial behavioral guidance; retained acquisition provenance and native validation boundaries. D12 now retains only learning/sharing details.

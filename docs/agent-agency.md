@@ -43,6 +43,8 @@ A need is a native bodily condition. A desire is something the actor wants or im
 
 Hunger does not require creating “Satisfy hunger” every time it changes. Eating an available berry can be a native or immediate response with no durable goal. “Keep enough food for tomorrow” is a good candidate for a persistent goal because it matters beyond the present stimulus. “Understand why the shelter leaks” is also a goal, although its next useful action may be investigation rather than construction.
 
+For example, a hungry actor carrying an edible berry may choose “Eat one berry” through Jev alone. After normal engine checks, native execution consumes the berry and applies its nutrition effect. No goal, written thought, speech, reflection or generative explanation is required. When native survival already handles eating adequately, even Jev is unnecessary. The [level-1 runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md#24-level-1-selection-without-generative-escalation) defines selection and admission.
+
 ### What persists
 
 Operational goals retain a short actor-authored objective, lifecycle state, relative priority and links to relevant plans or evidence. They can optionally identify a parent intention, a review cue or a supported completion condition. None of these optional links requires an actor to maintain a rigid hierarchy of all its motivations.
