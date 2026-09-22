@@ -1,4 +1,4 @@
-import { Immer, current, isDraft, original, enablePatches } from 'immer';
+import { Immer, current, isDraft, original, enablePatches, freeze } from 'immer';
 import type { WorldEvent, WorldState } from './types.js';
 
 // One isolated instance: drafts never cross the domain boundary. Unchanged branches
@@ -15,6 +15,12 @@ export function appendedEventCount(previous: WorldEvent[], next: WorldEvent[]): 
   return lineage && lineage === eventLineages.get(next) && next.length >= previous.length
     ? next.length - previous.length
     : undefined;
+}
+/** Server ownership boundary; builders remain mutable until explicitly handed off.
+ * Frozen unchanged branches skip Immer traversal (docs/architecture.md#state-and-transitions).
+ */
+export function freezeWorld(world: WorldState): WorldState {
+  return freeze(world, true);
 }
 export function draftWorld(world: WorldState): WorldState {
   return drafts.createDraft(isDraft(world) ? current(world) : world);

@@ -1,4 +1,10 @@
-import { performanceSnapshot, timed } from './performance.js';
+import {
+  performanceSnapshot,
+  timed,
+  recordDuration,
+  countMetric,
+  startRuntimeMonitoring,
+} from './performance.js';
 import { amendCommitment } from '@open-legend/domain';
 import { traceHistory, traceDetails } from './cognition-inspection.js';
 import { admitCognitionPolicy } from '@open-legend/domain';
@@ -1125,7 +1131,10 @@ export async function createGameServer(
   });
   server.requestTimeout = 10_000;
   server.headersTimeout = 10_000;
+  const stopRuntimeMonitoring = startRuntimeMonitoring();
   let previous = performance.now();
+  let previousCallback = previous;
+  let suspendedSeconds = 0;
   let ticking = false;
   let activeTick: Promise<void> | undefined;
   let thinking: Promise<void> | undefined;
@@ -1133,13 +1142,25 @@ export async function createGameServer(
     options.tick === false
       ? undefined
       : setInterval(() => {
-          if (ticking || disposed) return;
+          if (disposed) return;
+          const callbackAt = performance.now();
+          const callbackGap = (callbackAt - previousCallback) / 1000;
+          // Busy ticks still receive timer callbacks; only missing callbacks imply suspension.
+          if (callbackGap > 2) suspendedSeconds += callbackGap;
+          recordDuration('timer.lateness', Math.max(0, callbackGap * 1000 - 50));
+          previousCallback = callbackAt;
+          if (ticking) {
+            countMetric('timer.skippedWhileBusy');
+            return;
+          }
           ticking = true;
           const current = performance.now();
           const elapsed = (current - previous) / 1000;
           previous = current;
+          const excluded = suspendedSeconds;
+          suspendedSeconds = 0;
           activeTick = (async () => {
-            await service.tick(elapsed);
+            await timed('tick.wall', () => service.tick(elapsed, excluded));
             // Background admission must not hold the native clock (docs/performance.md#triggered-background-work).
             if (!thinking)
               thinking = director
@@ -1170,6 +1191,7 @@ export async function createGameServer(
     async close() {
       if (disposed) return;
       disposed = true;
+      stopRuntimeMonitoring();
       if (interval) clearInterval(interval);
       if (publishTimer) clearTimeout(publishTimer);
       unsubscribe();

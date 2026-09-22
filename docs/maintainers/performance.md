@@ -44,9 +44,9 @@ These are initial engineering targets for a named desktop and healthy same-host 
 | Durable commit to affected player view emission                            | p95 ≤16 ms, p99 ≤33 ms under normal output load                                                                         |
 | Click to first confirmed action update on local setup                      | p95 ≤150 ms, p99 ≤250 ms; also measure first changed position separately from accepted action                           |
 | Click to first changed position for an accepted, unobstructed walk         | p95 ≤200 ms, p99 ≤350 ms on the local setup; predicted pixels do not count as confirmation                              |
-| Native tick CPU at 1×                                                      | p95 ≤8 ms, p99 ≤16 ms per 250 ms batch on both fresh and mature tiny worlds                                             |
+| Native tick CPU at 1×                                                      | p95 ≤8 ms, p99 ≤16 ms per 50 ms batch on both fresh and mature tiny worlds                                              |
 | Main-thread simulation work at 8×                                          | No continuous slice >8 ms; sustain requested simulation speed without growing debt                                      |
-| Event-loop delay                                                           | p95 ≤10 ms, p99 ≤25 ms during ordinary play; record GC pauses separately                                                |
+| Excess timer lateness                                                      | p95 ≤10 ms, p99 ≤25 ms during ordinary play; record GC pauses separately                                                |
 | Ordinary walk commit without checkpoint, invalidation or narration trigger | ≤9 SQL round trips including transaction boundaries; witness count adds rows, not statements within a chunk             |
 | Idle Narrator                                                              | Zero periodic claim queries when no queued/due work exists                                                              |
 | Background contention                                                      | Optional inspection/tracing adds ≤10 ms to native command p95 at the small-world load                                   |
@@ -54,10 +54,13 @@ These are initial engineering targets for a named desktop and healthy same-host 
 
 An injected slow database may exceed normal latency budgets. Correct behavior is bounded queues, responsive pending/paused UI and truthful durability state. Do not pass by dropping events, lowering requested speed silently, disabling relevant background load or hiding confirmed latency behind prediction.
 
+PF03 snapshot freezing and bounded catch-up are implemented; [recorded profiling](../verification.md#mature-world-tick-profiling) includes mature-save before/after runtime measurements. The next priority is extended qualification of these boundaries and PF08 retained-history growth. PF04/PF07/PF10 remain gated on residual measured cost.
+
 ## PF00 — Baseline and attribution
 
 - [x] Record bounded, monotonic mutation wait, native-step, commit, command durability, projection and SQLite/PostgreSQL statement/lane timings without per-span SQL writes. Record native action acknowledgement and first SSE position separately.
-- [ ] Complete request-arrival, persistence-preparation, commit-acknowledgement, SSE-send and browser receipt/render attribution. Preserve bounded telemetry and separate action acceptance from first rendered movement.
+- [x] Add tick wall/native-work/yield, persistence diff/encoding/transaction, CPU/heap, event-loop/GC, busy-callback and requested/accepted/excluded-clock diagnostics; provide an offline native CPU profiler.
+- [ ] Complete request-arrival, commit-acknowledgement, SSE-send and browser receipt/render attribution. Preserve bounded telemetry and separate action acceptance from first rendered movement.
 - [ ] Reproduce walking, gather, eat, rest/stop, pause/resume, a mature-history view and a first encounter. Compare fresh and preserved mature saves; replay equivalent streams against the baseline and candidate build. Verify outcome codes so a rejected walk is not counted as a successful-action sample.
 - [ ] Measure actual PostgreSQL location/RTT, query count, locks, idle queries, event-loop delay, CPU profile, allocations/GC, heap, journal bytes, snapshot latency and view bytes. Use zero-cost provider fixtures and explicit empty credentials/zero spending. Provider-quality acceptance stays separate.
 - [ ] Measure the asynchronous PostgreSQL adapter before population growth. Preserve immediate command durability and one world writer. Do not describe the adapter as distributed/scalable persistence; specialized repositories remain gated production work.
@@ -96,8 +99,11 @@ Dependencies: PF00. Primary files: domain `draft.ts`, `events.ts`, `experience.t
 - [x] Remove repeated startup/actor initialization scans and unchanged policy replacement from each commit. Startup, spawn and capability changes retain complete authoritative initialization; broader CPU profiling remains in PF00.
 - [x] Make ordinary experience additions proportional to changed actor/source entries; reuse or incrementally maintain indexes instead of materializing all retained experience for each add. Preserve validation, duplicate prevention, forgotten-source and obligation protections.
 - [x] Replace repeated commitment scans with source-identity/event/deadline indexes and navigation string-map allocation with cached walkability and numeric breadth-first queues.
-- [ ] Profile residual Immer/finalization and diff costs; evaluate narrower drafts/targeted immutable branches only where needed, retaining input immutability and serializable state.
-- [x] Yield between fixed steps after eight milliseconds without changing transition boundaries, ordering, sequences or RNG draws.
+- [x] Attribute mature-world native cost with a CPU profile and compare the same snapshot with diagnostic input freezing; record runtime evidence without enabling the experiment in gameplay.
+- [x] Freeze server-owned snapshots after startup migration, command/editor acceptance and each fixed native step so unchanged branches skip finalization. Keep domain construction mutable until handoff; retain append lineage and serialization.
+- [ ] Complete legacy migration/shared-reference, append-proof and source-revocation qualification, with longer growing-history and all-speed workload coverage. Initial freeze cost and short mature-save runtime observations are recorded; they are not a soak/capacity claim.
+- [x] Bound each native batch to approximately eight milliseconds, accept only its completed prefix and retain remaining debt. Detect suspension from callback gaps rather than batch duration; preserve one writer and fixed-step order. Speed changes preserve admitted debt. Remeasure sustained command latency under load before adding scheduling machinery.
+- [x] Release mutation ownership between bounded batches without changing native transition boundaries, sequences or RNG draws. Commands can be admitted between batches instead of waiting for all accumulated catch-up.
 - [ ] If needed, finalize several fixed steps together after proving equivalence for perception, commitments, conversations and timer-gap/absence semantics; do not substitute the existing multi-second call.
 - [ ] Differentially replay movement, survival, changing visibility, death/revival and promises through baseline/candidate kernels at all speeds. Compare events and intermediate outcomes as well as final world/RNG.
 

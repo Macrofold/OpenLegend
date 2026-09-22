@@ -1,3 +1,4 @@
+import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
@@ -524,16 +525,20 @@ export class SqliteStore implements GameRepository {
     appendEventCount = this.acceptedState
       ? provenAppendCount(this.acceptedState.world.events, state.world.events)
       : undefined;
-    const changes = this.acceptedState
-      ? diffSavedWorld(this.acceptedState, state, appendEventCount)
-      : { operations: [] };
-    const changesPayload = JSON.stringify(changes);
+    const changes = timedSync('persistence.diff', () =>
+      this.acceptedState
+        ? diffSavedWorld(this.acceptedState, state, appendEventCount)
+        : { operations: [] },
+    );
+    const changesPayload = timedSync('persistence.journalEncode', () => JSON.stringify(changes));
     // Prepare the fixed candidate revision before acquiring the database transaction.
     const snapshot =
       !this.acceptedState ||
       (expectedRevision + 1) % 120 === 0 ||
       Buffer.byteLength(changesPayload) >= 1_048_576;
-    const snapshotPayload = snapshot ? JSON.stringify(state) : undefined;
+    const snapshotPayload = snapshot
+      ? timedSync('persistence.snapshotEncode', () => JSON.stringify(state))
+      : undefined;
     const changedRows = Object.entries(state.world.innerWorlds ?? {})
       .filter(
         ([actorId, inner]) =>
@@ -556,122 +561,127 @@ export class SqliteStore implements GameRepository {
           this.acceptedRevision !== expectedRevision ||
           this.acceptedRows.get(row.key) !== JSON.stringify(row.values),
       );
-    const revision = await this.db.transaction(async () => {
-      const row = await this.db
-        .prepare(
-          'SELECT MAX(revision) AS revision FROM (SELECT revision FROM world WHERE id = 1 UNION ALL SELECT revision FROM world_journal) AS revisions',
-        )
-        .get();
-      const current =
-        row?.['revision'] === null || row?.['revision'] === undefined ? 0 : Number(row['revision']);
-      if (current !== expectedRevision)
-        throw new Error('Save conflict: another writer changed this world.');
-      if (historyProjection?.receipt)
-        await this.commands.save(state.world.id, historyProjection.receipt);
-      const ledgerKey = `forget-ledger:${state.world.id}`;
-      const forgettingChanged =
-        this.acceptedRevision !== expectedRevision ||
-        this.acceptedState?.world.experience?.forgotten !== state.world.experience?.forgotten;
-      const ledger = (
-        forgettingChanged ? ((await this.getIntegration(ledgerKey)) ?? {}) : {}
-      ) as Record<string, string[]>;
-      for (const [actorId, ids] of Object.entries(ledger))
-        if (ids.some((id) => !state.world.experience?.forgotten[actorId]?.includes(id)))
-          throw new Error(
-            'Restore would resurrect forgotten evidence; reapply the current forgetting ledger first.',
-          );
-      if (
-        state.world.experience &&
-        this.acceptedState?.world.experience?.forgotten !== state.world.experience.forgotten
-      )
-        await this.putIntegration(ledgerKey, state.world.experience.forgotten);
-      const invalidations: Record<string, string[]> = structuredClone(invalidatedMemoryIds ?? {});
-      for (const [actorId, records] of Object.entries(state.world.memories)) {
-        const prior = this.acceptedState?.world.memories[actorId];
-        if (!prior || prior === records) continue;
-        const current = new Map(records.map((m) => [m.id, m]));
-        const ids = prior
-          .filter(
-            (m) =>
-              !current.has(m.id) ||
-              (current.get(m.id) !== m && JSON.stringify(current.get(m.id)) !== JSON.stringify(m)),
-          )
-          .map((m) => m.id);
-        if (ids.length)
-          invalidations[actorId] = [...new Set([...(invalidations[actorId] ?? []), ...ids])];
-      }
-      for (const [actorId, ids] of Object.entries(invalidations)) {
-        await this.vectors?.invalidate(`vectors:${state.world.id}:${actorId}`, ids);
-        await this.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
-        await this.putIntegration(`interests:${state.world.id}:${actorId}`, null);
-      }
-      const historyKey = `history-schema:${state.world.id}`;
-      const historyReady =
-        this.readyHistoryWorlds.has(state.world.id) || (await this.getIntegration(historyKey));
-      await this.history.project(
-        historyReady ? (historyProjection?.before ?? this.acceptedState?.world) : undefined,
-        historyProjection?.after ?? state.world,
-        historyReady
-          ? provenAppendCount(
-              (historyProjection?.before ?? this.acceptedState?.world)?.events ?? [],
-              (historyProjection?.after ?? state.world).events,
-            )
-          : undefined,
-      );
-      if (!historyReady) await this.putIntegration(historyKey, 1);
-      const outcomes = new Map<string, { ok: boolean; message: string; code: string }>();
-      for (const [id, receipt] of Object.entries(state.world.responseReceipts ?? {}))
-        if (receipt !== this.acceptedState?.world.responseReceipts?.[id] && receipt.outcome)
-          outcomes.set(id, receipt.outcome);
-      for (const [id, receipt] of Object.entries(state.world.declarationReceipts))
-        if (receipt !== this.acceptedState?.world.declarationReceipts[id])
-          outcomes.set(id, { ok: true, code: 'admitted', message: 'Definition admitted.' });
-      for (const [actorId, inner] of Object.entries(state.world.innerWorlds ?? {}))
-        if (
-          inner.publicationJobId &&
-          inner.publicationJobId !==
-            this.acceptedState?.world.innerWorlds?.[actorId]?.publicationJobId
-        )
-          outcomes.set(inner.publicationJobId, {
-            ok: true,
-            code: 'snapshot-published',
-            message: 'Inner world published.',
-          });
-      for (const [id, result] of outcomes) {
-        const job = await this.getJob(id);
-        if (job)
-          await this.putJob({
-            ...job,
-            status: result.ok ? 'completed' : 'failed',
-            message: result.message,
-            result,
-            completedAt: Date.now(),
-          });
-      }
-      const revision = current + 1;
-      await this.putIntegration('world-journal-head', revision);
-      if (snapshot) {
-        await this.db
+    const revision = await timed('persistence.transaction', () =>
+      this.db.transaction(async () => {
+        const row = await this.db
           .prepare(
-            'INSERT INTO world VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision, payload=excluded.payload',
+            'SELECT MAX(revision) AS revision FROM (SELECT revision FROM world WHERE id = 1 UNION ALL SELECT revision FROM world_journal) AS revisions',
           )
-          .run(revision, snapshotPayload!);
-        await this.db.prepare('DELETE FROM world_journal WHERE revision <= ?').run(revision);
-      } else {
-        await this.db
-          .prepare('INSERT INTO world_journal (revision,payload,created_at) VALUES (?,?,?)')
-          .run(revision, changesPayload, Date.now());
-      }
-      if (this.db.dialect === 'postgres')
-        for (const row of changedRows) {
+          .get();
+        const current =
+          row?.['revision'] === null || row?.['revision'] === undefined
+            ? 0
+            : Number(row['revision']);
+        if (current !== expectedRevision)
+          throw new Error('Save conflict: another writer changed this world.');
+        if (historyProjection?.receipt)
+          await this.commands.save(state.world.id, historyProjection.receipt);
+        const ledgerKey = `forget-ledger:${state.world.id}`;
+        const forgettingChanged =
+          this.acceptedRevision !== expectedRevision ||
+          this.acceptedState?.world.experience?.forgotten !== state.world.experience?.forgotten;
+        const ledger = (
+          forgettingChanged ? ((await this.getIntegration(ledgerKey)) ?? {}) : {}
+        ) as Record<string, string[]>;
+        for (const [actorId, ids] of Object.entries(ledger))
+          if (ids.some((id) => !state.world.experience?.forgotten[actorId]?.includes(id)))
+            throw new Error(
+              'Restore would resurrect forgotten evidence; reapply the current forgetting ledger first.',
+            );
+        if (
+          state.world.experience &&
+          this.acceptedState?.world.experience?.forgotten !== state.world.experience.forgotten
+        )
+          await this.putIntegration(ledgerKey, state.world.experience.forgotten);
+        const invalidations: Record<string, string[]> = structuredClone(invalidatedMemoryIds ?? {});
+        for (const [actorId, records] of Object.entries(state.world.memories)) {
+          const prior = this.acceptedState?.world.memories[actorId];
+          if (!prior || prior === records) continue;
+          const current = new Map(records.map((m) => [m.id, m]));
+          const ids = prior
+            .filter(
+              (m) =>
+                !current.has(m.id) ||
+                (current.get(m.id) !== m &&
+                  JSON.stringify(current.get(m.id)) !== JSON.stringify(m)),
+            )
+            .map((m) => m.id);
+          if (ids.length)
+            invalidations[actorId] = [...new Set([...(invalidations[actorId] ?? []), ...ids])];
+        }
+        for (const [actorId, ids] of Object.entries(invalidations)) {
+          await this.vectors?.invalidate(`vectors:${state.world.id}:${actorId}`, ids);
+          await this.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
+          await this.putIntegration(`interests:${state.world.id}:${actorId}`, null);
+        }
+        const historyKey = `history-schema:${state.world.id}`;
+        const historyReady =
+          this.readyHistoryWorlds.has(state.world.id) || (await this.getIntegration(historyKey));
+        await this.history.project(
+          historyReady ? (historyProjection?.before ?? this.acceptedState?.world) : undefined,
+          historyProjection?.after ?? state.world,
+          historyReady
+            ? provenAppendCount(
+                (historyProjection?.before ?? this.acceptedState?.world)?.events ?? [],
+                (historyProjection?.after ?? state.world).events,
+              )
+            : undefined,
+        );
+        if (!historyReady) await this.putIntegration(historyKey, 1);
+        const outcomes = new Map<string, { ok: boolean; message: string; code: string }>();
+        for (const [id, receipt] of Object.entries(state.world.responseReceipts ?? {}))
+          if (receipt !== this.acceptedState?.world.responseReceipts?.[id] && receipt.outcome)
+            outcomes.set(id, receipt.outcome);
+        for (const [id, receipt] of Object.entries(state.world.declarationReceipts))
+          if (receipt !== this.acceptedState?.world.declarationReceipts[id])
+            outcomes.set(id, { ok: true, code: 'admitted', message: 'Definition admitted.' });
+        for (const [actorId, inner] of Object.entries(state.world.innerWorlds ?? {}))
+          if (
+            inner.publicationJobId &&
+            inner.publicationJobId !==
+              this.acceptedState?.world.innerWorlds?.[actorId]?.publicationJobId
+          )
+            outcomes.set(inner.publicationJobId, {
+              ok: true,
+              code: 'snapshot-published',
+              message: 'Inner world published.',
+            });
+        for (const [id, result] of outcomes) {
+          const job = await this.getJob(id);
+          if (job)
+            await this.putJob({
+              ...job,
+              status: result.ok ? 'completed' : 'failed',
+              message: result.message,
+              result,
+              completedAt: Date.now(),
+            });
+        }
+        const revision = current + 1;
+        await this.putIntegration('world-journal-head', revision);
+        if (snapshot) {
           await this.db
             .prepare(
-              `INSERT INTO mind.inner_world VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(world_id,actor_id) DO UPDATE SET revision=excluded.revision,text=excluded.text,source_snapshot=excluded.source_snapshot,publication_job_id=excluded.publication_job_id WHERE (inner_world.revision,inner_world.text,inner_world.source_snapshot,inner_world.publication_job_id) IS DISTINCT FROM (excluded.revision,excluded.text,excluded.source_snapshot,excluded.publication_job_id)`,
+              'INSERT INTO world VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision, payload=excluded.payload',
             )
-            .run(...row.values);
+            .run(revision, snapshotPayload!);
+          await this.db.prepare('DELETE FROM world_journal WHERE revision <= ?').run(revision);
+        } else {
+          await this.db
+            .prepare('INSERT INTO world_journal (revision,payload,created_at) VALUES (?,?,?)')
+            .run(revision, changesPayload, Date.now());
         }
-      return revision;
-    });
+        if (this.db.dialect === 'postgres')
+          for (const row of changedRows) {
+            await this.db
+              .prepare(
+                `INSERT INTO mind.inner_world VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(world_id,actor_id) DO UPDATE SET revision=excluded.revision,text=excluded.text,source_snapshot=excluded.source_snapshot,publication_job_id=excluded.publication_job_id WHERE (inner_world.revision,inner_world.text,inner_world.source_snapshot,inner_world.publication_job_id) IS DISTINCT FROM (excluded.revision,excluded.text,excluded.source_snapshot,excluded.publication_job_id)`,
+              )
+              .run(...row.values);
+          }
+        return revision;
+      }),
+    );
     // Cache only after COMMIT acknowledgement; failed writes never certify a row.
     for (const row of changedRows) this.acceptedRows.set(row.key, JSON.stringify(row.values));
     this.acceptedRevision = revision;

@@ -167,6 +167,8 @@ Automated tests were not written or run for this change at user request. These a
 
 No automated tests were written or run for these performance changes, by user request. [PF00–PF11](performance.md) marks delivered implementation and retains unfinished acceptance. The checks below remain deferred; small runtime observations are not capacity claims.
 
+- [ ] Cover profiling monitor cleanup/restart, bounded retention, cumulative units/deltas, nested spans, in-flight debt, rejected commits, fractional steps and excluded timer gaps. Differentially replay immutable snapshot candidates across seed/load/migration/editor/privacy paths; include long growing-history runs and overloaded 1×/3×/8× clocks versus true suspension. Automated coverage is deferred by user request; implementation remains in PF00/PF03. Include debt retained across speed changes and cleared by pause/suspension, command interleaving between prefixes, failed commits and immutable editor/source deletion. Defer OS-specific suspension detection unless single synchronous operations exceeding two seconds remain a measured problem; callback silence still uses the existing absence policy.
+
 - [x] Run isolated native HTTP/SSE commands, retry/conflict/restart paths, cold-history owner lookup/deletion, backup/empty restore/existing-world restore and matched cadence observations. [Recorded evidence and limits](../verification.md#performance-investigation) distinguish synthetic history from live gameplay.
 
 - [ ] Cover proven append versus edit/backfill/forged hints, duplicate IDs, chunk boundaries (rows/bytes/parameters), event-time perspectives, rollback, forgotten audiences, source revocation and schema readiness caching on SQLite and PostgreSQL. Reconcile ambiguous commit without paid replay.

@@ -1,4 +1,4 @@
-import { recordDuration, timed } from './performance.js';
+import { recordDuration, timed, countMetric, gaugeMetric } from './performance.js';
 import { retainHotEvents } from './hot-events.js';
 import { COMMAND_RETRY_MS, type CommandEpoch, type GameplayReceipt } from './command-receipts.js';
 import { createPersonMemoryPager } from './person-memory-page.js';
@@ -23,6 +23,7 @@ import {
   updateWorld,
   appendedEventCount,
   initializeActorTraits,
+  freezeWorld,
   migrateCognition,
   forgetExperience,
   correctExperience,
@@ -257,6 +258,7 @@ export class WorldService {
       undefined,
       { after: startupHistory },
     );
+    freezeWorld(this.saved.world);
     this.persistedEvents = this.saved.world.events;
     this.worldEventsById = new Map(this.saved.world.events.map((event) => [event.id, event]));
     this.epoch =
@@ -452,6 +454,7 @@ export class WorldService {
         this.transcriptRevision++;
         this.transcriptEpoch++;
       }
+      freezeWorld(saved.world);
       this.saved = saved;
       if (currentAppendCount === undefined || saved.world.events !== historyWorld.events)
         this.worldEventsById = new Map(saved.world.events.map((event) => [event.id, event]));
@@ -486,6 +489,7 @@ export class WorldService {
           ? saved.world.events.slice(-appended)
           : [],
     );
+    freezeWorld(this.saved.world);
     this.unpersisted = true;
     this.notify(false);
   }
@@ -548,7 +552,9 @@ export class WorldService {
         ...next.world,
         paused: next.manuallyPaused || this.absent || this.storageError !== null,
       };
-      this.debtSeconds = 0;
+      // Speed changes preserve already-admitted time; pausing/resuming starts a fresh clock.
+      if (next.world.paused || this.world.paused) this.debtSeconds = 0;
+      gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
       const ok = await this.commit(next, undefined, 'unchanged');
       return {
         ok,
@@ -567,6 +573,7 @@ export class WorldService {
       await this.ready;
 
       this.debtSeconds = 0;
+      gaugeMetric('clock.pendingSimSeconds', 0);
       if (this.world.paused !== this.paused)
         await this.commit(
           { ...this.saved, world: { ...this.world, paused: this.paused } },
@@ -578,18 +585,46 @@ export class WorldService {
   }
 
   /** Fixed simulation steps with routine durability coalesced to one real second. */
-  async tick(elapsedRealSeconds: number): Promise<void> {
+  async tick(
+    elapsedRealSeconds: number,
+    suspendedRealSeconds = elapsedRealSeconds > 2 ? elapsedRealSeconds : 0,
+  ): Promise<void> {
+    if (
+      !Number.isFinite(elapsedRealSeconds) ||
+      elapsedRealSeconds < 0 ||
+      !Number.isFinite(suspendedRealSeconds) ||
+      suspendedRealSeconds < 0
+    )
+      throw new Error('Tick durations must be finite nonnegative seconds.');
+    do {
+      await this.tickBatch(elapsedRealSeconds, suspendedRealSeconds);
+      elapsedRealSeconds = 0;
+      suspendedRealSeconds = 0;
+      if (this.paused || this.debtSeconds < 1) return;
+      // Release the mutation queue before yielding so commands can interleave with catch-up.
+      const yieldedAt = performance.now();
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      recordDuration('tick.yieldWait', performance.now() - yieldedAt);
+    } while (true);
+  }
+
+  private async tickBatch(elapsedRealSeconds: number, suspendedRealSeconds: number): Promise<void> {
     return this.mutate(async () => {
       await this.ready;
       await this.refreshCommandEpoch();
 
       await this.reconcileDisconnectedConversation();
       if (this.world.paused !== this.paused) await this.syncPause();
-      if (this.paused || elapsedRealSeconds <= 0) return;
-      // A long event-loop suspension is absence, not permission to catch up offline time.
-      if (elapsedRealSeconds > 2) {
+      if (this.paused || elapsedRealSeconds < 0) return;
+      // The host distinguishes missing callbacks from callbacks during a busy batch.
+      // Direct callers retain the suspension default (docs/performance.md#simulation-cpu-and-growing-history).
+      if (suspendedRealSeconds > 0) {
+        countMetric('clock.excludedGapRealSeconds', suspendedRealSeconds);
+        countMetric('clock.discardedPendingSimSeconds', this.debtSeconds);
+        gaugeMetric('clock.pendingSimSeconds', 0);
         this.debtSeconds = 0;
-        return;
+        elapsedRealSeconds = Math.max(0, elapsedRealSeconds - suspendedRealSeconds);
+        if (!elapsedRealSeconds) return;
       }
       if (
         Object.values(this.world.experience?.awareness ?? {}).some(
@@ -605,36 +640,48 @@ export class WorldService {
           this.notify(false);
         }
         this.debtSeconds = 0;
+        gaugeMetric('clock.pendingSimSeconds', 0);
         return;
       }
       if (this.memoryBacklog) {
         this.memoryBacklog = null;
         this.notify(false);
       }
-      this.debtSeconds += elapsedRealSeconds * this.config.baseRatio * this.speed;
-      // Supported timer gaps are at most two seconds. Even at 8×, at most 960 cheap
-      // fixed steps are due; process that bounded batch without silently losing time.
+      const requested = elapsedRealSeconds * this.config.baseRatio * this.speed;
+      countMetric('clock.activeRealSeconds', elapsedRealSeconds);
+      countMetric('clock.requestedSimSeconds', requested);
+      gaugeMetric('clock.requestedSpeed', this.speed);
+      this.debtSeconds += requested;
+      gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
       const steps = Math.floor(this.debtSeconds);
       if (!steps) return;
       let world = this.world;
-      let sliceStarted = performance.now();
-      for (let step = 0; step < steps; step++) {
+      const batchStarted = performance.now();
+      let nativeMs = 0;
+      let completedSteps = 0;
+      gaugeMetric('tick.dueSteps', steps);
+      // Publish a bounded prefix and release mutation ownership; retain the rest as debt.
+      // A single transition remains atomic even if it exceeds this time budget.
+      for (; completedSteps < steps; ) {
         const stepStarted = performance.now();
-        world = advanceWorld(world, 1).world;
-        recordDuration('native.step', performance.now() - stepStarted);
-        // Yield only between original fixed steps; mutation ownership preserves RNG/event order.
-        if (performance.now() - sliceStarted >= 8 && step + 1 < steps) {
-          await new Promise<void>((resolve) => setImmediate(resolve));
-          sliceStarted = performance.now();
-        }
+        world = freezeWorld(advanceWorld(world, 1).world);
+        const stepMs = performance.now() - stepStarted;
+        nativeMs += stepMs;
+        recordDuration('native.step', stepMs);
+        completedSteps++;
+        if (performance.now() - batchStarted >= 8) break;
       }
+      recordDuration('tick.nativeWork', nativeMs);
+      const beforeSimTime = this.world.simTime;
       const saved = { ...this.saved, world };
       if (this.now() - this.lastRoutinePersistAt >= 1000) {
-        if (await this.commit(saved, undefined, 'append')) this.debtSeconds -= steps;
+        if (await this.commit(saved, undefined, 'append')) this.debtSeconds -= completedSteps;
       } else {
         this.acceptRoutine(saved);
-        this.debtSeconds -= steps;
+        this.debtSeconds -= completedSteps;
       }
+      countMetric('clock.advancedSimSeconds', this.world.simTime - beforeSimTime);
+      gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
     });
   }
 
