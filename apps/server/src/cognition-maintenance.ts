@@ -1,3 +1,4 @@
+import { timedSync } from './performance.js';
 import { ActorWork } from './actor-work.js';
 import {
   consolidationBatch,
@@ -108,24 +109,26 @@ export class CognitionMaintenance {
     this.scheduling = true;
     try {
       const current = this.service.world;
-      this.work.refresh(current, (id) => {
-        const actor = current.entities[id]!.actor!;
-        return [
-          actor.controller,
-          actor.incapacitated,
-          actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
-          actor.fullness >= 30,
-          actor.action?.type,
-          actor.rest?.asleep,
-          current.memories[id],
-          current.experience?.awareness[id],
-          current.experience?.summaries[id],
-          current.minds?.[id],
-          current.innerWorlds?.[id],
-          current.cognitionPolicy,
-          this.service.memoryBacklog,
-        ];
-      });
+      timedSync('cognition.maintenanceRefresh', () =>
+        this.work.refresh(current, (id) => {
+          const actor = current.entities[id]!.actor!;
+          return [
+            actor.controller,
+            actor.incapacitated,
+            actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
+            actor.fullness >= 30,
+            actor.action?.type,
+            actor.rest?.asleep,
+            current.memories[id],
+            current.experience?.awareness[id],
+            current.experience?.summaries[id],
+            current.minds?.[id],
+            current.innerWorlds?.[id],
+            current.cognitionPolicy,
+            this.service.memoryBacklog,
+          ];
+        }),
+      );
       const actors = this.work
         .ready(this.now(), current.simTime)
         .map((id) => current.entities[id]!);

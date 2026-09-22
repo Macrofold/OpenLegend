@@ -920,23 +920,44 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       }
     }
   }
-  const hadObjectExposures = world.visibleObjects !== undefined;
+  updateEncounters(world, original, events);
+  return finish(
+    world,
+    events,
+    outcome(true, 'advanced', `Advanced ${elapsedSimSeconds} simulation seconds.`),
+  );
+}
 
-  // Positions are stable during encounter projection; never reuse this index across movement.
-  const nearby = spatialCandidates(Object.values(world.entities).filter((e) => e.actor?.alive));
-  for (const actor of Object.values(world.entities).filter((e) => e.actor?.alive && hasMemory(e))) {
+/** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
+function updateEncounters(world: WorldState, original: WorldState, events: WorldEvent[]): void {
+  const hadObjectExposures = original.visibleObjects !== undefined;
+
+  // Read-only perception captures position scalars once after movement, avoiding repeated proxy walks.
+  // Only positions/identity are read here; event mutations still use the authoritative draft.
+  const entities = Object.values(world.entities).map((entity) => ({
+    entity,
+    id: entity.id,
+    position: { x: entity.position.x, z: entity.position.z },
+    alive: !!entity.actor?.alive,
+    memory: hasMemory(entity),
+    object: !entity.actor && !entity.animal,
+  }));
+  const nearby = spatialCandidates(entities.filter((e) => e.alive));
+  const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
+  for (const actor of entities.filter((e) => e.alive && e.memory)) {
+    const previous = original.visiblePeople?.[actor.id] ?? [];
+    const previouslySeen = new Set(previous);
     const seen = nearby(actor.position, PERCEPTION_RULES.sightRadius + 2)
       .filter(
         (e) =>
           e.id !== actor.id &&
-          e.actor?.alive &&
+          e.alive &&
           (canSee(actor.position, e.position) ||
-            (world.visiblePeople?.[actor.id]?.includes(e.id) &&
+            (previouslySeen.has(e.id) &&
               distance(actor.position, e.position) <= PERCEPTION_RULES.sightRadius + 2)),
       )
       .map((e) => e.id);
-    const previous = world.visiblePeople?.[actor.id] ?? [];
-    for (const id of seen.filter((id) => !previous.includes(id))) {
+    for (const id of seen.filter((id) => !previouslySeen.has(id))) {
       const recent = (world.memories[actor.id] ?? []).some(
         (m) =>
           m.kind === 'episode' &&
@@ -950,20 +971,25 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
           world,
           events,
           'encounter',
-          `${actor.name} encountered ${encountered.name}.`,
-          actor,
+          `${actor.entity.name} encountered ${encountered.name}.`,
+          actor.entity,
           id,
           { importance: 6, semanticTrigger: true },
         );
       }
     }
-    (world.visiblePeople ??= {})[actor.id] = seen;
+    if (
+      !original.visiblePeople?.[actor.id] ||
+      seen.length !== previous.length ||
+      seen.some((id, index) => id !== previous[index])
+    )
+      (world.visiblePeople ??= {})[actor.id] = seen;
     // Object exposures use the same committed awareness path without a cognition trigger.
-    const objects = Object.values(world.entities).filter(
-      (entity) => !entity.actor && !entity.animal && canSee(actor.position, entity.position),
+    const objects = nearbyObjects(actor.position, PERCEPTION_RULES.sightRadius).filter((entity) =>
+      canSee(actor.position, entity.position),
     );
     const priorObjects = new Set(
-      world.visibleObjects?.[actor.id] ??
+      original.visibleObjects?.[actor.id] ??
         (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
     );
     for (const entity of objects)
@@ -972,18 +998,21 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
           world,
           events,
           'encounter',
-          `${actor.name} encountered ${entity.name}.`,
-          actor,
+          `${actor.entity.name} encountered ${entity.entity.name}.`,
+          actor.entity,
           entity.id,
           { importance: 0, urgency: 0, semanticTrigger: false },
         );
-    (world.visibleObjects ??= {})[actor.id] = objects.map((entity) => entity.id);
+    const objectIds = objects.map((entity) => entity.id);
+    const previousObjects = original.visibleObjects?.[actor.id];
+    // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).
+    if (
+      !previousObjects ||
+      objectIds.length !== previousObjects.length ||
+      objectIds.some((id, index) => id !== previousObjects[index])
+    )
+      (world.visibleObjects ??= {})[actor.id] = objectIds;
   }
-  return finish(
-    world,
-    events,
-    outcome(true, 'advanced', `Advanced ${elapsedSimSeconds} simulation seconds.`),
-  );
 }
 
 /** Private records are returned only for the supplied actor; bind this ID to authorization in the application. */

@@ -81,16 +81,16 @@ export function findPath(world: WorldState, from: Position, to: Position): Posit
 const navigation = new WeakMap<WorldState['map'], Uint8Array>();
 
 /** Ephemeral candidate index; callers rebuild after movement, then apply exact visibility rules. */
-export function spatialCandidates(entities: Entity[], cellSize = 28) {
-  const cells = new Map<string, { entity: Entity; order: number }[]>();
+export function spatialCandidates<T extends { position: Position }>(entities: T[], cellSize = 28) {
+  const cells = new Map<string, { entity: T; order: number }[]>();
   entities.forEach((entity, order) => {
     const key = `${Math.floor(entity.position.x / cellSize)},${Math.floor(entity.position.z / cellSize)}`;
     let cell = cells.get(key);
     if (!cell) cells.set(key, (cell = []));
     cell.push({ entity, order });
   });
-  return (position: Position, radius: number): Entity[] => {
-    const found: { entity: Entity; order: number }[] = [];
+  return (position: Position, radius: number): T[] => {
+    const found: { entity: T; order: number }[] = [];
     for (
       let x = Math.floor((position.x - radius) / cellSize);
       x <= Math.floor((position.x + radius) / cellSize);
@@ -107,7 +107,10 @@ export function spatialCandidates(entities: Entity[], cellSize = 28) {
   };
 }
 
-const entityIndexes = new WeakMap<WorldState['entities'], ReturnType<typeof spatialCandidates>>();
+const entityIndexes = new WeakMap<
+  WorldState['entities'],
+  ReturnType<typeof spatialCandidates<Entity>>
+>();
 /** Immutable snapshots share one index; mutable domain drafts must rebuild after movement. */
 export function nearbyEntities(world: WorldState, position: Position, radius: number): Entity[] {
   let index = isDraft(world.entities) ? undefined : entityIndexes.get(world.entities);

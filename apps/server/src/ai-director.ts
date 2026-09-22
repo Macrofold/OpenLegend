@@ -1,3 +1,4 @@
+import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
 import { nearbyEntities, canSee, PERCEPTION_RULES } from '@open-legend/domain';
@@ -1183,30 +1184,32 @@ export class AiDirector {
       const world = this.service.world;
       const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
       const visible = new Map<string, string[]>();
-      this.thoughtWork.refresh(world, (id) => {
-        const entity = world.entities[id]!,
-          actor = entity.actor!;
-        const ids = nearbyEntities(world, entity.position, PERCEPTION_RULES.sightRadius)
-          .filter((other) => other.id !== id && canSee(entity.position, other.position))
-          .map((other) => other.id);
-        visible.set(id, ids);
-        return [
-          actor.controller,
-          actor.incapacitated,
-          actor.goal,
-          actor.fullness < 20,
-          actor.energy < 15,
-          actor.energy < 10,
-          actor.rest?.asleep,
-          ids.join('\0'),
-          world.memories[id],
-          world.experience?.awareness[id],
-          world.experience?.summaries[id],
-          world.innerWorlds?.[id],
-          world.cognitionPolicy,
-          this.service.telemetryRevision,
-        ];
-      });
+      timedSync('cognition.thoughtRefresh', () =>
+        this.thoughtWork.refresh(world, (id) => {
+          const entity = world.entities[id]!,
+            actor = entity.actor!;
+          const ids = nearbyEntities(world, entity.position, PERCEPTION_RULES.sightRadius)
+            .filter((other) => other.id !== id && canSee(entity.position, other.position))
+            .map((other) => other.id);
+          visible.set(id, ids);
+          return [
+            actor.controller,
+            actor.incapacitated,
+            actor.goal,
+            actor.fullness < 20,
+            actor.energy < 15,
+            actor.energy < 10,
+            actor.rest?.asleep,
+            ids.join('\0'),
+            world.memories[id],
+            world.experience?.awareness[id],
+            world.experience?.summaries[id],
+            world.innerWorlds?.[id],
+            world.cognitionPolicy,
+            this.service.telemetryRevision,
+          ];
+        }),
+      );
       const actors = this.thoughtWork
         .ready(this.now(), world.simTime)
         .map((id) => world.entities[id]!)

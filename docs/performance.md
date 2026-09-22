@@ -106,6 +106,12 @@ Keep authoritative hot state bounded by active entities and required working mem
 
 Only after these changes, consider sparse scheduling of idle actors, analytic needs advancement and sleeping regions. They must preserve threshold crossings, event-time awareness, path conflicts, action completion, stable ordering and random draws, or explicitly introduce a reviewed gameplay change. Do not lower fidelity silently to advertise a higher population.
 
+Perception should read position and capability scalars once after movement, query local candidates, compare prior membership with sets and preserve unchanged visibility-array identities. Avoid repeatedly walking draft proxies or copying whole entity subtrees just to compare distances. Event admission still uses the current authoritative draft and event-time audience rules.
+
+Scale cognitive eligibility separately from native movement. Signature-based dirty detection still costs work if every actor's visibility and history must be computed to discover that nothing changed. Prefer committed component/region invalidation and due deadlines; measure eligible-actor queue age as well as CPU time. Per-actor cooldowns and a bounded shared provider pool must replace a single world-global thought interval before claiming responsive many-agent cognition. Faster simulation must not silently multiply paid dispatch.
+
+Dense arrivals are a distinct workload: pairwise encounter events can each have many witnesses. Track events, audience writes and source-admission scans independently; avoid repeatedly scanning growing awareness arrays for duplicate admission. Preserve witness semantics and source revocation rather than claiming spatial indexes make concentrated crowds cheap.
+
 ## Bounded batching, backpressure and publication
 
 A single command on an idle healthy server should not wait for an artificial batch timer. When commands are already queued, a later microbatch can evaluate a bounded group in order against one candidate state and persist all receipts/effects together. Resolve each promise only from the committed batch. Keep one commit in flight; commands arriving during it wait in a bounded intention queue. Rejected, duplicate and conflicting IDs retain their own outcomes. Do not coalesce already-admitted discrete actions or suppress intermediate meaningful events.
