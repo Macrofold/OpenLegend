@@ -1,3 +1,4 @@
+import { GameSaveError } from './game-saves.js';
 import {
   performanceSnapshot,
   timed,
@@ -251,7 +252,9 @@ export async function createGameServer(
     );
   const service = new WorldService(store, config, options.now);
   await service.ready;
-  const director = new AiDirector(service, options.aiClient, options.now);
+  let director = new AiDirector(service, options.aiClient, options.now);
+  let loadingSave = false;
+  let activeWrites = 0;
   const session = randomBytes(32).toString('hex');
   type StreamState = {
     revision: number;
@@ -376,6 +379,14 @@ export async function createGameServer(
       return send(response, 400, { ok: false, code: 'url', message: 'Invalid URL.' });
     }
     if (url.pathname.startsWith('/api/')) {
+      if (loadingSave)
+        return send(response, 409, {
+          ok: false,
+          code: 'loading',
+          message: 'A saved world is loading. Please wait.',
+        });
+      const writing = request.method === 'POST';
+
       const origin = request.headers.origin;
       const ownOrigin = `http://${request.headers.host}`;
       if (request.headers['sec-fetch-site'] === 'cross-site' || (origin && origin !== ownOrigin))
@@ -384,6 +395,7 @@ export async function createGameServer(
           code: 'origin',
           message: 'Use the game in its own local browser tab.',
         });
+      if (writing) activeWrites++;
       try {
         if (request.method === 'GET' && url.pathname === '/api/state') {
           response.setHeader(
@@ -564,7 +576,98 @@ export async function createGameServer(
             message: 'Use a JSON request.',
           });
         const body = await jsonBody(request);
+        if (loadingSave)
+          return send(response, 409, {
+            ok: false,
+            code: 'loading',
+            message: 'A saved world is loading.',
+          });
+        const generation = request.headers['x-ol-generation'];
+        if (generation && generation !== service.generation && url.pathname !== '/api/saves/load')
+          return send(response, 409, {
+            ok: false,
+            code: 'stale-world',
+            message: 'The world changed. Reload this tab.',
+          });
+
         switch (url.pathname) {
+          case '/api/saves/list':
+            return send(response, 200, {
+              ok: true,
+              saves: await store.saves.list(service.world.id),
+            });
+          case '/api/saves/create': {
+            const value = z
+              .object({ id: z.string().uuid(), label: z.string().trim().min(1).max(80) })
+              .strict()
+              .parse(body);
+            await service.createSave(value.label, value.id);
+            return send(response, 200, { ok: true, message: 'Game saved.' });
+          }
+          case '/api/saves/delete': {
+            const value = z.object({ id: requestIdSchema }).strict().parse(body);
+            await store.saves.delete(service.world.id, value.id);
+            return send(response, 200, { ok: true, message: 'Save deleted.' });
+          }
+          case '/api/saves/load': {
+            const value = z
+              .object({ id: requestIdSchema, requestId: z.string().uuid() })
+              .strict()
+              .parse(body);
+            const prior = (await store.getIntegration(`load-request:${value.requestId}`)) as
+              | { saveId: string }
+              | undefined;
+            if (prior)
+              return send(response, prior.saveId === value.id ? 200 : 409, {
+                ok: prior.saveId === value.id,
+                message:
+                  prior.saveId === value.id
+                    ? 'This load already completed.'
+                    : 'Load request conflicts.',
+              });
+            if (generation !== service.generation)
+              return send(response, 409, {
+                ok: false,
+                message: 'The world changed. Reload this tab before loading.',
+              });
+            if (activeWrites > 1)
+              return send(response, 409, {
+                ok: false,
+                message: 'Another request is finishing. Try loading again shortly.',
+              });
+            const payload = await store.saves.read(service.world.id, value.id);
+            if (activeWrites > 1)
+              return send(response, 409, {
+                ok: false,
+                message: 'Another request is finishing. Try loading again shortly.',
+              });
+            loadingSave = true;
+            let drained = false;
+            try {
+              // Drain real background writers before replacing authority; no new worker framework.
+              const paused = await service.control({ paused: true });
+              if (!paused.ok) throw new GameSaveError(paused.message);
+              director.macrofold.stop();
+              await director.close();
+              drained = true;
+              await service.restoreSave(value.id, value.requestId, payload);
+              patches.clear();
+              patchBytes = 0;
+              publicView = undefined;
+              for (const stream of streams.keys()) stream.end();
+              streams.clear();
+              return send(response, 200, { ok: true, message: 'Saved world loaded and paused.' });
+            } finally {
+              if (drained) director = new AiDirector(service, options.aiClient, options.now);
+              else {
+                service.storageError =
+                  'Loading stopped before background work drained. Restart before continuing.';
+                service.notify();
+              }
+              loadingSave = false;
+              publish();
+            }
+          }
           case '/api/actions': {
             const context = actionContext.parse(body);
             return send(response, 200, { ok: true, catalogue: actionCatalogue(service, context) });
@@ -1082,6 +1185,8 @@ export async function createGameServer(
           error instanceof z.ZodError ||
           error instanceof SyntaxError ||
           (error instanceof Error && error.message === 'body-limit');
+        if (error instanceof GameSaveError)
+          return send(response, 400, { ok: false, code: 'save', message: error.message });
         return send(response, invalid ? 400 : 500, {
           ok: false,
           code: invalid ? 'invalid-input' : 'server',
@@ -1089,6 +1194,8 @@ export async function createGameServer(
             ? 'The request does not match the supported bounded input.'
             : 'The request failed. No automatic retry was submitted.',
         });
+      } finally {
+        if (writing) activeWrites--;
       }
     }
     if (vite) {
@@ -1142,7 +1249,7 @@ export async function createGameServer(
     options.tick === false
       ? undefined
       : setInterval(() => {
-          if (disposed) return;
+          if (disposed || loadingSave) return;
           const callbackAt = performance.now();
           const callbackGap = (callbackAt - previousCallback) / 1000;
           // Busy ticks still receive timer callbacks; only missing callbacks imply suspension.
@@ -1187,7 +1294,9 @@ export async function createGameServer(
   return {
     server,
     service,
-    director,
+    get director() {
+      return director;
+    },
     async close() {
       if (disposed) return;
       disposed = true;

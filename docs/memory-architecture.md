@@ -1,5 +1,7 @@
 # Memory architecture
 
+Changes to durable minds, history, derived recall or external workspaces must respect the [save/load design](save-and-load.md). This document continues to own memory and privacy semantics.
+
 This is the **single authoritative specification for the complete intended memory and cognition system**. It combines the current requirements for character minds, awareness, retrieval, attention, conversation, consolidation, reflection, workspaces, sleep and dreams. Related engineering documents can detail implementation, but do not define alternative memory behavior.
 
 The CR01–CR11 runtime foundation is implemented; integrated acceptance and broader conditional features remain open. Build tasks are in [CR01–CR12](maintainers/cognition-redesign.md); actual delivery evidence belongs in [implementation status](../archive/05-project/implementation-status.md) and [maintainer TODO](maintainers/TODO.md). The September 20 [narration and conversation design](narration-and-conversations.md) tracks the implemented immediate talk/act/think context slice and future notable unseen-event retention, durable conversations and Narrator work. NC00 records the immediate delivery; the larger NC01–NC13 gates remain open. This document describes what to build rather than maintaining previous versions of the design.

@@ -49,6 +49,8 @@ const terminal = new Set(['succeeded', 'failed', 'cancelled', 'timed_out']);
  */
 export class MacrofoldBackend implements AiClient {
   private api: MacrofoldTransport;
+  // A restored world starts fresh provider context; old operation records remain auditable.
+  private readonly timeline: string;
   readonly provisioner: MacrofoldProvisioner;
   private busy = new Set<string>();
   private messagesInFlight = new Set<string>();
@@ -57,6 +59,7 @@ export class MacrofoldBackend implements AiClient {
     private service: WorldService,
     private log?: IntelligenceLog,
   ) {
+    this.timeline = service.timelineId;
     this.api = new MacrofoldTransport(
       service.config.macrofoldUrl,
       service.config.macrofoldKey,
@@ -65,7 +68,7 @@ export class MacrofoldBackend implements AiClient {
     this.provisioner = new MacrofoldProvisioner(service.config, service.store, service.world.id);
   }
   private key(name: string): string {
-    return `macrofold:${digest(this.service.config.macrofoldUrl)}:${this.service.world.id}:${name}`;
+    return `macrofold:${digest(this.service.config.macrofoldUrl)}:${this.service.world.id}:${this.timeline}:${name}`;
   }
   private async load<T>(name: string): Promise<T | undefined> {
     return (await this.service.store.getIntegration(this.key(name))) as T | undefined;

@@ -1,8 +1,18 @@
 # Implemented architecture
 
+Changes to state ownership or persistence must respect the [save/load design](save-and-load.md). It owns the intended gameplay restoration contract; the mechanisms described here remain the current implementation.
+
 The canonical [memory architecture](memory-architecture.md) owns behavior; [CR01–CR12](maintainers/cognition-redesign.md) track implementation and acceptance. September 20 runtime update: compact decisions, native multi-question Jev, scoped embeddings, awareness/consolidation, PostgreSQL accepted text, background workspace reflection, sleep accounting and grouped god inspection are implemented. Live evidence and remaining acceptance work are tracked in [maintainer TODO](maintainers/TODO.md); implementation is not a claim of complete behavioral acceptance.
 
 The [long-term architecture](../archive/07-technical-architecture/README.md) remains design context. The [production data model](../archive/07-technical-architecture/production-data-model.md) distinguishes implemented single-writer PostgreSQL prerequisites from conditional distributed infrastructure. Current storage commits a transactional change journal with periodic snapshots; it also publishes `mind.inner_world` atomically. This is not the full normalized production schema.
+
+## Manual gameplay saves
+
+Settings & help provides named manual slots in the current authority database (`game_saves`), with 20 manual saves plus one replaceable pre-load recovery slot and a 64 MiB payload limit. `GameSaves` owns packaging/history capture and slot persistence; `WorldService` owns the serialized capture/restore transition. The package serializes the complete current `SavedWorld` and the history repository's tables, preserving cold history and accepted generated world definitions without a separate field registry. Capture flushes native progress and reads history in the same database lane; save publication is transactional.
+
+Loading pauses admission, drains the AI director, retains the current world as “Before last load,” installs history and world in one commit, preserves current forgetting/accounting/external-operation records, rotates command and provider-context identities, resets derived scheduling caches and reopens paused. Captured queued/running narration is cancelled, not redispatched. Browser world-agent sessions and drafts reset on the new timeline; these local drafting sessions are not authoritative game state. Existing attempt/cooldown guards stay outside rewind. Load operation receipts prevent a repeated request from rewinding twice. Operational backup and import include slot rows.
+
+**2026-09-21:** only the current development save format is supported, under the [no-legacy policy](save-and-load.md#active-development-policy). No new migration or compatibility readers are implemented. Old compatibility code predating this feature is not a requirement to maintain or extend. Saves remain local, full snapshots; autosaves, import/export UI, cloud/shared-world restore and performance qualification are not implemented. SQLite native UI evidence is in [Verification](verification.md#manual-saveload-runtime); automated, PostgreSQL and live-provider checks remain deferred in the [TODO](maintainers/TODO.md#manual-saveload-deferred-validation).
 
 ## Performance critical path
 

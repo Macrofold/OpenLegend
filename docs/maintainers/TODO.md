@@ -181,3 +181,15 @@ No automated tests were written or run for these performance changes, by user re
 - [ ] Cover cold event eviction versus deletion, retained awareness/obligation/knowledge sources, cold cross-event dependencies, row-coverage failures, journal replay, older backups and restore while preserving current forgetting/accounting.
 - [ ] Validate bounded timing capture and authenticated metrics access; add missing request/browser/GC spans. Repeat PF00 with at least 1,000 successful intentions, a 30-minute soak, storage stalls, preserved mature history and actual PostgreSQL; compare action confirmation and first rendered movement separately. Short native SQLite observations are not these gates.
 - [ ] Execute PF08 migration/recovery and PF09/PF11 population/crowd/load coverage after the remaining implementations and explicit scale authorization, including 100 independent players, 100 agents, thousands of animals, old receipts, privacy, fair admission and slow readers. No scale target has passed.
+
+## Manual save/load deferred validation
+
+Automated tests were neither written nor run for the initial implementation, at the owner's request. Capability work stays in [SL00–SL10](save-and-load.md); add the following automated coverage when authorized. Do not add legacy migration tests while the [active development policy](../save-and-load.md#active-development-policy) is in force.
+
+- [ ] Cover create/list/delete, the slot/size limits, duplicate create/load requests, incompatible formats, corruption, and source-preserving failures on both SQLite and PostgreSQL.
+- [ ] Cover native continuation including partial actions, inventory/definition additions, RNG, cold history, inner worlds, retained narration and current forgetting overlays. Verify complete dependency coverage whenever a new authoritative store is added.
+- [ ] Cover lost load responses, concurrent requests/ticks, fresh browser baselines, all-tab conversation/draft invalidation, stale commands and callbacks, worker-drain failures, unchanged spending/uncertain attempts, and recurrence of event IDs without abandoned-future job links.
+- [ ] Inject publication/install/COMMIT failures and process death; verify rollback/cache agreement and the pre-load recovery slot. Exercise server restart, slot persistence and the operational backup/import paths with slot rows.
+- [ ] Qualify live-provider cancellation/workspace context and PostgreSQL restore under separately authorized no-spend or capped conditions; current native browser evidence does not establish these boundaries.
+- [ ] Measure large saves and cold histories before changing the 64 MiB/20-slot limits. Defer streaming, compression, incremental snapshots, autosaves and portable/cloud saves to the focused tracker rather than adding speculative machinery.
+- [ ] Reconcile the pre-existing full-typecheck failures in test files that still treat asynchronous APIs as synchronous; the production build succeeds, but that is not a green full check.

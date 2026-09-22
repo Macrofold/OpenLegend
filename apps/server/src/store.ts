@@ -1,3 +1,4 @@
+import { GameSaves, type RestoreSave } from './game-saves.js';
 import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
@@ -225,7 +226,12 @@ export interface WorldStore {
     state: SavedWorld,
     invalidatedMemoryIds?: Record<string, string[]>,
     appendEventCount?: number,
-    historyProjection?: { before?: WorldState; after: WorldState; receipt?: GameplayReceipt },
+    historyProjection?: {
+      before?: WorldState;
+      after: WorldState;
+      receipt?: GameplayReceipt;
+      restore?: RestoreSave;
+    },
   ): Promise<number>;
   close(): Promise<void>;
 }
@@ -233,6 +239,7 @@ export interface WorldStore {
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
   history?: HistoryRepository;
+  saves?: GameSaves;
   commands?: CommandReceipts;
   vectors?: VectorStore;
   readonly persistence?: 'postgres' | 'sqlite';
@@ -389,10 +396,12 @@ export class SqliteStore implements GameRepository {
   }
 
   readonly history: HistoryRepository;
+  readonly saves: GameSaves;
   constructor(path: string, database?: SqlDatabase) {
     if (!database && path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = database ?? new SqliteDatabase(path);
     this.history = new HistoryRepository(this.db);
+    this.saves = new GameSaves(this.db);
     this.commands = new CommandReceipts(this.db);
     this.ready = this.initialize(!!database);
   }
@@ -442,6 +451,7 @@ export class SqliteStore implements GameRepository {
       await this.vectors.initialize();
     }
     await this.history.initialize();
+    await this.saves.initialize();
     await this.commands.initialize();
     const version = await this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema');
     if (version && version['value'] !== '1')
@@ -518,7 +528,12 @@ export class SqliteStore implements GameRepository {
     state: SavedWorld,
     invalidatedMemoryIds?: Record<string, string[]>,
     appendEventCount?: number,
-    historyProjection?: { before?: WorldState; after: WorldState; receipt?: GameplayReceipt },
+    historyProjection?: {
+      before?: WorldState;
+      after: WorldState;
+      receipt?: GameplayReceipt;
+      restore?: RestoreSave;
+    },
   ): Promise<number> {
     await this.ready;
 
@@ -542,6 +557,7 @@ export class SqliteStore implements GameRepository {
     const changedRows = Object.entries(state.world.innerWorlds ?? {})
       .filter(
         ([actorId, inner]) =>
+          !!historyProjection?.restore ||
           this.acceptedRevision !== expectedRevision ||
           inner !== this.acceptedState?.world.innerWorlds?.[actorId],
       )
@@ -558,6 +574,7 @@ export class SqliteStore implements GameRepository {
       }))
       .filter(
         (row) =>
+          !!historyProjection?.restore ||
           this.acceptedRevision !== expectedRevision ||
           this.acceptedRows.get(row.key) !== JSON.stringify(row.values),
       );
@@ -574,6 +591,10 @@ export class SqliteStore implements GameRepository {
             : Number(row['revision']);
         if (current !== expectedRevision)
           throw new Error('Save conflict: another writer changed this world.');
+        if (historyProjection?.restore) {
+          if (!this.acceptedState) throw new Error('No active world to replace.');
+          await this.saves.install(this.acceptedState, historyProjection.restore);
+        }
         if (historyProjection?.receipt)
           await this.commands.save(state.world.id, historyProjection.receipt);
         const ledgerKey = `forget-ledger:${state.world.id}`;
@@ -646,7 +667,7 @@ export class SqliteStore implements GameRepository {
               code: 'snapshot-published',
               message: 'Inner world published.',
             });
-        for (const [id, result] of outcomes) {
+        for (const [id, result] of historyProjection?.restore ? [] : outcomes) {
           const job = await this.getJob(id);
           if (job)
             await this.putJob({
@@ -683,6 +704,7 @@ export class SqliteStore implements GameRepository {
       }),
     );
     // Cache only after COMMIT acknowledgement; failed writes never certify a row.
+    if (historyProjection?.restore) this.acceptedRows.clear();
     for (const row of changedRows) this.acceptedRows.set(row.key, JSON.stringify(row.values));
     this.acceptedRevision = revision;
     this.acceptedState = state;

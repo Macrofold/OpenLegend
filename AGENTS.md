@@ -22,6 +22,10 @@ Guidelines
 - Comment the why – When coding, add brief comments at important behavioral boundaries explaining the requirement, tradeoff or intended extension. Reference the canonical documentation file and a specific heading, for example `docs/architecture.md#state-and-transitions`. Place comments near the code they clarify, especially around authority, privacy, persistence, admission, recovery and non-obvious compatibility behavior. Do not narrate obvious syntax, restate the implementation, cite historical/source files or comment every line; prefer a few durable links that help future maintainers and coding agents recover design context. Update or remove these references when the behavior or documentation owner changes.
 - Centralize semantic mutations – Adding, updating or deleting a domain concept must go through one authoritative entrypoint that performs validation, dependent-state updates, invalidation and committed side effects. Parameterize legitimate variants instead of creating shortcut paths that can omit downstream work.
 
+When making substantial changes to game-state management or adding/changing object storage, consider save/load implications and follow [the save/load design](docs/save-and-load.md).
+
+**2026-09-21 — No legacy support until the owner removes this block.** There are no real players. Do not add old-save migrations, backward-compatibility paths or legacy-support maintenance for evolving models/storage. Reject incompatible development saves explicitly; preserve same-version integrity and real accounting/privacy boundaries. See [active development policy](docs/save-and-load.md#active-development-policy), which overrides older compatibility requirements.
+
 ## Boundaries
 
 - `packages/domain` is authoritative, deterministic, serializable and free of I/O, wall clocks, provider SDKs, browser APIs and renderer imports. Changes are pure transitions with explicit outcomes and committed events. Randomness belongs to saved state.

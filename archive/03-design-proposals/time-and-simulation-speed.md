@@ -1,5 +1,7 @@
 # Time, acceleration, and survival
 
+Simulation time, scheduling and future dormancy changes must respect the continuation requirements in the [save/load design](../../docs/save-and-load.md).
+
 Status: **accepted timing scheme and implemented personal-world controls**, updated September 19, 2026. The user's latest instruction supersedes the earlier candidate of one real hour per game day: **1× now advances one simulated minute per real second**. The running prototype has 0.5×, 1×, 3× and 8× plus a saved **Pause game when hidden** checkbox in the time-controls settings panel. Larger aging, weather, sector and overload systems below remain design proposals. See [implemented architecture](../../docs/architecture.md) and [verification](../../docs/verification.md).
 
 The checkbox is on by default. When checked, a hidden or unfocused tab pauses the personal world; when unchecked, connected background play continues, including ordinary autonomous scheduling under existing AI caps. Manual pause always wins. Closing all connections, server downtime and computer sleep do not authorize offline catch-up. Live NPC cognition and conversation remain required acceptance work; native execution remains the per-action foundation and outage behavior. See [first playable MVP](../05-project/first-playable-mvp.md).

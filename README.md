@@ -40,7 +40,7 @@ Select a resource and Gather. Your character approaches it, completes the work, 
 
 Pause and **0.5× / 1× / 3× / 8×** controls use one simulation clock. At **1×, one real second advances one game minute**: a full game day takes 24 real minutes (48 minutes at 0.5×, 8 minutes at 3×, 3 minutes at 8×). Open **Time settings** beside the speed buttons to change **Pause game when hidden**. It is checked by default and saved to your local player profile. Checked, hiding the tab or moving focus away pauses the game; unchecked, the server continues while a game tab remains connected, even if background heartbeats are throttled. Manual pause always wins. Closing all game connections pauses progression after disconnect detection; server downtime and computer sleep produce no offline catch-up. An already dispatched model request may still incur usage, but a paused world cannot accept its effects.
 
-Saves are in `.data/world.sqlite`. Stop the server before copying the whole `.data` directory for a backup. Use another `OPEN_LEGEND_DATA_DIR` for a separate world. There is no silent save reset or destructive reset button. For a production client build served locally:
+Open **Settings & help → Save & load** to create named manual saves and restore a saved world paused. The server keeps up to 20 manual slots and a “Before last load” recovery slot. Development saves support only the current format; autosaves are not implemented. Saves are in `.data/world.sqlite`. Stop the server before copying the whole `.data` directory for a backup. Use another `OPEN_LEGEND_DATA_DIR` for a separate world. There is no silent save reset or destructive reset button. For a production client build served locally:
 
 ```sh
 pnpm run build
@@ -79,6 +79,7 @@ The latest design additions cover [world locks and invention ownership](archive/
 
 - [Maintainer work index](docs/maintainers/README.md) — navigation to cross-cutting work and the focused [ACT](docs/maintainers/actor-model.md), [CR](docs/maintainers/cognition-redesign.md), [NC](docs/maintainers/narration-and-conversations.md), [INV](docs/maintainers/inventions-and-world-evolution.md) and [production-data](docs/maintainers/production-data.md) trackers
 - [Research and design archive](archive/README.md)
+- [Save/load design](docs/save-and-load.md) — high-level constraints for future state, simulation and storage design; manual slots implemented; broader qualification and autosaves tracked separately
 - [Runtime performance design](docs/performance.md) and [prioritized tasks](docs/maintainers/performance.md) — compact persistence, triggered background work, bounded CPU and the measured scale path; cold event storage, gameplay retry epochs and actor scheduling are implemented; multiplayer and scale qualification remain pending
 - [Real-time multiplayer synchronization](archive/07-technical-architecture/realtime-synchronization.md) — batching, prediction, replication and future improvements
 - [Production data model](archive/07-technical-architecture/production-data-model.md), [world-agent queries](archive/07-technical-architecture/data-queries-and-mcp.md), and [migration/scale design](archive/07-technical-architecture/data-delivery-and-scale.md) — target design, with active phases in the [production-data tracker](docs/maintainers/production-data.md)

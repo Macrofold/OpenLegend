@@ -1,5 +1,7 @@
 # Production data delivery, operations and scale
 
+Operational recovery and retention must respect the [gameplay save/load design](../../docs/save-and-load.md). That document owns gameplay rewind semantics; this document owns storage operations and disaster recovery.
+
 The implemented personal-world baseline uses `WorldChanges`, one-second routine durability coalescing, periodic snapshots, journal recovery, SQLite/PostgreSQL adapters, pgvector recall, response receipts, typed SSE patches and atomic god-editor mutations. [Architecture](../../docs/architecture.md) owns those current mechanics. This document owns the remaining migration, retention, recovery, external deployment, normalization, backup/restore, sharding and measured-scale design; active D0–D6 work lives in the [production-data tracker](../../docs/maintainers/production-data.md).
 
 ## 1. What scaling means for this product

@@ -1,3 +1,4 @@
+import type { SavePayload, RestoreSave } from './game-saves.js';
 import { recordDuration, timed, countMetric, gaugeMetric } from './performance.js';
 import { retainHotEvents } from './hot-events.js';
 import { COMMAND_RETRY_MS, type CommandEpoch, type GameplayReceipt } from './command-receipts.js';
@@ -197,7 +198,8 @@ export class WorldService {
   private debtSeconds = 0;
   storageError: string | null = null;
   memoryBacklog: string | null = null;
-  readonly generation = randomUUID();
+  generation = randomUUID();
+  timelineId: string = randomUUID();
 
   constructor(
     readonly store: GameRepository,
@@ -265,6 +267,10 @@ export class WorldService {
       ((await store.getIntegration(`command-epoch:${this.world.id}`)) as CommandEpoch) ??
       this.epoch;
     await this.refreshCommandEpoch();
+    this.timelineId =
+      ((await store.getIntegration(`world-timeline:${this.world.id}`)) as string) ||
+      this.timelineId;
+    await store.putIntegration(`world-timeline:${this.world.id}`, this.timelineId);
     this.viewRevision = this.persistedRevision;
     this.lastRoutinePersistAt = this.now();
     await store.recoverInterruptedWork();
@@ -411,6 +417,7 @@ export class WorldService {
     eventMode: 'unchanged' | 'append' | 'diff',
     historyBefore?: WorldState,
     receipt?: GameplayReceipt,
+    restore?: RestoreSave,
   ): Promise<boolean> {
     if (this.storageError) return false;
     try {
@@ -436,6 +443,7 @@ export class WorldService {
           before: historyBefore,
           after: historyWorld,
           receipt,
+          restore,
         }),
       );
       this.updateHistoryRevision(
@@ -499,6 +507,65 @@ export class WorldService {
       await this.ready;
       if (this.unpersisted && !(await this.commit(this.saved, undefined, 'append')))
         throw new Error(this.storageError ?? 'The pending world changes could not be saved.');
+    });
+  }
+
+  async createSave(label: string, id: string): Promise<void> {
+    return this.mutate(async () => {
+      await this.flush();
+      if (this.storageError || !this.store.saves)
+        throw new Error(this.storageError ?? 'Saves unavailable.');
+      await this.store.saves.create(this.saved, label, id);
+    });
+  }
+
+  async restoreSave(id: string, requestId: string, payload: SavePayload): Promise<void> {
+    return this.mutate(async () => {
+      await this.flush();
+      const restored = structuredClone(payload.state);
+      // 2026-09-21: development saves use only the current model; no legacy migrations.
+      const ledger = (await this.store.getIntegration(`forget-ledger:${this.world.id}`)) as
+        | Record<string, string[]>
+        | undefined;
+      const events = payload.history.history_events.map(
+        (row) => JSON.parse(String(row['payload'])) as WorldEvent,
+      );
+      if (events.length !== restored.world.events.length + (restored.world.archivedEventCount ?? 0))
+        throw new Error('Save history is incomplete.');
+      restored.world.events = events.sort(
+        (a, b) => (a.order ?? a.sequence) - (b.order ?? b.sequence),
+      );
+      restored.world.archivedEventCount = 0;
+      const baseline = structuredClone(restored.world);
+      // Force current privacy overlays through history projection, even if captured earlier.
+      if (baseline.experience) baseline.experience.forgotten = {};
+      for (const [actorId, ids] of Object.entries(ledger ?? {}))
+        for (const sourceId of ids)
+          restored.world = forgetExperience(restored.world, actorId, sourceId).world;
+      restored.manuallyPaused = true;
+      restored.world.paused = true;
+      const epoch = {
+        generation: this.epoch.generation + 1,
+        openedAt: this.now(),
+        token: randomUUID(),
+      };
+      const timeline = randomUUID();
+      if (
+        !(await this.commit(restored, undefined, 'diff', baseline, undefined, {
+          id,
+          requestId,
+          payload,
+          epoch,
+          timeline,
+        }))
+      )
+        throw new Error(this.storageError ?? 'Load failed.');
+      this.epoch = epoch;
+      this.timelineId = timeline;
+      this.generation = randomUUID();
+      this.debtSeconds = 0;
+      this.memoryBacklog = null;
+      this.notify();
     });
   }
 

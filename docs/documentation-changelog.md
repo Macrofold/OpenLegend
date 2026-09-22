@@ -4,6 +4,22 @@ This file records material changes to OpenLegend's documentation structure and h
 
 It is historical context only. Current requirements, design, architecture, tasks, status and open decisions live in their canonical owner documents.
 
+## 2026-09-21 — Development save/load implementation policy
+
+- Recorded the owner's no-real-players block: no legacy readers, migrations or compatibility maintenance until explicitly lifted. Suspended SL06 and reconciled extension guidance.
+- Recorded the initial manual-slot implementation, scoped native runtime evidence and deferred automated/adapter/provider qualification, without closing broader phase gates.
+
+## 2026-09-21 — Save/load delivery tracker
+
+- Added the focused SL00–SL10 tracker under `docs/maintainers`, separating reusable gameplay capabilities from evolving object schemas and production-data rollout.
+- Linked the tracker from the maintainer index, design and production-data tracker; defined the initial manual-save slice and later autosave/conditional extensions without marking implementation complete.
+
+## 2026-09-21 — Save/load design guidance
+
+- Added `docs/save-and-load.md` as the canonical high-level gameplay restoration contract, with primary-source research and storage-independent state-design constraints.
+- Linked relevant state, simulation, memory, identity, persistence and extension designs, and added an AGENTS.md requirement to consider save/load during substantial state/storage changes.
+- Kept operational recovery and physical records with their existing owners; placed unresolved gameplay save policies in D60. No save/load implementation or acceptance task was completed by this documentation change.
+
 ## 2026-09-20 — Documentation consolidation
 
 - Adopted one-canonical-owner documentation policy.

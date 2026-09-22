@@ -1,3 +1,4 @@
+import { GameSavesPanel } from './ui/game-saves';
 import { History, Narrator } from './ui/history';
 import { createRoot } from 'react-dom/client';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -137,6 +138,17 @@ function App() {
   const accept = useCallback(
     (next: GameView, reset = false) =>
       setView((previous) => {
+        if (previous?.saveTimeline && next.saveTimeline !== previous.saveTimeline) {
+          // A restored timeline must not reuse abandoned browser conversations or drafts.
+          try {
+            localStorage.removeItem(`open-legend:world-agent:${next.worldId}`);
+            sessionStorage.removeItem('open-legend:composer-draft:v2');
+          } catch {
+            /* Browser storage is optional. */
+          }
+          window.location.reload();
+          return previous;
+        }
         if (!reset && previous?.worldId === next.worldId) {
           if (next.revision < previous.revision) return previous;
           if (next.profile.revision < previous.profile.revision)
@@ -631,6 +643,7 @@ function App() {
       case 'help':
         return (
           <>
+            <GameSavesPanel />
             <Section title="Appearance">
               <label>
                 World theme

@@ -23,6 +23,7 @@ try {
         'intelligence_calls',
         'meta',
         'player_profiles',
+        'game_saves',
         ...COMMAND_TABLES,
         ...['attempt_scopes', ...HISTORY_TABLES],
       ].map(async (name) => [name, await store.db.prepare(`SELECT * FROM ${name}`).all()] as const),

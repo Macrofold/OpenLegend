@@ -1,5 +1,7 @@
 # State systems and anticipation of future influences
 
+New state systems and ownership changes must respect the [save/load design](../../docs/save-and-load.md); define their durable facts and reconstruction responsibilities as part of their own design.
+
 Recorded September 19, 2026. **Accepted direction from M07/M08:** changing quantities should have meaningful state, a responsible update system, and contributions from other mechanics. When a new mechanic exposes a missing state/system, the engine should recognize it and propose the necessary definition. It should consider existing influences and plausible influences not yet specified, implemented, or discovered, without creating every related subsystem. Data shapes and calculations below are proposals, not code.
 
 Related: [world creation/discovery](world-creation-and-discovery.md), [materials/construction](evolving-materials-and-construction.md), [complexity control](simulation-scope-and-complexity.md), and [world rules](world-rules-and-parameters.md).

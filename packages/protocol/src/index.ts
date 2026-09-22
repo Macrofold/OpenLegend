@@ -155,6 +155,7 @@ export interface AiJobView {
 }
 
 export interface GameView {
+  saveTimeline?: string;
   commandEpoch?: string;
   historyRevision?: string;
   historyEpoch?: string;
@@ -420,4 +421,13 @@ export interface TranscriptPage {
   items: TranscriptItem[];
   watermark: number;
   before?: number;
+}
+
+/** Public slot metadata only; private world payloads never cross this boundary. */
+export interface GameSaveSummary {
+  id: string;
+  label: string;
+  createdAt: string;
+  simTime: number;
+  compatible: boolean;
 }

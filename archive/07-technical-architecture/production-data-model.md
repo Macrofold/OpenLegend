@@ -1,5 +1,7 @@
 # Production data model
 
+Record ownership, dependencies and transaction design must respect the [gameplay save/load design](../../docs/save-and-load.md). It owns the restoration contract without prescribing these record layouts.
+
 The current personal-world implementation stores whole-world snapshots plus transactional `WorldChanges`, periodic compaction, response receipts and SQLite/PostgreSQL cognition records; PostgreSQL also stores pgvector recall data. [Architecture](../../docs/architecture.md) owns exact current behavior. Records labeled transitional below exist only to bridge that runtime. Normalized production, conversation/story, rights/pack and hosted-operation records remain future target records until implemented.
 
 This document owns target production records, identities, invariants and transaction boundaries. [Data queries and MCP](data-queries-and-mcp.md) owns the durable query interface. [Data delivery and scale](data-delivery-and-scale.md) owns migration, deployment, retention, capacity evaluation and rollout. Existing [declaration](declarations-and-evolution.md), [memory](../../docs/memory-architecture.md), [governance](../03-design-proposals/invention-governance-and-ownership.md), [workshop](../03-design-proposals/world-agent-and-workshop.md) and [billing](billing-and-usage-reporting.md) documents own their product semantics.

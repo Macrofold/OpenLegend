@@ -26,6 +26,7 @@ const tables = [
   'intelligence_calls',
   'meta',
   'player_profiles',
+  'game_saves',
   ...['attempt_scopes', ...HISTORY_TABLES, ...COMMAND_TABLES].filter((name) =>
     sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name),
   ),
@@ -77,6 +78,7 @@ try {
     'attempts',
     'intelligence_calls',
     'player_profiles',
+    'game_saves',
     ...['attempt_scopes', ...HISTORY_TABLES, ...COMMAND_TABLES],
   ])
     if (Number((await db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get())?.['count']))

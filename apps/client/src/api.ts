@@ -4,6 +4,7 @@ import type { ApiResult, GamePatch, GameView } from '@open-legend/protocol';
 // pagehide notification must not erase a newer return/resume notification.
 const tabClientId = crypto.randomUUID();
 let presenceSequence = 0;
+let worldGeneration = '';
 
 export function setWorldPaused(paused: boolean): Promise<ApiResult> {
   return post('/api/control', {
@@ -15,7 +16,20 @@ export function setWorldPaused(paused: boolean): Promise<ApiResult> {
 export async function getState(): Promise<GameView> {
   const response = await fetch('/api/state', { credentials: 'same-origin', cache: 'no-store' });
   if (!response.ok) throw new Error(`The world could not be loaded (${response.status}).`);
-  return response.json() as Promise<GameView>;
+  const view = (await response.json()) as GameView;
+  worldGeneration = view.historyEpoch?.split(':')[0] ?? '';
+  try {
+    const key = `open-legend:save-timeline:${view.worldId}`;
+    const previous = sessionStorage.getItem(key);
+    if (previous && previous !== view.saveTimeline) {
+      localStorage.removeItem(`open-legend:world-agent:${view.worldId}`);
+      sessionStorage.removeItem('open-legend:composer-draft:v2');
+    }
+    if (view.saveTimeline) sessionStorage.setItem(key, view.saveTimeline);
+  } catch {
+    /* Browser storage is optional. */
+  }
+  return view;
 }
 export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
   if (patch.baseRevision !== current.revision || patch.revision <= current.revision)
@@ -59,7 +73,7 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
   const response = await fetch(path, {
     method: 'POST',
     credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-OL-Generation': worldGeneration },
     body: JSON.stringify(body),
   });
   let result: T;

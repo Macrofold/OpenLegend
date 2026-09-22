@@ -1,5 +1,7 @@
 # Narration, agent responses and conversations
 
+Conversation, source-history and narration storage must respect the [save/load design](save-and-load.md), including coherent timeline restoration and external-work fencing.
+
 Current implementation and delivery limits are recorded in [Architecture](architecture.md#durable-conversations-and-private-history).
 
 This specification owns accepted narration, response and conversation behavior. Delivery gates remain in the [sole NC tracker](maintainers/narration-and-conversations.md).

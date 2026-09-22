@@ -467,6 +467,7 @@ export async function projectView(
     ),
     revision,
     worldId: world.id,
+    saveTimeline: service.timelineId,
     commandEpoch: service.commandEpoch,
     godMode: service.config.godMode,
     ...(service.config.godMode
@@ -724,6 +725,7 @@ function changedFields<T extends object>(previous: T, next: T): Partial<T> | und
 export function projectPatch(previous: GameView, next: GameView): GamePatch | null {
   if (
     previous.worldId !== next.worldId ||
+    previous.saveTimeline !== next.saveTimeline ||
     previous.schemaVersion !== next.schemaVersion ||
     previous.godMode !== next.godMode ||
     !same(previous.godTools, next.godTools) ||

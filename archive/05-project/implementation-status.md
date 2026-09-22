@@ -31,3 +31,7 @@ The Person tab also exposes editable health, fullness and energy snapshots, a fi
 ### Selective story narration
 
 The default replaceable story selector, namespaced actor/object fields, owner editor, semantic introduction milestones, bounded frequency/grouping, dispatch revocation and indexed banner projection are implemented. Ordinary encounters and cognition importance do not admit Narrator jobs. Legacy prose remains private history and pending raw evidence does not appear as a banner. Place entities and inventory-item encounters are unsupported. Native runtime exercise is recorded in [verification](../../docs/verification.md); automated/privacy/recovery acceptance remains open in the [NC tracker](../../docs/maintainers/narration-and-conversations.md).
+
+## Manual gameplay saves
+
+Local manual slots, complete current-world/history capture, transactional restore, a pre-load recovery slot and React save/load controls are implemented. Restore preserves external spending and current forgetting, restarts provider context and opens paused. Only the current development format is supported. See [Architecture](../../docs/architecture.md#manual-gameplay-saves), [scoped native evidence](../../docs/verification.md#manual-saveload-runtime), and [SL00–SL10](../../docs/maintainers/save-and-load.md) for remaining acceptance; autosaves and portability are not implemented.

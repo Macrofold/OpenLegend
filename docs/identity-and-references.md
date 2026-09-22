@@ -1,5 +1,7 @@
 # Identity and references
 
+Identity and reference changes must preserve the reconstruction and compatibility constraints in the [save/load design](save-and-load.md).
+
 This document owns the identity contract. [Narration and conversations](narration-and-conversations.md#3-talk-act-and-think-response-contract) owns the response shape and admission semantics.
 
 ## Contract

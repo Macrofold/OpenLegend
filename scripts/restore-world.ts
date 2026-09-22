@@ -57,6 +57,7 @@ try {
       'attempts',
       'intelligence_calls',
       'player_profiles',
+      'game_saves',
       ...COMMAND_TABLES,
       ...['attempt_scopes', ...HISTORY_TABLES],
     ];

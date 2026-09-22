@@ -1,5 +1,7 @@
 # Runtime performance design
 
+State partitioning, cache eviction and persistence optimizations must respect the [save/load design](save-and-load.md), including complete capture and coherent restoration across hot and cold storage.
+
 Status: accepted target design, with initial foundations implemented as recorded in Architecture; larger-world capacity remains unqualified. [Prioritized tasks and acceptance budgets](maintainers/performance.md) are the execution plan. [Architecture](architecture.md#performance-critical-path) records current behavior; [verification](verification.md#performance-investigation) records the limited measurements.
 
 This document owns runtime work scheduling, persistence cost reduction, local buffering and performance escalation gates. The [real-time synchronization design](../archive/07-technical-architecture/realtime-synchronization.md) continues to own command/confirmation semantics, prediction, replication, reconnect and network queue contracts. The [production data design](../archive/07-technical-architecture/production-data-model.md) owns atomic data contracts; [delivery and scale](../archive/07-technical-architecture/data-delivery-and-scale.md) owns migration, recovery and partitioning. [Narration](narration-and-conversations.md) and [memory](memory-architecture.md) retain their behavioral and privacy contracts.
