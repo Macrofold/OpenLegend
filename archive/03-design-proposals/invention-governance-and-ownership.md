@@ -6,7 +6,7 @@ Related: [world creation and discovery](world-creation-and-discovery.md), [world
 
 ## Separate authority, authorship and knowledge
 
-A world owner governs what definitions run in their world. Creating an invention inside that world does not transfer its player's contribution to the owner. An inventor should retain an account-linked record of their work and the ability to reuse the portions they are entitled to take elsewhere. Account-level ownership is a product control and attribution model, not a declaration of exclusive rights over every idea or purely generated output.
+A world owner governs what definitions run in their world. An NPC-created invention belongs to the world creator account(s). A player-created invention belongs jointly to the inventing player and the world creator account(s); the player retains their ownership. Explicitly record whether an invention was NPC-created so libraries and lists can filter it. Deduplicate account IDs when a player is also a world creator. Account-level ownership is a product control and attribution model, not a declaration of exclusive rights over every idea or purely generated output.
 
 | Concept                            | Responsibility or permission                                                                                     |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -19,7 +19,7 @@ A world owner governs what definitions run in their world. Creating an invention
 
 Learning a recipe does not transfer its account ownership or grant permission to export its implementation. Importing a pack does not automatically teach every character its methods or provide the required materials. The host's ability to retire or replace a definition in one world does not erase its creator's history. A creator's ability to propose a revision does not authorize activating it in someone else's world.
 
-Keep character identity distinct from account identity: an account may control characters in several worlds, a definition may have several contributors, and an NPC may discover something without having a human account. Record those facts separately; NPC ownership/beneficiary policy remains an explicit open decision.
+Keep character identity distinct from account identity: an account may control characters in several worlds, a definition may have several contributors, and an NPC may discover something without having a human account. Record those facts separately. Preserve inventor actor, originating world, player account when applicable, NPC-created classification and owner accounts at creation. Permission origin remains separate: executing a player-delegated task does not bypass the player invention lock. Reusing or learning an existing invention does not grant new authorship or ownership; independent discoveries may share executable mechanics while retaining separate attribution records. Changes to world membership or controller roles do not silently rewrite historical ownership.
 
 ## Open and locked invention
 
@@ -75,7 +75,7 @@ Technical details describe what was declared and validated; they are not proof t
 
 The library should preserve the creator's authorized contribution capsule independently of a live world's continued existence or the account's current membership. Do not make leaving a world silently delete their own work. That capsule includes the creator's eligible artifacts, lineage and relevant metadata, not unrestricted copies of private dependencies, another actor's memory, hidden world state or other players' records. If a dependency cannot travel, retain its reference and explain the missing permission or compatibility requirement. World names and other origin metadata need a visibility policy for private/deleted worlds.
 
-If the world is hosted separately, an authenticated publication/synchronization contract will be needed to associate contributions with accounts and resolve provenance. A server-supplied author label alone is insufficient to settle disputed ownership. Account recovery, co-authorship disputes, deletion/retention and offline/self-hosted synchronization remain product and implementation decisions.
+If the world is hosted separately, an authenticated publication/synchronization contract will be needed to associate contributions with accounts and resolve provenance. A server-supplied author label alone is insufficient to settle disputed ownership. Account recovery, additional co-authorship disputes, deletion/retention and offline/self-hosted synchronization remain product and implementation decisions. Detailed invention mechanics remain open: start with small finite admission and attribution contracts that can be extended, without requiring marketplace or general rights-management infrastructure.
 
 ## Every world has an invention pack
 
@@ -101,7 +101,7 @@ A world owner chooses whether to offer a free-use world and make its whole inven
 
 To fulfill the complete-pack promise, the world must admit only contributions and dependencies whose recorded terms support that promise. The owner chooses those terms for participation but cannot acquire missing rights merely by changing a setting. Show both invention lock settings and contribution/sharing terms before a player joins and again before their first relevant contribution or an effective terms change. Record the accepted terms version with each contribution. A badge should distinguish verified complete free-use releases from worlds that merely intend to resolve blockers later.
 
-Creators retain attribution and control over eligible versions while granting the disclosed permissions needed to host, include and reuse them. Contribution is not an automatic assignment to the host. A player who does not accept a new sharing policy must have a clear choice not to contribute under it; the account library and existing grants are not silently rewritten.
+Creators retain attribution and control over eligible versions while granting the disclosed permissions needed to host, include and reuse them. The joint ownership rule above does not select redistribution terms, revenue shares or an exclusive assignment to the host. A player who does not accept a new sharing policy must have a clear choice not to contribute under it; the account library and existing grants are not silently rewritten.
 
 Converting an existing world to free use requires auditing its full inventory and dependency closure. Obtain the necessary contributor permissions or replace/remove blocked content through an explicit compatible migration. The owner may publish a clearly labeled eligible subset in the meantime, but it is not the full free-use pack. Changing future contribution terms must not retroactively appropriate older contributions. Conversely, closing a world or charging for a later release cannot silently revoke permissions already granted for an earlier release. Exact licenses, retention rights and consent text require a separate policy decision; this document grants none.
 

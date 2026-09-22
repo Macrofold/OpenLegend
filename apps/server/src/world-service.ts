@@ -228,13 +228,17 @@ export class WorldService {
     const existing = await store.load();
     if (existing) validateWorldModules(existing.state.world);
     this.pauseWhenHidden = this.profile.preferences.pauseWhenHidden;
+    const creationAccounts = {
+      creatorAccountIds: [this.profile.id],
+      playerAccountId: this.profile.id,
+    };
     this.saved = existing?.state ?? {
       world:
         config.worldPreset === 'touch-demo'
-          ? createTouchDemo(config.seed)
+          ? createTouchDemo(config.seed, creationAccounts)
           : config.worldPreset === 'reservoir-demo'
-            ? createReservoirDemo(config.seed)
-            : createWorld(config.seed),
+            ? createReservoirDemo(config.seed, creationAccounts)
+            : createWorld(config.seed, creationAccounts),
       speed: 1,
       manuallyPaused: false,
     };

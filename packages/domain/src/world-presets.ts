@@ -1,3 +1,4 @@
+import type { WorldCreationAccounts } from './invention-attribution.js';
 import { seedAgency } from './agency.js';
 import { DEFAULT_SENSES, COARSE_TOUCH } from './perception.js';
 import { createWorld } from './data.js';
@@ -43,8 +44,8 @@ export const RESERVOIR_DEMO_ATTRIBUTES: AttributeDefinition[] = [
     schema: { kind: 'category', choices: ['cautious', 'curious'], initial: 'cautious' },
   },
 ];
-export function createReservoirDemo(seed = 73): WorldState {
-  const world = createWorld(seed);
+export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts): WorldState {
+  const world = createWorld(seed, accounts);
   world.id = `reservoir-demo-${seed}`;
   world.moduleManifest = createModuleManifest([
     ...DEFAULT_ATTRIBUTES,
@@ -75,8 +76,8 @@ export function createReservoirDemo(seed = 73): WorldState {
 }
 
 /** The player retains normal sight; the resident has only coarse, unidentified contact. */
-export function createTouchDemo(seed = 73): WorldState {
-  const world = createReservoirDemo(seed);
+export function createTouchDemo(seed = 73, accounts?: WorldCreationAccounts): WorldState {
+  const world = createReservoirDemo(seed, accounts);
   world.id = `touch-demo-${seed}`;
   world.moduleManifest = createModuleManifest(world.moduleManifest!.definitions, [
     ...DEFAULT_SENSES,

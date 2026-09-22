@@ -1,3 +1,4 @@
+import { knownRecipeAttribution } from '@open-legend/domain';
 import { hasWildernessNeeds } from '@open-legend/domain';
 import { projectAttributes, attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
@@ -603,7 +604,14 @@ export async function projectView(
     entities,
     recipes: memo<GameView['recipes']>(
       'recipes',
-      [observation.knownRecipes, inventory, active, paused],
+      [
+        observation.knownRecipes,
+        world.declarationReceipts,
+        world.knowledge[player.id],
+        inventory,
+        active,
+        paused,
+      ],
       () =>
         observation.knownRecipes.map((recipe) => {
           const totals = new Map<string, number>();
@@ -614,6 +622,7 @@ export async function projectView(
           );
           return {
             id: recipe.id,
+            npcCreated: knownRecipeAttribution(world, player.id, recipe.id)!.npcCreated,
             name: recipe.name,
             description: recipe.description,
             family: recipe.output.launcher

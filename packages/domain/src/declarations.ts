@@ -1,3 +1,4 @@
+import { inventionAttribution } from './invention-attribution.js';
 import { inventionPermission } from './invention-policy.js';
 import {
   attributeDefinition,
@@ -238,12 +239,22 @@ export function admitDeclaration(
     );
   const permission = inventionPermission(original, provenance.authority);
   if (!permission.ok) return { world: original, events: [], outcome: permission };
+  let attribution: ReturnType<typeof inventionAttribution>;
+  try {
+    attribution = inventionAttribution(original, provenance.actorId);
+  } catch (error) {
+    return reject(
+      'invalid-attribution',
+      error instanceof Error ? error.message : 'Invalid inventor.',
+    );
+  }
   const errors = validateDeclaration(original, draft);
   if (errors.length) return reject('invalid-declaration', errors.join(' '));
   const digest = canonicalJson(draft);
   const receipt = getOwn(original.declarationReceipts, provenance.requestId);
   if (receipt)
-    return receipt.digest === digest
+    return receipt.digest === digest &&
+      canonicalJson(receipt.attribution) === canonicalJson(attribution)
       ? {
           world: original,
           events: [],
@@ -292,7 +303,7 @@ export function admitDeclaration(
       provenance: cloneValue(provenance),
     };
   }
-  world.declarationReceipts[provenance.requestId] = { digest, recipeId };
+  world.declarationReceipts[provenance.requestId] = { digest, recipeId, attribution };
   const knowledge =
     world.knowledge[provenance.actorId] ?? (world.knowledge[provenance.actorId] = []);
   if (!knowledge.some((record) => record.recipeId === recipeId))

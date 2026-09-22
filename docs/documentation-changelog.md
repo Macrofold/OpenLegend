@@ -1,5 +1,10 @@
 # Documentation changelog
 
+## 2026-09-22 — Ownership clarification
+
+- Accepted the owner's NPC/world-creator and player/world-creator joint ownership rule, plus explicit NPC-created filtering. Removed the corresponding D43 uncertainty; remaining account/library and transfer questions stay open.
+- Kept detailed invention mechanics extensible and finite. Local attribution is an implementation foundation, not a marketplace, legal licensing contract or autonomous invention release.
+
 ## 2026-09-22 — Invention policy defaults
 
 - Selected player invention open for the local prototype, preserving existing behavior under the owner's delegated implementation discretion. NPC invention remains locked with its existing enablement gate. D42 retains delegated creator rights and the proposed owner exception; no exception was adopted.

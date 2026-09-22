@@ -251,6 +251,7 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  authorship: import('./invention-attribution.js').WorldAuthorship;
   inventionPolicy: import('./invention-policy.js').InventionPolicy;
   moduleManifest: import('./world-modules.js').WorldModuleManifest;
   storyPolicy?: import('./story-selection.js').StoryPolicy;
@@ -264,7 +265,7 @@ export interface WorldState {
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   id: string;
   seed: number;
   rngState: number;
@@ -286,7 +287,14 @@ export interface WorldState {
   /** Durable history rows outside the active event working set; not deleted evidence. */
   archivedEventCount?: number;
   commandReceipts: Record<string, CommandReceipt>;
-  declarationReceipts: Record<string, { digest: string; recipeId: string }>;
+  declarationReceipts: Record<
+    string,
+    {
+      digest: string;
+      recipeId: string;
+      attribution: import('./invention-attribution.js').InventionAttribution;
+    }
+  >;
   nextId: number;
 }
 interface Envelope {

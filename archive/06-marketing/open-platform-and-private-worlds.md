@@ -47,7 +47,7 @@ The [invention governance and ownership proposal](../03-design-proposals/inventi
 
 World owners independently open or lock agent/NPC invention and player invention, separately from whether the world offers free-use packs. Every world has a complete invention inventory, but distributable releases require permission for their contents and dependency closure. Free-use worlds disclose contribution terms in advance so creators can build there and copy the complete authorized pack to their own world. A world with unresolved export blockers must identify them and cannot claim an incomplete bundle is the whole pack.
 
-This is a product direction for creator control, attribution and agreed reuse, not an ownership assignment or new license. Hosts cannot retroactively claim player contributions; inherited grants and terms remain attached to published versions. The existing AGPL engine policy and unresolved executable-extension boundary remain unchanged.
+The account ownership rule is specified in the linked governance design; it does not itself establish a new license or retroactively rewrite published contributions; inherited grants and terms remain attached to published versions. The existing AGPL engine policy and unresolved executable-extension boundary remain unchanged.
 
 ## Messaging and unresolved choices
 

@@ -133,14 +133,31 @@ export function Crafting({
   connected: boolean;
   invent(): void;
 }) {
+  const [creatorFilter, setCreatorFilter] = useState('all');
+  const recipes = view.recipes.filter(
+    (recipe) => creatorFilter === 'all' || recipe.npcCreated === (creatorFilter === 'npc'),
+  );
   return (
     <>
-      <Section title="Known recipes" count={view.recipes.length}>
-        {view.recipes.length ? (
-          view.recipes.map((r) => (
+      <Section title="Known recipes" count={recipes.length}>
+        <label>
+          Created by{' '}
+          <select
+            aria-label="Recipe creator"
+            value={creatorFilter}
+            onChange={(event) => setCreatorFilter(event.target.value)}
+          >
+            <option value="all">Everyone</option>
+            <option value="player">Players</option>
+            <option value="npc">NPCs</option>
+          </select>
+        </label>
+        {recipes.length ? (
+          recipes.map((r) => (
             <details className="ol-proposal" key={r.id}>
               <summary>
-                <span className="ol-heading">{r.name}</span> <Tag>Known recipe</Tag>
+                <span className="ol-heading">{r.name}</span>{' '}
+                <Tag>{r.npcCreated ? 'NPC-created' : 'Player-created'}</Tag>
               </summary>
               <p>{r.description}</p>
               <dl>
@@ -162,8 +179,12 @@ export function Crafting({
             </details>
           ))
         ) : (
-          <EmptyState title="Nothing invented yet.">
-            Describe a useful tool and discover a way to make it.
+          <EmptyState
+            title={view.recipes.length ? 'No recipes match this filter.' : 'Nothing invented yet.'}
+          >
+            {view.recipes.length
+              ? 'Choose another creator filter.'
+              : 'Describe a useful tool and discover a way to make it.'}
           </EmptyState>
         )}
       </Section>

@@ -114,6 +114,7 @@ export interface InventoryItemView {
 }
 
 export interface RecipeView {
+  npcCreated: boolean;
   id: string;
   name: string;
   description: string;

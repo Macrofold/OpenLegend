@@ -1,3 +1,7 @@
+import {
+  validateInventionAttribution,
+  type WorldCreationAccounts,
+} from './invention-attribution.js';
 import { initialInventionPolicy } from './invention-policy.js';
 import { seedAgency } from './agency.js';
 import { createModuleManifest } from './world-modules.js';
@@ -184,10 +188,20 @@ export function createActor(
 }
 
 /** A primitive camp and generic material families; there is deliberately no seeded sling or bow recipe. */
-export function createWorld(seed = 73): WorldState {
+export function createWorld(
+  seed = 73,
+  accounts: WorldCreationAccounts = {
+    creatorAccountIds: ['local-player'],
+    playerAccountId: 'local-player',
+  },
+): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
-    schemaVersion: 6,
+    schemaVersion: 7,
+    authorship: {
+      creatorAccountIds: [...accounts.creatorAccountIds],
+      playerAccountIds: { [PLAYER_ID]: accounts.playerAccountId },
+    },
     inventionPolicy: initialInventionPolicy(),
     moduleManifest: createModuleManifest(),
     storyPolicy: defaultStoryPolicy(),
@@ -354,6 +368,7 @@ export function createWorld(seed = 73): WorldState {
   });
   migrateActors(world);
   initializeIdentity(world);
+  validateInventionAttribution(world);
   migrateCognition(world);
   return world;
 }
