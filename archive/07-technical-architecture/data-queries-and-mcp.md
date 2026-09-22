@@ -134,6 +134,8 @@ World-wide multi-sector reads initially use the one-shard transaction. After phy
 
 ## 5. Permissions and privacy
 
+The proposed [owner-private stimulus scope](../../docs/events-perception-and-reactions.md#4-scope-and-event-identity) applies to internal records and their projections. Retaining a source, diagnostic record or reaction-queue entry does not make it general actor knowledge or grant query access; this document retains query authorization ownership.
+
 | Audience                       | Permitted view                                                                                                                                      |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Ordinary player                | Their current permitted observations, own inventory/knowledge/history, public mechanics and granted content                                         |

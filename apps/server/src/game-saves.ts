@@ -1,6 +1,7 @@
 import { HISTORY_TABLES } from './history.js';
 import { digest, type SavedWorld, type SqlDatabase } from './store.js';
 import type { GameSaveSummary } from '@open-legend/protocol';
+import { SaveFiles } from './save-files.js';
 
 // 2026-09-21: no real players. No legacy readers or migrations until the owner lifts
 // docs/save-and-load.md#active-development-policy. Bump this on incompatible changes.
@@ -22,9 +23,15 @@ export interface RestoreSave {
   timeline: string;
 }
 
-/** Local slots share the authority's database transaction; world fields need no second registry. */
+/** The database captures authority; manual slots publish to local files after capture. */
 export class GameSaves {
-  constructor(private readonly db: SqlDatabase) {}
+  private readonly files: SaveFiles;
+  constructor(
+    private readonly db: SqlDatabase,
+    directory: string,
+  ) {
+    this.files = new SaveFiles(directory);
+  }
   async initialize() {
     await this.db.exec(`CREATE TABLE IF NOT EXISTS game_saves (
       id TEXT PRIMARY KEY, world_id TEXT NOT NULL, label TEXT NOT NULL,
@@ -35,16 +42,24 @@ export class GameSaves {
   async list(worldId: string): Promise<GameSaveSummary[]> {
     const rows = await this.db
       .prepare(
-        'SELECT id,label,created_at,sim_time,format FROM game_saves WHERE world_id=? ORDER BY created_at DESC,id DESC',
+        "SELECT id,label,created_at,sim_time,format FROM game_saves WHERE world_id=? AND id='before-load'",
       )
       .all(worldId);
-    return rows.map((row) => ({
+    const recovery = rows.map((row) => ({
       id: String(row['id']),
       label: String(row['label']),
       createdAt: String(row['created_at']),
       simTime: Number(row['sim_time']),
       compatible: row['format'] === SAVE_FORMAT,
     }));
+    const manual = (await this.files.list(worldId)).map((metadata) => ({
+      id: metadata.id,
+      label: metadata.label,
+      createdAt: metadata.createdAt,
+      simTime: metadata.simTime,
+      compatible: metadata.format === SAVE_FORMAT,
+    }));
+    return [...manual, ...recovery].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
   async capture(state: SavedWorld): Promise<SavePayload> {
     const history = {} as SavePayload['history'];
@@ -72,29 +87,48 @@ export class GameSaves {
       );
   }
   async create(state: SavedWorld, label: string, id: string) {
-    await this.db.transaction(async () => {
-      const prior = await this.db
-        .prepare('SELECT id FROM game_saves WHERE id=? AND world_id=?')
-        .get(id, state.world.id);
-      if (prior) return;
-      const saves = await this.list(state.world.id);
-      if (saves.filter((save) => save.id !== 'before-load').length >= MAX_SAVES)
-        throw new GameSaveError(
-          'All 20 manual slots are in use. Delete a save before creating another.',
-        );
-      await this.insert(id, label, await this.capture(state));
-    });
+    const prior = await this.files.metadata(id);
+    if (prior) {
+      if (prior.worldId !== state.world.id) throw new GameSaveError('Save identity conflicts.');
+      return;
+    }
+    if ((await this.files.list(state.world.id)).length >= MAX_SAVES)
+      throw new GameSaveError(
+        'All 20 manual slots are in use. Delete a save before creating another.',
+      );
+    const payload = await this.db.transaction(() => this.capture(state));
+    const encoded = JSON.stringify(payload);
+    if (Buffer.byteLength(encoded) > MAX_BYTES)
+      throw new GameSaveError('This world exceeds the initial 64 MiB save limit.');
+    await this.files.write(
+      {
+        id,
+        worldId: state.world.id,
+        label,
+        createdAt: new Date().toISOString(),
+        simTime: state.world.simTime,
+        format: SAVE_FORMAT,
+        checksum: digest(payload),
+      },
+      encoded,
+    );
   }
   async read(worldId: string, id: string): Promise<SavePayload> {
-    const row = await this.db
-      .prepare('SELECT format,checksum,payload FROM game_saves WHERE world_id=? AND id=?')
-      .get(worldId, id);
+    const row =
+      id === 'before-load'
+        ? await this.db
+            .prepare('SELECT format,checksum,payload FROM game_saves WHERE world_id=? AND id=?')
+            .get(worldId, id)
+        : await this.files.metadata(id);
     if (!row) throw new GameSaveError('That save no longer exists.');
+    if ('worldId' in row && row.worldId !== worldId)
+      throw new GameSaveError('Save belongs to another world.');
     if (row['format'] !== SAVE_FORMAT)
       throw new GameSaveError(
         'This development save is incompatible. Older versions are not supported.',
       );
-    const encoded = String(row['payload']);
+    const encoded =
+      'payload' in row ? String(row['payload']) : await this.files.read(id, MAX_BYTES);
     if (Buffer.byteLength(encoded) > MAX_BYTES)
       throw new GameSaveError('Save exceeds the supported size.');
     const payload = JSON.parse(encoded) as SavePayload;
@@ -109,6 +143,13 @@ export class GameSaves {
     return payload;
   }
   async delete(worldId: string, id: string) {
+    if (id !== 'before-load') {
+      const metadata = await this.files.metadata(id);
+      if (metadata && metadata.worldId !== worldId)
+        throw new GameSaveError('Save belongs to another world.');
+      await this.files.delete(id);
+      return;
+    }
     await this.db.prepare('DELETE FROM game_saves WHERE world_id=? AND id=?').run(worldId, id);
   }
   /** Called inside the world commit. Keep accounting and external operation journals untouched. */

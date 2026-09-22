@@ -53,6 +53,7 @@ type PanelId =
   | 'crafting'
   | 'character'
   | 'agent'
+  | 'game'
   | 'nearby'
   | 'journal'
   | 'ai'
@@ -65,6 +66,7 @@ const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?:
   crafting: { title: 'Crafting', side: 'left' },
   character: { title: 'Character', side: 'left' },
   agent: { title: 'World agent', side: 'right', wide: true },
+  game: { title: 'Game', side: 'right' },
   nearby: { title: 'In view', side: 'right' },
   journal: { title: 'Journal', side: 'left' },
   ai: { title: 'AI & allowance', side: 'right' },
@@ -291,8 +293,12 @@ function App() {
   }
   useEffect(() => setOpen((v) => fit(v)), [width, scale]);
   async function command(action: ActionOption) {
-    if (!connected || !action.enabled) {
-      notify(action.reason ?? 'Reconnect to the world.');
+    if (!connected) {
+      notify('Reconnect to the world.');
+      return;
+    }
+    if (!action.enabled) {
+      notify(action.reason ?? 'This action is unavailable.');
       return;
     }
     setPicker(null);
@@ -347,6 +353,8 @@ function App() {
         id: 'move',
         label: 'Walk',
         enabled: !latest.current?.clock.paused,
+        // Loaded worlds start paused; blocked movement is not a lost connection.
+        reason: latest.current?.clock.paused ? 'Press Play to resume the world.' : undefined,
         command: { type: 'move', position },
       }),
   };
@@ -640,10 +648,11 @@ function App() {
         return view.godMode && mindId ? (
           <Mind key={`${view.worldId}:${mindId}`} actorId={mindId} />
         ) : null;
+      case 'game':
+        return <GameSavesPanel />;
       case 'help':
         return (
           <>
-            <GameSavesPanel />
             <Section title="Appearance">
               <label>
                 World theme
@@ -845,6 +854,7 @@ function App() {
                   ? (['inventory', 'crafting', 'character', 'journal'] as PanelId[])
                   : ([
                       'agent',
+                      'game',
                       'nearby',
                       ...(view.godMode ? ['intelligence' as PanelId] : []),
                     ] as PanelId[])
@@ -858,6 +868,7 @@ function App() {
                         character: 'ui.character',
                         journal: 'ui.journal',
                         agent: 'ui.agent',
+                        game: 'ui.settings',
                         nearby: 'ui.inview',
                         intelligence: 'ui.star',
                       }[id as 'inventory']

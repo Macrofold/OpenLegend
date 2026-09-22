@@ -6,9 +6,9 @@ Tasks deliberately avoid enumerating object types, fields or physical layouts. S
 
 ## Initial implemented slice
 
-- [x] SL00–SL03 foundations: a repository-owned current-format package captures `SavedWorld` plus durable history tables; manual slots publish transactionally in the same database. No field-by-field world registry.
+- [x] SL00–SL03 foundations: a repository-owned current-format package captures `SavedWorld` plus durable history tables; manual slots publish atomically in the local save folder after transactional capture. No field-by-field world registry.
 - [x] SL04–SL05 foundations: loading drains background workers, preserves external accounting/privacy authority, replaces history atomically with the world, rotates command/context generations and retains a pre-load slot. Restored pending narration is cancelled; world-agent sessions restart fresh.
-- [x] SL07 basic UI: Settings & help offers named save, list, confirm-load and confirm-delete; successful load reopens paused. Initial reversible limits are 20 manual slots plus one pre-load slot, 64 MiB per payload.
+- [x] SL07 basic UI: Game below World agent offers named save, list, confirm-load and confirm-delete; successful load reopens paused. Initial reversible limits are 20 manual slots plus one pre-load slot, 64 MiB per payload.
 - [x] Build and isolated native browser walkthrough: save, advance, restore earlier clock/meters and observe paused state. See [runtime evidence](../verification.md#manual-saveload-runtime).
 
 The detailed phase criteria below remain open where not fully established. Automated checks are deferred by instruction to [save/load validation TODO](TODO.md#manual-saveload-deferred-validation); PostgreSQL, live-provider and crash-boundary qualification have not been demonstrated. SL08 and SL10 are not implemented.
@@ -108,6 +108,8 @@ Dependencies: SL03–SL07; selected cadence/retention policy in D60 and relevant
 Exit: prolonged play remains within the selected storage/work budget; interrupted rotation preserves a usable checkpoint, and every advertised point restores successfully.
 
 ## SL09 — Continuation, recovery and performance qualification
+
+Coordinate new stimulus-state continuation with proposed [EPR08](events-perception-and-reactions.md#epr08--saveload-generation-fencing-and-overload); SL retains capture, restoration and generation-fencing qualification under the active development policy.
 
 Dependencies: SL02–SL07 for the manual release; extend coverage when SL08 or SL10 ships. Develop focused checks alongside each capability.
 

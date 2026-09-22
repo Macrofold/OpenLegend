@@ -8,6 +8,8 @@ For active task documents and their owning specifications, use the [master TODO 
 
 ## Start here
 
+The [engine perception and event research](02-research/engine-perception-and-event-architectures.md) supports the proposed [stimulus/reaction contract](../docs/events-perception-and-reactions.md); implementation work is indexed in the [maintainer work index](../docs/maintainers/README.md).
+
 The latest [perception and attention proposal](07-technical-architecture/perception-and-attention.md) documents current sight/hearing and future sensory gradients, distance-specific descriptions, sound events, semantic interests and bounded decision triggers. This addition is documentation only; see [implementation status](05-project/implementation-status.md) for the executable prototype.
 
 1. [Recommended direction](03-design-proposals/overview.md) — direct answers to the central questions and a proposed small starting stack.

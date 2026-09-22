@@ -39,6 +39,8 @@ The requirements below are OpenLegend's synthesis of those lessons and its exist
 
 ## State ownership and save scope
 
+For proposed [EPR state](events-perception-and-reactions.md#11-saveload-reset-and-privacy), spatial bins can be rebuilt when reconstruction preserves behavior. Threshold latches, encounter episodes and due intent must be saved or deterministically reconstructed whenever they affect the next response. The active no-legacy-support policy and generation fencing remain governed here.
+
 Every subsystem must identify its authoritative facts and how they participate in a save. Storage location does not determine whether data matters: cold history, unloaded regions and accepted character files can be essential even when absent from the active simulation object.
 
 | State category                  | Save/load treatment                                                                                                                                                       |

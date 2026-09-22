@@ -6,7 +6,7 @@ import { VectorStore } from './vector-store.js';
 import type { IntelligenceCall } from '@open-legend/protocol';
 import { SqliteDatabase } from './sqlite-database.js';
 import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { appendedEventCount as provenAppendCount, type WorldState } from '@open-legend/domain';
 import type { AiReceipt } from '@open-legend/ai';
@@ -401,7 +401,7 @@ export class SqliteStore implements GameRepository {
     if (!database && path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = database ?? new SqliteDatabase(path);
     this.history = new HistoryRepository(this.db);
-    this.saves = new GameSaves(this.db);
+    this.saves = new GameSaves(this.db, join(dirname(path), 'saves'));
     this.commands = new CommandReceipts(this.db);
     this.ready = this.initialize(!!database);
   }

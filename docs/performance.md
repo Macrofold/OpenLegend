@@ -6,6 +6,8 @@ Status: accepted target design, with initial foundations implemented as recorded
 
 This document owns runtime work scheduling, persistence cost reduction, local buffering and performance escalation gates. The [real-time synchronization design](../archive/07-technical-architecture/realtime-synchronization.md) continues to own command/confirmation semantics, prediction, replication, reconnect and network queue contracts. The [production data design](../archive/07-technical-architecture/production-data-model.md) owns atomic data contracts; [delivery and scale](../archive/07-technical-architecture/data-delivery-and-scale.md) owns migration, recovery and partitioning. [Narration](narration-and-conversations.md) and [memory](memory-architecture.md) retain their behavioral and privacy contracts.
 
+The proposed [events, perception, and reactions contract](events-perception-and-reactions.md) owns stimulus scope and reaction intake; execution cadence, CPU/I/O budgets, measurement and scale gates remain here.
+
 ## Selected approach
 
 Make the cost of an interaction follow the entities and records it changes, rather than total world age, history, observers elsewhere or background activity. Keep one authoritative writer per world initially. Retain PostgreSQL durability, use the existing journal and story jobs, and optimize them before adding infrastructure.
@@ -74,6 +76,8 @@ This removes idle work, not durable job admission. Do not dispatch from an uncom
 
 ### Cognition, maintenance and deadlines
 
+The proposed [internal-event integration](events-perception-and-reactions.md#7-internal-triggers-and-native-survival), [ongoing stimuli](events-perception-and-reactions.md#8-ongoing-salience-relevance-and-reminders), [actor intake](events-perception-and-reactions.md#9-reaction-intake-and-scheduling) and [consumer boundary](events-perception-and-reactions.md#10-transactions-subscriptions-and-secondary-consumers) define the inputs to this scheduling policy.
+
 Only actors affected by newly perceived evidence, need crossings, action outcomes, relevant inventory/goal changes or elapsed deadlines become scheduling candidates. Retain recurring critical-need reminders, consolidation eligibility and sleep/day boundaries; event-driven does not mean ignoring the passage of time.
 
 Start with small dirty-actor sets, cached scheduling state and one earliest-deadline timer. Rebuild scheduling indexes from saved state on startup; invalidate them after commit or restore. Distinguish real-time cooldown/batching deadlines from simulation-time hunger, commitments and sleep. Pausing or changing speed must not turn a game-time deadline into a stale wall-clock timeout.
@@ -87,6 +91,8 @@ Use scoped conversation/narration revisions on the existing SSE stream to invali
 Keep presence heartbeats because they establish liveness, and retain diagnostics' existing visible-panel cadence while making reads coalesced, bounded and independent of gameplay. Provider operation polling may remain necessary where no reliable callback/stream exists; back off while idle, respect provider limits, and preserve receipt reconciliation. Do not treat all timers as defects.
 
 ## Simulation CPU and growing history
+
+The proposed [spatial validity contract](events-perception-and-reactions.md#6-spatial-work-and-invalidation) covers event-time geometry and receiver/source invalidation; performance budgets and escalation gates remain here.
 
 Preserve one-second native semantics, deterministic ordering and saved randomness while reducing repeated work. The first CPU candidates are:
 

@@ -4,6 +4,8 @@ This document owns future sensory design: visual exposure, hearing/acoustics, oc
 
 ## 2. Separate physical exposure from attention and thought
 
+This document owns sensory production. The proposed [events/perception/reactions contract](../../docs/events-perception-and-reactions.md) owns how permitted evidence and perception changes reach reaction intake; the diagram spans these separate responsibilities.
+
 ```mermaid
 flowchart TD
     W[Authoritative objects, state and committed events] --> P[Native perception queries]
@@ -86,6 +88,8 @@ The server provides either a permitted sample field/contour or sufficient saniti
 
 ## 6. Shared descriptions with meaningful state variation
 
+Recognition and actor-specific appraisal cannot be replaced by globally cached object importance; see the proposed [shared-source boundary](../../docs/events-perception-and-reactions.md#5-perception-relationships-and-shared-source-work).
+
 Use an archetype's authored description set for ordinary instances. Compose supported state overlays and, when warranted, a small instance-specific override. An admitted new object or action/effect family includes bounded description variants with a safe fallback. The tree example could use `standing`, `felled` and `burning` states; these names are illustrative, not new executable properties.
 
 Each state overlay declares the facts and detail tiers it can affect. A far observer may see flame or smoke without learning the percentage of remaining fuel. A near observer can receive a scorched-bark description. A chopped tree's profile changes only after an authoritative transition; a falling trunk, stump and harvested resources use whatever identity/conservation contract the relevant family admits. See [state ownership](../03-design-proposals/state-systems-and-future-influences.md).
@@ -98,8 +102,12 @@ Persist historical observation payloads, or sufficient immutable versioned facts
 
 ## 7. Sensory event generation
 
+An external physical occurrence and an individual observer acquiring evidence are distinct. The proposed [private-acquisition boundary](../../docs/events-perception-and-reactions.md#4-scope-and-event-identity) owns their scope and identity.
+
 Deterministic geometry and propagation establish what can reach an actor before any semantic attention step. Exposure changes create bounded typed evidence with source, medium, strength, detail tier, time and audience. Visual and acoustic evidence must remain distinct from belief, memory selection, conversation membership and model attention. Coalesce routine unchanged exposure; preserve meaningful entry, exit, occlusion and state changes without requiring a paid call per object.
 
 ## 8. Acceptance criteria
+
+Cross-consumer and private-acquisition coverage belongs to proposed [EPR03](../../docs/maintainers/events-perception-and-reactions.md#epr03--actor-private-perception-acquisition-and-exposure-deltas) and [EPR09](../../docs/maintainers/events-perception-and-reactions.md#epr09--differential-and-performance-acceptance); sensory correctness remains here.
 
 Verify visual and hearing boundaries against deterministic scenes with walls, openings, distance bands, movement and changing sources. Player overlays and actor evidence must derive from the same authoritative geometry while respecting their distinct camera/body scopes. Tests must cover occlusion, partial detail, source disappearance, simultaneous emissions, coalescing, restart and strict exclusion of unseen or unheard facts. Performance evidence must report scene size, moving sources, update cadence and dropped/coalesced events.

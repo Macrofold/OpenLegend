@@ -186,6 +186,10 @@ No automated tests were written or run for these performance changes, by user re
 
 ## Manual save/load deferred validation
 
+- [ ] Cover clicking the ground after loading a paused world: show “Press Play to resume the world,” reserve reconnect messages for a lost connection, and allow movement after resuming. Automated coverage deferred at the owner's request.
+- [ ] Cover the Game launcher position, empty/list/error states and save/load/re-save flow; verify custom data directories and `.data/saves/` exclusion from Git. No automated tests were written or run for this menu change.
+- [ ] Cover atomic folder publication, interrupted candidates, disk-full/rename failures, directory permissions, damaged metadata and concurrent delete/create requests. Defer orphan cleanup and per-slot catalog corruption recovery until needed; verify manual save folders are included separately in operational backups.
+
 Automated tests were neither written nor run for the initial implementation, at the owner's request. Capability work stays in [SL00–SL10](save-and-load.md); add the following automated coverage when authorized. Do not add legacy migration tests while the [active development policy](../save-and-load.md#active-development-policy) is in force.
 
 - [ ] Cover create/list/delete, the slot/size limits, duplicate create/load requests, incompatible formats, corruption, and source-preserving failures on both SQLite and PostgreSQL.

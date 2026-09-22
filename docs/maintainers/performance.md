@@ -58,6 +58,8 @@ PF03 snapshot freezing and bounded catch-up are implemented; [recorded profiling
 
 ## PF00 — Baseline and attribution
 
+Proposed [EPR00](events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership) and [EPR09](events-perception-and-reactions.md#epr09--differential-and-performance-acceptance) consume this profiler and the PF acceptance budgets.
+
 - [x] Record bounded, monotonic mutation wait, native-step, commit, command durability, projection and SQLite/PostgreSQL statement/lane timings without per-span SQL writes. Record native action acknowledgement and first SSE position separately.
 - [x] Add tick wall/native-work/yield, persistence diff/encoding/transaction, CPU/heap, event-loop/GC, busy-callback and requested/accepted/excluded-clock diagnostics; provide an offline native CPU profiler.
 - [ ] Complete request-arrival, commit-acknowledgement, SSE-send and browser receipt/render attribution. Preserve bounded telemetry and separate action acceptance from first rendered movement.
@@ -81,6 +83,8 @@ Dependencies: PF00. Primary files: `apps/server/src/history.ts`, `store.ts`, `po
 Exit: ordinary walk meets the SQL budget; append cost depends on new rows; editing/forgetting still removes every dependent private record before success. Report local PostgreSQL latency before/after.
 
 ## PF02 — Commit-triggered Narrator and deadline scheduling
+
+Proposed [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) owns the remaining common stimulus-to-ActorWork intake; scheduling qualification remains here.
 
 Dependencies: PF00; coordinate signal metadata with PF01. Primary files: `history.ts`, `narrator.ts`, `http.ts`, `ai-director.ts`, `cognition-maintenance.ts`.
 
@@ -172,10 +176,12 @@ Exit: same active tiny world at increasing cold-history sizes meets per-step bud
 
 ## PF09 — Population work follows relevance
 
+Proposed [EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-full-world-sensory-scans) owns the specific object/audience scan integration; [EPR10](events-perception-and-reactions.md#epr10--conditional-incremental-spatialdeadline-infrastructure) owns its conditional incremental-index work. PF retains broader population qualification.
+
 Dependencies: PF03/PF08 and PF00 population profile; reuse real-time interest and D6 boundaries.
 
 - [x] Add spatial candidates, outstanding-commitment/deadline indexes, dirty-actor scheduling and cached static geometry where scans dominate. Rebuild indexes on load/restore and validate through the authoritative mutation path.
-- [ ] Replace eager all-mind visibility/signature refresh with changed-component/region invalidation and due-actor work. Profile thought and maintenance refresh separately; preserve threshold crossings, source invalidation and interest expiry.
+- [ ] Qualify the change-fed intake owned by [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake). Profile thought and maintenance refresh separately; preserve threshold crossings, source invalidation and interest expiry.
 - [ ] Replace the world-global autonomous thought interval with fair per-actor eligibility and explicitly bounded provider/context capacity. Keep interactive priority, per-actor serialization, spending reservations, cancellation and result revalidation; one global workflow is bounded but does not establish multi-agent responsiveness.
 - [ ] Bound dense first-encounter bursts while preserving actual witnesses and semantic evidence. Measure event count, audience rows and source-admission CPU independently; indexes alone cannot remove genuine witness fan-out. Do not silently suppress encounters or change narrative significance.
 - [ ] Profile per-second animal countdown updates and repeated entity sorting before evaluating dormancy/analytic updates; preserve needs crossings, actual event-time witnesses, action ordering and RNG semantics. Include moving observers and dense crowds; indexes cannot discard real audience work.

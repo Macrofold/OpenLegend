@@ -29,4 +29,6 @@ Automated coverage requested by these exit gates is deferred to [TODO](TODO.md#t
 
 ## Selective mechanism delivery within NC09–NC12
 
+Proposed [EPR07](events-perception-and-reactions.md#epr07--named-consumer-integration-without-a-universal-engine-bus) owns shared notification integration. NC retains story selection, conversation/transcript behavior and its outstanding acceptance.
+
 The replaceable selector, configuration/field admission, owner editor, milestone and frequency admission, revocation, legacy suppression and indexed standalone projection are implemented. NC09–NC12 remain open for the deferred acceptance work linked below. Place entities and inventory-item encounter support require a future exposure contract; this slice does not fabricate one. [Deferred automated acceptance](TODO.md#story-selection-deferred-validation) is not completed evidence.

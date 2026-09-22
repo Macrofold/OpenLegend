@@ -59,11 +59,8 @@ export function GameSavesPanel() {
     }
   }
   return (
-    <Section title="Save & load">
-      <p>
-        Manual saves stay on this server. Loading restores the world and pauses it. World-agent
-        sessions start fresh; real AI spending is retained.
-      </p>
+    <Section title="Save game">
+      <p>Save your current world, or open a saved game below. Loaded games start paused.</p>
       <label>
         Save name
         <input
@@ -81,6 +78,8 @@ export function GameSavesPanel() {
         20 manual slots. Development saves may become incompatible when the game changes.
       </p>
       {message && <p role="status">{message}</p>}
+      <h3>Saved games</h3>
+      {!saves.length && <p>No saved games yet. Save your current game to start your list.</p>}
       {saves.map((save) => (
         <div className="ol-save-row" key={save.id}>
           <strong>{save.label}</strong>

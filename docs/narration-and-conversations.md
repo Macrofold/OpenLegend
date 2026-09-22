@@ -233,6 +233,8 @@ A failed chat response offers an icon labeled Retry beside its failure status. R
 
 ## Replaceable story selection
 
+The proposed [EPR consumer contract](events-perception-and-reactions.md#10-transactions-subscriptions-and-secondary-consumers) may supply scoped candidate notifications, but the existing story selector remains the sole Narrator admission policy. Generic cognition importance, ordinary encounters and private internal stimuli do not automatically create story jobs. Existing durable story jobs remain the queue.
+
 Story selection follows committed occurrence → audience/perspective filtering → pure trusted evaluator → candidate admission, grouping and frequency → durable job → grounded prose or eligible fallback. Story importance grants no awareness, cognition trigger, memory-retention change or physical effect. The Narrator does not decide whether raw events deserve generation.
 
 A world pins one mechanism ID, version and trusted evaluator with validated numeric field declarations, introduction settings, finite event rules and delivery settings. Missing fields resolve to declared defaults. The default `story_importance` namespace declares actor/object importance from 0 to 10, default zero, and introduction threshold 7. Its event rules are empty. A declared field never gains executable meaning unless a trusted evaluator consumes it. Disabled or unavailable evaluators are silent; unknown or invalid configuration is rejected visibly at admission. Supported places must acquire real entity and exposure evidence before place rules are admitted.

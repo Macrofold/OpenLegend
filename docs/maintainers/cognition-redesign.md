@@ -86,6 +86,8 @@ Owner: server context and projection. Depends on: CR01; integrate CR04–CR06 as
 
 ### CR04 — Jev attention across all candidate sources
 
+Proposed [EPR03](events-perception-and-reactions.md#epr03--actor-private-perception-acquisition-and-exposure-deltas) owns perception-acquisition integration and [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) owns change-fed intake. Recall/awareness behavior and its unique verification remain here.
+
 Required companion reading: [context assembly and retrieval](../../archive/07-technical-architecture/context-and-inference.md#e-retrieve-personal-context-when-the-task-needs-it) and [semantic indexing and interest subscriptions](../../archive/07-technical-architecture/../../docs/memory-architecture.md#selection-signals-and-delivery-order). These supply implementation constraints beneath the canonical memory specification: permission filtering, fresh evidence despite index lag, disclosure-tier isolation, shared-definition reuse, selective instance indexing and goal-change reevaluation.
 
 - [x] Make selection respond to present people, recent events, goals, unresolved concerns and conflicting beliefs. Derive bounded cues from permitted state and accepted inner-world text without another writable narrative store; retain supporting and contradictory evidence.
@@ -109,6 +111,8 @@ Required companion reading: [context assembly and retrieval](../../archive/07-te
 Owner: server attention/retrieval, generic Jev execution. Depends on: CR01–CR03 and existing perception boundary for the foundation; CR05–CR07 for final source integration. Tool execution follows CR08 after the demonstrated-need gate. Exit evidence: crowded scenes and large inventories/recall yield bounded, scoped selection without losing required evidence.
 
 ### CR05 — Awareness and one experience source
+
+Proposed [EPR03](events-perception-and-reactions.md#epr03--actor-private-perception-acquisition-and-exposure-deltas) owns perception-acquisition integration and [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) owns change-fed intake. Recall/awareness behavior and its unique verification remain here.
 
 - [x] Add event-time awareness links for every actor, including the player. Store one shared event plus actor-specific perceived text/detail when needed; never expose a raw event through the join.
 - [x] Delivered CR baseline: retain experiential world events when at least one actor was aware. Keep deterministic state commits, idempotency, billing and recovery records independently; an unwitnessed action still changes the world. Future NC04 adds the configured notable-unseen exception; this checked item does not claim that extension is implemented.
@@ -177,6 +181,8 @@ Owner: pure domain needs/sleep, server scheduling. Depends on: CR08 for dream ex
 
 ### CR10 — Configurable triggers as admitted mechanics
 
+Coordinate proposed typed integration with [EPR04](events-perception-and-reactions.md#epr04--private-internal-threshold-events-and-native-protection), [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) and [EPR06](events-perception-and-reactions.md#epr06--persistent-stimuli-and-bounded-actor-local-relevance); broader admitted cognition policies remain here.
+
 - [x] Add finite versioned trigger/significance/escalation policy families that inventions or world settings can modify through normal admission. Capture offered routes, conditions and dependencies; keep spending, permissions and native hazards non-overridable by generated prose.
 - [ ] Verify unsupported fields have no effect, changed policy invalidates relevant pending proposals, and permitted invented mechanics can alter triggers without inserting executable code.
 
@@ -198,6 +204,8 @@ Owner: domain definitions/admission and server routing policy. Depends on: CR02,
 Owner: server repository/protocol/client projection and documentation. Depends on: CR05–CR10. Exit evidence: legacy-save migration/restart, actor privacy and god-access checks.
 
 ### CR12 — Acceptance and token/latency evidence
+
+Use [EPR09](events-perception-and-reactions.md#epr09--differential-and-performance-acceptance) for proposed stimulus privacy and ordering acceptance. Live cognition-quality acceptance remains CR12 work; native/fixture evidence cannot close it.
 
 Required companion cases: [context evaluation](../../archive/07-technical-architecture/context-and-inference.md#9-evaluation-before-richer-infrastructure) and [perception/attention verification](../../archive/07-technical-architecture/perception-and-attention.md#8-acceptance-criteria). Include their relevant privacy, paraphrase, index-lag, stale-query, encounter-coverage and cost gates alongside the checks below; linking them does not mark them complete.
 

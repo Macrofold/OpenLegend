@@ -4,6 +4,16 @@ This file records material changes to OpenLegend's documentation structure and h
 
 It is historical context only. Current requirements, design, architecture, tasks, status and open decisions live in their canonical owner documents.
 
+## 2026-09-21 — Proposed event framework integration
+
+- Installed `archive/02-research/engine-perception-and-event-architectures.md`, `docs/events-perception-and-reactions.md` and `docs/maintainers/events-perception-and-reactions.md`, preserving the source audit at `03ae5fb7a5ac25bcda39e6dbde274be1c9a942bd`.
+- Linked existing owners and trackers without completing implementation tasks; retained performance, cognition, sensory, narration, storage and save/load boundaries. Unresolved product policies remain in D53, D54 and D57.
+
+## 2026-09-21 — Game menu and local save files
+
+- Moved manual save/load controls from Settings & help to Game below World agent and moved manual slots to the gitignored local save folder. The pre-load recovery slot remains transactional in the authority database.
+- Updated storage/backup guidance, runtime evidence and deferred validation; earlier database-only manual development slots are not migrated under the active no-legacy policy.
+
 ## 2026-09-21 — Development save/load implementation policy
 
 - Recorded the owner's no-real-players block: no legacy readers, migrations or compatibility maintenance until explicitly lifted. Suspended SL06 and reconciled extension guidance.
