@@ -223,7 +223,7 @@ Corrections and contradictory testimony should update later interpretation witho
 
 ## 7. Minimal outputs and independent commits
 
-A simple conversation may need only speech or no new response. [Agent agency](agent-agency.md) owns optional repeated operations; its [admission contract](../archive/07-technical-architecture/agent-agency-runtime.md#4-admission-ordering-and-physical-execution) owns independent outcomes, exactly-once private experience and receipts. Current nullable-response limits belong in [Architecture](architecture.md#agency-implementation-boundary), not a second target schema here.
+A simple conversation may need only speech or no new response. [Agent agency](agent-agency.md) owns optional repeated operations; its [admission contract](../archive/07-technical-architecture/agent-agency-runtime.md#4-admission-ordering-and-physical-execution) owns independent outcomes, exactly-once private experience and receipts. Current response bounds belong in [Architecture](architecture.md#actor-agency-foundation), not a second target schema here.
 
 Context uses English sections and durable event-time attribution. The conservative speech action-context gate and optional action-relevance fallback follow the [conversation context contract](narration-and-conversations.md#explicit-triggers-and-readable-context); omitted suggestions do not remove open attempts. Acquisition labels describe evidence and need not be recited in dialogue. Ordinary responses exclude mind patches and server metadata, and intentional thought remains fictional authored experience rather than provider reasoning. Native memory ingestion does not require an LLM; immediate response and background reflection have independent commit boundaries.
 

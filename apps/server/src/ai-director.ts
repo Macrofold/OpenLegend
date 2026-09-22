@@ -1,3 +1,5 @@
+import { nativeProtectionReason } from './native-protection.js';
+import { currentGoal } from '@open-legend/domain';
 import { projectAttributes } from '@open-legend/domain';
 import { nativeNeedBelow } from '@open-legend/domain';
 import { timedSync } from './performance.js';
@@ -404,9 +406,8 @@ export class AiDirector {
       run.job.kind === 'thought' &&
       resident &&
       (resident.incapacitated ||
-        nativeNeedBelow(resident, 'fullness', 20) ||
-        nativeNeedBelow(resident, 'energy', 10) ||
-        resident.health < 0.1 * (resident.body?.maxHealth ?? 100))
+        resident.capabilities?.cognition === false ||
+        nativeProtectionReason(this.service.world, actorId))
     )
       throw new StopJob('stale', 'Native urgent needs superseded semantic work.');
     if (
@@ -1015,18 +1016,23 @@ export class AiDirector {
     run.responseWatch = undefined;
     const commitStartedAt = new Date().toISOString();
     const commit = () =>
-      this.service.transition((world) => {
-        this.current(run);
-        return commitActorResponse(
-          world,
-          run.job.id,
-          actorId,
-          reply,
-          prepared.binding.actions,
-          prepared.binding.entityIds,
-          prepared.binding.expectedPlan,
-        );
-      });
+      this.service.transition(
+        (world) => {
+          this.current(run);
+          return commitActorResponse(
+            world,
+            run.job.id,
+            actorId,
+            reply,
+            prepared.binding.actions,
+            prepared.binding.entityIds,
+            prepared.binding.expectedPlan,
+            prepared.attemptBindings,
+          );
+        },
+        undefined,
+        run.job.id,
+      );
     let result = await commit();
     while (!result.ok && result.code === 'paused') {
       await this.awaitResume(run, true);
@@ -1197,7 +1203,9 @@ export class AiDirector {
           return [
             actor.controller,
             actor.incapacitated,
-            actor.goal,
+            currentGoal(actor),
+            actor.agency.plan?.revision,
+            nativeProtectionReason(world, id),
             nativeNeedBelow(actor, 'fullness', 20),
             nativeNeedBelow(actor, 'energy', 15),
             nativeNeedBelow(actor, 'energy', 10),
@@ -1268,9 +1276,11 @@ export class AiDirector {
           subscription,
           visible.get(entity.id) ?? [],
         );
+        const nativeProtection = nativeProtectionReason(world, entity.id);
         const fingerprint = digest({
           matches,
-          goal: actor.goal,
+          nativeProtection,
+          // Goal edits refresh interests but do not buy a new response by themselves.
           need: nativeNeedBelow(actor, 'fullness', 20)
             ? 'hungry'
             : nativeNeedBelow(actor, 'energy', 15)
@@ -1295,20 +1305,14 @@ export class AiDirector {
           ...matches.map(
             (id) => `I notice ${world.entities[id]!.name}, relevant to my current interest.`,
           ),
-          `My current goal is ${actor.goal}.`,
+          `My current goal is ${currentGoal(actor)}.`,
           ...projectAttributes(world, entity, 'owner')
             .filter((v) => Object.hasOwn(actor.attributes ?? {}, v.id))
             .flatMap((v) => (v.concern ? [v.concern] : [])),
           ...(nativeNeedBelow(actor, 'fullness', 20) ? ['I am critically hungry.'] : []),
           ...(nativeNeedBelow(actor, 'energy', 15) ? ['I am exhausted.'] : []),
         ].join(' ');
-        const urgentNeed = actor.rest?.asleep
-          ? 'Sleep blocked autonomous cognition.'
-          : nativeNeedBelow(actor, 'fullness', 20)
-            ? 'Critical hunger required native survival behavior.'
-            : nativeNeedBelow(actor, 'energy', 10)
-              ? 'Exhaustion required native survival behavior.'
-              : undefined;
+        const urgentNeed = nativeProtection;
         const diagnosticTrigger = urgentNeed
           ? urgentNeed
           : latest.length
@@ -1327,11 +1331,7 @@ export class AiDirector {
               ? 'Autonomous cognition · Interest cue'
               : 'Autonomous cognition · State change';
         const id = `thought-${randomUUID()}`;
-        if (
-          nativeNeedBelow(actor, 'fullness', 20) ||
-          nativeNeedBelow(actor, 'energy', 10) ||
-          actor.rest?.asleep
-        ) {
+        if (urgentNeed) {
           await this.log.save({
             id,
             kind: 'Semantic trigger',
@@ -1346,7 +1346,7 @@ export class AiDirector {
             route: 'level0',
             gameTime: world.simTime,
             input: {
-              reason: actor.rest?.asleep ? 'Sleeping' : 'Native urgent protection',
+              reason: urgentNeed,
               stimulus: sentence,
             },
             exchanges: [],
@@ -1354,9 +1354,8 @@ export class AiDirector {
           await this.writeSchedule(key, {
             fingerprint,
             at: this.now(),
-            watermark: actor.rest?.asleep
-              ? (last?.watermark ?? 0)
-              : Math.max(last?.watermark ?? 0, ...latest.map((m) => m.sequence ?? 0)),
+            // Deferral is not consideration; preserve urgent evidence until the actor can use it.
+            watermark: last?.watermark ?? 0,
             ...(last?.attemptedOpportunity
               ? { attemptedOpportunity: last.attemptedOpportunity }
               : {}),

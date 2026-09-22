@@ -1,3 +1,4 @@
+import { currentGoal, NATIVE_PREPARATIONS } from '@open-legend/domain';
 import type { WorldState } from '@open-legend/domain';
 import { digest } from './store.js';
 import type { AttentionCandidate } from './recall.js';
@@ -10,13 +11,40 @@ export interface InterestSubscription {
   entityKinds: string[];
   definitions: string[];
 }
+/** Native prerequisites are actor-owned knowledge; no goal-prose inference or hidden-world scan. */
+function planDefinitions(world: WorldState, actorId: string): string[] {
+  const actor = world.entities[actorId]?.actor;
+  const plan = actor?.agency.plan;
+  if (
+    !plan ||
+    !['active', 'blocked'].includes(plan.status) ||
+    (plan.goalId &&
+      !actor!.agency.goals.some((goal) => goal.id === plan.goalId && goal.status === 'active'))
+  )
+    return [];
+  return [
+    ...new Set(
+      plan.steps
+        .filter((step) => !['completed', 'cancelled'].includes(step.status))
+        .flatMap(({ command }) => {
+          if (command.type === 'prepare') return [NATIVE_PREPARATIONS[command.preparation].input];
+          if (command.type === 'craft')
+            return world.knowledge[actorId]?.some((entry) => entry.recipeId === command.recipeId)
+              ? (world.recipes[command.recipeId]?.inputs.map((input) => input.definitionId) ?? [])
+              : [];
+          if (command.type === 'cook') return ['raw_meat'];
+          return [];
+        }),
+    ),
+  ].slice(0, 24);
+}
 /** A finite derived subscription from candidates actually included by attention. No executable predicates. */
 export function compileInterests(
   world: WorldState,
   actorId: string,
   selected: AttentionCandidate[],
 ): InterestSubscription {
-  const definitions = new Set<string>();
+  const definitions = new Set<string>(planDefinitions(world, actorId));
   const kinds = new Set<string>();
   for (const c of selected) {
     if (c.kind === 'possession') {
@@ -31,7 +59,7 @@ export function compileInterests(
   }
   return {
     version: 1,
-    goal: digest(world.entities[actorId]!.actor!.goal),
+    goal: digest(currentGoal(world.entities[actorId]!.actor!)),
     mindRevision: world.innerWorlds?.[actorId]?.revision ?? 0,
     expiresAt: world.simTime + 7200,
     properties: [
@@ -47,24 +75,31 @@ export function interestMatches(
   subscription: InterestSubscription | undefined,
   visibleIds: string[],
 ): string[] {
-  if (
-    !subscription ||
-    subscription.version !== 1 ||
-    subscription.goal !== digest(world.entities[actorId]!.actor!.goal) ||
-    subscription.mindRevision !== (world.innerWorlds?.[actorId]?.revision ?? 0) ||
-    world.simTime >= subscription.expiresAt
-  )
-    return [];
+  const valid =
+    subscription &&
+    subscription.version === 1 &&
+    subscription.goal === digest(currentGoal(world.entities[actorId]!.actor!)) &&
+    subscription.mindRevision === (world.innerWorlds?.[actorId]?.revision ?? 0) &&
+    world.simTime < subscription.expiresAt;
+  const definitions = new Set([
+    ...(valid ? subscription.definitions : []),
+    ...planDefinitions(world, actorId),
+  ]);
+  const kinds = valid ? subscription.entityKinds : [];
+  const properties = new Set([
+    ...(valid ? subscription.properties : []),
+    ...[...definitions].flatMap((id) => world.itemDefinitions[id]?.properties ?? []),
+  ]);
   return visibleIds
     .filter((id) => {
       const entity = world.entities[id];
       const definition = entity?.resource && world.itemDefinitions[entity.resource.definitionId];
       return (
         !!entity &&
-        (subscription.entityKinds.includes(entity.kind) ||
+        (kinds.includes(entity.kind) ||
           (!!definition &&
-            (subscription.definitions.includes(definition.id) ||
-              definition.properties.some((p) => subscription.properties.includes(p)))))
+            (definitions.has(definition.id) ||
+              definition.properties.some((p) => properties.has(p)))))
       );
     })
     .slice(0, 32);

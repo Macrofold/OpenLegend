@@ -558,7 +558,7 @@ export class CognitionMaintenance {
         actorScope: actorId,
         execution: 'full',
         task: 'background_reflection',
-        instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted files in mind/*.md. Edit those files directly; flexible names, at most ten files, each at most 500 whitespace words including its name and 8000 UTF-8 bytes. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return only one to three presentation thoughts, each at most twenty words. Do not echo file contents or patches.`,
+        instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted files in mind/*.md. Edit those files directly; flexible names, at most ten files, each at most 500 whitespace words including its name and 8000 UTF-8 bytes. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Do not echo file contents or patches.`,
         context: prepared.context,
         schema: z.toJSONSchema(reflectionSchema, { target: 'draft-7' }),
         signal: controller.signal,
@@ -570,7 +570,7 @@ export class CognitionMaintenance {
           async () => await this.macrofold.reflect(request, snapshot.files),
         ),
       );
-      reflectionSchema.parse({ thoughts: value.thoughts });
+      reflectionSchema.parse({ thoughts: value.thoughts, goalChanges: value.goalChanges });
       if (
         obligations !==
         digest((this.service.world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment'))
@@ -592,6 +592,8 @@ export class CognitionMaintenance {
           value.thoughts,
           prepared.binding.evidenceIds,
           null,
+          0,
+          value.goalChanges,
         ),
       );
       if (!accepted.ok) throw new Error(accepted.message);

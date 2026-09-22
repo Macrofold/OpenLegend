@@ -1,3 +1,4 @@
+import { seedAgency, finishPlanAction } from './agency.js';
 import type { Entity, WorldEvent, WorldState, Transition, ActorComponent } from './types.js';
 import { draftWorld } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
@@ -14,6 +15,12 @@ export function hasMemory(entity: Entity | undefined): boolean {
   return (
     !!entity?.actor && (entity.actor.capabilities?.memory ?? entity.actor.controller !== 'native')
   );
+}
+/** Current manual-work families are reviewed for the biped body only. Cognition is not anatomy.
+ * docs/engine-and-world-boundaries.md#intentional-v1-specificity
+ */
+export function supportsManualWork(entity: Entity | undefined): boolean {
+  return entity?.actor?.body?.plan === 'biped';
 }
 export function canSpeak(entity: Entity | undefined): boolean {
   return (
@@ -58,7 +65,7 @@ export function nativeActor(species: 'hare' | 'deer', bornAt: number): ActorComp
     energy: 100,
     action: null,
     equippedItemId: null,
-    goal: '',
+    agency: seedAgency(),
     planGeneration: 0,
   };
 }
@@ -114,6 +121,13 @@ export function reconcileBody(
   body.revision++;
   actor.health = Math.max(0, Math.min(body.maxHealth, actor.health));
   if (actor.health === 0 && actor.alive && !actor.incapacitated) {
+    if (actor.action)
+      finishPlanAction(
+        world,
+        entity.id,
+        actor.action.id,
+        outcome(false, 'actor-unavailable', 'The body can no longer continue this work.'),
+      );
     actor.action = null;
     actor.planGeneration++;
     if (actor.controller === 'player') actor.incapacitated = true;

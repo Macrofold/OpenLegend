@@ -1,3 +1,6 @@
+import { hasMemory, supportsManualWork } from './living.js';
+import { deferAttempt, arrangePlan, cancelPlan, changeGoal, type GoalChange } from './agency.js';
+import { getOwn, isSafeRecordId } from './records.js';
 import { draftWorld } from './draft.js';
 import { executeCommand, SIMULATION_RULES } from './kernel.js';
 import { appendMemory, canonicalJson, emit, finish, outcome } from './events.js';
@@ -5,7 +8,9 @@ import { seesEntity } from './perception.js';
 import { distance, hasLineOfSight } from './spatial.js';
 import type { Command, Outcome, Transition, WorldState } from './types.js';
 
-export interface ActorResponse {
+export interface ResponseOperation {
+  localId: string;
+  requiresAccepted: string[];
   talk: { text: string; addresseeEntityId: string } | null;
   act: {
     kind: 'known' | 'expression' | 'proposal';
@@ -13,14 +18,118 @@ export interface ActorResponse {
     verb: 'nod' | 'smile' | 'frown' | 'wave' | 'shrug' | 'shake_head' | 'slap' | null;
     targetEntityId: string | null;
     description: string | null;
+    mode: 'enqueue' | 'replace';
   } | null;
   think: { text: string; aboutEntityIds: string[] } | null;
+  goal: GoalChange | null;
+  plan: {
+    mode: 'enqueue' | 'replace' | 'cancel';
+    expectedRevision: number;
+    goalId: string | null;
+    actionIds: string[];
+  } | null;
+}
+export interface ActorResponse {
+  operations: ResponseOperation[];
 }
 export interface ResponseReceipt {
   digest: string;
-  components: Partial<Record<'talk' | 'act' | 'think', Outcome>>;
-  /** Optional only for additive compatibility with receipts saved before aggregate outcomes. */
-  outcome?: Outcome;
+  components: Record<string, Outcome>;
+  outcome: Outcome;
+}
+export const RESPONSE_LIMITS = { operations: 16, bytes: 16000 } as const;
+
+function validEnvelope(value: ActorResponse): boolean {
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    Object.keys(value).join() !== 'operations' ||
+    !Array.isArray(value.operations) ||
+    value.operations.length > RESPONSE_LIMITS.operations
+  )
+    return false;
+  if (new TextEncoder().encode(JSON.stringify(value)).length > RESPONSE_LIMITS.bytes) return false;
+  const ids = new Set<string>();
+  const fields = ['talk', 'act', 'think', 'goal', 'plan'] as const;
+  for (const op of value.operations) {
+    if (
+      !op ||
+      Object.keys(op).length !== 7 ||
+      !/^[a-z][a-z0-9_]{0,23}$/.test(op.localId) ||
+      !isSafeRecordId(op.localId) ||
+      ids.has(op.localId) ||
+      !Array.isArray(op.requiresAccepted) ||
+      op.requiresAccepted.length > 16 ||
+      new Set(op.requiresAccepted).size !== op.requiresAccepted.length ||
+      op.requiresAccepted.some((id) => !ids.has(id)) ||
+      fields.some(
+        (field) =>
+          !(field in op) ||
+          (op[field] !== null && (typeof op[field] !== 'object' || Array.isArray(op[field]))),
+      ) ||
+      fields.filter((field) => op[field] !== null).length !== 1
+    )
+      return false;
+    const record = (value: unknown, keys: string[]) =>
+      !!value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      Object.keys(value).length === keys.length &&
+      keys.every((key) => Object.hasOwn(value, key));
+    const text = (value: unknown) => typeof value === 'string';
+    const nullableText = (value: unknown) => value === null || text(value);
+    const strings = (value: unknown) => Array.isArray(value) && value.every(text);
+    if (
+      op.talk &&
+      (!record(op.talk, ['text', 'addresseeEntityId']) ||
+        !text(op.talk.text) ||
+        !text(op.talk.addresseeEntityId))
+    )
+      return false;
+    if (
+      op.think &&
+      (!record(op.think, ['text', 'aboutEntityIds']) ||
+        !text(op.think.text) ||
+        !strings(op.think.aboutEntityIds))
+    )
+      return false;
+    if (
+      op.act &&
+      (!record(op.act, ['kind', 'actionId', 'verb', 'targetEntityId', 'description', 'mode']) ||
+        !['known', 'expression', 'proposal'].includes(op.act.kind) ||
+        !['enqueue', 'replace'].includes(op.act.mode) ||
+        ![op.act.actionId, op.act.verb, op.act.targetEntityId, op.act.description].every(
+          nullableText,
+        ))
+    )
+      return false;
+    if (
+      op.goal &&
+      (!record(op.goal, ['operation', 'goalId', 'expectedRevision', 'objective', 'parentId']) ||
+        !['create', 'revise', 'pause', 'resume', 'complete', 'abandon'].includes(
+          op.goal.operation,
+        ) ||
+        ![op.goal.goalId, op.goal.objective, op.goal.parentId].every(nullableText) ||
+        !(
+          op.goal.expectedRevision === null ||
+          (Number.isSafeInteger(op.goal.expectedRevision) && op.goal.expectedRevision >= 0)
+        ))
+    )
+      return false;
+    if (
+      op.plan &&
+      (!record(op.plan, ['mode', 'expectedRevision', 'goalId', 'actionIds']) ||
+        !['enqueue', 'replace', 'cancel'].includes(op.plan.mode) ||
+        !Number.isSafeInteger(op.plan.expectedRevision) ||
+        op.plan.expectedRevision < 0 ||
+        !nullableText(op.plan.goalId) ||
+        !strings(op.plan.actionIds) ||
+        op.plan.actionIds.length > 8)
+    )
+      return false;
+    ids.add(op.localId);
+  }
+  return true;
 }
 export const RESPONSE_RECEIPT_LIMIT = 300;
 
@@ -33,6 +142,7 @@ export function commitActorResponse(
   actions: Record<string, Command | null>,
   entityIds: string[],
   expectedPlan: number,
+  attemptBindings: { description: string; command: Command }[] = [],
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -44,24 +154,27 @@ export function commitActorResponse(
     events: [],
     outcome: outcome(false, 'actor-unavailable', message),
   });
-  const digest = canonicalJson({ actorId, response, actions, entityIds, expectedPlan });
-  const prior = input.responseReceipts?.[id];
+  if (!isSafeRecordId(id) || id.length > 100 || !validEnvelope(response))
+    return reject('Malformed decision envelope, aliases, dependencies or aggregate limits.');
+  const digest = canonicalJson({
+    actorId,
+    response,
+    actions,
+    entityIds,
+    expectedPlan,
+    attemptBindings,
+  });
+  const prior = getOwn(input.responseReceipts ?? {}, id);
   if (prior) {
-    const priorComponents = Object.values(prior.components);
-    const priorOutcome =
-      prior.outcome ??
-      (priorComponents.length === 0 || priorComponents.some((component) => component.ok)
-        ? outcome(true, 'responded', 'Response was already applied.')
-        : outcome(false, 'response-rejected', 'No response component was accepted.'));
     return prior.digest === digest
       ? {
           world: input,
           events: [],
-          outcome: { ...priorOutcome, code: 'duplicate' },
+          outcome: { ...prior.outcome, code: 'duplicate' },
         }
       : reject('Response identity was reused with different content.');
   }
-  const actor = input.entities[actorId];
+  const actor = getOwn(input.entities, actorId);
   // Paused commits wait for resume at the paid-work boundary rather than turning
   // an admitted response into a failure. See docs/architecture.md#paid-work-absence-and-recovery.
   if (input.paused)
@@ -79,6 +192,7 @@ export function commitActorResponse(
   let world = draftWorld(input);
   const events: Transition['events'] = [];
   const components: ResponseReceipt['components'] = {};
+  let localId = '';
   const command = (part: 'talk' | 'act', value: Command) => {
     let transition = executeCommand(world, value);
     // A reply remains valid speech if its intended listener moved while it was
@@ -104,135 +218,260 @@ export function commitActorResponse(
     events.push(
       ...transition.events.map((event) => ({ ...event, data: { ...event.data, responseId: id } })),
     );
-    components[part] = transition.outcome;
+    components[localId] = transition.outcome;
   };
-  if (response.talk) {
-    const validTarget =
-      permitted.has(response.talk.addresseeEntityId) &&
-      Object.hasOwn(world.entities, response.talk.addresseeEntityId);
-    if (!response.talk.text.trim() || response.talk.text.length > 1200 || !validTarget)
-      components.talk = outcome(
+  for (const op of response.operations) {
+    localId = op.localId;
+    if (op.requiresAccepted.some((dependency) => !components[dependency]?.ok)) {
+      components[localId] = outcome(
         false,
-        'invalid-speech',
-        !validTarget
-          ? 'talk.addresseeEntityId must reference a permitted existing entity ID.'
-          : 'Speech must contain 1–1200 characters.',
+        'dependency-rejected',
+        'An admission dependency was rejected.',
       );
-    else
-      command('talk', {
-        id: `${id}:talk`,
-        actorId,
-        type: 'say',
-        text: response.talk.text,
-        targetId: response.talk.addresseeEntityId,
-      });
-  }
-  const act = response.act;
-  const invalidActShape =
-    !!act &&
-    ((act.kind === 'known' &&
-      (!act.actionId || act.verb || act.targetEntityId || act.description)) ||
-      (act.kind === 'expression' && (!act.verb || act.actionId || act.description)) ||
-      (act.kind === 'proposal' &&
-        (!act.description || act.actionId || act.verb || act.targetEntityId)));
-  if (invalidActShape) {
-    components.act = outcome(
-      false,
-      'invalid-action-response',
-      'The proposed action fields do not match its kind.',
-    );
-  } else if (act?.kind === 'known' && !Object.hasOwn(actions, act.actionId!)) {
-    components.act = outcome(false, 'unoffered-action', 'The proposed action was not offered.');
-  } else if (act?.kind === 'known') {
-    const selected = actions[act.actionId!];
-    if (input.entities[actorId]!.actor!.planGeneration !== expectedPlan)
-      components.act = outcome(false, 'stale-plan', 'The current task changed.');
-    else if (selected) command('act', { ...selected, actorId, id: `${id}:act` });
-    else components.act = outcome(true, 'continued', 'Existing behavior continues.');
-  } else if (act?.kind === 'expression') {
-    const source = world.entities[actorId]!;
-    const target = act.targetEntityId ? world.entities[act.targetEntityId] : undefined;
-    const invalidTarget =
-      !!act.targetEntityId &&
-      (!permitted.has(act.targetEntityId) || !Object.hasOwn(world.entities, act.targetEntityId));
-    const verbs = {
-      nod: 'nods',
-      smile: 'smiles',
-      frown: 'frowns',
-      wave: 'waves',
-      shrug: 'shrugs',
-      shake_head: 'shakes their head',
-      slap: 'slaps',
-    };
-    const reachable =
-      act.verb !== 'slap' ||
-      (!!target &&
-        target.id !== actorId &&
-        distance(source.position, target.position) <= SIMULATION_RULES.interactionRadius &&
-        hasLineOfSight(world, source.position, target.position));
-    if (
-      !act.verb ||
-      !Object.hasOwn(verbs, act.verb) ||
-      invalidTarget ||
-      !reachable ||
-      (target &&
-        (!hasLineOfSight(world, source.position, target.position) ||
-          !seesEntity(world, source, target) ||
-          (target.actor && !target.actor.alive)))
-    )
-      components.act = outcome(
-        false,
-        'invalid-expression',
-        'The expression target is unavailable or out of reach.',
-      );
-    else {
-      emit(
-        world,
-        events,
-        'expression',
-        `${source.name} ${verbs[act.verb!]}${target ? `${act.verb === 'slap' ? ' ' : ' toward '}${target.name}` : ''}.`,
-        source,
-        target?.id,
-        { mechanical: false, responseId: id, semanticTrigger: true },
-      );
-      components.act = outcome(
-        true,
-        'expressed',
-        'Expression accepted without mechanical effects.',
-      );
+      continue;
     }
-  } else if (act?.kind === 'proposal') {
-    components.act = outcome(
-      false,
-      'unsupported-action',
-      'Unlisted action proposed; new mechanics require separate invention admission. Nothing was performed.',
-    );
-  }
-  if (response.think) {
-    const invalidReferences = response.think.aboutEntityIds.some(
-      (target) => !permitted.has(target) || !Object.hasOwn(world.entities, target),
-    );
-    if (
-      !response.think.text.trim() ||
-      response.think.text.length > 240 ||
-      response.think.aboutEntityIds.length > 8 ||
-      invalidReferences
-    )
-      components.think = outcome(
+    const goalRef = (ref: string | null): string | null | undefined => {
+      if (!ref?.startsWith('$')) return ref;
+      const alias = ref.slice(1);
+      return op.requiresAccepted.includes(alias) ? components[alias]?.goalId : undefined;
+    };
+    if (op.talk) {
+      const validTarget =
+        permitted.has(op.talk.addresseeEntityId) &&
+        Object.hasOwn(world.entities, op.talk.addresseeEntityId);
+      if (!op.talk.text.trim() || op.talk.text.length > 1200 || !validTarget)
+        components[localId] = outcome(
+          false,
+          'invalid-speech',
+          !validTarget
+            ? 'talk.addresseeEntityId must reference a permitted existing entity ID.'
+            : 'Speech must contain 1–1200 characters.',
+        );
+      else
+        command('talk', {
+          id: `${id}:${localId}`,
+          actorId,
+          type: 'say',
+          text: op.talk.text,
+          targetId: op.talk.addresseeEntityId,
+        });
+    }
+    const act = op.act;
+    const invalidActShape =
+      !!act &&
+      ((act.kind === 'known' &&
+        (!act.actionId || act.verb || act.targetEntityId || act.description)) ||
+        (act.kind === 'expression' && (!act.verb || act.actionId || act.description)) ||
+        (act.kind === 'proposal' &&
+          (!act.description || act.actionId || act.verb || act.targetEntityId)));
+    if (invalidActShape) {
+      components[localId] = outcome(
         false,
-        'invalid-thought',
-        'The proposed thought exceeds its limits or references unavailable entities.',
+        'invalid-action-response',
+        'The proposed action fields do not match its kind.',
       );
-    else {
-      appendMemory(world, actorId, {
-        kind: 'episode',
-        source: 'self_thought',
-        summary: `I thought: ${response.think.text}`,
-        entityIds: response.think.aboutEntityIds,
-        importance: 5,
-        responseId: id,
-      });
-      components.think = outcome(true, 'thought', 'Private thought remembered.');
+    } else if (act?.kind === 'known' && !Object.hasOwn(actions, act.actionId!)) {
+      components[localId] = outcome(
+        false,
+        'unoffered-action',
+        'The proposed action was not offered.',
+      );
+    } else if (act?.kind === 'known') {
+      const selected = actions[act.actionId!];
+      if (act.mode === 'replace' && input.entities[actorId]!.actor!.planGeneration !== expectedPlan)
+        components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
+      else if (selected && ['conversation', 'teach', 'cancel', 'recover'].includes(selected.type))
+        command('act', { ...selected, actorId, id: `${id}:${localId}` });
+      else if (selected)
+        components[localId] = arrangePlan(
+          world.entities[actorId]!.actor!,
+          `${id}:${localId}`,
+          [{ ...selected, actorId, id: `${id}:${localId}` }],
+          act.mode,
+          world.entities[actorId]!.actor!.agency.plan?.revision ?? 0,
+          null,
+        );
+      else components[localId] = outcome(true, 'continued', 'Existing behavior continues.');
+    } else if (act?.kind === 'expression') {
+      const source = world.entities[actorId]!;
+      const target = act.targetEntityId ? world.entities[act.targetEntityId] : undefined;
+      const invalidTarget =
+        !!act.targetEntityId &&
+        (!permitted.has(act.targetEntityId) || !Object.hasOwn(world.entities, act.targetEntityId));
+      const verbs = {
+        nod: 'nods',
+        smile: 'smiles',
+        frown: 'frowns',
+        wave: 'waves',
+        shrug: 'shrugs',
+        shake_head: 'shakes their head',
+        slap: 'slaps',
+      };
+      const reachable =
+        act.verb !== 'slap' ||
+        (!!target &&
+          target.id !== actorId &&
+          distance(source.position, target.position) <= SIMULATION_RULES.interactionRadius &&
+          hasLineOfSight(world, source.position, target.position));
+      if (
+        !supportsManualWork(source) ||
+        !act.verb ||
+        !Object.hasOwn(verbs, act.verb) ||
+        invalidTarget ||
+        !reachable ||
+        (target &&
+          (!hasLineOfSight(world, source.position, target.position) ||
+            !seesEntity(world, source, target) ||
+            (target.actor && !target.actor.alive)))
+      )
+        components[localId] = outcome(
+          false,
+          supportsManualWork(source) ? 'invalid-expression' : 'unsupported-body',
+          supportsManualWork(source)
+            ? 'The expression target is unavailable or out of reach.'
+            : 'This gesture requires a supported biped body.',
+        );
+      else {
+        emit(
+          world,
+          events,
+          'expression',
+          `${source.name} ${verbs[act.verb!]}${target ? `${act.verb === 'slap' ? ' ' : ' toward '}${target.name}` : ''}.`,
+          source,
+          target?.id,
+          { mechanical: false, responseId: id, semanticTrigger: true },
+        );
+        components[localId] = outcome(
+          true,
+          'expressed',
+          'Expression accepted without mechanical effects.',
+        );
+      }
+    } else if (act?.kind === 'proposal') {
+      // Exact request-bound descriptions can reuse native commands even when the
+      // expensive suggestion gate is closed. Paraphrases need a scoped interpreter.
+      const normalize = (text: string) =>
+        text
+          .normalize('NFKC')
+          .toLowerCase()
+          .trim()
+          .replace(/[.!?]+$/u, '')
+          .replace(/\s+/gu, ' ');
+      const matches = attemptBindings.filter(
+        (binding) => normalize(binding.description) === normalize(act.description!),
+      );
+      const component = world.entities[actorId]!.actor!;
+      if (matches.length === 1) {
+        const selected = matches[0]!.command;
+        if (
+          act.mode === 'replace' &&
+          input.entities[actorId]!.actor!.planGeneration !== expectedPlan
+        )
+          components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
+        else if (['conversation', 'teach', 'cancel', 'recover'].includes(selected.type))
+          command('act', { ...selected, actorId, id: `${id}:${localId}` });
+        else
+          components[localId] = arrangePlan(
+            component,
+            `${id}:${localId}`,
+            [{ ...selected, actorId, id: `${id}:${localId}` }],
+            act.mode,
+            component.agency.plan?.revision ?? 0,
+            null,
+          );
+      } else
+        components[localId] = deferAttempt(world, actorId, `${id}:${localId}`, act.description!);
+    }
+
+    if (op.think) {
+      const invalidReferences = op.think.aboutEntityIds.some(
+        (target) => !permitted.has(target) || !Object.hasOwn(world.entities, target),
+      );
+      if (
+        !hasMemory(world.entities[actorId]) ||
+        !op.think.text.trim() ||
+        op.think.text.length > 240 ||
+        op.think.aboutEntityIds.length > 8 ||
+        invalidReferences
+      )
+        components[localId] = outcome(
+          false,
+          'invalid-thought',
+          'The proposed thought exceeds its limits or references unavailable entities.',
+        );
+      else {
+        appendMemory(world, actorId, {
+          kind: 'episode',
+          source: 'self_thought',
+          summary: `I thought: ${op.think.text}`,
+          entityIds: op.think.aboutEntityIds,
+          importance: 5,
+          responseId: id,
+        });
+        components[localId] = outcome(true, 'thought', 'Private thought remembered.');
+      }
+    }
+
+    if (op.goal) {
+      const goalId = goalRef(op.goal.goalId),
+        parentId = goalRef(op.goal.parentId);
+      components[localId] =
+        actor.actor.controller === 'player'
+          ? outcome(false, 'player-intention', 'Player intentions require explicit player input.')
+          : goalId === undefined || parentId === undefined
+            ? outcome(
+                false,
+                'invalid-goal-reference',
+                'Local goal references require an accepted goal dependency.',
+              )
+            : changeGoal(
+                world.entities[actorId]!.actor!,
+                { ...op.goal, goalId, parentId },
+                `${id}:${localId}`,
+                'actor',
+              );
+    }
+    if (op.plan) {
+      const component = world.entities[actorId]!.actor!;
+      const goalId = goalRef(op.plan.goalId);
+      if (goalId === undefined || op.plan.actionIds.some((handle) => !getOwn(actions, handle)))
+        components[localId] = outcome(
+          false,
+          'unoffered-action',
+          'Plan references require supplied actions and accepted goals.',
+        );
+      else if (op.plan.mode === 'cancel') {
+        if (
+          op.plan.actionIds.length ||
+          op.plan.goalId !== null ||
+          (component.agency.plan?.revision ?? 0) !== op.plan.expectedRevision
+        )
+          components[localId] = outcome(
+            false,
+            'invalid-plan',
+            'Cancellation requires the current plan revision and no new steps or goal.',
+          );
+        else {
+          cancelPlan(component);
+          components[localId] = outcome(
+            true,
+            'cancelled',
+            'Future dispatch cancelled; goals and spent resources retained.',
+          );
+        }
+      } else
+        components[localId] = arrangePlan(
+          component,
+          `${id}:${localId}`,
+          op.plan.actionIds.map((handle, index) => ({
+            ...actions[handle]!,
+            actorId,
+            id: `${id}:${localId}:${index}`,
+          })),
+          op.plan.mode,
+          op.plan.expectedRevision,
+          goalId,
+        );
     }
   }
   const accepted = Object.values(components).filter((part) => part.ok).length;

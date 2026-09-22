@@ -503,6 +503,7 @@ export class MacrofoldBackend implements AiClient {
   ): Promise<
     AiResult<{
       thoughts: string[];
+      goalChanges: import('@open-legend/domain').GoalChange[];
       files: import('@open-legend/domain').InnerWorld['files'];
       revision: string;
     }>
@@ -544,10 +545,10 @@ export class MacrofoldBackend implements AiClient {
         receipt,
         true,
       );
-      const value = validateMacrofoldValue<{ thoughts: string[] }>(
-        request.schema,
-        JSON.parse(output),
-      );
+      const value = validateMacrofoldValue<{
+        thoughts: string[];
+        goalChanges: import('@open-legend/domain').GoalChange[];
+      }>(request.schema, JSON.parse(output));
       const exported = await adapter.export(workspace.worktreeId, signal);
       return { outcome: 'value', value: { ...value, ...exported }, receipt };
     } catch (error) {

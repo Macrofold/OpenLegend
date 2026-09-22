@@ -1,3 +1,4 @@
+import { goalTexts, replaceGoals } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   attributeDefinition,
@@ -340,8 +341,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     entity.actor!.personality !== draft.person.personality.trim() ||
     entity.actor!.backstory !== draft.person.backstory.trim() ||
     JSON.stringify(entity.actor!.traits ?? []) !== JSON.stringify(traits) ||
-    JSON.stringify(entity.actor!.goals ?? [entity.actor!.goal].filter(Boolean)) !==
-      JSON.stringify(goals);
+    JSON.stringify(goalTexts(entity.actor!)) !== JSON.stringify(goals);
   const statsChanged =
     entity.actor!.health !== draft.person.stats.health ||
     entity.actor!.fullness !== draft.person.stats.fullness ||
@@ -352,13 +352,9 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     entity.actor!.personality = draft.person.personality.trim();
     entity.actor!.backstory = draft.person.backstory.trim();
     entity.actor!.traits = traits;
-    if (
-      JSON.stringify(entity.actor!.goals ?? [entity.actor!.goal].filter(Boolean)) !==
-      JSON.stringify(goals)
-    ) {
-      entity.actor!.goals = goals;
-      entity.actor!.goal = goals[0] ?? '';
-      entity.actor!.planGeneration++;
+    if (JSON.stringify(goalTexts(entity.actor!)) !== JSON.stringify(goals)) {
+      const goalResult = replaceGoals(entity.actor!, goals, `god-goals:${world.nextId++}`, 'god');
+      if (!goalResult.ok) return { world: original, events: [], outcome: goalResult };
     }
   }
   if (statsChanged) {
@@ -427,9 +423,9 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
         entity.actor!.description,
         entity.actor!.personality,
         entity.actor!.backstory,
-        (entity.actor!.goals ?? []).length
-          ? `My goals are: ${(entity.actor!.goals ?? []).join('; ')}.`
-          : entity.actor!.goal,
+        entity.actor!.initialGoals?.length
+          ? `My starting goals were: ${entity.actor!.initialGoals.join('; ')}.`
+          : '',
       ]
         .filter(Boolean)
         .join(' ');

@@ -1,3 +1,4 @@
+import { validateAgency } from './agency.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
 import { hasWildernessNeeds } from './wilderness-needs.js';
 import type { ActorComponent, Entity, WorldState, WorldEvent } from './types.js';
@@ -486,10 +487,11 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
-  if (world.schemaVersion !== 4 || !world.moduleManifest)
+  if (world.schemaVersion !== 5 || !world.moduleManifest)
     throw new Error(
       'Incompatible development world; required module manifest is missing. Older saves are not migrated.',
     );
+  validateAgency(world);
   validateModuleManifest(world.moduleManifest);
   for (const e of Object.values(world.entities)) {
     if (

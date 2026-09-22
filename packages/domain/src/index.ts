@@ -69,3 +69,5 @@ export * from './wilderness-needs.js';
 export * from './world-presets.js';
 export { admitAttributeDeclaration, type AttributeDeclarationRequest } from './declarations.js';
 export { editActorAttributes, type AttributeEditRequest } from './god-tools.js';
+
+export * from './agency.js';

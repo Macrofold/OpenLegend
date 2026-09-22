@@ -1,3 +1,4 @@
+import { replaceGoals, seedAgency, cancelPlan, finishPlanAction, readyPlanStep } from './agency.js';
 import {
   WILDERNESS_NEEDS,
   hasWildernessNeeds,
@@ -13,7 +14,13 @@ import {
 } from './world-modules.js';
 import { spatialCandidates, nearbyEntities } from './spatial.js';
 import { changeConversation } from './conversations.js';
-import { canSpeak, hasMemory, reconcileBody, commitBodyEffects } from './living.js';
+import {
+  canSpeak,
+  hasMemory,
+  supportsManualWork,
+  reconcileBody,
+  commitBodyEffects,
+} from './living.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import { accountRest, REST_RULES } from './sleep.js';
@@ -261,9 +268,30 @@ export function executeCommand(original: WorldState, command: Command): Transiti
   if (original.paused && command.type !== 'cancel') return reject('paused', 'The world is paused.');
   if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
     return reject('not-alive', 'This actor cannot act.');
+  if (
+    ['gather', 'prepare', 'craft', 'equip', 'hunt', 'harvest', 'cook'].includes(command.type) &&
+    !supportsManualWork(source)
+  )
+    return reject(
+      'unsupported-body',
+      'This native manual-work family requires a supported biped body.',
+    );
   const world = draftWorld(original);
   const actor = world.entities[command.actorId]!;
   const component = actor.actor!;
+  // Scope comes before live resource/lifecycle diagnostics, including deferred plan dispatch.
+  // docs/architecture.md#actor-agency-foundation
+  const scopedTargetId =
+    command.type === 'cook'
+      ? command.heatId
+      : ['gather', 'harvest', 'hunt', 'replenish'].includes(command.type) && 'targetId' in command
+        ? command.targetId
+        : undefined;
+  if (scopedTargetId) {
+    const target = getOwn(world.entities, scopedTargetId);
+    if (!target || !visible(world, actor, target))
+      return reject('not-visible', 'The action target is not currently perceived.');
+  }
   const events: WorldEvent[] = [];
   let result = outcome(true, 'accepted', 'Action started.');
   let action: Action | undefined;
@@ -417,6 +445,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       action = createAction(world, 'rest', SIMULATION_RULES.nativeRestSeconds);
       break;
     case 'cancel': {
+      cancelPlan(component);
       component.action = null;
       component.planGeneration++;
       result = outcome(
@@ -483,10 +512,13 @@ export function executeCommand(original: WorldState, command: Command): Transiti
     case 'goal': {
       if (typeof command.text !== 'string' || !command.text.trim() || command.text.length > 350)
         return reject('invalid-goal', 'Goal must contain 1–350 characters.');
-      component.goal = command.text.trim();
-      component.goals = [component.goal];
-      component.planGeneration++;
-      result = outcome(true, 'goal-set', 'Goal updated.');
+      result = replaceGoals(
+        component,
+        [command.text.trim()],
+        command.id,
+        component.controller === 'player' ? 'player' : 'god',
+      );
+      if (!result.ok) return reject(result.code, result.message);
       break;
     }
     case 'teach': {
@@ -548,6 +580,13 @@ export function executeCommand(original: WorldState, command: Command): Transiti
 }
 
 function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reason: string): void {
+  if (actor.actor!.action)
+    finishPlanAction(
+      world,
+      actor.id,
+      actor.actor!.action!.id,
+      outcome(false, 'action-failed', reason),
+    );
   actor.actor!.action = null;
   emit(world, events, 'action-stopped', `${actor.name} stopped: ${reason}`, actor);
 }
@@ -730,6 +769,12 @@ function completeAction(
       emit(world, events, 'rested', `${actor.name} finished resting.`, actor);
       break;
   }
+  finishPlanAction(
+    world,
+    actor.id,
+    action.id,
+    outcome(true, 'completed', `${action.type} completed.`),
+  );
   component.action = null;
 }
 
@@ -941,7 +986,12 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
       .sort(
         (a, b) => distance(actor.position, a.position) - distance(actor.position, b.position),
       )[0];
-    if (resource && component.action?.type === 'gather') return;
+    if (
+      resource &&
+      component.action?.type === 'gather' &&
+      world.entities[component.action.targetId ?? '']?.resource?.definitionId === 'berries'
+    )
+      return;
     if (resource) {
       const action = createAction(world, 'gather', resource.resource!.workSeconds);
       action.targetId = resource.id;
@@ -1025,7 +1075,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
         original.paused ? 'World time is paused.' : 'No time elapsed.',
       ),
     };
-  const world = draftWorld(original);
+  let world = draftWorld(original);
   const events: WorldEvent[] = [];
   let remaining = elapsedSimSeconds;
   while (remaining > 0) {
@@ -1033,10 +1083,12 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
     remaining -= seconds;
     world.simTime += seconds;
     // Stable actor order resolves finite-resource claims; no asynchronous writer mutates a step.
-    for (const actor of Object.values(world.entities)
+    for (const actorId of Object.values(world.entities)
       .filter((entity) => entity.actor)
-      .sort((a, b) => a.id.localeCompare(b.id))) {
-      const component = actor.actor!;
+      .map((entity) => entity.id)
+      .sort((a, b) => a.localeCompare(b))) {
+      let actor = world.entities[actorId]!;
+      let component = actor.actor!;
       if (!component.alive || component.incapacitated) continue;
       if (hasWildernessNeeds(component)) {
         if (advanceWildernessNeeds(actor, seconds)) reconcileBody(world, actor, events, 'needs');
@@ -1045,6 +1097,23 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       }
       advanceReservoirs(world, actor, seconds, events);
       nativeReservoirResponse(world, actor);
+      const step = readyPlanStep(world, actorId);
+      if (step) {
+        const stepId = step.id;
+        const transition = executeCommand(world, step.command);
+        world = draftWorld(transition.world);
+        events.push(...transition.events);
+        actor = world.entities[actorId]!;
+        component = actor.actor!;
+        const started = component.agency.plan!.steps.find((entry) => entry.id === stepId)!;
+        started.status = 'running';
+        started.actionId = component.action?.id ?? stepId;
+        started.outcome = transition.outcome;
+        component.agency.plan!.revision++;
+        component.agency.revision++;
+        if (!transition.outcome.ok || !component.action)
+          finishPlanAction(world, actorId, started.actionId, transition.outcome);
+      }
       if (hasWildernessNeeds(component)) accountRest(component, world.simTime, seconds);
       advanceAction(world, actor, seconds, events);
     }
@@ -1271,7 +1340,8 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
         // Sparse state is owner-private; explicit permitted projections carry public values.
         delete copy.actor.attributes;
         delete copy.actor.contacts;
-        copy.actor.goal = '';
+        copy.actor.agency = seedAgency();
+        delete copy.actor.initialGoals;
         copy.actor.planGeneration = 0;
       }
       if (copy.resource) definitionIds.add(copy.resource.definitionId);

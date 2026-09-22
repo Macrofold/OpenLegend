@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## Actor agency implementation boundary
+
+Architecture and implementation status now distinguish the delivered schema-5 agency slice from remaining AG/INV work. The former one-of-each response and writable goal mirrors are superseded. Goal seeds remain descriptive identity; current intentions have one domain owner. The implementation section anchor moved from `agency-implementation-boundary` to `actor-agency-foundation`, with inbound references updated. Manual evidence and explicitly deferred automated/live qualification remain separate.
+
 This file records material changes to OpenLegend's documentation structure and historically important decisions that replaced earlier documented directions.
 
 It is historical context only. Current requirements, design, architecture, tasks, status and open decisions live in their canonical owner documents.

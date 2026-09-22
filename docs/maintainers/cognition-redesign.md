@@ -63,7 +63,7 @@ Coordinate response translation with [AG01](agent-agency.md#ag01--optional-bound
 
 - [x] Implement native level 0 and Jev level 1 routing to level 2 mini, level 3 complex/low, level 4 complex/high, or level 5 reflection harness. Provider bindings must distinguish levels 3 and 4; the current fast/complex/full labels are insufficient.
 - [x] Directed speech admits level 2 by default. Jev always evaluates escalation for an admitted semantic opportunity; it may raise the immediate reasoning level and/or enqueue reflection. Ordinary speech must not request mind updates or wait for reflection.
-- [x] Keep ordinary response components minimal and reflection limited to short presentation thoughts as final output. The original speech-only slice is superseded by the September 20 NC00 nullable talk/act/think envelope; no component is mandatory. Remove required `policy`, `expectedRevision`, `thought`, `documents`, `removeDocuments`, `records` and companion patch arrays from ordinary responses.
+- [x] Keep ordinary response components minimal and reflection limited to short presentation thoughts as final output. The response envelope now supports optional repeated operations through AG01; no component is mandatory. Typed reflection goal changes share AG02 mutation instead of duplicating operational goals in prose. Remove required `policy`, `expectedRevision`, `thought`, `documents`, `removeDocuments`, `records` and companion patch arrays from ordinary responses.
 - [ ] Verify a greeting causes no harness run, relationship-writing requirement or default high-effort reasoning; an exceptional event can request reflection while conversation and simulation progress. Provider refusal, unavailable credentials, invalid data and uncertain completion remain distinct.
 
 - [x] Apply routing to every admitted semantic trigger, including notable events, hazards, encounters, need/goal changes and speech. Reject unoffered routes; native urgency acts immediately, and unavailable semantic work is explicitly deferred.
@@ -167,7 +167,7 @@ Owner: server workspace adapter/repository; generic execution in AI package. Dep
 
 - [x] Queue level 5 during safe downtime, eligible dreams and significant events. Support both trusted event significance flags and Jev significance judgments for configured event classes.
 - [x] Separate interactive admission from reflection scheduling. Native simulation and conversation must never await a reflection result or its remote cleanup; bound concurrency/reservations and give interactive work priority.
-- [x] Start a fresh harness conversation per reflection on compatible warm actor compute. Permit bounded multi-turn file work; final output contains one or more presentation thoughts, each at most 20 words, with a finite per-job count.
+- [x] Start a fresh harness conversation per reflection on compatible warm actor compute. Permit bounded multi-turn file work; final output contains one or more presentation thoughts, each at most 20 words, with a finite per-job count, plus optional typed goal changes through AG02.
 - [x] Publish validated snapshot/thoughts idempotently after completion. Define pause, shutdown, canceled/uncertain execution, actor death, stale identity/obligation revisions and dream interruption; no automatic paid repair.
 
 - [x] Persist/coalesce experience boundaries, idle/sleep episodes and last accepted reflection; stagger work with real-time cooldowns and fairness. Unchanged evidence cannot immediately retrigger reflection, and progress advances only after accepted publication.

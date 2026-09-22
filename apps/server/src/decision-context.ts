@@ -1,10 +1,11 @@
+import { currentGoal } from '@open-legend/domain';
 import { bodyContext, hasWildernessNeeds } from '@open-legend/domain';
 import { activeAppraisals } from '@open-legend/domain';
 
 import { compileInterests } from './interests.js';
 import { observeActor, type CognitionBinding, MIND_POLICY, mindFor } from '@open-legend/domain';
 import type { JudgeRequest, JudgeValue } from '@open-legend/ai';
-import { npcCandidates } from './context.js';
+import { npcCandidates, planningCandidates } from './context.js';
 import { domainCommand } from './cognition.js';
 import { candidateSet, gameTime, type RecallService } from './recall.js';
 import type { WorldService } from './world-service.js';
@@ -73,6 +74,16 @@ export async function prepareDecision(
       : { recent: [], older: [] };
   const automaticIds = conversation.recent;
   const availableActions = npcCandidates(service, actorId);
+  const planOffers = planningCandidates(service, actorId).map((candidate, index) => ({
+    ...candidate,
+    id: `p${index}`,
+  }));
+  const planActions = Object.fromEntries(
+    planOffers.map((candidate) => [
+      candidate.id,
+      domainCommand(candidate.command!, actorId, jobId),
+    ]),
+  );
   const candidates = candidateSet(world, actorId, observed, requiredIds, automaticIds, [
     ...conversation.older,
     ...conversation.recent,
@@ -82,6 +93,7 @@ export async function prepareDecision(
   const triggerIdSet = new Set(requiredIds);
   const requiredContext: Record<string, unknown> = {
     stimulus,
+    planOffers: planOffers.map(({ id, description }) => ({ id, description })),
     references: responseReferences(
       world,
       actorId,
@@ -110,7 +122,12 @@ export async function prepareDecision(
     now: gameTime(world.simTime),
     body: bodyContext(world, observed.actor),
     contacts: observed.contacts.map((c) => c.text),
-    goal: snapshotActor.goal,
+    goal: currentGoal(snapshotActor),
+    agency: {
+      goals: snapshotActor.agency.goals,
+      plan: snapshotActor.agency.plan,
+      attempts: snapshotActor.agency.attempts,
+    },
     conversation: candidates
       .filter(
         (candidate) =>
@@ -190,7 +207,10 @@ export async function prepareDecision(
         .join('\n'),
     now: gameTime(currentWorld.simTime),
     body: bodyContext(currentWorld, currentObserved.actor),
-    goal: actor.goal,
+    contacts: currentObserved.contacts.map((contact) => contact.text),
+    goal: currentGoal(actor),
+    agency: { goals: actor.agency.goals, plan: actor.agency.plan, attempts: actor.agency.attempts },
+    planOffers: planOffers.map(({ id, description }) => ({ id, description })),
   };
   context['conversation'] = selection.selected
     .filter((entry) => entry.kind === 'conversation' && !triggerIdSet.has(entry.id))
@@ -234,7 +254,7 @@ export async function prepareDecision(
     entityIds: references.entityIds,
     expectedPlan: actor.planGeneration,
     restEpisode: actor.action?.type === 'rest' ? actor.action.id : null,
-    actions: {},
+    actions: planActions,
   };
   const offered: { id: string; description: string }[] = [];
   const prompt = readableDecisionContext(context, offered, false);
@@ -248,6 +268,13 @@ export async function prepareDecision(
     offered,
     actionCandidates: availableActions.slice(0, 24),
     awarenessSequence,
+    attemptBindings: [...availableActions, ...planOffers]
+      .filter((candidate) => candidate.command)
+      .slice(0, 64)
+      .map((candidate) => ({
+        description: candidate.description,
+        command: domainCommand(candidate.command!, actorId, jobId),
+      })),
     diagnostics: {
       instructionsVersion: COGNITION_VERSION,
       snapshot: currentWorld.sequence,
@@ -302,17 +329,24 @@ export async function selectDecisionActions(
     );
   });
   const status = candidates.length ? 'completed after action gate' : 'no candidates';
-  const actions = Object.fromEntries(
-    selected.map((candidate) => {
-      const index = candidates.indexOf(candidate);
-      return [
-        `a${index}`,
-        candidate.command
-          ? domainCommand(candidate.command, prepared.binding.actorId, prepared.binding.decisionId)
-          : null,
-      ];
-    }),
-  );
+  const actions = {
+    ...prepared.binding.actions,
+    ...Object.fromEntries(
+      selected.map((candidate) => {
+        const index = candidates.indexOf(candidate);
+        return [
+          `a${index}`,
+          candidate.command
+            ? domainCommand(
+                candidate.command,
+                prepared.binding.actorId,
+                prepared.binding.decisionId,
+              )
+            : null,
+        ];
+      }),
+    ),
+  };
   const offered = selected.map((candidate) => ({
     id: `a${candidates.indexOf(candidate)}`,
     description: candidate.description,
@@ -361,14 +395,19 @@ export function fallbackDecisionActions(
   reason: string,
 ) {
   const candidates = prepared.actionCandidates;
-  const actions = Object.fromEntries(
-    candidates.map((candidate, index) => [
-      `a${index}`,
-      candidate.command
-        ? domainCommand(candidate.command, prepared.binding.actorId, prepared.binding.decisionId)
-        : null,
-    ]),
-  );
+  const actions = {
+    ...Object.fromEntries(
+      Object.entries(prepared.binding.actions).filter(([id]) => id.startsWith('p')),
+    ),
+    ...Object.fromEntries(
+      candidates.map((candidate, index) => [
+        `a${index}`,
+        candidate.command
+          ? domainCommand(candidate.command, prepared.binding.actorId, prepared.binding.decisionId)
+          : null,
+      ]),
+    ),
+  };
   const offered = candidates.map((candidate, index) => ({
     id: `a${index}`,
     description: candidate.description,

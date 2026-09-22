@@ -113,7 +113,7 @@ export function mindFor(world: WorldState, actorId: string): ActorMind {
     component?.backstory,
     component?.initialGoals?.length
       ? `My starting goals are: ${component.initialGoals.join('; ')}.`
-      : (component?.goal ?? 'I am learning to survive.'),
+      : 'I am learning to survive.',
   ]
     .filter(Boolean)
     .join(' ');

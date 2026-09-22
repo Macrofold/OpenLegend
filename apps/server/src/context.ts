@@ -1,3 +1,4 @@
+import { supportsManualWork } from '@open-legend/domain';
 import { nativeNeedBelow } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { hearsEntity, visionRadius } from '@open-legend/domain';
@@ -287,6 +288,7 @@ export function npcCandidates(
       });
     return actions;
   }
+  if (!supportsManualWork(observed.actor)) return actions;
   for (const [preparation, recipe] of Object.entries(NATIVE_PREPARATIONS)) {
     if (quantity(recipe.input) >= recipe.inputQuantity)
       actions.push({
@@ -391,4 +393,32 @@ export function npcCandidates(
       });
   }
   return actions;
+}
+
+/** Known techniques are valid planning vocabulary before their materials are owned.
+ * Admission queues intentions; native dispatch still owns all physical prerequisites.
+ */
+export function planningCandidates(service: WorldService, actorId: string): CandidateAction[] {
+  const observed = service.observe(actorId);
+  if (!observed || !supportsManualWork(observed.actor)) return [];
+  return [
+    ...observed.visibleEntities
+      .filter((entity) => entity.resource && entity.resource.quantity > 0)
+      .slice(0, 8)
+      .map((entity) => ({
+        id: `plan-gather:${entity.id}`,
+        description: `Gather ${entity.name}; it must remain perceived, reachable and nonempty at execution.`,
+        command: { type: 'gather' as const, targetId: entity.id },
+      })),
+    ...Object.entries(NATIVE_PREPARATIONS).map(([preparation, recipe]) => ({
+      id: `plan-prepare:${preparation}`,
+      description: `Prepare ${recipe.outputQuantity} ${recipe.output}; needs ${recipe.inputQuantity} ${recipe.input} at start.`,
+      command: { type: 'prepare' as const, preparation: preparation as 'fiber' | 'cord' },
+    })),
+    ...observed.knownRecipes.slice(0, 16).map((recipe) => ({
+      id: `plan-craft:${recipe.id}`,
+      description: `Craft ${recipe.name}; needs ${recipe.inputs.map((input) => `${input.quantity} ${input.definitionId}`).join(', ')} at start.`,
+      command: { type: 'craft' as const, recipeId: recipe.id },
+    })),
+  ];
 }

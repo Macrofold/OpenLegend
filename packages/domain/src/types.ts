@@ -136,8 +136,7 @@ export interface ActorComponent {
   personality?: string;
   backstory?: string;
   initialGoals?: string[];
-  /** Current authored goals; the first is the native goal used by action planning. */
-  goals?: string[];
+  agency: import('./agency.js').ActorAgency;
   rest?: import('./sleep.js').RestState;
   controller: 'player' | 'npc' | 'native';
   species?: 'human' | 'hare' | 'deer' | 'construct';
@@ -159,7 +158,6 @@ export interface ActorComponent {
   birthTimeKnown?: boolean;
   action: Action | null;
   equippedItemId: string | null;
-  goal: string;
   planGeneration: number;
 }
 export interface AnimalComponent {
@@ -244,6 +242,8 @@ export interface Outcome {
   message: string;
   recipeId?: string;
   itemId?: string;
+  goalId?: string;
+  planId?: string;
 }
 export interface CommandReceipt {
   digest: string;
@@ -262,7 +262,7 @@ export interface WorldState {
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
-  schemaVersion: 1 | 2 | 3 | 4;
+  schemaVersion: 1 | 2 | 3 | 4 | 5;
   id: string;
   seed: number;
   rngState: number;

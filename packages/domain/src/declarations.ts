@@ -358,7 +358,13 @@ export function admitAttributeDeclaration(
     (e) =>
       e.actor?.attributes?.[id] ||
       e.replenisher?.attributeId === id ||
-      e.actor?.action?.attributeId === id,
+      e.actor?.action?.attributeId === id ||
+      e.actor?.agency.plan?.steps.some(
+        (step) =>
+          ['queued', 'running'].includes(step.status) &&
+          step.command.type === 'replenish' &&
+          step.command.attributeId === id,
+      ),
   );
   if (request.removeId && (!previous || users.length))
     return reject('Missing definition or live state/action/source still depends on it.');
@@ -374,7 +380,18 @@ export function admitAttributeDeclaration(
       return reject(
         'Only a presentation revision is supported; state, units, ownership and mechanics must remain identical.',
       );
-    if (users.some((e) => e.actor?.action?.attributeId === id))
+    if (
+      users.some(
+        (e) =>
+          e.actor?.action?.attributeId === id ||
+          e.actor?.agency.plan?.steps.some(
+            (step) =>
+              ['queued', 'running'].includes(step.status) &&
+              step.command.type === 'replenish' &&
+              step.command.attributeId === id,
+          ),
+      )
+    )
       return reject('Wait for dependent work to finish or cancel it before revision.');
   } else if (request.definition?.version !== 1 && !request.removeId)
     return reject('New definitions begin at version 1.');

@@ -1,3 +1,4 @@
+import { seedAgency } from './agency.js';
 import { createModuleManifest } from './world-modules.js';
 import { initializeIdentity } from './identity.js';
 import { defaultStoryPolicy } from './story-selection.js';
@@ -156,7 +157,6 @@ export function createActor(
     ...(identity.personality ? { personality: identity.personality } : {}),
     ...(identity.backstory ? { backstory: identity.backstory } : {}),
     ...(initialGoals?.length ? { initialGoals } : {}),
-    ...(initialGoals?.length ? { goals: [...initialGoals] } : {}),
     controller,
     species: 'human',
     body: livingBody('human'),
@@ -169,11 +169,15 @@ export function createActor(
     bornAt: -24 * 365 * 86400,
     action: null,
     equippedItemId: null,
-    goal:
-      initialGoals?.[0] ??
-      (controller === 'npc'
-        ? 'Stay fed, learn useful techniques, and get to know the newcomer.'
-        : 'Make a life in the wild.'),
+    agency: seedAgency(
+      initialGoals?.length
+        ? initialGoals
+        : [
+            controller === 'npc'
+              ? 'Stay fed, learn useful techniques, and get to know the newcomer.'
+              : 'Make a life in the wild.',
+          ],
+    ),
     planGeneration: 0,
   };
 }
@@ -182,7 +186,7 @@ export function createActor(
 export function createWorld(seed = 73): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
-    schemaVersion: 4,
+    schemaVersion: 5,
     moduleManifest: createModuleManifest(),
     storyPolicy: defaultStoryPolicy(),
     visibleObjects: {},

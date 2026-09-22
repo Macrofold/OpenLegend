@@ -1,12 +1,12 @@
 # Agent agency implementation tracker
 
-This is the focused tracker for optional multi-operation decisions, actor-owned operational goals, short native plans and their integration with existing cognition and invention. **All work below is unimplemented or unverified until supported by delivery evidence.** Adding this file does not complete any item.
+This is the focused tracker for optional multi-operation decisions, actor-owned operational goals, short native plans and their integration with existing cognition and invention. Checked items have local implementation/runtime evidence; unchecked items retain their full acceptance requirements. Automated and live-provider qualification remain separate gates.
 
 Behavior belongs to [Agent agency](../agent-agency.md); the operational contract belongs to [Agent agency runtime](../../archive/07-technical-architecture/agent-agency-runtime.md). Existing [CR/CH](cognition-redesign.md), [NC](narration-and-conversations.md), [INV](inventions-and-world-evolution.md), [performance](performance.md) and [save/load](save-and-load.md) trackers retain their own work. Their IDs and valid acceptance requirements must not be silently replaced by AG tasks.
 
 [EWF06](extensible-world-foundation.md#ewf06--action-and-controller-integration-without-a-parallel-agency-system) supplies common integration; AG retains its delivery and AG01–AG04 need not wait for complete EWF/EPR qualification. AG05/AG06 consume family/concern interfaces; AG09 captures manifest dependencies.
 
-The attribute slice supplies generic concerns and replenishment candidates/native continuation through the existing single-action executor. It does not implement AG01 multi-operation decisions, AG02 goals or AG03/04 maintained plans; see [Architecture](../architecture.md#extensible-attribute-foundation).
+The native agency slice builds on module concerns and the existing single-action executor. See [Architecture](../architecture.md#actor-agency-foundation) for delivered behavior and [Verification](../verification.md#actor-agency-runtime) for actual evidence. Partial items below are not a claim of complete AG acceptance.
 
 ## Ownership and delivery order
 
@@ -20,11 +20,12 @@ Use the current single writer and existing stores first. No new platform depende
 
 **Owner:** server cognition contracts/director; domain response admission; protocol projections where needed. **Depends on:** existing NC00 foundation and actor-reference contract. **Primary touchpoints:** `apps/server/src/cognition-contracts.ts`, `apps/server/src/response-context.ts`, `apps/server/src/ai-director.ts`, `packages/domain/src/response.ts`.
 
-- [ ] Define one logical operation-list contract and a provider-compatible encoding with zero or more operations, repeated kinds, stable response-local aliases and bounded admission dependencies. Preserve the distinction between local aliases and server-authorized entity/action handles.
-- [ ] Change prompt examples to include empty, single-kind and combined decisions. Keep every operation optional; do not require visible reasoning, a goal for every need, or a reflection rewrite before a small intention edit.
-- [ ] Make the action-context gate control expensive suggestions, not permission to submit an unlisted attempt or intention. Preserve existing route/attention budget behavior and the deliberate bounded urgent-response refresh.
-- [ ] Update parser, domain contract and diagnostics together; do not accept a list at the model boundary while downstream code still assumes one `talk`, `act` and `think`. Validate provider schema shape in fixtures without external requests.
-- [ ] Apply advertised aggregate operation/byte limits and per-field limits before mutation. Define explicit no-response, envelope rejection, full acceptance and partial acceptance outcomes.
+- [x] Define one logical operation-list contract and a provider-compatible encoding with zero or more operations, repeated kinds, stable response-local aliases and bounded admission dependencies. Preserve the distinction between local aliases and server-authorized entity/action handles.
+- [x] Change prompt examples to include empty, single-kind and combined decisions. Keep every operation optional; do not require visible reasoning, a goal for every need, or a reflection rewrite before a small intention edit.
+- [x] Make the action-context gate control expensive suggestions, not permission to submit an unlisted attempt or intention. Preserve existing route/attention budget behavior and the deliberate bounded urgent-response refresh.
+- [x] Update parser, domain contract and diagnostics together; no runtime consumer assumes one `talk`, `act` and `think`.
+- [ ] Add automated provider-schema fixtures without external requests; local schema serialization is observed, but live structured-output acceptance remains unqualified.
+- [x] Apply advertised aggregate operation/byte limits and per-field limits before mutation. Define explicit no-response, envelope rejection, full acceptance and partial acceptance outcomes.
 
 **Exit evidence:** empty output leaves existing work and goals untouched; multiple thoughts and utterances are independently represented; a goal plus a queued action can coexist; duplicate aliases, forward/cyclic dependencies and malformed envelopes fail without effects. Closing action suggestions still permits a freeform attempt. No new mandatory Jev category-selection call appears.
 
@@ -33,21 +34,23 @@ Use the current single writer and existing stores first. No new platform depende
 **Owner:** domain agency/mind mutation; server context and creation adapters. **Depends on:** AG01 and current actor/memory ownership. **Touchpoints:** `packages/domain/src/types.ts`, `kernel.ts`, `mind.ts`, `experience.ts`, `god-tools.ts`, actor creation/seeding and all readers of `actor.goal`/`actor.goals`.
 
 - [ ] Add the minimum serializable agency state and a centralized create/revise/pause/resume/complete/abandon mutation. Preserve author scope, stable identity, revisions, private provenance, bounded parent relationships and actor-declared versus engine-evidenced completion.
-- [ ] Establish a single operational source of truth. Inventory current goal writers and replace their meaning at the development-format cutover; any needed native/UI current-goal string becomes a read-only projection. Do not maintain two independently writable goal systems.
-- [ ] Seed creator-authored initial goals once. Actor revisions thereafter do not rewrite the original backstory, and another actor's speech cannot edit them directly. Player-owned goals use explicit player input unless controller policy authorizes otherwise.
-- [ ] Allow reflection to submit the same typed mutations, with relevant revision checks. Prose mentioning a goal remains prose; it cannot silently authorize execution. A small immediate goal edit does not require CH01 or level-5 reflection.
-- [ ] Implement finite goal quotas, terminal-history retention and transparent rejection/consolidation behavior without dropping active obligations, unresolved dependencies or replay receipts, or creating an unlimited hidden planner scratchpad.
+- [x] Establish a single operational source of truth. Inventory current goal writers and replace their meaning at the development-format cutover; any needed native/UI current-goal string becomes a read-only projection. Do not maintain two independently writable goal systems.
+- [x] Seed creator-authored initial goals once. Actor revisions thereafter do not rewrite the original backstory, and another actor's speech cannot edit them directly. Player-owned goals use explicit player input unless controller policy authorizes otherwise.
+- [x] Allow reflection to submit the same typed mutations, with relevant revision checks. Prose mentioning a goal remains prose; it cannot silently authorize execution. A small immediate goal edit does not require CH01 or level-5 reflection.
+- [x] Implement finite goal quotas, terminal-history retention and transparent rejection/consolidation behavior without dropping active obligations, unresolved dependencies or replay receipts, or creating an unlimited hidden planner scratchpad.
 
 **Exit evidence:** goals survive a same-version restart and can be revised independently; a paused plan does not erase its goal; a mistaken subjective completion does not grant an objective reward or fulfill a promise; old seed text is not reapplied on every load. Cross-actor references, inherited dictionary IDs and parent cycles are rejected.
 
 ### AG03 — Bounded plan frontier and one native physical lane
 
+- [x] Integrate explicit cancel/replace and interruption detection with native work, preserving actual spent materials, retained goals and completed receipts. General suspended-work resumption remains in the unchecked requirement below.
+
 **Owner:** domain native execution/agency state; server readiness adapter. **Depends on:** AG02. **Touchpoints:** `packages/domain/src/kernel.ts`, `types.ts`, native action outcomes, existing `WorldService` transition path.
 
-- [ ] Persist short plan frontiers with step identity, supported arguments, success dependencies, blocked/waiting dispositions and the actual last outcome. A one-off sequence may exist without a durable goal.
-- [ ] Bind the actor-selected foreground plan and ordered one-off queue; blocked work cannot silently switch goals through an implicit utility scorer. Add enqueue and explicit replace/cancel semantics around the existing single action slot. Do not implement a plan by calling `executeCommand` for several timed actions in one immediate response.
+- [x] Persist short plan frontiers with step identity, supported arguments, success dependencies, blocked/waiting dispositions and the actual last outcome. A one-off sequence may exist without a durable goal.
+- [x] Bind the actor-selected foreground plan and ordered one-off queue; blocked work cannot silently switch goals through an implicit utility scorer. Add enqueue and explicit replace/cancel semantics around the existing single action slot. Do not implement a plan by calling `executeCommand` for several timed actions in one immediate response.
 - [ ] Dispatch only ready native work and revalidate at start. Bind an earlier step's output through trusted typed result references. Do not use a prewritten future item ID or treat queue admission as completion.
-- [ ] Advance known valid steps without another model call. On failure, block dependent work and create at most the eligible reconsideration opportunity; do not blindly attempt the remainder or regenerate the same plan.
+- [x] Advance known valid steps without another model call. On failure, block dependent work and create at most the eligible reconsideration opportunity; do not blindly attempt the remainder or regenerate the same plan.
 - [ ] Implement interruption during long-running work using trusted action-family pause/cancel boundaries, retaining consumed materials, committed effects and actual elapsed work. Revalidate suspended plans before resuming; do not imply every family supports pause/resume. Plan edits cannot rewrite completed receipts, refund resources or control another actor's response.
 
 **Exit evidence:** gathering → preparing → crafting executes in sequence with correct durations and one-time consumption; ordinary speech/thought does not cancel it; explicit replacement follows native cancellation rules. A failed first step blocks dependents. Two actors competing for a final resource cannot both receive it. Several native completions can occur after one model decision with zero continuation inference calls.
@@ -56,15 +59,18 @@ Use the current single writer and existing stores first. No new platform depende
 
 **Owner:** domain response mutation, server application/repository boundary. **Depends on:** AG01–AG03; existing durable jobs/command receipts. **Touchpoints:** `packages/domain/src/response.ts`, `apps/server/src/ai-director.ts`, `world-service.ts`, `store.ts` and the selected repository implementation.
 
-- [ ] Apply immediate authorized operations and persist accepted pending dispatches in one transition/transaction. Keep asynchronous interpretation and provider I/O outside the mutation transaction.
+- [x] Apply immediate authorized operations and persist accepted pending dispatches in one transition/transaction. Keep asynchronous interpretation and provider I/O outside the mutation transaction.
 - [ ] Give every component, step and invention bridge stable child identity. Return original outcomes for duplicate bodies, conflict for identity reuse with different bodies, and a rejected/deferred disposition for retired or uncertain identities.
-- [ ] Enforce independent component rejection and admission dependencies. A later rejected action does not unsay an accepted utterance; a component requiring a rejected goal creation cannot bind to a nonexistent goal.
-- [ ] Replace broad staleness checks where necessary with relevant goal/plan/action revisions. Preserve current actor lifecycle, target scope, policy, cancellation and load-epoch checks. Unrelated world ticks must not invalidate a whole decision.
-- [ ] Close replay protection beyond the 300-entry hot response-receipt window through existing durable admission, not an assumption that old callbacks never arrive.
+- [x] Enforce independent component rejection and admission dependencies. A later rejected action does not unsay an accepted utterance; a component requiring a rejected goal creation cannot bind to a nonexistent goal.
+- [x] Replace broad staleness checks where necessary with relevant goal/plan/action revisions. Preserve current actor lifecycle, target scope, policy, cancellation and load-epoch checks. Unrelated world ticks must not invalidate a whole decision.
+- [x] Close replay protection beyond the 300-entry hot response-receipt window through existing durable admission, not an assumption that old callbacks never arrive.
 
 **Exit evidence:** storage failure commits no partial envelope; duplicate completion, late completion, partial component rejection and mixed-body retry have deterministic outcomes. Crash/recovery at admission-versus-dispatch boundaries does not double-spend materials or start a second paid operation. All-optional empty decisions finish cleanly.
 
 ### AG05 — Resolve unlisted attempts to existing mechanics
+
+- [x] Retain bounded private unlisted intents and reuse exact normalized request-bound native descriptions without another provider call.
+- [ ] Add explicit withdrawal/resolution of the four unresolved intent slots when the scoped interpreter/INV bridge lands; do not silently evict unresolved work.
 
 **Owner:** server action interpretation; domain command adapters. **Depends on:** AG01, AG03–AG04. **Touchpoints:** `apps/server/src/context.ts`, `decision-context.ts`, `cognition.ts`, response admission and existing action adapters. INV-7.1 owns the shared missing-capability classification contract.
 
@@ -78,9 +84,11 @@ Use the current single writer and existing stores first. No new platform depende
 
 ### AG06 — Goal/plan-aware context and derived interests
 
+- [x] Derive material interests from known pending native steps even without a prior selected-object subscription; keep matching restricted to perceived candidates.
+
 **Owner:** server context/recall integration. **Depends on:** AG02–AG03 and delivered CR03/CR04 substrate. **Touchpoints:** `apps/server/src/decision-context.ts`, `response-context.ts`, `interests.ts`, `recall.ts`.
 
-- [ ] Render compact operational goals, current frontier, relevant blocked reason and fresh results once, with the established actor-perspective language and reference rules. Do not duplicate all goal prose into several context sections.
+- [x] Render compact operational goals, current frontier, relevant blocked reason and fresh results once, with the established actor-perspective language and reference rules. Do not duplicate all goal prose into several context sections.
 - [ ] Compile bounded interests from chosen goals and known plan prerequisites, not only from objects already selected by attention. Invalidate affected subscriptions on meaningful goal/plan changes and reevaluate currently exposed candidates once.
 - [ ] Preserve scope-before-relevance, required evidence, accepted About me, current conversation guarantees, obligations and total byte reservation. Optional planner context yields before privacy or required-context integrity does.
 - [ ] Retain contradictory evidence and a measured optional opportunity-discovery allowance. No interest subscription can search another actor's private inventions or unseen world state.
@@ -90,11 +98,13 @@ Use the current single writer and existing stores first. No new platform depende
 
 ### AG07 — Meaningful feedback, survival and bounded reconsideration
 
+- [x] Emit one private experience on frontier failure/interruption, suppress unchanged retries, and remove goal-only edits from the autonomous response fingerprint. Existing actor/global cooldowns remain authoritative.
+
 **Owner:** existing server actor scheduler and native controller policy. **Depends on:** AG03–AG06; current awareness/perception boundary. **Touchpoints:** `apps/server/src/ai-director.ts`, `actor-work.ts`, `interests.ts`, domain cognition policy and native outcome emission.
 
 - [ ] Connect private goal-review, native action-result and invention-result opportunities through the existing scheduler. Integrate the [EPR01/EPR05 scope and intake contract](events-perception-and-reactions.md); no parallel opportunity schema or universal event bus. AG01–AG04 can use existing receipts before full EPR delivery; AG07 qualifies the shared intake integration.
-- [ ] Distinguish unresolved/deferred opportunities from completed consideration. Replace native-urgency cursor advancement that would incorrectly consume needed semantic evidence without a later path to reconsider it.
-- [ ] Remove the categorical low-fullness semantic dead end for capable actors. Use native-response adequacy and urgency while preserving immediate native survival, actual incapacity/sleep/cognition capability checks and bounded spending.
+- [x] Distinguish unresolved/deferred opportunities from completed consideration. Replace native-urgency cursor advancement that would incorrectly consume needed semantic evidence without a later path to reconsider it.
+- [x] Remove the categorical low-fullness semantic dead end for capable actors. Use native-response adequacy and urgency while preserving immediate native survival, actual incapacity/sleep/cognition capability checks and bounded spending.
 - [ ] Suppress self-thought/self-goal immediate wake loops, repeated unchanged failures and recursive result-to-result churn. Preserve episode identity, coalescing, per-actor/global cooldowns and hysteresis under the existing D54 policy ownership.
 - [ ] Keep simulation deadlines separate from wall-time cooldown/spend. Measure fairness under the current single global workflow before adding bounded concurrency; maintain one authoritative writer.
 
@@ -117,13 +127,15 @@ Use the current single writer and existing stores first. No new platform depende
 **Owner:** agency domain state and existing save/application owners. **Depends on:** each stateful slice as it lands; coordinated with save/load tracker. **Touchpoints:** `WorldService`, `GameSaves`, saved world validation, durable jobs and receipt repositories.
 
 - [ ] Include goals, frontiers, active native work and actor-visible invention state in same-version integrity. Reject incompatible development formats; add no old-save conversion layer.
-- [ ] Rebuild only derived readiness/interests after restart. Preserve actual resources, completed steps and mutable goal revisions rather than asking a model to reconstruct them.
+- [x] Rebuild only derived readiness/interests after restart. Preserve actual resources, completed steps and mutable goal revisions rather than asking a model to reconstruct them.
 - [ ] Fence provider and native-dispatch callbacks by the current world/load epoch. Retain non-rewindable billing, revocation and uncertainty records under existing policy.
 - [ ] Treat saved queued/running paid work as recovery/reconciliation state, not authorization to dispatch again. Preserve explicit versus autonomous pause/cancellation behavior and fresh checks on resumption.
 
 **Exit evidence:** same-version restart resumes native readiness once; loading an earlier save rejects callbacks from the discarded timeline. External charges are not rewound. A canceled or revoked invention cannot activate because the lock later reopened. No provider call occurs merely from loading or rebuilding indexes.
 
 ### AG10 — Player, actor and god projections
+
+- [x] Strip other actors’ agency/initial-goal seeds from observations and exclude agency from ordinary client views; god goal editing reads the same operational owner. Broader invention projections remain below.
 
 **Owner:** current public protocol/view layer and existing cognition inspector; coordinate NC UI/history owners. **Depends on:** the corresponding AG01–AG09 slice. **Touchpoints:** `packages/protocol`, server `view.ts` and Intelligence trace helpers, existing client actor/world-agent views.
 
@@ -140,7 +152,7 @@ Use the current single writer and existing stores first. No new platform depende
 
 - [ ] Implement the matrix below with reproducible starting states, explicit receipt assertions and resource/time checks. Include the failure paths, not only an ideal transcript.
 - [ ] Run focused checks during implementation; after runtime changes run the repository's formatting and `pnpm run check` workflow while preserving unrelated edits. Report existing unrelated failures separately.
-- [ ] Publish actual fixture evidence in `docs/verification.md`, current facts in `docs/architecture.md`/implementation status and checkbox changes only after each stated gate is met.
+- [x] Publish actual fixture evidence in `docs/verification.md`, current facts in `docs/architecture.md`/implementation status and checkbox changes only after each stated gate is met.
 
 | Scenario                              | Required observation                                                                                                                                          |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -142,12 +142,14 @@ Delivered scope: pinned vision/hearing/contact adapters, unidentified present/mo
 
 ## EWF06 — Action and controller integration without a parallel agency system
 
+Delivered native agency scope and remaining AG/INV boundaries are recorded in [Architecture](../architecture.md#actor-agency-foundation); delivery state remains in the [AG tracker](agent-agency.md).
+
 **Dependencies:** EWF01–EWF04 plus the particular INV-3/AG interfaces being consumed. Basic AG01–AG04 can proceed earlier.
 
 - [ ] Bind mechanical family descriptors supplied by INV-3 to the shared manifest/version contract. INV remains the sole owner of action family schema, applicability, execution, and catalogue expansion.
 - [ ] Define the controller-facing concern/observation/affordance interface. Standard cognition, native animals, and player input use distinct adapters with explicit capabilities, not a mandatory human mind.
 - [ ] Connect module-defined needs and sense evidence to AG06/CR context through bounded projections; connect dependency changes to EPR, not a second work queue.
-- [ ] Ensure AG's optional repeated operation kinds and open attempt route survive family registration and provider schema adaptation. Closing action suggestions does not remove the proposal route.
+- [x] Ensure AG's optional repeated operation kinds and open attempt route survive family registration and provider schema adaptation. Closing action suggestions does not remove the proposal route.
 - [ ] Preserve one current physical lane, native step receipts, actor-method fidelity, private invention feedback, and separation between definition admission, learning, proficiency, and item creation.
 - [ ] Keep module/algorithm selection separate from execution budget, account permission, and origin locks. Do not automatically enable autonomous invention or invoke a creator session as an NPC controller.
 

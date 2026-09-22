@@ -1,3 +1,4 @@
+import { seedAgency } from './agency.js';
 import { DEFAULT_SENSES, COARSE_TOUCH } from './perception.js';
 import { createWorld } from './data.js';
 import { controlledEntityId, defaultResidentEntityId } from './identity.js';
@@ -60,8 +61,7 @@ export function createReservoirDemo(seed = 73): WorldState {
     delete actor.energy;
     delete actor.rest;
     initializeAttributes(actor, RESERVOIR_DEMO_ATTRIBUTES);
-    actor.goal = 'Stay charged and explore the clearing.';
-    actor.goals = [actor.goal];
+    actor.agency = seedAgency(['Stay charged and explore the clearing.']);
   }
   world.entities['charge-bank'] = {
     id: 'charge-bank',
@@ -85,8 +85,9 @@ export function createTouchDemo(seed = 73): WorldState {
   const resident = world.entities[defaultResidentEntityId(world)]!;
   resident.actor!.senses = [COARSE_TOUCH.id];
   resident.actor!.contacts = {};
-  resident.actor!.goal = 'Explore by short direct probes; only contact is available.';
-  resident.actor!.goals = [resident.actor!.goal];
+  resident.actor!.agency = seedAgency([
+    'Explore by short direct probes; only contact is available.',
+  ]);
   validateWorldModules(world);
   return world;
 }

@@ -1,3 +1,4 @@
+import { changeGoal, type GoalChange } from './agency.js';
 import { initializeIdentity } from './identity.js';
 import { hasMemory } from './living.js';
 import { draftWorld, finishWorld, cloneValue } from './draft.js';
@@ -799,6 +800,7 @@ export function publishInnerWorld(
   evidenceIds: string[],
   dreamEpisode: string | null,
   _processedThrough = 0,
+  goalChanges: GoalChange[] = [],
 ): Transition {
   const reject = (message: string) => ({
     world: input,
@@ -847,6 +849,17 @@ export function publishInnerWorld(
   const forgotten = new Set(input.experience?.forgotten[actorId] ?? []);
   if (evidenceIds.some((id) => forgotten.has(id))) return reject('Evidence was forgotten.');
   const world = draftWorld(input);
+  if (goalChanges.length > 8 || (actor.controller === 'player' && goalChanges.length))
+    return reject('Reflection cannot replace player intentions or exceed eight goal changes.');
+  for (const [index, change] of goalChanges.entries()) {
+    const result = changeGoal(
+      world.entities[actorId]!.actor!,
+      change,
+      `${jobId}:goal:${index}`,
+      'actor',
+    );
+    if (!result.ok) return reject(result.message);
+  }
   world.innerWorlds![actorId] = {
     text,
     files: cloneValue(files),

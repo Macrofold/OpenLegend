@@ -1,3 +1,4 @@
+import { goalTexts } from '@open-legend/domain';
 import {
   admitAttributeDeclaration,
   editActorAttributes,
@@ -787,10 +788,23 @@ export class WorldService {
   async transition(
     operation: (world: WorldState) => Transition,
     gameplay?: Omit<GameplayReceipt, 'result'>,
+    responseJobId?: string,
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
 
+      // Durable job admission outlives the hot domain receipt window. Check inside
+      // the same mutation lane as commit (docs/architecture.md#actor-agency-foundation).
+      if (responseJobId) {
+        const job = await this.store.getJob(responseJobId);
+        if (!job || (!this.world.responseReceipts?.[responseJobId] && job.status !== 'generating'))
+          return {
+            ok: false,
+            code: 'retired-response',
+            message:
+              'This response identity is retired or was never admitted; no effects were applied.',
+          };
+      }
       if (this.paused)
         return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
       const result = operation(this.world);
@@ -938,9 +952,7 @@ export class WorldService {
         personality: entity.actor.personality ?? '',
         backstory: entity.actor.backstory ?? '',
         traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
-        goals: [...(entity.actor.goals?.length ? entity.actor.goals : [entity.actor.goal])].filter(
-          Boolean,
-        ),
+        goals: goalTexts(entity.actor),
         stats: {
           health: entity.actor.health,
           fullness: entity.actor.fullness,
@@ -980,9 +992,7 @@ export class WorldService {
         personality: entity.actor.personality ?? '',
         backstory: entity.actor.backstory ?? '',
         traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
-        goals: [...(entity.actor.goals?.length ? entity.actor.goals : [entity.actor.goal])].filter(
-          Boolean,
-        ),
+        goals: goalTexts(entity.actor),
         stats: {
           health: entity.actor.health,
           fullness: entity.actor.fullness,

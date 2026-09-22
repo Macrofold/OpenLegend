@@ -1,3 +1,4 @@
+import { currentGoal } from '@open-legend/domain';
 import { batchedAttentionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
 import {
   EXPERIENCE_LIMITS,
@@ -388,7 +389,7 @@ export class RecallService {
       .slice(0, 8)
       .join('\n')
       .slice(0, 1600);
-    const query = `${stimulus}\nMy current goal: ${world.entities[actorId]!.actor!.goal}\n${cues}`;
+    const query = `${stimulus}\nMy current goal: ${currentGoal(world.entities[actorId]!.actor!)}\n${cues}`;
     if (Buffer.byteLength(query) > 8000)
       throw new Error(
         'The complete semantic stimulus exceeds the embedding input allowance; split this opportunity.',
@@ -624,7 +625,7 @@ export class RecallService {
           state: {
             stimulus,
             acceptedTextCues: cues,
-            goal: world.entities[actorId]!.actor!.goal,
+            goal: currentGoal(world.entities[actorId]!.actor!),
             includedContext: [...automatic, ...mandatory].map((candidate) => candidate.text),
             peoplePresent: people
               .filter((id) => finalistEntityIds.has(id))
@@ -675,7 +676,7 @@ export class RecallService {
         signals: {
           people,
           stimulus,
-          goal: world.entities[actorId]!.actor!.goal,
+          goal: currentGoal(world.entities[actorId]!.actor!),
           acceptedTextCues: cues,
           legacyFacetHints: records
             .filter((r) => ['concern', 'belief'].includes(r.kind))

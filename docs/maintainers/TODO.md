@@ -6,6 +6,15 @@ Runtime latency, database scheduling, native CPU, buffering and long-session opt
 
 [Agent agency](agent-agency.md) owns the new decision/goal/plan work; [EPR](events-perception-and-reactions.md) owns shared reaction intake. Their tasks and acceptance stay in those focused trackers.
 
+## Deferred agency validation
+
+Automated tests were explicitly excluded for this slice. Production compilation and manual native/service/browser execution are evidence only for the observed cases.
+
+- [ ] Update existing response/goal/save fixtures for the intentional schema-5 cutover, then add automated coverage for the [AG11 matrix](agent-agency.md#ag11--integrated-deterministic-and-adversarial-acceptance). Cover strict provider encoding, repeated operations, partial admission, alias/reference attacks, actual durations/material conservation, saved running work, cancellation, terminal-history bounds, reflection revisions, scope/privacy, starvation adequacy, private feedback and stale/retired job admission. Do not add old-save conversion fixtures.
+- [ ] Add injected persistence-failure and concurrent-admission coverage for atomic decision/job writes, restart at each dispatch boundary and callbacks beyond hot receipt retention. Extend same-version SQLite observations to PostgreSQL.
+- [ ] Run the separate [AG12 live gate](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) with an explicitly authorized total spending cap. Verify immediate/reflection provider schema compatibility, spontaneous optionality, useful plan construction/adaptation and complete costs before claiming model quality.
+- [ ] Measure agency context size and native overhead on representative larger saved worlds before adding caches, batching or extra queues. Small-world paired runs are not population capacity evidence.
+
 ## React design-system adoption
 
 - [ ] Verify distinct gather resources show their resource icon plus hand badge in saved shortcuts and suggestions, including reload, unavailable targets, missing-target fallback and badge/key-label layout at supported UI scales; run the relevant checks.

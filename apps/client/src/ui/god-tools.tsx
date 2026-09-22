@@ -267,7 +267,7 @@ function PersonEditorFields({
           maxLength={4000}
           value={person.goals.join('\n')}
           onChange={(event) => update('goals', event.target.value.split('\n'))}
-          placeholder="One current goal per line; the first drives immediate planning"
+          placeholder="One active intention per line; changing this list replaces active and paused intentions"
         />
       </label>
       <fieldset className="ol-person-stats">
