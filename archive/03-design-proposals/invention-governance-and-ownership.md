@@ -25,6 +25,8 @@ Keep character identity distinct from account identity: an account may control c
 
 The main world creator/owner must have two independent controls: **Agent invention lock** for autonomous in-world agents/NPCs, and **Player invention lock** for human-player invention requests. Changing either leaves the other unchanged. Other editors may receive explicit delegated authority later. Being an in-world ruler, a character in god mode without the required account permission, or a persuasive AI message is not authorization to change these settings.
 
+Autonomous NPC invention starts locked. The owner may explicitly enable it in development worlds after the supported-family privacy, resource-accounting and recovery checks pass; player invention remains independently controlled. Enabling invention does not authorize paid execution without an explicit nonzero spending cap. The initial player-lock value remains a proposed prototype choice.
+
 For each group, **open** permits eligible invention requests within the world's supported rules and operating limits; **locked** blocks new or revised definition admission originating from that group. Open does not promise unlimited AI spending, automatic success or arbitrary executable code. A locked group's characters can still use and learn permitted definitions, including new ones admitted by the other group through normal knowledge acquisition.
 
 | Agent invention lock | Player invention lock | Ordinary invention allowed                      |
@@ -40,7 +42,7 @@ Proposed enforcement contract: classify requests by their initiating authority a
 
 A lock is about definition admission, not pausing the world. Existing permitted actions, crafting admitted recipes, creating item instances, teaching and learning existing techniques, and ordinary environmental processes continue. Ordinary parameter choices already authorized by a finite family can remain actions; changing that family's bounds or registering a persistent new variant is a definition change. The engine must identify that difference rather than letting an action disguise a revision.
 
-A future authoritative policy record should contain a world ID, revision, independent agent and player lock values, effective time, changing principal, and audit reason. Proposed fields are `agentInventionLocked` and `playerInventionLocked`; exact schema names and each initial default remain open. Safe client projections expose both values and the current revision; owner controls label them separately, while player menus explain the player setting. A shared policy revision may version both values without coupling their behavior.
+A future authoritative policy record should contain a world ID, revision, independent agent and player lock values, effective time, changing principal, and audit reason. Proposed fields are `agentInventionLocked` and `playerInventionLocked`; exact schema names and the initial player default remain open. Safe client projections expose both values and the current revision; owner controls label them separately, while player menus explain the player setting. A shared policy revision may version both values without coupling their behavior.
 
 | Entry point                                                      | Required behavior when the applicable lock is on                                                                 |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |

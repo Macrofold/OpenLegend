@@ -2,6 +2,8 @@
 
 This document defines the focused integration boundary for persistent creator conversations backed by Macrofold. Product behavior belongs to the [world-agent and workshop design](../archive/03-design-proposals/world-agent-and-workshop.md); invention admission and delivery belong to [Declarations and evolution](../archive/07-technical-architecture/declarations-and-evolution.md) and the [invention tracker](maintainers/inventions-and-world-evolution.md). Generic NPC cognition and ordinary conversation lifecycle are outside this handoff.
 
+[Agent agency](agent-agency.md) can reuse generic execution adapters and application services through actor-scoped jobs. It cannot reuse creator permissions or persistent creator transcripts as an NPC mind; this handoff remains creator-conversation integration only.
+
 ## Conversation and remote-session mapping
 
 Each Open Legend creator tab is one independent conversation with its own durable application identity, ordered messages, pending operation and remote Macrofold session/workspace mapping. Persist the mapping from `(application, world, principal, conversationId)` to remote identities and configuration version on the server. The browser may cache drafts and presentation state but cannot choose arbitrary remote IDs or become the history authority.

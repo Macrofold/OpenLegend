@@ -4,6 +4,8 @@
 
 This tracker owns the new stimulus/perception/reaction integration. PF retains general performance qualification, CR retains cognition/recall behavior, NC retains conversations/story, and SL retains save/load. Cross-reference their work; do not recreate completed actor, Narrator, history, or save systems.
 
+[AG07](agent-agency.md#ag07--meaningful-feedback-survival-and-bounded-reconsideration) adds agency causes to EPR01/EPR05 intake. EPR owns common scope, episode identity, coalescing and cursor mechanics; AG owns operational goal/plan continuation and native-response adequacy. Basic AG01–AG04 state/admission work does not wait for all EPR performance gates.
+
 ## Read first and establish the baseline
 
 Read `AGENTS.md`, `docs/architecture.md`, `docs/events-perception-and-reactions.md`, `docs/performance.md`, `docs/save-and-load.md`, `docs/memory-architecture.md`, and the existing PF, CR, NC, and SL trackers. Use `docs/maintainers/README.md` for current owners.

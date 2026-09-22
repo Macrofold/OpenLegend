@@ -2,7 +2,7 @@
 
 Changes to state ownership or persistence must respect the [save/load design](save-and-load.md). It owns the intended gameplay restoration contract; the mechanisms described here remain the current implementation.
 
-The canonical [memory architecture](memory-architecture.md) owns behavior; [CR01–CR12](maintainers/cognition-redesign.md) track implementation and acceptance. September 20 runtime update: compact decisions, native multi-question Jev, scoped embeddings, awareness/consolidation, PostgreSQL accepted text, background workspace reflection, sleep accounting and grouped god inspection are implemented. Live evidence and remaining acceptance work are tracked in [maintainer TODO](maintainers/TODO.md); implementation is not a claim of complete behavioral acceptance.
+The canonical [memory architecture](memory-architecture.md) owns memory and attention behavior; [Agent agency](agent-agency.md) specifies the target operational extension; [CR01–CR12](maintainers/cognition-redesign.md) track implementation and acceptance. September 20 runtime update: compact decisions, native multi-question Jev, scoped embeddings, awareness/consolidation, PostgreSQL accepted text, background workspace reflection, sleep accounting and grouped god inspection are implemented. Live evidence and remaining acceptance work are tracked in [maintainer TODO](maintainers/TODO.md); implementation is not a claim of complete behavioral acceptance.
 
 The [long-term architecture](../archive/07-technical-architecture/README.md) remains design context. The [production data model](../archive/07-technical-architecture/production-data-model.md) distinguishes implemented single-writer PostgreSQL prerequisites from conditional distributed infrastructure. Current storage commits a transactional change journal with periodic snapshots; it also publishes `mind.inner_world` atomically. This is not the full normalized production schema.
 
@@ -166,6 +166,18 @@ Story identities are owner-scoped, with event/transition links, saved display or
 ### Diagnostic persistence
 
 `IntelligenceLog.save` sanitizes the entire snapshot, deep-copies mutable input and queues a single FIFO persistence lane. Running workflows use log-owned latest state rather than immediately rereading eventually consistent rows. Failed diagnostic writes log a generic error and do not poison later writes or alter work/billing. Shutdown settles workflows and maintenance, drains diagnostics, then closes storage. World commits, attempts, spending and accepted mind publication retain synchronous durability.
+
+The existing personal-perspective conversion in `experience.ts` uses rule-based wording changes, preserves event IDs/acquisition and advances affected summary/inner-world revisions. It is an implemented historical conversion, not an obligation to maintain old-save support. Arbitrary retained prose and model-authored attribution still need the [perspective acceptance checks](maintainers/cognition-redesign.md#individual-memory-perspective).
+
+### Agency implementation boundary
+
+Immediate decisions currently use nullable `talk`, `act` and `think`, at most one of each, committed in talk → act → think order. The strict provider schema includes every key; its total action object uses irrelevant fields set to null. Current limits are 1,200 speech characters, 240 thought characters, 500 proposal characters and eight thought subjects. The domain retains 300 recent response receipts; durable job admission is the longer-lived replay boundary. An empty response is valid. Freeform `proposal` actions return `unsupported-action` instead of entering invention. A closed action-context gate currently requires `act: null`.
+
+Actors have one timed-action slot and a native `goal` command replacing `goal`/`goals` and incrementing `planGeneration`; this is not a maintained multi-goal/frontier system. Invention orchestration still binds to the controlled player. `compileInterests` derives kinds/definitions/properties from selected objects and uses a goal digest for invalidation, not semantic discovery of arbitrary goal requirements.
+
+Autonomous scheduling currently suppresses semantic work below fullness 20 (also energy below 10 or sleep), and the native-urgency disposition can advance its experience watermark. Current event emission uses hearing for speech and sight for other sourced events; declaration admission emits `declaration-admitted` through that ordinary path. These are current limitations, not target private-invention or general audio semantics.
+
+[Agent agency](agent-agency.md), its [runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md) and [AG tracker](maintainers/agent-agency.md) specify multi-operation decisions, persistent operational pursuit and actor-led invention. The [EPR contract](events-perception-and-reactions.md) owns the planned common intake. Neither extension is implemented by documentation integration.
 
 ### Current runtime
 

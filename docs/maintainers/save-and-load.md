@@ -107,6 +107,8 @@ Dependencies: SL03–SL07; selected cadence/retention policy in D60 and relevant
 
 Exit: prolonged play remains within the selected storage/work budget; interrupted rotation preserves a usable checkpoint, and every advertised point restores successfully.
 
+[AG09](agent-agency.md#ag09--same-version-save-pause-recovery-and-revocation) owns agency-state round-trip and continuation coverage. SL capture/restore includes its authoritative goals/frontiers and fences discarded-timeline work; reuse that coverage without duplicating the AG checklist.
+
 ## SL09 — Continuation, recovery and performance qualification
 
 Coordinate new stimulus-state continuation with proposed [EPR08](events-perception-and-reactions.md#epr08--saveload-generation-fencing-and-overload); SL retains capture, restoration and generation-fencing qualification under the active development policy.

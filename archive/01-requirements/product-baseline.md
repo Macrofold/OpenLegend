@@ -19,7 +19,7 @@ The accepted [first playable MVP](../05-project/first-playable-mvp.md) includes 
 ## Status vocabulary
 
 | Label | Meaning |
-|---|---|
+| --- | --- |
 | Required direction | Explicit product intent in the brief; implementation details remain open |
 | Preference | A favored approach with alternatives explicitly welcomed |
 | Long-term aspiration | Desired possibility; not evidence of feasibility or a launch commitment |
@@ -29,7 +29,7 @@ The accepted [first playable MVP](../05-project/first-playable-mvp.md) includes 
 ## Traceable requirements
 
 | ID | User-stated requirement | Status | Design home |
-|---|---|---|---|
+| --- | --- |
 | F01 | Web-accessible simulator with accounts/login and human and autonomous characters sharing an interactive world | Required direction | [Architecture](../03-design-proposals/system-architecture.md) |
 | F02 | Each character has physical and mental needs that change and motivate action | Required direction | [Agent systems](../03-design-proposals/agents-and-social-simulation.md) |
 | F03 | Body parts, injuries, sickness, healing, hunger, fatigue, aging, frailty, and death | Required direction, expandable depth | [Agent systems](../03-design-proposals/agents-and-social-simulation.md) |
@@ -84,7 +84,7 @@ The accepted [first playable MVP](../05-project/first-playable-mvp.md) includes 
 | F52 | Provide pause/speed controls and saved Pause game when hidden; default to pausing on hidden/unfocused tabs, allow connected background progression when unchecked; no offline catch-up | Accepted M10/M11 plus September 19 refinement; manual pause overrides background opt-in, and autonomous scheduling follows effective pause state | [Time model](../03-design-proposals/time-and-simulation-speed.md), [MVP](../05-project/first-playable-mvp.md) |
 
 | ID | Additional user-stated requirement | Status | Design home |
-|---|---|---|---|
+| --- | --- |
 | F53 | World owner independently locks/unlocks agent/NPC invention and player invention; all four combinations preserve existing action use and learning | Accepted U14 plus separate-lock clarification; enforcement proposed | [Governance](../03-design-proposals/invention-governance-and-ownership.md) |
 | F54 | Players own their authored inventions and can inspect all past contributions across worlds in an account library, including origin world and technical details | Accepted U14 direction; account/rights/retention contracts proposed | [Ownership and library](../03-design-proposals/invention-governance-and-ownership.md) |
 | F55 | Every world has a complete invention pack; owners can designate free-use worlds whose complete packs players can reuse/clone in their own worlds | Accepted U14 direction; label, contribution terms and marketplace details open | [World packs](../03-design-proposals/invention-governance-and-ownership.md) |
@@ -99,7 +99,7 @@ These requirements extend the product direction without silently expanding the f
 ### U15 — visible AI billing
 
 | ID | User requirement | Status / interpretation | Design home |
-|---|---|---|---|
+| --- | --- |
 | F61 | Small billing UI with detailed separate LLM/Jev costs for the current server session, rolling 24 hours/7 days/30 days, all time and arbitrary start/end periods; query Macrofold for the accounting data | Accepted direction; reporting contract proposed, not implemented | [Interface](../03-design-proposals/playability-and-controls.md#billing-menu-and-cost-breakdown), [billing contract](../07-technical-architecture/billing-and-usage-reporting.md), [source](../00-source/billing-interface-followup.md) |
 
 ### September 19 — perception and attention
@@ -107,12 +107,12 @@ These requirements extend the product direction without silently expanding the f
 These requirements extend the product target without implying completed features or changing the first-playable acceptance boundary.
 
 | ID | User requirement | Status / interpretation | Design home |
-|---|---|---|---|
+| --- | --- |
 | F62 | Toggleable sight/hearing indicators, subtle gradients or contours, initially circular and later shaped by occlusion; distance affects sensory clarity | Accepted direction; exact presentation, units and propagation proposed | [Indicators](../07-technical-architecture/perception-and-attention.md#5-compact-player-perception-indicators) |
 | F63 | Every meaningful object has shared or distinctive near/medium/far visual descriptions; supported state changes and attached effects alter the permitted description | Accepted direction; archetype/instance composition and effect ownership proposed | [Descriptions](../07-technical-architecture/perception-and-attention.md#6-shared-descriptions-with-meaningful-state-variation) |
 | F64 | Sound exposure represents events/actions and sustained sources, attenuates with distance/obstacles, and supplies only the evidence the listener can perceive | Accepted direction; no independent acoustic model implemented | [Sound emissions](../07-technical-architecture/perception-and-attention.md#4-sound-belongs-to-emissions-and-processes) |
 | F65 | Meaningful new exposure creates decision opportunities; people entering view always qualify, ordinary objects usually qualify only when relevant; semantic indexing supports arbitrary goals without per-object Jev calls | Accepted direction; scoped index, interest subscriptions and batching proposed | [Semantic interests](../../docs/memory-architecture.md#selection-signals-and-delivery-order), [triggers](../07-technical-architecture/perception-and-attention.md#7-sensory-event-generation) |
-| F66 | Physical/emotional threshold crossings and persistent serious needs cause reconsideration, with an hourly low-food thought/reminder as the example | Accepted direction; low-fullness interpretation, exact thresholds and generated-thought guarantee versus cost limits remain open | [Needs and time](../07-technical-architecture/../../docs/memory-architecture.md) |
+| F66 | Physical/emotional threshold crossings and persistent serious needs cause reconsideration, with an hourly low-food thought/reminder as the example                                                                        | Accepted reconsideration opportunities, without compulsory fresh thoughts or paid calls; exact thresholds and reminder cadence remain open | [Needs and time](../07-technical-architecture/../../docs/memory-architecture.md)                                                                                                              |
 | F67 | Broad embodied vision agrees with what the player can see on-screen within character LOS; off-screen/hidden objects provide no new visual detail | Accepted direction; authoritative camera limits, background mode and display policy remain open | [Visual parity](../07-technical-architecture/perception-and-attention.md#embodied-visual-parity) |
 
 ## Compact cognition follow-up — F68–F73
@@ -120,7 +120,7 @@ These requirements extend the product target without implying completed features
 The [canonical design](../../docs/memory-architecture.md) owns these accepted targets; current delivery state belongs to [CR01–CR12](../../docs/maintainers/cognition-redesign.md).
 
 | ID | User requirement | Delivery tasks |
-| --- | --- | --- |
+| --- | --- |
 | F68 | Minimal English context and tiny purpose-specific output; remove storage metadata, redundant catalogues, empty scaffolding and ordinary mind-patch responses | CR01–CR03, CR12 |
 | F69 | Native behavior plus Jev level 1, mini level 2, complex low/high levels 3/4 and harness level 5; speech defaults to level 2; Jev evaluates escalation; inventions can configure trusted trigger mechanics | CR02, CR08, CR10 |
 | F70 | Jev yes/no attention selects actor-permitted nearby entities, possessions, recipes and recall; all actors including the player have event-time awareness; ordinary unwitnessed experiential events need not be logged, with the later F77 notable-event exception | CR04–CR05; NC04 for the later exception |
@@ -133,12 +133,12 @@ These settle behavior, not exact provider availability, budgets, daily rest acco
 ## Living actor model — F74
 
 | ID | Product requirement | Design home |
-|---|---|---|
+| --- | --- |
 | F74 | Treat every living being, including animals, as an actor; let lifecycle actions such as Revive and compatible conditions/effects such as wetness, fire and health changes apply across species; allow selected animals to gain intelligence, memory, inner worlds or speech | [Canonical actor model](../../docs/architecture.md#actor-means-any-living-being), [agent design](../03-design-proposals/agents-and-social-simulation.md#one-character-model-two-controllers) |
 
 ## Narration and conversation follow-up — F75–F80
 
-The [narration and conversation specification](../../docs/narration-and-conversations.md) owns these requirements.
+[Agent agency](../../docs/agent-agency.md) owns optional decision composition (F75), with operational admission in its [runtime contract](../07-technical-architecture/agent-agency-runtime.md). The [narration and conversation specification](../../docs/narration-and-conversations.md) owns communication/narration requirements F76–F80; EPR owns shared stimulus scope and intake.
 
 | ID | Product requirement |
 | --- | --- |

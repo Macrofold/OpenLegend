@@ -24,6 +24,8 @@ Implement `AiClient.judge` and `AiClient.generate` with the result/receipt contr
 
 The server has a Macrofold backend selected when its key is configured; fully pooled multi-actor execution remains unverified. Extend it through the existing execution port. It must preserve stable request IDs, cancellation/deadlines, provider receipts, bounded resources, permission-scoped context and durable attempt semantics. Macrofold must not become the authority for world state or declaration admission. The [platform brief](../archive/07-technical-architecture/macrofold-implementation-brief.md) describes the broader proposed service behavior. Native play works without Macrofold, but the current live full-deliberation route requires its harness; direct inference cannot silently substitute for it.
 
+The planned [agency runtime](../archive/07-technical-architecture/agent-agency-runtime.md) extends decision admission, operational goals and native continuation through existing application/domain boundaries. Follow [AG](maintainers/agent-agency.md) for that work and EPR for reaction intake; generated goal prose cannot become an alternate mutation path.
+
 ## Memory and context
 
 Follow the single [memory architecture](memory-architecture.md) and [CR01–CR12](maintainers/cognition-redesign.md) backlog. Keep physical truth, raw/consolidated experience, accepted inner-world prose, native commitments/knowledge and god-only thought presentation separate. Summaries are recallable experience with honest attribution; search indexes remain derived and neither can replace native facts.

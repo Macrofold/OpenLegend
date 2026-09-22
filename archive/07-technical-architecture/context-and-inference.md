@@ -6,7 +6,7 @@ This is the broader target contract between Open Legend's simulation, memory, de
 
 ## 1. Context is a versioned product of the application
 
-The accepted future [Narrator context contract](../../docs/narration-and-conversations.md#8-the-narrator-and-context-assembly) reuses this pipeline with a presentation purpose: actor-set/perspective, conversation/type/time filters, event-time awareness, mandatory causal evidence and scoped semantic retrieval. It does not inherit full NPC About me text or the union of participants' private knowledge. Ordinary conversation excludes internal thoughts; explicit single-actor grants and policy-approved notable-event cutaways are separate modes. One bounded generation returns source-linked prose, never effects; narrator voice is style only. The [composed-response contract](../../docs/narration-and-conversations.md#3-talk-act-and-think-response-contract) also extends immediate NPC routes to optional talk/act/think at any admitted trigger, with independently admitted components and no mandatory mind patch. NC01–NC13 track this future extension separately from delivered CR work.
+The accepted future [Narrator context contract](../../docs/narration-and-conversations.md#8-the-narrator-and-context-assembly) reuses this pipeline with a presentation purpose: actor-set/perspective, conversation/type/time filters, event-time awareness, mandatory causal evidence and scoped semantic retrieval. It does not inherit full NPC About me text or the union of participants' private knowledge. Ordinary conversation excludes internal thoughts; explicit single-actor grants and policy-approved notable-event cutaways are separate modes. One bounded generation returns source-linked prose, never effects; narrator voice is style only. The [agency runtime](agent-agency-runtime.md) owns optional multi-operation decisions, operational goal/plan projection and admission, tracked in AG. NC retains communication/narration integration; CR retains memory/attention. Private need/goal/result causes enter the [EPR intake](../../docs/events-perception-and-reactions.md#9-reaction-intake-and-scheduling), not a public sensory feed.
 
 The [perception and attention specification](perception-and-attention.md) extends this proposal with exposure-specific descriptions, event-time sound, embodied screen parity, semantic interest subscriptions and batched decision opportunities. It also audits the simpler current prototype; these richer contracts are not implemented by the documentation update. All retrieval and tools below must preserve the actor's actual detail/intelligibility, not merely check that an entity or event ID is accessible.
 
@@ -65,7 +65,7 @@ Track query-result dependencies as well as returned entities: an empty-neighbor 
 Each important value identifies its source kind and resolution status:
 
 | Status | Meaning and use |
-|---|---|
+|---|---|---|
 | Known | Current authorized state, authored definition or valid deterministic derivation |
 | Admitted estimate/default | Explicit world-approved approximation, with method/version and initialization provenance |
 | Unknown | Field is supported but value is unavailable, unobserved or not initialized |
@@ -81,6 +81,8 @@ For NPCs, distinguish observed, heard, inferred and imagined content. An old bel
 ### E. Retrieve personal context when the task needs it
 
 Include the complete accepted inner-world text as About me, relevant current goals/plan, urgent needs and active commitments, plus one Jev-selected Recall section combining consolidated memories and recent raw personal/aware-event experience without duplication. Rank by involved entities, topic, time, salience and intent; diversify repetitive evidence. Read bounded evidence links when needed. Numeric body state can constrain choices without serializing every organ into every greeting.
+
+Operational goals, frontier and fresh results come from the [agency projection](agent-agency-runtime.md#72-attention-inputs), within the existing budget and protected-context guarantees. Goal-derived interests use only actor-known prerequisites; no hidden registry lookup becomes actor evidence.
 
 Selection explicitly considers who is present, what just happened, current goals, unresolved concerns and conflicting beliefs. Derive bounded actor-scoped cues from permitted state and accepted inner-world text, including relevant counterevidence; do not introduce a second writable narrative store. Deliver structured lookups first, arbitrary-intent semantic matching second, and selective-recall tools only after demonstrated initial-context omissions. This sequencing does not delay required reflection file access; see the [canonical selection contract](../../docs/memory-architecture.md#selection-signals-and-delivery-order).
 
@@ -115,14 +117,14 @@ These examples are server-owned execution envelopes, not NPC prompt serializatio
   "schema": "ol.context/1",
   "id": "ctx_123",
   "purpose": "interaction.interpret",
-  "scope": {"world": "w1", "audience": "npc", "actor": "a7", "grantRevision": "g4"},
-  "contract": {"id": "interpret.binding", "version": 2},
+  "scope": { "world": "w1", "audience": "npc", "actor": "a7", "grantRevision": "g4" },
+  "contract": { "id": "interpret.binding", "version": 2 },
   "worldProfile": "profile_sha256",
   "declarationManifest": "manifest_sha256",
-  "snapshot": {"sector": "s1", "epoch": 3, "simulationTime": 7200},
-  "facts": [{"id": "f1", "status": "known", "source": "observation_8", "revision": 2}],
+  "snapshot": { "sector": "s1", "epoch": 3, "simulationTime": 7200 },
+  "facts": [{ "id": "f1", "status": "known", "source": "observation_8", "revision": 2 }],
   "candidateRefs": ["capability.binding_bundle@1"],
-  "queryDependencies": [{"query": "accessible_inventory", "revision": "q17"}],
+  "queryDependencies": [{ "query": "accessible_inventory", "revision": "q17" }],
   "missingRequired": [],
   "omittedOptional": ["older_routine_observations"],
   "expiresAt": "2026-09-19T20:00:05Z",
@@ -144,7 +146,7 @@ An agent is a bounded loop of model calls and tools, not a different species of 
 | Movement, need decay, fuel use, rain transmission, ordinary process update | Standard code/admitted formula or algorithm | Defined process recovery; no model-per-tick repair |
 | Exact fact or missing retrievable dependency | Authorized data query | Essential unavailable data → explicit approximation policy, clarification or defer |
 | Closed set of plausible interpretations or activities | Jev or equivalent typed inference | Unknown/uncertain → bounded additional context, single LLM when meaning needs generation, or clarify |
-| NPC speech or immediate decision | Jev attention/escalation; level 2 mini by default, level 3 low or level 4 high for complexity | Current minimal speech/action result; future NC contract permits optional talk/act/think or no response; independently enqueue reflection, no automatic paid repair |
+| NPC speech or immediate decision                                                             | Jev attention/escalation; level 2 mini by default, level 3 low or level 4 high for complexity | [Agency operations](agent-agency-runtime.md#2-decision-envelope-and-translation), including no new response; independently enqueue reflection, no automatic paid repair |
 | Future Narrator presentation | Scoped event/awareness selection and semantic retrieval, then one bounded LLM generation | Player-private grounded prose with source links; no effects, new awareness or recursive narration triggers; deterministic fallback |
 | Simple declaration draft with sufficient evidence | One typed LLM call | Invalid output stays unresolved; any further paid authoring requires separate admission and authorization |
 | Subjective reflection or eligible dream | Background level-5 bounded workspace harness | Publish accepted inner-world text and short thoughts atomically; preserve previous snapshot on failure |
@@ -163,7 +165,7 @@ Jev's documented arithmetic, distraction and adversarial-input limitations suppo
 
 ### Triggers and scheduling
 
-For exposure triggers, a new person encounter always creates a logical decision opportunity; mundane objects do so when a current interest or meaningful state change warrants it. Reevaluate already-visible candidates when a goal changes. Native exposure deltas and interest matching precede a bounded Jev batch, with no per-object/per-step inference. Critical-need reminders use simulation time, while model cooldowns and spending use real time. The [detailed trigger and reminder contract](perception-and-attention.md#7-sensory-event-generation) defines coalescing, index lag, encounter coverage and the open tradeoff between hourly awareness and hourly generated thoughts.
+For exposure triggers, a new person encounter always creates a logical decision opportunity; mundane objects do so when a current interest or meaningful state change warrants it. Reevaluate already-visible candidates when a goal changes. Native exposure deltas and interest matching precede a bounded Jev batch, with no per-object/per-step inference. Critical-need reminders use simulation time, while model cooldowns and spending use real time. The [detailed trigger and reminder contract](perception-and-attention.md#7-sensory-event-generation) defines coalescing, index lag, encounter coverage and reminder opportunities without compulsory generated thoughts.
 
 The game scheduler decides when reasoning is useful from explicit events and state transitions. It does not ask an LLM to inspect every tick or poll every resident continuously. Proposed trigger policy:
 

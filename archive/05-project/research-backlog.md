@@ -49,6 +49,20 @@ For [state-system authoring](../03-design-proposals/state-systems-and-future-inf
 
 Pass criteria: creator intent remains visible in the profile; inference/defaults reduce unnecessary questions without changing consequential intent; actual histories and shared rules remain consistent; future influences are considered without recursive subsystem generation; knowledge and physical state remain distinct; work/cost is bounded and outcomes understandable. Dependencies: F45–F49, D06/D12/D39–D41, R11/R21/R22. **Status: proposed cases only; no creation flow, classifier, game tests or prototype implemented.**
 
+## R24 / P1 — agency continuity, optionality and actor-method fidelity
+
+The [agency research](../02-research/agency-cognition-and-planning.md) motivates these experiments; [AG12](../../docs/maintainers/agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) owns delivery and behavioral qualification. Use matched worlds, opportunities, permitted histories, models and total allowances, with held-out scenarios and independent runs. Baselines must include silence, blocked work and provider unavailability, not only successful crafting.
+
+| Comparison | Manipulated variable | Measured outcome |
+| --- | --- | --- |
+| Prompt-only optionality versus an extra category gate | Add/remove the gate with the same opportunity set | Useful interventions and abstention, missed opportunities, false success, latency and full call cost |
+| Repeated replanning versus persistent frontier | Retain native frontier across decisions at matched budgets | Actual progress, native steps per decision, interruption, goal churn and adaptation when food arrives |
+| Selected-object cues versus goal-derived interests | Add bounded cues from actor-known plan prerequisites | Relevant exposed materials found, contrary/urgent evidence retained, scoped recall and missed alternatives |
+| Actor method versus compiler output | Complete/incomplete methods, substantive substitutions, hidden equivalent designs and goal cancellation | Conceptual fidelity, explicitly accepted revisions, privacy leakage, optional construction and truthful feedback |
+| Blanket urgent exclusion versus native-response adequacy | Adequate/unavailable food paths, starvation, sleep and no-provider states | Time to native protection/help, unresolved evidence retained, useful deliberation and repeated-call suppression |
+
+Account for all routing, attention, embeddings, generation, tools, reflection and uncertain charges per real hour and simulated day. Each run stops on its predeclared time/cost cap, terminal scenario outcome, or a privacy/resource/replay violation; no paid repair loop follows. Record failures and uncertainty. Fix sample sizes and behavioral comparison criteria from a development baseline before holdout evaluation. Dependencies: AG11, relevant CR12/INV gates, D12/D54 and R08/R11/R19/R22; **not run** and no paid execution authorized by this entry.
+
 ## Evidence record template
 
 Architecture-review additions: R08/R12/R13 should first benchmark the native committed-batch loop and crash restore without any model; distinguish restore/outcome replay from deterministic resimulation. R11 must include delayed event-time perception and a promise arriving during consolidation. R20 includes ambiguous cross-service submission, expired idempotency retention, old/new Macrofold worker compatibility, promoted artifacts surviving run expiry and late usage correction. R21/R23 include passive unknown properties during provider outage, aggregate cross-owner resource claims and owner/process migration at a committed boundary. Run each group when its smallest slice exists, not as one giant final acceptance project. [Active work index](../../docs/maintainers/README.md)

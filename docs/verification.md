@@ -2,6 +2,16 @@
 
 This file records current reproducible evidence and acceptance gaps. Fixture evidence does not establish live model quality, provider cost, hosted security, capacity or balance.
 
+Agency implementation and new operation/goal/plan acceptance remain open in the [AG tracker](maintainers/agent-agency.md). Documentation integration is not gameplay, fixture or live-provider evidence.
+
+## Agency documentation integration checks
+
+Documentation-only integration checked local Markdown paths/heading anchors, existing checkbox counts/states, source-comment references and formatting. Research-source identity checks retained the supplied review’s access limitations; this was not a repeated full-text study. This changed no executable code. Runtime tests, browser gameplay and paid inference were not run. AG/INV/CR/NC acceptance remains open.
+
+### Retained memory-perspective evidence
+
+The prior memory specification recorded isolated native execution of gathering perspectives, attributed speech, repeated conversion and inspector source tags. This is relocated evidence, not a new execution during agency integration. Running-save/restart verification, comprehensive automated coverage and live model acceptance remain pending in [CR’s perspective checks](maintainers/cognition-redesign.md#individual-memory-perspective).
+
 ## Current automated evidence
 
 | Area                                               | Current result                                                                                                             | Scope and limitation                                                                                                                                                                                                            |
@@ -94,7 +104,7 @@ No fixture, synthetic vector run or manually authored response counts as live-mo
 ## Open acceptance
 
 - The [cognition tracker](maintainers/cognition-redesign.md), especially CR12 and its migrated acceptance gaps, owns privacy, recall, routing, consolidation, reflection, sleep/dream, cancellation, recovery and token/latency completion.
-- The [narration tracker](maintainers/narration-and-conversations.md) owns talk/act/think combinations, durable conversation lifecycle, Narrator privacy, ordering, storage, transcript and live prose-quality acceptance.
+- The [narration tracker](maintainers/narration-and-conversations.md) retains response-to-speech/recall integration, durable conversation lifecycle, Narrator privacy, ordering, storage, transcript and live prose-quality acceptance.
 - The [actor tracker](maintainers/actor-model.md) owns cross-species migration, lifecycle, body effects, optional minds and compatibility evidence.
 - The [invention tracker](maintainers/inventions-and-world-evolution.md) owns the live invent-to-craft/use loop, semantic reuse, workshop, conjuring and mechanics-evolution evidence.
 - The [production-data tracker](maintainers/production-data.md) owns migration, restore, normalization, query, hosting and measured-scale gates.

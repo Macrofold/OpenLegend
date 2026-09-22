@@ -6,7 +6,7 @@ Each task must update implementation status with actual evidence when delivered.
 
 ## Delivery order
 
-The subsequent [NC01–NC13 narration/conversation track](../maintainers/narration-and-conversations.md) extends these delivered foundations without changing their historical completion evidence: optional talk/act/think replaces exclusive immediate speech/action contracts when NC02 lands, recallable private immediate thoughts remain distinct from god-only reflection presentation, and NC04 adds notable unseen-event retention without granting awareness. The NC work is future and unchecked in its own tracker; existing CR failure/acceptance tasks remain open.
+The [NC track](narration-and-conversations.md) retains speech/recall, conversation and Narrator integration acceptance for its delivered foundations; private immediate thoughts remain distinct from god-only reflection presentation, and notable unseen retention grants no awareness. [AG](agent-agency.md) extends universal decisions and operational pursuit. Existing CR/NC failure and behavioral acceptance tasks remain open; current implementation is recorded in Architecture.
 
 Keep CR identifiers stable for existing links. Execute in the following dependency order; a task's number does not imply that its integrations can precede their prerequisites:
 
@@ -39,6 +39,8 @@ The ordering below remains the dependency plan. Current evidence is recorded in 
 
 The [canonical memory specification](../memory-architecture.md) remains the behavior owner. Reuse the relevant query/storage/adapter contracts without importing unrelated platform work: creator chat persistence, full visual/acoustic overlays, general multiplayer, commerce and broad physiology remain in their own plans. Preserve their memory/privacy interfaces here. Detailed existing failures and operational checks remain in TODO; these tasks link them rather than creating a competing queue.
 
+[AG01/AG02](agent-agency.md) extend the delivered minimal response and narrative goal foundations with multi-operation decisions and one operational pursuit store. Checked CR foundations retain their recorded scope; they do not complete AG work. All pending privacy, provider, parameter and recovery gates remain open. The active save/load policy removes old-development-save compatibility work, not same-version integrity or source/privacy preservation.
+
 ### CR01 — Separate model text from execution metadata
 
 - [x] Define route-specific context/output contracts and server-only execution bindings. Keep policy, instructions version, IDs, expected revisions, watermarks, coverage and accounting outside model text unless a short handle is required to select an offered action.
@@ -47,7 +49,7 @@ The [canonical memory specification](../memory-architecture.md) remains the beha
 - [ ] Add deterministic payload inspection for a greeting, a resource task, a promise and a hazard. Reject unsupported/oversize output without paid repair; verify meaningful empty facts survive while null/empty scaffolding disappears.
 
 - [x] Define separate finite raw, consolidated, authored-text, thought-history and backlog quotas; select a finite presentation-thought count and preserve native commitment creation limits.
-- [ ] Establish actor-scoped repository/retrieval and independently replaceable execution interfaces using the data/query contracts. Plan versioned migration and rollback before schema/retention changes; minimal current-state adapters must report unsupported capabilities honestly.
+- [ ] Establish actor-scoped repository/retrieval and independently replaceable execution interfaces using the data/query contracts. Plan current-format validation, same-version restore and recoverable schema/retention changes without old-development-save conversion; minimal current-state adapters must report unsupported capabilities honestly.
 
 - [x] Define a versioned diagnostic root per semantic trigger/action before routing, with world/actor, perceived sentence, game/wall time, policy version, offered routes, disposition and stable child-stage/call IDs. Link coalesced triggers and queued reflection without duplicating calls or charges; capture no-call outcomes and explicit gaps under finite retention/capture limits.
 
@@ -68,6 +70,8 @@ Owner: `apps/server` context/cognition; generic limits in `packages/ai`. Depends
 - [ ] Inspect offered routes, native policy gates, Jev input/judgment and recorded routing reason, followed by actual escalated LLM/harness input/response. Separate proposed decisions, speech and presentation thoughts from validated/committed effects; distinguish pending, skipped, deferred, coalesced, canceled, stale, failed and uncertain outcomes.
 
 Owner: server director/cognition and AI adapters. Depends on: CR01. Exit evidence: fixture dispatch traces for all levels, speech and failures; provider compatibility remains a separate live gate.
+
+[AG06](agent-agency.md#ag06--goalplan-aware-context-and-derived-interests) owns new operational context and goal-derived interests; CR03/CR04 retain attention algorithms, scoped retrieval and pending behavioral acceptance.
 
 ### CR03 — Compact English context
 
@@ -102,7 +106,7 @@ Required companion reading: [context assembly and retrieval](../../archive/07-te
 - [x] Reevaluate on meaningful stimulus/goal changes; cache only across compatible actor, goal and evidence revisions. Preserve directed speech, urgent native danger and relevant active obligations even if optional attention fails.
 - [x] Define budget exhaustion, provider outage, crowd overflow, stale selection and index-lag behavior. No paid request per simulation tick or per individual nearby object, and no recursive attention-about-attention calls.
 - [ ] Preserve person-encounter opportunities, hysteresis, restart baselines and fair crowd dispositions. Keep D54 need reminders distinct from hourly consolidation; do not assume mandatory paid hourly thoughts.
-- [x] Compile bounded versioned interest subscriptions from goal changes; validate supported predicates, reevaluate currently exposed candidates and record expiry/index dependencies. Reuse definition/disclosure-tier embeddings and selectively index meaningful instance text, never per movement or repeated sound.
+- [x] Compile bounded versioned interest subscriptions from selected possessions/entities with goal-digest invalidation; validate supported predicates, reevaluate currently exposed candidates and record expiry/index dependencies. Semantic derivation from operational goals/known prerequisites remains AG06 work. Reuse definition/disclosure-tier embeddings and selectively index meaningful instance text, never per movement or repeated sound.
 - [x] Integrate CR05 awareness, CR06 summaries and CR07 accepted-text cues before final retrieval acceptance. Each semantic trigger uses the same full-stimulus embedding path, with scoped cache reuse rather than a paid call per fixed step.
 - [ ] Gate selective-recall tools on demonstrated omissions from initial context: record the missing permitted evidence, the affected decision and whether improved selection or a bounded tool resolves it. Reflection file access remains independently required.
 
@@ -179,6 +183,8 @@ Owner: server director/jobs and workspace adapter. Depends on: CR02, CR07. Exit 
 
 Owner: pure domain needs/sleep, server scheduling. Depends on: CR08 for dream execution; native accounting can precede it. Exit evidence: deterministic threshold/accounting scenarios plus separate capped live dream acceptance.
 
+CR10 and D54 retain threshold/reminder policy; [AG07](agent-agency.md#ag07--meaningful-feedback-survival-and-bounded-reconsideration) adds need/result integration and native-response adequacy through EPR intake without closing CR12 gates.
+
 ### CR10 — Configurable triggers as admitted mechanics
 
 Coordinate proposed typed integration with [EPR04](events-perception-and-reactions.md#epr04--private-internal-threshold-events-and-native-protection), [EPR05](events-perception-and-reactions.md#epr05--change-fed-actorwork-and-one-reaction-intake) and [EPR06](events-perception-and-reactions.md#epr06--persistent-stimuli-and-bounded-actor-local-relevance); broader admitted cognition policies remain here.
@@ -201,7 +207,9 @@ Owner: domain definitions/admission and server routing policy. Depends on: CR02,
 - [x] Complete searchable/filterable god diagnostics by actor, time, trigger, route, stage and outcome, with paginated history, follow/pause updates and a new-entry indicator while reading. Expand stage cost/tokens/latency, input/output and receipts on demand; show pending/unknown versus zero and aggregate each charge once.
 - [ ] Enforce god authorization on list/detail/update/export paths and clear private cached views on access loss or world change. Bound retained history and candidate payloads, redact credentials, surface dropped/truncated/expired diagnostics, and keep diagnostic failure from blocking native simulation or granting actor knowledge. Preserve existing inspector validation in TODO.
 
-Owner: server repository/protocol/client projection and documentation. Depends on: CR05–CR10. Exit evidence: legacy-save migration/restart, actor privacy and god-access checks.
+Owner: server repository/protocol/client projection and documentation. Depends on: CR05–CR10. Exit evidence: same-version restart/restore, explicit incompatible-format rejection, actor privacy and god-access checks. Previously delivered migrations are historical facts, not requirements to extend compatibility.
+
+CR12 may reuse [AG12](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) scenarios while retaining its memory/recall acceptance scope.
 
 ### CR12 — Acceptance and token/latency evidence
 
@@ -230,9 +238,9 @@ Owner: maintainers across modules. Depends on: CR01–CR11. Exit evidence: repro
 
 Future increments after CR12's core acceptance; these do not expand CR01–CR11 or require a harness for ordinary speech. Existing CR07–CR08 own multi-turn reflection and publication. The following tasks own character-side behavior; INV tasks own creator investigation and mechanical authoring.
 
-- [ ] **CH01 — Bounded investigation and planning.** Add a separately admitted harness route for difficult character goals when useful scoped tools exist: inspect permitted evidence and known methods, compare alternatives and propose a supported next action. Persist the objective, uncertainty and actual outcome between fresh jobs; resume on meaningful feedback rather than holding a run through construction or weather. Recheck intent, resources and evidence before action. Depend on CR04's recall gate when additional memory tools are needed; missing mechanics use INV-7.6 rather than creator privileges.
+- [ ] **CH01 — Bounded investigation and planning.** Add a separately admitted harness route for difficult character goals when useful scoped tools exist: inspect permitted evidence and known methods, compare alternatives and propose a supported next action. Persist the objective, uncertainty and actual outcome between fresh jobs; resume on meaningful feedback rather than holding a run through construction or weather. Recheck intent, resources and evidence before action. Depend on CR04's recall gate when additional memory tools are needed; missing mechanics use INV-7.6 rather than creator privileges. Consume the AG-owned goal/frontier and submit typed proposals through AG admission; never create a second plan store or hold a run alive during native work.
 - [ ] **CH02 — Teaching and social coordination.** After CH01 and the relevant learning/conversation contracts, support tool-assisted preparation when teaching, negotiating or coordinating requires evidence lookup. Preserve separate actor knowledge, attributed claims, partial learning and native commitments. Actual replies and practice arrive as new world events; never simulate the other person's agreement or learning inside one agent's private run. Keep ordinary conversation on the immediate route.
-- [ ] **CH03 — Demonstrate useful iteration.** Compare bounded multi-turn and one-call approaches on conflicting-belief reflection, a blocked practical goal and incomplete teaching. Record tools/results, selected evidence, changed proposals, accepted outcomes, latency and total spend in god diagnostics. Enforce cumulative tool/byte/time/cost caps, interruption and stale-result checks; a failed run does not authorize an automatic paid retry. Promote richer routes only where observable continuity or successful action improves enough to justify their cost.
+- [ ] **CH03 — Demonstrate useful iteration.** Compare bounded multi-turn and one-call approaches on conflicting-belief reflection, a blocked practical goal and incomplete teaching. Record tools/results, selected evidence, changed proposals, accepted outcomes, latency and total spend in god diagnostics. Enforce cumulative tool/byte/time/cost caps, interruption and stale-result checks; a failed run does not authorize an automatic paid retry. Promote richer routes only where observable continuity or successful action improves enough to justify their cost. Reuse [AG12](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) scenarios for matched-budget comparisons; no duplicated acceptance matrix.
 
 ## Migrated acceptance gaps
 
@@ -243,13 +251,13 @@ These pending checks directly define cognition completion and were moved from th
 - [ ] Add and run meaningful CR01–CR04 fixtures: route/output contracts, full accepted-text overflow, directed speech and independent reflection, all semantic stimulus families, five selection signals, privacy, required evidence, candidate coverage, index lag, semantic paraphrases, stale dependencies, compatible cache reuse and changed-vector spaces. Adjust old fixtures that assume full-harness speech or per-event memory copies. No current compilation result establishes behavior.
 - [ ] Add CR05–CR06 fixtures for event-time audience/detail, one shared event without duplicate raw recall, unknown historical audience, native explicit promises/deadlines/fulfillment/cancellation, learning continuity, six-hour/hour boundaries, summaries versus backlog, concurrent observers, corrections, forgetting and independent important incidents. Check important summaries remain protected at the finite quota.
 - [ ] Add CR07–CR09 fixtures for quota-counted file names/content, identity protection, paths/symlinks, consistent export revision, staged partial failure, fresh histories on warm compute, duplicate/stale publication, pause/cancel/death, dream interruption, shared spending, interactive priority and late provider accounting. Verify midnight windows, split rest, fatigue debt, actual sleeping and the two-hour minimum independently of speed.
-- [ ] Add CR10–CR11 fixtures for versioned policy admission and unoffered routes, additive legacy preservation, import rollback, interrupted/uncertain jobs, PostgreSQL CAS/snapshot agreement, current forgetting-ledger reapplication during restore and god authorization on every endpoint. Run `pnpm run check` and browser checks after the deferred tests are updated.
+- [ ] Add CR10–CR11 fixtures for versioned policy admission and unoffered routes, same-version source preservation, incompatible-format rejection, import rollback, interrupted/uncertain jobs, PostgreSQL CAS/snapshot agreement, current forgetting-ledger reapplication during restore and god authorization on every endpoint. Run `pnpm run check` and browser checks after the deferred tests are updated.
 
 ### Individual memory perspective
 
-- [ ] Add/run regression coverage for owner versus observer wording, named Mike identity, heard testimony, exact quoted dialogue, object/possessive references, repeated save migration, promise attribution, retained source tags and consolidation/reflection outputs. Run static/full checks when requested.
-- [ ] Reconcile architecture, domain/extension guidance and implementation status with actor-perspective storage and named character identity; review related memory documents and links. Validate varied legacy free prose and model-authored summaries/reflections before claiming universal first-person compliance.
-- [ ] Verify the existing local save after server restart: Mike's displayed name, Ada's migrated memories, persistence and scoped embedding/workspace refresh. Do not claim a running-save migration or paid-model acceptance from an isolated native execution.
+- [ ] Add/run regression coverage for owner versus observer wording, named Mike identity, heard testimony, exact quoted dialogue, object/possessive references, repeated same-version restore, promise attribution, retained source tags and consolidation/reflection outputs. Run static/full checks when requested.
+- [ ] Reconcile architecture, domain/extension guidance and implementation status with actor-perspective storage and named character identity; review related memory documents and links. Validate varied retained free prose and model-authored summaries/reflections before claiming universal first-person compliance.
+- [ ] Verify a current-format local save after server restart: Mike's displayed name, Ada's source-attributed memories, persistence and scoped embedding/workspace refresh. Do not claim running-save or paid-model acceptance from isolated native execution; no incompatible-save conversion is requested.
 
 ### NPC memory and Macrofold integration
 

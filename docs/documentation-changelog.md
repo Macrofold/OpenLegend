@@ -4,6 +4,19 @@ This file records material changes to OpenLegend's documentation structure and h
 
 It is historical context only. Current requirements, design, architecture, tasks, status and open decisions live in their canonical owner documents.
 
+## 2026-09-22 — Agency policy decisions and interruption
+
+- Accepted general-knowledge speculation with profile, traits and backstory as initial behavioral guidance; retained acquisition provenance and native validation boundaries. D12 now retains only learning/sharing details.
+- Resolved D54’s compulsory-thought question in favor of reconsideration opportunities and accepted D42’s NPC-disabled default with independent controls and qualified explicit enablement; numeric reminder tuning and remaining governance choices stay open.
+- Clarified interruption of long-running work for changed needs, preservation of longer-term goals and native pause/cancel accounting; extended pending AG verification without claiming implementation or enabling runtime settings.
+
+## 2026-09-22 — Agent agency documentation integration
+
+- Integrated `docs/agent-agency.md`, `archive/07-technical-architecture/agent-agency-runtime.md`, `docs/maintainers/agent-agency.md` and `archive/02-research/agency-cognition-and-planning.md` from the review pinned to `c35f5fbb87ca10fcd941cfc3bb80d0011d0ef032`.
+- Moved universal response and operational-goal semantics out of broader memory/conversation ownership, retaining response forwarding anchors and valid admission/experience requirements. Reconciled the newer EPR scope/intake contract instead of adding a second opportunity pipeline.
+- Linked existing INV/CH work, narrowed NC13 to tested effect/privacy dependencies and INV-7’s existing-family loop to shared-service prerequisites, and removed obsolete development-save compatibility obligations while retaining same-version recovery and real accounting. Moved prior personal-perspective evidence to Verification and implementation facts to Architecture; D57 no longer treats response cardinality as unresolved. D12 retains conceptual-knowledge policy; D54 retains need/reminder tuning; R24 records agency experiments.
+- Runtime behavior, deployment locks, spending policy and runtime verification status were unchanged. No implementation or acceptance checkbox was completed.
+
 ## 2026-09-21 — Proposed event framework integration
 
 - Installed `archive/02-research/engine-perception-and-event-architectures.md`, `docs/events-perception-and-reactions.md` and `docs/maintainers/events-perception-and-reactions.md`, preserving the source audit at `03ae5fb7a5ac25bcda39e6dbde274be1c9a942bd`.

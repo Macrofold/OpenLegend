@@ -2,13 +2,13 @@
 
 Identity and reference changes must preserve the reconstruction and compatibility constraints in the [save/load design](save-and-load.md).
 
-This document owns the identity contract. [Narration and conversations](narration-and-conversations.md#3-talk-act-and-think-response-contract) owns the response shape and admission semantics.
+This document owns the identity contract. [Agent agency runtime](../archive/07-technical-architecture/agent-agency-runtime.md#2-decision-envelope-and-translation) owns response shape and admission semantics; [Narration and conversations](narration-and-conversations.md) retains speech targets and audience behavior.
 
 ## Contract
 
 Names, labels and descriptions are display prose. Entity, item instance, definition, recipe, event, memory, conversation, request and job relationships use the appropriate stable ID, scoped to their world or owning record. Renaming or duplicate names must not change relationships. Memory perspective uses event source IDs to identify self-authored speech; an unknown source must not be inferred from a matching name. IDs may be readable strings; their authority comes from an exact stored key, never text matching. Enumerated kinds, verbs and control roles are values, not entity identities.
 
-The application allocates identities; generated prose cannot create or resolve them. Client intentions and generated structured fields must supply IDs of the expected kind. Admission validates existence, permissions and current mechanical prerequisites. No name lookup, fuzzy resolution, role substitution or paid repair retry is allowed. New generated definitions use the existing validated declaration path and application-owned content identities.
+The application allocates durable identities; generated prose cannot create or resolve them. Agency response-local aliases identify only objects proposed within that response; they are not stored IDs or authority. Client intentions and generated structured fields must supply IDs of the expected kind. Admission validates existence, permissions and current mechanical prerequisites. No name lookup, fuzzy resolution, role substitution or paid repair retry is allowed. New generated definitions use the existing validated declaration path and application-owned content identities.
 
 ## Actor context
 

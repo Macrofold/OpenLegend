@@ -174,6 +174,8 @@ Dependencies: PF00/PF03 and applicable production-data D1/D2 recovery contracts;
 
 Exit: same active tiny world at increasing cold-history sizes meets per-step budgets; backup/recovery retains complete permitted history and forgetting/spending state. Command receipt expiry additionally requires the implemented and verified epoch watermark. Other historical deletion remains blocked until its own retention policy is accepted.
 
+[AG07](agent-agency.md#ag07--meaningful-feedback-survival-and-bounded-reconsideration) and [AG12](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) connect native continuation and fair cognition admission to measured behavior/cost. Qualify the existing global workflow before increasing concurrency; no population or price target is established by the agency design.
+
 ## PF09 — Population work follows relevance
 
 Proposed [EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-full-world-sensory-scans) owns the specific object/audience scan integration; [EPR10](events-perception-and-reactions.md#epr10--conditional-incremental-spatialdeadline-infrastructure) owns its conditional incremental-index work. PF retains broader population qualification.

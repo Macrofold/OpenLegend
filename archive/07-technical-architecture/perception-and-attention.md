@@ -2,6 +2,8 @@
 
 This document owns future sensory design: visual exposure, hearing/acoustics, occlusion, detail tiers, player sensory overlays, deterministic propagation and sensory event generation. Current implemented sight/hearing behavior belongs to [Architecture](../../docs/architecture.md); semantic attention and routing belong to [Memory architecture](../../docs/memory-architecture.md). Material choices remain in [Open decisions](../05-project/open-decisions.md), and small implementation gaps may be tracked in the [maintainer TODO](../../docs/maintainers/TODO.md).
 
+[Agency](../../docs/agent-agency.md) contributes private goal/need/result causes through [EPR reaction intake](../../docs/events-perception-and-reactions.md#9-reaction-intake-and-scheduling), without public sensory events. Its goal-derived interests respect actor knowledge and reevaluate bounded current exposures. Actual non-speech sound follows this sensory contract; it must not be relabeled speech to obtain hearing or create a conversation.
+
 ## 2. Separate physical exposure from attention and thought
 
 This document owns sensory production. The proposed [events/perception/reactions contract](../../docs/events-perception-and-reactions.md) owns how permitted evidence and perception changes reach reaction intake; the diagram spans these separate responsibilities.

@@ -4,6 +4,8 @@ This file contains miscellaneous and cross-cutting deferred validation, integrat
 
 Runtime latency, database scheduling, native CPU, buffering and long-session optimization are tracked in [PF00–PF11](performance.md). Existing feature correctness checks below remain open; performance work does not complete them.
 
+[Agent agency](agent-agency.md) owns the new decision/goal/plan work; [EPR](events-perception-and-reactions.md) owns shared reaction intake. Their tasks and acceptance stay in those focused trackers.
+
 ## React design-system adoption
 
 - [ ] Verify distinct gather resources show their resource icon plus hand badge in saved shortcuts and suggestions, including reload, unavailable targets, missing-target fallback and badge/key-label layout at supported UI scales; run the relevant checks.

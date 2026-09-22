@@ -33,7 +33,7 @@ Separate injury from health summary. A damaged leg affects locomotion; pain affe
 
 Healing is an ongoing process affected by rest, nutrition, treatment, and condition; it should not require repeated LLM calls. Work, needs, healing, environmental changes and aging reference the accelerated [world clock](time-and-simulation-speed.md). Medical detail remains stylized. For the initial wilderness group, serious organ simulation and epidemiology would add more balancing work than visible benefit.
 
-Needs use thresholds with hysteresis: begin seeking food below one value, stop after a higher value. This avoids switching every tick. Integrate drift by elapsed simulated time, and wake cognition when a meaningful band changes. Use priorities so starvation overrides casual conversation while a minor discomfort does not continuously interrupt it.
+Needs use thresholds with hysteresis: begin seeking food below one value, stop after a higher value. This avoids switching every tick. Integrate drift by elapsed simulated time, and wake cognition when a meaningful band changes. Prioritize immediate native survival under the [agency adequacy boundary](../../docs/agent-agency.md#8-attention-and-initiation), while allowing bounded planning/help when a capable actor lacks a useful native solution. Minor discomfort must not continuously interrupt conversation.
 
 ## Emotion as an evolving appraisal, not a fixed response table
 
@@ -69,7 +69,7 @@ Use the existing perception/attention/memory pipeline rather than a model call f
 
 ## Decision and conversation boundaries
 
-Actor decisions use the cognition contracts in [Memory architecture](../../docs/memory-architecture.md). Talk/act/think response composition, durable conversation identity, membership, merging, narration and transcript rules belong to [Narration, agent responses and conversations](../../docs/narration-and-conversations.md). Social design here defines relationships and obligations, not those execution pipelines.
+Actor decision composition and operational goals/plans belong to [Agent agency](../../docs/agent-agency.md); [Memory architecture](../../docs/memory-architecture.md) owns recall/attention and narrative aspirations. Creator-authored initial goals seed once, while later operational changes are actor-owned and do not rewrite identity, another actor’s consent or social obligations. Planning respects species/body capabilities without implying hands or speech. Durable conversation identity, membership, merging, narration and transcript rules belong to [Narration and conversations](../../docs/narration-and-conversations.md). Social design here defines relationships and obligations, not those execution pipelines.
 
 ## Social continuity
 

@@ -12,6 +12,8 @@ An invention opened from a log or account library offers Inspect, Workshop and, 
 
 Clicking **Invent** first searches permitted existing inventions using text embeddings and vector search. Similar matches open a new **Similar inventions** modal offering Use existing, Modify existing, Invent new or Cancel before candidate generation. Modification retains the selected version as a derived draft; use follows ordinary crafting/action prerequisites. No matches proceeds normally; search failure is visible. The [canonical search contract](../07-technical-architecture/declarations-and-evolution.md#similar-inventions-before-authoring) and INV-2.1a–2.1b own details and implementation status. This workflow is planned, not implemented.
 
+NPC invention uses the same backend service with actor-scoped method/feedback and [agency continuation](../../docs/agent-agency.md#6-actor-led-invention), without opening the player’s Similar inventions modal. Creator-only queries, persistent creator transcripts and public discovery rights do not become NPC permissions or private knowledge. An admitted method does not force construction.
+
 ## Confirmed god-mode conjuring
 
 Accepted September 20, 2026; planned, not implemented. In god mode, the creator can ask the world agent to conjure a named object or suggest a random object. The request may describe something not yet defined in the world. The agent helps complete the object as it does an invention: propose relevant properties, supported behavior, dependencies, appearance and initial instance state, explain consequential choices, and ask for missing information only where it matters. “Random” selects a reviewable candidate; confirmation and retries must not silently reroll it.

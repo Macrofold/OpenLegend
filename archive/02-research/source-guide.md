@@ -17,6 +17,8 @@ No game was played for this research, no vendor API was benchmarked, no hosting 
 
 Follow-up synthesis: [native survival](../03-design-proposals/survival-baseline.md) adds concrete plant-fiber examples and the primitive starting scenario; [time and speed](../03-design-proposals/time-and-simulation-speed.md) develops the user's accelerated-time proposal using explicit arithmetic and untested design hypotheses. The earlier small-village research examples are precedents or superseded scenario suggestions, not the current starting-world decision.
 
+[Agency, cognition and planning](agency-cognition-and-planning.md) collects primary sources and bounded design inferences for optional decisions and persistent native pursuit. Its source-access notes are specific to that review; game behavior and cost remain unmeasured.
+
 ## Selected primary sources by topic
 
 These links point to sources actually reviewed in the research. Further specific pages are cited inline; selection here does not imply every source supports every recommendation.

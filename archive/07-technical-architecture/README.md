@@ -5,6 +5,7 @@ Current implemented architecture is defined in [docs/architecture.md](../../docs
 | Design owner | Scope |
 | --- | --- |
 | [Context and inference](context-and-inference.md) | Scoped context assembly, routing and execution boundaries |
+| [Agent agency runtime](agent-agency-runtime.md) | Decision encoding, operational goals/plans, admission and continuation; [behavior owner](../../docs/agent-agency.md) |
 | [Declarations and evolution](declarations-and-evolution.md) | Declarative mechanisms, admission, activation and evolution |
 | [Production data model](production-data-model.md) | Canonical production records, identity and transaction invariants |
 | [Data queries and MCP](data-queries-and-mcp.md) | Bounded query contracts and future scoped tool access |

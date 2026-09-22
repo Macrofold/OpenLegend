@@ -8,7 +8,7 @@ Accepted technical/visual direction: PlayCanvas browser presentation, an indepen
 
 ## Product and technical loops
 
-The [narration/conversation design](../docs/narration-and-conversations.md) owns talk/act/think responses and private storytelling over source-linked events; [NC00–NC13](../docs/maintainers/narration-and-conversations.md) own delivery. Missing action/effect invention remains a separate deferred extension.
+[Agent agency](../docs/agent-agency.md) owns optional decisions and operational goals/plans, with [AG delivery](../docs/maintainers/agent-agency.md) and [runtime semantics](07-technical-architecture/agent-agency-runtime.md). The [EPR contract](../docs/events-perception-and-reactions.md) owns reaction intake. [Narration/conversation design](../docs/narration-and-conversations.md) and [NC delivery](../docs/maintainers/narration-and-conversations.md) retain communication and private storytelling; missing mechanics remain INV/NC13 work. [Agency research](02-research/agency-cognition-and-planning.md) explains the design rationale and limits.
 
 ```mermaid
 flowchart TD

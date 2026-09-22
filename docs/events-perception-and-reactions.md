@@ -18,6 +18,8 @@ This document owns **stimulus scope, perception-change identity, and reaction in
 | [Save/load](save-and-load.md)                                                      | Consistent capture, restoration, generation fencing and active-development compatibility |
 | [Declarations](../archive/07-technical-architecture/declarations-and-evolution.md) | Admission of new mechanics and trusted configurable behavior                             |
 
+[Agent agency](agent-agency.md) owns operational goals, plan execution and decision composition. Agency goal-review/action-result/invention-result causes use this document’s single reaction intake; they do not introduce a second event pipeline. Private invention feedback uses owner-private scope, while unprojected execution receipts remain system-only.
+
 Keep the current single-world authority, fixed native steps, actor model, conversation/Narrator implementation, durable records, and bounded AI executors. This is not an engine replacement.
 
 ## 2. The six distinct concepts
@@ -169,6 +171,8 @@ The proposed episode lifecycle is `inactive → active → escalated/continued �
 
 Native protection remains immediate and deterministic. At first, keep the current native evaluator at its existing step boundary and call it only once; the new event records explain and schedule the response rather than creating a second survival action. Later skipping native evaluations requires proof that all relevant changes—food acquired, resource depletion, failed path, interrupted action, body change, or due rest—wake it correctly.
 
+Threshold recording preserves existing native rules. The [agency survival policy](agent-agency.md#8-attention-and-initiation) separately permits bounded deliberation when a capable actor lacks an adequate native response; it does not alter thresholds, duplicate native protection or consume merely deferred evidence.
+
 Owner-private routing does not imply conscious awareness during sleep: preserve current waking/sleep capability rules, and do not manufacture remembered experiences for an actor that could not perceive them. Routine animals retain native behavior without requiring a mind, a persisted human-style memory, or a model call. Sensory/memory capability determines evidence retention, not whether physical protection is allowed.
 
 ## 8. Ongoing salience, relevance, and reminders
@@ -195,9 +199,9 @@ For production behavior, preserve existing cooldowns, urgency policy, and explic
 
 ### One intake, several executors
 
-Adapt direct speech, newly committed external awareness, internal crossings, perception changes, and due reminders to one actor-local intake. The intake carries actor identity, generation, relevant evidence/episode, reason class, urgency, due time, and current disposition.
+Adapt direct speech, newly committed external awareness, internal crossings, perception changes, due reminders, goal reviews and actor-permitted action/invention results to one actor-local intake. The intake carries actor identity, generation, relevant evidence/episode, reason class, urgency, due time, and current disposition.
 
-Direct player speech retains explicit interactive priority. It must not also enqueue duplicate autonomous work for the same actor/response identity. Existing Jev escalation, immediate talk/act/think admission, optional reflection, and native actions remain the executors.
+Direct player speech retains explicit interactive priority. It must not also enqueue duplicate autonomous work for the same actor/response identity. Existing Jev escalation, response admission, optional reflection and native actions remain the executors; the agency contract extends response composition and native continuation.
 
 A reaction opportunity can be handled natively, coalesced, delayed, explicitly declined, or routed to reasoning. It is not a model request until durable admission and spending checks succeed.
 

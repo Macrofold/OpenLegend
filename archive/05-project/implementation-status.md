@@ -18,6 +18,10 @@ This is the current subsystem snapshot. Architecture details belong to [Architec
 
 A documentation change does not advance a capability. Update this table only when current code and current evidence support the new state.
 
+## Agent agency target
+
+[Agency behavior](../../docs/agent-agency.md), the [runtime contract](../07-technical-architecture/agent-agency-runtime.md) and [AG01–AG12](../../docs/maintainers/agent-agency.md) define the operational extension. Multi-operation decisions, persistent actor-owned goals/frontiers and autonomous actor-led invention remain unimplemented. Integration reuses the proposed EPR intake and existing CR/NC/INV boundaries; it changes no runtime or acceptance status. The current one-of-each response, single action slot and player-bound invention limitations are recorded in [Architecture](../../docs/architecture.md#agency-implementation-boundary).
+
 ## Identity references
 
 Saved control bindings replace hard-coded player/resident lookup across application routes and projections. New worlds seed opaque person IDs; older IDs remain unchanged. Immediate response fields explicitly identify entity IDs and use request-bound schema enums and a final reference table. See the [canonical contract](../../docs/identity-and-references.md) and [remaining verification](../../docs/maintainers/TODO.md). Build and disposable runtime observations are not live provider acceptance.
