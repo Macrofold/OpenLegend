@@ -55,7 +55,19 @@ export interface JobRecord extends AiJobView {
   request: {
     text: string;
     npcId?: string;
-    invention?: { actorId: string; authority: import('@open-legend/domain').InventionAuthority };
+    invention?: {
+      actorId: string;
+      worldId: string;
+      timelineId: string;
+      conversationId?: string;
+      authority: import('@open-legend/domain').InventionAuthority;
+    };
+  };
+  invention?: {
+    code: string;
+    candidateDigest?: string;
+    candidate?: import('@open-legend/domain').DeclarationDraft;
+    recipeId?: string;
   };
   result?: unknown;
   startedAt?: number;
@@ -262,6 +274,11 @@ export interface GameRepository extends WorldStore {
   getSpeechJobs(eventIds: string[]): Promise<Map<string, JobRecord>>;
   putJob(job: JobRecord): Promise<void>;
   recentJobs(limit?: number): Promise<JobRecord[]>;
+  inventionJobs(
+    worldId: string,
+    actorId: string,
+    before?: { createdAt: number; id: string },
+  ): Promise<JobRecord[]>;
   reserve(
     id: string,
     provider: 'jev' | 'openai' | 'macrofold',
@@ -426,6 +443,7 @@ export class SqliteStore implements GameRepository {
       CREATE TABLE IF NOT EXISTS jobs (
         id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, created_at INTEGER NOT NULL
       );
+      CREATE INDEX IF NOT EXISTS jobs_inventor ON jobs (json_extract(payload, '$.request.invention.worldId'), json_extract(payload, '$.request.invention.actorId'), created_at, id);
       CREATE INDEX IF NOT EXISTS jobs_speech_event ON jobs (json_extract(payload, '$.playerSpeechEventId')) WHERE json_extract(payload, '$.kind') = 'chat';
       CREATE TABLE IF NOT EXISTS attempts (
         id TEXT PRIMARY KEY, provider TEXT NOT NULL, status TEXT NOT NULL,
@@ -653,13 +671,21 @@ export class SqliteStore implements GameRepository {
             : undefined,
         );
         if (!historyReady) await this.putIntegration(historyKey, 1);
-        const outcomes = new Map<string, { ok: boolean; message: string; code: string }>();
+        const outcomes = new Map<
+          string,
+          { ok: boolean; message: string; code: string; recipeId?: string }
+        >();
         for (const [id, receipt] of Object.entries(state.world.responseReceipts ?? {}))
           if (receipt !== this.acceptedState?.world.responseReceipts?.[id] && receipt.outcome)
             outcomes.set(id, receipt.outcome);
         for (const [id, receipt] of Object.entries(state.world.declarationReceipts))
           if (receipt !== this.acceptedState?.world.declarationReceipts[id])
-            outcomes.set(id, { ok: true, code: 'admitted', message: 'Definition admitted.' });
+            outcomes.set(id, {
+              ok: true,
+              code: 'admitted',
+              message: 'Definition admitted.',
+              recipeId: receipt.recipeId,
+            });
         for (const [actorId, inner] of Object.entries(state.world.innerWorlds ?? {}))
           if (
             inner.publicationJobId &&
@@ -679,6 +705,9 @@ export class SqliteStore implements GameRepository {
               status: result.ok ? 'completed' : 'failed',
               message: result.message,
               result,
+              ...(job.invention && result.recipeId
+                ? { invention: { ...job.invention, code: 'admitted', recipeId: result.recipeId } }
+                : {}),
               completedAt: Date.now(),
             });
         }
@@ -803,6 +832,21 @@ export class SqliteStore implements GameRepository {
       .run(job.id, job.fingerprint, JSON.stringify(job), job.createdAt);
   }
 
+  async inventionJobs(
+    worldId: string,
+    actorId: string,
+    before = { createdAt: Number.MAX_SAFE_INTEGER, id: '\uffff' },
+  ): Promise<JobRecord[]> {
+    await this.ready;
+    return (
+      await this.db
+        .prepare(
+          "SELECT payload FROM jobs WHERE json_extract(payload, '$.request.invention.worldId') = ? AND json_extract(payload, '$.request.invention.actorId') = ? AND (created_at < ? OR (created_at = ? AND id < ?)) ORDER BY created_at DESC, id DESC LIMIT 50",
+        )
+        .all(worldId, actorId, before.createdAt, before.createdAt, before.id)
+    ).map((row) => JSON.parse(String(row['payload'])) as JobRecord);
+  }
+
   async recentJobs(limit = 12): Promise<JobRecord[]> {
     await this.ready;
 
@@ -922,10 +966,20 @@ export class SqliteStore implements GameRepository {
     for (const row of await this.db.prepare('SELECT payload FROM jobs').all()) {
       const job = JSON.parse(String(row['payload'])) as JobRecord;
       if (['queued', 'judging', 'generating'].includes(job.status)) {
+        const uncertain =
+          job.invention &&
+          (await this.db
+            .prepare("SELECT id FROM attempts WHERE status='uncertain' AND id IN (?, ?) LIMIT 1")
+            .get(`${job.id}:route`, `${job.id}:generate`));
         await this.putJob({
           ...job,
           status: 'stale',
-          message: 'Interrupted by restart; no paid request or world effect was repeated.',
+          ...(job.invention
+            ? { invention: { ...job.invention, code: uncertain ? 'uncertain' : 'interrupted' } }
+            : {}),
+          message: uncertain
+            ? 'Interrupted with uncertain provider completion; spending remains reserved and no request was replayed.'
+            : 'Interrupted by restart; no paid request or world effect was repeated.',
         });
       }
     }

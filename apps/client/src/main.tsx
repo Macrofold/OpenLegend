@@ -93,6 +93,7 @@ function App() {
     );
   const [npcId, setNpcId] = useState<string | null>(null),
     [seed, setSeed] = useState<ComposerDraft | null>(null),
+    [inventionSeed, setInventionSeed] = useState<{ id: string; text: string } | null>(null),
     [mindId, setMindId] = useState<string | null>(null),
     [intelligenceSelection, setIntelligenceSelection] = useState<DiagnosticSelection | null>(null),
     [personPosition, setPersonPosition] = useState<{ x: number; z: number } | null>(null),
@@ -321,8 +322,8 @@ function App() {
     setPicker(null);
   }
   function invent(text = readDraft().text) {
-    setSeed({ text, mode: 'invention' });
-    show('composer');
+    setInventionSeed({ id: crypto.randomUUID(), text });
+    show('agent');
     setPicker(null);
   }
   function inspect(entity: EntityView) {
@@ -599,6 +600,7 @@ function App() {
           <WorldAgent
             key={view.worldId}
             worldId={view.worldId}
+            inventionSeed={inventionSeed}
             invent={invent}
             visible={open.includes('agent') && (!narrow || open.at(-1) === 'agent')}
           />

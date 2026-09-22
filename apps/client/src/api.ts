@@ -23,6 +23,7 @@ export async function getState(): Promise<GameView> {
     const previous = sessionStorage.getItem(key);
     if (previous && previous !== view.saveTimeline) {
       localStorage.removeItem(`open-legend:world-agent:${view.worldId}`);
+      localStorage.removeItem(`open-legend:invention-draft:${view.worldId}`);
       sessionStorage.removeItem('open-legend:composer-draft:v2');
     }
     if (view.saveTimeline) sessionStorage.setItem(key, view.saveTimeline);

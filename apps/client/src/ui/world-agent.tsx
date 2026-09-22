@@ -1,3 +1,4 @@
+import { Inventions } from './inventions';
 import { useEffect, useRef, useState } from 'react';
 import { Button as AriaButton, Tabs, TabList, Tab, TabPanel } from 'react-aria-components';
 import { Button, EmptyState, Icon, IconButton, Tag } from '../design-system/components';
@@ -36,13 +37,19 @@ const valid = (v: unknown): v is Conversation[] =>
   );
 export function WorldAgent({
   worldId,
+  inventionSeed,
   invent,
   visible,
 }: {
   worldId: string;
+  inventionSeed: { id: string; text: string } | null;
   invent(text: string): void;
   visible: boolean;
 }) {
+  const [authoring, setAuthoring] = useState(false);
+  useEffect(() => {
+    if (inventionSeed) setAuthoring(true);
+  }, [inventionSeed]);
   const key = `open-legend:world-agent:${worldId}`;
   const [tabs, setTabs] = useState(() => readLocal(key, [], valid));
   const [active, setActive] = useState(() => tabs[0]?.id ?? '');
@@ -106,6 +113,7 @@ export function WorldAgent({
     setPending((v) => [...v, id]);
     try {
       const result = await post('/api/world-agent/messages', {
+        mode: 'discuss',
         requestId,
         conversationId: id,
         worldId,
@@ -206,90 +214,112 @@ export function WorldAgent({
   }));
   return (
     <div className="ol-agent">
-      <Tabs
-        className="ol-agent-tabs"
-        selectedKey={active}
-        onSelectionChange={(k) => setActive(String(k))}
-      >
-        <div className="ol-conversation-tabs">
-          <TabList aria-label="World conversations" items={tabs}>
-            {(t) => (
-              <Tab id={t.id} className="ol-conversation-tab">
-                <span>{t.title}</span>
-                <AriaButton
-                  className="ol-ibtn"
-                  aria-label={`End conversation: ${t.title}`}
-                  onPress={() => void end(t)}
-                >
-                  <Icon name="ui.close" />
-                </AriaButton>
-              </Tab>
-            )}
-          </TabList>
-          <IconButton icon="ui.plus" label="New conversation" onPress={create} />
-        </div>
-        {tabs.map((t) => (
-          <TabPanel key={t.id} id={t.id} className="ol-conversation-panel">
-            {t.id === active && (
-              <ConversationThread
-                conversationKey={`${worldId}:${t.id}`}
-                items={messages}
-                ariaLabel={t.title}
-                visible={visible}
-                empty={
-                  <EmptyState title="What might this world become?">
-                    Ask about the clearing, explore a possibility, or discuss an invention.
-                  </EmptyState>
-                }
-              />
-            )}
-          </TabPanel>
-        ))}
-      </Tabs>
-      {!tabs.length && (
-        <EmptyState title="A conversation begins with a question.">
-          <Button onPress={create} icon="ui.plus">
-            New conversation
-          </Button>
-        </EmptyState>
-      )}
-      {ended && (
-        <div className="ol-notice">
-          Ended “{ended.title}”.{' '}
-          <Button size="sm" variant="quiet" onPress={undo}>
-            Restore transcript
-          </Button>
-          <IconButton
-            icon="ui.close"
-            label="Dismiss ended conversation"
-            onPress={() => setEnded(null)}
-          />
-        </div>
-      )}
-      {error && <p role="alert">{error}</p>}
-      {tab && (
+      <div className="ol-agent-tools">
+        <Button
+          size="sm"
+          variant={authoring ? 'quiet' : 'primary'}
+          onPress={() => setAuthoring(false)}
+        >
+          Discuss
+        </Button>
+        <Button
+          size="sm"
+          variant={authoring ? 'primary' : 'quiet'}
+          onPress={() => setAuthoring(true)}
+        >
+          Invent
+        </Button>
+      </div>
+      {authoring ? (
+        <Inventions worldId={worldId} seed={inventionSeed} visible={visible} />
+      ) : (
         <>
-          <div className="ol-agent-tools">
-            <Button
-              size="sm"
-              variant="quiet"
-              icon="action.invent"
-              onPress={() => invent(tab.draft)}
-            >
-              Invent a tool
-            </Button>
-            <span className="ol-caption">Discussing an idea does not create it.</span>
-          </div>
-          <ConversationComposer
-            inputRef={textarea}
-            ariaLabel="Message to world agent"
-            placeholder="Ask about the world or explore an idea…"
-            maxLength={2000}
-            value={tab.draft}
-            onChange={(draft) => update(tab.id, (value) => ({ ...value, draft }))}
-            onSubmit={() => send()}
-            disabled={pending.includes(tab.id) || !tab.draft.trim()}
-          />
+          <Tabs
+            className="ol-agent-tabs"
+            selectedKey={active}
+            onSelectionChange={(k) => setActive(String(k))}
+          >
+            <div className="ol-conversation-tabs">
+              <TabList aria-label="World conversations" items={tabs}>
+                {(t) => (
+                  <Tab id={t.id} className="ol-conversation-tab">
+                    <span>{t.title}</span>
+                    <AriaButton
+                      className="ol-ibtn"
+                      aria-label={`End conversation: ${t.title}`}
+                      onPress={() => void end(t)}
+                    >
+                      <Icon name="ui.close" />
+                    </AriaButton>
+                  </Tab>
+                )}
+              </TabList>
+              <IconButton icon="ui.plus" label="New conversation" onPress={create} />
+            </div>
+            {tabs.map((t) => (
+              <TabPanel key={t.id} id={t.id} className="ol-conversation-panel">
+                {t.id === active && (
+                  <ConversationThread
+                    conversationKey={`${worldId}:${t.id}`}
+                    items={messages}
+                    ariaLabel={t.title}
+                    visible={visible}
+                    empty={
+                      <EmptyState title="What might this world become?">
+                        Ask about the clearing, explore a possibility, or discuss an invention.
+                      </EmptyState>
+                    }
+                  />
+                )}
+              </TabPanel>
+            ))}
+          </Tabs>
+          {!tabs.length && (
+            <EmptyState title="A conversation begins with a question.">
+              <Button onPress={create} icon="ui.plus">
+                New conversation
+              </Button>
+            </EmptyState>
+          )}
+          {ended && (
+            <div className="ol-notice">
+              Ended “{ended.title}”.{' '}
+              <Button size="sm" variant="quiet" onPress={undo}>
+                Restore transcript
+              </Button>
+              <IconButton
+                icon="ui.close"
+                label="Dismiss ended conversation"
+                onPress={() => setEnded(null)}
+              />
+            </div>
+          )}
+          {error && <p role="alert">{error}</p>}
+          {tab && (
+            <>
+              <div className="ol-agent-tools">
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  icon="action.invent"
+                  onPress={() => invent(tab.draft)}
+                >
+                  Invent a tool
+                </Button>
+                <span className="ol-caption">Discussing an idea does not create it.</span>
+              </div>
+              <ConversationComposer
+                inputRef={textarea}
+                ariaLabel="Message to world agent"
+                placeholder="Ask about the world or explore an idea…"
+                maxLength={2000}
+                value={tab.draft}
+                onChange={(draft) => update(tab.id, (value) => ({ ...value, draft }))}
+                onSubmit={() => send()}
+                disabled={pending.includes(tab.id) || !tab.draft.trim()}
+              />
+            </>
+          )}
         </>
       )}
     </div>

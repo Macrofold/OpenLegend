@@ -21,9 +21,17 @@ export interface GoalChange {
   objective: string | null;
   parentId: string | null;
 }
+export type ItemOutputCommand = {
+  id: string;
+  actorId: string;
+  type: 'equip' | 'eat' | 'cook';
+  itemFromStep: string;
+  heatId?: string;
+};
+export type PlannedCommand = Command | ItemOutputCommand;
 export interface PlanStep {
   id: string;
-  command: Command;
+  command: PlannedCommand;
   status: 'queued' | 'running' | 'completed' | 'blocked' | 'cancelled';
   actionId?: string;
   outcome?: Outcome;
@@ -229,7 +237,7 @@ export function replaceGoals(
 export function arrangePlan(
   actor: ActorComponent,
   id: string,
-  commands: Command[],
+  commands: PlannedCommand[],
   mode: 'enqueue' | 'replace',
   expectedRevision: number,
   goalId: string | null,
@@ -252,8 +260,18 @@ export function arrangePlan(
     );
   if (!commands.length || commands.length > AGENCY_LIMITS.steps)
     return outcome(false, 'plan-limit', 'A frontier needs one to eight steps.');
-  if (commands.some((command) => !isPhysicalCommand(command)))
+  if (commands.some((command) => !isPlannedCommand(command)))
     return outcome(false, 'invalid-plan', 'Only native physical work can be queued.');
+  const prior =
+    mode === 'enqueue' && current?.status === 'active'
+      ? current.steps.map((step) => step.command)
+      : [];
+  if (!validOutputReferences([...prior, ...commands]))
+    return outcome(
+      false,
+      'invalid-plan',
+      'Item references require an earlier single-output native step.',
+    );
   if (
     mode === 'enqueue' &&
     current &&
@@ -462,10 +480,12 @@ export function validateAgency(world: WorldState): void {
         plan.steps.filter((step) => step.status === 'running').length > 1)
     )
       throw new Error('Invalid saved step identities or concurrent work.');
+    if (plan && !validOutputReferences(plan.steps.map((step) => step.command)))
+      throw new Error('Invalid saved plan output references.');
     for (const step of [...(plan?.steps ?? []), ...agency.history]) {
       if (
         !isSafeRecordId(step.id) ||
-        !isPhysicalCommand(step.command) ||
+        !isPlannedCommand(step.command) ||
         step.command.id !== step.id ||
         step.command.actorId !== entity.id ||
         !['queued', 'running', 'completed', 'blocked', 'cancelled'].includes(step.status) ||
@@ -578,4 +598,47 @@ function isPhysicalCommand(command: Command): boolean {
     default:
       return false;
   }
+}
+
+function isPlannedCommand(command: PlannedCommand): boolean {
+  if (!command || !('itemFromStep' in command)) return isPhysicalCommand(command);
+  return (
+    isSafeRecordId(command.id) &&
+    isSafeRecordId(command.actorId) &&
+    isSafeRecordId(command.itemFromStep) &&
+    ['equip', 'eat', 'cook'].includes(command.type) &&
+    (command.type === 'cook' ? isSafeRecordId(command.heatId) : command.heatId === undefined)
+  );
+}
+function validOutputReferences(commands: PlannedCommand[]): boolean {
+  const prior = new Map<string, PlannedCommand>();
+  for (const command of commands) {
+    if (prior.has(command.id)) return false;
+    if ('itemFromStep' in command) {
+      const producer = prior.get(command.itemFromStep);
+      if (
+        !producer ||
+        producer.actorId !== command.actorId ||
+        !['gather', 'prepare', 'craft', 'cook'].includes(producer.type)
+      )
+        return false;
+    }
+    prior.set(command.id, command);
+  }
+  return true;
+}
+/** Resolve the receipt, never guess a matching item. Native dispatch rechecks possession and state.
+ * docs/architecture.md#actor-agency-foundation
+ */
+export function resolvePlanCommand(plan: ActorPlan, step: PlanStep): Command | undefined {
+  const command = step.command;
+  if (!('itemFromStep' in command)) return command;
+  const producer = plan.steps.find((entry) => entry.id === command.itemFromStep);
+  const itemId =
+    producer?.status === 'completed' && producer.outcome?.ok ? producer.outcome.itemId : undefined;
+  if (!itemId) return;
+  const { itemFromStep: _, heatId, ...base } = command;
+  return base.type === 'cook'
+    ? { ...base, type: 'cook', itemId, heatId: heatId! }
+    : { ...base, type: base.type, itemId };
 }

@@ -1437,8 +1437,17 @@ export class WorldService {
     );
   }
 
-  async admit(draft: DeclarationDraft, provenance: DeclarationProvenance): Promise<ApiResult> {
-    return await this.transition((world) => admitDeclaration(world, draft, provenance));
+  async admit(
+    draft: DeclarationDraft,
+    provenance: DeclarationProvenance,
+    checkCurrent?: () => void,
+  ): Promise<ApiResult> {
+    return await this.transition((world) => {
+      // Recheck cancellation after waiting for the writer, before publishing the candidate.
+      // docs/architecture.md#shared-invention-workflow
+      checkCurrent?.();
+      return admitDeclaration(world, draft, provenance);
+    });
   }
 
   observe(actorId: string) {

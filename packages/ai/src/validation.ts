@@ -204,7 +204,18 @@ export function compileSchema(schema: unknown): ValidateFunction {
       )
         throw new InvalidData('schema_must_require_all_properties');
     }
-    Object.values(node).forEach(inspect);
+    // Property maps contain arbitrary field names (including "properties"); they are not schemas.
+    // docs/architecture.md#shared-invention-workflow
+    for (const [key, value] of Object.entries(node)) {
+      if (
+        ['properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas'].includes(
+          key,
+        ) &&
+        record(value)
+      )
+        Object.values(value).forEach(inspect);
+      else if (!['const', 'enum', 'default', 'examples'].includes(key)) inspect(value);
+    }
   }
   inspect(schema);
   try {

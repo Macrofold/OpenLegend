@@ -5,6 +5,7 @@ import {
   cancelPlan,
   finishPlanAction,
   readyPlanStep,
+  resolvePlanCommand,
 } from './agency.js';
 import {
   WILDERNESS_NEEDS,
@@ -609,6 +610,7 @@ function completeAction(
   events: WorldEvent[],
 ): void {
   const component = actor.actor!;
+  let outputItemId: string | undefined;
   switch (action.type) {
     case 'move':
       if (action.destination) actor.position = { ...action.destination };
@@ -643,7 +645,7 @@ function completeAction(
       }
       const quantity = Math.min(target.resource.quantity, SIMULATION_RULES.gatherQuantity);
       target.resource.quantity -= quantity;
-      addItem(world, actor.id, target.resource.definitionId, quantity);
+      outputItemId = addItem(world, actor.id, target.resource.definitionId, quantity);
       emit(
         world,
         events,
@@ -657,7 +659,7 @@ function completeAction(
     }
     case 'prepare': {
       const preparation = NATIVE_PREPARATIONS[action.preparation!];
-      addItem(world, actor.id, preparation.output, preparation.outputQuantity);
+      outputItemId = addItem(world, actor.id, preparation.output, preparation.outputQuantity);
       emit(
         world,
         events,
@@ -674,6 +676,7 @@ function completeAction(
         return;
       }
       const itemId = addItem(world, actor.id, recipe.outputDefinitionId, 1);
+      outputItemId = itemId;
       emit(
         world,
         events,
@@ -766,7 +769,7 @@ function completeAction(
         failAction(world, actor, events, 'the fire went out before cooking finished.');
         return;
       }
-      addItem(world, actor.id, 'cooked_meat', 1);
+      outputItemId = addItem(world, actor.id, 'cooked_meat', 1);
       emit(
         world,
         events,
@@ -781,12 +784,10 @@ function completeAction(
       emit(world, events, 'rested', `${actor.name} finished resting.`, actor);
       break;
   }
-  finishPlanAction(
-    world,
-    actor.id,
-    action.id,
-    outcome(true, 'completed', `${action.type} completed.`),
-  );
+  finishPlanAction(world, actor.id, action.id, {
+    ...outcome(true, 'completed', `${action.type} completed.`),
+    ...(outputItemId ? { itemId: outputItemId } : {}),
+  });
   component.action = null;
 }
 
@@ -1112,7 +1113,18 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       const step = readyPlanStep(world, actorId);
       if (step) {
         const stepId = step.id;
-        const transition = executeCommand(world, step.command);
+        const command = resolvePlanCommand(component.agency.plan!, step);
+        const transition = command
+          ? executeCommand(world, command)
+          : {
+              world,
+              events: [],
+              outcome: outcome(
+                false,
+                'missing-plan-output',
+                'The earlier step has no completed item output. Revise the plan.',
+              ),
+            };
         world = draftWorld(transition.world);
         events.push(...transition.events);
         actor = world.entities[actorId]!;

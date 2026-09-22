@@ -455,3 +455,24 @@ export interface AttributeView {
   critical?: boolean;
   revision: number;
 }
+
+/** Creator-scoped durable records; candidate JSON is inspectable data, never executable. */
+export interface InventionRequestView {
+  id: string;
+  createdAt: number;
+  conversationId?: string;
+  intent: string;
+  status: AiJobView['status'];
+  code: string;
+  message: string;
+  candidate?: unknown;
+  recipeId?: string;
+  installed: boolean;
+  currentTimeline: boolean;
+}
+export interface InventionHistory {
+  ok: boolean;
+  message?: string;
+  requests: InventionRequestView[];
+  next?: { createdAt: number; id: string };
+}

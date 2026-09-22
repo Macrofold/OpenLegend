@@ -489,7 +489,7 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
-  if (world.schemaVersion !== 7 || !world.moduleManifest)
+  if (world.schemaVersion !== 8 || !world.moduleManifest)
     throw new Error(
       'Incompatible development world schema or missing required module manifest. Older saves are not migrated.',
     );

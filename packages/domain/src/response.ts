@@ -7,6 +7,7 @@ import {
   cancelPlan,
   changeGoal,
   type GoalChange,
+  type PlannedCommand,
 } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { draftWorld } from './draft.js';
@@ -34,7 +35,11 @@ export interface ResponseOperation {
     mode: 'enqueue' | 'replace' | 'cancel';
     expectedRevision: number;
     goalId: string | null;
-    actionIds: string[];
+    steps: {
+      actionId: string | null;
+      itemFromStep: number | null;
+      useItemAs: 'equip' | 'eat' | null;
+    }[];
   } | null;
 }
 export interface ActorResponse {
@@ -131,13 +136,25 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
       return false;
     if (
       op.plan &&
-      (!record(op.plan, ['mode', 'expectedRevision', 'goalId', 'actionIds']) ||
+      (!record(op.plan, ['mode', 'expectedRevision', 'goalId', 'steps']) ||
         !['enqueue', 'replace', 'cancel'].includes(op.plan.mode) ||
         !Number.isSafeInteger(op.plan.expectedRevision) ||
         op.plan.expectedRevision < 0 ||
         !nullableText(op.plan.goalId) ||
-        !strings(op.plan.actionIds) ||
-        op.plan.actionIds.length > 8)
+        !Array.isArray(op.plan.steps) ||
+        op.plan.steps.length > 8 ||
+        op.plan.steps.some(
+          (step, index) =>
+            !record(step, ['actionId', 'itemFromStep', 'useItemAs']) ||
+            (step.actionId !== null
+              ? typeof step.actionId !== 'string' ||
+                step.itemFromStep !== null ||
+                step.useItemAs !== null
+              : !Number.isSafeInteger(step.itemFromStep) ||
+                step.itemFromStep! < 0 ||
+                step.itemFromStep! >= index ||
+                !['equip', 'eat'].includes(step.useItemAs!)),
+        ))
     )
       return false;
     ids.add(op.localId);
@@ -460,7 +477,10 @@ export function commitActorResponse(
     if (op.plan) {
       const component = world.entities[actorId]!.actor!;
       const goalId = goalRef(op.plan.goalId);
-      if (goalId === undefined || op.plan.actionIds.some((handle) => !getOwn(actions, handle)))
+      if (
+        goalId === undefined ||
+        op.plan.steps.some((step) => step.actionId !== null && !getOwn(actions, step.actionId))
+      )
         components[localId] = outcome(
           false,
           'unoffered-action',
@@ -468,7 +488,7 @@ export function commitActorResponse(
         );
       else if (op.plan.mode === 'cancel') {
         if (
-          op.plan.actionIds.length ||
+          op.plan.steps.length ||
           op.plan.goalId !== null ||
           (component.agency.plan?.revision ?? 0) !== op.plan.expectedRevision
         )
@@ -489,11 +509,21 @@ export function commitActorResponse(
         components[localId] = arrangePlan(
           component,
           `${id}:${localId}`,
-          op.plan.actionIds.map((handle, index) => ({
-            ...actions[handle]!,
-            actorId,
-            id: `${id}:${localId}:${index}`,
-          })),
+          op.plan.steps.map(
+            (step, index): PlannedCommand =>
+              step.actionId !== null
+                ? {
+                    ...actions[step.actionId]!,
+                    actorId,
+                    id: `${id}:${localId}:${index}`,
+                  }
+                : {
+                    type: step.useItemAs!,
+                    itemFromStep: `${id}:${localId}:${step.itemFromStep}`,
+                    actorId,
+                    id: `${id}:${localId}:${index}`,
+                  },
+          ),
           op.plan.mode,
           op.plan.expectedRevision,
           goalId,

@@ -1,5 +1,10 @@
 # Documentation changelog
 
+## 2026-09-22 — Shared invention and plan-output slice
+
+- Recorded the bounded supported-family world-agent operation and shared durable pipeline, preserving broader INV requirements and their unchecked state. Ordinary inference is the explicit execution choice for this bounded operation; full discussion/cognition remains separate.
+- Recorded single-output native plan references and schema-8 development save cutover. No legacy migration was introduced. Manual, live-generation and saved-response replay evidence remain distinct; automated coverage was deferred at the owner's instruction.
+
 ## 2026-09-22 — Ownership clarification
 
 - Accepted the owner's NPC/world-creator and player/world-creator joint ownership rule, plus explicit NPC-created filtering. Removed the corresponding D43 uncertainty; remaining account/library and transfer questions stay open.

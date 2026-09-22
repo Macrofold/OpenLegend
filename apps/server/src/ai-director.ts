@@ -1,3 +1,4 @@
+import { inventSupportedTechnique, InventionFailure } from './invention-service.js';
 import { inventionPermission } from '@open-legend/domain';
 import { prepareAttemptInterpretation } from './attempt-interpretation.js';
 import { nativeProtectionReason } from './native-protection.js';
@@ -8,7 +9,7 @@ import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
 import { nearbyEntities, seesEntity, visionRadius } from '@open-legend/domain';
-import { decisionQuestions, inventionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
+import { decisionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
 import { interestMatches, type InterestSubscription } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
@@ -38,14 +39,8 @@ import {
   type GenerateRequest,
   type JudgmentAnswer,
 } from '@open-legend/ai';
-import {
-  DECLARATION_CONTRACT,
-  executeCommand,
-  type DeclarationDraft,
-  type DeclarationProvenance,
-} from '@open-legend/domain';
+import { executeCommand, type DeclarationProvenance } from '@open-legend/domain';
 import type { ApiResult } from '@open-legend/protocol';
-import { declarationSchema } from './ai-schemas.js';
 import { buildContext } from './context.js';
 import { digest, type JobRecord } from './store.js';
 import type { WorldService } from './world-service.js';
@@ -187,6 +182,7 @@ export class AiDirector {
     id: string,
     text: string,
     npcId?: string,
+    conversationId?: string,
   ): Promise<ApiResult> {
     // Independent inference does not wait for remote reflection cancellation/cleanup.
     this.maintenance.cancel();
@@ -194,7 +190,7 @@ export class AiDirector {
       await this.cancel(this.running.job.id);
       this.running = null;
     }
-    return await this.submit(kind, id, text, npcId);
+    return await this.submit(kind, id, text, npcId, undefined, conversationId);
   }
 
   async cancel(jobId: string): Promise<ApiResult> {
@@ -216,6 +212,7 @@ export class AiDirector {
     text: string,
     npcId?: string,
     retryOf?: string,
+    conversationId?: string,
   ): Promise<ApiResult> {
     return this.admission(async () => {
       let original: JobRecord | undefined;
@@ -254,12 +251,20 @@ export class AiDirector {
       }
       const targetId =
         kind === 'chat' ? (npcId ?? this.service.defaultResidentEntityId) : undefined;
-      const fingerprint = digest({ kind, text, targetId, ...(retryOf ? { retryOf } : {}) });
+      const fingerprint = digest({
+        kind,
+        text,
+        targetId,
+        worldId: this.service.world.id,
+        actorId: this.service.controlledEntityId,
+        conversationId,
+        ...(retryOf ? { retryOf } : {}),
+      });
       const previous = await this.service.store.getJob(id);
       if (previous)
         return previous.fingerprint === fingerprint
           ? {
-              ok: previous.status !== 'failed',
+              ok: !['failed', 'cancelled', 'stale'].includes(previous.status),
               code: previous.status,
               message: previous.message,
               jobId: id,
@@ -274,6 +279,9 @@ export class AiDirector {
         kind === 'invention'
           ? {
               actorId: this.service.controlledEntityId,
+              worldId: this.service.world.id,
+              timelineId: this.service.timelineId,
+              ...(conversationId ? { conversationId } : {}),
               authority: {
                 origin: 'player' as const,
                 policyRevision: this.service.world.inventionPolicy.revision,
@@ -353,6 +361,7 @@ export class AiDirector {
       const job: JobRecord = {
         id,
         kind,
+        ...(invention ? { invention: { code: 'queued' } } : {}),
         fingerprint,
         status: 'queued',
         message:
@@ -527,13 +536,28 @@ export class AiDirector {
         this.log.withTrigger(job.id, async () => {
           const known = error instanceof StopJob;
           const cancelled = run.controller.signal.aborted;
+          if (run.job.request.invention)
+            run.job.invention = {
+              ...run.job.invention,
+              code:
+                error instanceof InventionFailure
+                  ? error.code
+                  : run.job.invention?.code &&
+                      !['queued', 'candidate'].includes(run.job.invention.code)
+                    ? run.job.invention.code
+                    : known
+                      ? error.status
+                      : cancelled
+                        ? 'cancelled'
+                        : 'failed',
+            };
           await this.log.record(`${run.job.id}:failure`, 'Workflow failure', {
             reason: error instanceof Error ? error.message : 'Unknown failure',
           });
           await this.update(
             run,
             known ? error.status : cancelled ? 'cancelled' : 'failed',
-            known
+            known || error instanceof InventionFailure
               ? error.message
               : cancelled
                 ? (run.cancelReason ?? 'The request was cancelled before completion.')
@@ -662,6 +686,11 @@ export class AiDirector {
       { settled: true, receipt: result.receipt },
       accountingStartedAt,
     );
+    if (result.outcome !== 'value' && run.job.request.invention)
+      run.job.invention = {
+        ...run.job.invention,
+        code: result.receipt.completionUncertain ? 'uncertain' : result.outcome,
+      };
     if (result.outcome === 'value' && this.service.paused) await this.awaitResume(run, true);
     if (run.cancelReason) throw new StopJob('cancelled', run.cancelReason);
     // Surface actual provider failures even when an explicit request is paused.
@@ -1135,112 +1164,28 @@ export class AiDirector {
   }
 
   private async invent(run: Running): Promise<void> {
-    this.current(run);
-    const { actorId, authority } = run.job.request.invention!;
-    const context = buildContext(this.service, actorId, run.job.request.text);
-    const criteria: Record<string, string> = {
-      swing: 'A new physical sling-like stone launcher using binding and a flexible pouch.',
-      flex: 'A new physical bow-like launcher with flexible rigid body and binding, using arrows.',
-      arrow:
-        'A new physical arrow with shaft, point and fiber fletching, requiring a compatible bow to fire.',
-    };
-    for (const recipe of context.knownRecipes)
-      criteria[`reuse:${recipe.id}`] =
-        `Existing supported technique already fulfills this request: ${recipe.name}. ${recipe.description}. Exact material roles: ${JSON.stringify(recipe.inputs)}. Do not reuse if the request explicitly requires materially different inputs or mechanics.`;
-    const judged = await this.call(
-      run,
-      'jev',
-      'route',
-      async (id) =>
-        await this.client.judge({
-          requestId: id,
-          signal: run.controller.signal,
-          state: { context, contract: DECLARATION_CONTRACT },
-          questions: inventionQuestions(criteria),
-        }),
-    );
-    const admissibility = choice(judged.answers['admissibility']);
-    if (admissibility !== 'supported')
-      throw new StopJob(
-        'failed',
-        admissibility === 'forbidden'
-          ? 'This grounded world cannot admit magic or free resources. Describe a physical mechanism and materials.'
-          : admissibility === 'unsupported'
-            ? 'That request needs an unsupported mechanism or unsuitable materials. This version supports physical slings, bows and arrows.'
-            : 'Describe one invention at a time: its purpose and materials. Jev could not establish a supported invention confidently.',
-      );
-    const route = choice(judged.answers['route']);
-    if (route?.startsWith('reuse:')) {
-      const recipe = this.service.world.recipes[route.slice(6)];
-      if (!recipe || !context.knownRecipes.some((candidate) => candidate.id === recipe.id))
-        throw new StopJob(
-          'failed',
-          'The suggested existing technique was not in the permitted candidate set.',
-        );
-      await this.update(
-        run,
-        'completed',
-        `You already know ${recipe.name}. Use its Craft action; no new LLM generation was needed.`,
-        { reusedRecipeId: recipe.id },
-      );
-      return;
-    }
-    if (!route || !['swing', 'flex', 'arrow'].includes(route))
-      throw new StopJob(
-        'failed',
-        'Describe one invention at a time: its purpose and materials. Jev could not select a supported family confidently.',
-      );
-    type Generated = Omit<DeclarationDraft, 'output'> & {
-      output: Omit<DeclarationDraft['output'], 'launcher' | 'ammunition'> & {
-        launcher: DeclarationDraft['output']['launcher'] | null;
-        ammunition: DeclarationDraft['output']['ammunition'] | null;
-      };
-    };
-    const generationContext = buildContext(this.service, actorId, run.job.request.text);
-    const generated = await this.generate<Generated>(run, {
-      task: 'invent_supported_technique',
-      schema: declarationSchema,
-      context: { ...generationContext, selectedFamily: route, contract: DECLARATION_CONTRACT },
-      instructions: `${DATA_RULE} Design one genuinely new useful recipe from the trusted finite construction contract. Honor the requested physical materials and selected family. Use native material IDs listed in the context. Respect role requirements, quantity/work/parameter envelopes, required body rigidity for flex launchers, and output properties inherited from inputs. No code, magic, food, fuel, free resources or unregistered operations. This is a proposal; independent admission decides validity. For a launcher set ammunition null; for an arrow set launcher null. Use sensible modest costs and describe the preparation/assembly with its use prerequisites. Do not copy a prewritten final recipe; compose one for this request.`,
-    });
-    this.current(run);
-    const draft: DeclarationDraft = {
-      ...generated,
-      output: {
-        kind: generated.output.kind,
-        name: generated.output.name,
-        description: generated.output.description,
-        properties: generated.output.properties,
-        ...(generated.output.launcher ? { launcher: generated.output.launcher } : {}),
-        ...(generated.output.ammunition ? { ammunition: generated.output.ammunition } : {}),
-      },
-    };
-    if (
-      route === 'swing' || route === 'flex'
-        ? draft.output.launcher?.mechanism !== route
-        : draft.output.ammunition?.kind !== 'arrow'
-    )
-      throw new StopJob(
-        'failed',
-        'Generated mechanics did not match the routed request. Nothing was admitted.',
-      );
-    const knownMaterials = new Set(generationContext.materials.map((material) => material.id));
-    if (!draft.inputs.every((input) => knownMaterials.has(input.definitionId)))
-      throw new StopJob(
-        'failed',
-        'The proposal used a material outside the inventor’s supplied knowledge. Nothing was admitted.',
-      );
-    const outcome = await this.service.admit(draft, {
-      requestId: run.job.id,
-      actorId,
-      authority,
+    await inventSupportedTechnique(this.service, run.job.id, run.job.request, {
+      current: () => this.current(run),
       source: this.executionSource,
-      model: run.generatedBy ?? this.service.config.llmModel,
-      evidence: [`Jev route ${route}; definition generated from scoped material evidence.`],
-    });
-    await this.update(run, outcome.ok ? 'completed' : 'failed', outcome.message, {
-      draft,
-      admitted: outcome.ok,
+      model: () => run.generatedBy ?? this.service.config.llmModel,
+      judge: (request) =>
+        this.call(run, 'jev', 'route', (id) =>
+          this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+        ),
+      generate: (request) => this.generate(run, request),
+      checkpoint: async (candidate) => {
+        run.job.invention = {
+          ...run.job.invention,
+          code: 'candidate',
+          candidate,
+          candidateDigest: digest(candidate),
+        };
+        await this.service.store.putJob(run.job);
+      },
+      finish: async (status, message, result) => {
+        run.job.invention = { ...run.job.invention, ...result };
+        await this.update(run, status, message, result);
+      },
     });
   }
 

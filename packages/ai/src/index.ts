@@ -11,4 +11,10 @@ export {
 
 export * from './embedding.js';
 
-export { validateQuestions, decodeJudge, decodeUsage } from './validation.js';
+export {
+  compileSchema,
+  InvalidData,
+  validateQuestions,
+  decodeJudge,
+  decodeUsage,
+} from './validation.js';

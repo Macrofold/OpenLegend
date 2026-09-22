@@ -47,6 +47,7 @@ const interaction = z
   .strict();
 const worldAgentMessage = z
   .object({
+    mode: z.enum(['discuss', 'invent']),
     retryOf: requestIdSchema.optional(),
     requestId: requestIdSchema,
     conversationId: requestIdSchema,
@@ -1217,6 +1218,57 @@ export async function createGameServer(
               message: value.visible ? 'Present.' : 'Away.',
             });
           }
+          case '/api/inventions/list': {
+            const value = z
+              .object({
+                worldId: requestIdSchema,
+                before: z
+                  .object({ createdAt: z.number().int().nonnegative(), id: requestIdSchema })
+                  .strict()
+                  .optional(),
+              })
+              .strict()
+              .parse(body);
+            if (value.worldId !== service.world.id)
+              return send(response, 409, { ok: false, message: 'World mismatch.' });
+            const jobs = await store.inventionJobs(
+              service.world.id,
+              service.controlledEntityId,
+              value.before,
+            );
+            const requests = jobs.map((job) => {
+              const scope = job.request.invention!;
+              const recipeId = job.invention?.recipeId;
+              // A historical success is not proof of installation after restoring an older save.
+              // docs/architecture.md#shared-invention-workflow
+              return {
+                id: job.id,
+                createdAt: job.createdAt,
+                conversationId: scope.conversationId,
+                intent: job.request.text,
+                status: job.status,
+                code: job.invention?.code ?? job.status,
+                message: job.message,
+                candidate: job.invention?.candidate,
+                recipeId,
+                installed:
+                  !!recipeId &&
+                  !!service.world.recipes[recipeId] &&
+                  !!service.world.knowledge[scope.actorId]?.some(
+                    (entry) => entry.recipeId === recipeId,
+                  ),
+                currentTimeline: scope.timelineId === service.timelineId,
+              };
+            });
+            const last = jobs.at(-1);
+            return send(response, 200, {
+              ok: true,
+              requests,
+              ...(jobs.length === 50 && last
+                ? { next: { createdAt: last.createdAt, id: last.id } }
+                : {}),
+            });
+          }
           case '/api/world-agent/messages': {
             const value = worldAgentMessage.parse(body);
             if (value.worldId !== service.world.id)
@@ -1225,7 +1277,22 @@ export async function createGameServer(
                 code: 'world-mismatch',
                 message: 'This conversation belongs to another world.',
               });
-            const result = await director.macrofold.message(value);
+            if (value.mode === 'invent' && value.retryOf)
+              return send(response, 400, {
+                ok: false,
+                message:
+                  'Submit a new explicit invention request; failed work is never replayed automatically.',
+              });
+            const result =
+              value.mode === 'invent'
+                ? await director.submitInteractive(
+                    'invention',
+                    value.requestId,
+                    value.text,
+                    undefined,
+                    value.conversationId,
+                  )
+                : await director.macrofold.message(value);
             return send(response, result.ok ? 200 : 409, result);
           }
           case '/api/world-agent/close': {

@@ -44,13 +44,16 @@ Use the current single writer and existing stores first. No new platform depende
 
 ### AG03 — Bounded plan frontier and one native physical lane
 
+- [x] Retain actual single-item/stack outputs from gather/prepare/craft/cook; resolve earlier-step references at native dispatch and preserve them through restart. The decision envelope supports equip/eat output consumers.
+- [ ] Extend result references only when a concrete consumer needs quantities, multi-output selection, recipe outputs, cross-frontier references or model-selected cook targets. The freeform attempt interpreter still uses concrete offered commands; qualify an output-reference contract before extending it.
+
 - [x] Integrate explicit cancel/replace and interruption detection with native work, preserving actual spent materials, retained goals and completed receipts. General suspended-work resumption remains in the unchecked requirement below.
 
 **Owner:** domain native execution/agency state; server readiness adapter. **Depends on:** AG02. **Touchpoints:** `packages/domain/src/kernel.ts`, `types.ts`, native action outcomes, existing `WorldService` transition path.
 
 - [x] Persist short plan frontiers with step identity, supported arguments, success dependencies, blocked/waiting dispositions and the actual last outcome. A one-off sequence may exist without a durable goal.
 - [x] Bind the actor-selected foreground plan and ordered one-off queue; blocked work cannot silently switch goals through an implicit utility scorer. Add enqueue and explicit replace/cancel semantics around the existing single action slot. Do not implement a plan by calling `executeCommand` for several timed actions in one immediate response.
-- [ ] Dispatch only ready native work and revalidate at start. Bind an earlier step's output through trusted typed result references. Do not use a prewritten future item ID or treat queue admission as completion.
+- [x] Dispatch only ready native work and revalidate at start. Bind an earlier step's output through trusted typed result references. Do not use a prewritten future item ID or treat queue admission as completion.
 - [x] Advance known valid steps without another model call. On failure, block dependent work and create at most the eligible reconsideration opportunity; do not blindly attempt the remainder or regenerate the same plan.
 - [ ] Implement interruption during long-running work using trusted action-family pause/cancel boundaries, retaining consumed materials, committed effects and actual elapsed work. Revalidate suspended plans before resuming; do not imply every family supports pause/resume. Plan edits cannot rewrite completed receipts, refund resources or control another actor's response.
 

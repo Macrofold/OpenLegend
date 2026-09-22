@@ -12,6 +12,8 @@ import {
   macrofoldObject as object,
   macrofoldString as string,
   validateMacrofoldValue,
+  compileSchema,
+  InvalidData,
   validateQuestions,
   decodeJudge,
   decodeUsage,
@@ -601,6 +603,8 @@ export class MacrofoldBackend implements AiClient {
       ),
     ]);
     try {
+      // Validate caller contracts before spending, including schema-keyword field names.
+      compileSchema(request.schema);
       if (request.execution === 'fast' || request.execution === 'complex')
         return await this.singleInference<T>(request, receipt, signal);
       // Fresh history for each bounded inference; only explicitly permitted context
@@ -638,7 +642,8 @@ export class MacrofoldBackend implements AiClient {
           ? 'cancelled'
           : receipt.completionUncertain
             ? 'uncertain'
-            : error instanceof SyntaxError ||
+            : error instanceof InvalidData ||
+                error instanceof SyntaxError ||
                 (error instanceof Error && error.message.includes('requested schema'))
               ? 'invalid'
               : 'failed',
