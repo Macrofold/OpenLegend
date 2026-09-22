@@ -879,6 +879,38 @@ export async function createGameServer(
             const { expectedGeneration, ...request } = value;
             return send(response, 200, await service.godAttributeEdit(request, expectedGeneration));
           }
+          case '/api/god/invention-policy': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            z.object({}).strict().parse(body);
+            return send(response, 200, {
+              ok: true,
+              generation: service.generation,
+              policy: service.world.inventionPolicy,
+            });
+          }
+          case '/api/god/invention-policy/save': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({
+                expectedGeneration: z.string().uuid(),
+                expectedRevision: z.number().int().positive(),
+                playerLocked: z.boolean(),
+                agentLocked: z.boolean(),
+              })
+              .strict()
+              .parse(body);
+            return send(
+              response,
+              200,
+              await service.godInventionPolicy(
+                value.expectedGeneration,
+                value.expectedRevision,
+                value,
+              ),
+            );
+          }
           case '/api/god/definitions/attributes': {
             if (!config.godMode)
               return send(response, 403, { ok: false, message: 'God access required.' });

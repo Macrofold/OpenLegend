@@ -1,3 +1,4 @@
+import { validateInventionPolicy } from './invention-policy.js';
 import { validateAgency } from './agency.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
 import { hasWildernessNeeds } from './wilderness-needs.js';
@@ -487,10 +488,22 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
-  if (world.schemaVersion !== 5 || !world.moduleManifest)
+  if (world.schemaVersion !== 6 || !world.moduleManifest)
     throw new Error(
-      'Incompatible development world; required module manifest is missing. Older saves are not migrated.',
+      'Incompatible development world schema or missing required module manifest. Older saves are not migrated.',
     );
+  validateInventionPolicy(world.inventionPolicy);
+  for (const recipe of Object.values(world.recipes)) {
+    const authority = recipe.provenance?.authority;
+    if (
+      !authority ||
+      !['player', 'agent'].includes(authority.origin) ||
+      !Number.isSafeInteger(authority.policyRevision) ||
+      authority.policyRevision < 1 ||
+      authority.policyRevision > world.inventionPolicy.revision
+    )
+      throw new Error('Missing or invalid saved invention origin.');
+  }
   validateAgency(world);
   validateModuleManifest(world.moduleManifest);
   for (const e of Object.values(world.entities)) {

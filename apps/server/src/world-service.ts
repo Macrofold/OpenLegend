@@ -1,3 +1,4 @@
+import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
   admitAttributeDeclaration,
@@ -876,6 +877,38 @@ export class WorldService {
 
   async spawn(draft: GodSpawnDraft): Promise<ApiResult> {
     return await this.godTransition((world) => spawnWorldEntity(world, draft));
+  }
+
+  async godInventionPolicy(
+    expectedGeneration: string,
+    expectedRevision: number,
+    settings: { playerLocked: boolean; agentLocked: boolean },
+  ): Promise<ApiResult> {
+    if (!this.config.godMode)
+      return { ok: false, code: 'forbidden', message: 'God access required.' };
+    return this.godTransition((world) => {
+      const reject = (code: string, message: string) => ({
+        world,
+        events: [],
+        outcome: { ok: false, code, message },
+      });
+      if (expectedGeneration !== this.generation)
+        return reject('stale', 'The world was restored; refresh before editing.');
+      // Autonomous authoring is not yet privacy/recovery-qualified. Persist the independent
+      // setting now, but do not present unlock as usable before INV-1's enablement gate.
+      if (!settings.agentLocked)
+        return reject(
+          'invention-unqualified',
+          'Autonomous invention is not available yet. Its privacy and recovery checks must pass before unlocking.',
+        );
+      return changeInventionPolicy(
+        world,
+        expectedRevision,
+        settings,
+        this.profile.id,
+        'Owner changed invention settings.',
+      );
+    });
   }
 
   async godAttributeDeclaration(

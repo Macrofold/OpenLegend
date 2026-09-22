@@ -1,3 +1,4 @@
+import { initialInventionPolicy } from './invention-policy.js';
 import { seedAgency } from './agency.js';
 import { createModuleManifest } from './world-modules.js';
 import { initializeIdentity } from './identity.js';
@@ -186,7 +187,8 @@ export function createActor(
 export function createWorld(seed = 73): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
-    schemaVersion: 5,
+    schemaVersion: 6,
+    inventionPolicy: initialInventionPolicy(),
     moduleManifest: createModuleManifest(),
     storyPolicy: defaultStoryPolicy(),
     visibleObjects: {},

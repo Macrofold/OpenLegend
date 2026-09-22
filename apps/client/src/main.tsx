@@ -1,3 +1,4 @@
+import { InventionSettings } from './ui/invention-settings';
 import { GameSavesPanel } from './ui/game-saves';
 import { History, Narrator } from './ui/history';
 import { createRoot } from 'react-dom/client';
@@ -653,6 +654,7 @@ function App() {
       case 'help':
         return (
           <>
+            <InventionSettings view={view} />
             <Section title="Appearance">
               <label>
                 World theme

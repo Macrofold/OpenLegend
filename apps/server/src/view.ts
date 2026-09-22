@@ -506,6 +506,11 @@ export async function projectView(
     saveTimeline: service.timelineId,
     commandEpoch: service.commandEpoch,
     godMode: service.config.godMode,
+    inventionPolicy: {
+      revision: world.inventionPolicy.revision,
+      playerLocked: world.inventionPolicy.playerLocked,
+      agentLocked: world.inventionPolicy.agentLocked,
+    },
     ...(service.config.godMode
       ? {
           godTools: {
@@ -772,6 +777,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
     previous.saveTimeline !== next.saveTimeline ||
     previous.schemaVersion !== next.schemaVersion ||
     previous.godMode !== next.godMode ||
+    !same(previous.inventionPolicy, next.inventionPolicy) ||
     !same(previous.godTools, next.godTools) ||
     !same(previous.vision, next.vision) ||
     !same(previous.map, next.map)

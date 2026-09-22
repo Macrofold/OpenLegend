@@ -7,7 +7,7 @@ import { SaveFiles } from './save-files.js';
 // 2026-09-21: no real players. No legacy readers or migrations until the owner lifts
 // docs/save-and-load.md#active-development-policy. Bump this on incompatible changes.
 export class GameSaveError extends Error {}
-export const SAVE_FORMAT = 'development-2026-09-22-agency1';
+export const SAVE_FORMAT = 'development-2026-09-22-invention-policy1';
 const MAX_SAVES = 20;
 const MAX_BYTES = 64 * 1024 * 1024;
 type Rows = Record<string, unknown>[];
@@ -138,7 +138,7 @@ export class GameSaves {
       payload.format !== SAVE_FORMAT ||
       digest(payload) !== row['checksum'] ||
       payload.state?.world?.id !== worldId ||
-      payload.state.world.schemaVersion !== 5 ||
+      payload.state.world.schemaVersion !== 6 ||
       !HISTORY_TABLES.every((table) => Array.isArray(payload.history?.[table]))
     )
       throw new GameSaveError('Save integrity check failed.');

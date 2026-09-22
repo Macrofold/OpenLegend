@@ -90,7 +90,12 @@ export function ActionPicker({
     showUnavailable,
     picker.context.targetId,
   );
-  const canInvent = connected && !error && !!query.trim() && !matches.some((a) => a.enabled);
+  const canInvent =
+    !view.inventionPolicy.playerLocked &&
+    connected &&
+    !error &&
+    !!query.trim() &&
+    !matches.some((a) => a.enabled);
   const showInspect =
     !!picker.entity && (!query || 'look closer description inspect'.includes(query.toLowerCase()));
   const showRevive =
@@ -307,7 +312,9 @@ export function ActionPicker({
         {!error && !matches.length && !showInspect && !showRevive && !showAdd && (
           <p className="ol-meta">
             {query
-              ? 'No matching actions. Press Enter to invent this idea.'
+              ? view.inventionPolicy.playerLocked
+                ? 'No matching actions. Player invention is locked.'
+                : 'No matching actions. Press Enter to invent this idea.'
               : actions.length
                 ? 'Available actions are hidden. Show unavailable actions to see why.'
                 : 'No actions here yet.'}

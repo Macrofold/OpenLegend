@@ -1,3 +1,4 @@
+import { inventionPermission } from '@open-legend/domain';
 import { prepareAttemptInterpretation } from './attempt-interpretation.js';
 import { nativeProtectionReason } from './native-protection.js';
 import { currentGoal } from '@open-legend/domain';
@@ -159,6 +160,14 @@ export class AiDirector {
     );
     this.unsubscribe = service.subscribe(() => {
       const run = this.running;
+      if (run?.job.kind === 'invention' && run.job.request.invention) {
+        const permission = inventionPermission(service.world, run.job.request.invention.authority);
+        if (!permission.ok) {
+          run.cancelReason = permission.message;
+          run.controller.abort();
+          return;
+        }
+      }
       if (service.paused && run?.job.kind === 'thought') {
         run.controller.abort();
         return;
@@ -260,6 +269,21 @@ export class AiDirector {
               code: 'idempotency-conflict',
               message: 'That request ID was already used for different input.',
             };
+      // Capture origin before any paid routing; worker/model identity cannot change it.
+      const invention =
+        kind === 'invention'
+          ? {
+              actorId: this.service.controlledEntityId,
+              authority: {
+                origin: 'player' as const,
+                policyRevision: this.service.world.inventionPolicy.revision,
+              },
+            }
+          : undefined;
+      if (invention) {
+        const permission = inventionPermission(this.service.world, invention.authority);
+        if (!permission.ok) return permission;
+      }
       if (original) {
         const latest = await this.service.store.getSpeechJob(original.playerSpeechEventId!);
         const receipt = this.service.world.responseReceipts?.[original.id];
@@ -335,7 +359,11 @@ export class AiDirector {
           kind === 'chat'
             ? `${this.service.world.entities[targetId!]?.name ?? 'The person'} is considering your words.`
             : 'Checking known techniques and supported mechanisms.',
-        request: { text, ...(targetId ? { npcId: targetId } : {}) },
+        request: {
+          text,
+          ...(targetId ? { npcId: targetId } : {}),
+          ...(invention ? { invention } : {}),
+        },
         ...(original
           ? { retryOf: original.id, playerSpeechEventId: original.playerSpeechEventId }
           : {}),
@@ -393,9 +421,16 @@ export class AiDirector {
               ? 'This request was cancelled when the game paused.'
               : 'This request was cancelled before completion.'),
       );
+    if (run.job.kind === 'invention') {
+      const permission = inventionPermission(
+        this.service.world,
+        run.job.request.invention?.authority,
+      );
+      if (!permission.ok) throw new StopJob('stale', permission.message);
+    }
     const actorId =
       run.job.kind === 'invention'
-        ? this.service.controlledEntityId
+        ? run.job.request.invention!.actorId
         : (run.job.request.npcId ?? this.service.defaultResidentEntityId);
     const actor = this.service.world.entities[actorId];
     if (run.generation !== this.service.generation || !actor?.actor?.alive)
@@ -411,10 +446,7 @@ export class AiDirector {
         nativeProtectionReason(this.service.world, actorId))
     )
       throw new StopJob('stale', 'Native urgent needs superseded semantic work.');
-    if (
-      run.job.kind === 'invention' &&
-      this.service.world.entities[this.service.controlledEntityId]?.actor?.incapacitated
-    )
+    if (run.job.kind === 'invention' && this.service.world.entities[actorId]?.actor?.incapacitated)
       throw new StopJob('stale', 'The inventor became incapacitated; this result was not applied.');
   }
 
@@ -452,7 +484,7 @@ export class AiDirector {
       worldId: this.service.world.id,
       actorId:
         job.kind === 'invention'
-          ? this.service.controlledEntityId
+          ? job.request.invention!.actorId
           : (job.request.npcId ?? this.service.defaultResidentEntityId),
       actorName:
         this.service.world.entities[job.request.npcId ?? this.service.defaultResidentEntityId]
@@ -1103,11 +1135,9 @@ export class AiDirector {
   }
 
   private async invent(run: Running): Promise<void> {
-    const context = buildContext(
-      this.service,
-      this.service.controlledEntityId,
-      run.job.request.text,
-    );
+    this.current(run);
+    const { actorId, authority } = run.job.request.invention!;
+    const context = buildContext(this.service, actorId, run.job.request.text);
     const criteria: Record<string, string> = {
       swing: 'A new physical sling-like stone launcher using binding and a flexible pouch.',
       flex: 'A new physical bow-like launcher with flexible rigid body and binding, using arrows.',
@@ -1166,11 +1196,7 @@ export class AiDirector {
         ammunition: DeclarationDraft['output']['ammunition'] | null;
       };
     };
-    const generationContext = buildContext(
-      this.service,
-      this.service.controlledEntityId,
-      run.job.request.text,
-    );
+    const generationContext = buildContext(this.service, actorId, run.job.request.text);
     const generated = await this.generate<Generated>(run, {
       task: 'invent_supported_technique',
       schema: declarationSchema,
@@ -1206,7 +1232,8 @@ export class AiDirector {
       );
     const outcome = await this.service.admit(draft, {
       requestId: run.job.id,
-      actorId: this.service.controlledEntityId,
+      actorId,
+      authority,
       source: this.executionSource,
       model: run.generatedBy ?? this.service.config.llmModel,
       evidence: [`Jev route ${route}; definition generated from scoped material evidence.`],

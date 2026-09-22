@@ -158,6 +158,7 @@ export interface AiJobView {
 }
 
 export interface GameView {
+  inventionPolicy: { revision: number; playerLocked: boolean; agentLocked: boolean };
   saveTimeline?: string;
   commandEpoch?: string;
   historyRevision?: string;

@@ -72,6 +72,7 @@ export interface DeclarationDraft {
   };
 }
 export interface DeclarationProvenance {
+  authority: import('./invention-policy.js').InventionAuthority;
   requestId: string;
   actorId: string;
   source: 'live-model' | 'test-fixture';
@@ -250,6 +251,7 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  inventionPolicy: import('./invention-policy.js').InventionPolicy;
   moduleManifest: import('./world-modules.js').WorldModuleManifest;
   storyPolicy?: import('./story-selection.js').StoryPolicy;
   storyPolicyRevision?: number;
@@ -262,7 +264,7 @@ export interface WorldState {
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
-  schemaVersion: 1 | 2 | 3 | 4 | 5;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
   id: string;
   seed: number;
   rngState: number;

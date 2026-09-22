@@ -1,3 +1,4 @@
+import { inventionPermission } from './invention-policy.js';
 import {
   attributeDefinition,
   HOST_IMPLEMENTATIONS,
@@ -235,6 +236,8 @@ export function admitDeclaration(
       'invalid-provenance',
       'Declaration needs an active actor and a durable authoring request.',
     );
+  const permission = inventionPermission(original, provenance.authority);
+  if (!permission.ok) return { world: original, events: [], outcome: permission };
   const errors = validateDeclaration(original, draft);
   if (errors.length) return reject('invalid-declaration', errors.join(' '));
   const digest = canonicalJson(draft);
@@ -350,6 +353,11 @@ export function admitAttributeDeclaration(
     !!request.definition === !!request.removeId
   )
     return reject('Invalid or stale definition request.');
+  const permission = inventionPermission(original, {
+    origin: 'player',
+    policyRevision: original.inventionPolicy.revision,
+  });
+  if (!permission.ok) return { world: original, events: [], outcome: permission };
   const id = request.definition?.id ?? request.removeId!;
   const previous = attributeDefinition(original, id);
   if (previous && HOST_IMPLEMENTATIONS[previous.implementation].storage !== 'attributes')

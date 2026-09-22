@@ -52,7 +52,11 @@ export interface JobRecord extends AiJobView {
   stimulusEvidenceIds?: string[];
   fingerprint: string;
   createdAt: number;
-  request: { text: string; npcId?: string };
+  request: {
+    text: string;
+    npcId?: string;
+    invention?: { actorId: string; authority: import('@open-legend/domain').InventionAuthority };
+  };
   result?: unknown;
   startedAt?: number;
   completedAt?: number;

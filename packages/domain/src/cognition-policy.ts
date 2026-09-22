@@ -1,3 +1,4 @@
+import { inventionPermission } from './invention-policy.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { finish, outcome } from './events.js';
 import type { Transition, WorldState } from './types.js';
@@ -45,6 +46,11 @@ export function admitCognitionPolicy(
     p.significantEventTypes.some((t) => typeof t !== 'string' || !/^[a-z-]{1,64}$/.test(t))
   )
     return reject();
+  const permission = inventionPermission(input, {
+    origin: 'player',
+    policyRevision: input.inventionPolicy.revision,
+  });
+  if (!permission.ok) return { world: input, events: [], outcome: permission };
   const world = draftWorld(input);
   world.cognitionPolicy = cloneValue(p);
   return finish(

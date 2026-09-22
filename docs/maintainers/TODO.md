@@ -6,11 +6,15 @@ Runtime latency, database scheduling, native CPU, buffering and long-session opt
 
 [Agent agency](agent-agency.md) owns the new decision/goal/plan work; [EPR](events-perception-and-reactions.md) owns shared reaction intake. Their tasks and acceptance stay in those focused trackers.
 
+## Deferred invention-policy validation
+
+- [ ] Update existing declaration/save fixtures for required origin stamps and schema 6, then automate independent locks, pre-dispatch denial, lock/reopen revocation, unrelated-group changes, cancellation accounting, owner definition/state distinctions, stale settings, restore-generation fencing and same-version save recovery. Cover missing/forged origin, non-god endpoints, public settings and UI persistence. Do not add legacy migrations; fixture changes and automated suites were deferred at the owner's request.
+
 ## Deferred agency validation
 
 Automated tests were explicitly excluded for this slice. Production compilation and manual native/service/browser execution are evidence only for the observed cases.
 
-- [ ] Update existing response/goal/save fixtures for the intentional schema-5 cutover, then add automated coverage for the [AG11 matrix](agent-agency.md#ag11--integrated-deterministic-and-adversarial-acceptance). Cover strict provider encoding, repeated operations, partial admission, alias/reference attacks, actual durations/material conservation, saved running work, cancellation, terminal-history bounds, reflection revisions, scope/privacy, starvation adequacy, private feedback and stale/retired job admission. Do not add old-save conversion fixtures.
+- [ ] Update existing response/goal/save fixtures for the intentional schema-6 cutover, then add automated coverage for the [AG11 matrix](agent-agency.md#ag11--integrated-deterministic-and-adversarial-acceptance). Cover strict provider encoding, repeated operations, partial admission, alias/reference attacks, actual durations/material conservation, saved running work, cancellation, terminal-history bounds, reflection revisions, scope/privacy, starvation adequacy, private feedback and stale/retired job admission. Do not add old-save conversion fixtures.
 - [ ] Add injected persistence-failure and concurrent-admission coverage for atomic decision/job writes, restart at each dispatch boundary and callbacks beyond hot receipt retention. Extend same-version SQLite observations to PostgreSQL.
 - [ ] Add automated coverage for verified Macrofold harness failure with absent billing: preserve the failure code/run ID and failed execution disposition while retaining the full unpriced reservation. Include reflection, full generation and world-agent callers; transport/persistence uncertainty must remain distinct. Manual replay evidence is in [Verification](../verification.md#live-agency-contracts).
 - [ ] Run the separate [AG12 live gate](agent-agency.md#ag12--behavioral-value-and-cost-separately-authorized) with an explicitly authorized total spending cap. Verify immediate/reflection provider schema compatibility, spontaneous optionality, useful plan construction/adaptation and complete costs before claiming model quality.

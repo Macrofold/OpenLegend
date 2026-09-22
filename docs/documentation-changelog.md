@@ -1,5 +1,10 @@
 # Documentation changelog
 
+## 2026-09-22 — Invention policy defaults
+
+- Selected player invention open for the local prototype, preserving existing behavior under the owner's delegated implementation discretion. NPC invention remains locked with its existing enablement gate. D42 retains delegated creator rights and the proposed owner exception; no exception was adopted.
+- Recorded current policy boundaries in Architecture and partial completion under INV-1.3; broad workflow and live autonomous-authoring acceptance remain open.
+
 ## Actor agency implementation boundary
 
 Architecture and implementation status now distinguish the delivered schema-5 agency slice from remaining AG/INV work. The former one-of-each response and writable goal mirrors are superseded. Goal seeds remain descriptive identity; current intentions have one domain owner. The implementation section anchor moved from `agency-implementation-boundary` to `actor-agency-foundation`, with inbound references updated. Manual evidence and explicitly deferred automated/live qualification remain separate.

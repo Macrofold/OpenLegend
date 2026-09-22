@@ -76,7 +76,9 @@ export function Composer({
   );
   const actorBlocked =
     draft.mode !== 'chat'
-      ? null
+      ? view.inventionPolicy.playerLocked
+        ? 'Player invention is locked. Existing crafts remain available.'
+        : null
       : !npc
         ? npcId
           ? 'This person is no longer in view.'

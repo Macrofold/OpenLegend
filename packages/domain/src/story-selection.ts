@@ -1,3 +1,5 @@
+import { inventionPermission } from './invention-policy.js';
+import { canonicalJson } from './events.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 import { updateWorld } from './draft.js';
 
@@ -205,6 +207,15 @@ export function editStoryMechanism(
   changes: { entityId: string; values: Record<string, number> | null }[],
 ): WorldState {
   validateStoryPolicy(policy);
+  // Existing field values remain editable while definition authoring is locked.
+  // docs/architecture.md#invention-policy-boundary
+  if (canonicalJson(policy) !== canonicalJson(world.storyPolicy)) {
+    const permission = inventionPermission(world, {
+      origin: 'player',
+      policyRevision: world.inventionPolicy.revision,
+    });
+    if (!permission.ok) throw new Error(permission.message);
+  }
   return updateWorld(world, (draft) => {
     draft.storyPolicy = structuredClone(policy);
     for (const change of changes) {
