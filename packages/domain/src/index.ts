@@ -75,3 +75,9 @@ export * from './agency.js';
 export * from './invention-policy.js';
 
 export * from './invention-attribution.js';
+
+export {
+  SUPPORTED_INVENTION_FAMILIES,
+  inventionFamily,
+  type InventionFamily,
+} from './invention-families.js';

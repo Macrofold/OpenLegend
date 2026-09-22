@@ -243,3 +243,12 @@ No automated tests were written or run for this slice at the owner's request. Ru
 - [ ] Run the existing full check and appropriate focused suites after the test repairs; compare the same PF population/history scenarios before claiming scale. No model-quality, paid-cost, or full EW-R1–EW-R3 acceptance follows from native runtime checks.
 
 - [ ] Automate contact onset/detail/end, stationary persistence, receiver hearing and teaching exclusion, unknown identity/provenance filtering, collision-limited probes, same-version episode continuation, missing sense pins and aggregate contact bounds. Include multiple moving sources, removal, sleep/incapacity and spatial candidate fairness; implementation remains EWF05/EPR-owned.
+
+## Supported-invention loop — deferred automated validation
+
+No automated tests were written or run for this slice at the owner's request. Implementation ownership remains [INV-1/2/3](inventions-and-world-evolution.md); runtime evidence belongs to [Verification](../verification.md#supported-invention-loop).
+
+- [ ] Cover durable clarification and rejected-candidate revision, preserved proposal context through search choices, derived-base pins and same-version save/load. Verify independent attribution when content deduplicates, missing/corrupt derivation, and no in-place recipe/item changes.
+- [ ] Cover simultaneous continuation claims, same-ID replay/body conflict, lost responses, one-child transaction rollback, eight-follow-up bounds, pause, lock/reopen, restore, changed character/conversation, restart during every provider stage and conservative uncertain embedding accounting. No reopening or continuation may purchase an automatic retry.
+- [ ] Cover scoped vector indexing/version invalidation, cached source reuse, exact-name eligibility, inaccessible recipes, empty registry, score cutoff, failed/incomplete/missing search, budget rejection and explicit continue/retry. Qualify larger retrieval quality separately; no benchmark or general quality claim follows from a handful of live requests.
+- [ ] Cover modal keyboard/dismiss/reopen behavior, modify/new/reuse selection, saved follow-up drafts, a new draft opened during submission, pagination with active polling, simultaneous tabs, ingredient blockers and separate Craft/equip/use commands. Repair pre-existing test typing before running the full repository check.

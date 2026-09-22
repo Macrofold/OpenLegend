@@ -19,7 +19,7 @@ import type { AiClient } from '@open-legend/ai';
 import { AiDirector } from './ai-director.js';
 import { readConfig, type AppConfig } from './config.js';
 import { PostgresDatabase } from './postgres.js';
-import { SqliteStore } from './store.js';
+import { SqliteStore, digest } from './store.js';
 import { WorldService, commandInputSchema, requestIdSchema } from './world-service.js';
 import { projectPatch, projectView } from './view.js';
 import type { GameView } from '@open-legend/protocol';
@@ -48,6 +48,14 @@ const interaction = z
 const worldAgentMessage = z
   .object({
     mode: z.enum(['discuss', 'invent']),
+    continuation: z
+      .object({
+        parentId: requestIdSchema,
+        action: z.enum(['clarify', 'revise', 'search', 'new', 'modify', 'reuse']),
+        recipeId: requestIdSchema.optional(),
+      })
+      .strict()
+      .optional(),
     retryOf: requestIdSchema.optional(),
     requestId: requestIdSchema,
     conversationId: requestIdSchema,
@@ -1250,6 +1258,24 @@ export async function createGameServer(
                 code: job.invention?.code ?? job.status,
                 message: job.message,
                 candidate: job.invention?.candidate,
+                parentId: scope.continuation?.parentId,
+                rootId: scope.rootId,
+                continuedBy: job.invention?.continuedBy,
+                search:
+                  scope.timelineId === service.timelineId && job.invention?.search
+                    ? {
+                        ...job.invention.search,
+                        matches: job.invention.search.matches.filter(
+                          (match) =>
+                            !!service.world.recipes[match.recipeId] &&
+                            digest(service.world.recipes[match.recipeId]!.digest) ===
+                              match.digest &&
+                            service.world.knowledge[scope.actorId]?.some(
+                              (entry) => entry.recipeId === match.recipeId,
+                            ),
+                        ),
+                      }
+                    : undefined,
                 recipeId,
                 installed:
                   !!recipeId &&
@@ -1277,6 +1303,11 @@ export async function createGameServer(
                 code: 'world-mismatch',
                 message: 'This conversation belongs to another world.',
               });
+            if (value.mode === 'discuss' && value.continuation)
+              return send(response, 400, {
+                ok: false,
+                message: 'Only Invent supports invention follow-ups.',
+              });
             if (value.mode === 'invent' && value.retryOf)
               return send(response, 400, {
                 ok: false,
@@ -1291,6 +1322,7 @@ export async function createGameServer(
                     value.text,
                     undefined,
                     value.conversationId,
+                    value.continuation,
                   )
                 : await director.macrofold.message(value);
             return send(response, result.ok ? 200 : 409, result);

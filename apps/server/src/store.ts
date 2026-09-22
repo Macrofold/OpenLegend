@@ -61,10 +61,21 @@ export interface JobRecord extends AiJobView {
       timelineId: string;
       conversationId?: string;
       authority: import('@open-legend/domain').InventionAuthority;
+      rootId: string;
+      depth: number;
+      continuation?: import('@open-legend/protocol').InventionContinuation;
+      previous?: {
+        intent: string;
+        feedback: string;
+        candidate?: import('@open-legend/domain').DeclarationDraft;
+      };
+      base?: { recipeId: string; version: number; digest: string };
     };
   };
   invention?: {
     code: string;
+    search?: import('@open-legend/protocol').InventionSearch;
+    continuedBy?: string;
     candidateDigest?: string;
     candidate?: import('@open-legend/domain').DeclarationDraft;
     recipeId?: string;
@@ -273,6 +284,7 @@ export interface GameRepository extends WorldStore {
   getSpeechJob(eventId: string): Promise<JobRecord | undefined>;
   getSpeechJobs(eventIds: string[]): Promise<Map<string, JobRecord>>;
   putJob(job: JobRecord): Promise<void>;
+  claimInventionContinuation(job: JobRecord, parentId: string): Promise<boolean>;
   recentJobs(limit?: number): Promise<JobRecord[]>;
   inventionJobs(
     worldId: string,
@@ -832,6 +844,20 @@ export class SqliteStore implements GameRepository {
       .run(job.id, job.fingerprint, JSON.stringify(job), job.createdAt);
   }
 
+  async claimInventionContinuation(job: JobRecord, parentId: string): Promise<boolean> {
+    await this.ready;
+    // Claim and child are one durable write; a lost response cannot buy two follow-ups.
+    // docs/architecture.md#shared-invention-workflow
+    return this.db.transaction(async () => {
+      const parent = await this.getJob(parentId);
+      if (!parent?.invention || parent.invention.continuedBy) return false;
+      parent.invention.continuedBy = job.id;
+      await this.putJob(parent);
+      await this.putJob(job);
+      return true;
+    });
+  }
+
   async inventionJobs(
     worldId: string,
     actorId: string,
@@ -969,8 +995,15 @@ export class SqliteStore implements GameRepository {
         const uncertain =
           job.invention &&
           (await this.db
-            .prepare("SELECT id FROM attempts WHERE status='uncertain' AND id IN (?, ?) LIMIT 1")
-            .get(`${job.id}:route`, `${job.id}:generate`));
+            .prepare(
+              "SELECT id FROM attempts WHERE status='uncertain' AND (id IN (?, ?) OR substr(id, 1, ?) = ?) LIMIT 1",
+            )
+            .get(
+              `${job.id}:route`,
+              `${job.id}:generate`,
+              `${job.id}:invention-search:`.length,
+              `${job.id}:invention-search:`,
+            ));
         await this.putJob({
           ...job,
           status: 'stale',

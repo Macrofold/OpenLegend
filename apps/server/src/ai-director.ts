@@ -1,3 +1,5 @@
+import { searchInventions } from './invention-search.js';
+import type { InventionContinuation } from '@open-legend/protocol';
 import { inventSupportedTechnique, InventionFailure } from './invention-service.js';
 import { inventionPermission } from '@open-legend/domain';
 import { prepareAttemptInterpretation } from './attempt-interpretation.js';
@@ -183,6 +185,7 @@ export class AiDirector {
     text: string,
     npcId?: string,
     conversationId?: string,
+    continuation?: InventionContinuation,
   ): Promise<ApiResult> {
     // Independent inference does not wait for remote reflection cancellation/cleanup.
     this.maintenance.cancel();
@@ -190,7 +193,7 @@ export class AiDirector {
       await this.cancel(this.running.job.id);
       this.running = null;
     }
-    return await this.submit(kind, id, text, npcId, undefined, conversationId);
+    return await this.submit(kind, id, text, npcId, undefined, conversationId, continuation);
   }
 
   async cancel(jobId: string): Promise<ApiResult> {
@@ -213,6 +216,7 @@ export class AiDirector {
     npcId?: string,
     retryOf?: string,
     conversationId?: string,
+    continuation?: InventionContinuation,
   ): Promise<ApiResult> {
     return this.admission(async () => {
       let original: JobRecord | undefined;
@@ -259,6 +263,7 @@ export class AiDirector {
         actorId: this.service.controlledEntityId,
         conversationId,
         ...(retryOf ? { retryOf } : {}),
+        ...(continuation ? { continuation } : {}),
       });
       const previous = await this.service.store.getJob(id);
       if (previous)
@@ -274,15 +279,122 @@ export class AiDirector {
               code: 'idempotency-conflict',
               message: 'That request ID was already used for different input.',
             };
+      let parent: JobRecord | undefined;
+      if (continuation) {
+        parent = await this.service.store.getJob(continuation.parentId);
+        const scope = parent?.request.invention;
+        if (
+          kind !== 'invention' ||
+          !scope ||
+          !parent?.invention ||
+          scope.actorId !== this.service.controlledEntityId ||
+          scope.worldId !== this.service.world.id ||
+          scope.timelineId !== this.service.timelineId ||
+          scope.conversationId !== conversationId ||
+          !scope.rootId ||
+          !Number.isInteger(scope.depth) ||
+          ['queued', 'judging', 'generating'].includes(parent.status)
+        )
+          return {
+            ok: false,
+            code: 'stale',
+            message:
+              'This invention is unavailable or belongs to another character, conversation or save timeline.',
+          };
+        if (parent.invention.continuedBy)
+          return {
+            ok: false,
+            code: 'already-continued',
+            message: 'This request already has a follow-up. Refresh saved results.',
+            jobId: parent.invention.continuedBy,
+          };
+        if (scope.depth >= 8)
+          return {
+            ok: false,
+            code: 'continuation-limit',
+            message:
+              'This invention has reached eight follow-ups. Start a new explicit request if you want to continue.',
+          };
+        const permission = inventionPermission(this.service.world, scope.authority);
+        if (!permission.ok) return permission;
+        if (['reuse', 'modify'].includes(continuation.action)) {
+          const match = parent.invention.search?.matches.find(
+            (entry) => entry.recipeId === continuation.recipeId,
+          );
+          const recipe = match && this.service.world.recipes[match.recipeId];
+          if (
+            !match ||
+            !recipe ||
+            digest(recipe.digest) !== match.digest ||
+            recipe.version !== match.version ||
+            !this.service.world.knowledge[scope.actorId]?.some(
+              (entry) => entry.recipeId === recipe.id,
+            )
+          )
+            return {
+              ok: false,
+              code: 'stale',
+              message: 'The selected recipe is no longer available at that version. Search again.',
+            };
+        } else if (continuation.recipeId)
+          return {
+            ok: false,
+            code: 'invalid',
+            message: 'Only reuse or modification may select a recipe.',
+          };
+        if (
+          ['reuse', 'modify', 'new', 'search'].includes(continuation.action) &&
+          !['needs-choice', 'search-unavailable'].includes(parent.invention.code)
+        )
+          return {
+            ok: false,
+            code: 'invalid',
+            message: 'This request is not waiting for a search choice.',
+          };
+        if (continuation.action === 'clarify' && parent.invention.code !== 'needs-clarification')
+          return {
+            ok: false,
+            code: 'invalid',
+            message: 'This request is not waiting for clarification.',
+          };
+      }
       // Capture origin before any paid routing; worker/model identity cannot change it.
-      const invention =
+      const invention: JobRecord['request']['invention'] =
         kind === 'invention'
           ? {
+              rootId: parent?.request.invention?.rootId ?? id,
+              depth: parent ? parent.request.invention!.depth + 1 : 0,
+              ...(continuation ? { continuation } : {}),
+              ...(parent
+                ? {
+                    previous:
+                      parent.invention?.search && parent.request.invention?.previous
+                        ? parent.request.invention.previous
+                        : {
+                            intent: parent.request.text,
+                            feedback: parent.message,
+                            ...(parent.invention?.candidate
+                              ? { candidate: parent.invention.candidate }
+                              : {}),
+                          },
+                  }
+                : {}),
+              ...(continuation?.recipeId
+                ? {
+                    base: {
+                      recipeId: continuation.recipeId,
+                      version: this.service.world.recipes[continuation.recipeId]!.version,
+                      digest: this.service.world.recipes[continuation.recipeId]!.digest,
+                    },
+                  }
+                : continuation?.action !== 'new' && parent?.request.invention?.base
+                  ? { base: parent.request.invention.base }
+                  : {}),
               actorId: this.service.controlledEntityId,
-              worldId: this.service.world.id,
-              timelineId: this.service.timelineId,
+              worldId: parent?.request.invention?.worldId ?? this.service.world.id,
+              timelineId: parent?.request.invention?.timelineId ?? this.service.timelineId,
               ...(conversationId ? { conversationId } : {}),
-              authority: {
+              authority: parent?.request.invention?.authority ?? {
                 origin: 'player' as const,
                 policyRevision: this.service.world.inventionPolicy.revision,
               },
@@ -320,6 +432,7 @@ export class AiDirector {
       )
         return { ok: false, code: 'actor', message: 'Recover at camp before acting.' };
       if (
+        continuation?.action !== 'reuse' &&
         !this.service.config.macrofoldKey &&
         (!this.service.config.jevKey || !this.service.config.llmKey)
       )
@@ -378,6 +491,12 @@ export class AiDirector {
           : {}),
         createdAt: Math.max(this.now(), (original?.createdAt ?? 0) + 1),
       };
+      if (parent && !(await this.service.store.claimInventionContinuation(job, parent.id)))
+        return {
+          ok: false,
+          code: 'already-continued',
+          message: 'This request already has a follow-up. Refresh saved results.',
+        };
       await this.begin(job);
       return { ok: true, code: 'queued', message: job.message, jobId: id };
     });
@@ -431,6 +550,16 @@ export class AiDirector {
               : 'This request was cancelled before completion.'),
       );
     if (run.job.kind === 'invention') {
+      const scope = run.job.request.invention!;
+      if (
+        scope.worldId !== this.service.world.id ||
+        scope.timelineId !== this.service.timelineId ||
+        scope.actorId !== this.service.controlledEntityId
+      )
+        throw new StopJob(
+          'stale',
+          'The invention belongs to an earlier world, character or save timeline.',
+        );
       const permission = inventionPermission(
         this.service.world,
         run.job.request.invention?.authority,
@@ -1173,6 +1302,20 @@ export class AiDirector {
           this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
         ),
       generate: (request) => this.generate(run, request),
+      search: () =>
+        searchInventions(
+          this.service,
+          this.log,
+          run.job.id,
+          run.job.request.invention!.actorId,
+          run.job.request.text,
+          run.controller.signal,
+          () => this.current(run),
+          async () => {
+            if (this.service.paused) await this.awaitResume(run);
+            this.current(run);
+          },
+        ),
       checkpoint: async (candidate) => {
         run.job.invention = {
           ...run.job.invention,

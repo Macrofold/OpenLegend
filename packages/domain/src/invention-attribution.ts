@@ -77,6 +77,14 @@ export function validateInventionAttribution(world: WorldState): void {
       throw new Error('Invalid saved invention attribution.');
   }
   for (const recipe of Object.values(world.recipes)) {
+    const base = recipe.provenance.derivedFrom;
+    if (
+      base &&
+      (getOwn(world.recipes, base.recipeId)?.digest !== base.digest ||
+        getOwn(world.recipes, base.recipeId)?.version !== base.version ||
+        base.recipeId === recipe.id)
+    )
+      throw new Error('Invalid saved invention derivation.');
     const receipt = getOwn(world.declarationReceipts, recipe.provenance.requestId);
     if (
       !receipt ||

@@ -72,6 +72,7 @@ export interface DeclarationDraft {
   };
 }
 export interface DeclarationProvenance {
+  derivedFrom?: { recipeId: string; version: number; digest: string };
   authority: import('./invention-policy.js').InventionAuthority;
   requestId: string;
   actorId: string;

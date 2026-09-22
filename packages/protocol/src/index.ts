@@ -456,6 +456,26 @@ export interface AttributeView {
   revision: number;
 }
 
+export interface InventionContinuation {
+  parentId: string;
+  action: 'clarify' | 'revise' | 'search' | 'new' | 'modify' | 'reuse';
+  recipeId?: string;
+}
+export interface SimilarInvention {
+  recipeId: string;
+  version: number;
+  digest: string;
+  name: string;
+  description: string;
+  materials: string;
+  behavior: string;
+  score?: number;
+}
+export interface InventionSearch {
+  status: 'complete' | 'unavailable';
+  message: string;
+  matches: SimilarInvention[];
+}
 /** Creator-scoped durable records; candidate JSON is inspectable data, never executable. */
 export interface InventionRequestView {
   id: string;
@@ -466,6 +486,10 @@ export interface InventionRequestView {
   code: string;
   message: string;
   candidate?: unknown;
+  parentId?: string;
+  rootId?: string;
+  continuedBy?: string;
+  search?: InventionSearch;
   recipeId?: string;
   installed: boolean;
   currentTimeline: boolean;

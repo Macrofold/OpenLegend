@@ -19,49 +19,9 @@ import type {
   WorldState,
 } from './types.js';
 
-/** This is a finite mechanical envelope, not a claim to validate arbitrary physics. */
-export const DECLARATION_CONTRACT = {
-  schemaVersion: 1,
-  outputKinds: ['launcher', 'ammunition'],
-  workSeconds: { minimum: 48, maximum: 480 },
-  inputQuantity: { minimum: 1, maximum: 8, maximumTotal: 20 },
-  mechanisms: {
-    swing: {
-      ammunitionKind: 'stone',
-      requiredRoles: ['binding', 'pouch'],
-      damage: [10, 20],
-      range: [3, 7],
-      accuracy: [0.6, 0.9],
-    },
-    flex: {
-      ammunitionKind: 'arrow',
-      requiredRoles: ['body', 'binding'],
-      damage: [16, 28],
-      range: [4, 10],
-      accuracy: [0.6, 0.9],
-    },
-    arrow: { requiredRoles: ['shaft', 'point', 'fletching'], damageBonus: [0, 5] },
-  },
-  roleProperties: {
-    binding: 'binding',
-    body: 'flexible',
-    pouch: 'pouch',
-    shaft: 'shaft',
-    point: 'point',
-    fletching: 'fiber',
-  },
-  notes:
-    'Choose actual registered materials and quantities, a fitting name, mechanism and bounded parameters. Finished recipes are generated during play. Properties cannot invent effects. No scripts, free sources, nutrition, fuel or unregistered operations are supported. Arrow ammunition produces one projectile per completed craft.',
-} as const;
-
-const roleProperties: Record<InputRole, MaterialProperty> = {
-  binding: 'binding',
-  body: 'flexible',
-  pouch: 'pouch',
-  shaft: 'shaft',
-  point: 'point',
-  fletching: 'fiber',
-};
+export { DECLARATION_CONTRACT } from './invention-families.js';
+import { DECLARATION_CONTRACT } from './invention-families.js';
+const roleProperties = DECLARATION_CONTRACT.roleProperties;
 const properties = new Set<MaterialProperty>([
   'fiber',
   'binding',
@@ -239,6 +199,18 @@ export function admitDeclaration(
     );
   const permission = inventionPermission(original, provenance.authority);
   if (!permission.ok) return { world: original, events: [], outcome: permission };
+  // A derived candidate cannot replace or silently rebase its known source.
+  // archive/07-technical-architecture/declarations-and-evolution.md#similar-inventions-before-authoring
+  if (provenance.derivedFrom) {
+    const base = getOwn(original.recipes, provenance.derivedFrom.recipeId);
+    if (
+      !base ||
+      base.version !== provenance.derivedFrom.version ||
+      base.digest !== provenance.derivedFrom.digest ||
+      !original.knowledge[provenance.actorId]?.some((entry) => entry.recipeId === base.id)
+    )
+      return reject('stale-base', 'The selected base recipe is no longer known at that version.');
+  }
   let attribution: ReturnType<typeof inventionAttribution>;
   try {
     attribution = inventionAttribution(original, provenance.actorId);

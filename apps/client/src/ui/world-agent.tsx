@@ -1,3 +1,4 @@
+import type { ActionOption, RecipeView } from '@open-legend/protocol';
 import { Inventions } from './inventions';
 import { useEffect, useRef, useState } from 'react';
 import { Button as AriaButton, Tabs, TabList, Tab, TabPanel } from 'react-aria-components';
@@ -40,11 +41,17 @@ export function WorldAgent({
   inventionSeed,
   invent,
   visible,
+  recipes,
+  command,
+  connected,
 }: {
   worldId: string;
   inventionSeed: { id: string; text: string } | null;
   invent(text: string): void;
   visible: boolean;
+  recipes: RecipeView[];
+  command(action: ActionOption): void;
+  connected: boolean;
 }) {
   const [authoring, setAuthoring] = useState(false);
   useEffect(() => {
@@ -231,7 +238,14 @@ export function WorldAgent({
         </Button>
       </div>
       {authoring ? (
-        <Inventions worldId={worldId} seed={inventionSeed} visible={visible} />
+        <Inventions
+          worldId={worldId}
+          seed={inventionSeed}
+          visible={visible}
+          recipes={recipes}
+          command={command}
+          connected={connected}
+        />
       ) : (
         <>
           <Tabs

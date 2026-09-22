@@ -600,6 +600,9 @@ function App() {
           <WorldAgent
             key={view.worldId}
             worldId={view.worldId}
+            recipes={view.recipes}
+            command={command}
+            connected={connected}
             inventionSeed={inventionSeed}
             invent={invent}
             visible={open.includes('agent') && (!narrow || open.at(-1) === 'agent')}

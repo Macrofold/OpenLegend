@@ -1,5 +1,8 @@
+import type { InventionSearch } from '@open-legend/protocol';
 import {
   DECLARATION_CONTRACT,
+  SUPPORTED_INVENTION_FAMILIES,
+  inventionFamily,
   type DeclarationDraft,
   type DeclarationProvenance,
 } from '@open-legend/domain';
@@ -26,11 +29,12 @@ export interface InventionExecution {
   model(): string;
   judge(request: Omit<JudgeRequest, 'requestId' | 'signal'>): Promise<JudgeValue>;
   generate<T>(request: Omit<GenerateRequest, 'requestId' | 'signal'>): Promise<T>;
+  search(): Promise<InventionSearch>;
   checkpoint(draft: DeclarationDraft): Promise<void>;
   finish(
     status: 'completed' | 'failed',
     message: string,
-    result: { code: string; recipeId?: string },
+    result: { code: string; recipeId?: string; search?: InventionSearch },
   ): Promise<void>;
 }
 const choice = (answer: JudgmentAnswer | undefined) =>
@@ -45,16 +49,62 @@ export async function inventSupportedTechnique(
 ): Promise<void> {
   port.current();
   const { actorId, authority } = request.invention!;
-  const context = buildContext(service, actorId, request.text);
-  const criteria: Record<string, string> = {
-    swing: 'A new physical sling-like stone launcher using binding and a flexible pouch.',
-    flex: 'A new physical bow-like launcher with flexible rigid body and binding, using arrows.',
-    arrow:
-      'A new physical arrow with shaft, point and fiber fletching, requiring a compatible bow to fire.',
+  const scope = request.invention!;
+  const selected = scope.base && service.world.recipes[scope.base.recipeId];
+  if (
+    scope.base &&
+    (!selected ||
+      selected.digest !== scope.base.digest ||
+      selected.version !== scope.base.version ||
+      !service.world.knowledge[actorId]?.some((entry) => entry.recipeId === selected.id))
+  )
+    throw new InventionFailure(
+      'stale',
+      'The selected recipe changed or is no longer known. Search again.',
+    );
+  if (scope.continuation?.action === 'reuse') {
+    await port.finish(
+      'completed',
+      `${selected!.name} is available in Crafting. Selecting it has not consumed materials.`,
+      { code: 'reused', recipeId: selected!.id },
+    );
+    return;
+  }
+  // Keep a chosen base through clarification; a new search or Invent new is an explicit change.
+  // docs/architecture.md#shared-invention-workflow
+  if (
+    scope.continuation?.action === 'search' ||
+    (!scope.base &&
+      (!scope.continuation || ['clarify', 'revise'].includes(scope.continuation.action)))
+  ) {
+    const search = await port.search();
+    port.current();
+    if (search.status !== 'complete' || search.matches.length) {
+      await port.finish('completed', search.message, {
+        code: search.status === 'complete' ? 'needs-choice' : 'search-unavailable',
+        search,
+      });
+      return;
+    }
+  }
+  const baseDraft = selected
+    ? {
+        schemaVersion: selected.schemaVersion,
+        name: selected.name,
+        description: selected.description,
+        inputs: selected.inputs,
+        output: selected.output,
+        workSeconds: selected.workSeconds,
+      }
+    : undefined;
+  const context = {
+    ...buildContext(service, actorId, request.text),
+    ...(scope.previous ? { previousProposal: scope.previous } : {}),
+    ...(selected ? { selectedBase: baseDraft } : {}),
   };
-  for (const recipe of context.knownRecipes)
-    criteria[`reuse:${recipe.id}`] =
-      `Existing supported technique already fulfills this request: ${recipe.name}. ${recipe.description}. Exact material roles: ${JSON.stringify(recipe.inputs)}. Do not reuse if the request explicitly requires materially different inputs or mechanics.`;
+  const criteria = Object.fromEntries(
+    Object.entries(SUPPORTED_INVENTION_FAMILIES).map(([key, value]) => [key, value.description]),
+  );
   const judged = await port.judge({
     state: { context, contract: DECLARATION_CONTRACT },
     questions: inventionQuestions(criteria),
@@ -74,21 +124,7 @@ export async function inventSupportedTechnique(
           : 'Describe one invention at a time: its purpose and materials. Jev could not establish a supported invention confidently.',
     );
   const route = choice(judged.answers['route']);
-  if (route?.startsWith('reuse:')) {
-    const recipe = service.world.recipes[route.slice(6)];
-    if (!recipe || !context.knownRecipes.some((candidate) => candidate.id === recipe.id))
-      throw new InventionFailure(
-        'invalid',
-        'The suggested existing technique was not in the permitted candidate set.',
-      );
-    await port.finish(
-      'completed',
-      `You already know ${recipe.name}. Use its Craft action; no new LLM generation was needed.`,
-      { code: 'reused', recipeId: recipe.id },
-    );
-    return;
-  }
-  if (!route || !['swing', 'flex', 'arrow'].includes(route))
+  if (!route || !Object.hasOwn(SUPPORTED_INVENTION_FAMILIES, route))
     throw new InventionFailure(
       'needs-clarification',
       'Describe one invention at a time: its purpose and materials. Jev could not select a supported family confidently.',
@@ -105,8 +141,14 @@ export async function inventSupportedTechnique(
     maxOutputTokens: 1800,
     task: 'invent_supported_technique',
     schema: declarationSchema,
-    context: { ...generationContext, selectedFamily: route, contract: DECLARATION_CONTRACT },
-    instructions: `${DATA_RULE} Design one genuinely new useful recipe from the trusted finite construction contract. Honor the requested physical materials and selected family. Use native material IDs listed in the context. Respect role requirements, quantity/work/parameter envelopes, required body rigidity for flex launchers, and output properties inherited from inputs. No code, magic, food, fuel, free resources or unregistered operations. This is a proposal; independent admission decides validity. For a launcher set ammunition null; for an arrow set launcher null. Use sensible modest costs and describe the preparation/assembly with its use prerequisites. Do not copy a prewritten final recipe; compose one for this request.`,
+    context: {
+      ...generationContext,
+      ...(scope.previous ? { previousProposal: scope.previous } : {}),
+      ...(baseDraft ? { selectedBase: baseDraft } : {}),
+      selectedFamily: route,
+      contract: DECLARATION_CONTRACT,
+    },
+    instructions: `${DATA_RULE} Design one useful recipe from the trusted finite construction contract. The current request is the revised intent; previousProposal is prior candidate/validation feedback, not permission to repeat a rejected method. When selectedBase is present, derive a separate recipe honoring the requested changes and preserving unchanged mechanics; never mutate the base. Honor explicit material and mechanism choices; do not silently substitute different materials. Honor the requested physical materials and selected family. Use native material IDs listed in the context. Respect role requirements, quantity/work/parameter envelopes, required body rigidity for flex launchers, and output properties inherited from inputs. No code, magic, food, fuel, free resources or unregistered operations. This is a proposal; independent admission decides validity. For a launcher set ammunition null; for an arrow set launcher null. Use sensible modest costs and describe the preparation/assembly with its use prerequisites. Do not copy a prewritten final recipe; compose one for this request.`,
   });
   port.current();
   const draft: DeclarationDraft = {
@@ -122,11 +164,7 @@ export async function inventSupportedTechnique(
   };
   await port.checkpoint(draft);
   port.current();
-  if (
-    route === 'swing' || route === 'flex'
-      ? draft.output.launcher?.mechanism !== route
-      : draft.output.ammunition?.kind !== 'arrow'
-  )
+  if (inventionFamily(draft) !== route)
     throw new InventionFailure(
       'invalid',
       'Generated mechanics did not match the routed request. Nothing was admitted.',
@@ -144,6 +182,7 @@ export async function inventSupportedTechnique(
       actorId,
       authority,
       source: port.source,
+      ...(scope.base ? { derivedFrom: scope.base } : {}),
       model: port.model(),
       evidence: [`Jev route ${route}; definition generated from scoped material evidence.`],
     },
