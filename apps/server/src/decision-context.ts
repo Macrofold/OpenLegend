@@ -1,4 +1,4 @@
-import { currentGoal } from '@open-legend/domain';
+import { type AttemptBinding, currentGoal } from '@open-legend/domain';
 import { bodyContext, hasWildernessNeeds } from '@open-legend/domain';
 import { activeAppraisals } from '@open-legend/domain';
 
@@ -78,11 +78,15 @@ export async function prepareDecision(
     ...candidate,
     id: `p${index}`,
   }));
+  const intentActions = observed.actor.actor!.agency.attempts.map((attempt, index) => ({
+    id: `w${index}`,
+    description: `Withdraw my pending intent: ${attempt.description}`,
+    command: { type: 'withdraw-attempt' as const, id: jobId, actorId, attemptId: attempt.id },
+  }));
   const planActions = Object.fromEntries(
-    planOffers.map((candidate) => [
-      candidate.id,
-      domainCommand(candidate.command!, actorId, jobId),
-    ]),
+    planOffers
+      .map((candidate) => [candidate.id, domainCommand(candidate.command!, actorId, jobId)])
+      .concat(intentActions.map((candidate) => [candidate.id, candidate.command])),
   );
   const candidates = candidateSet(world, actorId, observed, requiredIds, automaticIds, [
     ...conversation.older,
@@ -93,6 +97,7 @@ export async function prepareDecision(
   const triggerIdSet = new Set(requiredIds);
   const requiredContext: Record<string, unknown> = {
     stimulus,
+    intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     planOffers: planOffers.map(({ id, description }) => ({ id, description })),
     references: responseReferences(
       world,
@@ -186,6 +191,7 @@ export async function prepareDecision(
   const actor = currentObserved.actor.actor!;
   const context: Record<string, unknown> = {
     stimulus,
+    intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     identity: `I am ${currentObserved.actor.name}.${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(world, actorId)
       .map(
@@ -261,6 +267,15 @@ export async function prepareDecision(
   const bytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   if (bytes > 100000)
     throw new Error('Complete accepted inner world and required context exceed the input budget.');
+  const attempts = new Map<string, AttemptBinding>();
+  for (const candidate of [...availableActions, ...planOffers]) {
+    if (!candidate.command) continue;
+    const binding = {
+      description: candidate.description,
+      commands: [domainCommand(candidate.command, actorId, jobId)],
+    };
+    attempts.set(JSON.stringify(binding), binding);
+  }
   return {
     context,
     prompt,
@@ -268,13 +283,7 @@ export async function prepareDecision(
     offered,
     actionCandidates: availableActions.slice(0, 24),
     awarenessSequence,
-    attemptBindings: [...availableActions, ...planOffers]
-      .filter((candidate) => candidate.command)
-      .slice(0, 64)
-      .map((candidate) => ({
-        description: candidate.description,
-        command: domainCommand(candidate.command!, actorId, jobId),
-      })),
+    attemptBindings: [...attempts.values()].slice(0, 64),
     diagnostics: {
       instructionsVersion: COGNITION_VERSION,
       snapshot: currentWorld.sequence,

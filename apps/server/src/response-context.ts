@@ -76,6 +76,7 @@ export function readableDecisionContext(
     '## Task\nChoose only warranted speech, actions, private thoughts, goals or a short native plan. Each kind is optional and may repeat. A direct question normally deserves a direct conversational reply; silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.',
     `## Conversation so far\nSpeech I personally experienced in this exchange:\n${list(context['conversation'])}`,
     `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\nPrerequisites must be obtained first. These handles can be queued without a current action shortlist.`,
+    `## Private intent controls\n${JSON.stringify(context['intentActions'] ?? [])}\nUse a known action handle to withdraw an unresolved intent. Withdrawal does not cancel physical work and cannot be queued in a plan.`,
     `## Private intentions and native work\n${JSON.stringify(context['agency'] ?? { goals: [], plan: null })}\nThese are intentions and actual step dispositions, never proof that an objective was achieved.`,
     `## Current time\n${context['now']}`,
     `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,

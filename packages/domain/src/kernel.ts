@@ -1,4 +1,11 @@
-import { replaceGoals, seedAgency, cancelPlan, finishPlanAction, readyPlanStep } from './agency.js';
+import {
+  withdrawAttempt,
+  replaceGoals,
+  seedAgency,
+  cancelPlan,
+  finishPlanAction,
+  readyPlanStep,
+} from './agency.js';
 import {
   WILDERNESS_NEEDS,
   hasWildernessNeeds,
@@ -63,6 +70,7 @@ export const SIMULATION_RULES = {
   animalFleeTilesPerSecond: 0.055,
   ...WILDERNESS_NEEDS,
   nativeRestSeconds: 28800,
+  gatherQuantity: 2,
   harvestSeconds: 84,
   cookSeconds: 90,
   shotSeconds: 18,
@@ -444,6 +452,10 @@ export function executeCommand(original: WorldState, command: Command): Transiti
         return reject('not-applicable', 'This body does not use wilderness rest.');
       action = createAction(world, 'rest', SIMULATION_RULES.nativeRestSeconds);
       break;
+    case 'withdraw-attempt': {
+      result = withdrawAttempt(component, command.attemptId);
+      break;
+    }
     case 'cancel': {
       cancelPlan(component);
       component.action = null;
@@ -629,7 +641,7 @@ function completeAction(
         failAction(world, actor, events, 'the resource is depleted.');
         return;
       }
-      const quantity = Math.min(target.resource.quantity, 2);
+      const quantity = Math.min(target.resource.quantity, SIMULATION_RULES.gatherQuantity);
       target.resource.quantity -= quantity;
       addItem(world, actor.id, target.resource.definitionId, quantity);
       emit(

@@ -8,9 +8,17 @@ import {
   queryMemories,
   mindFor,
   SIMULATION_RULES,
+  type Entity,
 } from '@open-legend/domain';
 import type { CommandInput } from '@open-legend/protocol';
 import type { WorldService } from './world-service.js';
+
+// Describe the native batch, not an invented quantity choice. Interpretation may
+// compose these steps but cannot rewrite their arguments or effects.
+function gatherDescription(entity: Entity): string {
+  const resource = entity.resource!;
+  return `Gather ${entity.name}: up to ${SIMULATION_RULES.gatherQuantity} ${resource.definitionId} per batch (${resource.quantity} currently available), ${resource.workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty.`;
+}
 
 export const CONTEXT_BYTE_LIMIT = 100_000;
 export class ContextBudgetError extends Error {
@@ -330,7 +338,7 @@ export function npcCandidates(
     if (entity.resource && entity.resource.quantity > 0)
       actions.push({
         id: `gather:${entity.id}`,
-        description: `Gather ${entity.name}.`,
+        description: gatherDescription(entity),
         command: { type: 'gather', targetId: entity.id },
       });
     if (entity.animal && entity.actor?.alive && equipped && launcher && ammunition)
@@ -407,17 +415,17 @@ export function planningCandidates(service: WorldService, actorId: string): Cand
       .slice(0, 8)
       .map((entity) => ({
         id: `plan-gather:${entity.id}`,
-        description: `Gather ${entity.name}; it must remain perceived, reachable and nonempty at execution.`,
+        description: gatherDescription(entity),
         command: { type: 'gather' as const, targetId: entity.id },
       })),
     ...Object.entries(NATIVE_PREPARATIONS).map(([preparation, recipe]) => ({
       id: `plan-prepare:${preparation}`,
-      description: `Prepare ${recipe.outputQuantity} ${recipe.output}; needs ${recipe.inputQuantity} ${recipe.input} at start.`,
+      description: `Prepare ${recipe.outputQuantity} ${recipe.output}; needs ${recipe.inputQuantity} ${recipe.input} at start, ${recipe.workSeconds} work seconds.`,
       command: { type: 'prepare' as const, preparation: preparation as 'fiber' | 'cord' },
     })),
     ...observed.knownRecipes.slice(0, 16).map((recipe) => ({
       id: `plan-craft:${recipe.id}`,
-      description: `Craft ${recipe.name}; needs ${recipe.inputs.map((input) => `${input.quantity} ${input.definitionId}`).join(', ')} at start.`,
+      description: `Craft one ${recipe.outputDefinitionId} (${recipe.name}); ${recipe.workSeconds} work seconds, needs ${recipe.inputs.map((input) => `${input.quantity} ${input.definitionId}`).join(', ')} at start.`,
       command: { type: 'craft' as const, recipeId: recipe.id },
     })),
   ];

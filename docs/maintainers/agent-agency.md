@@ -71,12 +71,13 @@ Use the current single writer and existing stores first. No new platform depende
 ### AG05 — Resolve unlisted attempts to existing mechanics
 
 - [x] Retain bounded private unlisted intents and reuse exact normalized request-bound native descriptions without another provider call.
-- [ ] Add explicit withdrawal/resolution of the four unresolved intent slots when the scoped interpreter/INV bridge lands; do not silently evict unresolved work.
+- [x] Interpret up to four new proposals in one optional bounded call through the existing durable response job. Bind only scoped native handles, keep original proposal/component identity, preserve other components on interpretation failure, suppress unchanged repeats and reject stale manifest results. See [observed cases](../verification.md#native-attempt-resolution).
+- [x] Add explicit withdrawal/resolution of the four unresolved intent slots through the scoped interpreter and private native controls; do not silently evict unresolved work. The INV bridge remains AG08 work.
 
 **Owner:** server action interpretation; domain command adapters. **Depends on:** AG01, AG03–AG04. **Touchpoints:** `apps/server/src/context.ts`, `decision-context.ts`, `cognition.ts`, response admission and existing action adapters. INV-7.1 owns the shared missing-capability classification contract.
 
 - [ ] Replace unconditional dead-end handling of freeform proposals with a durable resolution request. Use exact supported bindings first; use bounded interpretation only when the wording cannot be grounded adequately without it.
-- [ ] Reuse existing commands or short native compositions before requesting a new definition. The freeform path must work when no useful action was shortlisted, without broadening the actor's evidence scope.
+- [x] Reuse existing commands or short native compositions before requesting a new definition. The freeform path must work when no useful action was shortlisted, without broadening the actor's evidence scope.
 - [ ] Preserve target, recipient, instrument and intended result distinctions. A model may identify an attempt, but it cannot provide authoritative health/resource effects or change the structured target through prose.
 - [ ] Connect unresolved capability cases to the INV-owned service; do not duplicate recipe generation, family classification or policy locks. Clearly distinguish physical impossibility, insufficient known information, currently blocked action, unsupported host capability and provider unavailability in internal outcomes.
 - [ ] Add reason-specific duplicate suppression using relevant dependencies and policy versions. A depleted resource becoming available can invalidate its block; a paraphrase does not bypass an unchanged unsupported capability result.

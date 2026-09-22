@@ -1,3 +1,4 @@
+import { prepareAttemptInterpretation } from './attempt-interpretation.js';
 import { nativeProtectionReason } from './native-protection.js';
 import { currentGoal } from '@open-legend/domain';
 import { projectAttributes } from '@open-legend/domain';
@@ -1013,6 +1014,48 @@ export class AiDirector {
       { accepted: true },
       parsingStartedAt,
     );
+    let attemptBindings = prepared.attemptBindings;
+    const interpretationManifest = this.service.world.moduleManifest.revision;
+    const interpretation = prepareAttemptInterpretation(
+      reply,
+      attemptBindings,
+      this.service.world.entities[actorId]!.actor!.agency,
+      interpretationManifest,
+    );
+    if (interpretation) {
+      try {
+        const value = await this.generate<unknown>(
+          run,
+          {
+            task: 'native_attempt_interpretation',
+            actorScope: actorId,
+            execution: 'fast',
+            model: c.macrofoldKey ? c.macrofoldMiniModel : c.miniModel,
+            reasoningEffort: 'low',
+            maxOutputTokens: 1024,
+            instructions: interpretation.instructions,
+            context: interpretation.context,
+            schema: interpretation.schema,
+          },
+          `attempt:${attempt}:interpret`,
+        );
+        if (this.service.world.moduleManifest.revision !== interpretationManifest)
+          throw new Error('World mechanics changed during interpretation; intent deferred.');
+        attemptBindings = [...attemptBindings, ...interpretation.resolve(value)];
+      } catch (error) {
+        if (run.controller.signal.aborted || run.cancelReason || run.supersession) throw error;
+        // Optional interpretation failure preserves speech and a private deferred intent.
+        // No paid repair or automatic retry. Native execution still owns every effect.
+        await this.log.record(
+          `${run.job.id}:attempt:${attempt}:interpretation-deferred`,
+          'Native attempt deferred',
+          {},
+          { reason: error instanceof Error ? error.message : 'Interpretation unavailable' },
+        );
+      }
+      this.current(run);
+      if (await retryForUrgentAwareness()) return;
+    }
     run.responseWatch = undefined;
     const commitStartedAt = new Date().toISOString();
     const commit = () =>
@@ -1027,7 +1070,7 @@ export class AiDirector {
             prepared.binding.actions,
             prepared.binding.entityIds,
             prepared.binding.expectedPlan,
-            prepared.attemptBindings,
+            attemptBindings,
           );
         },
         undefined,

@@ -395,6 +395,8 @@ export function validateAgency(world: WorldState): void {
       'goals' in entity.actor
     )
       throw new Error('Incompatible or invalid development agency state.');
+    if (new Set(agency.attempts.map((attempt) => attempt.id)).size !== agency.attempts.length)
+      throw new Error('Duplicate saved unlisted intent identities.');
     for (const attempt of agency.attempts) {
       if (
         !isSafeRecordId(attempt.id) ||
@@ -479,6 +481,29 @@ export function validateAgency(world: WorldState): void {
   }
 }
 
+export function normalizeAttempt(description: string): string {
+  return description.normalize('NFKC').toLowerCase().trim().replace(/\s+/gu, ' ');
+}
+
+/** Explicit withdrawal/resolution releases a private intent slot, never a physical action.
+ * docs/architecture.md#actor-agency-foundation
+ */
+export function withdrawAttempt(actor: ActorComponent, id: string): Outcome {
+  const index = actor.agency.attempts.findIndex((attempt) => attempt.id === id);
+  if (index < 0)
+    return outcome(false, 'attempt-unavailable', 'That private intent is no longer pending.');
+  actor.agency.attempts.splice(index, 1);
+  actor.agency.revision++;
+  return outcome(true, 'attempt-withdrawn', 'Private intent withdrawn; ongoing work is unchanged.');
+}
+
+export function resolveAttempt(actor: ActorComponent, description: string): void {
+  const matching = actor.agency.attempts.filter(
+    (attempt) => attempt.normalized === normalizeAttempt(description),
+  );
+  for (const pending of matching) withdrawAttempt(actor, pending.id);
+}
+
 /** Freeform intent is retained honestly; a missing interpreter is not physical impossibility. */
 export function deferAttempt(
   world: WorldState,
@@ -486,10 +511,10 @@ export function deferAttempt(
   id: string,
   description: string,
 ): Outcome {
-  if (!description.trim() || description.length > 500)
+  if (!isSafeRecordId(id) || !description.trim() || description.length > 500)
     return outcome(false, 'invalid-attempt', 'An attempt needs 1–500 characters.');
   const actor = world.entities[actorId]!.actor!;
-  const normalized = description.normalize('NFKC').toLowerCase().trim().replace(/\s+/gu, ' ');
+  const normalized = normalizeAttempt(description);
   const prior = actor.agency.attempts.find(
     (attempt) =>
       attempt.normalized === normalized &&
@@ -514,7 +539,7 @@ export function deferAttempt(
   return outcome(
     true,
     'attempt-deferred',
-    'Intent retained privately. Interpretation is unavailable; no action was performed or invention admitted.',
+    'Intent retained privately without an executable binding; no action was performed or invention admitted.',
   );
 }
 

@@ -1,5 +1,13 @@
 import { hasMemory, supportsManualWork } from './living.js';
-import { deferAttempt, arrangePlan, cancelPlan, changeGoal, type GoalChange } from './agency.js';
+import {
+  normalizeAttempt,
+  resolveAttempt,
+  deferAttempt,
+  arrangePlan,
+  cancelPlan,
+  changeGoal,
+  type GoalChange,
+} from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { draftWorld } from './draft.js';
 import { executeCommand, SIMULATION_RULES } from './kernel.js';
@@ -32,6 +40,11 @@ export interface ResponseOperation {
 export interface ActorResponse {
   operations: ResponseOperation[];
 }
+export interface AttemptBinding {
+  description: string;
+  commands: Command[];
+}
+
 export interface ResponseReceipt {
   digest: string;
   components: Record<string, Outcome>;
@@ -39,7 +52,7 @@ export interface ResponseReceipt {
 }
 export const RESPONSE_LIMITS = { operations: 16, bytes: 16000 } as const;
 
-function validEnvelope(value: ActorResponse): boolean {
+export function validResponseEnvelope(value: ActorResponse): boolean {
   if (
     !value ||
     typeof value !== 'object' ||
@@ -142,7 +155,7 @@ export function commitActorResponse(
   actions: Record<string, Command | null>,
   entityIds: string[],
   expectedPlan: number,
-  attemptBindings: { description: string; command: Command }[] = [],
+  attemptBindings: AttemptBinding[] = [],
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -154,7 +167,7 @@ export function commitActorResponse(
     events: [],
     outcome: outcome(false, 'actor-unavailable', message),
   });
-  if (!isSafeRecordId(id) || id.length > 100 || !validEnvelope(response))
+  if (!isSafeRecordId(id) || id.length > 100 || !validResponseEnvelope(response))
     return reject('Malformed decision envelope, aliases, dependencies or aggregate limits.');
   const digest = canonicalJson({
     actorId,
@@ -263,7 +276,11 @@ export function commitActorResponse(
         (!act.actionId || act.verb || act.targetEntityId || act.description)) ||
         (act.kind === 'expression' && (!act.verb || act.actionId || act.description)) ||
         (act.kind === 'proposal' &&
-          (!act.description || act.actionId || act.verb || act.targetEntityId)));
+          (!act.description ||
+            act.description.length > 500 ||
+            act.actionId ||
+            act.verb ||
+            act.targetEntityId)));
     if (invalidActShape) {
       components[localId] = outcome(
         false,
@@ -280,7 +297,10 @@ export function commitActorResponse(
       const selected = actions[act.actionId!];
       if (act.mode === 'replace' && input.entities[actorId]!.actor!.planGeneration !== expectedPlan)
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (selected && ['conversation', 'teach', 'cancel', 'recover'].includes(selected.type))
+      else if (
+        selected &&
+        ['conversation', 'teach', 'cancel', 'recover', 'withdraw-attempt'].includes(selected.type)
+      )
         command('act', { ...selected, actorId, id: `${id}:${localId}` });
       else if (selected)
         components[localId] = arrangePlan(
@@ -348,37 +368,43 @@ export function commitActorResponse(
         );
       }
     } else if (act?.kind === 'proposal') {
-      // Exact request-bound descriptions can reuse native commands even when the
-      // expensive suggestion gate is closed. Paraphrases need a scoped interpreter.
-      const normalize = (text: string) =>
-        text
-          .normalize('NFKC')
-          .toLowerCase()
-          .trim()
-          .replace(/[.!?]+$/u, '')
-          .replace(/\s+/gu, ' ');
+      // Server-scoped interpretation chooses existing commands, never effects. Admission
+      // remains native and a composition queues sequential work rather than executing it here.
+      // docs/architecture.md#actor-agency-foundation
+      const normalize = (text: string) => normalizeAttempt(text).replace(/[.!?]+$/u, '');
       const matches = attemptBindings.filter(
         (binding) => normalize(binding.description) === normalize(act.description!),
       );
       const component = world.entities[actorId]!.actor!;
       if (matches.length === 1) {
-        const selected = matches[0]!.command;
+        const selected = matches[0]!.commands;
         if (
           act.mode === 'replace' &&
           input.entities[actorId]!.actor!.planGeneration !== expectedPlan
         )
           components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
-        else if (['conversation', 'teach', 'cancel', 'recover'].includes(selected.type))
-          command('act', { ...selected, actorId, id: `${id}:${localId}` });
+        else if (
+          selected.length === 1 &&
+          ['conversation', 'teach', 'cancel', 'recover', 'withdraw-attempt'].includes(
+            selected[0]!.type,
+          )
+        )
+          command('act', { ...selected[0]!, actorId, id: `${id}:${localId}` });
         else
           components[localId] = arrangePlan(
             component,
             `${id}:${localId}`,
-            [{ ...selected, actorId, id: `${id}:${localId}` }],
+            selected.map((command, index) => ({
+              ...command,
+              actorId,
+              id: `${id}:${localId}:${index}`,
+            })),
             act.mode,
             component.agency.plan?.revision ?? 0,
             null,
           );
+        if (components[localId]?.ok)
+          resolveAttempt(world.entities[actorId]!.actor!, act.description!);
       } else
         components[localId] = deferAttempt(world, actorId, `${id}:${localId}`, act.description!);
     }
