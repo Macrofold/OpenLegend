@@ -23,7 +23,7 @@ A documentation change does not advance a capability. Update this table only whe
 
 Optional repeated operations, one private revisioned goal store, an eight-step native frontier, individual admission/completion outcomes, bounded private unlisted intents and same-version restart/load are implemented. Reflection and god/player editing share goal mutation; native prerequisites inform actor-scoped interests, and inadequate native hunger handling no longer categorically suppresses cognition. Local runtime and browser observations are recorded in [Verification](../../docs/verification.md#actor-agency-runtime).
 
-[AG01–AG12](../../docs/maintainers/agent-agency.md) retains the unfinished work: typed future-item outputs, general suspension, semantic attempt interpretation, private actor invention, complete adversarial automation and live provider/behavior/cost qualification. See [Architecture](../../docs/architecture.md#actor-agency-foundation) for the current implementation boundary.
+[Live agency verification](../../docs/verification.md#live-agency-contracts) now includes a model-generated gather/prepare frontier admitted through the real director and completed natively after restart. This is narrow contract evidence, not general behavioral acceptance. [AG01–AG12](../../docs/maintainers/agent-agency.md) retains typed future-item outputs, general suspension, semantic attempt interpretation, private actor invention, complete adversarial automation and broader live provider/behavior/cost qualification. See [Architecture](../../docs/architecture.md#actor-agency-foundation) for the current implementation boundary.
 
 ## Identity references
 

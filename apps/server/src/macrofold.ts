@@ -42,6 +42,9 @@ const permissions = {
 };
 const terminal = new Set(['succeeded', 'failed', 'cancelled', 'timed_out']);
 
+/** Verified terminal failure is distinct from missing billing or an unknown completion. */
+class MacrofoldExecutionError extends Error {}
+
 /** Backend-owned remote identities and spending. Native agents never receive world tools.
  * Macrofold allocates workspace context; each lane retains its own compute.
  * Conversations retain sessions, while bounded typed calls use fresh history.
@@ -475,8 +478,14 @@ export class MacrofoldBackend implements AiClient {
       lane.blocked = false;
       delete lane.run;
       await save();
-      if (status['status'] !== 'succeeded' || result['execution_outcome'] !== 'success')
-        throw new Error(`Macrofold execution ended with ${String(result['execution_outcome'])}.`);
+      if (status['status'] !== 'succeeded' || result['execution_outcome'] !== 'success') {
+        const code = status['failure_code'];
+        const failure =
+          typeof code === 'string' && /^[a-z0-9_]{1,80}$/.test(code) ? ` (${code})` : '';
+        throw new MacrofoldExecutionError(
+          `Macrofold execution ended with ${String(result['execution_outcome'])}${failure}. Inspect run ${receipt.providerRequestId} in Macrofold before retrying.`,
+        );
+      }
       return string(result['output_text']);
     } catch (error) {
       if (!lane.run && error instanceof MacrofoldHttpError && error.admissionRejected) {
@@ -552,7 +561,12 @@ export class MacrofoldBackend implements AiClient {
       const exported = await adapter.export(workspace.worktreeId, signal);
       return { outcome: 'value', value: { ...value, ...exported }, receipt };
     } catch (error) {
-      receipt.completionUncertain = receipt.dispatched && receipt.estimatedCostUsd === undefined;
+      // A verified failed run cannot publish; unreported billing still consumes its
+      // reservation in store.settle. See docs/architecture.md#monthly-agent-spending.
+      receipt.completionUncertain =
+        receipt.dispatched &&
+        receipt.estimatedCostUsd === undefined &&
+        !(error instanceof MacrofoldExecutionError);
       return {
         outcome: signal.aborted
           ? 'cancelled'
@@ -615,7 +629,10 @@ export class MacrofoldBackend implements AiClient {
       const value = validateMacrofoldValue<T>(request.schema, JSON.parse(output));
       return { outcome: 'value', value, receipt };
     } catch (error) {
-      receipt.completionUncertain = receipt.dispatched && receipt.estimatedCostUsd === undefined;
+      receipt.completionUncertain =
+        receipt.dispatched &&
+        receipt.estimatedCostUsd === undefined &&
+        !(error instanceof MacrofoldExecutionError);
       return {
         outcome: signal.aborted
           ? 'cancelled'
@@ -1000,7 +1017,10 @@ export class MacrofoldBackend implements AiClient {
       );
       response = { ok: true, code: 'completed', message };
     } catch (error) {
-      receipt.completionUncertain = receipt.dispatched && receipt.estimatedCostUsd === undefined;
+      receipt.completionUncertain =
+        receipt.dispatched &&
+        receipt.estimatedCostUsd === undefined &&
+        !(error instanceof MacrofoldExecutionError);
       response = {
         ok: false,
         code: receipt.completionUncertain ? 'uncertain' : 'failed',

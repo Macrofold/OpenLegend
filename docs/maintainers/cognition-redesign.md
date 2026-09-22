@@ -335,6 +335,9 @@ These pending checks directly define cognition completion and were moved from th
 
 ### Message-local reply outcomes
 
+- [x] Preserve verified Macrofold harness failure codes and run identities in user-visible failure details without releasing unreported charges. Native replay evidence is in [Verification](../verification.md#live-agency-contracts); automated caller coverage remains in [TODO](TODO.md#deferred-agency-validation).
+- [ ] Restore the configured external reflection harness and complete the typed goal-change publication walkthrough. The [current live blocker](../verification.md#live-agency-contracts) prevents reflection compatibility acceptance. Preserve the failed run and its accounting before a separately admitted verification attempt.
+
 - [ ] Verify chat jobs persist the exact player speech event ID; animated dots and failure labels appear only alongside that message, including repeated identical text and reloads. Completed turns have no label. Legacy unlinked messages intentionally receive no guessed status.
 - [ ] Add an index for speech-event job lookup if chat history/job counts grow; verify actor visibility boundaries, repeated identical text, reload behavior and terminal status persistence. Focused projection and browser scenarios cover the current state mapping, one-line growth, pending dots, successful replies and failures; broader recovery coverage remains open.
 - [ ] Add automated regression coverage for pending dots occupying a separate incoming-response row, failure reasons remaining inside the originating message, and legacy saved identity/provenance errors being normalized into a plain-language failure tooltip. This correction was runtime-checked without adding or running automated tests at the user's request.

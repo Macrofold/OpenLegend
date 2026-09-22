@@ -24,7 +24,8 @@ Use the current single writer and existing stores first. No new platform depende
 - [x] Change prompt examples to include empty, single-kind and combined decisions. Keep every operation optional; do not require visible reasoning, a goal for every need, or a reflection rewrite before a small intention edit.
 - [x] Make the action-context gate control expensive suggestions, not permission to submit an unlisted attempt or intention. Preserve existing route/attention budget behavior and the deliberate bounded urgent-response refresh.
 - [x] Update parser, domain contract and diagnostics together; no runtime consumer assumes one `talk`, `act` and `think`.
-- [ ] Add automated provider-schema fixtures without external requests; local schema serialization is observed, but live structured-output acceptance remains unqualified.
+- [x] Exercise the operation-list schema through the configured live immediate-response route and continue its admitted native plan without another inference. Narrow evidence is recorded in [Verification](../verification.md#live-agency-contracts); broader behavioral acceptance remains AG12-owned.
+- [ ] Add automated provider-schema fixtures without external requests; preserve the separate response/reflection and malformed-reference boundaries.
 - [x] Apply advertised aggregate operation/byte limits and per-field limits before mutation. Define explicit no-response, envelope rejection, full acceptance and partial acceptance outcomes.
 
 **Exit evidence:** empty output leaves existing work and goals untouched; multiple thoughts and utterances are independently represented; a goal plus a queued action can coexist; duplicate aliases, forward/cyclic dependencies and malformed envelopes fail without effects. Closing action suggestions still permits a freeform attempt. No new mandatory Jev category-selection call appears.
