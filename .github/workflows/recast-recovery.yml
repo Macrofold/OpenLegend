@@ -1,0 +1,32 @@
+name: Recast implementation recovery
+on:
+  push:
+    branches: [feature/spatial-world-3d]
+    paths: ['.github/workflows/recast-recovery.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Export tracked source and installed packages, not credentials or saves
+        run: |
+          git archive --format=zip --output=/tmp/recast-source.zip HEAD
+          find . -type d -name node_modules -prune -print0 | tar --null -czf /tmp/recast-dependencies.tar.gz --files-from=-
+      - uses: actions/upload-artifact@v4
+        with:
+          name: recast-recovery
+          path: |
+            /tmp/recast-source.zip
+            /tmp/recast-dependencies.tar.gz
+          retention-days: 1
