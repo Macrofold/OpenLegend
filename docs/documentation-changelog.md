@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## Third spatial scaling pass
+
+Replaced eager exact graph baking/weak-component labels with lazy checked edges, connector-aware A\* and bounded exhausted-search proofs; documented finite native participant reuse and isolated observation copying. Updated implemented SW/PF entries and remaining latency gates. Removed the obsolete PF task to implement experience-ID indexing (already delivered); its regression requirements remain SR08. Added SR11/SR12 and extended SR05 instead of duplicating privacy checks. Prior automated evidence remains historical; this round records builds/manual runtime only.
+
 ## Second spatial scaling pass
 
 Recorded lazy support-group navigation, sparse exact seams, direct validated overlap paths, search scratch reuse, boolean query changes and mutation-owner experience/audience reuse. Updated implemented SW subsets without closing the remaining preparation, private-acquisition or population gates. Added SR08–SR10 automated coverage to maintainer TODO; old checks remain historical and this pass supplies production build and ad-hoc runtime observations only.

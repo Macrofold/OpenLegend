@@ -1165,6 +1165,23 @@ function nativeReservoirResponse(world: WorldState, actor: Entity): void {
   }
 }
 
+/** This finite native step changes entity state, not participant components/membership.
+ * Compile IDs outside the draft so inert scenery is not proxied/sorted every second. A nested
+ * command can install a new world; refresh there before the next native phase. Future native
+ * spawning/component mutations must also refresh this roster, never retain revoked draft entities.
+ * docs/performance.md#simulation-cpu-and-growing-history
+ */
+function nativeParticipants(world: WorldState): { actors: string[]; ambient: string[] } {
+  const source = isDraft(world.entities) ? current(world.entities) : world.entities;
+  const active = Object.values(source)
+    .filter((e) => e.actor || e.animal || e.heat)
+    .sort((a, b) => a.id.localeCompare(b.id));
+  return {
+    actors: active.filter((e) => e.actor).map((e) => e.id),
+    ambient: active.map((e) => e.id),
+  };
+}
+
 /** Advance bounded one-second native steps. Paused time and absent-player catch-up are never inferred. */
 export function advanceWorld(original: WorldState, elapsedSimSeconds: number): Transition {
   if (
@@ -1191,6 +1208,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
         original.paused ? 'World time is paused.' : 'No time elapsed.',
       ),
     };
+  let participants = nativeParticipants(original);
   let world = draftWorld(original);
   const events: WorldEvent[] = [];
   let remaining = elapsedSimSeconds;
@@ -1199,10 +1217,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
     remaining -= seconds;
     world.simTime += seconds;
     // Stable actor order resolves finite-resource claims; no asynchronous writer mutates a step.
-    for (const actorId of Object.values(world.entities)
-      .filter((entity) => entity.actor)
-      .map((entity) => entity.id)
-      .sort((a, b) => a.localeCompare(b))) {
+    for (const actorId of participants.actors) {
       let actor = world.entities[actorId]!;
       let component = actor.actor!;
       if (!component.alive || component.incapacitated) continue;
@@ -1228,6 +1243,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
                 'The earlier step has no completed item output. Revise the plan.',
               ),
             };
+        participants = nativeParticipants(transition.world);
         world = draftWorld(transition.world);
         events.push(...transition.events);
         actor = world.entities[actorId]!;
@@ -1247,7 +1263,8 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
     // Only landing needs this index; rebuild once at that phase, then track subsequent moves.
     let occupancy: LandingOccupancy | undefined;
     const landingOccupancy = () => (occupancy ??= new LandingOccupancy(world));
-    for (const entity of Object.values(world.entities).sort((a, b) => a.id.localeCompare(b.id))) {
+    for (const id of participants.ambient) {
+      const entity = world.entities[id]!;
       advanceFlight(world, entity, seconds, events, landingOccupancy);
       advanceAnimal(world, entity, seconds);
       occupancy?.update(entity);
@@ -1260,7 +1277,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       }
     }
   }
-  updateEncounters(world, original, events);
+  updateEncounters(world, original, events, participants.actors);
   return finish(
     world,
     events,
@@ -1269,7 +1286,14 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
 }
 
 /** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
-function updateEncounters(world: WorldState, original: WorldState, events: WorldEvent[]): void {
+function updateEncounters(
+  world: WorldState,
+  original: WorldState,
+  events: WorldEvent[],
+  actorIds: readonly string[],
+): void {
+  if (!actorIds.some((id) => world.entities[id]?.actor?.alive && hasMemory(world.entities[id])))
+    return;
   const hadObjectExposures = original.visibleObjects !== undefined;
   const encounter = encounterEmitter(world, events);
 
@@ -1447,13 +1471,24 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
   const visibleEntities = nearbyEntities(world, actor.position, visionRadius(world, actor))
     .filter((entity) => entity.id !== actorId && visible(world, actor, entity))
     .map((entity) => {
-      const copy = cloneValue(entity);
+      // Shape the permitted view before its one final deep copy. Cloning a private plan or
+      // long future route just to erase it wastes work proportional to invisible state.
+      // docs/architecture.md#dependencies-and-authority
+      const copy: Entity = {
+        ...entity,
+        spatial: { ...entity.spatial },
+        ...(entity.actor
+          ? {
+              actor: {
+                ...entity.actor,
+                action: entity.actor.action ? { ...entity.actor.action, path: [] } : null,
+              },
+            }
+          : {}),
+      };
       // A visible body is evidence of its current activity, not access to its future route.
       delete copy.spatial.flight;
-      if (copy.actor?.action) {
-        copy.actor.action.path = [];
-        delete copy.actor.action.destination;
-      }
+      if (copy.actor?.action) delete copy.actor.action.destination;
       if (copy.actor) {
         // Sparse state is owner-private; explicit permitted projections carry public values.
         delete copy.actor.attributes;
@@ -1469,8 +1504,8 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
     definitionIds.add(recipe.outputDefinitionId);
     for (const input of recipe.inputs) definitionIds.add(input.definitionId);
   }
-  const self = cloneValue(actor);
-  if (self.actor) delete self.actor.contacts;
+  const self = { ...actor, actor: { ...actor.actor } };
+  delete self.actor.contacts;
   return cloneValue({
     worldId: world.id,
     at: world.simTime,

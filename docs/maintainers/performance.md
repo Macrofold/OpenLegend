@@ -2,7 +2,7 @@
 
 ## Spatial measurements
 
-Cross-link [SW06/SW14](spatial-world.md) for spatial readiness and measurements rather than adding another worker framework here. Qualify larger actor/geometry workloads before adding a BVH, navmesh worker, tiled rebuild or crowd solver. Current graph/shape caches and camera-only updates must retain zero provider cost.
+Cross-link [SW06/SW14](spatial-world.md) for spatial readiness and measurements rather than adding another worker framework here. Retain the implemented static bounds index; qualify larger actor/geometry workloads before adding navmesh workers, tiled rebuilding or a crowd solver. Current graph/shape caches and camera-only updates must retain zero provider cost.
 
 This is the sole tracker for runtime performance optimization. [Runtime performance design](../performance.md) owns the approach; [Architecture](../architecture.md#performance-critical-path) owns implementation facts and [Verification](../verification.md#performance-investigation) owns evidence. Checked items identify delivered implementation or explicitly named runtime observations. Unchecked acceptance and regression items remain open; implementation is not scale qualification.
 
@@ -115,7 +115,8 @@ Dependencies: PF00. Primary files: domain `draft.ts`, `events.ts`, `experience.t
 - [x] Attribute mature-world native cost with a CPU profile and compare the same snapshot with diagnostic input freezing; record runtime evidence without enabling the experiment in gameplay.
 - [x] Freeze server-owned snapshots after startup migration, command/editor acceptance and each fixed native step so unchanged branches skip finalization. Keep domain construction mutable until handoff; retain append lineage and serialization.
 - [x] Capture post-movement perception scalars once, spatially filter object candidates, use set membership against the prior immutable visibility snapshot, and retain unchanged visibility arrays. Preserve event/audience order and hysteresis; matched replay digests and population timing are in Verification.
-- [ ] Remove linear source-array duplicate scans from experience append admission with indexes scoped to authoritative mutations. Preserve same-length edits/replacements, deletion, forgetting, mutable construction and draft lifetime; never trust a stale ID cache.
+- [x] Reuse sorted native participant IDs across the internal steps of one advance, refreshing after nested command transitions; avoid inert-entity work and skip an encounter phase with no eligible observer. The finite no-native-spawn/component-change assumption is explicit; SR12 retains its qualification.
+- [x] Assemble permitted actor observations before one final deep copy instead of copying private state and copying the sanitized result again. Returned ownership and scope remain unchanged; SR05 retains its qualification.
 - [ ] Complete legacy migration/shared-reference, append-proof and source-revocation qualification, with longer growing-history and all-speed workload coverage. Initial freeze cost and short mature-save runtime observations are recorded; they are not a soak/capacity claim.
 - [x] Bound each native batch to approximately eight milliseconds, accept only its completed prefix and retain remaining debt. Detect suspension from callback gaps rather than batch duration; preserve one writer and fixed-step order. Speed changes preserve admitted debt. Remeasure sustained command latency under load before adding scheduling machinery.
 - [x] Release mutation ownership between bounded batches without changing native transition boundaries, sequences or RNG draws. Commands can be admitted between batches instead of waiting for all accumulated catch-up.
@@ -225,4 +226,8 @@ Exit: a published measured capacity envelope and a justified next bottleneck. No
 
 ## Spatial-provider review integration
 
-SW04/SW05/SW08/SW10 now own indexed static geometry, height-local graph construction, bounded immutable sight reuse and dirty renderer work. The remaining cold-navigation and dense-first-exposure measurements are tracked in [SW scaling next steps](spatial-world.md#scaling-next-steps), with EPR02/EPR10 retaining audience/intake changes. Keep those task bodies in SW/EPR; [SR01–SR07](TODO.md#spatial-review-regression-todos) records the automated coverage deferred by the owner. PF population qualification is not complete merely because the finite native provider is faster.
+SW04/SW05/SW08/SW10 now own indexed static geometry, height-local graph construction, bounded immutable sight reuse and dirty renderer work. The remaining cold-navigation and dense-first-exposure measurements are tracked in [SW scaling next steps](spatial-world.md#scaling-next-steps), with EPR02/EPR10 retaining audience/intake changes. Keep those task bodies in SW/EPR; [SR01–SR12](TODO.md#spatial-review-regression-todos) records the automated coverage deferred by the owner. PF population qualification is not complete merely because the finite native provider is faster.
+
+### A further 90% end-to-end reduction
+
+Treat this as an attribution target, not a result of multiplying microbenchmark speedups. PF00 must separate queue/native/commit/projection/SSE/render spans on the same scenario. Reducing one fraction of latency by 90% cannot reduce the whole by 90% unless it dominates. Use lazy spatial work and participant reuse already delivered; next target the measured dominant remaining layer through PF01/PF05/PF08/PF09 and EPR02/EPR03 rather than adding another cache speculatively. Keep first acquisition, dense no-route search, mature history, ordinary movement and full-stack sustained load separate. Do not change visibility, auditory evidence, durability or simulation time to meet a number.

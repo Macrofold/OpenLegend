@@ -100,7 +100,11 @@ Keep presence heartbeats because they establish liveness, and retain diagnostics
 
 The proposed [spatial validity contract](events-perception-and-reactions.md#6-spatial-work-and-invalidation) covers event-time geometry and receiver/source invalidation; performance budgets and escalation gates remain here.
 
-Preserve one-second native semantics, deterministic ordering and saved randomness while reducing repeated work. The first CPU candidates are:
+Preserve one-second native semantics, deterministic ordering and saved randomness while reducing repeated work. The implemented finite native loop compiles sorted participant IDs once per `advanceWorld` call, before draft traversal, and reuses them across its internal one-second steps. Only actors, animals and heat sources participate; inert scenery is not sorted or proxied each second. Nested plan-command transitions refresh the roster before the next native phase. This is valid because current native stepping changes state, not entity membership or actor/animal/heat components. A future native spawning or component-changing family must refresh that roster at its mutation boundary. IDs, not draft entities, cross draft replacement. With no living memory-capable observer, the encounter phase has no work; otherwise its existing observation/event boundaries remain unchanged. This does not authorize combining separate application transitions or analytically skipping physical steps.
+
+Actor observation assembly omits private routes/state before one final deep copy. Returned records remain isolated; do not substitute an aliased public view or a persistent copy of private plans. Candidate selection and required evidence remain the existing owners' responsibility.
+
+The remaining CPU candidates are:
 
 - Initialize traits, minds, cognition migration and policy when loading/creating actors or changing policy, rather than scanning every actor during every save. Keep one authoritative actor-admission entrypoint and startup validation.
 - Preserve the implemented draft-local source-ID index for append admission. It scans retained IDs once per mutation-owner draft array, then maintains membership on accepted additions; it does not duplicate writable experience. Non-add changes invalidate it, array replacement obtains a new identity, and raw mutable builders use live lookup. Duplicate, owner, forgotten-source and obligation checks remain required. Further batching is conditional work, not a replacement for the current per-event semantic mutation.
