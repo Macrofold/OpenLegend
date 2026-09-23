@@ -6,7 +6,6 @@ permissions:
   contents: read
 jobs:
   check:
-    if: github.ref != 'refs/heads/research/navigation-qualification'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
