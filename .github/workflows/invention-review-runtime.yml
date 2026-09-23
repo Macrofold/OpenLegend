@@ -1,0 +1,37 @@
+name: Invention review runtime export
+on:
+  push:
+    branches: [review/invention-foundation-performance]
+    paths: [.github/workflows/invention-review-runtime.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Export dependencies and prior design snapshots only
+        run: |
+          git archive --format=tar 3ad74eb19e0a9143d96e4f51ad19b68d7fa2d232 docs archive README.md > /tmp/invention-common-base.tar
+          git archive --format=tar 69897a356c959677cfbf7fe1785f2b9db0271b43 docs archive README.md > /tmp/invention-design.tar
+          git diff --name-only 3ad74eb19e0a9143d96e4f51ad19b68d7fa2d232 69897a356c959677cfbf7fe1785f2b9db0271b43 > /tmp/invention-design-files.txt
+          tar -czf /tmp/invention-review-dependencies.tar.gz node_modules apps/*/node_modules packages/*/node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: invention-review-runtime
+          path: |
+            /tmp/invention-review-dependencies.tar.gz
+            /tmp/invention-common-base.tar
+            /tmp/invention-design.tar
+            /tmp/invention-design-files.txt
+          retention-days: 1
