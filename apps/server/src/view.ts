@@ -100,16 +100,19 @@ export async function projectView(
     inventory: memo('ownedItems', [world.items], () =>
       inventoryFor(world, service.controlledEntityId),
     ),
-    visibleEntities: memo('visibleEntities', [world.entities], () =>
-      nearbyEntities(
-        world,
-        world.entities[service.controlledEntityId]!.position,
-        visionRadius(world, world.entities[service.controlledEntityId]!),
-      ).filter(
-        (entity) =>
-          entity.id !== service.controlledEntityId &&
-          seesEntity(world, world.entities[service.controlledEntityId]!, entity),
-      ),
+    visibleEntities: memo(
+      'visibleEntities',
+      [world.entities, world.map, world.moduleManifest],
+      () =>
+        nearbyEntities(
+          world,
+          world.entities[service.controlledEntityId]!.position,
+          visionRadius(world, world.entities[service.controlledEntityId]!),
+        ).filter(
+          (entity) =>
+            entity.id !== service.controlledEntityId &&
+            seesEntity(world, world.entities[service.controlledEntityId]!, entity),
+        ),
     ),
     knownRecipes: memo(
       'knownRecipes',

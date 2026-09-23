@@ -6,10 +6,99 @@ import {
   resolveSupport,
   supportBelow,
   surfaceById,
+  SPATIAL_LIMITS,
+  type BodyProfile,
+  type WorldPoint,
 } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition, spatialMap } from './spatial-state.js';
 import { emit } from './events.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
+
+/** Short-lived landing broad phase, created lazily after voluntary movement.
+ * The caller updates it after each native animal/flyer move. Never cache a mutable step's
+ * occupancy by world identity: a second bird must see the first bird's committed landing.
+ */
+export class LandingOccupancy {
+  private cells = new Map<string, Set<string>>();
+  private bodies = new Map<
+    string,
+    { position: WorldPoint; radius: number; height: number; keys: string[] }
+  >();
+  constructor(world: WorldState) {
+    for (const entity of Object.values(world.entities)) this.update(entity);
+  }
+  private keys(position: WorldPoint, radius: number, height: number): string[] {
+    const keys: string[] = [];
+    for (
+      let x = Math.floor((position.x - radius) / 4);
+      x <= Math.floor((position.x + radius) / 4);
+      x++
+    )
+      for (let y = Math.floor(position.y / 4); y <= Math.floor((position.y + height) / 4); y++)
+        for (
+          let z = Math.floor((position.z - radius) / 4);
+          z <= Math.floor((position.z + radius) / 4);
+          z++
+        )
+          keys.push(`${x},${y},${z}`);
+    return keys;
+  }
+  update(entity: Entity): void {
+    const old = this.bodies.get(entity.id);
+    if (!old && !entity.actor?.alive) return;
+    const p = entity.position;
+    const body = bodyProfile(entity);
+    if (
+      old &&
+      entity.actor?.alive &&
+      old.radius === body.radius &&
+      old.height === body.height &&
+      old.position.x === p.x &&
+      old.position.y === p.y &&
+      old.position.z === p.z
+    )
+      return;
+    if (old) {
+      for (const key of old.keys) {
+        const cell = this.cells.get(key)!;
+        cell.delete(entity.id);
+        if (!cell.size) this.cells.delete(key);
+      }
+      this.bodies.delete(entity.id);
+    }
+    if (!entity.actor?.alive) return;
+    const keys = this.keys(p, body.radius, body.height);
+    this.bodies.set(entity.id, {
+      position: { ...p },
+      radius: body.radius,
+      height: body.height,
+      keys,
+    });
+    for (const key of keys) {
+      let cell = this.cells.get(key);
+      if (!cell) this.cells.set(key, (cell = new Set()));
+      cell.add(entity.id);
+    }
+  }
+  blocked(id: string, position: WorldPoint, body: BodyProfile): boolean {
+    const seen = new Set<string>([id]);
+    for (const key of this.keys(position, body.radius, body.height))
+      for (const otherId of this.cells.get(key) ?? []) {
+        if (seen.has(otherId)) continue;
+        seen.add(otherId);
+        const other = this.bodies.get(otherId)!;
+        const p = other.position;
+        // Physical height/footprint, not equal surface IDs: coplanar patches may overlap.
+        if (
+          p.y < position.y + body.height - SPATIAL_LIMITS.epsilon &&
+          p.y + other.height > position.y + SPATIAL_LIMITS.epsilon &&
+          Math.hypot(p.x - position.x, p.z - position.z) < body.radius + other.radius
+        )
+          return true;
+      }
+    return false;
+  }
+}
 
 /** A small native locomotion family: explicit corridors, not free-flight physics or AI per frame.
  * docs/spatial-world.md#flying-creatures. Gravity is a game-time tuning value, not Earth physics. */
@@ -18,9 +107,11 @@ export function advanceFlight(
   entity: Entity,
   seconds: number,
   events: WorldEvent[],
+  landingOccupancy?: () => LandingOccupancy,
 ): void {
-  const state = entity.spatial,
-    map = spatialMap(world),
+  const state = entity.spatial;
+  if (!state.flight && state.fallVelocity === undefined) return;
+  const map = spatialMap(world),
     body = bodyProfile(entity);
   if (
     state.supportSurfaceId === null &&
@@ -81,13 +172,7 @@ export function advanceFlight(
   // Reserve the landing footprint against actual current bodies, not a visual sprite rectangle.
   if (
     landing &&
-    Object.values(world.entities).some(
-      (other) =>
-        other.id !== entity.id &&
-        !!other.actor?.alive &&
-        other.spatial.supportSurfaceId === landing.surfaceId &&
-        distance3D(other.position, landing) < body.radius + bodyProfile(other).radius,
-    )
+    (landingOccupancy?.() ?? new LandingOccupancy(world)).blocked(entity.id, landing, body)
   )
     return;
   const wasGrounded = state.supportSurfaceId !== null;

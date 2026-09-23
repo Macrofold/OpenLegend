@@ -27,9 +27,10 @@ export function replaceSpatialLayout(
   world.map.spatial.revision = expectedRevision + 1;
   try {
     validateSpatialWorld(world);
+    const map = spatialMap(world);
     for (const entity of Object.values(world.entities)) {
       const p = supportedPosition(entity);
-      if (p && !canStand(spatialMap(world), p, bodyProfile(entity)))
+      if (p && !canStand(map, p, bodyProfile(entity)))
         return reject('This change would remove support or obstruct an occupant.');
       if (!p) return reject('Wait for airborne actors to land before structural editing.');
     }

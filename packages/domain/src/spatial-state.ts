@@ -181,7 +181,8 @@ export function starterFlightRoutes(): Record<string, FlightRoute> {
   };
 }
 export function validateSpatialWorld(world: WorldState): void {
-  validateSpatialMap(world.map);
+  const map = spatialMap(world);
+  validateSpatialMap(map);
   if (!world.flightRoutes || Object.keys(world.flightRoutes).length > 16)
     throw new Error('Invalid flight route registry.');
   for (const [routeId, route] of Object.entries(world.flightRoutes)) {
@@ -208,7 +209,7 @@ export function validateSpatialWorld(world: WorldState): void {
           p.waitSeconds < 0 ||
           p.waitSeconds > 86400 ||
           (p.landingSurfaceId !== undefined &&
-            !resolveSupport(world.map, p.position, p.landingSurfaceId)),
+            !resolveSupport(map, p.position, p.landingSurfaceId)),
       )
     )
       throw new Error('Invalid native flight route.');
@@ -224,7 +225,7 @@ export function validateSpatialWorld(world: WorldState): void {
         throw new Error('Native takeoff and landing must be vertical.');
       if (
         !canFlySegment(
-          world.map,
+          map,
           from.position,
           to.position,
           BODY_PROFILES.bird,
@@ -234,7 +235,7 @@ export function validateSpatialWorld(world: WorldState): void {
         throw new Error('Flight corridor intersects geometry.');
       if (
         to.landingSurfaceId &&
-        !canStand(world.map, { ...to.position, surfaceId: to.landingSurfaceId }, BODY_PROFILES.bird)
+        !canStand(map, { ...to.position, surfaceId: to.landingSurfaceId }, BODY_PROFILES.bird)
       )
         throw new Error('Flight landing has no valid stance.');
     }
@@ -246,8 +247,7 @@ export function validateSpatialWorld(world: WorldState): void {
       !s ||
       !Object.hasOwn(BODY_PROFILES, s.bodyProfileId) ||
       !Number.isFinite(s.heading) ||
-      (s.supportSurfaceId !== null &&
-        !resolveSupport(world.map, entity.position, s.supportSurfaceId))
+      (s.supportSurfaceId !== null && !resolveSupport(map, entity.position, s.supportSurfaceId))
     )
       throw new Error(
         `Invalid spatial state for ${entity.id}. A current 3D-format world is required.`,
@@ -283,10 +283,10 @@ export function validateSpatialWorld(world: WorldState): void {
       const a = entity.actor.action;
       if (
         a.path.length > SPATIAL_LIMITS.maxPathPoints ||
-        a.path.some((p) => !finitePoint(p) || !resolveSupport(world.map, p, p.surfaceId))
+        a.path.some((p) => !finitePoint(p) || !resolveSupport(map, p, p.surfaceId))
       )
         throw new Error('Invalid saved spatial route.');
-      if (a.destination && !resolveSupport(world.map, a.destination, a.destination.surfaceId))
+      if (a.destination && !resolveSupport(map, a.destination, a.destination.surfaceId))
         throw new Error('Invalid saved spatial destination.');
     }
   }

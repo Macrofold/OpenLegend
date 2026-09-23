@@ -7,6 +7,7 @@ import {
   spatialBlockers,
   supportBelow,
   surfaceById,
+  surfaceContains,
   surfaceHeight,
   type WorldPoint,
 } from '@open-legend/spatial';
@@ -48,7 +49,10 @@ interface RenderedEntity {
   view: EntityView;
   materials: pc.StandardMaterial[];
   lastFrame: number;
+  lastMoving?: boolean;
+  shadowGeometry?: string;
   facing: number;
+  scaleFacing: number;
   width: number;
   height: number;
 }
@@ -78,6 +82,12 @@ export class WildernessScene implements WorldRenderer {
   private elapsed = 0;
   private view: GameView | null = null;
   private mapKey = '';
+  private worldKey = '';
+  private cutawayKey = '';
+  private orientedYaw = NaN;
+  private orientedPitch = NaN;
+  private nextHoverAt = 0;
+  private lastHover?: { entity: EntityView | null; x: number; y: number };
   private initialized = false;
   private visionBlur: VisionBlur;
   readonly statuses: CharacterStatuses;
@@ -184,9 +194,18 @@ export class WildernessScene implements WorldRenderer {
   setView(view: GameView): void {
     this.view = view;
     const key = `${view.worldId}:${view.map.seed}:${view.map.width}:${view.map.height}:${view.map.spatial.revision}`;
-    if (this.mapKey !== key) {
+    const worldKey = `${view.worldId}:${view.saveTimeline}`;
+    if (this.worldKey !== worldKey) {
       for (const entry of this.actors.values()) this.releaseEntity(entry);
       this.actors.clear();
+      this.selected = null;
+      this.initialized = false;
+      this.worldKey = worldKey;
+      this.mapKey = '';
+      this.cutawayKey = '';
+    }
+    if (this.mapKey !== key) {
+      // Geometry changes rebuild the landscape, not every unchanged actor's sprite/GPU assets.
       this.mapKey = key;
       this.buildLandscape(view.map);
     }
@@ -284,22 +303,26 @@ export class WildernessScene implements WorldRenderer {
     const map = this.view?.map;
     if (!map) return;
     const level = map.spatial.levels.find((entry) => entry.id === this.cameraSettings.levelId);
-    this.cutaways.clear();
-    if (level) {
-      for (const surface of map.spatial.surfaces) {
-        const minimum = Math.min(
-          surfaceHeight(surface, surface.minX, surface.minZ),
-          surfaceHeight(surface, surface.minX, surface.maxZ),
-          surfaceHeight(surface, surface.maxX, surface.minZ),
-          surfaceHeight(surface, surface.maxX, surface.maxZ),
-        );
-        if (surface.levelId !== level.id && minimum > level.focusY + 0.05)
-          this.cutaways.add(surface.id);
+    const cutawayKey = `${this.mapKey}:${level?.id ?? 'all'}`;
+    if (this.cutawayKey !== cutawayKey) {
+      this.cutawayKey = cutawayKey;
+      this.cutaways.clear();
+      if (level) {
+        for (const surface of map.spatial.surfaces) {
+          const minimum = Math.min(
+            surfaceHeight(surface, surface.minX, surface.minZ),
+            surfaceHeight(surface, surface.minX, surface.maxZ),
+            surfaceHeight(surface, surface.maxX, surface.minZ),
+            surfaceHeight(surface, surface.maxX, surface.maxZ),
+          );
+          if (surface.levelId !== level.id && minimum > level.focusY + 0.05)
+            this.cutaways.add(surface.id);
+        }
+        for (const blocker of spatialBlockers(map))
+          if (blocker.bounds.min.y > level.focusY + 0.05) this.cutaways.add(blocker.id);
       }
-      for (const blocker of spatialBlockers(map))
-        if (blocker.bounds.min.y > level.focusY + 0.05) this.cutaways.add(blocker.id);
+      for (const [id, node] of this.geometryNodes) node.enabled = !this.cutaways.has(id);
     }
-    for (const [id, node] of this.geometryNodes) node.enabled = !this.cutaways.has(id);
     for (const entry of this.actors.values()) {
       const support = surfaceById(map, entry.view.supportSurfaceId ?? '');
       entry.root.enabled =
@@ -639,6 +662,7 @@ export class WildernessScene implements WorldRenderer {
       card: !crate,
       lastFrame: -1,
       facing: 1,
+      scaleFacing: 1,
       width,
       height,
       observed: true,
@@ -857,7 +881,14 @@ export class WildernessScene implements WorldRenderer {
         ? pc.PROJECTION_ORTHOGRAPHIC
         : pc.PROJECTION_PERSPECTIVE;
     this.camera.camera!.orthoHeight = this.cameraSettings.zoom;
-    for (const card of this.cards.keys()) this.orientCard(card);
+    if (
+      this.orientedYaw !== this.cameraSettings.yaw ||
+      this.orientedPitch !== this.cameraSettings.pitch
+    ) {
+      this.orientedYaw = this.cameraSettings.yaw;
+      this.orientedPitch = this.cameraSettings.pitch;
+      for (const card of this.cards.keys()) this.orientCard(card);
+    }
   }
   private update(dt: number): void {
     this.elapsed += Math.min(dt, 0.1);
@@ -882,14 +913,23 @@ export class WildernessScene implements WorldRenderer {
         position.z <= support.maxZ
       )
         position.y = surfaceHeight(support, position.x, position.z);
-      const below = this.view && supportBelow(this.view.map, position);
-      entry.shadow.enabled = !!below;
-      if (below) {
-        entry.shadow.setLocalPosition(0, below.y - position.y + 0.025, 0);
-        const spread = Math.min(1.8, 1 + Math.max(0, position.y - below.y) * 0.1);
-        entry.shadow.setLocalScale(entry.width * 0.9 * spread, 1, entry.width * 0.6 * spread);
+      const positionChanged = Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 1e-6;
+      if (positionChanged || entry.shadowGeometry !== this.mapKey) {
+        const below =
+          support &&
+          surfaceContains(support, position) &&
+          Math.abs(position.y - surfaceHeight(support, position.x, position.z)) < 1e-5
+            ? { y: position.y }
+            : this.view && supportBelow(this.view.map, position);
+        entry.shadow.enabled = !!below;
+        if (below) {
+          entry.shadow.setLocalPosition(0, below.y - position.y + 0.025, 0);
+          const spread = Math.min(1.8, 1 + Math.max(0, position.y - below.y) * 0.1);
+          entry.shadow.setLocalScale(entry.width * 0.9 * spread, 1, entry.width * 0.6 * spread);
+        }
+        entry.shadowGeometry = this.mapKey;
       }
-      entry.root.setPosition(position);
+      if (positionChanged) entry.root.setPosition(position);
       const animated = entry.card && (entry.view.kind === 'station' || moving);
       const frame =
         animated && !this.view?.clock.paused
@@ -900,11 +940,16 @@ export class WildernessScene implements WorldRenderer {
         entry.lastFrame = frame;
       }
       if (entry.card) {
-        entry.sprite.setLocalScale(entry.width * entry.facing, 1, entry.height);
-        this.orientCard(
-          entry.sprite,
-          entry.view.kind === 'actor' && moving ? Math.sin(this.elapsed * 12) * 0.015 : 0,
-        );
+        if (entry.facing !== entry.scaleFacing) {
+          entry.sprite.setLocalScale(entry.width * entry.facing, 1, entry.height);
+          entry.scaleFacing = entry.facing;
+        }
+        if (moving || entry.lastMoving)
+          this.orientCard(
+            entry.sprite,
+            entry.view.kind === 'actor' && moving ? Math.sin(this.elapsed * 12) * 0.015 : 0,
+          );
+        entry.lastMoving = moving;
       }
     }
     const selected = this.selected ? this.actors.get(this.selected) : undefined;
@@ -938,9 +983,10 @@ export class WildernessScene implements WorldRenderer {
     }
     this.statuses.update((id) => this.statusAnchor(id));
     // Reevaluate stationary pointers as actors move or the camera changes.
-    if (this.hoverPoint && !this.drag) {
+    if (this.hoverPoint && !this.drag && this.elapsed >= this.nextHoverAt) {
+      this.nextHoverAt = this.elapsed + 0.05;
       const rect = this.canvas.getBoundingClientRect();
-      this.callbacks.hover(
+      this.publishHover(
         this.pick(this.hoverPoint.x - rect.left, this.hoverPoint.y - rect.top),
         this.hoverPoint,
       );
@@ -963,9 +1009,20 @@ export class WildernessScene implements WorldRenderer {
       this.view.vision.radius * VISION_FOCUS.obscuredFraction
     );
   }
+  private publishHover(entity: EntityView | null, point: { x: number; y: number }): void {
+    // Stationary hover must not rerender React at the GPU frame rate.
+    if (
+      this.lastHover?.entity === entity &&
+      this.lastHover.x === point.x &&
+      this.lastHover.y === point.y
+    )
+      return;
+    this.lastHover = { entity, ...point };
+    this.callbacks.hover(entity, point);
+  }
   private clearHover = (): void => {
     this.hoverPoint = null;
-    this.callbacks.hover(null, { x: 0, y: 0 });
+    this.publishHover(null, { x: 0, y: 0 });
   };
   private screenRay(x: number, y: number): { from: pc.Vec3; to: pc.Vec3 } {
     return {
@@ -1070,10 +1127,10 @@ export class WildernessScene implements WorldRenderer {
       drag.x = event.clientX;
       drag.y = event.clientY;
       this.canvas.style.cursor = 'grabbing';
-      this.callbacks.hover(null, { x: event.clientX, y: event.clientY });
+      this.publishHover(null, { x: event.clientX, y: event.clientY });
       this.placeCamera();
     } else {
-      this.callbacks.hover(this.pick(local.x, local.y), { x: event.clientX, y: event.clientY });
+      this.publishHover(this.pick(local.x, local.y), { x: event.clientX, y: event.clientY });
     }
   };
   private pointerUp = (event: PointerEvent): void => {

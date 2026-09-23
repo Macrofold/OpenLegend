@@ -6,7 +6,7 @@ import {
   distance3D,
   findSurfaceRoute,
   resolveSupport,
-  supportSurfaces,
+  surfacesInBounds,
   surfaceById,
   surfaceContains,
   surfaceHeight,
@@ -96,7 +96,12 @@ export function findApproachPath(
   )
     candidates.push(targetSupport);
   const radius = Math.min(12, Math.max(1, reach));
-  for (const surface of supportSurfaces(map)) {
+  const goal = interactionAnchor(target);
+  const footY = goal.y - profile.interactionHeight;
+  for (const surface of surfacesInBounds(map, {
+    min: { x: target.position.x - radius, y: footY - reach, z: target.position.z - radius },
+    max: { x: target.position.x + radius, y: footY + reach, z: target.position.z + radius },
+  })) {
     for (
       let z = Math.max(Math.ceil(surface.minZ), Math.ceil(target.position.z - radius));
       z <= Math.min(Math.floor(surface.maxZ), Math.floor(target.position.z + radius));
@@ -108,8 +113,7 @@ export function findApproachPath(
         x++
       ) {
         const p = { x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id };
-        if (canReachEntity(world, actor, target, reach, p) && canStand(map, p, profile))
-          candidates.push(p);
+        if (distance3D(interactionAnchor(actor, p), goal) <= reach) candidates.push(p);
       }
     }
   }
@@ -120,7 +124,14 @@ export function findApproachPath(
       a.z - b.z ||
       a.x - b.x,
   );
-  for (const candidate of candidates.slice(0, 12)) {
+  let attempted = 0;
+  for (const candidate of candidates) {
+    if (
+      !canReachEntity(world, actor, target, reach, candidate) ||
+      !canStand(map, candidate, profile)
+    )
+      continue;
+    if (attempted++ === 12) break;
     const route = findSurfaceRoute(map, start, candidate, profile);
     if (route.status === 'reached') return route.path;
   }

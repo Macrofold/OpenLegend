@@ -1,7 +1,8 @@
 import { gatheringYield, BASE_GATHER_QUANTITY } from './gathering.js';
+import { current, isDraft } from 'immer';
 import { canWalkSegment, finitePoint, interpolate, type SurfacePoint } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
-import { advanceFlight } from './flight.js';
+import { advanceFlight, LandingOccupancy } from './flight.js';
 import {
   withdrawAttempt,
   replaceGoals,
@@ -44,6 +45,7 @@ import {
   hearsEntity,
   seesEntity,
   visionRadius,
+  visionQuery,
   sensesFor,
   contactViews,
   directProbe,
@@ -1242,9 +1244,13 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       if (hasWildernessNeeds(component)) accountRest(component, world.simTime, seconds);
       advanceAction(world, actor, seconds, events);
     }
+    // Only landing needs this index; rebuild once at that phase, then track subsequent moves.
+    let occupancy: LandingOccupancy | undefined;
+    const landingOccupancy = () => (occupancy ??= new LandingOccupancy(world));
     for (const entity of Object.values(world.entities).sort((a, b) => a.id.localeCompare(b.id))) {
-      advanceFlight(world, entity, seconds, events);
+      advanceFlight(world, entity, seconds, events, landingOccupancy);
       advanceAnimal(world, entity, seconds);
+      occupancy?.update(entity);
       if (entity.heat?.lit) {
         entity.heat.fuelSeconds = Math.max(0, entity.heat.fuelSeconds - seconds);
         if (entity.heat.fuelSeconds === 0) {
@@ -1266,12 +1272,13 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
 function updateEncounters(world: WorldState, original: WorldState, events: WorldEvent[]): void {
   const hadObjectExposures = original.visibleObjects !== undefined;
 
-  // Read-only perception captures position scalars once after movement, avoiding repeated proxy walks.
-  // Only positions/identity are read here; event mutations still use the authoritative draft.
+  // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
+  // Snapshot identity, transforms and body height; event mutations still use the authoritative draft.
   const entities = Object.values(world.entities).map((entity) => ({
     entity,
     id: entity.id,
-    position: { x: entity.position.x, y: entity.position.y, z: entity.position.z },
+    position: isDraft(entity.position) ? current(entity.position) : entity.position,
+    height: bodyProfile(entity).height,
     alive: !!entity.actor?.alive,
     memory: hasMemory(entity),
     object: !entity.actor && !entity.animal,
@@ -1281,6 +1288,7 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
   const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
   for (const actor of entities.filter((e) => e.alive && e.memory)) {
     const radius = visionRadius(world, actor.entity);
+    const sees = visionQuery(world, actor.entity);
     const touch = sensesFor(world, actor.entity).find(
       (s) => s.implementation === 'contact-proximity-v1',
     );
@@ -1361,7 +1369,7 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
     const previous = original.visiblePeople?.[actor.id] ?? [];
     const previouslySeen = new Set(previous);
     const seen = nearby(actor.position, radius + 2)
-      .filter((e) => e.id !== actor.id && e.alive && seesEntity(world, actor.entity, e.entity))
+      .filter((e) => e.id !== actor.id && e.alive && sees(e))
       .map((e) => e.id);
     for (const id of seen.filter((id) => !previouslySeen.has(id))) {
       const recent = (world.memories[actor.id] ?? []).some(
@@ -1391,9 +1399,7 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
     )
       (world.visiblePeople ??= {})[actor.id] = seen;
     // Object exposures use the same committed awareness path without a cognition trigger.
-    const objects = nearbyObjects(actor.position, radius).filter((entity) =>
-      seesEntity(world, actor.entity, entity.entity),
-    );
+    const objects = nearbyObjects(actor.position, radius).filter((entity) => sees(entity));
     const priorObjects = new Set(
       original.visibleObjects?.[actor.id] ??
         (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
@@ -1461,6 +1467,12 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
     .filter((entity) => entity.id !== actorId && visible(world, actor, entity))
     .map((entity) => {
       const copy = cloneValue(entity);
+      // A visible body is evidence of its current activity, not access to its future route.
+      delete copy.spatial.flight;
+      if (copy.actor?.action) {
+        copy.actor.action.path = [];
+        delete copy.actor.action.destination;
+      }
       if (copy.actor) {
         // Sparse state is owner-private; explicit permitted projections carry public values.
         delete copy.actor.attributes;

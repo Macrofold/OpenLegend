@@ -24,6 +24,7 @@ interface Graph {
   nodes: Node[];
   lookup: Map<string, number>;
   revision: number;
+  components: Int32Array;
 }
 const graphs = new WeakMap<SpatialMap, Map<string, Graph>>();
 const key = (surface: string, x: number, z: number) => `${surface}:${x},${z}`;
@@ -44,7 +45,12 @@ function graphFor(map: SpatialMap, body: BodyProfile): Graph {
   const cached = profiles?.get(profileKey);
   if (cached?.revision === map.spatial.revision) return cached;
   validateSpatialMap(map);
-  const graph: Graph = { nodes: [], lookup: new Map(), revision: map.spatial.revision };
+  const graph: Graph = {
+    nodes: [],
+    lookup: new Map(),
+    revision: map.spatial.revision,
+    components: new Int32Array(),
+  };
   const columns = new Map<string, number[]>();
   for (const s of [...supportSurfaces(map)].sort((a, b) => a.id.localeCompare(b.id))) {
     for (let z = Math.ceil(s.minZ); z <= Math.floor(s.maxZ); z++) {
@@ -52,6 +58,8 @@ function graphFor(map: SpatialMap, body: BodyProfile): Graph {
         const point = { x, y: surfaceHeight(s, x, z), z, surfaceId: s.id };
         if (!canStand(map, point, body)) continue;
         const index = graph.nodes.length;
+        if (index >= SPATIAL_LIMITS.maxGraphNodes)
+          throw new Error('Spatial graph exceeds its native node budget.');
         graph.nodes.push({ point, edges: [] });
         graph.lookup.set(key(s.id, x, z), index);
         const column = `${x},${z}`;
@@ -61,11 +69,27 @@ function graphFor(map: SpatialMap, body: BodyProfile): Graph {
       }
     }
   }
+  for (const column of columns.values())
+    column.sort((a, b) => graph.nodes[a]!.point.y - graph.nodes[b]!.point.y || a - b);
   for (const [index, node] of graph.nodes.entries()) {
     const p = node.point;
     const candidates = DIRECTIONS.map(([dx, dz]) =>
       graph.lookup.get(key(p.surfaceId, p.x + dx, p.z + dz)),
-    ).concat(columns.get(`${p.x},${p.z}`) ?? []);
+    );
+    const column = columns.get(`${p.x},${p.z}`)!;
+    // Only coincident heights can form a seam; stacked floors are not all-to-all edges.
+    let lo = 0,
+      hi = column.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (graph.nodes[column[mid]!]!.point.y < p.y - SPATIAL_LIMITS.supportTolerance) lo = mid + 1;
+      else hi = mid;
+    }
+    for (let i = lo; i < column.length; i++) {
+      const next = column[i]!;
+      if (graph.nodes[next]!.point.y > p.y + SPATIAL_LIMITS.supportTolerance) break;
+      candidates.push(next);
+    }
     for (const next of candidates) {
       if (next === undefined || next === index) continue;
       const target = graph.nodes[next]!.point;
@@ -73,6 +97,23 @@ function graphFor(map: SpatialMap, body: BodyProfile): Graph {
         node.edges.push({ index: next, cost: distance3D(p, target) });
     }
   }
+  const components = new Int32Array(graph.nodes.length);
+  for (let i = 0; i < components.length; i++) components[i] = i;
+  const root = (i: number): number => {
+    while (components[i] !== i) {
+      components[i] = components[components[i]!]!;
+      i = components[i]!;
+    }
+    return i;
+  };
+  for (const [i, node] of graph.nodes.entries())
+    for (const edge of node.edges) {
+      const a = root(i),
+        b = root(edge.index);
+      if (a !== b) components[Math.max(a, b)] = Math.min(a, b);
+    }
+  for (let i = 0; i < components.length; i++) components[i] = root(i);
+  graph.components = components;
   profiles ??= new Map();
   profiles.set(profileKey, graph);
   graphs.set(map, profiles);
@@ -174,6 +215,8 @@ export function findSurfaceRoute(
   const starts = endpointNodes(map, graph, from, body),
     ends = endpointNodes(map, graph, to, body);
   if (!starts.length || !ends.length) return fail('no-route');
+  const startComponents = new Set(starts.map((i) => graph.components[i]));
+  if (!ends.some((i) => startComponents.has(graph.components[i]))) return fail('no-route');
   const endCosts = new Map(ends.map((i) => [i, distance3D(graph.nodes[i]!.point, to)]));
   const costs = new Float64Array(graph.nodes.length).fill(Infinity),
     parent = new Int32Array(graph.nodes.length).fill(-1);

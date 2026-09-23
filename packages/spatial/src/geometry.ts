@@ -10,7 +10,9 @@ import {
   type WorldPoint,
   type SpatialBlocker,
 } from './types.js';
+import { BoundsIndex } from './bounds-index.js';
 const EPS = SPATIAL_LIMITS.epsilon;
+const EMPTY_IDS: ReadonlySet<string> = new Set();
 export const distance3D = (a: WorldPoint, b: WorldPoint): number =>
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 export const horizontalDistance = (
@@ -46,7 +48,7 @@ export function surfaceContains(
   );
 }
 export function surfaceById(map: SpatialMap, id: string): WalkableSurface | undefined {
-  return supportSurfaces(map).find((surface) => surface.id === id);
+  return preparedShapes(map).supportById.get(id);
 }
 export function terrainWalkable(map: SpatialMap, point: WorldPoint): boolean {
   if (point.x < 0 || point.z < 0 || point.x > map.width - 1 || point.z > map.height - 1)
@@ -61,27 +63,78 @@ export function resolveSupport(
   surfaceId?: string,
 ): SurfacePoint | null {
   if (!finitePoint(point)) return null;
-  const surfaces = surfaceId
-    ? [surfaceById(map, surfaceId)].filter((s): s is WalkableSurface => !!s)
-    : supportSurfaces(map);
-  for (const surface of surfaces) {
-    if (!surfaceContains(surface, point)) continue;
+  if (surfaceId) {
+    const surface = surfaceById(map, surfaceId);
+    if (!surface || !surfaceContains(surface, point)) return null;
     const y = surfaceHeight(surface, point.x, point.z);
-    if (Math.abs(y - point.y) > SPATIAL_LIMITS.supportTolerance) continue;
-    if (surface.material === 'ground' && !terrainWalkable(map, point)) continue;
-    return { x: point.x, y, z: point.z, surfaceId: surface.id };
+    return Math.abs(y - point.y) <= SPATIAL_LIMITS.supportTolerance &&
+      (surface.material !== 'ground' || terrainWalkable(map, point))
+      ? { x: point.x, y, z: point.z, surfaceId: surface.id }
+      : null;
   }
-  return null;
+  let best: SurfacePoint | null = null,
+    bestOrder = Infinity;
+  preparedShapes(map).supportIndex.visit(
+    (bounds) =>
+      columnIntersects(bounds, point) &&
+      bounds.min.y <= point.y + SPATIAL_LIMITS.supportTolerance &&
+      bounds.max.y >= point.y - SPATIAL_LIMITS.supportTolerance,
+    ({ surface, order }) => {
+      const y = surfaceHeight(surface, point.x, point.z);
+      if (
+        order < bestOrder &&
+        Math.abs(y - point.y) <= SPATIAL_LIMITS.supportTolerance &&
+        (surface.material !== 'ground' || terrainWalkable(map, point))
+      ) {
+        best = { x: point.x, y, z: point.z, surfaceId: surface.id };
+        bestOrder = order;
+      }
+      return false;
+    },
+  );
+  return best;
+}
+function columnIntersects(bounds: Bounds3, point: WorldPoint): boolean {
+  return (
+    point.x >= bounds.min.x - EPS &&
+    point.x <= bounds.max.x + EPS &&
+    point.z >= bounds.min.z - EPS &&
+    point.z <= bounds.max.z + EPS
+  );
 }
 export function supportBelow(map: SpatialMap, point: WorldPoint): SurfacePoint | null {
-  let best: SurfacePoint | null = null;
-  for (const surface of supportSurfaces(map)) {
-    if (!surfaceContains(surface, point)) continue;
-    const y = surfaceHeight(surface, point.x, point.z);
-    if (y <= point.y + EPS && (!best || y > best.y))
-      best = { x: point.x, y, z: point.z, surfaceId: surface.id };
-  }
+  let best: SurfacePoint | null = null,
+    bestOrder = Infinity;
+  preparedShapes(map).supportIndex.visit(
+    (bounds) => columnIntersects(bounds, point) && bounds.min.y <= point.y + EPS,
+    ({ surface, order }) => {
+      const y = surfaceHeight(surface, point.x, point.z);
+      if (y <= point.y + EPS && (!best || y > best.y || (y === best.y && order < bestOrder))) {
+        best = { x: point.x, y, z: point.z, surfaceId: surface.id };
+        bestOrder = order;
+      }
+      return false;
+    },
+  );
   return best;
+}
+/** Candidate support patches; callers still check plane height, stance and exact reach. */
+export function surfacesInBounds(map: SpatialMap, bounds: Bounds3): WalkableSurface[] {
+  const found: Array<{ surface: WalkableSurface; order: number }> = [];
+  preparedShapes(map).supportIndex.visit(
+    (b) =>
+      b.min.x <= bounds.max.x + EPS &&
+      b.max.x >= bounds.min.x - EPS &&
+      b.min.y <= bounds.max.y + EPS &&
+      b.max.y >= bounds.min.y - EPS &&
+      b.min.z <= bounds.max.z + EPS &&
+      b.max.z >= bounds.min.z - EPS,
+    (entry) => {
+      found.push(entry);
+      return false;
+    },
+  );
+  return found.sort((a, b) => a.order - b.order).map((entry) => entry.surface);
 }
 // Halfspaces ax + by + cz <= d allow the same finite slabs/wedges to serve rays and body sweeps.
 type Plane = readonly [number, number, number, number];
@@ -139,19 +192,66 @@ interface PreparedShape {
   id: string;
   kind: 'surface' | 'blocker';
   planes: Plane[];
+  bounds: Bounds3;
   movement: boolean;
   sight: boolean;
   transmission: number;
 }
-const shapeCache = new WeakMap<
-  SpatialMap,
-  {
-    revision: number;
-    shapes: PreparedShape[];
-    blockers: SpatialBlocker[];
-    supports: WalkableSurface[];
+interface SupportEntry {
+  surface: WalkableSurface;
+  order: number;
+}
+interface PreparedGeometry {
+  revision: number;
+  shapes: PreparedShape[];
+  blockers: SpatialBlocker[];
+  supports: WalkableSurface[];
+  supportById: Map<string, WalkableSurface>;
+  shapeIndex: BoundsIndex<PreparedShape>;
+  supportIndex: BoundsIndex<SupportEntry>;
+}
+const shapeCache = new WeakMap<SpatialMap, PreparedGeometry>();
+function surfaceBounds(s: WalkableSurface, topOnly = false): Bounds3 {
+  const ys = [
+    surfaceHeight(s, s.minX, s.minZ),
+    surfaceHeight(s, s.maxX, s.minZ),
+    surfaceHeight(s, s.minX, s.maxZ),
+    surfaceHeight(s, s.maxX, s.maxZ),
+  ];
+  return {
+    min: {
+      x: s.minX,
+      y: topOnly ? Math.min(...ys) : (s.solidBase ?? Math.min(...ys) - s.thickness),
+      z: s.minZ,
+    },
+    max: { x: s.maxX, y: Math.max(...ys), z: s.maxZ },
+  };
+}
+/** Broad-phase slab test deliberately includes boundary contacts; exact halfspaces decide them. */
+function intersectsSegment(
+  bounds: Bounds3,
+  from: WorldPoint,
+  to: WorldPoint,
+  body?: BodyProfile,
+): boolean {
+  let enter = 0,
+    exit = 1;
+  for (const axis of ['x', 'y', 'z'] as const) {
+    const min = bounds.min[axis] - (axis === 'y' ? (body?.height ?? 0) : (body?.radius ?? 0));
+    const max = bounds.max[axis] + (axis === 'y' ? 0 : (body?.radius ?? 0));
+    const delta = to[axis] - from[axis];
+    if (Math.abs(delta) < EPS) {
+      if (from[axis] < min - EPS || from[axis] > max + EPS) return false;
+      continue;
+    }
+    const a = (min - EPS - from[axis]) / delta,
+      b = (max + EPS - from[axis]) / delta;
+    enter = Math.max(enter, Math.min(a, b));
+    exit = Math.min(exit, Math.max(a, b));
+    if (enter > exit) return false;
   }
->();
+  return true;
+}
 function preparedShapes(map: SpatialMap) {
   const cached = shapeCache.get(map);
   if (cached?.revision === map.spatial.revision) return cached;
@@ -178,6 +278,7 @@ function preparedShapes(map: SpatialMap) {
     id: surface.id,
     kind: 'surface',
     planes: surfacePlanes(surface),
+    bounds: surfaceBounds(surface),
     movement: true,
     sight: true,
     transmission: surface.acousticTransmission,
@@ -188,6 +289,7 @@ function preparedShapes(map: SpatialMap) {
         id: b.id,
         kind: 'blocker',
         planes: boxPlanes(b.bounds),
+        bounds: b.bounds,
         movement: b.movement,
         sight: b.sight,
         transmission: b.acousticTransmission,
@@ -218,7 +320,20 @@ function preparedShapes(map: SpatialMap) {
         }),
       ),
   ];
-  const result = { revision: map.spatial.revision, shapes, blockers, supports };
+  const result: PreparedGeometry = {
+    revision: map.spatial.revision,
+    shapes,
+    blockers,
+    supports,
+    supportById: new Map(supports.map((s) => [s.id, s])),
+    shapeIndex: new BoundsIndex(shapes.map((s) => ({ value: s, bounds: s.bounds }))),
+    supportIndex: new BoundsIndex(
+      supports.map((surface, order) => ({
+        value: { surface, order },
+        bounds: surfaceBounds(surface, true),
+      })),
+    ),
+  };
   shapeCache.set(map, result);
   return result;
 }
@@ -230,40 +345,56 @@ export function supportSurfaces(map: SpatialMap): readonly WalkableSurface[] {
 export function spatialBlockers(map: SpatialMap): readonly SpatialBlocker[] {
   return preparedShapes(map).blockers;
 }
+function visitHits(
+  map: SpatialMap,
+  from: WorldPoint,
+  to: WorldPoint,
+  channel: 'sight' | 'sound' | 'movement',
+  ignore: ReadonlySet<string>,
+  body: BodyProfile | undefined,
+  visit: (shape: PreparedShape, interval: [number, number]) => boolean,
+): boolean {
+  if (!finitePoint(from) || !finitePoint(to)) throw new Error('Invalid spatial ray.');
+  return preparedShapes(map).shapeIndex.visit(
+    (bounds) => intersectsSegment(bounds, from, to, body),
+    (shape) => {
+      if (
+        ignore.has(shape.id) ||
+        (channel === 'sight' && !shape.sight) ||
+        (channel === 'movement' && !shape.movement)
+      )
+        return false;
+      const interval = clipSegment(from, to, shape.planes, body);
+      return !!interval && visit(shape, interval);
+    },
+  );
+}
 export function rayHits(
   map: SpatialMap,
   from: WorldPoint,
   to: WorldPoint,
   channel: 'sight' | 'sound' | 'movement' = 'sight',
-  ignore: ReadonlySet<string> = new Set(),
+  ignore: ReadonlySet<string> = EMPTY_IDS,
   body?: BodyProfile,
 ): RayHit[] {
-  if (!finitePoint(from) || !finitePoint(to)) throw new Error('Invalid spatial ray.');
   const hits: RayHit[] = [];
-  for (const shape of preparedShapes(map).shapes) {
-    if (
-      ignore.has(shape.id) ||
-      (channel === 'sight' && !shape.sight) ||
-      (channel === 'movement' && !shape.movement)
-    )
-      continue;
-    const interval = clipSegment(from, to, shape.planes, body);
-    if (interval)
-      hits.push({
-        id: shape.id,
-        kind: shape.kind,
-        fraction: interval[0],
-        exitFraction: interval[1],
-        point: interpolate(from, to, interval[0]),
-        transmission: shape.transmission,
-      });
-  }
+  visitHits(map, from, to, channel, ignore, body, (shape, interval) => {
+    hits.push({
+      id: shape.id,
+      kind: shape.kind,
+      fraction: interval[0],
+      exitFraction: interval[1],
+      point: interpolate(from, to, interval[0]),
+      transmission: shape.transmission,
+    });
+    return false;
+  });
   return hits.sort((a, b) => a.fraction - b.fraction || a.id.localeCompare(b.id));
 }
 export const clearSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean =>
-  rayHits(map, from, to).length === 0;
+  !visitHits(map, from, to, 'sight', EMPTY_IDS, undefined, () => true);
 export function soundTransmission(map: SpatialMap, from: WorldPoint, to: WorldPoint): number {
-  // One contribution per physical slab/blocker, not one attenuation per triangle or entry/exit face.
+  // Preserve canonical hit order for numeric stability; only acoustic queries need all crossings.
   return rayHits(map, from, to, 'sound').reduce((value, hit) => value * hit.transmission, 1);
 }
 function onlySupportContact(
@@ -277,9 +408,17 @@ function onlySupportContact(
   const s = surfaceById(map, hit.id)!;
   const support = surfaceById(map, from.surfaceId)!;
   const toeAllowance = body.radius * Math.hypot(support.slopeX, support.slopeZ);
-  const times = [hit.fraction, hit.exitFraction];
-  // A body's conservative box may brush a sloping support at a seam. Allow the
-  // contact only while the foot stays above its top; never ignore the entire ramp.
+  return aboveSurfaceDuringContact(s, from, to, [hit.fraction, hit.exitFraction], toeAllowance);
+}
+function aboveSurfaceDuringContact(
+  s: WalkableSurface,
+  from: WorldPoint,
+  to: WorldPoint,
+  interval: readonly [number, number],
+  allowance = 0,
+): boolean {
+  const times = [...interval];
+  // Clamping to patch bounds makes this piecewise linear; include every change of slope.
   for (const [a, b, min, max] of [
     [from.x, to.x, s.minX, s.maxX],
     [from.z, to.z, s.minZ, s.maxZ],
@@ -287,13 +426,13 @@ function onlySupportContact(
     if (Math.abs(b! - a!) < EPS) continue;
     for (const boundary of [min!, max!]) {
       const t = (boundary - a!) / (b! - a!);
-      if (t > hit.fraction && t < hit.exitFraction) times.push(t);
+      if (t > interval[0] && t < interval[1]) times.push(t);
     }
   }
   return times.every((t) => {
     const p = interpolate(from, to, t);
     return (
-      p.y + toeAllowance + SPATIAL_LIMITS.supportTolerance >=
+      p.y + allowance + SPATIAL_LIMITS.supportTolerance >=
       surfaceHeight(
         s,
         Math.max(s.minX, Math.min(s.maxX, p.x)),
@@ -302,6 +441,7 @@ function onlySupportContact(
     );
   });
 }
+
 export function canStand(
   map: SpatialMap,
   point: SurfacePoint,
@@ -321,15 +461,15 @@ export function canWalkSegment(
   to: SurfacePoint,
   body: BodyProfile = BODY_PROFILES.person,
 ): boolean {
-  if (!canStand(map, from, body) || !canStand(map, to, body)) return false;
-  const a = surfaceById(map, from.surfaceId)!,
-    b = surfaceById(map, to.surfaceId)!;
   if (
     from.surfaceId !== to.surfaceId &&
     (horizontalDistance(from, to) > EPS ||
       Math.abs(from.y - to.y) > SPATIAL_LIMITS.supportTolerance)
   )
     return false;
+  if (!canStand(map, from, body) || !canStand(map, to, body)) return false;
+  const a = surfaceById(map, from.surfaceId)!,
+    b = surfaceById(map, to.surfaceId)!;
   const ignored = new Set([from.surfaceId, to.surfaceId]);
   // Supported patches are convex planes: the chord stays on its admitted surface. Different
   // supports connect only at a coincident seam, never through a wall or between floors.
@@ -355,7 +495,13 @@ export function canFlySegment(
   body: BodyProfile,
   supportIds: string[] = [],
 ): boolean {
-  return rayHits(map, from, to, 'movement', new Set(supportIds), body).length === 0;
+  // Landing/takeoff may touch a named support's top, never pass through its underside.
+  // Ignoring the whole landing slab would allow a vertical route up through a ceiling.
+  return !visitHits(map, from, to, 'movement', EMPTY_IDS, body, (shape, interval) => {
+    if (shape.kind !== 'surface' || !supportIds.includes(shape.id)) return true;
+    const surface = surfaceById(map, shape.id)!;
+    return !aboveSurfaceDuringContact(surface, from, to, interval);
+  });
 }
 /** Camera picking hits physical top faces. Focus filters presentation only, not collision. */
 export function pickSurfaces(
@@ -365,7 +511,15 @@ export function pickSurfaces(
   levelId: string | null,
 ): Array<{ point: SurfacePoint; fraction: number }> {
   const hits: Array<{ point: SurfacePoint; fraction: number }> = [];
-  for (const surface of supportSurfaces(map)) {
+  const candidates: WalkableSurface[] = [];
+  preparedShapes(map).supportIndex.visit(
+    (bounds) => intersectsSegment(bounds, from, to),
+    ({ surface }) => {
+      candidates.push(surface);
+      return false;
+    },
+  );
+  for (const surface of candidates) {
     if (levelId && surface.levelId !== levelId) continue;
     const dy = to.y - from.y - surface.slopeX * (to.x - from.x) - surface.slopeZ * (to.z - from.z);
     if (Math.abs(dy) < EPS) continue;

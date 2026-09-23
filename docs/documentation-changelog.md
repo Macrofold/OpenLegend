@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## Spatial scaling review and completion reconciliation
+
+Added the SW delivery ledger separating implemented native subsets from broader unchecked targets. Recorded bounded static indexing, visibility/landing/cache dependencies and renderer dirty work in current implementation owners; retained measured cold-preparation and first-exposure gaps under SW/PF/EPR. Consolidated new regression work in maintainer TODO at the owner's instruction and replaced obsolete schema-8 fixture targets with the current spatial format. Prior automated evidence remains historical; this review adds build/manual-runtime observations only.
+
 ## Spatial-world integration and first native provider
 
 Added spatial behavior/runtime/tracker/research owners and retained the original pinned source review as historical research. Reconciled sensory, agency, art, camera, save, storage and engine/world ownership without resetting existing task IDs. Replaced the flat-world target with XYZ/support-aware simulation and mixed representation. The initial implementation chooses bounded native surface A\*/convex queries over unqualified multi-library WASM integration; researched alternatives and broader target gates remain explicit. Current behavior and actual validation are recorded in Architecture/Verification, not inferred from documentation integration.

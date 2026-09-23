@@ -111,7 +111,7 @@ Dependencies: PF00. Primary files: domain `draft.ts`, `events.ts`, `experience.t
 
 - [x] Remove repeated startup/actor initialization scans and unchanged policy replacement from each commit. Startup, spawn and capability changes retain complete authoritative initialization; broader CPU profiling remains in PF00.
 - [x] Make ordinary experience additions proportional to changed actor/source entries; reuse or incrementally maintain indexes instead of materializing all retained experience for each add. Preserve validation, duplicate prevention, forgotten-source and obligation protections.
-- [x] Replace repeated commitment scans with source-identity/event/deadline indexes and navigation string-map allocation with cached walkability and numeric breadth-first queues.
+- [x] Replace repeated commitment scans with source-identity/event/deadline indexes and navigation string-map allocation with cached walkability and numeric breadth-first queues in the original planar slice. Current 3D navigation uses the SW-owned layered A\* provider; this historical completion is not a claim of current planar BFS.
 - [x] Attribute mature-world native cost with a CPU profile and compare the same snapshot with diagnostic input freezing; record runtime evidence without enabling the experiment in gameplay.
 - [x] Freeze server-owned snapshots after startup migration, command/editor acceptance and each fixed native step so unchanged branches skip finalization. Keep domain construction mutable until handoff; retain append lineage and serialization.
 - [x] Capture post-movement perception scalars once, spatially filter object candidates, use set membership against the prior immutable visibility snapshot, and retain unchanged visibility arrays. Preserve event/audience order and hysteresis; matched replay digests and population timing are in Verification.
@@ -222,3 +222,7 @@ Dependencies: immediate budgets passing; coordinate D5/D6 and R12 rather than du
 - [ ] Before sectors, replicas or a durable external journal, demonstrate the saturated resource and satisfy the existing production/real-time migration contracts. Re-run privacy, conserved-resource and failure tests at the new boundary.
 
 Exit: a published measured capacity envelope and a justified next bottleneck. No unsupported 100×, 1,000× or 10,000× capacity claim.
+
+## Spatial-provider review integration
+
+SW04/SW05/SW08/SW10 now own indexed static geometry, height-local graph construction, bounded immutable sight reuse and dirty renderer work. The remaining cold-navigation and dense-first-exposure measurements are tracked in [SW scaling next steps](spatial-world.md#scaling-next-steps), with EPR02/EPR10 retaining audience/intake changes. Keep those task bodies in SW/EPR; [SR01–SR07](TODO.md#spatial-review-regression-todos) records the automated coverage deferred by the owner. PF population qualification is not complete merely because the finite native provider is faster.
