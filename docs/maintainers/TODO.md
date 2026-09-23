@@ -1,5 +1,17 @@
 # Maintainer TODO — cross-cutting work
 
+## Invention performance review regression TODOs
+
+No unit tests, test suites or browser automation were written or run for this review. The production build, actual HTTP/native application exercise and synthetic stress measurements are recorded in [Verification](../verification.md#invention-performance-review). These regression cases supplement the existing invention/agency cases below rather than marking them complete; feature delivery remains in INV/PF.
+
+- [ ] **IPR01 — Bounded timeline history:** cover equal timestamps/keyset ordering, world/actor isolation, empty history, 1–50-row limits and invalid limits. Place more than 50 newer abandoned-timeline jobs ahead of three current jobs and verify context/unchanged-method suppression still sees the intended current records. Keep the public history feed intentionally cross-timeline.
+- [ ] **IPR02 — Indexed interrupted recovery:** cover 0/50/51/137 unfinished jobs, every queued/judging/generating transition, preserved completed/failed/stale rows, interruption midway through recovery, corrupt payload handling and conservative uncertain attempts. Check initialized and newly installed indexes separately; confirm no provider redispatch or accounting release on result failure.
+- [ ] **IPR03 — PostgreSQL qualification:** run both history query shapes, row-value pagination, expression/partial index creation and paged recovery through the real PostgreSQL adapter. Capture plans and mature attempt-history behavior, including existing databases and late/uncertain receipts. The review has only SQLite runtime and PostgreSQL translation inspection.
+- [ ] **IPR04 — Search revalidation and scope payloads:** compare set-based knowledge validation with a complete scan; revoke knowledge or replace a recipe during awaited search. Verify reconcile/search serialize exactly source ID/revision pins even when callers supply large text/vectors, while put retains full embeddings. Verify authorized ranking/output remains unchanged against real pgvector, with bounded empty/large inputs.
+- [ ] **IPR05 — Supplied-method runtime regression:** automate the manually observed zero-key/zero-budget HTTP admission, identical request replay, separate resource-consuming craft and clean restart. Keep intent/actor/timeline/cancellation/private-feedback checks from the existing invention cases; manual success does not replace these cases.
+- [ ] **IPR06 — Future funded publication:** once staged art/budgets are implemented, spend an exactly sufficient authorized allowance and publish the completed eligible result without a second reservation. Exhaustion/lowered limits must block new costs, not settle/publish twice or discard valid funded output; current revocation must still prevent forbidden publication.
+
+
 ## Macrofold worker reuse — deferred validation
 
 - [ ] Cover one sandbox creation across repeated full calls, actor/reflection lanes sharing a worktree, restart and timeline rotation; separate worktrees must remain isolated. Verify run bodies retain the saved sandbox ID and fresh sessions do not reuse model history.

@@ -2,6 +2,57 @@
 
 This file records current reproducible evidence and acceptance gaps. Fixture evidence does not establish live model quality, provider cost, hosted security, capacity or balance.
 
+
+## Invention performance review
+
+Reviewed main `7bba4866819e5623fc4e42d6f8d82f96ca25877d` alongside the documentation-only foundation `69897a356c959677cfbf7fe1785f2b9db0271b43`. The latter implemented no runtime features. This review changes five server files only; domain/spatial rules are unchanged. [Current behavior and residual limits](architecture.md#bounded-invention-history-and-recovery) distinguish these fixes from the future foundation.
+
+### Method and environment
+
+Manual runtime and synthetic stress execution on September 23, 2026 used Linux x64, Node 22.16.0, SQLite 3.49.1, five visible CPUs reporting Intel Xeon Platinum 8573C, isolated disposable data, no credentials and zero AI budget. The pinned dependencies were installed with lifecycle scripts disabled. Production TypeScript and Vite client builds passed; the existing approximately 2.62 MB uncompressed client chunk warning remains. No unit/test suites, browser automation, live model calls or real PostgreSQL queries were run. Actual provider spend was $0. The reserved attempt below is synthetic local accounting, not a paid call.
+
+[Bounded raw measurements and workload metadata](verification/invention-performance-review.json) retain the observations. These are short, synthetic samples with ordinary profiling/run-order noise, not stable production percentiles, an independent-machine benchmark, an exhaustive concurrency test or a hosted population guarantee. Scripted application/profiling exercises were kept outside the repository; no executable unit tests were added.
+
+### Retained job history and recovery
+
+The SQLite experiment inserted 20,000 or 50,000 completed invention rows with an 8,000-character candidate description plus eight unfinished jobs. The newest 100 history rows belonged to an abandoned timeline. Regular recovery timing excludes initial setup/index creation; a separate run measured index installation on existing history.
+
+| Observed operation | Before | After |
+| --- | --- | --- |
+| Recover eight unfinished jobs beside 20,000 completed rows | 324.23 ms; 201,981,952-byte sampled RSS increase | 1.79 ms; no sampled RSS increase |
+| Recover eight unfinished jobs beside 50,000 completed rows | 768.32 ms; 469,876,736-byte sampled RSS increase | 1.63 ms; no sampled RSS increase |
+| Obtain three current-timeline rows with 50,000 historical rows (median of 30 retrievals) | 0.411 ms; incorrectly returned zero after limiting abandoned history | 0.054 ms; returned the intended three current records |
+
+No sampled RSS increase is not a claim of zero allocation. The new partial index avoids parsing retained completed job payloads; it does not remove all attempts-table recovery cost. Building new indexes over the 50,000-row existing database took 629.26 ms once. SQLite's query plan used `jobs_inventor_timeline` for scope and row-value keyset bounds. Another run recovered 137 pending jobs across several batches in 28.55 ms, left no unfinished rows and retained a synthetic 12,000-micro-USD reserved attempt as uncertain with the same exposure. Corrupt data, crash mid-recovery, large uncertain-attempt populations and PostgreSQL plans remain TODO.
+
+### Search CPU and SQL payload
+
+At 20,000 known sources, an isolated current-membership check took 697.09 ms with nested array scans versus 3.81 ms with a single set and linear lookups. Both reported the same valid membership. These are single native measurements, not complete search response times.
+
+Capturing the actual `VectorStore.reconcile` SQL parameter with 2,000 characters of extra source text per record reduced 20,000-source input from 41,077,781 to 877,781 bytes when only ID/revision pins were serialized. The accompanying native serialization measurements were 131.69 versus 9.90 ms. No pgvector, database I/O, network or embedding time was measured. `put` continues to receive actual vectors; exact ranking complexity and cold indexing of all missing sources remain pending optimization.
+
+### Actual HTTP and native continuation
+
+A real `createGameServer` instance with its normal simulation timer accepted a complete supplied sling over `/api/world-agent/messages`, admitted it without any provider call, returned the saved completion on identical request replay, accepted a separate native craft command, produced the item during simulation progress and recovered the recipe/admitted job after clean restart. The world progressed to simulation time 80; history returned one request. Observed HTTP times were 39.74 ms for submission, 24.16 ms for duplicate lookup and 18.25 ms for starting craft. These individual timings are not a tail-latency claim. The spending-attempt table remained empty and reported reserved/spent cost remained zero.
+
+### Native capacity boundary
+
+The existing native stress runner executed `scripts/performance/scenarios/gems.json` and `mixed.json`. Headroom compares measured throughput to the requested 3× rate of 180 native simulation steps per real second; below 1 fails that workload's requested rate.
+
+| Scenario | Measured loop | Largest step | 3× headroom |
+| --- | --- | --- | --- |
+| 500 synthetic ground objects, 514 total entities, 180 steps, no warmup — baseline | 2,128.14 ms | 884.66 ms | 0.470 |
+| Same scenario — review | 2,132.14 ms | 902.98 ms | 0.469 |
+| 10 added people, 20 animals, 300 resources; 344 total entities, 180 steps, no warmup | 10,571.16 ms | 9,754.86 ms | 0.095 |
+| Same mixed setup with 30 warmup steps excluded, then 180 measured steps | 1,181.39 ms | 82.84 ms | 0.846 |
+
+The two ground-object runs produced the same final-world SHA-256 digest. No native-domain speedup is claimed from server query changes. The mixed cold run retained 3,254 events and 31,756 awareness entries; first-exposure work dominates that observation. Warmup improves the measured steady portion but must not hide the cold stall, and even the warmed sample does not sustain 3×. These observations provide evidence for existing [PF09](maintainers/performance.md#pf09--population-work-follows-relevance), spatial/EPR and SR07 work; the review does not silently drop events, alter witnesses or change simulation time to meet a target. There is no browser/GPU, persistence, provider or long-running-world capacity evidence in these native measurements.
+
+### Unimplemented and unqualified scope
+
+[INV](maintainers/inventions-and-world-evolution.md) retains coordinated art/revisions, dependency verification, mechanic freezes and full episode/runtime budgets as future work. Per-request cold indexing limits, reliable provider-derived exposure bounds, long-month usage/attempt-query scaling and cross-world payer enforcement remain explicit gaps. The budget for a result already funded must not be reserved again merely to publish it; this is a clarified target contract, not a delivered generated-art feature. All requested regression tests are in [TODO](maintainers/TODO.md#invention-performance-review-regression-todos). Existing behavior-specific and spatial tests are not obsolete merely because this manual exercise passed.
+
+
 ## Macrofold worker reuse
 
 Manual local recovery execution used a disposable SQLite database: reserve a $0.01 synthetic allocation, close/reopen before writing its operational marker, recover through the real backend allocation method, then repeat recovery. The ledger retained one $0.01 accounting entry; changing the amount or using ordinary duplicate reservation was rejected. This was local accounting evidence, not provider spend. Production build passed. The Macrofold endpoint remained unreachable, so workspace retry and zero-rate worker resume have no new live acceptance evidence. No automated tests were written or run.

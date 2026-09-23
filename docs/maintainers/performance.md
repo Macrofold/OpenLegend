@@ -187,6 +187,8 @@ Exit: same active tiny world at increasing cold-history sizes meets per-step bud
 
 ## PF09 — Population work follows relevance
 
+The [invention performance review](../verification.md#native-capacity-boundary) reproduced dense first-exposure/event fan-out and missed 3× native capacity on the current spatial baseline. This is evidence for the existing dense-burst/relevance work below, not a new completed optimization. Preserve actual witnesses, physical effects and native RNG/order; do not meet a benchmark by silently dropping exposures. SR07 in [TODO](TODO.md#spatial-review-regression-todos) retains the integrated regression requirement.
+
 Coordinate module dependencies and aggregate admission with [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); PF retains implementation and qualification.
 
 Proposed [EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-full-world-sensory-scans) owns the specific object/audience scan integration; [EPR10](events-perception-and-reactions.md#epr10--conditional-incremental-spatialdeadline-infrastructure) owns its conditional incremental-index work. PF retains broader population qualification.
