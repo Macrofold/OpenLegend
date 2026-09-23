@@ -1,5 +1,7 @@
 # Documentation changelog
 
+- The MCP stack selection distinguishes SDK major versions from protocol revisions: prefer the official v2 server with its documented 2025-era compatibility handler for the inspected Macrofold client. No custom dual protocol or forced client upgrade is required; actual interoperability remains unqualified.
+
 ## 2026-09-23 — Unified World Agent and end-to-end authoring
 
 - Accepted one unified action-capable conversation with consequential approval and a $5 explicitly funded session including images, without a compulsory art allocation. The World Agent has authorized world-level inspection; NPC knowledge remains a separate caller boundary.
