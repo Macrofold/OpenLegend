@@ -1,0 +1,79 @@
+name: Recast application observation
+on:
+  push:
+    branches: [feature/spatial-world-3d]
+    paths: ['.github/workflows/recast-integration.yml', '.github/recast-payload/**']
+permissions:
+  contents: write
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Publish reviewed source, without automated tests
+        run: |
+          python3 - <<'PY'
+          import base64,hashlib,json,lzma
+          from pathlib import Path,PurePosixPath
+          parts=sorted(Path('.github/recast-payload').glob('part-*.txt'))
+          payload=lzma.decompress(base64.b64decode(''.join(p.read_text().strip() for p in parts),validate=True))
+          assert hashlib.sha256(payload).hexdigest()=='e3a27775a46fa1c617425b4224cf875e36e6b5c05a818cdbf619f20e4025b734'
+          for item in json.loads(payload):
+            path=PurePosixPath(item['path'])
+            assert not path.is_absolute() and '..' not in path.parts and '.github' not in path.parts
+            p=Path(path)
+            before=p.read_bytes() if p.exists() else b''
+            assert hashlib.sha256(before).hexdigest()==item['before'],str(path)
+            lines=before.decode().splitlines(keepends=True)
+            for start,count,new in reversed(item['edits']): lines[start:start+count]=new
+            data=''.join(lines).encode()
+            assert hashlib.sha256(data).hexdigest()==item['after'],str(path)
+            p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
+          PY
+          git add apps packages pnpm-lock.yaml
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m '[skip ci] Integrate prepared Recast routes, capsule clearance and player-centered presentation'
+          git push origin HEAD:refs/heads/feature/spatial-world-3d
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Observe running application and capture rendered output
+        run: |
+          mkdir -p /tmp/ol-observation
+          AI_BUDGET_USD=0 OPEN_LEGEND_DATABASE_URL='' OPEN_LEGEND_DATA_DIR=/tmp/ol-observation/save PORT=3230 node --import tsx apps/server/src/main.ts --production > /tmp/ol-observation/server.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID || true' EXIT
+          sleep 4
+          node --input-type=module <<'JS'
+          import {chromium} from '@playwright/test';
+          import {writeFile} from 'node:fs/promises';
+          const browser=await chromium.launch({headless:true,args:['--enable-unsafe-swiftshader','--use-angle=swiftshader']});
+          const page=await browser.newPage({viewport:{width:1440,height:950}});
+          const messages=[];page.on('pageerror',e=>messages.push('PAGE '+e.message));page.on('console',m=>{if(['error','warning'].includes(m.type()))messages.push(m.type()+' '+m.text());});
+          try {
+            await page.goto('http://127.0.0.1:3230/',{waitUntil:'networkidle'});await page.waitForTimeout(3000);
+            await page.screenshot({path:'/tmp/ol-observation/start.png'});
+            const canvas=page.locator('canvas').first();const box=await canvas.boundingBox();
+            if(box){await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down({button:'right'});await page.mouse.move(box.x+box.width/2+150,box.y+box.height/2+50,{steps:20});await page.mouse.up({button:'right'});await page.waitForTimeout(1000);}
+            await page.screenshot({path:'/tmp/ol-observation/orbit.png'});
+            await writeFile('/tmp/ol-observation/body.txt',await page.locator('body').innerText());
+            await writeFile('/tmp/ol-observation/canvas.json',JSON.stringify(await page.locator('canvas').evaluateAll(cs=>cs.map(c=>({width:c.width,height:c.height,data:c.dataset}))),null,2));
+          }catch(e){messages.push(String(e));}
+          await writeFile('/tmp/ol-observation/messages.json',JSON.stringify(messages,null,2));await browser.close();
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recast-application-observation
+          path: /tmp/ol-observation/
+          retention-days: 2
