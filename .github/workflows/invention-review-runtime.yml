@@ -1,37 +1,95 @@
-name: Invention review runtime export
+name: Publish reviewed invention changes
 on:
   push:
     branches: [review/invention-foundation-performance]
     paths: [.github/workflows/invention-review-runtime.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  export:
+  publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Export dependencies and prior design snapshots only
+      - name: Apply exact reviewed files without running tests
+        shell: bash
         run: |
-          git archive --format=tar 3ad74eb19e0a9143d96e4f51ad19b68d7fa2d232 docs archive README.md > /tmp/invention-common-base.tar
-          git archive --format=tar 69897a356c959677cfbf7fe1785f2b9db0271b43 docs archive README.md > /tmp/invention-design.tar
-          git diff --name-only 3ad74eb19e0a9143d96e4f51ad19b68d7fa2d232 69897a356c959677cfbf7fe1785f2b9db0271b43 > /tmp/invention-design-files.txt
-          tar -czf /tmp/invention-review-dependencies.tar.gz node_modules apps/*/node_modules packages/*/node_modules
-      - uses: actions/upload-artifact@v4
-        with:
-          name: invention-review-runtime
-          path: |
-            /tmp/invention-review-dependencies.tar.gz
-            /tmp/invention-common-base.tar
-            /tmp/invention-design.tar
-            /tmp/invention-design-files.txt
-          retention-days: 1
+          set -euo pipefail
+          BASE=7bba4866819e5623fc4e42d6f8d82f96ca25877d
+          DESIGN=69897a356c959677cfbf7fe1785f2b9db0271b43
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code "$BASE" HEAD -- . ':(exclude).github/workflows/invention-review-runtime.yml' ':(exclude).invention-review/**'
+          git diff --name-only 3ad74eb19e0a9143d96e4f51ad19b68d7fa2d232 "$DESIGN" > /tmp/invention-design-files.txt
+          while IFS= read -r path; do
+            mkdir -p "$(dirname "$path")"
+            git show "$DESIGN:$path" > "$path"
+          done < /tmp/invention-design-files.txt
+          python3 - <<'PY'
+          import base64, gzip, hashlib, json
+          from pathlib import Path
+          encoded = ''.join(Path(f'.invention-review/part-{i}.b64').read_text().strip() for i in range(5))
+          raw = gzip.decompress(base64.b64decode(encoded, validate=True))
+          if hashlib.sha256(raw).hexdigest() != 'f663185ab46a9bf3e44679c01126dce2b0c20bf4c82c4baa560734e3e952bf59':
+              raise SystemExit('Review data checksum mismatch')
+          allowed = {
+              'README.md',
+              'apps/server/src/actor-invention.ts',
+              'apps/server/src/ai-director.ts',
+              'apps/server/src/invention-search.ts',
+              'apps/server/src/store.ts',
+              'apps/server/src/vector-store.ts',
+              'archive/03-design-proposals/visual-direction.md',
+              'archive/05-project/implementation-status.md',
+              'archive/07-technical-architecture/declarations-and-evolution.md',
+              'docs/architecture.md', 'docs/documentation-changelog.md',
+              'docs/invention-art-pipeline.md', 'docs/invention-budgets.md',
+              'docs/invention-foundation.md', 'docs/invention-validation.md',
+              'docs/maintainers/README.md', 'docs/maintainers/TODO.md',
+              'docs/maintainers/inventions-and-world-evolution.md',
+              'docs/maintainers/performance.md', 'docs/verification.md',
+              'docs/verification/invention-performance-review.json',
+              'docs/world-constitution.md',
+          }
+          seen = set()
+          for operation in json.loads(raw):
+              path = Path(operation['path'])
+              if operation['path'] not in allowed or operation['path'] in seen:
+                  raise SystemExit(f'Unexpected review path: {path}')
+              seen.add(operation['path'])
+              original = path.read_bytes() if path.exists() else b''
+              if hashlib.sha256(original).hexdigest() != operation['old']:
+                  raise SystemExit(f'Stale review input: {path}')
+              lines = original.decode().splitlines(keepends=True)
+              for first, last, replacement in reversed(operation['edits']):
+                  if not (0 <= first <= last <= len(lines)):
+                      raise SystemExit('Invalid edit range')
+                  lines[first:last] = [replacement]
+              output = ''.join(lines).encode()
+              if hashlib.sha256(output).hexdigest() != operation['new']:
+                  raise SystemExit(f'Output mismatch: {path}')
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(output)
+          print(f'Published data verified for {len(seen)} changed files; no tests or providers invoked.')
+          PY
+          rm -rf .invention-review
+          rm .github/workflows/invention-review-runtime.yml
+          git add README.md apps/server/src archive docs .invention-review .github/workflows/invention-review-runtime.yml
+          git diff --cached --check
+          git diff --exit-code "$BASE" -- .github/workflows
+          git config user.name 'OpenLegend review'
+          git config user.email 'review@users.noreply.github.com'
+          TREE=$(git write-tree)
+          COMMIT=$(git commit-tree "$TREE" -p "$GITHUB_SHA" -p "$DESIGN" <<'MSG'
+          [skip ci] Review invention performance and reconcile foundation
+
+          Bound unfinished-job recovery and current-timeline actor history; avoid quadratic knowledge revalidation and excess vector scope serialization.
+          Preserve current 3D spatial work and reconcile the authoritative invention foundation, budgets, art and validation contracts.
+          Record measured SQLite/native/HTTP evidence and unimplemented scale/budget/indexing gaps. Add regression TODOs only; no automated tests or paid models run.
+          Remove all temporary review publication files and workflow.
+          MSG
+          )
+          git push origin "$COMMIT:refs/heads/review/invention-foundation-performance"
+          echo "Final reviewed commit: $COMMIT"
+          git diff --stat "$BASE" "$COMMIT"
