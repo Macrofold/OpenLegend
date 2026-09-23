@@ -1,4 +1,5 @@
 import {
+  gatheringYield,
   hasWildernessNeeds,
   NATIVE_ITEMS,
   NATIVE_PREPARATIONS,
@@ -116,7 +117,18 @@ export function commandFacts(
     `${seconds < 60 ? `${seconds} seconds` : `${Number((seconds / 60).toFixed(1))} minutes`} of game time`;
   if (command.type === 'gather' && target?.resource)
     return [
-      ['Yields', `${Math.min(2, target.resource.quantity)} ${name(target.resource.definitionId)}`],
+      [
+        'Yields',
+        `${Math.min(
+          gatheringYield(
+            observation.inventory
+              .filter((item) => item.quantity > 0)
+              .map((item) => observation.itemDefinitions.find((d) => d.id === item.definitionId)),
+            target.resource.definitionId,
+          ),
+          target.resource.quantity,
+        )} ${name(target.resource.definitionId)}`,
+      ],
       ['Time', `${duration(target.resource.workSeconds)}, plus travel`],
     ];
   if (command.type === 'prepare' && command.preparation) {

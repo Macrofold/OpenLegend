@@ -81,3 +81,5 @@ export {
   inventionFamily,
   type InventionFamily,
 } from './invention-families.js';
+export { gatheringYield } from './gathering.js';
+export { recordInventionFeedback } from './invention-feedback.js';

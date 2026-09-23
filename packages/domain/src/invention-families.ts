@@ -3,7 +3,8 @@ import type { DeclarationDraft } from './types.js';
 /** This is a finite mechanical envelope, not a claim to validate arbitrary physics. */
 export const DECLARATION_CONTRACT = {
   schemaVersion: 1,
-  outputKinds: ['launcher', 'ammunition'],
+  outputKinds: ['launcher', 'ammunition', 'gathering-tool'],
+  gatheringTool: { requiredRoles: ['body', 'binding'], quantity: [2, 4] },
   workSeconds: { minimum: 48, maximum: 480 },
   inputQuantity: { minimum: 1, maximum: 8, maximumTotal: 20 },
   mechanisms: {
@@ -35,9 +36,13 @@ export const DECLARATION_CONTRACT = {
     'Choose actual registered materials and quantities, a fitting name, mechanism and bounded parameters. Finished recipes are generated during play. Properties cannot invent effects. No scripts, free sources, nutrition, fuel or unregistered operations are supported. Arrow ammunition produces one projectile per completed craft.',
 } as const;
 
-// This describes the three existing native consumers, not a plugin interpreter.
+// These are finite native consumers, not a plugin interpreter.
 // docs/architecture.md#shared-invention-workflow
 export const SUPPORTED_INVENTION_FAMILIES = {
+  'gathering-tool': {
+    description:
+      'A rigid body bound with cord improves gathering one registered resource; carried tools do not stack.',
+  },
   swing: {
     description: 'A physical sling-like stone launcher using binding and a flexible pouch.',
   },
@@ -52,6 +57,7 @@ export const SUPPORTED_INVENTION_FAMILIES = {
 } as const;
 export type InventionFamily = keyof typeof SUPPORTED_INVENTION_FAMILIES;
 export function inventionFamily(draft: DeclarationDraft): InventionFamily | undefined {
+  if (draft.output.kind === 'gathering-tool') return 'gathering-tool';
   return draft.output.kind === 'launcher'
     ? draft.output.launcher?.mechanism
     : draft.output.ammunition?.kind === 'arrow'

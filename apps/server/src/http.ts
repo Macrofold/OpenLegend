@@ -40,6 +40,7 @@ const command = z
   .strict();
 const interaction = z
   .object({
+    candidate: z.unknown().optional(),
     requestId: requestIdSchema,
     text: z.string().trim().min(1).max(1000),
     npcId: requestIdSchema.optional(),
@@ -47,6 +48,7 @@ const interaction = z
   .strict();
 const worldAgentMessage = z
   .object({
+    candidate: z.unknown().optional(),
     mode: z.enum(['discuss', 'invent']),
     continuation: z
       .object({
@@ -1257,7 +1259,7 @@ export async function createGameServer(
                 status: job.status,
                 code: job.invention?.code ?? job.status,
                 message: job.message,
-                candidate: job.invention?.candidate,
+                candidate: job.invention?.candidate ?? scope.candidate,
                 parentId: scope.continuation?.parentId,
                 rootId: scope.rootId,
                 continuedBy: job.invention?.continuedBy,
@@ -1303,7 +1305,7 @@ export async function createGameServer(
                 code: 'world-mismatch',
                 message: 'This conversation belongs to another world.',
               });
-            if (value.mode === 'discuss' && value.continuation)
+            if (value.mode === 'discuss' && (value.continuation || value.candidate))
               return send(response, 400, {
                 ok: false,
                 message: 'Only Invent supports invention follow-ups.',
@@ -1323,6 +1325,7 @@ export async function createGameServer(
                     undefined,
                     value.conversationId,
                     value.continuation,
+                    value.candidate,
                   )
                 : await director.macrofold.message(value);
             return send(response, result.ok ? 200 : 409, result);
@@ -1372,6 +1375,9 @@ export async function createGameServer(
                 value.requestId,
                 value.text,
                 value.npcId,
+                undefined,
+                undefined,
+                value.candidate,
               ),
             );
           }

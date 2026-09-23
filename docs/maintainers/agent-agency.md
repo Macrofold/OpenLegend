@@ -119,11 +119,11 @@ Use the current single writer and existing stores first. No new platform depende
 
 **Owner:** agency context/scheduler integration; shared invention implementation remains INV-1/INV-7. **Depends on:** AG02–AG07 plus the relevant INV request, policy, actor-method dialogue, admission and scoped-result work. **Touchpoints:** director request origin, decision context, goal/plan references, invention result delivery.
 
-- [ ] Let an actor decision initiate the shared invention request with explicit actor origin, purpose and its own proposed method. Bind private request/goal/plan references without changing the meaning of creator world-agent permissions.
-- [ ] Deliver neutral clarification and sanitized validation feedback into fresh actor-scoped continuation jobs. INV owns question generation/validation; AG owns scheduling and the actor's choice to answer, revise or stop.
-- [ ] On an admitted method, allow either bounded reconsideration or a previously explicit native continuation. Do not force a new goal, automatic construction, redundant post-invention call or consumption merely because admission succeeded.
-- [ ] Preserve an actor's right to change priorities while authoring is in flight. A result may remain learned/available without reviving an abandoned build plan. Avoid storing the actor's private purpose in public recipe metadata.
-- [ ] Integrate a private result path. Existing public `declaration-admitted` emission must not reveal an unexpressed mental discovery; change its admission/result projection in INV using EPR scope and NC narration boundaries rather than adding a parallel knowledge store.
+- [x] Let an actor decision initiate the shared request with actor origin, private purpose and its own complete method; the request links to the originating decision without granting creator permissions.
+- [x] Deliver private validation feedback to fresh actor decisions, which may submit a revised method or stop. Freeform investigative dialogue remains under INV-7.
+- [x] Allow normal bounded reconsideration after admission without forcing a goal, construction, extra post-invention call or material consumption.
+- [x] Retain admitted knowledge without reviving abandoned plans; keep private request purpose outside recipe provenance and instruct actors to author construction-only descriptions.
+- [x] Deliver discovery and validation through private experience/events and the existing knowledge owner; ordinary player job projection excludes NPC inventions.
 
 **Exit evidence:** the actor supplies the conceptual design rather than receiving a hidden completed recipe. A suggested substantive substitution requires actor acceptance. Invention grants no item or proficiency. A nearby uninformed actor learns nothing from private validation. The inventor can adopt, continue, postpone or abandon construction after the result, with no duplicated job or automatic goal creation.
 

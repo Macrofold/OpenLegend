@@ -33,6 +33,7 @@ export interface Ammunition {
   damageBonus: number;
 }
 export interface ItemDefinition {
+  gatheringTool?: { resourceId: string; quantity: number };
   id: string;
   version: number;
   name: string;
@@ -63,7 +64,8 @@ export interface DeclarationDraft {
   inputs: RecipeInput[];
   workSeconds: number;
   output: {
-    kind: 'launcher' | 'ammunition';
+    kind: 'launcher' | 'ammunition' | 'gathering-tool';
+    gatheringTool?: { resourceId: string; quantity: number };
     name: string;
     description: string;
     properties: MaterialProperty[];
@@ -76,7 +78,7 @@ export interface DeclarationProvenance {
   authority: import('./invention-policy.js').InventionAuthority;
   requestId: string;
   actorId: string;
-  source: 'live-model' | 'test-fixture';
+  source: 'live-model' | 'test-fixture' | 'supplied-proposal';
   model?: string;
   evidence?: string[];
 }

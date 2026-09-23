@@ -406,7 +406,11 @@ export function fallbackDecisionActions(
   const candidates = prepared.actionCandidates;
   const actions = {
     ...Object.fromEntries(
-      Object.entries(prepared.binding.actions).filter(([id]) => id.startsWith('p')),
+      // Optional relevance failure must preserve explicitly offered intent withdrawal.
+      // docs/architecture.md#actor-agency-foundation
+      Object.entries(prepared.binding.actions).filter(
+        ([id]) => id.startsWith('p') || id.startsWith('w'),
+      ),
     ),
     ...Object.fromEntries(
       candidates.map((candidate, index) => [

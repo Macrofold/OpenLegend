@@ -1,5 +1,13 @@
 # Maintainer TODO — cross-cutting work
 
+## Invention foundation — deferred automated coverage
+
+- [ ] Cover supplied proposal normalization/fidelity, unknown materials, duplicate receipts, actor/world/timeline fencing and no-provider admission.
+- [ ] Cover private NPC response dispatch, rejected-method feedback, one-child revisions, abandon/stop, lock/reopen during deliberation, cancellation and restart without paid replay; inspect player/NPC/narrator projections for leakage.
+- [ ] Cover gathering-tool cost, non-stacking yields, finite/depleted resources, current action facts and same-version recipe/item restoration.
+- [ ] Cover native action interpretation with NPC invention enabled, preservation of intent-withdrawal handles when action relevance fails, generated gathering targets outside scoped knowledge, and `idle()`/shutdown while a child invention is registering (including storage failure).
+- [ ] Exercise the complete browser-originated bow/arrow craft/use flow and compare clear/ambiguous/forbidden prompts across more live samples under explicit caps. No automated tests were written or run for this slice.
+
 This file contains miscellaneous and cross-cutting deferred validation, integration blockers, documentation gaps and small follow-ups that do not belong to a focused feature tracker. Feature task state belongs in the focused trackers listed in the [maintainer work index](README.md).
 
 Runtime latency, database scheduling, native CPU, buffering and long-session optimization are tracked in [PF00–PF11](performance.md). Existing feature correctness checks below remain open; performance work does not complete them.

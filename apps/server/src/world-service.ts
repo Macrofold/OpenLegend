@@ -898,13 +898,8 @@ export class WorldService {
       });
       if (expectedGeneration !== this.generation)
         return reject('stale', 'The world was restored; refresh before editing.');
-      // Autonomous authoring is not yet privacy/recovery-qualified. Persist the independent
-      // setting now, but do not present unlock as usable before INV-1's enablement gate.
-      if (!settings.agentLocked)
-        return reject(
-          'invention-unqualified',
-          'Autonomous invention is not available yet. Its privacy and recovery checks must pass before unlocking.',
-        );
+      // Both groups share admission; unlocking permits only finite, actor-scoped proposals.
+      // docs/architecture.md#shared-invention-workflow
       return changeInventionPolicy(
         world,
         expectedRevision,

@@ -56,6 +56,7 @@ export interface JobRecord extends AiJobView {
     text: string;
     npcId?: string;
     invention?: {
+      candidate?: unknown;
       actorId: string;
       worldId: string;
       timelineId: string;
@@ -67,7 +68,7 @@ export interface JobRecord extends AiJobView {
       previous?: {
         intent: string;
         feedback: string;
-        candidate?: import('@open-legend/domain').DeclarationDraft;
+        candidate?: unknown;
       };
       base?: { recipeId: string; version: number; digest: string };
     };

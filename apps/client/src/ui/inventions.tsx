@@ -15,6 +15,7 @@ import { Actions } from './panels';
 const active = (request: InventionRequestView) =>
   ['queued', 'judging', 'generating'].includes(request.status);
 type Draft = {
+  candidateJson?: string;
   text: string;
   requestId: string;
   conversationId: string;
@@ -55,6 +56,7 @@ export function Inventions({
         ['text', 'requestId', 'conversationId', 'seedId'].every(
           (key) => typeof fields[key] === 'string',
         ) &&
+        (fields['candidateJson'] === undefined || typeof fields['candidateJson'] === 'string') &&
         (fields['continuation'] === undefined ||
           (!!fields['continuation'] &&
             typeof fields['continuation'] === 'object' &&
@@ -135,6 +137,9 @@ export function Inventions({
         worldId,
         mode: 'invent',
         text: submission.text.trim(),
+        ...(submission.candidateJson?.trim()
+          ? { candidate: JSON.parse(submission.candidateJson) }
+          : {}),
       });
       if (!result.ok && !result.jobId) throw new Error(result.message);
       // A late response may clear only the submitted draft, never a newly opened request.
@@ -142,6 +147,7 @@ export function Inventions({
         setForm({
           ...formRef.current,
           text: '',
+          candidateJson: undefined,
           continuation: undefined,
           requestId: crypto.randomUUID(),
         });
@@ -167,6 +173,7 @@ export function Inventions({
     const same = JSON.stringify(prior.continuation) === JSON.stringify(continuation);
     const draft: Draft = {
       ...prior,
+      candidateJson: same ? prior.candidateJson : undefined,
       text: same && prior.text ? prior.text : request.intent,
       requestId: same ? prior.requestId : crypto.randomUUID(),
       conversationId: request.conversationId!,
@@ -201,8 +208,8 @@ export function Inventions({
   return (
     <div className="ol-inventions">
       <p>
-        Describe one physical sling, bow or arrow and its materials. Inventing makes a technique
-        available; crafting still consumes materials and time.
+        Describe one physical sling, bow, arrow or gathering tool and its materials. Inventing makes
+        a technique available; crafting still consumes materials and time.
       </p>
       {form.continuation && (
         <p>
@@ -231,6 +238,27 @@ export function Inventions({
           }
         />
       </label>
+      <details>
+        <summary>Supply a complete proposal</summary>
+        <p>
+          A supplied proposal is validated exactly as written, without paid rewriting. Leave empty
+          to describe an invention normally.
+        </p>
+        <textarea
+          aria-label="Complete invention proposal JSON"
+          rows={6}
+          value={form.candidateJson ?? ''}
+          disabled={pending}
+          maxLength={12000}
+          onChange={(event) =>
+            setForm({
+              ...formRef.current,
+              candidateJson: event.target.value,
+              requestId: crypto.randomUUID(),
+            })
+          }
+        />
+      </details>
       <Button onPress={() => void submit()} isDisabled={pending || !form.text.trim()}>
         {form.continuation ? 'Send follow-up' : 'Request invention'}
       </Button>
@@ -242,6 +270,7 @@ export function Inventions({
             setForm({
               ...form,
               text: '',
+              candidateJson: undefined,
               continuation: undefined,
               requestId: crypto.randomUUID(),
               conversationId: crypto.randomUUID(),

@@ -146,7 +146,9 @@ export async function searchInventions(
             .join(', '),
           behavior: recipe.output.launcher
             ? `${inventionFamily(recipe)} launcher; ${recipe.output.launcher.ammunitionKind} ammunition; range ${recipe.output.launcher.range}; ${recipe.workSeconds} game seconds to craft`
-            : `Arrow ammunition; damage bonus ${recipe.output.ammunition!.damageBonus}; ${recipe.workSeconds} game seconds to craft`,
+            : recipe.output.gatheringTool
+              ? `Carried gathering tool; up to ${recipe.output.gatheringTool.quantity} ${world.itemDefinitions[recipe.output.gatheringTool.resourceId]!.name} per batch, limited by remaining supply; ${recipe.workSeconds} game seconds to craft`
+              : `Arrow ammunition; damage bonus ${recipe.output.ammunition!.damageBonus}; ${recipe.workSeconds} game seconds to craft`,
           score: match.score,
         };
       }),

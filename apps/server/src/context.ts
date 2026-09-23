@@ -1,4 +1,8 @@
-import { supportsManualWork } from '@open-legend/domain';
+import {
+  supportsManualWork,
+  inventionFamily,
+  SUPPORTED_INVENTION_FAMILIES,
+} from '@open-legend/domain';
 import { nativeNeedBelow } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { hearsEntity, visionRadius } from '@open-legend/domain';
@@ -17,7 +21,7 @@ import type { WorldService } from './world-service.js';
 // compose these steps but cannot rewrite their arguments or effects.
 function gatherDescription(entity: Entity): string {
   const resource = entity.resource!;
-  return `Gather ${entity.name}: up to ${SIMULATION_RULES.gatherQuantity} ${resource.definitionId} per batch (${resource.quantity} currently available), ${resource.workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty.`;
+  return `Gather ${entity.name}: base yield ${SIMULATION_RULES.gatherQuantity} ${resource.definitionId} per batch, up to 4 with a compatible carried gathering tool (${resource.quantity} currently available), ${resource.workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty.`;
 }
 
 export const CONTEXT_BYTE_LIMIT = 100_000;
@@ -51,12 +55,8 @@ export function buildContext(service: WorldService, actorId: string, query: stri
   // This deterministic retrieval helps old techniques surface; it does not prove paraphrase equivalence.
   const rankedRecipes = observed.knownRecipes
     .map((recipe, index) => {
-      const familyTerms =
-        recipe.output.launcher?.mechanism === 'swing'
-          ? 'sling throw stone pebble pouch swing'
-          : recipe.output.launcher?.mechanism === 'flex'
-            ? 'bow flex launch arrow'
-            : 'arrow shaft point fletching projectile';
+      const family = inventionFamily(recipe);
+      const familyTerms = family ? SUPPORTED_INVENTION_FAMILIES[family].description : '';
       const text =
         `${recipe.name} ${recipe.description} ${familyTerms} ${recipe.inputs.map((input) => `${input.definitionId} ${input.role}`).join(' ')}`.toLowerCase();
       return {
@@ -82,6 +82,7 @@ export function buildContext(service: WorldService, actorId: string, query: stri
       ...(definition.cooked !== undefined ? { cooked: definition.cooked } : {}),
       ...(definition.launcher ? { launcher: definition.launcher } : {}),
       ...(definition.ammunition ? { ammunition: definition.ammunition } : {}),
+      ...(definition.gatheringTool ? { gatheringTool: definition.gatheringTool } : {}),
     }));
   const context = {
     world: { id: observed.worldId, profile: service.world.profile, simulationSeconds: observed.at },
@@ -118,6 +119,7 @@ export function buildContext(service: WorldService, actorId: string, query: stri
         properties: recipe.output.properties,
         ...(recipe.output.launcher ? { launcher: recipe.output.launcher } : {}),
         ...(recipe.output.ammunition ? { ammunition: recipe.output.ammunition } : {}),
+        ...(recipe.output.gatheringTool ? { gatheringTool: recipe.output.gatheringTool } : {}),
       },
     })),
     memories: queryMemories(service.world, actorId, { text: query, limit: 12 }).map((memory) => ({

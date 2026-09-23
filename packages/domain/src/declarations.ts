@@ -109,7 +109,15 @@ export function validateDeclaration(world: WorldState, candidate: unknown): stri
   const output = candidate.output;
   if (
     !record(output) ||
-    !exactKeys(output, ['kind', 'name', 'description', 'properties', 'launcher', 'ammunition'])
+    !exactKeys(output, [
+      'kind',
+      'name',
+      'description',
+      'properties',
+      'launcher',
+      'ammunition',
+      'gatheringTool',
+    ])
   )
     return [...errors, 'Unsupported output shape or effects.'];
   if (!boundedText(output.name, 80) || !boundedText(output.description, 700))
@@ -135,6 +143,7 @@ export function validateDeclaration(world: WorldState, candidate: unknown): stri
     const launcher = output.launcher;
     if (
       output.ammunition !== undefined ||
+      output.gatheringTool !== undefined ||
       !record(launcher) ||
       !exactKeys(launcher, ['mechanism', 'ammunitionKind', 'damage', 'range', 'accuracy'])
     )
@@ -164,13 +173,35 @@ export function validateDeclaration(world: WorldState, candidate: unknown): stri
     const ammo = output.ammunition;
     if (
       output.launcher !== undefined ||
+      output.gatheringTool !== undefined ||
       !record(ammo) ||
       !exactKeys(ammo, ['kind', 'damageBonus']) ||
       ammo.kind !== 'arrow' ||
       !range(ammo.damageBonus, 0, 5)
     )
       errors.push('Only bounded physical arrow ammunition can be assembled.');
-  } else errors.push('Output kind must be launcher or ammunition.');
+  } else if (output.kind === 'gathering-tool') {
+    const envelope = DECLARATION_CONTRACT.gatheringTool;
+    requireRoles([...envelope.requiredRoles]);
+    const tool = output.gatheringTool;
+    const body = candidate.inputs.find((input) => record(input) && input.role === 'body');
+    if (
+      output.launcher !== undefined ||
+      output.ammunition !== undefined ||
+      !record(tool) ||
+      !exactKeys(tool, ['resourceId', 'quantity']) ||
+      !range(tool.quantity, envelope.quantity[0], envelope.quantity[1]) ||
+      !Number.isInteger(tool.quantity) ||
+      !Object.values(world.entities).some(
+        (entity) => entity.resource?.definitionId === tool.resourceId,
+      ) ||
+      !record(body) ||
+      !getOwn(world.itemDefinitions, body.definitionId)?.properties.includes('rigid')
+    )
+      errors.push(
+        'A gathering tool needs a rigid body, binding, an existing resource, and a yield of 2–4.',
+      );
+  } else errors.push('Unsupported output kind.');
   return errors;
 }
 
@@ -191,7 +222,7 @@ export function admitDeclaration(
     !isSafeRecordId(provenance.requestId) ||
     !getOwn(original.entities, provenance.actorId)?.actor?.alive ||
     getOwn(original.entities, provenance.actorId)?.actor?.incapacitated ||
-    !['live-model', 'test-fixture'].includes(provenance.source)
+    !['live-model', 'test-fixture', 'supplied-proposal'].includes(provenance.source)
   )
     return reject(
       'invalid-provenance',
@@ -263,6 +294,7 @@ export function admitDeclaration(
       recipeId,
       ...(draft.output.launcher ? { launcher: { ...draft.output.launcher } } : {}),
       ...(draft.output.ammunition ? { ammunition: { ...draft.output.ammunition } } : {}),
+      ...(draft.output.gatheringTool ? { gatheringTool: { ...draft.output.gatheringTool } } : {}),
     };
     world.itemDefinitions[outputDefinitionId] = definition;
     world.recipes[recipeId] = {
@@ -294,6 +326,7 @@ export function admitDeclaration(
     actor,
     undefined,
     { recipeId, source: provenance.source },
+    'private',
   );
   return finish(world, events, {
     ok: true,

@@ -415,7 +415,12 @@ export async function projectView(
   const jobs = optional(
     service,
     'jobs',
-    memo('jobs', [telemetryRevision], () => service.store.recentJobs()),
+    memo('jobs', [telemetryRevision], async () =>
+      (await service.store.recentJobs()).filter(
+        (job) =>
+          !job.request.invention || job.request.invention.actorId === service.controlledEntityId,
+      ),
+    ),
     [],
   ).map(({ id, kind, status, message, queueLatencyMs, totalLatencyMs }) => ({
     id,
@@ -627,7 +632,9 @@ export async function projectView(
             description: recipe.description,
             family: recipe.output.launcher
               ? `${recipe.output.launcher.mechanism} launcher · ${recipe.output.launcher.ammunitionKind}`
-              : 'Arrow ammunition',
+              : recipe.output.gatheringTool
+                ? `Gathering tool · up to ${recipe.output.gatheringTool.quantity} ${world.itemDefinitions[recipe.output.gatheringTool.resourceId]!.name} per batch`
+                : 'Arrow ammunition',
             ingredients: recipe.inputs.map((input) => ({
               name: world.itemDefinitions[input.definitionId]!.name,
               quantity: input.quantity,

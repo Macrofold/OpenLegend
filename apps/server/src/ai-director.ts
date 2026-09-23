@@ -1,7 +1,12 @@
 import { searchInventions } from './invention-search.js';
 import type { InventionContinuation } from '@open-legend/protocol';
-import { inventSupportedTechnique, InventionFailure } from './invention-service.js';
-import { inventionPermission } from '@open-legend/domain';
+import {
+  inventSupportedTechnique,
+  InventionFailure,
+  normalizeInventionProposal,
+} from './invention-service.js';
+import { inventionPermission, recordInventionFeedback } from '@open-legend/domain';
+import { prepareActorInvention } from './actor-invention.js';
 import { prepareAttemptInterpretation } from './attempt-interpretation.js';
 import { nativeProtectionReason } from './native-protection.js';
 import { currentGoal } from '@open-legend/domain';
@@ -43,7 +48,7 @@ import {
 } from '@open-legend/ai';
 import { executeCommand, type DeclarationProvenance } from '@open-legend/domain';
 import type { ApiResult } from '@open-legend/protocol';
-import { buildContext } from './context.js';
+import { CONTEXT_BYTE_LIMIT, ContextBudgetError } from './context.js';
 import { digest, type JobRecord } from './store.js';
 import type { WorldService } from './world-service.js';
 
@@ -65,6 +70,13 @@ interface ResponseInterruption {
   text: string;
 }
 interface Running {
+  actorInvention?: {
+    actorId: string;
+    purpose: string;
+    candidate: unknown;
+    parentId?: string;
+    policyRevision: number;
+  };
   job: JobRecord;
   controller: AbortController;
   generation: string;
@@ -119,7 +131,7 @@ export class AiDirector {
     readonly service: WorldService,
     client?: AiClient,
     private readonly now = Date.now,
-    readonly executionSource: DeclarationProvenance['source'] = client
+    readonly executionSource: Exclude<DeclarationProvenance['source'], 'supplied-proposal'> = client
       ? 'test-fixture'
       : 'live-model',
   ) {
@@ -186,6 +198,7 @@ export class AiDirector {
     npcId?: string,
     conversationId?: string,
     continuation?: InventionContinuation,
+    candidate?: unknown,
   ): Promise<ApiResult> {
     // Independent inference does not wait for remote reflection cancellation/cleanup.
     this.maintenance.cancel();
@@ -193,7 +206,16 @@ export class AiDirector {
       await this.cancel(this.running.job.id);
       this.running = null;
     }
-    return await this.submit(kind, id, text, npcId, undefined, conversationId, continuation);
+    return await this.submit(
+      kind,
+      id,
+      text,
+      npcId,
+      undefined,
+      conversationId,
+      continuation,
+      candidate,
+    );
   }
 
   async cancel(jobId: string): Promise<ApiResult> {
@@ -217,8 +239,35 @@ export class AiDirector {
     retryOf?: string,
     conversationId?: string,
     continuation?: InventionContinuation,
+    candidate?: unknown,
+    initiatingActor?: string,
+    initiatingPolicyRevision?: number,
   ): Promise<ApiResult> {
     return this.admission(async () => {
+      candidate = normalizeInventionProposal(candidate);
+      const inventorId = initiatingActor ?? this.service.controlledEntityId;
+      if (
+        initiatingActor &&
+        (kind !== 'invention' ||
+          this.service.world.entities[initiatingActor]?.actor?.controller !== 'npc')
+      )
+        return {
+          ok: false,
+          code: 'actor',
+          message: 'Only a server-bound NPC may initiate private invention.',
+        };
+      if (
+        candidate !== undefined &&
+        (kind !== 'invention' ||
+          JSON.stringify(candidate).length > 12000 ||
+          (continuation && ['reuse', 'search'].includes(continuation.action)))
+      )
+        return {
+          ok: false,
+          code: 'invalid-declaration',
+          message:
+            'Supply a proposal of at most 12,000 characters for authoring, separately from reuse or search.',
+        };
       let original: JobRecord | undefined;
       if (retryOf) {
         original = await this.service.store.getJob(retryOf);
@@ -260,10 +309,11 @@ export class AiDirector {
         text,
         targetId,
         worldId: this.service.world.id,
-        actorId: this.service.controlledEntityId,
+        actorId: inventorId,
         conversationId,
         ...(retryOf ? { retryOf } : {}),
         ...(continuation ? { continuation } : {}),
+        ...(candidate !== undefined ? { candidate } : {}),
       });
       const previous = await this.service.store.getJob(id);
       if (previous)
@@ -287,7 +337,7 @@ export class AiDirector {
           kind !== 'invention' ||
           !scope ||
           !parent?.invention ||
-          scope.actorId !== this.service.controlledEntityId ||
+          scope.actorId !== inventorId ||
           scope.worldId !== this.service.world.id ||
           scope.timelineId !== this.service.timelineId ||
           scope.conversationId !== conversationId ||
@@ -359,10 +409,12 @@ export class AiDirector {
           };
       }
       // Capture origin before any paid routing; worker/model identity cannot change it.
+      const priorCandidate = parent?.invention?.candidate ?? parent?.request.invention?.candidate;
       const invention: JobRecord['request']['invention'] =
         kind === 'invention'
           ? {
               rootId: parent?.request.invention?.rootId ?? id,
+              ...(candidate !== undefined ? { candidate } : {}),
               depth: parent ? parent.request.invention!.depth + 1 : 0,
               ...(continuation ? { continuation } : {}),
               ...(parent
@@ -373,9 +425,7 @@ export class AiDirector {
                         : {
                             intent: parent.request.text,
                             feedback: parent.message,
-                            ...(parent.invention?.candidate
-                              ? { candidate: parent.invention.candidate }
-                              : {}),
+                            ...(priorCandidate !== undefined ? { candidate: priorCandidate } : {}),
                           },
                   }
                 : {}),
@@ -390,13 +440,14 @@ export class AiDirector {
                 : continuation?.action !== 'new' && parent?.request.invention?.base
                   ? { base: parent.request.invention.base }
                   : {}),
-              actorId: this.service.controlledEntityId,
+              actorId: inventorId,
               worldId: parent?.request.invention?.worldId ?? this.service.world.id,
               timelineId: parent?.request.invention?.timelineId ?? this.service.timelineId,
               ...(conversationId ? { conversationId } : {}),
               authority: parent?.request.invention?.authority ?? {
-                origin: 'player' as const,
-                policyRevision: this.service.world.inventionPolicy.revision,
+                origin: initiatingActor ? ('agent' as const) : ('player' as const),
+                policyRevision:
+                  initiatingPolicyRevision ?? this.service.world.inventionPolicy.revision,
               },
             }
           : undefined;
@@ -427,12 +478,13 @@ export class AiDirector {
           message: 'Resume the world before talking or inventing.',
         };
       if (
-        !this.service.world.entities[this.service.controlledEntityId]?.actor?.alive ||
-        this.service.world.entities[this.service.controlledEntityId]?.actor?.incapacitated
+        !this.service.world.entities[inventorId]?.actor?.alive ||
+        this.service.world.entities[inventorId]?.actor?.incapacitated
       )
         return { ok: false, code: 'actor', message: 'Recover at camp before acting.' };
       if (
         continuation?.action !== 'reuse' &&
+        invention?.candidate === undefined &&
         !this.service.config.macrofoldKey &&
         (!this.service.config.jevKey || !this.service.config.llmKey)
       )
@@ -519,6 +571,28 @@ export class AiDirector {
       ...(result !== undefined ? { result } : {}),
     };
     await this.service.store.putJob(run.job);
+    const scope = run.job.request.invention;
+    if (
+      terminal &&
+      status === 'failed' &&
+      scope?.authority.origin === 'agent' &&
+      scope.worldId === this.service.world.id &&
+      scope.timelineId === this.service.timelineId
+    ) {
+      await this.service.transition((world) =>
+        scope.worldId === world.id && scope.timelineId === this.service.timelineId
+          ? recordInventionFeedback(world, scope.actorId, run.job.id, message)
+          : {
+              world,
+              events: [],
+              outcome: {
+                ok: false,
+                code: 'stale',
+                message: 'Feedback belongs to an earlier timeline.',
+              },
+            },
+      );
+    }
     const trace = this.log.get(run.job.id);
     if (trace)
       await this.log.save({
@@ -554,7 +628,7 @@ export class AiDirector {
       if (
         scope.worldId !== this.service.world.id ||
         scope.timelineId !== this.service.timelineId ||
-        scope.actorId !== this.service.controlledEntityId
+        (scope.authority.origin === 'player' && scope.actorId !== this.service.controlledEntityId)
       )
         throw new StopJob(
           'stale',
@@ -694,14 +768,39 @@ export class AiDirector {
           );
         }),
       )
-      .finally(() => {
-        this.pendingWork.delete(pending);
-        if (this.running === run) {
-          this.running = null;
-          this.pending = null;
+      .finally(async () => {
+        try {
+          if (this.running === run) {
+            this.running = null;
+            this.pending = null;
+          }
+          this.nextThoughtAt = this.now() + this.service.config.thoughtIntervalMs;
+          this.service.notify();
+          // A fresh explicit actor choice may submit once; recovery never replays this dispatch.
+          // docs/architecture.md#shared-invention-workflow
+          const proposal = run.actorInvention;
+          if (
+            proposal &&
+            !this.stopped &&
+            !run.controller.signal.aborted &&
+            run.generation === this.service.generation
+          ) {
+            await this.submitActorInvention(
+              proposal.actorId,
+              `${run.job.id}:invention`,
+              proposal.purpose,
+              proposal.candidate,
+              proposal.parentId,
+              proposal.policyRevision,
+            );
+          }
+        } catch {
+          this.service.storageError =
+            'An actor invention dispatch could not be recorded; simulation is paused to prevent uncertain work from being repeated.';
+        } finally {
+          // Keep dispatch tracked until its child is registered; idle/close must not race it.
+          this.pendingWork.delete(pending);
         }
-        this.nextThoughtAt = this.now() + this.service.config.thoughtIntervalMs;
-        this.service.notify();
       });
     this.pending = pending;
     this.pendingWork.add(pending);
@@ -1168,10 +1267,19 @@ export class AiDirector {
     const level = route === 'level4' ? 4 : route === 'level3' ? 3 : 2;
     const limits = LEVEL_LIMITS[level];
     const c = this.service.config;
-    const schema = boundResponseSchema(
+    const actorInvention = await prepareActorInvention(this.service, actorId);
+    const baseSchema = boundResponseSchema(
       prepared.binding.entityIds,
       Object.keys(prepared.binding.actions),
     );
+    const schema = actorInvention.enabled
+      ? baseSchema.extend({ invention: actorInvention.schema })
+      : baseSchema;
+    const instructions = `${RESPONSE_INSTRUCTIONS} ${actorInvention.instructions}`;
+    const context = `${prepared.prompt}\n${actorInvention.context}`;
+    // Private proposal context shares the existing total bound; it does not buy a larger prompt.
+    if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
+      throw new ContextBudgetError();
     const value = await this.generate<unknown>(
       run,
       {
@@ -1186,9 +1294,11 @@ export class AiDirector {
             ? c.miniModel
             : c.complexModel,
         reasoningEffort: limits.effort,
-        maxOutputTokens: limits.outputTokens,
-        instructions: RESPONSE_INSTRUCTIONS,
-        context: prepared.prompt,
+        maxOutputTokens: actorInvention.enabled
+          ? Math.max(1800, limits.outputTokens)
+          : limits.outputTokens,
+        instructions,
+        context,
         schema: z.toJSONSchema(schema, { target: 'draft-7' }),
       },
       `attempt:${attempt}:generate`,
@@ -1197,6 +1307,13 @@ export class AiDirector {
     if (await retryForUrgentAwareness()) return;
     const parsingStartedAt = new Date().toISOString();
     const reply = schema.parse(value);
+    // Authoring metadata must not invalidate the strict native response envelope.
+    // docs/architecture.md#shared-invention-workflow
+    const nativeReply = { operations: reply.operations };
+    const proposedInvention =
+      actorInvention.enabled && 'invention' in reply
+        ? actorInvention.schema.parse(reply.invention)
+        : null;
     await this.log.record(
       `${run.job.id}:attempt:${attempt}:parse`,
       'Response parsing',
@@ -1207,7 +1324,7 @@ export class AiDirector {
     let attemptBindings = prepared.attemptBindings;
     const interpretationManifest = this.service.world.moduleManifest.revision;
     const interpretation = prepareAttemptInterpretation(
-      reply,
+      nativeReply,
       attemptBindings,
       this.service.world.entities[actorId]!.actor!.agency,
       interpretationManifest,
@@ -1256,7 +1373,7 @@ export class AiDirector {
             world,
             run.job.id,
             actorId,
-            reply,
+            nativeReply,
             prepared.binding.actions,
             prepared.binding.entityIds,
             prepared.binding.expectedPlan,
@@ -1289,6 +1406,67 @@ export class AiDirector {
         components: receipt?.components,
         trigger: semanticTrigger,
       },
+    );
+    if (result.ok && proposedInvention) {
+      let candidate: unknown;
+      try {
+        candidate = JSON.parse(proposedInvention.candidateJson);
+      } catch {
+        candidate = null;
+      }
+      run.actorInvention = {
+        actorId,
+        purpose: proposedInvention.purpose,
+        candidate,
+        policyRevision: actorInvention.policyRevision,
+        ...(proposedInvention.parentId ? { parentId: proposedInvention.parentId } : {}),
+      };
+    }
+  }
+
+  /** Server-only actor gateway. No HTTP actor identity or origin is accepted. */
+  async submitActorInvention(
+    actorId: string,
+    id: string,
+    purpose: string,
+    candidate: unknown,
+    parentId?: string,
+    policyRevision = this.service.world.inventionPolicy.revision,
+  ): Promise<ApiResult> {
+    const permission = inventionPermission(this.service.world, { origin: 'agent', policyRevision });
+    if (!permission.ok) return permission;
+    if (candidate === undefined)
+      return {
+        ok: false,
+        code: 'invalid-declaration',
+        message: 'Supply an explicit actor proposal.',
+      };
+    candidate = normalizeInventionProposal(candidate);
+    const candidateDigest = digest(candidate);
+    const prior = (await this.service.store.inventionJobs(this.service.world.id, actorId)).find(
+      (job) =>
+        job.request.invention?.timelineId === this.service.timelineId &&
+        job.request.invention.candidate !== undefined &&
+        digest(job.request.invention.candidate) === candidateDigest,
+    );
+    if (prior)
+      return {
+        ok: true,
+        code: 'already-proposed',
+        message: 'This unchanged method already has a saved result.',
+        jobId: prior.id,
+      };
+    return this.submit(
+      'invention',
+      id,
+      purpose,
+      undefined,
+      undefined,
+      `actor-invention:${actorId}`,
+      parentId ? { parentId, action: 'revise' } : undefined,
+      candidate,
+      actorId,
+      policyRevision,
     );
   }
 
@@ -1600,7 +1778,7 @@ export class AiDirector {
   }
 
   async idle(): Promise<void> {
-    await this.pending;
+    while (this.pendingWork.size) await Promise.all([...this.pendingWork]);
   }
   async close(): Promise<void> {
     this.stopped = true;

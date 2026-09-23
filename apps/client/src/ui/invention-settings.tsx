@@ -8,6 +8,7 @@ export function InventionSettings({ view }: { view: GameView }) {
     generation: string;
     revision: number;
     playerLocked: boolean;
+    agentLocked: boolean;
   }>();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -25,6 +26,7 @@ export function InventionSettings({ view }: { view: GameView }) {
             generation: result.generation,
             revision: result.policy.revision,
             playerLocked: result.policy.playerLocked,
+            agentLocked: result.policy.agentLocked,
           });
       })
       .catch((error) => {
@@ -42,7 +44,7 @@ export function InventionSettings({ view }: { view: GameView }) {
         expectedGeneration: editing.generation,
         expectedRevision: editing.revision,
         playerLocked: editing.playerLocked,
-        agentLocked: true,
+        agentLocked: editing.agentLocked,
       });
       setMessage(result.message);
     } catch (error) {
@@ -66,15 +68,28 @@ export function InventionSettings({ view }: { view: GameView }) {
         Player invention lock
       </label>
       <label>
-        <input type="checkbox" checked={view.inventionPolicy.agentLocked} disabled /> Agent
-        invention lock
+        <input
+          type="checkbox"
+          checked={editing?.agentLocked ?? view.inventionPolicy.agentLocked}
+          disabled={!view.godMode || !editing || busy}
+          onChange={(event) =>
+            setEditing(editing ? { ...editing, agentLocked: event.target.checked } : undefined)
+          }
+        />{' '}
+        Agent invention lock
       </label>
-      <p className="ol-caption">Autonomous invention is not available in this version.</p>
+      <p className="ol-caption">
+        Unlocked agents may propose supported techniques privately. Construction remains a separate
+        decision.
+      </p>
       {view.godMode && (
         <Button
           onPress={() => void save()}
           isDisabled={
-            !editing || busy || editing.playerLocked === view.inventionPolicy.playerLocked
+            !editing ||
+            busy ||
+            (editing.playerLocked === view.inventionPolicy.playerLocked &&
+              editing.agentLocked === view.inventionPolicy.agentLocked)
           }
         >
           Save invention settings

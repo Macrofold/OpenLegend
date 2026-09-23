@@ -1,4 +1,5 @@
 import { validateInventionAttribution } from './invention-attribution.js';
+import { validateGatheringTools } from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
 import { validateAgency } from './agency.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
@@ -495,6 +496,7 @@ export function validateWorldModules(world: WorldState): void {
     );
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
+  validateGatheringTools(world);
   for (const recipe of Object.values(world.recipes)) {
     const authority = recipe.provenance?.authority;
     if (

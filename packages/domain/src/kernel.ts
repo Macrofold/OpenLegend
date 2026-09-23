@@ -1,3 +1,4 @@
+import { gatheringYield, BASE_GATHER_QUANTITY } from './gathering.js';
 import {
   withdrawAttempt,
   replaceGoals,
@@ -71,7 +72,7 @@ export const SIMULATION_RULES = {
   animalFleeTilesPerSecond: 0.055,
   ...WILDERNESS_NEEDS,
   nativeRestSeconds: 28800,
-  gatherQuantity: 2,
+  gatherQuantity: BASE_GATHER_QUANTITY,
   harvestSeconds: 84,
   cookSeconds: 90,
   shotSeconds: 18,
@@ -643,7 +644,13 @@ function completeAction(
         failAction(world, actor, events, 'the resource is depleted.');
         return;
       }
-      const quantity = Math.min(target.resource.quantity, SIMULATION_RULES.gatherQuantity);
+      // Carried compatible tools select one bounded yield; they never multiply finite supply.
+      // docs/architecture.md#shared-invention-workflow
+      const toolYield = gatheringYield(
+        inventoryFor(world, actor.id).map((item) => world.itemDefinitions[item.definitionId]),
+        target.resource.definitionId,
+      );
+      const quantity = Math.min(target.resource.quantity, toolYield);
       target.resource.quantity -= quantity;
       outputItemId = addItem(world, actor.id, target.resource.definitionId, quantity);
       emit(

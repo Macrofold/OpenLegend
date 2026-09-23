@@ -25,7 +25,10 @@ export const declarationSchema: JsonSchema = object({
   },
   workSeconds: { type: 'integer', minimum: 48, maximum: 480 },
   output: object({
-    kind: { type: 'string', enum: ['launcher', 'ammunition'] },
+    kind: { type: 'string', enum: ['launcher', 'ammunition', 'gathering-tool'] },
+    gatheringTool: nullable(
+      object({ resourceId: text(120), quantity: { type: 'integer', minimum: 2, maximum: 4 } }),
+    ),
     name: text(80),
     description: text(700),
     properties: {
