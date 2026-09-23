@@ -1,0 +1,45 @@
+name: Spatial world checks
+on:
+  push:
+    branches: [feature/spatial-world-3d]
+  pull_request:
+    paths:
+      - 'packages/**'
+      - 'apps/**'
+      - 'tests/browser/spatial-world.spec.ts'
+      - 'playwright.config.ts'
+      - 'tsconfig*.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/spatial-check.yml'
+permissions:
+  contents: read
+concurrency:
+  group: spatial-check-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      # This focused gate supplements, not replaces, the repository's full check.
+      - run: pnpm exec vitest run packages/spatial/src/spatial.test.ts packages/domain/src/spatial-world.test.ts apps/client/src/world-camera.test.ts apps/server/src/spatial-http.test.ts
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test tests/browser/spatial-world.spec.ts
+        env:
+          AI_BUDGET_USD: '0'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spatial-browser-evidence
+          path: test-results/
+          retention-days: 7

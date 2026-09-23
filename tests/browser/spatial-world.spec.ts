@@ -30,7 +30,8 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     await expect(canvas).toHaveAttribute('data-ready', 'true');
     await expect(canvas).toHaveAttribute('data-floor', 'all');
     await page.screenshot({ path: info.outputPath('spatial-clearing.png') });
-    await page.getByRole('button', { name: 'Resume world', exact: true }).click();
+    // A fresh in-memory fixture starts unpaused; no wall-clock ticks run.
+    await expect(page.getByRole('button', { name: 'Pause world', exact: true })).toBeVisible();
     // Project a known public deck point through the default orthographic camera.
     // This clicks actual scene geometry, not a hidden test-only move endpoint.
     const rect = (await canvas.boundingBox())!;
