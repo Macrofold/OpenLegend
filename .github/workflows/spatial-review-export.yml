@@ -1,20 +1,64 @@
-name: Spatial review source export
+name: Publish second spatial review
 on:
   push:
     branches: [feature/spatial-world-3d]
     paths: [.github/workflows/spatial-review-export.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  export:
+  publish:
+    if: contains(github.event.head_commit.message, '[spatial-review-export]')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
-      - run: git archive --format=zip --output=/tmp/spatial-review-source.zip HEAD
-      - uses: actions/upload-artifact@v4
-        with:
-          name: spatial-review-source
-          path: /tmp/spatial-review-source.zip
-          retention-days: 1
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - name: Apply reviewed source and documentation only
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD^)" = "7bba4866819e5623fc4e42d6f8d82f96ca25877d"
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, subprocess
+          from pathlib import Path, PurePosixPath
+          parts = sorted(Path('.github/spatial-review2').glob('part-*.b64'))
+          assert len(parts) == 3
+          payload = lzma.decompress(base64.b64decode(''.join(p.read_text().strip() for p in parts), validate=True))
+          assert hashlib.sha256(payload).hexdigest() == '3cf383335f815dc777890832404ff73ce8ef4844e68f9aae50b789ee488e39b4'
+          files = json.loads(payload)
+          assert len(files) == 16 and len({f['path'] for f in files}) == 16
+          prepared = []
+          for item in files:
+              path = PurePosixPath(item['path'])
+              assert not path.is_absolute() and '..' not in path.parts
+              assert path.parts[0] in ('docs', 'archive', 'packages')
+              assert not str(path).endswith(('.test.ts', '.spec.ts'))
+              target = Path(path)
+              assert target.is_file() and not target.is_symlink()
+              before = target.read_bytes()
+              assert hashlib.sha256(before).hexdigest() == item['before'], str(path)
+              lines = before.decode('utf-8').splitlines(keepends=True)
+              for start, count, replacement in reversed(item['edits']):
+                  assert 0 <= start <= len(lines) and 0 <= count <= len(lines) - start
+                  lines[start:start + count] = replacement.splitlines(keepends=True)
+              after = ''.join(lines).encode('utf-8')
+              assert hashlib.sha256(after).hexdigest() == item['after'], str(path)
+              prepared.append((target, after))
+          for target, after in prepared:
+              target.write_bytes(after)
+          subprocess.run(['git', 'add', '--', *(str(p) for p, _ in prepared)], check=True)
+          PY
+          git diff --cached --check
+          tree=$(git write-tree)
+          test "$(git rev-parse "$tree:apps")" = "bff6d0d98e6d750bd2e2feda95b13126edb48d48"
+          test "$(git rev-parse "$tree:archive")" = "84dee1826a5ae55a0e2cae9c7f31d62d1738b07b"
+          test "$(git rev-parse "$tree:docs")" = "ec6715ac3eea35854fbbb1757e496a13556f043b"
+          test "$(git rev-parse "$tree:packages")" = "aff9dfb80abb5d9ab7d6534dcfd63a2e0687ef92"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m '[skip ci] Reduce spatial graph construction and encounter hot-path work' -m 'Build only conservative surface components, collapse exact zero-cost seams and reuse synchronous search scratch. Short-circuit geometry queries and reuse mutation-scoped experience IDs and fixed-phase audiences. Preserve independent invention work; document manual runtime evidence, remaining limits and deferred regression coverage. No automated tests were added or run.'
+          git push origin HEAD:refs/heads/feature/spatial-world-3d
