@@ -115,3 +115,7 @@ Recorded the statement-count fixture and investigation limits in Verification, i
 
 - 2026-09-21: Updated architecture, extension guidance and implementation status for the initial performance foundations. Preserved incomplete PF task exits, recorded native SQLite runtime observations separately from scale acceptance, and added deferred coverage to the maintainer TODO. No retention policy or multiplayer deployment claim was introduced.
 - 2026-09-21: Accepted shared-world absence behavior: a world-level Continue while unattended setting permits progression with no present players; otherwise all admitted players must be disconnected or unfocused before the world pauses. Set ordinary gameplay commands to a 24-hour outcome-replay window followed by rejection through a server-issued command epoch/controller-generation watermark. Current receipts remain intact until that expiry boundary is implemented; provider, billing and administrative identities retain their separate policies.
+
+## Spatial world browser verification
+
+Recorded the passing branch-only GitHub Actions production build, 24 focused tests and real PlayCanvas browser scenario in Verification. Updated the narrowly evidenced camera, surface-picking and executed-check task states while retaining broader acceptance gates. Removed temporary source/publication transport files; a read-only spatial workflow now supplements the unchanged full repository check. No live provider calls or legacy save conversion were introduced.
