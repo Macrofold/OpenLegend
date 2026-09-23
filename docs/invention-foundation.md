@@ -35,7 +35,7 @@ Read this packet together with the existing subsystem owners. Links below are co
 | [Save/load](save-and-load.md), [production data](../archive/07-technical-architecture/production-data-model.md), and [billing](../archive/07-technical-architecture/billing-and-usage-reporting.md) | Restoration, durable authority, retention, exact accounting, reporting, and invention entitlements.                                                             |
 | [INV tracker](maintainers/inventions-and-world-evolution.md)                                                                                                                                        | All invention implementation tasks and acceptance gates. Other trackers retain their existing subsystem work.                                                   |
 
-The [world-agent tool contract](invention-workshop-tools.md) defines application tool grants, read/preview/Apply separation and the extension seam beyond finite recipes; it is not another admission owner.
+The [world-agent tool contract](invention-workshop-tools.md) owns one application tool service for the UI and [MCP transport](world-agent-mcp.md). The [unified World Agent runtime](world-agent-runtime.md) owns conversation, native Macrofold execution and session funding. The [relationship graph](invention-graph.md) owns typed navigation/projections, and [composition and revision](invention-composition.md) supplies the end-to-end kind-adapter and live-law workflow beneath the existing module/declaration owners. [Target scenarios](invention-scenarios.md) define the player/NPC outcomes and staged capability sequence. These are accepted designs, not claims of delivered MCP, graph, or general composition.
 
 The visual direction and [hybrid art methods](../archive/03-design-proposals/procedural-art-and-animation.md) still own style, rigs, procedural composition, and pixel-density decisions. This packet does not select a new renderer or promise particular image-provider latency.
 
@@ -55,7 +55,7 @@ The [spatial world contract](spatial-world.md) owns XYZ position, physical exten
 
 ## 4. The invention project and its identities
 
-An invention project is the durable root for one creative objective. Begin with the existing request/root lineage and repositories rather than introducing a new service. A project survives browser reload, provider-session expiry, an interrupted worker, and a failed revision. A conversation is a view into it, not its authoritative state.
+An invention project is the durable root for one creative objective. A funding session is separate: one conversation may revisit projects or deliberately fund another session without losing lineage or resetting old exposure. [World Agent runtime](world-agent-runtime.md#3-durable-identities-and-ownership) owns that mapping. Begin with the existing request/root lineage and repositories rather than introducing a new service. A project survives browser reload, provider-session expiry, an interrupted worker, and a failed revision. A conversation is a view into it, not its authoritative state.
 
 Keep these identities distinct:
 
@@ -229,7 +229,7 @@ The default art strategy is exact authorized reuse, trusted composition and imme
 
 ## 12. Delivery direction and decision coverage
 
-Extend the delivered supported-family path rather than rebuild it. First make project revisions, budget attribution, validation evidence, and one truthful staged item-art loop work together. Then add governed redesign and larger interaction analysis against real consumers. General G2, distributed hosting, marketplace rights automation, exhaustive physics, and universal 3D are not first-slice prerequisites.
+Extend the delivered supported-family path rather than rebuild it. Prioritize the unified, capable native World Agent with one shared MCP tool surface, explicit action approvals, and a $5 funded session including images. Prove inspection/drafting/Apply with current recipes first, then typed graph navigation and a substantially different kind adapter, then real compositions, NPC investigations and shared-law revision. Progressive art can ship alongside the relevant supported families rather than block all graph/agent work. Use the phase gates in [Target scenarios](invention-scenarios.md#capability-ladder-and-stop-conditions). Cost optimization follows capable, accountable operation; permission, correctness and work bounds are not deferred. General G2, distributed hosting, marketplace automation and exhaustive physics are not first-slice prerequisites.
 
 The following decisions are final architectural constraints; detailed tasks remain only in INV:
 
@@ -240,7 +240,7 @@ The following decisions are final architectural constraints; detailed tasks rema
 | Editing function and appearance before/after use                                   | Sections 4 and 7.                                      |
 | Backtracking without losing work or retrying paid uncertainty                      | Section 8 and budgets.                                 |
 | Invented mechanics and evolving validation obligations                             | Validation policy hierarchy and world constitution.    |
-| Typed dependency graph, interaction closure, and evidence reuse                    | Invention validation.                                  |
+| Typed dependency graph, interaction closure, and evidence reuse                    | Relationship graph and invention validation.           |
 | Independent origin locks, author refinement control, frozen laws, pins, quarantine | Governance and world constitution.                     |
 | Root authoring allowance plus aggregate runtime sustainability                     | Invention budgets.                                     |
 | Actor knowledge, privacy, continuation, and non-oracle feedback                    | Section 9 and AG/EPR/memory owners.                    |

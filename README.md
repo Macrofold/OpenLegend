@@ -1,5 +1,7 @@
 # Open Legend
 
+For the accepted next-generation authoring design, start with [player/NPC target scenarios](docs/invention-scenarios.md), [unified World Agent](docs/world-agent-runtime.md), [MCP integration](docs/world-agent-mcp.md), and [relationship graph](docs/invention-graph.md). These specifications distinguish planned capability from the current finite workshop; they do not claim an already-connected MCP harness.
+
 ## Play the elevated world
 
 The current world supports real elevation and stacked surfaces with generated sprites and simple 3D scenery. The timber lookout in the northeast has a ramp, a passage underneath and a gatherable crate; a small native bird flies between heights and perches on the deck. Camera **View** controls provide orbit, pitch, projection and floor focus. Drag pans; Shift-drag orbits/tilts; wheel zooms. With the canvas focused, arrows rotate/tilt, Page Up/Down selects a level, P switches projection and Home recenters. Rotation can be locked. Selecting a lower level cuts away upper presentation, not its physical geometry.
@@ -100,7 +102,6 @@ The browser check needs Playwright Chromium (`pnpm exec playwright install chrom
 ## Explore the project
 
 The [invention foundation](docs/invention-foundation.md) is the accepted target for coordinated revisions, validation, world constitution, staged art and budgets. [Current architecture](docs/architecture.md#shared-invention-workflow) distinguishes the supported implementation from future features.
-
 
 The [Narrator and conversation design](docs/narration-and-conversations.md) now includes readable actor context, explicit direct-address/overhearing triggers and optional talk/act/think reactions. Supported expressions have no mechanical effects; private thoughts stay private. Its broader [NC01–NC13 tasks](docs/maintainers/narration-and-conversations.md), cover durable group membership and private Narrator prose; broader acceptance remains open and automatic action/effect invention is deferred.
 

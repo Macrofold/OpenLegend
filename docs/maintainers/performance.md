@@ -207,6 +207,16 @@ Dependencies: PF03/PF08 and PF00 population profile; reuse real-time interest an
 
 Exit: cost follows active changes and relevant neighbors in sparse worlds; dense cases have explicit limits and backpressure. Broader gameplay/AI-quality acceptance remains in ACT/CR/NC.
 
+### PF09 encounter implementation sequence
+
+[Encounter scaling](../encounter-scaling.md) owns the measured triage design; EPR owns private perception-acquisition semantics. These tasks add no new scheduler or public-event authority.
+
+- [ ] **PF09a:** Instrument candidate filtering, exact sense checks, event audience, experience mutation/finalization and history projection separately in cold and warmed fixtures. Preserve counts, seeds, requested/accepted time and bounded counterexamples.
+- [ ] **PF09b:** Remove repeated scans/materialization and reuse immutable event-time indexes before changing semantics. Use a transition-local audience/experience batch with one semantic owner where profiling demonstrates repeated work; preserve actual public witnesses and stable ordering.
+- [ ] **PF09c:** Implement the accepted EPR private acquisition boundary for ordinary first-noticing, rather than broadcasting each observer's perception to every other actor. Treat this as an explicitly qualified semantic correction, not claim identical old event/awareness digests. Keep real speech/actions and configured public occurrences separately witnessed.
+- [ ] **PF09d:** Qualify large legitimate audiences and isolated graph/scenario work concurrently with native play. Bound work without exposing half-transitions or silently dropping required effects. Adopt resumable preparation/worker execution only if the simpler fixes cannot meet a measured workload.
+- [ ] **PF09e:** Record cold peak stall, warmed throughput, memory and event/awareness growth across population/density/speed. Keep deployment target sizes explicit; do not infer scale readiness from small tool-call latency or remove the first-exposure spike from reports.
+
 ## PF10 — Workers and movement prediction
 
 Dependencies: PF03/PF05; measured residual event-loop CPU or unavoidable confirmation RTT.

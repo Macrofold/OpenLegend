@@ -1,5 +1,7 @@
 # Extensible world foundation — implementation tracker
 
+[INV-15–INV-19](inventions-and-world-evolution.md#unified-world-agent-delivery) now own the agent-facing graph/MCP/kind-adapter integration and capability journeys. EWF remains responsible for the actual shared host/state/port interfaces; tool descriptions or graph edges do not complete them. Use [Composition](../invention-composition.md) and [target scenarios](../invention-scenarios.md) when qualifying unlike consumers.
+
 **Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification.md#extensible-attribute-runtime).
 
 [Engine and world boundaries](../engine-and-world-boundaries.md) owns the architectural decision rule. [World-module runtime](../../archive/07-technical-architecture/world-module-runtime.md) owns the shared integration contract. Current behavior and test results belong to [Architecture](../architecture.md) and [Verification](../verification.md).

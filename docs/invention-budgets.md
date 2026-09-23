@@ -1,5 +1,7 @@
 # Invention budgets, runtime cost, and accounting
 
+For the unified World Agent, the accepted default is **$5 for one explicitly funded workshop session, including image generation**. Purpose breakdowns are visible; no separate mandatory art cap or fixed allocation split is selected. The [World Agent runtime](world-agent-runtime.md#8-shared-5-allowance-and-external-runs) owns how session funding spans projects and remote-run allocations. Existing sessions/configured lower caps retain their admitted limits; reconnects never grant another allowance. The current workshop-root implementation is narrower than this target.
+
 **Status: accepted target design.** This document owns invention-episode spending admission, bounded refinement, recurring computational sustainability, and causal cost attribution. It extends the existing local dispatch accounting and [billing/usage contract](../archive/07-technical-architecture/billing-and-usage-reporting.md); it does not create a second wallet, billing ledger, or entitlement authority. [Invention foundation](invention-foundation.md) owns project lifecycle, the [module runtime](../archive/07-technical-architecture/world-module-runtime.md) owns execution interfaces, and [INV](maintainers/inventions-and-world-evolution.md) owns delivery.
 
 The implemented [workshop-root cap](architecture.md#invention-workshop-tools) is one bounded subset of this design, recorded on the existing attempt ledger. It does not complete cross-world payer, runtime, art or entitlement enforcement.
@@ -20,7 +22,7 @@ No default allowance is inferred from a model key, an unlocked invention setting
 
 ## 2. One episode across revisions and workers
 
-Use the existing root request/project lineage as the logical authoring episode. Its allowance covers all authorized child attempts: clarification, revisions, authoring, validation, speculative art, refinement, and any related harness work. Changing a draft ID, browser session, actor worker, provider, or server process cannot reset the allowance.
+Use the existing root request/project lineage as the initial authoring-episode implementation; the unified runtime adds explicit funding-session identity without replacing that lineage or the attempts ledger. A project may span deliberately funded sessions, and a session may inspect multiple permitted projects; all costs retain both identities. Its allowance covers all authorized child attempts: clarification, revisions, authoring, validation, speculative art, refinement, and any related harness work. Changing a draft ID, browser session, actor worker, provider, or server process cannot reset the allowance.
 
 The initiating actor/account, permission origin, payer, world, and episode are separate fields. An NPC proposal may originate in an already-accounted actor decision; do not charge that decision again as a new invention-generation call. A player-delegated NPC task keeps player origin and the explicitly bound payer. A permitted shared technical result does not create permission to spend someone else's funds.
 

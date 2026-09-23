@@ -1,8 +1,16 @@
 # Verification
 
+## Unified World Agent specification
+
+This pass specifies the unified out-of-world World Agent, typed relationship graph, shared application tools, native Macrofold/MCP connection, kind composition, live-law revisions, target player/NPC journeys and encounter-scaling plan. These are accepted target contracts, not newly implemented graph/MCP/composition/runtime-art services. The only runtime change is the workshop-root default from $1 to $5; explicit configured caps and existing admitted session/root allocations are not changed by that default.
+
+The review inspected OpenLegend's last delivered implementation `377ef03e6d4ff2c5c947f9085cd94111a84b34d0` and main `7bba4866819e5623fc4e42d6f8d82f96ca25877d`; the review branch already contains that main revision. The intervening incomplete publication added an export workflow and a partial patch file, not an implemented capability. Those temporary files are removed without applying the partial patch. Macrofold contracts were inspected at `19865a2f45885e228deb6b7ea443e33982257d21`; official MCP tooling/protocol sources were researched on September 23, 2026.
+
+Manual execution of the actual `readConfig` under Node 22.16.0 with isolated empty/specified environment objects returned default/zero/explicit-lower workshop values of `[5, 0, 2.5]`. No provider keys were read or requests dispatched. Production TypeScript (`tsc --noEmit -p tsconfig.build.json`) and the Vite client build passed; the existing approximately 2.625 MB uncompressed main bundle warning remains. No automated unit suites, browser automation, native-harness or paid model/image calls were run; provider spend was $0. There is no new native-simulation performance claim: prior cold-stall evidence motivates the [encounter plan](encounter-scaling.md), not an unmeasured speedup.
+
+Documentation verification covers relative links/anchors, preservation of existing task IDs/checkbox states, source-comment references, explicit implemented-versus-target boundaries and removal of the prior temporary publication files. Future automated cases are UWA01–UWA10 in the [maintainer TODO](maintainers/TODO.md#unified-world-agent-deferred-regression-coverage). Actual SDK negotiation, Macrofold tool forwarding, native agent usefulness, the image-inclusive session cap and compositional world behavior still require their explicit INV release gates.
+
 This file records current reproducible evidence and acceptance gaps. Fixture evidence does not establish live model quality, provider cost, hosted security, capacity or balance.
-
-
 
 ## Invention extensibility review
 
@@ -36,18 +44,17 @@ A repeated native dry-validation exercise on the small two-recipe world ran 300 
 
 The existing native stress runner used its committed gems/mixed scenarios with 180 steps and no warmup:
 
-| Scenario | Measured native loop | Largest step | Headroom at requested 3x |
-| --- | --- | --- | --- |
-| 500 ground objects, 514 entities, original domain baseline | 4347.45 ms | 1760.21 ms | 0.230 |
-| Same ground-object scenario, review | 4248.23 ms | 1774.04 ms | 0.235 |
-| 10 added people, 20 animals, 300 resources; 344 entities | 20193.16 ms | 18648.81 ms | 0.050 |
+| Scenario                                                   | Measured native loop | Largest step | Headroom at requested 3x |
+| ---------------------------------------------------------- | -------------------- | ------------ | ------------------------ |
+| 500 ground objects, 514 entities, original domain baseline | 4347.45 ms           | 1760.21 ms   | 0.230                    |
+| Same ground-object scenario, review                        | 4248.23 ms           | 1774.04 ms   | 0.235                    |
+| 10 added people, 20 animals, 300 resources; 344 entities   | 20193.16 ms          | 18648.81 ms  | 0.050                    |
 
 The complete ground-object runs have the same final-world digest. A separate mixed baseline attempt was interrupted by a local command deadline while writing output and supplies no comparative throughput evidence. The completed mixed review retains 3,254 events and 31,756 awareness entries, with first-exposure/experience work dominating. Both completed workloads fail the requested 3x throughput; below 1 is insufficient headroom. This is the existing PF09/EPR/SW problem, not resolved by workshop tools. Different hardware/load from earlier observations prevents attributing cross-review timing changes to a regression or speedup. No witnesses/events, physical semantics or simulation time were dropped to improve a score.
 
 ### Remaining qualification
 
 Live natural-language quality, Macrofold inference execution, full browser/accessibility flow, broader cancellation/concurrency/save fencing, PostgreSQL budget queries and large observation/material workloads remain unqualified. Generic definition composition, host-enforced dependency summaries, owner-wide mechanics tools, generated art and full payer/runtime budgets remain feature gaps under INV/EWF. [IER01–IER07](maintainers/TODO.md#invention-extensibility-review-regression-todos) are the requested deferred automated regression cases. Existing IPR/SR/AG cases remain valid; no suite was marked complete by these manual observations.
-
 
 ## Invention performance review
 
@@ -63,10 +70,10 @@ Manual runtime and synthetic stress execution on September 23, 2026 used Linux x
 
 The SQLite experiment inserted 20,000 or 50,000 completed invention rows with an 8,000-character candidate description plus eight unfinished jobs. The newest 100 history rows belonged to an abandoned timeline. Regular recovery timing excludes initial setup/index creation; a separate run measured index installation on existing history.
 
-| Observed operation | Before | After |
-| --- | --- | --- |
-| Recover eight unfinished jobs beside 20,000 completed rows | 324.23 ms; 201,981,952-byte sampled RSS increase | 1.79 ms; no sampled RSS increase |
-| Recover eight unfinished jobs beside 50,000 completed rows | 768.32 ms; 469,876,736-byte sampled RSS increase | 1.63 ms; no sampled RSS increase |
+| Observed operation                                                                       | Before                                                               | After                                                 |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
+| Recover eight unfinished jobs beside 20,000 completed rows                               | 324.23 ms; 201,981,952-byte sampled RSS increase                     | 1.79 ms; no sampled RSS increase                      |
+| Recover eight unfinished jobs beside 50,000 completed rows                               | 768.32 ms; 469,876,736-byte sampled RSS increase                     | 1.63 ms; no sampled RSS increase                      |
 | Obtain three current-timeline rows with 50,000 historical rows (median of 30 retrievals) | 0.411 ms; incorrectly returned zero after limiting abandoned history | 0.054 ms; returned the intended three current records |
 
 No sampled RSS increase is not a claim of zero allocation. The new partial index avoids parsing retained completed job payloads; it does not remove all attempts-table recovery cost. Building new indexes over the 50,000-row existing database took 629.26 ms once. SQLite's query plan used `jobs_inventor_timeline` for scope and row-value keyset bounds. Another run recovered 137 pending jobs across several batches in 28.55 ms, left no unfinished rows and retained a synthetic 12,000-micro-USD reserved attempt as uncertain with the same exposure. Corrupt data, crash mid-recovery, large uncertain-attempt populations and PostgreSQL plans remain TODO.
@@ -85,19 +92,18 @@ A real `createGameServer` instance with its normal simulation timer accepted a c
 
 The existing native stress runner executed `scripts/performance/scenarios/gems.json` and `mixed.json`. Headroom compares measured throughput to the requested 3× rate of 180 native simulation steps per real second; below 1 fails that workload's requested rate.
 
-| Scenario | Measured loop | Largest step | 3× headroom |
-| --- | --- | --- | --- |
-| 500 synthetic ground objects, 514 total entities, 180 steps, no warmup — baseline | 2,128.14 ms | 884.66 ms | 0.470 |
-| Same scenario — review | 2,132.14 ms | 902.98 ms | 0.469 |
-| 10 added people, 20 animals, 300 resources; 344 total entities, 180 steps, no warmup | 10,571.16 ms | 9,754.86 ms | 0.095 |
-| Same mixed setup with 30 warmup steps excluded, then 180 measured steps | 1,181.39 ms | 82.84 ms | 0.846 |
+| Scenario                                                                             | Measured loop | Largest step | 3× headroom |
+| ------------------------------------------------------------------------------------ | ------------- | ------------ | ----------- |
+| 500 synthetic ground objects, 514 total entities, 180 steps, no warmup — baseline    | 2,128.14 ms   | 884.66 ms    | 0.470       |
+| Same scenario — review                                                               | 2,132.14 ms   | 902.98 ms    | 0.469       |
+| 10 added people, 20 animals, 300 resources; 344 total entities, 180 steps, no warmup | 10,571.16 ms  | 9,754.86 ms  | 0.095       |
+| Same mixed setup with 30 warmup steps excluded, then 180 measured steps              | 1,181.39 ms   | 82.84 ms     | 0.846       |
 
 The two ground-object runs produced the same final-world SHA-256 digest. No native-domain speedup is claimed from server query changes. The mixed cold run retained 3,254 events and 31,756 awareness entries; first-exposure work dominates that observation. Warmup improves the measured steady portion but must not hide the cold stall, and even the warmed sample does not sustain 3×. These observations provide evidence for existing [PF09](maintainers/performance.md#pf09--population-work-follows-relevance), spatial/EPR and SR07 work; the review does not silently drop events, alter witnesses or change simulation time to meet a target. There is no browser/GPU, persistence, provider or long-running-world capacity evidence in these native measurements.
 
 ### Unimplemented and unqualified scope
 
 [INV](maintainers/inventions-and-world-evolution.md) retains coordinated art/revisions, dependency verification, mechanic freezes and full episode/runtime budgets as future work. Per-request cold indexing limits, reliable provider-derived exposure bounds, long-month usage/attempt-query scaling and cross-world payer enforcement remain explicit gaps. The budget for a result already funded must not be reserved again merely to publish it; this is a clarified target contract, not a delivered generated-art feature. All requested regression tests are in [TODO](maintainers/TODO.md#invention-performance-review-regression-todos). Existing behavior-specific and spatial tests are not obsolete merely because this manual exercise passed.
-
 
 ## Macrofold worker reuse
 
