@@ -298,6 +298,7 @@ export interface GameRepository extends WorldStore {
     amountUsd: number,
     ceilingUsd: number,
     actorId?: string,
+    reuse?: 'compute-allocation',
   ): Promise<boolean>;
   settle(id: string, receipt: AiReceipt): Promise<void>;
   recoverInterruptedWork(): Promise<void>;
@@ -908,6 +909,7 @@ export class SqliteStore implements GameRepository {
     amountUsd: number,
     ceilingUsd: number,
     actorId = 'world-agent',
+    reuse?: 'compute-allocation',
   ): Promise<boolean> {
     await this.ready;
 
@@ -923,8 +925,22 @@ export class SqliteStore implements GameRepository {
     const monthStart = new Date();
     const start = Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth(), 1);
     return this.db.transaction(async () => {
-      if (await this.db.prepare('SELECT id FROM attempts WHERE id = ?').get(id))
-        throw new Error('Attempt already admitted; do not dispatch it again.');
+      const existing = await this.db
+        .prepare('SELECT provider,reserved FROM attempts WHERE id = ?')
+        .get(id);
+      // Resume the same allocation after a crash, never authorize another model dispatch.
+      // docs/architecture.md#macrofold-worker-ownership
+      if (
+        existing &&
+        reuse === 'compute-allocation' &&
+        provider === 'macrofold' &&
+        id.startsWith('macrofold-worker:') &&
+        id.endsWith(':compute') &&
+        existing['provider'] === provider &&
+        Number(existing['reserved']) === micro(amountUsd)
+      )
+        return true;
+      if (existing) throw new Error('Attempt already admitted; do not dispatch it again.');
       const row = await this.db
         .prepare(
           "SELECT COALESCE(SUM(spent + CASE WHEN status = 'reserved' THEN reserved ELSE 0 END), 0) AS total FROM attempts a LEFT JOIN attempt_scopes s ON s.attempt_id=a.id WHERE a.created_at>=? AND (s.actor_id=? OR s.actor_id IS NULL)",

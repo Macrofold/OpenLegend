@@ -1,5 +1,11 @@
 # Maintainer TODO — cross-cutting work
 
+## Macrofold worker reuse — deferred validation
+
+- [ ] Cover one sandbox creation across repeated full calls, actor/reflection lanes sharing a worktree, restart and timeline rotation; separate worktrees must remain isolated. Verify run bodies retain the saved sandbox ID and fresh sessions do not reuse model history.
+- [ ] Cover concurrent creation, lost creation responses, stable retry key/body after configuration changes, persisted lane-ID adoption, one compute reservation, zero-rate settlement and unavailable workers without replacement. Run live acceptance once the configured Macrofold endpoint is available; no automated tests were written or run for this change.
+- [ ] Cover workspace creation recovery with changed actor names and missing original bodies; zero-rate paused-worker resume, repeated pause episodes, failed/ambiguous resume and refusal to renew paid compute implicitly. Cover process interruption after ledger reservation/settlement but before the allocation marker, preserving the original amount/account scope and rejecting ordinary model-call replay.
+
 ## Invention foundation — deferred automated coverage
 
 - [ ] Cover supplied proposal normalization/fidelity, unknown materials, duplicate receipts, actor/world/timeline fencing and no-provider admission.

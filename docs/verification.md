@@ -2,6 +2,12 @@
 
 This file records current reproducible evidence and acceptance gaps. Fixture evidence does not establish live model quality, provider cost, hosted security, capacity or balance.
 
+## Macrofold worker reuse
+
+Manual local recovery execution used a disposable SQLite database: reserve a $0.01 synthetic allocation, close/reopen before writing its operational marker, recover through the real backend allocation method, then repeat recovery. The ledger retained one $0.01 accounting entry; changing the amount or using ordinary duplicate reservation was rejected. This was local accounting evidence, not provider spend. Production build passed. The Macrofold endpoint remained unreachable, so workspace retry and zero-rate worker resume have no new live acceptance evidence. No automated tests were written or run.
+
+The worker-ownership change passed the production TypeScript/client build. A manual invocation started the real backend against disposable SQLite state with a $0.01 compute allocation and $0.02 total cap, but workspace provisioning could not connect to the configured `http://localhost:3210` endpoint. A separate connection check also failed. No sandbox was created, no model request was dispatched, and live reuse across runs/restart was not verified. Automated tests were neither written nor run; remaining coverage is tracked in [TODO](maintainers/TODO.md#macrofold-worker-reuse--deferred-validation).
+
 ## Foundation review verification
 
 The September 22 review corrected the native response envelope passed to action interpretation when NPC invention is enabled, lost withdrawal handles in relevance fallback, missing generated gathering-target knowledge checks, and premature removal of child dispatch from tracked work. These boundaries have deferred automated coverage in [TODO](maintainers/TODO.md#invention-foundation--deferred-automated-coverage).

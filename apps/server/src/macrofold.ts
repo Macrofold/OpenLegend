@@ -48,9 +48,10 @@ const terminal = new Set(['succeeded', 'failed', 'cancelled', 'timed_out']);
 class MacrofoldExecutionError extends Error {}
 
 /** Backend-owned remote identities and spending. Native agents never receive world tools.
- * Macrofold allocates workspace context; each lane retains its own compute.
+ * Macrofold allocates workspace context; owned worktrees retain their compute across timelines.
  * Conversations retain sessions, while bounded typed calls use fresh history.
- * Mutations are journaled before dispatch. Ambiguous admission is blocked, never replayed.
+ * Mutations are journaled before dispatch. Ambiguous runs stay blocked; worker creation
+ * can recover through its original idempotency key without admitting another worker.
  */
 export class MacrofoldBackend implements AiClient {
   private api: MacrofoldTransport;
@@ -59,6 +60,7 @@ export class MacrofoldBackend implements AiClient {
   readonly provisioner: MacrofoldProvisioner;
   private busy = new Set<string>();
   private messagesInFlight = new Set<string>();
+  private sandboxCreations = new Map<string, Promise<string>>();
   private controllers = new Map<string, AbortController>();
   constructor(
     private service: WorldService,
@@ -161,6 +163,7 @@ export class MacrofoldBackend implements AiClient {
     }
   }
   private async waitSandbox(id: string, signal: AbortSignal): Promise<void> {
+    let resumed = false;
     for (;;) {
       signal.throwIfAborted();
       const sandbox = object(
@@ -175,9 +178,25 @@ export class MacrofoldBackend implements AiClient {
         if (sandbox['active_run_id']) throw new Error('This Macrofold sandbox is busy.');
         return;
       }
+      if (
+        sandbox['status'] === 'paused' &&
+        sandbox['rate_micro_usd_per_minute'] === '0' &&
+        !resumed
+      ) {
+        // Recover the same zero-rate worker, not a new allocation. Hosted renewal
+        // needs separate spending admission. docs/architecture.md#macrofold-worker-ownership
+        await this.api.request(
+          `/v1/sandboxes/${encodeURIComponent(id)}/resume`,
+          {},
+          digest({ sandbox: id, pausedAt: string(sandbox['updated_at']), operation: 'resume' }),
+          signal,
+        );
+        resumed = true;
+        continue;
+      }
       if (sandbox['status'] !== 'creating')
         throw new Error(
-          `Macrofold sandbox is ${String(sandbox['status'])}; explicit lifecycle recovery is required.`,
+          `Macrofold sandbox ${id} is ${String(sandbox['status'])}; paid renewal or replacement requires explicit lifecycle recovery.`,
         );
       await delay(500, undefined, { signal });
     }
@@ -292,21 +311,32 @@ export class MacrofoldBackend implements AiClient {
       // Missing reporting permission or delayed usage leaves the reserve intact.
     }
   }
-  private async reserveCompute(name: string, background = false): Promise<void> {
+  private workerKey(worktreeId: string): string {
+    // Compute ownership is operational state, not conversation history or rewindable game state.
+    // docs/architecture.md#macrofold-worker-ownership
+    return `macrofold-worker:${digest(this.service.config.macrofoldUrl)}:${this.service.world.id}:${worktreeId}`;
+  }
+  private async reserveCompute(
+    name: string,
+    worktreeId: string,
+    allocationUsd: number,
+    background = false,
+  ): Promise<void> {
     const config = this.service.config;
-    if (await this.load(`compute:${name}`)) return;
-    if (!config.macrofoldComputeUsd)
+    const id = `${this.workerKey(worktreeId)}:compute`;
+    if (await this.service.store.getIntegration(id)) return;
+    if (!allocationUsd)
       throw new Error(
         'Set MACROFOLD_COMPUTE_MAX_USD to a nonzero compute allocation before starting a warm worker.',
       );
-    const id = this.key(`compute:${name}`);
     if (
       !(await this.service.store.reserve(
         id,
         'macrofold',
-        config.macrofoldComputeUsd,
+        allocationUsd,
         Math.max(0, config.budgetUsd - (background ? interactiveAllowance(config) : 0)),
         name.startsWith('reflection-v2:') ? name.slice('reflection-v2:'.length) : 'world-agent',
+        'compute-allocation',
       ))
     )
       throw new Error('AI spending cap cannot cover the compute allocation.');
@@ -316,7 +346,57 @@ export class MacrofoldBackend implements AiClient {
     receipt.dispatched = true;
     receipt.completionUncertain = true;
     await this.service.store.settle(id, receipt);
-    await this.save(`compute:${name}`, true);
+    await this.service.store.putIntegration(id, true);
+  }
+  private async ensureSandbox(
+    worktreeId: string,
+    name: string,
+    background: boolean,
+    signal: AbortSignal,
+    recordedSandbox?: string,
+  ): Promise<string> {
+    const pending = this.sandboxCreations.get(worktreeId);
+    if (pending) return pending;
+    const creation = (async () => {
+      const key = this.workerKey(worktreeId);
+      const previous = (await this.service.store.getIntegration(key)) as
+        | { body: Record<string, unknown>; sandbox?: string }
+        | undefined;
+      if (previous?.sandbox) return previous.sandbox;
+      const body = previous?.body ?? {
+        worktree_id: worktreeId,
+        long_running: true,
+        max_cost_micro_usd: String(Math.ceil(this.service.config.macrofoldComputeUsd * 1e6)),
+      };
+      if (!previous && recordedSandbox) {
+        // This exact ID was already saved by this application lane; no container discovery.
+        await this.service.store.putIntegration(key, { body, sandbox: recordedSandbox });
+        return recordedSandbox;
+      }
+      // Retain both key and exact body on transport failure. An explicit later call can
+      // recover the same creation; never retry a model run or allocate a replacement here.
+      await this.service.store.putIntegration(key, { body });
+      await this.reserveCompute(
+        name,
+        worktreeId,
+        Number(body['max_cost_micro_usd']) / 1e6,
+        background,
+      );
+      signal.throwIfAborted();
+      const response = object(await this.api.request('/v1/sandboxes', body, digest(key), signal));
+      const sandbox = string(response['id']);
+      await this.service.store.putIntegration(key, { body, sandbox });
+      if (response['rate_micro_usd_per_minute'] === '0') {
+        const computeId = `${key}:compute`;
+        const receipt = this.receipt(computeId, 'macrofold', 'long-running-compute', {});
+        receipt.dispatched = true;
+        receipt.estimatedCostUsd = 0;
+        await this.service.store.settle(computeId, receipt);
+      }
+      return sandbox;
+    })().finally(() => this.sandboxCreations.delete(worktreeId));
+    this.sandboxCreations.set(worktreeId, creation);
+    return creation;
   }
   private async native(
     name: string,
@@ -393,28 +473,15 @@ export class MacrofoldBackend implements AiClient {
         lane.worktree = resource.worktreeId;
         await save();
       }
-      if (!lane.sandbox) {
-        await this.reserveCompute(name, reflection);
-        const sandbox = await this.mutation(
-          `sandbox:${name}`,
-          '/v1/sandboxes',
-          {
-            worktree_id: lane.worktree,
-            long_running: true,
-            max_cost_micro_usd: String(Math.ceil(config.macrofoldComputeUsd * 1e6)),
-          },
-          signal,
-        );
-        lane.sandbox = string(sandbox['id']);
-        // Local Docker reports an authoritative zero compute rate. Release only
-        // that allocation; hosted/unknown compute stays conservatively reserved.
-        if (sandbox['rate_micro_usd_per_minute'] === '0') {
-          const computeId = this.key(`compute:${name}`);
-          const computeReceipt = this.receipt(computeId, 'macrofold', 'long-running-compute', {});
-          computeReceipt.dispatched = true;
-          computeReceipt.estimatedCostUsd = 0;
-          await this.service.store.settle(computeId, computeReceipt);
-        }
+      const sandbox = await this.ensureSandbox(
+        lane.worktree,
+        name,
+        reflection,
+        signal,
+        lane.sandbox,
+      );
+      if (lane.sandbox !== sandbox) {
+        lane.sandbox = sandbox;
         await save();
       }
       await this.waitSandbox(lane.sandbox, signal);

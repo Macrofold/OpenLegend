@@ -40,26 +40,29 @@ export class MacrofoldProvisioner {
   private async create(actorId: string, name: string): Promise<ActorWorkspace> {
     const key = `macrofold-actor-v2:${digest(this.config.macrofoldUrl)}:${this.worldId}:${actorId}`;
     const state = (await this.store.getIntegration(key)) as
-      | { operationId: string; pending?: boolean; attempt?: number; result?: ActorWorkspace }
+      | {
+          operationId: string;
+          pending?: boolean;
+          body?: Record<string, unknown>;
+          result?: ActorWorkspace;
+        }
       | undefined;
     if (state?.result) return state.result;
-    if (state?.pending)
-      throw new Error('Workspace creation admission uncertain; reconcile before creating another.');
-    const attempt = state ? (state.attempt ?? 0) + 1 : 0;
-    const operationId = digest({ key, version: 1, ...(attempt ? { attempt } : {}) });
-    await this.store.putIntegration(key, { operationId, attempt, pending: true });
-    try {
-      const created = object(
-        await this.api.request(
-          '/v1/workspaces',
-          {
-            name: `Open Legend · ${name} · ${digest(this.worldId).slice(0, 8)}`.slice(0, 120),
-            persistence: 'persistent',
-            permissions: COGNITION_PERMISSIONS,
-          },
-          operationId,
-        ),
+    if (state?.pending && !state.body)
+      throw new Error(
+        'Workspace creation has no saved request body; reconcile its original operation before retrying.',
       );
+    const operationId = state?.operationId ?? digest({ key, version: 1 });
+    const body = state?.body ?? {
+      name: `Open Legend · ${name} · ${digest(this.worldId).slice(0, 8)}`.slice(0, 120),
+      persistence: 'persistent',
+      permissions: COGNITION_PERMISSIONS,
+    };
+    // Creation recovery repeats the exact provider identity/body; renamed actors cannot
+    // accidentally change a pending request. docs/architecture.md#macrofold-worker-ownership
+    await this.store.putIntegration(key, { operationId, body, pending: true });
+    try {
+      const created = object(await this.api.request('/v1/workspaces', body, operationId));
       const result = {
         workspaceId: string(created['id']),
         worktreeId: string(created['default_worktree_id']),
@@ -70,7 +73,7 @@ export class MacrofoldProvisioner {
       if (error instanceof MacrofoldHttpError && error.admissionRejected)
         await this.store.putIntegration(key, {
           operationId,
-          attempt,
+          body,
           pending: false,
           status: error.status,
           code: error.code,
