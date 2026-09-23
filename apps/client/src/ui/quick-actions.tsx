@@ -1,3 +1,4 @@
+import { distance3D } from '@open-legend/spatial';
 import { useEffect, useRef, useState } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import type { ActionOption, GameView } from '@open-legend/protocol';
@@ -14,19 +15,12 @@ export function gatherQuickActions(view: GameView, pins: string[]): ActionOption
     const sources = resources
       .filter(
         (e) =>
-          e.subtype === type &&
-          Math.hypot(
-            e.position.x - view.player.position.x,
-            e.position.z - view.player.position.z,
-          ) <= view.vision.radius,
+          e.subtype === type && distance3D(e.position, view.player.position) <= view.vision.radius,
       )
       .sort(
         (a, b) =>
-          Math.hypot(a.position.x - view.player.position.x, a.position.z - view.player.position.z) -
-            Math.hypot(
-              b.position.x - view.player.position.x,
-              b.position.z - view.player.position.z,
-            ) || a.id.localeCompare(b.id),
+          distance3D(a.position, view.player.position) -
+            distance3D(b.position, view.player.position) || a.id.localeCompare(b.id),
       );
     const stocked = sources.filter((e) => (e.quantity ?? 0) > 0);
     const target =

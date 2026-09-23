@@ -1,5 +1,9 @@
 # Visual direction — grounded pixel art in a spatial world
 
+## Camera freedom and physical shape
+
+The target now supports [orbit, pitch and projection](../../docs/spatial-world.md#tactical-camera-and-perspective), with optional sprite-friendly locks rather than a fixed-camera engine restriction. Preserve the painted/procedural style: simple physical terrain/ramp/deck geometry can carry painted textures, while people and creatures may remain sprites. A backdrop’s view validity must be explicit; painted art cannot expose a correct unseen backside. Existing asynchronous art/provenance rules remain unchanged.
+
 Status: **accepted visual direction and proposed production brief**, updated September 19, 2026 (America/New_York). Requirements: F25, F40–F41. The user wants beautiful browser-based pixel art, 2.5D with 3D structure, a modern feel and restrained cartoon styling. PlayCanvas is the accepted engine direction. A procedural-art prototype now exists; the richer production family and runtime AI asset generation below remain unimplemented. [User follow-ups V01–V04](../00-source/design-followups.md), [D02/D24](../05-project/open-decisions.md)
 
 The [UI design-system handoff brief](../../docs/ui-design-brief.md) records the dark green adventure interface direction, proposed React Aria stack, theme boundaries and current interaction requirements for external design work. Technology adoption remains proposed.

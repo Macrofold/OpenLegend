@@ -1,5 +1,9 @@
 # Extending Open Legend
 
+## Spatial extensions
+
+Use the [spatial contract](../archive/07-technical-architecture/spatial-world-runtime.md) and dependency-free `packages/spatial` values. Write entity position through the native spatial assignment path after action checks; do not create a second altitude field. Route requests name a semantic support, not a PlayCanvas node or library polygon. New reach/sense code must distinguish 3D separation from intentional horizontal geometry. New providers preserve native time, knowledge scope and saved plain routes. Current finite surfaces are not a universal physics interpreter.
+
 Use the smallest responsible module. Favor an explicit finite contract and meaningful scenarios over a framework that anticipates every future game.
 
 Start with [Engine and world boundaries](engine-and-world-boundaries.md#5-a-repeatable-boundary-decision). Determine whether the change is a supported configuration/composition, a new reviewed native implementation behind an existing interface, or a new host capability. World-specific names should not automatically require changes across every transport, context, UI and scheduler layer. The [world-module runtime](../archive/07-technical-architecture/world-module-runtime.md) defines the target shared boundary, and [EWF](maintainers/extensible-world-foundation.md) tracks its implementation. Until a particular interface is delivered, the native extension steps below describe the current code path; do not pretend a generic API exists.

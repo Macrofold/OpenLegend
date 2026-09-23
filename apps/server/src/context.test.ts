@@ -276,8 +276,8 @@ describe('actor-scoped native decision candidates', () => {
     const hunt = select(service, 'hunt', (action) => action.command?.targetId === 'hare-1');
     expect(hunt.command?.itemId).toBe(toolId);
     expect(service.world.items[hunt.command!.ammunitionId!]!.ownerId).toBe('ada');
-    service.world.entities['hare-2']!.position = { x: 27, z: 23 };
-    service.world.entities.ada!.position = { x: 1, z: 1 }; // Beyond the broader 28-unit sight field.
+    service.world.entities['hare-2']!.position = { y: 0, x: 27, z: 23 };
+    service.world.entities.ada!.position = { y: 0, x: 1, z: 1 }; // Beyond the broader 28-unit sight field.
     expect(npcCandidates(service).some((action) => action.command?.targetId === 'hare-2')).toBe(
       false,
     );
@@ -294,9 +294,10 @@ describe('actor-scoped native decision candidates', () => {
     const service = setup();
     service.world.entities['test-remains'] = {
       id: 'test-remains',
+      spatial: { bodyProfileId: 'object', heading: 0, supportSurfaceId: 'terrain' },
       name: 'Hare remains',
       kind: 'remains',
-      position: { x: 14, z: 12 },
+      position: { y: 0, x: 14, z: 12 },
       remains: {
         sourceId: 'test-remains',
         harvested: false,
@@ -331,17 +332,18 @@ describe('actor-scoped native decision candidates', () => {
     service.world.entities.campfire!.heat!.fuelSeconds = 1;
     expect(npcCandidates(service).some((action) => action.command?.type === 'cook')).toBe(false);
     service.world.entities.campfire!.heat!.fuelSeconds = 10000;
-    service.world.entities.campfire!.position = { x: 27, z: 23 };
-    service.world.entities.ada!.position = { x: 1, z: 1 };
+    service.world.entities.campfire!.position = { y: 0, x: 27, z: 23 };
+    service.world.entities.ada!.position = { y: 0, x: 1, z: 1 };
     expect(npcCandidates(service).some((action) => action.command?.type === 'cook')).toBe(false);
   });
   it('does not offer unreachable visible resources or actions for paused/dead actors', () => {
     const service = setup();
     service.world.entities['isolated-berries'] = {
       id: 'isolated-berries',
+      spatial: { bodyProfileId: 'object', heading: 0, supportSurfaceId: 'terrain' },
       kind: 'resource',
       name: 'Island berries',
-      position: { x: 18, z: 13 },
+      position: { y: 0, x: 18, z: 13 },
       resource: { definitionId: 'berries', quantity: 2, workSeconds: 30 },
     };
     for (const [x, z] of [

@@ -1,5 +1,9 @@
 # Context assembly and AI routing
 
+## Height-aware context
+
+The [spatial runtime](spatial-world-runtime.md) owns support/point references and native geometry. Context consumes observer-permitted spatial facts without raw navmeshes, hidden topology or an NPC’s private future route. A supplied known action selected by Jev reaches the same spatial admission as any other action; pathfinding itself is not semantic escalation.
+
 > **NPC cognition update:** [Memory architecture](../../docs/memory-architecture.md) owns the accepted redesign: Jev attention/escalation, default level-2 speech, separate low/high complex reasoning, and background level-5 workspace reflection. Ordinary responses do not carry mind patches. The richer manifests, coverage and dependency envelopes below belong to server contracts, not serialized NPC prompt text. Routine experience summarization has its own small-model route; subjective inner-world edits belong to reflection. [CR01–CR12](../../docs/maintainers/cognition-redesign.md) track implementation; the broader audience/authority contract remains in force.
 
 This is the broader target contract between Open Legend's simulation, memory, declaration registry and AI execution adapters. The executable prototype's bounded context retrieval and Jev/LLM routes are described in [implemented architecture](../../docs/architecture.md); richer perception and distributed infrastructure remain proposed, with benchmarks and broad acceptance open. Read with the [declaration specification](declarations-and-evolution.md) and [Macrofold brief](macrofold-implementation-brief.md).

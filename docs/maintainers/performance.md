@@ -1,5 +1,9 @@
 # Performance implementation tracker
 
+## Spatial measurements
+
+Cross-link [SW06/SW14](spatial-world.md) for spatial readiness and measurements rather than adding another worker framework here. Qualify larger actor/geometry workloads before adding a BVH, navmesh worker, tiled rebuild or crowd solver. Current graph/shape caches and camera-only updates must retain zero provider cost.
+
 This is the sole tracker for runtime performance optimization. [Runtime performance design](../performance.md) owns the approach; [Architecture](../architecture.md#performance-critical-path) owns implementation facts and [Verification](../verification.md#performance-investigation) owns evidence. Checked items identify delivered implementation or explicitly named runtime observations. Unchecked acceptance and regression items remain open; implementation is not scale qualification.
 
 ## Delivery status

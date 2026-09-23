@@ -116,13 +116,14 @@ export function populateScenario(input: WorldState | undefined, scenario: Scenar
   let world = input ?? createWorld(scenario.seed);
   world.paused = false;
   const anchor = Object.values(world.entities).find((e) => e.kind === 'player')?.position ?? {
+    y: 0,
     x: 0,
     z: 0,
   };
   const positions: Position[] = [];
   for (let z = 0; z < world.map.height; z++)
     for (let x = 0; x < world.map.width; x++)
-      if (isWalkable(world, { x, z })) positions.push({ x, z });
+      if (isWalkable(world, { y: 0, x, z })) positions.push({ y: 0, x, z });
   if (!positions.length) throw new Error('No walkable fixture positions.');
   if (scenario.layout === 'crowded')
     positions.sort(
@@ -144,7 +145,7 @@ export function populateScenario(input: WorldState | undefined, scenario: Scenar
     while (cursor < positions.length) {
       const result = spawnWorldEntity(world, {
         type: index < scenario.people ? 'person' : 'deer',
-        position: positions[cursor++]!,
+        position: { ...positions[cursor++]!, surfaceId: 'terrain' },
         ...(index < scenario.people
           ? {
               person: {
@@ -187,6 +188,7 @@ export function populateScenario(input: WorldState | undefined, scenario: Scenar
         id,
         name: group.definition.name,
         kind: 'resource',
+        spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
         position: { ...position },
         resource: {
           definitionId: group.definition.id,

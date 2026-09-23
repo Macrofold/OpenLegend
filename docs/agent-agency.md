@@ -1,5 +1,9 @@
 # Agent agency: thoughts, intentions, plans and open-ended action
 
+## Spatial movement dependency
+
+Plans reference the [spatial destination and native route contract](../archive/07-technical-architecture/spatial-world-runtime.md). A blocked route, inaccessible stance or flying target can change the current means without deleting a goal. Native traversal and level-1 selected actions share fresh spatial admission; navigation/cache preparation is not an invented action or a mandatory LLM decision. [SW05–SW08](maintainers/spatial-world.md) supplies ground integration; flight-specific cases add SW12 only.
+
 **Specification status:** target behavior, not a statement that the runtime implements it. Delivery and acceptance belong to the [agency tracker](maintainers/agent-agency.md). The [runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md) owns serialization, admission, scheduling and execution details.
 
 Agency is the standard operational-controller contract, not a requirement that every organism maintain verbal thoughts or goals. [Engine/world boundaries](engine-and-world-boundaries.md#8-minds-agency-and-behavior) allows other compatible controllers while preserving native authority and the existing player/actor permission boundary.

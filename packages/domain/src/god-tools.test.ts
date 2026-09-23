@@ -6,7 +6,7 @@ describe('god world editing (native fixtures)', () => {
     const original = createWorld(31);
     const result = spawnWorldEntity(original, {
       type: 'person',
-      position: { x: 24, z: 5 },
+      position: { y: 0, surfaceId: 'terrain', x: 24, z: 5 },
       person: {
         name: 'Mira',
         personality: 'Warm, direct, and difficult to discourage.',
@@ -34,7 +34,7 @@ describe('god world editing (native fixtures)', () => {
   it('assigns three saved random traits when omitted and revives only dead characters', () => {
     const spawned = spawnWorldEntity(createWorld(32), {
       type: 'person',
-      position: { x: 24, z: 5 },
+      position: { y: 0, surfaceId: 'terrain', x: 24, z: 5 },
       person: {
         name: 'Rowan',
         personality: '',
@@ -60,13 +60,16 @@ describe('god world editing (native fixtures)', () => {
 
   it('rejects blocked, occupied and unsupported spawn data without changing the world', () => {
     const world = createWorld(33);
-    expect(spawnWorldEntity(world, { type: 'hare', position: { x: 0, z: 0 } }).outcome.code).toBe(
-      'blocked',
-    );
+    expect(
+      spawnWorldEntity(world, {
+        type: 'hare',
+        position: { y: 0, surfaceId: 'terrain', x: 0, z: 0 },
+      }).outcome.code,
+    ).toBe('blocked');
     expect(
       spawnWorldEntity(world, {
         type: 'river-stones',
-        position: { ...world.entities.player!.position },
+        position: { ...world.entities.player!.position, surfaceId: 'terrain' },
       }).outcome.code,
     ).toBe('occupied');
     expect(JSON.stringify(world)).toBe(JSON.stringify(createWorld(33)));

@@ -79,7 +79,15 @@ const presence = z
 const actionContext = z
   .object({
     targetId: requestIdSchema.optional(),
-    position: z.object({ x: z.number().finite(), z: z.number().finite() }).strict().optional(),
+    position: z
+      .object({
+        x: z.number().finite(),
+        y: z.number().finite(),
+        z: z.number().finite(),
+        surfaceId: requestIdSchema,
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 const preferences = z
@@ -90,7 +98,14 @@ const preferences = z
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, 'Choose a preference to update.');
-const position = z.object({ x: z.number().finite(), z: z.number().finite() }).strict();
+const position = z
+  .object({
+    x: z.number().finite(),
+    y: z.number().finite(),
+    z: z.number().finite(),
+    surfaceId: requestIdSchema,
+  })
+  .strict();
 const godSpawnType = z.enum([
   'banked-campfire',
   'berry-bush',

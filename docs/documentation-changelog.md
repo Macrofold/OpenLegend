@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## Spatial-world integration and first native provider
+
+Added spatial behavior/runtime/tracker/research owners and retained the original pinned source review as historical research. Reconciled sensory, agency, art, camera, save, storage and engine/world ownership without resetting existing task IDs. Replaced the flat-world target with XYZ/support-aware simulation and mixed representation. The initial implementation chooses bounded native surface A\*/convex queries over unqualified multi-library WASM integration; researched alternatives and broader target gates remain explicit. Current behavior and actual validation are recorded in Architecture/Verification, not inferred from documentation integration.
+
 ## 2026-09-22 — Shared invention and plan-output slice
 
 - Recorded the bounded supported-family world-agent operation and shared durable pipeline, preserving broader INV requirements and their unchecked state. Ordinary inference is the explicit execution choice for this bounded operation; full discussion/cognition remains separate.

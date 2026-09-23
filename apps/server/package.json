@@ -9,7 +9,8 @@
     "@open-legend/domain": "workspace:*",
     "@open-legend/protocol": "workspace:*",
     "pg": "8.16.3",
-    "zod": "4.6.5"
+    "zod": "4.6.5",
+    "@open-legend/spatial": "workspace:*"
   },
   "devDependencies": {
     "@types/pg": "8.15.5"

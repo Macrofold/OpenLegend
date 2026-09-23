@@ -471,7 +471,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     h.director.submit('chat', 'far-reply', 'Hello Ada.');
     await started.promise;
     h.change((world) => {
-      world.entities['player']!.position = { x: 26, z: 22 };
+      world.entities['player']!.position = { y: 0, x: 26, z: 22 };
     });
     wait.resolve(value(h.calls.generations[0]!.requestId, 'openai', speechFixture('Hello there.')));
     await h.director.idle();

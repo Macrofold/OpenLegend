@@ -1,5 +1,9 @@
 # Agent agency implementation tracker
 
+## Spatial dependencies
+
+[SW05–SW08](spatial-world.md) supplies supported ground route execution, results and senses; add SW12 only for flight-specific scenarios. Existing AG delivery can use flat schema-9 fixtures independently of the full camera/flight roadmap. Do not reset the operational goal/plan implementation or CR02 Jev-only work.
+
 This is the focused tracker for optional multi-operation decisions, actor-owned operational goals, short native plans and their integration with existing cognition and invention. Checked items have local implementation/runtime evidence; unchecked items retain their full acceptance requirements. Automated and live-provider qualification remain separate gates.
 
 Behavior belongs to [Agent agency](../agent-agency.md); the operational contract belongs to [Agent agency runtime](../../archive/07-technical-architecture/agent-agency-runtime.md). Existing [CR/CH](cognition-redesign.md), [NC](narration-and-conversations.md), [INV](inventions-and-world-evolution.md), [performance](performance.md) and [save/load](save-and-load.md) trackers retain their own work. Their IDs and valid acceptance requirements must not be silently replaced by AG tasks.

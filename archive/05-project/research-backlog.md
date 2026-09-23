@@ -1,5 +1,9 @@
 # Research backlog
 
+## Spatial empirical work
+
+Use [the research archive](../02-research/three-dimensional-worlds-and-navigation.md) and [SW qualification](../../docs/maintainers/spatial-world.md) for measured questions: layered-grid versus navmesh clearance/scale, sprite readability during orbit/pitch, coarse transmission versus audible unidentified contacts, air-corridor coverage and cold/warm native cost. The current native stack is a reversible small-world choice, not a benchmark verdict against researched libraries. Full actor crowd/geometry performance and viewport policy qualification remain open; implementation acceptance stays only in SW.
+
 This file contains only active empirical questions whose answers could change a current decision or design. Current runtime evidence belongs in [Verification](../../docs/verification.md); completed research conclusions belong in their canonical design owner. Priorities: P0 blocks initial shape, P1 blocks an associated feature and P2 is exploratory.
 
 The [engine perception and event research](../02-research/engine-perception-and-event-architectures.md) completes the external-document review, not runtime qualification or adoption. The remaining local question is whether scoped intake removes the identified scans while preserving privacy, ordering and continuation; [EPR00](../../docs/maintainers/events-perception-and-reactions.md#epr00--baseline-invariants-and-task-ownership) and [EPR09](../../docs/maintainers/events-perception-and-reactions.md#epr09--differential-and-performance-acceptance) own the baseline and detailed acceptance matrix.

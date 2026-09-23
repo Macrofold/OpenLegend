@@ -14,7 +14,10 @@ import type {
 import { applyGamePatch, getState, post, setWorldPaused, startPresence } from './api';
 import { aiSetupReason } from './ai-readiness';
 import { playerEntity } from './entity-view';
-import { WildernessScene } from './scene';
+import { createWorldRenderer } from './scene';
+import type { WorldRenderer } from './world-renderer';
+import { CameraControls } from './ui/camera-controls';
+import type { CameraState } from './world-camera';
 import {
   Button,
   Condition,
@@ -85,6 +88,9 @@ function App() {
     [error, setError] = useState(''),
     [sceneError, setSceneError] = useState(''),
     [notice, setNotice] = useState('');
+  const [cameraView, setCameraView] = useState<
+    Pick<CameraState, 'projection' | 'levelId' | 'rotationLocked'>
+  >({ projection: 'orthographic', levelId: null, rotationLocked: false });
   const [open, setOpen] = useState<PanelId[]>([]),
     [selected, setSelected] = useState<string | null>(null),
     [picker, setPicker] = useState<PickerContext | null>(null),
@@ -96,7 +102,12 @@ function App() {
     [inventionSeed, setInventionSeed] = useState<{ id: string; text: string } | null>(null),
     [mindId, setMindId] = useState<string | null>(null),
     [intelligenceSelection, setIntelligenceSelection] = useState<DiagnosticSelection | null>(null),
-    [personPosition, setPersonPosition] = useState<{ x: number; z: number } | null>(null),
+    [personPosition, setPersonPosition] = useState<{
+      x: number;
+      y: number;
+      z: number;
+      surfaceId: string;
+    } | null>(null),
     [godEditors, setGodEditors] = useState<GodEditorWindow[]>([]),
     [timeSettings, setTimeSettings] = useState(false),
     [pausePending, setPausePending] = useState(false),
@@ -115,16 +126,16 @@ function App() {
     (v): v is boolean => typeof v === 'boolean',
   );
   const canvas = useRef<HTMLCanvasElement>(null),
-    scene = useRef<WildernessScene | null>(null),
+    scene = useRef<WorldRenderer | null>(null),
     latest = useRef(view),
     currentPicker = useRef(picker),
     handlers = useRef({
       select: (
         _e: EntityView | null,
         _p?: { x: number; y: number },
-        _g?: { x: number; z: number },
+        _g?: { x: number; y: number; z: number; surfaceId: string },
       ) => {},
-      move: (_p: { x: number; z: number }) => {},
+      move: (_p: { x: number; y: number; z: number; surfaceId: string }) => {},
     }),
     retry = useRef(() => {});
   latest.current = view;
@@ -364,10 +375,27 @@ function App() {
     if (!view || !canvas.current || sceneError) return;
     try {
       if (!scene.current)
-        scene.current = new WildernessScene(canvas.current, {
+        scene.current = createWorldRenderer(canvas.current, {
           select: (...args) => handlers.current.select(...args),
           move: (p) => handlers.current.move(p),
-          hover: (entity, point) => setHover(entity ? { entity, point } : null),
+          hover: (entity, point) =>
+            setHover((previous) =>
+              previous?.entity === entity &&
+              previous.point.x === point.x &&
+              previous.point.y === point.y
+                ? previous
+                : entity
+                  ? { entity, point }
+                  : null,
+            ),
+          cameraChanged: ({ projection, levelId, rotationLocked }) =>
+            setCameraView((previous) =>
+              previous.projection === projection &&
+              previous.levelId === levelId &&
+              previous.rotationLocked === rotationLocked
+                ? previous
+                : { projection, levelId, rotationLocked },
+            ),
         });
       scene.current.setView(view);
     } catch (e) {
@@ -505,7 +533,10 @@ function App() {
       notify(String(reason));
     }
   }
-  async function spawn(type: string, position: { x: number; z: number }) {
+  async function spawn(
+    type: string,
+    position: { x: number; y: number; z: number; surfaceId: string },
+  ) {
     if (!connected) return notify('Reconnect to the world.');
     try {
       const result = await post('/api/god/spawn', { type, position });
@@ -515,7 +546,10 @@ function App() {
       notify(String(reason));
     }
   }
-  async function createPerson(position: { x: number; z: number }, draft: PersonDraft) {
+  async function createPerson(
+    position: { x: number; y: number; z: number; surfaceId: string },
+    draft: PersonDraft,
+  ) {
     if (!connected)
       return { ok: false, code: 'offline', message: 'Reconnect to the world.' } as const;
     const result = await post('/api/god/person', { position, ...draft });
@@ -954,23 +988,12 @@ function App() {
               talk={talk}
             />
             <Narrator item={view.narrator} />
-            <Toolbar className="ol-camera ol-card" aria-label="Camera">
-              <IconButton
-                icon="ui.plus"
-                label="Zoom in"
-                onPress={() => scene.current?.setZoom(-2)}
-              />
-              <IconButton
-                icon="ui.minus"
-                label="Zoom out"
-                onPress={() => scene.current?.setZoom(2)}
-              />
-              <IconButton
-                icon="ui.recenter"
-                label="Recenter camera"
-                onPress={() => scene.current?.center()}
-              />
-            </Toolbar>
+            <CameraControls
+              levels={view.map.spatial.levels}
+              state={cameraView}
+              send={(command) => scene.current?.cameraCommand(command)}
+              center={() => scene.current?.center()}
+            />
             {picker && (
               <ActionPicker
                 key={`${picker.point.x}:${picker.point.y}:${picker.entity?.id}`}

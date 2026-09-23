@@ -88,7 +88,11 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
       intent: { kind: 'unavailable' },
     });
   };
-  const position = selected?.position ?? context.position;
+  const position = selected
+    ? selected.spatial.supportSurfaceId
+      ? { ...selected.position, surfaceId: selected.spatial.supportSurfaceId }
+      : undefined
+    : context.position;
   if (position)
     add(
       'move',

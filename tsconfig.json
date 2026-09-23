@@ -16,7 +16,8 @@
     "paths": {
       "@open-legend/domain": ["./packages/domain/src/index.ts"],
       "@open-legend/ai": ["./packages/ai/src/index.ts"],
-      "@open-legend/protocol": ["./packages/protocol/src/index.ts"]
+      "@open-legend/protocol": ["./packages/protocol/src/index.ts"],
+      "@open-legend/spatial": ["./packages/spatial/src/index.ts"]
     },
     "jsx": "react-jsx"
   },

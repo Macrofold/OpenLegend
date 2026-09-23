@@ -153,11 +153,11 @@ describe('authoritative pure world', () => {
   });
   it('routes around grid obstacles and rejects out-of-bounds ground', () => {
     let world = createWorld();
-    const destination = { x: 20, z: 7 };
-    const path = findPath(world, { x: 15, z: 7 }, destination)!;
+    const destination = { y: 0, x: 20, z: 7 };
+    const path = findPath(world, { y: 0, x: 15, z: 7 }, destination)!;
     expect(path.length).toBeGreaterThan(5);
     expect(path.every((point) => isWalkable(world, point))).toBe(true);
-    expect(isWalkable(world, { x: -0.2, z: 12 })).toBe(false);
+    expect(isWalkable(world, { y: 0, x: -0.2, z: 12 })).toBe(false);
     world = command(world, { type: 'move', destination });
     world = advanceWorld(world, 240).world;
     expect(world.entities.player!.position).toEqual(destination);
@@ -397,9 +397,9 @@ describe('bounded invented mechanisms', () => {
 describe('perception, survival and continuity', () => {
   it('preserves event-time listeners and private memories independently of later positions', () => {
     let world = createWorld();
-    world.entities.ada!.position = { x: 26, z: 22 };
+    world.entities.ada!.position = { y: 0, x: 26, z: 22 };
     world = command(world, { type: 'say', text: 'The secret is moonflower.' });
-    world.entities.ada!.position = { x: 12, z: 13 };
+    world.entities.ada!.position = { y: 0, x: 12, z: 13 };
     expect(
       queryMemories(world, 'ada').some((record) => record.summary.includes('moonflower')),
     ).toBe(false);

@@ -65,10 +65,11 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     actor.agency = seedAgency(['Stay charged and explore the clearing.']);
   }
   world.entities['charge-bank'] = {
+    spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
     id: 'charge-bank',
     name: 'Charged capacitor',
     kind: 'resource',
-    position: { x: 12, z: 13 },
+    position: { y: 0, x: 12, z: 13 },
     replenisher: { attributeId: 'clockwork:charge', remaining: 2400 },
   };
   validateWorldModules(world);

@@ -106,7 +106,15 @@ export const commandInputSchema = z
     recipeId: id.optional(),
     attributeId: id.optional(),
     ammunitionId: id.optional(),
-    position: z.object({ x: z.number().finite(), z: z.number().finite() }).strict().optional(),
+    position: z
+      .object({
+        x: z.number().finite(),
+        y: z.number().finite(),
+        z: z.number().finite(),
+        surfaceId: id,
+      })
+      .strict()
+      .optional(),
     quantity: z.number().int().min(1).max(20).optional(),
     preparation: z.enum(['fiber', 'cord']).optional(),
   })

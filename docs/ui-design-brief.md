@@ -1,5 +1,9 @@
 # Open Legend UI design brief
 
+## Spatial camera and floor UI
+
+[Spatial-world controls](spatial-world.md#tactical-camera-and-perspective) own camera/floor behavior. The current Camera toolbar keeps zoom/recenter and adds a View popover with rotation, tilt, projection, lock and level selection. A floor focus changes presentation only. Explicit XYZ/surface selection reaches the server; lower-level cutaways cannot expose unpermitted people. Preserve accessible buttons, canvas keyboard focus, touch alternatives, panel shortcuts and non-canvas inspection.
+
 React and React Aria are the current UI foundation; Motion remains unnecessary for the current modest transitions. This brief owns presentation and interaction behavior. See the [production UI ownership guide](../apps/client/src/design-system/README.md), [current architecture](architecture.md) and [cross-cutting validation queue](maintainers/TODO.md).
 
 ## Project and atmosphere

@@ -1,5 +1,9 @@
 # Stable data queries and world-agent MCP access
 
+## Spatial query scope
+
+[Spatial query results](spatial-world-runtime.md) distinguish points, supports and permitted topology. Tools must not leak hidden navigation geometry, generated-map seeds, precise unidentified sound origins or private NPC future routes. Physical safety checks may reject blocked motion without revealing an unobserved cause. Creator queries remain separately authorized.
+
 
 Current HTTP state, editor and diagnostic queries are described in [Architecture](../../docs/architecture.md). This document specifies the future bounded production query service and scoped world-agent/MCP contracts; it does not imply those tools are live.
 Status: **proposed production contract**, September 19, 2026; no endpoints, views or MCP server are implemented here. Companion to the [production data model](production-data-model.md) and [delivery/scale plan](data-delivery-and-scale.md). This is the interface to establish before writing world-agent prompts or feature queries that would otherwise depend on the prototype's JSON layout.

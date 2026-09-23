@@ -1,5 +1,9 @@
 # Declarations, reusable mechanisms, and world evolution
 
+## Spatial family boundary
+
+[Finite spatial families](spatial-world-runtime.md) provide bounded geometry, body/anchor and locomotion contracts. INV continues to own mechanical authoring/installation; the spatial mutation boundary owns placement consistency and invalidation. A PNG, imported mesh, arbitrary JSON field or navigation edge never grants support, anatomy or a new host operation. New spatial authoring depends only on the relevant SW13/native families, not the complete 3D roadmap; G0–G3 authority is unchanged.
+
 Definition activation, migration and cleanup must respect the [save/load design](../../docs/save-and-load.md), including preservation of dependencies needed by retained worlds.
 
 This is the canonical technical design for declarations, G0–G3 mechanisms, state ownership, admission, activation, migration and mechanic evolution. Current finite-family behavior belongs to [Architecture](../../docs/architecture.md), delivery state to the [invention tracker](../../docs/maintainers/inventions-and-world-evolution.md), governance to [Invention governance](../03-design-proposals/invention-governance-and-ownership.md), creator UX to [World agent and workshop](../03-design-proposals/world-agent-and-workshop.md), and empirical questions to the [Research backlog](../05-project/research-backlog.md).

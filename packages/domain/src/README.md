@@ -1,5 +1,9 @@
 # Headless domain contract
 
+## Spatial authority
+
+The [spatial runtime](../../../archive/07-technical-architecture/spatial-world-runtime.md) owns exact coordinate/provider semantics. Entities use required XYZ plus explicit support and body profile. Native action transitions call shared support/sweep/reach logic; renderer/SDK objects never enter the domain, protocol or save. Static scans and layered A\* are bounded for the current public map. Ground routes stay native; unqualified Recast/Rapier, crowd dynamics and generic construction are future provider/family work. Incompatible development saves are rejected rather than read with optional Y.
+
 `index.ts` is the package boundary. State and return values are plain JSON; the kernel imports no renderer, provider, transport, database or ambient clock. It uses persisted seeded RNG, stable IDs and copied state. The application binds actor/world authority before calling it and commits returned state, receipts and events together.
 
 - `createActor(world, controller, fullness)`: creates an actor with three distinct described traits sampled from `config/traits.json` using saved RNG. Save the returned actor in the creating transition. Trait prose grants no mechanical powers. `initializeActorTraits` fills only missing legacy traits; it is idempotent and preserves saved descriptions.

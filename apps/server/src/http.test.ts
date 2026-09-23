@@ -58,7 +58,12 @@ describe('local HTTP boundary', () => {
   it('gates god world editing and persists spawned people and revival while paused', async () => {
     const ordinary = await start();
     expect(
-      (await ordinary.post('/api/god/spawn', { type: 'hare', position: { x: 24, z: 5 } })).status,
+      (
+        await ordinary.post('/api/god/spawn', {
+          type: 'hare',
+          position: { y: 0, surfaceId: 'terrain', x: 24, z: 5 },
+        })
+      ).status,
     ).toBe(403);
     const { post, game, initial } = await start(true);
     expect(initial.godTools?.spawnOptions[0]).toEqual({ id: 'person', label: 'Person' });
@@ -71,14 +76,14 @@ describe('local HTTP boundary', () => {
         await (
           await post('/api/god/spawn', {
             type: 'hare',
-            position: { x: 24, z: 5 },
+            position: { y: 0, surfaceId: 'terrain', x: 24, z: 5 },
           })
         ).json()
       ).code,
     ).toBe('spawned');
     const created = await (
       await post('/api/god/person', {
-        position: { x: 25, z: 5 },
+        position: { y: 0, x: 25, z: 5 },
         name: 'Mira',
         personality: 'Warm and direct.',
         backstory: 'A patient traveler.',
@@ -108,7 +113,7 @@ describe('local HTTP boundary', () => {
     expect(
       (
         await post('/api/god/person', {
-          position: { x: 26, z: 5 },
+          position: { y: 0, x: 26, z: 5 },
           name: 'Extra',
           personality: '',
           backstory: '',

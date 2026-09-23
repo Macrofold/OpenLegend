@@ -316,6 +316,9 @@ export async function projectView(
             kind,
             subtype: entity.actor?.species ?? entity.resource?.definitionId ?? entity.kind,
             position: entity.position,
+            supportSurfaceId: entity.spatial.supportSurfaceId,
+            heading: entity.spatial.heading,
+            appearance: entity.appearance ?? 'sprite',
             radius: entity.kind === 'campfire' ? 0.5 : 0.35,
             ...(entity.actor
               ? {
@@ -492,7 +495,7 @@ export async function projectView(
     craft: `Crafting${work?.recipeId && world.recipes[work.recipeId] ? ` ${world.recipes[work.recipeId]!.output.name}` : ''}`,
   };
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     historyRevision: service.historyRevision,
     historyEpoch: service.historyEpoch,
     narrator: optional(
@@ -531,7 +534,9 @@ export async function projectView(
       ...world.map,
       seed: world.seed,
       obstacles: world.map.tiles.flatMap((row, z) =>
-        row.flatMap((tile, x) => (tile === 'rock' ? [{ x, z, radius: 0.52, kind: 'rock' }] : [])),
+        row.flatMap((tile, x) =>
+          tile === 'rock' ? [{ y: 0, x, z, radius: 0.52, kind: 'rock' }] : [],
+        ),
       ),
     })),
     clock: {
@@ -547,6 +552,8 @@ export async function projectView(
       id: player.id,
       name: player.name,
       position: player.position,
+      supportSurfaceId: player.spatial.supportSurfaceId,
+      heading: player.spatial.heading,
       attributes: projectAttributes(world, player, 'owner'),
       health: actor.health,
       hunger: actor.fullness === undefined ? undefined : 100 - actor.fullness,
@@ -812,7 +819,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
   const player = changedFields(previous.player, next.player);
   const ai = changedFields(previous.ai, next.ai);
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     ...(previous.commandEpoch !== next.commandEpoch ? { commandEpoch: next.commandEpoch } : {}),
     baseRevision: previous.revision,
     revision: next.revision,

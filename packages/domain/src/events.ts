@@ -110,6 +110,7 @@ export function emit(
         ? world.conversations?.active[source.id]
         : undefined;
   const event: WorldEvent = {
+    ...(source ? { origin: { ...source.position } } : {}),
     scope,
     ...(conversationId ? { conversationId } : {}),
     id: nextId(world, 'event'),

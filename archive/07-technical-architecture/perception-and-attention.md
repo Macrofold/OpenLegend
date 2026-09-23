@@ -1,5 +1,9 @@
 # Perception and sensory evidence
 
+## Spatial input ownership
+
+Common XYZ coordinates, support surfaces, geometric rays/sweeps and navigation belong to the [spatial runtime](spatial-world-runtime.md); this document retains sensory meaning, detail, recognition, localization and intelligibility. Target sight/hearing evaluate body eye/ear anchors against height, extents, floors and openings. Range circles are coarse display aids, not the full propagation volume. Orbit/floor cutaways never move the body or remove its physical occlusion. Playback mute and camera location never change actor hearing. Approved viewport intersection, independent NPC sensing, one active embodied view and D51 hidden-tab/multi-view questions remain intact; the current body-only projection is a documented implementation gap, not a policy reversal. [SW08/SW09](../../docs/maintainers/spatial-world.md) owns new geometric and camera integration; preserve existing sensory acceptance.
+
 This document owns future sensory design: visual exposure, hearing/acoustics, occlusion, detail tiers, player sensory overlays, deterministic propagation and sensory event generation. Current implemented sight/hearing behavior belongs to [Architecture](../../docs/architecture.md); semantic attention and routing belong to [Memory architecture](../../docs/memory-architecture.md). Material choices remain in [Open decisions](../05-project/open-decisions.md), and small implementation gaps may be tracked in the [maintainer TODO](../../docs/maintainers/TODO.md).
 
 [Agency](../../docs/agent-agency.md) contributes private goal/need/result causes through [EPR reaction intake](../../docs/events-perception-and-reactions.md#9-reaction-intake-and-scheduling), without public sensory events. Its goal-derived interests respect actor knowledge and reevaluate bounded current exposures. Actual non-speech sound follows this sensory contract; it must not be relabeled speech to obtain hearing or create a conversation.

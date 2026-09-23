@@ -1,5 +1,27 @@
 import * as pc from 'playcanvas';
-import type { EntityView, GameView, Position } from '@open-legend/protocol';
+import type { EntityView, GameView, SurfacePoint } from '@open-legend/protocol';
+import {
+  intersectBox,
+  pickSurfaces,
+  rayHits,
+  spatialBlockers,
+  supportBelow,
+  surfaceById,
+  surfaceHeight,
+  type WorldPoint,
+} from '@open-legend/spatial';
+import {
+  cameraPose,
+  cameraPreferences,
+  initialCamera,
+  restoreCameraPreferences,
+  updateCamera,
+  CAMERA_FOV_DEGREES,
+  type CameraCommand,
+  type CameraState,
+} from './world-camera';
+import type { SceneCallbacks, WorldRenderer } from './world-renderer';
+import { birdArt, surfaceMesh } from './spatial-art';
 import { playerEntity } from './entity-view';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
 import { CharacterStatuses } from './character-status';
@@ -17,6 +39,9 @@ import {
 
 interface RenderedEntity {
   observed: boolean;
+  card: boolean;
+  images: ImageData[];
+  assetKey: string;
   root: pc.Entity;
   sprite: pc.Entity;
   shadow: pc.Entity;
@@ -27,20 +52,25 @@ interface RenderedEntity {
   width: number;
   height: number;
 }
-export interface SceneCallbacks {
-  select(entity: EntityView | null, at?: { x: number; y: number }, ground?: Position): void;
-  move(position: Position): void;
-  hover(entity: EntityView | null, at: { x: number; y: number }): void;
-}
 /** Presentation only. Entity positions, terrain and all interactions come from the public projection. */
-export class WildernessScene {
+export class WildernessScene implements WorldRenderer {
   readonly app: pc.Application;
   private camera!: pc.Entity;
   private landscape!: pc.Entity;
   private actors = new Map<string, RenderedEntity>();
   private textures: pc.Texture[] = [];
   private materials: pc.StandardMaterial[] = [];
-  private target = new pc.Vec3(12, 0, 12);
+  private cameraSettings = initialCamera();
+  private geometryNodes = new Map<string, pc.Entity>();
+  private geometryMeshes: pc.Mesh[] = [];
+  private cutaways = new Set<string>();
+  private cards = new Map<pc.Entity, { x: number; y: number; z: number; height: number }>();
+  private landscapeCards = new Set<pc.Entity>();
+  private appearanceAssets = new Map<
+    string,
+    { materials: pc.StandardMaterial[]; images: ImageData[]; refs: number }
+  >();
+  private landscapeMaterials: pc.StandardMaterial[] = [];
   private selected: string | null = null;
   private marker: pc.Entity;
   private destination: pc.Entity;
@@ -48,7 +78,6 @@ export class WildernessScene {
   private elapsed = 0;
   private view: GameView | null = null;
   private mapKey = '';
-  private zoom = 12;
   private initialized = false;
   private visionBlur: VisionBlur;
   readonly statuses: CharacterStatuses;
@@ -58,6 +87,7 @@ export class WildernessScene {
     y: number;
     button: number;
     pan: boolean;
+    orbit: boolean;
     moved: boolean;
   } | null = null;
   // Some browsers emit contextmenu on press, others after release. Pointer
@@ -66,13 +96,22 @@ export class WildernessScene {
   private resizeObserver?: ResizeObserver;
   private destroyed = false;
   private readyRequested = false;
+  private shadowMaterial?: pc.StandardMaterial;
   private hoverPoint: { x: number; y: number } | null = null;
-  private animations: Array<{ entity: pc.Entity; x: number; z: number; phase: number }> = [];
+  private animations: Array<{ y: number; entity: pc.Entity; x: number; z: number; phase: number }> =
+    [];
 
   constructor(
     private canvas: HTMLCanvasElement,
     private callbacks: SceneCallbacks,
   ) {
+    try {
+      this.cameraSettings = restoreCameraPreferences(
+        JSON.parse(localStorage.getItem('open-legend:camera-v1') ?? 'null'),
+      );
+    } catch {
+      /* Camera preference storage is optional. */
+    }
     this.app = new pc.Application(canvas, {
       graphicsDeviceOptions: {
         alpha: false,
@@ -95,9 +134,10 @@ export class WildernessScene {
       this.camera.addComponent('camera', {
         clearColor: new pc.Color(0.27, 0.34, 0.27),
         projection: pc.PROJECTION_ORTHOGRAPHIC,
-        orthoHeight: this.zoom,
+        orthoHeight: this.cameraSettings.zoom,
         nearClip: 0.1,
-        farClip: 150,
+        farClip: 256,
+        fov: CAMERA_FOV_DEGREES,
       });
       this.app.root.addChild(this.camera);
       const sun = new pc.Entity('Afternoon sun', this.app);
@@ -129,6 +169,7 @@ export class WildernessScene {
       canvas.addEventListener('lostpointercapture', this.pointerCancel);
       canvas.addEventListener('contextmenu', this.contextMenu);
       canvas.addEventListener('wheel', this.wheel, { passive: false });
+      canvas.addEventListener('keydown', this.cameraKey);
       window.addEventListener('blur', this.blur);
       this.app.on('update', (dt: number) => this.update(dt));
       this.resize();
@@ -142,44 +183,39 @@ export class WildernessScene {
 
   setView(view: GameView): void {
     this.view = view;
-    const key = `${view.worldId}:${view.map.seed}:${view.map.width}:${view.map.height}`;
+    const key = `${view.worldId}:${view.map.seed}:${view.map.width}:${view.map.height}:${view.map.spatial.revision}`;
     if (this.mapKey !== key) {
-      for (const entry of this.actors.values()) entry.root.destroy();
+      for (const entry of this.actors.values()) this.releaseEntity(entry);
       this.actors.clear();
       this.mapKey = key;
       this.buildLandscape(view.map);
     }
     if (!this.initialized) {
-      this.target.set(view.player.position.x, 0, view.player.position.z - 1);
+      this.cameraSettings = updateCamera(this.cameraSettings, {
+        type: 'focus',
+        point: { ...view.player.position, z: view.player.position.z - 1 },
+      });
       this.initialized = true;
       this.placeCamera();
+      this.callbacks.cameraChanged?.(this.cameraState());
     }
     const entities = [
       ...view.entities.filter((entity) => entity.id !== view.player.id),
       playerEntity(view),
     ];
     const visible = new Set(entities.map((entity) => entity.id));
-    for (const [id, entry] of this.actors)
-      if (!visible.has(id)) {
-        const distance = Math.hypot(
-          entry.view.position.x - view.player.position.x,
-          entry.view.position.z - view.player.position.z,
-        );
-        if (distance <= view.vision.radius) {
-          // Absence inside current sight means it really disappeared/changed.
-          entry.root.destroy();
-          this.actors.delete(id);
-        } else {
-          // Only retain the last permitted image; never predict hidden movement.
-          entry.observed = false;
-          entry.root.setPosition(entry.view.position.x, 0, entry.view.position.z);
-        }
+    for (const entry of this.actors.values())
+      if (!visible.has(entry.view.id)) {
+        // Absence can mean occlusion, not disappearance. Retain only the last authorized image;
+        // an unobserved ghost has no interaction or current-state knowledge.
+        entry.observed = false;
+        entry.root.setPosition(entry.view.position.x, entry.view.position.y, entry.view.position.z);
       }
     for (const entity of entities) {
       let entry = this.actors.get(entity.id);
-      const signature = `${entity.kind}:${entity.subtype}:${entity.status === 'Dead'}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      const signature = `${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.status === 'Dead'}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
       if (entry && entry.root.tags.list()[0] !== signature) {
-        entry.root.destroy();
+        this.releaseEntity(entry);
         this.actors.delete(entity.id);
         entry = undefined;
       }
@@ -194,9 +230,10 @@ export class WildernessScene {
     // A bounded, session-only visual memory; never a second source of live facts.
     const remembered = [...this.actors].filter(([, entry]) => !entry.observed);
     for (const [id, entry] of remembered.slice(0, Math.max(0, remembered.length - 128))) {
-      entry.root.destroy();
+      this.releaseEntity(entry);
       this.actors.delete(id);
     }
+    this.applyLevelFocus();
     this.statuses.observe(view);
     if (!this.readyRequested) {
       this.readyRequested = true;
@@ -211,14 +248,72 @@ export class WildernessScene {
     this.selected = id;
   }
   center(): void {
-    if (this.view) {
-      this.target.set(this.view.player.position.x, 0, this.view.player.position.z - 1);
-      this.placeCamera();
-    }
+    if (this.view) this.cameraCommand({ type: 'focus', point: this.view.player.position });
   }
   setZoom(delta: number): void {
-    this.zoom = pc.math.clamp(this.zoom + delta, 6, 25);
-    this.camera.camera!.orthoHeight = this.zoom;
+    this.cameraCommand({ type: 'zoom', delta });
+  }
+  cameraState(): CameraState {
+    return { ...this.cameraSettings, focus: { ...this.cameraSettings.focus } };
+  }
+  cameraCommand(command: CameraCommand): void {
+    if (
+      command.type === 'level' &&
+      command.id &&
+      !this.view?.map.spatial.levels.some((level) => level.id === command.id)
+    )
+      return;
+    this.cameraSettings = updateCamera(this.cameraSettings, command);
+    this.placeCamera();
+    this.applyLevelFocus();
+    // No storage write for every pointer sample. Commit preferences when a gesture ends.
+    if (!this.drag) this.saveCameraPreferences();
+    this.callbacks.cameraChanged?.(this.cameraState());
+  }
+  private saveCameraPreferences(): void {
+    try {
+      localStorage.setItem(
+        'open-legend:camera-v1',
+        JSON.stringify(cameraPreferences(this.cameraSettings)),
+      );
+    } catch {
+      /* Optional local presentation preference. */
+    }
+  }
+  private applyLevelFocus(): void {
+    const map = this.view?.map;
+    if (!map) return;
+    const level = map.spatial.levels.find((entry) => entry.id === this.cameraSettings.levelId);
+    this.cutaways.clear();
+    if (level) {
+      for (const surface of map.spatial.surfaces) {
+        const minimum = Math.min(
+          surfaceHeight(surface, surface.minX, surface.minZ),
+          surfaceHeight(surface, surface.minX, surface.maxZ),
+          surfaceHeight(surface, surface.maxX, surface.minZ),
+          surfaceHeight(surface, surface.maxX, surface.maxZ),
+        );
+        if (surface.levelId !== level.id && minimum > level.focusY + 0.05)
+          this.cutaways.add(surface.id);
+      }
+      for (const blocker of spatialBlockers(map))
+        if (blocker.bounds.min.y > level.focusY + 0.05) this.cutaways.add(blocker.id);
+    }
+    for (const [id, node] of this.geometryNodes) node.enabled = !this.cutaways.has(id);
+    for (const entry of this.actors.values()) {
+      const support = surfaceById(map, entry.view.supportSurfaceId ?? '');
+      entry.root.enabled =
+        !level ||
+        !support ||
+        support.levelId === level.id ||
+        entry.view.id === this.view!.player.id;
+      for (const mesh of entry.sprite.render?.meshInstances ?? [])
+        mesh.setParameter('material_opacity', entry.observed ? 1 : 0.28);
+    }
+    this.canvas.dataset.projection = this.cameraSettings.projection;
+    this.canvas.dataset.floor = level?.id ?? 'all';
+    this.canvas.dataset.cameraYaw = String(this.cameraSettings.yaw);
+    this.canvas.dataset.cameraPitch = String(this.cameraSettings.pitch);
   }
   screenPosition(id: string): { x: number; y: number } | null {
     const entry = this.actors.get(id);
@@ -236,6 +331,7 @@ export class WildernessScene {
   private statusAnchor(id: string): { x: number; y: number } | null {
     const entry = this.actors.get(id);
     if (!entry || !this.identifiable(entry)) return null;
+    if (!entry.card) return this.screenPosition(id);
     const transform = entry.sprite.getWorldTransform();
     const points = [
       new pc.Vec3(-0.5, 0, -0.5),
@@ -343,21 +439,23 @@ export class WildernessScene {
     width: number,
     height: number,
   ): pc.Entity {
-    // Plane tilted toward fixed elevated camera, with lower edge touching the ground.
-    const sprite = this.primitive(
-      name,
-      'plane',
-      material,
-      parent,
-      x,
-      y + height * 0.4,
-      z - height * 0.3,
-      width,
-      1,
-      height,
-    );
-    sprite.setEulerAngles(53, 0, 0);
+    const sprite = this.primitive(name, 'plane', material, parent, x, y, z, width, 1, height);
+    this.cards.set(sprite, { x, y, z, height });
+    if (parent === this.landscape) this.landscapeCards.add(sprite);
+    this.orientCard(sprite);
     return sprite;
+  }
+  private orientCard(sprite: pc.Entity, bob = 0): void {
+    const binding = this.cards.get(sprite);
+    if (!binding) return;
+    sprite.setRotation(this.camera.getRotation());
+    sprite.rotateLocal(90, 0, 0);
+    const up = this.camera.up;
+    sprite.setLocalPosition(
+      binding.x + (up.x * binding.height) / 2,
+      binding.y + (up.y * binding.height) / 2 + bob,
+      binding.z + (up.z * binding.height) / 2,
+    );
   }
   private ring(color: string, name: string): pc.Entity {
     const source = document.createElement('canvas');
@@ -379,45 +477,109 @@ export class WildernessScene {
     entity.setLocalScale(1.4, 1, 1.4);
     return entity;
   }
+  private releaseMaterial(material: pc.StandardMaterial): void {
+    const texture = material.diffuseMap;
+    if (texture) {
+      texture.destroy();
+      this.textures = this.textures.filter((entry) => entry !== texture);
+    }
+    material.destroy();
+    this.materials = this.materials.filter((entry) => entry !== material);
+  }
+  private releaseEntity(entry: RenderedEntity): void {
+    this.cards.delete(entry.sprite);
+    entry.root.destroy();
+    const asset = this.appearanceAssets.get(entry.assetKey);
+    if (asset && --asset.refs === 0) {
+      for (const material of asset.materials) this.releaseMaterial(material);
+      this.appearanceAssets.delete(entry.assetKey);
+    }
+  }
   private makeEntity(view: EntityView, game: GameView): RenderedEntity {
     const root = new pc.Entity(view.name, this.app);
     this.app.root.addChild(root);
-    root.setPosition(view.position.x, 0, view.position.z);
-    let width = 1.1,
-      height = 1.4,
-      art: HTMLCanvasElement[];
-    if (view.kind === 'actor') {
-      width = 1.05;
-      height = 2.1;
-      const equipped =
-        view.id === game.player.id && game.player.inventory.some((item) => item.equipped);
-      art = [0, 1, 2].map((frame) => personArt(view.id !== game.player.id, frame, equipped));
-    } else if (view.kind === 'animal' || view.kind === 'remains') {
-      const deer = /deer/i.test(view.subtype + view.name);
-      width = deer ? 2.3 : 1.25;
-      height = deer ? 1.9 : 1.05;
-      art = [0, 2, -2].map((frame) =>
-        animalArt(deer, frame, view.kind === 'remains' || view.status === 'Dead'),
-      );
-    } else if (view.kind === 'station') {
-      width = 1.5;
-      height = 1.65;
-      art = [0, 1, 2].map(fireArt);
-    } else {
-      width = 1.9;
-      height = 1.6;
-      art = [
-        resourceArt(
-          view.subtype + view.name,
-          view.id.split('').reduce((sum, letter) => sum + letter.charCodeAt(0), 0),
+    root.setPosition(view.position.x, view.position.y, view.position.z);
+    const dead = view.kind === 'remains' || view.status === 'Dead';
+    const equipped =
+      view.id === game.player.id && game.player.inventory.some((item) => item.equipped);
+    const deer = view.subtype === 'deer',
+      bird = view.subtype === 'bird',
+      crate = view.appearance === 'crate-mesh';
+    const key = crate
+      ? 'crate-mesh'
+      : view.kind === 'actor'
+        ? `person:${view.id !== game.player.id}:${equipped}:${dead}`
+        : view.kind === 'animal' || view.kind === 'remains'
+          ? `animal:${view.subtype}:${dead}`
+          : view.kind === 'station'
+            ? 'fire'
+            : `resource:${view.subtype}:${view.id}`;
+    let width = crate
+      ? 1
+      : view.kind === 'actor'
+        ? 1.05
+        : deer
+          ? 2.3
+          : bird
+            ? 1.3
+            : view.kind === 'animal' || view.kind === 'remains'
+              ? 1.25
+              : view.kind === 'station'
+                ? 1.5
+                : 1.9;
+    let height = crate
+      ? 0.8
+      : view.kind === 'actor'
+        ? 2.1
+        : deer
+          ? 1.9
+          : bird
+            ? 1
+            : view.kind === 'animal' || view.kind === 'remains'
+              ? 1.05
+              : view.kind === 'station'
+                ? 1.65
+                : 1.6;
+    let asset = this.appearanceAssets.get(key);
+    if (!asset) {
+      const images = crate
+        ? []
+        : view.kind === 'actor'
+          ? [0, 1, 2].map((frame) => personArt(view.id !== game.player.id, frame, equipped))
+          : view.kind === 'animal' || view.kind === 'remains'
+            ? [0, 1, 2].map((frame) =>
+                bird
+                  ? birdArt(frame, dead)
+                  : animalArt(deer, frame === 1 ? 2 : frame === 2 ? -2 : 0, dead),
+              )
+            : view.kind === 'station'
+              ? [0, 1, 2].map(fireArt)
+              : [
+                  resourceArt(
+                    view.subtype + view.name,
+                    view.id.split('').reduce((sum, letter) => sum + letter.charCodeAt(0), 0),
+                  ),
+                ];
+      const materials = crate
+        ? [this.material('#a17a4d'), this.material('#564631')]
+        : images.map((source) => this.material('#ffffff', source, true, true));
+      // Read alpha once while creating an asset, not a Canvas readback on each hover frame.
+      asset = {
+        images: images.map((image) =>
+          image.getContext('2d')!.getImageData(0, 0, image.width, image.height),
         ),
-      ];
+        materials,
+        refs: 0,
+      };
+      this.appearanceAssets.set(key, asset);
     }
-    const materials = art.map((source) => this.material('#ffffff', source, true, true));
+    asset.refs++;
+    // All entities share one shadow texture/material. Airborne shadows attach to a support below.
+    this.shadowMaterial ??= this.material('#ffffff', shadowArt(), true, true);
     const shadow = this.primitive(
-      'Contact shadow',
+      'Support shadow',
       'plane',
-      this.material('#ffffff', shadowArt(), true, true),
+      this.shadowMaterial,
       root,
       0,
       0.025,
@@ -426,14 +588,55 @@ export class WildernessScene {
       1,
       width * 0.6,
     );
-    const sprite = this.billboard(view.name, materials[0]!, root, 0, 0.04, 0, width, height);
-    if (view.kind === 'remains' || view.status === 'Dead') sprite.setLocalEulerAngles(53, 0, 75);
+    let sprite: pc.Entity;
+    if (crate) {
+      sprite = this.primitive(
+        view.name,
+        'box',
+        asset.materials[0]!,
+        root,
+        0,
+        height / 2,
+        0,
+        width,
+        height,
+        0.8,
+      );
+      for (const x of [-0.43, 0.43])
+        this.primitive(
+          'Crate band',
+          'box',
+          asset.materials[1]!,
+          root,
+          x,
+          height / 2,
+          0,
+          0.08,
+          height + 0.035,
+          0.84,
+        );
+      this.primitive(
+        'Crate lid band',
+        'box',
+        asset.materials[1]!,
+        root,
+        0,
+        height + 0.015,
+        0,
+        width,
+        0.035,
+        0.08,
+      );
+    } else sprite = this.billboard(view.name, asset.materials[0]!, root, 0, 0.04, 0, width, height);
     return {
       root,
       sprite,
       shadow,
       view,
-      materials,
+      materials: asset.materials,
+      images: asset.images,
+      assetKey: key,
+      card: !crate,
       lastFrame: -1,
       facing: 1,
       width,
@@ -443,6 +646,14 @@ export class WildernessScene {
   }
   private buildLandscape(map: GameView['map']): void {
     this.landscape.destroy();
+    for (const card of this.landscapeCards) this.cards.delete(card);
+    this.landscapeCards.clear();
+    for (const material of this.landscapeMaterials) this.releaseMaterial(material);
+    this.landscapeMaterials = [];
+    for (const mesh of this.geometryMeshes) mesh.destroy();
+    this.geometryMeshes = [];
+    this.geometryNodes.clear();
+    const materialStart = this.materials.length;
     this.landscape = new pc.Entity('Landscape', this.app);
     this.app.root.addChild(this.landscape);
     this.animations = [];
@@ -517,24 +728,55 @@ export class WildernessScene {
       1,
       map.height + 24,
     );
-    const rockMaterial = this.material('#ffffff', undefined, false, true);
-    rockMaterial.emissiveVertexColor = true;
-    rockMaterial.update();
-    for (const obstacle of map.obstacles) {
-      if (obstacle.kind === 'rock') {
-        this.rock(obstacle.x, obstacle.z, rng, rockMaterial);
-        this.primitive(
-          'Stone contact shadow',
-          'plane',
-          this.material('#ffffff', shadowArt(), true, true),
-          this.landscape,
-          obstacle.x + 0.2,
-          0.018,
-          obstacle.z + 0.2,
-          1.8,
-          1,
-          1.5,
-        );
+    const stone = this.material('#7b8178'),
+      timber = this.material('#715438');
+    for (const blocker of spatialBlockers(map)) {
+      const a = blocker.bounds.min,
+        b = blocker.bounds.max;
+      const node = this.primitive(
+        blocker.id,
+        'box',
+        blocker.material === 'stone' ? stone : timber,
+        this.landscape,
+        (a.x + b.x) / 2,
+        (a.y + b.y) / 2,
+        (a.z + b.z) / 2,
+        b.x - a.x,
+        b.y - a.y,
+        b.z - a.z,
+      );
+      this.geometryNodes.set(blocker.id, node);
+    }
+    const deckMaterial = this.material('#b48b57'),
+      rampMaterial = this.material('#8b8e7a');
+    for (const surface of map.spatial.surfaces) {
+      if (surface.material === 'ground') continue;
+      const mesh = surfaceMesh(this.app.graphicsDevice, surface);
+      this.geometryMeshes.push(mesh);
+      const node = new pc.Entity(surface.name, this.app);
+      node.addComponent('render', {
+        meshInstances: [
+          new pc.MeshInstance(mesh, surface.material === 'timber' ? deckMaterial : rampMaterial),
+        ],
+        castShadows: true,
+        receiveShadows: true,
+      });
+      this.landscape.addChild(node);
+      this.geometryNodes.set(surface.id, node);
+      if (surface.material === 'timber') {
+        for (let x = surface.minX + 0.4; x < surface.maxX; x += 0.5)
+          this.primitive(
+            'Deck plank seam',
+            'box',
+            timber,
+            node,
+            x,
+            surfaceHeight(surface, x, surface.minZ) + 0.008,
+            (surface.minZ + surface.maxZ) / 2,
+            0.018,
+            0.012,
+            surface.maxZ - surface.minZ,
+          );
       }
     }
     // Large woodland silhouettes remain outside the playable map; they imply no hidden collision.
@@ -602,63 +844,20 @@ export class WildernessScene {
         1,
         0.15,
       );
-      this.animations.push({ entity, x, z, phase: rng() * Math.PI * 2 });
+      this.animations.push({ y: 0, entity, x, z, phase: rng() * Math.PI * 2 });
     }
-  }
-  private rock(x: number, z: number, rng: () => number, material: pc.StandardMaterial): void {
-    // Hand-shaped faceted volume, with per-face stone tones; no smooth toy-like spheres.
-    const lower: number[][] = [],
-      upper: number[][] = [];
-    for (let i = 0; i < 7; i++) {
-      const angle = (i * Math.PI * 2) / 7;
-      const radius = 0.48 + rng() * 0.12;
-      lower.push([Math.cos(angle) * radius, 0.03, Math.sin(angle) * radius]);
-      upper.push([
-        Math.cos(angle) * radius * 0.72,
-        0.35 + rng() * 0.23,
-        Math.sin(angle) * radius * 0.68,
-      ]);
-    }
-    const positions: number[] = [],
-      colors: number[] = [];
-    const peak = [0.02, 0.67 + rng() * 0.2, -0.06];
-    const palette = [
-      [111, 126, 108],
-      [138, 145, 124],
-      [162, 165, 141],
-      [121, 135, 116],
-      [151, 158, 133],
-    ];
-    const triangle = (a: number[], b: number[], c: number[], shade: number): void => {
-      positions.push(...a, ...b, ...c);
-      const color = palette[shade % palette.length]!;
-      for (let i = 0; i < 3; i++) colors.push(color[0]!, color[1]!, color[2]!, 255);
-    };
-    for (let i = 0; i < 7; i++) {
-      const n = (i + 1) % 7;
-      triangle(lower[i]!, upper[i]!, lower[n]!, i);
-      triangle(lower[n]!, upper[i]!, upper[n]!, i);
-      triangle(upper[i]!, peak, upper[n]!, i + 2);
-    }
-    const mesh = new pc.Mesh(this.app.graphicsDevice);
-    mesh.setPositions(positions);
-    mesh.setColors32(colors);
-    const indices = positions.map((_, index) => index).slice(0, positions.length / 3);
-    mesh.setNormals(pc.calculateNormals(positions, indices));
-    mesh.update();
-    const entity = new pc.Entity('Weathered stone', this.app);
-    entity.addComponent('render', {
-      meshInstances: [new pc.MeshInstance(mesh, material)],
-      castShadows: true,
-    });
-    entity.setPosition(x, 0, z);
-    entity.setEulerAngles(0, rng() * 180, 0);
-    this.landscape.addChild(entity);
+    this.landscapeMaterials = this.materials.slice(materialStart);
   }
   private placeCamera(): void {
-    this.camera.setPosition(this.target.x, 34, this.target.z + 28);
-    this.camera.lookAt(this.target);
-    this.camera.camera!.orthoHeight = this.zoom;
+    const pose = cameraPose(this.cameraSettings);
+    this.camera.setPosition(pose.position.x, pose.position.y, pose.position.z);
+    this.camera.lookAt(pose.target.x, pose.target.y, pose.target.z);
+    this.camera.camera!.projection =
+      this.cameraSettings.projection === 'orthographic'
+        ? pc.PROJECTION_ORTHOGRAPHIC
+        : pc.PROJECTION_PERSPECTIVE;
+    this.camera.camera!.orthoHeight = this.cameraSettings.zoom;
+    for (const card of this.cards.keys()) this.orientCard(card);
   }
   private update(dt: number): void {
     this.elapsed += Math.min(dt, 0.1);
@@ -666,13 +865,32 @@ export class WildernessScene {
       if (!entry.observed) continue;
       const position = entry.root.getPosition().clone();
       const dx = entry.view.position.x - position.x;
+      const dy = entry.view.position.y - position.y;
       const dz = entry.view.position.z - position.z;
-      const moving = Math.abs(dx) + Math.abs(dz) > 0.025;
-      if (Math.abs(dx) > 0.012) entry.facing = dx < 0 ? -1 : 1;
+      const moving = Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 0.025;
+      const screenMotion = dx * this.camera.right.x + dz * this.camera.right.z;
+      if (Math.abs(screenMotion) > 0.012) entry.facing = screenMotion < 0 ? -1 : 1;
       position.x += dx * Math.min(1, dt * 13);
+      position.y += dy * Math.min(1, dt * 13);
       position.z += dz * Math.min(1, dt * 13);
+      const support = this.view && surfaceById(this.view.map, entry.view.supportSurfaceId ?? '');
+      if (
+        support &&
+        position.x >= support.minX &&
+        position.x <= support.maxX &&
+        position.z >= support.minZ &&
+        position.z <= support.maxZ
+      )
+        position.y = surfaceHeight(support, position.x, position.z);
+      const below = this.view && supportBelow(this.view.map, position);
+      entry.shadow.enabled = !!below;
+      if (below) {
+        entry.shadow.setLocalPosition(0, below.y - position.y + 0.025, 0);
+        const spread = Math.min(1.8, 1 + Math.max(0, position.y - below.y) * 0.1);
+        entry.shadow.setLocalScale(entry.width * 0.9 * spread, 1, entry.width * 0.6 * spread);
+      }
       entry.root.setPosition(position);
-      const animated = entry.view.kind === 'station' || moving;
+      const animated = entry.card && (entry.view.kind === 'station' || moving);
       const frame =
         animated && !this.view?.clock.paused
           ? 1 + (Math.floor(this.elapsed * (entry.view.kind === 'station' ? 4 : 6)) % 2)
@@ -681,19 +899,19 @@ export class WildernessScene {
         entry.sprite.render!.material = entry.materials[frame % entry.materials.length]!;
         entry.lastFrame = frame;
       }
-      entry.sprite.setLocalScale(entry.width * entry.facing, 1, entry.height);
-      if (entry.view.kind === 'actor')
-        entry.sprite.setLocalPosition(
-          0,
-          0.04 + entry.height * 0.4 + (moving ? Math.sin(this.elapsed * 12) * 0.015 : 0),
-          -entry.height * 0.3,
+      if (entry.card) {
+        entry.sprite.setLocalScale(entry.width * entry.facing, 1, entry.height);
+        this.orientCard(
+          entry.sprite,
+          entry.view.kind === 'actor' && moving ? Math.sin(this.elapsed * 12) * 0.015 : 0,
         );
+      }
     }
     const selected = this.selected ? this.actors.get(this.selected) : undefined;
     this.marker.enabled = !!selected && this.identifiable(selected);
     if (selected && this.identifiable(selected)) {
       const p = selected.root.getPosition();
-      this.marker.setPosition(p.x, 0.035, p.z);
+      this.marker.setPosition(p.x, p.y + 0.035, p.z);
       const scale = Math.max(1.1, selected.view.radius * 2.6);
       this.marker.setLocalScale(scale, 1, scale);
       this.marker.setEulerAngles(0, this.elapsed * 8, 0);
@@ -704,17 +922,18 @@ export class WildernessScene {
       const position = player.root.getPosition();
       const projection = this.camera.camera!;
       const center = projection.worldToScreen(position);
+      // Project a 3D-radius presentation mask along camera axes, not fixed world X/Z.
       const xEdge = projection.worldToScreen(
-        position.clone().add(new pc.Vec3(this.view.vision.radius, 0, 0)),
+        position.clone().add(this.camera.right.clone().mulScalar(this.view.vision.radius)),
       );
-      const zEdge = projection.worldToScreen(
-        position.clone().add(new pc.Vec3(0, 0, this.view.vision.radius)),
+      const yEdge = projection.worldToScreen(
+        position.clone().add(this.camera.up.clone().mulScalar(this.view.vision.radius)),
       );
       this.visionBlur.update(
         center.x,
         center.y,
         Math.abs(xEdge.x - center.x),
-        Math.abs(zEdge.y - center.y),
+        Math.abs(yEdge.y - center.y),
       );
     }
     this.statuses.update((id) => this.statusAnchor(id));
@@ -736,7 +955,7 @@ export class WildernessScene {
   }
   private identifiable(entry: RenderedEntity): boolean {
     const player = this.view && this.actors.get(this.view.player.id);
-    if (!entry.observed || !player || !this.view) return false;
+    if (!entry.observed || !entry.root.enabled || !player || !this.view) return false;
     // Fully obscured pixels must not reveal an identity through picking. This
     // presentation restriction only narrows the server's permitted observation.
     return (
@@ -748,57 +967,60 @@ export class WildernessScene {
     this.hoverPoint = null;
     this.callbacks.hover(null, { x: 0, y: 0 });
   };
+  private screenRay(x: number, y: number): { from: pc.Vec3; to: pc.Vec3 } {
+    return {
+      from: this.camera.camera!.screenToWorld(x, y, 0.1),
+      to: this.camera.camera!.screenToWorld(x, y, 256),
+    };
+  }
   private pick(x: number, y: number): EntityView | null {
+    if (!this.view) return null;
+    const ray = this.screenRay(x, y);
+    const obstruction =
+      rayHits(this.view.map, ray.from, ray.to, 'sight', this.cutaways)[0]?.fraction ?? Infinity;
     let best: EntityView | null = null,
-      distance = Infinity,
-      depth = Infinity;
+      nearest = obstruction + 1e-5;
     for (const entry of this.actors.values()) {
       if (!this.identifiable(entry)) continue;
-      const foot = this.camera.camera!.worldToScreen(entry.root.getPosition());
-      // Pick the visible tilted sprite, not an estimated vertical actor capsule.
-      // A capsule missed the upper part of resources and people's heads.
-      const transform = entry.sprite.getWorldTransform();
-      const corners = [
-        new pc.Vec3(-0.5, 0, -0.5),
-        new pc.Vec3(0.5, 0, -0.5),
-        new pc.Vec3(-0.5, 0, 0.5),
-        new pc.Vec3(0.5, 0, 0.5),
-      ].map((corner) => this.camera.camera!.worldToScreen(transform.transformPoint(corner)));
-      const left = Math.min(foot.x - 12, ...corners.map((corner) => corner.x)) - 3;
-      const right = Math.max(foot.x + 12, ...corners.map((corner) => corner.x)) + 3;
-      const top = Math.min(...corners.map((corner) => corner.y)) - 3;
-      const bottom = Math.max(foot.y + 6, ...corners.map((corner) => corner.y)) + 3;
-      if (x >= left && x <= right && y >= top && y <= bottom) {
-        const d = Math.hypot(x - foot.x, y - (top + bottom) / 2);
-        const spriteDepth = entry.sprite
-          .getPosition()
-          .clone()
-          .sub(this.camera.getPosition())
-          .dot(this.camera.forward);
-        // Overlapping silhouettes belong to the visible foreground sprite;
-        // proximity to a background resource's center must not steal the click.
-        if (spriteDepth < depth - 0.01 || (Math.abs(spriteDepth - depth) <= 0.01 && d < distance)) {
-          depth = spriteDepth;
-          distance = d;
-          best = entry.view;
-        }
+      let fraction: number | null = null;
+      if (!entry.card) {
+        const p = entry.root.getPosition();
+        fraction = intersectBox(ray.from, ray.to, {
+          min: { x: p.x - entry.width / 2, y: p.y, z: p.z - 0.4 },
+          max: { x: p.x + entry.width / 2, y: p.y + entry.height, z: p.z + 0.4 },
+        });
+      } else {
+        const inverse = entry.sprite.getWorldTransform().clone().invert();
+        const from = inverse.transformPoint(ray.from),
+          to = inverse.transformPoint(ray.to);
+        const dy = to.y - from.y;
+        if (Math.abs(dy) < 1e-7) continue;
+        const t = -from.y / dy;
+        const u = from.x + (to.x - from.x) * t + 0.5;
+        const v = from.z + (to.z - from.z) * t + 0.5;
+        if (t < 0 || t > 1 || u < 0 || u >= 1 || v < 0 || v >= 1) continue;
+        const image = entry.images[Math.max(0, entry.lastFrame) % entry.images.length]!;
+        const alpha =
+          image.data[
+            (Math.floor(v * image.height) * image.width + Math.floor(u * image.width)) * 4 + 3
+          ]!;
+        if (alpha < 24) continue;
+        fraction = t;
+      }
+      if (fraction !== null && fraction < nearest) {
+        nearest = fraction;
+        best = entry.view;
       }
     }
     return best;
   }
-  private groundPoint(x: number, y: number): Position | null {
-    const a = this.camera.camera!.screenToWorld(x, y, 1),
-      b = this.camera.camera!.screenToWorld(x, y, 100);
-    const t = -a.y / (b.y - a.y);
-    const position = { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
-    const map = this.view?.map;
-    return map &&
-      position.x >= -0.45 &&
-      position.z >= -0.45 &&
-      position.x < map.width - 0.5 &&
-      position.z < map.height - 0.5
-      ? position
-      : null;
+  private groundPoint(x: number, y: number): SurfacePoint | null {
+    if (!this.view) return null;
+    const ray = this.screenRay(x, y);
+    const obstruction =
+      rayHits(this.view.map, ray.from, ray.to, 'sight', this.cutaways)[0]?.fraction ?? Infinity;
+    const hit = pickSurfaces(this.view.map, ray.from, ray.to, this.cameraSettings.levelId)[0];
+    return hit && hit.fraction <= obstruction + 1e-4 ? hit.point : null;
   }
   private local(event: MouseEvent): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect();
@@ -806,6 +1028,7 @@ export class WildernessScene {
   }
   private pointerDown = (event: PointerEvent): void => {
     if (event.button > 2 || this.drag) return;
+    this.canvas.focus({ preventScroll: true });
     this.pointerContextHandled = false;
     // macOS Control-click is a context gesture even when reported as primary.
     if (event.button === 0 && event.ctrlKey) return;
@@ -816,6 +1039,7 @@ export class WildernessScene {
       button: event.button,
       // Primary drag follows the design system; secondary/middle retain camera access.
       pan: true,
+      orbit: event.shiftKey,
       moved: false,
     };
     this.canvas.setPointerCapture(event.pointerId);
@@ -838,9 +1062,11 @@ export class WildernessScene {
       if (!drag.moved && Math.hypot(dx, dy) <= 5) return;
       drag.moved = true;
       if (!drag.pan) return;
-      const scale = (this.zoom * 2) / this.canvas.clientHeight;
-      this.target.x -= dx * scale;
-      this.target.z -= dy * scale * 1.3;
+      this.cameraCommand(
+        drag.orbit
+          ? { type: 'orbit', yaw: -dx * 0.007, pitch: dy * 0.006 }
+          : { type: 'pan', dx, dy, viewportHeight: this.canvas.clientHeight },
+      );
       drag.x = event.clientX;
       drag.y = event.clientY;
       this.canvas.style.cursor = 'grabbing';
@@ -866,7 +1092,7 @@ export class WildernessScene {
     else {
       const position = this.groundPoint(local.x, local.y);
       if (position) {
-        this.destination.setPosition(position.x, 0.035, position.z);
+        this.destination.setPosition(position.x, position.y + 0.035, position.z);
         this.markerUntil = this.elapsed + 1.7;
         this.callbacks.move(position);
       }
@@ -875,7 +1101,36 @@ export class WildernessScene {
   };
   private wheel = (event: WheelEvent): void => {
     event.preventDefault();
-    this.setZoom(event.deltaY * 0.008);
+    if (event.shiftKey) this.cameraCommand({ type: 'orbit', yaw: 0, pitch: event.deltaY * 0.001 });
+    else this.setZoom(event.deltaY * 0.008);
+  };
+  private cameraKey = (event: KeyboardEvent): void => {
+    const delta = Math.PI / 8;
+    if (event.key === 'Home') this.center();
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
+      this.cameraCommand({
+        type: 'orbit',
+        yaw: event.key === 'ArrowLeft' ? -delta : delta,
+        pitch: 0,
+      });
+    else if (event.key === 'ArrowUp' || event.key === 'ArrowDown')
+      this.cameraCommand({ type: 'orbit', yaw: 0, pitch: event.key === 'ArrowUp' ? 0.12 : -0.12 });
+    else if (event.key === 'PageUp' || event.key === 'PageDown') {
+      const levels = this.view?.map.spatial.levels ?? [];
+      const choices = [null, ...levels.map((level) => level.id)];
+      const index = choices.indexOf(this.cameraSettings.levelId);
+      const id =
+        choices[(index + (event.key === 'PageUp' ? 1 : choices.length - 1)) % choices.length] ??
+        null;
+      this.cameraCommand({
+        type: 'level',
+        id,
+        y: levels.find((level) => level.id === id)?.focusY ?? this.view?.player.position.y ?? 0,
+      });
+    } else if (event.key.toLowerCase() === 'p') this.cameraCommand({ type: 'projection' });
+    else return;
+    event.preventDefault();
+    event.stopPropagation();
   };
   private cancelDrag(): void {
     const drag = this.drag;
@@ -883,6 +1138,7 @@ export class WildernessScene {
     this.canvas.style.cursor = '';
     if (!drag) return;
     if (drag.button === 2) this.pointerContextHandled = true;
+    this.saveCameraPreferences();
     if (this.canvas.hasPointerCapture(drag.pointerId))
       this.canvas.releasePointerCapture(drag.pointerId);
   }
@@ -937,6 +1193,7 @@ export class WildernessScene {
     this.canvas.removeEventListener('lostpointercapture', this.pointerCancel);
     this.canvas.removeEventListener('contextmenu', this.contextMenu);
     this.canvas.removeEventListener('wheel', this.wheel);
+    this.canvas.removeEventListener('keydown', this.cameraKey);
     window.removeEventListener('blur', this.blur);
     this.cancelDrag();
     this.textures.forEach((texture) => texture.destroy());
@@ -945,4 +1202,11 @@ export class WildernessScene {
     this.statuses.destroy();
     this.app.destroy();
   }
+}
+
+export function createWorldRenderer(
+  canvas: HTMLCanvasElement,
+  callbacks: SceneCallbacks,
+): WorldRenderer {
+  return new WildernessScene(canvas, callbacks);
 }

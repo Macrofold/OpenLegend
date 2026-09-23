@@ -16,7 +16,7 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
   const marker = structuredClone(game.service.world.entities.reeds!);
   marker.id = 'vision-fixture';
   marker.name = 'Vision fixture';
-  marker.position = { x: 2, z: 2 };
+  marker.position = { y: 0, x: 2, z: 2 };
   game.service.world.entities[marker.id] = marker;
   await new Promise<void>((resolve, reject) => {
     game.server.once('error', reject);
@@ -60,7 +60,7 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
 
     // Explicit fixture relocation exercises a boundary crossing without waiting
     // on movement, AI or real-time survival. The client receives only its DTO.
-    const relocate = (position: { x: number; z: number }) =>
+    const relocate = (position: { y: number; x: number; z: number }) =>
       game.service.transition((previous) => {
         const world = structuredClone(previous);
         world.entities.player!.position = position;
@@ -76,12 +76,12 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
     // pointer hover nor a right-click may identify the obscured object.
     await page.mouse.move(point.x, point.y);
     await expect(page.locator('.ol-world-hover')).toContainText('Vision fixture');
-    expect(relocate({ x: 24, z: 12 }).ok).toBe(true);
+    expect(relocate({ y: 0, x: 24, z: 12 }).ok).toBe(true);
     await expect(page.locator('.ol-world-hover')).toBeHidden();
     await canvas.click({ button: 'right', position: point });
     await expect(page.locator('#contextTitle')).toHaveText('The clearing');
     await page.keyboard.press('Escape');
-    expect(relocate({ x: 27, z: 23 }).ok).toBe(true);
+    expect(relocate({ y: 0, x: 27, z: 23 }).ok).toBe(true);
     await expect(page.locator('[data-entity="vision-fixture"]')).toHaveCount(0);
     await expect
       .poll(() =>

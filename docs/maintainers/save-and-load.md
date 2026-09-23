@@ -1,5 +1,9 @@
 # Save/load implementation tracker
 
+## Spatial capture dependency
+
+[SW15](spatial-world.md) owns new spatial-state fixtures and cache/renderer restoration. This tracker retains global capture/restore and privacy/accounting behavior. A saved route/flight progress is canonical data; reconstructing readiness or visuals cannot consume resources or redispatch AI.
+
 This is the sole implementation tracker for gameplay save/load capabilities. The [save/load design](../save-and-load.md) owns behavior and acceptance principles. [Architecture](../architecture.md) owns implemented facts; [Verification](../verification.md) owns evidence. Phase exit gates remain open until their required evidence is recorded; the initial delivery below is not full qualification. Existing persistence and backup scripts are reusable foundations, not proof that these capabilities are complete.
 
 Tasks deliberately avoid enumerating object types, fields or physical layouts. Subsystem owners maintain their own serialization, validation and migration details as they evolve. Completing the framework does not automatically establish coverage for subsequently added state.

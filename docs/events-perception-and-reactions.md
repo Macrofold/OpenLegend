@@ -1,5 +1,9 @@
 # Events, perception, and reactions
 
+## Spatial dependency
+
+[Spatial world](spatial-world.md) supplies coordinates, physical geometry and queries; the sensory owner still assigns modality/detail/exposure. Position/support and geometry revisions feed the existing candidate/exposure intake. Event-time origin is immutable historical evidence; newer geometry cannot upgrade it. The 3D integration adds no parallel event bus and no paid call per altitude or camera frame. See [SW08](maintainers/spatial-world.md); private thoughts and technical readiness remain distinct from external occurrences.
+
 **Status: proposed architecture.** Installing this document does not accept every proposal, authorize paid execution, or claim implementation. The [research and audit](../archive/02-research/engine-perception-and-event-architectures.md) explains the evidence. The [EPR tracker](maintainers/events-perception-and-reactions.md) defines the work.
 
 ## 1. Purpose and ownership

@@ -1,5 +1,9 @@
 # Real-time synchronization, prediction and persistence
 
+## Spatial projection dependency
+
+Future transport carries [XYZ/support and authorized trajectory samples](spatial-world-runtime.md), never live renderer nodes or an NPC’s private future route merely for smoothing. Visual interpolation does not own movement. Current local schema-2 projections reset on geometry changes; no multiplayer rewrite is part of this spatial release.
+
 Persistence and authority-generation changes must respect the [save/load design](../../docs/save-and-load.md), including restore boundaries and invalidation of obsolete client requests.
 
 

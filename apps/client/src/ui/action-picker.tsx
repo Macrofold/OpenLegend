@@ -42,8 +42,8 @@ export function ActionPicker({
   preference(profile: PlayerProfile): void;
   revive(entity: EntityView): void;
   enableCognition(entity: EntityView): void;
-  spawn(type: string, position: { x: number; z: number }): void;
-  createPerson(position: { x: number; z: number }): void;
+  spawn(type: string, position: { x: number; y: number; z: number; surfaceId: string }): void;
+  createPerson(position: { x: number; y: number; z: number; surfaceId: string }): void;
 }) {
   const [query, setQuery] = useState(''),
     [actions, setActions] = useState<CatalogueAction[]>([]),

@@ -1,5 +1,9 @@
 # Engine and world boundaries
 
+## Spatial substrate and world policies
+
+[Spatial world](spatial-world.md) owns the XYZ/support/query boundary. The first provider supports bounded public planar patches embedded in 3D and finite blockers; the wilderness module supplies the lookout, profiles and native flight route. Keep those content choices replaceable rather than treating every world as a wilderness. Sensory definitions remain replaceable policies consuming geometry; rendering/appearance never admits physical capabilities. Broader provider/profile registration remains EWF/SW work.
+
 **Status: target architecture.** This document defines the intended separation between OpenLegend's runtime and the realities built with it. It does not claim that the current implementation already has a general module runtime. [Architecture](architecture.md) describes executable behavior; [EWF delivery](maintainers/extensible-world-foundation.md) tracks the missing shared foundation.
 
 ## 1. The product being built

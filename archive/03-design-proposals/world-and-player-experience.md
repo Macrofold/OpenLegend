@@ -1,5 +1,9 @@
 # World systems and the player's experience
 
+## Height and viewpoint
+
+[Elevation and tactical views](../../docs/spatial-world.md) change spatial presentation, not what counts as a permitted story source. An upper-floor cutaway cannot create awareness of a concealed actor or change a physical barrier. Preserve embodied knowledge and the existing separate authorized creator view.
+
 Status: **design proposals** expanding the user's baseline, updated for accepted wilderness starting direction. Requirements: F04, F08, F17–F29, F35–F39. Exact mechanics and staging remain proposals; [U02](../00-source/design-followups.md) records the accepted correction.
 
 ## The first place worth visiting

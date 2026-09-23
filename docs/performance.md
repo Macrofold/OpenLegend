@@ -1,5 +1,9 @@
 # Runtime performance design
 
+## Spatial cost and scheduling
+
+[SW14](maintainers/spatial-world.md) owns spatial measurements and [the native provider](../archive/07-technical-architecture/spatial-world-runtime.md#initial-native-provider) owns its finite bounds/cache identity. Navigation is unpaid native CPU work, not an AI-director job. Current small graphs are prepared synchronously and memoized, so no new worker/queue race is introduced. General worker preparation stays SW06 work. Preserve fixed-step time/debt, single writer and measured optimization; orbit/animation never rebakes navigation or re-embeds actors.
+
 State partitioning, cache eviction and persistence optimizations must respect the [save/load design](save-and-load.md), including complete capture and coherent restoration across hot and cold storage.
 
 Status: accepted target design, with initial foundations implemented as recorded in Architecture; larger-world capacity remains unqualified. [Prioritized tasks and acceptance budgets](maintainers/performance.md) are the execution plan. [Architecture](architecture.md#performance-critical-path) records current behavior; [verification](verification.md#performance-investigation) records the limited measurements.

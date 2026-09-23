@@ -1,5 +1,9 @@
 # Living actor model implementation tracker
 
+## Spatial body integration
+
+Use [SW02/SW04/SW07/SW12](spatial-world.md) for physical anchors, clearance, safe support/flight loss and flight families. Species, controller, mind, speech and body capability remain separate. A bird sprite is not permission to fly; the current native bird profile/routine supplies that behavior. Do not duplicate physical position in an anatomy or animation record.
+
 This is the sole implementation tracker for the living-actor migration. Canonical behavior is defined by [Actor means any living being](../architecture.md#actor-means-any-living-being), the [agent and social-simulation design](../../archive/03-design-proposals/agents-and-social-simulation.md), and [F74](../../archive/01-requirements/product-baseline.md#living-actor-model--f74).
 
 ## Tasks

@@ -4,6 +4,7 @@ Current implemented architecture is defined in [docs/architecture.md](../../docs
 
 | Design owner | Scope |
 | --- | --- |
+| [Spatial world](spatial-world-runtime.md) | Coordinates, physical geometry, navigation, camera and renderer boundary |
 | [World-module runtime](world-module-runtime.md) | Shared host binding, installed composition and subsystem integration |
 | [Context and inference](context-and-inference.md) | Scoped context assembly, routing and execution boundaries |
 | [Agent agency runtime](agent-agency-runtime.md) | Decision encoding, operational goals/plans, admission and continuation; [behavior owner](../../docs/agent-agency.md) |
@@ -12,7 +13,7 @@ Current implemented architecture is defined in [docs/architecture.md](../../docs
 | [Data queries and MCP](data-queries-and-mcp.md) | Bounded query contracts and future scoped tool access |
 | [Data delivery and scale](data-delivery-and-scale.md) | Migration, retention, recovery, deployment and scale design |
 | [Realtime synchronization](realtime-synchronization.md) | Future shared-world command, replication and reconnect model |
-| [Perception and attention](perception-and-attention.md) | Sensory geometry, propagation, detail tiers and sensory evidence |
+| [Perception and attention](perception-and-attention.md) | Sensory propagation, detail tiers and evidence using the spatial query boundary |
 | [Billing and usage reporting](billing-and-usage-reporting.md) | Scoped provider usage and reporting contract |
 | [Macrofold implementation brief](macrofold-implementation-brief.md) | Downstream execution-service requirements |
 

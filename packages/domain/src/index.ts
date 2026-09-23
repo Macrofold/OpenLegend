@@ -41,7 +41,18 @@ export {
   SIMULATION_RULES,
 } from './kernel.js';
 export { admitDeclaration, validateDeclaration, DECLARATION_CONTRACT } from './declarations.js';
-export { distance, findPath, hasLineOfSight, isWalkable, nearbyEntities } from './spatial.js';
+export {
+  distance,
+  distance3D,
+  findPath,
+  hasLineOfSight,
+  hasLineOfEffect,
+  canReachEntity,
+  findApproachPath,
+  isWalkable,
+  nearbyEntities,
+  sameSurfacePoint,
+} from './spatial.js';
 
 export * from './mind.js';
 
@@ -83,3 +94,6 @@ export {
 } from './invention-families.js';
 export { gatheringYield } from './gathering.js';
 export { recordInventionFeedback } from './invention-feedback.js';
+
+export * from './spatial-state.js';
+export * from './spatial-mutations.js';

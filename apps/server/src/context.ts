@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import {
+  canReachEntity,
+  findApproachPath,
+  sameSurfacePoint,
   supportsManualWork,
   inventionFamily,
   SUPPORTED_INVENTION_FAMILIES,
@@ -293,7 +297,13 @@ export function npcCandidates(
         description: `Probe a short distance ${direction}.`,
         command: {
           type: 'move',
-          position: { x: observed.actor.position.x + dx, z: observed.actor.position.z + dz },
+          position:
+            sameSurfacePoint(
+              service.world,
+              observed.actor,
+              observed.actor.position.x + dx,
+              observed.actor.position.z + dz,
+            ) ?? undefined,
         },
       });
     return actions;
@@ -335,7 +345,10 @@ export function npcCandidates(
   for (const entity of observed.visibleEntities) {
     // Target discovery uses only this actor's perception. Terrain is the same public
     // geometry used by native movement, never a search for hidden entities/items.
-    const path = findPath(service.world, observed.actor.position, entity.position);
+    const reach = entity.animal && launcher ? launcher.range : SIMULATION_RULES.interactionRadius;
+    const path = canReachEntity(service.world, observed.actor, entity, reach)
+      ? []
+      : findApproachPath(service.world, observed.actor, entity, reach);
     if (!path) continue;
     if (entity.resource && entity.resource.quantity > 0)
       actions.push({
@@ -369,7 +382,7 @@ export function npcCandidates(
       let previous = observed.actor.position;
       let length = 0;
       for (const point of path) {
-        length += Math.hypot(point.x - previous.x, point.z - previous.z);
+        length += Math.hypot(point.x - previous.x, point.y - previous.y, point.z - previous.z);
         previous = point;
       }
       fires.push({

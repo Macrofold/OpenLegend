@@ -1,5 +1,9 @@
 # Events, perception, and reactions — implementation tracker
 
+## Spatial integration dependencies
+
+Use [SW04/SW08/SW09](spatial-world.md) for geometry, height-aware senses and camera exposure. Retain EPR scope, hysteresis, observer detail, coalescing and privacy gates here. Current coarse intelligible-only sound is not the full auditory-contact contract; do not broaden its exact-word audience to simulate a muffled unidentified sound.
+
 **Status:** proposed work; no item is complete merely because this tracker exists. Implement when requested. [Design](../events-perception-and-reactions.md) owns the contract; [research](../../archive/02-research/engine-perception-and-event-architectures.md) owns external evidence and the pinned source audit.
 
 This tracker owns the new stimulus/perception/reaction integration. PF retains general performance qualification, CR retains cognition/recall behavior, NC retains conversations/story, and SL retains save/load. Cross-reference their work; do not recreate completed actor, Narrator, history, or save systems.

@@ -1,5 +1,9 @@
 # Inventions and world evolution implementation tracker
 
+## Spatial family dependencies
+
+[SW03–SW05 and SW13](spatial-world.md) supply eligible geometry and placement adapters. Existing recipe authoring does not wait for flight, a GLB pipeline or full 3D completion. Keep creator versus actor authority, private invention evidence and actual activation/crafting separate. The first spatial branch installs native demo geometry, not an arbitrary generated-creature or building authoring capability.
+
 This is the sole implementation tracker for declarations, invention, conjuring and world-evolution delivery. The canonical design is [Declarations, reusable mechanisms, and world evolution](../../archive/07-technical-architecture/declarations-and-evolution.md). Product behavior for the creator workflow belongs to the [world-agent and workshop design](../../archive/03-design-proposals/world-agent-and-workshop.md), and ownership policy belongs to [invention governance](../../archive/03-design-proposals/invention-governance-and-ownership.md).
 
 The first attribute family uses declaration admission for bounded definitions and presentation-only revision/removal, with god authority and restore-generation checks. This is a narrow EWF consumer; INV-1–INV-5 workflow, general family composition and natural-language authoring release gates remain open. See [Architecture](../architecture.md#extensible-attribute-foundation).

@@ -106,7 +106,7 @@ test('native wilderness is visible, playable, saved and honestly reports absent 
         'fixture-overlapping-sprites',
         {
           type: 'move',
-          position: { x: 19, z: 13 },
+          position: { y: 0, surfaceId: 'terrain', x: 19, z: 13 },
         },
         'ada',
       ).ok,

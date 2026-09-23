@@ -1,93 +1,154 @@
+import { isDraft } from 'immer';
+import {
+  BODY_PROFILES,
+  canStand,
+  clearSegment,
+  distance3D,
+  findSurfaceRoute,
+  resolveSupport,
+  supportSurfaces,
+  surfaceById,
+  surfaceContains,
+  surfaceHeight,
+  type BodyProfile,
+  type SurfacePoint,
+} from '@open-legend/spatial';
+import { bodyProfile, spatialMap, supportedPosition } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
-import { current as snapshot, isDraft } from 'immer';
 
-export function distance(a: Position, b: Position): number {
-  return Math.hypot(a.x - b.x, a.z - b.z);
-}
-export function isWalkable(world: WorldState, position: Position): boolean {
-  if (
-    !Number.isFinite(position.x) ||
-    !Number.isFinite(position.z) ||
-    position.x < 0 ||
-    position.z < 0 ||
-    position.x > world.map.width - 1 ||
-    position.z > world.map.height - 1
-  )
-    return false;
-  const tile = world.map.tiles[Math.round(position.z)]?.[Math.round(position.x)];
-  return tile === 'grass' || tile === 'sand';
+/** Existing callers now measure real 3D separation; new code should prefer the explicit name. */
+export const distance = distance3D;
+export { distance3D };
+export function isWalkable(
+  world: WorldState,
+  position: Position,
+  surfaceId?: string,
+  profile: BodyProfile = BODY_PROFILES.person,
+): boolean {
+  const map = spatialMap(world),
+    p = resolveSupport(map, position, surfaceId);
+  return !!p && canStand(map, p, profile);
 }
 export function hasLineOfSight(world: WorldState, from: Position, to: Position): boolean {
-  const steps = Math.max(1, Math.ceil(distance(from, to) * 3));
-  for (let i = 1; i < steps; i++) {
-    const x = Math.round(from.x + ((to.x - from.x) * i) / steps);
-    const z = Math.round(from.z + ((to.z - from.z) * i) / steps);
-    if (world.map.tiles[z]?.[x] === 'rock') return false;
-  }
-  return true;
+  return clearSegment(spatialMap(world), from, to);
 }
-/** Bounded breadth-first grid navigation. null means unreachable; [] means already there. */
-export function findPath(world: WorldState, from: Position, to: Position): Position[] | null {
-  if (!isWalkable(world, from) || !isWalkable(world, to)) return null;
-  const map = isDraft(world.map) ? snapshot(world.map) : world.map;
-  let walkable = navigation.get(map);
-  const width = map.width,
-    size = width * map.height;
-  if (!walkable) {
-    walkable = new Uint8Array(size);
-    for (let z = 0; z < map.height; z++)
-      for (let x = 0; x < width; x++) {
-        const tile = map.tiles[z]?.[x];
-        walkable[z * width + x] = tile === 'grass' || tile === 'sand' ? 1 : 0;
+export function interactionAnchor(entity: Entity, position: Position = entity.position): Position {
+  return { x: position.x, y: position.y + bodyProfile(entity).interactionHeight, z: position.z };
+}
+export function hasLineOfEffect(
+  world: WorldState,
+  actor: Entity,
+  target: Entity,
+  origin: Position = actor.position,
+): boolean {
+  return clearSegment(
+    spatialMap(world),
+    interactionAnchor(actor, origin),
+    interactionAnchor(target),
+  );
+}
+export function canReachEntity(
+  world: WorldState,
+  actor: Entity,
+  target: Entity,
+  reach: number,
+  origin: Position = actor.position,
+): boolean {
+  return (
+    distance3D(interactionAnchor(actor, origin), interactionAnchor(target)) <= reach &&
+    hasLineOfEffect(world, actor, target, origin)
+  );
+}
+/** Strict endpoint projection: Y selects a real height, explicit surface IDs disambiguate seams. */
+export function findPath(
+  world: WorldState,
+  from: Position,
+  to: Position,
+  fromSurfaceId?: string,
+  toSurfaceId?: string,
+  profile: BodyProfile = BODY_PROFILES.person,
+): SurfacePoint[] | null {
+  const map = spatialMap(world);
+  const start = resolveSupport(map, from, fromSurfaceId),
+    destination = resolveSupport(map, to, toSurfaceId);
+  if (!start || !destination) return null;
+  const result = findSurfaceRoute(map, start, destination, profile);
+  return result.status === 'reached' ? result.path : null;
+}
+/** Try a bounded set of actual interaction stances. A flying target's center is not a
+ * ground destination, and a nearby point under a deck is not a reachable upper-floor stance. */
+export function findApproachPath(
+  world: WorldState,
+  actor: Entity,
+  target: Entity,
+  reach: number,
+): SurfacePoint[] | null {
+  const start = supportedPosition(actor);
+  if (!start) return null;
+  const map = spatialMap(world),
+    profile = bodyProfile(actor);
+  const candidates: SurfacePoint[] = [];
+  const targetSupport = supportedPosition(target);
+  if (
+    targetSupport &&
+    canStand(map, targetSupport, profile) &&
+    canReachEntity(world, actor, target, reach, targetSupport)
+  )
+    candidates.push(targetSupport);
+  const radius = Math.min(12, Math.max(1, reach));
+  for (const surface of supportSurfaces(map)) {
+    for (
+      let z = Math.max(Math.ceil(surface.minZ), Math.ceil(target.position.z - radius));
+      z <= Math.min(Math.floor(surface.maxZ), Math.floor(target.position.z + radius));
+      z++
+    ) {
+      for (
+        let x = Math.max(Math.ceil(surface.minX), Math.ceil(target.position.x - radius));
+        x <= Math.min(Math.floor(surface.maxX), Math.floor(target.position.x + radius));
+        x++
+      ) {
+        const p = { x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id };
+        if (canReachEntity(world, actor, target, reach, p) && canStand(map, p, profile))
+          candidates.push(p);
       }
-    navigation.set(map, walkable);
+    }
   }
-  const start = Math.round(from.z) * width + Math.round(from.x);
-  const goal = Math.round(to.z) * width + Math.round(to.x);
-  const queue = new Int32Array(size),
-    parents = new Int32Array(size).fill(-1);
-  queue[0] = start;
-  parents[start] = start;
-  let tail = 1;
-  for (let index = 0; index < tail; index++) {
-    const current = queue[index]!;
-    if (current === goal) {
-      const path: Position[] = [];
-      for (let step = current; step !== start; step = parents[step]!) {
-        path.push({ x: step % width, z: Math.floor(step / width) });
-      }
-      path.reverse();
-      // The last point retains the requested sub-tile position.
-      if (path.length) path[path.length - 1] = { ...to };
-      else if (distance(from, to) > 0.01) path.push({ ...to });
-      return path;
-    }
-    // Keep north/east/south/west tie-breaking identical to native navigation.
-    for (const next of [
-      current - width,
-      current % width < width - 1 ? current + 1 : -1,
-      current + width,
-      current % width > 0 ? current - 1 : -1,
-    ]) {
-      if (next >= 0 && next < size && walkable[next] && parents[next] === -1) {
-        parents[next] = current;
-        queue[tail++] = next;
-      }
-    }
+  candidates.sort(
+    (a, b) =>
+      distance3D(start, a) - distance3D(start, b) ||
+      a.surfaceId.localeCompare(b.surfaceId) ||
+      a.z - b.z ||
+      a.x - b.x,
+  );
+  for (const candidate of candidates.slice(0, 12)) {
+    const route = findSurfaceRoute(map, start, candidate, profile);
+    if (route.status === 'reached') return route.path;
   }
   return null;
 }
+/** Project a short voluntary movement only onto its existing support, not the floor below. */
+export function sameSurfacePoint(
+  world: WorldState,
+  actor: Entity,
+  x: number,
+  z: number,
+): SurfacePoint | null {
+  const map = spatialMap(world),
+    surface = surfaceById(map, actor.spatial.supportSurfaceId ?? '');
+  if (!surface || !surfaceContains(surface, { x, z })) return null;
+  return { x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id };
+}
 
-const navigation = new WeakMap<WorldState['map'], Uint8Array>();
-
-/** Ephemeral candidate index; callers rebuild after movement, then apply exact visibility rules. */
+/** Ephemeral 3D point index for observed entity anchors. Exact body/geometry checks follow it.
+ * Large static solids use the separate complete, bounded geometry provider, not this index. */
 export function spatialCandidates<T extends { position: Position }>(entities: T[], cellSize = 28) {
   const cells = new Map<string, { entity: T; order: number }[]>();
   entities.forEach((entity, order) => {
-    const key = `${Math.floor(entity.position.x / cellSize)},${Math.floor(entity.position.z / cellSize)}`;
-    let cell = cells.get(key);
-    if (!cell) cells.set(key, (cell = []));
+    const p = entity.position,
+      key = `${Math.floor(p.x / cellSize)},${Math.floor(p.y / cellSize)},${Math.floor(p.z / cellSize)}`;
+    const cell = cells.get(key) ?? [];
     cell.push({ entity, order });
+    cells.set(key, cell);
   });
   return (position: Position, radius: number): T[] => {
     const found: { entity: T; order: number }[] = [];
@@ -97,21 +158,23 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
       x++
     )
       for (
-        let z = Math.floor((position.z - radius) / cellSize);
-        z <= Math.floor((position.z + radius) / cellSize);
-        z++
+        let y = Math.floor((position.y - radius) / cellSize);
+        y <= Math.floor((position.y + radius) / cellSize);
+        y++
       )
-        found.push(...(cells.get(`${x},${z}`) ?? []));
-    // Keep the original event/observer order, including RNG-independent audience ordering.
+        for (
+          let z = Math.floor((position.z - radius) / cellSize);
+          z <= Math.floor((position.z + radius) / cellSize);
+          z++
+        )
+          found.push(...(cells.get(`${x},${y},${z}`) ?? []));
     return found.sort((a, b) => a.order - b.order).map(({ entity }) => entity);
   };
 }
-
 const entityIndexes = new WeakMap<
   WorldState['entities'],
   ReturnType<typeof spatialCandidates<Entity>>
 >();
-/** Immutable snapshots share one index; mutable domain drafts must rebuild after movement. */
 export function nearbyEntities(world: WorldState, position: Position, radius: number): Entity[] {
   let index = isDraft(world.entities) ? undefined : entityIndexes.get(world.entities);
   if (!index) {

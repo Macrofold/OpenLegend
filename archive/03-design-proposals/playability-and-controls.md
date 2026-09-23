@@ -1,5 +1,9 @@
 # Playability, action discovery and controls
 
+## Tactical camera controls
+
+[Spatial world](../../docs/spatial-world.md#tactical-camera-and-perspective) owns orbit, pitch, pan, zoom, recenter, projection and level focus. The current controls use drag for pan, Shift-drag for orbit/tilt, wheel zoom, and visible View controls. Focused-canvas arrows, Page Up/Down, P and Home avoid existing panel shortcuts. Gestures resolve before actions; a drag release cannot walk. Touch users can pan and use visible rotation/tilt/level buttons; richer pinch gestures remain optional.
+
 Status: **accepted product direction from the user's interface follow-up; proposed contracts and implementation sequence**. This document records requested behavior. The prototype now implements the finite native/learned action catalogue, compact text search, contextual one-second action tooltips and the saved Show Unavailable Actions preference. The September 20 React design system adds three saved quick slots, larger tabbed world-agent conversations, Look closer and character traits. Full key remapping, ranking, full logs and the invention workshop remain proposed. Ranking weights remain tuning proposals. See [implemented architecture](../../docs/architecture.md) for current behavior and [world/player experience](world-and-player-experience.md) for the broader spatial interaction design.
 
 ## Status feedback above characters and objects

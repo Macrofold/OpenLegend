@@ -1,5 +1,9 @@
 # Agent agency runtime contract
 
+## Spatial route integration
+
+Use the [single spatial runtime](spatial-world-runtime.md) for destinations, route proposals and current geometry checks. Native plan following remains zero-call; Jev selection still translates to the same action admission. A future spatial-data preparation condition is technical, not evidence that a route is physically impossible; SW06 owns any CPU-worker mechanism. Do not add an agency-specific navigator, action executor or second position store.
+
 **Status:** proposed implementation contract for the [agent agency specification](../../docs/agent-agency.md). This document owns wire-to-domain translation, operational storage, admission, execution and continuation semantics. It does not own mechanical definition validation, memory retention or conversation membership. Implementation tasks and acceptance criteria belong to the [agency tracker](../../docs/maintainers/agent-agency.md), with level-1 action selection owned by [CR02/CR12](../../docs/maintainers/cognition-redesign.md#cr02--semantic-levels-and-immediate-speech).
 
 ## 1. Fit the existing authority boundary

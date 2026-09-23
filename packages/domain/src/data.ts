@@ -1,4 +1,9 @@
 import {
+  starterSpatialLayout,
+  starterFlightRoutes,
+  validateSpatialWorld,
+} from './spatial-state.js';
+import {
   validateInventionAttribution,
   type WorldCreationAccounts,
 } from './invention-attribution.js';
@@ -197,7 +202,7 @@ export function createWorld(
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
-    schemaVersion: 8,
+    schemaVersion: 9,
     authorship: {
       creatorAccountIds: [...accounts.creatorAccountIds],
       playerAccountIds: { [PLAYER_ID]: accounts.playerAccountId },
@@ -213,7 +218,8 @@ export function createWorld(
     simTime: 0,
     paused: false,
     profile: { id: 'grounded-wilderness', version: 1 },
-    map: { width: 28, height: 24, tiles: [] },
+    map: { width: 28, height: 24, tiles: [], spatial: starterSpatialLayout(28, 24) },
+    flightRoutes: starterFlightRoutes(),
     entities: {},
     items: {},
     itemDefinitions: structuredClone(NATIVE_ITEMS),
@@ -247,74 +253,84 @@ export function createWorld(
   }
   const entities: Entity[] = [
     {
+      spatial: { bodyProfileId: 'person', supportSurfaceId: 'terrain', heading: 0 },
       id: PLAYER_ID,
       name: 'Mike',
       kind: 'player',
-      position: { x: 11, z: 13 },
+      position: { y: 0, x: 11, z: 13 },
       actor: createActor(world, 'player', 76),
     },
     {
+      spatial: { bodyProfileId: 'person', supportSurfaceId: 'terrain', heading: 0 },
       id: NPC_ID,
       name: 'Ada',
       kind: 'npc',
-      position: { x: 13, z: 12 },
+      position: { y: 0, x: 13, z: 12 },
       actor: createActor(world, 'npc', 66),
     },
     {
+      spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
       id: 'campfire',
       name: 'Banked campfire',
       kind: 'campfire',
-      position: { x: 11, z: 10 },
+      position: { y: 0, x: 11, z: 10 },
       heat: { lit: true, fuelSeconds: 172800 },
     },
     {
+      spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
       id: 'reeds',
       name: 'River reeds',
       kind: 'resource',
-      position: { x: 5, z: 11 },
+      position: { y: 0, x: 5, z: 11 },
       resource: { definitionId: 'raw_fiber', quantity: 48, workSeconds: 36 },
     },
     {
+      spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
       id: 'reeds-east',
       name: 'Dry grass fibers',
       kind: 'resource',
-      position: { x: 19, z: 12 },
+      position: { y: 0, x: 19, z: 12 },
       resource: { definitionId: 'raw_fiber', quantity: 30, workSeconds: 36 },
     },
     {
+      spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
       id: 'branches',
       name: 'Fallen branches',
       kind: 'resource',
-      position: { x: 8, z: 8 },
+      position: { y: 0, x: 8, z: 8 },
       resource: { definitionId: 'wood', quantity: 36, workSeconds: 42 },
     },
     {
+      spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
       id: 'stones',
       name: 'River stones',
       kind: 'resource',
-      position: { x: 5, z: 15 },
+      position: { y: 0, x: 5, z: 15 },
       resource: { definitionId: 'stone', quantity: 60, workSeconds: 24 },
     },
     {
+      spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
       id: 'berries-west',
       name: 'Berry bush',
       kind: 'resource',
-      position: { x: 8, z: 13 },
+      position: { y: 0, x: 8, z: 13 },
       resource: { definitionId: 'berries', quantity: 36, workSeconds: 30 },
     },
     {
+      spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
       id: 'berries-east',
       name: 'Berry thicket',
       kind: 'resource',
-      position: { x: 19, z: 15 },
+      position: { y: 0, x: 19, z: 15 },
       resource: { definitionId: 'berries', quantity: 30, workSeconds: 30 },
     },
     {
+      spatial: { bodyProfileId: 'hare', supportSurfaceId: 'terrain', heading: 0 },
       id: 'hare-1',
       name: 'Hare',
       kind: 'animal',
       actor: nativeActor('hare', world.simTime),
-      position: { x: 16, z: 13 },
+      position: { y: 0, x: 16, z: 13 },
       animal: {
         fleeFrom: null,
         fleeSeconds: 0,
@@ -322,11 +338,12 @@ export function createWorld(
       },
     },
     {
+      spatial: { bodyProfileId: 'hare', supportSurfaceId: 'terrain', heading: 0 },
       id: 'hare-2',
       name: 'Hare',
       kind: 'animal',
       actor: nativeActor('hare', world.simTime),
-      position: { x: 21, z: 11 },
+      position: { y: 0, x: 21, z: 11 },
       animal: {
         fleeFrom: null,
         fleeSeconds: 0,
@@ -334,16 +351,40 @@ export function createWorld(
       },
     },
     {
+      spatial: { bodyProfileId: 'deer', supportSurfaceId: 'terrain', heading: 0 },
       id: 'deer-1',
       name: 'Deer',
       kind: 'animal',
       actor: nativeActor('deer', world.simTime),
-      position: { x: 21, z: 19 },
+      position: { y: 0, x: 21, z: 19 },
       animal: {
         fleeFrom: null,
         fleeSeconds: 0,
         wanderSeconds: 200,
       },
+    },
+    {
+      id: 'lookout-cache',
+      name: 'Lookout supply crate',
+      kind: 'resource',
+      position: { x: 20, y: 3, z: 5.5 },
+      spatial: { bodyProfileId: 'object', supportSurfaceId: 'lookout-deck', heading: 0 },
+      appearance: 'crate-mesh',
+      resource: { definitionId: 'wood', quantity: 24, workSeconds: 42 },
+    },
+    {
+      id: 'bird-1',
+      name: 'Woodland bird',
+      kind: 'animal',
+      position: { x: 22, y: 3, z: 5.5 },
+      spatial: {
+        bodyProfileId: 'bird',
+        supportSurfaceId: 'lookout-deck',
+        heading: 0,
+        flight: { routeId: 'clearing-bird-loop', next: 1, waitSeconds: 180 },
+      },
+      actor: nativeActor('bird', world.simTime),
+      animal: { fleeFrom: null, fleeSeconds: 0, wanderSeconds: 0 },
     },
   ];
   for (const entity of entities) world.entities[entity.id] = entity;
@@ -370,6 +411,7 @@ export function createWorld(
   initializeIdentity(world);
   validateInventionAttribution(world);
   migrateCognition(world);
+  validateSpatialWorld(world);
   return world;
 }
 

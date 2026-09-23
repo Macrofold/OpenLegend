@@ -1,5 +1,7 @@
 /** Public wire contract. Never expose the authoritative world or another actor's memory. */
-export type Position = Readonly<{ x: number; z: number }>;
+import type { WorldPoint, SurfacePoint, SpatialLayout } from '@open-legend/spatial';
+export type Position = Readonly<WorldPoint>;
+export type { SurfacePoint, SpatialLayout };
 
 /** Deliberately smaller than the domain command: the server supplies actor/authority. */
 export interface CommandInput {
@@ -27,7 +29,7 @@ export interface CommandInput {
   recipeId?: string;
   attributeId?: string;
   ammunitionId?: string;
-  position?: Position;
+  position?: SurfacePoint;
   quantity?: number;
   preparation?: 'fiber' | 'cord';
 }
@@ -60,7 +62,7 @@ export interface CatalogueAction {
 
 export interface ActionContext {
   targetId?: string;
-  position?: Position;
+  position?: SurfacePoint;
 }
 
 export interface ActionCatalogue {
@@ -87,6 +89,9 @@ export interface EntityView {
   name: string;
   subtype: string;
   position: Position;
+  supportSurfaceId: string | null;
+  heading: number;
+  appearance: 'sprite' | 'crate-mesh';
   radius: number;
   status: string;
   description?: string;
@@ -96,7 +101,7 @@ export interface EntityView {
   speechCapable?: boolean;
   health?: number;
   bodyRevision?: number;
-  species?: 'human' | 'hare' | 'deer' | 'construct';
+  species?: 'human' | 'hare' | 'deer' | 'construct' | 'bird';
   quantity?: number;
   actions: ActionOption[];
 }
@@ -170,7 +175,7 @@ export interface GameView {
     traits: Array<{ id: string; name: string; description: string }>;
     spawnOptions: Array<{ id: string; label: string }>;
   };
-  schemaVersion: 1;
+  schemaVersion: 2;
   revision: number;
   worldId: string;
   profile: PlayerProfile;
@@ -180,8 +185,9 @@ export interface GameView {
     width: number;
     height: number;
     seed: number;
+    spatial: SpatialLayout;
     tiles: Array<Array<'grass' | 'sand' | 'water' | 'rock'>>;
-    obstacles: Array<{ x: number; z: number; radius: number; kind: string }>;
+    obstacles: Array<{ y: number; x: number; z: number; radius: number; kind: string }>;
   };
   clock: {
     seconds: number;
@@ -196,6 +202,8 @@ export interface GameView {
     id: string;
     name: string;
     position: Position;
+    supportSurfaceId: string | null;
+    heading: number;
     /** Permitted applicable values, never a raw module state dump. */
     attributes: AttributeView[];
     /** Default-world convenience values; generic presentation uses attributes. */
@@ -253,7 +261,7 @@ export interface GamePatch {
   commandEpoch?: string;
   historyRevision?: string;
   historyEpoch?: string;
-  schemaVersion: 1;
+  schemaVersion: 2;
   baseRevision: number;
   revision: number;
   narrator?: GameView['narrator'];

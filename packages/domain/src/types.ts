@@ -1,15 +1,9 @@
 import type { ActorMind } from './mind.js';
+import type { SurfacePoint, SpatialMap, WorldPoint } from '@open-legend/spatial';
 /** All authoritative state is JSON data. The kernel owns no I/O or ambient clock. */
-export interface Position {
-  x: number;
-  z: number;
-}
+export type Position = WorldPoint;
 export type Terrain = 'grass' | 'sand' | 'water' | 'rock';
-export interface WorldMap {
-  width: number;
-  height: number;
-  tiles: Terrain[][];
-}
+export interface WorldMap extends SpatialMap {}
 export type MaterialProperty =
   | 'fiber'
   | 'binding'
@@ -106,8 +100,8 @@ export interface Action {
   type: ActionType;
   stage: 'approaching' | 'working';
   targetId?: string;
-  destination?: Position;
-  path: Position[];
+  destination?: SurfacePoint;
+  path: SurfacePoint[];
   remainingSeconds: number;
   totalSeconds: number;
   attributeId?: string;
@@ -143,7 +137,7 @@ export interface ActorComponent {
   agency: import('./agency.js').ActorAgency;
   rest?: import('./sleep.js').RestState;
   controller: 'player' | 'npc' | 'native';
-  species?: 'human' | 'hare' | 'deer' | 'construct';
+  species?: 'human' | 'hare' | 'deer' | 'construct' | 'bird';
   body?: import('./living.js').LivingBody;
   capabilities?: {
     cognition: boolean;
@@ -193,6 +187,9 @@ export interface Entity {
   name: string;
   kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains';
   position: Position;
+  /** Appearance is never a source of body dimensions or movement capability. */
+  appearance?: 'sprite' | 'crate-mesh';
+  spatial: import('./spatial-state.js').EntitySpatial;
   actor?: ActorComponent;
   replenisher?: { attributeId: string; remaining: number };
   animal?: AnimalComponent;
@@ -226,6 +223,8 @@ export interface KnowledgeRecord {
 }
 export interface WorldEvent {
   scope?: 'external' | 'private';
+  /** Committed occurrence origin, never recomputed from a source's later position. */
+  origin?: Position;
   order?: number;
   conversationId?: string;
   id: string;
@@ -268,7 +267,7 @@ export interface WorldState {
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   id: string;
   seed: number;
   rngState: number;
@@ -277,6 +276,7 @@ export interface WorldState {
   paused: boolean;
   profile: { id: 'grounded-wilderness'; version: 1 };
   map: WorldMap;
+  flightRoutes: Record<string, import('./spatial-state.js').FlightRoute>;
   entities: Record<string, Entity>;
   items: Record<string, ItemInstance>;
   itemDefinitions: Record<string, ItemDefinition>;
@@ -312,7 +312,7 @@ export type Command = Envelope &
         conversationId: string;
         generation: number;
       }
-    | { type: 'move'; destination: Position }
+    | { type: 'move'; destination: SurfacePoint }
     | { type: 'gather' | 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }
     | { type: 'craft'; recipeId: string }
@@ -369,7 +369,7 @@ export interface GodPersonEditorDraft {
 
 export interface GodSpawnDraft {
   type: GodSpawnType;
-  position: Position;
+  position: SurfacePoint;
   person?: GodPersonDraft;
 }
 

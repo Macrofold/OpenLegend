@@ -1,5 +1,9 @@
 # Open Legend — research and planning archive
 
+## Spatial-world research and delivery
+
+[3D-world research](02-research/three-dimensional-worlds-and-navigation.md) and the [historical code review](02-research/spatial-world-repository-review.md) support the [spatial behavior owner](../docs/spatial-world.md), [runtime contract](07-technical-architecture/spatial-world-runtime.md) and [SW tracker](../docs/maintainers/spatial-world.md). Current delivered limits belong to [Architecture](../docs/architecture.md#spatial-world-foundation), not the original research snapshot.
+
 Created September 18, 2026 (America/New_York); web research continued into September 19 UTC. Updated for wilderness, native survival, accelerated time, Macrofold/memory, and the accepted PlayCanvas/custom-simulation and grounded pixel-art direction. This archive began as documentation-only planning. The prototype now exists; [implementation status](05-project/implementation-status.md) owns delivery evidence. Proposed systems and dated research are not live acceptance.
 
 Open Legend is a shared world of embodied people and autonomous residents whose needs, memories, emotions, and relationships shape their lives—and whose available interactions can grow through play.

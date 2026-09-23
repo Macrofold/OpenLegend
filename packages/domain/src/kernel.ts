@@ -1,4 +1,7 @@
 import { gatheringYield, BASE_GATHER_QUANTITY } from './gathering.js';
+import { canWalkSegment, finitePoint, interpolate, type SurfacePoint } from '@open-legend/spatial';
+import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
+import { advanceFlight } from './flight.js';
 import {
   withdrawAttempt,
   replaceGoals,
@@ -46,7 +49,16 @@ import {
   directProbe,
   PERCEPTION_RULES,
 } from './perception.js';
-import { distance, findPath, hasLineOfSight, isWalkable } from './spatial.js';
+import {
+  distance,
+  findPath,
+  hasLineOfSight,
+  hasLineOfEffect,
+  canReachEntity,
+  findApproachPath,
+  sameSurfacePoint,
+  isWalkable,
+} from './spatial.js';
 import type {
   ActorComponent,
   Action,
@@ -111,13 +123,8 @@ function takeItem(world: WorldState, actorId: string, itemId: string): ItemInsta
 function validId(value: unknown): value is string {
   return isSafeRecordId(value);
 }
-function validPosition(value: unknown): value is Position {
-  return (
-    !!value &&
-    typeof value === 'object' &&
-    Number.isFinite((value as Position).x) &&
-    Number.isFinite((value as Position).z)
-  );
+function validPosition(value: unknown): value is SurfacePoint {
+  return finitePoint(value) && isSafeRecordId((value as SurfacePoint).surfaceId);
 }
 function visible(world: WorldState, actor: Entity, target: Entity): boolean {
   return seesEntity(world, actor, target);
@@ -167,20 +174,58 @@ function targetPosition(world: WorldState, action: Action): Position | undefined
     ? action.destination
     : world.entities[action.targetId ?? action.heatId ?? '']?.position;
 }
-function approach(world: WorldState, actor: Entity, action: Action): Outcome | null {
+function actionTarget(world: WorldState, action: Action): Entity | undefined {
+  return world.entities[action.targetId ?? action.heatId ?? ''];
+}
+function actionInReach(
+  world: WorldState,
+  actor: Entity,
+  action: Action,
+  origin = actor.position,
+): boolean {
+  if (action.type === 'move')
+    return (
+      !!action.destination &&
+      actor.spatial.supportSurfaceId === action.destination.surfaceId &&
+      distance(origin, action.destination) <= 0.015
+    );
+  const target = actionTarget(world, action);
+  return !!target && canReachEntity(world, actor, target, actionReach(world, action), origin);
+}
+function approachPath(world: WorldState, actor: Entity, action: Action): SurfacePoint[] | null {
+  if (!supportedPosition(actor)) return null;
   const destination = targetPosition(world, action);
-  if (!destination) return outcome(false, 'missing-target', 'That target no longer exists.');
-  const reach = action.type === 'move' ? 0.05 : actionReach(world, action);
-  if (
-    distance(actor.position, destination) <= reach &&
-    hasLineOfSight(world, actor.position, destination)
-  )
-    return null;
-  const path =
-    visionRadius(world, actor) === 0
-      ? directProbe(world, actor.position, destination)
-      : findPath(world, actor.position, destination);
-  if (!path) return outcome(false, 'unreachable', 'There is no walkable route to that target.');
+  if (!destination) return null;
+  if (visionRadius(world, actor) === 0)
+    return directProbe(
+      world,
+      actor.position,
+      destination,
+      actor.spatial.supportSurfaceId!,
+      action.type === 'move'
+        ? action.destination!.surfaceId
+        : (actionTarget(world, action)?.spatial.supportSurfaceId ?? undefined),
+    );
+  return action.type === 'move'
+    ? findPath(
+        world,
+        actor.position,
+        action.destination!,
+        actor.spatial.supportSurfaceId!,
+        action.destination!.surfaceId,
+        bodyProfile(actor),
+      )
+    : actionTarget(world, action)
+      ? findApproachPath(world, actor, actionTarget(world, action)!, actionReach(world, action))
+      : null;
+}
+function approach(world: WorldState, actor: Entity, action: Action): Outcome | null {
+  if (!targetPosition(world, action))
+    return outcome(false, 'missing-target', 'That target no longer exists.');
+  if (actionInReach(world, actor, action)) return null;
+  const path = approachPath(world, actor, action);
+  if (!path)
+    return outcome(false, 'unreachable', 'No supported route to a reachable stance was found.');
   action.stage = 'approaching';
   action.path = path;
   return null;
@@ -286,6 +331,14 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       'unsupported-body',
       'This native manual-work family requires a supported biped body.',
     );
+  if (
+    source.spatial.supportSurfaceId === null &&
+    !['say', 'teach', 'goal', 'cancel'].includes(command.type)
+  )
+    return reject(
+      'unsupported-airborne-action',
+      'This native action requires a supported ground stance.',
+    );
   const world = draftWorld(original);
   const actor = world.entities[command.actorId]!;
   const component = actor.actor!;
@@ -315,7 +368,10 @@ export function executeCommand(original: WorldState, command: Command): Transiti
           'unsupported-navigation',
           'Only a short direct probe is supported without vision.',
         );
-      if (!validPosition(command.destination) || !isWalkable(world, command.destination))
+      if (
+        !validPosition(command.destination) ||
+        !isWalkable(world, command.destination, command.destination.surfaceId, bodyProfile(actor))
+      )
         return reject('blocked', 'Choose walkable ground.');
       action = createAction(world, 'move', 0);
       action.destination = { ...command.destination };
@@ -475,7 +531,9 @@ export function executeCommand(original: WorldState, command: Command): Transiti
           'cannot-recover',
           'Camp recovery is available when health or food is critically low.',
         );
-      actor.position = { x: 11, z: 13 };
+      setSpatialPosition(actor, { x: 11, y: 0, z: 13 }, 'terrain');
+      delete actor.spatial.flight;
+      delete actor.spatial.fallVelocity;
       component.health = Math.max(component.health, 65);
       if (hasWildernessNeeds(component)) {
         setWildernessNeed(component, 'fullness', Math.max(component.fullness, 45));
@@ -614,7 +672,10 @@ function completeAction(
   let outputItemId: string | undefined;
   switch (action.type) {
     case 'move':
-      if (action.destination) actor.position = { ...action.destination };
+      if (!action.destination || !actionInReach(world, actor, action)) {
+        failAction(world, actor, events, 'the destination was not reached.');
+        return;
+      }
       emit(
         world,
         events,
@@ -713,10 +774,7 @@ function completeAction(
         failAction(world, actor, events, 'compatible ammunition is no longer available.');
         return;
       }
-      if (
-        distance(actor.position, target.position) > launcher.range ||
-        !hasLineOfSight(world, actor.position, target.position)
-      ) {
+      if (!canReachEntity(world, actor, target, launcher.range)) {
         failAction(world, actor, events, 'the animal moved out of range.');
         return;
       }
@@ -798,21 +856,30 @@ function completeAction(
   component.action = null;
 }
 
-function moveAlongPath(actor: Entity, path: Position[], distanceBudget: number): void {
+function moveAlongPath(
+  world: WorldState,
+  actor: Entity,
+  path: SurfacePoint[],
+  distanceBudget: number,
+): boolean {
   let remaining = distanceBudget;
+  const map = spatialMap(world),
+    profile = bodyProfile(actor);
   while (path.length && remaining > 0) {
-    const point = path[0]!;
-    const delta = distance(actor.position, point);
+    const point = path[0]!,
+      start = supportedPosition(actor);
+    if (!start || !canWalkSegment(map, start, point, profile)) return false;
+    const delta = distance(start, point);
     if (delta <= remaining) {
-      actor.position = { ...point };
+      setSpatialPosition(actor, point, point.surfaceId);
       path.shift();
       remaining -= delta;
     } else {
-      actor.position.x += ((point.x - actor.position.x) * remaining) / delta;
-      actor.position.z += ((point.z - actor.position.z) * remaining) / delta;
+      setSpatialPosition(actor, interpolate(start, point, remaining / delta), start.surfaceId);
       remaining = 0;
     }
   }
+  return true;
 }
 function advanceAction(
   world: WorldState,
@@ -832,30 +899,39 @@ function advanceAction(
       failAction(world, actor, events, 'the animal is no longer alive.');
       return;
     }
-    const reach = action.type === 'move' ? 0.05 : actionReach(world, action);
-    if (
-      distance(actor.position, destination) > reach ||
-      !hasLineOfSight(world, actor.position, destination)
-    ) {
-      const last = action.path[action.path.length - 1];
-      if (!last || distance(last, destination) > 0.6) {
-        const path =
-          visionRadius(world, actor) === 0
-            ? directProbe(world, actor.position, destination)
-            : findPath(world, actor.position, destination);
+    if (!actionInReach(world, actor, action)) {
+      const last = action.path.at(-1);
+      const endpointUseful =
+        last &&
+        (action.type === 'move'
+          ? last.surfaceId === action.destination!.surfaceId &&
+            distance(last, action.destination!) <= 0.015
+          : canReachEntity(
+              world,
+              actor,
+              actionTarget(world, action)!,
+              actionReach(world, action),
+              last,
+            ));
+      if (!endpointUseful) {
+        const path = approachPath(world, actor, action);
         if (!path) {
-          failAction(world, actor, events, 'the route became blocked.');
+          failAction(world, actor, events, 'no supported route remains.');
           return;
         }
         action.path = path;
       }
-      moveAlongPath(
-        actor,
-        action.path,
-        SIMULATION_RULES.movementTilesPerSecond *
-          seconds *
-          (1 - (actor.actor?.body?.conditions.injury ?? 0) / 200),
-      );
+      if (
+        !moveAlongPath(
+          world,
+          actor,
+          action.path,
+          SIMULATION_RULES.movementTilesPerSecond *
+            seconds *
+            (1 - (actor.actor?.body?.conditions.injury ?? 0) / 200),
+        )
+      )
+        failAction(world, actor, events, 'the route became physically blocked.');
       return;
     }
     if (action.type === 'move') {
@@ -867,6 +943,10 @@ function advanceAction(
       failAction(world, actor, events, error.message);
       return;
     }
+  }
+  if (['gather', 'harvest', 'cook'].includes(action.type) && !actionInReach(world, actor, action)) {
+    failAction(world, actor, events, 'the target moved out of reach.');
+    return;
   }
   if (action.type === 'replenish') {
     const definition = attributeDefinition(world, action.attributeId ?? '');
@@ -881,7 +961,7 @@ function advanceAction(
       target.replenisher.attributeId !== definition.id ||
       distance(actor.position, target.position) > SIMULATION_RULES.interactionRadius ||
       target.replenisher.remaining <= 0 ||
-      !hasLineOfSight(world, actor.position, target.position)
+      !hasLineOfEffect(world, actor, target)
     ) {
       failAction(
         world,
@@ -914,7 +994,14 @@ function advanceAction(
 }
 function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void {
   const animal = entity.animal;
-  if (!animal || !entity.actor?.alive || entity.actor.action) return;
+  if (
+    !animal ||
+    !entity.actor?.alive ||
+    entity.actor.action ||
+    entity.spatial.flight ||
+    entity.spatial.fallVelocity !== undefined
+  )
+    return;
   if (animal.fleeSeconds > 0 && animal.fleeFrom) {
     animal.fleeSeconds = Math.max(0, animal.fleeSeconds - seconds);
     let dx = entity.position.x - animal.fleeFrom.x;
@@ -923,11 +1010,12 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
     dx /= length;
     dz /= length;
     for (const vector of [
-      { x: dx, z: dz },
-      { x: -dz, z: dx },
-      { x: dz, z: -dx },
+      { y: 0, x: dx, z: dz },
+      { y: 0, x: -dz, z: dx },
+      { y: 0, x: dz, z: -dx },
     ]) {
       const destination = {
+        y: 0,
         x:
           entity.position.x +
           vector.x *
@@ -941,8 +1029,10 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
             seconds *
             (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200),
       };
-      if (isWalkable(world, destination)) {
-        entity.position = destination;
+      const point = sameSurfacePoint(world, entity, destination.x, destination.z),
+        start = supportedPosition(entity);
+      if (point && start && canWalkSegment(spatialMap(world), start, point, bodyProfile(entity))) {
+        setSpatialPosition(entity, point, point.surfaceId);
         break;
       }
     }
@@ -951,10 +1041,14 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
     if (animal.wanderSeconds <= 0) {
       const angle = nextRandom(world) * Math.PI * 2;
       const destination = {
+        y: 0,
         x: entity.position.x + Math.cos(angle) * 0.4,
         z: entity.position.z + Math.sin(angle) * 0.4,
       };
-      if (isWalkable(world, destination)) entity.position = destination;
+      const point = sameSurfacePoint(world, entity, destination.x, destination.z),
+        start = supportedPosition(entity);
+      if (point && start && canWalkSegment(spatialMap(world), start, point, bodyProfile(entity)))
+        setSpatialPosition(entity, point, point.surfaceId);
       animal.wanderSeconds = 120 + Math.floor(nextRandom(world) * 120);
     }
   }
@@ -1149,6 +1243,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       advanceAction(world, actor, seconds, events);
     }
     for (const entity of Object.values(world.entities).sort((a, b) => a.id.localeCompare(b.id))) {
+      advanceFlight(world, entity, seconds, events);
       advanceAnimal(world, entity, seconds);
       if (entity.heat?.lit) {
         entity.heat.fuelSeconds = Math.max(0, entity.heat.fuelSeconds - seconds);
@@ -1176,7 +1271,7 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
   const entities = Object.values(world.entities).map((entity) => ({
     entity,
     id: entity.id,
-    position: { x: entity.position.x, z: entity.position.z },
+    position: { x: entity.position.x, y: entity.position.y, z: entity.position.z },
     alive: !!entity.actor?.alive,
     memory: hasMemory(entity),
     object: !entity.actor && !entity.animal,
@@ -1196,7 +1291,12 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
       // Source IDs stay in private state; acquisition is owner-scoped, never a public encounter.
       // docs/events-perception-and-reactions.md#9-reaction-intake-and-scheduling owns intake.
       for (const source of nearbyAll(actor.position, touch.radius)
-        .filter((e) => e.id !== actor.id && distance(actor.position, e.position) <= touch.radius)
+        .filter(
+          (e) =>
+            e.id !== actor.id &&
+            distance(actor.position, e.position) <= touch.radius &&
+            hasLineOfEffect(world, actor.entity, e.entity),
+        )
         .slice(0, 32)) {
         const oldPosition = original.entities[source.id]?.position;
         const detail =
@@ -1261,13 +1361,7 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
     const previous = original.visiblePeople?.[actor.id] ?? [];
     const previouslySeen = new Set(previous);
     const seen = nearby(actor.position, radius + 2)
-      .filter(
-        (e) =>
-          e.id !== actor.id &&
-          e.alive &&
-          (distance(actor.position, e.position) <= radius ||
-            (previouslySeen.has(e.id) && distance(actor.position, e.position) <= radius + 2)),
-      )
+      .filter((e) => e.id !== actor.id && e.alive && seesEntity(world, actor.entity, e.entity))
       .map((e) => e.id);
     for (const id of seen.filter((id) => !previouslySeen.has(id))) {
       const recent = (world.memories[actor.id] ?? []).some(
@@ -1297,8 +1391,8 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
     )
       (world.visiblePeople ??= {})[actor.id] = seen;
     // Object exposures use the same committed awareness path without a cognition trigger.
-    const objects = nearbyObjects(actor.position, radius).filter(
-      (entity) => distance(actor.position, entity.position) <= radius,
+    const objects = nearbyObjects(actor.position, radius).filter((entity) =>
+      seesEntity(world, actor.entity, entity.entity),
     );
     const priorObjects = new Set(
       original.visibleObjects?.[actor.id] ??

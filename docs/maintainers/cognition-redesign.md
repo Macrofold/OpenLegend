@@ -1,5 +1,9 @@
 # Cognition redesign delivery tasks
 
+## Spatial acceptance cross-links
+
+Use [SW08/SW16](spatial-world.md) for geometric audience/reach and cross-level native execution. Keep CR02/CR12 level-1 selection and zero-generative-continuation gates here. CH01 is not a prerequisite for native ground navigation, and no path node or camera frame is a new paid decision.
+
 Status: **CR01–CR11 runtime foundation implemented; verification and conditional extensions remain explicitly open.** Checked items identify delivered implementation; unchecked validation items remain open. The [canonical design](../memory-architecture.md) owns behavior. Cross-cutting deferred work lives in [TODO](TODO.md).
 
 Each task must update implementation status with actual evidence when delivered. Fixture results establish contracts only; live quality, cost and latency require separately authorized execution with configured credentials and a nonzero cap. No automatic paid retries.

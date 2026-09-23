@@ -1,3 +1,4 @@
+import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
 import { validateGatheringTools } from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
@@ -490,10 +491,11 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
-  if (world.schemaVersion !== 8 || !world.moduleManifest)
+  if (world.schemaVersion !== 9 || !world.moduleManifest)
     throw new Error(
-      'Incompatible development world schema or missing required module manifest. Older saves are not migrated.',
+      'Incompatible development world schema. This build requires 3D format 9; use a separate OPEN_LEGEND_DATA_DIR for a fresh world. Existing saves are preserved, not migrated.',
     );
+  validateSpatialWorld(world);
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
   validateGatheringTools(world);

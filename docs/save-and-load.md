@@ -1,5 +1,9 @@
 # Saving and loading game state
 
+## Spatial state
+
+The [spatial persistence contract](../archive/07-technical-architecture/spatial-world-runtime.md#11-persistence-restoration-and-versioning) identifies canonical XYZ/support, accepted routes, native flight/fall and geometry/profile records; SDK objects, GPU resources and shape/graph caches are derived. Current-format restoration preserves native progress without regenerating AI decisions. This cutover requires schema 9, rejects earlier formats clearly and preserves the active no-legacy policy; use a separate data directory rather than an old-XZ importer.
+
 This document owns the high-level gameplay save/load design and the constraints it places on future state design. It specifies intended behavior, not implemented functionality or acceptance evidence. Object schemas, storage layouts, file formats, APIs and implementation tasks remain with their subsystem owners. Examples below illustrate categories; they are not an exhaustive save manifest.
 
 [Architecture](architecture.md) owns current persistence behavior. The [production data model](../archive/07-technical-architecture/production-data-model.md) owns record and transaction contracts; [data delivery and scale](../archive/07-technical-architecture/data-delivery-and-scale.md) owns operational backup, disaster recovery and rollout. Those mechanisms must support this gameplay contract without becoming competing definitions of it.

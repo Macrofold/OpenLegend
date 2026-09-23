@@ -1,5 +1,9 @@
 # Memory architecture
 
+## Spatial context boundary
+
+Use [height-aware permitted exposure](spatial-world.md) and [plain spatial references](../archive/07-technical-architecture/spatial-world-runtime.md), not renderer objects or raw navigation data. Descriptions such as “on the deck above” require permitted evidence; approximate overhead sounds must not disclose a hidden exact location or identity. Route following and altitude updates need no embeddings or LLM call. Native continuation, level-1 Jev selection and generative reconsideration retain their existing separate roles.
+
 Changes to durable minds, history, derived recall or external workspaces must respect the [save/load design](save-and-load.md). This document continues to own memory and privacy semantics.
 
 This specification owns character memory, awareness, recall, attention, authored inner-world continuity, consolidation, reflection, sleep and dreams. [Agent agency](agent-agency.md) owns optional decision composition and operational goals/plans; its [runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md) owns their admission and continuation. [Events, perception and reactions](events-perception-and-reactions.md) owns stimulus scope and reaction intake. These interfaces share actor scope and evidence boundaries without creating another writable mind.

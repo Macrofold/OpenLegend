@@ -1,5 +1,9 @@
 # Production data model
 
+## Spatial identities
+
+Use the [spatial runtime](spatial-world-runtime.md) for canonical XYZ, semantic support, geometry/profile versions and accepted route progress. Storage follows existing transaction owners; do not persist SDK polygon/collider/GPU handles as identity or maintain a second position table with independent writers. Public starter geometry is explicitly disclosed; that does not authorize exporting a future hidden map.
+
 Record ownership, dependencies and transaction design must respect the [gameplay save/load design](../../docs/save-and-load.md). It owns the restoration contract without prescribing these record layouts.
 
 The current personal-world implementation stores whole-world snapshots plus transactional `WorldChanges`, periodic compaction, response receipts and SQLite/PostgreSQL cognition records; PostgreSQL also stores pgvector recall data. [Architecture](../../docs/architecture.md) owns exact current behavior. Records labeled transitional below exist only to bridge that runtime. Normalized production, conversation/story, rights/pack and hosted-operation records remain future target records until implemented.

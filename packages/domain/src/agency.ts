@@ -1,3 +1,4 @@
+import { finitePoint } from '@open-legend/spatial';
 import { cloneValue } from './draft.js';
 import { appendMemory, outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
@@ -568,11 +569,7 @@ function isPhysicalCommand(command: Command): boolean {
   if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
   switch (command.type) {
     case 'move':
-      return (
-        !!command.destination &&
-        Number.isFinite(command.destination.x) &&
-        Number.isFinite(command.destination.z)
-      );
+      return finitePoint(command.destination) && isSafeRecordId(command.destination.surfaceId);
     case 'gather':
     case 'harvest':
       return isSafeRecordId(command.targetId);

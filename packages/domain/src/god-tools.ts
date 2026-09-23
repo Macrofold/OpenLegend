@@ -1,3 +1,5 @@
+import { BODY_PROFILES, canStand } from '@open-legend/spatial';
+import { groundedSpatial, spatialMap } from './spatial-state.js';
 import { goalTexts, replaceGoals } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
@@ -62,7 +64,20 @@ function personTraits(draft: Pick<GodPersonDraft | GodPersonEditorDraft, 'traitI
 
 function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity | null {
   const id = nextId(world, draft.type === 'person' ? 'person' : draft.type);
-  const base = { id, position: { ...draft.position } };
+  const base = {
+    id,
+    position: { x: draft.position.x, y: draft.position.y, z: draft.position.z },
+    spatial: groundedSpatial(
+      draft.type === 'person'
+        ? 'person'
+        : draft.type === 'hare'
+          ? 'hare'
+          : draft.type === 'deer'
+            ? 'deer'
+            : 'object',
+      draft.position.surfaceId,
+    ),
+  };
   switch (draft.type) {
     case 'person': {
       if (!draft.person) return null;
@@ -136,8 +151,22 @@ function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity | null {
 export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Transition {
   if (!GOD_SPAWN_OPTIONS.some((option) => option.id === draft.type))
     return reject(original, 'unsupported', 'That object type cannot be added.');
-  if (!isWalkable(original, draft.position))
-    return reject(original, 'blocked', 'Choose open grass or sand.');
+  if (
+    !canStand(
+      spatialMap(original),
+      draft.position,
+      BODY_PROFILES[
+        draft.type === 'person'
+          ? 'person'
+          : draft.type === 'hare'
+            ? 'hare'
+            : draft.type === 'deer'
+              ? 'deer'
+              : 'object'
+      ],
+    )
+  )
+    return reject(original, 'blocked', 'Choose an unobstructed walkable surface.');
   if (
     Object.values(original.entities).some(
       (entity) => distance(entity.position, draft.position) < 0.5,
@@ -206,6 +235,19 @@ export function reviveActor(
   if (expectedRevision !== undefined && current.actor.body.revision !== expectedRevision)
     return reject(original, 'stale', 'The body changed.');
   if (current.actor.alive) return reject(original, 'alive', `${current.name} is already alive.`);
+  if (
+    !current.spatial.supportSurfaceId ||
+    !canStand(
+      spatialMap(original),
+      { ...current.position, surfaceId: current.spatial.supportSurfaceId },
+      BODY_PROFILES[current.spatial.bodyProfileId],
+    )
+  )
+    return reject(
+      original,
+      'unsupported-stance',
+      'Revival needs a clear supported stance. Wait for the body to land.',
+    );
   const world = draftWorld(original);
   const entity = world.entities[actorId]!;
   const actor = entity.actor!;

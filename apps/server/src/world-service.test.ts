@@ -65,7 +65,7 @@ describe('world presence, time and durable commands', () => {
     expect(
       service.command('fixture-move', {
         type: 'move',
-        position: { ...service.world.entities.player!.position },
+        position: { ...service.world.entities.player!.position, surfaceId: 'terrain' },
       }).ok,
     ).toBe(true);
     const movement = service.world.events.at(-1)!;
@@ -312,9 +312,9 @@ describe('public projection and a playable native loop', () => {
       entityIds: [],
       importance: 10,
     });
-    service.world.entities.ada!.position = { x: 26, z: 22 };
+    service.world.entities.ada!.position = { y: 0, x: 26, z: 22 };
     expect(service.say('unheard', 'ada', 'secret-unheard-speech').ok).toBe(true);
-    service.world.entities.ada!.position = { x: 12, z: 13 };
+    service.world.entities.ada!.position = { y: 0, x: 12, z: 13 };
     store.putJob({
       id: 'private-job',
       kind: 'thought',
@@ -350,7 +350,7 @@ describe('public projection and a playable native loop', () => {
     activate(service);
     service.command('already-there', {
       type: 'move',
-      position: { ...service.world.entities.player!.position },
+      position: { ...service.world.entities.player!.position, surfaceId: 'terrain' },
     });
     const action = projectView(service).player.action;
     expect(action === null || Number.isFinite(action.progress)).toBe(true);

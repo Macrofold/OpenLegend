@@ -1,5 +1,9 @@
 # Procedural art, 2D models and pixel density
 
+## Mixed representation in a 3D world
+
+The accepted procedural/painted/2D-rig vocabulary is a representation family, not a planar-world limitation. [Spatial visual bindings](../07-technical-architecture/spatial-world-runtime.md#10-playcanvas-isolation-and-hybrid-assets) place sprites, simple meshes and future models at one authoritative 3D anchor. Camera-facing single-view fallback is explicit; missing rear/pitch views do not automatically trigger generation. Visual skeletons, parts and sockets cannot grant anatomy, flight or reach. Current plain meshes and cached sprite artwork are described in [Architecture](../../docs/architecture.md#spatial-world-foundation); arbitrary rigs and model imports remain separate work.
+
 Recorded September 19, 2026. **Accepted direction:** evolve toward a hybrid visual system using procedural composition, reusable 2D rigs, state-based effects and authored/generated artwork. The user also asks about the cost of novel-image generation and higher pixel density. The architecture and rollout below are proposals; no rig, new renderer or configurable density setting is implemented here. F25/D24 track this direction. [Visual direction](visual-direction.md) owns the style; [art generated during play](visual-direction.md#art-generated-during-play) owns asynchronous publication, state correctness and art funding.
 
 ## What the current prototype does

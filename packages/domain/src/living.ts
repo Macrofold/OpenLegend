@@ -4,7 +4,7 @@ import { draftWorld } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
 
 export interface LivingBody {
-  plan: 'biped' | 'quadruped';
+  plan: 'biped' | 'quadruped' | 'avian';
   maxHealth: number;
   revision: number;
   conditions: { injury: number; wetness: number; burning: number };
@@ -29,9 +29,14 @@ export function canSpeak(entity: Entity | undefined): boolean {
 }
 // Finite body/lifecycle policy; another body family expands through EWF03/INV.
 // See docs/engine-and-world-boundaries.md#intentional-v1-specificity.
-export function livingBody(species: 'human' | 'deer' | 'hare' | 'construct'): LivingBody {
+export function livingBody(species: 'human' | 'deer' | 'hare' | 'construct' | 'bird'): LivingBody {
   return {
-    plan: species === 'human' || species === 'construct' ? 'biped' : 'quadruped',
+    plan:
+      species === 'human' || species === 'construct'
+        ? 'biped'
+        : species === 'bird'
+          ? 'avian'
+          : 'quadruped',
     maxHealth: species === 'human' || species === 'construct' ? 100 : species === 'deer' ? 36 : 18,
     revision: 0,
     conditions: { injury: 0, wetness: 0, burning: 0 },
@@ -40,12 +45,12 @@ export function livingBody(species: 'human' | 'deer' | 'hare' | 'construct'): Li
       species === 'human' || species === 'construct'
         ? []
         : [
-            { definitionId: 'raw_meat', quantity: species === 'hare' ? 2 : 4 },
-            { definitionId: 'bone', quantity: species === 'hare' ? 2 : 3 },
+            { definitionId: 'raw_meat', quantity: species === 'deer' ? 4 : 2 },
+            { definitionId: 'bone', quantity: species === 'deer' ? 3 : 2 },
           ],
   };
 }
-export function nativeActor(species: 'hare' | 'deer', bornAt: number): ActorComponent {
+export function nativeActor(species: 'hare' | 'deer' | 'bird', bornAt: number): ActorComponent {
   return {
     species,
     body: livingBody(species),
@@ -57,7 +62,7 @@ export function nativeActor(species: 'hare' | 'deer', bornAt: number): ActorComp
       speech: false,
       needs: false,
     },
-    health: species === 'hare' ? 18 : 36,
+    health: species === 'deer' ? 36 : 18,
     alive: true,
     incapacitated: false,
     bornAt,
@@ -129,6 +134,10 @@ export function reconcileBody(
         outcome(false, 'actor-unavailable', 'The body can no longer continue this work.'),
       );
     actor.action = null;
+    if (entity.spatial.supportSurfaceId === null) {
+      delete entity.spatial.flight;
+      entity.spatial.fallVelocity = 0;
+    }
     actor.planGeneration++;
     if (actor.controller === 'player') actor.incapacitated = true;
     else {

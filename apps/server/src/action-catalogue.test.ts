@@ -109,7 +109,9 @@ it('scopes object menus to their target, including relevant missing prerequisite
     'teach',
   ]);
   expect(
-    actionCatalogue(service, { position: { x: 11, z: 13 } }).actions.map((action) => action.id),
+    actionCatalogue(service, {
+      position: { y: 0, x: 11, z: 13, surfaceId: 'terrain' },
+    }).actions.map((action) => action.id),
   ).toEqual(expect.arrayContaining(['prepare-cord', 'talk-ada', 'gather-reeds']));
 });
 

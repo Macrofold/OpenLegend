@@ -9,7 +9,8 @@
     "playcanvas": "2.22.2",
     "react": "19.3.0",
     "react-aria-components": "1.21.1",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "@open-legend/spatial": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "19.3.0",
