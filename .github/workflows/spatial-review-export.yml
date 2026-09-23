@@ -1,0 +1,20 @@
+name: Spatial review source export
+on:
+  push:
+    branches: [feature/spatial-world-3d]
+    paths: [.github/workflows/spatial-review-export.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: git archive --format=zip --output=/tmp/spatial-review-source.zip HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spatial-review-source
+          path: /tmp/spatial-review-source.zip
+          retention-days: 1
