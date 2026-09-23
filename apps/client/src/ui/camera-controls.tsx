@@ -92,7 +92,7 @@ export function CameraControls({
       <CameraButton
         icon="ui.camera-help"
         label="Camera help"
-        hint="Drag to pan; Shift-drag to rotate and tilt; scroll to zoom. With the world focused: arrows rotate/tilt, Page Up/Down changes floor, P switches projection, Home centers on you. Follow keeps you centered; dragging or choosing a floor stops following."
+        hint="Left/middle-drag to pan; right-drag or Shift-drag to rotate and tilt; scroll to zoom. With the world focused: arrows rotate/tilt, Page Up/Down changes floor, P switches projection, Home centers on you. Follow keeps you centered; dragging or choosing a floor stops following."
       />
       {levels.length > 0 && (
         <select

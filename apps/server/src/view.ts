@@ -670,7 +670,8 @@ export async function projectView(
             id: actor.action.id,
             // Floating progress is opt-in; routine movement never gets a status.
             showStatus:
-              actor.action.stage === 'working' &&
+              !!actor.action.navigation ||
+              (              actor.action.stage === 'working' &&
               [
                 'gather',
                 'prepare',
@@ -680,14 +681,16 @@ export async function projectView(
                 'hunt',
                 'strike',
                 'replenish',
-              ].includes(actor.action.type),
+              ].includes(actor.action.type)),
             durationSeconds: actor.action.totalSeconds,
             elapsedSeconds:
               actor.action.stage === 'working'
                 ? actor.action.totalSeconds - actor.action.remainingSeconds
                 : 0,
             advancing: !paused && actor.action.stage === 'working',
-            label: workLabels[actor.action.type] ?? 'Working',
+            label: actor.action.navigation
+              ? 'Preparing route'
+              : (workLabels[actor.action.type] ?? 'Working'),
             progress:
               actor.action.stage === 'approaching'
                 ? 0

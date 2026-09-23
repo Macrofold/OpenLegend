@@ -10,7 +10,8 @@
     "@open-legend/protocol": "workspace:*",
     "pg": "8.16.3",
     "zod": "4.6.5",
-    "@open-legend/spatial": "workspace:*"
+    "@open-legend/spatial": "workspace:*",
+    "recast-navigation": "0.43.1"
   },
   "devDependencies": {
     "@types/pg": "8.15.5"

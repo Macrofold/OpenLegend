@@ -107,3 +107,4 @@ export { isConversationEvent } from './events.js';
 
 export * from './knowledge.js';
 export * from './worlds/base/knowledge.js';
+export { completeNavigation } from './kernel.js';
