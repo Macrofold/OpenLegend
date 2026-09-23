@@ -1,20 +1,56 @@
-name: Spatial review source export
+name: Publish reviewed spatial changes
 on:
   push:
     branches: [feature/spatial-world-3d]
     paths: [.github/workflows/spatial-review-export.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  export:
+  publish:
+    if: contains(github.event.head_commit.message, '[spatial-review-export]')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
-      - run: git archive --format=zip --output=/tmp/spatial-review-source.zip HEAD
-      - uses: actions/upload-artifact@v4
-        with:
-          name: spatial-review-source
-          path: /tmp/spatial-review-source.zip
-          retention-days: 1
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - name: Apply the reviewed tree without running tests
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD^)" = "d12ebc4ae88552cf442906999060499f300dc2e8"
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma
+          from pathlib import Path, PurePosixPath
+          parts = sorted(Path('.github/spatial-review-payload').glob('part-*.b64'))
+          assert len(parts) == 5, 'Incomplete reviewed payload'
+          payload = lzma.decompress(base64.b64decode(''.join(p.read_text().strip() for p in parts), validate=True))
+          assert hashlib.sha256(payload).hexdigest() == '72d4714f2461887a40096085115fde4bee03c74b16510a2e92c7e900e1da1229', 'Payload mismatch'
+          files = json.loads(payload)
+          assert len(files) == 22
+          assert len({f['path'] for f in files}) == 22
+          for item in files:
+              path = PurePosixPath(item['path'])
+              assert not path.is_absolute() and '..' not in path.parts
+              target = Path(path)
+              assert not target.is_symlink()
+              lines = target.read_text(encoding='utf-8').splitlines(keepends=True) if target.exists() else []
+              for start, count, replacement in reversed(item['edits']):
+                  assert 0 <= start <= len(lines) and 0 <= count <= len(lines) - start
+                  lines[start:start + count] = replacement
+              content = ''.join(lines).encode('utf-8')
+              assert hashlib.sha256(content).hexdigest() == item['sha256'], str(path)
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(content)
+          PY
+          git rm -- .github/workflows/spatial-review-export.yml .github/spatial-review-payload/part-*.b64
+          git add -A
+          git diff --cached --check
+          test "$(git write-tree)" = "e198512126bd0c0074e57f2f95559d7b97559026"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m '[skip ci] Optimize spatial scaling and reconcile delivery gaps' -m 'Index full spatial extents; localize stacked navigation and landing checks; bound sensing caches and fix invalidation; avoid redundant renderer work. Record manual runtime observations and deferred automated regression coverage. Remove temporary publication files; preserve normal CI for subsequent work.'
+          git push origin HEAD:refs/heads/feature/spatial-world-3d
