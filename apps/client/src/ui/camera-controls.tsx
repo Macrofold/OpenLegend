@@ -93,8 +93,9 @@ export function CameraControls({
             {state.rotationLocked ? 'Unlock rotation' : 'Lock rotation'}
           </Button>
           <p>
-            Drag to pan. Shift-drag to orbit and tilt. Scroll to zoom. With the world focused:
-            arrows rotate/tilt, Page Up/Down changes level, P changes projection, Home recenters.
+            Left/middle-drag to pan. Right-drag (or Shift-drag) to orbit and tilt. Scroll to zoom.
+            With the world focused: arrows rotate/tilt, Page Up/Down changes level, P changes
+            projection, Home recenters.
           </p>
         </div>
       </details>

@@ -1,5 +1,6 @@
 import {
   BODY_PROFILES,
+  MOVEMENT,
   SPATIAL_LIMITS,
   type BodyProfile,
   type Bounds3,
@@ -11,6 +12,7 @@ import {
   type SpatialBlocker,
 } from './types.js';
 import { BoundsIndex } from './bounds-index.js';
+import { bodyIntersects } from './body-query.js';
 const EPS = SPATIAL_LIMITS.epsilon;
 const EMPTY_IDS: ReadonlySet<string> = new Set();
 export const distance3D = (a: WorldPoint, b: WorldPoint): number =>
@@ -172,7 +174,9 @@ function clipSegment(
   for (const [a, b, c, bound] of planes) {
     // Minkowski expansion for an upright conservative box with a foot-level anchor.
     const expansion = body
-      ? body.radius * (Math.abs(a) + Math.abs(c)) + Math.max(0, -b * body.height)
+      ? (body.radius + MOVEMENT.skin) * (Math.abs(a) + Math.abs(c)) +
+        Math.max(0, -b * body.height) +
+        Math.abs(b) * MOVEMENT.skin
       : 0;
     const origin = a * from.x + b * from.y + c * from.z;
     const delta = a * (to.x - from.x) + b * (to.y - from.y) + c * (to.z - from.z);
@@ -189,6 +193,7 @@ function clipSegment(
   return enter <= 1 && exit >= 0 ? [Math.max(0, enter), Math.min(1, exit)] : null;
 }
 interface PreparedShape {
+  surface?: WalkableSurface;
   id: string;
   kind: 'surface' | 'blocker';
   planes: Plane[];
@@ -244,8 +249,10 @@ function intersectsSegment(
   let enter = 0,
     exit = 1;
   for (const axis of ['x', 'y', 'z'] as const) {
-    const min = bounds.min[axis] - (axis === 'y' ? (body?.height ?? 0) : (body?.radius ?? 0));
-    const max = bounds.max[axis] + (axis === 'y' ? 0 : (body?.radius ?? 0));
+    const skin = body ? MOVEMENT.skin : 0;
+    const min =
+      bounds.min[axis] - (axis === 'y' ? (body?.height ?? 0) : (body?.radius ?? 0)) - skin;
+    const max = bounds.max[axis] + (axis === 'y' ? 0 : (body?.radius ?? 0)) + skin;
     const delta = to[axis] - from[axis];
     if (Math.abs(delta) < EPS) {
       if (from[axis] < min - EPS || from[axis] > max + EPS) return false;
@@ -283,6 +290,7 @@ function preparedShapes(map: SpatialMap) {
     throw new Error('Spatial query geometry exceeds its complete-query budget.');
   const shapes: PreparedShape[] = map.spatial.surfaces.map((surface) => ({
     id: surface.id,
+    surface,
     kind: 'surface',
     planes: surfacePlanes(surface),
     bounds: surfaceBounds(surface),
@@ -483,7 +491,9 @@ export function canStand(
     'movement',
     new Set([point.surfaceId]),
     body,
-    (shape, interval) => !onlySupportContact(map, shape, interval, point, point, body),
+    (shape, interval) =>
+      !onlySupportContact(map, shape, interval, point, point, body) &&
+      bodyIntersects(shape, point, point, body),
   );
   memo?.set(point, { radius: body.radius, height: body.height, maxSlope: body.maxSlope, allowed });
   return allowed;
@@ -516,7 +526,9 @@ export function canWalkSegment(
       'movement',
       ignored,
       body,
-      (shape, interval) => !onlySupportContact(map, shape, interval, from, to, body),
+      (shape, interval) =>
+        !onlySupportContact(map, shape, interval, from, to, body) &&
+        bodyIntersects(shape, from, to, body),
     )
   )
     return false;
@@ -537,6 +549,7 @@ export function canFlySegment(
   // Landing/takeoff may touch a named support's top, never pass through its underside.
   // Ignoring the whole landing slab would allow a vertical route up through a ceiling.
   return !visitHits(map, from, to, 'movement', EMPTY_IDS, body, (shape, interval) => {
+    if (!bodyIntersects(shape, from, to, body)) return false;
     if (shape.kind !== 'surface' || !supportIds.includes(shape.id)) return true;
     const surface = surfaceById(map, shape.id)!;
     return !aboveSurfaceDuringContact(surface, from, to, interval);

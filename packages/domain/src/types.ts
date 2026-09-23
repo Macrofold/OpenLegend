@@ -102,6 +102,9 @@ export interface Action {
   targetId?: string;
   destination?: SurfacePoint;
   path: SurfacePoint[];
+  /** Admitted work awaiting derived data; no positions, costs or effects are supplied by a client. */
+  navigation?: { request: import('@open-legend/spatial').NavigationRequest; failure?: string };
+  replans?: number;
   remainingSeconds: number;
   totalSeconds: number;
   attributeId?: string;
@@ -267,7 +270,7 @@ export interface WorldState {
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
   id: string;
   seed: number;
   rngState: number;

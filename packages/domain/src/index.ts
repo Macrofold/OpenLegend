@@ -97,3 +97,5 @@ export { recordInventionFeedback } from './invention-feedback.js';
 
 export * from './spatial-state.js';
 export * from './spatial-mutations.js';
+
+export { completeNavigation } from './kernel.js';

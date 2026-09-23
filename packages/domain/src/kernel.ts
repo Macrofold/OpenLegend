@@ -1,6 +1,16 @@
 import { gatheringYield, BASE_GATHER_QUANTITY } from './gathering.js';
 import { current, isDraft } from 'immer';
-import { canWalkSegment, finitePoint, interpolate, type SurfacePoint } from '@open-legend/spatial';
+import {
+  canWalkSegment,
+  finitePoint,
+  interpolate,
+  MOVEMENT,
+  SPATIAL_LIMITS,
+  type RoutePlan,
+  type NavigationRequest,
+  type NavigationResult,
+  type SurfacePoint,
+} from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
 import { advanceFlight, LandingOccupancy } from './flight.js';
 import {
@@ -189,17 +199,17 @@ function actionInReach(
     return (
       !!action.destination &&
       actor.spatial.supportSurfaceId === action.destination.surfaceId &&
-      distance(origin, action.destination) <= 0.015
+      distance(origin, action.destination) <= MOVEMENT.arrivalTolerance
     );
   const target = actionTarget(world, action);
   return !!target && canReachEntity(world, actor, target, actionReach(world, action), origin);
 }
-function approachPath(world: WorldState, actor: Entity, action: Action): SurfacePoint[] | null {
+function approachPath(world: WorldState, actor: Entity, action: Action): RoutePlan | null {
   if (!supportedPosition(actor)) return null;
   const destination = targetPosition(world, action);
   if (!destination) return null;
-  if (visionRadius(world, actor) === 0)
-    return directProbe(
+  if (visionRadius(world, actor) === 0) {
+    const path = directProbe(
       world,
       actor.position,
       destination,
@@ -208,6 +218,8 @@ function approachPath(world: WorldState, actor: Entity, action: Action): Surface
         ? action.destination!.surfaceId
         : (actionTarget(world, action)?.spatial.supportSurfaceId ?? undefined),
     );
+    return path ? { status: 'reached', path, length: 0, expanded: 0 } : null;
+  }
   return action.type === 'move'
     ? findPath(
         world,
@@ -228,10 +240,90 @@ function approach(world: WorldState, actor: Entity, action: Action): Outcome | n
   const path = approachPath(world, actor, action);
   if (!path)
     return outcome(false, 'unreachable', 'No supported route to a reachable stance was found.');
+  if (path.status !== 'reached' && path.status !== 'pending')
+    return outcome(false, path.status, 'No supported route was found.');
   action.stage = 'approaching';
-  action.path = path;
+  action.path = path.path;
+  action.navigation = path.status === 'pending' ? { request: path.request } : undefined;
   return null;
 }
+/** Route results are untrusted derived data. Only a matching current action may accept them;
+ * preparation may finish while paused, but this transition never moves or consumes anything.
+ * archive/07-technical-architecture/spatial-world-runtime.md#navigation-preparation
+ */
+export function completeNavigation(
+  original: WorldState,
+  actorId: string,
+  actionId: string,
+  request: NavigationRequest,
+  result: NavigationResult,
+): Transition {
+  const source = original.entities[actorId],
+    action = source?.actor?.action;
+  const stale = (): Transition => ({
+    world: original,
+    events: [],
+    outcome: outcome(false, 'stale-route', 'The route request is no longer current.'),
+  });
+  if (
+    !action ||
+    action.id !== actionId ||
+    !action.navigation ||
+    canonicalJson(action.navigation.request) !== canonicalJson(request) ||
+    request.geometryRevision !== original.map.spatial.revision ||
+    source.spatial.supportSurfaceId !== request.from.surfaceId ||
+    distance(source.position, request.from) > 1e-7
+  )
+    return stale();
+  const profile = bodyProfile(source);
+  if (
+    profile.radius !== request.body.radius ||
+    profile.height !== request.body.height ||
+    profile.maxSlope !== request.body.maxSlope
+  )
+    return stale();
+  let failure =
+    result.status === 'reached'
+      ? undefined
+      : result.status === 'no-route'
+        ? 'no supported route reaches that destination.'
+        : result.status === 'unavailable'
+          ? 'navigation preparation is unavailable; retry the action later.'
+          : result.status === 'budget-exceeded'
+            ? 'the route exceeds the current navigation budget.'
+            : 'the proposed route does not fit this body or its supporting surfaces.';
+  if (result.status === 'reached') {
+    let previous = request.from;
+    if (!Array.isArray(result.path) || result.path.length > SPATIAL_LIMITS.maxPathPoints)
+      return stale();
+    for (const point of result.path) {
+      if (!finitePoint(point) || !canWalkSegment(spatialMap(original), previous, point, profile)) {
+        failure = 'the prepared route became physically blocked.';
+        break;
+      }
+      previous = point;
+    }
+    if (
+      !request.destinations.some(
+        (p) => p.surfaceId === previous.surfaceId && distance(p, previous) < 1e-6,
+      )
+    )
+      failure = 'navigation returned only a partial route.';
+  }
+  const world = draftWorld(original),
+    current = world.entities[actorId]!.actor!.action!;
+  if (failure) current.navigation!.failure = failure;
+  else {
+    current.path = result.path.map((p) => ({ ...p }));
+    delete current.navigation;
+  }
+  return finish(
+    world,
+    [],
+    outcome(true, failure ? 'route-blocked' : 'route-ready', failure ?? 'Route ready.'),
+  );
+}
+
 function materialRequirements(
   world: WorldState,
   action: Action,
@@ -892,6 +984,24 @@ function advanceAction(
   const action = actor.actor!.action;
   if (!action) return;
   if (action.stage === 'approaching') {
+    if (action.navigation?.failure) {
+      failAction(world, actor, events, action.navigation.failure);
+      return;
+    }
+    if (action.navigation) {
+      const requested = action.navigation.request;
+      const profile = bodyProfile(actor);
+      if (
+        requested.geometryRevision === world.map.spatial.revision &&
+        requested.body.radius === profile.radius &&
+        requested.body.height === profile.height &&
+        requested.body.maxSlope === profile.maxSlope &&
+        requested.from.surfaceId === actor.spatial.supportSurfaceId &&
+        distance(requested.from, actor.position) < 1e-7
+      )
+        return;
+      delete action.navigation;
+    }
     const destination = targetPosition(world, action);
     if (!destination) {
       failAction(world, actor, events, 'the target disappeared.');
@@ -907,7 +1017,7 @@ function advanceAction(
         last &&
         (action.type === 'move'
           ? last.surfaceId === action.destination!.surfaceId &&
-            distance(last, action.destination!) <= 0.015
+            distance(last, action.destination!) <= MOVEMENT.arrivalTolerance
           : canReachEntity(
               world,
               actor,
@@ -916,12 +1026,22 @@ function advanceAction(
               last,
             ));
       if (!endpointUseful) {
-        const path = approachPath(world, actor, action);
-        if (!path) {
-          failAction(world, actor, events, 'no supported route remains.');
+        if ((action.replans ?? 0) >= MOVEMENT.maxReplans) {
+          failAction(
+            world,
+            actor,
+            events,
+            'the target or route keeps changing; choose a new action.',
+          );
           return;
         }
-        action.path = path;
+        action.replans = (action.replans ?? 0) + 1;
+        const error = approach(world, actor, action);
+        if (error) {
+          failAction(world, actor, events, error.message);
+          return;
+        }
+        if (action.navigation) return;
       }
       if (
         !moveAlongPath(
@@ -932,8 +1052,11 @@ function advanceAction(
             seconds *
             (1 - (actor.actor?.body?.conditions.injury ?? 0) / 200),
         )
-      )
-        failAction(world, actor, events, 'the route became physically blocked.');
+      ) {
+        action.path = [];
+        if ((action.replans ?? 0) >= MOVEMENT.maxReplans)
+          failAction(world, actor, events, 'the route became physically blocked.');
+      }
       return;
     }
     if (action.type === 'move') {
@@ -1488,7 +1611,10 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
       };
       // A visible body is evidence of its current activity, not access to its future route.
       delete copy.spatial.flight;
-      if (copy.actor?.action) delete copy.actor.action.destination;
+      if (copy.actor?.action) {
+        delete copy.actor.action.destination;
+        delete copy.actor.action.navigation;
+      }
       if (copy.actor) {
         // Sparse state is owner-private; explicit permitted projections carry public values.
         delete copy.actor.attributes;

@@ -1,3 +1,5 @@
+import { completeNavigation } from '@open-legend/domain';
+import type { NavigationRequest, NavigationResult } from '@open-legend/spatial';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
@@ -838,6 +840,22 @@ export class WorldService {
       )
         return { ok: false, code: 'storage', message: this.storageError! };
       return { ok: result.outcome.ok, code: result.outcome.code, message: result.outcome.message };
+    });
+  }
+
+  async preparedNavigation(
+    actorId: string,
+    actionId: string,
+    request: NavigationRequest,
+    result: NavigationResult,
+    map: WorldState['map'],
+    timeline: string,
+  ): Promise<void> {
+    await this.mutate(async () => {
+      if (this.world.map !== map || this.timelineId !== timeline) return;
+      const transition = completeNavigation(this.world, actorId, actionId, request, result);
+      if (transition.world === this.world) return;
+      await this.commit({ ...this.saved, world: transition.world }, undefined, 'unchanged');
     });
   }
 

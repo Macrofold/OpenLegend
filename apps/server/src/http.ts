@@ -1,3 +1,5 @@
+import { initializeCollisionRuntime } from '@open-legend/spatial/rapier';
+import { NavigationCoordinator } from './navigation/coordinator.js';
 import { GameSaveError } from './game-saves.js';
 import {
   performanceSnapshot,
@@ -95,6 +97,9 @@ const preferences = z
     showUnavailableActions: z.boolean().optional(),
     pauseWhenHidden: z.boolean().optional(),
     narratorVoice: z.enum(['restrained', 'lyrical', 'wry']).optional(),
+    revealMode: z.enum(['off', 'player', 'nearby']).optional(),
+    revealRadius: z.number().finite().min(2).max(12).optional(),
+    revealStrength: z.number().finite().min(0.2).max(0.95).optional(),
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, 'Choose a preference to update.');
@@ -276,8 +281,10 @@ export async function createGameServer(
       config.databasePath,
       config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
     );
+  await initializeCollisionRuntime();
   const service = new WorldService(store, config, options.now);
   await service.ready;
+  const navigation = new NavigationCoordinator(service);
   let director = new AiDirector(service, options.aiClient, options.now);
   let loadingSave = false;
   let activeWrites = 0;
@@ -1527,6 +1534,7 @@ export async function createGameServer(
       await activeTick;
       await thinking;
       await director.close();
+      await navigation.close();
       await service.flush();
       await projectionQueue;
       for (const [stream, state] of streams) {

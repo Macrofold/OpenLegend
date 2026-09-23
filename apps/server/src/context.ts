@@ -345,10 +345,11 @@ export function npcCandidates(
     // Target discovery uses only this actor's perception. Terrain is the same public
     // geometry used by native movement, never a search for hidden entities/items.
     const reach = entity.animal && launcher ? launcher.range : SIMULATION_RULES.interactionRadius;
-    const path = canReachEntity(service.world, observed.actor, entity, reach)
-      ? []
+    const route = canReachEntity(service.world, observed.actor, entity, reach)
+      ? { status: 'reached', path: [] as import('@open-legend/spatial').SurfacePoint[] }
       : findApproachPath(service.world, observed.actor, entity, reach);
-    if (!path) continue;
+    if (!route) continue;
+    const path = route.path;
     if (entity.resource && entity.resource.quantity > 0)
       actions.push({
         id: `gather:${entity.id}`,
@@ -379,7 +380,15 @@ export function npcCandidates(
       });
     if (entity.heat?.lit) {
       let previous = observed.actor.position;
-      let length = 0;
+      // Pending detours are not yet a travel-time promise; fuel is rechecked at work start.
+      let length =
+        route.status === 'pending'
+          ? Math.hypot(
+              entity.position.x - previous.x,
+              entity.position.y - previous.y,
+              entity.position.z - previous.z,
+            )
+          : 0;
       for (const point of path) {
         length += Math.hypot(point.x - previous.x, point.y - previous.y, point.z - previous.z);
         previous = point;

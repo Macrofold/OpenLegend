@@ -765,10 +765,16 @@ export class SqliteStore implements GameRepository {
     await this.ready;
 
     const row = await this.db.prepare('SELECT * FROM player_profiles WHERE id = ?').get(id);
+    const reveal = (await this.getIntegration(`world-reveal:${id}`)) as Partial<
+      PlayerProfile['preferences']
+    > | null;
     return {
       id,
       revision: row ? Number(row['revision']) : 0,
       preferences: {
+        revealMode: reveal?.revealMode ?? 'nearby',
+        revealRadius: reveal?.revealRadius ?? 6,
+        revealStrength: reveal?.revealStrength ?? 0.7,
         showUnavailableActions: Number(row?.['show_unavailable_actions']) === 1,
         pauseWhenHidden: row ? Number(row['pause_when_hidden']) === 1 : true,
         narratorVoice: ((await this.getIntegration(`narrator-voice:${id}`)) ?? 'restrained') as
@@ -797,6 +803,20 @@ export class SqliteStore implements GameRepository {
       pause_when_hidden=COALESCE(?, player_profiles.pause_when_hidden)`,
         )
         .run(id, unavailable, pause, unavailable, pause);
+      if (
+        preferences.revealMode !== undefined ||
+        preferences.revealRadius !== undefined ||
+        preferences.revealStrength !== undefined
+      ) {
+        const existing = ((await this.getIntegration(`world-reveal:${id}`)) ?? {}) as Record<
+          string,
+          unknown
+        >;
+        // Merge only this UI control's fields inside the profile transaction; world restores cannot rewind them.
+        for (const key of ['revealMode', 'revealRadius', 'revealStrength'] as const)
+          if (preferences[key] !== undefined) existing[key] = preferences[key];
+        await this.putIntegration(`world-reveal:${id}`, existing);
+      }
       if (preferences.narratorVoice)
         await this.putIntegration(`narrator-voice:${id}`, preferences.narratorVoice);
       return await this.getProfile(id);

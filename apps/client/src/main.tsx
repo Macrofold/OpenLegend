@@ -1,3 +1,4 @@
+import { WorldVisualSettings } from './ui/world-visual-settings';
 import { InventionSettings } from './ui/invention-settings';
 import { GameSavesPanel } from './ui/game-saves';
 import { History, Narrator } from './ui/history';
@@ -694,6 +695,7 @@ function App() {
         return (
           <>
             <InventionSettings view={view} />
+            <WorldVisualSettings view={view} />
             <Section title="Appearance">
               <label>
                 World theme
@@ -728,8 +730,8 @@ function App() {
             <Section title="Controls">
               <p>
                 Click ground to walk. Click an object to look closer. Right-click or Control-click
-                for actions. Drag with the primary, right or middle mouse button to pan. Scroll to
-                zoom.
+                for actions. Drag with the primary or middle mouse button to pan. Right-drag
+                smoothly orbits and tilts. Scroll to zoom.
               </p>
               <p>
                 I Inventory · C Crafting · K Character · W World agent · V In view · J Journal · 1–3
