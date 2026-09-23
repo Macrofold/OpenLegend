@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## Spatial scaling continuation and reconciliation
+
+Preserved the concurrent third-pass lazy graph, closed-region proofs, native roster and observation sanitation. Added movement-only support equivalence, weak exact-stance memoization and independent JSON-copy allocation reduction to implemented owners. Allocated SW04.1c/SW05.1d and SR13–SR15 without replacing existing task IDs or evidence. Current limits and matched continuation observations remain distinct from earlier timings; no automated tests were added or run.
+
 ## Third spatial scaling pass
 
 Replaced eager exact graph baking/weak-component labels with lazy checked edges, connector-aware A\* and bounded exhausted-search proofs; documented finite native participant reuse and isolated observation copying. Updated implemented SW/PF entries and remaining latency gates. Removed the obsolete PF task to implement experience-ID indexing (already delivered); its regression requirements remain SR08. Added SR11/SR12 and extended SR05 instead of duplicating privacy checks. Prior automated evidence remains historical; this round records builds/manual runtime only.

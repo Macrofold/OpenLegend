@@ -60,12 +60,28 @@ export function updateWorld(world: WorldState, change: (draft: WorldState) => vo
   return finishWorld(draft);
 }
 export function cloneValue<T>(value: T): T {
-  // Also handles containers whose children are drafts (for observation DTOs).
+  if (!value || typeof value !== 'object') return value;
+  // Containers can contain nested Immer proxies. Keep this JSON-data copy independent,
+  // but avoid an entries/map/fromEntries allocation chain for every awareness/event field.
+  // docs/performance.md#simulation-cpu-and-growing-history
   if (isDraft(value)) return structuredClone(current(value as object)) as T;
-  if (Array.isArray(value)) return value.map(cloneValue) as T;
-  if (value && typeof value === 'object')
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, cloneValue(item)]),
-    ) as T;
-  return value;
+  if (Array.isArray(value)) {
+    const copy = new Array(value.length);
+    for (let i = 0; i < value.length; i++) if (i in value) copy[i] = cloneValue(value[i]);
+    return copy as T;
+  }
+  const copy: Record<string, unknown> = {};
+  for (const key of Object.keys(value)) {
+    const item = cloneValue((value as Record<string, unknown>)[key]);
+    // Match Object.fromEntries: a JSON __proto__ key is data, never a prototype setter.
+    if (key === '__proto__')
+      Object.defineProperty(copy, key, {
+        value: item,
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
+    else copy[key] = item;
+  }
+  return copy as T;
 }

@@ -36,17 +36,45 @@ const surfaceGroups = new WeakMap<
   {
     revision: number;
     bySurface: Map<string, WalkableSurface[]>;
+    representative: Map<string, string>;
   }
 >();
 /** Coarse connectivity only: plane-height overlap at shared grid coordinates may connect
  * supports, but never proves clearance. Disconnected upper floors need no ground graph bake.
  * docs/architecture.md#spatial-world-foundation
  */
-function groupsFor(map: SpatialMap): Map<string, WalkableSurface[]> {
+function groupsFor(map: SpatialMap) {
   const cached = surfaceGroups.get(map);
-  if (cached?.revision === map.spatial.revision) return cached.bySurface;
+  if (cached?.revision === map.spatial.revision) return cached;
   validateSpatialMap(map);
-  const surfaces = [...supportSurfaces(map)].sort((a, b) => a.id.localeCompare(b.id));
+  const surfaces: WalkableSurface[] = [];
+  const representative = new Map<string, string>(),
+    equivalent = new Map<string, string>();
+  for (const s of [...supportSurfaces(map)].sort((a, b) => a.id.localeCompare(b.id))) {
+    // Quotient only identical public movement patches, not merely coincident points.
+    // Physical/acoustic solids stay separate; returned routes restore exact endpoint IDs.
+    // Directed/permission-bearing traversal families must not inherit this equivalence.
+    const signature = s.id.startsWith('terrain-rock:')
+      ? s.id
+      : JSON.stringify([
+          s.minX,
+          s.maxX,
+          s.minZ,
+          s.maxZ,
+          s.y,
+          s.slopeX,
+          s.slopeZ,
+          s.thickness,
+          s.solidBase ?? null,
+          s.material,
+        ]);
+    const id = equivalent.get(signature);
+    representative.set(s.id, id ?? s.id);
+    if (!id) {
+      equivalent.set(signature, s.id);
+      surfaces.push(s);
+    }
+  }
   const parents = surfaces.map((_, i) => i);
   const root = (i: number): number => {
     while (parents[i] !== i) {
@@ -90,8 +118,10 @@ function groupsFor(map: SpatialMap): Map<string, WalkableSurface[]> {
     group.push(surface);
     bySurface.set(surface.id, group);
   }
-  surfaceGroups.set(map, { revision: map.spatial.revision, bySurface });
-  return bySurface;
+  for (const [id, canonical] of representative) bySurface.set(id, bySurface.get(canonical)!);
+  const result = { revision: map.spatial.revision, bySurface, representative };
+  surfaceGroups.set(map, result);
+  return result;
 }
 const key = (surface: string, x: number, z: number) => `${surface}:${x},${z}`;
 const DIRECTIONS = [
@@ -122,7 +152,9 @@ function graphFor(map: SpatialMap, body: BodyProfile, surfaces: WalkableSurface[
         // Authored patch samples are admission-bounded; each derived rock adds at most one.
         if (index >= SPATIAL_LIMITS.maxGraphNodes + SPATIAL_LIMITS.maxBlockers)
           throw new Error('Spatial graph exceeds its native candidate budget.');
-        nodes.push({ point: { x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id } });
+        nodes.push({
+          point: Object.freeze({ x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id }),
+        });
         lookup.set(key(surface.id, x, z), index);
         const column = `${x},${z}`;
         let entries = columns.get(column);
@@ -322,12 +354,19 @@ export function findSurfaceRoute(
         };
     }
   }
-  const groups = groupsFor(map),
-    group = groups.get(from.surfaceId);
-  if (!group || group !== groups.get(to.surfaceId)) return fail('no-route');
+  const topology = groupsFor(map),
+    group = topology.bySurface.get(from.surfaceId);
+  if (!group || group !== topology.bySurface.get(to.surfaceId)) return fail('no-route');
+  const startPoint = { ...from, surfaceId: topology.representative.get(from.surfaceId)! };
+  const endPoint = { ...to, surfaceId: topology.representative.get(to.surfaceId)! };
+  if (
+    (startPoint.surfaceId !== from.surfaceId && !canWalkSegment(map, from, startPoint, body)) ||
+    (endPoint.surfaceId !== to.surfaceId && !canWalkSegment(map, endPoint, to, body))
+  )
+    return fail('no-route');
   const graph = graphFor(map, body, group);
-  const starts = endpointNodes(map, graph, from, body),
-    ends = endpointNodes(map, graph, to, body);
+  const starts = endpointNodes(map, graph, startPoint, body),
+    ends = endpointNodes(map, graph, endPoint, body);
   if (!starts.length || !ends.length) return fail('no-route');
   // A fully exhausted search proves its reached set has no outgoing edge. Reuse only that
   // negative fact (also safe for directional seams), not an assumed connected-component label.
@@ -410,13 +449,16 @@ export function findSurfaceRoute(
     path.push({ ...graph.nodes[index]!.point });
   }
   path.reverse();
-  if (path[0]?.surfaceId === from.surfaceId && distance3D(path[0], from) < 1e-6) path.shift();
+  if (path[0]?.surfaceId === startPoint.surfaceId && distance3D(path[0], startPoint) < 1e-6)
+    path.shift();
+  if (startPoint.surfaceId !== from.surfaceId) path.unshift(startPoint);
   if (
     !path.length ||
-    path.at(-1)!.surfaceId !== to.surfaceId ||
-    distance3D(path.at(-1)!, to) > 1e-6
+    path.at(-1)!.surfaceId !== endPoint.surfaceId ||
+    distance3D(path.at(-1)!, endPoint) > 1e-6
   )
-    path.push({ ...to });
+    path.push(endPoint);
+  if (endPoint.surfaceId !== to.surfaceId) path.push({ ...to });
   if (path.length > SPATIAL_LIMITS.maxPathPoints) return fail('budget-exceeded', expanded);
   return { status: 'reached', path, length: bestCost, expanded };
 }

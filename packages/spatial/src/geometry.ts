@@ -201,6 +201,12 @@ interface SupportEntry {
   surface: WalkableSurface;
   order: number;
 }
+interface StanceMemo {
+  radius: number;
+  height: number;
+  maxSlope: number;
+  allowed: boolean;
+}
 interface PreparedGeometry {
   revision: number;
   shapes: PreparedShape[];
@@ -209,6 +215,7 @@ interface PreparedGeometry {
   supportById: Map<string, WalkableSurface>;
   shapeIndex: BoundsIndex<PreparedShape>;
   supportIndex: BoundsIndex<SupportEntry>;
+  stances: WeakMap<SurfacePoint, StanceMemo>;
 }
 const shapeCache = new WeakMap<SpatialMap, PreparedGeometry>();
 function surfaceBounds(s: WalkableSurface, topOnly = false): Bounds3 {
@@ -322,6 +329,7 @@ function preparedShapes(map: SpatialMap) {
   ];
   const result: PreparedGeometry = {
     revision: map.spatial.revision,
+    stances: new WeakMap(),
     shapes,
     blockers,
     supports,
@@ -450,12 +458,25 @@ export function canStand(
   point: SurfacePoint,
   body: BodyProfile = BODY_PROFILES.person,
 ): boolean {
+  // Navigation reuses immutable points for many adjacent edges. Cache their exact stance,
+  // not a guessed clearance class. Mutable positions always take the complete query path.
+  // The owning map/revision invalidates these weak entries with all other derived geometry.
+  // archive/07-technical-architecture/spatial-world-runtime.md#initial-native-provider
+  const memo = Object.isFrozen(point) ? preparedShapes(map).stances : undefined;
+  const prior = memo?.get(point);
+  if (
+    prior &&
+    prior.radius === body.radius &&
+    prior.height === body.height &&
+    prior.maxSlope === body.maxSlope
+  )
+    return prior.allowed;
   const support = resolveSupport(map, point, point.surfaceId);
   const surface = surfaceById(map, point.surfaceId);
   if (!support || !surface || Math.hypot(surface.slopeX, surface.slopeZ) > body.maxSlope)
     return false;
   // Stance/clearance are boolean queries; do not allocate and sort a complete hit list.
-  return !visitHits(
+  const allowed = !visitHits(
     map,
     point,
     point,
@@ -464,6 +485,8 @@ export function canStand(
     body,
     (shape, interval) => !onlySupportContact(map, shape, interval, point, point, body),
   );
+  memo?.set(point, { radius: body.radius, height: body.height, maxSlope: body.maxSlope, allowed });
+  return allowed;
 }
 export function canWalkSegment(
   map: SpatialMap,
