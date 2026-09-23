@@ -1,0 +1,36 @@
+name: Isolated navigation qualification dependencies
+on:
+  push:
+    branches: [research/navigation-qualification]
+    paths: [.github/workflows/navigation-qualification-export.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Export source and isolated library installation without executing tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nav-qualification-export /tmp/nav-libs
+          git archive --format=zip --output=/tmp/nav-qualification-export/source.zip HEAD
+          cd /tmp/nav-libs
+          printf '{"name":"openlegend-navigation-qualification","private":true,"type":"module"}\n' > package.json
+          RAPIER_VERSION="$(npm view @dimforge/rapier3d-compat version)"
+          npm install --ignore-scripts --no-audit --no-fund --save-exact navcat@0.4.1 recast-navigation@0.43.1 "@dimforge/rapier3d-compat@$RAPIER_VERSION"
+          npm ls --all > dependency-tree.txt
+          node --version > runtime-version.txt
+          tar -czf /tmp/nav-qualification-export/libraries.tgz package.json package-lock.json dependency-tree.txt runtime-version.txt node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: navigation-qualification-inputs
+          path: /tmp/nav-qualification-export/
+          retention-days: 2
