@@ -399,16 +399,19 @@ export function soundTransmission(map: SpatialMap, from: WorldPoint, to: WorldPo
 }
 function onlySupportContact(
   map: SpatialMap,
-  hit: RayHit,
+  shape: PreparedShape,
+  interval: readonly [number, number],
   from: SurfacePoint,
   to: SurfacePoint,
   body: BodyProfile,
 ): boolean {
-  if (hit.kind !== 'surface') return false;
-  const s = surfaceById(map, hit.id)!;
+  if (shape.kind !== 'surface') return false;
+  // A whole slab below both foot anchors cannot intrude above the supported chord.
+  if (shape.bounds.max.y <= Math.min(from.y, to.y) + SPATIAL_LIMITS.supportTolerance) return true;
+  const s = surfaceById(map, shape.id)!;
   const support = surfaceById(map, from.surfaceId)!;
   const toeAllowance = body.radius * Math.hypot(support.slopeX, support.slopeZ);
-  return aboveSurfaceDuringContact(s, from, to, [hit.fraction, hit.exitFraction], toeAllowance);
+  return aboveSurfaceDuringContact(s, from, to, interval, toeAllowance);
 }
 function aboveSurfaceDuringContact(
   s: WalkableSurface,
@@ -451,8 +454,15 @@ export function canStand(
   const surface = surfaceById(map, point.surfaceId);
   if (!support || !surface || Math.hypot(surface.slopeX, surface.slopeZ) > body.maxSlope)
     return false;
-  return rayHits(map, point, point, 'movement', new Set([point.surfaceId]), body).every((hit) =>
-    onlySupportContact(map, hit, point, point, body),
+  // Stance/clearance are boolean queries; do not allocate and sort a complete hit list.
+  return !visitHits(
+    map,
+    point,
+    point,
+    'movement',
+    new Set([point.surfaceId]),
+    body,
+    (shape, interval) => !onlySupportContact(map, shape, interval, point, point, body),
   );
 }
 export function canWalkSegment(
@@ -476,8 +486,14 @@ export function canWalkSegment(
   if (from.surfaceId === to.surfaceId && (!surfaceContains(a, to) || !surfaceContains(b, from)))
     return false;
   if (
-    rayHits(map, from, to, 'movement', ignored, body).some(
-      (hit) => !onlySupportContact(map, hit, from, to, body),
+    visitHits(
+      map,
+      from,
+      to,
+      'movement',
+      ignored,
+      body,
+      (shape, interval) => !onlySupportContact(map, shape, interval, from, to, body),
     )
   )
     return false;

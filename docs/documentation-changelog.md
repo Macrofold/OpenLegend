@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## Second spatial scaling pass
+
+Recorded lazy support-group navigation, sparse exact seams, direct validated overlap paths, search scratch reuse, boolean query changes and mutation-owner experience/audience reuse. Updated implemented SW subsets without closing the remaining preparation, private-acquisition or population gates. Added SR08–SR10 automated coverage to maintainer TODO; old checks remain historical and this pass supplies production build and ad-hoc runtime observations only.
+
 ## Spatial scaling review and completion reconciliation
 
 Added the SW delivery ledger separating implemented native subsets from broader unchecked targets. Recorded bounded static indexing, visibility/landing/cache dependencies and renderer dirty work in current implementation owners; retained measured cold-preparation and first-exposure gaps under SW/PF/EPR. Consolidated new regression work in maintainer TODO at the owner's instruction and replaced obsolete schema-8 fixture targets with the current spatial format. Prior automated evidence remains historical; this review adds build/manual-runtime observations only.

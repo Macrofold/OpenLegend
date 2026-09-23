@@ -66,6 +66,89 @@ export function emit(
   data?: WorldEvent['data'],
   scope: 'external' | 'private' = 'external',
 ): WorldEvent {
+  return recordEvent(
+    world,
+    events,
+    type,
+    text,
+    eventAudience(world, type, source, scope),
+    source,
+    targetId,
+    data,
+    scope,
+  );
+}
+
+function eventAudience(
+  world: WorldState,
+  type: string,
+  source: Entity | undefined,
+  scope: 'external' | 'private',
+  candidates?: Entity[],
+): string[] {
+  const audience =
+    scope === 'private' || !source
+      ? []
+      : (candidates ?? Object.values(world.entities))
+          .filter(
+            (entity) =>
+              hasMemory(entity) &&
+              entity.actor?.alive &&
+              !entity.actor.rest?.asleep &&
+              (type === 'speech'
+                ? hearsEntity(world, entity, source)
+                : seesEntity(world, entity, source)),
+          )
+          .map((entity) => entity.id);
+  if (source && hasMemory(source) && !audience.includes(source.id)) audience.push(source.id);
+  return audience;
+}
+
+/** Only for the synchronous post-movement encounter phase: emitting encounters changes
+ * experience, not positions or sensory capabilities. Never retain this resolver across motion.
+ * The usual recordEvent path still owns every ledger, memory and commitment mutation.
+ * EPR03 still owns private acquisition; this optimization does not redefine witness semantics.
+ * docs/events-perception-and-reactions.md#6-spatial-work-and-invalidation
+ */
+export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
+  let observers: Entity[] | undefined;
+  const audiences = new Map<string, string[]>();
+  return (source: Entity, targetId: string, meaningful: boolean): WorldEvent => {
+    let audience = audiences.get(source.id);
+    if (!audience) {
+      observers ??= Object.values(world.entities).filter(
+        (e) => hasMemory(e) && e.actor?.alive && !e.actor.rest?.asleep,
+      );
+      audience = eventAudience(world, 'encounter', source, 'external', observers);
+      audiences.set(source.id, audience);
+    }
+    return recordEvent(
+      world,
+      events,
+      'encounter',
+      `${source.name} encountered ${world.entities[targetId]!.name}.`,
+      audience,
+      source,
+      targetId,
+      meaningful
+        ? { importance: 6, semanticTrigger: true }
+        : { importance: 0, urgency: 0, semanticTrigger: false },
+      'external',
+    );
+  };
+}
+
+function recordEvent(
+  world: WorldState,
+  events: WorldEvent[],
+  type: string,
+  text: string,
+  audience: string[],
+  source: Entity | undefined,
+  targetId: string | undefined,
+  data: WorldEvent['data'],
+  scope: 'external' | 'private',
+): WorldEvent {
   const boundedMetric = (value: unknown, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value)
       ? Math.max(0, Math.min(10, value))
@@ -85,24 +168,6 @@ export function emit(
     data?.['urgency'],
     ['death', 'incapacitated'].includes(type) ? 10 : type === 'speech' ? 4 : 2,
   );
-  const audience =
-    scope === 'private'
-      ? source && hasMemory(source)
-        ? [source.id]
-        : []
-      : Object.values(world.entities)
-          .filter(
-            (entity) =>
-              hasMemory(entity) &&
-              entity.actor?.alive &&
-              !entity.actor.rest?.asleep &&
-              !!source &&
-              (type === 'speech'
-                ? hearsEntity(world, entity, source)
-                : seesEntity(world, entity, source)),
-          )
-          .map((entity) => entity.id);
-  if (source && hasMemory(source) && !audience.includes(source.id)) audience.push(source.id);
   const conversationId =
     type === 'speech' && source
       ? engageConversation(world, source.id, targetId)
@@ -119,7 +184,7 @@ export function emit(
     at: world.simTime,
     type,
     text,
-    audience,
+    audience: [...audience],
     importance,
     urgency,
   };

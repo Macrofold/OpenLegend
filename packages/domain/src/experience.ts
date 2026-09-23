@@ -1,3 +1,4 @@
+import { current, isDraft } from 'immer';
 import { changeGoal, type GoalChange } from './agency.js';
 import { initializeIdentity } from './identity.js';
 import { hasMemory } from './living.js';
@@ -129,6 +130,55 @@ function stableExperienceUpdate(previous: ExperienceEntry, next: ExperienceEntry
   );
 }
 
+type IdentifiedEntry = { id?: string; eventId?: string };
+type IdentityField = 'id' | 'eventId';
+const additionIndexes = new WeakMap<
+  object,
+  { length: number; field: IdentityField; ids: Set<string | undefined> }
+>();
+/** IDs cannot be edited and removals replace the array. Only this mutation owner's draft
+ * additions reuse a membership index; unowned mutable builders always read their live array.
+ * docs/performance.md#simulation-cpu-and-growing-history
+ */
+function containsEntryId<T extends IdentifiedEntry>(
+  entries: T[] | undefined,
+  id: string,
+  field: IdentityField,
+): boolean {
+  if (!entries) return false;
+  if (!isDraft(entries)) return entries.some((entry) => entry[field] === id);
+  let index = additionIndexes.get(entries);
+  if (!index || index.length !== entries.length || index.field !== field) {
+    // Read retained history without creating one Immer proxy per old experience.
+    index = { length: entries.length, field, ids: new Set(current(entries).map((e) => e[field])) };
+    additionIndexes.set(entries, index);
+  }
+  return index.ids.has(id);
+}
+function appendEntry<T extends IdentifiedEntry>(
+  entries: T[],
+  entry: T,
+  field: IdentityField,
+): void {
+  const index = additionIndexes.get(entries),
+    length = entries.length;
+  entries.push(entry);
+  if (index?.length === length && index.field === field) {
+    index.ids.add(entry[field]);
+    index.length = entries.length;
+  } else additionIndexes.delete(entries);
+}
+function containsExperienceKey(world: WorldState, actorId: string, key: string): boolean {
+  const separator = key.indexOf(':'),
+    source = key.slice(0, separator),
+    id = key.slice(separator + 1);
+  if (source === 'awareness')
+    return containsEntryId(world.experience?.awareness[actorId], id, 'eventId');
+  if (source === 'memory') return containsEntryId(world.memories[actorId], id, 'id');
+  if (source === 'summary') return containsEntryId(world.experience?.summaries[actorId], id, 'id');
+  return false;
+}
+
 /** The one authoritative path for creator mutation of retained experience. */
 export function mutateExperience(
   world: WorldState,
@@ -147,6 +197,16 @@ export function mutateExperience(
 ): string[] | null {
   if (!world.experience) migrateCognition(world);
   if (!hasMemory(world.entities[actorId])) return null;
+  const additionsOnly = Array.isArray(mutation)
+    ? mutation.every((change) => change.operation === 'add')
+    : mutation.operation === 'add';
+  if (!additionsOnly)
+    for (const entries of [
+      world.experience!.awareness[actorId],
+      world.memories[actorId],
+      world.experience!.summaries[actorId],
+    ])
+      if (entries) additionIndexes.delete(entries);
   if (!Array.isArray(mutation) && mutation.operation === 'consolidate') {
     const used = new Set(mutation.retiredIds);
     if (
@@ -239,7 +299,7 @@ export function mutateExperience(
       new Set(keys).size !== keys.length ||
       keys.some(
         (key) =>
-          !!experienceEntry(world, actorId, key) ||
+          containsExperienceKey(world, actorId, key) ||
           world.experience?.forgotten[actorId]?.includes(key.slice(key.indexOf(':') + 1)),
       ) ||
       additions.some(
@@ -253,9 +313,10 @@ export function mutateExperience(
       return null;
     for (const entry of additions) {
       if (entry.source === 'awareness')
-        (world.experience!.awareness[actorId] ??= []).push(entry.value);
-      else if (entry.source === 'memory') (world.memories[actorId] ??= []).push(entry.value);
-      else (world.experience!.summaries[actorId] ??= []).push(entry.value);
+        appendEntry((world.experience!.awareness[actorId] ??= []), entry.value, 'eventId');
+      else if (entry.source === 'memory')
+        appendEntry((world.memories[actorId] ??= []), entry.value, 'id');
+      else appendEntry((world.experience!.summaries[actorId] ??= []), entry.value, 'id');
     }
     return [];
   }

@@ -81,7 +81,7 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 
 **Dependencies:** EPR01 contract sufficient; does not require new private-event behavior. Coordinate with PF09, not a second spatial implementation.
 
-- [ ] Preserve and qualify the implemented phase-local scalar spatial candidate pass and unchanged visibility-array identity. Complete remaining audience reuse, exact event-time validity, private acquisition and differential acceptance; do not repeat the old scan rewrite.
+- [ ] Qualify the implemented scalar spatial candidate pass, unchanged visibility-array identity and exact per-source audience reuse within the fixed-position encounter phase. General external-event candidate reuse, event-time invalidation, private acquisition and differential acceptance remain open; do not repeat the old scan rewrite. New automated coverage belongs to SR10 in [maintainer TODO](TODO.md#spatial-review-regression-todos).
 - [ ] Restrict external-event audience discovery to relevant listener candidates, then apply the exact existing hearing/sight, capability, life, and sleep rules. Preserve self handling deliberately.
 - [ ] Do not repeatedly call `nearbyEntities` on a mutable draft: its current implementation rebuilds. Introduce explicit phase-valid query context or equivalent reuse, with a safe rebuild/fallback when validity cannot be proved.
 - [ ] Invalidate candidate geometry after every relevant movement, teleport, spawn, removal, or sense-range change. An event's audience must use positions at that event's occurrence, not the end of a multi-step batch.

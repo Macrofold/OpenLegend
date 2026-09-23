@@ -14,6 +14,7 @@ import {
   type RouteResult,
   type SpatialMap,
   type SurfacePoint,
+  type WalkableSurface,
 } from './types.js';
 
 interface Node {
@@ -25,8 +26,71 @@ interface Graph {
   lookup: Map<string, number>;
   revision: number;
   components: Int32Array;
+  search: { costs: Float64Array; parents: Int32Array; stamps: Uint32Array; generation: number };
 }
 const graphs = new WeakMap<SpatialMap, Map<string, Graph>>();
+const surfaceGroups = new WeakMap<
+  SpatialMap,
+  {
+    revision: number;
+    bySurface: Map<string, WalkableSurface[]>;
+  }
+>();
+/** Coarse connectivity only: plane-height overlap at shared grid coordinates may connect
+ * supports, but never proves clearance. Disconnected upper floors need no ground graph bake.
+ * docs/architecture.md#spatial-world-foundation
+ */
+function groupsFor(map: SpatialMap): Map<string, WalkableSurface[]> {
+  const cached = surfaceGroups.get(map);
+  if (cached?.revision === map.spatial.revision) return cached.bySurface;
+  validateSpatialMap(map);
+  const surfaces = [...supportSurfaces(map)].sort((a, b) => a.id.localeCompare(b.id));
+  const parents = surfaces.map((_, i) => i);
+  const root = (i: number): number => {
+    while (parents[i] !== i) {
+      parents[i] = parents[parents[i]!]!;
+      i = parents[i]!;
+    }
+    return i;
+  };
+  for (let i = 0; i < surfaces.length; i++) {
+    const a = surfaces[i]!;
+    for (let j = i + 1; j < surfaces.length; j++) {
+      const b = surfaces[j]!;
+      const minX = Math.ceil(Math.max(a.minX, b.minX)),
+        maxX = Math.floor(Math.min(a.maxX, b.maxX));
+      const minZ = Math.ceil(Math.max(a.minZ, b.minZ)),
+        maxZ = Math.floor(Math.min(a.maxZ, b.maxZ));
+      if (minX > maxX || minZ > maxZ) continue;
+      // The difference of two support planes is linear, so its extrema lie at corners.
+      const delta = surfaceHeight(a, minX, minZ) - surfaceHeight(b, minX, minZ);
+      const dx = (maxX - minX) * (a.slopeX - b.slopeX);
+      const dz = (maxZ - minZ) * (a.slopeZ - b.slopeZ);
+      // Coarse rejection must remain conservative at floating-point seam boundaries.
+      const tolerance = SPATIAL_LIMITS.supportTolerance + SPATIAL_LIMITS.epsilon;
+      if (
+        delta + Math.min(0, dx) + Math.min(0, dz) > tolerance ||
+        delta + Math.max(0, dx) + Math.max(0, dz) < -tolerance
+      )
+        continue;
+      const first = root(i),
+        second = root(j);
+      if (first !== second) parents[Math.max(first, second)] = Math.min(first, second);
+    }
+  }
+  const groups = new Map<number, WalkableSurface[]>(),
+    bySurface = new Map<string, WalkableSurface[]>();
+  for (let i = 0; i < surfaces.length; i++) {
+    const id = root(i),
+      surface = surfaces[i]!;
+    let group = groups.get(id);
+    if (!group) groups.set(id, (group = []));
+    group.push(surface);
+    bySurface.set(surface.id, group);
+  }
+  surfaceGroups.set(map, { revision: map.spatial.revision, bySurface });
+  return bySurface;
+}
 const key = (surface: string, x: number, z: number) => `${surface}:${x},${z}`;
 const DIRECTIONS = [
   [0, -1],
@@ -39,20 +103,25 @@ const DIRECTIONS = [
  * qualified Recast adapter without changing destinations or the authoritative movement owner.
  * archive/07-technical-architecture/spatial-world-runtime.md#initial-native-provider
  */
-function graphFor(map: SpatialMap, body: BodyProfile): Graph {
-  const profileKey = `${body.id}:${body.radius}:${body.height}:${body.maxSlope}`;
+function graphFor(map: SpatialMap, body: BodyProfile, surfaces: WalkableSurface[]): Graph {
+  const profileKey = `${body.id}:${body.radius}:${body.height}:${body.maxSlope}:${surfaces[0]!.id}`;
   let profiles = graphs.get(map);
   const cached = profiles?.get(profileKey);
   if (cached?.revision === map.spatial.revision) return cached;
-  validateSpatialMap(map);
   const graph: Graph = {
     nodes: [],
     lookup: new Map(),
     revision: map.spatial.revision,
     components: new Int32Array(),
+    search: {
+      costs: new Float64Array(),
+      parents: new Int32Array(),
+      stamps: new Uint32Array(),
+      generation: 0,
+    },
   };
   const columns = new Map<string, number[]>();
-  for (const s of [...supportSurfaces(map)].sort((a, b) => a.id.localeCompare(b.id))) {
+  for (const s of surfaces) {
     for (let z = Math.ceil(s.minZ); z <= Math.floor(s.maxZ); z++) {
       for (let x = Math.ceil(s.minX); x <= Math.floor(s.maxX); x++) {
         const point = { x, y: surfaceHeight(s, x, z), z, surfaceId: s.id };
@@ -85,15 +154,29 @@ function graphFor(map: SpatialMap, body: BodyProfile): Graph {
       if (graph.nodes[column[mid]!]!.point.y < p.y - SPATIAL_LIMITS.supportTolerance) lo = mid + 1;
       else hi = mid;
     }
+    let seamHub: number | undefined;
     for (let i = lo; i < column.length; i++) {
-      const next = column[i]!;
-      if (graph.nodes[next]!.point.y > p.y + SPATIAL_LIMITS.supportTolerance) break;
+      const next = column[i]!,
+        height = graph.nodes[next]!.point.y;
+      if (height > p.y + SPATIAL_LIMITS.supportTolerance) break;
+      if (height === p.y) {
+        // Valid exact-coincident stances in this finite family connect at zero cost.
+        // A star preserves connectivity without a quadratic clique; native links need their own rules.
+        // Keep tolerance-height seams explicit: those carry real distance and may be directional.
+        seamHub ??= next;
+        if (index !== seamHub && next !== seamHub) continue;
+      }
       candidates.push(next);
     }
     for (const next of candidates) {
       if (next === undefined || next === index) continue;
       const target = graph.nodes[next]!.point;
-      if (canWalkSegment(map, p, target, body))
+      // Same-surface geometry is reversible. Reuse the earlier direction's result; seam
+      // contact allowances can differ by source slope and must still be checked both ways.
+      if (next < index && p.surfaceId === target.surfaceId) {
+        const reverse = graph.nodes[next]!.edges.find((edge) => edge.index === index);
+        if (reverse) node.edges.push({ index: next, cost: reverse.cost });
+      } else if (canWalkSegment(map, p, target, body))
         node.edges.push({ index: next, cost: distance3D(p, target) });
     }
   }
@@ -114,6 +197,12 @@ function graphFor(map: SpatialMap, body: BodyProfile): Graph {
     }
   for (let i = 0; i < components.length; i++) components[i] = root(i);
   graph.components = components;
+  graph.search = {
+    costs: new Float64Array(graph.nodes.length),
+    parents: new Int32Array(graph.nodes.length),
+    stamps: new Uint32Array(graph.nodes.length),
+    generation: 0,
+  };
   profiles ??= new Map();
   profiles.set(profileKey, graph);
   graphs.set(map, profiles);
@@ -211,19 +300,50 @@ export function findSurfaceRoute(
     return { status: 'reached', path: [], length: 0, expanded: 0 };
   if (from.surfaceId === to.surfaceId && canWalkSegment(map, from, to, body))
     return { status: 'reached', path: [{ ...to }], length: distance3D(from, to), expanded: 0 };
-  const graph = graphFor(map, body);
+  if (from.surfaceId !== to.surfaceId) {
+    // Overlapping supports can share an endpoint. Validate both legs instead of baking a
+    // dense graph just to change the semantic support; blocked legs still use normal search.
+    for (const seam of [
+      { ...from, surfaceId: to.surfaceId },
+      { ...to, surfaceId: from.surfaceId },
+    ]) {
+      if (canWalkSegment(map, from, seam, body) && canWalkSegment(map, seam, to, body))
+        return {
+          status: 'reached',
+          path:
+            seam.surfaceId === to.surfaceId && distance3D(seam, to) < 1e-6
+              ? [{ ...to }]
+              : [seam, { ...to }],
+          length: distance3D(from, seam) + distance3D(seam, to),
+          expanded: 0,
+        };
+    }
+  }
+  const groups = groupsFor(map),
+    group = groups.get(from.surfaceId);
+  if (!group || group !== groups.get(to.surfaceId)) return fail('no-route');
+  const graph = graphFor(map, body, group);
   const starts = endpointNodes(map, graph, from, body),
     ends = endpointNodes(map, graph, to, body);
   if (!starts.length || !ends.length) return fail('no-route');
   const startComponents = new Set(starts.map((i) => graph.components[i]));
   if (!ends.some((i) => startComponents.has(graph.components[i]))) return fail('no-route');
   const endCosts = new Map(ends.map((i) => [i, distance3D(graph.nodes[i]!.point, to)]));
-  const costs = new Float64Array(graph.nodes.length).fill(Infinity),
-    parent = new Int32Array(graph.nodes.length).fill(-1);
+  // Queries are synchronous/non-reentrant. Generation stamps reuse bounded graph-local
+  // scratch without clearing every unrelated floor on each short route. Never saved state.
+  const { costs, parents: parent, stamps } = graph.search;
+  let generation = (graph.search.generation + 1) >>> 0;
+  if (generation === 0) {
+    stamps.fill(0);
+    generation = 1;
+  }
+  graph.search.generation = generation;
   const queue = new MinQueue();
   for (const index of starts) {
     const cost = distance3D(from, graph.nodes[index]!.point);
     costs[index] = cost;
+    parent[index] = -1;
+    stamps[index] = generation;
     queue.push({ index, cost, estimate: cost + distance3D(graph.nodes[index]!.point, to) });
   }
   let expanded = 0,
@@ -241,7 +361,8 @@ export function findSurfaceRoute(
     }
     for (const edge of graph.nodes[entry.index]!.edges) {
       const cost = entry.cost + edge.cost;
-      if (cost >= costs[edge.index]! - 1e-9) continue;
+      if (stamps[edge.index] === generation && cost >= costs[edge.index]! - 1e-9) continue;
+      stamps[edge.index] = generation;
       costs[edge.index] = cost;
       parent[edge.index] = entry.index;
       queue.push({

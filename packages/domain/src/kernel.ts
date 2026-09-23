@@ -39,7 +39,7 @@ import { experiences } from './experience.js';
 import { accountRest, REST_RULES } from './sleep.js';
 import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
-import { appendMemory, canonicalJson, emit, finish, outcome } from './events.js';
+import { appendMemory, canonicalJson, emit, encounterEmitter, finish, outcome } from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   hearsEntity,
@@ -1271,6 +1271,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
 /** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
 function updateEncounters(world: WorldState, original: WorldState, events: WorldEvent[]): void {
   const hadObjectExposures = original.visibleObjects !== undefined;
+  const encounter = encounterEmitter(world, events);
 
   // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
   // Snapshot identity, transforms and body height; event mutations still use the authoritative draft.
@@ -1379,18 +1380,7 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
           (m.summary.startsWith('I saw ') || m.eventType === 'encounter') &&
           world.simTime - m.at < 3600,
       );
-      if (!recent) {
-        const encountered = world.entities[id]!;
-        emit(
-          world,
-          events,
-          'encounter',
-          `${actor.entity.name} encountered ${encountered.name}.`,
-          actor.entity,
-          id,
-          { importance: 6, semanticTrigger: true },
-        );
-      }
+      if (!recent) encounter(actor.entity, id, true);
     }
     if (
       !original.visiblePeople?.[actor.id] ||
@@ -1405,16 +1395,7 @@ function updateEncounters(world: WorldState, original: WorldState, events: World
         (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
     );
     for (const entity of objects)
-      if (!priorObjects.has(entity.id))
-        emit(
-          world,
-          events,
-          'encounter',
-          `${actor.entity.name} encountered ${entity.entity.name}.`,
-          actor.entity,
-          entity.id,
-          { importance: 0, urgency: 0, semanticTrigger: false },
-        );
+      if (!priorObjects.has(entity.id)) encounter(actor.entity, entity.id, false);
     const objectIds = objects.map((entity) => entity.id);
     const previousObjects = original.visibleObjects?.[actor.id];
     // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).

@@ -24,14 +24,22 @@ export class BoundsIndex<T> {
         min: { ...items[0]!.bounds.min },
         max: { ...items[0]!.bounds.max },
       };
+      const centers: Bounds3 = {
+        min: { x: Infinity, y: Infinity, z: Infinity },
+        max: { x: -Infinity, y: -Infinity, z: -Infinity },
+      };
       for (const { bounds: b } of items)
         for (const axis of axes) {
           bounds.min[axis] = Math.min(bounds.min[axis], b.min[axis]);
           bounds.max[axis] = Math.max(bounds.max[axis], b.max[axis]);
+          const center = b.min[axis] + b.max[axis];
+          centers.min[axis] = Math.min(centers.min[axis], center);
+          centers.max[axis] = Math.max(centers.max[axis], center);
         }
       if (items.length <= 4) return { bounds, entries: items };
+      // Wide overlapping decks may vary only in Y. Split their centers, not slab width.
       const axis = axes.reduce((best, next) =>
-        bounds.max[next] - bounds.min[next] > bounds.max[best] - bounds.min[best] ? next : best,
+        centers.max[next] - centers.min[next] > centers.max[best] - centers.min[best] ? next : best,
       );
       items.sort(
         (a, b) => a.bounds.min[axis] + a.bounds.max[axis] - b.bounds.min[axis] - b.bounds.max[axis],
