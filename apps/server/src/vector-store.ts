@@ -88,8 +88,8 @@ export class VectorStore {
    */
   async search(scope: VectorScope, query: number[], sources: VectorSource[], limit: number) {
     this.validate(scope, query);
-    if (!Number.isInteger(limit) || limit < 1 || limit > 100)
-      throw new Error('Vector search limit must be between 1 and 100.');
+    if (!Number.isSafeInteger(limit) || limit < 1)
+      throw new Error('Vector search limit must be a positive integer.');
     return (
       await this.db
         .prepare(

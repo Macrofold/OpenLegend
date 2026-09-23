@@ -88,7 +88,7 @@ export function readableDecisionContext(
     sections.splice(
       6,
       0,
-      `## Actions\nOptional relevant executable choices; selection is not mandatory:\n${actions.length ? actions.map((action) => `- ${action.description}`).join('\n') : 'No shortlisted mechanical action.'}\nI may instead express a gesture (nod, smile, frown, wave, shrug, shake_head, slap), or propose an unlisted action. I should not prefer an existing action just because it is listed. Expressions have no mechanical effects; a slap requires contact range. A proposal is an intention, not a completed action; unsupported mechanics require separate invention admission.`,
+      `## Actions\nOptional relevant executable choices; selection is not mandatory:\n${actions.length ? actions.map((action) => `- ${action.id}: ${action.description}`).join('\n') : 'No shortlisted mechanical action.'}\nI may instead express a gesture (nod, smile, frown, wave, shrug, shake_head, slap), or propose an unlisted action. I should not prefer an existing action just because it is listed. Expressions have no mechanical effects; a slap requires contact range. A proposal is an intention, not a completed action; unsupported mechanics require separate invention admission.`,
     );
   sections.push(
     `## Response format\nReturn {"operations":[]} to continue without intervention. At most 16 operations and 16000 UTF-8 bytes in total. Each operation has localId (unique lowercase letter followed by letters/digits/underscores, max 24), requiresAccepted (earlier localIds only), and exactly one non-null field among talk, act, think, goal, plan; all four unused fields must be null. Operations are admitted in order; requiresAccepted means admission, never physical completion.
@@ -100,7 +100,7 @@ Examples: empty {"operations":[]}; speech alone {"operations":[{"localId":"reply
   );
   sections.push(`## References
 Names are display prose, never identifiers. Copy exact IDs into structured fields.
-${list(context['references'])}${actions.length ? `\nAction IDs (valid only for this response):\n${actions.map((action) => JSON.stringify(action)).join('\n')}` : ''}`);
+${list(context['references'])}`);
   return sections.join('\n\n');
 }
 

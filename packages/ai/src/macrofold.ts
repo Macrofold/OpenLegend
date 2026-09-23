@@ -11,7 +11,8 @@ export class MacrofoldHttpError extends Error {
   }
   get admissionRejected(): boolean {
     return (
-      this.code === 'execution_disabled' || [400, 401, 403, 404, 422, 429].includes(this.status)
+      this.code === 'execution_disabled' ||
+      [400, 401, 403, 404, 413, 422, 429].includes(this.status)
     );
   }
 }

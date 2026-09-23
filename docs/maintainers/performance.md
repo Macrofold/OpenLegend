@@ -232,3 +232,7 @@ SW04/SW05/SW08/SW10 now own indexed static geometry, height-local graph construc
 ### A further 90% end-to-end reduction
 
 Treat this as an attribution target, not a result of multiplying microbenchmark speedups. PF00 must separate queue/native/commit/projection/SSE/render spans on the same scenario. Reducing one fraction of latency by 90% cannot reduce the whole by 90% unless it dominates. Use lazy spatial work and participant reuse already delivered; next target the measured dominant remaining layer through PF01/PF05/PF08/PF09 and EPR02/EPR03 rather than adding another cache speculatively. Keep first acquisition, dense no-route search, mature history, ordinary movement and full-stack sustained load separate. Do not change visibility, auditory evidence, durability or simulation time to meet a number.
+
+### Cognition review stress follow-up
+
+- [ ] Under PF00/PF03, qualify cold geometry/encounter/finalization bursts in the existing gems and mixed scenarios: the [cognition review measurements](../verification.md#cognition-context-and-action-capacity) remain below requested 3× headroom. Compare equivalent sequential runs before choosing a targeted optimization; do not add a worker/queue based on these profiles alone.

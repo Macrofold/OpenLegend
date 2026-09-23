@@ -135,3 +135,7 @@ Recorded the statement-count fixture and investigation limits in Verification, i
 ## Spatial world browser verification
 
 Recorded the passing branch-only GitHub Actions production build, 24 focused tests and real PlayCanvas browser scenario in Verification. Updated the narrowly evidenced camera, surface-picking and executed-check task states while retaining broader acceptance gates. Removed temporary source/publication transport files; a read-only spatial workflow now supplements the unchanged full repository check. No live provider calls or legacy save conversion were introduced.
+
+## Cognition context and opportunity correction
+
+The September 23 review replaces the conflicting deferred-evidence cursor requirements with fresh opportunity snapshots and retained, independently queryable history. Commit `2fce978` (September 20) introduced oldest-eight backlog selection; `4040ccb` added the 100-finalist context policy while generic validation still allowed only 32 questions. Commit `ab13896` (September 22) changed actor responses to `operations[]` without updating the diagnostics renderer. These were implementation/contract synchronization gaps, not evidence that empty thought/speech was generated. Current contracts and coverage tasks now describe the corrected behavior.

@@ -225,9 +225,9 @@ Keep a small ready set and due-time checks initially. A heap or timing wheel is 
 
 ### Correct coalescing and overload
 
-Coalesce repeat wakeups or updates to the same episode, not distinct accepted speech, effects, or evidence. Do not advance a cursor beyond an item that has merely been deferred. An attempted-opportunity marker prevents duplicate paid admission; an evidence-consumption marker records actual handling. They are not interchangeable.
+Coalesce cognition wakeups while preserving distinct accepted speech, effects and evidence in their authoritative stores. The cognition wakeup watermark covers the current opportunity snapshot, including native or unavailable dispositions; it is not evidence of semantic handling. Retained history never becomes a backlog of owed cognition calls. The [memory context contract](memory-architecture.md#4-jev-attention-before-context-inclusion) supplies fresh hard-query and semantic context for each opportunity.
 
-Bound pending actor/episode metadata and work per turn using the performance policy. Keep required evidence in its existing authoritative store and retain a recoverable cursor when optional work queues fill. Do not materialize an unbounded per-event promise chain. Never drop an authoritative occurrence or let a full queue disable native protection. If required retention cannot progress, use the existing explicit backpressure behavior rather than silent loss.
+Bound pending actor/episode metadata and work per turn using the performance policy. Keep required evidence in its existing authoritative store and retain authoritative evidence when optional work queues fill. Do not materialize an unbounded per-event promise chain. Never drop an authoritative occurrence or let a full queue disable native protection. If required retention cannot progress, use the existing explicit backpressure behavior rather than silent loss.
 
 Priority should preserve interactive and urgent work while aging deferred actors sufficiently to avoid starvation. This design does not increase global model concurrency or per-actor spending automatically.
 

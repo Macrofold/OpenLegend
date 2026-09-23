@@ -7,6 +7,7 @@ export interface CameraState {
   projection: 'orthographic' | 'perspective';
   levelId: string | null;
   rotationLocked: boolean;
+  following: boolean;
 }
 export type CameraCommand =
   | { type: 'orbit'; yaw: number; pitch: number }
@@ -15,7 +16,8 @@ export type CameraCommand =
   | { type: 'focus'; point: WorldPoint }
   | { type: 'level'; id: string | null; y: number }
   | { type: 'projection' }
-  | { type: 'rotation-lock' };
+  | { type: 'rotation-lock' }
+  | { type: 'follow' };
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 export const CAMERA_FOV_DEGREES = 45;
 export function initialCamera(): CameraState {
@@ -27,6 +29,7 @@ export function initialCamera(): CameraState {
     projection: 'orthographic',
     levelId: null,
     rotationLocked: false,
+    following: false,
   };
 }
 /** Pure client presentation controller. No world position, visibility grant, or simulation clock is changed. */
@@ -52,6 +55,7 @@ export function updateCamera(state: CameraState, command: CameraCommand): Camera
         dy = (clamp(command.dy, -1000, 1000) * scale) / Math.sin(state.pitch);
       return {
         ...state,
+        following: false,
         focus: {
           x: clamp(state.focus.x - dx * Math.cos(state.yaw) - dy * Math.sin(state.yaw), -64, 192),
           y: state.focus.y,
@@ -69,13 +73,20 @@ export function updateCamera(state: CameraState, command: CameraCommand): Camera
         : state;
     case 'level':
       return Number.isFinite(command.y)
-        ? { ...state, levelId: command.id, focus: { ...state.focus, y: command.y } }
+        ? {
+            ...state,
+            following: false,
+            levelId: command.id,
+            focus: { ...state.focus, y: command.y },
+          }
         : state;
     case 'projection':
       return {
         ...state,
         projection: state.projection === 'orthographic' ? 'perspective' : 'orthographic',
       };
+    case 'follow':
+      return { ...state, following: !state.following, levelId: null };
     case 'rotation-lock':
       return { ...state, rotationLocked: !state.rotationLocked };
   }
@@ -103,6 +114,7 @@ export function cameraPreferences(state: CameraState) {
     zoom: state.zoom,
     projection: state.projection,
     rotationLocked: state.rotationLocked,
+    following: state.following,
   };
 }
 export function restoreCameraPreferences(value: unknown): CameraState {
@@ -116,5 +128,6 @@ export function restoreCameraPreferences(value: unknown): CameraState {
   if (typeof v.zoom === 'number' && Number.isFinite(v.zoom)) state.zoom = clamp(v.zoom, 4, 30);
   if (v.projection === 'perspective') state.projection = v.projection;
   if (typeof v.rotationLocked === 'boolean') state.rotationLocked = v.rotationLocked;
+  if (typeof v.following === 'boolean') state.following = v.following;
   return state;
 }

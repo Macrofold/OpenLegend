@@ -15,6 +15,7 @@ import {
   compileSchema,
   InvalidData,
   validateQuestions,
+  validateJudgmentSize,
   decodeJudge,
   decodeUsage,
   type AiClient,
@@ -835,6 +836,7 @@ export class MacrofoldBackend implements AiClient {
     let run: string | undefined;
     try {
       validateQuestions(request.questions);
+      validateJudgmentSize(request.state, request.questions);
       signal.throwIfAborted();
       receipt.dispatched = true;
       const accepted = await this.mutation(
@@ -852,7 +854,10 @@ export class MacrofoldBackend implements AiClient {
           input: { state: request.state, questions: request.questions },
           limits: {
             max_cost_micro_usd: String(Math.ceil(config.jevReserveUsd * 1e6)),
-            max_output_tokens: 1024,
+            max_output_tokens: Math.min(
+              16384,
+              Math.max(1024, Object.keys(request.questions).length * 64),
+            ),
             timeout_seconds: Math.ceil(config.aiTimeoutMs / 1000),
           },
         },
@@ -882,6 +887,10 @@ export class MacrofoldBackend implements AiClient {
           await this.cancel(run);
         } catch {}
       }
+      // Rejected admission never reached a model; do not label it uncertain or bill the reserve.
+      // docs/ai-providers.md#receipts-outcomes-and-accounting
+      if (!run && error instanceof MacrofoldHttpError && error.admissionRejected)
+        receipt.dispatched = false;
       receipt.completionUncertain = receipt.dispatched && receipt.estimatedCostUsd === undefined;
       return {
         outcome: signal.aborted
