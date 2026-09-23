@@ -108,10 +108,13 @@ export async function searchInventions(
     current();
     const ranked = await vectors.search(scope, query!, sources, 5);
     current();
+    // Snapshot membership once; rechecking every source with Array.some is quadratic.
+    // docs/architecture.md#bounded-invention-history-and-recovery
+    const known = new Set((service.world.knowledge[actorId] ?? []).map((entry) => entry.recipeId));
     if (
       sources.some(
         (source) =>
-          !service.world.knowledge[actorId]?.some((entry) => entry.recipeId === source.id) ||
+          !known.has(source.id) ||
           service.world.recipes[source.id]?.digest !== world.recipes[source.id]?.digest,
       )
     )

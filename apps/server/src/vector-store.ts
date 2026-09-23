@@ -10,6 +10,12 @@ export interface VectorScope {
   dimensions: number;
 }
 
+// Callers may include text or vectors; SQL scope joins need only identity/revision pins.
+// docs/architecture.md#bounded-invention-history-and-recovery
+function sourcePins(sources: VectorSource[]): string {
+  return JSON.stringify(sources.map(({ id, revision }) => ({ id, revision })));
+}
+
 /** Derived embeddings stay in PostgreSQL. Only source IDs and top-match scores leave it. */
 export class VectorStore {
   constructor(private db: SqlDatabase) {}
@@ -53,7 +59,7 @@ export class VectorStore {
                ON s.id = v.source_id AND s.revision = v.revision
              WHERE v.scope = ? AND v.model = ? AND v.dimensions = ?`,
           )
-          .all(JSON.stringify(sources), scope.key, scope.model, scope.dimensions)
+          .all(sourcePins(sources), scope.key, scope.model, scope.dimensions)
       ).map((row) => String(row['source_id'])),
     );
   }
@@ -105,7 +111,7 @@ export class VectorStore {
         )
         .all(
           JSON.stringify(query),
-          JSON.stringify(sources),
+          sourcePins(sources),
           scope.key,
           scope.model,
           scope.dimensions,
