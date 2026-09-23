@@ -1,5 +1,20 @@
 # Documentation changelog
 
+## 2026-09-22 — Coordinated invention foundation
+
+Integrated the accepted invention discussion against `3ad74eb19e0a9143d96e4f51ad19b68d7fa2d232`, including the latest actor-method and gathering-tool implementation. The review read the actual invention service, policy and module bindings, current architecture/status, engine/world principles, save and billing contracts, and existing INV work. It did not run the game, automated/runtime suites, paid providers, or performance experiments.
+
+- Added [Invention foundation](invention-foundation.md) as the coordination/ownership entry point, plus [World constitution](world-constitution.md), [Validation](invention-validation.md), [Runtime art](invention-art-pipeline.md), and [Budgets](invention-budgets.md). These are accepted target contracts, not claims of completed implementation.
+- Preserved the established four-layer engine/world architecture rather than introducing a competing meta-kernel. Replaceable world systems and invented laws/validation obligations remain beneath protected host integrity and current authority. A resolved constitution references existing manifest/policy records rather than duplicating them.
+- Replaced the conceptual production-line model with editable projects, immutable submitted revisions, independent mechanics/art evidence and publication, scope-sensitive redesign, and bounded repair that reuses valid work. Active versions remain intact while replacements are prepared. Late/superseded results cannot publish into the wrong candidate or restored timeline.
+- Made immutable versions, exact installation pins, author refinement locks, owner review/freeze, origin locks and quarantine orthogonal. Added indirect-change checks without claiming every emergent consequence can be frozen. Current origin defaults and the separately unresolved owner-authoring exception remain unchanged.
+- Added dependency/interaction planning, invented-obligation hierarchy, reusable native scenarios and evidence, focused Jev questions, targeted LLM investigation, and runtime amplification checks. Root spending survives revisions and rewind; authoring cost, runtime sustainability and invention entitlements remain separate.
+- Reconciled this design with delivered behavior: complete supplied proposals already bypass search/routing/generation; private NPC proposals/revisions reuse agency and durable feedback; four finite families include a gathering tool; schema-8 manifest/attribute/sense foundations exist but are not a general interpreter. No second designer, actor store, wallet, installer or service is required.
+- Expanded the existing INV tracker with INV-9–INV-14 and 49 unchecked tasks, retaining the existing INV-1–INV-8 IDs and completion states. Updated its next-slice guidance to extend delivered work instead of rebuilding it. Added entry-point navigation and moved detailed runtime-art ownership out of the visual-style brief while retaining its inbound headings.
+- Reconciled declarations with separate candidate/installation/protection lifecycles and the new specification owners. Preserved mechanical property, source, privacy, activation, migration and retention contracts. Existing broader workshop, conjuring, portability, and conditional G2 gates remain open.
+
+This is documentation-only: no executable code, live settings, origin locks, allowance amounts, model defaults, or implementation-status claims were changed. Current-format integrity remains required; obsolete development-save compatibility is still not requested. Documentation inspection is not runtime, browser, live-model, or scale acceptance.
+
 ## 2026-09-22 — Shared invention and plan-output slice
 
 - Recorded the bounded supported-family world-agent operation and shared durable pipeline, preserving broader INV requirements and their unchecked state. Ordinary inference is the explicit execution choice for this bounded operation; full discussion/cognition remains separate.
@@ -52,7 +67,7 @@ Added engine/world principles, shared reusable-construct/effect contracts, world
 
 ## 2026-09-21 — Game menu and local save files
 
-- Moved manual save/load controls from Settings & help to Game below World agent and moved manual slots to the gitignored local save folder. The pre-load recovery slot remains transactional in the authority database.
+- Moved manual save/load controls from Settings & help to Game below world agent and moved manual slots to the gitignored local save folder. The pre-load recovery slot remains transactional in the authority database.
 - Updated storage/backup guidance, runtime evidence and deferred validation; earlier database-only manual development slots are not migrated under the active no-legacy policy.
 
 ## 2026-09-21 — Development save/load implementation policy
