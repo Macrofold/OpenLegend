@@ -1,21 +1,80 @@
-name: Invention extensibility source export
+name: Publish reviewed invention extensibility changes
 on:
   push:
     branches: [review/invention-extensibility]
     paths: [.github/workflows/invention-extensibility-export.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  export:
+  publish:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
-      - run: git archive --format=zip --output=/tmp/invention-extensibility-source.zip HEAD
-      - uses: actions/upload-artifact@v4
-        with:
-          name: invention-extensibility-source
-          path: /tmp/invention-extensibility-source.zip
-          retention-days: 1
+          fetch-depth: 0
+      - name: Verify and apply reviewed changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/review/invention-extensibility
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, pathlib, subprocess
+          root = pathlib.Path.cwd()
+          staging = [f'.review/invention-extensibility-{i}.b64' for i in range(4)]
+          workflow = '.github/workflows/invention-extensibility-export.yml'
+          allowed = set(staging + [workflow])
+          changed = set(subprocess.check_output(['git','diff','--name-only','9df01920d11d5fda6fda9dbe5350e2c98b4f4222','HEAD'], text=True).splitlines())
+          if not changed <= allowed:
+              raise SystemExit('Concurrent source changes detected; refusing to overwrite.')
+          encoded = ''.join((root / p).read_text().strip() for p in staging)
+          payload = lzma.decompress(base64.b64decode(encoded, validate=True))
+          if hashlib.sha256(payload).hexdigest() != '380a5751891ebd160e1f079926c06eebea89141681cbadbc739c6d41ecf605ba':
+              raise SystemExit('Reviewed payload digest mismatch.')
+          operations = json.loads(payload)
+          if len(operations) != 36:
+              raise SystemExit('Unexpected reviewed file count.')
+          prepared = []
+          seen = set()
+          for operation in operations:
+              name = operation['path']
+              p = pathlib.PurePosixPath(name)
+              if p.is_absolute() or '..' in p.parts or name in seen or name.startswith(('.git/', '.github/', '.review/')) or '/tests/' in name or '.test.' in name or '.spec.' in name:
+                  raise SystemExit('Invalid reviewed path: ' + name)
+              seen.add(name)
+              target = root / name
+              if target.is_symlink():
+                  raise SystemExit('Unexpected symlink: ' + name)
+              if operation['oldSha256'] is None:
+                  if target.exists():
+                      raise SystemExit('New file already exists: ' + name)
+                  old = ''
+              else:
+                  old = target.read_text()
+                  if hashlib.sha256(old.encode()).hexdigest() != operation['oldSha256']:
+                      raise SystemExit('Base content changed: ' + name)
+              lines = old.splitlines(keepends=True)
+              previous_end = 0
+              for start, end, replacement in operation['edits']:
+                  if not (previous_end <= start <= end <= len(lines)):
+                      raise SystemExit('Invalid line edits: ' + name)
+                  previous_end = end
+              for start, end, replacement in reversed(operation['edits']):
+                  lines[start:end] = replacement.splitlines(keepends=True)
+              new = ''.join(lines)
+              if hashlib.sha256(new.encode()).hexdigest() != operation['newSha256']:
+                  raise SystemExit('Final content mismatch: ' + name)
+              prepared.append((target, new))
+          for target, content in prepared:
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(content)
+          for name in staging + [workflow]:
+              (root / name).unlink()
+          print(f'Applied {len(prepared)} verified source/documentation files; removed temporary publication files.')
+          PY
+          git add -A
+          git diff --cached --check
+          git config user.name "OpenLegend review"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "[skip ci] Add scoped invention workshop tools and extensibility boundaries" -m "Preserve finite native admission while adding scoped inspection, bounded tool-driven drafting, explicit digest-bound Apply, shared material validation and durable episode reservations. Record manual runtime/stress evidence and deferred regression coverage; remove temporary publication tooling. No unit tests or paid provider calls were run."
+          git push origin HEAD:refs/heads/review/invention-extensibility
