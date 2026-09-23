@@ -1,0 +1,21 @@
+name: Invention extensibility source export
+on:
+  push:
+    branches: [review/invention-extensibility]
+    paths: [.github/workflows/invention-extensibility-export.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: git archive --format=zip --output=/tmp/invention-extensibility-source.zip HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: invention-extensibility-source
+          path: /tmp/invention-extensibility-source.zip
+          retention-days: 1
