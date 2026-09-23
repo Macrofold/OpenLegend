@@ -366,7 +366,7 @@ export function npcCandidates(
     observed.visibleEntities.map((entity) => [
       entity.id,
       canReachEntity(service.world, observed.actor, entity, SIMULATION_RULES.interactionRadius)
-        ? []
+        ? { status: 'reached' as const, path: [] as import('@open-legend/spatial').SurfacePoint[] }
         : findApproachPath(
             service.world,
             observed.actor,
@@ -376,7 +376,10 @@ export function npcCandidates(
     ]),
   );
   for (const entity of observed.visibleEntities) {
-    const position = approaches.get(entity.id)?.at(-1);
+    const approach = approaches.get(entity.id);
+    const position = approach?.status === 'pending'
+      ? approach.request.destinations[0]
+      : approach?.path.at(-1);
     if (!position) continue;
     const command: CommandInput = { type: 'move', position };
     if (service.previewCommand(command, actorId).ok)
@@ -424,13 +427,13 @@ export function npcCandidates(
     // Target discovery uses only this actor's perception. Terrain is the same public
     // geometry used by native movement, never a search for hidden entities/items.
     const reach = entity.animal && launcher ? launcher.range : SIMULATION_RULES.interactionRadius;
-    const path =
-      reach === SIMULATION_RULES.interactionRadius
-        ? approaches.get(entity.id)
-        : canReachEntity(service.world, observed.actor, entity, reach)
-          ? []
-          : findApproachPath(service.world, observed.actor, entity, reach);
-    if (!path) continue;
+    const route = reach === SIMULATION_RULES.interactionRadius
+      ? approaches.get(entity.id)
+      : canReachEntity(service.world, observed.actor, entity, reach)
+      ? { status: 'reached', path: [] as import('@open-legend/spatial').SurfacePoint[] }
+      : findApproachPath(service.world, observed.actor, entity, reach);
+    if (!route) continue;
+    const path = route.path;
     if (entity.actor?.alive && entity.id !== actorId && supportsManualWork(observed.actor))
       for (const definition of Object.values(NATIVE_STRIKES))
         actions.push({
@@ -468,7 +471,15 @@ export function npcCandidates(
       });
     if (entity.heat?.lit) {
       let previous = observed.actor.position;
-      let length = 0;
+      // Pending detours are not yet a travel-time promise; fuel is rechecked at work start.
+      let length =
+        route.status === 'pending'
+          ? Math.hypot(
+              entity.position.x - previous.x,
+              entity.position.y - previous.y,
+              entity.position.z - previous.z,
+            )
+          : 0;
       for (const point of path) {
         length += Math.hypot(point.x - previous.x, point.y - previous.y, point.z - previous.z);
         previous = point;

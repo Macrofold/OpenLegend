@@ -106,6 +106,9 @@ export interface Action {
   targetId?: string;
   destination?: SurfacePoint;
   path: SurfacePoint[];
+  /** Admitted work awaiting derived data; no positions, costs or effects are supplied by a client. */
+  navigation?: { request: import('@open-legend/spatial').NavigationRequest; failure?: string };
+  replans?: number;
   remainingSeconds: number;
   totalSeconds: number;
   attributeId?: string;

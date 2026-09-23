@@ -116,6 +116,36 @@ export const BODY_PROFILES = {
   },
 } as const satisfies Record<string, BodyProfile>;
 export type BodyProfileId = keyof typeof BODY_PROFILES;
+/** World units are metres; these are tolerances, not position quantization. The navmesh
+ * is approximate; its output is reprojected onto an identified physical support.
+ */
+export const MOVEMENT = {
+  skin: 0.01,
+  cellSize: 0.1,
+  cellHeight: 0.05,
+  contourError: 0.1,
+  projectionTolerance: 0.2,
+  arrivalTolerance: 0.02,
+  maxStepHeight: 0,
+  maxReplans: 2,
+} as const;
+export interface NavigationRequest {
+  from: SurfacePoint;
+  destinations: SurfacePoint[];
+  body: BodyProfile;
+  geometryRevision: number;
+}
+export type NavigationResult =
+  | { status: 'reached'; path: SurfacePoint[]; length: number }
+  | {
+      status: 'no-route' | 'invalid-endpoint' | 'budget-exceeded' | 'unsafe-route' | 'unavailable';
+      path: [];
+      reason?: string;
+    };
+export type RoutePlan =
+  | { status: 'reached'; path: SurfacePoint[]; length: number; expanded: number }
+  | { status: 'pending'; path: []; request: NavigationRequest; expanded: number }
+  | { status: 'invalid-endpoint' | 'no-route' | 'budget-exceeded'; path: []; expanded: number };
 export const SPATIAL_LIMITS = {
   epsilon: 1e-5,
   supportTolerance: 0.015,

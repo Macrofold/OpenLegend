@@ -12,6 +12,7 @@ import {
   surfaceHeight,
   type BodyProfile,
   type SurfacePoint,
+  type RoutePlan,
 } from '@open-legend/spatial';
 import { bodyProfile, spatialMap, supportedPosition } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
@@ -67,13 +68,13 @@ export function findPath(
   fromSurfaceId?: string,
   toSurfaceId?: string,
   profile: BodyProfile = BODY_PROFILES.person,
-): SurfacePoint[] | null {
+): RoutePlan | null {
   const map = spatialMap(world);
   const start = resolveSupport(map, from, fromSurfaceId),
     destination = resolveSupport(map, to, toSurfaceId);
   if (!start || !destination) return null;
   const result = findSurfaceRoute(map, start, destination, profile);
-  return result.status === 'reached' ? result.path : null;
+  return result.status === 'invalid-endpoint' ? null : result;
 }
 /** Try a bounded set of actual interaction stances. A flying target's center is not a
  * ground destination, and a nearby point under a deck is not a reachable upper-floor stance. */
@@ -82,7 +83,7 @@ export function findApproachPath(
   actor: Entity,
   target: Entity,
   reach: number,
-): SurfacePoint[] | null {
+): RoutePlan | null {
   const start = supportedPosition(actor);
   if (!start) return null;
   const map = spatialMap(world),
@@ -124,18 +125,31 @@ export function findApproachPath(
       a.z - b.z ||
       a.x - b.x,
   );
-  let attempted = 0;
+  const destinations: SurfacePoint[] = [];
   for (const candidate of candidates) {
     if (
       !canReachEntity(world, actor, target, reach, candidate) ||
       !canStand(map, candidate, profile)
     )
       continue;
-    if (attempted++ === 12) break;
+    if (destinations.length === 12) break;
+    destinations.push(candidate);
     const route = findSurfaceRoute(map, start, candidate, profile);
-    if (route.status === 'reached') return route.path;
+    if (route.status === 'reached') return route;
   }
-  return null;
+  return destinations.length
+    ? {
+        status: 'pending',
+        path: [],
+        expanded: 0,
+        request: {
+          from: start,
+          destinations,
+          body: { ...profile },
+          geometryRevision: map.spatial.revision,
+        },
+      }
+    : null;
 }
 /** Project a short voluntary movement only onto its existing support, not the floor below. */
 export function sameSurfacePoint(

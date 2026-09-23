@@ -185,6 +185,40 @@ export function validateSpatialWorld(world: WorldState): void {
         a.path.some((p) => !finitePoint(p) || !resolveSupport(map, p, p.surfaceId))
       )
         throw new Error('Invalid saved spatial route.');
+      // Pending preparation is saved intent, never a saved WASM ref or worker handle.
+      // Old geometry may legitimately await replanning; bound/validate its plain data here.
+      if (a.navigation) {
+        const request = a.navigation.request;
+        if (
+          !request ||
+          !finitePoint(request.from) ||
+          typeof request.from.surfaceId !== 'string' ||
+          !Number.isSafeInteger(request.geometryRevision) ||
+          request.geometryRevision < 0 ||
+          !Array.isArray(request.destinations) ||
+          !request.destinations.length ||
+          request.destinations.length > 12 ||
+          request.destinations.some(
+            (p) => !finitePoint(p) || typeof p.surfaceId !== 'string' || p.surfaceId.length > 120,
+          ) ||
+          !request.body ||
+          !Object.values(BODY_PROFILES).some(
+            (p) =>
+              p.id === request.body.id &&
+              p.radius === request.body.radius &&
+              p.height === request.body.height &&
+              p.maxSlope === request.body.maxSlope,
+          ) ||
+          (a.navigation.failure !== undefined &&
+            (typeof a.navigation.failure !== 'string' || a.navigation.failure.length > 300))
+        )
+          throw new Error('Invalid saved navigation request.');
+      }
+      if (
+        a.replans !== undefined &&
+        (!Number.isSafeInteger(a.replans) || a.replans < 0 || a.replans > 2)
+      )
+        throw new Error('Invalid saved navigation retry count.');
       if (a.destination && !resolveSupport(map, a.destination, a.destination.surfaceId))
         throw new Error('Invalid saved spatial destination.');
     }
