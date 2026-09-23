@@ -1,5 +1,12 @@
 # Documentation changelog
 
+## 2026-09-23 — Invention extensibility and workshop tools
+
+- Added the application tool contract and recorded the finite review-before-install recipe workshop, shared cognition/material validation, descriptive family discovery, current-world-relative premise routing and distinct preview/Apply semantics. General Discuss, privileged creator tools, compositional law validation and generated art remain separately scoped.
+- Recorded root-budget membership on the existing attempt ledger and current operational backup format 2; no gameplay save schema change or legacy reader was added.
+- Marked delivered INV subsets without completing broader parent tasks, added IER regression TODOs, and recorded separate HTTP/native/typed-transport/backup/stress evidence. No automated test suite or paid API was executed.
+
+
 ## 2026-09-23 — Invention performance and foundation review
 
 - Reconciled the accepted invention packet from `69897a356c959677cfbf7fe1785f2b9db0271b43` with spatial/runtime main `7bba4866819e5623fc4e42d6f8d82f96ca25877d`, preserving the existing engine boundary and XYZ/camera work rather than reintroducing a flat-world assumption.

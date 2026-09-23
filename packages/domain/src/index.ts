@@ -89,6 +89,8 @@ export * from './invention-attribution.js';
 
 export {
   SUPPORTED_INVENTION_FAMILIES,
+  INVENTION_FAMILY_INTERFACES,
+  describeInvention,
   inventionFamily,
   type InventionFamily,
 } from './invention-families.js';

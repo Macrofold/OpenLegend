@@ -5,7 +5,13 @@ import { retainHotEvents } from '../apps/server/src/hot-events.js';
 import type { WorldEvent } from '@open-legend/domain';
 import { readFileSync } from 'node:fs';
 import { readConfig } from '../apps/server/src/config.js';
-import { SqliteStore, digest, type SavedWorld } from '../apps/server/src/store.js';
+import {
+  SqliteStore,
+  digest,
+  ACCOUNTING_TABLES,
+  BACKUP_FORMAT,
+  type SavedWorld,
+} from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { migrateActors, migrateCognition, forgetExperience } from '@open-legend/domain';
 const file = process.argv[2];
@@ -19,7 +25,8 @@ const backup = JSON.parse(readFileSync(file, 'utf8')) as {
   tables: Record<string, Record<string, unknown>[]> & { world: { payload: string }[] };
 };
 if (
-  backup.version !== 1 ||
+  backup.version !== BACKUP_FORMAT ||
+  ACCOUNTING_TABLES.some((table) => !Array.isArray(backup.tables?.[table])) ||
   digest(backup.tables) !== backup.digest ||
   backup.tables.world.length !== 1
 )
@@ -54,12 +61,12 @@ try {
   if (!current) {
     const tables = [
       'jobs',
-      'attempts',
+      ...ACCOUNTING_TABLES,
       'intelligence_calls',
       'player_profiles',
       'game_saves',
       ...COMMAND_TABLES,
-      ...['attempt_scopes', ...HISTORY_TABLES],
+      ...HISTORY_TABLES,
     ];
     for (const table of tables)
       if (

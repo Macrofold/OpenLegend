@@ -26,6 +26,8 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 
 ## Supporting references
 
+- [World-agent invention tool contract](../invention-workshop-tools.md) — scoped read/preview/Apply and extension seams
+
 - [Extensibility roadmap](../extensibility-roadmap.md)
 - [Extensible-world worked examples](../extensible-world-examples.md)
 - [Product baseline](../../archive/01-requirements/product-baseline.md)

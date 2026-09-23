@@ -1,3 +1,4 @@
+import { inventionMaterials } from './invention-context.js';
 import {
   canReachEntity,
   findApproachPath,
@@ -70,23 +71,7 @@ export function buildContext(service: WorldService, actorId: string, query: stri
     })
     .sort((a, b) => b.score - a.score || b.index - a.index)
     .slice(0, 24);
-  const ownedDefinitionIds = new Set(observed.inventory.map((item) => item.definitionId));
-  // Native mechanics and every owned definition remain present. Unowned generated
-  // definitions duplicate candidate recipe outputs and need not be sent twice.
-  const materials = observed.itemDefinitions
-    .filter((definition) => !definition.recipeId || ownedDefinitionIds.has(definition.id))
-    .map((definition) => ({
-      id: definition.id,
-      version: definition.version,
-      name: excerpt(definition.name, 40),
-      properties: definition.properties,
-      native: !definition.recipeId,
-      ...(definition.nutrition !== undefined ? { nutrition: definition.nutrition } : {}),
-      ...(definition.cooked !== undefined ? { cooked: definition.cooked } : {}),
-      ...(definition.launcher ? { launcher: definition.launcher } : {}),
-      ...(definition.ammunition ? { ammunition: definition.ammunition } : {}),
-      ...(definition.gatheringTool ? { gatheringTool: definition.gatheringTool } : {}),
-    }));
+  const materials = inventionMaterials(observed);
   const context = {
     world: { id: observed.worldId, profile: service.world.profile, simulationSeconds: observed.at },
     contacts: observed.contacts,

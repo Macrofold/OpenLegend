@@ -5,6 +5,8 @@ import { resolve } from 'node:path';
 import { writeFileSync } from 'node:fs';
 import {
   SqliteStore,
+  ACCOUNTING_TABLES,
+  BACKUP_FORMAT,
   digest,
   applyWorldChanges,
   type SavedWorld,
@@ -22,12 +24,12 @@ sqlite.exec('BEGIN');
 const tables = [
   'world',
   'jobs',
-  'attempts',
+  ...ACCOUNTING_TABLES,
   'intelligence_calls',
   'meta',
   'player_profiles',
   'game_saves',
-  ...['attempt_scopes', ...HISTORY_TABLES, ...COMMAND_TABLES].filter((name) =>
+  ...[...HISTORY_TABLES, ...COMMAND_TABLES].filter((name) =>
     sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name),
   ),
 ] as const;
@@ -63,7 +65,7 @@ if (
   throw new Error('Source journal head mismatch; import refused.');
 writeFileSync(
   resolve(destination),
-  JSON.stringify({ version: 1, digest: digest(data), tables: data }),
+  JSON.stringify({ version: BACKUP_FORMAT, digest: digest(data), tables: data }),
   { flag: 'wx', mode: 0o600 },
 );
 sqlite.exec('COMMIT');
@@ -75,11 +77,11 @@ try {
   if (await target.load()) throw new Error('Destination already has a world. Import refused.');
   for (const table of [
     'jobs',
-    'attempts',
+    ...ACCOUNTING_TABLES,
     'intelligence_calls',
     'player_profiles',
     'game_saves',
-    ...['attempt_scopes', ...HISTORY_TABLES, ...COMMAND_TABLES],
+    ...[...HISTORY_TABLES, ...COMMAND_TABLES],
   ])
     if (Number((await db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get())?.['count']))
       throw new Error('Destination has existing accounting or profiles; import refused.');

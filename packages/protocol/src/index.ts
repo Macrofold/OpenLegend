@@ -466,7 +466,8 @@ export interface AttributeView {
 
 export interface InventionContinuation {
   parentId: string;
-  action: 'clarify' | 'revise' | 'search' | 'new' | 'modify' | 'reuse';
+  action: 'clarify' | 'revise' | 'search' | 'new' | 'modify' | 'reuse' | 'apply';
+  candidateDigest?: string;
   recipeId?: string;
 }
 export interface SimilarInvention {
@@ -485,7 +486,19 @@ export interface InventionSearch {
   matches: SimilarInvention[];
 }
 /** Creator-scoped durable records; candidate JSON is inspectable data, never executable. */
+export interface InventionValidationView {
+  valid: boolean;
+  family?: string;
+  summary?: string;
+  errors: string[];
+  dependencies: Array<{ id: string; version: number; role: string }>;
+  limits: string[];
+}
+
 export interface InventionRequestView {
+  mode?: 'workshop';
+  candidateDigest?: string;
+  validation?: InventionValidationView;
   id: string;
   createdAt: number;
   conversationId?: string;

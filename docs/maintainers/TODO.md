@@ -1,5 +1,18 @@
 # Maintainer TODO — cross-cutting work
 
+
+## Invention extensibility review regression TODOs
+
+The review used manual application/typed-transport/backup exercises and existing native stress scripts, not unit/test suites or browser automation. [Verification](../verification.md#invention-extensibility-review) records observed scope. The following cases remain to be automated; their successful smoke subsets do not close these broader cases.
+
+- [ ] **IER01 — Scoped tool evidence:** strict irrelevant/unknown argument rejection, actor/world isolation, missing/unknown ingredients and recipe IDs without private-detail leaks, own-versus-other attribute/sense metadata, page boundaries/content revisions and limits. Tool metadata must not become registration authority; validate all read operations leave world/RNG/knowledge unchanged.
+- [ ] **IER02 — Preview and exact Apply:** paused and zero-key supplied drafts; valid/invalid candidate retention; stale or replaced digest, supplied replacement bytes, competing Apply/revise children, inherited base changes, knowledge revocation, actor incapacity, full recipe capacity and changed locks. Cover Apply at the eight-follow-up authoring bound and Apply with zero remaining generation budget; no provider call, duplicate install, item creation or automatic native work.
+- [ ] **IER03 — Bounded real-adapter tool loop:** direct/Macrofold strict schemas, absent optional context, valid multi-turn tool results, malformed/candidate-plus-tools envelopes, 4-round/8-call/3-per-turn/byte/output bounds, semantic unsupported behavior, false model success, retained findings and final base requirements. Compare native summaries to actual finite consumers. Qualify live model usefulness separately; the injected transport is not live evidence.
+- [ ] **IER04 — Cost and recovery:** concurrent root and actor-month reservations, settlement/reported-over-reserve, missing/late/uncertain receipts, config lowering/zero, inherited caps across switching workflow modes and explicit follow-ups, stable per-turn IDs, cancel/restore/restart with no replay, and readiness publication with exhausted funds. Exercise PostgreSQL schema/query behavior. Root caps are not complete cross-world payer enforcement.
+- [ ] **IER05 — Operational recovery:** current-format backup/import includes attempt_budgets and retains all attempt relationships; incompatible/missing-table envelopes fail before installation. Empty-target recovery preserves cap exposure; existing-world restore does not overwrite current costs. Check interrupted export/restore, omitted rows/corruption and same-version gameplay restore fencing. No old-format compatibility reader is requested.
+- [ ] **IER06 — Player workflow and cognition:** catalogue/checkbox/status/native-validation UI, full JSON inspection, stable transport drafts and later Apply/revise, late responses, scroll/reopen, accessibility, unsupported general Discuss expectations, zero-call supplied NPC behavior and actor-scoped feedback. Test known-recipe reuse in workshop mode does not buy generation or run another search.
+- [ ] **IER07 — Runtime and schema equivalence:** compare the shared material projection with the prior cognition result, schema role/kind/quantity/work bounds with native validation, and generic world-premise wording with both supported and unsupported contracts. Run representative larger actor/history workloads and native crowd stress; do not hide cold encounter stalls behind warmed-only figures.
+
 ## Invention performance review regression TODOs
 
 No unit tests, test suites or browser automation were written or run for this review. The production build, actual HTTP/native application exercise and synthetic stress measurements are recorded in [Verification](../verification.md#invention-performance-review). These regression cases supplement the existing invention/agency cases below rather than marking them complete; feature delivery remains in INV/PF.
@@ -86,7 +99,7 @@ Automated tests were explicitly excluded for this slice. Production compilation 
 
 - [ ] Verify distinct gather resources show their resource icon plus hand badge in saved shortcuts and suggestions, including reload, unavailable targets, missing-target fallback and badge/key-label layout at supported UI scales; run the relevant checks.
 - [ ] Update design-system guidance and verification evidence for consistent resource-plus-action icons across the picker and quick bar after validation.
-- [ ] Complete typed world-agent proposal/question envelopes, semantic reuse and confirmed conjuring through the existing INV delivery track. Current structured recipe/job cards and prose-question affordances do not implement those server contracts.
+- [ ] Complete general creator/module proposal and typed question envelopes plus confirmed conjuring through INV. Finite reviewable recipe drafts/Apply and ordinary semantic reuse are implemented; their current cards do not implement general module activation or typed multi-question authoring.
 - [ ] Complete the existing diagnostics revocation, late-billing/race and comprehensive follow/focus tests. Native fixture inspection does not establish provider billing or cognition quality.
 - [ ] Complete broader device/browser and assistive-technology acceptance; desktop/mobile Chromium and keyboard checks are scoped evidence, not universal accessibility certification.
 

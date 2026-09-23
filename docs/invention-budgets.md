@@ -2,6 +2,8 @@
 
 **Status: accepted target design.** This document owns invention-episode spending admission, bounded refinement, recurring computational sustainability, and causal cost attribution. It extends the existing local dispatch accounting and [billing/usage contract](../archive/07-technical-architecture/billing-and-usage-reporting.md); it does not create a second wallet, billing ledger, or entitlement authority. [Invention foundation](invention-foundation.md) owns project lifecycle, the [module runtime](../archive/07-technical-architecture/world-module-runtime.md) owns execution interfaces, and [INV](maintainers/inventions-and-world-evolution.md) owns delivery.
 
+The implemented [workshop-root cap](architecture.md#invention-workshop-tools) is one bounded subset of this design, recorded on the existing attempt ledger. It does not complete cross-world payer, runtime, art or entitlement enforcement.
+
 ## 1. Three independent resource questions
 
 A candidate may be mechanically valid but unaffordable to author or unsustainable to execute. Keep these decisions separate:

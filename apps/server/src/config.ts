@@ -73,6 +73,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     conversationDisconnectMs:
       numberSetting(env, 'CONVERSATION_DISCONNECT_SECONDS', 60, 5, 600) * 1000,
     narrationBatchMs: numberSetting(env, 'NARRATION_BATCH_MS', 750, 0, 10000),
+    inventionWorkshopUsd: numberSetting(env, 'INVENTION_WORKSHOP_MAX_USD', 1, 0, 10),
     jevReserveUsd: numberSetting(env, 'JEV_CALL_RESERVE_USD', 0.005, 0.000001, 1),
     llmReserveUsd: numberSetting(env, 'LLM_CALL_RESERVE_USD', 0.08, 0.000001, 10),
     thoughtIntervalMs: numberSetting(env, 'NPC_THOUGHT_INTERVAL_SECONDS', 45, 15, 3600) * 1000,

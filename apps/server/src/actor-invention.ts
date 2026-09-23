@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DECLARATION_CONTRACT } from '@open-legend/domain';
 import { declarationSchema } from './ai-schemas.js';
-import { buildContext } from './context.js';
+import { inventionMaterials } from './invention-context.js';
 import type { WorldService } from './world-service.js';
 
 /** Private context is read only for this actor. A response proposes; the shared gateway admits.
@@ -44,7 +44,7 @@ export async function prepareActorInvention(service: WorldService, actorId: stri
         ? {
             inventionContract: DECLARATION_CONTRACT,
             candidateSchema: declarationSchema,
-            inventionMaterials: buildContext(service, actorId, '').materials,
+            inventionMaterials: inventionMaterials(service.observe(actorId)!),
             continuation: 'Set parentId to an uncontinued result ID when revising; otherwise null.',
           }
         : {}),
