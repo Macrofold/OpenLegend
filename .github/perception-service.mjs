@@ -8,9 +8,10 @@ import { ActorWork } from '../apps/server/src/actor-work.ts';
 const cases=[];
 const config=readConfig({...process.env,PORT:'3224',AI_BUDGET_USD:'0',OPEN_LEGEND_DATABASE_URL:'',OPEN_LEGEND_DATA_DIR:'/tmp/perception-http-final'});
 let game=await createGameServer({config,production:true,tick:false});
-const listen=async()=>new Promise(resolve=>game.server.listen(config.port,config.host,resolve));
+// A fresh ephemeral port prevents the exercise's HTTP pool from reusing a socket from the deliberately stopped server.
+const listen=async()=>new Promise(resolve=>game.server.listen(0,config.host,resolve));
 await listen();
-const base=`http://${config.host}:${config.port}`;
+let base=`http://${config.host}:${game.server.address().port}`;
 let bootstrap=await fetch(`${base}/api/state`);let cookie=bootstrap.headers.get('set-cookie')?.split(';')[0];await bootstrap.json();
 const post=async(path,body)=>{const response=await fetch(base+path,{method:'POST',headers:{cookie,origin:base,'content-type':'application/json'},body:JSON.stringify(body)});return response.json();};
 try {
@@ -25,8 +26,8 @@ try {
     }
   }),events:[],outcome:{ok:true,code:'fixture',message:'Disposable native scene'}}));
   const before=game.service.world.simTime;
-  const observedTimes=[];let pending=false;let polls=0;let done=false;
-  const poll=setInterval(()=>{if(pending)return;pending=true;void fetch(base+'/api/state').then(r=>r.json()).then(v=>{observedTimes.push(v.clock.seconds);if(!done)polls++;}).finally(()=>{pending=false;});},1);
+  const observedTimes=[];let pending=false;let polls=0;let done=false;let pollFailure;
+  const poll=setInterval(()=>{if(pending)return;pending=true;void fetch(base+'/api/state').then(r=>r.json()).then(v=>{observedTimes.push(v.clock.seconds);if(!done)polls++;}).catch(error=>{pollFailure=String(error);}).finally(()=>{pending=false;});},1);
   const started=performance.now();
   const ticking=game.service.tick(1/config.baseRatio);
   const cancelled=game.service.command(randomUUID(),{type:'cancel'});
@@ -35,6 +36,7 @@ try {
   const after=game.service.world.simTime;
   const cancel=await cancelled;clearInterval(poll);
   while(pending)await new Promise(resolve=>setTimeout(resolve,1));
+  if(pollFailure)throw Error(pollFailure);
   if(after!==before+1||!cancel.ok||observedTimes.some(t=>t!==before&&t!==after))throw Error('Atomic native publication failed');
   const privateEvents=game.service.world.events.filter(e=>e.type==='encounter');
   if(!privateEvents.length||privateEvents.some(e=>e.scope!=='private'||e.audience.length!==1))throw Error('HTTP native acquisitions not private');
@@ -45,6 +47,7 @@ try {
   const savedCount=Object.values(game.service.world.experience.awareness).reduce((n,a)=>n+a.length,0);
   await game.close();
   game=await createGameServer({config,production:true,tick:false});await listen();
+  base=`http://${config.host}:${game.server.address().port}`;
   bootstrap=await fetch(base+'/api/state');cookie=bootstrap.headers.get('set-cookie')?.split(';')[0];await bootstrap.json();
   await game.service.setConnection('perception-restart',true);
   await post('/api/control',{paused:false,clientId:'perception-restart',presenceSequence:1});
