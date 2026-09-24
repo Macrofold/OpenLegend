@@ -300,7 +300,7 @@ Goal/plan changes invalidate the relevant interest signature. Reevaluate current
 
 Use native plan continuation for already-resolved steps. A self-authored thought alone is not a generic new semantic trigger. A goal edit can update subscriptions without triggering an immediate second decision. A failed step creates a bounded reconsideration opportunity; repeated unchanged failure does not.
 
-Track delivered, deferred and resolved opportunities separately. A native urgency disposition must not advance the semantic evidence cursor as though a missing solution had been considered and resolved. Explicit empty output can resolve the current opportunity without canceling a plan. Deferred semantic opportunities retain the evidence necessary for later attention under bounded retention rules.
+Track native, unavailable and completed opportunity dispositions separately. A wakeup watermark records the current snapshot, not proof that each memory received semantic consideration. Do not retain a queue of events owed future cognition calls. Explicit empty output continues without canceling a plan. Historical evidence remains independently queryable under the [memory context contract](../../docs/memory-architecture.md#4-jev-attention-before-context-inclusion); new evidence and meaningful state changes may trigger fresh consideration.
 
 Coalesce compatible causes per actor, preserve a compact list of distinct relevant changes, and carry a cause-chain/episode identity through result delivery. Apply per-actor and global real-time spending/cooldown limits. Hysteresis prevents need-band jitter and repeated enter/exit exposure from producing paid storms. The exact need thresholds/reminders remain in existing policy/D54, not a new competing table here.
 

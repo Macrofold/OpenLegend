@@ -97,6 +97,8 @@ The existing embodied-visual-parity policy remains: the active server-approved v
 
 ### Picking and controls
 
+A compact bottom-right camera toolbar keeps zoom, recenter, follow-player, rotation, tilt, projection, rotation lock and floor selection visible. Icon controls have accessible names and hover/focus explanations; the information icon explains gestures and shortcuts. Follow is an explicit pressed toggle beside recenter, with a visible checkmark when active. It defaults off, persists as a local presentation preference and tracks the rendered player smoothly. Panning or selecting a floor disables follow; zoom, orbit and projection preserve it. Recenter is a one-time action and does not enable follow. Follow clears floor focus so the player's actual height remains centered.
+
 A click intersects actual permitted spatial geometry, not an assumed `y=0` plane. Where several floors lie beneath the pointer, focus level and an explicit surface choice disambiguate them. Show the chosen floor and destination before submission. The server independently checks the submitted location and actor permissions.
 
 Preserve existing click-to-act and contextual menus. Orbit and pan gestures must not accidentally submit movement on release. Provide keyboard and visible-button alternatives, touch controls, recenter, and reduced-motion behavior. Existing inventory/crafting/world-agent shortcuts must not be silently reused for camera controls.

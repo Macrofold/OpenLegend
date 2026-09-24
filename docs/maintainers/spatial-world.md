@@ -283,3 +283,6 @@ Add a separate hidden-geometry variant rather than assuming the public starter m
 ## Later capabilities, explicitly outside this release
 
 Track only concrete future gaps here once evidenced: full volumetric/SVO navigation, advanced local avoidance, moving platforms/vehicles, swimming, ballistic projectiles, complex structural collapse, room/portal acoustics, wide-world streaming, or arbitrary procedural rigs. Do not add these as prerequisites to the elevated-world milestones. Research experiments belong in the research backlog; unresolved product choices stay in open decisions.
+
+- [x] Expose compact camera icons with hover/focus labels and help; add persisted follow-player toggle beside recenter.
+- [ ] Verify follow while walking and changing elevation, reload persistence, pan/floor cancellation, and narrow-screen touch/focus usability.

@@ -283,6 +283,11 @@ export class WildernessScene implements WorldRenderer {
     )
       return;
     this.cameraSettings = updateCamera(this.cameraSettings, command);
+    if (command.type === 'follow' && this.cameraSettings.following && this.view)
+      this.cameraSettings = updateCamera(this.cameraSettings, {
+        type: 'focus',
+        point: this.view.player.position,
+      });
     this.placeCamera();
     this.applyLevelFocus();
     // No storage write for every pointer sample. Commit preferences when a gesture ends.
@@ -965,6 +970,17 @@ export class WildernessScene implements WorldRenderer {
     const player = this.view && this.actors.get(this.view.player.id);
     if (player && this.view) {
       const position = player.root.getPosition();
+      // Follow the interpolated sprite, not network snapshots; docs/spatial-world.md#picking-and-controls.
+      if (this.cameraSettings.following) {
+        const focus = this.cameraSettings.focus;
+        if (focus.x !== position.x || focus.y !== position.y || focus.z !== position.z) {
+          this.cameraSettings = updateCamera(this.cameraSettings, {
+            type: 'focus',
+            point: position,
+          });
+          this.placeCamera();
+        }
+      }
       const projection = this.camera.camera!;
       const center = projection.worldToScreen(position);
       // Project a 3D-radius presentation mask along camera axes, not fixed world X/Z.

@@ -1,5 +1,53 @@
 # Verification
 
+## Repertoire foundation runtime observations
+
+This pass integrates main `196cfd258654df40b96e70b0ac95e26d38b1eca3` with the retained invention branch and implements [source-backed relationship inspection and read-only MCP](architecture.md#repertoire-relationship-and-mcp-foundation). It adds no native simulation effects or saved-world schema. The [aggregate record](verification/repertoire-foundation.json) identifies the runtime checkpoint, environment and workload inputs. New automated cases are IRF01–IRF09 in [maintainer TODO](maintainers/TODO.md#repertoire-foundation-deferred-regression-coverage).
+
+### Environment and method
+
+Manual execution used Linux x64, Node v22.16.0, local SQLite, five visible CPUs (AMD EPYC 9V74 80-Core Processor; available parallelism 4), isolated disposable worlds and zero AI funding. No provider keys were read, no native Macrofold run or real model/image API was called, and provider spending was **$0**. SDK dependencies were exact-pinned to 2.0.0 and installed with lifecycle scripts disabled. Production TypeScript and the Vite client build passed; the existing large main-chunk warning remains. No unit/test suites were written or run in this continuation. Temporary native/HTTP exercise drivers and private CPU profiles were kept outside version control.
+
+### Actual HTTP, source and recovery observations
+
+A real `createGameServer` instance served the actual official-SDK `/mcp` transport with a generated local bearer and a 2025-11-25 initialization. Discovery returned all eight registered tools; context, current definitions, direct relationships, live entity inspection and the cookie/origin-protected local owner endpoint returned successfully. An invalid bearer returned 401. An unknown argument produced a protocol-valid tool error (`isError: true`), not an accepted actor override. The SDK compatibility response used short SSE framing for some calls; this was parsed by the manual caller. It is not live Macrofold interoperability evidence.
+
+One thousand small-world tool graph reads took 21.85 ms total, with median 0.017 ms and maximum 1.631 ms in this sample. The actual world digest remained unchanged and the frozen-definition cache was reused. These in-process timings are not HTTP throughput or production tail guarantees. Handler inputs and outputs remain independently bounded.
+
+After an actual native Resume and speech action, retained personal commitment evidence could be inspected with its existing provenance. A complete supplied sling passed unpaid native preview, entered the existing authenticated Invent endpoint, was admitted without a model call, appeared with its real input/output links, and invalidated the old definition cache. Clean close/reopen retained that admitted definition and exposed it again. This does not establish a new write path through MCP, new agreement semantics, in-world reading/writing, or general composition. All those readers remain non-mutating; the manual mutation used existing native services deliberately.
+
+### Bounded adjacency profiling
+
+The synthetic graph contains one high-degree root and source-labelled leaf records, not an actual world of that many admitted mechanics. Each size ran 1,000 first-page queries returning 50 edges. A no-match relation filter had to page through the root and could examine no more than 1,024 entries per call. Returned-copy mutation did not alter the index, and a cursor against a changed source was rejected as stale.
+
+| Synthetic graph | Build | Median page query | No-match continuation pages |
+| --- | --- | --- | --- |
+| 1,001 nodes / 1,000 edges | 3.18 ms | 0.151 ms | 1 |
+| 10,001 nodes / 10,000 edges | 22.16 ms | 0.150 ms | 10 |
+| 30,001 nodes / 30,000 edges | 74.12 ms | 0.153 ms | 30 |
+
+Build includes indexing/sorting/snapshot identity; it is not zero cost and is not performed per simulation tick. Queries measure bounded adjacency only, not all-source extraction, transitive closure, database I/O, model use or UI layout. The raw record includes sampled RSS changes; they are not peak-memory or zero-allocation claims. Multi-hop impact jobs, persistent source indexing and all-family coverage remain pending.
+
+### Native stress remains a separate limit
+
+The existing `scripts/stress-native.ts` runner executed the committed `gems.json` and `mixed.json` scenarios for 180 steps with no warmup, frozen snapshots and a requested 3× rate (180 native seconds per real second). A headroom below 1 does not sustain that requested rate.
+
+| Scenario | Native loop | Largest step | 3× headroom |
+| --- | --- | --- | --- |
+| gems / 514 entities | 1122.59 ms | 116.59 ms | 0.891 |
+| mixed / 344 entities | 1674.33 ms | 955.58 ms | 0.597 |
+
+The mixed world retained 3,254 events and 31,756 awareness entries. These current-baseline samples still show meaningful cold-step cost and do not qualify large-population hosting. The source/adjacency work does not claim to improve native simulation. No witness, event, physical effect or simulation time was dropped to improve a score. Follow [PF09](maintainers/performance.md#pf09--population-work-follows-relevance) and the [encounter design](encounter-scaling.md); do not infer a cross-review speedup from different hardware or earlier baselines.
+
+### UI and integration limits
+
+Documentation path/heading checks covered 142 Markdown files and found no newly introduced unresolved link relative to the integrated baseline. Existing checked maintainer entries were preserved; the reader/MCP subsets have separate implementation marks and their automated acceptance remains pending. Source-comment documentation anchors were also checked. This is documentation verification, not runtime acceptance.
+
+
+The owner relationship-list component builds successfully and its actual shared HTTP route was exercised. A manual Chromium navigation failed with `ERR_BLOCKED_BY_ADMINISTRATOR` in this environment; no visual, keyboard, accessibility or end-to-end browser acceptance is claimed. The restriction was not bypassed. Actual Macrofold provisioning/harness forwarding, modern protocol profile, multi-user credential/recipient controls, full output-schema qualification, larger source stores, shutdown/body-abuse matrices and full-stack sustained load remain explicit task gates.
+
+The implemented MCP endpoint is opt-in and read-only. Full unified conversation, world/session mutation grants, complete impact verification, live structural/participation semantics, information carriers, mutual agreements, observer-relative effects and image generation remain their respective INV/AC/EWF/EPR work. A type or graph label does not complete those features.
+
 ## World Agent specification rebase reconciliation
 
 The specification/review branch is reconciled onto main `11be9312dd560b8fcae5016acb1fc6ddf6216d86`. Its existing invention changes were replayed in first-parent order; the earlier merge commit's complete first-parent change was retained rather than dropping its manual integration edits. The only replay conflict was the documentation changelog, resolved by keeping both additions. No upstream runtime or workflow changes were overwritten. Production TypeScript compilation and the Vite client build passed again on the reconciled tree, retaining the existing bundle-size warning. The actual configuration reader again returned `[5, 0, 2.5]` for default/zero/explicit-lower settings. No test suite, live harness or paid provider was invoked. Temporary source/publication files are absent from the resulting tree.
@@ -582,3 +630,19 @@ Fractional routes retained their endpoint IDs and each returned leg passed the e
 The combined application was built and started through its ordinary production entrypoint on loopback port 3225, with fresh isolated `/mnt/data/round3-merged-live` SQLite storage and zero AI budget. Normal authenticated presence/control and command calls moved the actor to `{x:24,y:3,z:6}` on `lookout-deck`, rejected the same point on `terrain`, and completed movement underneath to `{x:20,y:0,z:5}`. Those local command calls returned in 17.98, 4.18 and 6.26 ms respectively; these are individual observations, not a request-latency distribution. The page returned HTTP 200. A clean pause/shutdown/restart retained the lower position/support and reopened paused. Both application processes were stopped; no existing user save was touched.
 
 Current browser/GPU, PostgreSQL, long-session heap, many-client and paid-cognition latency remain unmeasured. EPR03 private acquisition, D51 viewport authorization and broader crowd/flight/model-family gaps remain in their existing owners. Temporary reconciliation/publication files are removed at final publication and normal CI restored; this request skips automated test jobs, not future work. The complete-latency plan remains PF-owned, with spatial preparation and evidence semantics separately owned by SW/EPR.
+
+### Compact camera toolbar verification
+
+The production build passed. Manual inspection in the running local browser confirmed the visible icon cluster, checked follow toggle, recentering, rotation, projection switching, drag cancellation of follow and keyboard-focus shortcut help. Continuous moving-player/elevation tracking, reload persistence and narrow-screen touch qualification remain unverified. The repository-wide check stopped at formatting differences in unrelated concurrent cognition files before reaching tests; those files were left untouched.
+
+## Cognition context and action capacity
+
+September 23 manual runtime qualification used synthetic data and isolated SQLite/temporary PostgreSQL storage; no automated tests were written or run. The failed incident's 43-question request passes local shape/size validation. A synthetic size exercise admitted 300 questions at 47,771 estimated tokens; 1,000 and 10,000 candidates selected 345 under the 55k estimate in approximately 8ms and 56ms respectively. This is admission throughput, not model quality.
+
+A 512-action dense scene retained 20 perceived entities and six possessions after injected optional relevance failure. Unavailable vectors returned an explicitly incomplete deterministic 300-candidate fallback. Fixture all-yes judgments produced 262 handle-bearing action options under request/prompt budgets; action-filter failure preserved 288 fitting options. Twenty-four significant experiences advanced the wakeup watermark together. The subsequent changed interest subscription caused one fresh opportunity; the third unchanged consideration purchased no additional work. Fixture spend was zero. Manual React server rendering exercised speech, thought, action, goal, plan, empty continuation, missing envelope, and undispatched failure summaries; this was not browser interaction acceptance.
+
+Live OpenAI embeddings and temporary PostgreSQL/pgvector indexed 500 synthetic action descriptions and returned 300 in 8.1 seconds, ranking the deer approach option first despite its last source position. The first 300-question Jev request revealed Macrofold's 16,384 output-token maximum; after correcting that request limit, the configured Macrofold route rejected admission with HTTP 413 `model_context_exceeded`. No successful 300-question provider inference is claimed. No direct Jev credential is configured. Large-request acceptance through that route remains blocked on its context admission; no automatic paid retries or silent truncation were added. Admission rejection is now distinguished from uncertain execution; an isolated HTTP 413 fixture returned failed/undispatched/not-uncertain and released its reservation to zero. Local conservative ledger charge across these checks was $0.20 (including retained reserves from rejection receipts before that correction); actual invoice reconciliation remains external.
+
+Sequential native stress runs used Node 22.23.2, frozen snapshots, no warmup, 180 steps at requested 3× speed. Gems (514 entities): 1,482ms total, p50 5.43ms, p95 13.68ms, max 208.68ms, headroom 0.675. Mixed (344 entities): 1,658ms total, p50 3.78ms, p95 5.59ms, max 938.56ms, headroom 0.603. Neither cold workload met 3× capacity (headroom must exceed 1); geometry, encounters and Immer finalization dominate. These native-only profiles do not establish a cognition regression or full multiplayer capacity. Local artifacts: `/tmp/openlegend-cognition-{gems,mixed}-sequential.json` and corresponding CPU profiles.
+
+The production TypeScript/Vite build passed. Repository-wide Markdown link/anchor inspection found zero issues across 109 documents; whitespace checks passed. Automated suites remain deliberately unrun per owner instruction.

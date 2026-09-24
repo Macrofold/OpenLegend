@@ -50,7 +50,7 @@ export function prepareAttemptInterpretation(
       return [{ localId: operation.localId, description: act.description }];
     })
     .slice(0, Math.max(0, 4 - agency.attempts.length));
-  const choices = bindings.slice(0, 64).filter((binding) => binding.commands.length === 1);
+  const choices = bindings.filter((binding) => binding.commands.length === 1);
   if (!proposals.length || !choices.length) return;
   const handles = choices.map((_, index) => `n${index}`);
   const schema = z
@@ -76,7 +76,7 @@ export function prepareAttemptInterpretation(
       description: choice.description,
     })),
   };
-  if (Buffer.byteLength(JSON.stringify(context)) > 32000) return;
+  if (Buffer.byteLength(JSON.stringify(context)) > 100000) return;
   return {
     instructions,
     context,

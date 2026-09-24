@@ -2,7 +2,7 @@
 
 ## Camera and spatial interaction
 
-The [spatial owner](../../../../docs/spatial-world.md#picking-and-controls) defines meanings rather than another camera schema here. Camera View uses normal focusable controls; drag pans, Shift-drag orbits/tilts, wheel zooms, and focused-canvas arrows/Page Up/Page Down/P/Home control the view. Pointer capture ends without action after a drag. A level selection is not a movement command. The small renderer interface is plain TypeScript; PlayCanvas types stay in scene/art implementation. Multi-touch pinch and assistive-device qualification remain SW09/SW16 work.
+The [spatial owner](../../../../docs/spatial-world.md#picking-and-controls) defines meanings rather than another camera schema here. The compact camera toolbar uses focusable icon controls with hover/focus labels, a follow toggle beside recenter and a shortcut help icon; drag pans, Shift-drag orbits/tilts, wheel zooms, and focused-canvas arrows/Page Up/Page Down/P/Home control the view. Pointer capture ends without action after a drag. A level selection is not a movement command. The small renderer interface is plain TypeScript; PlayCanvas types stay in scene/art implementation. Multi-touch pinch and assistive-device qualification remain SW09/SW16 work.
 
 This is the production port of the supplied September 20 design system. React owns the HUD and world-status markup. React Aria provides buttons, toolbars, radio groups, conversation tabs and delayed tooltips. PlayCanvas still renders the world and supplies screen coordinates; it never authorizes actions.
 

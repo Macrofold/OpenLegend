@@ -62,8 +62,7 @@ const sameKeys = (a: Record<string, unknown>, keys: string[]) =>
   Object.keys(a).length === keys.length && keys.every((k) => Object.hasOwn(a, k));
 
 export function validateQuestions(value: unknown): asserts value is TypedQuestionMap {
-  if (!record(value) || Object.keys(value).length < 1 || Object.keys(value).length > 32)
-    throw new InvalidData('invalid_questions');
+  if (!record(value) || Object.keys(value).length < 1) throw new InvalidData('invalid_questions');
   for (const [id, q] of Object.entries(value)) {
     if (!/^[a-zA-Z0-9_-]{1,64}$/.test(id) || !record(q) || !nonempty(q.instructions))
       throw new InvalidData('invalid_questions');
@@ -96,6 +95,19 @@ export function validateQuestions(value: unknown): asserts value is TypedQuestio
         throw new InvalidData('invalid_noul_question');
     } else throw new InvalidData('invalid_question_type');
   }
+}
+
+// Conservative application estimates (4 characters/token), not a provider question-count limit.
+// docs/ai-providers.md#provider-behavior-and-limits
+export const JUDGMENT_MAX_CHARACTERS = 55_000 * 4;
+export const JUDGMENT_STATE_QUESTION_CHARACTERS = 28_000 * 4;
+export function validateJudgmentSize(state: unknown, questions: TypedQuestionMap): void {
+  const stateSize = JSON.stringify(state).length;
+  const longest = Math.max(0, ...Object.values(questions).map((q) => JSON.stringify(q).length));
+  if (JSON.stringify({ state, questions }).length > JUDGMENT_MAX_CHARACTERS)
+    throw new InvalidData('judgment_exceeds_55000_estimated_tokens');
+  if (stateSize + longest > JUDGMENT_STATE_QUESTION_CHARACTERS)
+    throw new InvalidData('judgment_state_question_exceeds_28000_estimated_tokens');
 }
 
 function probabilities(value: unknown, keys: string[]): Record<string, number> {

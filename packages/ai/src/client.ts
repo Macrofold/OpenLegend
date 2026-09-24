@@ -7,6 +7,7 @@ import {
   record,
   serialize,
   validateQuestions,
+  validateJudgmentSize,
 } from './validation.js';
 import { estimateCostUsd } from './usage.js';
 import type {
@@ -112,7 +113,7 @@ function httpError(status: number): OutcomeError {
 /** Server-only transport boundary. It does not schedule, retry, reserve budgets, or authorize world changes. */
 export function createAiClient(config: AiClientConfig = {}): AiClient {
   const timeoutMs = limit(config.timeoutMs, 20_000, 120_000);
-  const maxRequestBytes = limit(config.maxRequestBytes, 65_536, 1_048_576);
+  const maxRequestBytes = limit(config.maxRequestBytes, 500_000, 1_048_576);
   const maxResponseBytes = limit(config.maxResponseBytes, 262_144, 2_097_152);
   const maxOutputTokens = limit(config.maxOutputTokens, 2048, 16_384);
   const fetcher = config.fetch ?? ((url: string, init: RequestInit) => fetch(url, init));
@@ -301,6 +302,7 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
           throw new InvalidData('invalid_judgment_state');
         const questions: unknown = JSON.parse(serialize(request.questions, maxRequestBytes));
         validateQuestions(questions);
+        validateJudgmentSize(request.state, questions);
         return {
           body: { model, state: JSON.parse(contextJson) as unknown, questions },
           decode: (data) => decodeJudge(data, questions as TypedQuestionMap),

@@ -89,8 +89,8 @@ function App() {
     [sceneError, setSceneError] = useState(''),
     [notice, setNotice] = useState('');
   const [cameraView, setCameraView] = useState<
-    Pick<CameraState, 'projection' | 'levelId' | 'rotationLocked'>
-  >({ projection: 'orthographic', levelId: null, rotationLocked: false });
+    Pick<CameraState, 'projection' | 'levelId' | 'rotationLocked' | 'following'>
+  >({ projection: 'orthographic', levelId: null, rotationLocked: false, following: false });
   const [open, setOpen] = useState<PanelId[]>([]),
     [selected, setSelected] = useState<string | null>(null),
     [picker, setPicker] = useState<PickerContext | null>(null),
@@ -388,13 +388,14 @@ function App() {
                   ? { entity, point }
                   : null,
             ),
-          cameraChanged: ({ projection, levelId, rotationLocked }) =>
+          cameraChanged: ({ projection, levelId, rotationLocked, following }) =>
             setCameraView((previous) =>
               previous.projection === projection &&
               previous.levelId === levelId &&
-              previous.rotationLocked === rotationLocked
+              previous.rotationLocked === rotationLocked &&
+              previous.following === following
                 ? previous
-                : { projection, levelId, rotationLocked },
+                : { projection, levelId, rotationLocked, following },
             ),
         });
       scene.current.setView(view);
@@ -632,6 +633,9 @@ function App() {
       case 'agent':
         return (
           <WorldAgent
+            actorId={view.player.id}
+            godMode={view.godMode}
+            saveTimeline={view.saveTimeline}
             key={view.worldId}
             worldId={view.worldId}
             recipes={view.recipes}
