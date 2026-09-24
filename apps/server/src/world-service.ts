@@ -849,6 +849,62 @@ export class WorldService {
     });
   }
 
+  /** Apply an exact reviewed tool operation with its receipt in the existing world transaction.
+   * The callback is application-owned, never a function supplied through MCP.
+   * docs/world-agent-runtime.md#durable-write-sessions
+   */
+  async reviewedTransition(
+    id: string,
+    fingerprint: string,
+    timeline: string,
+    operation: (world: WorldState) => Promise<Transition>,
+  ): Promise<ApiResult> {
+    return this.mutate(async () => {
+      await this.ready;
+      if (!this.config.godMode || this.timelineId !== timeline)
+        return { ok: false, code: 'stale', message: 'World authority or timeline changed.' };
+      const receipts = this.store.commands;
+      if (!receipts)
+        return {
+          ok: false,
+          code: 'unavailable',
+          message: 'Durable operation receipts are unavailable.',
+        };
+      const previous = await receipts.get(this.world.id, id);
+      if (previous)
+        return previous.fingerprint === fingerprint
+          ? previous.result
+          : {
+              ok: false,
+              code: 'conflict',
+              message: 'Operation identity already has different content.',
+            };
+      const result = await operation(this.world);
+      if (!result.outcome.ok) return result.outcome;
+      const receipt: GameplayReceipt = {
+        id,
+        fingerprint,
+        epoch: 0,
+        expiresAt: Number.MAX_SAFE_INTEGER,
+        result: result.outcome,
+      };
+      const world = updateWorld(result.world, (draft) => {
+        delete draft.commandReceipts[id];
+      });
+      if (
+        !(await this.commit(
+          { ...this.saved, world },
+          result.invalidatedMemoryIds,
+          'append',
+          undefined,
+          receipt,
+        ))
+      )
+        return { ok: false, code: 'storage', message: this.storageError! };
+      return result.outcome;
+    });
+  }
+
   private async godTransition(operation: (world: WorldState) => Transition): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
@@ -883,24 +939,57 @@ export class WorldService {
     });
   }
 
-  async godKnowledge(value: import('@open-legend/domain').KnowledgeEdit & {
-    worldId: string; generation: string; actorId: string; givenName?: string; nameRevision?: number;
-  }): Promise<ApiResult> {
-    if (!this.config.godMode) return {ok: false, code: 'forbidden', message: 'God access required.'};
-    return this.godTransition(world => {
-              if (world.id !== value.worldId || this.generation !== value.generation)
-                return {world, events: [], outcome: {ok: false, code: 'stale-world', message: 'The world changed. Reload the editor.'}};
-              let edited: import('@open-legend/domain').Outcome = {ok: false, code: 'knowledge-rejected', message: 'Knowledge edit rejected.'};
-              const candidate = updateWorld(world, draft => {
-              const permitted = value.subjectId ? [value.subjectId] : [];
-              if (value.givenName !== undefined && value.subjectId) {
-                const named = assignGivenName(draft, value.actorId, {subjectId: value.subjectId, givenName: value.givenName, expectedRevision: value.nameRevision ?? 0}, permitted, true);
-                if (!named.ok) {edited = named; return;}
-              }
-              edited = editKnowledge(draft, value.actorId, value, permitted);
-              if (edited.ok && value.subjectId) rememberSubject(draft, value.actorId, value.subjectId, true);
-              });
-              return {world: edited.ok ? candidate : world, events: [], outcome: edited};
+  async godKnowledge(
+    value: import('@open-legend/domain').KnowledgeEdit & {
+      worldId: string;
+      generation: string;
+      actorId: string;
+      givenName?: string;
+      nameRevision?: number;
+    },
+  ): Promise<ApiResult> {
+    if (!this.config.godMode)
+      return { ok: false, code: 'forbidden', message: 'God access required.' };
+    return this.godTransition((world) => {
+      if (world.id !== value.worldId || this.generation !== value.generation)
+        return {
+          world,
+          events: [],
+          outcome: {
+            ok: false,
+            code: 'stale-world',
+            message: 'The world changed. Reload the editor.',
+          },
+        };
+      let edited: import('@open-legend/domain').Outcome = {
+        ok: false,
+        code: 'knowledge-rejected',
+        message: 'Knowledge edit rejected.',
+      };
+      const candidate = updateWorld(world, (draft) => {
+        const permitted = value.subjectId ? [value.subjectId] : [];
+        if (value.givenName !== undefined && value.subjectId) {
+          const named = assignGivenName(
+            draft,
+            value.actorId,
+            {
+              subjectId: value.subjectId,
+              givenName: value.givenName,
+              expectedRevision: value.nameRevision ?? 0,
+            },
+            permitted,
+            true,
+          );
+          if (!named.ok) {
+            edited = named;
+            return;
+          }
+        }
+        edited = editKnowledge(draft, value.actorId, value, permitted);
+        if (edited.ok && value.subjectId)
+          rememberSubject(draft, value.actorId, value.subjectId, true);
+      });
+      return { world: edited.ok ? candidate : world, events: [], outcome: edited };
     });
   }
 
@@ -1297,13 +1386,12 @@ export class WorldService {
     return this.evaluateCommand(randomUUID(), input, actorId, true) as ApiResult;
   }
 
-  private evaluateCommand(
+  /** Family binding is shared by UI commands and reviewed agent commands. */
+  private bindCommand(
     commandId: string,
     input: CommandInput,
     actorId: string,
-    preview: boolean,
-    gameplay?: Omit<GameplayReceipt, 'result'>,
-  ): ApiResult | Promise<ApiResult> {
+  ): Command | ApiResult {
     const envelope = { id: commandId, actorId };
     let command: Command;
     switch (input.type) {
@@ -1427,6 +1515,37 @@ export class WorldService {
       default:
         command = { ...envelope, type: input.type };
     }
+    return command;
+  }
+
+  reviewedCommandTransition(
+    world: WorldState,
+    id: string,
+    input: CommandInput,
+    actorId: string,
+  ): Transition {
+    if (world !== this.world || actorId !== this.controlledEntityId)
+      return {
+        world,
+        events: [],
+        outcome: { ok: false, code: 'stale-controller', message: 'The controlled actor changed.' },
+      };
+    const bound = this.bindCommand(id, input, actorId);
+    return 'actorId' in bound
+      ? executeCommand(world, bound)
+      : { world, events: [], outcome: bound };
+  }
+
+  private evaluateCommand(
+    commandId: string,
+    input: CommandInput,
+    actorId: string,
+    preview: boolean,
+    gameplay?: Omit<GameplayReceipt, 'result'>,
+  ): ApiResult | Promise<ApiResult> {
+    const bound = this.bindCommand(commandId, input, actorId);
+    if (!('actorId' in bound)) return bound;
+    const command = bound;
     if (preview) {
       if (this.paused) return { ok: false, code: 'paused', message: 'Resume the world to act.' };
       const { outcome } = executeCommand(this.world, command, { preview: true });

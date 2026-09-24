@@ -1,3 +1,4 @@
+import { WorldAgentStore } from './world-agent-store.js';
 import { KnowledgeStore } from './knowledge-store.js';
 import { validateKnowledge } from '@open-legend/domain';
 import { upgradeWorldState } from './upgrade-world.js';
@@ -522,6 +523,7 @@ export class SqliteStore implements GameRepository {
       await this.vectors.initialize();
     }
     await new KnowledgeStore(this.db).initialize();
+    await new WorldAgentStore(this.db).initialize();
     await this.history.initialize();
     await this.saves.initialize();
     await this.commands.initialize();
@@ -780,7 +782,11 @@ export class SqliteStore implements GameRepository {
             .prepare('INSERT INTO world_journal (revision,payload,created_at) VALUES (?,?,?)')
             .run(revision, changesPayload, Date.now());
         }
-        await new KnowledgeStore(this.db).project(this.acceptedState?.world, state.world, !!historyProjection?.restore);
+        await new KnowledgeStore(this.db).project(
+          this.acceptedState?.world,
+          state.world,
+          !!historyProjection?.restore,
+        );
         if (this.db.dialect === 'postgres')
           for (const row of changedRows) {
             await this.db
