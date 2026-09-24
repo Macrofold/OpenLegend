@@ -1,0 +1,32 @@
+name: MCP review source export
+on:
+  push:
+    branches: [feature/invention-repertoire-foundation]
+    paths: [.github/workflows/mcp-review-export.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Export source and dependencies only
+        run: |
+          git bundle create /tmp/mcp-review.bundle --all
+          tar -czf /tmp/mcp-review-dependencies.tar.gz node_modules apps/*/node_modules packages/*/node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mcp-review-runtime
+          path: |
+            /tmp/mcp-review.bundle
+            /tmp/mcp-review-dependencies.tar.gz
+          retention-days: 1
