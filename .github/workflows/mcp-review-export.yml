@@ -1,4 +1,4 @@
-name: MCP review source export
+name: MCP authoring continuation source export
 on:
   push:
     branches: [feature/invention-repertoire-foundation]
