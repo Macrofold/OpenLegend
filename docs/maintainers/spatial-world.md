@@ -51,7 +51,7 @@ The current provider is pinned Recast/Detour in one reused server worker with se
 - [x] **SW04.1c** Memoize exact stances for frozen points using weak keys and current radius/height/slope inputs under prepared map/revision geometry. Mutable points retain complete validation; automated qualification remains SR16.
 - [x] **SW05.1d (superseded provider)** Historical lattice optimization; current Recast replacement is SW17. Preserve its earlier performance evidence in Verification, not as a second active provider requirement.
 
-Existing task IDs below retain the remaining broad requirements. No new model calls, world bus, second dynamics authority, hidden-map shortcut or old-save migration is justified by these optimizations.
+Existing task IDs below retain the remaining broad requirements. No new model calls, world bus, second dynamics authority, hidden-map shortcut or parallel legacy runtime is justified by these optimizations.
 
 ## Delivery order and useful milestones
 
@@ -82,7 +82,7 @@ SW14–SW16 accompany each slice; they are not a final cleanup phase. No milesto
 - [x] **SW02.1** Introduce shared plain coordinate/bounds conventions and required Y. Preserve one authoritative `Entity.position`; add support/mode/heading/profile references without a second altitude writer. Differentiate screen points, vectors, destinations, and semantic surface IDs.
 - [x] **SW02.2** Inventory every position reader/writer and every planar distance calculation throughout domain, server, protocol, client, tests, owner tools, spawning, revival/recovery, and logs. Replace each according to its actual meaning rather than mechanically adding Y to every `Math.hypot`.
 - [ ] **SW02.3** Define units, actor support-anchor convention, native eye/ear/contact offsets, positive heading, static transforms, tolerances, and finite validation. Rename ambiguous new map metadata so vertical height and grid depth cannot be confused.
-- [x] **SW02.4** Bump incompatible development save/transport interpretation. New flat fixtures explicitly set Y to zero. Reject old saves clearly; add no legacy migrations, optional-Y compatibility reader, silent reset, or permanent dual format.
+- [x] **SW02.4** Require explicit XYZ in the current spatial model and transport; flat fixtures set Y to zero. Existing worlds use the current startup/load update owner. Do not introduce feature-specific save versions, silent resets, optional-Y runtime representations or permanent dual formats. Earlier cutover evidence remains historical.
 
 **Exit:** all supported creation/mutation routes produce valid 3D state; same-XZ actors on different supports remain distinct. Invalid numbers/IDs/transforms fail without effects. Existing gameplay fixtures are updated, not removed to hide regressions.
 
@@ -228,7 +228,7 @@ SW14–SW16 accompany each slice; they are not a final cleanup phase. No milesto
 - [ ] **SW15.1** Include positions, support/mode/profile/geometry versions, accepted route segments/cursors, traversal/fall state, consequential conflict waiting, and spatial evidence in coherent capture. Keep SDK objects and GPU handles out of saves.
 - [ ] **SW15.2** Rebuild derived indexes/nav data from pinned canonical inputs without changing a saved native route or choosing a new floor. Validate missing support/link/source records rather than silently snapping or resetting.
 - [ ] **SW15.3** Fence CPU/GPU/AI callbacks by world/load epoch and relevant identity. Preserve current billing, revocation, forgotten evidence, and no automatic paid retries. Reauthorize camera views and clear abandoned-future projections.
-- [ ] **SW15.4** Test mid-ramp, under/over bridge, queued preparation, mid-traversal, mid-flight, falling, changed-door, and obsolete-asset restoration. Reject incompatible development saves explicitly; do not add legacy conversions.
+- [ ] **SW15.4** Test mid-ramp, under/over bridge, queued preparation, mid-traversal, mid-flight, falling, changed-door, and obsolete-asset restoration. Exercise safe in-place current-state updates through the existing owner; preserve identity and unrelated state. Reject unsupported or invalid states explicitly rather than resetting a world or adding parallel legacy runtimes.
 
 **Exit:** a coherent same-version load continues native work without duplicated effects or changed support, while retired callbacks and hidden future knowledge remain inaccessible.
 
