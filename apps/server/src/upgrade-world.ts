@@ -9,6 +9,22 @@ import {
  * docs/save-and-load.md#active-development-policy
  */
 export function upgradeWorldState(world: WorldState): void {
+  // Preserve old facts and IDs while ordering raw source arrays for cursor reads.
+  // Missing sequence remains unknown (zero); malformed numeric data is left for validation.
+  for (const rows of [
+    ...Object.values(world.memories ?? {}),
+    ...Object.values(world.experience?.awareness ?? {}),
+  ]) {
+    if (
+      Array.isArray(rows) &&
+      rows.every(
+        (row) => row && Number.isSafeInteger(row.sequence ?? 0) && (row.sequence ?? 0) >= 0,
+      ) &&
+      rows.some((row, i) => i > 0 && (row.sequence ?? 0) < (rows[i - 1]!.sequence ?? 0))
+    )
+      rows.sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+  }
+
   if (!Object.hasOwn(world, 'perceptionFeatures')) world.perceptionFeatures = {};
   // Actor cognition is change-driven; remove the retired pacing field from saved policies.
   if (world.cognitionPolicy)

@@ -1125,6 +1125,13 @@ function advanceAction(
     return;
   }
   if (action.type === 'follow') {
+    if (
+      capabilityBlocked(world, actor, 'actions') ||
+      capabilityBlocked(world, actor, 'locomotion')
+    ) {
+      failAction(world, actor, events, 'following is no longer available to this body.');
+      return;
+    }
     const error = updateFollowPath(world, actor, action);
     if (error) {
       failAction(world, actor, events, error);
@@ -1533,7 +1540,8 @@ export function* advanceWorldWork(
       if (
         !capabilityBlocked(world, actor, 'locomotion') ||
         component.action?.type === 'status-effect' ||
-        component.action?.type === 'pickup'
+        component.action?.type === 'pickup' ||
+        component.action?.type === 'follow'
       )
         advanceAction(world, actor, seconds, events);
       yield;
@@ -1589,6 +1597,9 @@ function* updateEncounters(
     const clearSight = () => {
       if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
       if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
+      // Perception loss ends continuous recognition too; an old episode is not a live identity grant.
+      if (Object.keys(world.perceptionEpisodes?.[actor.id] ?? {}).length)
+        world.perceptionEpisodes![actor.id] = {};
     };
     // Sleeping does not manufacture conscious acquisitions. Waking reacquires actual evidence.
     if (actor.sleeping) {

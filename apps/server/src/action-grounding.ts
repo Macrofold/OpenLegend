@@ -1,6 +1,7 @@
 import { navigationInvocationSchema } from './navigation-contracts.js';
 import { z } from 'zod';
 import {
+  observerDescription,
   bindNavigationInvocation,
   NAVIGATION_CAPABILITIES,
   FOLLOW_RULES,
@@ -64,7 +65,8 @@ export function exactNavigation(
   );
   const matches = visible.filter(
     (e) =>
-      (normalize(e.name) === name ||
+      (normalize(observerDescription(world, actorId, e.id)).replace(/^(?:an?|the)\s+/u, '') ===
+        name ||
         e.id === following[1] ||
         (targetId === e.id &&
           ['this', 'that', 'this actor', 'that actor', 'this deer', 'that deer'].includes(name))) &&
@@ -196,7 +198,7 @@ export async function groundActionAttempts(
         )
         .slice(0, 16)) {
         scoped.push({
-          description: `Follow ${target.name} [${target.id}] at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
+          description: `Follow ${observerDescription(world, actorId, target.id)} [${target.id}] at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
           commands: [
             {
               id: op.localId,
@@ -220,7 +222,7 @@ export async function groundActionAttempts(
         support: observed.actor.spatial.supportSurfaceId,
         entities: visible.slice(0, 64).map((e) => ({
           id: e.id,
-          name: e.name,
+          name: observerDescription(world, actorId, e.id),
           position: e.position,
           surfaceId: e.spatial.supportSurfaceId,
           living: !!e.actor?.alive,
@@ -364,7 +366,7 @@ export async function groundActionAttempts(
           if (command.type === 'move')
             return `Walk to x=${command.destination.x}, z=${command.destination.z} on ${command.destination.surfaceId}.`;
           if (command.type === 'follow')
-            return `Follow ${observed.visibleEntities.find((e) => e.id === command.targetId)?.name ?? 'the selected actor'} at ${command.distance ?? FOLLOW_RULES.defaultDistance} world units until cancelled, interrupted or lost from sight. No stealth or sunset stop.`;
+            return `Follow ${observerDescription(world, actorId, command.targetId)} at ${command.distance ?? FOLLOW_RULES.defaultDistance} world units until cancelled, interrupted or lost from sight. No stealth or sunset stop.`;
           return (
             scoped.find((choice) => choice.commands[0] === command)?.description ??
             `Perform ${command.type}.`
