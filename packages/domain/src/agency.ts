@@ -1,3 +1,4 @@
+import { capabilityBlocked } from './status-capabilities.js';
 import { finitePoint } from '@open-legend/spatial';
 import { cloneValue } from './draft.js';
 import { appendMemory, outcome } from './events.js';
@@ -386,7 +387,7 @@ export function readyPlanStep(world: WorldState, actorId: string): PlanStep | un
     actor.action ||
     !actor.alive ||
     actor.incapacitated ||
-    actor.rest?.asleep
+    capabilityBlocked(world, world.entities[actorId], 'actions')
   )
     return;
   if (
@@ -568,6 +569,17 @@ export function deferAttempt(
 function isPhysicalCommand(command: Command): boolean {
   if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
   switch (command.type) {
+    case 'pickup':
+      return (
+        isSafeRecordId(command.targetId) &&
+        (command.itemId === undefined || isSafeRecordId(command.itemId))
+      );
+    case 'drop':
+      return (
+        isSafeRecordId(command.itemId) &&
+        Number.isSafeInteger(command.quantity) &&
+        command.quantity > 0
+      );
     case 'move':
       return finitePoint(command.destination) && isSafeRecordId(command.destination.surfaceId);
     case 'gather':
@@ -582,6 +594,8 @@ function isPhysicalCommand(command: Command): boolean {
     case 'equip':
     case 'eat':
       return isSafeRecordId(command.itemId);
+    case 'strike':
+      return isSafeRecordId(command.targetId) && isSafeRecordId(command.definitionId);
     case 'hunt':
       return (
         isSafeRecordId(command.targetId) &&
@@ -590,8 +604,12 @@ function isPhysicalCommand(command: Command): boolean {
       );
     case 'cook':
       return isSafeRecordId(command.itemId) && isSafeRecordId(command.heatId);
-    case 'rest':
-      return true;
+    case 'status-effect':
+      return (
+        isSafeRecordId(command.targetId) &&
+        isSafeRecordId(command.definitionId) &&
+        ['activate', 'deactivate'].includes(command.operation)
+      );
     default:
       return false;
   }

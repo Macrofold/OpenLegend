@@ -27,6 +27,8 @@ export interface Ammunition {
   damageBonus: number;
 }
 export interface ItemDefinition {
+  /** Consumed by the installed item-handling mechanic; absent means not portable. */
+  portable?: boolean;
   gatheringTool?: { resourceId: string; quantity: number };
   id: string;
   version: number;
@@ -86,6 +88,8 @@ export interface RecipeDefinition extends DeclarationDraft {
 }
 export type NativePreparation = 'fiber' | 'cord';
 export type ActionType =
+  | 'pickup'
+  | 'strike'
   | 'move'
   | 'gather'
   | 'prepare'
@@ -93,7 +97,7 @@ export type ActionType =
   | 'hunt'
   | 'harvest'
   | 'cook'
-  | 'rest'
+  | 'status-effect'
   | 'replenish';
 export interface Action {
   id: string;
@@ -105,6 +109,7 @@ export interface Action {
   remainingSeconds: number;
   totalSeconds: number;
   attributeId?: string;
+  definitionId?: string;
   definitionVersion?: number;
   transferred?: number;
   recipeId?: string;
@@ -135,7 +140,6 @@ export interface ActorComponent {
   backstory?: string;
   initialGoals?: string[];
   agency: import('./agency.js').ActorAgency;
-  rest?: import('./sleep.js').RestState;
   controller: 'player' | 'npc' | 'native';
   species?: 'human' | 'hare' | 'deer' | 'construct' | 'bird';
   body?: import('./living.js').LivingBody;
@@ -182,10 +186,13 @@ export interface HeatComponent {
   lit: boolean;
 }
 export interface Entity {
+  statusEffects?: Record<string, import('./status-effects.js').StatusEffectInstance>;
+  /** Sparse attributes for non-actor entities; actors retain their existing owner. */
+  attributes?: Record<string, import('./world-modules.js').AttributeState>;
   mechanismFields?: Record<string, Record<string, number>>;
   id: string;
   name: string;
-  kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains';
+  kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains' | 'item-pile';
   position: Position;
   /** Appearance is never a source of body dimensions or movement capability. */
   appearance?: 'sprite' | 'crate-mesh';
@@ -253,6 +260,13 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  knowledgeRevisions?: Record<string, number>;
+  knowledgePolicy?: import('./knowledge.js').KnowledgePolicy;
+  actorKnowledge?: Record<string, import('./knowledge.js').ActorKnowledge>;
+  observerIdentities?: Record<string, Record<string, import('./worlds/base/knowledge.js').ObserverIdentity>>;
+  perceptionEpisodes?: Record<string, Record<string, string>>;
+  itemHandling: import('./item-handling.js').ItemHandlingPolicy;
+  statusEffectPolicy: import('./status-effects.js').StatusEffectPolicy;
   authorship: import('./invention-attribution.js').WorldAuthorship;
   inventionPolicy: import('./invention-policy.js').InventionPolicy;
   moduleManifest: import('./world-modules.js').WorldModuleManifest;
@@ -267,7 +281,7 @@ export interface WorldState {
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
   id: string;
   seed: number;
   rngState: number;
@@ -312,16 +326,25 @@ export type Command = Envelope &
         conversationId: string;
         generation: number;
       }
+    | { type: 'pickup'; targetId: string; itemId?: string }
+    | { type: 'drop'; itemId: string; quantity: number }
     | { type: 'move'; destination: SurfacePoint }
     | { type: 'gather' | 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }
     | { type: 'craft'; recipeId: string }
     | { type: 'replenish'; targetId: string; attributeId: string }
     | { type: 'equip' | 'eat'; itemId: string }
+    | { type: 'strike'; definitionId: string; targetId: string }
     | { type: 'hunt'; targetId: string; weaponItemId?: string; ammoItemId?: string }
     | { type: 'cook'; itemId: string; heatId: string }
-    | { type: 'rest' | 'cancel' | 'recover' }
-    | { type: 'say'; text: string; targetId?: string }
+    | {
+        type: 'status-effect';
+        targetId: string;
+        definitionId: string;
+        operation: 'activate' | 'deactivate';
+      }
+    | { type: 'cancel' | 'recover' }
+    | { type: 'say'; text: string; targetId?: string; intendedRecipientId?: string }
     | { type: 'goal'; text: string }
     | { type: 'withdraw-attempt'; attemptId: string }
     | { type: 'teach'; targetId: string; recipeId: string }
@@ -354,6 +377,7 @@ export interface GodPersonDraft {
 }
 
 export interface GodPersonEditorDraft {
+  inventory?: Array<{ definitionId: string; quantity: number }>;
   name: string;
   description: string;
   personality: string;
@@ -390,6 +414,7 @@ export interface ActorObservation {
   actor: Entity;
   visibleEntities: Entity[];
   contacts: import('./perception.js').ContactView[];
+  groundItems: ItemInstance[];
   inventory: ItemInstance[];
   itemDefinitions: ItemDefinition[];
   knownRecipes: RecipeDefinition[];

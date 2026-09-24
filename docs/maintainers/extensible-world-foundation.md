@@ -258,3 +258,8 @@ For each delivered slice report: task IDs and exact changed files; behavior pres
 ## Repertoire integration consumers
 
 [INV-20](inventions-and-world-evolution.md#inv-20--repertoire-integration-and-cross-domain-composition) owns the new cross-domain integration slices. EWF continues to own the shared host/manifest and state interfaces; [AC](action-capabilities.md) owns invocation/activity semantics. A source-backed inspection graph is delivered without a new registry. Positive material/port contracts, carrier/interaction/clock/topology consumers and qualified effects must still be implemented by their actual owners before general compositional or exotic-world support is claimed.
+
+## Targeted-strike slice
+
+- [x] Add the trusted declarative Punch definition, native target/range/approach/impact handling and public sprite-arm animation through existing domain/server/client boundaries. This does not complete generic action-definition admission.
+- [ ] Qualify the [targeted-strike validation](TODO.md#targeted-strike-validation) before claiming broader combat coverage.

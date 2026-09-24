@@ -861,10 +861,14 @@ export class HistoryRepository {
       this.db.dialect === 'postgres'
         ? `(e.payload::jsonb #>> '{data,responseId}')`
         : `json_extract(e.payload, '$.data.responseId')`;
+    const relevant =
+      this.db.dialect === 'postgres'
+        ? `(e.payload::jsonb #>> '{data,conversationRelevant}')='true'`
+        : `json_extract(e.payload, '$.data.conversationRelevant')=1`;
     if (options.participantId) {
       const speechParticipants = `((${field('actorId')}=? AND ${field('targetId')}=?) OR (${field('actorId')}=? AND (${field('targetId')}=? OR ${field('targetId')} IS NULL)))`;
       if (options.responseActions) {
-        filter += ` AND ((${field('type')}='speech' AND ${speechParticipants}) OR (${responseId} IS NOT NULL AND ${field('actorId')}=?))`;
+        filter += ` AND ((${field('type')}='speech' AND ${speechParticipants}) OR ((${responseId} IS NOT NULL OR ${relevant}) AND ${field('actorId')}=?))`;
         args.push(
           actorId,
           options.participantId,
@@ -878,7 +882,7 @@ export class HistoryRepository {
       }
     } else if (options.speechOnly) {
       filter += options.responseActions
-        ? ` AND (${field('type')}='speech' OR ${responseId} IS NOT NULL)`
+        ? ` AND (${field('type')}='speech' OR ${responseId} IS NOT NULL OR ${relevant})`
         : ` AND ${field('type')}='speech'`;
     }
     const events = await this.db

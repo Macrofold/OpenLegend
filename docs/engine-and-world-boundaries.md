@@ -46,6 +46,10 @@ A fast native sight evaluator can be supplied by the host while a world's sense 
 
 The desired boundary is **stable interfaces around replaceable behavior**, not a switch from all hard-coded code to all player-written scripts.
 
+## Editable knowledge boundary
+
+[Knowledge documents](knowledge.md) use reusable owner/subject identity, revision, validation and persistence mechanisms. Their meaning, default quotas and observer naming belong to the [base-world cognition policy](worlds/base/knowledge.md). Seeing an entity does not grant knowledge of its global name; runtime identity is not recognition evidence. Dynamic state is database-backed; YAML holds authored policy only.
+
 ## 4. What must remain protected
 
 | Replaceable world rule                                                                      | Non-negotiable runtime boundary                                                                                                                    |

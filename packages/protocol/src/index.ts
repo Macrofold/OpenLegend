@@ -7,24 +7,29 @@ export type { SurfacePoint, SpatialLayout };
 export interface CommandInput {
   type:
     | 'conversation'
+    | 'pickup'
+    | 'drop'
     | 'move'
     | 'gather'
     | 'prepare'
     | 'craft'
     | 'equip'
+    | 'strike'
     | 'hunt'
     | 'harvest'
     | 'cook'
     | 'eat'
     | 'replenish'
-    | 'rest'
+    | 'status-effect'
     | 'cancel'
     | 'recover'
     | 'teach';
   conversationId?: string;
   generation?: number;
   operation?: 'join' | 'leave';
+  effectOperation?: 'activate' | 'deactivate';
   targetId?: string;
+  definitionId?: string;
   itemId?: string;
   recipeId?: string;
   attributeId?: string;
@@ -82,10 +87,32 @@ export interface PlayerProfile {
 /** A control changes only its own preference, preserving concurrent UI choices. */
 export type PlayerPreferencePatch = Partial<PlayerProfile['preferences']>;
 
+export interface ActionAnimation {
+  id: string;
+  kind: 'punch';
+  progress: number;
+  direction: { x: number; z: number };
+}
+
+export interface StatusEffectView {
+  id: string;
+  label: string;
+  pose?: 'horizontal';
+  particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
+}
 export interface EntityView {
+  contents?: Array<{
+    id: string;
+    definitionId: string;
+    name: string;
+    quantity: number;
+    portable: boolean;
+  }>;
+  actionAnimation?: ActionAnimation | null;
+  statusEffects?: StatusEffectView[];
   attributes?: AttributeView[];
   id: string;
-  kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station';
+  kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station' | 'item-pile';
   name: string;
   subtype: string;
   position: Position;
@@ -173,7 +200,8 @@ export interface GameView {
   godMode?: boolean;
   godTools?: {
     traits: Array<{ id: string; name: string; description: string }>;
-    spawnOptions: Array<{ id: string; label: string }>;
+    spawnOptions: Array<{ id: string; label: string; category: 'Actors' | 'Environment' }>;
+    itemOptions: Array<{ id: string; label: string; description: string }>;
   };
   schemaVersion: 2;
   revision: number;
@@ -199,6 +227,7 @@ export interface GameView {
     pauseReason: 'manual' | 'away' | 'storage' | null;
   };
   player: {
+    statusEffects?: StatusEffectView[];
     id: string;
     name: string;
     position: Position;
@@ -207,6 +236,7 @@ export interface GameView {
     /** Permitted applicable values, never a raw module state dump. */
     attributes: AttributeView[];
     /** Default-world convenience values; generic presentation uses attributes. */
+    actionAnimation?: ActionAnimation | null;
     health: number;
     hunger?: number;
     energy?: number;
@@ -285,6 +315,7 @@ export interface ApiResult {
 }
 
 export interface GodPersonFields {
+  inventory?: Array<{ definitionId: string; quantity: number }>;
   name: string;
   description: string;
   personality: string;
@@ -311,6 +342,8 @@ export interface GodMemoryEditorEntry {
 }
 
 export interface GodPersonEditorView {
+  statuses: string[];
+  itemOptions: Array<{ id: string; name: string }>;
   before?: string;
   ok: true;
   revision: number;
@@ -338,6 +371,10 @@ export interface GodWorldEventsEditorView {
 
 /** Private inspection DTO: returned only by the separately authorized god endpoint. */
 export interface GodMindView {
+  worldId?: string;
+  generation?: string;
+  notepads?: {subjectId: string | null; label: string; text: string; revision: number; characters: number; maxCharacters: number}[];
+  identities?: Record<string, {givenName: string; revision: number; encounterId: string | null; authored: boolean}>;
   corrections?: Record<string, string>;
   legacyThoughts?: Array<{
     decisionId: string;
@@ -350,7 +387,7 @@ export interface GodMindView {
   experiences?: Array<{ id: string; text: string; at: number; kind: string; source: string }>;
   commitments?: Array<{ id: string; text: string; resolved: boolean }>;
   skills?: Array<{ name: string; source: string; learnedAt: number }>;
-  rest?: { asleep: boolean; sleepingSeconds: number; restedSeconds: number; debtSeconds: number };
+  statusEffects?: Array<{ id: string; label: string; elapsedSeconds: number }>;
   actorId: string;
   name: string;
   revision: number;

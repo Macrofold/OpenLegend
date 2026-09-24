@@ -1,3 +1,5 @@
+import { observerDescription, recognizesSubject } from './worlds/base/knowledge.js';
+import { capabilityBlocked } from './status-capabilities.js';
 import { appraiseEvent } from './social.js';
 import { mutateExperience } from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
@@ -94,7 +96,7 @@ function eventAudience(
             (entity) =>
               hasMemory(entity) &&
               entity.actor?.alive &&
-              !entity.actor.rest?.asleep &&
+              !capabilityBlocked(world, entity, 'perception') &&
               (type === 'speech'
                 ? hearsEntity(world, entity, source)
                 : seesEntity(world, entity, source)),
@@ -104,38 +106,23 @@ function eventAudience(
   return audience;
 }
 
-/** Only for the synchronous post-movement encounter phase: emitting encounters changes
- * experience, not positions or sensory capabilities. Never retain this resolver across motion.
- * The usual recordEvent path still owns every ledger, memory and commitment mutation.
- * EPR03 still owns private acquisition; this optimization does not redefine witness semantics.
- * docs/events-perception-and-reactions.md#6-spatial-work-and-invalidation
+/** Noticing a source is private evidence, not an outward action others can witness.
+ * docs/events-perception-and-reactions.md#perception-acquisition-is-normally-private
  */
 export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
-  let observers: Entity[] | undefined;
-  const audiences = new Map<string, string[]>();
-  return (source: Entity, targetId: string, meaningful: boolean): WorldEvent => {
-    let audience = audiences.get(source.id);
-    if (!audience) {
-      observers ??= Object.values(world.entities).filter(
-        (e) => hasMemory(e) && e.actor?.alive && !e.actor.rest?.asleep,
-      );
-      audience = eventAudience(world, 'encounter', source, 'external', observers);
-      audiences.set(source.id, audience);
-    }
-    return recordEvent(
+  return (source: Entity, targetId: string, meaningful: boolean): WorldEvent =>
+    emit(
       world,
       events,
       'encounter',
-      `${source.name} encountered ${world.entities[targetId]!.name}.`,
-      audience,
+      `${source.name} encountered ${observerDescription(world, source.id, targetId)}.`,
       source,
       targetId,
       meaningful
         ? { importance: 6, semanticTrigger: true }
         : { importance: 0, urgency: 0, semanticTrigger: false },
-      'external',
+      'private',
     );
-  };
 }
 
 function recordEvent(
@@ -160,7 +147,9 @@ function recordEvent(
       : type === 'speech'
         ? 7
         : data?.['semanticTrigger'] === true ||
-            ['crafted', 'declaration-admitted', 'shot', 'fire-out', 'rested'].includes(type)
+            ['crafted', 'declaration-admitted', 'shot', 'struck', 'fire-out', 'rested'].includes(
+              type,
+            )
           ? 6
           : 3,
   );
@@ -171,7 +160,7 @@ function recordEvent(
   const conversationId =
     type === 'speech' && source
       ? engageConversation(world, source.id, targetId)
-      : type === 'expression' && source
+      : (type === 'expression' || data?.['conversationRelevant'] === true) && source
         ? world.conversations?.active[source.id]
         : undefined;
   const event: WorldEvent = {
@@ -202,6 +191,27 @@ function recordEvent(
   events.push(event);
   if (world.experience) {
     for (const actorId of audience) {
+      const intendedId =
+        type === 'speech' && typeof data?.['intendedRecipientId'] === 'string'
+          ? data['intendedRecipientId']
+          : type === 'speech'
+            ? targetId
+            : undefined;
+      const observer = world.entities[actorId];
+      const recipient = intendedId ? world.entities[intendedId] : undefined;
+      // Intent is private unless the observer is involved or can see both participants.
+      // docs/narration-and-conversations.md#speech-intent-and-audience
+      const perceivedRecipient =
+        intendedId &&
+        (actorId === source?.id ||
+          actorId === intendedId ||
+          (observer &&
+            source &&
+            recipient &&
+            seesEntity(world, observer, source) &&
+            seesEntity(world, observer, recipient)))
+          ? intendedId
+          : undefined;
       mutateExperience(world, actorId, {
         operation: 'add',
         entry: {
@@ -216,29 +226,42 @@ function recordEvent(
               scope === 'private'
                 ? type === 'contact'
                   ? 'felt'
-                  : 'internal'
+                  : type === 'encounter'
+                    ? 'observed'
+                    : 'internal'
                 : type === 'speech'
                   ? 'heard'
                   : 'observed',
-            recognized: type !== 'contact',
+            recognized: type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
             intelligible: true,
-            entityIds: [source?.id, targetId].filter((id): id is string => !!id),
+            entityIds: [source?.id, type === 'speech' ? perceivedRecipient : targetId].filter(
+              (id): id is string => !!id,
+            ),
             importance: event.importance ?? importance,
             urgency: event.urgency ?? urgency,
             eventType: type,
             ...(source ? { sourceId: source.id } : {}),
-            ...(targetId ? { targetId } : {}),
+            ...(type === 'speech'
+              ? perceivedRecipient
+                ? {
+                    intendedRecipientId: perceivedRecipient,
+                    ...(targetId === perceivedRecipient ? { targetId } : {}),
+                  }
+                : {}
+              : targetId
+                ? { targetId }
+                : {}),
             triggerKind:
               source?.id === actorId
                 ? 'self_event'
                 : type === 'speech'
-                  ? targetId === actorId
+                  ? intendedId === actorId
                     ? 'addressed_speech'
                     : 'overheard_speech'
                   : targetId === actorId
                     ? 'directed_action'
                     : 'observed_event',
-            content: typeof data?.['text'] === 'string' ? data['text'] : text,
+            content: typeof data?.['text'] === 'string' ? data['text'] : memoryPerspective(world, actorId, text, false, source?.id),
           },
         },
       });
@@ -255,4 +278,13 @@ export function finish(world: WorldState, events: WorldEvent[], result: Outcome)
   world.sequence++;
   const committedEvents = cloneValue(events);
   return { world: finishWorld(world), events: committedEvents, outcome: result };
+}
+
+/** Observed conversation events may be native state narration, not an actor reply. */
+export function isConversationEvent(event: WorldEvent): boolean {
+  return (
+    event.type === 'speech' ||
+    typeof event.data?.['responseId'] === 'string' ||
+    event.data?.['conversationRelevant'] === true
+  );
 }

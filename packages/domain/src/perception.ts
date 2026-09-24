@@ -1,3 +1,5 @@
+import { DEFAULT_SENSES, PERCEPTION_RULES } from './worlds/base/senses.js';
+import { capabilityBlocked } from './status-capabilities.js';
 import {
   canWalkSegment,
   clearSegment,
@@ -11,7 +13,7 @@ import { current, isDraft, original } from 'immer';
 import { distance } from './spatial.js';
 import type { Entity, Position, WorldState } from './types.js';
 
-export const PERCEPTION_RULES = { sightRadius: 28, hearingRadius: 10 } as const;
+export { PERCEPTION_RULES } from './worlds/base/senses.js';
 /** Reviewed detector versions are pinned in each world's resolved manifest. */
 export const SENSE_IMPLEMENTATIONS = [
   'vision-geometry-v1',
@@ -25,10 +27,7 @@ export interface SenseDefinition {
   implementation: SenseImplementation;
   radius: number;
 }
-export const DEFAULT_SENSES: SenseDefinition[] = [
-  { id: 'wilderness:vision', version: 1, implementation: 'vision-geometry-v1', radius: 28 },
-  { id: 'wilderness:hearing', version: 1, implementation: 'hearing-transmission-v1', radius: 10 },
-];
+export { DEFAULT_SENSES } from './worlds/base/senses.js';
 export const COARSE_TOUCH: SenseDefinition = {
   id: 'contact:touch',
   version: 1,
@@ -79,9 +78,12 @@ function resolveSenses(world: WorldState, entity: Entity): ResolvedSenses {
   return result;
 }
 export function sensesFor(world: WorldState, entity: Entity): SenseDefinition[] {
-  return resolveSenses(world, entity).definitions;
+  return capabilityBlocked(world, entity, 'perception')
+    ? []
+    : resolveSenses(world, entity).definitions;
 }
 export function visionRadius(world: WorldState, entity: Entity): number {
+  if (capabilityBlocked(world, entity, 'perception')) return 0;
   return resolveSenses(world, entity).vision;
 }
 interface SightTarget {
@@ -107,6 +109,7 @@ const visibility = new WeakMap<WorldState['map'], Map<string, ObserverSight>>();
  * Radius and both body anchors participate in reuse; future senses must add their own dependencies.
  */
 export function visionQuery(world: WorldState, observer: Entity): (source: SightTarget) => boolean {
+  if (capabilityBlocked(world, observer, 'perception')) return () => false;
   const radius = visionRadius(world, observer);
   const from = isDraft(observer.position) ? current(observer.position) : observer.position;
   const eyeHeight = bodyProfile(observer).eyeHeight;
@@ -156,6 +159,12 @@ export function seesEntity(world: WorldState, observer: Entity, source: Entity):
   });
 }
 export function hearsEntity(world: WorldState, observer: Entity, source: Entity): boolean {
+  return (
+    !capabilityBlocked(world, observer, 'perception') && withinHearingRange(world, observer, source)
+  );
+}
+/** Conversation membership uses physical range, not temporary receiver availability. */
+export function withinHearingRange(world: WorldState, observer: Entity, source: Entity): boolean {
   const radius = resolveSenses(world, observer).hearing;
   if (radius <= 0) return false;
   const listener = {

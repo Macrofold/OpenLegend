@@ -29,7 +29,7 @@ export function initialCamera(): CameraState {
     projection: 'orthographic',
     levelId: null,
     rotationLocked: false,
-    following: false,
+    following: true,
   };
 }
 /** Pure client presentation controller. No world position, visibility grant, or simulation clock is changed. */

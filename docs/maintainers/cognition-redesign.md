@@ -159,7 +159,7 @@ Owner: server scheduler/repository and generic summarizer; pure acceptance rules
 - [x] Preserve essential identity and native obligation authority. Workspace prose cannot grant capabilities, edit world state or fabricate witnessed evidence. Keep old sessions, scratch and audit exports outside actor recall.
 - [ ] Verify Macrofold scoped file and snapshot capabilities before relying on them. Provisioning a workspace alone is not working workspace reflection; a SQLite adapter is an interim step, not PostgreSQL acceptance.
 
-- [x] Preserve authored relationship/belief/goal prose in one accepted text authority; any query index derives from that revision. Keep native skills, obligations and mechanical appraisals independently authoritative.
+- [x] Preserve authored self-understanding and external knowledge in their respective accepted document authorities (CR13); any query index derives from that revision. Keep native skills, obligations and mechanical appraisals independently authoritative.
 
 - [x] Seed new actors' identity, permitted knowledge and initial accepted text atomically with saved state; provision actor-scoped workspace access idempotently without fabricating witnessed background or duplicating paid setup.
 - [x] Enforce the initial ten-file/500-word-per-file ceiling plus finite bytes until an explicit quota decision supersedes it. Count headings and durable scratch, expose deterministic counts/preview, keep trusted instructions read-only and reject overflow without truncation or paid repair.
@@ -184,9 +184,9 @@ Owner: server director/jobs and workspace adapter. Depends on: CR02, CR07. Exit 
 
 ### CR09 — Eight-hour rest and two-hour dream threshold
 
-- [x] Add saved native rest/sleep accounting with an eight-simulated-hour daily requirement. Distinguish resting from sleeping and accumulate actual sleep continuously within a sleep episode.
-- [x] Admit dreams only after at least two simulated hours asleep, deduplicated per episode with bounded later opportunities. Waking before the threshold cancels eligibility; speed changes do not alter simulated thresholds.
-- [x] Specify daily window, split-rest credit, interruption/reset and sleep-debt effects as explicit native rules. Initial tuning uses calendar days, split-rest credit, fifteen-minute sleep onset and bounded debt; later tuning must preserve the eight-hour need and two-hour dream minimum.
+- [x] Implement authored sleep content through entity status effects, with immediate onset, energy-based recovery/waking and continuous effect episodes.
+- [x] Admit dreams only after the configured continuous-sleep threshold (two simulated hours by default), deduplicated per episode with bounded later opportunities. Waking before the threshold cancels eligibility; speed changes do not alter simulated thresholds.
+- [x] Expose validated conditions, targets, rates and reactivation grace through the [status-effect registry](../status-effects.md#configuration); cognition policy separately binds dream eligibility. Emit observed transitions and cancel unavailable speakers.
 - [ ] Verify pause, acceleration, restart, interrupted sleep and budget exhaustion. Sleep/rest must proceed without an available dream model; dreamed content stays imagined.
 
 Owner: pure domain needs/sleep, server scheduling. Depends on: CR08 for dream execution; native accounting can precede it. Exit evidence: deterministic threshold/accounting scenarios plus separate capped live dream acceptance.
@@ -265,7 +265,7 @@ These pending checks directly define cognition completion and were moved from th
 
 - [ ] Add and run meaningful CR01–CR04 fixtures: route/output contracts, full accepted-text overflow, directed speech and independent reflection, all semantic stimulus families, five selection signals, privacy, required evidence, candidate coverage, index lag, semantic paraphrases, stale dependencies, compatible cache reuse and changed-vector spaces. Adjust old fixtures that assume full-harness speech or per-event memory copies. No current compilation result establishes behavior.
 - [ ] Add CR05–CR06 fixtures for event-time audience/detail, one shared event without duplicate raw recall, unknown historical audience, native explicit promises/deadlines/fulfillment/cancellation, learning continuity, six-hour/hour boundaries, summaries versus backlog, concurrent observers, corrections, forgetting and independent important incidents. Check important summaries remain protected at the finite quota.
-- [ ] Add CR07–CR09 fixtures for quota-counted file names/content, identity protection, paths/symlinks, consistent export revision, staged partial failure, fresh histories on warm compute, duplicate/stale publication, pause/cancel/death, dream interruption, shared spending, interactive priority and late provider accounting. Verify midnight windows, split rest, fatigue debt, actual sleeping and the two-hour minimum independently of speed.
+- [ ] Add CR07–CR09 fixtures for quota-counted file names/content, identity protection, paths/symlinks, consistent export revision, staged partial failure, fresh histories on warm compute, duplicate/stale publication, pause/cancel/death, dream interruption, shared spending, interactive priority and late provider accounting. Verify scheduled windows, energy thresholds, wake grace, actual sleeping and configured dream eligibility independently of speed.
 - [ ] Add CR10–CR11 fixtures for versioned policy admission and unoffered routes, same-version source preservation, incompatible-format rejection, import rollback, interrupted/uncertain jobs, PostgreSQL CAS/snapshot agreement, current forgetting-ledger reapplication during restore and god authorization on every endpoint. Run `pnpm run check` and browser checks after the deferred tests are updated.
 
 ### Individual memory perspective
@@ -318,9 +318,9 @@ These pending checks directly define cognition completion and were moved from th
 - [ ] Explicit chat/invention requests no longer abort merely because the game pauses or the tab is hidden. An admitted provider stage may finish; successful results wait for resume before another paid stage or deterministic commit. Background NPC cognition still cancels on pause. Shutdown cancels pending resume waits; process-restart recovery of held responses remains follow-up work.
 - [ ] Check pause during Jev, harness execution and after completion; repeated blur/resume; no new stage while paused; stale actor/action/evidence rejection after resume; no duplicate billing or dispatch; shutdown cleanup and actual provider failure messages.
 - [ ] Verify pause-policy documentation against runtime acceptance; architecture/time/setup guidance now reflects held explicit responses. Update remaining UI wording in its own pending batch. Thinking text now explains that detailed responses can take about a minute; completed held responses say to resume. No automated tests or paid calls run for this change.
-- [ ] Add automated coverage for guaranteed current-conversation recall: the newest 32 actor-aware speech events in the durably associated conversation bypass embeddings and Jev, appear once in chronological order and remain private to actors with awareness. Up to 32 older speech events use vector ranking followed by Jev relevance. Cover forgotten/corrected evidence, large transcripts, multiple NPCs, untargeted overhearing, restart, semantic outage and context-budget failure. Tests were deferred at the user's request.
+- [ ] Add automated coverage for guaranteed current-conversation recall: all available actor-aware speech events in the durably associated conversation through the decision snapshot bypass embeddings and Jev, appear once in chronological order and remain private to actors with awareness. No conversation turns are truncated at the triggering message or filtered as optional history. Cover forgotten/corrected evidence, large transcripts, multiple NPCs, untargeted overhearing, restart, semantic outage and context-budget failure. Tests were deferred at the user's request.
 - [ ] Add automated coverage that the current trigger appears only in the Trigger section; non-speech events do not consume the guaranteed speech window; non-person objects never enter `peoplePresent`; required context fails before embedding/Jev dispatch; and semantic candidates are bounded by the remaining context allowance. No test files or suites were added or run at the user's request.
-- [x] Reconcile conversation/retrieval documentation for durable conversation association, the newest-32 plus semantic-32 prompt policy, retained-history independence and required-versus-semantic byte allocation.
+- [x] Reconcile conversation/retrieval documentation for durable conversation association, the complete available conversation snapshot policy, retained-history independence and required-versus-semantic byte allocation.
 - [x] Replace the interim pair/time-gap boundary with durable conversation association. Recall requires actor-owned event-time awareness; missing legacy association remains unknown. The native conversation and event-binding implementation is tracked in NC05; integrated privacy and merge acceptance remains open.
 - [ ] Add automated coverage for component-specific action admission, mandatory-budget rejection before embeddings, zero-remaining-budget retrieval, action-space reservation before Jev, and large-backlog candidate construction. Tests were deferred at the user's request.
 - [ ] Add automated coverage for importance/urgency interruption policy and the single response refresh: ordinary awareness must not delay replies; only events at or above both thresholds abort the active provider stage and refresh once; the retry rescans from the original watermark and includes every qualifying event received before it starts under distinct provider/application-stage identities; evidence arriving during the refreshed attempt does not loop. Cover legacy awareness without urgency and ensure user, pause and shutdown cancellation cannot become a retry. Automated tests were deferred at the user's request.
@@ -364,19 +364,19 @@ These pending checks directly define cognition completion and were moved from th
 - [ ] Add focused tests for direct Jev/LM, Macrofold inference, and full harness/world-agent input/output capture, failures, cancellation, receipt usage, billing, raw provider responses, and restart history.
 - [ ] Verify owner-session, origin, and god-mode authorization; credential redaction; response capture limits; provider response preservation; pagination and panel refresh behavior.
 - [ ] Run runtime tests and browser verification; changed runtime files were formatted and typechecking passed, but no tests were written or run at user request.
-- [ ] Document the right-side Intelligence calls panel and synchronize relevant architecture, extension, provider, verification, and implementation-status docs without losing unique information.
+- [x] Document the current Intelligence panel in its canonical debugger specification, client design-system guidance, architecture, verification and implementation snapshot. Broader provider/retention acceptance remains below.
 - [ ] Document persistent local debug storage, god-mode access, missing usage/billing semantics, one-megabyte response capture truncation, latest-status poll coalescing, and restart-interrupted entries.
 - [ ] Verify the on-demand Macrofold run-events and billing-usage integration against live permissions, late-arriving charges, missing usage, BYOK estimates, and pagination limits; individual harness LM inputs/outputs depend on provider event coverage.
 - [ ] Define debug-history retention/export and account for persistent conversation history supplied by Macrofold beyond the locally submitted prompt.
 - [ ] Verify intelligence inspector scroll stability while reading nested outputs and manually refreshing; verify Macrofold details collapse during/after fetching and the wider panel at desktop/mobile sizes.
-- [ ] Document manual Refresh calls, doubled inspector width, and the distinction between locally recorded input/output and optional remote Macrofold events/billing. Tests and documentation deferred at user request.
+- [x] Document local stage refresh versus optional remote Macrofold events/billing and the desktop resizing behavior.
 - [ ] Verify camera/canvas framing after reload, viewport resizing, browser panel resizing, and opening wide docks; cover fractional dimensions and confirm no ResizeObserver sizing feedback. Tests deferred per requested workflow.
 - [ ] Document CSS-owned canvas display sizing and rendering-buffer-only resize behavior in the relevant client architecture guidance.
 - [ ] Verify JSON Copy buttons copy full displayed contents, including refreshed Macrofold details, preserve disclosure/scroll state, and report clipboard failures; document controls in the next documentation batch.
 - [ ] Add and run regression coverage for list-to-detail navigation, Back to Intelligence, independently collapsed stage accordions, JSON controls remaining visible while stages are collapsed, and combined provider-exchange JSON.
-- [ ] Update the canonical architecture, UI, verification, and implementation-status documentation for the stage accordions and persistent JSON controls after runtime validation.
+- [x] Document stage accordions, persistent JSON controls, compact trigger/response rows, structured billing, counted answer filters and shared desktop drag/resize; automated validation remains deferred.
 - [ ] Add regression coverage for grouped Jev rubrics: render shared question text and options once, resolve candidate handles to target text, and show one compact target/selection/probability row per answer across choice, score, Noul, missing-answer, and non-candidate question shapes.
-- [ ] Document grouped Jev target results and the distinction between display labels such as `Mike (player)` and admissible entity handles such as `player` in the next Intelligence-inspector documentation batch.
+- [x] Document grouped Jev target results and the distinction between display labels such as `Mike (player)` and admissible entity handles such as `player`.
 - [ ] Add response-admission coverage proving nearby display names cannot be mistaken for handles: generated talk, expression, and thought references must use the exact advertised entity ID, while label-shaped values such as `Mike (player)` remain rejected and visibly diagnosable.
 - [ ] Add Intelligence-inspector coverage for Jev purpose labels derived from routing, memory-attention, action-attention, invention, and fallback question shapes; verify the visible stage heading and expanded purpose agree.
 - [ ] Add use-case coverage for structured LM summaries: NPC speech/action/thought, invention request/proposal/materials, memory-consolidation mode/sources/groups, background-reflection thoughts, provider failures, null components, and unknown task fallbacks. Raw provider/schema payloads must remain confined to the JSON pullout.
@@ -392,7 +392,7 @@ These pending checks directly define cognition completion and were moved from th
 ### Cognition persistence and consolidation follow-up
 
 - [ ] Migrate existing fixtures to asynchronous repository/service APIs (`await service.ready`, mutations, reads and close); add transaction isolation, concurrent world commands, budget admission, rollback/disconnection and shutdown coverage. No tests were authored or run for this refactor. Production builds use `tsconfig.build.json`; the full test-inclusive typecheck still requires fixture migration.
-- [ ] Add consolidation coverage for explicit source partitions, updating existing memory identities, unrelated routine incidents, unchanged individual important incidents, missing/duplicate/stale sources, capacity preflight, hourly same-day batches, daily review of every consolidated and remaining raw memory from the previous completed day, and cancellation/provider failure preserving originals. Reject reordered groups and groups spanning an intervening memory. Verify useful recall from overdue raw sources within the 512-source initial retrieval limit and independent required-evidence selection.
+- [ ] Add consolidation coverage for explicit source partitions, updating existing memory identities, unrelated routine incidents, unchanged individual important incidents, missing/duplicate/stale sources, request-size preflight, hourly same-day batches, daily review of every consolidated and remaining raw memory from the previous completed day, and cancellation/provider failure preserving originals. Reject reordered groups and groups spanning an intervening memory. Verify useful recall from overdue raw sources within the 512-source initial retrieval limit and independent required-evidence selection.
 - [ ] Verify repeated overlapping reflections: memories never become “done reflecting”; legacy processed watermarks are ignored by scheduling and no longer advanced. Verify intentional idle-only scheduling, one dispatched reflection maximum per actor/game day, queued later opportunities, and real-time budget limits independently of memory reuse. Dream consolidation is separate from reflection.
 - [ ] **Known limitation, explicitly deferred:** forgetting/correcting evidence during Jev attention can leave stale selected text in the next model request, certified against a newer dependency snapshot. Rebuild or reject selection when its original dependencies change; do not silently refresh the dependency stamp. User accepted deferring this uncommon race.
 - [ ] Synchronize memory architecture, implemented architecture, cognition-redesign tasks, production-data model, setup and verification docs with this implementation: asynchronous PostgreSQL transactions/serialized world mutations, changed-row writes, explicit reusable memory groups, individually protected incidents, chronology-safe hourly batches, one daily dream review of the previous completed day, no age-only loss of unconsolidated recall, and once-daily intentional idle reflection without processed-memory semantics. Documentation propagation was deferred at the user's request; preserve unique requirements and dated evidence.
@@ -409,3 +409,48 @@ These pending checks directly define cognition completion and were moved from th
 - [x] Replace immediate cognition backlog draining with snapshot wakeups while retaining queryable evidence.
 - [x] Project response operations and undispatched validation reasons in diagnostics.
 - [ ] Complete deferred automated coverage in [TODO](TODO.md#cognition-context-and-diagnostics--deferred-automated-validation) and live provider acceptance in [Verification](../verification.md#cognition-context-and-action-capacity).
+
+- [x] Reuse completed direct speech jobs to suppress duplicate autonomous speech triggers without consuming unrelated/new evidence; include conversation replies after the original trigger and beyond 32 turns. Focused local fixtures cover context outage and a fresh director reading durable completion.
+
+- [x] Compact context/action relevance with documented Noul questions, shared rubrics and fact-only action context; retain the relevance threshold and hard-query fallback.
+- [ ] Compare compact relevance against held-out mixed, contradictory and goal-changing evidence before claiming behavioral equivalence; live evidence remains limited to the [synthetic check](../verification.md#compact-jev-relevance-requests).
+
+### Context projection audit
+
+- [x] Share labeled attention/decision sections; preserve inventory ownership/equipment, permitted relative location, resource units and supported visible activity without inferring stillness from a missing action.
+- [x] Separate changing spatial projection from revision-keyed semantic embedding text; remove world-wide actor-by-candidate scanning from recall ranking.
+- [x] Supply immediate body/intent/contact facts to recall relevance and reject decisions whose forgetting/correction boundary changed during optional attention.
+- [ ] Complete the cross-cutting [projection validation](TODO.md#readable-cognition-context--deferred-automated-validation) and outstanding CR privacy/provider/behavioral acceptance before claiming complete cognition qualification.
+
+### Exact entity context references
+
+- [x] Render compact inventory entries and opaque, collision-checked entity references with species-aware anonymous wording.
+- [x] Bind response tokens and explicit intention annotations to permitted canonical identities before native admission; retain canonical identity across later context projection.
+- [ ] Implement observer-owned learned names after resolving [name knowledge and initial seeding](../../archive/05-project/open-decisions.md#observer-known-names); visibility must not imply name knowledge.
+
+- [x] Revise inspector hierarchy: explicit trigger subtype/level, bottom-right timestamps, rich response previews, compact collapsed stage input/output, and identity-linked supporting records nested under their consuming call. Automated interaction coverage remains in TODO.
+
+### Trace attribution and pacing
+
+- [x] Distinguish skipped vector search from Jev selections and hard-query evidence in the inspector.
+- [x] Remove global autonomous post-completion waiting while retaining per-actor pacing, serial admission, fairness and spending checks; capture scheduling reason and trigger age.
+- [x] Preserve speech intent independently of delivery, show actor-permitted trigger facts, and condition reply encouragement on directed speech.
+- [x] Keep trigger facts JSON-typed and omit inapplicable speech roles before strict AI serialization; use direct awareness lookup without rebuilding an index for one event. Deferred regression coverage remains in [TODO](TODO.md).
+- [x] Project generic species memories without individual handles and preserve named actors' episodes without text deduplication. Personal aliases are excluded; deferred regression and live-quality work remain in TODO.
+
+- [x] Separate consolidation request sizing from summary retention: remove fixed storage/schema/group-count ceilings, partition by input/output allowance, retain chronological barriers and atomically publish only a complete validated review.
+
+
+### CR13 — Editable knowledge documents
+
+Canonical contracts: [Knowledge](../knowledge.md), [base-world policy](../worlds/base/knowledge.md). Keep action-repertoire, hearing and spatial branch work with its existing owners.
+
+- [x] Add actor-owned general/subject documents, Unicode character limits, revisioned complete replacements, tombstones and one authoritative edit function.
+- [x] Separate accepted external understanding from About me without duplicating prose; reject an oversized in-place migration without discarding stored state.
+- [x] Project individual document rows transactionally, validate on reopen, include state in save/load and reproject on restore.
+- [x] Integrate optional immediate and reflection proposals, required general/subject context, existing scoped semantic retrieval, owner inspection/editing, private diagnostics and invalidation.
+- [x] Add saved perception episodes and scoped references so server identity cannot alone reconnect private knowledge after a disappearance. Base-world name policy remains BW08.
+- [ ] Qualify paid reflection workspace export plus combined knowledge publication on an available provider; preserve CR07/CR12 live gates.
+- [ ] Add aggregate actor storage admission and bounded cold-document retrieval when measured long-running population/history requires them; the initial implementation retains document maps in active world state.
+
+Deferred automated coverage is in [TODO](TODO.md#knowledge-documents--deferred-automated-validation). Implementation checkboxes do not establish live model quality or full scale acceptance.

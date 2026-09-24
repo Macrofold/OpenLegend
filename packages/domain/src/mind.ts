@@ -1,4 +1,5 @@
-import { nativeNeedBelow } from './wilderness-needs.js';
+import { dreamStatus, dreamPolicy } from './cognition-policy.js';
+import { nativeNeedBelow } from './worlds/base/needs.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import type { Command, MemoryRecord, Transition, WorldState } from './types.js';
@@ -94,6 +95,7 @@ export interface CognitionBinding {
   evidenceIds: string[];
   entityIds: string[];
   expectedPlan: number;
+  entityEpisodes?: Record<string, string>;
   actions: Record<string, Command | null>;
   restEpisode: string | null;
 }
@@ -203,14 +205,16 @@ export function commitCognition(
   if (
     binding.purpose !== 'thought' &&
     (nativeNeedBelow(actor, 'fullness', 30) ||
-      (nativeNeedBelow(actor, 'energy', 15) && actor.action?.type !== 'rest') ||
+      (nativeNeedBelow(actor, 'energy', 15) &&
+        !dreamStatus(input, input.entities[binding.actorId])) ||
       actor.health < 0.4 * (actor.body?.maxHealth ?? 100) ||
-      (actor.action && actor.action.type !== 'rest'))
+      (actor.action && actor.action.type !== 'status-effect'))
   )
     return reject('Urgency or active work superseded consolidation.');
   if (
     binding.purpose === 'dream' &&
-    (actor.action?.type !== 'rest' || actor.action.id !== binding.restEpisode)
+    (!dreamStatus(input, input.entities[binding.actorId]) ||
+      dreamStatus(input, input.entities[binding.actorId])?.episode !== binding.restEpisode)
   )
     return reject('Rest episode changed.');
   // Ordinary perceived events live in actor-scoped awareness after the cognition

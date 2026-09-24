@@ -1,3 +1,6 @@
+import { editKnowledge, type KnowledgeEdit } from './knowledge.js';
+import { assignGivenName, canRememberSubject, rememberSubject, type GivenNameEdit } from './worlds/base/knowledge.js';
+import { capabilityBlocked } from './status-capabilities.js';
 import { hasMemory, supportsManualWork } from './living.js';
 import {
   normalizeAttempt,
@@ -18,6 +21,8 @@ import { distance, hasLineOfSight } from './spatial.js';
 import type { Command, Outcome, Transition, WorldState } from './types.js';
 
 export interface ResponseOperation {
+  note?: KnowledgeEdit | null;
+  name?: GivenNameEdit | null;
   localId: string;
   requiresAccepted: string[];
   talk: { text: string; addresseeEntityId: string } | null;
@@ -55,7 +60,7 @@ export interface ResponseReceipt {
   components: Record<string, Outcome>;
   outcome: Outcome;
 }
-export const RESPONSE_LIMITS = { operations: 16, bytes: 16000 } as const;
+export const RESPONSE_LIMITS = { operations: 16, bytes: 40000 } as const;
 
 export function validResponseEnvelope(value: ActorResponse): boolean {
   if (
@@ -68,11 +73,12 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
     return false;
   if (new TextEncoder().encode(JSON.stringify(value)).length > RESPONSE_LIMITS.bytes) return false;
   const ids = new Set<string>();
-  const fields = ['talk', 'act', 'think', 'goal', 'plan'] as const;
+  const fields = ['talk', 'act', 'think', 'goal', 'plan', 'note', 'name'] as const;
   for (const op of value.operations) {
     if (
       !op ||
-      Object.keys(op).length !== 7 ||
+      Object.keys(op).some(key => !['localId', 'requiresAccepted', ...fields].includes(key)) ||
+      Object.keys(op).length < 7 ||
       !/^[a-z][a-z0-9_]{0,23}$/.test(op.localId) ||
       !isSafeRecordId(op.localId) ||
       ids.has(op.localId) ||
@@ -82,10 +88,10 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
       op.requiresAccepted.some((id) => !ids.has(id)) ||
       fields.some(
         (field) =>
-          !(field in op) ||
-          (op[field] !== null && (typeof op[field] !== 'object' || Array.isArray(op[field]))),
+          (!['note', 'name'].includes(field) && !(field in op)) ||
+          (op[field] != null && (typeof op[field] !== 'object' || Array.isArray(op[field]))),
       ) ||
-      fields.filter((field) => op[field] !== null).length !== 1
+      fields.filter((field) => op[field] != null).length !== 1
     )
       return false;
     const record = (value: unknown, keys: string[]) =>
@@ -157,6 +163,10 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
         ))
     )
       return false;
+    if (op.note && (!record(op.note, ['subjectId', 'expectedRevision', 'text']) ||
+        !nullableText(op.note.subjectId) || !text(op.note.text) || !Number.isSafeInteger(op.note.expectedRevision))) return false;
+    if (op.name && (!record(op.name, ['subjectId', 'expectedRevision', 'givenName']) ||
+        !text(op.name.subjectId) || !text(op.name.givenName) || !Number.isSafeInteger(op.name.expectedRevision))) return false;
     ids.add(op.localId);
   }
   return true;
@@ -173,6 +183,8 @@ export function commitActorResponse(
   entityIds: string[],
   expectedPlan: number,
   attemptBindings: AttemptBinding[] = [],
+  expectedEncounters?: Record<string, string>,
+  evidenceIds: string[] = [],
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -193,6 +205,8 @@ export function commitActorResponse(
     entityIds,
     expectedPlan,
     attemptBindings,
+    expectedEncounters,
+    evidenceIds,
   });
   const prior = getOwn(input.responseReceipts ?? {}, id);
   if (prior) {
@@ -217,7 +231,8 @@ export function commitActorResponse(
   if (!actor.actor.alive) return unavailable(`${actor.name} is dead and cannot respond.`);
   if (actor.actor.incapacitated)
     return unavailable(`${actor.name} is incapacitated and cannot respond.`);
-  if (actor.actor.rest?.asleep) return unavailable(`${actor.name} is asleep and cannot respond.`);
+  if (capabilityBlocked(input, actor, 'speech'))
+    return unavailable(`${actor.name} cannot speak in their current state.`);
   const permitted = new Set(entityIds);
   let world = draftWorld(input);
   const events: Transition['events'] = [];
@@ -225,9 +240,8 @@ export function commitActorResponse(
   let localId = '';
   const command = (part: 'talk' | 'act', value: Command) => {
     let transition = executeCommand(world, value);
-    // A reply remains valid speech if its intended listener moved while it was
-    // being composed. It is spoken aloud to the current audible audience;
-    // mechanical actions continue to enforce their live prerequisites.
+    // Speaking aloud preserves intent without claiming the recipient heard or joined.
+    // docs/narration-and-conversations.md#speech-intent-and-audience
     if (
       part === 'talk' &&
       value.type === 'say' &&
@@ -239,6 +253,7 @@ export function commitActorResponse(
         actorId: value.actorId,
         type: 'say',
         text: value.text,
+        intendedRecipientId: value.targetId,
       });
     world = draftWorld(transition.world);
     for (const event of transition.events) {
@@ -265,6 +280,21 @@ export function commitActorResponse(
       const alias = ref.slice(1);
       return op.requiresAccepted.includes(alias) ? components[alias]?.goalId : undefined;
     };
+    const subject = op.name?.subjectId ?? op.note?.subjectId;
+    if (subject && expectedEncounters && expectedEncounters[subject] !== world.perceptionEpisodes?.[actorId]?.[subject]) {
+      components[localId] = outcome(false, 'stale-encounter', 'The perceived subject encounter changed.');
+      continue;
+    }
+    if (op.name) components[localId] = assignGivenName(world, actorId, op.name, entityIds);
+    if (op.note) {
+      const subjectId = op.note.subjectId;
+      if (subjectId !== null && !canRememberSubject(world, actorId, subjectId))
+        components[localId] = outcome(false, 'recognition-unavailable', 'The subject has no supported identity binding.');
+      else {
+        components[localId] = editKnowledge(world, actorId, op.note, entityIds, evidenceIds);
+        if (components[localId]!.ok && subjectId !== null) rememberSubject(world, actorId, subjectId);
+      }
+    }
     if (op.talk) {
       const validTarget =
         permitted.has(op.talk.addresseeEntityId) &&

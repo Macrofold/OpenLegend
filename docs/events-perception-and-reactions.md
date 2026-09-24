@@ -141,7 +141,7 @@ Remembering and currently perceiving are independent. Forgetting a memory while 
 
 ### Initial implementation: reuse correct candidate indexes
 
-Preserve and qualify the implemented phase-local scalar spatial candidate pass for object encounters, unchanged visibility-array identity and per-source audience reuse in the fixed-position post-movement phase. Each event still commits independently through the existing mutation owner; the resolver cannot be reused after movement, life/sleep or sense changes. Complete general external-event candidate reuse, exact event-time validity, private acquisition integration and differential acceptance. Do not recreate the old full-scan-to-grid rewrite or treat that partial improvement as complete EPR02 delivery.
+Preserve and qualify the implemented phase-local scalar spatial candidate pass for object encounters, unchanged visibility-array identity and observer-private encounter publication in the fixed-position post-movement phase. Each event still commits independently through the existing mutation owner; the resolver cannot be reused after movement, life/sleep or sense changes. Complete general external-event candidate reuse, exact event-time validity, broader acquisition delta integration and differential acceptance. Do not recreate the old full-scan-to-grid rewrite or treat that partial improvement as complete EPR02 delivery.
 
 Optimize external-event audiences with listener candidates appropriate to the event's sense and maximum reach. An owner-private internal event must bypass spatial audience discovery entirely.
 
@@ -203,7 +203,7 @@ An ongoing high-salience stimulus uses three mechanisms: an onset opportunity, b
 
 Mandatory native hazards cannot be removed by optional attention filtering. Many simultaneous persistent cues require bounded grouping and explicit overflow handling; no field can promise unlimited mandatory prompt size. Narrative descriptions remain separate from physical effects such as blindness or burning, which require supported native mechanics.
 
-For production behavior, preserve existing cooldowns, urgency policy, and explicit urgent single-refresh semantics. Implement configurable reminder contracts but do not invent a mandatory paid hourly-thought policy. Use an explicit test policy to exercise reminders; unresolved cadence or attention-forcing preferences remain in the decision register. A reminder may decide to continue a valid native plan without invoking a model.
+For production behavior, preserve urgency policy and explicit urgent single-refresh semantics. Autonomous cognition has no actor cooldown; background maintenance timing remains separate. Implement configurable reminder contracts but do not invent a mandatory paid hourly-thought policy. Use an explicit test policy to exercise reminders; unresolved cadence or attention-forcing preferences remain in the decision register. A reminder may decide to continue a valid native plan without invoking a model.
 
 ## 9. Reaction intake and scheduling
 

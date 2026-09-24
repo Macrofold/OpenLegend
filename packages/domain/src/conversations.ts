@@ -1,3 +1,5 @@
+import { withinHearingRange } from './perception.js';
+import { capabilityBlocked } from './status-capabilities.js';
 import type { WorldState, Transition } from './types.js';
 import { nextId } from './data.js';
 import { draftWorld } from './draft.js';
@@ -185,7 +187,8 @@ export function changeConversation(
   if (
     !['join', 'leave'].includes(operation) ||
     (input.paused && operation !== 'leave') ||
-    (operation === 'join' && !!(entity?.actor?.incapacitated || entity?.actor?.rest?.asleep)) ||
+    (operation === 'join' &&
+      !!(entity?.actor?.incapacitated || capabilityBlocked(input, entity, 'speech'))) ||
     !entity?.actor?.alive ||
     !canSpeak(entity) ||
     !conversation ||
@@ -231,7 +234,9 @@ export function reconcileConversations(world: WorldState): void {
     if (
       members.length &&
       !members.some(
-        (i) => world.entities[i.actorId] && hearsEntity(world, entity, world.entities[i.actorId]!),
+        (i) =>
+          world.entities[i.actorId] &&
+          withinHearingRange(world, entity, world.entities[i.actorId]!),
       )
     )
       leaveConversation(world, actorId, 'out-of-range');

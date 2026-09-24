@@ -1,3 +1,5 @@
+import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
+import { playerEntity } from '../entity-view';
 import { useState } from 'react';
 import { EventTime } from './event-time';
 import { Button as AriaButton } from 'react-aria-components';
@@ -52,17 +54,25 @@ export function Traits({ traits }: { traits: EntityView['traits'] }) {
   );
 }
 export function Inventory({
+  addItem,
   view,
   command,
   connected,
 }: {
   view: GameView;
+  addItem(): void;
   command(a: ActionOption): void;
   connected: boolean;
 }) {
+  const [dropQuantity, setDropQuantity] = useState(1);
   const [query, setQuery] = useState(''),
     [selected, setSelected] = useState<string | null>(null);
   const item = view.player.inventory.find((i) => i.id === selected);
+  const validDropQuantity =
+    Number.isSafeInteger(dropQuantity) &&
+    dropQuantity > 0 &&
+    !!item &&
+    dropQuantity <= item.quantity;
   const row = (i: InventoryItemView) => (
     <EntityRow
       key={i.id}
@@ -70,11 +80,19 @@ export function Inventory({
       meta={i.equipped ? 'Equipped' : i.category}
       count={i.quantity}
       icon={symbol(i.definitionId)}
-      onPress={() => setSelected(i.id)}
+      onPress={() => {
+        setSelected(i.id);
+        setDropQuantity(i.quantity);
+      }}
     />
   );
   return (
     <>
+      {view.godMode && (
+        <Button size="sm" variant="quiet" icon="ui.plus" onPress={addItem} disabled={!connected}>
+          God mode · Add item
+        </Button>
+      )}
       <input
         type="search"
         aria-label="Search inventory"
@@ -96,7 +114,37 @@ export function Inventory({
               <Tag key={t}>{t}</Tag>
             ))}
           </div>
-          <Actions actions={item.actions} command={command} connected={connected} />
+          {item.actions.some((action) => action.command.type === 'drop') && (
+            <label className="ol-drop-quantity">
+              Drop quantity{' '}
+              <input
+                type="number"
+                min={1}
+                max={item.quantity}
+                step={1}
+                value={dropQuantity}
+                onChange={(event) => setDropQuantity(Number(event.target.value))}
+              />
+            </label>
+          )}
+          <Actions
+            actions={item.actions.map((action) =>
+              action.command.type === 'drop'
+                ? {
+                    ...action,
+                    enabled: action.enabled && validDropQuantity,
+                    reason:
+                      action.reason ??
+                      (!validDropQuantity
+                        ? `Enter a whole quantity from 1 to ${item.quantity}.`
+                        : undefined),
+                    command: { ...action.command, quantity: dropQuantity },
+                  }
+                : action,
+            )}
+            command={command}
+            connected={connected}
+          />
         </>
       ) : (
         <>
@@ -199,19 +247,27 @@ export function EntityDetail({
   connected,
   command,
   talk,
-  inspectMind,
-  editPerson,
+  godControls,
 }: {
   entity: EntityView;
   connected: boolean;
   command(a: ActionOption): void;
   talk(id: string): void;
-  inspectMind?(): void;
-  editPerson?(): void;
+  godControls?: GodCharacterControls;
 }) {
   return (
     <>
       <p className="ol-narrative">{entity.description ?? entity.status}</p>
+      {entity.contents && (
+        <ul>
+          {entity.contents.map((item) => (
+            <li key={item.id}>
+              {item.name} × {item.quantity}
+              {!item.portable ? ' · Not portable' : ''}
+            </li>
+          ))}
+        </ul>
+      )}
       <Tag>{entity.status}</Tag>
       {!!entity.attributes?.length && <Condition attributes={entity.attributes} />}
       {entity.quantity !== undefined && <p>{entity.quantity} available</p>}
@@ -226,20 +282,14 @@ export function EntityDetail({
         </Button>
       )}
       <Actions actions={entity.actions} command={command} connected={connected} />
-      {editPerson && (
-        <Button variant="quiet" size="sm" icon="ui.character" onPress={editPerson}>
-          Edit Person · God mode
-        </Button>
-      )}
-      {inspectMind && (
-        <Button variant="quiet" size="sm" onPress={inspectMind}>
-          Inspect private mind · God mode
-        </Button>
+      {godControls && (
+        <GodCharacterActions entity={entity} connected={connected} controls={godControls} />
       )}
     </>
   );
 }
 export function Character({
+  godControls,
   view,
   command,
   connected,
@@ -247,9 +297,17 @@ export function Character({
   view: GameView;
   command(a: ActionOption): void;
   connected: boolean;
+  godControls?: GodCharacterControls;
 }) {
   return (
     <>
+      {godControls && (
+        <GodCharacterActions
+          entity={playerEntity(view)}
+          connected={connected}
+          controls={godControls}
+        />
+      )}
       <Section title="Condition">
         <Condition {...view.player} />
         <Actions actions={view.player.actions} command={command} connected={connected} />

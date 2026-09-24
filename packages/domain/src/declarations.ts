@@ -287,6 +287,7 @@ export function admitDeclaration(
     const outputDefinitionId = `${recipeId}-item`;
     const definition = {
       id: outputDefinitionId,
+      portable: world.itemHandling.defaultPortable,
       version: 1,
       name: draft.output.name,
       description: draft.output.description,

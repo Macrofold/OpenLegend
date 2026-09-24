@@ -87,9 +87,9 @@ Exit: deterministic no-cost fixtures prove stale results cannot mutate the resto
 
 ## SL06 — Compatibility policy after real-player support begins
 
-Blocked intentionally by the [2026-09-21 owner policy](../save-and-load.md#active-development-policy). Do not implement migrations, old-save readers or legacy fixtures until the owner removes that block. Current-format integrity checks remain in SL01; rejecting incompatible saves is sufficient now.
+The [active development policy](../save-and-load.md#active-development-policy) permits small in-place migrations now. This task covers a future ongoing release-compatibility commitment, not ordinary development updates. Current-state integrity checks remain in SL01.
 
-- [ ] Only after the block is removed, select a support window in D60 and scope an ordered migration pipeline with preserved originals and historical fixtures.
+- [ ] When real-player release compatibility is needed, select a support window in D60 and scope an ordered migration pipeline with preserved originals and historical fixtures.
 
 Exit: future compatibility work is qualified only against a newly authorized support policy. This task does not block the development save/load flow.
 

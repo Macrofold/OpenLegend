@@ -51,7 +51,7 @@ Record amplification caps and stacking keys. Seeing the same fire twenty times s
 
 ## Personality and experience
 
-The September 20 first-playable UI now assigns three distinct descriptive traits from a configurable [JSON bank](../../packages/domain/config/traits.json) using saved randomness. Their names/descriptions persist and appear in character inspection; legacy actors receive traits once. These starting dispositions have no numerical bonuses or new automatic cognition policy. The dimensional mappings, trait evolution and provenance model below remain a richer future design; see [current architecture](../../docs/architecture.md#react-presentation-and-character-traits).
+The September 20 first-playable UI now assigns three distinct descriptive traits from a configurable [JSON bank](../../packages/domain/src/worlds/base/config/traits.json) using saved randomness. Their names/descriptions persist and appear in character inspection; legacy actors receive traits once. These starting dispositions have no numerical bonuses or new automatic cognition policy. The dimensional mappings, trait evolution and provenance model below remain a richer future design; see [current architecture](../../docs/architecture.md#react-presentation-and-character-traits).
 
 Use a small trait vector inspired by mainstream dimensional personality models, as reviewed in the research document. Traits modify preferences and sensitivities: sociability affects approaching strangers; conscientiousness can affect promise salience; emotional volatility affects response/recovery; openness affects exploration. These are designed mappings, not scientific formulas.
 
