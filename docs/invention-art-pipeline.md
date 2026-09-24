@@ -141,7 +141,7 @@ Generation and validation failures do not authorize an endless paid retry loop. 
 
 ## 9. Cost, caching, and runtime efficiency
 
-Use the [budget contract](invention-budgets.md). Art has a visible allocation beneath the relevant overall allowance. Include image-provider charges, optional planning/classification, validation compute, storage, and serving where attributable, without summing the same cost twice.
+Use the [budget contract](invention-budgets.md). Art has a visible purpose breakdown within the shared image-inclusive session allowance; no fixed or separately mandatory art allocation is imposed. Include image-provider charges, optional planning/classification, validation compute, storage, and serving where attributable, without summing the same cost twice.
 
 Do not issue one image job per instance, state tick, death, wound intensity, or zoom level. Prefer finite state mappings, procedural overlays, shared family assets, dirty-layer updates, and exact/compatible reuse. A distinctive appearance can use an explicit instance-specific key; not every instance is inherently distinctive.
 

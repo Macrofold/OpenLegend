@@ -254,3 +254,7 @@ The delivered local reuse exercise covers definition-only attribute transfer and
 ## Required implementation report
 
 For each delivered slice report: task IDs and exact changed files; behavior preserved versus deliberately changed; canonical owner updates; native/fixture tests run; same-version save implications; deliberate v1 limitations and code/design seam links; measured performance where applicable; remaining blockers and unverified claims. Never claim a whole subsystem complete because its adapter compiles.
+
+## Repertoire integration consumers
+
+[INV-20](inventions-and-world-evolution.md#inv-20--repertoire-integration-and-cross-domain-composition) owns the new cross-domain integration slices. EWF continues to own the shared host/manifest and state interfaces; [AC](action-capabilities.md) owns invocation/activity semantics. A source-backed inspection graph is delivered without a new registry. Positive material/port contracts, carrier/interaction/clock/topology consumers and qualified effects must still be implemented by their actual owners before general compositional or exotic-world support is claimed.

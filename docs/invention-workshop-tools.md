@@ -1,6 +1,6 @@
 # World-agent invention tools
 
-**Status: accepted target application contract.** The existing finite native workshop is a delivered subset described in [Architecture](architecture.md#invention-workshop-tools); this document defines the shared service that both the UI and [MCP transport](world-agent-mcp.md) must use. [World Agent runtime](world-agent-runtime.md) owns unified conversation/session execution, [composition](invention-composition.md) owns kind integration, and the existing INV tracker owns delivery.
+**Status: accepted target application contract.** The existing finite native workshop and separate [world-authorized read-only bootstrap](architecture.md#repertoire-relationship-and-mcp-foundation) are delivered subsets; this document defines the shared service that both the UI and [MCP transport](world-agent-mcp.md) must use. [World Agent runtime](world-agent-runtime.md) owns unified conversation/session execution, [composition](invention-composition.md) owns kind integration, and the existing INV tracker owns delivery.
 
 ## 1. The boundary
 
@@ -133,3 +133,9 @@ MCP request IDs, native action IDs and external provider attempt IDs remain dist
 ## Activity and repertoire integration
 
 The shared service must consume [AC invocation/activity contracts](action-capabilities.md), not restrict ordinary use to pre-enumerated action handles. [Repertoire foundation](repertoire-foundation.md) specifies live/evidence relationships, shared participation, observer-relative presentation and information/social records. Activity inspection can precede new start/modify tools; only implemented operations are invocable.
+
+## Implemented world-level read profile
+
+`WorldToolService` is shared by the local owner inspector and read-only MCP endpoint. It exposes context, lexical definition lookup, exact definition/live/evidence inspection, one-hop graph navigation, current native item instances, retained actor evidence, current activity and unpaid finite recipe validation. Its descriptors generate both transports' discovery/input schemas. Existing actor-bound tools retain their earlier restricted profile; this new grant never becomes an NPC knowledge source automatically.
+
+This profile is an interim subset of the unified service contract, not another world registry or permission engine. The [architecture](architecture.md#repertoire-relationship-and-mcp-foundation) owns exact current coverage and caps. Full draft/approval/action/art/funding adapters, real Macrofold execution and general traversal/impact work remain in INV-15/16/18/20. `ol_inspect` accepts actual exact-source refs; reference-only nodes may require a future authorized archive reader. A cursor/source failure must not be described as a nonexistent mechanic.

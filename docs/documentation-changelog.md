@@ -1,5 +1,12 @@
 # Documentation changelog
 
+## 2026-09-23 — Repertoire source and MCP foundation
+
+- Integrated the complete repertoire review into one detailed cross-domain specification: action/use versus invention, live n-ary relationships, ongoing labor, information carriers/claims, agreements versus enforcement, temporal method checks, observer-relative presentation and preserved exotic-world seams. Added INV-20 and AC/EWF integration tasks without inventing unsupported mechanics.
+- Added source-backed definition/live/evidence adjacency, one shared world-authorized read/preview service, a demand-driven owner relationship list and a disabled-by-default read-only official-SDK MCP endpoint. Preserved actor privacy, native admission, existing personal commitments and save/accounting owners.
+- Recorded local SDK/HTTP/native/restart and bounded stress observations separately from unqualified browser, actual Macrofold native harness, hosted authorization and full graph/interaction capability. Added IRF regression TODOs; did not complete broader parent gates.
+- Continued from the prepared feature branch and preserved current main and previous invention work. Removed temporary export scaffolding and restored normal CI configuration; no new automated suites or paid calls.
+
 ## 2026-09-23 — Reconcile current main with World Agent specification
 
 - Replayed the review branch onto main `11be9312dd560b8fcae5016acb1fc6ddf6216d86`, preserving the earlier integrated invention changes and all incoming domain/spatial work. Retained both changelog additions at the sole replay conflict; no runtime conflict was resolved by discarding a side.

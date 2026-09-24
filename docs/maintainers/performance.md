@@ -189,6 +189,9 @@ Exit: same active tiny world at increasing cold-history sizes meets per-step bud
 
 ## PF09 — Population work follows relevance
 
+The [repertoire foundation run](../verification.md#repertoire-foundation-runtime-observations) adds current-baseline cold gems/mixed samples. Both miss the requested 3× rate; source-backed graph reads do not resolve that native cost. Retain the existing phase/privacy work and qualify current-tree cold/warmed full-application behavior before new optimization claims.
+
+
 The [invention performance review](../verification.md#native-capacity-boundary) reproduced dense first-exposure/event fan-out and missed 3× native capacity on its older spatial baseline. Subsequent [native scaling work](../verification.md#spatial-scaling-review-third-pass) already improves audience/experience/participant and geometry paths; remeasure the same full-stack workloads before attributing current capacity. Private acquisition and broader qualification remain open. Preserve actual witnesses, physical effects and native RNG/order; do not meet a benchmark by silently dropping exposures. SR07 in [TODO](TODO.md#spatial-review-regression-todos) retains the integrated regression requirement.
 
 Coordinate module dependencies and aggregate admission with [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); PF retains implementation and qualification.

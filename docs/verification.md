@@ -1,5 +1,53 @@
 # Verification
 
+## Repertoire foundation runtime observations
+
+This pass integrates main `196cfd258654df40b96e70b0ac95e26d38b1eca3` with the retained invention branch and implements [source-backed relationship inspection and read-only MCP](architecture.md#repertoire-relationship-and-mcp-foundation). It adds no native simulation effects or saved-world schema. The [aggregate record](verification/repertoire-foundation.json) identifies the runtime checkpoint, environment and workload inputs. New automated cases are IRF01–IRF09 in [maintainer TODO](maintainers/TODO.md#repertoire-foundation-deferred-regression-coverage).
+
+### Environment and method
+
+Manual execution used Linux x64, Node v22.16.0, local SQLite, five visible CPUs (AMD EPYC 9V74 80-Core Processor; available parallelism 4), isolated disposable worlds and zero AI funding. No provider keys were read, no native Macrofold run or real model/image API was called, and provider spending was **$0**. SDK dependencies were exact-pinned to 2.0.0 and installed with lifecycle scripts disabled. Production TypeScript and the Vite client build passed; the existing large main-chunk warning remains. No unit/test suites were written or run in this continuation. Temporary native/HTTP exercise drivers and private CPU profiles were kept outside version control.
+
+### Actual HTTP, source and recovery observations
+
+A real `createGameServer` instance served the actual official-SDK `/mcp` transport with a generated local bearer and a 2025-11-25 initialization. Discovery returned all eight registered tools; context, current definitions, direct relationships, live entity inspection and the cookie/origin-protected local owner endpoint returned successfully. An invalid bearer returned 401. An unknown argument produced a protocol-valid tool error (`isError: true`), not an accepted actor override. The SDK compatibility response used short SSE framing for some calls; this was parsed by the manual caller. It is not live Macrofold interoperability evidence.
+
+One thousand small-world tool graph reads took 21.85 ms total, with median 0.017 ms and maximum 1.631 ms in this sample. The actual world digest remained unchanged and the frozen-definition cache was reused. These in-process timings are not HTTP throughput or production tail guarantees. Handler inputs and outputs remain independently bounded.
+
+After an actual native Resume and speech action, retained personal commitment evidence could be inspected with its existing provenance. A complete supplied sling passed unpaid native preview, entered the existing authenticated Invent endpoint, was admitted without a model call, appeared with its real input/output links, and invalidated the old definition cache. Clean close/reopen retained that admitted definition and exposed it again. This does not establish a new write path through MCP, new agreement semantics, in-world reading/writing, or general composition. All those readers remain non-mutating; the manual mutation used existing native services deliberately.
+
+### Bounded adjacency profiling
+
+The synthetic graph contains one high-degree root and source-labelled leaf records, not an actual world of that many admitted mechanics. Each size ran 1,000 first-page queries returning 50 edges. A no-match relation filter had to page through the root and could examine no more than 1,024 entries per call. Returned-copy mutation did not alter the index, and a cursor against a changed source was rejected as stale.
+
+| Synthetic graph | Build | Median page query | No-match continuation pages |
+| --- | --- | --- | --- |
+| 1,001 nodes / 1,000 edges | 3.18 ms | 0.151 ms | 1 |
+| 10,001 nodes / 10,000 edges | 22.16 ms | 0.150 ms | 10 |
+| 30,001 nodes / 30,000 edges | 74.12 ms | 0.153 ms | 30 |
+
+Build includes indexing/sorting/snapshot identity; it is not zero cost and is not performed per simulation tick. Queries measure bounded adjacency only, not all-source extraction, transitive closure, database I/O, model use or UI layout. The raw record includes sampled RSS changes; they are not peak-memory or zero-allocation claims. Multi-hop impact jobs, persistent source indexing and all-family coverage remain pending.
+
+### Native stress remains a separate limit
+
+The existing `scripts/stress-native.ts` runner executed the committed `gems.json` and `mixed.json` scenarios for 180 steps with no warmup, frozen snapshots and a requested 3× rate (180 native seconds per real second). A headroom below 1 does not sustain that requested rate.
+
+| Scenario | Native loop | Largest step | 3× headroom |
+| --- | --- | --- | --- |
+| gems / 514 entities | 1122.59 ms | 116.59 ms | 0.891 |
+| mixed / 344 entities | 1674.33 ms | 955.58 ms | 0.597 |
+
+The mixed world retained 3,254 events and 31,756 awareness entries. These current-baseline samples still show meaningful cold-step cost and do not qualify large-population hosting. The source/adjacency work does not claim to improve native simulation. No witness, event, physical effect or simulation time was dropped to improve a score. Follow [PF09](maintainers/performance.md#pf09--population-work-follows-relevance) and the [encounter design](encounter-scaling.md); do not infer a cross-review speedup from different hardware or earlier baselines.
+
+### UI and integration limits
+
+Documentation path/heading checks covered 142 Markdown files and found no newly introduced unresolved link relative to the integrated baseline. Existing checked maintainer entries were preserved; the reader/MCP subsets have separate implementation marks and their automated acceptance remains pending. Source-comment documentation anchors were also checked. This is documentation verification, not runtime acceptance.
+
+
+The owner relationship-list component builds successfully and its actual shared HTTP route was exercised. A manual Chromium navigation failed with `ERR_BLOCKED_BY_ADMINISTRATOR` in this environment; no visual, keyboard, accessibility or end-to-end browser acceptance is claimed. The restriction was not bypassed. Actual Macrofold provisioning/harness forwarding, modern protocol profile, multi-user credential/recipient controls, full output-schema qualification, larger source stores, shutdown/body-abuse matrices and full-stack sustained load remain explicit task gates.
+
+The implemented MCP endpoint is opt-in and read-only. Full unified conversation, world/session mutation grants, complete impact verification, live structural/participation semantics, information carriers, mutual agreements, observer-relative effects and image generation remain their respective INV/AC/EWF/EPR work. A type or graph label does not complete those features.
+
 ## World Agent specification rebase reconciliation
 
 The specification/review branch is reconciled onto main `11be9312dd560b8fcae5016acb1fc6ddf6216d86`. Its existing invention changes were replayed in first-parent order; the earlier merge commit's complete first-parent change was retained rather than dropping its manual integration edits. The only replay conflict was the documentation changelog, resolved by keeping both additions. No upstream runtime or workflow changes were overwritten. Production TypeScript compilation and the Vite client build passed again on the reconciled tree, retaining the existing bundle-size warning. The actual configuration reader again returned `[5, 0, 2.5]` for default/zero/explicit-lower settings. No test suite, live harness or paid provider was invoked. Temporary source/publication files are absent from the resulting tree.

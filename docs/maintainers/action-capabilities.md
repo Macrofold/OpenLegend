@@ -48,6 +48,7 @@ The first playable slice is **parameterized movement through the existing native
 - [ ] AC02.2 Reuse one strict family codec and authoritative admission/execution path from player menus, NPC candidates, structured decisions and text grounding. Retain small typed wrappers where useful.
 - [ ] AC02.3 Project scoped discoverability, parameter types, knowledge requirements, blocked/unknown status and contrast examples independently of a short concrete candidate list.
 - [ ] AC02.4 Reject caller-supplied validators, function paths, effect summaries, dependency omissions, raw state mutation and unknown executable fields. Pin required family/definition versions through common metadata.
+- [ ] AC02.5 Expose this same invocation contract through the World Agent tool service under INV-20.2. Keep out-of-world inspection separate from actor action authority; no shortlist-only vocabulary or second native dispatcher.
 
 **Exit:** a new parameterized native family is visible through the shared consumers without editing unrelated transport/render switches. AX06, AX21, AX55, AX57 and AX68 establish the authority boundary. Full family growth remains INV-3-owned.
 
@@ -96,6 +97,7 @@ The first playable slice is **parameterized movement through the existing native
 - [ ] AC06.3 Add registered three-valued predicates, branch dispositions and native waits through existing scheduling. Unknown, false, stale and technical failure must not collapse together.
 - [ ] AC06.4 Add counted/finite-set iteration with stable per-iteration identities and bounded state/work. Add open-ended qualified activities only with explicit scope, termination, cancellation and budget policy.
 - [ ] AC06.5 Recheck guard plus mutation atomically where required. Pin branch decisions and consumed outputs after commit; restore cannot choose a different past branch.
+- [ ] AC06.6 Supply shared constraint/result references for invention-method preparation and runtime maintained checks under INV-20.7. Cover causal ordering, preserved exact instances, sealed content and changing evidence without a separate workshop expression language.
 
 **Exit:** AUT-01–06, INV-12 and AX24–AX30, AX33–AX36, AX37, AX49, AX59–AX63 and AX70 pass. No generic evaluator, SQL, arbitrary JSON paths, hidden-state predicate or unbounded recursive graph is accepted.
 
@@ -118,6 +120,7 @@ The first playable slice is **parameterized movement through the existing native
 - [ ] AC08.2 Keep the single physical lane initially; reject unsupported simultaneous body work. Preserve already supported speech/private-operation concurrency without inventing extra limbs or attention.
 - [ ] AC08.3 Implement request/offer/handoff bindings that do not submit another actor's acceptance or command. Participation results become actual typed continuation evidence.
 - [ ] AC08.4 Before shipping a genuinely joint physical family, implement its role/readiness/start/withdrawal protocol and resource arbitration under its owner. Do not mark cooperative lifting supported merely because invitations work.
+- [ ] AC08.5 Integrate the first INV-20.6 worksite's readiness, role acceptance, participant channel claims and withdrawal into existing action ownership. Keep passive/machine work distinct from actor labor; richer concurrency requires the actual body/family consumer.
 
 **Exit:** COM-05, INV-03–05, COOP-01–04 and AX31–AX44, AX50–AX51 and AX58 pass for the delivered subfamilies. Undelivered joint physics remains explicitly unsupported.
 
