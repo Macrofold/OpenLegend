@@ -1,12 +1,17 @@
-name: Code checks
+name: Rebased native performance
 on:
   push:
-  pull_request:
+    branches: [design/action-repertoire-and-capability-grounding]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  check:
+  performance:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      AI_BUDGET_USD: '0'
+      OPEN_LEGEND_DATABASE_URL: ''
+      OPEN_LEGEND_DATA_DIR: /tmp/rebased-perf-world
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -15,4 +20,13 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run check
+      - name: Measure candidate against rebased baseline
+        run: python .github/perf-rebase-work.py
+      - name: Commit measured work and evidence
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff --check
+          git add packages apps docs
+          git diff --cached --quiet || git commit -m '[skip ci] perf: qualify native finalization against rebased main'
+          git push origin HEAD:design/action-repertoire-and-capability-grounding
