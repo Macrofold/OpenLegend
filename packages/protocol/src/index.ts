@@ -8,6 +8,7 @@ export interface CommandInput {
   type:
     | 'conversation'
     | 'move'
+    | 'follow'
     | 'gather'
     | 'prepare'
     | 'craft'
@@ -30,6 +31,7 @@ export interface CommandInput {
   attributeId?: string;
   ammunitionId?: string;
   position?: SurfacePoint;
+  distance?: number;
   quantity?: number;
   preparation?: 'fiber' | 'cord';
 }

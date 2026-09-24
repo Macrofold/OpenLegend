@@ -2,6 +2,7 @@ import { gatheringYield, BASE_GATHER_QUANTITY } from './gathering.js';
 import { current, isDraft } from 'immer';
 import { canWalkSegment, finitePoint, interpolate, type SurfacePoint } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
+import { FOLLOW_RULES, updateFollowPath } from './follow.js';
 import { advanceFlight, LandingOccupancy } from './flight.js';
 import {
   withdrawAttempt,
@@ -349,7 +350,8 @@ export function executeCommand(original: WorldState, command: Command): Transiti
   const scopedTargetId =
     command.type === 'cook'
       ? command.heatId
-      : ['gather', 'harvest', 'hunt', 'replenish'].includes(command.type) && 'targetId' in command
+      : ['gather', 'harvest', 'hunt', 'replenish', 'follow'].includes(command.type) &&
+          'targetId' in command
         ? command.targetId
         : undefined;
   if (scopedTargetId) {
@@ -361,6 +363,25 @@ export function executeCommand(original: WorldState, command: Command): Transiti
   let result = outcome(true, 'accepted', 'Action started.');
   let action: Action | undefined;
   switch (command.type) {
+    case 'follow': {
+      const desiredDistance = command.distance ?? FOLLOW_RULES.defaultDistance;
+      if (
+        command.targetId === actor.id ||
+        !Number.isFinite(desiredDistance) ||
+        desiredDistance < FOLLOW_RULES.minimumDistance ||
+        desiredDistance > FOLLOW_RULES.maximumDistance
+      )
+        return reject(
+          'invalid-follow',
+          'Choose another perceived actor and a following distance between 1.5 and 12 world units.',
+        );
+      action = createAction(world, 'follow', 0);
+      action.targetId = command.targetId;
+      action.follow = { distance: desiredDistance, nextRepathAt: 0 };
+      const error = updateFollowPath(world, actor, action);
+      if (error) return reject('follow-unavailable', error);
+      break;
+    }
     case 'move': {
       if (
         visionRadius(world, actor) === 0 &&
@@ -631,7 +652,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       const error = approach(world, actor, action);
       if (error) return { world: original, events: [], outcome: error };
     }
-    if (action.stage === 'working') {
+    if (action.stage === 'working' && action.type !== 'follow') {
       const error = startWork(world, actor, action);
       if (error) return { world: original, events: [], outcome: error };
     }
@@ -891,6 +912,26 @@ function advanceAction(
 ): void {
   const action = actor.actor!.action;
   if (!action) return;
+  if (action.type === 'follow') {
+    const error = updateFollowPath(world, actor, action);
+    if (error) {
+      failAction(world, actor, events, error);
+      return;
+    }
+    if (
+      action.stage === 'approaching' &&
+      !moveAlongPath(
+        world,
+        actor,
+        action.path,
+        SIMULATION_RULES.movementTilesPerSecond *
+          seconds *
+          (1 - (actor.actor?.body?.conditions.injury ?? 0) / 200),
+      )
+    )
+      failAction(world, actor, events, 'the following route became physically blocked.');
+    return; // Holding is still an active activity, never a completed arrival.
+  }
   if (action.stage === 'approaching') {
     const destination = targetPosition(world, action);
     if (!destination) {

@@ -336,6 +336,7 @@ export async function projectView(
                 : entity.actor.action
                   ? ({
                       move: 'Walking',
+                      follow: 'Following',
                       replenish: 'Replenishing',
                       gather: 'Gathering',
                       rest: 'Resting',
@@ -488,6 +489,7 @@ export async function projectView(
     observation.visibleEntities.find((entity) => entity.id === work.targetId)?.name;
   const workLabels: Record<string, string> = {
     move: 'Walking',
+    follow: 'Following',
     replenish: 'Replenishing',
     rest: 'Resting',
     gather: `Gathering${targetName ? ` ${targetName.toLowerCase()}` : ''}`,

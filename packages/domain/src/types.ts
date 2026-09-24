@@ -86,6 +86,7 @@ export interface RecipeDefinition extends DeclarationDraft {
 }
 export type NativePreparation = 'fiber' | 'cord';
 export type ActionType =
+  | 'follow'
   | 'move'
   | 'gather'
   | 'prepare'
@@ -96,6 +97,7 @@ export type ActionType =
   | 'rest'
   | 'replenish';
 export interface Action {
+  follow?: { distance: number; nextRepathAt: number; lastObservedPosition?: Position };
   id: string;
   type: ActionType;
   stage: 'approaching' | 'working';
@@ -313,6 +315,7 @@ export type Command = Envelope &
         generation: number;
       }
     | { type: 'move'; destination: SurfacePoint }
+    | { type: 'follow'; targetId: string; distance?: number }
     | { type: 'gather' | 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }
     | { type: 'craft'; recipeId: string }

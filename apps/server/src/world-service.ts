@@ -84,6 +84,7 @@ export const commandInputSchema = z
     type: z.enum([
       'conversation',
       'move',
+      'follow',
       'gather',
       'prepare',
       'craft',
@@ -102,6 +103,7 @@ export const commandInputSchema = z
     generation: z.number().int().nonnegative().optional(),
     operation: z.enum(['join', 'leave']).optional(),
     targetId: id.optional(),
+    distance: z.number().min(1.5).max(12).optional(),
     itemId: id.optional(),
     recipeId: id.optional(),
     attributeId: id.optional(),
@@ -1274,6 +1276,16 @@ export class WorldService {
         if (!input.position)
           return { ok: false, code: 'position', message: 'Choose a destination.' };
         command = { ...envelope, type: 'move', destination: input.position };
+        break;
+      case 'follow':
+        if (!input.targetId)
+          return { ok: false, code: 'target', message: 'Choose an actor to follow.' };
+        command = {
+          ...envelope,
+          type: 'follow',
+          targetId: input.targetId,
+          ...(input.distance !== undefined ? { distance: input.distance } : {}),
+        };
         break;
       case 'gather':
       case 'harvest':

@@ -12,6 +12,8 @@ import type { CommandInput } from '@open-legend/protocol';
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
   conversation:
     'Join or leave a nearby conversation. Membership never grants earlier unheard speech.',
+  follow:
+    'Follow a currently perceived actor, stopping when the target is lost or the activity is interrupted. No attack or stealth is implied.',
   move: 'Walk to the chosen location along a traversable route. This replaces your current work.',
   gather:
     'Approach a resource and collect a small batch into your inventory. Supplies at each source are finite.',

@@ -570,6 +570,12 @@ function isPhysicalCommand(command: Command): boolean {
   switch (command.type) {
     case 'move':
       return finitePoint(command.destination) && isSafeRecordId(command.destination.surfaceId);
+    case 'follow':
+      return (
+        isSafeRecordId(command.targetId) &&
+        (command.distance === undefined ||
+          (Number.isFinite(command.distance) && command.distance >= 1.5 && command.distance <= 12))
+      );
     case 'gather':
     case 'harvest':
       return isSafeRecordId(command.targetId);
