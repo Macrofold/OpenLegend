@@ -1,0 +1,65 @@
+name: Reconcile invention foundation with current main
+on:
+  push:
+    branches: [feature/invention-repertoire-foundation]
+    paths: [.github/workflows/reconcile-invention-main.yml]
+permissions:
+  contents: write
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reproduce reviewed merge and verify exact tree
+        run: |
+          git config user.name 'OpenLegend implementation'
+          git config user.email 'implementation@users.noreply.github.com'
+          git checkout cbe34ac7517397ca44963bf88f9ca00575f76f5e
+          git merge --no-commit --no-ff fc01e19b30060e6c7213b1c5405be13df209297e || true
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess
+          files=subprocess.check_output(['git','diff','--name-only','--diff-filter=U'],text=True).splitlines()
+          expected={'apps/server/src/ai-director.ts','apps/server/src/context.ts','apps/server/src/jev-questions.ts','docs/architecture.md','docs/documentation-changelog.md','docs/maintainers/README.md','docs/maintainers/extensible-world-foundation.md','pnpm-lock.yaml'}
+          assert set(files)==expected,files
+          for f in files:
+            def resolve(m):
+              a,b=m.group(1,2)
+              if f=='apps/server/src/jev-questions.ts':return b
+              if f=='docs/maintainers/README.md':return b+'\n'+a[a.index('## Invention foundation packet'):]
+              if f=='docs/architecture.md':return b+'\n'+a
+              return a+'\n'+b
+            s=Path(f).read_text()
+            s=re.sub(r'^<<<<<<< HEAD\n(.*?)^=======\n(.*?)^>>>>>>> fc01e19b30060e6c7213b1c5405be13df209297e\n',resolve,s,flags=re.M|re.S)
+            assert '<<<<<<<' not in s and '>>>>>>>' not in s,f
+            Path(f).write_text(s)
+          subprocess.run(['git','add','.'],check=True)
+          PY
+          test "$(git write-tree)" = abfaf913b3bd5fe403ee8e741240f8d53a125a5b
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Compile production code only; no test suites
+        run: |
+          pnpm exec tsc --noEmit -p tsconfig.build.json
+          pnpm exec vite build --config apps/client/vite.config.ts
+      - name: Publish verified merge and export working dependencies
+        run: |
+          commit=$(printf '%s\n' '[skip ci] Reconcile invention foundation with current world and knowledge owners' | git commit-tree abfaf913b3bd5fe403ee8e741240f8d53a125a5b -p "$GITHUB_SHA" -p fc01e19b30060e6c7213b1c5405be13df209297e)
+          git push origin "$commit:refs/heads/feature/invention-repertoire-foundation"
+          git branch reconciled-invention "$commit"
+          git bundle create /tmp/reconciled-invention.bundle --all
+          tar -czf /tmp/reconciled-dependencies.tar.gz node_modules apps/*/node_modules packages/*/node_modules
+          echo "Published $commit"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reconciled-invention-runtime
+          path: |
+            /tmp/reconciled-invention.bundle
+            /tmp/reconciled-dependencies.tar.gz
+          retention-days: 1
