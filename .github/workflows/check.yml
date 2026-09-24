@@ -26,7 +26,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Apply cooperative checkpoints
-        run: python .github/burst-edit.py
+        run: python .github/burst-run.py
       - name: Format and production build, no test suites
         run: |
           git diff --name-only -- '*.ts' '*.tsx' | xargs -r pnpm exec prettier --write
