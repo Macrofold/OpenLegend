@@ -16,7 +16,7 @@ import { current, isDraft } from 'immer';
 import { changeGoal, type GoalChange } from './agency.js';
 import { initializeIdentity } from './identity.js';
 import { hasMemory } from './living.js';
-import { draftWorld, finishWorld, cloneValue } from './draft.js';
+import { draftWorld, finishWorld, cloneValue, appendSnapshot } from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { memoryPerspective } from './memory-perspective.js';
@@ -167,6 +167,19 @@ function containsEntryId<T extends IdentifiedEntry>(
   field: IdentityField,
 ): boolean {
   if (!entries) return false;
+  const snapshot = isDraft(entries) ? current(entries) : entries;
+  if (Object.isFrozen(snapshot)) {
+    let index = additionIndexes.get(snapshot);
+    if (!index || index.field !== field) {
+      index = {
+        length: snapshot.length,
+        field,
+        ids: new Set(snapshot.map((entry) => entry[field])),
+      };
+      additionIndexes.set(snapshot, index);
+    }
+    return index.ids.has(id);
+  }
   if (!isDraft(entries)) return entries.some((entry) => entry[field] === id);
   let index = additionIndexes.get(entries);
   if (!index || index.length !== entries.length || index.field !== field) {
@@ -176,18 +189,32 @@ function containsEntryId<T extends IdentifiedEntry>(
   }
   return index.ids.has(id);
 }
-function appendEntry<T extends IdentifiedEntry>(
+function appendEntries<T extends IdentifiedEntry>(
   entries: T[],
-  entry: T,
+  values: T[],
   field: IdentityField,
-): void {
+): T[] {
+  const snapshot = isDraft(entries) ? current(entries) : entries;
+  const appended = appendSnapshot(entries, values);
+  if (appended) {
+    const index = additionIndexes.get(snapshot);
+    if (index?.field === field) {
+      // Transfer, never share a mutable membership set with an old snapshot or fork.
+      additionIndexes.delete(snapshot);
+      for (const entry of values) index.ids.add(entry[field]);
+      index.length = appended.length;
+      additionIndexes.set(appended, index);
+    }
+    return appended;
+  }
   const index = additionIndexes.get(entries),
     length = entries.length;
-  entries.push(entry);
+  entries.push(...values);
   if (index?.length === length && index.field === field) {
-    index.ids.add(entry[field]);
+    for (const entry of values) index.ids.add(entry[field]);
     index.length = entries.length;
   } else additionIndexes.delete(entries);
+  return entries;
 }
 function containsExperienceKey(world: WorldState, actorId: string, key: string): boolean {
   const separator = key.indexOf(':'),
@@ -335,13 +362,28 @@ export function mutateExperience(
       additions.some((entry) => 'actorId' in entry.value && entry.value.actorId !== actorId)
     )
       return null;
+    const awareness: Awareness[] = [],
+      memories: MemoryRecord[] = [],
+      summaries: ExperienceSummary[] = [];
     for (const entry of additions) {
-      if (entry.source === 'awareness')
-        appendEntry((world.experience!.awareness[actorId] ??= []), entry.value, 'eventId');
-      else if (entry.source === 'memory')
-        appendEntry((world.memories[actorId] ??= []), entry.value, 'id');
-      else appendEntry((world.experience!.summaries[actorId] ??= []), entry.value, 'id');
+      if (entry.source === 'awareness') awareness.push(entry.value);
+      else if (entry.source === 'memory') memories.push(entry.value);
+      else summaries.push(entry.value);
     }
+    if (awareness.length)
+      world.experience!.awareness[actorId] = appendEntries(
+        world.experience!.awareness[actorId] ?? [],
+        awareness,
+        'eventId',
+      );
+    if (memories.length)
+      world.memories[actorId] = appendEntries(world.memories[actorId] ?? [], memories, 'id');
+    if (summaries.length)
+      world.experience!.summaries[actorId] = appendEntries(
+        world.experience!.summaries[actorId] ?? [],
+        summaries,
+        'id',
+      );
     return [];
   }
 

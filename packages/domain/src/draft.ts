@@ -5,16 +5,44 @@ import type { WorldEvent, WorldState } from './types.js';
 // retain identity for persistence and projection; legacy seed/migration data stays mutable.
 const drafts = new Immer({ autoFreeze: false });
 enablePatches();
-type EventLineage = { tip: WorldEvent[] };
-const eventLineages = new WeakMap<WorldEvent[], EventLineage>();
+type AppendLineage = { tip: readonly unknown[] };
+const appendLineages = new WeakMap<readonly unknown[], AppendLineage>();
+function recordAppend(before: readonly unknown[], after: readonly unknown[]): void {
+  let lineage = appendLineages.get(before);
+  if (!lineage || lineage.tip !== before) {
+    // Forks start a distinct proof; losing an old optimization never certifies a false prefix.
+    lineage = { tip: before };
+    appendLineages.set(before, lineage);
+  }
+  lineage.tip = after;
+  appendLineages.set(after, lineage);
+}
+/** Frozen prefix plus owned new values avoids Immer traversing each historical row again.
+ * New values must belong to the caller; never freeze a model/client-owned object in place.
+ * Plain mutable builders take their existing mutation path. This proves append, not authority.
+ * docs/hearing-and-speech.md#performance-and-invalidation
+ */
+export function appendSnapshot<T>(entries: T[], owned: T[]): T[] | undefined {
+  const before = isDraft(entries) ? current(entries) : entries;
+  if (!Object.isFrozen(before)) return undefined;
+  const after = Object.freeze([...before, ...owned.map((value) => freeze(value, true))]) as T[];
+  recordAppend(before, after);
+  return after;
+}
+export function appendedCount(
+  previous: readonly unknown[],
+  next: readonly unknown[],
+): number | undefined {
+  if (previous === next) return 0;
+  const lineage = appendLineages.get(previous);
+  return lineage && lineage === appendLineages.get(next) && next.length >= previous.length
+    ? next.length - previous.length
+    : undefined;
+}
 
 /** Only draft-proven appends may skip retained history; unknown/forked arrays use a diff. */
 export function appendedEventCount(previous: WorldEvent[], next: WorldEvent[]): number | undefined {
-  if (previous === next) return 0;
-  const lineage = eventLineages.get(previous);
-  return lineage && lineage === eventLineages.get(next) && next.length >= previous.length
-    ? next.length - previous.length
-    : undefined;
+  return appendedCount(previous, next);
 }
 /** Server ownership boundary; builders remain mutable until explicitly handed off.
  * Frozen unchanged branches skip Immer traversal (docs/architecture.md#state-and-transitions).
@@ -40,18 +68,8 @@ export function finishWorld(world: WorldState): WorldState {
           path[1] >= before.length),
     );
   });
-  if (result.events !== before && appendOnly && result.events.length >= before.length) {
-    let lineage = eventLineages.get(before);
-    if (!lineage) {
-      lineage = { tip: before };
-      eventLineages.set(before, lineage);
-    }
-    // A fork must not certify two incompatible append histories as the same prefix.
-    if (lineage.tip === before) {
-      lineage.tip = result.events;
-      eventLineages.set(result.events, lineage);
-    }
-  }
+  if (result.events !== before && appendOnly && result.events.length >= before.length)
+    recordAppend(before, result.events);
   return result;
 }
 export function updateWorld(world: WorldState, change: (draft: WorldState) => void): WorldState {

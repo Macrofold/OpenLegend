@@ -1,3 +1,4 @@
+import { appendedCount } from '@open-legend/domain';
 import {
   initializePerceivedEventIndexes,
   readPerceivedEvents,
@@ -55,9 +56,30 @@ export interface StoryJob {
 }
 const revisionOf = (text: string) => createHash('sha256').update(text).digest('hex');
 function eventEvidence(awareness: EventEvidence): EventEvidence {
-  const { actorId, text, content, modality, sourceId, targetId, intendedRecipientId, speech, importance, urgency } =
-    awareness;
-  return { actorId, text, content, modality, sourceId, targetId, intendedRecipientId, speech, importance, urgency };
+  const {
+    actorId,
+    text,
+    content,
+    modality,
+    sourceId,
+    targetId,
+    intendedRecipientId,
+    speech,
+    importance,
+    urgency,
+  } = awareness;
+  return {
+    actorId,
+    text,
+    content,
+    modality,
+    sourceId,
+    targetId,
+    intendedRecipientId,
+    speech,
+    importance,
+    urgency,
+  };
 }
 /** Scoped durable history repository. Only the application binds owner and perspective. */
 export class HistoryRepository {
@@ -432,6 +454,7 @@ export class HistoryRepository {
       for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {})) {
         if (entries === previous.experience?.awareness[actorId]) continue;
         const before = previous.experience?.awareness[actorId] ?? [];
+        if (appendedCount(before, entries) !== undefined) continue;
         let prefix = 0;
         while (prefix < before.length && entries[prefix] === before[prefix]) prefix++;
         if (prefix === before.length) continue; // Unchanged or append-only, no edited old sources.

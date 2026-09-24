@@ -1,3 +1,4 @@
+import { current, isDraft } from 'immer';
 import {
   observerDescription,
   recognizesSubject,
@@ -7,12 +8,12 @@ import { capabilityBlocked } from './status-capabilities.js';
 import { perceiveSpeech, prepareSpeechWords } from './speech.js';
 import { isSpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
-import { soundOrigin } from './perception.js';
+import { soundOrigin, speechObservers } from './perception.js';
 import { appraiseEvent } from './social.js';
 import { mutateExperience } from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';
-import { finishWorld, cloneValue } from './draft.js';
+import { finishWorld, cloneValue, appendSnapshot } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { seesEntity } from './perception.js';
@@ -185,10 +186,13 @@ function recordEvent(
   const speechAwareness = new Map<string, Awareness>();
   if (type === 'speech' && source) {
     const volume = isSpeechVolume(data?.['volume']) ? data['volume'] : 'normal';
+    const origin = isDraft(source) ? current(source) : source;
     // The shared source is parsed once; masking and recognition remain listener-local.
     const words = prepareSpeechWords(String(data?.['text'] ?? ''));
-    for (const observer of scope === 'private' ? [source] : Object.values(world.entities)) {
-      const entry = perceiveSpeech(world, observer, source, event, volume, words);
+    for (const observer of scope === 'private'
+      ? [origin]
+      : speechObservers(world, origin, volume)) {
+      const entry = perceiveSpeech(world, observer, origin, event, volume, words);
       if (entry) {
         audience.push(observer.id);
         speechAwareness.set(observer.id, entry);
@@ -215,36 +219,24 @@ function recordEvent(
     if (conversation) conversation.lastActivityAt = world.simTime;
   }
   if (audience.length || importance >= (world.socialPolicy?.notableThreshold ?? 8))
-    world.events.push(event);
+    world.events =
+      appendSnapshot(world.events, [cloneValue(event)]) ?? (world.events.push(event), world.events);
   events.push(event);
   if (world.experience) {
     for (const actorId of audience) {
-      const intendedId =
-        type === 'speech' && typeof data?.['intendedRecipientId'] === 'string'
-          ? data['intendedRecipientId']
-          : type === 'speech'
-            ? targetId
-            : undefined;
-      const observer = world.entities[actorId];
-      const recipient = intendedId ? world.entities[intendedId] : undefined;
-      // Intent is private unless the observer is involved or can see both participants.
-      // docs/narration-and-conversations.md#speech-intent-and-audience
-      const perceivedRecipient =
-        intendedId &&
-        (actorId === source?.id ||
-          actorId === intendedId ||
-          (observer &&
-            source &&
-            recipient &&
-            seesEntity(world, observer, source) &&
-            seesEntity(world, observer, recipient)))
-          ? intendedId
-          : undefined;
+      const speech = speechAwareness.get(actorId);
+      if (speech) {
+        mutateExperience(world, actorId, {
+          operation: 'add',
+          entry: { source: 'awareness', value: speech },
+        });
+        continue;
+      }
       mutateExperience(world, actorId, {
         operation: 'add',
         entry: {
           source: 'awareness',
-          value: speechAwareness.get(actorId) ?? {
+          value: {
             eventId: event.id,
             actorId,
             text: memoryPerspective(world, actorId, text, type === 'speech', source?.id),
@@ -261,7 +253,7 @@ function recordEvent(
                   ? 'heard'
                   : 'observed',
             entityEpisodes: Object.fromEntries(
-              [source?.id, type === 'speech' ? perceivedRecipient : targetId].flatMap((id) => {
+              [source?.id, targetId].flatMap((id) => {
                 const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
                 return id && episode ? [[id, episode]] : [];
               }),
@@ -269,33 +261,18 @@ function recordEvent(
             recognized:
               type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
             intelligible: true,
-            entityIds: [source?.id, type === 'speech' ? perceivedRecipient : targetId].filter(
-              (id): id is string => !!id,
-            ),
+            entityIds: [source?.id, targetId].filter((id): id is string => !!id),
             importance: event.importance ?? importance,
             urgency: event.urgency ?? urgency,
             eventType: type,
             ...(source ? { sourceId: source.id } : {}),
-            ...(type === 'speech'
-              ? perceivedRecipient
-                ? {
-                    intendedRecipientId: perceivedRecipient,
-                    ...(targetId === perceivedRecipient ? { targetId } : {}),
-                  }
-                : {}
-              : targetId
-                ? { targetId }
-                : {}),
+            ...(targetId ? { targetId } : {}),
             triggerKind:
               source?.id === actorId
                 ? 'self_event'
-                : type === 'speech'
-                  ? intendedId === actorId
-                    ? 'addressed_speech'
-                    : 'overheard_speech'
-                  : targetId === actorId
-                    ? 'directed_action'
-                    : 'observed_event',
+                : targetId === actorId
+                  ? 'directed_action'
+                  : 'observed_event',
             content:
               typeof data?.['text'] === 'string'
                 ? data['text']
