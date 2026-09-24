@@ -444,3 +444,11 @@ No automated tests were written or run for this slice at the owner's request. Im
 - [ ] Cover lossless in-place migration, oversized migration refusal, transactional PostgreSQL/SQLite rows, save/restore generation, interrupted commits and projection corruption detection.
 - [ ] Cover owner editor counts/stale-save feedback, reflection identity preservation, Unicode output budgets, forgotten/corrected evidence, no automatic paid repair, and structured diagnostic note/name presentation.
 - [ ] After outstanding action-repertoire/hearing/spatial branches merge, exercise their response schemas, event attribution and encounter hooks with CR13/BW08; do not duplicate their executors.
+
+## MCP authoring write regression coverage
+
+Manual HTTP/MCP execution is not an automated regression suite. Retain the broader IRF/UWA/IER coverage; these additional cases target the write implementation.
+
+- [ ] **MAW01 — Exact session and approval identity:** missing/wrong/expired/rotated context; closed/restored sessions; actor versus creator authority; changed draft, dependencies, manifest and locks; approval cannot be granted by a model; no caller-supplied account or controller escalation.
+- [ ] **MAW02 — Durable native apply:** replay identical draft/prepare/apply, conflicting operation body, concurrent apply, and interruption before/after native commit. Recover native receipt before stale-manifest rejection; no duplicate item, teaching, action, attribute conversion or recipe installation. Keep ordinary action admission separate from terminal completion.
+- [ ] **MAW03 — Shared tools and bounded records:** strict fields, unsupported meaningful command modifiers, all native command parameter types, candidate limits, 32 drafts/64 plans/64 revisions, ordered batched lists, no per-tick authoring scan, valid SSE and JSON MCP framing, no gameplay writes during preview, and context-handle diagnostic redaction.

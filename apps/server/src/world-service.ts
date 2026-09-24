@@ -954,11 +954,13 @@ export class WorldService {
   async godAttributeDeclaration(
     request: AttributeDeclarationRequest,
     expectedGeneration: string,
+    checkCurrent?: () => void,
   ): Promise<ApiResult> {
     if (!this.config.godMode)
       return { ok: false, code: 'forbidden', message: 'God access required.' };
-    return this.godTransition((world) =>
-      expectedGeneration !== this.generation
+    return this.godTransition((world) => {
+      checkCurrent?.();
+      return expectedGeneration !== this.generation
         ? {
             world,
             events: [],
@@ -968,8 +970,8 @@ export class WorldService {
               message: 'The world was restored; refresh before editing.',
             },
           }
-        : admitAttributeDeclaration(world, request),
-    );
+        : admitAttributeDeclaration(world, request);
+    });
   }
   async godAttributeEdit(
     request: AttributeEditRequest,
@@ -1249,9 +1251,11 @@ export class WorldService {
     input: CommandInput,
     actorId?: string,
     epoch?: string,
+    checkCurrent?: () => void,
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
+      checkCurrent?.();
       const actor = actorId ?? this.controlledEntityId;
       if (commandId.startsWith('gameplay:'))
         return {

@@ -7,7 +7,7 @@ import type { GameRepository } from './store.js';
 function clean(value: unknown): unknown {
   const ancestors = new WeakSet<object>();
   const visit = (item: unknown, key = '', embeddingContext = false): unknown => {
-    if (/authorization|api[_-]?key|secret|password|access[_-]?token|refresh[_-]?token/i.test(key))
+    if (/authorization|api[_-]?key|secret|password|access[_-]?token|refresh[_-]?token|context[_-]?handle/i.test(key))
       return '[redacted]';
     if (/signal|abort/i.test(key) || item instanceof AbortSignal || item instanceof AbortController)
       return undefined;
@@ -21,7 +21,7 @@ function clean(value: unknown): unknown {
       return item
         .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+=*/gi, 'Bearer [redacted]')
         .replace(
-          /((?:api[_-]?key|password|secret|access[_-]?token|refresh[_-]?token)\s*[=:]\s*)[^\s&,;]+/gi,
+          /((?:api[_-]?key|password|secret|access[_-]?token|refresh[_-]?token|context[_-]?handle)\s*[=:]\s*)[^\s&,;]+/gi,
           '$1[redacted]',
         );
     }

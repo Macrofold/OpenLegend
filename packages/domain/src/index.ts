@@ -109,3 +109,4 @@ export { isConversationEvent } from './events.js';
 
 export * from './knowledge.js';
 export * from './worlds/base/knowledge.js';
+export { canonicalJson } from './events.js';

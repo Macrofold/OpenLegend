@@ -1,3 +1,5 @@
+import { WorldAuthoring } from './world-authoring.js';
+import { WorldAgentTools } from './world-agent-tools.js';
 import { WorldToolService, worldReadRequest } from './world-tools.js';
 import { createWorldMcp } from './world-mcp.js';
 import { executeInventionTool, inventionToolInput } from './invention-tools.js';
@@ -298,7 +300,9 @@ export async function createGameServer(
   let director = new AiDirector(service, options.aiClient, options.now);
   let loadingSave = false;
   const worldTools = new WorldToolService(service);
-  const mcp = createWorldMcp(worldTools, config.mcpRead, () => ({
+  const worldAuthoring = new WorldAuthoring(service,store.db);
+  const worldAgentTools = new WorldAgentTools(service,worldTools,worldAuthoring);
+  const mcp = createWorldMcp(worldAgentTools, config.mcpRead, () => ({
     worldId: service.world.id,
     loading: loadingSave,
   }));
@@ -1424,6 +1428,28 @@ export async function createGameServer(
               result: executeInventionTool(service, service.controlledEntityId, value.tool),
             });
           }
+          case '/api/world-agent/session': {
+            const value = z.object({worldId:requestIdSchema,conversationId:requestIdSchema,open:z.boolean().default(false)}).strict().parse(body);
+            if(value.worldId !== service.world.id) return send(response,409,{ok:false,message:'World mismatch.'});
+            const selected = value.open ? await worldAuthoring.open(value.conversationId) : await worldAuthoring.session(value.conversationId);
+            return send(response,200,{ok:true,session:await worldAuthoring.view(selected)});
+          }
+          case '/api/world-agent/authoring-tools': {
+            const value = z.object({worldId:requestIdSchema,conversationId:requestIdSchema,name:z.string().max(80),arguments:z.unknown()}).strict().parse(body);
+            if(value.worldId !== service.world.id) return send(response,409,{ok:false,message:'World mismatch.'});
+            const selected = await worldAuthoring.session(value.conversationId);
+            const result = await worldAgentTools.execute(value.name,value.arguments,selected);
+            return send(response,200,{ok:result.status === 'ok',result,message:result.message});
+          }
+          case '/api/world-agent/approve': {
+            const value = z.object({worldId:requestIdSchema,conversationId:requestIdSchema,planId:requestIdSchema,
+              digest:z.string().regex(/^[a-f0-9]{64}$/),decision:z.enum(['approve','reject']),apply:z.boolean().default(false)}).strict().parse(body);
+            if(value.worldId !== service.world.id) return send(response,409,{ok:false,message:'World mismatch.'});
+            const selected = await worldAuthoring.session(value.conversationId);
+            const plan = await worldAuthoring.approve(selected,value.planId,value.digest,value.decision);
+            const result = value.decision === 'approve' && value.apply ? await worldAuthoring.apply(selected,plan.id) : {ok:true,code:plan.status,message:plan.status};
+            return send(response,200,{...result,session:await worldAuthoring.view(await worldAuthoring.session(value.conversationId))});
+          }
           case '/api/world-agent/messages': {
             const value = worldAgentMessage.parse(body);
             if (value.worldId !== service.world.id)
@@ -1465,6 +1491,7 @@ export async function createGameServer(
               .parse(body);
             if (value.worldId !== service.world.id)
               return send(response, 409, { ok: false, message: 'World mismatch.' });
+            await worldAuthoring.close(value.conversationId);
             await director.macrofold.closeConversation(value.conversationId);
             return send(response, 200, {
               ok: true,

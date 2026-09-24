@@ -560,3 +560,4 @@ export interface InventionHistory {
 }
 
 export * from './relationships.js';
+export type { AuthoringKind, AuthoringDraftView, AuthoringPlanView, AuthoringSessionView } from './authoring.js';

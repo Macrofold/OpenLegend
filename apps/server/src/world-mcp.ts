@@ -3,7 +3,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import type { McpReadConfig } from './mcp-config.js';
-import { WORLD_READ_TOOLS, type WorldToolService } from './world-tools.js';
+import { z } from 'zod';
+import type { WorldAgentTools } from './world-agent-tools.js';
 
 const MAX_BODY = 32 * 1024,
   MAX_INFLIGHT = 8,
@@ -38,12 +39,11 @@ async function body(request: IncomingMessage): Promise<unknown> {
   }
 }
 
-/** Stateless MCP transport only. The shared service owns semantics and explicit source coverage.
- * No connector mutation or paid tool is enabled by this read-only bootstrap.
- * docs/world-agent-mcp.md#implemented-read-only-bootstrap
+/** Stateless transport; the application owns grants, drafts, approval and native effects.
+ * docs/world-agent-mcp.md#session-bound-authoring-tools
  */
 export function createWorldMcp(
-  tools: WorldToolService,
+  tools: WorldAgentTools,
   config: McpReadConfig | null,
   current: () => { worldId: string; loading: boolean },
 ) {
@@ -55,7 +55,7 @@ export function createWorldMcp(
     };
   let inflight = 0,
     closed = false;
-  // A dedicated service credential is read-only and world-bound; it is never an NPC identity.
+  // The credential is world-bound; write authority additionally requires a UI-issued session context.
   const validScope = () =>
     !!config &&
     Date.now() < config.expiresAt &&
@@ -64,33 +64,47 @@ export function createWorldMcp(
     !closed;
   const entry = createMcpHandler(
     () => {
-      const server = new McpServer({ name: 'openlegend-world-inspection', version: '1.0.0' });
-      for (const [name, tool] of Object.entries(WORLD_READ_TOOLS)) {
+      const server = new McpServer({ name: 'openlegend-world-agent', version: '1.1.0' });
+      for (const tool of tools.descriptors(tools.service.config.mcpWrites)) {
+        const context = z.string().min(1).max(200);
+        const schema = tool.schema.extend({
+          contextHandle: tool.session ? context : context.optional(),
+        });
         server.registerTool(
-          name,
+          tool.name,
           {
             description: tool.description,
-            inputSchema: tool.schema,
+            inputSchema: schema,
             annotations: {
-              readOnlyHint: true,
-              destructiveHint: false,
+              readOnlyHint: tool.readOnly,
+              destructiveHint: !tool.readOnly,
               idempotentHint: true,
               openWorldHint: false,
             },
           },
           async (args: unknown) => {
-            let result = validScope()
-              ? tools.execute(name, args, {
-                  worldId: config!.worldId,
-                  principal: 'configured-mcp-world-reader',
-                })
-              : {
-                  status: 'forbidden',
-                  message: 'World read grant expired, changed, or is unavailable.',
-                  cost: 'no-paid-work',
-                };
+            const guard = () => {
+              if (!validScope())
+                throw new Error('Connector grant expired, changed, or is unavailable.');
+            };
+            let result: Record<string, unknown>;
+            try {
+              guard();
+              const { contextHandle, ...input } = args as Record<string, unknown>;
+              const session =
+                typeof contextHandle === 'string'
+                  ? await tools.authoring.resolveHandle(contextHandle)
+                  : undefined;
+              guard();
+              result = await tools.execute(tool.name, input, session, guard);
+            } catch (error) {
+              result = {
+                status: 'forbidden',
+                message: error instanceof Error ? error.message : 'Tool authority unavailable.',
+              };
+            }
             const reply = () => ({
-              isError: result.status !== 'ok',
+              isError: result['status'] !== 'ok',
               structuredContent: { ...result },
               content: [{ type: 'text' as const, text: JSON.stringify(result) }],
             });

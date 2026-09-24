@@ -317,6 +317,7 @@ export interface GameRepository extends WorldStore {
     reuse?: 'compute-allocation',
     budget?: AttemptBudget,
   ): Promise<boolean>;
+  budgetExposure?(budgetId: string): Promise<{ spentUsd: number; reservedUsd: number; uncertainUsd: number }>;
   settle(id: string, receipt: AiReceipt): Promise<void>;
   recoverInterruptedWork(): Promise<void>;
   usage(ceilingUsd: number): Promise<{
@@ -1036,6 +1037,14 @@ export class SqliteStore implements GameRepository {
         await this.db.prepare('INSERT INTO attempt_budgets VALUES (?,?)').run(id, budget.id);
       return true;
     });
+  }
+
+  async budgetExposure(budgetId: string) {
+    await this.ready;
+    const row = await this.db.prepare(
+      "SELECT COALESCE(SUM(CASE WHEN a.status='settled' THEN a.spent ELSE 0 END),0) AS spent, COALESCE(SUM(CASE WHEN a.status='reserved' THEN a.reserved ELSE 0 END),0) AS reserved, COALESCE(SUM(CASE WHEN a.status='uncertain' THEN a.spent ELSE 0 END),0) AS uncertain FROM attempt_budgets b JOIN attempts a ON a.id=b.attempt_id WHERE b.budget_id=?",
+    ).get(budgetId);
+    return { spentUsd: Number(row?.['spent'] ?? 0) / 1e6, reservedUsd: Number(row?.['reserved'] ?? 0) / 1e6, uncertainUsd: Number(row?.['uncertain'] ?? 0) / 1e6 };
   }
 
   async settle(id: string, receipt: AiReceipt): Promise<void> {

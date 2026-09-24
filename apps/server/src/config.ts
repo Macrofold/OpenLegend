@@ -47,6 +47,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   return {
     worldPreset,
     mcpRead: readMcpConfig(env),
+    mcpWrites: env['OPEN_LEGEND_MCP_WRITES'] === 'true',
+    macrofoldWorldConnectionId: env['MACROFOLD_WORLD_CONNECTION_ID'] ?? '',
+    macrofoldWorldRunUsd: numberSetting(env, 'MACROFOLD_WORLD_RUN_MAX_USD', 1, 0.000001, 5),
     databaseUrl: env['OPEN_LEGEND_DATABASE_URL'] ?? '',
     embeddingKey: env['OPENAI_EMBEDDING_API_KEY'] ?? env['OPENAI_API_KEY'] ?? '',
     embeddingModel: env['EMBEDDING_MODEL'] ?? 'text-embedding-3-small',

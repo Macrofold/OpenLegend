@@ -158,3 +158,11 @@ Only server-to-server POST requests without an Origin are accepted. The SDK owns
 ### Growth boundary
 
 Reuse the same application descriptors, source readers and typed projections as local owner inspection. Add implemented capabilities under their actual application owners; do not register the entire target catalogue as stub tools. Before writes, implement the retained connection/session context, per-operation grants, exact revision/receipt and human-approval paths. Before multi-user reads, implement recipient disclosure and revocation rather than letting one broad service credential expose another user's data. Read-only hints are not enforcement: the current registered handlers themselves contain no mutation or paid dispatch.
+
+## Session-bound authoring tools
+
+`OPEN_LEGEND_MCP_WRITES=true` opts the existing endpoint into application authoring tools. Reads retain the authenticated world-level view. Authoring additionally requires a context handle issued by an authenticated OpenLegend conversation, bound to its world/timeline/account/session. The dedicated connector credential remains independently required; a context handle cannot select another world or raise grants. Handles are purpose-signed using the protected connector credential hash, expire with that credential and become unusable after close, restore or rotation. Diagnostic capture redacts context handles.
+
+The implemented tools add kind discovery, session/budget inspection, immutable draft create/update/read, native validation, prepare, approval-card inspection and exact apply. Human approval is only an authenticated same-origin application route, never an agent tool. Both local HTTP and MCP use the same dispatcher and native owners. Paid generation, arbitrary law replacement and general graph closure are not supplied by these adapters.
+
+Short responses use the SDK's negotiated transport: legacy clients can receive the SDK's SSE-formatted response even when the modern handler selects JSON mode. Clients must implement negotiated MCP framing rather than assume every successful HTTP body is one JSON object. Endpoint body/concurrency/wire bounds remain in force. Starting a session or using these native tools makes no model or image request.
