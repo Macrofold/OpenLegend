@@ -6,6 +6,7 @@ permissions:
   contents: read
 jobs:
   check:
+    if: github.ref != 'refs/heads/design/action-repertoire-and-capability-grounding'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,3 +17,71 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
+  action-implementation:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/design/action-repertoire-and-capability-grounding'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: write
+    env:
+      AI_BUDGET_USD: '0'
+      OPEN_LEGEND_DATABASE_URL: ''
+      OPEN_LEGEND_DATA_DIR: /tmp/action-slice-world
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Baseline native stress
+        run: node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/action-baseline.cpuprofile
+      - name: Apply bounded implementation slice
+        run: python .github/action-slice.py
+      - name: Format changed source
+        run: git ls-files -m -o --exclude-standard apps packages docs archive README.md | grep -E '\.(ts|tsx|md)$' | xargs -r pnpm exec prettier --write
+      - name: Typecheck and build without test suites
+        run: pnpm run typecheck && pnpm run build
+      - name: Native runtime smoke
+        run: |
+          node --import tsx --input-type=module <<'JS'
+          import { createWorld, executeCommand, advanceWorld, observeActor, sameSurfacePoint } from './packages/domain/src/index.ts';
+          let world = createWorld(73);
+          world = { ...world, paused: false };
+          const actor = Object.values(world.entities).find(e => e.actor?.controller === 'player');
+          const target = observeActor(world, actor.id).visibleEntities.find(e => e.actor?.alive && e.id !== actor.id);
+          const point = sameSurfacePoint(world, actor, actor.position.x + .5, actor.position.z);
+          let result = executeCommand(world, { id:'smoke-move',actorId:actor.id,type:'move',destination:point });
+          console.log('MOVE_ADMISSION', result.outcome);
+          world=result.world;
+          const moved=advanceWorld(world, 20); world=moved.world;
+          console.log('MOVE_RESULT', world.entities[actor.id].position, world.entities[actor.id].actor.action?.type ?? 'idle');
+          if(target) {
+            result=executeCommand(world,{id:'smoke-follow',actorId:actor.id,type:'follow',targetId:target.id,distance:3});
+            console.log('FOLLOW_ADMISSION',result.outcome);
+            world=advanceWorld(result.world,20).world;
+            console.log('FOLLOW_RUNNING',world.entities[actor.id].actor.action);
+            result=executeCommand(world,{id:'smoke-cancel',actorId:actor.id,type:'cancel'});
+            console.log('FOLLOW_CANCEL',result.outcome,result.world.entities[actor.id].actor.action);
+          } else console.log('FOLLOW_SMOKE_NO_VISIBLE_TARGET');
+          JS
+      - name: Post-change native stress
+        run: node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/action-after.cpuprofile
+      - name: Commit qualified source slice
+        run: |
+          git add apps packages docs archive README.md
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m '[skip ci] feat: add perception-bound native follow activity'
+            git push origin HEAD:design/action-repertoire-and-capability-grounding
+          fi
+      - name: Diagnostic source boundary inventory
+        if: always()
+        run: |
+          git diff --stat
+          grep -R -n -E 'validateWorld|action\.type|schemaVersion.*9|schemaVersion !==|case .withdraw-attempt.' apps/server/src/store.ts apps/server/src/game-saves.ts packages/domain/src/agency.ts packages/domain/src/kernel.ts | head -70
