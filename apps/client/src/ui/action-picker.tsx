@@ -32,6 +32,7 @@ export function ActionPicker({
   enableCognition,
   spawn,
   createPerson,
+  createItem,
 }: {
   picker: PickerContext;
   view: GameView;
@@ -44,6 +45,10 @@ export function ActionPicker({
   revive(entity: EntityView): void;
   enableCognition(entity: EntityView): void;
   spawn(type: string, position: { x: number; y: number; z: number; surfaceId: string }): void;
+  createItem(
+    definitionId: string,
+    position: { x: number; y: number; z: number; surfaceId: string },
+  ): void;
   createPerson(position: { x: number; y: number; z: number; surfaceId: string }): void;
 }) {
   const [query, setQuery] = useState(''),
@@ -54,6 +59,7 @@ export function ActionPicker({
     [showUnavailable, setShowUnavailable] = useState(
       view.profile.preferences.showUnavailableActions,
     );
+  const [openPullout, setOpenPullout] = useState<string | null>(null);
   const menu = useRef<HTMLDivElement>(null),
     input = useRef<HTMLInputElement>(null),
     refreshRequest = useRef(0);
@@ -91,6 +97,7 @@ export function ActionPicker({
     showUnavailable,
     picker.context.targetId,
   );
+  const pickups = matches.filter((action) => action.category === 'Pick Up');
   const canInvent =
     !view.inventionPolicy.playerLocked &&
     connected &&
@@ -104,10 +111,14 @@ export function ActionPicker({
     !!picker.entity &&
     godCharacterAvailability(picker.entity).revive &&
     (!query || 'revive god mode'.includes(query.toLowerCase()));
+  const creationPosition =
+    picker.entity?.kind === 'item-pile' && picker.entity.supportSurfaceId
+      ? { ...picker.entity.position, surfaceId: picker.entity.supportSurfaceId }
+      : picker.context.position;
   const showAdd =
     view.godMode &&
-    !picker.entity &&
-    !!picker.context.position &&
+    (!picker.entity || picker.entity.kind === 'item-pile') &&
+    !!creationPosition &&
     (!query || 'add something spawn god mode'.includes(query.toLowerCase()));
   useLayoutEffect(() => {
     const place = () => {
@@ -150,6 +161,8 @@ export function ActionPicker({
       aria-label={`Actions for ${picker.entity?.name ?? 'the clearing'}`}
       style={{ left: position.x, top: position.y }}
       onKeyDown={(e) => {
+        // Portaled pullouts own their keyboard navigation; React events still bubble here.
+        if (!e.currentTarget.contains(e.target as Node)) return;
         if (e.key === 'Escape') {
           e.stopPropagation();
           close();
@@ -244,16 +257,34 @@ export function ActionPicker({
         {showAdd && (
           <PulloutPicker
             label="Add something"
+            isOpen={openPullout === 'add'}
+            onOpenChange={(open) => setOpenPullout(open ? 'add' : null)}
             icon="ui.plus"
             badge="God mode"
             placeholder="Search objects…"
-            options={(view.godTools?.spawnOptions ?? []).map((option) => ({
-              ...option,
-              icon: spawnIcons[option.id] ?? 'ui.plus',
-            }))}
+            options={[]}
+            groups={[
+              {
+                label: 'Items',
+                icon: 'ui.inventory',
+                options: (view.godTools?.itemOptions ?? []).map((option) => ({
+                  ...option,
+                  id: `item:${option.id}`,
+                  icon: symbol(option.id),
+                })),
+              },
+              ...(['Actors', 'Environment'] as const).map((category) => ({
+                label: category,
+                icon: category === 'Actors' ? 'ui.character' : 'ui.world',
+                options: (view.godTools?.spawnOptions ?? [])
+                  .filter((option) => option.category === category)
+                  .map((option) => ({ ...option, icon: spawnIcons[option.id] ?? 'ui.plus' })),
+              })),
+            ]}
             onSelect={(type) => {
-              if (type === 'person') createPerson(picker.context.position!);
-              else spawn(type, picker.context.position!);
+              if (type.startsWith('item:')) createItem(type.slice(5), creationPosition!);
+              else if (type === 'person') createPerson(creationPosition!);
+              else spawn(type, creationPosition!);
             }}
           />
         )}
@@ -264,46 +295,68 @@ export function ActionPicker({
             <small className="ol-item-hint">Inspect</small>
           </AriaButton>
         )}
-        {matches.map((a) => (
-          <Explanation
-            key={a.id}
-            title={a.label}
-            text={`${a.description}${!a.enabled ? `\n\n${a.reason ?? 'Unavailable right now.'}` : ''}`}
-            facts={a.facts}
-          >
-            <AriaButton
-              data-picker-row
-              data-catalogue-action={a.id}
-              className="ol-item"
-              aria-disabled={!a.enabled}
-              onPress={() => {
-                if (a.enabled) run(a);
-              }}
+        {pickups.length > 1 && (
+          <PulloutPicker
+            label="Pick Up"
+            isOpen={openPullout === 'pickup'}
+            onOpenChange={(open) => setOpenPullout(open ? 'pickup' : null)}
+            icon="ui.inventory"
+            placeholder="Search items…"
+            options={pickups.map((a) => ({
+              id: a.id,
+              label: a.label,
+              disabled: !a.enabled,
+              description: a.enabled ? undefined : a.reason,
+            }))}
+            onSelect={(id) => {
+              const action = matches.find((a) => a.id === id);
+              if (action?.enabled) run(action);
+            }}
+          />
+        )}
+        {matches
+          .filter((a) => a.category !== 'Pick Up' || pickups.length <= 1)
+          .map((a) => (
+            <Explanation
+              key={a.id}
+              title={a.label}
+              text={`${a.description}${!a.enabled ? `\n\n${a.reason ?? 'Unavailable right now.'}` : ''}`}
+              facts={a.facts}
             >
-              <Icon
-                name={symbol(
-                  a.intent.kind === 'command'
-                    ? a.intent.command.type === 'gather'
-                      ? (view.entities.find((e) => e.id === a.targetId)?.subtype ?? 'resource.reed')
-                      : a.intent.command.type
-                    : a.intent.kind === 'compose'
-                      ? 'talk'
-                      : 'ui.lock',
-                )}
-                badge={
-                  a.intent.kind === 'command' && a.intent.command.type === 'gather'
-                    ? 'action.gather'
-                    : undefined
-                }
-              />
-              <span>
-                {a.label}
-                {!a.enabled && <small className="ol-item-reason">{a.reason}</small>}
-              </span>
-              <small className="ol-item-hint">{a.category}</small>
-            </AriaButton>
-          </Explanation>
-        ))}
+              <AriaButton
+                data-picker-row
+                data-catalogue-action={a.id}
+                className="ol-item"
+                aria-disabled={!a.enabled}
+                onPress={() => {
+                  if (a.enabled) run(a);
+                }}
+              >
+                <Icon
+                  name={symbol(
+                    a.intent.kind === 'command'
+                      ? a.intent.command.type === 'gather'
+                        ? (view.entities.find((e) => e.id === a.targetId)?.subtype ??
+                          'resource.reed')
+                        : a.intent.command.type
+                      : a.intent.kind === 'compose'
+                        ? 'talk'
+                        : 'ui.lock',
+                  )}
+                  badge={
+                    a.intent.kind === 'command' && a.intent.command.type === 'gather'
+                      ? 'action.gather'
+                      : undefined
+                  }
+                />
+                <span>
+                  {a.label}
+                  {!a.enabled && <small className="ol-item-reason">{a.reason}</small>}
+                </span>
+                <small className="ol-item-hint">{a.category}</small>
+              </AriaButton>
+            </Explanation>
+          ))}
         {error && (
           <p role="status" className="ol-meta">
             {error}

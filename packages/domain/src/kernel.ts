@@ -1,5 +1,13 @@
+import { BASE_ACTION_DEFAULTS } from './worlds/base/actions.js';
+import {
+  canHandleItems,
+  portableItems,
+  pickUpItems,
+  dropItems,
+  itemsForOwner,
+} from './item-handling.js';
 import { strikeDefinition } from './strikes.js';
-import { gatheringYield, BASE_GATHER_QUANTITY } from './gathering.js';
+import { gatheringYield } from './gathering.js';
 import { current, isDraft } from 'immer';
 import { canWalkSegment, finitePoint, interpolate, type SurfacePoint } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
@@ -14,12 +22,11 @@ import {
   resolvePlanCommand,
 } from './agency.js';
 import {
-  WILDERNESS_NEEDS,
   hasWildernessNeeds,
   nativeNeedBelow,
   setWildernessNeed,
   advanceWildernessNeeds,
-} from './wilderness-needs.js';
+} from './worlds/base/needs.js';
 import {
   attributeDefinition,
   readAttribute,
@@ -56,7 +63,6 @@ import {
   sensesFor,
   contactViews,
   directProbe,
-  PERCEPTION_RULES,
 } from './perception.js';
 import {
   distance,
@@ -87,19 +93,11 @@ export const SIMULATION_RULES = {
   version: 2,
   fixedStepSeconds: 1,
   maxAdvanceSeconds: 86400,
-  movementTilesPerSecond: 0.11,
-  sightRadius: PERCEPTION_RULES.sightRadius,
-  interactionRadius: 1.6,
-  animalFleeTilesPerSecond: 0.055,
-  ...WILDERNESS_NEEDS,
-  gatherQuantity: BASE_GATHER_QUANTITY,
-  harvestSeconds: 84,
-  cookSeconds: 90,
-  shotSeconds: 18,
+  ...BASE_ACTION_DEFAULTS,
 } as const;
 
 export function inventoryFor(world: WorldState, actorId: string): ItemInstance[] {
-  return Object.values(world.items).filter((item) => item.ownerId === actorId && item.quantity > 0);
+  return itemsForOwner(world, actorId).filter((item) => item.quantity > 0);
 }
 export function quantityOf(world: WorldState, actorId: string, definitionId: string): number {
   return inventoryFor(world, actorId)
@@ -166,6 +164,7 @@ function ammoFor(
   );
 }
 function actionReach(world: WorldState, action: Action): number {
+  if (action.type === 'pickup') return world.itemHandling.reach;
   if (action.type === 'strike') return strikeDefinition(action.definitionId)?.range ?? 0;
   if (action.type !== 'hunt') return SIMULATION_RULES.interactionRadius;
   const range =
@@ -304,7 +303,11 @@ function prepareReplenishment(
 }
 
 /** Accepted commands are idempotent by id+body. Rejections cause no physical effects. */
-export function executeCommand(original: WorldState, command: Command): Transition {
+export function executeCommand(
+  original: WorldState,
+  command: Command,
+  options: { preview?: boolean } = {},
+): Transition {
   const reject = (code: string, message: string): Transition => ({
     world: original,
     events: [],
@@ -364,27 +367,50 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       'unsupported-airborne-action',
       'This native action requires a supported ground stance.',
     );
-  const world = draftWorld(original);
-  const actor = world.entities[command.actorId]!;
-  const component = actor.actor!;
   // Scope comes before live resource/lifecycle diagnostics, including deferred plan dispatch.
   // docs/architecture.md#actor-agency-foundation
   const scopedTargetId =
     command.type === 'cook'
       ? command.heatId
-      : ['gather', 'harvest', 'hunt', 'replenish', 'strike'].includes(command.type) &&
+      : ['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup'].includes(command.type) &&
           'targetId' in command
         ? command.targetId
         : undefined;
   if (scopedTargetId) {
-    const target = getOwn(world.entities, scopedTargetId);
-    if (!target || !visible(world, actor, target))
+    const target = getOwn(original.entities, scopedTargetId);
+    if (!target || !visible(original, source, target))
       return reject('not-visible', 'The action target is not currently perceived.');
   }
+  if (command.type === 'pickup') {
+    const target = getOwn(original.entities, command.targetId);
+    if (!canHandleItems(original, source) || target?.kind !== 'item-pile')
+      return reject('unavailable', 'Choose a visible pile and an actor able to handle items.');
+    if (
+      !portableItems(original, target.id).some(
+        (item) => !command.itemId || item.id === command.itemId,
+      )
+    )
+      return reject('empty', 'No matching portable items remain.');
+  }
+  const world = draftWorld(original);
+  const actor = world.entities[command.actorId]!;
+  const component = actor.actor!;
   const events: WorldEvent[] = [];
   let result = outcome(true, 'accepted', 'Action started.');
   let action: Action | undefined;
   switch (command.type) {
+    case 'pickup': {
+      action = createAction(world, 'pickup', world.itemHandling.pickupSeconds);
+      action.targetId = command.targetId;
+      action.itemId = command.itemId;
+      break;
+    }
+    case 'drop': {
+      const reason = dropItems(world, actor, command.itemId, command.quantity, events);
+      if (reason) return reject('cannot-drop', reason);
+      result = outcome(true, 'dropped', 'Items dropped on the ground.');
+      break;
+    }
     case 'move': {
       if (
         visionRadius(world, actor) === 0 &&
@@ -703,7 +729,9 @@ export function executeCommand(original: WorldState, command: Command): Transiti
   }
   if (action) {
     if (
-      ['move', 'gather', 'hunt', 'harvest', 'cook', 'replenish', 'strike'].includes(action.type)
+      ['move', 'gather', 'hunt', 'harvest', 'cook', 'replenish', 'strike', 'pickup'].includes(
+        action.type,
+      )
     ) {
       const error = approach(world, actor, action);
       if (error) return { world: original, events: [], outcome: error };
@@ -718,6 +746,9 @@ export function executeCommand(original: WorldState, command: Command): Transiti
         'cannot-interrupt',
         'The current state must end before starting another activity.',
       );
+    // Previews run identical admission, but never build disposable event/receipt history.
+    // docs/architecture.md#bundled-world-and-item-custody
+    if (options.preview) return { world: original, events: [], outcome: result };
     component.action = action;
     component.planGeneration++;
     emit(
@@ -732,6 +763,7 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       { actionType: action.type },
     );
   }
+  if (options.preview) return { world: original, events: [], outcome: result };
   world.commandReceipts[command.id] = { digest, outcome: result };
   return finish(world, events, result);
 }
@@ -756,6 +788,19 @@ function completeAction(
   const component = actor.actor!;
   let outputItemId: string | undefined;
   switch (action.type) {
+    case 'pickup': {
+      const target = world.entities[action.targetId ?? ''];
+      if (!target || !visible(world, actor, target) || !actionInReach(world, actor, action)) {
+        failAction(world, actor, events, 'the pile is no longer visible or within reach.');
+        return;
+      }
+      const reason = pickUpItems(world, actor, target.id, action.itemId, events);
+      if (reason) {
+        failAction(world, actor, events, reason);
+        return;
+      }
+      break;
+    }
     case 'move':
       if (!action.destination || !actionInReach(world, actor, action)) {
         failAction(world, actor, events, 'the destination was not reached.');
@@ -1080,8 +1125,18 @@ function advanceAction(
       return;
     }
   }
-  if (['gather', 'harvest', 'cook'].includes(action.type) && !actionInReach(world, actor, action)) {
-    failAction(world, actor, events, 'the target moved out of reach.');
+  if (
+    ['gather', 'harvest', 'cook', 'pickup'].includes(action.type) &&
+    !actionInReach(world, actor, action)
+  ) {
+    failAction(
+      world,
+      actor,
+      events,
+      action.type === 'pickup' && !world.entities[action.targetId ?? '']
+        ? 'the pile is no longer available.'
+        : 'the target moved out of reach.',
+    );
     return;
   }
   if (action.type === 'replenish') {
@@ -1521,7 +1576,14 @@ function updateEncounters(
       )
         actor.entity.actor!.contacts = contacts;
     }
-    if (radius === 0) continue;
+    if (radius === 0) {
+      if (
+        world.perceptionEpisodes?.[actor.id] &&
+        Object.keys(world.perceptionEpisodes[actor.id]!).length
+      )
+        world.perceptionEpisodes[actor.id] = {};
+      continue;
+    }
     const previous = original.visiblePeople?.[actor.id] ?? [];
     const previouslySeen = new Set(previous);
     const seen = nearby(actor.position, radius + 2)
@@ -1552,6 +1614,17 @@ function updateEncounters(
     for (const entity of objects)
       if (!priorObjects.has(entity.id)) encounter(actor.entity, entity.id, false);
     const objectIds = objects.map((entity) => entity.id);
+    // Persistent exposure episodes do not imply identity recognition across a disappearance.
+    // docs/knowledge.md#subject-binding
+    const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
+    const exposed = [...seen, ...objectIds];
+    if (
+      exposed.length !== Object.keys(priorEpisodes).length ||
+      exposed.some((id) => !priorEpisodes[id])
+    )
+      (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
+        exposed.map((id) => [id, priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`]),
+      );
     const previousObjects = original.visibleObjects?.[actor.id];
     // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).
     if (
@@ -1633,6 +1706,9 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
       if (copy.resource) definitionIds.add(copy.resource.definitionId);
       return copy;
     });
+  const pileIds = new Set(visibleEntities.filter((e) => e.kind === 'item-pile').map((e) => e.id));
+  const groundItems = Object.values(world.items).filter((item) => pileIds.has(item.ownerId));
+  for (const item of groundItems) definitionIds.add(item.definitionId);
   for (const recipe of knownRecipes) {
     definitionIds.add(recipe.outputDefinitionId);
     for (const input of recipe.inputs) definitionIds.add(input.definitionId);
@@ -1645,6 +1721,7 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
     actor: self,
     contacts: contactViews(actor),
     visibleEntities,
+    groundItems,
     inventory,
     itemDefinitions: [...definitionIds].map((id) => world.itemDefinitions[id]!).filter(Boolean),
     knownRecipes,

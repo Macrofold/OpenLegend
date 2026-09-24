@@ -1,3 +1,4 @@
+import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import { NATIVE_STRIKES } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
@@ -37,6 +38,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
     command: CommandInput,
     keywords: string[] = [],
     targetId?: string,
+    availability?: { ok: boolean; message: string },
   ) => {
     // Ground exposes destination movement only. Personal work belongs to self;
     // resource and social actions belong to the specifically selected target.
@@ -47,7 +49,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
       !(selected.id === service.controlledEntityId && !targetId)
     )
       return;
-    const result = service.previewCommand(command);
+    const result = availability ?? service.previewCommand(command);
     actions.push({
       id,
       label,
@@ -133,6 +135,18 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
   }
 
   for (const target of selected ? [selected] : []) {
+    for (const option of pickupActions(world, observation.actor, target, (command) =>
+      service.previewCommand(command),
+    ))
+      add(
+        option.id,
+        option.label,
+        'Pick Up',
+        option.command,
+        ['take', 'collect'],
+        target.id,
+        option.availability,
+      );
     if (target.actor && target.id !== service.controlledEntityId)
       for (const definition of Object.values(NATIVE_STRIKES))
         add(

@@ -1,4 +1,5 @@
 import {
+  BASE_ITEM_HANDLING,
   DEFAULT_STATUS_EFFECT_POLICY,
   DEFAULT_COGNITION_POLICY,
   type WorldState,
@@ -8,6 +9,14 @@ import {
  * docs/save-and-load.md#active-development-policy
  */
 export function upgradeWorldState(world: WorldState): void {
+  // Actor cognition is change-driven; remove the retired pacing field from saved policies.
+  if (world.cognitionPolicy)
+    delete (world.cognitionPolicy as typeof world.cognitionPolicy & { cooldownSeconds?: number })
+      .cooldownSeconds;
+  if (!Object.hasOwn(world, 'itemHandling')) {
+    world.itemHandling = structuredClone(BASE_ITEM_HANDLING);
+    for (const definition of Object.values(world.itemDefinitions)) definition.portable ??= true;
+  }
   if (Object.hasOwn(world, 'statusEffectPolicy')) return;
   world.statusEffectPolicy = structuredClone(DEFAULT_STATUS_EFFECT_POLICY);
   delete (world as WorldState & { sleepPolicy?: unknown }).sleepPolicy;

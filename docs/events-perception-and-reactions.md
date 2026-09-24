@@ -203,7 +203,7 @@ An ongoing high-salience stimulus uses three mechanisms: an onset opportunity, b
 
 Mandatory native hazards cannot be removed by optional attention filtering. Many simultaneous persistent cues require bounded grouping and explicit overflow handling; no field can promise unlimited mandatory prompt size. Narrative descriptions remain separate from physical effects such as blindness or burning, which require supported native mechanics.
 
-For production behavior, preserve existing cooldowns, urgency policy, and explicit urgent single-refresh semantics. Implement configurable reminder contracts but do not invent a mandatory paid hourly-thought policy. Use an explicit test policy to exercise reminders; unresolved cadence or attention-forcing preferences remain in the decision register. A reminder may decide to continue a valid native plan without invoking a model.
+For production behavior, preserve urgency policy and explicit urgent single-refresh semantics. Autonomous cognition has no actor cooldown; background maintenance timing remains separate. Implement configurable reminder contracts but do not invent a mandatory paid hourly-thought policy. Use an explicit test policy to exercise reminders; unresolved cadence or attention-forcing preferences remain in the decision register. A reminder may decide to continue a valid native plan without invoking a model.
 
 ## 9. Reaction intake and scheduling
 

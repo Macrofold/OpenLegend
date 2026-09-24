@@ -1,6 +1,7 @@
+import { livingBody, nativeActor } from './worlds/base/bodies.js';
 import { interruptStatusEffects } from './status-effects.js';
-import { seedAgency, finishPlanAction } from './agency.js';
-import type { Entity, WorldEvent, WorldState, Transition, ActorComponent } from './types.js';
+import { finishPlanAction } from './agency.js';
+import type { Entity, WorldEvent, WorldState, Transition } from './types.js';
 import { draftWorld } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
 
@@ -28,53 +29,8 @@ export function canSpeak(entity: Entity | undefined): boolean {
     !!entity?.actor && (entity.actor.capabilities?.speech ?? entity.actor.controller !== 'native')
   );
 }
-// Finite body/lifecycle policy; another body family expands through EWF03/INV.
-// See docs/engine-and-world-boundaries.md#intentional-v1-specificity.
-export function livingBody(species: 'human' | 'deer' | 'hare' | 'construct' | 'bird'): LivingBody {
-  return {
-    plan:
-      species === 'human' || species === 'construct'
-        ? 'biped'
-        : species === 'bird'
-          ? 'avian'
-          : 'quadruped',
-    maxHealth: species === 'human' || species === 'construct' ? 100 : species === 'deer' ? 36 : 18,
-    revision: 0,
-    conditions: { injury: 0, wetness: 0, burning: 0 },
-    susceptibility: { injury: 1, wetness: 1, burning: 1, healing: 1 },
-    harvestYield:
-      species === 'human' || species === 'construct'
-        ? []
-        : [
-            { definitionId: 'raw_meat', quantity: species === 'deer' ? 4 : 2 },
-            { definitionId: 'bone', quantity: species === 'deer' ? 3 : 2 },
-          ],
-  };
-}
-export function nativeActor(species: 'hare' | 'deer' | 'bird', bornAt: number): ActorComponent {
-  return {
-    species,
-    body: livingBody(species),
-    controller: 'native',
-    capabilities: {
-      cognition: false,
-      memory: false,
-      innerWorld: false,
-      speech: false,
-      needs: false,
-    },
-    health: species === 'deer' ? 36 : 18,
-    alive: true,
-    incapacitated: false,
-    bornAt,
-    fullness: 100,
-    energy: 100,
-    action: null,
-    equippedItemId: null,
-    agency: seedAgency(),
-    planGeneration: 0,
-  };
-}
+// Stable composition exports; authored defaults have one base-world owner.
+export { livingBody, nativeActor } from './worlds/base/bodies.js';
 /** The sole legacy physical conversion. Run inside the startup/create transaction. */
 export function migrateActors(world: WorldState): void {
   if (world.schemaVersion >= 3) return;

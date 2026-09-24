@@ -4,7 +4,7 @@ import { emit, finish, outcome, canonicalJson } from './events.js';
 import { finishPlanAction } from './agency.js';
 import { nextId } from './data.js';
 import { attributeDefinition, readAttribute, setAttribute } from './world-modules.js';
-import { setWildernessNeed } from './wilderness-needs.js';
+import { setWildernessNeed } from './worlds/base/needs.js';
 import { validateStatusEffectPolicy } from './status-effect-validation.js';
 import type { Entity, WorldState, WorldEvent, Transition } from './types.js';
 

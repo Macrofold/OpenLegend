@@ -1,3 +1,4 @@
+import { observerDescription, recognizesSubject } from './worlds/base/knowledge.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { appraiseEvent } from './social.js';
 import { mutateExperience } from './experience.js';
@@ -114,7 +115,7 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       world,
       events,
       'encounter',
-      `${source.name} encountered ${world.entities[targetId]!.name}.`,
+      `${source.name} encountered ${observerDescription(world, source.id, targetId)}.`,
       source,
       targetId,
       meaningful
@@ -231,7 +232,7 @@ function recordEvent(
                 : type === 'speech'
                   ? 'heard'
                   : 'observed',
-            recognized: type !== 'contact',
+            recognized: type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
             intelligible: true,
             entityIds: [source?.id, type === 'speech' ? perceivedRecipient : targetId].filter(
               (id): id is string => !!id,
@@ -260,7 +261,7 @@ function recordEvent(
                   : targetId === actorId
                     ? 'directed_action'
                     : 'observed_event',
-            content: typeof data?.['text'] === 'string' ? data['text'] : text,
+            content: typeof data?.['text'] === 'string' ? data['text'] : memoryPerspective(world, actorId, text, false, source?.id),
           },
         },
       });

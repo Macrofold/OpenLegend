@@ -1,3 +1,6 @@
+import { observerDescription } from '@open-legend/domain';
+import { dropItemReason } from '@open-legend/domain';
+import { pickupActions } from './item-actions.js';
 import { entityLabel } from './entity-references.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import { NATIVE_STRIKES } from '@open-legend/domain';
@@ -30,7 +33,7 @@ function gatherDescription(entity: Entity): string {
   return `Gather ${entity.name}: base yield ${SIMULATION_RULES.gatherQuantity} ${resource.definitionId} per batch, up to 4 with a compatible carried gathering tool (${resource.quantity} currently available), ${resource.workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty.`;
 }
 
-function describeTargets(service: WorldService, candidates: CandidateAction[]): CandidateAction[] {
+function describeTargets(service: WorldService, actorId: string, candidates: CandidateAction[]): CandidateAction[] {
   return candidates.map((candidate) => {
     const command = candidate.command;
     const id = command && 'targetId' in command ? command.targetId : undefined;
@@ -38,7 +41,7 @@ function describeTargets(service: WorldService, candidates: CandidateAction[]): 
     return target
       ? {
           ...candidate,
-          description: `${candidate.description} Target: ${entityLabel(service.world, target)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.`,
+          description: `${candidate.description.split(target.name).join(observerDescription(service.world, actorId, target.id))} Target: ${entityLabel(service.world, target, actorId)}${target.actor ? `; species: ${target.actor.species ?? 'unknown'}` : ''}.`,
         }
       : candidate;
   });
@@ -246,6 +249,31 @@ export function npcCandidates(
   });
   const actions: CandidateAction[] = [
     ...replenishments,
+    ...observed.visibleEntities.flatMap((target) =>
+      pickupActions(service.world, observed.actor, target, (command) =>
+        service.previewCommand(command, actorId),
+      )
+        .filter((option) => option.availability.ok)
+        .map((option) => ({
+          id: option.id,
+          description: `${option.description} from ${target.name}.`,
+          command: option.command,
+        })),
+    ),
+    ...inventory
+      .filter((item) => definitions.get(item.definitionId)?.portable === true)
+      .flatMap((item) => {
+        const command: CommandInput = { type: 'drop', itemId: item.id, quantity: item.quantity };
+        return !dropItemReason(service.world, observed.actor, item.id, item.quantity)
+          ? [
+              {
+                id: `drop-${item.id}`,
+                description: `Drop ${item.quantity} ${definitions.get(item.definitionId)!.name} on the ground.`,
+                command,
+              },
+            ]
+          : [];
+      }),
     {
       id: 'continue',
       description: actor.action
@@ -326,7 +354,7 @@ export function npcCandidates(
             ) ?? undefined,
         },
       });
-    return describeTargets(service, actions);
+    return describeTargets(service, actorId, actions);
   }
   if (!supportsManualWork(observed.actor)) return actions;
   for (const [preparation, recipe] of Object.entries(NATIVE_PREPARATIONS)) {
@@ -442,7 +470,7 @@ export function npcCandidates(
         command: { type: 'craft', recipeId: recipe.id },
       });
   }
-  return describeTargets(service, actions);
+  return describeTargets(service, actorId, actions);
 }
 
 /** Known techniques are valid planning vocabulary before their materials are owned.
@@ -451,7 +479,7 @@ export function npcCandidates(
 export function planningCandidates(service: WorldService, actorId: string): CandidateAction[] {
   const observed = service.observe(actorId);
   if (!observed || !supportsManualWork(observed.actor)) return [];
-  return describeTargets(service, [
+  return describeTargets(service, actorId, [
     ...observed.visibleEntities
       .filter((entity) => entity.resource && entity.resource.quantity > 0)
       .map((entity) => ({

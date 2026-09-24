@@ -101,6 +101,15 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         conversationId: input.conversationId!,
         generation: input.generation!,
       };
+    case 'pickup':
+      return {
+        ...base,
+        type: 'pickup',
+        targetId: input.targetId!,
+        ...(input.itemId ? { itemId: input.itemId } : {}),
+      };
+    case 'drop':
+      return { ...base, type: 'drop', itemId: input.itemId!, quantity: input.quantity! };
     case 'move':
       return { ...base, type: 'move', destination: input.position! };
     case 'gather':

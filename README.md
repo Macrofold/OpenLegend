@@ -40,7 +40,7 @@ Open Talk through a nearby person or quick suggestion. Until AI is configured, i
 
 Click the ground to walk; click a thing to **Look closer**, or right-click / Control-click for its actions. Object menus stay scoped to that object, self menus contain personal work, and empty-ground menus offer walking. **Show Unavailable Actions** reveals blocked options and saves that preference. Hover or keyboard-focus an action for a one-second explanation with actual material/time facts. Search retains **Search actions or invent something…**: unmatched Enter opens an editable invention draft, and only **Send** dispatches it.
 
-With `OPEN_LEGEND_GOD_MODE=true`, right-click a dead actor to **Revive**, or right-click blank walkable ground and choose **Add something**. The searchable list contains every currently supported placeable world entity, with Person first and the remainder alphabetized; it shows eight rows before scrolling. Creating a person accepts a name, personality, backstory, described trait tags and initial goals. Leaving traits empty assigns the usual three saved random traits. God mode also offers **Grant cognition and speech** for an ordinary animal. Revival fully restores the body even after harvesting; harvested inventory is preserved. These owner-only mutations work while paused and are labeled **God mode**.
+With `OPEN_LEGEND_GOD_MODE=true`, right-click a dead actor to **Revive**, or right-click blank walkable ground and choose **Add something**. The creation pullouts group known Items, Actors and Environment. Choose an item and quantity to place it on the ground. Player Inventory also offers **God mode · Add item**. Portable ground items can be picked up individually or with **Pick Up All**; inventory details support dropping a chosen quantity. Creating a person accepts a name, personality, backstory, described trait tags and initial goals. Leaving traits empty assigns the usual three saved random traits. God mode also offers **Grant cognition and speech** for an ordinary animal. Revival fully restores the body even after harvesting; harvested inventory is preserved. These owner-only mutations work while paused and are labeled **God mode**.
 
 Drag with the primary, right or middle mouse button to pan. A stationary right-click opens actions on release. Scroll to zoom or use the camera buttons to zoom/recenter and the visible icons for rotation, tilt and projection. Follow keeps the player centered; dragging or choosing a floor stops following. Hover or focus the information icon for shortcuts. Dismissing a menu by clicking the world never walks.
 
@@ -94,6 +94,8 @@ The browser check needs Playwright Chromium (`pnpm exec playwright install chrom
 | `packages/protocol` | Public client DTOs and command intentions                                              |
 | `apps/server`       | Context, routing, durable spending, persistence, admission and HTTP                    |
 | `apps/client`       | PlayCanvas world and React / React Aria HUD                                            |
+
+See the [base-world mechanics](docs/worlds/base/README.md) for authored rules and their separation from the engine.
 
 ## Explore the project
 

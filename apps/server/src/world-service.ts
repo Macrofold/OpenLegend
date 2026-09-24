@@ -1,3 +1,4 @@
+import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { inventoryFor, projectStatusEffects } from '@open-legend/domain';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
@@ -84,6 +85,8 @@ export const commandInputSchema = z
   .object({
     type: z.enum([
       'conversation',
+      'pickup',
+      'drop',
       'move',
       'gather',
       'prepare',
@@ -119,7 +122,7 @@ export const commandInputSchema = z
       })
       .strict()
       .optional(),
-    quantity: z.number().int().min(1).max(20).optional(),
+    quantity: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
     preparation: z.enum(['fiber', 'cord']).optional(),
   })
   .strict();
@@ -891,6 +894,10 @@ export class WorldService {
     return this.godTransition((world) => applyBodyEffects(world, id, effects, expected));
   }
 
+  async createItem(request: GodItemRequest): Promise<ApiResult> {
+    return this.godTransition((world) => createGodItem(world, request));
+  }
+
   async spawn(draft: GodSpawnDraft): Promise<ApiResult> {
     return await this.godTransition((world) => spawnWorldEntity(world, draft));
   }
@@ -1309,6 +1316,20 @@ export class WorldService {
           operation: input.effectOperation,
         };
         break;
+      case 'pickup':
+        if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a pile.' };
+        command = {
+          ...envelope,
+          type: 'pickup',
+          targetId: input.targetId,
+          ...(input.itemId ? { itemId: input.itemId } : {}),
+        };
+        break;
+      case 'drop':
+        if (!input.itemId || input.quantity === undefined)
+          return { ok: false, code: 'item', message: 'Choose an item and quantity.' };
+        command = { ...envelope, type: 'drop', itemId: input.itemId, quantity: input.quantity };
+        break;
       case 'gather':
       case 'harvest':
         if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a target.' };
@@ -1386,7 +1407,7 @@ export class WorldService {
     }
     if (preview) {
       if (this.paused) return { ok: false, code: 'paused', message: 'Resume the world to act.' };
-      const { outcome } = executeCommand(this.world, command);
+      const { outcome } = executeCommand(this.world, command, { preview: true });
       return { ok: outcome.ok, code: outcome.code, message: outcome.message };
     }
     return this.transition((world) => executeCommand(world, command), gameplay);

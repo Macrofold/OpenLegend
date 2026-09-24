@@ -1,6 +1,6 @@
 # Sleep and waking
 
-Sleep is authored default-world content in [status-effects.yaml](../packages/domain/config/status-effects.yaml), executed by the generic [status-effect runtime](status-effects.md). It is not an engine state, flag, scheduler or renderer special case. This document owns the default mechanic; the runtime document owns configuration, operations, targets and admission.
+Sleep is authored default-world content in [status-effects.yaml](../../../packages/domain/src/worlds/base/config/status-effects.yaml), executed by the generic [status-effect runtime](../../status-effects.md). It is not an engine state, flag, scheduler or renderer special case. This document owns the default mechanic; the runtime document owns configuration, operations, targets and admission.
 
 ## Configuration
 
@@ -22,8 +22,8 @@ The definition emits exactly **“{subject.name} fell asleep.”** and **“{sub
 
 ## Interaction and pending replies
 
-**Wake Up** ends one's own effect. The same action may target another perceived entity within physical reach; approaching remains separate. The default permits waking others but not forcing them to sleep. Ordinary speech does not automatically wake a recipient. Sleep interrupts current work; speech restriction cancels pending replies and rejects late speech at admission. An already-committed response remains legitimate. See the [generic capability and narration contract](status-effects.md#capabilities-and-presentation).
+**Wake Up** ends one's own effect. The same action may target another perceived entity within physical reach; approaching remains separate. The default permits waking others but not forcing them to sleep. Ordinary speech does not automatically wake a recipient. Sleep interrupts current work; speech restriction cancels pending replies and rejects late speech at admission. An already-committed response remains legitimate. See the [generic capability and narration contract](../../status-effects.md#capabilities-and-presentation).
 
 ## Persistence and presentation
 
-The generic registry and entity instances are saved with the world, following the [active development policy](save-and-load.md#active-development-policy). Public projections carry generic labels/pose/particle data. Dreams are optional cognition work: [memory architecture](memory-architecture.md#9-sleep-dreams-forgetting-and-consolidation) owns their configured effect-episode requirement. Native recovery never waits for provider credentials, paid work or dream completion.
+The generic registry and entity instances are saved with the world, following the [active development policy](../../save-and-load.md#active-development-policy). Public projections carry generic labels/pose/particle data. Dreams are optional cognition work: [memory architecture](../../memory-architecture.md#9-sleep-dreams-forgetting-and-consolidation) owns their configured effect-episode requirement. Native recovery never waits for provider credentials, paid work or dream completion.

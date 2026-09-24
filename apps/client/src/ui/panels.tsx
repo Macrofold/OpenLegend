@@ -54,14 +54,17 @@ export function Traits({ traits }: { traits: EntityView['traits'] }) {
   );
 }
 export function Inventory({
+  addItem,
   view,
   command,
   connected,
 }: {
   view: GameView;
+  addItem(): void;
   command(a: ActionOption): void;
   connected: boolean;
 }) {
+  const [dropQuantity, setDropQuantity] = useState(1);
   const [query, setQuery] = useState(''),
     [selected, setSelected] = useState<string | null>(null);
   const item = view.player.inventory.find((i) => i.id === selected);
@@ -72,11 +75,19 @@ export function Inventory({
       meta={i.equipped ? 'Equipped' : i.category}
       count={i.quantity}
       icon={symbol(i.definitionId)}
-      onPress={() => setSelected(i.id)}
+      onPress={() => {
+        setSelected(i.id);
+        setDropQuantity(i.quantity);
+      }}
     />
   );
   return (
     <>
+      {view.godMode && (
+        <Button size="sm" variant="quiet" icon="ui.plus" onPress={addItem} disabled={!connected}>
+          God mode · Add item
+        </Button>
+      )}
       <input
         type="search"
         aria-label="Search inventory"
@@ -98,7 +109,36 @@ export function Inventory({
               <Tag key={t}>{t}</Tag>
             ))}
           </div>
-          <Actions actions={item.actions} command={command} connected={connected} />
+          {item.actions.some((action) => action.command.type === 'drop') && (
+            <label className="ol-drop-quantity">
+              Drop quantity{' '}
+              <input
+                type="number"
+                min={1}
+                max={item.quantity}
+                step={1}
+                value={dropQuantity}
+                onChange={(event) => setDropQuantity(Number(event.target.value))}
+              />
+            </label>
+          )}
+          <Actions
+            actions={item.actions.map((action) =>
+              action.command.type === 'drop'
+                ? {
+                    ...action,
+                    enabled:
+                      action.enabled &&
+                      Number.isSafeInteger(dropQuantity) &&
+                      dropQuantity > 0 &&
+                      dropQuantity <= item.quantity,
+                    command: { ...action.command, quantity: dropQuantity },
+                  }
+                : action,
+            )}
+            command={command}
+            connected={connected}
+          />
         </>
       ) : (
         <>
@@ -212,6 +252,16 @@ export function EntityDetail({
   return (
     <>
       <p className="ol-narrative">{entity.description ?? entity.status}</p>
+      {entity.contents && (
+        <ul>
+          {entity.contents.map((item) => (
+            <li key={item.id}>
+              {item.name} × {item.quantity}
+              {!item.portable ? ' · Not portable' : ''}
+            </li>
+          ))}
+        </ul>
+      )}
       <Tag>{entity.status}</Tag>
       {!!entity.attributes?.length && <Condition attributes={entity.attributes} />}
       {entity.quantity !== undefined && <p>{entity.quantity} available</p>}

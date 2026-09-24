@@ -9,7 +9,6 @@ export interface CognitionPolicy {
   maxImmediateLevel: 2 | 3 | 4;
   significantEventTypes: string[];
   reflection: boolean;
-  cooldownSeconds: number;
 }
 export const DEFAULT_COGNITION_POLICY: CognitionPolicy = {
   dream: { statusEffectId: 'wilderness:restorative-rest', afterSeconds: 7200 },
@@ -18,7 +17,6 @@ export const DEFAULT_COGNITION_POLICY: CognitionPolicy = {
   maxImmediateLevel: 4,
   significantEventTypes: ['death', 'animal-died', 'incapacitated', 'taught'],
   reflection: true,
-  cooldownSeconds: 45,
 };
 export function admitCognitionPolicy(
   input: WorldState,
@@ -34,7 +32,7 @@ export function admitCognitionPolicy(
   const p = proposed as CognitionPolicy;
   if (
     Object.keys(p).sort().join(',') !==
-      'cooldownSeconds,dream,maxImmediateLevel,reflection,revision,significantEventTypes,version' ||
+      'dream,maxImmediateLevel,reflection,revision,significantEventTypes,version' ||
     !p.dream ||
     Object.keys(p.dream).sort().join() !== 'afterSeconds,statusEffectId' ||
     !input.statusEffectPolicy.definitions.some((d) => d.id === p.dream.statusEffectId) ||
@@ -45,9 +43,6 @@ export function admitCognitionPolicy(
     (input.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).revision !== expectedRevision ||
     ![2, 3, 4].includes(p.maxImmediateLevel) ||
     typeof p.reflection !== 'boolean' ||
-    !Number.isFinite(p.cooldownSeconds) ||
-    p.cooldownSeconds < 15 ||
-    p.cooldownSeconds > 3600 ||
     !Array.isArray(p.significantEventTypes) ||
     p.significantEventTypes.length > 16 ||
     p.significantEventTypes.some((t) => typeof t !== 'string' || !/^[a-z-]{1,64}$/.test(t))

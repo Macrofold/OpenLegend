@@ -141,7 +141,7 @@ Coordinate EWF05 sense evidence through [EWF](extensible-world-foundation.md); e
 - [ ] Make dirty-state acknowledgement generation-aware: a wakeup arriving while processing must remain pending after that run finishes. A stale run cannot clear newer dirty reasons.
 - [ ] Hold paid wakeups until their required input evidence is durably available. Reuse after-commit signaling and startup reconciliation; do not add a new broker.
 
-**Tests:** idle steady world produces no repeated visibility/history scans beyond explicitly due work; unrelated actor changes stay scoped; cooldown defers but does not lose an event; new wake during completion is not lost; commit-before-notification crash recovers; uncommitted rollback schedules no paid work; explicit speech has one admitted response; no model credentials never block native work.
+**Tests:** idle steady world produces no repeated visibility/history scans beyond explicitly due work; unrelated actor changes stay scoped; new autonomous evidence is eligible without an actor cooldown; new wake during completion is not lost; commit-before-notification crash recovers; uncommitted rollback schedules no paid work; explicit speech has one admitted response; no model credentials never block native work.
 
 **Exit:** expensive trigger discovery follows meaningful changes and deadlines rather than UI telemetry, all actors, and retained experience collections on every poll.
 

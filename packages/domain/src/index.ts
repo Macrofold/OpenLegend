@@ -1,4 +1,6 @@
 export * from './types.js';
+export * from './item-handling.js';
+export { BASE_ITEM_HANDLING } from './worlds/base/item-handling.js';
 export {
   canSee,
   canHear,
@@ -58,7 +60,7 @@ export * from './mind.js';
 
 export * from './experience.js';
 export * from './status-effects.js';
-export { DEFAULT_STATUS_EFFECT_POLICY } from './default-status-effects.js';
+export { DEFAULT_STATUS_EFFECT_POLICY } from './worlds/base/status-effects.js';
 export * from './cognition-policy.js';
 export * from './commitments.js';
 export * from './response.js';
@@ -77,7 +79,7 @@ export * from './identity.js';
 export * from './story-selection.js';
 
 export * from './world-modules.js';
-export * from './wilderness-needs.js';
+export * from './worlds/base/needs.js';
 export * from './world-presets.js';
 export { admitAttributeDeclaration, type AttributeDeclarationRequest } from './declarations.js';
 export { editActorAttributes, type AttributeEditRequest } from './god-tools.js';
@@ -102,3 +104,6 @@ export * from './spatial-mutations.js';
 export { NATIVE_STRIKES, strikeDefinition, type StrikeDefinition } from './strikes.js';
 
 export { isConversationEvent } from './events.js';
+
+export * from './knowledge.js';
+export * from './worlds/base/knowledge.js';

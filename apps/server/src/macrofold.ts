@@ -583,6 +583,8 @@ export class MacrofoldBackend implements AiClient {
     AiResult<{
       thoughts: string[];
       goalChanges: import('@open-legend/domain').GoalChange[];
+      knowledgeChanges: import('@open-legend/domain').KnowledgeEdit[];
+      nameChanges: import('@open-legend/domain').GivenNameEdit[];
       files: import('@open-legend/domain').InnerWorld['files'];
       revision: string;
     }>
@@ -627,6 +629,8 @@ export class MacrofoldBackend implements AiClient {
       const value = validateMacrofoldValue<{
         thoughts: string[];
         goalChanges: import('@open-legend/domain').GoalChange[];
+      knowledgeChanges: import('@open-legend/domain').KnowledgeEdit[];
+      nameChanges: import('@open-legend/domain').GivenNameEdit[];
       }>(request.schema, JSON.parse(output));
       const exported = await adapter.export(workspace.worktreeId, signal);
       return { outcome: 'value', value: { ...value, ...exported }, receipt };

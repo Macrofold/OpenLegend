@@ -62,6 +62,8 @@ function responseParts(calls: IntelligenceCall[]): { label: string; text: string
         ['act', 'Action'],
         ['goal', 'Goal'],
         ['plan', 'Plan'],
+        ['note', 'Knowledge edit'],
+        ['name', 'Given name'],
       ]) {
         const part = record(op?.[key!]);
         if (part)
@@ -81,6 +83,7 @@ function responseParts(calls: IntelligenceCall[]): { label: string; text: string
                   }`
                 : undefined) ??
                 part['text'] ??
+                part['givenName'] ??
                 part['description'] ??
                 part['objective'] ??
                 part['verb'] ??
@@ -118,6 +121,21 @@ function failureMessage(call: IntelligenceCall): string | undefined {
 function normalizeRoot(call: IntelligenceCall): IntelligenceCall {
   const input = record(call.input);
   const output = record(call.output);
+  // A finished scheduler check is not an executed cognition stage.
+  // docs/memory-architecture.md#god-mode-cognition-debugger
+  if (
+    call.kind === 'Semantic trigger' &&
+    call.route === 'level0' &&
+    (call.disposition === 'native' || call.disposition === 'skipped')
+  ) {
+    const reason = typeof input?.['reason'] === 'string' ? input['reason'] : call.trigger;
+    return {
+      ...call,
+      triggerType: `Cognition skipped${reason ? ` · ${reason}` : ''}`,
+      trigger: reason ?? 'Native protection prevented cognition.',
+      disposition: 'skipped',
+    };
+  }
   if (call.kind.toLowerCase().includes('world agent')) {
     const rejected = output?.['ok'] === false;
     return {

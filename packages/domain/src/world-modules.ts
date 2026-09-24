@@ -1,13 +1,16 @@
+import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
+export { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 import { validateStatusEffects } from './status-effect-validation.js';
 import { activeStatusEffects } from './status-capabilities.js';
 import { strikeDefinition } from './strikes.js';
 import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
+import { validateItemHandling } from './item-handling.js';
 import { validateGatheringTools } from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
 import { validateAgency } from './agency.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
-import { hasWildernessNeeds } from './wilderness-needs.js';
+import { hasWildernessNeeds } from './worlds/base/needs.js';
 import type { ActorComponent, Entity, WorldState, WorldEvent } from './types.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
 
@@ -105,38 +108,6 @@ export const HOST_IMPLEMENTATIONS = Object.freeze({
     storage: 'attributes',
   },
 } as const);
-export const DEFAULT_ATTRIBUTES: AttributeDefinition[] = [
-  {
-    id: 'wilderness:health',
-    version: 1,
-    implementation: 'native-health-v1',
-    name: 'Health',
-    disclosure: 'owner',
-    presentation: 'health',
-    schema: { kind: 'number', min: 0, max: 100, initial: 100, unit: '%' },
-    concern: { below: 40, text: 'I am seriously injured.' },
-  },
-  {
-    id: 'wilderness:fullness',
-    version: 1,
-    implementation: 'native-fullness-v1',
-    name: 'Food',
-    disclosure: 'owner',
-    presentation: 'food',
-    schema: { kind: 'number', min: 0, max: 100, initial: 100, unit: '%' },
-    concern: { below: 30, text: 'I am very hungry.' },
-  },
-  {
-    id: 'wilderness:energy',
-    version: 1,
-    implementation: 'native-energy-v1',
-    name: 'Energy',
-    disclosure: 'owner',
-    presentation: 'energy',
-    schema: { kind: 'number', min: 0, max: 100, initial: 85, unit: '%' },
-    concern: { below: 25, text: 'I am exhausted.' },
-  },
-];
 export function definitionPin(definition: AttributeDefinition | SenseDefinition): DefinitionPin {
   return {
     id: definition.id,
@@ -516,6 +487,7 @@ export function validateWorldModules(world: WorldState): void {
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
   validateGatheringTools(world);
+  validateItemHandling(world);
   for (const recipe of Object.values(world.recipes)) {
     const authority = recipe.provenance?.authority;
     if (

@@ -1,7 +1,7 @@
-import type { ActorComponent, Entity } from './types.js';
+import type { ActorComponent, Entity } from '../../types.js';
 
-// Separate thresholds remain native policy. Do not merge seeking, eating, sleep
-// and cognitive urgency: archive/07-technical-architecture/world-module-runtime.md#42-default-physiology-as-a-module.
+// Base-world seeking, eating, sleep and cognitive concern use distinct thresholds.
+// docs/worlds/base/survival.md
 export const WILDERNESS_NEEDS = {
   fullnessPerSecond: 0.003,
   starvationDamagePerSecond: 0.009,

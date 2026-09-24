@@ -146,7 +146,7 @@ The September 23 review replaces the conflicting deferred-evidence cursor requir
 
 ## Actor sleep policy
 
-The owner replaced the eight-hour daily rest quota, split-rest credit, sleep debt and fifteen-minute onset with scheduled energy thresholds, immediate voluntary sleep and full-energy waking. Physical policy now belongs to `docs/sleep.md`; memory architecture retains dream content/admission. Development format 10 rejects old sleep accounting without a migration.
+The owner replaced the eight-hour daily rest quota, split-rest credit, sleep debt and fifteen-minute onset with scheduled energy thresholds, immediate voluntary sleep and full-energy waking. Physical policy now belongs to `docs/worlds/base/sleep.md`; memory architecture retains dream content/admission. Development format 10 rejects old sleep accounting without a migration.
 
 ## Conversation snapshot and duplicate speech-trigger correction
 
@@ -154,6 +154,12 @@ The September 23 trace review found an autonomous opportunity presenting an alre
 
 ## Generic status-effect ownership
 
-The sleep-specific numeric policy, actor rest flag and named renderer checks were superseded by an entity-scoped status-effect registry. `docs/status-effects.md` owns generic schema, targets, operations, transitions and capability consumers; `docs/sleep.md` retains only the authored default mechanic. Anytime automatic activation changed from energy below 20 to energy at or below zero; player automatic activation remains excluded. Dream eligibility moved to cognition policy. Narration uses “fell asleep” and “woke up.” Deferred validation replaced obsolete policy/command cases without claiming automated acceptance.
+The sleep-specific numeric policy, actor rest flag and named renderer checks were superseded by an entity-scoped status-effect registry. `docs/status-effects.md` owns generic schema, targets, operations, transitions and capability consumers; `docs/worlds/base/sleep.md` retains only the authored default mechanic. Anytime automatic activation changed from energy below 20 to energy at or below zero; player automatic activation remains excluded. Dream eligibility moved to cognition policy. Narration uses “fell asleep” and “woke up.” Deferred validation replaced obsolete policy/command cases without claiming automated acceptance.
 
 - Replaced the global autonomous-thought interval with per-actor cognition-policy pacing; removed the `NPC_THOUGHT_INTERVAL_SECONDS` example setting. Defined named/generic recall and speech intent versus delivery in their canonical owners. Personal aliases remain unimplemented.
+
+## Base-world ownership
+
+Moved the sleep specification to `docs/worlds/base/sleep.md` and repaired inbound references. Added the base-world mechanics index, item/ground-pile specification, survival/combat ownership and BW delivery tracker. Moved authored defaults/configuration under `packages/domain/src/worlds/base/`; generic runtime contracts remain with their existing owners. AGENTS.md requires this separation for subsequent work.
+
+- Removed the implementation-chosen 256-summary quota from the consolidation contract and snapshot. Memory retention no longer constrains semantic grouping by remaining slots; request-size limits and atomic multi-request publication have separate ownership in the memory design and runtime snapshot.

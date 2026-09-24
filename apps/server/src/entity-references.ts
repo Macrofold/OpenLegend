@@ -1,16 +1,17 @@
+import { observerGivenName, recognizesSubject } from '@open-legend/domain';
 import type { ActorResponse, Entity, WorldState } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 
-const cache = new WeakMap<WorldState['entities'], Map<string, string>>();
+const cache = new WeakMap<WorldState, Map<string, Map<string, string>>>();
 
 /** Opaque presentation references are not domain identities or authority.
  * docs/memory-architecture.md#metadata-stays-in-the-server-binding
  */
-export function entityHandles(world: WorldState): Map<string, string> {
-  const cached = cache.get(world.entities);
+export function entityHandles(world: WorldState, observerId = world.identity?.controlledEntityId ?? ''): Map<string, string> {
+  const cached = cache.get(world)?.get(observerId);
   if (cached) return cached;
   const hashes = Object.keys(world.entities).map(
-    (id) => [id, createHash('sha256').update(id).digest('hex')] as const,
+    (id) => [id, createHash('sha256').update(`${observerId}:${id}:${world.perceptionEpisodes?.[observerId]?.[id] ?? (recognizesSubject(world, observerId, id) ? 'known' : world.sequence)}`).digest('hex')] as const,
   );
   const groups = new Map<string, typeof hashes>();
   for (const entry of hashes) {
@@ -27,7 +28,8 @@ export function entityHandles(world: WorldState): Map<string, string> {
     }
     for (const [id, hash] of group) handles.set(id, hash.slice(0, length));
   }
-  cache.set(world.entities, handles);
+  const observers = cache.get(world) ?? new Map<string, Map<string, string>>();
+  observers.set(observerId, handles); cache.set(world, observers);
   return handles;
 }
 
@@ -50,19 +52,19 @@ export function entityDisplayName(entity: Entity, recognized = true): string {
   return recognized && !generic ? entity.name : `${/^[aeiou]/i.test(noun) ? 'an' : 'a'} ${noun}`;
 }
 
-export function entityLabel(world: WorldState, entity: Entity, recognized = true): string {
-  return `${entityDisplayName(entity, recognized)} (ID:${entityHandles(world).get(entity.id)!})`;
+export function entityLabel(world: WorldState, entity: Entity, observerId: string): string {
+  const givenName = observerGivenName(world, observerId, entity.id);
+  const label = givenName ?? (entity.actor ? entityDisplayName(entity, false) : entity.name);
+  return `${label} (ID:${entityHandles(world, observerId).get(entity.id)!})`;
 }
 
-export function entityReferenceMap(world: WorldState, ids: string[]): Record<string, string> {
-  const handles = entityHandles(world);
-  return Object.fromEntries(
-    ids.map((id) => {
-      const handle = handles.get(id);
-      if (!handle) throw new Error('Referenced entity is unavailable.');
-      return [handle, id];
-    }),
-  );
+export function entityReferenceMap(world: WorldState, ids: string[], observerId: string): Record<string, string> {
+  const handles = entityHandles(world, observerId);
+  return Object.fromEntries(ids.map(id => {
+    const handle = handles.get(id);
+    if (!handle) throw new Error('Referenced entity is unavailable.');
+    return [handle, id];
+  }));
 }
 
 export function resolveEntityMarkers(text: string, references: Record<string, string>): string {
@@ -74,10 +76,10 @@ export function resolveEntityMarkers(text: string, references: Record<string, st
 }
 
 /** Persist full identities in intentions, then reproject annotations in a later context. */
-export function projectEntityMarkers(text: string, world: WorldState): string {
-  const handles = entityHandles(world);
+export function projectEntityMarkers(text: string, world: WorldState, observerId: string): string {
+  const handles = entityHandles(world, observerId);
   return text.replace(/\(ID:([^()\s]+)\)/g, (original, id: string) =>
-    handles.has(id) ? `(ID:${handles.get(id)})` : original,
+    handles.has(id) ? recognizesSubject(world, observerId, id) ? `(ID:${handles.get(id)})` : '(unrecognized identity)' : original,
   );
 }
 
@@ -94,6 +96,8 @@ export function resolveResponseEntities(
   return {
     operations: response.operations.map((op) => ({
       ...op,
+      ...(op.note ? {note: {...op.note, subjectId: op.note.subjectId ? resolve(op.note.subjectId) : null, text: resolveEntityMarkers(op.note.text, references)}} : {}),
+      ...(op.name ? {name: {...op.name, subjectId: resolve(op.name.subjectId)}} : {}),
       talk: op.talk ? { ...op.talk, addresseeEntityId: resolve(op.talk.addresseeEntityId) } : null,
       act: op.act
         ? {

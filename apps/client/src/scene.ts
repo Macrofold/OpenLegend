@@ -1,3 +1,4 @@
+import { itemPileArt } from './art';
 import * as pc from 'playcanvas';
 import { StatusIndicators } from './status-indicators';
 import type { EntityView, GameView, SurfacePoint } from '@open-legend/protocol';
@@ -239,7 +240,12 @@ export class WildernessScene implements WorldRenderer {
       }
     for (const entity of entities) {
       let entry = this.actors.get(entity.id);
-      const signature = `${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.status === 'Dead'}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      const signature = `${
+        entity.contents
+          ?.slice(0, 12)
+          .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
+          .join('|') ?? ''
+      }:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.status === 'Dead'}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
       if (entry && entry.root.tags.list()[0] !== signature) {
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
@@ -558,63 +564,78 @@ export class WildernessScene implements WorldRenderer {
     const deer = view.subtype === 'deer',
       bird = view.subtype === 'bird',
       crate = view.appearance === 'crate-mesh';
-    const key = crate
-      ? 'crate-mesh'
-      : view.kind === 'actor'
-        ? `person:${view.id !== game.player.id}:${equipped}:${dead}`
-        : view.kind === 'animal' || view.kind === 'remains'
-          ? `animal:${view.subtype}:${dead}`
-          : view.kind === 'station'
-            ? 'fire'
-            : `resource:${view.subtype}:${view.id}`;
-    let width = crate
-      ? 1
-      : view.kind === 'actor'
-        ? 1.05
-        : deer
-          ? 2.3
-          : bird
-            ? 1.3
+    const key =
+      view.kind === 'item-pile'
+        ? `pile:${view.contents
+            ?.slice(0, 12)
+            .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
+            .join('|')}`
+        : crate
+          ? 'crate-mesh'
+          : view.kind === 'actor'
+            ? `person:${view.id !== game.player.id}:${equipped}:${dead}`
             : view.kind === 'animal' || view.kind === 'remains'
-              ? 1.25
+              ? `animal:${view.subtype}:${dead}`
               : view.kind === 'station'
-                ? 1.5
-                : 1.9;
-    let height = crate
-      ? 0.8
-      : view.kind === 'actor'
-        ? 2.1
-        : deer
-          ? 1.9
-          : bird
-            ? 1
-            : view.kind === 'animal' || view.kind === 'remains'
-              ? 1.05
-              : view.kind === 'station'
-                ? 1.65
-                : 1.6;
+                ? 'fire'
+                : `resource:${view.subtype}:${view.id}`;
+    let width =
+      view.kind === 'item-pile'
+        ? 1
+        : crate
+          ? 1
+          : view.kind === 'actor'
+            ? 1.05
+            : deer
+              ? 2.3
+              : bird
+                ? 1.3
+                : view.kind === 'animal' || view.kind === 'remains'
+                  ? 1.25
+                  : view.kind === 'station'
+                    ? 1.5
+                    : 1.9;
+    let height =
+      view.kind === 'item-pile'
+        ? 0.55
+        : crate
+          ? 0.8
+          : view.kind === 'actor'
+            ? 2.1
+            : deer
+              ? 1.9
+              : bird
+                ? 1
+                : view.kind === 'animal' || view.kind === 'remains'
+                  ? 1.05
+                  : view.kind === 'station'
+                    ? 1.65
+                    : 1.6;
     let asset = this.appearanceAssets.get(key);
     if (!asset) {
-      const images = crate
-        ? []
-        : view.kind === 'actor'
-          ? [0, 1, 2, 3, 4, 5].map((frame) =>
-              personArt(view.id !== game.player.id, frame, equipped),
-            )
-          : view.kind === 'animal' || view.kind === 'remains'
-            ? [0, 1, 2].map((frame) =>
-                bird
-                  ? birdArt(frame, dead)
-                  : animalArt(deer, frame === 1 ? 2 : frame === 2 ? -2 : 0, dead),
-              )
-            : view.kind === 'station'
-              ? [0, 1, 2].map(fireArt)
-              : [
-                  resourceArt(
-                    view.subtype + view.name,
-                    view.id.split('').reduce((sum, letter) => sum + letter.charCodeAt(0), 0),
-                  ),
-                ];
+      const images =
+        view.kind === 'item-pile'
+          ? [itemPileArt(view.contents ?? [])]
+          : crate
+            ? []
+            : view.kind === 'actor'
+              ? [0, 1, 2, 3, 4, 5].map((frame) =>
+                  personArt(view.id !== game.player.id, frame, equipped),
+                )
+              : view.kind === 'animal' || view.kind === 'remains'
+                ? [0, 1, 2].map((frame) =>
+                    bird
+                      ? birdArt(frame, dead)
+                      : animalArt(deer, frame === 1 ? 2 : frame === 2 ? -2 : 0, dead),
+                  )
+                : view.kind === 'station'
+                  ? [0, 1, 2].map(fireArt)
+                  : [
+                      resourceArt(
+                        view.subtype + view.name,
+                        view.id.split('').reduce((sum, letter) => sum + letter.charCodeAt(0), 0),
+                      ),
+                    ];
       const materials = crate
         ? [this.material('#a17a4d'), this.material('#564631')]
         : images.map((source) => this.material('#ffffff', source, true, true));

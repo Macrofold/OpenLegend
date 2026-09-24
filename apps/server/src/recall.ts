@@ -1,7 +1,8 @@
+import { subjectKnowledgeCandidates } from './knowledge-context.js';
+import { recognizesSubject, observerGivenName } from '@open-legend/domain';
 import {
   entityHandles,
   projectEntityMarkers,
-  hasIndividualName,
   entityDisplayName,
 } from './entity-references.js';
 import {
@@ -67,6 +68,7 @@ export function gameTime(at: number): string {
 function memoryCandidate(
   memory: MemoryRecord,
   world: WorldState,
+  actorId: string,
   requiredIds: Set<string>,
   automaticIds: Set<string>,
   conversationIds: Set<string>,
@@ -77,7 +79,7 @@ function memoryCandidate(
     ids.has(memory.id) || (memory.eventId ? ids.has(memory.eventId) : false);
   const summary = memory.summary.replace(/\(ID:([^()\s]+)\)/g, (marker, id: string) => {
     const entity = world.entities[id];
-    return entity?.actor && !hasIndividualName(entity) ? entityDisplayName(entity) : marker;
+    return entity?.actor && !observerGivenName(world, actorId, entity.id) ? entityDisplayName(entity) : marker;
   });
   return {
     id: memory.id,
@@ -91,7 +93,7 @@ function memoryCandidate(
       correctedIds.has(memory.id),
     automatic: matches(automaticIds),
     entityIds: memory.entityIds.filter(
-      (id) => !world.entities[id]?.actor || hasIndividualName(world.entities[id]!),
+      (id) => !world.entities[id]?.actor || !!observerGivenName(world, actorId, id),
     ),
     at: memory.at,
     salience: memory.importance,
@@ -110,6 +112,7 @@ function speechCandidates(world: WorldState, actorId: string): AttentionCandidat
     memoryCandidate(
       memory,
       world,
+      actorId,
       new Set(),
       new Set(),
       ids,
@@ -149,6 +152,7 @@ export function candidateSet(
     memoryCandidate(
       memory,
       world,
+      actorId,
       requiredIdSet,
       automaticIdSet,
       conversationIdSet,
@@ -163,7 +167,7 @@ export function candidateSet(
     // The observer's own identity does not prevent grouping encounters with unnamed animals.
     // docs/memory-architecture.md#named-and-generic-memory-subjects
     const namedOther = memory.entityIds.some(
-      (id) => id !== actorId && world.entities[id]?.actor && hasIndividualName(world.entities[id]!),
+      (id) => id !== actorId && world.entities[id]?.actor && !!observerGivenName(world, actorId, id),
     );
     if (memory.required || memory.automatic || namedOther) {
       candidates.push(memory);
@@ -192,9 +196,9 @@ export function candidateSet(
   }
   for (const memory of candidates) {
     memory.embeddingText = memory.text;
-    memory.text = projectEntityMarkers(memory.text, world);
+    memory.text = projectEntityMarkers(memory.text, world, actorId);
     const identities = memory.entityIds.flatMap((id) =>
-      world.entities[id] ? [`(ID:${entityHandles(world).get(id)})`] : [],
+      world.entities[id] ? [`(ID:${entityHandles(world, actorId).get(id)})`] : [],
     );
     if (identities.length) memory.text += ` Referenced entities: ${identities.join('; ')}.`;
   }
@@ -204,8 +208,14 @@ export function candidateSet(
   const definitions = new Map(
     observed.itemDefinitions.map((definition) => [definition.id, definition]),
   );
+  const groundItems = new Map<string, typeof observed.groundItems>();
+  for (const item of observed.groundItems) {
+    const contents = groundItems.get(item.ownerId) ?? [];
+    contents.push(item);
+    groundItems.set(item.ownerId, contents);
+  }
   for (const e of observed.visibleEntities) {
-    const description = perceivedEntityText(e, definitions, world);
+    const description = perceivedEntityText(e, definitions, world, actorId, groundItems.get(e.id));
     const embeddingText = description.replace(/ \(ID:[a-f0-9]+\)/g, '');
     candidates.push({
       id: `entity:${e.id}`,
@@ -286,6 +296,10 @@ export function candidateSet(
       .map((c) => c.id),
   ]);
   for (const candidate of candidates) if (hardIds.has(candidate.id)) candidate.required = true;
+  const involved = new Set(observed.visibleEntities.map(entity => entity.id));
+  for (const candidate of candidates.filter(c => c.required || c.automatic))
+    for (const id of candidate.entityIds) involved.add(id);
+  candidates.push(...subjectKnowledgeCandidates(world, actorId, involved));
   return candidates;
 }
 interface VectorCache {
@@ -474,7 +488,7 @@ export class RecallService {
       .slice(0, 8)
       .join('\n')
       .slice(0, 1600);
-    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world)}\n${cues}`;
+    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world, actorId)}\n${cues}`;
     if (Buffer.byteLength(query) > 8000)
       throw new Error(
         'The complete semantic stimulus exceeds the embedding input allowance; split this opportunity.',
@@ -702,7 +716,7 @@ export class RecallService {
           {
             stimulus,
             ...(cues ? { innerWorldExcerpt: cues } : {}),
-            goal: projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world),
+            goal: projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world, actorId),
             includedContext: {
               ...immediateContext,
               ...contextSections([...automatic, ...mandatory]),
@@ -754,7 +768,7 @@ export class RecallService {
         signals: {
           people,
           stimulus,
-          goal: projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world),
+          goal: projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world, actorId),
           innerWorldExcerpt: cues,
           legacyFacetHints: records
             .filter((r) => ['concern', 'belief'].includes(r.kind))

@@ -7,6 +7,8 @@ export type { SurfacePoint, SpatialLayout };
 export interface CommandInput {
   type:
     | 'conversation'
+    | 'pickup'
+    | 'drop'
     | 'move'
     | 'gather'
     | 'prepare'
@@ -99,11 +101,18 @@ export interface StatusEffectView {
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
 }
 export interface EntityView {
+  contents?: Array<{
+    id: string;
+    definitionId: string;
+    name: string;
+    quantity: number;
+    portable: boolean;
+  }>;
   actionAnimation?: ActionAnimation | null;
   statusEffects?: StatusEffectView[];
   attributes?: AttributeView[];
   id: string;
-  kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station';
+  kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station' | 'item-pile';
   name: string;
   subtype: string;
   position: Position;
@@ -191,7 +200,8 @@ export interface GameView {
   godMode?: boolean;
   godTools?: {
     traits: Array<{ id: string; name: string; description: string }>;
-    spawnOptions: Array<{ id: string; label: string }>;
+    spawnOptions: Array<{ id: string; label: string; category: 'Actors' | 'Environment' }>;
+    itemOptions: Array<{ id: string; label: string; description: string }>;
   };
   schemaVersion: 2;
   revision: number;
@@ -361,6 +371,10 @@ export interface GodWorldEventsEditorView {
 
 /** Private inspection DTO: returned only by the separately authorized god endpoint. */
 export interface GodMindView {
+  worldId?: string;
+  generation?: string;
+  notepads?: {subjectId: string | null; label: string; text: string; revision: number; characters: number; maxCharacters: number}[];
+  identities?: Record<string, {givenName: string; revision: number; encounterId: string | null; authored: boolean}>;
   corrections?: Record<string, string>;
   legacyThoughts?: Array<{
     decisionId: string;

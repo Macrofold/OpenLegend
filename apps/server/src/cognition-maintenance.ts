@@ -1,3 +1,4 @@
+import { resolveResponseEntities } from './entity-references.js';
 import { dreamStatus, dreamPolicy } from '@open-legend/domain';
 import { nativeNeedBelow } from '@open-legend/domain';
 import { timedSync } from './performance.js';
@@ -6,6 +7,8 @@ import {
   consolidationBatch,
   CONSOLIDATION_INSTRUCTIONS,
   type ConsolidationBatch,
+  consolidationRequests,
+  CONSOLIDATION_OUTPUT_TOKENS,
 } from './memory-consolidation.js';
 import { interactiveAllowance } from './cognition-budget.js';
 import { randomUUID } from 'node:crypto';
@@ -24,7 +27,7 @@ import type { WorldService } from './world-service.js';
 import type { MacrofoldBackend } from './macrofold.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import { digest, type JobRecord } from './store.js';
-import { gameTime, type RecallService } from './recall.js';
+import type { RecallService } from './recall.js';
 import { prepareDecision } from './decision-context.js';
 interface ReflectionRequest {
   actorId: string;
@@ -421,88 +424,65 @@ export class CognitionMaintenance {
         }));
         if (batch.routine.length) {
           const positions = new Map(batch.sources.map((source, i) => [source.id, i]));
-          const handles = new Map(batch.routine.map((source, i) => [`s${i}`, source]));
-          const request: GenerateRequest = {
-            requestId: `${job.id}:summary`,
-            actorScope: actorId,
-            execution: 'fast',
-            model: c.macrofoldKey ? c.macrofoldSummaryModel : c.summaryModel,
-            reasoningEffort: 'low',
-            maxOutputTokens: 8192,
-            task: 'memory_consolidation',
-            instructions: CONSOLIDATION_INSTRUCTIONS,
-            context: {
-              mode: batch.mode,
-              memoryOwner: this.service.world.entities[actorId]?.name,
-              maxGroups: batch.maxGroups,
-              protectedSources: Object.fromEntries(
-                batch.protected.map((source) => [
-                  source.id,
-                  {
-                    text: source.summary,
-                    at: gameTime(source.at),
-                    chronologicalPosition: positions.get(source.id),
-                    source: source.source,
-                  },
-                ]),
+          const requests = consolidationRequests(batch, this.service.world.entities[actorId]?.name);
+          for (const [index, { context, handles }] of requests.entries()) {
+            const request: GenerateRequest = {
+              requestId: `${job.id}:summary:${index}`,
+              actorScope: actorId,
+              execution: 'fast',
+              model: c.macrofoldKey ? c.macrofoldSummaryModel : c.summaryModel,
+              reasoningEffort: 'low',
+              maxOutputTokens: CONSOLIDATION_OUTPUT_TOKENS,
+              task: 'memory_consolidation',
+              instructions: CONSOLIDATION_INSTRUCTIONS,
+              context,
+              schema: z.toJSONSchema(summarySchema, { target: 'draft-7' }),
+              signal: controller.signal,
+            };
+            const value = summarySchema.parse(
+              await this.paid(request.requestId, 'openai', () =>
+                this.client.generate<unknown>(request),
               ),
-              sources: Object.fromEntries(
-                [...handles].map(([handle, source]) => [
-                  handle,
-                  {
-                    text: source.summary,
-                    at: gameTime(source.at),
-                    chronologicalPosition: positions.get(source.id),
-                    source: source.source,
-                    existingSummary: source.kind === 'reflection',
-                  },
-                ]),
-              ),
-            },
-            schema: z.toJSONSchema(summarySchema, { target: 'draft-7' }),
-            signal: controller.signal,
-          };
-          const value = summarySchema.parse(
-            await this.paid(request.requestId, 'openai', () =>
-              this.client.generate<unknown>(request),
-            ),
-          );
-          if (!value.feasible || !value.groups.length || value.groups.length > batch.maxGroups)
-            throw new Error('Consolidation cannot safely fit; original memories retained.');
-          const covered = new Set<string>();
-          let previousPosition = -1;
-          for (const group of value.groups) {
-            const groupPositions = group.sourceIds.map((handle) => {
-              const source = handles.get(handle);
-              if (!source || covered.has(handle))
-                throw new Error('Consolidation returned unknown or repeated source handles.');
-              covered.add(handle);
-              return positions.get(source.id)!;
-            });
-            if (
-              groupPositions.some(
-                (position, i) =>
-                  position <= previousPosition ||
-                  (i > 0 && position !== groupPositions[i - 1]! + 1),
-              )
-            )
+            );
+            if (!value.feasible || !value.groups.length)
               throw new Error(
-                'Consolidation changed chronological order or crossed an intervening memory.',
+                'Model declined faithful consolidation or returned no groups; original memories retained.',
               );
-            previousPosition = groupPositions.at(-1)!;
-          }
-          if (covered.size !== handles.size)
-            throw new Error('Consolidation did not cover every routine source exactly once.');
-          groups.push(
-            ...value.groups.map((group) => ({
-              text: group.text,
-              sourceIds: group.sourceIds.map((handle) => {
+            const covered = new Set<string>();
+            let previousPosition = -1;
+            for (const group of value.groups) {
+              const groupPositions = group.sourceIds.map((handle) => {
                 const source = handles.get(handle);
-                if (!source) throw new Error('Unknown consolidation source handle.');
-                return source.id;
-              }),
-            })),
-          );
+                if (!source || covered.has(handle))
+                  throw new Error('Consolidation returned unknown or repeated source handles.');
+                covered.add(handle);
+                return positions.get(source.id)!;
+              });
+              if (
+                groupPositions.some(
+                  (position, i) =>
+                    position <= previousPosition ||
+                    (i > 0 && position !== groupPositions[i - 1]! + 1),
+                )
+              )
+                throw new Error(
+                  'Consolidation changed chronological order or crossed an intervening memory.',
+                );
+              previousPosition = groupPositions.at(-1)!;
+            }
+            if (covered.size !== handles.size)
+              throw new Error('Consolidation did not cover every routine source exactly once.');
+            groups.push(
+              ...value.groups.map((group) => ({
+                text: group.text,
+                sourceIds: group.sourceIds.map((handle) => {
+                  const source = handles.get(handle);
+                  if (!source) throw new Error('Unknown consolidation source handle.');
+                  return source.id;
+                }),
+              })),
+            );
+          }
           groups.sort(
             (a, b) =>
               Math.min(...a.sourceIds.map((id) => positions.get(id)!)) -
@@ -565,7 +545,7 @@ export class CognitionMaintenance {
         actorScope: actorId,
         execution: 'full',
         task: 'background_reflection',
-        instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted files in mind/*.md. Edit those files directly; flexible names, at most ten files, each at most 500 whitespace words including its name and 8000 UTF-8 bytes. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Do not echo file contents or patches.`,
+        instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Identity files are read-only. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. General knowledge allows 5000 Unicode code points; subject notepads allow 1000 each. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Do not echo identity file contents.`,
         context: prepared.context,
         schema: z.toJSONSchema(reflectionSchema, { target: 'draft-7' }),
         signal: controller.signal,
@@ -577,7 +557,11 @@ export class CognitionMaintenance {
           async () => await this.macrofold.reflect(request, snapshot.files),
         ),
       );
-      reflectionSchema.parse({ thoughts: value.thoughts, goalChanges: value.goalChanges });
+      reflectionSchema.parse({ thoughts: value.thoughts, goalChanges: value.goalChanges, knowledgeChanges: value.knowledgeChanges, nameChanges: value.nameChanges });
+      const edits = resolveResponseEntities({operations: [
+        ...value.nameChanges.map((name, i) => ({localId: `name${i}`, requiresAccepted: [], talk: null, act: null, think: null, goal: null, plan: null, name})),
+        ...value.knowledgeChanges.map((note, i) => ({localId: `note${i}`, requiresAccepted: [], talk: null, act: null, think: null, goal: null, plan: null, note})),
+      ]}, prepared.entityReferences);
       if (
         obligations !==
         digest((this.service.world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment'))
@@ -601,6 +585,9 @@ export class CognitionMaintenance {
           null,
           0,
           value.goalChanges,
+          edits.operations.flatMap(op => op.note ? [op.note] : []),
+          edits.operations.flatMap(op => op.name ? [op.name] : []),
+          prepared.binding.entityIds,
         ),
       );
       if (!accepted.ok) throw new Error(accepted.message);

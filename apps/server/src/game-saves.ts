@@ -1,5 +1,5 @@
 import { upgradeWorldState } from './upgrade-world.js';
-import { validateWorldModules } from '@open-legend/domain';
+import { validateKnowledge, validateWorldModules } from '@open-legend/domain';
 import { HISTORY_TABLES } from './history.js';
 import { digest, type SavedWorld, type SqlDatabase } from './store.js';
 import type { GameSaveSummary } from '@open-legend/protocol';
@@ -65,6 +65,7 @@ export class GameSaves {
   }
   async capture(state: SavedWorld): Promise<SavePayload> {
     validateWorldModules(state.world);
+    validateKnowledge(state.world);
     const history = {} as SavePayload['history'];
     for (const table of HISTORY_TABLES)
       history[table] = await this.db
@@ -141,6 +142,7 @@ export class GameSaves {
       throw new GameSaveError('Save integrity check failed.');
     upgradeWorldState(payload.state.world);
     validateWorldModules(payload.state.world);
+    validateKnowledge(payload.state.world);
     return payload;
   }
   async delete(worldId: string, id: string) {
@@ -156,6 +158,7 @@ export class GameSaves {
   /** Called inside the world commit. Keep accounting and external operation journals untouched. */
   async install(current: SavedWorld, restore: RestoreSave) {
     validateWorldModules(restore.payload.state.world);
+    validateKnowledge(restore.payload.state.world);
     const before = await this.capture(current);
     await this.delete(current.world.id, 'before-load');
     await this.insert('before-load', 'Before last load', before);

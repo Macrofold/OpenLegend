@@ -1,5 +1,5 @@
 import { dreamStatus, dreamPolicy } from './cognition-policy.js';
-import { nativeNeedBelow } from './wilderness-needs.js';
+import { nativeNeedBelow } from './worlds/base/needs.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import type { Command, MemoryRecord, Transition, WorldState } from './types.js';
@@ -95,6 +95,7 @@ export interface CognitionBinding {
   evidenceIds: string[];
   entityIds: string[];
   expectedPlan: number;
+  entityEpisodes?: Record<string, string>;
   actions: Record<string, Command | null>;
   restEpisode: string | null;
 }

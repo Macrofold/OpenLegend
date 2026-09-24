@@ -1,3 +1,4 @@
+import { observerDescription } from './worlds/base/knowledge.js';
 import { controlledEntityId } from './identity.js';
 import type { WorldState } from './types.js';
 
@@ -19,7 +20,7 @@ export function memoryPerspective(
   if (speech) {
     const separator = text.indexOf(':');
     if (separator < 0) return text;
-    const speaker = named(text.slice(0, separator));
+    const speaker = sourceEntityId && world.entities[sourceEntityId] ? `${observerDescription(world, actorId, sourceEntityId)} said` : 'An unidentified speaker said';
     return `${sourceEntityId === actorId ? 'I said' : speaker}${text.slice(separator)}`;
   }
   // Quoted testimony keeps the speaker's exact words, including names/pronouns.
@@ -29,7 +30,11 @@ export function memoryPerspective(
       if (index % 2) return part;
       let result = named(part);
       // Attribution is evidence, not a name match; unknown legacy subjects stay in third person.
-      if (sourceEntityId !== actorId) return result;
+      if (sourceEntityId !== actorId) {
+        const source = sourceEntityId ? world.entities[sourceEntityId] : undefined;
+        if (index === 0 && source) result = result.replace(new RegExp(`^${escape(source.name)}(?=\\s|[.,:’'])`), observerDescription(world, actorId, source.id));
+        return result;
+      }
       const name = escape(actor.name);
       // Only the leading native subject is known to be the event source.
       // Later occurrences may name a different entity with the same label.

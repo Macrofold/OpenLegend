@@ -569,6 +569,17 @@ export function deferAttempt(
 function isPhysicalCommand(command: Command): boolean {
   if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
   switch (command.type) {
+    case 'pickup':
+      return (
+        isSafeRecordId(command.targetId) &&
+        (command.itemId === undefined || isSafeRecordId(command.itemId))
+      );
+    case 'drop':
+      return (
+        isSafeRecordId(command.itemId) &&
+        Number.isSafeInteger(command.quantity) &&
+        command.quantity > 0
+      );
     case 'move':
       return finitePoint(command.destination) && isSafeRecordId(command.destination.surfaceId);
     case 'gather':

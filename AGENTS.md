@@ -28,6 +28,12 @@ When making substantial changes to game-state management or adding/changing obje
 
 ## Boundaries
 
+### Engine and bundled world separation
+
+Base-world mechanics, balance, named content and behavior specifications belong under `docs/worlds/base/`; authored implementation/configuration belongs under `packages/domain/src/worlds/base/` (including YAML and its generated data). Additional worlds get corresponding world directories. Generic engine contracts, validation, transactions, storage, perception/privacy and trusted executors stay with their existing subsystem owners. Native execution does not make a world rule universal. Put new base-world discussion in its world specification and link to it from engine docs; retain implementation snapshots and evidence in their canonical owners.
+
+Keep one authored source per rule. Reuse engine operations instead of introducing world-specific shortcuts or another action registry. The bundled world is intended to become an ordinary external world package; preserve that seam without building an unused loader. Temporary composition exports may preserve existing consumers but must refer to the single world-owned definition. See [base-world ownership](docs/worlds/base/README.md#code-boundary).
+
 ### Authored-reality design principles
 
 OpenLegend should be an engine for running authored realities, with a strong default reality—not a fixed survival game with an ever-growing collection of mod hooks. Apply [P01–P12 and the boundary decision procedure](docs/engine-and-world-boundaries.md#design-principles-for-every-feature) when designing or substantially changing a subsystem. Preserve protected runtime integrity while treating world laws, physiology, senses, and controller policies as potentially replaceable behavior. Built-in or native code is not automatically a universal world rule.

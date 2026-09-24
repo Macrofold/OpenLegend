@@ -16,6 +16,7 @@ const propertyDescriptions: Record<ItemDefinition['properties'][number], string>
 };
 
 const activities: Record<Action['type'], string | undefined> = {
+  pickup: 'picking up items',
   move: 'moving',
   gather: 'gathering',
   prepare: 'preparing materials',
@@ -36,9 +37,11 @@ export function perceivedEntityText(
   entity: Entity,
   definitions: Map<string, ItemDefinition>,
   world: WorldState,
+  observerId: string,
+  contents: readonly ItemInstance[] = [],
 ) {
   const facts = [
-    `I can see ${entityLabel(world, entity)}.${entity.actor ? ` Species: ${entity.actor.species ?? 'unknown'}.` : ''}`,
+    `I can see ${entityLabel(world, entity, observerId)}.${entity.actor ? ` Species: ${entity.actor.species ?? 'unknown'}.` : ''}`,
   ];
   if (entity.actor && !entity.actor.alive) facts.push('It is dead.');
   else if (entity.actor?.action) {
@@ -53,6 +56,10 @@ export function perceivedEntityText(
       `${entity.resource.quantity} units of ${item?.name ?? 'unidentified material'} remain.`,
     );
   }
+  if (entity.kind === 'item-pile')
+    facts.push(
+      `Contents: ${contents.map((item) => `${item.quantity} × ${definitions.get(item.definitionId)?.name ?? 'unidentified item'}`).join('; ')}.`,
+    );
   if (entity.heat) facts.push(entity.heat.lit ? 'The fire is lit.' : 'The fire is unlit.');
   return facts.join(' ');
 }

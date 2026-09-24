@@ -1,3 +1,4 @@
+import { observerDescription } from '@open-legend/domain';
 import { resolveResponseEntities, resolveEntityMarkers } from './entity-references.js';
 import { capabilityBlocked } from '@open-legend/domain';
 import { searchInventions } from './invention-search.js';
@@ -1361,7 +1362,7 @@ export class AiDirector {
     const reply = schema.parse(value);
     // Authoring metadata must not invalidate the strict native response envelope.
     // docs/architecture.md#shared-invention-workflow
-    let nativeReply = { operations: reply.operations };
+    let nativeReply: import('@open-legend/domain').ActorResponse = { operations: reply.operations };
     const proposedInvention =
       actorInvention.enabled && 'invention' in reply
         ? actorInvention.schema.parse(reply.invention)
@@ -1438,6 +1439,8 @@ export class AiDirector {
             prepared.binding.entityIds,
             prepared.binding.expectedPlan,
             attemptBindings,
+            prepared.binding.entityEpisodes,
+            prepared.binding.evidenceIds,
           );
         },
         undefined,
@@ -1637,10 +1640,6 @@ export class AiDirector {
         if (!actor.alive || actor.incapacitated) continue;
         const key = `semantic-schedule:${world.id}:${entity.id}`;
         const last = scheduled.get(entity.id);
-        if (last && this.now() - last.at < policy.cooldownSeconds * 1000) {
-          this.thoughtWork.defer(entity.id, last.at + policy.cooldownSeconds * 1000);
-          continue;
-        }
         const all = experiences(world, entity.id);
         // Completed direct replies already handled exactly their own speech event, not all
         // intervening awareness. Reuse durable jobs so restart retains this distinction.
@@ -1707,20 +1706,20 @@ export class AiDirector {
             .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
             .map((v) => [v.id, v.concern]),
           mind: world.innerWorlds?.[entity.id]?.revision,
+          knowledge: world.knowledgeRevisions?.[entity.id] ?? 0,
           policy: policy.revision,
         });
         const opportunity = digest({ fingerprint, evidence: latest.map((memory) => memory.id) });
 
         if (
           (last?.fingerprint === fingerprint && !unseen.length) ||
-          last?.attemptedOpportunity === opportunity ||
-          (last && this.now() - last.at < policy.cooldownSeconds * 1000)
+          last?.attemptedOpportunity === opportunity
         )
           continue;
         const sentence = [
           ...latest.map((m) => m.summary),
           ...matches.map(
-            (id) => `I notice ${world.entities[id]!.name}, relevant to my current interest.`,
+            (id) => `I notice ${observerDescription(world, entity.id, id)}, relevant to my current interest.`,
           ),
           `My current goal is ${currentGoal(actor)}.`,
           ...projectAttributes(world, entity, 'owner')
@@ -1740,10 +1739,10 @@ export class AiDirector {
                 latest[0]!.summary,
               )
             : matches.length
-              ? `A nearby interest became relevant: ${world.entities[matches[0]!]!.name}.`
+              ? `A nearby interest became relevant: ${observerDescription(world, entity.id, matches[0]!)}.`
               : 'A goal, surrounding, or internal state changed.';
         const diagnosticTriggerType = urgentNeed
-          ? 'Native survival need'
+          ? `Cognition skipped · ${urgentNeed}`
           : latest.length
             ? 'Autonomous cognition · New experience'
             : matches.length
@@ -1761,7 +1760,7 @@ export class AiDirector {
             triggerType: diagnosticTriggerType,
             startedAt: new Date().toISOString(),
             status: 'completed',
-            disposition: 'native',
+            disposition: 'skipped',
             route: 'level0',
             gameTime: world.simTime,
             input: {
@@ -1828,8 +1827,7 @@ export class AiDirector {
               policy: policy.revision,
               scheduling: {
                 reason:
-                  'Current significant evidence or changed interests/state; actor cooldown elapsed and shared execution slot available.',
-                cooldownSeconds: policy.cooldownSeconds,
+                  'Current significant evidence or changed interests/state; shared execution slot available; no actor cooldown.',
                 priorActorOpportunityAt: last?.at,
                 admittedAt: this.now(),
                 triggerGameTime: latest[0]?.at,
@@ -1861,11 +1859,6 @@ export class AiDirector {
     // This director is the sole schedule writer. Failed writes never update its cache.
     await this.service.store.putIntegration(key, value);
     this.schedules.set(key, value);
-    this.thoughtWork.defer(
-      key.slice(`semantic-schedule:${this.service.world.id}:`.length),
-      value.at +
-        (this.service.world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).cooldownSeconds * 1000,
-    );
   }
   private async think(run: Running): Promise<void> {
     return await this.decide(run, false);

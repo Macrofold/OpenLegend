@@ -1,3 +1,4 @@
+import { generalKnowledgeContext } from './knowledge-context.js';
 import {
   entityLabel,
   entityReferenceMap,
@@ -102,7 +103,7 @@ export async function prepareDecision(
   triggerEvidenceId?: string,
 ) {
   const world = service.world;
-  stimulus = projectEntityMarkers(stimulus, world);
+  stimulus = projectEntityMarkers(stimulus, world, actorId);
   const observed = observeActor(world, actorId);
   if (!observed) throw new Error('Actor unavailable.');
   const awarenessSequence = Math.max(
@@ -154,6 +155,7 @@ export async function prepareDecision(
   const triggerIdSet = new Set(requiredIds);
   const requiredContext: Record<string, unknown> = {
     stimulus,
+    notepad: generalKnowledgeContext(world, actorId),
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId) ?? null,
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     planOffers: planOffers.map(({ id, description }) => ({ id, description })),
@@ -166,18 +168,18 @@ export async function prepareDecision(
       requiredIds,
       socialEntityIds(world, actorId),
     ).references,
-    identity: `I am ${entityLabel(world, observed.actor)}. Species: ${snapshotActor.species ?? 'unknown'}.${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
+    identity: `I am ${entityLabel(world, observed.actor, actorId)}. Species: ${snapshotActor.species ?? 'unknown'}.${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(world, actorId)
       .map(
         (value) =>
-          `I feel ${value.feeling} concerning ${world.entities[value.targetId] ? entityLabel(world, world.entities[value.targetId]!) : 'an unknown cause'}.`,
+          `I feel ${value.feeling} concerning ${world.entities[value.targetId] ? entityLabel(world, world.entities[value.targetId]!, actorId) : 'an unknown cause'}.`,
       )
       .join(' '),
     kinship: Object.values(world.kinships ?? {})
       .filter((value) => [value.firstId, value.secondId].includes(actorId))
       .map(
         (value) =>
-          `${world.entities[value.firstId] ? entityLabel(world, world.entities[value.firstId]!) : 'an unknown person'} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${world.entities[value.secondId] ? entityLabel(world, world.entities[value.secondId]!) : 'an unknown person'}.`,
+          `${world.entities[value.firstId] ? entityLabel(world, world.entities[value.firstId]!, actorId) : 'an unknown person'} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${world.entities[value.secondId] ? entityLabel(world, world.entities[value.secondId]!, actorId) : 'an unknown person'}.`,
       )
       .join(' '),
     aboutMe:
@@ -242,6 +244,7 @@ export async function prepareDecision(
       100000 - requiredBytes - actionReserveBytes,
       {
         identity: requiredContext['identity'],
+        notepad: requiredContext['notepad'],
         triggerFacts: requiredContext['triggerFacts'],
         now: requiredContext['now'],
         body: requiredContext['body'],
@@ -299,20 +302,21 @@ export async function prepareDecision(
   );
   const context: Record<string, unknown> = {
     stimulus,
+    notepad: generalKnowledgeContext(currentWorld, actorId),
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId) ?? null,
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
-    identity: `I am ${entityLabel(currentWorld, currentObserved.actor)}. Species: ${actor.species ?? 'unknown'}.${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
+    identity: `I am ${entityLabel(currentWorld, currentObserved.actor, actorId)}. Species: ${actor.species ?? 'unknown'}.${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(currentWorld, actorId)
       .map(
         (value) =>
-          `I feel ${value.feeling} concerning ${currentWorld.entities[value.targetId] ? entityLabel(currentWorld, currentWorld.entities[value.targetId]!) : 'an unknown cause'}.`,
+          `I feel ${value.feeling} concerning ${currentWorld.entities[value.targetId] ? entityLabel(currentWorld, currentWorld.entities[value.targetId]!, actorId) : 'an unknown cause'}.`,
       )
       .join(' '),
     kinship: Object.values(currentWorld.kinships ?? {})
       .filter((value) => [value.firstId, value.secondId].includes(actorId))
       .map(
         (value) =>
-          `${currentWorld.entities[value.firstId] ? entityLabel(currentWorld, currentWorld.entities[value.firstId]!) : 'an unknown person'} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${currentWorld.entities[value.secondId] ? entityLabel(currentWorld, currentWorld.entities[value.secondId]!) : 'an unknown person'}.`,
+          `${currentWorld.entities[value.firstId] ? entityLabel(currentWorld, currentWorld.entities[value.firstId]!, actorId) : 'an unknown person'} is ${value.kind === 'parent' ? 'a parent' : 'a sibling'} of ${currentWorld.entities[value.secondId] ? entityLabel(currentWorld, currentWorld.entities[value.secondId]!, actorId) : 'an unknown person'}.`,
       )
       .join(' '),
     aboutMe:
@@ -353,7 +357,7 @@ export async function prepareDecision(
     requiredIds,
     [
       ...currentSelection
-        .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation')
+        .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation' || candidate.kind === 'knowledge')
         .flatMap((candidate) => candidate.entityIds),
       ...socialEntityIds(currentWorld, actorId),
     ],
@@ -369,7 +373,7 @@ export async function prepareDecision(
   );
   const entityReferences = {
     ...references.entityReferences,
-    ...entityReferenceMap(currentWorld, planningTargetIds),
+    ...entityReferenceMap(currentWorld, planningTargetIds, actorId),
   };
   const binding: CognitionBinding = {
     actorId,
@@ -382,6 +386,10 @@ export async function prepareDecision(
       .filter((c) => c.kind === 'memory' || c.kind === 'conversation')
       .flatMap((c) => c.sourceIds ?? [c.id]),
     entityIds: Object.values(entityReferences),
+    entityEpisodes: Object.fromEntries(Object.values(entityReferences).flatMap(id => {
+      const episode = currentWorld.perceptionEpisodes?.[actorId]?.[id];
+      return episode ? [[id, episode]] : [];
+    })),
     expectedPlan: actor.planGeneration,
     restEpisode: dreamStatus(currentWorld, currentWorld.entities[actorId])?.episode ?? null,
     actions: planActions,
@@ -389,14 +397,14 @@ export async function prepareDecision(
   const offered: { id: string; description: string }[] = [];
   for (const key of Object.keys(context)) {
     const value = context[key];
-    if (typeof value === 'string') context[key] = projectEntityMarkers(value, currentWorld);
+    if (typeof value === 'string') context[key] = projectEntityMarkers(value, currentWorld, actorId);
     else if (value != null)
       context[key] = JSON.parse(
-        projectEntityMarkers(JSON.stringify(value), currentWorld),
+        projectEntityMarkers(JSON.stringify(value), currentWorld, actorId),
         (field, entry) =>
           typeof entry === 'string' &&
           /^(actorId|targetId|sourceId|targetEntityId|addresseeEntityId)$/.test(field)
-            ? (entityHandles(currentWorld).get(entry) ?? entry)
+            ? (entityHandles(currentWorld, actorId).get(entry) ?? entry)
             : entry,
       );
   }
@@ -425,6 +433,7 @@ export async function prepareDecision(
     visibleEntityReferences: entityReferenceMap(
       currentWorld,
       currentObserved.visibleEntities.map((entity) => entity.id),
+      actorId,
     ),
     diagnostics: {
       instructionsVersion: COGNITION_VERSION,

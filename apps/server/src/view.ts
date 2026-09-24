@@ -1,4 +1,5 @@
-import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
+import { dropItemReason, capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
+import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import { isConversationEvent } from '@open-legend/domain';
 import { NATIVE_STRIKES, supportsManualWork } from '@open-legend/domain';
@@ -128,6 +129,22 @@ export async function projectView(
           .filter((recipe) => !!recipe),
     ),
   };
+  const pileContents = memo('pileContents', [world.items, world.itemDefinitions], () => {
+    const byOwner = new Map<string, NonNullable<EntityView['contents']>>();
+    for (const item of Object.values(world.items)) {
+      const definition = world.itemDefinitions[item.definitionId]!;
+      const contents = byOwner.get(item.ownerId) ?? [];
+      contents.push({
+        id: item.id,
+        definitionId: item.definitionId,
+        name: definition.name,
+        quantity: item.quantity,
+        portable: definition.portable === true,
+      });
+      byOwner.set(item.ownerId, contents);
+    }
+    return byOwner;
+  });
   const player = world.entities[service.controlledEntityId]!;
   const actor = player.actor!;
   const quantity = (definitionId: string) =>
@@ -168,6 +185,11 @@ export async function projectView(
       observation.inventory,
       world.itemDefinitions,
       actor.equippedItemId,
+      actor.action,
+      world.itemHandling,
+      player.spatial,
+      player.statusEffects,
+      world.statusEffectPolicy,
       actor.capabilities?.needs,
       active,
       paused,
@@ -176,6 +198,11 @@ export async function projectView(
       observation.inventory.map((item) => {
         const definition = world.itemDefinitions[item.definitionId]!;
         const actions: ActionOption[] = [];
+        if (definition.portable === true) {
+          const command = { type: 'drop' as const, itemId: item.id, quantity: item.quantity };
+          const reason = dropItemReason(world, player, item.id, item.quantity);
+          actions.push(action(`drop-${item.id}`, 'Drop', command, !reason, reason ?? undefined));
+        }
         if (definition.launcher)
           actions.push(action(`equip-${item.id}`, 'Equip', { type: 'equip', itemId: item.id }));
         if (definition.nutrition && hasWildernessNeeds(actor))
@@ -207,7 +234,7 @@ export async function projectView(
                 : 'material',
           description: definition.description,
           equipped: actor.equippedItemId === item.id,
-          tags: [...definition.properties],
+          tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],
           actions,
         };
       }),
@@ -219,6 +246,7 @@ export async function projectView(
         `entity:${entity.id}`,
         [
           entity,
+          entity.kind === 'item-pile' ? pileContents.get(entity.id) : undefined,
           world.itemDefinitions,
           active,
           paused,
@@ -226,6 +254,9 @@ export async function projectView(
           ammunition,
           observation.knownRecipes,
           player.position,
+          player.spatial,
+          world.itemHandling,
+          player.statusEffects,
           world.map,
           actor.attributes,
           world.moduleManifest,
@@ -233,6 +264,14 @@ export async function projectView(
         ],
         () => {
           const actions: ActionOption[] = [];
+          for (const option of pickupActions(world, player, entity, (command) =>
+            service.previewCommand(command),
+          )) {
+            const preview = option.availability;
+            actions.push(
+              action(option.id, option.label, option.command, preview.ok, preview.message),
+            );
+          }
           for (const option of statusEffectActions(world, player, entity)) {
             const preview = service.previewCommand(option.command);
             actions.push(
@@ -332,18 +371,22 @@ export async function projectView(
                   recipeId: recipe.id,
                 }),
               );
-          const kind: EntityView['kind'] = entity.remains
-            ? 'remains'
-            : entity.animal
-              ? 'animal'
-              : entity.actor
-                ? 'actor'
-                : entity.resource
-                  ? 'resource'
-                  : 'station';
+          const kind: EntityView['kind'] =
+            entity.kind === 'item-pile'
+              ? 'item-pile'
+              : entity.remains
+                ? 'remains'
+                : entity.animal
+                  ? 'animal'
+                  : entity.actor
+                    ? 'actor'
+                    : entity.resource
+                      ? 'resource'
+                      : 'station';
           return {
             id: entity.id,
             name: entity.name,
+            ...(entity.kind === 'item-pile' ? { contents: pileContents.get(entity.id) ?? [] } : {}),
             description: describeEntity(entity, world.itemDefinitions),
             ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),
             kind,
@@ -371,6 +414,7 @@ export async function projectView(
                       .join(', ')
                   : entity.actor.action
                     ? ({
+                        pickup: 'Picking up items',
                         move: 'Walking',
                         replenish: 'Replenishing',
                         gather: 'Gathering',
@@ -403,7 +447,9 @@ export async function projectView(
                       : 'Cold'
                     : entity.replenisher
                       ? `${Math.round(entity.replenisher.remaining)} units of supply`
-                      : 'Gatherable',
+                      : entity.kind === 'item-pile'
+                        ? `${pileContents.get(entity.id)?.length ?? 0} item stack${pileContents.get(entity.id)?.length === 1 ? '' : 's'}`
+                        : 'Gatherable',
             ...(entity.resource ? { quantity: entity.resource.quantity } : {}),
             ...(entity.actor
               ? {
@@ -570,6 +616,15 @@ export async function projectView(
           godTools: {
             traits: TRAIT_BANK.map((trait) => ({ ...trait })),
             spawnOptions: GOD_SPAWN_OPTIONS.map((option) => ({ ...option })),
+            itemOptions: memo('god-items', [world.itemDefinitions], () =>
+              Object.values(world.itemDefinitions)
+                .map((definition) => ({
+                  id: definition.id,
+                  label: definition.name,
+                  description: definition.description,
+                }))
+                .sort((a, b) => a.label.localeCompare(b.label)),
+            ),
           },
         }
       : {}),

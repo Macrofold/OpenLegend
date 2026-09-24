@@ -1,3 +1,11 @@
+import { migrateKnowledge } from './knowledge-migration.js';
+import { editKnowledge, advanceKnowledgeRevision, type KnowledgeEdit } from './knowledge.js';
+import {
+  assignGivenName,
+  canRememberSubject,
+  rememberSubject,
+  type GivenNameEdit,
+} from './worlds/base/knowledge.js';
 import { dreamStatus, dreamPolicy } from './cognition-policy.js';
 import { current, isDraft } from 'immer';
 import { changeGoal, type GoalChange } from './agency.js';
@@ -15,7 +23,6 @@ export const EXPERIENCE_LIMITS = {
   conversationSpeech: 512,
   protectedImportance: 8,
   backlog: 8192,
-  summaries: 256,
   summaryBytes: 1200,
   historyDays: 30,
 } as const;
@@ -529,6 +536,7 @@ export function migrateCognition(world: WorldState): void {
       }
     }
   }
+  migrateKnowledge(world);
   // Perspective rewrites are idempotent and retain original event IDs and acquisition metadata.
   if (world.experience.perspectiveVersion === 1) return;
   for (const entity of Object.values(world.entities)) {
@@ -674,7 +682,7 @@ export function acceptConsolidation(
     events: [],
     outcome: outcome(false, 'consolidation-rejected', message),
   });
-  if (!input.experience || !sources.length || !groups.length || groups.length > 256)
+  if (!input.experience || !sources.length || !groups.length)
     return reject('Invalid memory groups.');
   if (input.experience.summaries[actorId]?.some((s) => s.id.startsWith(`${id}:`)))
     return {
@@ -717,9 +725,9 @@ export function acceptConsolidation(
   const world = draftWorld(input);
   const state = world.experience!;
   const previous = new Map((state.summaries[actorId] ?? []).map((s) => [s.id, s]));
+  // Retention is separate from consolidation: distinct memories never compete for summary slots.
+  // docs/memory-architecture.md#retention-corrections-and-protected-commitments
   const retained = [...previous.values()].filter((s) => !used.has(s.id));
-  if (retained.length + groups.length > EXPERIENCE_LIMITS.summaries)
-    return reject('Consolidate routine summaries before adding more distinct memories.');
   const replacements = groups.map((group, i): ExperienceSummary => {
     const entries = group.sourceIds.map((id) => expected.get(id)!);
     const existing = group.sourceIds
@@ -838,6 +846,17 @@ export function invalidateExperience(
       for (const [id, evidence] of Object.entries(corrections))
         if (affected.has(id) || affected.has(evidence)) delete corrections[id];
   }
+  // Privacy invalidation must also reach accepted canvases and observer identity associations.
+  // docs/knowledge.md#privacy-and-correction
+  advanceKnowledgeRevision(world, actorId);
+  if (world.actorKnowledge?.[actorId]) {
+    for (const document of Object.values(world.actorKnowledge[actorId]!)) {
+      document.text = '';
+      document.evidenceIds = [];
+      document.revision++;
+    }
+  }
+  if (forget && world.observerIdentities?.[actorId]) world.observerIdentities[actorId] = {};
   const roots = new Set(sourceIds);
   const summaries = state.summaries[actorId] ?? [];
   const retained = summaries.filter((s) => !affected.has(s.id) || (!forget && roots.has(s.id)));
@@ -873,6 +892,9 @@ export function publishInnerWorld(
   dreamEpisode: string | null,
   _processedThrough = 0,
   goalChanges: GoalChange[] = [],
+  knowledgeChanges: KnowledgeEdit[] = [],
+  nameChanges: GivenNameEdit[] = [],
+  permittedSubjects: string[] = [],
 ): Transition {
   const reject = (message: string) => ({
     world: input,
@@ -921,7 +943,24 @@ export function publishInnerWorld(
   }
   const forgotten = new Set(input.experience?.forgotten[actorId] ?? []);
   if (evidenceIds.some((id) => forgotten.has(id))) return reject('Evidence was forgotten.');
+  if (input.actorKnowledge && files.some((f) => !prior.files.some((old) => old.path === f.path)))
+    return reject(
+      'Use knowledgeChanges for external understanding; About me files retain personal identity.',
+    );
   const world = draftWorld(input);
+  if (knowledgeChanges.length > 16 || nameChanges.length > 16)
+    return reject('Too many knowledge changes.');
+  for (const edit of nameChanges) {
+    const result = assignGivenName(world, actorId, edit, permittedSubjects);
+    if (!result.ok) return reject(result.message);
+  }
+  for (const edit of knowledgeChanges) {
+    if (edit.subjectId !== null && !canRememberSubject(world, actorId, edit.subjectId))
+      return reject('Knowledge subject is not recognized.');
+    const result = editKnowledge(world, actorId, edit, permittedSubjects, evidenceIds);
+    if (!result.ok) return reject(result.message);
+    if (edit.subjectId !== null) rememberSubject(world, actorId, edit.subjectId);
+  }
   if (goalChanges.length > 8 || (actor.controller === 'player' && goalChanges.length))
     return reject('Reflection cannot replace player intentions or exceed eight goal changes.');
   for (const [index, change] of goalChanges.entries()) {

@@ -6,6 +6,7 @@ export interface InterestSubscription {
   version: 1;
   goal: string;
   mindRevision: number;
+  knowledgeRevision?: number;
   expiresAt: number;
   properties: string[];
   entityKinds: string[];
@@ -60,6 +61,7 @@ export function compileInterests(
   return {
     version: 1,
     goal: digest(currentGoal(world.entities[actorId]!.actor!)),
+    knowledgeRevision: world.knowledgeRevisions?.[actorId] ?? 0,
     mindRevision: world.innerWorlds?.[actorId]?.revision ?? 0,
     expiresAt: world.simTime + 7200,
     properties: [
@@ -79,6 +81,7 @@ export function interestMatches(
     subscription &&
     subscription.version === 1 &&
     subscription.goal === digest(currentGoal(world.entities[actorId]!.actor!)) &&
+    (subscription.knowledgeRevision ?? 0) === (world.knowledgeRevisions?.[actorId] ?? 0) &&
     subscription.mindRevision === (world.innerWorlds?.[actorId]?.revision ?? 0) &&
     world.simTime < subscription.expiresAt;
   const definitions = new Set([

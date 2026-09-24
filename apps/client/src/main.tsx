@@ -32,6 +32,7 @@ import {
   Toolbar,
   symbol,
 } from './design-system/components';
+import { ItemCreationModal, type ItemCreationTarget } from './ui/item-creation';
 import { ActionPicker, type PickerContext } from './ui/action-picker';
 import {
   PersonCreationModal,
@@ -88,6 +89,10 @@ function App() {
     [error, setError] = useState(''),
     [sceneError, setSceneError] = useState(''),
     [notice, setNotice] = useState('');
+  const [itemCreation, setItemCreation] = useState<{
+    target: ItemCreationTarget;
+    definitionId?: string;
+  } | null>(null);
   const [cameraView, setCameraView] = useState<
     Pick<CameraState, 'projection' | 'levelId' | 'rotationLocked' | 'following'>
   >({ projection: 'orthographic', levelId: null, rotationLocked: false, following: true });
@@ -607,7 +612,12 @@ function App() {
     const props = { view, connected, command: (a: ActionOption) => void command(a) };
     switch (id) {
       case 'inventory':
-        return <Inventory {...props} />;
+        return (
+          <Inventory
+            {...props}
+            addItem={() => setItemCreation({ target: { actorId: view.player.id } })}
+          />
+        );
       case 'crafting':
         return <Crafting {...props} invent={() => invent()} />;
       case 'character':
@@ -1015,6 +1025,10 @@ function App() {
             />
             {picker && (
               <ActionPicker
+                createItem={(definitionId, position) => {
+                  setItemCreation({ definitionId, target: { position } });
+                  setPicker(null);
+                }}
                 key={`${picker.point.x}:${picker.point.y}:${picker.entity?.id}`}
                 picker={picker}
                 view={view}
@@ -1034,6 +1048,15 @@ function App() {
                   setPicker(null);
                   setPersonPosition(position);
                 }}
+              />
+            )}
+            {view.godMode && itemCreation && (
+              <ItemCreationModal
+                options={view.godTools?.itemOptions ?? []}
+                target={itemCreation.target}
+                initialDefinitionId={itemCreation.definitionId}
+                close={() => setItemCreation(null)}
+                notify={notify}
               />
             )}
             {personPosition && view.godMode && (
@@ -1101,6 +1124,13 @@ function App() {
           style={{ left: Math.min(hover.point.x + 16, width - 220), top: hover.point.y + 18 }}
         >
           {hover.entity.name}
+          {view?.entities
+            .find((entity) => entity.id === hover.entity.id)
+            ?.contents?.map((item) => (
+              <div key={item.id}>
+                {item.name} × {item.quantity}
+              </div>
+            ))}
         </div>
       )}
     </>

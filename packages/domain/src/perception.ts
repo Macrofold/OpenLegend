@@ -1,3 +1,4 @@
+import { DEFAULT_SENSES, PERCEPTION_RULES } from './worlds/base/senses.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import {
   canWalkSegment,
@@ -12,7 +13,7 @@ import { current, isDraft, original } from 'immer';
 import { distance } from './spatial.js';
 import type { Entity, Position, WorldState } from './types.js';
 
-export const PERCEPTION_RULES = { sightRadius: 28, hearingRadius: 10 } as const;
+export { PERCEPTION_RULES } from './worlds/base/senses.js';
 /** Reviewed detector versions are pinned in each world's resolved manifest. */
 export const SENSE_IMPLEMENTATIONS = [
   'vision-geometry-v1',
@@ -26,10 +27,7 @@ export interface SenseDefinition {
   implementation: SenseImplementation;
   radius: number;
 }
-export const DEFAULT_SENSES: SenseDefinition[] = [
-  { id: 'wilderness:vision', version: 1, implementation: 'vision-geometry-v1', radius: 28 },
-  { id: 'wilderness:hearing', version: 1, implementation: 'hearing-transmission-v1', radius: 10 },
-];
+export { DEFAULT_SENSES } from './worlds/base/senses.js';
 export const COARSE_TOUCH: SenseDefinition = {
   id: 'contact:touch',
   version: 1,

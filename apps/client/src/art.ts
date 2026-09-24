@@ -350,3 +350,48 @@ export function shadowArt(): HTMLCanvasElement {
   ctx.fillRect(0, 0, 64, 64);
   return image;
 }
+
+/** A small stable collage, independent of authoritative quantities or mechanics. */
+export function itemPileArt(
+  items: ReadonlyArray<{ definitionId: string; quantity: number }>,
+): HTMLCanvasElement {
+  const [image, ctx] = canvas(72, 48);
+  let index = 0;
+  for (const item of items.slice(0, 12)) {
+    for (let n = 0; n < Math.min(3, item.quantity) && index < 18; n++, index++) {
+      const x = 8 + ((index * 17) % 49),
+        y = 20 + ((index * 7) % 17);
+      const name = item.definitionId;
+      if (/wood|branch|cord|fiber/.test(name)) {
+        poly(ctx, /fiber|cord/.test(name) ? '#c6ae74' : '#856747', [
+          x,
+          y,
+          x + 17,
+          y - 6,
+          x + 18,
+          y - 3,
+          x + 1,
+          y + 3,
+        ]);
+      } else if (/berries|meat/.test(name)) {
+        box(ctx, /berries/.test(name) ? '#a35150' : '#ad795a', x, y, 9, 6);
+        box(ctx, '#d9a47b', x + 1, y, 4, 2);
+      } else {
+        poly(ctx, /stone|bone/.test(name) ? '#aeb19b' : '#aa8c5d', [
+          x,
+          y + 5,
+          x + 2,
+          y - 3,
+          x + 10,
+          y - 5,
+          x + 15,
+          y + 2,
+          x + 9,
+          y + 7,
+        ]);
+        box(ctx, '#d7cbae', x + 3, y - 2, 5, 2);
+      }
+    }
+  }
+  return image;
+}

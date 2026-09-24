@@ -27,6 +27,8 @@ export interface Ammunition {
   damageBonus: number;
 }
 export interface ItemDefinition {
+  /** Consumed by the installed item-handling mechanic; absent means not portable. */
+  portable?: boolean;
   gatheringTool?: { resourceId: string; quantity: number };
   id: string;
   version: number;
@@ -86,6 +88,7 @@ export interface RecipeDefinition extends DeclarationDraft {
 }
 export type NativePreparation = 'fiber' | 'cord';
 export type ActionType =
+  | 'pickup'
   | 'strike'
   | 'move'
   | 'gather'
@@ -189,7 +192,7 @@ export interface Entity {
   mechanismFields?: Record<string, Record<string, number>>;
   id: string;
   name: string;
-  kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains';
+  kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains' | 'item-pile';
   position: Position;
   /** Appearance is never a source of body dimensions or movement capability. */
   appearance?: 'sprite' | 'crate-mesh';
@@ -257,6 +260,12 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  knowledgeRevisions?: Record<string, number>;
+  knowledgePolicy?: import('./knowledge.js').KnowledgePolicy;
+  actorKnowledge?: Record<string, import('./knowledge.js').ActorKnowledge>;
+  observerIdentities?: Record<string, Record<string, import('./worlds/base/knowledge.js').ObserverIdentity>>;
+  perceptionEpisodes?: Record<string, Record<string, string>>;
+  itemHandling: import('./item-handling.js').ItemHandlingPolicy;
   statusEffectPolicy: import('./status-effects.js').StatusEffectPolicy;
   authorship: import('./invention-attribution.js').WorldAuthorship;
   inventionPolicy: import('./invention-policy.js').InventionPolicy;
@@ -317,6 +326,8 @@ export type Command = Envelope &
         conversationId: string;
         generation: number;
       }
+    | { type: 'pickup'; targetId: string; itemId?: string }
+    | { type: 'drop'; itemId: string; quantity: number }
     | { type: 'move'; destination: SurfacePoint }
     | { type: 'gather' | 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }
@@ -403,6 +414,7 @@ export interface ActorObservation {
   actor: Entity;
   visibleEntities: Entity[];
   contacts: import('./perception.js').ContactView[];
+  groundItems: ItemInstance[];
   inventory: ItemInstance[];
   itemDefinitions: ItemDefinition[];
   knownRecipes: RecipeDefinition[];

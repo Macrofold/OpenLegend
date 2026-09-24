@@ -57,7 +57,7 @@ Cognition now preserves ordered hard-query baselines on optional retrieval failu
 
 The default world now includes a trusted declarative Punch, available by target ID through player and NPC action bindings. Existing native approach and body-effect paths enforce reach and apply impact; public progress drives a sprite-arm punch animation. The finite family's authoring limitation is documented in [Targeted actions](../../docs/targeted-actions.md); manual evidence is in [Verification](../../docs/verification.md#targeted-punch-runtime).
 
-Entity-scoped [status effects](../../docs/status-effects.md) now own explicit conditions, attribute-targeted rates, capability restrictions, episodes and observed transitions. [Default sleep content](../../docs/sleep.md) uses this runtime; menus, rendering and pending-reply cancellation consume generic projections/capabilities. Object-to-object numeric effects have manual runtime evidence, not broader world-agent authoring acceptance; see [verification](../../docs/verification.md#generic-status-effects).
+Entity-scoped [status effects](../../docs/status-effects.md) now own explicit conditions, attribute-targeted rates, capability restrictions, episodes and observed transitions. [Default sleep content](../../docs/worlds/base/sleep.md) uses this runtime; menus, rendering and pending-reply cancellation consume generic projections/capabilities. Object-to-object numeric effects have manual runtime evidence, not broader world-agent authoring acceptance; see [verification](../../docs/verification.md#generic-status-effects).
 
 Conversation context includes all available permitted turns through the decision snapshot. Autonomous intake reuses completed direct-response jobs to suppress only their handled speech events; it preserves unrelated/new triggers and does not restrict autonomous speech.
 
@@ -70,3 +70,11 @@ Cognition uses short collision-checked entity references and server-only reverse
 Intelligence now shows visible trigger subtypes/semantic levels, bottom-right row time, rich hover/focus response previews and collapsed stage input/output summaries. Identity-matched supporting records are nested beneath their consuming calls, while unmatched records remain visible. Action attention explicitly asks whether each action is reasonable to consider now; no final-action authority or uncertainty threshold changed.
 
 Cognition uses per-actor pacing without a global post-completion wait, records scheduling/trigger-age metadata, and presents perceived speech roles separately from current visibility. Speech fallback retains intended-recipient metadata without inventing an audience. Recall distinguishes named episodes from generic species grouping. Retrieval UI distinguishes skipped vectors from Jev judgments and selections. Runtime evidence and remaining validation are in [verification](../../docs/verification.md#trace-attribution-and-pacing-runtime).
+
+## Base-world content and physical items
+
+Bundled world defaults are separated under `packages/domain/src/worlds/base/` with [canonical world mechanics](../../docs/worlds/base/README.md). Known-item God creation supports player inventory and ground piles; character inventory editing remains available. Portable item stacks support native approach/pickup, Pick Up All and partial dropping, with shared custody, perceived contents and saved state. Concrete NPC handles share execution. External world packaging and post-merge freeform action binding remain [BW05–BW07](../../docs/maintainers/base-world.md).
+
+Autonomous cognition has no actor cooldown: changed opportunities are eligible on the next scheduler pass under existing shared-slot, duplicate-suppression and spending admission. Saved policies remove the retired cooldown field in place; background maintenance timing remains separate.
+
+Memory consolidation no longer imposes a 256-summary capacity or response-group cap. Chronological requests are sized independently of retained memory; all partitions must validate before atomic publication. Existing age/protected retention continues; broader live consolidation-quality acceptance remains pending.

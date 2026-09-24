@@ -1,3 +1,4 @@
+import { editKnowledge, assignGivenName, rememberSubject, updateWorld } from '@open-legend/domain';
 import { GameSaveError } from './game-saves.js';
 import {
   performanceSnapshot,
@@ -856,6 +857,23 @@ export async function createGameServer(
               ),
             );
           }
+          case '/api/god/items': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            const value = z
+              .object({
+                id: requestIdSchema,
+                definitionId: requestIdSchema,
+                quantity: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+                destination: z.union([
+                  z.object({ actorId: requestIdSchema }).strict(),
+                  z.object({ position }).strict(),
+                ]),
+              })
+              .strict()
+              .parse(body);
+            return send(response, 200, await service.createItem(value));
+          }
           case '/api/god/spawn': {
             if (!config.godMode)
               return send(response, 403, { ok: false, message: 'God access required.' });
@@ -1261,6 +1279,29 @@ export async function createGameServer(
                 }),
               ),
             });
+          }
+          case '/api/god/knowledge': {
+            if (!config.godMode) return send(response, 403, {ok: false, message: 'God editing is disabled.'});
+            const value = z.object({worldId: requestIdSchema, generation: requestIdSchema, actorId: requestIdSchema,
+              subjectId: requestIdSchema.nullable(), expectedRevision: z.number().int().nonnegative(), text: z.string(),
+              givenName: z.string().optional(), nameRevision: z.number().int().nonnegative().optional(),
+            }).strict().parse(body);
+            const result = await service.transition(world => {
+              if (world.id !== value.worldId || service.generation !== value.generation)
+                return {world, events: [], outcome: {ok: false, code: 'stale-world', message: 'The world changed. Reload the editor.'}};
+              let edited: import('@open-legend/domain').Outcome = {ok: false, code: 'knowledge-rejected', message: 'Knowledge edit rejected.'};
+              const candidate = updateWorld(world, draft => {
+              const permitted = value.subjectId ? [value.subjectId] : [];
+              if (value.givenName !== undefined && value.subjectId) {
+                const named = assignGivenName(draft, value.actorId, {subjectId: value.subjectId, givenName: value.givenName, expectedRevision: value.nameRevision ?? 0}, permitted, true);
+                if (!named.ok) {edited = named; return;}
+              }
+              edited = editKnowledge(draft, value.actorId, value, permitted);
+              if (edited.ok && value.subjectId) rememberSubject(draft, value.actorId, value.subjectId, true);
+              });
+              return {world: edited.ok ? candidate : world, events: [], outcome: edited};
+            });
+            return send(response, 200, {...result, ...(result.ok ? {mind: inspectGodMind(service, value.actorId)} : {})});
           }
           case '/api/god/mind': {
             if (!config.godMode)

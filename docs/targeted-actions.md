@@ -2,7 +2,7 @@
 
 ## Targeted strikes
 
-A targeted strike is a finite trusted native action family. The default-world `punch` definition lives in `packages/domain/src/strikes.ts`: version 1, range 1.3 world units, `autoMoveToRange: true`, 30 simulation seconds of wind-up, 5 injury damage, and the `punch` presentation. At the default clock this wind-up takes half a real second. These are initial balance choices, not universal world laws.
+A targeted strike is a finite trusted native action family. The [base-world combat specification](worlds/base/combat.md) owns the bundled Punch definition and balance; its authored data lives in `packages/domain/src/worlds/base/strikes.ts`.
 
 The public intention is `{type: "strike", definitionId: "punch", targetId: "entity-id"}`. The server supplies actor and command identity. Clients cannot submit damage, range or executable behavior. The current family requires a supported biped attacker on a supported ground stance and another living, currently perceived actor as target. It supports both people and animals as targets. No weapon is required; equipping a weapon does not modify a punch.
 
