@@ -3,7 +3,7 @@ import type { RelationshipEdge, RelationshipNode, RelationshipRef } from '@open-
 import { fingerprint, GraphReadError, refKey, RelationshipIndex } from './relationship-index.js';
 
 // A record holder is not necessarily its author, witness, or the person its claim describes.
-// docs/repertoire-foundation.md#5-information-bearing-artifacts
+// docs/repertoire-foundation.md#5-information-artifacts
 export function memoryRef(actorId: string, record: MemoryRecord): RelationshipRef {
   return {
     kind: 'memory-record',
@@ -35,7 +35,9 @@ export function projectMemoryRecord(world: WorldState, generation: string, id: s
       'Retained memory is unavailable; absence is not proof that the event did not happen.',
     );
   const root = memoryRef(actorId, record);
-  const nodes: RelationshipNode[] = [{ ref: root, label: record.summary, layer: 'evidence' }];
+  const nodes: RelationshipNode[] = [
+    { ref: root, label: record.summary, layer: 'evidence', canInspect: true },
+  ];
   const edges: RelationshipEdge[] = [];
   const actor: RelationshipRef = { kind: 'actor-reference', id: actorId, version: 'identity' };
   nodes.push({

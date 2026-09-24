@@ -36,7 +36,12 @@ export function projectLiveSubject(
     edges = new Map<string, RelationshipEdge>();
   const add = (kind: string, id: string, label: string, data: unknown): RelationshipRef => {
     const ref = { kind, id, version: fingerprint(data) };
-    nodes.set(refKey(ref), { ref, label, layer: 'live' });
+    nodes.set(refKey(ref), {
+      ref,
+      label,
+      layer: 'live',
+      canInspect: kind === 'entity' || kind === 'item',
+    });
     return ref;
   };
   const link = (

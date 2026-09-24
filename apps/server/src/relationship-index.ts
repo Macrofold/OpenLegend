@@ -72,7 +72,7 @@ export class RelationshipIndex {
       list.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     this.snapshot = fingerprint([
       scope,
-      nodes.map((n) => [n.ref, n.label, n.layer, n.availability ?? null]),
+      nodes.map((n) => [n.ref, n.label, n.layer, n.availability ?? null, n.canInspect ?? false]),
       edges.map((e) => e.id),
       limitations,
     ]);

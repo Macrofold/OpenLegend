@@ -11,7 +11,7 @@ import { declarationSchema } from './ai-schemas.js';
 import { normalizeInventionProposal } from './invention-service.js';
 import { fingerprint, GraphReadError, GRAPH_LIMITS, refKey } from './relationship-index.js';
 import { inspectableEntity, projectLiveSubject } from './live-relationships.js';
-import { WorldGraphReader } from './world-graph.js';
+import { DEFINITION_KINDS, WorldGraphReader } from './world-graph.js';
 import type { WorldService } from './world-service.js';
 
 const id = z.string().min(1).max(200);
@@ -48,7 +48,7 @@ export const WORLD_READ_TOOLS = {
   },
   ol_inspect: {
     description:
-      'Inspect a current exact definition or live item/entity. Optional version detects stale selection. No private authoring provenance, automatic learning or mutation.',
+      'Inspect a current exact definition, live item/entity, or retained memory-record ref. Optional version detects stale selection. Owner evidence stays separate from private authoring provenance, learning and mutation.',
     schema: select,
   },
   ol_graph: {
@@ -164,13 +164,15 @@ export class WorldToolService {
         cost: 'no-paid-work',
       };
       // The whole result is rejected, never silently truncated into a misleading complete response.
-      if (Buffer.byteLength(JSON.stringify(result)) > RESULT_BYTES)
+      const serialized = JSON.stringify(result);
+      if (Buffer.byteLength(serialized) > RESULT_BYTES)
         return {
           status: 'capacity',
           message: 'Result exceeds the read envelope. Select a smaller page or subject.',
           cost: 'no-paid-work',
         };
-      return result;
+      // All adapters receive detached JSON, never writable references to authoritative state.
+      return JSON.parse(serialized) as WorldToolResult;
     } catch (error) {
       if (error instanceof GraphReadError)
         return { status: error.code, message: error.message, cost: 'no-paid-work' };
@@ -198,7 +200,7 @@ export class WorldToolService {
             name,
             description: tool.description,
           })),
-          definitionKinds: ['recipe', 'item-definition', 'attribute', 'sense', 'host', 'family'],
+          definitionKinds: DEFINITION_KINDS,
           recipeContract: DECLARATION_CONTRACT,
           recipeSchema: declarationSchema,
           limitations: [
@@ -208,12 +210,7 @@ export class WorldToolService {
         };
       case 'ol_find': {
         const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_find.schema>;
-        if (
-          input.kinds?.some(
-            (kind) =>
-              !['recipe', 'item-definition', 'attribute', 'sense', 'host', 'family'].includes(kind),
-          )
-        )
+        if (input.kinds?.some((kind) => !DEFINITION_KINDS.some((supported) => supported === kind)))
           throw new GraphReadError(
             'unavailable',
             'A requested definition kind has no implemented reader.',
@@ -350,7 +347,7 @@ export class WorldToolService {
           const item = world.items[items.keys[offset++]!]!;
           if (input.definitionId && input.definitionId !== item.definitionId) continue;
           if (input.ownerId && input.ownerId !== item.ownerId) continue;
-          values.push({ ref: { kind: 'item', id: item.id, version: fingerprint(item) }, ...item });
+          values.push({ ...item, ref: { kind: 'item', id: item.id, version: fingerprint(item) } });
         }
         return {
           items: values,

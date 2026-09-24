@@ -19,6 +19,15 @@ import {
   GraphReadError,
 } from './relationship-index.js';
 
+export const DEFINITION_KINDS = [
+  'recipe',
+  'item-definition',
+  'attribute',
+  'sense',
+  'host',
+  'family',
+] as const;
+
 export const DEFINITION_COVERAGE = [
   'Exact current recipe/material/base references and installed attribute/sense implementation bindings only.',
   'Not a complete read/effect, property-consumer, world-law or interaction-validation graph.',
@@ -47,7 +56,7 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
     const ref = { kind, id, version: fingerprint(data) };
     if (nodes.size >= GRAPH_LIMITS.nodes)
       throw new GraphReadError('capacity', 'Too many graph nodes.');
-    const node: RelationshipNode = { ref, label, layer: 'definition' };
+    const node: RelationshipNode = { ref, label, layer: 'definition', canInspect: true };
     const entry = { node, data };
     nodes.set(refKey(ref), node);
     records.set(refKey(ref), entry);
@@ -91,7 +100,8 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
   for (const value of world.moduleManifest.definitions) {
     const ref = add('attribute', value.id, value.name, value);
     const host = resolve('host', value.implementation);
-    if (host) link(ref, host.node.ref, 'implements');
+    if (!host) throw new GraphReadError('unavailable', 'An attribute implementation is missing.');
+    link(ref, host.node.ref, 'implements');
   }
   for (const value of world.moduleManifest.senses) {
     // The implementation ref is projected from an already validated installed sense.
@@ -100,6 +110,7 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
       add('host', value.implementation, value.implementation, {
         interface: 'sense',
         implementation: value.implementation,
+        coverage: 'Installed implementation reference only; no standalone host codec exposed.',
       });
     link(add('sense', value.id, value.id, value), host, 'implements');
   }
@@ -127,6 +138,8 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
     const target =
       value.output.gatheringTool &&
       resolve('item-definition', value.output.gatheringTool.resourceId);
+    if (value.output.gatheringTool && !target)
+      throw new GraphReadError('unavailable', 'A gathering target definition is missing.');
     if (target) link(ref, target.node.ref, 'uses', 'gathering-target');
     const base = value.provenance.derivedFrom;
     if (base) {
