@@ -135,7 +135,7 @@ export function createPerceptionFrame(world: WorldState, previous: WorldState) {
     *query(observer: Source): Generator<void, Exposure, void> {
       const prior = old?.sources.get(observer.id),
         exposed = old?.exposures.get(observer.id);
-      if (
+      const stableObserver =
         compatible &&
         exposed &&
         prior &&
@@ -143,35 +143,58 @@ export function createPerceptionFrame(world: WorldState, previous: WorldState) {
         prior.radius === observer.radius &&
         prior.eyeHeight === observer.eyeHeight &&
         prior.sleeping === observer.sleeping &&
-        prior.memory === observer.memory &&
-        !changed.some(
-          (source) =>
-            nearby(observer, source) ||
-            (!!old!.sources.get(source.id) && nearby(observer, old!.sources.get(source.id)!)),
-        ) &&
-        !removed.some((source) => nearby(observer, source))
-      ) {
+        prior.memory === observer.memory;
+      // A moving person does not invalidate static object geometry. Classification changes
+      // check both the old and new source so death/removal cannot leave stale exposures.
+      const canReuse = (kind: 'alive' | 'object') =>
+        stableObserver &&
+        !changed.some((source) => {
+          const before = old!.sources.get(source.id);
+          return (
+            (source[kind] && nearby(observer, source)) ||
+            (!!before?.[kind] && nearby(observer, before))
+          );
+        }) &&
+        !removed.some((source) => source[kind] && nearby(observer, source));
+      const reusePeople = canReuse('alive'),
+        reuseObjects = canReuse('object');
+      if (reusePeople && reuseObjects) {
         next.stats.reused++;
-        next.exposures.set(observer.id, exposed);
-        return exposed;
+        next.exposures.set(observer.id, exposed!);
+        return exposed!;
       }
       const sees = visionQuery(world, world.entities[observer.id]!);
-      living ??= spatialCandidates(samples.filter((source) => source.alive));
-      objects ??= spatialCandidates(samples.filter((source) => source.object));
-      const people = living(observer.position, observer.radius + 2);
-      const things = objects(observer.position, observer.radius);
-      next.stats.queried++;
-      next.stats.candidates += people.length + things.length;
-      const result: Exposure = { people: [], objects: [] };
+      const result: Exposure = {
+        people: reusePeople ? exposed!.people : [],
+        objects: reuseObjects ? exposed!.objects : [],
+      };
       let examined = 0;
-      for (const source of people) {
-        if (source.id !== observer.id && sees(source)) result.people.push(source.id);
-        if (++examined % 64 === 0) yield;
+      next.stats.queried++;
+      if (!reusePeople) {
+        living ??= spatialCandidates(samples.filter((source) => source.alive));
+        const candidates = living(observer.position, observer.radius + 2);
+        next.stats.candidates += candidates.length;
+        for (const source of candidates) {
+          if (source.id !== observer.id && sees(source)) result.people.push(source.id);
+          if (++examined % 64 === 0) yield;
+        }
       }
-      for (const source of things) {
-        if (sees(source)) result.objects.push(source.id);
-        if (++examined % 64 === 0) yield;
+      if (!reuseObjects) {
+        objects ??= spatialCandidates(samples.filter((source) => source.object));
+        const candidates = objects(observer.position, observer.radius);
+        next.stats.candidates += candidates.length;
+        for (const source of candidates) {
+          if (sees(source)) result.objects.push(source.id);
+          if (++examined % 64 === 0) yield;
+        }
       }
+      // Preserve committed identities when a geometry recheck finds no membership change.
+      const retain = (ids: string[], before: string[] | undefined) =>
+        before && ids.length === before.length && ids.every((id, i) => id === before[i])
+          ? before
+          : ids;
+      result.people = retain(result.people, previous.visiblePeople?.[observer.id]);
+      result.objects = retain(result.objects, previous.visibleObjects?.[observer.id]);
       next.exposures.set(observer.id, result);
       return result;
     },

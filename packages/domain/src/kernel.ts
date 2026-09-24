@@ -1682,6 +1682,18 @@ function* updateEncounters(
     }
     const visible = yield* frame.query(actor);
     const seen = visible.people;
+    // Stable exposure is current knowledge, not a fresh acquisition. Skip all per-object
+    // set construction and episode rebuilding when neither membership nor detail changed.
+    if (
+      original.perceptionEpisodes?.[actor.id] &&
+      seen === original.visiblePeople?.[actor.id] &&
+      visible.objects === original.visibleObjects?.[actor.id] &&
+      frame.changedFeatures.size === 0
+    ) {
+      encounter.flush();
+      yield;
+      continue;
+    }
     const previous = original.visiblePeople?.[actor.id] ?? [];
     const previouslySeen = new Set(previous);
     const acquired = seen.filter((id) => !previouslySeen.has(id));

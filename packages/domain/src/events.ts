@@ -251,6 +251,7 @@ function recordEvent(
             seesEntity(world, observer, recipient)))
           ? intendedId
           : undefined;
+      const perspective = memoryPerspective(world, actorId, text, type === 'speech', source?.id);
       const addition: ExperienceMutation = {
         operation: 'add',
         entry: {
@@ -258,7 +259,7 @@ function recordEvent(
           value: {
             eventId: event.id,
             actorId,
-            text: memoryPerspective(world, actorId, text, type === 'speech', source?.id),
+            text: perspective,
             at: event.at,
             sequence: world.nextId,
             modality:
@@ -271,7 +272,8 @@ function recordEvent(
                 : type === 'speech'
                   ? 'heard'
                   : 'observed',
-            recognized: type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
+            recognized:
+              type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
             intelligible: true,
             entityIds: [source?.id, type === 'speech' ? perceivedRecipient : targetId].filter(
               (id): id is string => !!id,
@@ -302,7 +304,12 @@ function recordEvent(
                     : targetId === actorId
                       ? 'directed_action'
                       : 'observed_event',
-            content: typeof data?.['text'] === 'string' ? data['text'] : memoryPerspective(world, actorId, text, false, source?.id),
+            content:
+              typeof data?.['text'] === 'string'
+                ? data['text']
+                : type === 'speech'
+                  ? memoryPerspective(world, actorId, text, false, source?.id)
+                  : perspective,
           },
         },
       };
