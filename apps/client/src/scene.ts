@@ -231,8 +231,15 @@ export class WildernessScene implements WorldRenderer {
       playerEntity(view),
     ];
     const visible = new Set(entities.map((entity) => entity.id));
-    for (const entry of this.actors.values())
+    for (const [id, entry] of this.actors)
       if (!visible.has(entry.view.id)) {
+        // Loose piles have no renderer ghost: occlusion and collection both hide the heap.
+        // docs/worlds/base/items.md#ground-piles
+        if (entry.view.kind === 'item-pile') {
+          this.releaseEntity(entry);
+          this.actors.delete(id);
+          continue;
+        }
         // Absence can mean occlusion, not disappearance. Retain only the last authorized image;
         // an unobserved ghost has no interaction or current-state knowledge.
         entry.observed = false;

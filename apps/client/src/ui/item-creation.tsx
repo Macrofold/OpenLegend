@@ -64,7 +64,7 @@ export function ItemCreationModal({
                 onPress={close}
               />
             </header>
-            <div className="ol-person-form">
+            <fieldset className="ol-person-form" disabled={saving} style={{ border: 0, margin: 0 }}>
               <SelectField
                 label="Item"
                 value={definitionId}
@@ -93,7 +93,7 @@ export function ItemCreationModal({
                   {error}
                 </p>
               )}
-            </div>
+            </fieldset>
             <footer className="ol-modal-actions">
               <Button type="button" variant="quiet" onPress={close} disabled={saving}>
                 Cancel

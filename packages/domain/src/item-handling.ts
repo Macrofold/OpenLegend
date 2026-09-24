@@ -161,7 +161,12 @@ export function dropItemReason(
     return 'Choose a portable item in this inventory.';
   if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > item.quantity)
     return 'Choose an available whole quantity.';
-  if (!actor.spatial.supportSurfaceId) return 'Dropping requires a supported surface.';
+  const surfaceId = actor.spatial.supportSurfaceId;
+  if (
+    !surfaceId ||
+    !canStand(spatialMap(world), { ...actor.position, surfaceId }, BODY_PROFILES.object)
+  )
+    return 'Dropping requires space for a pile on a supported surface.';
   if (actor.actor.action) return 'Stop current work before dropping items.';
   return null;
 }

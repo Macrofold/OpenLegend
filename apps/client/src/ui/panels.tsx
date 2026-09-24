@@ -68,6 +68,11 @@ export function Inventory({
   const [query, setQuery] = useState(''),
     [selected, setSelected] = useState<string | null>(null);
   const item = view.player.inventory.find((i) => i.id === selected);
+  const validDropQuantity =
+    Number.isSafeInteger(dropQuantity) &&
+    dropQuantity > 0 &&
+    !!item &&
+    dropQuantity <= item.quantity;
   const row = (i: InventoryItemView) => (
     <EntityRow
       key={i.id}
@@ -127,11 +132,12 @@ export function Inventory({
               action.command.type === 'drop'
                 ? {
                     ...action,
-                    enabled:
-                      action.enabled &&
-                      Number.isSafeInteger(dropQuantity) &&
-                      dropQuantity > 0 &&
-                      dropQuantity <= item.quantity,
+                    enabled: action.enabled && validDropQuantity,
+                    reason:
+                      action.reason ??
+                      (!validDropQuantity
+                        ? `Enter a whole quantity from 1 to ${item.quantity}.`
+                        : undefined),
                     command: { ...action.command, quantity: dropQuantity },
                   }
                 : action,

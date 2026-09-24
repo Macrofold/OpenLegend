@@ -391,6 +391,11 @@ export function executeCommand(
       )
     )
       return reject('empty', 'No matching portable items remain.');
+    if (
+      capabilityBlocked(original, source, 'locomotion') &&
+      !canReachEntity(original, source, target, original.itemHandling.reach)
+    )
+      return reject('capability-restricted', 'Movement is required to reach this pile.');
   }
   const world = draftWorld(original);
   const actor = world.entities[command.actorId]!;
@@ -746,7 +751,7 @@ export function executeCommand(
         'cannot-interrupt',
         'The current state must end before starting another activity.',
       );
-    // Previews run identical admission, but never build disposable event/receipt history.
+    // Scheduled-work previews stop after identical admission, before action-start events/receipts.
     // docs/architecture.md#bundled-world-and-item-custody
     if (options.preview) return { world: original, events: [], outcome: result };
     component.action = action;
@@ -1060,6 +1065,18 @@ function advanceAction(
 ): void {
   const action = actor.actor!.action;
   if (!action) return;
+  // A changed body/policy must cancel pending pickup, not strand work or grant a transfer.
+  // docs/worlds/base/items.md#pickup-and-drop
+  if (
+    action.type === 'pickup' &&
+    (!canHandleItems(world, actor) ||
+      !supportedPosition(actor) ||
+      capabilityBlocked(world, actor, 'actions') ||
+      (action.stage === 'approaching' && capabilityBlocked(world, actor, 'locomotion')))
+  ) {
+    failAction(world, actor, events, 'item handling or required movement is no longer available.');
+    return;
+  }
   if (
     action.type === 'strike' &&
     strikeDefinition(action.definitionId)?.version !== action.definitionVersion
@@ -1440,7 +1457,8 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       }
       if (
         !capabilityBlocked(world, actor, 'locomotion') ||
-        component.action?.type === 'status-effect'
+        component.action?.type === 'status-effect' ||
+        component.action?.type === 'pickup'
       )
         advanceAction(world, actor, seconds, events);
     }
