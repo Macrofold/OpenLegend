@@ -255,6 +255,8 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  /** Shared outward-feature baseline for the completed perception phase, not private knowledge. */
+  perceptionFeatures: Record<string, string>;
   authorship: import('./invention-attribution.js').WorldAuthorship;
   inventionPolicy: import('./invention-policy.js').InventionPolicy;
   moduleManifest: import('./world-modules.js').WorldModuleManifest;
@@ -269,7 +271,7 @@ export interface WorldState {
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
   id: string;
   seed: number;
   rngState: number;

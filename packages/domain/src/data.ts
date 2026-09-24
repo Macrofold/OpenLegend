@@ -202,7 +202,8 @@ export function createWorld(
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
-    schemaVersion: 12,
+    schemaVersion: 13,
+    perceptionFeatures: {},
     authorship: {
       creatorAccountIds: [...accounts.creatorAccountIds],
       playerAccountIds: { [PLAYER_ID]: accounts.playerAccountId },

@@ -1,3 +1,4 @@
+import { createPerceptionFrame } from './perception-frame.js';
 import { confirmActionRevision } from './agency.js';
 import { gatheringYield, BASE_GATHER_QUANTITY } from './gathering.js';
 import { current, isDraft } from 'immer';
@@ -1336,43 +1337,44 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       }
     }
   }
-  updateEncounters(world, original, events, participants.actors);
-  return finish(
+  const perception = updateEncounters(world, original, events, participants.actors);
+  const result = finish(
     world,
     events,
     outcome(true, 'advanced', `Advanced ${elapsedSimSeconds} simulation seconds.`),
   );
+  perception?.retain(result.world);
+  return result;
 }
 
-/** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
+/** Positions stay fixed during this phase; never reuse a frame across intervening motion. */
 function updateEncounters(
   world: WorldState,
   original: WorldState,
   events: WorldEvent[],
   actorIds: readonly string[],
-): void {
+): ReturnType<typeof createPerceptionFrame> | undefined {
   if (!actorIds.some((id) => world.entities[id]?.actor?.alive && hasMemory(world.entities[id])))
     return;
-  const hadObjectExposures = original.visibleObjects !== undefined;
-  const encounter = encounterEmitter(world, events);
-
-  // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
-  // Snapshot identity, transforms and body height; event mutations still use the authoritative draft.
-  const entities = Object.values(world.entities).map((entity) => ({
-    entity,
-    id: entity.id,
-    position: isDraft(entity.position) ? current(entity.position) : entity.position,
-    height: bodyProfile(entity).height,
-    alive: !!entity.actor?.alive,
-    memory: hasMemory(entity),
-    object: !entity.actor && !entity.animal,
+  const frame = createPerceptionFrame(world, original);
+  const entities = frame.sources.map((source) => ({
+    ...source,
+    entity: world.entities[source.id]!,
   }));
-  const nearby = spatialCandidates(entities.filter((e) => e.alive));
+  const byId = new Map(entities.map((source) => [source.id, source]));
+  const encounter = encounterEmitter(world, events);
   let nearbyAll: ReturnType<typeof spatialCandidates<(typeof entities)[number]>> | undefined;
-  const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
-  for (const actor of entities.filter((e) => e.alive && e.memory)) {
-    const radius = visionRadius(world, actor.entity);
-    const sees = visionQuery(world, actor.entity);
+  for (const actor of entities.filter((source) => source.alive && hasMemory(source.entity))) {
+    const radius = actor.radius;
+    const clearSight = () => {
+      if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
+      if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
+    };
+    // Sleeping does not manufacture conscious acquisitions. Waking reacquires actual evidence.
+    if (actor.sleeping) {
+      clearSight();
+      continue;
+    }
     const touch = sensesFor(world, actor.entity).find(
       (s) => s.implementation === 'contact-proximity-v1',
     );
@@ -1449,14 +1451,16 @@ function updateEncounters(
       )
         actor.entity.actor!.contacts = contacts;
     }
-    if (radius === 0) continue;
+
+    if (radius === 0) {
+      clearSight();
+      continue;
+    }
+    const visible = frame.query(actor);
+    const seen = visible.people;
     const previous = original.visiblePeople?.[actor.id] ?? [];
     const previouslySeen = new Set(previous);
-    const seen = nearby(actor.position, radius + 2)
-      .filter((e) => e.id !== actor.id && e.alive && sees(e))
-      .map((e) => e.id);
     const acquired = seen.filter((id) => !previouslySeen.has(id));
-    // One retained-memory scan only when there are actual new living contacts.
     const recent = new Set(
       acquired.length
         ? (world.memories[actor.id] ?? [])
@@ -1470,31 +1474,33 @@ function updateEncounters(
         : [],
     );
     for (const id of acquired) if (!recent.has(id)) encounter(actor.entity, id, true);
+    for (const id of seen)
+      if (previouslySeen.has(id) && frame.changedFeatures.has(id))
+        encounter(actor.entity, id, true, byId.get(id)!.detail);
     if (
       !original.visiblePeople?.[actor.id] ||
       seen.length !== previous.length ||
-      seen.some((id, index) => id !== previous[index])
+      seen.some((id, i) => id !== previous[i])
     )
       (world.visiblePeople ??= {})[actor.id] = seen;
-    // Object exposures use the same committed awareness path without a cognition trigger.
-    const objects = nearbyObjects(actor.position, radius).filter((entity) => sees(entity));
-    const priorObjects = new Set(
-      original.visibleObjects?.[actor.id] ??
-        (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
-    );
-    for (const entity of objects)
-      if (!priorObjects.has(entity.id)) encounter(actor.entity, entity.id, false);
-    const objectIds = objects.map((entity) => entity.id);
-    const previousObjects = original.visibleObjects?.[actor.id];
-    // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).
+    const objectIds = visible.objects;
+    const previousObjects = original.visibleObjects?.[actor.id] ?? [];
+    const priorObjects = new Set(previousObjects);
+    for (const id of objectIds) {
+      if (!priorObjects.has(id)) encounter(actor.entity, id, false);
+      else if (frame.changedFeatures.has(id))
+        encounter(actor.entity, id, false, byId.get(id)!.detail);
+    }
     if (
-      !previousObjects ||
+      !original.visibleObjects?.[actor.id] ||
       objectIds.length !== previousObjects.length ||
-      objectIds.some((id, index) => id !== previousObjects[index])
+      objectIds.some((id, i) => id !== previousObjects[i])
     )
       (world.visibleObjects ??= {})[actor.id] = objectIds;
     encounter.flush();
   }
+  frame.finish();
+  return frame;
 }
 
 /** Private records are returned only for the supplied actor; bind this ID to authorization in the application. */

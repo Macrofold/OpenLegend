@@ -117,7 +117,12 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       throw new Error('Private perception evidence could not be admitted.');
     pending = [];
   };
-  const acquire = (source: Entity, targetId: string, meaningful: boolean): WorldEvent => {
+  const acquire = (
+    source: Entity,
+    targetId: string,
+    meaningful: boolean,
+    detail?: string,
+  ): WorldEvent => {
     if (owner !== source.id) {
       flush();
       owner = source.id;
@@ -126,13 +131,26 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       world,
       events,
       'encounter',
-      `${source.name} saw ${world.entities[targetId]!.name}.`,
+      detail
+        ? `${source.name} notices ${world.entities[targetId]!.name}: ${detail}.`
+        : `${source.name} saw ${world.entities[targetId]!.name}.`,
       [source.id],
       source,
       targetId,
       meaningful
-        ? { importance: 6, semanticTrigger: true, acquisition: true }
-        : { importance: 0, urgency: 0, semanticTrigger: false, acquisition: true },
+        ? {
+            importance: 6,
+            semanticTrigger: true,
+            acquisition: true,
+            change: detail ? 'detail' : 'onset',
+          }
+        : {
+            importance: 0,
+            urgency: 0,
+            semanticTrigger: false,
+            acquisition: true,
+            change: detail ? 'detail' : 'onset',
+          },
       'private',
       pending,
     );

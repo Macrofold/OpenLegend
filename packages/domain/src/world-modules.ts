@@ -1,3 +1,4 @@
+import { validatePerceptionState } from './perception-frame.js';
 import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
 import { validateGatheringTools } from './gathering.js';
@@ -491,11 +492,12 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
-  if (world.schemaVersion !== 12 || !world.moduleManifest)
+  if (world.schemaVersion !== 13 || !world.moduleManifest)
     throw new Error(
-      'Incompatible development world schema. This build requires 3D format 9; use a separate OPEN_LEGEND_DATA_DIR for a fresh world. Existing saves are preserved, not migrated.',
+      'Incompatible development world schema. This build requires perception format 13; use a separate OPEN_LEGEND_DATA_DIR for a fresh world. Existing saves are preserved, not migrated.',
     );
   validateSpatialWorld(world);
+  validatePerceptionState(world);
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
   validateGatheringTools(world);
