@@ -49,7 +49,7 @@ Use the current single writer and existing stores first. No new platform depende
 ### AG03 — Bounded plan frontier and one native physical lane
 
 - [x] Retain actual single-item/stack outputs from gather/prepare/craft/cook; resolve earlier-step references at native dispatch and preserve them through restart. The decision envelope supports equip/eat output consumers.
-- [ ] Extend result references only when a concrete consumer needs quantities, multi-output selection, recipe outputs, cross-frontier references or model-selected cook targets. The freeform attempt interpreter still uses concrete offered commands; qualify an output-reference contract before extending it.
+- [ ] Extend result references only when a concrete consumer needs quantities, multi-output selection, recipe outputs, cross-frontier references or model-selected cook targets. Freeform grounding can now bind move/follow parameters alongside existing concrete commands; its generated sequences still have no general future-output reference contract. Qualify that contract before extending it.
 
 - [x] Integrate explicit cancel/replace and interruption detection with native work, preserving actual spent materials, retained goals and completed receipts. General suspended-work resumption remains in the unchecked requirement below.
 
@@ -78,7 +78,7 @@ Use the current single writer and existing stores first. No new platform depende
 ### AG05 — Resolve unlisted attempts to existing mechanics
 
 - [x] Retain bounded private unlisted intents and reuse exact normalized request-bound native descriptions without another provider call.
-- [x] Interpret up to four new proposals in one optional bounded call through the existing durable response job. Bind only scoped native handles, keep original proposal/component identity, preserve other components on interpretation failure, suppress unchanged repeats and reject stale manifest results. See [observed cases](../verification.md#native-attempt-resolution).
+- [x] Resolve up to four new proposals through the existing durable response job, using exact binding and Jev classification before bounded generative interpretation when needed. Native move/follow parameters and existing concrete sequences share admission. Preserve component identity, scoped references and stale-manifest rejection; uncertain revisions await the initiator. See [current runtime evidence](../verification.md#action-capability-native-slice); live semantic quality remains unqualified.
 - [x] Add explicit withdrawal/resolution of the four unresolved intent slots through the scoped interpreter and private native controls; do not silently evict unresolved work. The INV bridge remains AG08 work.
 
 **Owner:** server action interpretation; domain command adapters. **Depends on:** AG01, AG03–AG04. **Touchpoints:** `apps/server/src/context.ts`, `decision-context.ts`, `cognition.ts`, response admission and existing action adapters. INV-7.1 owns the shared missing-capability classification contract.

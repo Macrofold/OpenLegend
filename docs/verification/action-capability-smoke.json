@@ -1,5 +1,5 @@
 {
-  "scope": "No-network native/manual runtime exercise with injected semantic outputs. Not a unit/browser suite or live-model quality evidence.",
+  "scope": "Native/manual runtime exercise with loopback HTTP and injected semantic outputs; no external provider calls. Not a unit/browser suite or live-model quality evidence.",
   "node": "v22.23.2",
   "run": "35949420195",
   "paidModelCalls": 0,

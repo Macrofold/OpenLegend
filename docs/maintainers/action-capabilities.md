@@ -1,6 +1,6 @@
 # Action capability grounding and activities: delivery tracker
 
-**Status: design and acceptance work; all new tasks below are unimplemented/unqualified.** This is the focused subtracker for the detailed parameterized invocation and activity contract beneath AG05, with AG03 continuation and INV-3 family integration. It does not replace their IDs, reset their checkboxes, or duplicate their complete acceptance programs.
+**Status: delivery and acceptance tracker.** A narrow native slice is implemented; unchecked tasks retain broader scope or qualification requirements. Current runtime facts and evidence are linked below. This is the focused subtracker for the detailed parameterized invocation and activity contract beneath AG05, with AG03 continuation and INV-3 family integration. It does not replace their IDs, reset their checkboxes, or duplicate their complete acceptance programs.
 
 The [capability specification](../action-capabilities.md) owns behavior/contracts. The [action repertoire](../repertoires/actions.md) owns example intents. [Architecture](../architecture.md) owns current facts; [Verification](../verification.md) owns actual evidence. The [maintainer index](README.md) remains navigation only.
 

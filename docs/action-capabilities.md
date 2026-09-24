@@ -205,6 +205,8 @@ Provider encodings can use strict nullable fields rather than this union. Their 
 
 ### Preserve the consequential slots
 
+[Partial fulfillment and initiator review](#partial-fulfillment-and-initiator-review) permits explicit accepted relaxation; the requirement here is traceability and no silent change, not rejection of every unsupported qualifier.
+
 Grounding records a compact intent contract alongside the candidate: initiator; action versus goal versus hypothetical; target; affected object/part; instrument; recipient/participants; destination/frame; quantity and units; method; hard constraints; optional preferences; temporal extent; termination; replacement/queue mode; and authorized result dependencies. Only applicable slots are needed.
 
 | Phrase                       | Required interpretation                                                                                   |

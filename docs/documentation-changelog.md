@@ -135,3 +135,7 @@ Recorded the statement-count fixture and investigation limits in Verification, i
 ## Spatial world browser verification
 
 Recorded the passing branch-only GitHub Actions production build, 24 focused tests and real PlayCanvas browser scenario in Verification. Updated the narrowly evidenced camera, surface-picking and executed-check task states while retaining broader acceptance gates. Removed temporary source/publication transport files; a read-only spatial workflow now supplements the unchanged full repository check. No live provider calls or legacy save conversion were introduced.
+
+## Action invocation and partial-fulfillment implementation
+
+Added current move/follow, Jev-first grounding and revised-action approval facts to Architecture and implementation status, with native/HTTP/stress evidence in Verification. Refined the action capability specification to permit explicit partial fulfillment and initiator review, and reserved Mechanical workflow reconciliation for integration with the separate invention work. The example repertoire remains aspirational. Broader AC/AG/INV acceptance is not marked complete. Temporary implementation/verification workflow files are removed and the original CI workflow is restored.

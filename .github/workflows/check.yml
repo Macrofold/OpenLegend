@@ -1,66 +1,18 @@
-name: Action implementation closeout
+name: Code checks
 on:
   push:
-    branches:
-      - design/action-repertoire-and-capability-grounding
+  pull_request:
 permissions:
   contents: read
 jobs:
-  documentation-and-cleanup:
+  check:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Record verified scope and audit documentation
-        run: python .github/action-finish.py
-      - name: Format documentation
-        run: |
-          git ls-files -m -- docs archive | grep -E '\.(md|json)$' | xargs -r pnpm exec prettier --write
-      - name: Restore standard CI and remove temporary implementation programs
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import subprocess
-          workflow="""name: Code checks
-          on:
-            push:
-            pull_request:
-          permissions:
-            contents: read
-          jobs:
-            check:
-              runs-on: ubuntu-latest
-              steps:
-                - uses: actions/checkout@v4
-                - uses: pnpm/action-setup@v4
-                - uses: actions/setup-node@v4
-                  with:
-                    node-version: '22'
-                    cache: pnpm
-                - run: pnpm install --frozen-lockfile
-                - run: pnpm run check
-          """
-          p=Path('.github/workflows/check.yml');p.write_text(workflow)
-          digest=subprocess.check_output(['git','hash-object',str(p)],text=True).strip()
-          if digest!='73ebf085d2889d173a4738e5c1f32f76576c0c6f':raise RuntimeError('Restored workflow differs from the original.')
-          for name in ['action-slice.py','action-finish.py','action-smoke.mjs']:
-            Path('.github',name).unlink(missing_ok=True)
-          PY
-      - name: Commit documentation and cleanup
-        run: |
-          git add .github docs archive
-          git diff --cached --stat
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m '[skip ci] docs: record action runtime evidence and restore standard CI'
-          git push origin HEAD:design/action-repertoire-and-capability-grounding
+      - run: pnpm run check

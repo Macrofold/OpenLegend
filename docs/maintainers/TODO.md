@@ -304,3 +304,6 @@ No new unit/browser tests are written or run for this task at the owner's reques
 - Add runtime action admission coverage for pause winning the serialized writer queue: resuming repeats only the original unpaid commit, never grounding or provider dispatch. Verify a new manifest cannot select an old pending revision with matching text.
 
 - Add automated coverage for durable response readiness on exact player text actions, Jev-only full matches and NPC proposals whose final provider phase is Jev classification. Retired/terminal jobs must still fail closed. Verify an actor's confirmation question is a normal completed interpretation, not a provider retry trigger.
+
+- Action acceptance follow-up: run capped live Jev/full-match and partial-revision examples, including the actor's subsequent accept/decline choice. The injected smoke outputs establish control flow, not semantic quality. Qualify the Character panel's visual layout, keyboard controls and stale-load draft/error behavior.
+- Profile the existing mixed scenario's cold advance spike through the performance owner before making population/hitch-free claims; do not add an unrelated scheduler rewrite to action grounding.

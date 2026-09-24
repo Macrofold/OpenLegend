@@ -473,3 +473,29 @@ Fractional routes retained their endpoint IDs and each returned leg passed the e
 The combined application was built and started through its ordinary production entrypoint on loopback port 3225, with fresh isolated `/mnt/data/round3-merged-live` SQLite storage and zero AI budget. Normal authenticated presence/control and command calls moved the actor to `{x:24,y:3,z:6}` on `lookout-deck`, rejected the same point on `terrain`, and completed movement underneath to `{x:20,y:0,z:5}`. Those local command calls returned in 17.98, 4.18 and 6.26 ms respectively; these are individual observations, not a request-latency distribution. The page returned HTTP 200. A clean pause/shutdown/restart retained the lower position/support and reopened paused. Both application processes were stopped; no existing user save was touched.
 
 Current browser/GPU, PostgreSQL, long-session heap, many-client and paid-cognition latency remain unmeasured. EPR03 private acquisition, D51 viewport authorization and broader crowd/flight/model-family gaps remain in their existing owners. Temporary reconciliation/publication files are removed at final publication and normal CI restored; this request skips automated test jobs, not future work. The complete-latency plan remains PF-owned, with spatial preparation and evidence semantics separately owned by SW/EPR.
+
+## Action capability native slice
+
+**Qualified scope:** production TypeScript/client build plus direct native and real loopback-HTTP runtime exercises, with injected semantic outputs and paid execution disabled. [Machine-readable results](verification/action-capability-smoke.json) retain the actual outcomes and scenario parameters from [run 35949420195](https://github.com/Macrofold/OpenLegend/actions/runs/35949420195). The resulting source commit is `cf81000741ae011011a260e4547c5faabfd1323b`; subsequent documentation/CI cleanup does not change those runtime sources.
+
+`pnpm run build` completed, including `tsc --noEmit -p tsconfig.build.json` and the Vite production build. The manual runtime exercise observed: exact coordinate text binding and completed native travel with zero semantic calls; an uncertain omitted-stealth revision retained without physical action; native acceptance starting follow; pending approval retained through a real SQLite/server restart; approval through `/api/command`; follow stopping once the target was actually outside sight; explicit cancellation; and exclusion of the private follow cursor from another actor's observation. The strict provider-schema projection reported no optional object-property omissions.
+
+The player HTTP action request reached its actual durable native-plan admission. A prior exploratory run exposed its missing response-readiness marker; the recorded successful run includes the corrected provider-independent admission. A pending revision's action component remains unaccepted until approval even though the interpretation workflow has completed. This does not claim that a live model chose an appropriate omission.
+
+### Performance exercises
+
+These are measured native advance times on one GitHub-hosted Ubuntu runner using Node v22.23.2. CPU model and full hardware details were not retained. The follower workload used 180 one-second advances; the existing mixed and gem scenarios used their saved speed-3 configuration and no warmup. Do not compare them as equal amounts of simulated work or infer a supported population capacity.
+
+| Workload                                       | Measured advances | Median  | p95     | Maximum   | Total      |
+| ---------------------------------------------- | ----------------- | ------- | ------- | --------- | ---------- |
+| 50 active followers; one moving fixture leader | 180               | 4.69 ms | 7.15 ms | 10.24 ms  | 892.93 ms  |
+| Mixed fixture; 344 total entities              | 180               | 2.35 ms | 3.42 ms | 558.12 ms | 1001.55 ms |
+| 500 added gems; 514 total entities             | 180               | 3.39 ms | 6.23 ms | 77.48 ms  | 751.70 ms  |
+
+All 50 fixture followers remained active at the end. Existing `scripts/stress-native.ts` scenarios completed within their configured limits. The mixed fixture retains a substantial cold spike; this slice does not claim to solve pre-existing encounter/initialization cost or demonstrate hitch-free simulation. There were zero paid model calls during these exercises.
+
+### Not qualified
+
+No unit or browser suites were written or run for this task; requested automated cases are in [TODO](maintainers/TODO.md#action-capability-slice-deferred-automated-coverage). A full test-inclusive typecheck encountered pre-existing fixture/API/provenance/old-goal typing errors; the production build excludes those test files and passed. The new Character panel was built, while its HTTP lifecycle was exercised; visual/browser interaction and accessibility remain unqualified.
+
+Live Jev routing quality, live LLM partial-fulfillment judgment, and a live autonomous actor's decision to accept/decline are not established by the injected outputs. Per-actor future inference, broad cross-constitution capability support, general workflow composition and invention integration remain their existing AC/AG/INV tasks. Paid model usage for this implementation task was $0.
