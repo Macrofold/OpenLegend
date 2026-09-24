@@ -11,6 +11,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Apply reviewed patch and verify exact tree; no tests or paid calls
         run: |
           python3 - <<'PY'
@@ -20,7 +22,7 @@ jobs:
           assert hashlib.sha256(p).hexdigest()=='59fd160d35518d067500cf0d87624b3ea779fefdc78958f9fc43d6f86055c122'
           pathlib.Path('/tmp/slice.patch').write_bytes(p)
           PY
-          git checkout HEAD^ -- .github/workflows/check.yml
+          git checkout 74415fa718cb4adc3b4a6a60ef6bb2a00cdc4748 -- .github/workflows/check.yml
           git rm .github/workflows/publish-mcp-slice.yml .mcp-slice.b64
           git apply --index /tmp/slice.patch
           test "$(git write-tree)" = c5ec15b80c238db4bc60c0e3cb6210fc498791e2
