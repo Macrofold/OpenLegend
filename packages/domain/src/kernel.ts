@@ -1534,7 +1534,10 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
       };
       // A visible body is evidence of its current activity, not access to its future route.
       delete copy.spatial.flight;
-      if (copy.actor?.action) delete copy.actor.action.destination;
+      if (copy.actor?.action) {
+        delete copy.actor.action.destination;
+        delete copy.actor.action.follow;
+      }
       if (copy.actor) {
         // Sparse state is owner-private; explicit permitted projections carry public values.
         delete copy.actor.attributes;

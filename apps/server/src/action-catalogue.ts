@@ -59,6 +59,15 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
       intent: { kind: 'command', command },
     });
   };
+  if (selected?.actor?.alive && selected.id !== service.controlledEntityId)
+    add(
+      `follow:${selected.id}`,
+      `Follow ${selected.name}`,
+      'Movement',
+      { type: 'follow', targetId: selected.id },
+      ['follow', 'accompany'],
+      selected.id,
+    );
   const missing = (
     family: keyof typeof ACTION_DESCRIPTIONS,
     label: string,

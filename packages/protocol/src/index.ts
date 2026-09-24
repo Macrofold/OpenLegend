@@ -163,7 +163,7 @@ export interface AiJobView {
   queueLatencyMs?: number;
   totalLatencyMs?: number;
   id: string;
-  kind: 'chat' | 'invention' | 'thought';
+  kind: 'chat' | 'invention' | 'thought' | 'action';
   status: 'queued' | 'judging' | 'generating' | 'completed' | 'failed' | 'cancelled' | 'stale';
   message: string;
 }
@@ -512,4 +512,18 @@ export interface InventionHistory {
   message?: string;
   requests: InventionRequestView[];
   next?: { createdAt: number; id: string };
+}
+
+export interface PlayerActionAttempt {
+  id: string;
+  description: string;
+  status: 'needs-interpretation' | 'awaiting-confirmation';
+  fulfillment?: {
+    requested: string;
+    executableDescription: string;
+    verdict: 'exact' | 'partial' | 'confirm';
+    supported: string[];
+    omitted: { requirement: string; reason: string }[];
+    reason: string;
+  };
 }

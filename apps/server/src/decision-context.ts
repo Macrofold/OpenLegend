@@ -297,9 +297,7 @@ export async function prepareDecision(
     actions: planActions,
   };
   const offered: { id: string; description: string }[] = [];
-  const prompt =
-    readableDecisionContext(context, offered, false) +
-    `\nNavigation: ${NAVIGATION_INSTRUCTIONS}\nPosition/support: ${JSON.stringify({ position: currentObserved.actor.position, support: currentObserved.actor.spatial.supportSurfaceId })}\nPublic supports: ${JSON.stringify(context['publicSurfaces'])}`;
+  const prompt = readableDecisionContext(context, offered, false);
   const bytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   if (bytes > 100000)
     throw new Error('Complete accepted inner world and required context exceed the input budget.');

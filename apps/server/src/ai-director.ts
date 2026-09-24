@@ -1,3 +1,8 @@
+import { groundActionAttempts } from './action-grounding.js';
+import { actionResponse } from './action-response.js';
+import { npcCandidates, planningCandidates } from './context.js';
+import { domainCommand } from './cognition.js';
+import type { ActorResponse, AttemptBinding } from '@open-legend/domain';
 import { searchInventions } from './invention-search.js';
 import type { InventionContinuation } from '@open-legend/protocol';
 import {
@@ -7,7 +12,6 @@ import {
 } from './invention-service.js';
 import { inventionPermission, recordInventionFeedback } from '@open-legend/domain';
 import { prepareActorInvention } from './actor-invention.js';
-import { prepareAttemptInterpretation } from './attempt-interpretation.js';
 import { nativeProtectionReason } from './native-protection.js';
 import { currentGoal } from '@open-legend/domain';
 import { projectAttributes } from '@open-legend/domain';
@@ -189,6 +193,181 @@ export class AiDirector {
       // Abort the provider stage promptly; the attempt wrapper rebuilds context once.
       run.controller.abort();
     });
+  }
+
+  async submitAction(
+    id: string,
+    text: string,
+    mode: 'enqueue' | 'replace',
+    targetId?: string,
+  ): Promise<ApiResult> {
+    return this.admission(async () => {
+      const actorId = this.service.controlledEntityId;
+      const actor = this.service.world.entities[actorId]?.actor;
+      if (!text.trim() || text.length > 500 || !['enqueue', 'replace'].includes(mode))
+        return {
+          ok: false,
+          code: 'invalid-action',
+          message: 'Supply an action of 1–500 characters.',
+        };
+      const fingerprint = digest({
+        kind: 'action',
+        world: this.service.world.id,
+        timeline: this.service.timelineId,
+        actorId,
+        text,
+        mode,
+        targetId,
+      });
+      const previous = await this.service.store.getJob(id);
+      if (previous)
+        return previous.kind === 'action' && previous.fingerprint === fingerprint
+          ? { ok: true, code: 'duplicate', message: previous.message, jobId: id }
+          : {
+              ok: false,
+              code: 'idempotency-conflict',
+              message: 'This request identity was already used.',
+            };
+      if (this.service.paused)
+        return { ok: false, code: 'paused', message: 'Resume before attempting an action.' };
+      if (!actor?.alive || actor.incapacitated || actor.rest?.asleep)
+        return { ok: false, code: 'actor-unavailable', message: 'Your character cannot act now.' };
+      if (
+        targetId &&
+        !this.service.observe(actorId)?.visibleEntities.some((e) => e.id === targetId)
+      )
+        return {
+          ok: false,
+          code: 'target',
+          message: 'The selected target is no longer perceived.',
+        };
+      if (this.running || this.stopped)
+        return {
+          ok: false,
+          code: 'busy',
+          message: 'Another intelligence request is in progress; try again after it finishes.',
+        };
+      this.maintenance.cancel();
+      const job: JobRecord = {
+        id,
+        kind: 'action',
+        fingerprint,
+        status: 'queued',
+        message: 'Resolving your action.',
+        createdAt: this.now(),
+        diagnosticTriggerType: 'Player action request',
+        request: {
+          text,
+          npcId: actorId,
+          action: {
+            mode,
+            targetId,
+            expectedPlan: actor.planGeneration,
+            timelineId: this.service.timelineId,
+          },
+        },
+      };
+      await this.begin(job);
+      return { ok: true, code: 'queued', message: job.message, jobId: id };
+    });
+  }
+
+  private async groundAttempts(
+    run: Running,
+    actorId: string,
+    response: ActorResponse,
+    bindings: AttemptBinding[],
+    operation: string,
+  ): Promise<AttemptBinding[]> {
+    const world = this.service.world;
+    const manifest = world.moduleManifest.revision;
+    let serial = 0;
+    const resolved = await groundActionAttempts(world, actorId, response, bindings, {
+      judge: (request) =>
+        this.call(run, 'jev', `${operation}:classify:${serial++}`, (requestId) =>
+          this.client.judge({ ...request, requestId, signal: run.controller.signal }),
+        ),
+      generate: (request) =>
+        this.generate<unknown>(
+          run,
+          {
+            ...request,
+            task: 'native_attempt_interpretation',
+            actorScope: actorId,
+            execution: 'fast',
+            model: this.service.config.macrofoldKey
+              ? this.service.config.macrofoldMiniModel
+              : this.service.config.miniModel,
+            reasoningEffort: 'low',
+            maxOutputTokens: 2200,
+          },
+          `${operation}:interpret:${serial++}`,
+        ),
+      record: (kind, input, output) =>
+        this.log.record(`${run.job.id}:${operation}:report:${serial++}`, kind, input, output),
+    });
+    this.current(run);
+    if (this.service.world.moduleManifest.revision !== manifest)
+      throw new Error('Mechanics changed during action interpretation; submit a fresh action.');
+    return resolved;
+  }
+
+  private async playerAction(run: Running): Promise<void> {
+    const actorId = run.job.request.npcId!;
+    const request = run.job.request.action!;
+    if (request.timelineId !== this.service.timelineId)
+      throw new StopJob('stale', 'The action belongs to an earlier timeline.');
+    const response = actionResponse({
+      kind: 'proposal',
+      description: run.job.request.text,
+      actionId: null,
+      verb: null,
+      targetEntityId: request.targetId ?? null,
+      mode: request.mode,
+    });
+    const choices = [
+      ...npcCandidates(this.service, actorId),
+      ...planningCandidates(this.service, actorId),
+    ].flatMap((c) =>
+      c.command
+        ? [
+            {
+              description: c.description,
+              commands: [domainCommand(c.command, actorId, run.job.id)],
+            },
+          ]
+        : [],
+    );
+    const unique = [...new Map(choices.map((c) => [JSON.stringify(c), c])).values()];
+    const bindings = await this.groundAttempts(run, actorId, response, unique, 'player-action');
+    await this.awaitResume(run, true);
+    this.current(run);
+    const observed = this.service.observe(actorId);
+    const refs = [actorId, ...(observed?.visibleEntities.map((e) => e.id) ?? [])];
+    const result = await this.service.transition(
+      (world) =>
+        commitActorResponse(
+          world,
+          run.job.id,
+          actorId,
+          response,
+          {},
+          refs,
+          request.expectedPlan,
+          bindings,
+        ),
+      undefined,
+      run.job.id,
+    );
+    const component = this.service.world.responseReceipts?.[run.job.id]?.components['action'];
+    const fulfillment = bindings.find((b) => b.description === run.job.request.text)?.fulfillment;
+    const message =
+      component?.code === 'needs-confirmation'
+        ? component.message
+        : fulfillment?.verdict === 'partial'
+          ? `${component?.message ?? result.message} Not fulfilled: ${fulfillment.omitted.map((o) => o.requirement).join('; ')}.`
+          : (component?.message ?? result.message);
+    await this.update(run, 'completed', message, { outcome: component ?? result, fulfillment });
   }
 
   async submitInteractive(
@@ -647,6 +826,13 @@ export class AiDirector {
     const actor = this.service.world.entities[actorId];
     if (run.generation !== this.service.generation || !actor?.actor?.alive)
       throw new StopJob('stale', 'The actor or world changed; the result was not applied.');
+    if (
+      run.job.kind === 'action' &&
+      (actor.actor.incapacitated ||
+        actor.actor.rest?.asleep ||
+        run.job.request.action?.timelineId !== this.service.timelineId)
+    )
+      throw new StopJob('stale', 'The actor or action timeline changed.');
     const resident =
       this.service.world.entities[run.job.request.npcId ?? this.service.defaultResidentEntityId]
         ?.actor;
@@ -961,6 +1147,7 @@ export class AiDirector {
   }
 
   private async process(run: Running): Promise<void> {
+    if (run.job.kind === 'action') return await this.playerAction(run);
     if (run.job.kind === 'invention') return await this.invent(run);
     if (run.job.kind === 'thought') return await this.think(run);
     return await this.decide(run, true);
@@ -1322,42 +1509,22 @@ export class AiDirector {
       parsingStartedAt,
     );
     let attemptBindings = prepared.attemptBindings;
-    const interpretationManifest = this.service.world.moduleManifest.revision;
-    const interpretation = prepareAttemptInterpretation(
-      nativeReply,
-      attemptBindings,
-      this.service.world.entities[actorId]!.actor!.agency,
-      interpretationManifest,
-    );
-    if (interpretation) {
+    if (nativeReply.operations.some((op) => op.act?.kind === 'proposal')) {
       try {
-        const value = await this.generate<unknown>(
+        attemptBindings = await this.groundAttempts(
           run,
-          {
-            task: 'native_attempt_interpretation',
-            actorScope: actorId,
-            execution: 'fast',
-            model: c.macrofoldKey ? c.macrofoldMiniModel : c.miniModel,
-            reasoningEffort: 'low',
-            maxOutputTokens: 1024,
-            instructions: interpretation.instructions,
-            context: interpretation.context,
-            schema: interpretation.schema,
-          },
-          `attempt:${attempt}:interpret`,
+          actorId,
+          nativeReply,
+          attemptBindings,
+          `attempt:${attempt}`,
         );
-        if (this.service.world.moduleManifest.revision !== interpretationManifest)
-          throw new Error('World mechanics changed during interpretation; intent deferred.');
-        attemptBindings = [...attemptBindings, ...interpretation.resolve(value)];
       } catch (error) {
         if (run.controller.signal.aborted || run.cancelReason || run.supersession) throw error;
-        // Optional interpretation failure preserves speech and a private deferred intent.
-        // No paid repair or automatic retry. Native execution still owns every effect.
         await this.log.record(
           `${run.job.id}:attempt:${attempt}:interpretation-deferred`,
-          'Native attempt deferred',
+          'Action interpretation deferred',
           {},
-          { reason: error instanceof Error ? error.message : 'Interpretation unavailable' },
+          { reason: error instanceof Error ? error.message : 'Unavailable' },
         );
       }
       this.current(run);
