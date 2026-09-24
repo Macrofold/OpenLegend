@@ -8,6 +8,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
 - [Combat](combat.md)
+- [Knowledge and observer identity](knowledge.md)
 
 ## Code boundary
 

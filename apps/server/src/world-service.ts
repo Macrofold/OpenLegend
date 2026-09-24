@@ -1,3 +1,4 @@
+import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/domain';
 import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { inventoryFor, projectStatusEffects } from '@open-legend/domain';
 import { changeInventionPolicy } from '@open-legend/domain';
@@ -879,6 +880,27 @@ export class WorldService {
         case 'enable-cognition':
           return enableActorCognition(world, targetId);
       }
+    });
+  }
+
+  async godKnowledge(value: import('@open-legend/domain').KnowledgeEdit & {
+    worldId: string; generation: string; actorId: string; givenName?: string; nameRevision?: number;
+  }): Promise<ApiResult> {
+    if (!this.config.godMode) return {ok: false, code: 'forbidden', message: 'God access required.'};
+    return this.godTransition(world => {
+              if (world.id !== value.worldId || this.generation !== value.generation)
+                return {world, events: [], outcome: {ok: false, code: 'stale-world', message: 'The world changed. Reload the editor.'}};
+              let edited: import('@open-legend/domain').Outcome = {ok: false, code: 'knowledge-rejected', message: 'Knowledge edit rejected.'};
+              const candidate = updateWorld(world, draft => {
+              const permitted = value.subjectId ? [value.subjectId] : [];
+              if (value.givenName !== undefined && value.subjectId) {
+                const named = assignGivenName(draft, value.actorId, {subjectId: value.subjectId, givenName: value.givenName, expectedRevision: value.nameRevision ?? 0}, permitted, true);
+                if (!named.ok) {edited = named; return;}
+              }
+              edited = editKnowledge(draft, value.actorId, value, permitted);
+              if (edited.ok && value.subjectId) rememberSubject(draft, value.actorId, value.subjectId, true);
+              });
+              return {world: edited.ok ? candidate : world, events: [], outcome: edited};
     });
   }
 

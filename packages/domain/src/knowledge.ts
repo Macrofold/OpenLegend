@@ -40,10 +40,10 @@ export function editKnowledge(
   const policy = world.knowledgePolicy;
   if (!policy || !world.entities[actorId]?.actor || !isSafeRecordId(actorId))
     return outcome(false, 'knowledge-unavailable', 'Knowledge is unavailable for this actor.');
-  if (edit.subjectId !== null && (!permittedSubjects.includes(edit.subjectId) ||
-      !isSafeRecordId(edit.subjectId) || !world.entities[edit.subjectId]))
-    return outcome(false, 'unpermitted-subject', 'The knowledge subject was not supplied.');
   const current = knowledgeDocument(world, actorId, edit.subjectId);
+  if (edit.subjectId !== null && (!permittedSubjects.includes(edit.subjectId) ||
+      !isSafeRecordId(edit.subjectId) || (!world.entities[edit.subjectId] && !current)))
+    return outcome(false, 'unpermitted-subject', 'The knowledge subject was not supplied.');
   if (!Number.isSafeInteger(edit.expectedRevision) || edit.expectedRevision < 0 ||
       edit.expectedRevision !== (current?.revision ?? 0))
     return outcome(false, 'stale-knowledge', 'The knowledge document changed; read its current revision.');
@@ -68,15 +68,15 @@ export function editKnowledge(
 
 export function validateKnowledge(world: WorldState): void {
   if (!world.knowledgePolicy && !world.actorKnowledge) return;
-  for (const limit of Object.values(world.knowledgePolicy?.maxCharacters ?? {}))
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100000)
+  for (const limit of [world.knowledgePolicy?.maxCharacters?.general, world.knowledgePolicy?.maxCharacters?.subject])
+    if (!Number.isSafeInteger(limit) || limit! < 1)
       throw new Error('Invalid admitted knowledge character limit.');
   if (!world.knowledgePolicy) throw new Error('Knowledge has no admitted policy.');
   for (const [actorId, documents] of Object.entries(world.actorKnowledge ?? {})) {
     if (!world.entities[actorId]?.actor) throw new Error('Knowledge owner is unavailable.');
     for (const [id, document] of Object.entries(documents)) {
       if (id !== knowledgeKey(document.subjectId) ||
-          (document.subjectId !== null && !world.entities[document.subjectId]) ||
+          (document.subjectId !== null && !isSafeRecordId(document.subjectId)) ||
           !Number.isSafeInteger(document.revision) || document.revision < 1 ||
           typeof document.text !== 'string' || !Array.isArray(document.evidenceIds) ||
           document.evidenceIds.some((id) => typeof id !== 'string') ||

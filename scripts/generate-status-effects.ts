@@ -32,7 +32,7 @@ const knowledgeSource = new URL('../packages/domain/src/worlds/base/config/knowl
 const knowledgeDestination = new URL('../packages/domain/src/worlds/base/config/knowledge.generated.json', import.meta.url);
 const knowledge = parse(await readFile(knowledgeSource, 'utf8'));
 if (knowledge?.knowledge?.policy !== 'editable-notepads' || knowledge?.observerIdentity?.policy !== 'observer-given-names' ||
-    !['general', 'subject'].every(key => Number.isSafeInteger(knowledge.knowledge.maxCharacters[key]) && knowledge.knowledge.maxCharacters[key] > 0 && knowledge.knowledge.maxCharacters[key] <= 100000))
+    !['general', 'subject'].every(key => Number.isSafeInteger(knowledge.knowledge.maxCharacters[key]) && knowledge.knowledge.maxCharacters[key] > 0))
   throw new Error('Invalid base-world knowledge policy.');
 const knowledgeOutput = await format(JSON.stringify(knowledge), { ...(await resolveConfig(knowledgeDestination.pathname)), parser: 'json' });
 if (process.argv.includes('--check')) {

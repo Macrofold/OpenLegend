@@ -38,7 +38,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
     command: CommandInput,
     keywords: string[] = [],
     targetId?: string,
-    availability?: { ok: boolean; message: string },
+    provided?: { availability: { ok: boolean; message: string }; description: string },
   ) => {
     // Ground exposes destination movement only. Personal work belongs to self;
     // resource and social actions belong to the specifically selected target.
@@ -49,12 +49,12 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
       !(selected.id === service.controlledEntityId && !targetId)
     )
       return;
-    const result = availability ?? service.previewCommand(command);
+    const result = provided?.availability ?? service.previewCommand(command);
     actions.push({
       id,
       label,
       category,
-      description: describeCommand(command, observation),
+      description: provided?.description ?? describeCommand(command, observation),
       facts: commandFacts(command, observation),
       keywords,
       ...(targetId ? { targetId } : {}),
@@ -143,9 +143,9 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
         option.label,
         'Pick Up',
         option.command,
-        ['take', 'collect'],
+        ['take', 'collect', option.description],
         target.id,
-        option.availability,
+        { availability: option.availability, description: option.description },
       );
     if (target.actor && target.id !== service.controlledEntityId)
       for (const definition of Object.values(NATIVE_STRIKES))

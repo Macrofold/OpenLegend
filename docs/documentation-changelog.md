@@ -163,3 +163,5 @@ The sleep-specific numeric policy, actor rest flag and named renderer checks wer
 Moved the sleep specification to `docs/worlds/base/sleep.md` and repaired inbound references. Added the base-world mechanics index, item/ground-pile specification, survival/combat ownership and BW delivery tracker. Moved authored defaults/configuration under `packages/domain/src/worlds/base/`; generic runtime contracts remain with their existing owners. AGENTS.md requires this separation for subsequent work.
 
 - Removed the implementation-chosen 256-summary quota from the consolidation contract and snapshot. Memory retention no longer constrains semantic grouping by remaining slots; request-size limits and atomic multi-request publication have separate ownership in the memory design and runtime snapshot.
+
+Knowledge canvas mechanics now have one engine owner in `docs/knowledge.md`; bundled limits/naming/recognition live in `docs/worlds/base/knowledge.md`. This replaces the proposed naming-heavy YAML state example and the external-beliefs-in-one-inner-world-text direction. The observer-known-name decision is resolved; aggregate storage remains open.

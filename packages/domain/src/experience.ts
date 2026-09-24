@@ -294,6 +294,9 @@ export function mutateExperience(
       world.memories = committed.memories;
       world.minds = committed.minds;
       world.innerWorlds = committed.innerWorlds;
+      world.actorKnowledge = committed.actorKnowledge;
+      world.observerIdentities = committed.observerIdentities;
+      world.knowledgeRevisions = committed.knowledgeRevisions;
       return [...new Set([...updates, ...additions])];
     }
     const additions = mutations.map((change) => {
@@ -943,10 +946,6 @@ export function publishInnerWorld(
   }
   const forgotten = new Set(input.experience?.forgotten[actorId] ?? []);
   if (evidenceIds.some((id) => forgotten.has(id))) return reject('Evidence was forgotten.');
-  if (input.actorKnowledge && files.some((f) => !prior.files.some((old) => old.path === f.path)))
-    return reject(
-      'Use knowledgeChanges for external understanding; About me files retain personal identity.',
-    );
   const world = draftWorld(input);
   if (knowledgeChanges.length > 16 || nameChanges.length > 16)
     return reject('Too many knowledge changes.');

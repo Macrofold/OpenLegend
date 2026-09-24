@@ -159,7 +159,7 @@ Owner: server scheduler/repository and generic summarizer; pure acceptance rules
 - [x] Preserve essential identity and native obligation authority. Workspace prose cannot grant capabilities, edit world state or fabricate witnessed evidence. Keep old sessions, scratch and audit exports outside actor recall.
 - [ ] Verify Macrofold scoped file and snapshot capabilities before relying on them. Provisioning a workspace alone is not working workspace reflection; a SQLite adapter is an interim step, not PostgreSQL acceptance.
 
-- [x] Preserve authored relationship/belief/goal prose in one accepted text authority; any query index derives from that revision. Keep native skills, obligations and mechanical appraisals independently authoritative.
+- [x] Preserve authored self-understanding and external knowledge in their respective accepted document authorities (CR13); any query index derives from that revision. Keep native skills, obligations and mechanical appraisals independently authoritative.
 
 - [x] Seed new actors' identity, permitted knowledge and initial accepted text atomically with saved state; provision actor-scoped workspace access idempotently without fabricating witnessed background or duplicating paid setup.
 - [x] Enforce the initial ten-file/500-word-per-file ceiling plus finite bytes until an explicit quota decision supersedes it. Count headings and durable scratch, expose deterministic counts/preview, keep trusted instructions read-only and reject overflow without truncation or paid repair.
@@ -439,3 +439,18 @@ These pending checks directly define cognition completion and were moved from th
 - [x] Project generic species memories without individual handles and preserve named actors' episodes without text deduplication. Personal aliases are excluded; deferred regression and live-quality work remain in TODO.
 
 - [x] Separate consolidation request sizing from summary retention: remove fixed storage/schema/group-count ceilings, partition by input/output allowance, retain chronological barriers and atomically publish only a complete validated review.
+
+
+### CR13 — Editable knowledge documents
+
+Canonical contracts: [Knowledge](../knowledge.md), [base-world policy](../worlds/base/knowledge.md). Keep action-repertoire, hearing and spatial branch work with its existing owners.
+
+- [x] Add actor-owned general/subject documents, Unicode character limits, revisioned complete replacements, tombstones and one authoritative edit function.
+- [x] Separate accepted external understanding from About me without duplicating prose; reject an oversized in-place migration without discarding stored state.
+- [x] Project individual document rows transactionally, validate on reopen, include state in save/load and reproject on restore.
+- [x] Integrate optional immediate and reflection proposals, required general/subject context, existing scoped semantic retrieval, owner inspection/editing, private diagnostics and invalidation.
+- [x] Add saved perception episodes and scoped references so server identity cannot alone reconnect private knowledge after a disappearance. Base-world name policy remains BW08.
+- [ ] Qualify paid reflection workspace export plus combined knowledge publication on an available provider; preserve CR07/CR12 live gates.
+- [ ] Add aggregate actor storage admission and bounded cold-document retrieval when measured long-running population/history requires them; the initial implementation retains document maps in active world state.
+
+Deferred automated coverage is in [TODO](TODO.md#knowledge-documents--deferred-automated-validation). Implementation checkboxes do not establish live model quality or full scale acceptance.

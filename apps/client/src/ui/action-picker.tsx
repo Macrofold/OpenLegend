@@ -97,7 +97,13 @@ export function ActionPicker({
     showUnavailable,
     picker.context.targetId,
   );
-  const pickups = matches.filter((action) => action.category === 'Pick Up');
+  const isPickUpAll = (action: CatalogueAction) =>
+    action.intent.kind === 'command' &&
+    action.intent.command.type === 'pickup' &&
+    !action.intent.command.itemId;
+  const pickups = matches
+    .filter((action) => action.category === 'Pick Up')
+    .sort((a, b) => Number(isPickUpAll(b)) - Number(isPickUpAll(a)));
   const canInvent =
     !view.inventionPolicy.playerLocked &&
     connected &&

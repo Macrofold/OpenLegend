@@ -372,6 +372,7 @@ No automated tests were written or run for this slice at the owner's request. Im
 - [ ] Cover owner/origin/generation denial and idempotent God creation; unknown definitions, invalid/overflow quantities, portable/nonportable definitions, existing-world migration preserving identity/creator policy, and save/load during approach.
 - [ ] Cover two actors collecting the final stack, partial/full drops, equipped references, canceled/unreachable/occluded pickup, distinct supports, identical-position merging, nonportable contents in Pick Up All, and no duplicated quantity or empty pile.
 - [ ] Cover categorized hover/click/keyboard pullouts, searchable catalogues, player/other-actor inventory controls, quantity errors, observer-scoped hover/inspection, menu invalidation after movement or body/policy changes, unseen-pile removal, representative-art caps and whole-list accessibility.
+- [ ] Cover immutable custody-cache invalidation after transfers and load replacement, fresh mutable/draft reads, and scheduled-preview/execution admission equivalence including status interruptions, materials and RNG. Cover capability loss during approach versus in-reach work, pile-body placement rejection, portaled arrow/Escape handling, Pick Up All ordering and single-stack item-name search.
 - [ ] Cover post-merge typed invocation/revised-action/readiness integration without replacing the native transfer owner. Benchmark large mixed piles and many visible piles separately from native actor population.
 
 - [ ] Cover skipped native-protection trace presentation for existing `native` and new `skipped` records: reason/subtype, neutral status icon, zero child stages and no fabricated execution-stage card; preserve root-only world-agent output rendering.
@@ -382,3 +383,12 @@ No automated tests were written or run for this slice at the owner's request. Im
 
 - [ ] Cover more than 256 existing and newly produced summaries; lossless singleton groups; input/output partition boundaries and oversized single sources; protected chronological gaps; stale/forgotten sources and missing/duplicate handles. Verify second-chunk failure/cancellation/budget exhaustion preserves every original and makes no automatic retry. Include Unicode/token-estimate drift and later-review compression across chunk boundaries.
 - [ ] Verify live small-model grouping quality and output-budget adequacy on repetitive and distinct whole-day memories; synthetic execution does not establish paid model quality. Measure retained-summary growth under the existing age/protection policy before proposing a new storage quota.
+
+## Knowledge documents — deferred automated validation
+
+- [ ] Cover general/subject code-point limits (including emoji), exact-boundary replacement, rejected overflow, stale edits, clear/recreate tombstones and independent speech acceptance.
+- [ ] Cover observer isolation, deliberate naming including “Deer,” introductions, authored acquaintance, continuous encounter, out-of-view/re-entry, reference collision extension and stale-encounter fencing.
+- [ ] Cover direct required context and optional semantic retrieval, provenance/uncertainty, absence of private name/position leakage, knowledge/interest invalidation and no capability grant from prose.
+- [ ] Cover lossless in-place migration, oversized migration refusal, transactional PostgreSQL/SQLite rows, save/restore generation, interrupted commits and projection corruption detection.
+- [ ] Cover owner editor counts/stale-save feedback, reflection identity preservation, Unicode output budgets, forgotten/corrected evidence, no automatic paid repair, and structured diagnostic note/name presentation.
+- [ ] After outstanding action-repertoire/hearing/spatial branches merge, exercise their response schemas, event attribution and encounter hooks with CR13/BW08; do not duplicate their executors.
