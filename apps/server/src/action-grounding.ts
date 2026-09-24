@@ -1,7 +1,9 @@
+import { navigationInvocationSchema } from './navigation-contracts.js';
 import { z } from 'zod';
 import {
   bindNavigationInvocation,
   NAVIGATION_CAPABILITIES,
+  FOLLOW_RULES,
   normalizeAttempt,
   sameAttempt,
   observeActor,
@@ -13,17 +15,6 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import type { GenerateRequest, JudgeRequest, JudgeValue } from '@open-legend/ai';
-
-export const navigationInvocationSchema = z
-  .object({
-    family: z.enum(['move', 'follow']),
-    x: z.number().finite().nullable(),
-    z: z.number().finite().nullable(),
-    surfaceId: z.string().min(1).max(120).nullable(),
-    targetEntityId: z.string().min(1).max(120).nullable(),
-    distance: z.number().min(1.5).max(12).nullable(),
-  })
-  .strict();
 
 interface GroundingPorts {
   judge(request: Omit<JudgeRequest, 'requestId' | 'signal'>): Promise<JudgeValue>;
@@ -113,23 +104,34 @@ export async function groundActionAttempts(
     )
     .slice(0, 4);
   const additions: AttemptBinding[] = [];
-  const seen = new Set<string>();
+  const seen = new Map<string, string>();
   for (const op of proposals) {
     const act = op.act!;
     const text = act.description!;
     ports.signal?.throwIfAborted();
     const normalized = JSON.stringify([normalize(text), act.targetEntityId, act.mode]);
+    const priorOperation = seen.get(normalized);
+    if (priorOperation) {
+      const prior = additions.find((binding) => binding.operationId === priorOperation);
+      if (prior?.fulfillment)
+        additions.push({
+          ...prior,
+          operationId: op.localId,
+          description: text,
+          fulfillment: { ...prior.fulfillment, requested: text },
+        });
+      continue; // Repeat the chosen invocation, not its paid interpretation.
+    }
     if (
-      seen.has(normalized) ||
       actor.agency.attempts.some(
-        (a) =>
-          sameAttempt(a, text, act.targetEntityId, act.mode) &&
-          a.manifestRevision === world.moduleManifest.revision &&
-          (a.status === 'awaiting-confirmation' || !ports.retryUnresolved),
+        (pending) =>
+          sameAttempt(pending, text, act.targetEntityId, act.mode) &&
+          pending.manifestRevision === world.moduleManifest.revision &&
+          (pending.status === 'awaiting-confirmation' || !ports.retryUnresolved),
       )
     )
       continue;
-    seen.add(normalized);
+    seen.set(normalized, op.localId);
     try {
       let commands: Command[] | undefined;
       const exact = exactNavigation(
@@ -166,20 +168,46 @@ export async function groundActionAttempts(
         await ports.record('Action fulfillment', { text }, fulfillment);
         continue;
       }
-      const choices = bindings.filter((b) => b.commands.length === 1).slice(0, 48);
-      for (const target of observed.visibleEntities
-        .filter((e) => e.actor?.alive && e.id !== actorId)
+      // Apply the explicit target before truncation; selection must survive dense scenes.
+      const scoped = bindings
+        .filter(
+          (binding) =>
+            binding.commands.length === 1 &&
+            (!act.targetEntityId ||
+              binding.commands.some(
+                (command) =>
+                  ('targetId' in command && command.targetId === act.targetEntityId) ||
+                  ('heatId' in command && command.heatId === act.targetEntityId),
+              )),
+        )
+        .slice(0, 48);
+      const visible = act.targetEntityId
+        ? [
+            ...observed.visibleEntities.filter((e) => e.id === act.targetEntityId),
+            ...observed.visibleEntities.filter((e) => e.id !== act.targetEntityId),
+          ]
+        : observed.visibleEntities;
+      for (const target of visible
+        .filter(
+          (e) =>
+            e.actor?.alive &&
+            e.id !== actorId &&
+            (!act.targetEntityId || e.id === act.targetEntityId),
+        )
         .slice(0, 16)) {
-        choices.push({
+        scoped.push({
           description: `Follow ${target.name} [${target.id}] at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
-          commands: [{ id: op.localId, actorId, type: 'follow', targetId: target.id, distance: 3 }],
+          commands: [
+            {
+              id: op.localId,
+              actorId,
+              type: 'follow',
+              targetId: target.id,
+              distance: FOLLOW_RULES.defaultDistance,
+            },
+          ],
         });
       }
-      const scoped = choices.filter(
-        (c) =>
-          !act.targetEntityId ||
-          c.commands.some((cmd) => 'targetId' in cmd && cmd.targetId === act.targetEntityId),
-      );
       const context = {
         request: text,
         targetEntityId: act.targetEntityId,
@@ -190,7 +218,7 @@ export async function groundActionAttempts(
         },
         position: observed.actor.position,
         support: observed.actor.spatial.supportSurfaceId,
-        entities: observed.visibleEntities.slice(0, 64).map((e) => ({
+        entities: visible.slice(0, 64).map((e) => ({
           id: e.id,
           name: e.name,
           position: e.position,
@@ -289,7 +317,7 @@ export async function groundActionAttempts(
         await ports.generate({
           instructions:
             policy +
-            ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or navigation invocation. Only move/follow support generated parameters. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON.',
+            ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or navigation invocation. Only move/follow support generated parameters. Follow has no successful finite termination and cannot precede another step; do not promise unreachable continuation. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON.',
           context,
           schema: z.toJSONSchema(schema, { target: 'draft-7' }),
         }),
@@ -331,38 +359,12 @@ export async function groundActionAttempts(
         await ports.record('Action binding rejected', { text }, result);
         continue;
       }
-      let verdict: ActionFulfillment['verdict'] =
-        result.disposition === 'confirm' ? 'confirm' : result.omitted.length ? 'partial' : 'exact';
-      if (result.omitted.length && verdict !== 'confirm') {
-        const review = await ports.judge({
-          state: { ...context, proposed: result },
-          questions: {
-            fulfillment: {
-              type: 'choice',
-              instructions:
-                policy +
-                ' Decide whether the documented omissions are tolerable for this actor now. Be pragmatic about optional detail but do not assume consent to a materially different action. Removing a stopping condition can lengthen activity: account for that explicitly. When unsure, ask the initiator. Classification does not override native authority.',
-              criteria: {
-                tolerable:
-                  'Core intent remains useful; all omitted requirements are tolerably optional in this context.',
-                ask: 'The omitted criteria may be essential or materially change risk, scope, recipient, method, duration or cost; obtain initiator acceptance.',
-                reject:
-                  'The candidate contradicts the request or cannot be treated as a useful supported revision.',
-              },
-            },
-          },
-        });
-        await ports.record('Action fulfillment classification', { text, proposed: result }, review);
-        const disposition = confident(review, 'fulfillment');
-        if (disposition === 'reject') continue;
-        if (disposition !== 'tolerable') verdict = 'confirm';
-      }
       const nativeDescription = boundCommands
         .map((command) => {
           if (command.type === 'move')
             return `Walk to x=${command.destination.x}, z=${command.destination.z} on ${command.destination.surfaceId}.`;
           if (command.type === 'follow')
-            return `Follow ${observed.visibleEntities.find((e) => e.id === command.targetId)?.name ?? 'the selected actor'} at ${command.distance ?? 3} world units until cancelled, interrupted or lost from sight. No stealth or sunset stop.`;
+            return `Follow ${observed.visibleEntities.find((e) => e.id === command.targetId)?.name ?? 'the selected actor'} at ${command.distance ?? FOLLOW_RULES.defaultDistance} world units until cancelled, interrupted or lost from sight. No stealth or sunset stop.`;
           return (
             scoped.find((choice) => choice.commands[0] === command)?.description ??
             `Perform ${command.type}.`
@@ -377,13 +379,75 @@ export async function groundActionAttempts(
         );
         continue;
       }
+      if (boundCommands.slice(0, -1).some((command) => command.type === 'follow')) {
+        await ports.record(
+          'Action continuation unavailable',
+          { text },
+          { reason: 'Indefinite following cannot truthfully complete before another step.' },
+        );
+        continue;
+      }
+      let verdict: ActionFulfillment['verdict'] =
+        result.disposition === 'confirm' ? 'confirm' : result.omitted.length ? 'partial' : 'exact';
+      let reason = result.reason;
+      let omitted = result.omitted;
+      // Review actual decoded behavior, including candidates that claim no omissions.
+      // docs/architecture.md#action-fulfillment-and-revision-approval
+      if (verdict !== 'confirm') {
+        const review = await ports.judge({
+          state: {
+            ...context,
+            proposed: result,
+            native: { description: nativeDescription, commands: boundCommands },
+          },
+          questions: {
+            fulfillment: {
+              type: 'choice',
+              instructions:
+                policy +
+                ' Compare every meaningful clause of the original request with the decoded native behavior, not the model claims. Verify the omission report is complete. Removing a stop may lengthen activity. Uncertain or unreported differences require acceptance. Classification never grants new mechanics.',
+              criteria: {
+                exact:
+                  'The actual native behavior fulfills the entire request; no requirement is omitted or merely claimed.',
+                tolerable:
+                  'Every unfulfilled requirement is explicitly documented in omitted, and all are tolerably nonessential for this actor in context.',
+                ask: 'A difference is unreported, uncertain, or may materially change intent, risk, recipient, scope, method, duration or cost. Ask the initiator.',
+                reject:
+                  'The candidate contradicts the request or is not a useful supported revision.',
+              },
+            },
+          },
+        });
+        await ports.record(
+          'Action fulfillment classification',
+          { text, proposed: result, nativeDescription, commands: boundCommands },
+          review,
+        );
+        const assessment = confident(review, 'fulfillment');
+        if (assessment === 'reject') continue;
+        const exact = assessment === 'exact' && omitted.length === 0;
+        const partial = assessment === 'tolerable' && omitted.length > 0;
+        if (!exact && !partial) {
+          verdict = 'confirm';
+          reason =
+            'Independent review did not establish full fulfillment or tolerable documented omissions. Accept only the displayed native behavior.';
+          if (!omitted.length)
+            omitted = [
+              {
+                requirement: text,
+                reason:
+                  'Full fulfillment is unverified; the displayed native action is the proposed substitute.',
+              },
+            ];
+        }
+      }
       const fulfillment: ActionFulfillment = {
         requested: text,
         executableDescription: nativeDescription,
         verdict,
-        supported: result.supported,
-        omitted: result.omitted,
-        reason: result.reason,
+        supported: [nativeDescription.slice(0, 500)],
+        omitted,
+        reason,
       };
       additions.push({
         operationId: op.localId,

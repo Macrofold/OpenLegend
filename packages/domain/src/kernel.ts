@@ -535,6 +535,17 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       action = createAction(world, 'rest', SIMULATION_RULES.nativeRestSeconds);
       break;
     case 'confirm-attempt': {
+      const first = component.agency.attempts.find((attempt) => attempt.id === command.attemptId)
+        ?.alternative?.commands[0];
+      if (first) {
+        // Disposable native admission, just like menu preview: no effects or RNG are published.
+        const preview = executeCommand(original, {
+          ...first,
+          actorId: actor.id,
+          id: `${command.id}:preview`,
+        });
+        if (!preview.outcome.ok) return reject(preview.outcome.code, preview.outcome.message);
+      }
       result = confirmActionRevision(world, actor.id, command.attemptId, command.id);
       break;
     }

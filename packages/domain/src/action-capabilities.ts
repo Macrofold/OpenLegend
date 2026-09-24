@@ -1,5 +1,6 @@
 import { surfaceContains, surfaceHeight } from '@open-legend/spatial';
 import { FOLLOW_RULES } from './follow.js';
+export { FOLLOW_RULES } from './follow.js';
 import { outcome } from './events.js';
 import { isSafeRecordId } from './records.js';
 import { seesEntity } from './perception.js';

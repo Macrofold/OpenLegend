@@ -616,6 +616,15 @@ export async function projectView(
       ),
       history: `Your life in this clearing began on Day 1. You have lived here for ${Math.floor(world.simTime / 86400)} full days.`,
       inventory,
+      actionAttempts: memo('player-action-attempts', [actor.agency.attempts], () =>
+        actor.agency.attempts.map((attempt) => ({
+          id: attempt.id,
+          description: attempt.description,
+          status: attempt.status,
+          mode: attempt.mode,
+          ...(attempt.alternative ? { fulfillment: attempt.alternative.fulfillment } : {}),
+        })),
+      ),
       actions: playerActions,
     },
     entities,

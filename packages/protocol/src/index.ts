@@ -229,6 +229,7 @@ export interface GameView {
     memories?: Array<{ id: string; text: string; time: number }>;
     history?: string;
     inventory: InventoryItemView[];
+    actionAttempts: PlayerActionAttempt[];
     actions: ActionOption[];
   };
   entities: EntityView[];
@@ -515,6 +516,7 @@ export interface InventionHistory {
 }
 
 export interface PlayerActionAttempt {
+  mode: 'enqueue' | 'replace';
   id: string;
   description: string;
   status: 'needs-interpretation' | 'awaiting-confirmation';

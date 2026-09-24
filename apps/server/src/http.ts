@@ -633,27 +633,6 @@ export async function createGameServer(
               await director.submitAction(value.requestId, value.text, value.mode, value.targetId),
             );
           }
-          case '/api/action-attempts': {
-            const value = z.object({ requestId: requestIdSchema.nullable() }).strict().parse(body);
-            const actorId = service.controlledEntityId;
-            const job = value.requestId ? await store.getJob(value.requestId) : undefined;
-            const permitted =
-              job?.kind === 'action' &&
-              job.request.npcId === actorId &&
-              job.request.action?.timelineId === service.timelineId;
-            return send(response, 200, {
-              ok: true,
-              attempts: service.world.entities[actorId]!.actor!.agency.attempts.map((a) => ({
-                id: a.id,
-                description: a.description,
-                status: a.status,
-                ...(a.alternative ? { fulfillment: a.alternative.fulfillment } : {}),
-              })),
-              ...(permitted
-                ? { job: { status: job.status, message: job.message, result: job.result } }
-                : {}),
-            });
-          }
           case '/api/saves/list':
             return send(response, 200, {
               ok: true,

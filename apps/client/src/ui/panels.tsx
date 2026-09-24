@@ -251,7 +251,11 @@ export function Character({
 }) {
   return (
     <>
-      <ActionAttempts view={view} connected={connected} />
+      <ActionAttempts
+        key={`${view.worldId}:${view.saveTimeline}:${view.player.id}`}
+        view={view}
+        connected={connected}
+      />
       <Section title="Condition">
         <Condition {...view.player} />
         <Actions actions={view.player.actions} command={command} connected={connected} />
