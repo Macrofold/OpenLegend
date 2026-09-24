@@ -190,8 +190,17 @@ const evaluators: Record<StoryPolicy['evaluator'], Evaluator> = {
   },
 };
 export function selectStory(input: StorySelectionInput, p: StoryPolicy): StorySelection {
+  const event = input.event;
+  // Acquisition is private evidence, not a private thought. Only its sole observer may
+  // receive a designated introduction. docs/narration-and-conversations.md#replaceable-story-selection
+  const ownAcquisition =
+    event.type === 'encounter' &&
+    event.data?.['acquisition'] === 'visual' &&
+    event.actorId === input.viewerId &&
+    event.audience.length === 1 &&
+    event.audience[0] === input.viewerId;
   if (
-    input.event.scope === 'private' ||
+    (event.scope === 'private' && !ownAcquisition) ||
     !p.enabled ||
     !evaluators[p.evaluator] ||
     !input.event.audience.includes(input.viewerId) ||
