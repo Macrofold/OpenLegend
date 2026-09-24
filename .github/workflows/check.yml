@@ -45,38 +45,17 @@ jobs:
           git ls-files -m -o --exclude-standard apps packages docs archive README.md | grep -E '\.(ts|tsx|md|json)$' | while IFS= read -r f; do if [ -f "$f" ]; then printf '%s\n' "$f"; fi; done | xargs -r pnpm exec prettier --write
       - name: Production typecheck and build, no test suites
         run: pnpm run build
-      - name: Exercise actual native runtime
-        run: timeout 120s node --import tsx .github/review-smoke.mjs
-      - name: Commit reviewed source and evidence
+      - name: Native execution and matched-host stress
+        run: timeout 180s node --import tsx .github/review-fixture-loader.mjs
+      - name: Commit reviewed source and documentation
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add apps packages docs archive README.md
           if ! git diff --cached --quiet; then
-            git commit -m '[skip ci] fix: scope action intents and fence revised-action authority'
+            git commit -m '[skip ci] fix: preserve queued prerequisites and reconcile action delivery docs'
             git push origin HEAD:design/action-repertoire-and-capability-grounding
           fi
       - name: Review diagnostics
         if: always()
-        run: |
-          git diff --stat
-          python - <<'PY'
-          from pathlib import Path
-          requests={
-           'apps/server/src/ai-director.ts':['let attemptBindings','markResponseReady','responseReady =','async playerAction','actor.action','thoughtWork.refresh'],
-           'apps/server/src/world-service.ts':['actionAttempts'],
-           'apps/server/src/http.ts':["case '/api/action-attempt'", "case '/api/action-attempts'"],
-           'packages/protocol/src/index.ts':['interface PlayerActionAttempt'],
-           'apps/server/src/view.ts':['jobs:','projectPatch'],
-           'packages/domain/src/kernel.ts':['advanceAction(world','entity.animal'],
-          }
-          for path,terms in requests.items():
-            lines=Path(path).read_text().splitlines(); shown=set()
-            for i,line in enumerate(lines):
-              if any(term in line for term in terms):
-                a=max(0,i-3); b=min(len(lines),i+25)
-                if i in shown: continue
-                print('\n###',path,i+1)
-                for k in range(a,b):
-                  print(f'{k+1}: {lines[k]}'); shown.add(k)
-          PY
+        run: git diff --stat
