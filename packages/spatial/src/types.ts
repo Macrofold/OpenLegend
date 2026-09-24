@@ -121,7 +121,8 @@ export type BodyProfileId = keyof typeof BODY_PROFILES;
  */
 export const MOVEMENT = {
   skin: 0.01,
-  cellSize: 0.1,
+  // Eight-centimetre rasterization preserves the measured person-width passage; not placement snapping.
+  cellSize: 0.08,
   cellHeight: 0.05,
   contourError: 0.1,
   projectionTolerance: 0.2,
@@ -154,8 +155,6 @@ export const SPATIAL_LIMITS = {
   maxBlockers: 128,
   maxGraphNodes: 16384,
   maxPathPoints: 2048,
-  maxSearchExpansions: 32768,
-  maxConnectorDistance: 1.6,
 } as const;
 export interface RayHit {
   id: string;
@@ -165,6 +164,3 @@ export interface RayHit {
   point: WorldPoint;
   transmission: number;
 }
-export type RouteResult =
-  | { status: 'reached'; path: SurfacePoint[]; length: number; expanded: number }
-  | { status: 'invalid-endpoint' | 'no-route' | 'budget-exceeded'; path: []; expanded: number };

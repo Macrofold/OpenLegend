@@ -1,5 +1,9 @@
 # Open Legend UI system
 
+## World presentation ownership
+
+[World presentation](../../../../docs/world-presentation.md) owns the accepted continuous right-drag orbit/pitch, primary/middle pan, mixed sprite/mesh depth, default illumination, projected shadows and configurable local character-visible read-through. These are presentation settings, not extra bodily perception. Follow that owner where older fixed-camera, unlit-art or right-button-pan directions conflict; SW18 retains visual qualification and further art work.
+
 ## Camera and spatial interaction
 
 The [spatial owner](../../../../docs/spatial-world.md#picking-and-controls) defines meanings rather than another camera schema here. The compact camera toolbar uses focusable icon controls with hover/focus labels, a follow toggle beside recenter and a shortcut help icon; drag pans, Shift-drag orbits/tilts, wheel zooms, and focused-canvas arrows/Page Up/Page Down/P/Home control the view. Pointer capture ends without action after a drag. A level selection is not a movement command. The small renderer interface is plain TypeScript; PlayCanvas types stay in scene/art implementation. Multi-touch pinch and assistive-device qualification remain SW09/SW16 work.

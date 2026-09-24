@@ -1,5 +1,9 @@
 # Open Legend
 
+## Movement and lighting
+
+The game uses Recast/Detour in one reused navigation worker and Rapier capsule/cylinder queries for physical clearance. Clear moves need no worker; detours follow smoothed arbitrary-angle routes. **Preparing navigation** is technical waiting, not elapsed game time. New schema-10 saves are required; use a separate `.data-recast` directory to retain earlier development worlds. Ordinary sprites now respond to ambient/local lighting and cast simple proxy shadows onto the actual receiving surfaces. **Game → World visibility** configures nearby character-visible read-through, radius and strength. See [presentation](docs/world-presentation.md) and [current implementation evidence](docs/verification/recast-integration.md); high-end art, crowd dynamics and arbitrary 3D model delivery remain future work.
+
 ## Play the elevated world
 
 The current world supports real elevation and stacked surfaces with generated sprites and simple 3D scenery. The timber lookout in the northeast has a ramp, a passage underneath and a gatherable crate; a small native bird flies between heights and perches on the deck. The bottom-right camera toolbar provides orbit, pitch, projection, floor focus and a checked follow-player toggle beside recenter. Drag pans; Shift-drag orbits/tilts; wheel zooms. With the canvas focused, arrows rotate/tilt, Page Up/Down selects a level, P switches projection and Home recenters. Rotation can be locked. Selecting a lower level cuts away upper presentation, not its physical geometry.
@@ -73,7 +77,7 @@ Use a separate new data directory and disable paid work:
 OPEN_LEGEND_DATA_DIR=/tmp/openlegend-reservoir-demo OPEN_LEGEND_WORLD_PRESET=reservoir-demo AI_BUDGET_USD=0 PORT=3218 node --import tsx apps/server/src/main.ts
 ```
 
-Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Schema 9 rejects older development saves without modifying them; select a fresh directory for either preset. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
+Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Schema 10 rejects older development saves without modifying them; select a fresh directory for either preset. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
 
 For the coarse touch-only resident, use a separate data directory and `OPEN_LEGEND_WORLD_PRESET=touch-demo`. The player retains sight; the resident receives only unidentified contacts and short direct probe choices. God inspection is administrative evidence, not the resident's knowledge. See the [implemented limits](docs/architecture.md#registered-senses-and-coarse-contact).
 

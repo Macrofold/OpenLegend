@@ -1,4 +1,5 @@
 import { itemPileArt } from './art';
+import { interpolateVisualFoot } from './world-motion';
 import { WorldPresentation, lightSprite, type RevealBinding } from './world-presentation';
 import * as pc from 'playcanvas';
 import { StatusIndicators } from './status-indicators';
@@ -367,7 +368,8 @@ export class WildernessScene implements WorldRenderer {
         for (const blocker of spatialBlockers(map))
           if (blocker.bounds.min.y > level.focusY + 0.05) this.cutaways.add(blocker.id);
       }
-      for (const [id, node] of this.geometryNodes) node.enabled = !this.cutaways.has(id);
+      for (const [id, node] of this.geometryNodes)
+        this.presentation.setCutaway(node, this.cutaways.has(id));
     }
     for (const entry of this.actors.values()) {
       const support = surfaceById(map, entry.view.supportSurfaceId ?? '');
@@ -986,24 +988,18 @@ export class WildernessScene implements WorldRenderer {
       const moving = Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 0.025;
       const screenMotion = dx * this.camera.right.x + dz * this.camera.right.z;
       if (Math.abs(screenMotion) > 0.012) entry.facing = screenMotion < 0 ? -1 : 1;
-      position.x += dx * Math.min(1, dt * 13);
-      position.y += dy * Math.min(1, dt * 13);
-      position.z += dz * Math.min(1, dt * 13);
-      const targetSupport =
-        this.view && surfaceById(this.view.map, entry.view.supportSurfaceId ?? '');
-      const previousSupport = this.view && surfaceById(this.view.map, entry.renderedSupport ?? '');
-      // Interpolation may lag across a seam. Stay on the previous receiver until the new
-      // support contains the interpolated foot, rather than interpolating through the ramp.
-      const support =
-        targetSupport && surfaceContains(targetSupport, position)
-          ? targetSupport
-          : previousSupport && surfaceContains(previousSupport, position)
-            ? previousSupport
-            : undefined;
-      if (entry.view.supportSurfaceId && support) {
-        position.y = surfaceHeight(support, position.x, position.z);
-        entry.renderedSupport = support.id;
-      } else if (!entry.view.supportSurfaceId) entry.renderedSupport = null;
+      if (this.view) {
+        const pose = interpolateVisualFoot(
+          this.view.map,
+          position,
+          entry.view.position,
+          entry.renderedSupport,
+          entry.view.supportSurfaceId,
+          1 - Math.exp(-Math.min(dt, 0.1) * 13),
+        );
+        position.set(pose.point.x, pose.point.y, pose.point.z);
+        entry.renderedSupport = pose.support;
+      }
       const positionChanged = position.distance(entry.root.getPosition()) > 1e-6;
       if (positionChanged) entry.root.setPosition(position);
       entry.shadow.enabled =
@@ -1032,7 +1028,7 @@ export class WildernessScene implements WorldRenderer {
         (entry.view.kind === 'station' || moving);
       const frame =
         punchFrame ||
-        (animated && !this.view?.clock.paused
+        (animated && !this.view?.clock.paused && !this.view?.clock.preparingNavigation
           ? 1 + (Math.floor(this.elapsed * (entry.view.kind === 'station' ? 4 : 6)) % 2)
           : 0);
       if (frame !== entry.lastFrame) {
@@ -1185,13 +1181,51 @@ export class WildernessScene implements WorldRenderer {
       to: this.camera.camera!.screenToWorld(x, y, 256),
     };
   }
+  private cardHit(
+    card: pc.Entity,
+    image: ImageData,
+    ray: { from: pc.Vec3; to: pc.Vec3 },
+  ): number | null {
+    const inverse = card.getWorldTransform().clone().invert();
+    const from = inverse.transformPoint(ray.from),
+      to = inverse.transformPoint(ray.to);
+    const dy = to.y - from.y;
+    if (Math.abs(dy) < 1e-7) return null;
+    const t = -from.y / dy,
+      u = from.x + (to.x - from.x) * t + 0.5,
+      v = from.z + (to.z - from.z) * t + 0.5;
+    if (t < 0 || t > 1 || u < 0 || u >= 1 || v < 0 || v >= 1) return null;
+    return image.data[
+      (Math.floor(v * image.height) * image.width + Math.floor(u * image.width)) * 4 + 3
+    ]! >= 24
+      ? t
+      : null;
+  }
+  private readonly alphaMasks = new WeakMap<pc.Texture, ImageData>();
   private pick(x: number, y: number): EntityView | null {
     if (!this.view) return null;
     const ray = this.screenRay(x, y);
-    const obstruction =
+    let obstruction =
       rayHits(this.view.map, ray.from, ray.to, 'sight', this.cutaways)[0]?.fraction ?? Infinity;
+    // Decorative canopies obstruct the camera but never grant or remove bodily perception.
+    for (const card of this.landscapeCards) {
+      if (!card.enabled || this.cards.get(card)!.height < 2) continue;
+      const texture = (card.render!.material as pc.StandardMaterial).diffuseMap;
+      if (!texture) continue;
+      let image = this.alphaMasks.get(texture);
+      if (!image) {
+        const source: unknown = texture.getSource();
+        if (!(source instanceof HTMLCanvasElement)) continue;
+        image = source.getContext('2d')!.getImageData(0, 0, source.width, source.height);
+        this.alphaMasks.set(texture, image);
+      }
+      const t = this.cardHit(card, image, ray);
+      if (t !== null) obstruction = Math.min(obstruction, t);
+    }
     let best: EntityView | null = null,
-      nearest = obstruction + 1e-5;
+      revealed: EntityView | null = null,
+      nearest = obstruction + 1e-5,
+      nearestReveal = Infinity;
     for (const entry of this.actors.values()) {
       if (!this.identifiable(entry)) continue;
       let fraction: number | null = null;
@@ -1202,32 +1236,34 @@ export class WildernessScene implements WorldRenderer {
           max: { x: p.x + entry.width / 2, y: p.y + entry.height, z: p.z + 0.4 },
         });
       } else {
-        const inverse = entry.sprite.getWorldTransform().clone().invert();
-        const from = inverse.transformPoint(ray.from),
-          to = inverse.transformPoint(ray.to);
-        const dy = to.y - from.y;
-        if (Math.abs(dy) < 1e-7) continue;
-        const t = -from.y / dy;
-        const u = from.x + (to.x - from.x) * t + 0.5;
-        const v = from.z + (to.z - from.z) * t + 0.5;
-        if (t < 0 || t > 1 || u < 0 || u >= 1 || v < 0 || v >= 1) continue;
         const image = entry.images[Math.max(0, entry.lastFrame) % entry.images.length]!;
-        const alpha =
-          image.data[
-            (Math.floor(v * image.height) * image.width + Math.floor(u * image.width)) * 4 + 3
-          ]!;
-        if (alpha < 24) continue;
-        fraction = t;
+        fraction = this.cardHit(entry.sprite, image, ray);
       }
-      if (
-        fraction !== null &&
-        (fraction < nearest || (best === null && this.revealStrength(entry) > 0.05))
-      ) {
+      if (fraction === null) continue;
+      if (fraction <= obstruction + 1e-5 && fraction < nearest) {
         nearest = fraction;
         best = entry.view;
+      } else if (
+        entry.reveal.strength > 0.05 &&
+        this.revealStrength(entry) > 0.05 &&
+        fraction < nearestReveal
+      ) {
+        const hit = ray.from.clone().lerp(ray.from, ray.to, fraction),
+          foot = entry.root.getPosition();
+        const q = Math.hypot(
+          (hit.x - foot.x) / Math.max(entry.width * 0.7, 0.1),
+          (hit.y - foot.y - entry.height / 2) / Math.max(entry.height * 0.65, 0.1),
+          (hit.z - foot.z) / Math.max(entry.width * 0.7, 0.1),
+        );
+        // Match the shader's feather, not the whole bounding rectangle of a hidden sprite.
+        const t = Math.max(0, Math.min(1, (q - 0.65) / 0.7));
+        if ((1 - t * t * (3 - 2 * t)) * entry.reveal.strength > 0.05) {
+          nearestReveal = fraction;
+          revealed = entry.view;
+        }
       }
     }
-    return best;
+    return revealed ?? best;
   }
   private groundPoint(x: number, y: number): SurfacePoint | null {
     if (!this.view) return null;

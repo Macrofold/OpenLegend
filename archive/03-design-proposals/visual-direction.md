@@ -1,5 +1,10 @@
 # Visual direction — grounded pixel art in a spatial world
 
+## World presentation ownership
+
+[World presentation](../../docs/world-presentation.md) owns the accepted continuous right-drag orbit/pitch, primary/middle pan, mixed sprite/mesh depth, default illumination, projected shadows and configurable local character-visible read-through. These are presentation settings, not extra bodily perception. Follow that owner where older fixed-camera, unlit-art or right-button-pan directions conflict; SW18 retains visual qualification and further art work.
+
+
 ## Camera freedom and physical shape
 
 The target now supports [orbit, pitch and projection](../../docs/spatial-world.md#tactical-camera-and-perspective), with optional sprite-friendly locks rather than a fixed-camera engine restriction. Preserve the painted/procedural style: simple physical terrain/ramp/deck geometry can carry painted textures, while people and creatures may remain sprites. A backdrop’s view validity must be explicit; painted art cannot expose a correct unseen backside. Existing asynchronous art/provenance rules remain unchanged.
