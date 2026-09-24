@@ -1,18 +1,33 @@
-name: Code checks
+name: Persistence profiling workspace
 on:
   push:
-  pull_request:
+    branches: [design/action-repertoire-and-capability-grounding]
 permissions:
   contents: read
 jobs:
-  check:
+  workspace:
     runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      AI_BUDGET_USD: '0'
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run check
+      - name: Package tracked source and installed dependencies only
+        run: |
+          git ls-files -z > /tmp/workspace-paths
+          find . -type d -name node_modules -prune -print0 >> /tmp/workspace-paths
+          tar --null -T /tmp/workspace-paths -czf /tmp/openlegend-workspace.tgz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openlegend-workspace
+          path: /tmp/openlegend-workspace.tgz
+          compression-level: 0
+          retention-days: 1
