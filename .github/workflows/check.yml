@@ -49,6 +49,8 @@ jobs:
           node --import tsx .github/perf-integration-exercise.mjs > /tmp/integration-final.json
           cp /tmp/integration-final.json docs/verification/action-perf-integration.json
           python .github/perf-review-static.py
+          # The first pass creates the report linked by Verification; recheck that generated target.
+          python .github/perf-review-static.py
           git diff --check
       - name: Confirm current main, record final scope and clean up
         run: |
