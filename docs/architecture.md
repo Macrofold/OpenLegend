@@ -382,3 +382,10 @@ The independent fulfillment classifier sees actual decoded commands, not only th
 `GameView.player.actionAttempts` carries the controlled actor's bounded pending summaries through the existing state stream and patch projection. It exposes no executable command body or other actor's private intent. The action panel no longer polls a second read endpoint. Its draft/request state is keyed by world, save timeline and actor; old asynchronous replies cannot update a new scope. Ambiguous network retries retain command identities, and a vanished explicitly selected target remains visible as unavailable rather than silently reverting to unscoped resolution.
 
 Regression work remains in [Maintainer TODO](maintainers/TODO.md#action-review-regression-todos); measured build/runtime/stress scope is in [Verification](verification.md#action-capability-review). The retained architecture still has cold encounter/audience fan-out and bounded synchronous route preparation costs. The review does not qualify arbitrary population scale, new movement modes, stealth, sunset predicates or invented workflow integration.
+
+
+## Private perception and evidence batches
+
+Native visual acquisition now records an observer-private `encounter` with observed modality and actual source/target provenance. Noticing an object is not an external act and cannot give another observer knowledge of that target. Speech, gestures and other outward actions retain their event-time audience rules. This is the intentional EPR03 semantics change, not a behavior-preserving cache optimization.
+
+The fixed-position encounter phase batches at most 128 new awareness entries through `mutateExperience`; no second evidence store or post-commit best-effort delivery is added. Event identities and required native commitment/appraisal processing remain in the authoritative transition. Retained-memory encounter deduplication scans once per observer with newly seen living contacts, not once per pair. Development schema 12 rejects earlier worlds without conversion; same-version capture retains private evidence and active exposures.

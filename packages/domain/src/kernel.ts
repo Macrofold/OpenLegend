@@ -1455,16 +1455,21 @@ function updateEncounters(
     const seen = nearby(actor.position, radius + 2)
       .filter((e) => e.id !== actor.id && e.alive && sees(e))
       .map((e) => e.id);
-    for (const id of seen.filter((id) => !previouslySeen.has(id))) {
-      const recent = (world.memories[actor.id] ?? []).some(
-        (m) =>
-          m.kind === 'episode' &&
-          m.entityIds.includes(id) &&
-          (m.summary.startsWith('I saw ') || m.eventType === 'encounter') &&
-          world.simTime - m.at < 3600,
-      );
-      if (!recent) encounter(actor.entity, id, true);
-    }
+    const acquired = seen.filter((id) => !previouslySeen.has(id));
+    // One retained-memory scan only when there are actual new living contacts.
+    const recent = new Set(
+      acquired.length
+        ? (world.memories[actor.id] ?? [])
+            .filter(
+              (m) =>
+                m.kind === 'episode' &&
+                (m.summary.startsWith('I saw ') || m.eventType === 'encounter') &&
+                world.simTime - m.at < 3600,
+            )
+            .flatMap((m) => m.entityIds)
+        : [],
+    );
+    for (const id of acquired) if (!recent.has(id)) encounter(actor.entity, id, true);
     if (
       !original.visiblePeople?.[actor.id] ||
       seen.length !== previous.length ||
@@ -1488,6 +1493,7 @@ function updateEncounters(
       objectIds.some((id, index) => id !== previousObjects[index])
     )
       (world.visibleObjects ??= {})[actor.id] = objectIds;
+    encounter.flush();
   }
 }
 

@@ -321,3 +321,9 @@ No unit/browser suites were written or run for this review. The [manual runtime 
 - [ ] Cover state-stream approval deltas and private projection, mount/unmount and world/timeline/controller changes during requests, draft isolation, disappeared pinned targets, duplicate clicks and ambiguous delivery retries. Confirm no two-second polling endpoint or raw pending command bodies remain in the public UI path. Exercise keyboard/screen-reader interactions in the real browser.
 - [ ] Extend same-version SQLite observations to manual save/load, PostgreSQL and injected commit failures. Capture active follow, stale pending alternatives and accepted/declined outcome identity at each actual durability boundary; no extra native effects or paid replay after restore.
 - [ ] Add sustained grounded-follow workload coverage with separate first-exposure, route preparation and steady native movement measurements. Native actions must make no provider calls; cold event/awareness fan-out remains PF/EPR work, not a population-capacity pass.
+
+
+## Perception performance — deferred automated validation
+
+- [ ] Automate observer-private visual acquisition: A sees an object while C sees A but not the object; C learns nothing from A's private acquisition. Check actual speech/gesture witnesses separately, acquisition modality/provenance, ordinary-object non-trigger behavior and living-contact cognition opportunities.
+- [ ] Cover 0/1/128/129/many batch entries, duplicate/forgotten-ID rejection, required commitment side effects, unchanged source ownership, event ordering, rollback, copied records and same-version restore without new acquisitions. Compare intentional private audiences separately from unchanged physical state and native RNG. No unit/browser suite was written or run for this change.

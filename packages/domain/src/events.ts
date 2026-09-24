@@ -1,5 +1,5 @@
 import { appraiseEvent } from './social.js';
-import { mutateExperience } from './experience.js';
+import { mutateExperience, type ExperienceMutation } from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';
 import { finishWorld, cloneValue } from './draft.js';
@@ -104,38 +104,43 @@ function eventAudience(
   return audience;
 }
 
-/** Only for the synchronous post-movement encounter phase: emitting encounters changes
- * experience, not positions or sensory capabilities. Never retain this resolver across motion.
- * The usual recordEvent path still owns every ledger, memory and commitment mutation.
- * EPR03 still owns private acquisition; this optimization does not redefine witness semantics.
- * docs/events-perception-and-reactions.md#6-spatial-work-and-invalidation
+/** Acquiring evidence is private, not an observable act by the observer.
+ * Batch only this fixed-position phase through the existing experience owner;
+ * external speech/actions still resolve their actual event-time audiences.
+ * docs/architecture.md#private-perception-and-evidence-batches
  */
 export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
-  let observers: Entity[] | undefined;
-  const audiences = new Map<string, string[]>();
-  return (source: Entity, targetId: string, meaningful: boolean): WorldEvent => {
-    let audience = audiences.get(source.id);
-    if (!audience) {
-      observers ??= Object.values(world.entities).filter(
-        (e) => hasMemory(e) && e.actor?.alive && !e.actor.rest?.asleep,
-      );
-      audience = eventAudience(world, 'encounter', source, 'external', observers);
-      audiences.set(source.id, audience);
+  let owner: string | undefined;
+  let pending: ExperienceMutation[] = [];
+  const flush = () => {
+    if (owner && pending.length && mutateExperience(world, owner, pending) === null)
+      throw new Error('Private perception evidence could not be admitted.');
+    pending = [];
+  };
+  const acquire = (source: Entity, targetId: string, meaningful: boolean): WorldEvent => {
+    if (owner !== source.id) {
+      flush();
+      owner = source.id;
     }
-    return recordEvent(
+    const event = recordEvent(
       world,
       events,
       'encounter',
-      `${source.name} encountered ${world.entities[targetId]!.name}.`,
-      audience,
+      `${source.name} saw ${world.entities[targetId]!.name}.`,
+      [source.id],
       source,
       targetId,
       meaningful
-        ? { importance: 6, semanticTrigger: true }
-        : { importance: 0, urgency: 0, semanticTrigger: false },
-      'external',
+        ? { importance: 6, semanticTrigger: true, acquisition: true }
+        : { importance: 0, urgency: 0, semanticTrigger: false, acquisition: true },
+      'private',
+      pending,
     );
+    // Bound temporary memory independently of the number of visible objects.
+    if (pending.length >= 128) flush();
+    return event;
   };
+  return Object.assign(acquire, { flush });
 }
 
 function recordEvent(
@@ -148,6 +153,7 @@ function recordEvent(
   targetId: string | undefined,
   data: WorldEvent['data'],
   scope: 'external' | 'private',
+  awarenessBatch?: ExperienceMutation[],
 ): WorldEvent {
   const boundedMetric = (value: unknown, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value)
@@ -202,7 +208,7 @@ function recordEvent(
   events.push(event);
   if (world.experience) {
     for (const actorId of audience) {
-      mutateExperience(world, actorId, {
+      const addition: ExperienceMutation = {
         operation: 'add',
         entry: {
           source: 'awareness',
@@ -213,7 +219,7 @@ function recordEvent(
             at: event.at,
             sequence: world.nextId,
             modality:
-              scope === 'private'
+              scope === 'private' && data?.['acquisition'] !== true
                 ? type === 'contact'
                   ? 'felt'
                   : 'internal'
@@ -229,19 +235,23 @@ function recordEvent(
             ...(source ? { sourceId: source.id } : {}),
             ...(targetId ? { targetId } : {}),
             triggerKind:
-              source?.id === actorId
-                ? 'self_event'
-                : type === 'speech'
-                  ? targetId === actorId
-                    ? 'addressed_speech'
-                    : 'overheard_speech'
-                  : targetId === actorId
-                    ? 'directed_action'
-                    : 'observed_event',
+              data?.['acquisition'] === true
+                ? 'observed_event'
+                : source?.id === actorId
+                  ? 'self_event'
+                  : type === 'speech'
+                    ? targetId === actorId
+                      ? 'addressed_speech'
+                      : 'overheard_speech'
+                    : targetId === actorId
+                      ? 'directed_action'
+                      : 'observed_event',
             content: typeof data?.['text'] === 'string' ? data['text'] : text,
           },
         },
-      });
+      };
+      if (awarenessBatch) awarenessBatch.push(addition);
+      else mutateExperience(world, actorId, addition);
     }
   }
   appraiseEvent(world, event);
