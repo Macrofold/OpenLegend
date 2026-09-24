@@ -12,19 +12,22 @@ export interface CommandInput {
     | 'prepare'
     | 'craft'
     | 'equip'
+    | 'strike'
     | 'hunt'
     | 'harvest'
     | 'cook'
     | 'eat'
     | 'replenish'
-    | 'rest'
+    | 'status-effect'
     | 'cancel'
     | 'recover'
     | 'teach';
   conversationId?: string;
   generation?: number;
   operation?: 'join' | 'leave';
+  effectOperation?: 'activate' | 'deactivate';
   targetId?: string;
+  definitionId?: string;
   itemId?: string;
   recipeId?: string;
   attributeId?: string;
@@ -82,7 +85,22 @@ export interface PlayerProfile {
 /** A control changes only its own preference, preserving concurrent UI choices. */
 export type PlayerPreferencePatch = Partial<PlayerProfile['preferences']>;
 
+export interface ActionAnimation {
+  id: string;
+  kind: 'punch';
+  progress: number;
+  direction: { x: number; z: number };
+}
+
+export interface StatusEffectView {
+  id: string;
+  label: string;
+  pose?: 'horizontal';
+  particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
+}
 export interface EntityView {
+  actionAnimation?: ActionAnimation | null;
+  statusEffects?: StatusEffectView[];
   attributes?: AttributeView[];
   id: string;
   kind: 'actor' | 'animal' | 'resource' | 'remains' | 'station';
@@ -199,6 +217,7 @@ export interface GameView {
     pauseReason: 'manual' | 'away' | 'storage' | null;
   };
   player: {
+    statusEffects?: StatusEffectView[];
     id: string;
     name: string;
     position: Position;
@@ -207,6 +226,7 @@ export interface GameView {
     /** Permitted applicable values, never a raw module state dump. */
     attributes: AttributeView[];
     /** Default-world convenience values; generic presentation uses attributes. */
+    actionAnimation?: ActionAnimation | null;
     health: number;
     hunger?: number;
     energy?: number;
@@ -285,6 +305,7 @@ export interface ApiResult {
 }
 
 export interface GodPersonFields {
+  inventory?: Array<{ definitionId: string; quantity: number }>;
   name: string;
   description: string;
   personality: string;
@@ -311,6 +332,8 @@ export interface GodMemoryEditorEntry {
 }
 
 export interface GodPersonEditorView {
+  statuses: string[];
+  itemOptions: Array<{ id: string; name: string }>;
   before?: string;
   ok: true;
   revision: number;
@@ -350,7 +373,7 @@ export interface GodMindView {
   experiences?: Array<{ id: string; text: string; at: number; kind: string; source: string }>;
   commitments?: Array<{ id: string; text: string; resolved: boolean }>;
   skills?: Array<{ name: string; source: string; learnedAt: number }>;
-  rest?: { asleep: boolean; sleepingSeconds: number; restedSeconds: number; debtSeconds: number };
+  statusEffects?: Array<{ id: string; label: string; elapsedSeconds: number }>;
   actorId: string;
   name: string;
   revision: number;

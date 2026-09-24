@@ -1,3 +1,4 @@
+import { dreamStatus, dreamPolicy } from './cognition-policy.js';
 import { current, isDraft } from 'immer';
 import { changeGoal, type GoalChange } from './agency.js';
 import { initializeIdentity } from './identity.js';
@@ -35,6 +36,8 @@ export interface Awareness {
   eventType?: string;
   sourceId?: string;
   targetId?: string;
+  /** Intended speech recipient, only when perceived at event time; not proof of delivery. */
+  intendedRecipientId?: string;
   triggerKind?:
     | 'addressed_speech'
     | 'overheard_speech'
@@ -499,9 +502,17 @@ export function migrateCognition(world: WorldState): void {
     for (const aware of world.experience.awareness[entity.id] ?? []) {
       const event = events.get(aware.eventId);
       if (event) {
+        // New captures deliberately omit imperceptible recipients. Do not refill them on load.
+        if (
+          !aware.eventType &&
+          event.targetId &&
+          (aware.entityIds.includes(event.targetId) ||
+            event.targetId === entity.id ||
+            event.actorId === entity.id)
+        )
+          aware.targetId ??= event.targetId;
         aware.eventType ??= event.type;
         aware.sourceId ??= event.actorId;
-        aware.targetId ??= event.targetId;
         if (aware.intelligible)
           aware.content ??=
             typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text;
@@ -886,7 +897,8 @@ export function publishInnerWorld(
     return reject('Actor or accepted revision changed.');
   if (
     dreamEpisode &&
-    (actor.action?.id !== dreamEpisode || !actor.rest?.asleep || actor.rest.sleepingSeconds < 7200)
+    (dreamStatus(input, input.entities[actorId])?.episode !== dreamEpisode ||
+      dreamStatus(input, input.entities[actorId])!.elapsedSeconds < dreamPolicy(input).afterSeconds)
   )
     return reject('Dream interrupted.');
   if (

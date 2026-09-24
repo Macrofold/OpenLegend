@@ -252,3 +252,8 @@ The delivered local reuse exercise covers definition-only attribute transfer and
 ## Required implementation report
 
 For each delivered slice report: task IDs and exact changed files; behavior preserved versus deliberately changed; canonical owner updates; native/fixture tests run; same-version save implications; deliberate v1 limitations and code/design seam links; measured performance where applicable; remaining blockers and unverified claims. Never claim a whole subsystem complete because its adapter compiles.
+
+## Targeted-strike slice
+
+- [x] Add the trusted declarative Punch definition, native target/range/approach/impact handling and public sprite-arm animation through existing domain/server/client boundaries. This does not complete generic action-definition admission.
+- [ ] Qualify the [targeted-strike validation](TODO.md#targeted-strike-validation) before claiming broader combat coverage.

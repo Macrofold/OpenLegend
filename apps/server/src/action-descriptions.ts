@@ -1,3 +1,4 @@
+import { strikeDefinition } from '@open-legend/domain';
 import {
   gatheringYield,
   hasWildernessNeeds,
@@ -20,6 +21,8 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
     'Make an item using a technique you know. Materials are consumed when work begins and are not refunded if you stop.',
   equip:
     'Ready a ranged tool from your inventory for hunting. It needs compatible ammunition before you can fire.',
+  strike:
+    'Approach the target and perform one strike. Damage requires a living target in range with a clear line of effect at impact.',
   hunt: 'Approach a living animal and attempt one shot with your equipped ranged tool. Each attempt consumes ammunition and can miss. A killed animal leaves harvestable remains.',
   harvest:
     'Use a cutting point to collect the remaining materials from animal remains. Each set of remains can be harvested once.',
@@ -27,7 +30,7 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   eat: 'Eat one portion from your inventory to restore fullness immediately, up to full. Raw meat must be cooked first.',
   replenish:
     'Approach a compatible supply and transfer its finite resource into your reservoir over time. Stopping keeps only the amount already transferred.',
-  rest: 'Rest where you are to regain energy over time. Resting replaces your current work, and hunger continues to increase.',
+  'status-effect': 'Activate or end an applicable state on the selected target.',
   cancel: 'Stop your current movement or work. Materials already consumed are not returned.',
   recover:
     'Return to camp after collapsing, with health, fullness and energy partially restored. Your current action ends; the world continues from its current state.',
@@ -57,6 +60,12 @@ export function describeCommand(command: CommandInput, observation: ActorObserva
       : undefined;
   const common = ACTION_DESCRIPTIONS[command.type];
   switch (command.type) {
+    case 'strike': {
+      const strike = strikeDefinition(command.definitionId);
+      return strike
+        ? `${common} ${strike.label}: ${strike.damage} injury damage, ${strike.range} units reach, ${strike.workSeconds} game seconds of wind-up. One strike per command; no automatic repeated attacks.`
+        : common;
+    }
     case 'gather':
       if (!target?.resource) return common;
       return `${common} ${target.name} has ${target.resource.quantity} units of ${name(target.resource.definitionId).toLowerCase()} remaining.`;

@@ -1,3 +1,8 @@
+import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
+import { statusEffectActions } from './status-effect-actions.js';
+import { isConversationEvent } from '@open-legend/domain';
+import { NATIVE_STRIKES, supportsManualWork } from '@open-legend/domain';
+import { actionAnimation } from './action-animation.js';
 import { knownRecipeAttribution } from '@open-legend/domain';
 import { hasWildernessNeeds } from '@open-legend/domain';
 import { projectAttributes, attributeDefinition, readAttribute } from '@open-legend/domain';
@@ -224,9 +229,34 @@ export async function projectView(
           world.map,
           actor.attributes,
           world.moduleManifest,
+          world.statusEffectPolicy,
         ],
         () => {
           const actions: ActionOption[] = [];
+          for (const option of statusEffectActions(world, player, entity)) {
+            const preview = service.previewCommand(option.command);
+            actions.push(
+              action(option.id, option.label, option.command, preview.ok, preview.message),
+            );
+          }
+          if (entity.actor)
+            for (const definition of Object.values(NATIVE_STRIKES)) {
+              const command = {
+                type: 'strike' as const,
+                definitionId: definition.id,
+                targetId: entity.id,
+              };
+              actions.push(
+                action(
+                  `${definition.id}-${entity.id}`,
+                  definition.label,
+                  command,
+                  !!entity.actor?.alive && supportsManualWork(player) && active,
+                  'Requires an active actor with a supported biped body and a living target.',
+                ),
+              );
+            }
+
           const speechCapable = canSpeak(entity);
           const talkUnavailableReason = !entity.actor
             ? undefined
@@ -236,8 +266,8 @@ export async function projectView(
                 ? `${entity.name} is dead and cannot respond.`
                 : entity.actor.incapacitated
                   ? `${entity.name} is incapacitated and cannot respond.`
-                  : entity.actor.rest?.asleep
-                    ? `${entity.name} is asleep and cannot respond.`
+                  : capabilityBlocked(world, entity, 'speech')
+                    ? `${entity.name} cannot speak in their current state.`
                     : !hearsEntity(world, entity, player)
                       ? `Move within hearing range of ${entity.name} to talk.`
                       : undefined;
@@ -330,26 +360,33 @@ export async function projectView(
                   ...(talkUnavailableReason ? { talkUnavailableReason } : {}),
                 }
               : {}),
+            statusEffects: projectStatusEffects(world, entity),
+            actionAnimation: actionAnimation(world, entity),
             status: entity.actor
               ? !entity.actor.alive
                 ? 'Dead'
-                : entity.actor.action
-                  ? ({
-                      move: 'Walking',
-                      replenish: 'Replenishing',
-                      gather: 'Gathering',
-                      rest: 'Resting',
-                      hunt: 'Hunting',
-                      harvest: 'Harvesting',
-                      cook: 'Cooking',
-                      prepare: 'Preparing',
-                      craft: 'Crafting',
-                    }[entity.actor.action.type] ?? 'Working')
-                  : entity.animal
-                    ? entity.animal.fleeSeconds > 0
-                      ? 'Fleeing'
-                      : 'Foraging'
-                    : 'Watching the clearing'
+                : projectStatusEffects(world, entity).length
+                  ? projectStatusEffects(world, entity)
+                      .map((d) => d.label)
+                      .join(', ')
+                  : entity.actor.action
+                    ? ({
+                        move: 'Walking',
+                        replenish: 'Replenishing',
+                        gather: 'Gathering',
+                        'status-effect': 'Active state',
+                        hunt: 'Hunting',
+                        strike: 'Striking',
+                        harvest: 'Harvesting',
+                        cook: 'Cooking',
+                        prepare: 'Preparing',
+                        craft: 'Crafting',
+                      }[entity.actor.action.type] ?? 'Working')
+                    : entity.animal
+                      ? entity.animal.fleeSeconds > 0
+                        ? 'Fleeing'
+                        : 'Foraging'
+                      : 'Watching the clearing'
               : entity.animal
                 ? !entity.actor!.alive
                   ? 'Dead'
@@ -402,8 +439,7 @@ export async function projectView(
       for (const event of visible) {
         bounded.push(event);
         if (isJournalEvent(event)) journal++;
-        if (event.type === 'speech' || typeof event.data?.['responseId'] === 'string')
-          conversation++;
+        if (isConversationEvent(event)) conversation++;
         if (journal >= 60 && conversation >= 30) break;
       }
       return bounded.reverse();
@@ -440,7 +476,7 @@ export async function projectView(
   const conversationId = world.conversations?.active[service.controlledEntityId];
   const conversationEntries = events
     .filter((event) => !conversationId || event.conversationId === conversationId)
-    .filter((event) => event.type === 'speech' || typeof event.data?.['responseId'] === 'string')
+    .filter((event) => isConversationEvent(event))
     .slice(-30);
   // Text is authoritative in memory; optional job reads must never hide it while refreshing.
   // See docs/architecture.md#performance-critical-path.
@@ -471,7 +507,10 @@ export async function projectView(
           : 'live'
         : 'unconfigured';
   const playerActions = [
-    action('rest', 'Rest', { type: 'rest' }),
+    ...statusEffectActions(world, player, player).map((option) => {
+      const preview = service.previewCommand(option.command);
+      return action(option.id, option.label, option.command, preview.ok, preview.message);
+    }),
     action('cancel', 'Stop current work', { type: 'cancel' }, !!actor.action, 'No work to stop.'),
   ];
   if (canRecoverAtCamp(player))
@@ -489,9 +528,12 @@ export async function projectView(
   const workLabels: Record<string, string> = {
     move: 'Walking',
     replenish: 'Replenishing',
-    rest: 'Resting',
+    'status-effect':
+      world.statusEffectPolicy.definitions.find((d) => d.id === work?.definitionId)?.label ??
+      'Active state',
     gather: `Gathering${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
     harvest: `Harvesting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
+    strike: `Striking${targetName ? ` ${targetName}` : ''}`,
     hunt: `Hunting${targetName ? ` ${targetName.toLowerCase()}` : ''}`,
     cook: 'Cooking meat',
     prepare: work?.preparation === 'fiber' ? 'Cleaning fibers' : 'Twisting cord',
@@ -559,9 +601,11 @@ export async function projectView(
       heading: player.spatial.heading,
       attributes: projectAttributes(world, player, 'owner'),
       health: actor.health,
+      actionAnimation: actionAnimation(world, player),
       hunger: actor.fullness === undefined ? undefined : 100 - actor.fullness,
       energy: actor.energy,
       alive: actor.alive,
+      statusEffects: projectStatusEffects(world, player),
       action: actor.action
         ? {
             id: actor.action.id,
@@ -574,8 +618,8 @@ export async function projectView(
                 'craft',
                 'cook',
                 'harvest',
-                'rest',
                 'hunt',
+                'strike',
                 'replenish',
               ].includes(actor.action.type),
             durationSeconds: actor.action.totalSeconds,

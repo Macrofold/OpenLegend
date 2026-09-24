@@ -1,3 +1,5 @@
+import { statusEffectActions } from './status-effect-actions.js';
+import { NATIVE_STRIKES } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
 import { NATIVE_PREPARATIONS } from '@open-legend/domain';
@@ -67,9 +69,15 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
     id: string = family,
     targetId?: string,
   ) => {
-    const personalFamily = ['cancel', 'rest', 'recover', 'equip', 'eat', 'cook', 'craft'].includes(
-      family,
-    );
+    const personalFamily = [
+      'cancel',
+      'status-effect',
+      'recover',
+      'equip',
+      'eat',
+      'cook',
+      'craft',
+    ].includes(family);
     if (!selected) return;
     if (
       targetId !== selected.id &&
@@ -103,7 +111,13 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
       selected?.id,
     );
   else missing('move', 'Walk', 'Movement', 'Right-click a destination in the world.');
-  add('rest', 'Rest', 'Survival', { type: 'rest' }, ['sleep', 'energy']);
+  if (selected)
+    for (const option of statusEffectActions(
+      world,
+      world.entities[service.controlledEntityId]!,
+      selected,
+    ))
+      add(option.id, option.label, 'States', option.command, [], selected.id);
   if (world.entities[service.controlledEntityId]!.actor!.action)
     add('cancel', 'Stop current work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
   else missing('cancel', 'Stop current work', 'Movement', 'No work to stop.');
@@ -119,6 +133,17 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
   }
 
   for (const target of selected ? [selected] : []) {
+    if (target.actor && target.id !== service.controlledEntityId)
+      for (const definition of Object.values(NATIVE_STRIKES))
+        add(
+          `${definition.id}-${target.id}`,
+          `${definition.label} ${target.name}`,
+          'Combat',
+          { type: 'strike', definitionId: definition.id, targetId: target.id },
+          ['punch', 'hit', 'melee', 'attack'],
+          target.id,
+        );
+
     if (target.replenisher) {
       const definition = attributeDefinition(world, target.replenisher.attributeId);
       if (

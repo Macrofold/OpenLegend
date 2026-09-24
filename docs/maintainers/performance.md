@@ -236,3 +236,9 @@ Treat this as an attribution target, not a result of multiplying microbenchmark 
 ### Cognition review stress follow-up
 
 - [ ] Under PF00/PF03, qualify cold geometry/encounter/finalization bursts in the existing gems and mixed scenarios: the [cognition review measurements](../verification.md#cognition-context-and-action-capacity) remain below requested 3× headroom. Compare equivalent sequential runs before choosing a targeted optimization; do not add a worker/queue based on these profiles alone.
+
+- [ ] Qualify clustered sleeping-actor workloads under PF00/PF03: [sleep runtime evidence](../verification.md#declarative-actor-sleep) measured 100 sleepers below 3× capacity. Attribute native draft/update and observer costs before introducing sleeping-actor dormancy; energy, hunger, wake events and perception must retain their semantics.
+
+- [ ] Follow up on [generic status-effect stress evidence](../verification.md#generic-status-effects): immutable rule traversal removed the measured status-runtime bottleneck, but dense native scenes remain below full cold 3× capacity. Attribute remaining costs before adding applicability indexes, queues or dormancy.
+
+- [ ] Profile remaining full Intelligence history latency after the parent/time index and compact projection; current live reads still take about 870ms median under simulation. Follow-off root peeks are inexpensive. Measure remaining query/projection work before introducing caches or coordination; see [runtime evidence](../verification.md#intelligence-panel-readability-and-runtime-verification).

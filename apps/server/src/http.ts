@@ -8,7 +8,7 @@ import {
 } from './performance.js';
 import { amendCommitment } from '@open-legend/domain';
 import { traceHistory, traceDetails } from './cognition-inspection.js';
-import { admitCognitionPolicy } from '@open-legend/domain';
+import { admitStatusEffectPolicy, admitCognitionPolicy } from '@open-legend/domain';
 import { inspectGodMind } from './god-mind.js';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
@@ -128,6 +128,16 @@ const godPerson = z
   .strict();
 const godPersonEditor = z
   .object({
+    inventory: z
+      .array(
+        z
+          .object({
+            definitionId: requestIdSchema,
+            quantity: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+          })
+          .strict(),
+      )
+      .optional(),
     name: z.string().trim().min(1).max(80),
     description: z.string().trim().max(2000),
     personality: z.string().trim().max(1000),
@@ -1119,6 +1129,28 @@ export async function createGameServer(
             if (result.ok) await store.db.exec('DELETE FROM intelligence_calls');
             return send(response, 200, result);
           }
+          case '/api/god/status-effects': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God access required.' });
+            if (
+              body &&
+              typeof body === 'object' &&
+              !Array.isArray(body) &&
+              !Object.keys(body).length
+            )
+              return send(response, 200, { ok: true, policy: service.world.statusEffectPolicy });
+            const value = z
+              .object({ policy: z.unknown(), expectedRevision: z.number().int().min(1) })
+              .strict()
+              .parse(body);
+            return send(
+              response,
+              200,
+              await service.transition((world) =>
+                admitStatusEffectPolicy(world, value.policy, value.expectedRevision),
+              ),
+            );
+          }
           case '/api/god/cognition-policy': {
             if (!config.godMode)
               return send(response, 403, { ok: false, message: 'God access required.' });
@@ -1137,9 +1169,10 @@ export async function createGameServer(
           case '/api/god/triggers': {
             if (!config.godMode)
               return send(response, 403, { ok: false, message: 'God access required.' });
-            const filter = z
+            const { peek, ...filter } = z
               .object({
                 offset: z.number().int().min(0).max(1000).default(0),
+                peek: z.boolean().default(false),
                 search: z.string().max(200).optional(),
                 actor: z.string().max(100).optional(),
                 route: z.string().max(50).optional(),
@@ -1153,14 +1186,20 @@ export async function createGameServer(
             return send(response, 200, {
               ok: true,
               worldId: service.world.id,
-              ...(await traceHistory(store, filter)),
+              ...(peek
+                ? {
+                    roots: (await store.diagnosticRoots(0, {}))
+                      .slice(0, 1)
+                      .map(({ id }) => ({ id })),
+                  }
+                : await traceHistory(store, filter, service.world)),
             });
           }
           case '/api/god/trigger': {
             if (!config.godMode)
               return send(response, 403, { ok: false, message: 'God access required.' });
             const { id } = z.object({ id: requestIdSchema }).strict().parse(body);
-            const details = await traceDetails(store, id);
+            const details = await traceDetails(store, id, service.world);
             return send(response, details ? 200 : 404, { ok: !!details, details });
           }
           case '/api/god/intelligence-details': {
@@ -1169,7 +1208,7 @@ export async function createGameServer(
                 ok: false,
                 message: 'God inspection is disabled by the host.',
               });
-            const { id } = z.object({ id: z.string().uuid() }).strict().parse(body);
+            const { id } = z.object({ id: requestIdSchema }).strict().parse(body);
             return send(response, 200, {
               ok: true,
               details: await director.macrofold.inspectCall(id),

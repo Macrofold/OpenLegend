@@ -1,3 +1,4 @@
+import { dreamStatus, dreamPolicy } from '@open-legend/domain';
 import { nativeNeedBelow } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { ActorWork } from './actor-work.js';
@@ -119,7 +120,7 @@ export class CognitionMaintenance {
             actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
             !nativeNeedBelow(actor, 'fullness', 30),
             actor.action?.type,
-            actor.rest?.asleep,
+            dreamStatus(current, current.entities[id])?.episode,
             current.memories[id],
             current.experience?.awareness[id],
             current.experience?.summaries[id],
@@ -152,13 +153,19 @@ export class CognitionMaintenance {
           actor.health >= 0.4 * (actor.body?.maxHealth ?? 100) &&
           !nativeNeedBelow(actor, 'fullness', 30) &&
           !actor.incapacitated &&
-          (!actor.action || actor.action.type === 'rest');
+          (!actor.action || actor.action.type === 'status-effect');
         const mind = mindFor(world, entity.id);
         // Sim-time deadlines follow pause/speed naturally; wall time only gates paid admission.
         const future = [
           (Math.floor(world.simTime / 3600) + 1) * 3600,
           mind.lastReflectionAt + 3600,
-          ...(actor.rest?.asleep ? [world.simTime + 7200 - actor.rest.sleepingSeconds] : []),
+          ...(dreamStatus(world, world.entities[entity.id])
+            ? [
+                world.simTime +
+                  dreamPolicy(world).afterSeconds -
+                  dreamStatus(world, world.entities[entity.id])!.elapsedSeconds,
+              ]
+            : []),
           ...(world.experience?.awareness[entity.id] ?? []).map(
             (entry) => entry.at + EXPERIENCE_LIMITS.rawHours * 3600,
           ),
@@ -167,11 +174,11 @@ export class CognitionMaintenance {
           ),
         ].filter((at) => at > world.simTime);
         this.work.inspected(entity.id, Math.min(...future));
-        const sleeping =
+        const dreamReady =
           safe &&
-          actor.action?.type === 'rest' &&
-          actor.rest?.asleep &&
-          actor.rest.sleepingSeconds >= 7200;
+          !!dreamStatus(world, world.entities[entity.id]) &&
+          dreamStatus(world, world.entities[entity.id])!.elapsedSeconds >=
+            dreamPolicy(world).afterSeconds;
         const hasMemories = experiences(world, entity.id, true).length > 0;
         const day = Math.floor(world.simTime / 86400);
         const reflectedToday =
@@ -210,7 +217,7 @@ export class CognitionMaintenance {
           previousKind === 'consolidation' &&
           this.service.config.macrofoldKey &&
           this.service.store.persistence === 'postgres';
-        if (sleeping && reviewDay >= 0 && review?.day !== reviewDay && !prioritizeReflection) {
+        if (dreamReady && reviewDay >= 0 && review?.day !== reviewDay && !prioritizeReflection) {
           const batch = consolidationBatch(world, entity.id, 'daily', reviewDay);
           // Attempt each completed day at most once. Provider failure preserves every source.
           await this.service.store.putIntegration(reviewKey, { day: reviewDay });

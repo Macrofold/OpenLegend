@@ -81,7 +81,7 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 
 **Dependencies:** EPR01 contract sufficient; does not require new private-event behavior. Coordinate with PF09, not a second spatial implementation.
 
-- [ ] Qualify the implemented scalar spatial candidate pass, unchanged visibility-array identity and exact per-source audience reuse within the fixed-position encounter phase. General external-event candidate reuse, event-time invalidation, private acquisition and differential acceptance remain open; do not repeat the old scan rewrite. New automated coverage belongs to SR10 in [maintainer TODO](TODO.md#spatial-review-regression-todos).
+- [ ] Qualify the implemented scalar spatial candidate pass, unchanged visibility-array identity and observer-private encounter publication within the fixed-position encounter phase. General external-event candidate reuse, event-time invalidation, broader acquisition deltas and differential acceptance remain open; do not repeat the old scan rewrite. New automated coverage belongs to SR10 in [maintainer TODO](TODO.md#spatial-review-regression-todos).
 - [ ] Restrict external-event audience discovery to relevant listener candidates, then apply the exact existing hearing/sight, capability, life, and sleep rules. Preserve self handling deliberately.
 - [ ] Do not repeatedly call `nearbyEntities` on a mutable draft: its current implementation rebuilds. Introduce explicit phase-valid query context or equivalent reuse, with a safe rebuild/fallback when validity cannot be proved.
 - [ ] Invalidate candidate geometry after every relevant movement, teleport, spawn, removal, or sense-range change. An event's audience must use positions at that event's occurrence, not the end of a multi-step batch.
@@ -96,7 +96,7 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 
 **Dependencies:** EPR01–EPR02. This task includes intentional semantics, so distinguish it from the behavior-preserving optimization above.
 
-- [ ] Separate an observer acquiring evidence from an outwardly observable encounter/action. Route private acquisition through one semantic experience entrypoint, not ordinary external broadcast around the observer.
+- [x] Separate encounter acquisition from outwardly observable actions: living-actor and object encounters use the existing private event/experience mutation entrypoint, retaining observed modality without broadcasting around the observer.
 - [ ] Use current versus prior exposure to produce entry/exit/meaningful-feature deltas. Retain living-actor encounter opportunities, current ordinary-object baseline behavior, and supported recognition uncertainty.
 - [ ] Keep live exposure, last-seen evidence, and encounter-episode hysteresis distinct. Linger must not provide current hidden updates or extend action reach.
 - [ ] Add invalidation for stationary observers seeing moved sources, movement within a cell, source feature changes, sense/capability changes, and removal. Do not depend only on observer movement.

@@ -1,3 +1,4 @@
+import { DEFAULT_STATUS_EFFECT_POLICY } from './default-status-effects.js';
 import {
   starterSpatialLayout,
   starterFlightRoutes,
@@ -202,7 +203,8 @@ export function createWorld(
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
-    schemaVersion: 9,
+    schemaVersion: 10,
+    statusEffectPolicy: structuredClone(DEFAULT_STATUS_EFFECT_POLICY),
     authorship: {
       creatorAccountIds: [...accounts.creatorAccountIds],
       playerAccountIds: { [PLAYER_ID]: accounts.playerAccountId },

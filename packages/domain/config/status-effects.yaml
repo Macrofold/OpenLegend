@@ -1,0 +1,148 @@
+# Authored default-world status effects. Edit this file, then run pnpm config:generate.
+# Sleep/waking uses generic status-effect operations; no named runtime behavior.
+revision: 1
+clockOffsetHours: 8
+definitions:
+  - id: wilderness:restorative-rest
+    type: statusEffect
+    target: $subject
+    label: Sleeping
+    enabled: true
+    requires:
+      all:
+        - &conscious
+          all:
+            - field:
+                target: $subject
+                name: alive
+                operator: equal
+                value: true
+            - field:
+                target: $subject
+                name: incapacitated
+                operator: equal
+                value: false
+        - field:
+            target: $subject
+            name: grounded
+            operator: equal
+            value: true
+    activationCondition:
+      compare:
+        target: $subject
+        attribute: wilderness:energy
+        operator: lessThan
+        value: 100
+    automaticActivation:
+      all:
+        - field:
+            target: $subject
+            name: controller
+            operator: notEqual
+            value: player
+        - any:
+            - compare:
+                target: $subject
+                attribute: wilderness:energy
+                operator: lessThanOrEqual
+                value: 0
+            - all:
+                - dailyWindow:
+                    target: $world
+                    clock: localTime
+                    start: 22
+                    end: 6
+                - compare:
+                    target: $subject
+                    attribute: wilderness:energy
+                    operator: lessThan
+                    value: 70
+    automaticDeactivation:
+      compare:
+        target: $subject
+        attribute: wilderness:energy
+        operator: greaterThanOrEqual
+        value: 100
+    reactivationDelaySeconds: 300
+    occupiesAction: true
+    interruptOn:
+      - injury
+      - hunger
+      - recovery
+      - new-action
+      - voluntary
+      - revived
+    whileActive:
+      - changeRate:
+          target: $subject
+          attribute: wilderness:energy
+          amount: 0.003472222222222222
+          per: gameSecond
+      - restrictCapabilities:
+          target: $subject
+          capabilities:
+            - actions
+            - locomotion
+            - speech
+            - perception
+    actions:
+      activate: Sleep
+      deactivate: Wake Up
+      allowOther: true
+      activateOther: false
+    presentation:
+      pose: horizontal
+      particle:
+        text: zzz
+        anchor: head
+        motion: floatAway
+    onActivate:
+      emit:
+        target: $subject
+        type: stateChanged
+        narration: '{subject.name} fell asleep.'
+    onDeactivate:
+      emit:
+        target: $subject
+        type: stateChanged
+        narration: '{subject.name} woke up.'
+  - id: wilderness:energy-expenditure
+    type: statusEffect
+    target: $subject
+    label: Energy expenditure
+    enabled: true
+    requires:
+      all:
+        - *conscious
+        - &awake
+          statusActive:
+            target: $subject
+            definitionId: wilderness:restorative-rest
+            value: false
+    automaticActivation: *awake
+    reactivationDelaySeconds: 0
+    occupiesAction: false
+    interruptOn: []
+    whileActive:
+      - changeRate:
+          target: $subject
+          attribute: wilderness:energy
+          amount: -0.0015
+          per: gameSecond
+        when:
+          field:
+            target: $subject
+            name: activeWork
+            operator: equal
+            value: true
+      - changeRate:
+          target: $subject
+          attribute: wilderness:energy
+          amount: -0.0005
+          per: gameSecond
+        when:
+          field:
+            target: $subject
+            name: activeWork
+            operator: equal
+            value: false

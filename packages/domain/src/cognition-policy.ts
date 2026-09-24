@@ -3,6 +3,7 @@ import { draftWorld, cloneValue } from './draft.js';
 import { finish, outcome } from './events.js';
 import type { Transition, WorldState } from './types.js';
 export interface CognitionPolicy {
+  dream: { statusEffectId: string; afterSeconds: number };
   version: 1;
   revision: number;
   maxImmediateLevel: 2 | 3 | 4;
@@ -11,6 +12,7 @@ export interface CognitionPolicy {
   cooldownSeconds: number;
 }
 export const DEFAULT_COGNITION_POLICY: CognitionPolicy = {
+  dream: { statusEffectId: 'wilderness:restorative-rest', afterSeconds: 7200 },
   version: 1,
   revision: 1,
   maxImmediateLevel: 4,
@@ -32,7 +34,12 @@ export function admitCognitionPolicy(
   const p = proposed as CognitionPolicy;
   if (
     Object.keys(p).sort().join(',') !==
-      'cooldownSeconds,maxImmediateLevel,reflection,revision,significantEventTypes,version' ||
+      'cooldownSeconds,dream,maxImmediateLevel,reflection,revision,significantEventTypes,version' ||
+    !p.dream ||
+    Object.keys(p.dream).sort().join() !== 'afterSeconds,statusEffectId' ||
+    !input.statusEffectPolicy.definitions.some((d) => d.id === p.dream.statusEffectId) ||
+    !Number.isFinite(p.dream.afterSeconds) ||
+    p.dream.afterSeconds <= 0 ||
     p.version !== 1 ||
     p.revision !== expectedRevision + 1 ||
     (input.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).revision !== expectedRevision ||
@@ -62,4 +69,15 @@ export function admitCognitionPolicy(
       'Cognition policy accepted; native hazards and spending limits remain authoritative.',
     ),
   );
+}
+
+export function dreamPolicy(world: WorldState): CognitionPolicy['dream'] {
+  return (world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).dream;
+}
+export function dreamStatus(
+  world: WorldState,
+  entity: import('./types.js').Entity | undefined,
+): import('./status-effects.js').StatusEffectInstance | undefined {
+  const state = entity?.statusEffects?.[dreamPolicy(world).statusEffectId];
+  return state?.active ? state : undefined;
 }

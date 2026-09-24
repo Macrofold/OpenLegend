@@ -1,3 +1,6 @@
+import { validateStatusEffects } from './status-effect-validation.js';
+import { activeStatusEffects } from './status-capabilities.js';
+import { strikeDefinition } from './strikes.js';
 import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
 import { validateGatheringTools } from './gathering.js';
@@ -342,6 +345,7 @@ export function readAttribute(
   if (storage === 'attributes') return actor.attributes?.[definition.id]?.value;
   // The native adapter projects body-relative percent without copying authoritative health.
   if (storage === 'health') return (actor.health / (actor.body?.maxHealth ?? 100)) * 100;
+  if (storage === 'energy') return actor.energy;
   if (!hasWildernessNeeds(actor)) return undefined;
   return actor[storage];
 }
@@ -375,8 +379,8 @@ export function setAttribute(
   const storage = HOST_IMPLEMENTATIONS[d.implementation].storage;
   if (storage !== 'attributes')
     throw new Error('Native state must use its owning body/need operation.');
-  const prior = entity.actor!.attributes?.[d.id];
-  if (!prior) throw new Error('Attribute is not applicable to this actor.');
+  const prior = (entity.actor?.attributes ?? entity.attributes)?.[d.id];
+  if (!prior) throw new Error('Attribute is not applicable to this entity.');
   if (prior.value === value) return false;
   const wasConcerned =
     prior.concernActive ??
@@ -464,10 +468,23 @@ export function projectAttributes(
 export function bodyContext(world: WorldState, entity: Entity): string {
   const actor = entity.actor!;
   return [
-    ...projectAttributes(world, entity, 'owner').flatMap((v) =>
-      v.concern ? [v.concern] : v.display === 'category' ? [`${v.name}: ${v.value}.`] : [],
-    ),
-    actor.rest?.asleep ? 'I am asleep.' : `I am ${actor.action?.type ?? 'idle'}.`,
+    // Qualitative concerns supplement measurements; they must not replace them.
+    // docs/memory-architecture.md#3-one-compact-model-facing-context
+    ...projectAttributes(world, entity, 'owner').flatMap((v) => {
+      const fullness = attributeDefinition(world, v.id)?.implementation === 'native-fullness-v1';
+      const name = fullness ? `${v.name} (fullness; lower means hungrier)` : v.name;
+      const measurement =
+        v.status === 'unknown'
+          ? `${name}: unknown.`
+          : v.display === 'meter'
+            ? `${name}: ${v.value}${v.unit ? ` ${v.unit}` : ''} (range ${v.min}–${v.max}${v.unit ? ` ${v.unit}` : ''}).`
+            : `${name}: ${v.value}.`;
+      return v.concern ? [measurement, v.concern] : [measurement];
+    }),
+    ...activeStatusEffects(world, entity)
+      .filter((d) => d.actions)
+      .map((d) => `I am ${d.label.toLowerCase()}.`),
+    `Current activity: ${actor.action?.type ?? 'idle'}.`,
   ].join(' ');
 }
 export function advanceReservoirs(
@@ -491,10 +508,10 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
-  if (world.schemaVersion !== 9 || !world.moduleManifest)
-    throw new Error(
-      'Incompatible development world schema. This build requires 3D format 9; use a separate OPEN_LEGEND_DATA_DIR for a fresh world. Existing saves are preserved, not migrated.',
-    );
+  // Disposable development saves use current-state validation, not per-feature version gates.
+  // docs/save-and-load.md#active-development-policy
+  if (!world.moduleManifest) throw new Error('World module manifest is missing.');
+  validateStatusEffects(world);
   validateSpatialWorld(world);
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
@@ -513,6 +530,11 @@ export function validateWorldModules(world: WorldState): void {
   validateAgency(world);
   validateModuleManifest(world.moduleManifest);
   for (const e of Object.values(world.entities)) {
+    if (e.actor)
+      for (const definition of world.moduleManifest.definitions) {
+        const value = readAttribute(e.actor, definition);
+        if (value !== undefined) validateAttributeValue(definition, value);
+      }
     if (
       e.actor?.capabilities?.needs !== false &&
       e.actor &&
@@ -564,6 +586,12 @@ export function validateWorldModules(world: WorldState): void {
       )
         throw new Error('Invalid replenishment source.');
     }
+    if (
+      e.actor?.action?.type === 'strike' &&
+      (!strikeDefinition(e.actor.action.definitionId) ||
+        strikeDefinition(e.actor.action.definitionId)?.version !== e.actor.action.definitionVersion)
+    )
+      throw new Error('Missing active strike definition.');
     if (
       e.actor?.action?.type === 'replenish' &&
       (!attributeDefinition(world, e.actor.action.attributeId ?? '')?.reservoir ||

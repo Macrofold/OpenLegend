@@ -1,3 +1,4 @@
+import { dreamPolicy } from '../packages/domain/src/index.js';
 /** Explicit paid acceptance, never run by test/check or on startup.
  * node --env-file=.env --import tsx scripts/verify-live-memory.ts
  * Uses an isolated real simulation and separate saved database. Four mini-model
@@ -134,7 +135,12 @@ try {
   );
   const rest = await service.command(
     `dream-rest-${id}`,
-    { type: 'rest' },
+    {
+      type: 'status-effect',
+      definitionId: dreamPolicy(service.world).statusEffectId,
+      targetId: service.defaultResidentEntityId,
+      effectOperation: 'activate',
+    },
     service.defaultResidentEntityId,
   );
   if (!rest.ok) throw new Error(rest.message);

@@ -1,3 +1,4 @@
+import { capabilityBlocked } from './status-capabilities.js';
 import { hasMemory, supportsManualWork } from './living.js';
 import {
   normalizeAttempt,
@@ -217,7 +218,8 @@ export function commitActorResponse(
   if (!actor.actor.alive) return unavailable(`${actor.name} is dead and cannot respond.`);
   if (actor.actor.incapacitated)
     return unavailable(`${actor.name} is incapacitated and cannot respond.`);
-  if (actor.actor.rest?.asleep) return unavailable(`${actor.name} is asleep and cannot respond.`);
+  if (capabilityBlocked(input, actor, 'speech'))
+    return unavailable(`${actor.name} cannot speak in their current state.`);
   const permitted = new Set(entityIds);
   let world = draftWorld(input);
   const events: Transition['events'] = [];
@@ -225,9 +227,8 @@ export function commitActorResponse(
   let localId = '';
   const command = (part: 'talk' | 'act', value: Command) => {
     let transition = executeCommand(world, value);
-    // A reply remains valid speech if its intended listener moved while it was
-    // being composed. It is spoken aloud to the current audible audience;
-    // mechanical actions continue to enforce their live prerequisites.
+    // Speaking aloud preserves intent without claiming the recipient heard or joined.
+    // docs/narration-and-conversations.md#speech-intent-and-audience
     if (
       part === 'talk' &&
       value.type === 'say' &&
@@ -239,6 +240,7 @@ export function commitActorResponse(
         actorId: value.actorId,
         type: 'say',
         text: value.text,
+        intendedRecipientId: value.targetId,
       });
     world = draftWorld(transition.world);
     for (const event of transition.events) {

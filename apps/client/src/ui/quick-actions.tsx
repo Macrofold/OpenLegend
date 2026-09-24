@@ -121,9 +121,11 @@ export function QuickActions({
   options.push(...people);
   const candidateSuggestions = [
     options.find((a) => a.id === 'recover'),
-    ...(view.player.energy !== undefined && view.player.energy < 35
-      ? [options.find((a) => a.id === 'rest')]
-      : []),
+    ...options.filter((a) =>
+      view.player.actions.some(
+        (option) => option.id === a.id && option.command.type === 'status-effect',
+      ),
+    ),
     ...(view.player.hunger !== undefined && view.player.hunger > 70
       ? [options.find((a) => a.id.startsWith('eat-') && a.enabled)]
       : []),

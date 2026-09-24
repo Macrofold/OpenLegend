@@ -1,3 +1,4 @@
+import { dreamStatus } from '@open-legend/domain';
 import { nativeNeedBelow } from '@open-legend/domain';
 import { z } from 'zod';
 import {
@@ -105,7 +106,6 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     case 'gather':
     case 'harvest':
       return { ...base, type: input.type, targetId: input.targetId! };
-    case 'rest':
     case 'cancel':
     case 'recover':
       return { ...base, type: input.type };
@@ -123,6 +123,21 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     case 'eat':
     case 'equip':
       return { ...base, type: input.type, itemId: input.itemId! };
+    case 'strike':
+      return {
+        ...base,
+        type: 'strike',
+        targetId: input.targetId!,
+        definitionId: input.definitionId!,
+      };
+    case 'status-effect':
+      return {
+        ...base,
+        type: 'status-effect',
+        targetId: input.targetId!,
+        definitionId: input.definitionId!,
+        operation: input.effectOperation!,
+      };
     case 'hunt':
       return {
         ...base,
@@ -201,7 +216,7 @@ export function cognitionContext(
         c.command ? domainCommand(c.command, actorId, decisionId) : null,
       ]),
     ),
-    restEpisode: actor.action?.type === 'rest' ? actor.action.id : null,
+    restEpisode: dreamStatus(service.world, service.world.entities[actorId])?.episode ?? null,
   };
   const { thoughts: _thoughts, receipts: _receipts, ...acceptedMind } = mind;
   const context = {
@@ -278,8 +293,11 @@ export function cognitionOpportunity(service: WorldService, actorId: string) {
   const mind = mindFor(service.world, actorId);
   const recall = get_memories(service.world, actorId, { limit: 0 });
   const fresh = recall.observationWatermark > mind.processedWatermark;
-  if (actor.action?.type === 'rest')
-    return actor.action.id !== mind.lastDreamEpisode && fresh ? ('dream' as const) : null;
+  if (dreamStatus(service.world, service.world.entities[actorId]))
+    return dreamStatus(service.world, service.world.entities[actorId])!.episode !==
+      mind.lastDreamEpisode && fresh
+      ? ('dream' as const)
+      : null;
   if (actor.action || nativeNeedBelow(actor, 'energy', 30)) return null;
   return fresh && service.world.simTime - mind.lastReflectionAt >= 3600
     ? ('reflection' as const)

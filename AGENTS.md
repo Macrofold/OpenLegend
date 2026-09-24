@@ -24,7 +24,7 @@ Guidelines
 
 When making substantial changes to game-state management or adding/changing object storage, consider save/load implications and follow [the save/load design](docs/save-and-load.md).
 
-**2026-09-21 — No legacy support until the owner removes this block.** There are no real players. Do not add old-save migrations, backward-compatibility paths or legacy-support maintenance for evolving models/storage. Reject incompatible development saves explicitly; preserve same-version integrity and real accounting/privacy boundaries. See [active development policy](docs/save-and-load.md#active-development-policy), which overrides older compatibility requirements.
+**Evolve development state in place.** Do not bend over backwards to support legacy game versions. Simple migrations and direct schema/data updates are allowed and preferred: update the existing database/world to the current model, preserving identity and unrelated state. Do not introduce per-feature world/save versions, new databases/data directories, parallel legacy runtimes or an elaborate compatibility framework. Never automatically reset or replace a world to accommodate a feature change; a destructive reset requires an explicit owner request. If a safe, small migration is unclear, stop and explain the specific conflict rather than discarding state. Preserve atomicity, current-state validation, accounting, credentials and privacy boundaries. See [active development policy](docs/save-and-load.md#active-development-policy).
 
 ## Boundaries
 

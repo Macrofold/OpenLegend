@@ -1,3 +1,5 @@
+import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
+import { playerEntity } from '../entity-view';
 import { useState } from 'react';
 import { EventTime } from './event-time';
 import { Button as AriaButton } from 'react-aria-components';
@@ -199,15 +201,13 @@ export function EntityDetail({
   connected,
   command,
   talk,
-  inspectMind,
-  editPerson,
+  godControls,
 }: {
   entity: EntityView;
   connected: boolean;
   command(a: ActionOption): void;
   talk(id: string): void;
-  inspectMind?(): void;
-  editPerson?(): void;
+  godControls?: GodCharacterControls;
 }) {
   return (
     <>
@@ -226,20 +226,14 @@ export function EntityDetail({
         </Button>
       )}
       <Actions actions={entity.actions} command={command} connected={connected} />
-      {editPerson && (
-        <Button variant="quiet" size="sm" icon="ui.character" onPress={editPerson}>
-          Edit Person · God mode
-        </Button>
-      )}
-      {inspectMind && (
-        <Button variant="quiet" size="sm" onPress={inspectMind}>
-          Inspect private mind · God mode
-        </Button>
+      {godControls && (
+        <GodCharacterActions entity={entity} connected={connected} controls={godControls} />
       )}
     </>
   );
 }
 export function Character({
+  godControls,
   view,
   command,
   connected,
@@ -247,9 +241,17 @@ export function Character({
   view: GameView;
   command(a: ActionOption): void;
   connected: boolean;
+  godControls?: GodCharacterControls;
 }) {
   return (
     <>
+      {godControls && (
+        <GodCharacterActions
+          entity={playerEntity(view)}
+          connected={connected}
+          controls={godControls}
+        />
+      )}
       <Section title="Condition">
         <Condition {...view.player} />
         <Actions actions={view.player.actions} command={command} connected={connected} />

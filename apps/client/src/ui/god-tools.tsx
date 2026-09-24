@@ -10,7 +10,7 @@ import type {
   Position,
 } from '@open-legend/protocol';
 import { post } from '../api';
-import { Button, IconButton, SelectField, Tag } from '../design-system/components';
+import { Button, Condition, IconButton, SelectField, Tag } from '../design-system/components';
 import { EditorPanel } from './editor';
 
 type TraitOption = { id: string; name: string; description: string };
@@ -70,6 +70,7 @@ function normalizedEditorPerson(person: GodPersonFields): GodPersonFields {
     traitIds: [...new Set(person.traitIds)],
     goals: person.goals.map((goal) => goal.trim()).filter(Boolean),
     stats: { ...person.stats },
+    inventory: person.inventory?.map((item) => ({ ...item })),
   };
 }
 
@@ -86,6 +87,8 @@ function validateEditorPerson(person: GodPersonFields): string {
     return 'Each goal must be 500 characters or fewer.';
   if (Object.values(value.stats).some((stat) => !Number.isFinite(stat) || stat < 0 || stat > 100))
     return 'Health, fullness, and energy must each be between 0 and 100.';
+  if (value.inventory?.some((item) => !Number.isSafeInteger(item.quantity) || item.quantity < 0))
+    return 'Item quantities must be nonnegative whole numbers.';
   return '';
 }
 
@@ -204,10 +207,12 @@ function PersonFields({
 }
 
 function PersonEditorFields({
+  section,
   person,
   traits,
   onChange,
 }: {
+  section: 'character' | 'identity';
   person: GodPersonFields;
   traits: TraitOption[];
   onChange(person: GodPersonFields): void;
@@ -216,101 +221,115 @@ function PersonEditorFields({
     onChange({ ...person, [key]: value });
   return (
     <div className="ol-person-form">
-      <label>
-        Name
-        <input
-          required
-          maxLength={80}
-          value={person.name}
-          onChange={(event) => update('name', event.target.value)}
-        />
-      </label>
-      <label>
-        Description
-        <textarea
-          rows={3}
-          maxLength={2000}
-          value={person.description}
-          onChange={(event) => update('description', event.target.value)}
-          placeholder="How this person is described in the world"
-        />
-      </label>
-      <label>
-        Personality
-        <textarea
-          rows={3}
-          maxLength={1000}
-          value={person.personality}
-          onChange={(event) => update('personality', event.target.value)}
-          placeholder="How they tend to think, feel, and relate to others"
-        />
-      </label>
-      <label>
-        Backstory
-        <textarea
-          rows={5}
-          maxLength={4000}
-          value={person.backstory}
-          onChange={(event) => update('backstory', event.target.value)}
-          placeholder="The history that shaped them"
-        />
-      </label>
-      <TraitFields
-        selected={person.traitIds}
-        traits={traits}
-        onChange={(ids) => update('traitIds', ids)}
-      />
-      <label>
-        Goals
-        <textarea
-          rows={4}
-          maxLength={4000}
-          value={person.goals.join('\n')}
-          onChange={(event) => update('goals', event.target.value.split('\n'))}
-          placeholder="One active intention per line; changing this list replaces active and paused intentions"
-        />
-      </label>
-      <fieldset className="ol-person-stats">
-        <legend>Stats</legend>
-        <div>
-          {(
-            [
-              ['health', 'Health'],
-              ['fullness', 'Fullness'],
-              ['energy', 'Energy'],
-            ] as const
-          )
-            .filter(([key]) => person.stats[key] !== undefined)
-            .map(([key, label]) => (
-              <label key={key}>
-                {label}
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={person.stats[key]}
-                  onChange={(event) =>
-                    update('stats', { ...person.stats, [key]: Number(event.target.value) })
-                  }
-                />
-              </label>
-            ))}
-        </div>
-        <Button
-          type="button"
-          variant="secondary"
-          onPress={() =>
-            update('stats', {
-              health: 100,
-              ...(person.stats.fullness === undefined ? {} : { fullness: 100 }),
-              ...(person.stats.energy === undefined ? {} : { energy: 100 }),
-            })
-          }
-        >
-          Fill stats to 100
-        </Button>
-      </fieldset>
+      {section === 'identity' && (
+        <>
+          <label>
+            Name
+            <input
+              required
+              maxLength={80}
+              value={person.name}
+              onChange={(event) => update('name', event.target.value)}
+            />
+          </label>
+          <label>
+            Description
+            <textarea
+              rows={3}
+              maxLength={2000}
+              value={person.description}
+              onChange={(event) => update('description', event.target.value)}
+              placeholder="How this person is described in the world"
+            />
+          </label>
+          <label>
+            Personality
+            <textarea
+              rows={3}
+              maxLength={1000}
+              value={person.personality}
+              onChange={(event) => update('personality', event.target.value)}
+              placeholder="How they tend to think, feel, and relate to others"
+            />
+          </label>
+          <label>
+            Backstory
+            <textarea
+              rows={5}
+              maxLength={4000}
+              value={person.backstory}
+              onChange={(event) => update('backstory', event.target.value)}
+              placeholder="The history that shaped them"
+            />
+          </label>
+          <TraitFields
+            selected={person.traitIds}
+            traits={traits}
+            onChange={(ids) => update('traitIds', ids)}
+          />
+          <label>
+            Goals
+            <textarea
+              rows={4}
+              maxLength={4000}
+              value={person.goals.join('\n')}
+              onChange={(event) => update('goals', event.target.value.split('\n'))}
+              placeholder="One active intention per line; changing this list replaces active and paused intentions"
+            />
+          </label>
+        </>
+      )}
+      {section === 'character' && (
+        <>
+          <fieldset className="ol-person-stats">
+            <legend>Needs</legend>
+            <Condition
+              attributes={(
+                [
+                  ['health', 'Health', 'health', 40],
+                  ['fullness', 'Food', 'food', 30],
+                  ['energy', 'Energy', 'energy', 25],
+                ] as const
+              ).flatMap(([id, name, presentation, threshold]) => {
+                const value = person.stats[id];
+                return value === undefined
+                  ? []
+                  : [
+                      {
+                        id,
+                        name,
+                        presentation,
+                        value,
+                        status: 'known' as const,
+                        display: 'meter' as const,
+                        min: 0,
+                        max: 100,
+                        unit: '%',
+                        critical: value < threshold,
+                      },
+                    ];
+              })}
+              onValueChange={(id, value) => update('stats', { ...person.stats, [id]: value })}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              onPress={() =>
+                update('stats', {
+                  health: 100,
+                  ...(person.stats.fullness === undefined ? {} : { fullness: 100 }),
+                  ...(person.stats.energy === undefined ? {} : { energy: 100 }),
+                })
+              }
+            >
+              Fill needs to 100
+            </Button>
+          </fieldset>
+          <fieldset className="ol-person-stats">
+            <legend>Stats</legend>
+          </fieldset>
+        </>
+      )}
     </div>
   );
 }
@@ -699,18 +718,128 @@ export function PersonEditor({
       onClose={close}
       tabs={[
         {
-          id: 'person',
-          label: 'Person',
+          id: 'character',
+          label: 'Character',
           icon: 'ui.character',
           content: (
             <div className="ol-person-editor-tab">
+              <fieldset className="ol-person-stats">
+                <legend>Statuses</legend>
+                <div className="ol-actions">
+                  {loaded.statuses.map((status) => (
+                    <Tag key={status}>{status}</Tag>
+                  ))}
+                </div>
+              </fieldset>
+              <PersonEditorFields
+                section="character"
+                person={person}
+                traits={traits}
+                onChange={setPerson}
+              />
               <RefreshHead
                 refreshedAt={refreshedAt}
                 refresh={refresh}
                 title="Latest character state"
               />
-              <PersonEditorFields person={person} traits={traits} onChange={setPerson} />
             </div>
+          ),
+        },
+        {
+          id: 'inventory',
+          label: 'Inventory',
+          icon: 'ui.inventory',
+          content: (
+            <div className="ol-person-form">
+              {(person.inventory ?? []).map((item, index) => (
+                <div className="ol-god-inventory-row" key={index}>
+                  <SelectField
+                    label={`Item ${index + 1}`}
+                    value={item.definitionId}
+                    placeholder="Search items…"
+                    placement="bottom start"
+                    options={loaded.itemOptions.map((option) => ({
+                      id: option.id,
+                      label: option.name,
+                    }))}
+                    onChange={(definitionId) =>
+                      setPerson({
+                        ...person,
+                        inventory: person.inventory!.map((entry, i) =>
+                          i === index ? { ...entry, definitionId } : entry,
+                        ),
+                      })
+                    }
+                  />
+                  <label>
+                    Quantity
+                    <input
+                      aria-label={`Quantity ${index + 1}`}
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={item.quantity}
+                      onChange={(event) =>
+                        setPerson({
+                          ...person,
+                          inventory: person.inventory!.map((entry, i) =>
+                            i === index
+                              ? { ...entry, quantity: event.currentTarget.valueAsNumber }
+                              : entry,
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                  <Button
+                    variant="quiet"
+                    onPress={() =>
+                      setPerson({
+                        ...person,
+                        inventory: person.inventory!.filter((_, i) => i !== index),
+                      })
+                    }
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              <Button
+                disabled={
+                  !loaded.itemOptions.some(
+                    (option) => !person.inventory?.some((item) => item.definitionId === option.id),
+                  )
+                }
+                onPress={() => {
+                  const option = loaded.itemOptions.find(
+                    (option) => !person.inventory?.some((item) => item.definitionId === option.id),
+                  );
+                  if (option)
+                    setPerson({
+                      ...person,
+                      inventory: [
+                        ...(person.inventory ?? []),
+                        { definitionId: option.id, quantity: 1 },
+                      ],
+                    });
+                }}
+              >
+                Add item
+              </Button>
+            </div>
+          ),
+        },
+        {
+          id: 'identity',
+          label: 'Identity',
+          icon: 'ui.character',
+          content: (
+            <PersonEditorFields
+              section="identity"
+              person={person}
+              traits={traits}
+              onChange={setPerson}
+            />
           ),
         },
         {

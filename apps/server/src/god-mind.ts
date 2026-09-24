@@ -1,3 +1,4 @@
+import { activeStatusEffects } from '@open-legend/domain';
 import { mindFor, experiences, wordCount } from '@open-legend/domain';
 import type { GodMindView } from '@open-legend/protocol';
 import type { WorldService } from './world-service.js';
@@ -24,7 +25,11 @@ export function inspectGodMind(service: WorldService, actorId: string): GodMindV
       source: k.source,
       learnedAt: k.learnedAt,
     })),
-    rest: entity.actor.rest,
+    statusEffects: activeStatusEffects(service.world, entity).map((d) => ({
+      id: d.id,
+      label: d.label,
+      elapsedSeconds: entity.statusEffects![d.id]!.elapsedSeconds,
+    })),
 
     documents: mind.documents,
     records: mind.records,

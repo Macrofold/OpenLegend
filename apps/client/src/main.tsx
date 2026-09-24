@@ -90,7 +90,7 @@ function App() {
     [notice, setNotice] = useState('');
   const [cameraView, setCameraView] = useState<
     Pick<CameraState, 'projection' | 'levelId' | 'rotationLocked' | 'following'>
-  >({ projection: 'orthographic', levelId: null, rotationLocked: false, following: false });
+  >({ projection: 'orthographic', levelId: null, rotationLocked: false, following: true });
   const [open, setOpen] = useState<PanelId[]>([]),
     [selected, setSelected] = useState<string | null>(null),
     [picker, setPicker] = useState<PickerContext | null>(null),
@@ -534,6 +534,39 @@ function App() {
       notify(String(reason));
     }
   }
+  async function enableCognition(entity: EntityView) {
+    if (!connected) return notify('Reconnect to the world.');
+    try {
+      const result = await post('/api/god/act', {
+        action: 'enable-cognition',
+        targetId: entity.id,
+      });
+      notify(result.message);
+      if (result.ok) setPicker(null);
+    } catch (reason) {
+      notify(String(reason));
+    }
+  }
+  function characterGodControls(target: EntityView) {
+    if (!view?.godMode) return undefined;
+    return {
+      revive,
+      enableCognition,
+      ...(target.kind === 'actor'
+        ? {
+            editPerson: () =>
+              setGodEditors((current) => [
+                ...current,
+                { id: crypto.randomUUID(), type: 'person' as const, actorId: target.id },
+              ]),
+            inspectMind: () => {
+              setMindId(target.id);
+              show('mind');
+            },
+          }
+        : {}),
+    };
+  }
   async function spawn(
     type: string,
     position: { x: number; y: number; z: number; surfaceId: string },
@@ -578,30 +611,14 @@ function App() {
       case 'crafting':
         return <Crafting {...props} invent={() => invent()} />;
       case 'character':
-        return <Character {...props} />;
+        return <Character {...props} godControls={characterGodControls(playerEntity(view))} />;
       case 'nearby':
         return entity ? (
           <EntityDetail
             entity={entity}
             {...props}
             talk={talk}
-            editPerson={
-              view.godMode && entity.kind === 'actor'
-                ? () =>
-                    setGodEditors((current) => [
-                      ...current,
-                      { id: crypto.randomUUID(), type: 'person', actorId: entity.id },
-                    ])
-                : undefined
-            }
-            inspectMind={
-              view.godMode && entity.kind === 'actor'
-                ? () => {
-                    setMindId(entity.id);
-                    show('mind');
-                  }
-                : undefined
-            }
+            godControls={characterGodControls(entity)}
           />
         ) : (
           <>
@@ -962,7 +979,8 @@ function App() {
                         title={title(id)}
                         id={id === 'nearby' ? 'nearbyPanel' : `${id}Panel`}
                         wide={panelInfo[id].wide}
-                        draggable={!narrow && (id === 'agent' || id === 'composer')}
+                        draggable={!narrow && ['agent', 'composer', 'intelligence'].includes(id)}
+                        resizable={!narrow && id === 'intelligence'}
                         onClose={() => hide(id)}
                         onBack={
                           id === 'nearby' && entity
@@ -1010,14 +1028,7 @@ function App() {
                 inspect={inspect}
                 preference={preference}
                 revive={(target) => void revive(target)}
-                enableCognition={(target) => {
-                  void post('/api/god/act', { action: 'enable-cognition', targetId: target.id })
-                    .then((result) => {
-                      notify(result.message);
-                      if (result.ok) setPicker(null);
-                    })
-                    .catch((reason) => notify(String(reason)));
-                }}
+                enableCognition={(target) => void enableCognition(target)}
                 spawn={(type, position) => void spawn(type, position)}
                 createPerson={(position) => {
                   setPicker(null);

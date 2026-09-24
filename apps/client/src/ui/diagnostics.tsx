@@ -7,9 +7,11 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { Focusable, Tooltip, TooltipTrigger } from 'react-aria-components';
 import type { GodMindView, IntelligenceCall } from '@open-legend/protocol';
 import { post } from '../api';
-import { Button, EntityRow, IconButton, Section, Tag } from '../design-system/components';
+import { EventTime } from './event-time';
+import { Button, Icon, IconButton, Section, Tag } from '../design-system/components';
 
 type JsonObject = Record<string, unknown>;
 
@@ -96,8 +98,8 @@ export function Mind({ actorId }: { actorId: string }) {
             }}
           />
           <InlineJson
-            title="Thoughts and sleep"
-            value={{ thoughts: mind.thoughts, rest: mind.rest }}
+            title="Thoughts and active states"
+            value={{ thoughts: mind.thoughts, statusEffects: mind.statusEffects }}
           />
         </>
       ) : (
@@ -111,16 +113,147 @@ export type DiagnosticSelection = IntelligenceCall & {
   stageCount: number;
   knownCostUsd: number;
   costIncomplete: boolean;
+  actorKind?: string;
+  actorSpecies?: string;
+  responseSummary?: string;
+  responseParts?: { label: string; text: string }[];
+  errorSummary?: string;
 };
 type Row = DiagnosticSelection;
 type RawView = { title: string; value: unknown };
 
-function shortDiagnosticId(id: string): string {
-  const parts = id.split(':');
-  const root = parts[0] ?? id;
-  const suffix = parts.slice(1);
-  const compact = root.length > 12 ? `${root.slice(0, 8)}…${root.slice(-4)}` : root;
-  return suffix.length ? `${compact}:${suffix.join(':')}` : compact;
+/** Rich previews share the accessible tooltip primitives and escape panel clipping. */
+function Preview({
+  title,
+  value,
+  children,
+}: {
+  title: string;
+  value: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <TooltipTrigger delay={250} closeDelay={150}>
+      <Focusable>
+        <span tabIndex={0} className="ol-inspection-preview">
+          {children}
+        </span>
+      </Focusable>
+      <Tooltip className="ol-root ol-inspection-tooltip" placement="start" offset={8}>
+        <strong>{title}</strong>
+        <div>{value}</div>
+      </Tooltip>
+    </TooltipTrigger>
+  );
+}
+function levelLabel(route?: string): string | undefined {
+  const match = route?.match(/level[ -]?(\d)/i);
+  return match
+    ? `Level ${match[1]}`
+    : route === 'native'
+      ? 'Level 1 · Native'
+      : route === 'full-harness'
+        ? 'Full harness'
+        : undefined;
+}
+function ResponsePreview({ row }: { row: Row }) {
+  return (
+    <dl className="ol-preview-facts">
+      {row.responseParts?.length ? (
+        row.responseParts.map((part, index) => (
+          <Labeled key={index} label={part.label}>
+            {part.text}
+          </Labeled>
+        ))
+      ) : (
+        <Labeled label="Response">{row.responseSummary ?? 'No response recorded'}</Labeled>
+      )}
+    </dl>
+  );
+}
+function shortValue(value: unknown): string {
+  if (value == null) return 'Not recorded';
+  if (typeof value === 'string') return value.length > 240 ? `${value.slice(0, 240)}…` : value;
+  if (Array.isArray(value)) return `${value.length} items`;
+  const fields = object(value);
+  if (!fields) return String(value);
+  return (
+    Object.entries(fields)
+      .filter(([key, item]) => item != null && !['receipt', 'schema', 'requestId'].includes(key))
+      .slice(0, 4)
+      .map(
+        ([key, item]) =>
+          `${humanize(key)}: ${typeof item === 'object' ? (Array.isArray(item) ? `${item.length} items` : `${Object.keys(item as object).length} fields`) : shortValue(item)}`,
+      )
+      .join(' · ') || 'No additional fields'
+  );
+}
+function stageInput(call: IntelligenceCall): string {
+  if (call.kind === 'Jev')
+    return `${Object.keys(object(path(call.input, 'questions')) ?? {}).length} questions · actor context and candidates`;
+  if (call.kind.startsWith('LM'))
+    return `${lmPurposeTitle(textAt(call.input, 'task'))} · ${String(path(call.input, 'context') ?? '').length.toLocaleString()} context characters`;
+  return shortValue(call.input);
+}
+function stageResult(call: IntelligenceCall): string {
+  const answers =
+    object(path(call.output, 'value', 'answers')) ?? object(path(call.output, 'answers'));
+  if (answers) {
+    const entries = Object.entries(answers);
+    if (entries.some(([, answer]) => path(answer, 'type') === 'noul')) {
+      const yes = entries.filter(([, answer]) => answerBucket(answer) === 'yes').length;
+      return `${yes} included · ${entries.length - yes} excluded`;
+    }
+    return entries
+      .map(
+        ([key, answer]) =>
+          `${humanize(key)}: ${levelLabel(answerLabel(answer)) ?? answerLabel(answer)}`,
+      )
+      .join(' · ');
+  }
+  return (
+    textAt(call.output, 'reason') ??
+    textAt(call.output, 'error') ??
+    textAt(call.output, 'message') ??
+    shortValue(path(call.output, 'value') ?? call.output)
+  );
+}
+// Only fold records when their request/attempt identity identifies the consuming stage.
+// docs/memory-architecture.md#god-mode-cognition-debugger
+function stageGroups(calls: IntelligenceCall[]) {
+  const supporting = new Map<string, IntelligenceCall[]>();
+  const folded = new Set<string>();
+  for (const call of calls) {
+    let owner: IntelligenceCall | undefined;
+    if (call.kind === 'Accounting')
+      owner = calls.find(
+        (c) =>
+          (c.id === textAt(call.input, 'requestId') ||
+            textAt(c.input, 'requestId') === textAt(call.input, 'requestId')) &&
+          c.kind !== 'Accounting',
+      );
+    const purpose =
+      call.kind === 'Action context'
+        ? 'Action relevance'
+        : call.kind === 'Semantic decision'
+          ? 'Response routing'
+          : undefined;
+    const attempt = call.id.match(/^(.*:attempt:\d+):/)?.[1];
+    if (purpose && attempt)
+      owner = calls.find(
+        (c) =>
+          c.kind === 'Jev' &&
+          jevPurpose(c) === purpose &&
+          (textAt(c.input, 'requestId') ?? c.id).startsWith(`${attempt}:`),
+      );
+    if (owner && owner.id !== call.id) {
+      supporting.set(owner.id, [...(supporting.get(owner.id) ?? []), call]);
+      folded.add(call.id);
+    }
+  }
+  return calls
+    .filter((c) => !folded.has(c.id))
+    .map((call) => ({ call, supporting: supporting.get(call.id) ?? [] }));
 }
 
 function stageTitle(call: IntelligenceCall): string {
@@ -150,25 +283,41 @@ function stageTitle(call: IntelligenceCall): string {
   }
 }
 
-function stageSummary(call: IntelligenceCall) {
-  const receipt = object(call.output)?.['receipt'] as
-    | {
-        latencyMs?: number;
-        providerLatencyMs?: number;
-        providerQueueLatencyMs?: number;
-        estimatedCostUsd?: number;
-        usage?: { inputTokens: number; outputTokens: number };
-      }
-    | undefined;
-  const kind = stageTitle(call);
-  const applicationLatency =
-    call.completedAt === undefined
-      ? receipt?.latencyMs
-      : Math.max(0, Date.parse(call.completedAt) - Date.parse(call.startedAt));
-  const latency = receipt
-    ? ` · OpenLegend ${applicationLatency ?? '?'} ms${receipt.providerLatencyMs === undefined ? '' : ` · Macrofold run ${receipt.providerLatencyMs} ms · queue ${receipt.providerQueueLatencyMs ?? '?'} ms`}`
-    : '';
-  return `${kind} · ${call.status}${latency}${receipt ? ` · ${receipt.usage ? `${receipt.usage.inputTokens} input tokens / ${receipt.usage.outputTokens} output tokens` : 'tokens unknown'} · ${receipt.estimatedCostUsd === undefined ? 'cost unknown' : `$${receipt.estimatedCostUsd.toFixed(6)}`}` : ''} · ${shortDiagnosticId(call.id)}`;
+function StageMetrics({ call }: { call: IntelligenceCall }) {
+  const receipt = object(path(call.output, 'receipt'));
+  const usage = object(receipt?.['usage']);
+  const elapsed = call.completedAt
+    ? Date.parse(call.completedAt) - Date.parse(call.startedAt)
+    : receipt?.['latencyMs'];
+  return (
+    <dl className="ol-diagnostic-metrics">
+      {typeof elapsed === 'number' && (
+        <Labeled label="Elapsed">{Math.max(0, elapsed).toLocaleString()} ms</Labeled>
+      )}
+      {receipt && (
+        <>
+          <Labeled label="Model">
+            {valueText(receipt['model']) ?? valueText(receipt['requestedModel']) ?? 'Not reported'}
+          </Labeled>
+          <Labeled label="Tokens">
+            {usage
+              ? `${usage['inputTokens'] ?? '?'} in / ${usage['outputTokens'] ?? '?'} out`
+              : 'Not reported'}
+          </Labeled>
+          <Labeled label="Estimated cost">
+            {typeof receipt['estimatedCostUsd'] === 'number'
+              ? `$${receipt['estimatedCostUsd'].toFixed(6)}`
+              : receipt['dispatched'] === false
+                ? 'No provider dispatch'
+                : 'Not reported'}
+          </Labeled>
+          {typeof receipt['providerQueueLatencyMs'] === 'number' && (
+            <Labeled label="Provider queue">{String(receipt['providerQueueLatencyMs'])} ms</Labeled>
+          )}
+        </>
+      )}
+    </dl>
+  );
 }
 
 function Labeled({ label, children }: { label: string; children: ReactNode }) {
@@ -252,9 +401,18 @@ function answerLabel(answer: unknown): string {
   return 'No recorded decision';
 }
 
+function answerBucket(answer: unknown): string {
+  const data = object(answer);
+  // Noul is a probability, not a distinct option for every percentage.
+  // docs/memory-architecture.md#god-mode-cognition-debugger
+  if (typeof data?.['noul'] === 'number') return data['noul'] >= 0.5 ? 'yes' : 'no';
+  return answerLabel(answer);
+}
+
 function jevQuestionText(question: JsonObject | undefined, id: string): string {
   const instructions = valueText(question?.['instructions']) ?? 'No question text was recorded.';
   return instructions
+    .replace(`Is \`candidates.${id}\``, 'Is each candidate')
     .replace(`Would candidate ${id}`, 'Would each candidate')
     .replace(
       `For candidate ${id} in candidates, would including it`,
@@ -303,6 +461,7 @@ function jevScores(answer: JsonObject | undefined, options: string[]): string {
 }
 
 function JevSummary({ call }: { call: IntelligenceCall }) {
+  const [excluded, setExcluded] = useState<Record<string, string[]>>({});
   const questions = object(path(call.input, 'questions'));
   const answers =
     object(path(call.output, 'value', 'answers')) ?? object(path(call.output, 'answers'));
@@ -341,6 +500,23 @@ function JevSummary({ call }: { call: IntelligenceCall }) {
       </dl>
       {[...groups.entries()].map(([groupKey, group]) => {
         const options = jevOptions(group.question);
+        const labels = [
+          ...new Set([
+            ...(group.question?.['type'] === 'noul'
+              ? ['yes', 'no']
+              : options.map(([label]) => label)),
+            ...group.entries.map(({ answer }) => answerBucket(answer)),
+          ]),
+        ];
+        const hidden = excluded[groupKey] ?? [];
+        const counts = new Map<string, number>();
+        for (const entry of group.entries) {
+          const label = answerBucket(entry.answer);
+          counts.set(label, (counts.get(label) ?? 0) + 1);
+        }
+        const visible = group.entries.filter(
+          ({ answer }) => !hidden.includes(answerBucket(answer)),
+        );
         return (
           <section className="ol-diagnostic-card ol-jev-question" key={groupKey}>
             <div className="ol-diagnostic-card-head">
@@ -350,8 +526,14 @@ function JevSummary({ call }: { call: IntelligenceCall }) {
               </span>
             </div>
             <p className="ol-prose">{group.text}</p>
+            {group.question?.['type'] === 'noul' && (
+              <p className="ol-caption">
+                Yes ≥ 50%; No &lt; 50%. Exact probabilities remain visible.
+              </p>
+            )}
             {!!options.length && (
-              <div className="ol-jev-options">
+              <details className="ol-jev-options">
+                <summary>Answer definitions</summary>
                 <span className="ol-eyebrow">Options</span>
                 <ul className="ol-choice-list">
                   {options.map(([option, description]) => (
@@ -363,13 +545,35 @@ function JevSummary({ call }: { call: IntelligenceCall }) {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </details>
             )}
             <div className="ol-jev-results-head">
               <span className="ol-eyebrow">Results</span>
             </div>
+            <div className="ol-answer-filters" role="group" aria-label="Filter answers">
+              {labels.map((label) => (
+                <button
+                  type="button"
+                  key={label}
+                  aria-pressed={!hidden.includes(label)}
+                  onClick={() =>
+                    setExcluded((current) => ({
+                      ...current,
+                      [groupKey]: hidden.includes(label)
+                        ? hidden.filter((value) => value !== label)
+                        : [...hidden, label],
+                    }))
+                  }
+                >
+                  {humanize(label)} <span>{counts.get(label) ?? 0}</span>
+                </button>
+              ))}
+            </div>
+            <p className="ol-caption">
+              {visible.length} of {group.entries.length} results
+            </p>
             <ul className="ol-jev-target-list">
-              {group.entries.map(({ id, answer }) => {
+              {visible.map(({ id, answer }) => {
                 const target = jevTarget(state, id);
                 const scores = jevScores(
                   answer,
@@ -445,7 +649,7 @@ function LmResponse({ value }: { value: JsonObject }) {
             {Array.isArray(part['aboutEntityIds']) && part['aboutEntityIds'].length > 0 && (
               <p className="ol-caption">About: {part['aboutEntityIds'].map(String).join(', ')}</p>
             )}
-            {kind === 'plan' && <pre>{JSON.stringify(part['steps'], null, 2)}</pre>}
+            {kind === 'plan' && <StructuredValue value={part['steps']} />}
             {Array.isArray(operation['requiresAccepted']) &&
               operation['requiresAccepted'].length > 0 && (
                 <p className="ol-caption">
@@ -592,6 +796,10 @@ type Retrieval = {
   query?: string;
   embedding?: JsonObject;
   candidates: JsonObject[];
+  mandatoryCount: number;
+  automaticCount: number;
+  attentionStatus?: string;
+  triggerFacts?: unknown;
 };
 
 function retrievalFrom(calls: IntelligenceCall[]): Retrieval | undefined {
@@ -601,7 +809,11 @@ function retrievalFrom(calls: IntelligenceCall[]): Retrieval | undefined {
   if (!selection) return undefined;
   return {
     query: valueText(selection['query']),
+    triggerFacts: path(stage.input, 'triggerFacts'),
     embedding: object(selection['embedding']),
+    mandatoryCount: Array.isArray(selection['mandatory']) ? selection['mandatory'].length : 0,
+    automaticCount: Array.isArray(selection['automatic']) ? selection['automatic'].length : 0,
+    attentionStatus: valueText(selection['attentionStatus']),
     candidates: Array.isArray(selection['candidates'])
       ? selection['candidates'].map(object).filter((item): item is JsonObject => !!item)
       : [],
@@ -609,14 +821,39 @@ function retrievalFrom(calls: IntelligenceCall[]): Retrieval | undefined {
 }
 
 function RetrievalSummary({ retrieval }: { retrieval: Retrieval }) {
+  const searchStatus = valueText(retrieval.embedding?.['status']);
+  const direct = searchStatus?.includes('direct-Jev limit') ?? false;
+  const judged = retrieval.candidates.filter((candidate) => candidate['attention'] != null).length;
+  const selected = retrieval.candidates.filter(
+    (candidate) => candidate['selected'] === true,
+  ).length;
   const semantic = retrieval.candidates
     .filter((candidate) => typeof candidate['score'] === 'number')
     .sort((a, b) => Number(b['score']) - Number(a['score']));
   return (
     <div className="ol-retrieval-summary">
+      {retrieval.triggerFacts != null && (
+        <section className="ol-diagnostic-card">
+          <strong>Trigger facts</strong>
+          <StructuredValue value={retrieval.triggerFacts} />
+        </section>
+      )}
       <dl className="ol-diagnostic-fields">
         {retrieval.query && <Labeled label="Query">{retrieval.query}</Labeled>}
-        <Labeled label="Retrieves from">
+        <Labeled label="Vector search">
+          {direct
+            ? 'Skipped — candidates evaluated directly by Jev'
+            : (searchStatus ?? 'Status unavailable')}
+        </Labeled>
+        <Labeled label="Hard-query context">
+          {retrieval.mandatoryCount + retrieval.automaticCount} entries
+        </Labeled>
+        <Labeled label="Optional candidates">{retrieval.candidates.length}</Labeled>
+        <Labeled label="Jev judgments">
+          {judged} · {retrieval.attentionStatus ?? 'Status unavailable'}
+        </Labeled>
+        <Labeled label="Optional entries selected">{selected}</Labeled>
+        <Labeled label="Configured vector store">
           {valueText(retrieval.embedding?.['table']) ??
             (retrieval.embedding?.['storage'] === 'pgvector'
               ? 'recall_vectors'
@@ -626,13 +863,19 @@ function RetrievalSummary({ retrieval }: { retrieval: Retrieval }) {
           <Labeled label="Embedding model">{String(retrieval.embedding['model'])}</Labeled>
         )}
         {retrieval.embedding?.['search'] !== undefined && (
-          <Labeled label="Search">{String(retrieval.embedding['search'])}</Labeled>
+          <Labeled label="Retrieval policy">{String(retrieval.embedding['search'])}</Labeled>
         )}
       </dl>
       <section className="ol-diagnostic-card">
         <div className="ol-diagnostic-card-head">
-          <strong>Top {semantic.length} semantic results</strong>
-          <span className="ol-caption">cosine similarity</span>
+          <strong>
+            {direct
+              ? 'Vector search skipped'
+              : semantic.length
+                ? `Top ${semantic.length} vector results`
+                : 'No vector-scored results'}
+          </strong>
+          {!direct && <span className="ol-caption">cosine similarity</span>}
         </div>
         {semantic.length ? (
           <ol className="ol-result-list">
@@ -648,28 +891,166 @@ function RetrievalSummary({ retrieval }: { retrieval: Retrieval }) {
             ))}
           </ol>
         ) : (
-          <p className="ol-caption">No scored semantic results were retained for this request.</p>
+          <p className="ol-caption">
+            {direct
+              ? 'Candidates went directly to Jev; no vector scores were needed.'
+              : 'No vector scores were retained. This does not mean Jev rejected every candidate.'}
+          </p>
         )}
       </section>
     </div>
   );
 }
 
-function responseFrom(calls: IntelligenceCall[]): string | undefined {
-  for (const call of [...calls].reverse()) {
-    const response =
-      textAt(call.input, 'proposed', 'speech') ??
-      textAt(call.input, 'proposed', 'talk', 'text') ??
-      textAt(call.output, 'value', 'talk', 'text') ??
-      textAt(call.output, 'value', 'speech') ??
-      textAt(call.output, 'speech');
-    if (response) return response;
-  }
-  for (const call of [...calls].reverse()) {
-    const outcome = textAt(call.output, 'message') ?? textAt(call.output, 'reason');
-    if (outcome) return outcome;
-  }
-  return undefined;
+function StructuredValue({ value }: { value: unknown }) {
+  if (value == null) return <span className="ol-caption">Not recorded</span>;
+  if (Array.isArray(value))
+    return value.length ? (
+      <ol className="ol-structured-list">
+        {value.map((item, index) => (
+          <li key={index}>
+            <StructuredValue value={item} />
+          </li>
+        ))}
+      </ol>
+    ) : (
+      <span className="ol-caption">None</span>
+    );
+  const fields = object(value);
+  if (!fields) return <span className="ol-prose">{String(value)}</span>;
+  return (
+    <dl className="ol-diagnostic-fields ol-structured-fields">
+      {Object.entries(fields)
+        .filter(([, item]) => item != null)
+        .map(([key, item]) => (
+          <Labeled key={key} label={humanize(key)}>
+            <StructuredValue value={item} />
+          </Labeled>
+        ))}
+    </dl>
+  );
+}
+
+function StatusIcon({ status }: { status: string }) {
+  return (
+    <span className="ol-diagnostic-status" data-status={status} title={humanize(status)}>
+      <Icon
+        name={status === 'failed' ? 'ui.close' : status === 'completed' ? 'ui.check' : 'ui.more'}
+        label={humanize(status)}
+        size={16}
+      />
+    </span>
+  );
+}
+
+function CopyValue({ label, value }: { label: string; value: unknown }) {
+  const [status, setStatus] = useState('');
+  return (
+    <span className="ol-copy-value">
+      <Button
+        size="sm"
+        variant="quiet"
+        icon="ui.copy"
+        onPress={() =>
+          void navigator.clipboard
+            .writeText(JSON.stringify(value ?? null, null, 2))
+            .then(() => setStatus('Copied'))
+            .catch(() => setStatus('Copy failed; use the JSON view'))
+        }
+      >
+        {label}
+      </Button>
+      <small role="status">{status}</small>
+    </span>
+  );
+}
+
+function BillingDetails({ value }: { value: unknown }) {
+  const data = object(value);
+  const runs = Array.isArray(data?.['runs']) ? data['runs'] : [];
+  const money = (value: unknown) =>
+    typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value))
+      ? `$${(Number(value) / 1e6).toFixed(6)}`
+      : 'Not reported';
+  return (
+    <section className="ol-diagnostic-card">
+      <strong>Provider billing</strong>
+      {!runs.length && (
+        <p>No provider run ID was recorded; remote billing cannot be retrieved for this stage.</p>
+      )}
+      {runs.map((raw, index) => {
+        const run = object(raw),
+          billing = object(run?.['billing']);
+        const entries = Array.isArray(billing?.['data']) ? billing['data'] : [];
+        return (
+          <div key={index}>
+            {typeof billing?.['unavailable'] === 'string' && (
+              <p role="alert" className="ol-diagnostic-error">
+                {billing['unavailable']}
+              </p>
+            )}
+            {!entries.length && !billing?.['unavailable'] && (
+              <p>Usage has not been reported yet.</p>
+            )}
+            {entries.map((entry, i) => {
+              const line = object(entry),
+                usage = object(line?.['model_usage']);
+              return (
+                <dl key={i} className="ol-diagnostic-metrics">
+                  <Labeled label="Model">
+                    {valueText(line?.['model']) ?? valueText(line?.['kind']) ?? 'Not reported'}
+                  </Labeled>
+                  <Labeled label="Billing mode">
+                    {valueText(line?.['billing_mode']) ?? 'Not reported'}
+                  </Labeled>
+                  <Labeled label="Macrofold charge">{money(line?.['charged_micro_usd'])}</Labeled>
+                  <Labeled label="Provider cost">
+                    {money(usage?.['provider_cost_micro_usd'])}
+                  </Labeled>
+                  <Labeled label="Tokens">
+                    {String(usage?.['input_tokens'] ?? '?')} in /{' '}
+                    {String(usage?.['output_tokens'] ?? '?')} out
+                  </Labeled>
+                  <Labeled label="Reporting status">
+                    {valueText(usage?.['completeness']) ?? 'Not reported'} ·{' '}
+                    {valueText(usage?.['provider_cost_status']) ?? 'Cost status unknown'}
+                  </Labeled>
+                </dl>
+              );
+            })}
+            <details>
+              <summary>Billing records and run ID</summary>
+              <p className="ol-diagnostic-id">{String(run?.['runId'] ?? 'Unknown')}</p>
+              <StructuredValue value={billing} />
+            </details>
+            <details>
+              <summary>Provider events</summary>
+              <StructuredValue value={run?.['events']} />
+            </details>
+          </div>
+        );
+      })}
+      <p className="ol-caption">{valueText(data?.['note'])}</p>
+    </section>
+  );
+}
+
+function RoutingResult({ call }: { call: IntelligenceCall }) {
+  const answers =
+    object(path(call.output, 'answers')) ?? object(path(call.output, 'value', 'answers')) ?? {};
+  return (
+    <dl className="ol-preview-facts">
+      {Object.entries(answers).map(([key, answer]) => (
+        <Labeled key={key} label={humanize(key)}>
+          <strong>{levelLabel(answerLabel(answer)) ?? humanize(answerLabel(answer))}</strong>
+          <span className="ol-route-probabilities">{jevScores(object(answer), [])}</span>
+        </Labeled>
+      ))}
+      {path(call.output, 'confidence') != null && (
+        <Labeled label="Confidence">{String(path(call.output, 'confidence'))}</Labeled>
+      )}
+    </dl>
+  );
 }
 
 function StageReadable({
@@ -681,6 +1062,7 @@ function StageReadable({
   retrieval?: Retrieval;
   trigger?: string;
 }) {
+  const routing = call.kind === 'Semantic decision';
   const jev = call.kind === 'Jev' || !!path(call.input, 'questions');
   const lm = call.kind.startsWith('LM ·');
   const worldAgent = call.kind.toLowerCase().includes('world agent');
@@ -700,7 +1082,7 @@ function StageReadable({
     textAt(call.output, 'error') ??
     textAt(call.input, 'reason');
   const task = textAt(call.input, 'task');
-  const embedding = call.kind === 'Embeddings';
+  const embedding = /embedding/i.test(call.kind);
   const showRetrieval = call.kind === 'Context and retrieval';
   const embeddingTexts = path(call.input, 'texts');
   const failureStage = /failure|error/i.test(call.kind);
@@ -712,7 +1094,7 @@ function StageReadable({
         proposedAction ||
         (!lm && !worldAgent && message)) && (
         <dl className="ol-diagnostic-fields">
-          {stimulus && <Labeled label="Trigger">{stimulus}</Labeled>}
+          {stimulus && <Labeled label="Trigger">{trigger ?? stimulus}</Labeled>}
           {!lm && task && <Labeled label="Task">{humanize(task)}</Labeled>}
           {speech && <Labeled label="Actor response">“{speech}”</Labeled>}
           {proposedAction && <Labeled label="Decision">{proposedAction}</Labeled>}
@@ -721,7 +1103,8 @@ function StageReadable({
           )}
         </dl>
       )}
-      {jev && <JevSummary call={call} />}
+      {routing && <RoutingResult call={call} />}
+      {jev && <JevSummary key={call.id} call={call} />}
       {lm && <LmSummary call={call} trigger={trigger} />}
       {worldAgent && <WorldAgentSummary call={call} />}
       {embedding && (
@@ -738,6 +1121,17 @@ function StageReadable({
         </dl>
       )}
       {showRetrieval && retrieval && <RetrievalSummary retrieval={retrieval} />}
+      {!routing && !jev && !lm && !worldAgent && !embedding && !showRetrieval && (
+        <>
+          <StructuredValue value={call.output} />
+          {call.input != null && (
+            <details>
+              <summary>Decision context</summary>
+              <StructuredValue value={call.input} />
+            </details>
+          )}
+        </>
+      )}
       {!stimulus &&
         !task &&
         !speech &&
@@ -747,7 +1141,8 @@ function StageReadable({
         !lm &&
         !worldAgent &&
         !embedding &&
-        !showRetrieval && (
+        !showRetrieval &&
+        call.output == null && (
           <p className="ol-caption">No additional rendered fields were recorded for this stage.</p>
         )}
     </div>
@@ -820,49 +1215,134 @@ function Stage({
   trigger,
   remote,
   setRemote,
-  setError,
   showJson,
+  supporting = [],
 }: {
   call: IntelligenceCall;
+  supporting?: IntelligenceCall[];
   retrieval?: Retrieval;
   trigger?: string;
   remote: unknown;
   setRemote(value: unknown): void;
-  setError(message: string): void;
   showJson(raw: RawView): void;
 }) {
-  const hasProviderDetails = call.exchanges.some(
-    (exchange) =>
-      exchange.method === 'POST' && ['/v1/runs', '/v1/inferences'].includes(exchange.path),
+  const [loadingBilling, setLoadingBilling] = useState(false);
+  const [billingError, setBillingError] = useState('');
+  const supportingFailure = supporting.find(
+    (c) => c.status === 'failed' || path(c.output, 'ok') === false,
   );
+  const failure =
+    call.status === 'failed' || path(call.output, 'ok') === false || !!supportingFailure;
+  const reason =
+    textAt(call.output, 'reason') ??
+    textAt(call.output, 'error') ??
+    textAt(call.output, 'message') ??
+    textAt(supportingFailure?.output, 'error') ??
+    (supportingFailure
+      ? `${supportingFailure.kind} failed; inspect supporting details.`
+      : undefined);
+  const hasProviderDetails =
+    !!path(call.output, 'receipt', 'providerRequestId') ||
+    call.exchanges.some(
+      (exchange) =>
+        exchange.method === 'POST' && ['/v1/runs', '/v1/inferences'].includes(exchange.path),
+    );
   return (
     <section className="ol-diagnostic-stage">
       <details>
-        <summary>{stageSummary(call)}</summary>
-        <p className="ol-caption ol-diagnostic-id">Stage ID: {call.id}</p>
+        <summary>
+          <StatusIcon status={failure ? 'failed' : call.status} />
+          <span className="ol-stage-heading">
+            <strong>{stageTitle(call)}</strong>
+            <span className="ol-stage-peek">
+              <Preview title="Input" value={<StructuredValue value={call.input} />}>
+                <span className="ol-truncate">Input · {stageInput(call)}</span>
+              </Preview>
+            </span>
+            <span className="ol-stage-peek">
+              <Preview
+                title="Output"
+                value={
+                  <>
+                    <p>{stageResult(call)}</p>
+                    <StructuredValue value={path(call.output, 'value') ?? call.output} />
+                  </>
+                }
+              >
+                <span className="ol-truncate">Output · {stageResult(call)}</span>
+              </Preview>
+            </span>
+          </span>
+        </summary>
+        <details className="ol-stage-technical">
+          <summary>Timing, usage and stage ID</summary>
+          <StageMetrics call={call} />
+          <p className="ol-caption ol-diagnostic-id">Stage ID: {call.id}</p>
+        </details>
+        <div className="ol-actions">
+          <CopyValue label="Copy input" value={call.input} />
+          <CopyValue label="Copy output" value={call.output} />
+        </div>
         <StageReadable call={call} retrieval={retrieval} trigger={trigger} />
+        {supporting.map((context) => (
+          <details key={context.id} className="ol-supporting-stage">
+            <summary>
+              <StatusIcon status={context.status} />{' '}
+              {context.kind === 'Action context'
+                ? 'Action options and retrieval'
+                : stageTitle(context)}{' '}
+              · {stageResult(context)}
+            </summary>
+            <p className="ol-caption ol-diagnostic-id">Stage ID: {context.id}</p>
+            <CopyValue label="Copy input" value={context.input} />{' '}
+            <CopyValue label="Copy output" value={context.output} />
+            <StageReadable call={context} trigger={trigger} />
+          </details>
+        ))}
         {hasProviderDetails && (
           <div className="ol-diagnostic-stage-actions">
             <Button
               size="sm"
               variant="quiet"
-              onPress={() =>
-                void post<{ ok: boolean; details?: unknown; message?: string }>(
-                  '/api/god/intelligence-details',
-                  { id: call.id },
-                )
-                  .then((result) => {
-                    if (result.ok) setRemote(result.details);
-                    else setError(result.message ?? 'Provider details unavailable.');
-                  })
-                  .catch((fetchError) => setError(String(fetchError)))
-              }
+              disabled={loadingBilling}
+              onPress={async () => {
+                setLoadingBilling(true);
+                setBillingError('');
+                try {
+                  const result = await post<{ ok: boolean; details?: unknown; message?: string }>(
+                    '/api/god/intelligence-details',
+                    { id: call.id },
+                  );
+                  if (!result.ok)
+                    throw new Error(result.message ?? 'Provider details unavailable.');
+                  setRemote(result.details);
+                } catch (error) {
+                  setBillingError(error instanceof Error ? error.message : String(error));
+                } finally {
+                  setLoadingBilling(false);
+                }
+              }}
             >
-              Fetch billing details
+              {loadingBilling
+                ? 'Fetching billing…'
+                : remote === undefined
+                  ? 'Fetch billing details'
+                  : 'Refresh billing details'}
             </Button>
           </div>
         )}
+        {billingError && (
+          <p role="alert" className="ol-diagnostic-error">
+            {billingError}
+          </p>
+        )}
+        {remote !== undefined && <BillingDetails value={remote} />}
       </details>
+      {failure && (
+        <p role="alert" className="ol-diagnostic-error">
+          {reason ?? 'Stage failed; open the stage to inspect input and output.'}
+        </p>
+      )}
       <div className="ol-diagnostic-stage-json">
         <IconButton
           icon="ui.json"
@@ -884,10 +1364,12 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
       root: IntelligenceCall;
       children: IntelligenceCall[];
       coverage: string;
+      responseSummary?: string;
     } | null>(null),
     [error, setError] = useState(''),
     [remote, setRemote] = useState<Record<string, unknown>>({});
   async function load() {
+    setError('');
     try {
       const result = await post<{
         ok: boolean;
@@ -904,7 +1386,7 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
   useEffect(() => void load(), [row.id]);
   const calls = detail ? (detail.children.length ? detail.children : [detail.root]) : [];
   const retrieval = detail ? retrievalFrom(calls) : undefined;
-  const response = detail ? responseFrom(calls) : undefined;
+  const response = detail?.responseSummary;
   return (
     <div className="ol-trace-detail">
       {error && <p role="alert">{error}</p>}
@@ -931,31 +1413,40 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
             </div>
           </div>
           <dl className="ol-diagnostic-overview">
-            <Labeled label="Trace ID">
-              <span className="ol-diagnostic-id">{detail.root.id}</span>
-            </Labeled>
             <Labeled label="Trigger type">
               {detail.root.triggerType ?? 'Unclassified trigger'}
             </Labeled>
             <Labeled label="Trigger">{detail.root.trigger ?? detail.root.kind}</Labeled>
             <Labeled label="Actor">{detail.root.actorName ?? 'World agent'}</Labeled>
-            <Labeled label="Route">{detail.root.route ?? 'No route recorded'}</Labeled>
-            <Labeled label="Outcome">{detail.root.disposition ?? detail.root.status}</Labeled>
-            {response && (
-              <Labeled label={detail.root.status === 'failed' ? 'Error' : 'Response'}>
-                “{response}”
+            {response && <Labeled label="Proposed response">{response}</Labeled>}
+            <Labeled label="Trace ID">
+              <span className="ol-diagnostic-id">{detail.root.id}</span>
+            </Labeled>
+            <Labeled label="Recorded at">
+              {new Date(detail.root.startedAt).toLocaleString()}
+            </Labeled>
+            {detail.root.gameTime !== undefined && (
+              <Labeled label="World time at request">
+                <EventTime time={detail.root.gameTime} />
               </Labeled>
             )}
+            <Labeled label="Stages">{calls.length}</Labeled>
+            <Labeled label="Recorded cost">
+              ${row.knownCostUsd.toFixed(6)}
+              {row.costIncomplete ? ' + unreported usage' : ''}
+            </Labeled>
+            <Labeled label="Route">{detail.root.route ?? 'No route recorded'}</Labeled>
+            <Labeled label="Outcome">{detail.root.disposition ?? detail.root.status}</Labeled>
           </dl>
-          {calls.map((call) => (
+          {stageGroups(calls).map(({ call, supporting }) => (
             <Stage
               key={call.id}
               call={call}
+              supporting={supporting}
               retrieval={retrieval}
               trigger={detail.root.trigger}
               remote={remote[call.id]}
               setRemote={(value) => setRemote((current) => ({ ...current, [call.id]: value }))}
-              setError={setError}
               showJson={showJson}
             />
           ))}
@@ -966,16 +1457,78 @@ function TraceDetail({ row, showJson }: { row: Row; showJson(raw: RawView): void
   );
 }
 
+function triggerIcon(type: string): string {
+  if (/autonomous/i.test(type)) return 'ui.cognition';
+  if (/world-agent/i.test(type)) return 'ui.world';
+  if (/speech|message/i.test(type)) return 'action.talk';
+  if (/invention/i.test(type)) return 'action.invent';
+  if (/survival|need/i.test(type)) return 'meter.health';
+  if (/dream/i.test(type)) return 'ui.night';
+  if (/reflection/i.test(type)) return 'ui.refresh';
+  if (/consolidation|memory/i.test(type)) return 'ui.journal';
+  return 'ui.help';
+}
 function TraceRow({ row, onSelect }: { row: Row; onSelect(row: Row): void }) {
+  const type = row.triggerType ?? row.kind;
+  const actorIcon =
+    row.actorKind === 'animal'
+      ? row.actorSpecies === 'deer'
+        ? 'creature.deer'
+        : row.actorSpecies === 'hare'
+          ? 'creature.hare'
+          : 'creature.animal'
+      : row.actorKind === 'world'
+        ? 'ui.world'
+        : row.actorKind === 'person'
+          ? 'ui.character'
+          : 'ui.inview';
   return (
-    <div className="ol-trace">
-      <EntityRow
-        name={`${new Date(row.startedAt).toLocaleTimeString()} · ${row.actorName ?? 'World agent'} · ${row.trigger ?? row.kind}`}
-        meta={`${row.route ?? '—'} · ${row.disposition ?? row.status} · ${shortDiagnosticId(row.id)} · $${row.knownCostUsd.toFixed(4)}${row.costIncomplete ? ' + unknown' : ''}`}
-        icon="ui.star"
-        onPress={() => onSelect(row)}
-      />
-    </div>
+    <button type="button" className="ol-trace-row" onClick={() => onSelect(row)}>
+      <Icon name={actorIcon} label={row.actorKind ?? 'Actor'} size={24} />
+      <span className="ol-trace-copy">
+        <span className="ol-trace-heading">
+          <strong>{row.actorName ?? 'World agent'}</strong>
+          {levelLabel(row.route) && <Tag>{levelLabel(row.route)}</Tag>}
+        </span>
+        <span className="ol-trace-type">
+          <Icon name={triggerIcon(type)} size={14} />
+          <span>{type}</span>
+        </span>
+        <Preview
+          title="Trigger"
+          value={
+            <dl className="ol-preview-facts">
+              <Labeled label="Type">{type}</Labeled>
+              <Labeled label="Trigger">{row.trigger ?? row.kind}</Labeled>
+            </dl>
+          }
+        >
+          <span className="ol-truncate">{row.trigger ?? row.kind}</span>
+        </Preview>
+        <span className="ol-trace-bottom">
+          {row.responseParts?.some((part) => part.label === 'Speech') && (
+            <Icon name="action.talk" size={14} />
+          )}
+          <Preview
+            title={row.errorSummary ? 'Failure' : 'Proposed response'}
+            value={
+              <>
+                {row.errorSummary && <p className="ol-diagnostic-error">{row.errorSummary}</p>}
+                <ResponsePreview row={row} />
+              </>
+            }
+          >
+            <span
+              className={`ol-truncate ${row.errorSummary ? 'ol-diagnostic-error' : 'ol-trace-response'}`}
+            >
+              {row.errorSummary ?? row.responseSummary ?? row.disposition ?? 'No response recorded'}
+            </span>
+          </Preview>
+          <time dateTime={row.startedAt}>{new Date(row.startedAt).toLocaleTimeString()}</time>
+        </span>
+      </span>
+      <StatusIcon status={row.status} />
+    </button>
   );
 }
 
@@ -989,6 +1542,7 @@ export function Diagnostics({
   onSelect(row: DiagnosticSelection): void;
 }) {
   const [rows, setRows] = useState<Row[]>([]),
+    [loading, setLoading] = useState(true),
     [offset, setOffset] = useState(0),
     [more, setMore] = useState(false),
     [follow, setFollow] = useState(false),
@@ -1002,6 +1556,7 @@ export function Diagnostics({
   newest.current = rows[0]?.id;
   async function refresh() {
     const id = ++generation.current;
+    setLoading(true);
     try {
       const result = await post<{
         ok: boolean;
@@ -1032,6 +1587,8 @@ export function Diagnostics({
         setRows([]);
         setError(String(refreshError));
       }
+    } finally {
+      if (id === generation.current) setLoading(false);
     }
   }
   useEffect(() => {
@@ -1051,6 +1608,7 @@ export function Diagnostics({
       try {
         const result = await post<{ ok: boolean; roots?: Row[] }>('/api/god/triggers', {
           offset: 0,
+          peek: true,
         });
         if (!active) return;
         if (!result.ok) {
@@ -1071,7 +1629,7 @@ export function Diagnostics({
   if (selection)
     return (
       <div ref={panel}>
-        <TraceDetail row={selection} showJson={setRaw} />
+        <TraceDetail key={selection.id} row={selection} showJson={setRaw} />
         {raw && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
       </div>
     );
@@ -1129,7 +1687,12 @@ export function Diagnostics({
       {rows.map((row) => (
         <TraceRow key={row.id} row={row} onSelect={onSelect} />
       ))}
-      {!rows.length && !error && <p>No matching retained triggers.</p>}
+      {loading && (
+        <p role="status" className="ol-caption">
+          Loading triggers…
+        </p>
+      )}
+      {!rows.length && !error && !loading && <p>No matching retained triggers.</p>}
       {raw && <RawJsonPanel raw={raw} onClose={() => setRaw(null)} />}
     </div>
   );

@@ -80,6 +80,7 @@ export function personArt(npc: boolean, frame = 0, equipment = false): HTMLCanva
     shade = npc ? '#554c3c' : '#45565a';
   const skin = npc ? '#b58a65' : '#c19b78',
     skinLight = npc ? '#d1ac82' : '#dcbb92';
+  const punching = frame >= 3;
   const step = frame === 1 ? 3 : frame === 2 ? -3 : 0;
   // Adults with long limbs, a compact head and readable clothing folds at close zoom.
   box(ctx, '#292d29', 17 - step, 77, 6, 13);
@@ -122,11 +123,13 @@ export function personArt(npc: boolean, frame = 0, equipment = false): HTMLCanva
   box(ctx, light, 19, 45, 2, 6);
   box(ctx, '#3d352b', 15, 53, 17, 4);
   box(ctx, '#bc9c5b', 23, 54, 3, 2);
-  poly(ctx, cloth, [31, 30, 35, 33, 37, 49, 33, 50, 31, 40]);
+  if (!punching) poly(ctx, cloth, [31, 30, 35, 33, 37, 49, 33, 50, 31, 40]);
   box(ctx, skin, 8, 45, 4, 9);
   box(ctx, skinLight, 8, 46, 2, 6);
-  box(ctx, skin, 34, 48, 4, 8);
-  box(ctx, skinLight, 34, 48, 2, 6);
+  if (!punching) {
+    box(ctx, skin, 34, 48, 4, 8);
+    box(ctx, skinLight, 34, 48, 2, 6);
+  }
   box(ctx, '#74533e', 21, 23, 7, 6);
   box(ctx, skin, 22, 23, 5, 5);
   box(ctx, '#302c24', 19, 8, 12, 17);
@@ -154,10 +157,32 @@ export function personArt(npc: boolean, frame = 0, equipment = false): HTMLCanva
   box(ctx, '#655136', 30, 52, 6, 5);
   box(ctx, '#b59a6b', 30, 49, 5, 2);
   for (let y = 31; y < 48; y += 4) box(ctx, '#ccb58a', 18, y, 1, 1);
-  if (equipment) {
+  if (equipment && !punching) {
     box(ctx, '#665239', 37, 36, 2, 24);
     box(ctx, '#beac76', 37, 36, 1, 18);
     box(ctx, '#5c5744', 36, 58, 4, 5);
+  }
+  if (punching) {
+    // Replace the hanging arm in the same pixel sprite, with a shoulder/sleeve,
+    // bent elbow and fist. Frames 3/4/5 are guard, extension and contact.
+    // docs/targeted-actions.md#presentation
+    const [elbowX, elbowY, fistX, fistY] =
+      frame === 3 ? [35, 40, 29, 33] : frame === 4 ? [38, 35, 40, 30] : [39, 32, 45, 29];
+    poly(ctx, shade, [30, 29, 34, 29, elbowX + 2, elbowY, elbowX - 2, elbowY + 3, 30, 35]);
+    poly(ctx, cloth, [31, 30, 33, 30, elbowX + 1, elbowY, elbowX - 1, elbowY + 1, 31, 35]);
+    poly(ctx, skin, [
+      elbowX - 2,
+      elbowY,
+      elbowX + 2,
+      elbowY + 2,
+      fistX + 2,
+      fistY + 2,
+      fistX - 2,
+      fistY - 1,
+    ]);
+    box(ctx, '#74533e', fistX - 3, fistY - 3, 6, 6);
+    box(ctx, skin, fistX - 2, fistY - 3, 5, 5);
+    box(ctx, skinLight, fistX - 2, fistY - 3, 4, 2);
   }
   return image;
 }

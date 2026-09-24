@@ -1,4 +1,5 @@
 import * as pc from 'playcanvas';
+import { StatusIndicators } from './status-indicators';
 import type { EntityView, GameView, SurfacePoint } from '@open-legend/protocol';
 import {
   intersectBox,
@@ -50,6 +51,7 @@ interface RenderedEntity {
   materials: pc.StandardMaterial[];
   lastFrame: number;
   lastMoving?: boolean;
+  punchRecovery?: number;
   shadowGeometry?: string;
   facing: number;
   scaleFacing: number;
@@ -68,7 +70,10 @@ export class WildernessScene implements WorldRenderer {
   private geometryNodes = new Map<string, pc.Entity>();
   private geometryMeshes: pc.Mesh[] = [];
   private cutaways = new Set<string>();
-  private cards = new Map<pc.Entity, { x: number; y: number; z: number; height: number }>();
+  private cards = new Map<
+    pc.Entity,
+    { x: number; y: number; z: number; height: number; horizontalHeight?: number }
+  >();
   private landscapeCards = new Set<pc.Entity>();
   private appearanceAssets = new Map<
     string,
@@ -91,6 +96,7 @@ export class WildernessScene implements WorldRenderer {
   private initialized = false;
   private visionBlur: VisionBlur;
   readonly statuses: CharacterStatuses;
+  private statusIndicators: StatusIndicators;
   private drag: {
     pointerId: number;
     x: number;
@@ -132,6 +138,7 @@ export class WildernessScene implements WorldRenderer {
     this.canvas.dataset.ready = 'false';
     this.visionBlur = new VisionBlur(canvas);
     this.statuses = new CharacterStatuses(canvas);
+    this.statusIndicators = new StatusIndicators(canvas);
     try {
       this.camera = new pc.Entity('Camera', this.app);
       this.landscape = new pc.Entity('Landscape', this.app);
@@ -243,6 +250,21 @@ export class WildernessScene implements WorldRenderer {
         entry.root.tags.add(signature);
         this.actors.set(entity.id, entry);
       }
+      const card = this.cards.get(entry.sprite);
+      if (
+        card &&
+        card.horizontalHeight !==
+          (entity.statusEffects?.some((effect) => effect.pose === 'horizontal')
+            ? entry.width
+            : undefined)
+      ) {
+        // Use projected presentation, never action names or elapsed client time.
+        // docs/architecture.md#react-presentation-and-character-traits
+        card.horizontalHeight = entity.statusEffects?.some((effect) => effect.pose === 'horizontal')
+          ? entry.width
+          : undefined;
+        this.orientCard(entry.sprite);
+      }
       entry.view = entity;
       entry.observed = true;
     }
@@ -254,6 +276,7 @@ export class WildernessScene implements WorldRenderer {
     }
     this.applyLevelFocus();
     this.statuses.observe(view);
+    this.statusIndicators.observe(entities);
     if (!this.readyRequested) {
       this.readyRequested = true;
       // An existing WebGL context alone does not prove that the world rendered.
@@ -478,11 +501,13 @@ export class WildernessScene implements WorldRenderer {
     if (!binding) return;
     sprite.setRotation(this.camera.getRotation());
     sprite.rotateLocal(90, 0, 0);
+    if (binding.horizontalHeight !== undefined) sprite.rotateLocal(0, 90, 0);
+    const height = binding.horizontalHeight ?? binding.height;
     const up = this.camera.up;
     sprite.setLocalPosition(
-      binding.x + (up.x * binding.height) / 2,
-      binding.y + (up.y * binding.height) / 2 + bob,
-      binding.z + (up.z * binding.height) / 2,
+      binding.x + (up.x * height) / 2,
+      binding.y + (up.y * height) / 2 + bob,
+      binding.z + (up.z * height) / 2,
     );
   }
   private ring(color: string, name: string): pc.Entity {
@@ -573,7 +598,9 @@ export class WildernessScene implements WorldRenderer {
       const images = crate
         ? []
         : view.kind === 'actor'
-          ? [0, 1, 2].map((frame) => personArt(view.id !== game.player.id, frame, equipped))
+          ? [0, 1, 2, 3, 4, 5].map((frame) =>
+              personArt(view.id !== game.player.id, frame, equipped),
+            )
           : view.kind === 'animal' || view.kind === 'remains'
             ? [0, 1, 2].map((frame) =>
                 bird
@@ -935,11 +962,33 @@ export class WildernessScene implements WorldRenderer {
         entry.shadowGeometry = this.mapKey;
       }
       if (positionChanged) entry.root.setPosition(position);
-      const animated = entry.card && (entry.view.kind === 'station' || moving);
+      const punch = entry.view.actionAnimation;
+      let punchFrame = 0;
+      if (
+        punch?.kind === 'punch' &&
+        entry.view.kind === 'actor' &&
+        !entry.view.statusEffects?.some((effect) => effect.pose === 'horizontal')
+      ) {
+        const direction =
+          punch.direction.x * this.camera.right.x + punch.direction.z * this.camera.right.z;
+        if (Math.abs(direction) > 0.01) entry.facing = direction < 0 ? -1 : 1;
+        punchFrame = punch.progress < 0.4 ? 3 : punch.progress < 0.8 ? 4 : 5;
+        entry.punchRecovery = 0.18;
+      } else if (entry.punchRecovery) {
+        // A short visual recovery ends at idle even when no further snapshots arrive.
+        // docs/targeted-actions.md#presentation
+        if (!this.view?.clock.paused) entry.punchRecovery = Math.max(0, entry.punchRecovery - dt);
+        punchFrame = entry.punchRecovery > 0.12 ? 4 : entry.punchRecovery > 0.06 ? 3 : 0;
+      }
+      const animated =
+        entry.card &&
+        !entry.view.statusEffects?.some((effect) => effect.pose === 'horizontal') &&
+        (entry.view.kind === 'station' || moving);
       const frame =
-        animated && !this.view?.clock.paused
+        punchFrame ||
+        (animated && !this.view?.clock.paused
           ? 1 + (Math.floor(this.elapsed * (entry.view.kind === 'station' ? 4 : 6)) % 2)
-          : 0;
+          : 0);
       if (frame !== entry.lastFrame) {
         entry.sprite.render!.material = entry.materials[frame % entry.materials.length]!;
         entry.lastFrame = frame;
@@ -952,7 +1001,11 @@ export class WildernessScene implements WorldRenderer {
         if (moving || entry.lastMoving)
           this.orientCard(
             entry.sprite,
-            entry.view.kind === 'actor' && moving ? Math.sin(this.elapsed * 12) * 0.015 : 0,
+            entry.view.kind === 'actor' &&
+              !entry.view.statusEffects?.some((effect) => effect.pose === 'horizontal') &&
+              moving
+              ? Math.sin(this.elapsed * 12) * 0.015
+              : 0,
           );
         entry.lastMoving = moving;
       }
@@ -998,6 +1051,14 @@ export class WildernessScene implements WorldRenderer {
       );
     }
     this.statuses.update((id) => this.statusAnchor(id));
+    this.statusIndicators.update((id) => {
+      const entry = this.actors.get(id);
+      if (!entry || !this.identifiable(entry)) return null;
+      // Top of the original sprite remains its head after the horizontal rotation.
+      const head = entry.sprite.getWorldTransform().transformPoint(new pc.Vec3(0, 0, -0.4));
+      const point = this.camera.camera!.worldToScreen(head);
+      return { x: point.x, y: point.y };
+    }, !!this.view?.clock.paused);
     // Reevaluate stationary pointers as actors move or the camera changes.
     if (this.hoverPoint && !this.drag && this.elapsed >= this.nextHoverAt) {
       this.nextHoverAt = this.elapsed + 0.05;
@@ -1273,6 +1334,7 @@ export class WildernessScene implements WorldRenderer {
     this.materials.forEach((material) => material.destroy());
     this.visionBlur.destroy();
     this.statuses.destroy();
+    this.statusIndicators.destroy();
     this.app.destroy();
   }
 }

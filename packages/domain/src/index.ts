@@ -57,7 +57,8 @@ export {
 export * from './mind.js';
 
 export * from './experience.js';
-export * from './sleep.js';
+export * from './status-effects.js';
+export { DEFAULT_STATUS_EFFECT_POLICY } from './default-status-effects.js';
 export * from './cognition-policy.js';
 export * from './commitments.js';
 export * from './response.js';
@@ -97,3 +98,7 @@ export { recordInventionFeedback } from './invention-feedback.js';
 
 export * from './spatial-state.js';
 export * from './spatial-mutations.js';
+
+export { NATIVE_STRIKES, strikeDefinition, type StrikeDefinition } from './strikes.js';
+
+export { isConversationEvent } from './events.js';

@@ -75,7 +75,6 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     narrationBatchMs: numberSetting(env, 'NARRATION_BATCH_MS', 750, 0, 10000),
     jevReserveUsd: numberSetting(env, 'JEV_CALL_RESERVE_USD', 0.005, 0.000001, 1),
     llmReserveUsd: numberSetting(env, 'LLM_CALL_RESERVE_USD', 0.08, 0.000001, 10),
-    thoughtIntervalMs: numberSetting(env, 'NPC_THOUGHT_INTERVAL_SECONDS', 45, 15, 3600) * 1000,
     aiTimeoutMs: numberSetting(env, 'AI_TIMEOUT_SECONDS', 35, 5, 120) * 1000,
     macrofoldUrl: env['MACROFOLD_BASE_URL'] ?? 'http://localhost:3210',
     macrofoldKey: env['MACROFOLD_API_KEY'] ?? '',

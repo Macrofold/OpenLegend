@@ -1,3 +1,4 @@
+import { inventoryFor, projectStatusEffects } from '@open-legend/domain';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
@@ -88,11 +89,12 @@ export const commandInputSchema = z
       'prepare',
       'craft',
       'equip',
+      'strike',
       'hunt',
       'harvest',
       'cook',
       'eat',
-      'rest',
+      'status-effect',
       'replenish',
       'cancel',
       'recover',
@@ -101,7 +103,9 @@ export const commandInputSchema = z
     conversationId: id.optional(),
     generation: z.number().int().nonnegative().optional(),
     operation: z.enum(['join', 'leave']).optional(),
+    effectOperation: z.enum(['activate', 'deactivate']).optional(),
     targetId: id.optional(),
+    definitionId: id.optional(),
     itemId: id.optional(),
     recipeId: id.optional(),
     attributeId: id.optional(),
@@ -985,7 +989,18 @@ export class WorldService {
       ok: true,
       revision: this.viewRevision,
       actorId,
+      statuses: [
+        !entity.actor.alive ? 'Dead' : entity.actor.incapacitated ? 'Incapacitated' : 'Alive',
+        ...projectStatusEffects(this.world, entity).map((effect) => effect.label),
+      ],
+      itemOptions: Object.values(this.world.itemDefinitions)
+        .map((item) => ({ id: item.id, name: item.name }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
       person: {
+        inventory: inventoryFor(this.world, actorId).map(({ definitionId, quantity }) => ({
+          definitionId,
+          quantity,
+        })),
         name: entity.name,
         description:
           entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
@@ -1023,9 +1038,13 @@ export class WorldService {
     return this.mutate(async () => {
       await this.ready;
       const entity = this.world.entities[actorId];
-      if (!entity?.actor || entity.kind !== 'npc')
+      if (!entity?.actor || !hasMemory(entity))
         return { ok: false, code: 'actor', message: 'Choose a person.' };
       const currentPerson: GodPersonEditorDraft = {
+        inventory: inventoryFor(this.world, actorId).map(({ definitionId, quantity }) => ({
+          definitionId,
+          quantity,
+        })),
         name: entity.name,
         description:
           entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
@@ -1275,6 +1294,21 @@ export class WorldService {
           return { ok: false, code: 'position', message: 'Choose a destination.' };
         command = { ...envelope, type: 'move', destination: input.position };
         break;
+      case 'status-effect':
+        if (!input.targetId || !input.definitionId || !input.effectOperation)
+          return {
+            ok: false,
+            code: 'binding',
+            message: 'Choose a status effect, operation and target.',
+          };
+        command = {
+          ...envelope,
+          type: 'status-effect',
+          targetId: input.targetId,
+          definitionId: input.definitionId,
+          operation: input.effectOperation,
+        };
+        break;
       case 'gather':
       case 'harvest':
         if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a target.' };
@@ -1317,6 +1351,16 @@ export class WorldService {
         command = { ...envelope, type: 'cook', itemId: input.itemId, heatId };
         break;
       }
+      case 'strike':
+        if (!input.targetId || !input.definitionId)
+          return { ok: false, code: 'target', message: 'Choose a strike and target.' };
+        command = {
+          ...envelope,
+          type: 'strike',
+          targetId: input.targetId,
+          definitionId: input.definitionId,
+        };
+        break;
       case 'hunt':
         if (!input.targetId) return { ok: false, code: 'target', message: 'Choose an animal.' };
         command = {

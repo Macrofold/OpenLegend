@@ -83,7 +83,7 @@ F62–F67 and the [sensory design](../07-technical-architecture/perception-and-a
 
 ## D55 — Compact cognition and independent reflection
 
-The cognition direction is accepted in [Memory architecture](../../docs/memory-architecture.md). Remaining choices are: per-route models/effort parameters and budgets; attention batching and failure behavior; snapshot size versus full inclusion and greeting token target; raw/backlog retention; summarizer support; rest-day/split-rest/debt semantics; repeat-dream cadence; snapshot recovery and presentation-thought count. These do not reopen the settled direction. See the [canonical specification](../../docs/memory-architecture.md).
+The cognition direction is accepted in [Memory architecture](../../docs/memory-architecture.md). Remaining choices are: per-route models/effort parameters and budgets; attention batching and failure behavior; snapshot size versus full inclusion and greeting token target; raw/backlog retention; summarizer support; repeat-dream cadence; snapshot recovery and presentation-thought count. These do not reopen the settled direction. See the [canonical specification](../../docs/memory-architecture.md).
 
 ## Decisions requiring creator taste rather than more browsing
 
@@ -118,3 +118,9 @@ Choose durable retention/archive periods for global history, story jobs and diag
 The [save/load design](../../docs/save-and-load.md) establishes consistent world capture, safe restoration and separation from non-rewindable external authority. The initial development slice uses reversible limits of 20 manual slots plus one pre-load slot and 64 MiB per payload. The [active development policy](../../docs/save-and-load.md#active-development-policy) explicitly disables legacy support until the owner lifts it. Choose autosave cadence (real or simulation time), retention budgets and, only after that block is lifted, a compatibility support window. Coordinate dependency retention with D59; no new historical deletion policy is selected here.
 
 Before shared-world or cloud saves ship, choose who may rewind a shared world, how participants are notified, how divergent saves are selected or branched, and how cross-world effects constrain restoration. These choices do not block designing serializable state or implementing personal-world saves. Exact point-in-time rewind beyond retained checkpoints is not promised by the design.
+
+## Observer-known names
+
+Proposed direction: separate an entity's optional given name from its species/default display label, and store observer-owned name knowledge keyed by canonical subject identity. A minimal fact records the name that observer learned and its source/time; introductions, testimony or explicit creator-seeded acquaintance may establish it. Seeing an actor does not reveal their given name. Self-name knowledge and initial acquaintance should be seeded explicitly. Projection uses a known name when present, otherwise “a person,” “a deer,” etc.; the opaque reference still identifies the exact subject. Name knowledge is social evidence, not recipe knowledge, and an observer may retain an alias or outdated name without changing the subject's real name.
+
+Open implementation choice: initial acquaintance/name-fact seeding and how to distinguish existing species-only labels from an actor deliberately named “Deer.” Recommended small migration: preserve existing identities/state, introduce optional given-name semantics and seed only explicit starting acquaintance; do not infer that every visible stranger's name is known. No learned-name storage or migration is implemented by the short-reference change. Current recognized-name projection remains the existing policy until this design is accepted and implemented.

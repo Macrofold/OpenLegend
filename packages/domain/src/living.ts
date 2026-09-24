@@ -1,3 +1,4 @@
+import { interruptStatusEffects } from './status-effects.js';
 import { seedAgency, finishPlanAction } from './agency.js';
 import type { Entity, WorldEvent, WorldState, Transition, ActorComponent } from './types.js';
 import { draftWorld } from './draft.js';
@@ -153,6 +154,7 @@ export function reconcileBody(
           yields: body.harvestYield.map((y) => ({ ...y })),
         };
     }
+    interruptStatusEffects(world, entity, events, 'body-unavailable');
     emit(
       world,
       events,
@@ -250,6 +252,7 @@ export function commitBodyEffects(
   );
   actor.health += totals.health + totals.healing - totals.injury - totals.burning;
   reconcileBody(world, entity, events, cause);
+  if (actor.health < before) interruptStatusEffects(world, entity, events, 'injury');
   emit(world, events, 'body-effect', `${entity.name}'s body changed.`, entity, entity.id, {
     effectId: cause,
     healthDelta: actor.health - before,

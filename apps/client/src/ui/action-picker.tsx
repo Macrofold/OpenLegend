@@ -1,3 +1,4 @@
+import { godCharacterAvailability } from './god-character-actions';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import type {
@@ -100,8 +101,8 @@ export function ActionPicker({
     !!picker.entity && (!query || 'look closer description inspect'.includes(query.toLowerCase()));
   const showRevive =
     view.godMode &&
-    picker.entity?.bodyRevision !== undefined &&
-    picker.entity.status === 'Dead' &&
+    !!picker.entity &&
+    godCharacterAvailability(picker.entity).revive &&
     (!query || 'revive god mode'.includes(query.toLowerCase()));
   const showAdd =
     view.godMode &&
@@ -216,9 +217,8 @@ export function ActionPicker({
       </div>
       <div className="ol-menu-scroll">
         {view.godMode &&
-          picker.entity?.kind === 'animal' &&
-          !picker.entity.speechCapable &&
-          picker.entity.status !== 'Dead' &&
+          !!picker.entity &&
+          godCharacterAvailability(picker.entity).enableCognition &&
           (!query || 'grant cognition speech'.includes(query.toLowerCase())) && (
             <AriaButton
               data-picker-row
