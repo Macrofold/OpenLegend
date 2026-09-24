@@ -1,6 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse } from 'yaml';
 import { format, resolveConfig } from 'prettier';
+import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { createWorld } from '../packages/domain/src/data.js';
 import { validateStatusEffectPolicy } from '../packages/domain/src/status-effect-validation.js';
 
@@ -15,6 +16,8 @@ const destination = new URL(
   import.meta.url,
 );
 const policy: unknown = parse(await readFile(source, 'utf8'));
+// This composition script validates a real world, whose geometry uses the shared adapter.
+await initializeCollisionRuntime();
 validateStatusEffectPolicy(createWorld(), policy);
 const output = await format(JSON.stringify(policy), {
   ...(await resolveConfig(destination.pathname)),
