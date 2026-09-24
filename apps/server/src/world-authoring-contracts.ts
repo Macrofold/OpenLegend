@@ -8,7 +8,11 @@ const id = z
 const revision = z.number().int().min(1).max(1_000_000);
 const draft = { draftId: id, revision };
 const mutation = { operationId: id };
-const payload = z.string().min(2).max(24000);
+const payload = z
+  .string()
+  .min(2)
+  .max(24000)
+  .refine((v) => Buffer.byteLength(v, 'utf8') <= 24000, 'Candidate exceeds the UTF-8 byte limit.');
 export const authoringKind = z.enum([
   'recipe',
   'attribute',
@@ -99,3 +103,13 @@ export const authoringToolRequest = z
     arguments: z.unknown(),
   })
   .strict();
+
+export const sessionTurnsRequest = sessionRequest
+  .extend({
+    before: z
+      .object({ sequence: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER), id })
+      .strict()
+      .optional(),
+  })
+  .strict();
+export const sessionTurnRequest = sessionRequest.extend({ requestId: id }).strict();

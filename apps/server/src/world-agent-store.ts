@@ -1,3 +1,8 @@
+import type {
+  WorldAgentReply,
+  WorldAgentTurnCursor,
+  WorldAgentTurnView,
+} from '@open-legend/protocol';
 import type { SqlDatabase } from './store.js';
 
 /** Operational authoring state is not rewound with gameplay. Domain definitions remain in WorldState.
@@ -18,6 +23,15 @@ export interface AgentSession {
   policy: string;
   actorId: string;
   activeTurn?: string;
+  turnSequence?: number;
+}
+export interface AgentTurnRecord {
+  fingerprint: string;
+  text?: string;
+  sequence?: number;
+  createdAt?: number;
+  cancelRequested?: boolean;
+  response?: WorldAgentReply;
 }
 export class WorldAgentStore {
   constructor(readonly db: SqlDatabase) {}
@@ -30,7 +44,10 @@ export class WorldAgentStore {
         WHERE json_extract(payload,'$.activeTurn') IS NOT NULL;
       CREATE TABLE IF NOT EXISTS world_agent_records (
         session_id TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL, payload TEXT NOT NULL,
-        PRIMARY KEY(session_id,kind,id));`);
+        PRIMARY KEY(session_id,kind,id));
+      CREATE INDEX IF NOT EXISTS world_agent_turn_order
+        ON world_agent_records(session_id, COALESCE(json_extract(payload,'$.sequence'),0),id)
+        WHERE kind='turn';`);
   }
   async session(id: string): Promise<AgentSession | undefined> {
     const row = await this.db
@@ -84,6 +101,33 @@ export class WorldAgentStore {
       .prepare('SELECT COUNT(*) AS count FROM world_agent_records WHERE session_id=? AND kind=?')
       .get(sessionId, kind);
     return Number(row?.['count'] ?? 0);
+  }
+  async turns(sessionId: string, before?: WorldAgentTurnCursor) {
+    const cursor = before ?? { sequence: Number.MAX_SAFE_INTEGER, id: '\uffff' };
+    const rows = await this.db
+      .prepare(
+        `SELECT id,payload FROM world_agent_records
+      WHERE session_id=? AND kind='turn'
+      AND (COALESCE(json_extract(payload,'$.sequence'),0),id)<(?,?)
+      ORDER BY COALESCE(json_extract(payload,'$.sequence'),0) DESC,id DESC LIMIT 21`,
+      )
+      .all(sessionId, cursor.sequence, cursor.id);
+    const items: WorldAgentTurnView[] = rows.slice(0, 20).map((row) => {
+      const turn = JSON.parse(String(row['payload'])) as AgentTurnRecord;
+      return {
+        id: String(row['id']),
+        sequence: turn.sequence ?? 0,
+        text: turn.text ?? null,
+        createdAt: turn.createdAt ?? null,
+        cancelRequested: !!turn.cancelRequested,
+        response: turn.response ?? null,
+      };
+    });
+    const last = items.at(-1);
+    return {
+      turns: items,
+      next: rows.length > 20 && last ? { sequence: last.sequence, id: last.id } : null,
+    };
   }
   async exposure(budgetId: string) {
     const row = await this.db

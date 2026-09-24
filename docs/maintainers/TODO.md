@@ -1,5 +1,10 @@
 # Maintainer TODO — cross-cutting work
 
+## World Agent session continuation — deferred regression coverage
+
+- [ ] **WAC01 — Durable turn recovery and cancellation:** round-trip paged original text/replies in sequence order, equal/legacy sequence cursors, principal/world isolation, zero-cost session reopen and Apply, atomic interrupted-turn recovery, cancellation before/after dispatch, late terminal results, and stable duplicate message identities. Restart never redispatches a retained uncertain turn. Verify the SQL index through both database adapters.
+- [ ] **WAC02 — Current native preview and approval:** replace a definition or controlled actor after creating an action draft; preview and human approval must reject stale bases just as Apply does. Cover changed affected-state sets, UTF-8 payload byte limits, identical Apply replay, and lowered/exhausted generation funding without blocking unpaid operations.
+
 ## Repertoire foundation deferred regression coverage
 
 The graph/read-only MCP/UI foundation used manual native/HTTP exercises and existing stress scripts; no unit/test suites were written or run. [Verification](../verification.md#repertoire-foundation-runtime-observations) records exact scope, including the blocked browser walkthrough. Existing IER/IPR/UWA/AC cases remain valid. These cases are unimplemented automated coverage, not release-completion claims.

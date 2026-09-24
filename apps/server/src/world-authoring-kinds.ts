@@ -221,21 +221,32 @@ export function authoringTransition(
   }
 }
 export function validateAuthoring(service: WorldService, d: AuthoringDraft) {
+  const world = service.world;
   const action = d.kind === 'action' ? commandInputSchema.safeParse(d.payload) : undefined;
-  const t =
-    d.kind === 'action'
+  // Preview and Apply share base/control fences. A structurally valid action on an
+  // obsolete base must not be presented as ready for human approval.
+  const t = !currentDraftBase(world, d)
+    ? reject(
+        world,
+        'stale-base',
+        'A referenced definition changed. Create a new draft against the current base.',
+      )
+    : d.kind === 'action'
       ? {
-          outcome: action?.success
-            ? service.previewCommand(action.data, d.actorId)
-            : {
-                ok: false,
-                code: 'invalid-action',
-                message: 'Payload does not match a native command.',
-              },
+          outcome:
+            d.actorId !== service.controlledEntityId
+              ? { ok: false, code: 'stale-controller', message: 'The controlled actor changed.' }
+              : action?.success
+                ? service.previewCommand(action.data, d.actorId)
+                : {
+                    ok: false,
+                    code: 'invalid-action',
+                    message: 'Payload does not match a native command.',
+                  },
         }
       : authoringTransition(
           service,
-          d.kind === 'recipe' ? { ...service.world, paused: false } : service.world,
+          d.kind === 'recipe' ? { ...world, paused: false } : world,
           d,
           `preview-${d.id}-${d.revision}`,
         );

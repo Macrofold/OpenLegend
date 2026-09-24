@@ -560,3 +560,5 @@ export interface InventionHistory {
 }
 
 export * from './relationships.js';
+
+export * from './world-agent.js';
