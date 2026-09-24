@@ -90,40 +90,49 @@ export class NavigationCoordinator {
     this.pump();
   }
   private pump() {
-    if (this.active || this.retiring || this.closed || !this.map) return;
+    if (this.active || this.retiring || this.closed || this.service.storageError || !this.map)
+      return;
     const task = this.queue.shift();
     // A failed worker does not restart on an idle timer. A newly requested action permits one retry.
     if (!task && this.failed) return;
-    if (!this.worker) {
-      this.failed = false;
-      this.worker = new Worker(new URL('./worker.mjs', import.meta.url), {
-        execArgv: [],
-        env: {},
-        resourceLimits: { maxOldGenerationSizeMb: 128 },
-      });
-      const worker = this.worker;
-      worker.on('message', (reply: NavigationReply) => {
-        if (this.worker === worker) this.completion = this.completed(reply);
-      });
-      worker.on('error', () => {
-        if (this.worker === worker) void this.failedWorker();
-      });
-      worker.on('exit', () => {
-        if (!this.closed && this.worker === worker) void this.failedWorker();
-      });
-    } else if (!task && this.preparedKey === this.key) return;
+    if (!task && this.worker && this.preparedKey === this.key) return;
     const id = ++this.requestId;
     this.active = { id, task, key: this.key };
-    const message: NavigationMessage = {
-      id,
-      key: this.key,
-      ...(this.preparedKey !== this.key ? { map: this.map } : {}),
-      ...(task ? { request: task.request } : {}),
-    };
-    if (task) recordDuration('navigation.queueWait', performance.now() - task.queuedAt);
-    this.timer = setTimeout(() => void this.failedWorker(), 20_000);
-    this.worker.postMessage(message);
+    try {
+      if (!this.worker) {
+        this.failed = false;
+        this.worker = new Worker(new URL('./worker.mjs', import.meta.url), {
+          execArgv: [],
+          env: {},
+          resourceLimits: { maxOldGenerationSizeMb: 128 },
+        });
+        const worker = this.worker;
+        worker.on('message', (reply: NavigationReply) => {
+          if (this.worker === worker) this.completion = this.completed(reply);
+        });
+        worker.on('error', () => {
+          if (this.worker === worker) void this.failedWorker();
+        });
+        worker.on('exit', () => {
+          if (!this.closed && this.worker === worker) void this.failedWorker();
+        });
+      }
+      const message: NavigationMessage = {
+        id,
+        key: this.key,
+        ...(this.preparedKey !== this.key ? { map: this.map } : {}),
+        ...(task ? { request: task.request } : {}),
+      };
+      if (task) recordDuration('navigation.queueWait', performance.now() - task.queuedAt);
+      this.timer = setTimeout(() => void this.failedWorker(), 20_000);
+      this.worker.postMessage(message);
+    } catch {
+      // Launch/serialization can fail before an error event. Use the same terminal path
+      // instead of throwing from setImmediate or leaving a saved action pending forever.
+      void this.failedWorker();
+    }
   }
+
   private preparedKey = '';
   private async completed(reply: NavigationReply) {
     const active = this.active;
@@ -162,14 +171,14 @@ export class NavigationCoordinator {
   }
   private async failedWorker(markUnavailable = true) {
     const worker = this.worker;
-    if (!worker) return;
     const active = this.active;
+    if (!worker && !active) return;
     this.active = undefined;
     this.worker = undefined;
     this.preparedKey = '';
     clearTimeout(this.timer);
     this.failed = true;
-    this.retiring = worker.terminate();
+    this.retiring = worker?.terminate() ?? Promise.resolve(0);
     try {
       await this.retiring;
       if (markUnavailable && active?.task && !this.closed) {
