@@ -1,61 +1,18 @@
-name: Action review closeout
+name: Code checks
 on:
   push:
+  pull_request:
 permissions:
   contents: read
 jobs:
-  closeout:
-    if: github.ref == 'refs/heads/design/action-repertoire-and-capability-grounding'
+  check:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-    env:
-      AI_BUDGET_USD: '0'
-      OPEN_LEGEND_DATABASE_URL: ''
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-          fetch-depth: 1
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: python .github/review-close.py
-      - run: pnpm exec prettier --write apps/server/src/action-grounding.ts
-      - name: Production build, no unit or browser suites
-        run: pnpm run build
-      - name: Compact native-fulfillment packet exercise
-        run: node --import tsx .github/review-close-smoke.mjs
-      - name: Remove temporary runners and restore CI
-        run: python .github/review-close.py --clean
-      - name: Check final diff and local documentation targets
-        run: |
-          git diff --check
-          python - <<'PY'
-          import re
-          from pathlib import Path
-          paths=['docs/action-capabilities.md','docs/maintainers/action-capabilities.md','docs/architecture.md','docs/verification.md']
-          missing=[]
-          for path in paths:
-            p=Path(path)
-            for link in re.findall(r'\]\(([^\s)]+)\)',p.read_text()):
-              if '://' in link or link.startswith('#') or link.startswith('mailto:'):continue
-              target=link.split('#')[0]
-              if target and not (p.parent/target).exists(): missing.append((path,link))
-          print('Missing local file targets:',missing)
-          if missing:raise SystemExit(1)
-          PY
-      - name: Commit final reviewed source and evidence
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A .github apps/server/src/action-grounding.ts docs
-          git commit -m '[skip ci] docs: record reviewed action behavior, performance limits and remaining qualification'
-          git push origin HEAD:design/action-repertoire-and-capability-grounding
-      - name: Closeout diagnostics
-        if: always()
-        run: git diff --stat
+      - run: pnpm run check

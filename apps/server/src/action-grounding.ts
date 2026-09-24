@@ -396,8 +396,11 @@ export async function groundActionAttempts(
       if (verdict !== 'confirm') {
         const review = await ports.judge({
           state: {
-            ...context,
-            proposed: result,
+            request: text,
+            targetEntityId: act.targetEntityId,
+            actor: context.actor,
+            capabilities: context.capabilities,
+            declaredOmissions: result.omitted,
             native: { description: nativeDescription, commands: boundCommands },
           },
           questions: {

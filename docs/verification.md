@@ -503,3 +503,33 @@ Live Jev routing quality, live LLM partial-fulfillment judgment, and a live auto
 ### Explicit target admission follow-up
 
 The final native guard rejects contradictory structured targets before exact-text binding can queue work or create a misleading approval. Production build and a direct native runtime exercise completed in [run 35950355436](https://github.com/Macrofold/OpenLegend/actions/runs/35950355436); the matching target still starts native following. Results are retained under explicitTargetAdmission in the existing [action evidence](verification/action-capability-smoke.json). No unit/browser suite or paid provider was used. This small source follow-up is separate from the earlier measured stress workloads.
+
+## Action capability review
+
+**September 24, 2026 UTC.** Review baseline: `35a448e6a2c55f2b9f62256403c364420cac1ef4`. Qualified source slices are `edf4fe8`, `f5b6821` and `4e2bb53`; the closeout adds a smaller fulfillment-review packet without changing the native executor. Production TypeScript checking and client builds passed in the isolated GitHub runner. Unit/browser suites were neither written nor run, as requested. No live Jev/LLM calls were made and paid model usage was **$0**. Semantic stages below use explicitly injected outputs; these are observed runtime outcomes, not behavioral accuracy or full acceptance claims.
+
+### Actual runtime scope
+
+- [Core exercise](verification/action-review-core.json): exact coordinate movement reached its destination with zero semantic calls; same prose with different target/mode retained separate pending records; a newly queued plan invalidated an old replacement approval before movement started; one operation's binding could not authorize a second operation.
+- [Service and semantic-boundary exercise](verification/action-review-runtime.json): an optimistic generated action with no reported stealth omission was held when the independent classifier could not establish full fulfillment; documented tolerable omissions remained partial; a later simulated optional provider outage retained the earlier grounded move; repeated identical operations retained separate identities with no repeated inference; explicit player retries reached classification again. Real loopback HTTP admission, current public-state/patch projection and SQLite shutdown/restart retained pending approval without exposing its commands.
+- [Final native exercise and matched profiles](verification/action-review-final.json): a lost target could not replace existing running work; enqueued preparation remained admissible before future supplies arrive; an explicit target survived beyond the first 64 entries in a 92-entity observation; native following remained active under the isolated workload below.
+- [Closeout packet exercise](verification/action-review-closeout.json): the compact reviewer packet still contains decoded native behavior and retains the uncertain revision for approval. Packet size and classifier/generator counts are recorded explicitly. This does not measure live providers.
+
+### Matched-host native stress
+
+Both revisions ran on the same Ubuntu GitHub runner, Node v22.23.2, Intel Xeon 6973P-C. The unchanged built-in scenarios each contain 180 measured one-second native advances, zero warm-up and requested speed 3. Baseline is the pre-review commit above. These are single paired measurements, not statistically established speedups. Final entity/event/awareness counts matched across each pair; that is not proof of complete behavioral equivalence.
+
+| Scenario | Baseline total ms | Reviewed total ms | p95 baseline / reviewed ms | Maximum baseline / reviewed ms |
+| --- | --- | --- | --- | --- |
+| mixed (344 entities) | 1272.80 | 1179.83 | 4.41 / 4.12 | 687.35 / 659.51 |
+| gems (514 entities) | 848.06 | 847.87 | 5.39 / 5.94 | 92.12 / 89.90 |
+
+The isolated fifty-follower workload admitted all 50 actors and retained all 50 activities after 180 one-second advances. Median was 3.25 ms, p95 6.19 ms, maximum 18.16 ms, total 687.62 ms. It deliberately disables cognition/memory and uses repeated fixture positions to isolate native controllers; it is not crowd collision, social-memory, browser, persistence or end-to-end population qualification.
+
+**Remaining performance limitation:** the mixed scenario has a large first-exposure encounter/event/awareness spike in both baseline and reviewed revisions. Its reviewed native headroom including that cold work is only 0.85 at requested 3x, below the required 1 even before server/persistence work. `updateEncounters`, event recording and draft finalization appear in the profiles. No claim of sustained population capacity or hitch-free startup is justified. PF/EPR own reducing this cost while preserving audience, event and knowledge semantics. The independent earlier-run raw profile in the service exercise has different timings and is not substituted for this matched comparison.
+
+### Qualification still outstanding
+
+Live Jev/LLM fidelity and threshold calibration; actual NPC acceptance decisions; browser interaction/accessibility and UI-scope races; full crash/permission/replay matrix; PostgreSQL/manual-save variants; general constraints/roles/parameter questions; definition-specific dependency invalidation; and invention/workflow integration remain open in [AC](maintainers/action-capabilities.md#delivered-scope-and-remaining-work), [TODO](maintainers/TODO.md#action-review-regression-todos) and [PF](maintainers/performance.md#action-capability-review-observations). Existing test fixtures need the current schema 11 rather than legacy conversion. Native point movement/follow is implemented, not the entire action repertoire.
+
+Temporary branch-only review runners are removed at closeout and the original CI workflow is restored. No test suite was disabled permanently, and `main` was not changed by this review.
