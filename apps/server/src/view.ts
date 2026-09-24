@@ -5,7 +5,7 @@ import { statusEffectActions } from './status-effect-actions.js';
 import { isConversationEvent } from '@open-legend/domain';
 import { NATIVE_STRIKES, supportsManualWork } from '@open-legend/domain';
 import { actionAnimation } from './action-animation.js';
-import { knownRecipeAttribution } from '@open-legend/domain';
+import { knownRecipeAttribution, navigationBlocked } from '@open-legend/domain';
 import { hasWildernessNeeds } from '@open-legend/domain';
 import { projectAttributes, attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
@@ -651,6 +651,7 @@ export async function projectView(
       baseRatio: service.config.baseRatio,
       paused: paused,
       pauseReason: pauseReason,
+      preparingNavigation: navigationBlocked(world),
     },
     player: {
       id: player.id,

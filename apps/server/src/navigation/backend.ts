@@ -32,7 +32,7 @@ interface Prepared {
 }
 /** Worker-owned, bounded derived state. Never persist polygon refs or run this constructor in
  * a domain transition. Whole-revision rebuilding is the initial policy; affected tiles remain
- * a measured expansion seam. spatial-world-runtime.md#navigation-preparation
+ * a measured expansion seam. archive/07-technical-architecture/spatial-world-runtime.md#navigation-preparation
  */
 export class RecastPlanner {
   private readonly meshes = new Map<string, Prepared>();

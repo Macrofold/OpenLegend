@@ -4,7 +4,10 @@ import type { EntityView, GameView } from '@open-legend/protocol';
 /** Renderer-only approximations. Mechanical bodies, hearing and sight never use these shaders.
  * docs/world-presentation.md#sprite-lighting
  */
+const litSprites = new WeakSet<pc.StandardMaterial>();
 export function lightSprite(material: pc.StandardMaterial): void {
+  if (litSprites.has(material)) return;
+  litSprites.add(material);
   material.twoSidedLighting = true;
   material.specular.set(0, 0, 0);
   material.shaderChunks.glsl.set(
@@ -52,6 +55,7 @@ export class WorldPresentation {
   private readonly proxyMaterial: pc.StandardMaterial;
   private readonly lights: pc.Entity[] = [];
   private readonly frame: pc.CameraFrame;
+  private readonly hiddenMaterials = new WeakMap<pc.MeshInstance, pc.Material>();
   constructor(
     private app: pc.Application,
     private camera: pc.Entity,
@@ -161,6 +165,20 @@ export class WorldPresentation {
   releaseMaterial(source: pc.StandardMaterial): void {
     this.revealMaterials.get(source)?.destroy();
     this.revealMaterials.delete(source);
+  }
+  /** A floor cutaway changes camera visibility, not shadow casting or physical geometry. */
+  setCutaway(node: pc.Entity, hidden: boolean): void {
+    for (const render of node.findComponents('render') as pc.RenderComponent[])
+      for (const mi of render.meshInstances) {
+        const source = this.hiddenMaterials.get(mi);
+        if (hidden && !source) {
+          this.hiddenMaterials.set(mi, mi.material);
+          mi.material = this.proxyMaterial;
+        } else if (!hidden && source) {
+          mi.material = source;
+          this.hiddenMaterials.delete(mi);
+        }
+      }
   }
   shadowProxy(parent: pc.Entity, width: number, height: number, depth = width): pc.Entity {
     const proxy = new pc.Entity('Shadow-only body', this.app);

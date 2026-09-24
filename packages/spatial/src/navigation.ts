@@ -1,7 +1,6 @@
 import { canStand, canWalkSegment, distance3D } from './geometry.js';
 import {
   BODY_PROFILES,
-  SPATIAL_LIMITS,
   type BodyProfile,
   type RoutePlan,
   type SpatialMap,
@@ -10,14 +9,13 @@ import {
 
 /** Navigation is required data, not synchronous graph construction inside a world mutation.
  * Direct segments need no worker. Detours enter one bounded Recast queue only after a native
- * action is admitted; previews never schedule work. See spatial-world-runtime.md#navigation-preparation.
+ * action is admitted; previews never schedule work. See archive/07-technical-architecture/spatial-world-runtime.md#navigation-preparation.
  */
 export function findSurfaceRoute(
   map: SpatialMap,
   from: SurfacePoint,
   to: SurfacePoint,
   body: BodyProfile = BODY_PROFILES.person,
-  _maxExpansions = SPATIAL_LIMITS.maxSearchExpansions,
 ): RoutePlan {
   if (!canStand(map, from, body) || !canStand(map, to, body))
     return { status: 'invalid-endpoint', path: [], expanded: 0 };
