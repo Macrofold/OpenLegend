@@ -1,0 +1,24 @@
+name: Cadence source preparation
+on:
+  push:
+    branches: [review/simulation-cadence-work]
+    paths: [.github/workflows/cadence-source.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export tracked history only, no credentials or saves
+        run: |
+          git bundle create /tmp/cadence-source.bundle refs/remotes/origin/feature/spatial-world-3d refs/remotes/origin/feat/hearing-speech-captions refs/remotes/origin/main
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cadence-source
+          path: /tmp/cadence-source.bundle
+          retention-days: 1
