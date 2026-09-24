@@ -1,4 +1,4 @@
-name: Sustained rebased qualification
+name: Rebased performance review
 on:
   push:
     branches: [design/action-repertoire-and-capability-grounding]
@@ -8,13 +8,13 @@ concurrency:
   group: action-native-performance
   cancel-in-progress: true
 jobs:
-  qualification:
+  review:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     env:
       AI_BUDGET_USD: '0'
       OPEN_LEGEND_DATABASE_URL: ''
-      OPEN_LEGEND_DATA_DIR: /tmp/rebased-perf-world
+      OPEN_LEGEND_DATA_DIR: /tmp/rebased-review-world
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,67 +25,38 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Finish reviewed runtime and profiling boundaries
+      - name: Finish migration and documentation ownership
         run: |
-          python .github/perf-server-fix.py
-          pnpm exec prettier --write packages/domain/src/kernel.ts scripts/performance/profile-server.mjs
-          pnpm run build
-          node --import tsx .github/perf-integration-exercise.mjs > /tmp/action-integration.json
-          cp /tmp/action-integration.json docs/verification/action-perf-integration.json
-      - name: Sustained server and matched native workloads
-        run: |
-          git worktree add --detach /tmp/server-baseline 3be6601f862a48fe1facf951943f53c16024cb1f
-          cp scripts/performance/profile-server.mjs /tmp/server-baseline/scripts/performance/profile-server.mjs
-          (cd /tmp/server-baseline && pnpm install --frozen-lockfile)
-          echo '{"seed":73,"people":0,"animals":0,"layout":"scattered","steps":180,"warmup":0,"speed":1,"objects":[]}' > /tmp/server-small.json
-          for scene in small mixed; do
-            if [ "$scene" = small ]; then config=/tmp/server-small.json; else config=$PWD/scripts/performance/scenarios/mixed.json; fi
-            (cd /tmp/server-baseline && node --import tsx scripts/performance/profile-server.mjs "$config" "/tmp/server-$scene-before.json" 15 1,3,8)
-            node --import tsx scripts/performance/profile-server.mjs "$config" "/tmp/server-$scene-after.json" 15 1,3,8
-            cp "/tmp/server-$scene-before.json" "docs/verification/action-server-$scene-before.json"
-            cp "/tmp/server-$scene-after.json" "docs/verification/action-server-$scene-after.json"
-          done
-          echo '{"seed":73,"people":100,"animals":0,"layout":"crowded","steps":180,"warmup":0,"speed":1,"timeoutSeconds":120,"objects":[{"count":500,"name":"Profiling gem","properties":["rigid"]}]}' > /tmp/server-dense.json
-          node --import tsx scripts/performance/profile-server.mjs /tmp/server-dense.json /tmp/server-dense-after.json 15 1
-          cp /tmp/server-dense-after.json docs/verification/action-server-dense-after.json
+          python .github/perf-closeout.py
           python - <<'PY'
-          import json,pathlib,subprocess,os
-          root=pathlib.Path.cwd();report={'scope':'Matched rebased baseline/final native profiles; same runner; no automated suites or providers. Final runtime retains intentional privacy/migration corrections.','baseline':'3be6601f862a48fe1facf951943f53c16024cb1f','inputCommit':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'cases':{}}
-          for name in ['mixed','gems','dense']:
-            cfg=json.load(open('/tmp/server-dense.json' if name=='dense' else f'scripts/performance/scenarios/{name}.json'));cfg['timeoutSeconds']=120
-            for warm in [False,True]:
-              c={**cfg,'warmup':30 if warm else 0,'steps':600 if warm else 180};path=f'/tmp/native-{name}-{warm}.json';pathlib.Path(path).write_text(json.dumps(c));row={}
-              for variant,cwd in [('before','/tmp/server-baseline'),('after',str(root))]:
-                p=subprocess.run(['node','--import','tsx','scripts/stress-native.ts',path,f'/tmp/native-{name}-{warm}-{variant}.cpuprofile'],cwd=cwd,text=True,capture_output=True,timeout=140)
-                if p.returncode:raise RuntimeError(p.stderr[-5000:])
-                d=json.loads(p.stdout);row[variant]={k:d[k] for k in ['node','steps','warmupSteps','totalMs','p50Ms','p95Ms','maxStepMs','nativeHeadroomAtRequestedSpeed','finalCounts','finalWorldDigest','hottestSelfMs']}
-              row['sameFinalDigest']=row['before']['finalWorldDigest']==row['after']['finalWorldDigest'];report['cases'][name+('-warm' if warm else '-cold')]=row
-          pathlib.Path('docs/verification/action-perf-final-native.json').write_text(json.dumps(report,indent=2)+'\n')
-          summary={}
-          for name in ['small','mixed','dense']:
-            summary[name]={}
-            for variant in ['before','after']:
-              p=pathlib.Path(f'docs/verification/action-server-{name}-{variant}.json')
-              if not p.exists():continue
-              d=json.loads(p.read_text());summary[name][variant]=[{'speed':v['speed'],'achievedSpeed':v['achievedSpeed'],'startingSimTime':v['startingSimTime'],'commands':v['client']['commands'],'rejected':v['client']['commandCodes'],'eventLoop':v['eventLoop'],'cpuMs':v['serverCpuMs'],'debt':v['gauges'].get('clock.pendingSimSeconds'),'storageError':v['storageError'],'memoryBacklog':v['memoryBacklog'],'clientErrors':v['client']['errors']} for v in d['phases']]
-          pathlib.Path('docs/verification/action-server-summary.json').write_text(json.dumps({'scope':'15-second phases with continuous presence; no browser/PostgreSQL/providers; see raw reports for counts and cumulative metric caveats.','run':os.environ['GITHUB_RUN_ID'],'results':summary},indent=2)+'\n')
+          import pathlib,subprocess
+          changed=subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMR','fc01e19b30060e6c7213b1c5405be13df209297e'],text=True).splitlines()
+          paths=[p for p in changed if not p.startswith('.github/') and pathlib.Path(p).suffix in ['.ts','.tsx','.mjs','.md','.json']]
+          paths+=['packages/domain/src/worlds/base/navigation.ts','docs/worlds/base/navigation.md']
+          subprocess.run(['pnpm','exec','prettier','--write',*sorted(set(paths))],check=True)
           PY
-      - name: Commit reviewed source and measurements
+          pnpm run build
+          node --import tsx .github/perf-upgrade-exercise.mjs > /tmp/pending-upgrade.json
+          cp /tmp/pending-upgrade.json docs/verification/action-perf-pending-upgrade.json
+          node --import tsx .github/perf-integration-exercise.mjs > /tmp/integration-final.json
+          cp /tmp/integration-final.json docs/verification/action-perf-integration.json
+          python .github/perf-review-static.py
+          git diff --check
+      - name: Commit reviewed source and current documentation
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git diff --check
-          git add packages apps scripts docs
-          git diff --cached --quiet || git commit -m '[skip ci] perf: qualify sustained server load and final native paths'
+          git add packages apps scripts docs README.md archive
+          git diff --cached --quiet || git commit -m '[skip ci] fix: preserve pending upgrades and reconcile performance ownership'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
-      - name: Retain focused diagnostics
+      - name: Retain focused failure diagnostics
         if: failure()
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          mkdir -p .github/server-diagnostics
-          for f in /tmp/server-*.json /tmp/action-integration.json; do test ! -f "$f" || cp "$f" .github/server-diagnostics/; done
-          git diff > .github/server-diagnostics/source.patch
-          git add .github/server-diagnostics
-          git diff --cached --quiet || git commit -m '[skip ci] chore: retain bounded server qualification diagnostics'
+          mkdir -p .github/closeout-diagnostics
+          git diff > .github/closeout-diagnostics/source.patch
+          for f in /tmp/pending-upgrade.json /tmp/integration-final.json; do test ! -f "$f" || cp "$f" .github/closeout-diagnostics/; done
+          git add .github/closeout-diagnostics
+          git diff --cached --quiet || git commit -m '[skip ci] chore: retain review diagnostics'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
