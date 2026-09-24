@@ -189,11 +189,13 @@ export function responseReferences(
         : {}),
       ...(id === actorId ? { relation: 'myself' } : {}),
       ...(visible.has(id) ? { position: entity.position } : {}),
-      ...(recognizesSubject(world, actorId, id) || !world.observerIdentities?.[actorId]?.[id] ? {
-        noteRevision: knowledgeDocument(world, actorId, id)?.revision ?? 0,
-        noteCharacters: characterCount(knowledgeDocument(world, actorId, id)?.text ?? ''),
-        nameRevision: world.observerIdentities?.[actorId]?.[id]?.revision ?? 0,
-      } : {knowledgeBinding: 'unresolved'}),
+      ...(recognizesSubject(world, actorId, id) || !world.observerIdentities?.[actorId]?.[id]
+        ? {
+            noteRevision: knowledgeDocument(world, actorId, id)?.revision ?? 0,
+            noteCharacters: characterCount(knowledgeDocument(world, actorId, id)?.text ?? ''),
+            nameRevision: world.observerIdentities?.[actorId]?.[id]?.revision ?? 0,
+          }
+        : { knowledgeBinding: 'unresolved' }),
       triggerRoles: roles.get(id) ?? [],
     });
   });

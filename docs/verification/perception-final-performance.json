@@ -25,30 +25,12 @@
           },
           "heapUsedBytes": 41356400,
           "hottest": [
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              356.26499999999953
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              123.3009999999999
-            ],
-            [
-              "get dist/immer.mjs:382",
-              105.86499999999995
-            ],
-            [
-              "recordEvent src/events.ts:1",
-              90.52399999999994
-            ],
-            [
-              "isPlainObject dist/immer.mjs:60",
-              88.56000000000002
-            ],
-            [
-              "isDraftable dist/immer.mjs:54",
-              81.29999999999998
-            ]
+            ["finalizeProperty dist/immer.mjs:314", 356.26499999999953],
+            ["updateEncounters src/kernel.ts:1", 123.3009999999999],
+            ["get dist/immer.mjs:382", 105.86499999999995],
+            ["recordEvent src/events.ts:1", 90.52399999999994],
+            ["isPlainObject dist/immer.mjs:60", 88.56000000000002],
+            ["isDraftable dist/immer.mjs:54", 81.29999999999998]
           ]
         },
         {
@@ -67,30 +49,12 @@
           },
           "heapUsedBytes": 41172128,
           "hottest": [
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              340.73699999999934
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              153.02200000000002
-            ],
-            [
-              "recordEvent src/events.ts:1",
-              102.36199999999998
-            ],
-            [
-              "isPlainObject dist/immer.mjs:60",
-              95.812
-            ],
-            [
-              "isDraftable dist/immer.mjs:54",
-              92.60399999999997
-            ],
-            [
-              "get dist/immer.mjs:382",
-              84.20599999999999
-            ]
+            ["finalizeProperty dist/immer.mjs:314", 340.73699999999934],
+            ["updateEncounters src/kernel.ts:1", 153.02200000000002],
+            ["recordEvent src/events.ts:1", 102.36199999999998],
+            ["isPlainObject dist/immer.mjs:60", 95.812],
+            ["isDraftable dist/immer.mjs:54", 92.60399999999997],
+            ["get dist/immer.mjs:382", 84.20599999999999]
           ]
         },
         {
@@ -109,30 +73,12 @@
           },
           "heapUsedBytes": 51118664,
           "hottest": [
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              346.0019999999998
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              137.47799999999992
-            ],
-            [
-              "isPlainObject dist/immer.mjs:60",
-              110.86399999999998
-            ],
-            [
-              "get dist/immer.mjs:382",
-              104.59899999999999
-            ],
-            [
-              "recordEvent src/events.ts:1",
-              83.18900000000001
-            ],
-            [
-              "isDraftable dist/immer.mjs:54",
-              80.85100000000001
-            ]
+            ["finalizeProperty dist/immer.mjs:314", 346.0019999999998],
+            ["updateEncounters src/kernel.ts:1", 137.47799999999992],
+            ["isPlainObject dist/immer.mjs:60", 110.86399999999998],
+            ["get dist/immer.mjs:382", 104.59899999999999],
+            ["recordEvent src/events.ts:1", 83.18900000000001],
+            ["isDraftable dist/immer.mjs:54", 80.85100000000001]
           ]
         }
       ],
@@ -153,30 +99,12 @@
           },
           "heapUsedBytes": 34793688,
           "hottest": [
-            [
-              "shallowCopy dist/immer.mjs:121",
-              179.96499999999997
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              93.18299999999996
-            ],
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              86.87100000000001
-            ],
-            [
-              "each dist/immer.mjs:77",
-              43.067000000000014
-            ],
-            [
-              "recordEvent src/events.ts:1",
-              42.715999999999994
-            ],
-            [
-              "get dist/immer.mjs:382",
-              38.59900000000001
-            ]
+            ["shallowCopy dist/immer.mjs:121", 179.96499999999997],
+            ["updateEncounters src/kernel.ts:1", 93.18299999999996],
+            ["finalizeProperty dist/immer.mjs:314", 86.87100000000001],
+            ["each dist/immer.mjs:77", 43.067000000000014],
+            ["recordEvent src/events.ts:1", 42.715999999999994],
+            ["get dist/immer.mjs:382", 38.59900000000001]
           ]
         },
         {
@@ -195,30 +123,12 @@
           },
           "heapUsedBytes": 30091896,
           "hottest": [
-            [
-              "shallowCopy dist/immer.mjs:121",
-              201.669
-            ],
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              95.84799999999998
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              80.205
-            ],
-            [
-              "recordEvent src/events.ts:1",
-              47.412000000000006
-            ],
-            [
-              "(anonymous) src/perception-frame.ts:1",
-              40.66999999999999
-            ],
-            [
-              "get dist/immer.mjs:382",
-              34.644999999999996
-            ]
+            ["shallowCopy dist/immer.mjs:121", 201.669],
+            ["finalizeProperty dist/immer.mjs:314", 95.84799999999998],
+            ["updateEncounters src/kernel.ts:1", 80.205],
+            ["recordEvent src/events.ts:1", 47.412000000000006],
+            ["(anonymous) src/perception-frame.ts:1", 40.66999999999999],
+            ["get dist/immer.mjs:382", 34.644999999999996]
           ]
         },
         {
@@ -237,30 +147,12 @@
           },
           "heapUsedBytes": 28939408,
           "hottest": [
-            [
-              "shallowCopy dist/immer.mjs:121",
-              192.9519999999999
-            ],
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              105.18499999999995
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              79.66099999999999
-            ],
-            [
-              "recordEvent src/events.ts:1",
-              52.63800000000001
-            ],
-            [
-              "get dist/immer.mjs:382",
-              34.705000000000005
-            ],
-            [
-              "(garbage collector) :0",
-              31.944000000000003
-            ]
+            ["shallowCopy dist/immer.mjs:121", 192.9519999999999],
+            ["finalizeProperty dist/immer.mjs:314", 105.18499999999995],
+            ["updateEncounters src/kernel.ts:1", 79.66099999999999],
+            ["recordEvent src/events.ts:1", 52.63800000000001],
+            ["get dist/immer.mjs:382", 34.705000000000005],
+            ["(garbage collector) :0", 31.944000000000003]
           ]
         }
       ]
@@ -283,30 +175,12 @@
           },
           "heapUsedBytes": 42490088,
           "hottest": [
-            [
-              "intersectsSegment src/geometry.ts:1",
-              168.5559999999999
-            ],
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              102.83099999999992
-            ],
-            [
-              "(anonymous) src/kernel.ts:1",
-              100.64399999999996
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              96.26499999999994
-            ],
-            [
-              "(anonymous) src/geometry.ts:1",
-              82.49599999999997
-            ],
-            [
-              "get dist/immer.mjs:382",
-              67.772
-            ]
+            ["intersectsSegment src/geometry.ts:1", 168.5559999999999],
+            ["finalizeProperty dist/immer.mjs:314", 102.83099999999992],
+            ["(anonymous) src/kernel.ts:1", 100.64399999999996],
+            ["updateEncounters src/kernel.ts:1", 96.26499999999994],
+            ["(anonymous) src/geometry.ts:1", 82.49599999999997],
+            ["get dist/immer.mjs:382", 67.772]
           ]
         },
         {
@@ -325,30 +199,12 @@
           },
           "heapUsedBytes": 38213912,
           "hottest": [
-            [
-              "intersectsSegment src/geometry.ts:1",
-              188.92699999999982
-            ],
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              107.21899999999997
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              99.56299999999996
-            ],
-            [
-              "(anonymous) src/geometry.ts:1",
-              96.56699999999998
-            ],
-            [
-              "(anonymous) src/kernel.ts:1",
-              88.90499999999993
-            ],
-            [
-              "get dist/immer.mjs:382",
-              54.79100000000001
-            ]
+            ["intersectsSegment src/geometry.ts:1", 188.92699999999982],
+            ["finalizeProperty dist/immer.mjs:314", 107.21899999999997],
+            ["updateEncounters src/kernel.ts:1", 99.56299999999996],
+            ["(anonymous) src/geometry.ts:1", 96.56699999999998],
+            ["(anonymous) src/kernel.ts:1", 88.90499999999993],
+            ["get dist/immer.mjs:382", 54.79100000000001]
           ]
         },
         {
@@ -367,30 +223,12 @@
           },
           "heapUsedBytes": 46697952,
           "hottest": [
-            [
-              "intersectsSegment src/geometry.ts:1",
-              185.70899999999995
-            ],
-            [
-              "(anonymous) src/kernel.ts:1",
-              108.14199999999995
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              97.17599999999992
-            ],
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              95.75099999999995
-            ],
-            [
-              "(anonymous) src/geometry.ts:1",
-              86.36799999999997
-            ],
-            [
-              "get dist/immer.mjs:382",
-              64.39800000000002
-            ]
+            ["intersectsSegment src/geometry.ts:1", 185.70899999999995],
+            ["(anonymous) src/kernel.ts:1", 108.14199999999995],
+            ["updateEncounters src/kernel.ts:1", 97.17599999999992],
+            ["finalizeProperty dist/immer.mjs:314", 95.75099999999995],
+            ["(anonymous) src/geometry.ts:1", 86.36799999999997],
+            ["get dist/immer.mjs:382", 64.39800000000002]
           ]
         }
       ],
@@ -411,30 +249,12 @@
           },
           "heapUsedBytes": 29607744,
           "hottest": [
-            [
-              "shallowCopy dist/immer.mjs:121",
-              137.9039999999999
-            ],
-            [
-              "(anonymous) src/perception-frame.ts:1",
-              60.05100000000004
-            ],
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              51.432
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              35.126
-            ],
-            [
-              "(anonymous) dist/immer.mjs:79",
-              29.339000000000006
-            ],
-            [
-              "post node:inspector:118",
-              26.155
-            ]
+            ["shallowCopy dist/immer.mjs:121", 137.9039999999999],
+            ["(anonymous) src/perception-frame.ts:1", 60.05100000000004],
+            ["finalizeProperty dist/immer.mjs:314", 51.432],
+            ["updateEncounters src/kernel.ts:1", 35.126],
+            ["(anonymous) dist/immer.mjs:79", 29.339000000000006],
+            ["post node:inspector:118", 26.155]
           ]
         },
         {
@@ -453,30 +273,12 @@
           },
           "heapUsedBytes": 29609752,
           "hottest": [
-            [
-              "shallowCopy dist/immer.mjs:121",
-              154.66400000000002
-            ],
-            [
-              "(anonymous) src/perception-frame.ts:1",
-              57.153999999999996
-            ],
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              50.74999999999999
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              31.525000000000002
-            ],
-            [
-              "(anonymous) dist/immer.mjs:79",
-              30.180999999999994
-            ],
-            [
-              "getOwnPropertyDescriptor dist/immer.mjs:447",
-              27.261999999999997
-            ]
+            ["shallowCopy dist/immer.mjs:121", 154.66400000000002],
+            ["(anonymous) src/perception-frame.ts:1", 57.153999999999996],
+            ["finalizeProperty dist/immer.mjs:314", 50.74999999999999],
+            ["updateEncounters src/kernel.ts:1", 31.525000000000002],
+            ["(anonymous) dist/immer.mjs:79", 30.180999999999994],
+            ["getOwnPropertyDescriptor dist/immer.mjs:447", 27.261999999999997]
           ]
         },
         {
@@ -495,30 +297,12 @@
           },
           "heapUsedBytes": 29419768,
           "hottest": [
-            [
-              "shallowCopy dist/immer.mjs:121",
-              144.95399999999987
-            ],
-            [
-              "finalizeProperty dist/immer.mjs:314",
-              64.60199999999999
-            ],
-            [
-              "(anonymous) src/perception-frame.ts:1",
-              46.62699999999999
-            ],
-            [
-              "updateEncounters src/kernel.ts:1",
-              41.775
-            ],
-            [
-              "getOwnPropertyDescriptor dist/immer.mjs:447",
-              31.257000000000005
-            ],
-            [
-              "each dist/immer.mjs:77",
-              24.933000000000007
-            ]
+            ["shallowCopy dist/immer.mjs:121", 144.95399999999987],
+            ["finalizeProperty dist/immer.mjs:314", 64.60199999999999],
+            ["(anonymous) src/perception-frame.ts:1", 46.62699999999999],
+            ["updateEncounters src/kernel.ts:1", 41.775],
+            ["getOwnPropertyDescriptor dist/immer.mjs:447", 31.257000000000005],
+            ["each dist/immer.mjs:77", 24.933000000000007]
           ]
         }
       ]
@@ -542,30 +326,12 @@
         },
         "heapUsedBytes": 47503408,
         "hottest": [
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            403.19800000000055
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            382.2360000000001
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            184.61799999999982
-          ],
-          [
-            "get dist/immer.mjs:382",
-            180.0109999999999
-          ],
-          [
-            "(anonymous) src/perception.ts:1",
-            157.72199999999975
-          ],
-          [
-            "(anonymous) src/spatial.ts:1",
-            139.05099999999987
-          ]
+          ["finalizeProperty dist/immer.mjs:314", 403.19800000000055],
+          ["updateEncounters src/kernel.ts:1", 382.2360000000001],
+          ["(anonymous) src/kernel.ts:1", 184.61799999999982],
+          ["get dist/immer.mjs:382", 180.0109999999999],
+          ["(anonymous) src/perception.ts:1", 157.72199999999975],
+          ["(anonymous) src/spatial.ts:1", 139.05099999999987]
         ]
       },
       "after": {
@@ -584,30 +350,12 @@
         },
         "heapUsedBytes": 35148360,
         "hottest": [
-          [
-            "shallowCopy dist/immer.mjs:121",
-            558.1680000000002
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            267.4809999999998
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            251.84299999999988
-          ],
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            180.59799999999996
-          ],
-          [
-            "(anonymous) src/perception.ts:1",
-            175.53299999999996
-          ],
-          [
-            "(garbage collector) :0",
-            94.70299999999996
-          ]
+          ["shallowCopy dist/immer.mjs:121", 558.1680000000002],
+          ["finalizeProperty dist/immer.mjs:314", 267.4809999999998],
+          ["updateEncounters src/kernel.ts:1", 251.84299999999988],
+          ["(anonymous) src/perception-frame.ts:1", 180.59799999999996],
+          ["(anonymous) src/perception.ts:1", 175.53299999999996],
+          ["(garbage collector) :0", 94.70299999999996]
         ]
       }
     },
@@ -628,30 +376,12 @@
         },
         "heapUsedBytes": 47014992,
         "hottest": [
-          [
-            "updateEncounters src/kernel.ts:1",
-            296.1109999999996
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            255.79600000000002
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            195.6229999999999
-          ],
-          [
-            "get dist/immer.mjs:382",
-            191.81899999999993
-          ],
-          [
-            "intersectsSegment src/geometry.ts:1",
-            152.2809999999999
-          ],
-          [
-            "(anonymous) src/geometry.ts:1",
-            122.55299999999995
-          ]
+          ["updateEncounters src/kernel.ts:1", 296.1109999999996],
+          ["finalizeProperty dist/immer.mjs:314", 255.79600000000002],
+          ["(anonymous) src/kernel.ts:1", 195.6229999999999],
+          ["get dist/immer.mjs:382", 191.81899999999993],
+          ["intersectsSegment src/geometry.ts:1", 152.2809999999999],
+          ["(anonymous) src/geometry.ts:1", 122.55299999999995]
         ]
       },
       "after": {
@@ -670,30 +400,12 @@
         },
         "heapUsedBytes": 65272208,
         "hottest": [
-          [
-            "shallowCopy dist/immer.mjs:121",
-            427.1860000000003
-          ],
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            230.7519999999997
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            166.461
-          ],
-          [
-            "(anonymous) dist/immer.mjs:79",
-            81.95699999999998
-          ],
-          [
-            "getOwnPropertyDescriptor dist/immer.mjs:447",
-            79.413
-          ],
-          [
-            "(anonymous) src/spatial.ts:1",
-            68.30799999999996
-          ]
+          ["shallowCopy dist/immer.mjs:121", 427.1860000000003],
+          ["(anonymous) src/perception-frame.ts:1", 230.7519999999997],
+          ["finalizeProperty dist/immer.mjs:314", 166.461],
+          ["(anonymous) dist/immer.mjs:79", 81.95699999999998],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 79.413],
+          ["(anonymous) src/spatial.ts:1", 68.30799999999996]
         ]
       }
     }
@@ -714,30 +426,12 @@
     },
     "heapUsedBytes": 192927192,
     "hottest": [
-      [
-        "updateEncounters src/kernel.ts:1",
-        1264.298999999996
-      ],
-      [
-        "shallowCopy dist/immer.mjs:121",
-        1038.0779999999995
-      ],
-      [
-        "finalizeProperty dist/immer.mjs:314",
-        692.6450000000011
-      ],
-      [
-        "recordEvent src/events.ts:1",
-        526.9160000000006
-      ],
-      [
-        "(garbage collector) :0",
-        363.4010000000001
-      ],
-      [
-        "isDraftable dist/immer.mjs:54",
-        309.9699999999995
-      ]
+      ["updateEncounters src/kernel.ts:1", 1264.298999999996],
+      ["shallowCopy dist/immer.mjs:121", 1038.0779999999995],
+      ["finalizeProperty dist/immer.mjs:314", 692.6450000000011],
+      ["recordEvent src/events.ts:1", 526.9160000000006],
+      ["(garbage collector) :0", 363.4010000000001],
+      ["isDraftable dist/immer.mjs:54", 309.9699999999995]
     ]
   }
 }

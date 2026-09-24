@@ -23,9 +23,7 @@
           "version": 1,
           "name": "Profiling gem",
           "description": "Synthetic profiling fixture; not an authored game asset.",
-          "properties": [
-            "rigid"
-          ]
+          "properties": ["rigid"]
         }
       }
     ]

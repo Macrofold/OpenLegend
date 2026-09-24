@@ -7,11 +7,22 @@ const cache = new WeakMap<WorldState, Map<string, Map<string, string>>>();
 /** Opaque presentation references are not domain identities or authority.
  * docs/memory-architecture.md#metadata-stays-in-the-server-binding
  */
-export function entityHandles(world: WorldState, observerId = world.identity?.controlledEntityId ?? ''): Map<string, string> {
+export function entityHandles(
+  world: WorldState,
+  observerId = world.identity?.controlledEntityId ?? '',
+): Map<string, string> {
   const cached = cache.get(world)?.get(observerId);
   if (cached) return cached;
   const hashes = Object.keys(world.entities).map(
-    (id) => [id, createHash('sha256').update(`${observerId}:${id}:${world.perceptionEpisodes?.[observerId]?.[id] ?? (recognizesSubject(world, observerId, id) ? 'known' : world.sequence)}`).digest('hex')] as const,
+    (id) =>
+      [
+        id,
+        createHash('sha256')
+          .update(
+            `${observerId}:${id}:${world.perceptionEpisodes?.[observerId]?.[id] ?? (recognizesSubject(world, observerId, id) ? 'known' : world.sequence)}`,
+          )
+          .digest('hex'),
+      ] as const,
   );
   const groups = new Map<string, typeof hashes>();
   for (const entry of hashes) {
@@ -29,7 +40,8 @@ export function entityHandles(world: WorldState, observerId = world.identity?.co
     for (const [id, hash] of group) handles.set(id, hash.slice(0, length));
   }
   const observers = cache.get(world) ?? new Map<string, Map<string, string>>();
-  observers.set(observerId, handles); cache.set(world, observers);
+  observers.set(observerId, handles);
+  cache.set(world, observers);
   return handles;
 }
 
@@ -58,13 +70,19 @@ export function entityLabel(world: WorldState, entity: Entity, observerId: strin
   return `${label} (ID:${entityHandles(world, observerId).get(entity.id)!})`;
 }
 
-export function entityReferenceMap(world: WorldState, ids: string[], observerId: string): Record<string, string> {
+export function entityReferenceMap(
+  world: WorldState,
+  ids: string[],
+  observerId: string,
+): Record<string, string> {
   const handles = entityHandles(world, observerId);
-  return Object.fromEntries(ids.map(id => {
-    const handle = handles.get(id);
-    if (!handle) throw new Error('Referenced entity is unavailable.');
-    return [handle, id];
-  }));
+  return Object.fromEntries(
+    ids.map((id) => {
+      const handle = handles.get(id);
+      if (!handle) throw new Error('Referenced entity is unavailable.');
+      return [handle, id];
+    }),
+  );
 }
 
 export function resolveEntityMarkers(text: string, references: Record<string, string>): string {
@@ -79,7 +97,11 @@ export function resolveEntityMarkers(text: string, references: Record<string, st
 export function projectEntityMarkers(text: string, world: WorldState, observerId: string): string {
   const handles = entityHandles(world, observerId);
   return text.replace(/\(ID:([^()\s]+)\)/g, (original, id: string) =>
-    handles.has(id) ? recognizesSubject(world, observerId, id) ? `(ID:${handles.get(id)})` : '(unrecognized identity)' : original,
+    handles.has(id)
+      ? recognizesSubject(world, observerId, id)
+        ? `(ID:${handles.get(id)})`
+        : '(unrecognized identity)'
+      : original,
   );
 }
 
@@ -96,13 +118,30 @@ export function resolveResponseEntities(
   return {
     operations: response.operations.map((op) => ({
       ...op,
-      ...(op.note ? {note: {...op.note, subjectId: op.note.subjectId ? resolve(op.note.subjectId) : null, text: resolveEntityMarkers(op.note.text, references)}} : {}),
-      ...(op.name ? {name: {...op.name, subjectId: resolve(op.name.subjectId)}} : {}),
+      ...(op.note
+        ? {
+            note: {
+              ...op.note,
+              subjectId: op.note.subjectId ? resolve(op.note.subjectId) : null,
+              text: resolveEntityMarkers(op.note.text, references),
+            },
+          }
+        : {}),
+      ...(op.name ? { name: { ...op.name, subjectId: resolve(op.name.subjectId) } } : {}),
       talk: op.talk ? { ...op.talk, addresseeEntityId: resolve(op.talk.addresseeEntityId) } : null,
       act: op.act
         ? {
             ...op.act,
-            ...(op.act.invocation ? { invocation: { ...op.act.invocation, targetEntityId: op.act.invocation.targetEntityId ? resolve(op.act.invocation.targetEntityId) : null } } : {}),
+            ...(op.act.invocation
+              ? {
+                  invocation: {
+                    ...op.act.invocation,
+                    targetEntityId: op.act.invocation.targetEntityId
+                      ? resolve(op.act.invocation.targetEntityId)
+                      : null,
+                  },
+                }
+              : {}),
             targetEntityId: op.act.targetEntityId ? resolve(op.act.targetEntityId) : null,
             description: op.act.description
               ? resolveEntityMarkers(op.act.description, references)

@@ -23,10 +23,7 @@
           "version": 1,
           "name": "Rare gem",
           "description": "Synthetic profiling fixture; not an authored game asset.",
-          "properties": [
-            "rigid",
-            "point"
-          ]
+          "properties": ["rigid", "point"]
         }
       },
       {
@@ -38,9 +35,7 @@
           "version": 1,
           "name": "Food parcel",
           "description": "Synthetic profiling fixture; not an authored game asset.",
-          "properties": [
-            "food"
-          ],
+          "properties": ["food"],
           "nutrition": 20
         }
       },
@@ -53,9 +48,7 @@
           "version": 1,
           "name": "Dry fuel",
           "description": "Synthetic profiling fixture; not an authored game asset.",
-          "properties": [
-            "fuel"
-          ]
+          "properties": ["fuel"]
         }
       }
     ]

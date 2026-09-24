@@ -37,16 +37,11 @@
     },
     {
       "name": "later-failure-preserves-earlier",
-      "operations": [
-        "move"
-      ]
+      "operations": ["move"]
     },
     {
       "name": "repeated-operations-not-dropped",
-      "operations": [
-        "one",
-        "two"
-      ],
+      "operations": ["one", "two"],
       "semanticCalls": 0
     },
     {
@@ -89,9 +84,7 @@
           "requested": "go to x=12,z=14",
           "executableDescription": "go to x=12,z=14",
           "verdict": "exact",
-          "supported": [
-            "go to x=12,z=14"
-          ],
+          "supported": ["go to x=12,z=14"],
           "omitted": [],
           "reason": "Complete native form bound without inference."
         }
@@ -109,9 +102,7 @@
             "requested": "Follow Ada without being noticed",
             "executableDescription": "Follow Ada at 3 world units; no stealth.",
             "verdict": "confirm",
-            "supported": [
-              "Follow Ada"
-            ],
+            "supported": ["Follow Ada"],
             "omitted": [
               {
                 "requirement": "without being noticed",
@@ -166,10 +157,7 @@
               "version": 1,
               "name": "Rare gem",
               "description": "Synthetic profiling fixture; not an authored game asset.",
-              "properties": [
-                "rigid",
-                "point"
-              ]
+              "properties": ["rigid", "point"]
             }
           },
           {
@@ -181,9 +169,7 @@
               "version": 1,
               "name": "Food parcel",
               "description": "Synthetic profiling fixture; not an authored game asset.",
-              "properties": [
-                "food"
-              ],
+              "properties": ["food"],
               "nutrition": 20
             }
           },
@@ -196,9 +182,7 @@
               "version": 1,
               "name": "Dry fuel",
               "description": "Synthetic profiling fixture; not an authored game asset.",
-              "properties": [
-                "fuel"
-              ]
+              "properties": ["fuel"]
             }
           }
         ]
@@ -220,54 +204,18 @@
       "nativeSecondsPerWallSecond": 87.69134594534077,
       "finalWorldDigest": "4236a9d489e7876379876772e85c600fc3ced5e6772d2f6c5aba83b7d5f4c21f",
       "hottestSelfMs": [
-        [
-          "finalizeProperty dist/immer.mjs:314",
-          354.0079999999996
-        ],
-        [
-          "updateEncounters src/kernel.ts:1",
-          136.472
-        ],
-        [
-          "get dist/immer.mjs:382",
-          107.94299999999996
-        ],
-        [
-          "isPlainObject dist/immer.mjs:60",
-          95.86500000000001
-        ],
-        [
-          "recordEvent src/events.ts:1",
-          94.48299999999998
-        ],
-        [
-          "isDraftable dist/immer.mjs:54",
-          89.87499999999999
-        ],
-        [
-          "(anonymous) src/kernel.ts:1",
-          75.702
-        ],
-        [
-          "(garbage collector) :0",
-          66.743
-        ],
-        [
-          "isDraft dist/immer.mjs:51",
-          61.309000000000026
-        ],
-        [
-          "freeze dist/immer.mjs:161",
-          57.92900000000001
-        ],
-        [
-          "appendEntry src/experience.ts:1",
-          51.703
-        ],
-        [
-          "mutateExperience src/experience.ts:1",
-          49.334
-        ]
+        ["finalizeProperty dist/immer.mjs:314", 354.0079999999996],
+        ["updateEncounters src/kernel.ts:1", 136.472],
+        ["get dist/immer.mjs:382", 107.94299999999996],
+        ["isPlainObject dist/immer.mjs:60", 95.86500000000001],
+        ["recordEvent src/events.ts:1", 94.48299999999998],
+        ["isDraftable dist/immer.mjs:54", 89.87499999999999],
+        ["(anonymous) src/kernel.ts:1", 75.702],
+        ["(garbage collector) :0", 66.743],
+        ["isDraft dist/immer.mjs:51", 61.309000000000026],
+        ["freeze dist/immer.mjs:161", 57.92900000000001],
+        ["appendEntry src/experience.ts:1", 51.703],
+        ["mutateExperience src/experience.ts:1", 49.334]
       ]
     },
     "gems": {
@@ -299,10 +247,7 @@
               "version": 1,
               "name": "Rare gem",
               "description": "Synthetic profiling fixture; not an authored game asset.",
-              "properties": [
-                "rigid",
-                "point"
-              ]
+              "properties": ["rigid", "point"]
             }
           }
         ]
@@ -324,54 +269,18 @@
       "nativeSecondsPerWallSecond": 131.23674687939996,
       "finalWorldDigest": "e85e99b75a9acf81b9f505a2dfd2b89770d549f2428f0d208243077c7d37b0c2",
       "hottestSelfMs": [
-        [
-          "intersectsSegment src/geometry.ts:1",
-          162.74699999999987
-        ],
-        [
-          "finalizeProperty dist/immer.mjs:314",
-          114.07199999999992
-        ],
-        [
-          "updateEncounters src/kernel.ts:1",
-          105.60599999999994
-        ],
-        [
-          "(anonymous) src/geometry.ts:1",
-          101.02599999999994
-        ],
-        [
-          "(anonymous) src/kernel.ts:1",
-          95.708
-        ],
-        [
-          "get dist/immer.mjs:382",
-          68.953
-        ],
-        [
-          "(garbage collector) :0",
-          67.75500000000001
-        ],
-        [
-          "__name src/bounds-index.ts:1",
-          47.434000000000005
-        ],
-        [
-          "shallowCopy dist/immer.mjs:121",
-          43.159
-        ],
-        [
-          "set filename :0",
-          42.22199999999999
-        ],
-        [
-          "(anonymous) src/perception.ts:1",
-          38.99400000000001
-        ],
-        [
-          "post node:inspector:118",
-          30.099
-        ]
+        ["intersectsSegment src/geometry.ts:1", 162.74699999999987],
+        ["finalizeProperty dist/immer.mjs:314", 114.07199999999992],
+        ["updateEncounters src/kernel.ts:1", 105.60599999999994],
+        ["(anonymous) src/geometry.ts:1", 101.02599999999994],
+        ["(anonymous) src/kernel.ts:1", 95.708],
+        ["get dist/immer.mjs:382", 68.953],
+        ["(garbage collector) :0", 67.75500000000001],
+        ["__name src/bounds-index.ts:1", 47.434000000000005],
+        ["shallowCopy dist/immer.mjs:121", 43.159],
+        ["set filename :0", 42.22199999999999],
+        ["(anonymous) src/perception.ts:1", 38.99400000000001],
+        ["post node:inspector:118", 30.099]
       ]
     }
   }

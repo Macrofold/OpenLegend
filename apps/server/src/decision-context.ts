@@ -388,7 +388,12 @@ export async function prepareDecision(
     requiredIds,
     [
       ...currentSelection
-        .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation' || candidate.kind === 'knowledge')
+        .filter(
+          (candidate) =>
+            candidate.kind === 'memory' ||
+            candidate.kind === 'conversation' ||
+            candidate.kind === 'knowledge',
+        )
         .flatMap((candidate) => candidate.entityIds),
       ...socialEntityIds(currentWorld, actorId),
     ],
@@ -417,10 +422,12 @@ export async function prepareDecision(
       .filter((c) => c.kind === 'memory' || c.kind === 'conversation')
       .flatMap((c) => c.sourceIds ?? [c.id]),
     entityIds: Object.values(entityReferences),
-    entityEpisodes: Object.fromEntries(Object.values(entityReferences).flatMap(id => {
-      const episode = currentWorld.perceptionEpisodes?.[actorId]?.[id];
-      return episode ? [[id, episode]] : [];
-    })),
+    entityEpisodes: Object.fromEntries(
+      Object.values(entityReferences).flatMap((id) => {
+        const episode = currentWorld.perceptionEpisodes?.[actorId]?.[id];
+        return episode ? [[id, episode]] : [];
+      }),
+    ),
     expectedPlan: actor.planGeneration,
     restEpisode: dreamStatus(currentWorld, currentWorld.entities[actorId])?.episode ?? null,
     actions: planActions,
@@ -428,7 +435,8 @@ export async function prepareDecision(
   const offered: { id: string; description: string }[] = [];
   for (const key of Object.keys(context)) {
     const value = context[key];
-    if (typeof value === 'string') context[key] = projectEntityMarkers(value, currentWorld, actorId);
+    if (typeof value === 'string')
+      context[key] = projectEntityMarkers(value, currentWorld, actorId);
     else if (value != null)
       context[key] = JSON.parse(
         projectEntityMarkers(JSON.stringify(value), currentWorld, actorId),

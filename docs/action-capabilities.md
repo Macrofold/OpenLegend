@@ -513,7 +513,7 @@ The family supplies mandatory authoritative dependencies; the activity adds evid
 
 Cache structured normalized intent with actor scope, target binding, method/constraints and the relevant version/dependency signature. Text normalization alone is insufficient for semantic equivalence. Do not globally publish private failed inventions or reuse another actor's private explanation. Conservative cache misses may cost another legitimate decision; overly broad cache hits must not suppress meaningfully different requests.
 
-Maintain accepted intent revision separately from physical work generation where required. Unrelated awareness or simulation ticks do not stale an entire response. Changed target identity, revoked control, replaced plans or obsolete definitions invalidate only affected authority/components according to AG.
+Maintain accepted intent revision separately from physical work generation where required. Unrelated awareness or simulation ticks do not stale an entire response. Changed target identity, revoked control, replaced plans or obsolete definitions invalidate only affected authority/components according to AG. Recognition-episode pins for delayed anonymous references remain an explicit integration requirement; a canonical entity ID is not a permanent recognition grant.
 
 ## 17. Persistence, epochs and replay
 
@@ -523,7 +523,7 @@ Each callback/result carries world/load epoch, actor/controller authority, root/
 
 The same-version save must distinguish running, waiting, blocked, suspended where supported, completed and cancelled work. An unsupported definition change either blocks activation for active work or follows the canonical INV version policy; do not silently retarget old invocations.
 
-Follow the active no-legacy-development-save policy: incompatible saves fail explicitly. This feature adds no migration or compatibility reader. Fictional time travel, cloning and memory effects remain below real accounting, permission revocation and privacy guarantees.
+Follow the [active development policy](save-and-load.md#active-development-policy): use small, identity-preserving in-place upgrades; reject malformed state rather than reset a world. Do not add per-feature versions or parallel legacy runtimes. Fictional time travel, cloning and memory effects remain below real accounting, permission revocation and privacy guarantees.
 
 ## 18. Interface and presentation
 
@@ -707,7 +707,7 @@ Continue point movement, narrow follow and fulfillment review independently of i
 
 ### Reconciliation notes from the implemented review
 
-The current adapter carries response-local operation identity, original request and manifest revision into native admission. Saved pending identity additionally includes explicit target and queue/replace mode; the exact alternative is never silently overwritten. These fields should map to the common invocation/authority contracts rather than become a competing definition registry. The current development snapshot is schema 11 / `development-2026-09-24-actions2`; no legacy reader was added.
+The current adapter carries response-local operation identity, original request and manifest revision into native admission. Saved pending identity additionally includes explicit target and queue/replace mode; the exact alternative is never silently overwritten. These fields should map to the common invocation/authority contracts rather than become a competing definition registry. Current persistence follows the active in-place upgrade policy. Missing non-authoritative target/mode metadata is defaulted conservatively; existing alternative modes, commands, IDs and text remain unchanged.
 
 The implemented control vocabulary is still the existing flat sequential AG frontier plus a family-local indefinite follow activity. General wait/branch/repeat, finite follow termination, rich target roles, installed-definition dependency pins and arbitrary output ports remain to reconcile. An indefinite follow cannot be advertised as the completed prerequisite of a later generated step. Current confirmation stores only plan-eligible mechanical commands; confirmation of immediate social/control operations needs their own shared admission contract before claiming support.
 

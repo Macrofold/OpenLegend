@@ -3,14 +3,8 @@ import { canReachEntity, distance, findApproachPath } from './spatial.js';
 import { supportedPosition } from './spatial-state.js';
 import type { Action, Entity, WorldState } from './types.js';
 
-export const FOLLOW_RULES = {
-  defaultDistance: 3,
-  minimumDistance: 1.5,
-  maximumDistance: 12,
-  resumeMargin: 0.75,
-  repathSeconds: 4,
-  targetDisplacement: 1,
-} as const;
+import { FOLLOW_RULES } from './worlds/base/navigation.js';
+export { FOLLOW_RULES } from './worlds/base/navigation.js';
 
 /** Follow owns only its path/hold state; the kernel remains the sole movement owner.
  * docs/architecture.md#native-follow-activity

@@ -265,7 +265,10 @@ export interface WorldState {
   knowledgeRevisions?: Record<string, number>;
   knowledgePolicy?: import('./knowledge.js').KnowledgePolicy;
   actorKnowledge?: Record<string, import('./knowledge.js').ActorKnowledge>;
-  observerIdentities?: Record<string, Record<string, import('./worlds/base/knowledge.js').ObserverIdentity>>;
+  observerIdentities?: Record<
+    string,
+    Record<string, import('./worlds/base/knowledge.js').ObserverIdentity>
+  >;
   perceptionEpisodes?: Record<string, Record<string, string>>;
   itemHandling: import('./item-handling.js').ItemHandlingPolicy;
   statusEffectPolicy: import('./status-effects.js').StatusEffectPolicy;

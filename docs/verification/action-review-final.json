@@ -60,30 +60,12 @@
           "awareness": 31756
         },
         "hottest": [
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            205.28799999999987
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            93.86299999999999
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            58.834999999999994
-          ],
-          [
-            "get dist/immer.mjs:382",
-            54.72800000000001
-          ],
-          [
-            "(garbage collector) :0",
-            50.407999999999994
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            47.583999999999996
-          ]
+          ["finalizeProperty dist/immer.mjs:314", 205.28799999999987],
+          ["updateEncounters src/kernel.ts:1", 93.86299999999999],
+          ["isPlainObject dist/immer.mjs:60", 58.834999999999994],
+          ["get dist/immer.mjs:382", 54.72800000000001],
+          ["(garbage collector) :0", 50.407999999999994],
+          ["(anonymous) src/kernel.ts:1", 47.583999999999996]
         ]
       },
       "reviewed": {
@@ -101,30 +83,12 @@
           "awareness": 31756
         },
         "hottest": [
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            195.75599999999977
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            83.68099999999997
-          ],
-          [
-            "get dist/immer.mjs:382",
-            57.38700000000001
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            51.528000000000006
-          ],
-          [
-            "isDraftable dist/immer.mjs:54",
-            51.30400000000001
-          ],
-          [
-            "recordEvent src/events.ts:1",
-            50.139
-          ]
+          ["finalizeProperty dist/immer.mjs:314", 195.75599999999977],
+          ["updateEncounters src/kernel.ts:1", 83.68099999999997],
+          ["get dist/immer.mjs:382", 57.38700000000001],
+          ["isPlainObject dist/immer.mjs:60", 51.528000000000006],
+          ["isDraftable dist/immer.mjs:54", 51.30400000000001],
+          ["recordEvent src/events.ts:1", 50.139]
         ]
       }
     },
@@ -145,30 +109,12 @@
           "awareness": 2048
         },
         "hottest": [
-          [
-            "intersectsSegment src/geometry.ts:1",
-            110.65099999999997
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            69.187
-          ],
-          [
-            "(anonymous) src/geometry.ts:1",
-            62.95200000000005
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            55.65200000000001
-          ],
-          [
-            "get dist/immer.mjs:382",
-            54.117000000000004
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            50.99000000000001
-          ]
+          ["intersectsSegment src/geometry.ts:1", 110.65099999999997],
+          ["(anonymous) src/kernel.ts:1", 69.187],
+          ["(anonymous) src/geometry.ts:1", 62.95200000000005],
+          ["finalizeProperty dist/immer.mjs:314", 55.65200000000001],
+          ["get dist/immer.mjs:382", 54.117000000000004],
+          ["updateEncounters src/kernel.ts:1", 50.99000000000001]
         ]
       },
       "reviewed": {
@@ -186,30 +132,12 @@
           "awareness": 2048
         },
         "hottest": [
-          [
-            "intersectsSegment src/geometry.ts:1",
-            128.53599999999992
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            69.76199999999999
-          ],
-          [
-            "(anonymous) src/geometry.ts:1",
-            63.75700000000001
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            56.778000000000006
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            52.78300000000001
-          ],
-          [
-            "get dist/immer.mjs:382",
-            41.964000000000006
-          ]
+          ["intersectsSegment src/geometry.ts:1", 128.53599999999992],
+          ["updateEncounters src/kernel.ts:1", 69.76199999999999],
+          ["(anonymous) src/geometry.ts:1", 63.75700000000001],
+          ["(anonymous) src/kernel.ts:1", 56.778000000000006],
+          ["finalizeProperty dist/immer.mjs:314", 52.78300000000001],
+          ["get dist/immer.mjs:382", 41.964000000000006]
         ]
       }
     }

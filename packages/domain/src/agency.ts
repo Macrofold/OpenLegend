@@ -811,7 +811,11 @@ export function confirmActionRevision(
   id: string,
 ): Outcome {
   const actor = Object.hasOwn(world.entities, actorId) ? world.entities[actorId]?.actor : undefined;
-  if (!actor?.alive || actor.incapacitated || capabilityBlocked(world, world.entities[actorId], 'actions'))
+  if (
+    !actor?.alive ||
+    actor.incapacitated ||
+    capabilityBlocked(world, world.entities[actorId], 'actions')
+  )
     return outcome(
       false,
       'actor-unavailable',

@@ -21,54 +21,18 @@
         },
         "finalWorldDigest": "bd90f41c3357e0d0bdee6a478153abb457d7b61f4a8ec217168bf155630491e9",
         "hottestSelfMs": [
-          [
-            "shallowCopy dist/immer.mjs:121",
-            168.12800000000007
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            80.08099999999997
-          ],
-          [
-            "get dist/immer.mjs:382",
-            63.93599999999999
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            58.331
-          ],
-          [
-            "isDraftable dist/immer.mjs:54",
-            43.675
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            37.28499999999998
-          ],
-          [
-            "advanceWorldWork src/kernel.ts:1",
-            35.836
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            35.15200000000001
-          ],
-          [
-            "matchesStatusCondition src/status-effects.ts:1",
-            32.98399999999999
-          ],
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            31.322000000000013
-          ],
-          [
-            "getOwnPropertyDescriptor dist/immer.mjs:447",
-            27.860000000000003
-          ],
-          [
-            "has dist/immer.mjs:90",
-            26.604999999999997
-          ]
+          ["shallowCopy dist/immer.mjs:121", 168.12800000000007],
+          ["finalizeProperty dist/immer.mjs:314", 80.08099999999997],
+          ["get dist/immer.mjs:382", 63.93599999999999],
+          ["updateEncounters src/kernel.ts:1", 58.331],
+          ["isDraftable dist/immer.mjs:54", 43.675],
+          ["(anonymous) src/kernel.ts:1", 37.28499999999998],
+          ["advanceWorldWork src/kernel.ts:1", 35.836],
+          ["isPlainObject dist/immer.mjs:60", 35.15200000000001],
+          ["matchesStatusCondition src/status-effects.ts:1", 32.98399999999999],
+          ["(anonymous) src/perception-frame.ts:1", 31.322000000000013],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 27.860000000000003],
+          ["has dist/immer.mjs:90", 26.604999999999997]
         ]
       },
       "after": {
@@ -87,54 +51,18 @@
         },
         "finalWorldDigest": "bd90f41c3357e0d0bdee6a478153abb457d7b61f4a8ec217168bf155630491e9",
         "hottestSelfMs": [
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            79.70299999999997
-          ],
-          [
-            "get dist/immer.mjs:382",
-            56.34899999999999
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            54.23600000000001
-          ],
-          [
-            "advanceWorldWork src/kernel.ts:1",
-            43.13899999999999
-          ],
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            40.38400000000001
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            37.91800000000001
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            29.852
-          ],
-          [
-            "isDraftable dist/immer.mjs:54",
-            28.664
-          ],
-          [
-            "(garbage collector) :0",
-            28.202
-          ],
-          [
-            "has dist/immer.mjs:90",
-            26.583000000000002
-          ],
-          [
-            "matchesStatusCondition src/status-effects.ts:1",
-            26.534000000000002
-          ],
-          [
-            "peek dist/immer.mjs:486",
-            25.677
-          ]
+          ["finalizeProperty dist/immer.mjs:314", 79.70299999999997],
+          ["get dist/immer.mjs:382", 56.34899999999999],
+          ["updateEncounters src/kernel.ts:1", 54.23600000000001],
+          ["advanceWorldWork src/kernel.ts:1", 43.13899999999999],
+          ["(anonymous) src/perception-frame.ts:1", 40.38400000000001],
+          ["(anonymous) src/kernel.ts:1", 37.91800000000001],
+          ["isPlainObject dist/immer.mjs:60", 29.852],
+          ["isDraftable dist/immer.mjs:54", 28.664],
+          ["(garbage collector) :0", 28.202],
+          ["has dist/immer.mjs:90", 26.583000000000002],
+          ["matchesStatusCondition src/status-effects.ts:1", 26.534000000000002],
+          ["peek dist/immer.mjs:486", 25.677]
         ]
       }
     },
@@ -155,54 +83,18 @@
         },
         "finalWorldDigest": "4d75009742740880627d2d14f341fed31791903e1ba473dc0933c6c014981871",
         "hottestSelfMs": [
-          [
-            "shallowCopy dist/immer.mjs:121",
-            481.8169999999997
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            216.632
-          ],
-          [
-            "get dist/immer.mjs:382",
-            207.38600000000014
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            177.5680000000001
-          ],
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            137.00900000000007
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            108.746
-          ],
-          [
-            "advanceWorldWork src/kernel.ts:1",
-            100.119
-          ],
-          [
-            "isDraftable dist/immer.mjs:54",
-            96.71299999999998
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            96.48399999999997
-          ],
-          [
-            "has dist/immer.mjs:90",
-            91.591
-          ],
-          [
-            "matchesStatusCondition src/status-effects.ts:1",
-            89.35199999999999
-          ],
-          [
-            "getOwnPropertyDescriptor dist/immer.mjs:447",
-            84.35000000000004
-          ]
+          ["shallowCopy dist/immer.mjs:121", 481.8169999999997],
+          ["finalizeProperty dist/immer.mjs:314", 216.632],
+          ["get dist/immer.mjs:382", 207.38600000000014],
+          ["updateEncounters src/kernel.ts:1", 177.5680000000001],
+          ["(anonymous) src/perception-frame.ts:1", 137.00900000000007],
+          ["(anonymous) src/kernel.ts:1", 108.746],
+          ["advanceWorldWork src/kernel.ts:1", 100.119],
+          ["isDraftable dist/immer.mjs:54", 96.71299999999998],
+          ["isPlainObject dist/immer.mjs:60", 96.48399999999997],
+          ["has dist/immer.mjs:90", 91.591],
+          ["matchesStatusCondition src/status-effects.ts:1", 89.35199999999999],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 84.35000000000004]
         ]
       },
       "after": {
@@ -221,54 +113,18 @@
         },
         "finalWorldDigest": "4d75009742740880627d2d14f341fed31791903e1ba473dc0933c6c014981871",
         "hottestSelfMs": [
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            272.0680000000001
-          ],
-          [
-            "get dist/immer.mjs:382",
-            179.7300000000002
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            173.18500000000006
-          ],
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            135.6280000000001
-          ],
-          [
-            "advanceWorldWork src/kernel.ts:1",
-            116.28200000000007
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            114.16700000000006
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            110.72899999999998
-          ],
-          [
-            "isDraftable dist/immer.mjs:54",
-            93.35300000000001
-          ],
-          [
-            "peek dist/immer.mjs:486",
-            84.43900000000002
-          ],
-          [
-            "(anonymous) src/perception.ts:1",
-            80.69700000000003
-          ],
-          [
-            "has dist/immer.mjs:90",
-            80.66799999999998
-          ],
-          [
-            "matchesStatusCondition src/status-effects.ts:1",
-            74.93700000000003
-          ]
+          ["finalizeProperty dist/immer.mjs:314", 272.0680000000001],
+          ["get dist/immer.mjs:382", 179.7300000000002],
+          ["updateEncounters src/kernel.ts:1", 173.18500000000006],
+          ["(anonymous) src/perception-frame.ts:1", 135.6280000000001],
+          ["advanceWorldWork src/kernel.ts:1", 116.28200000000007],
+          ["isPlainObject dist/immer.mjs:60", 114.16700000000006],
+          ["(anonymous) src/kernel.ts:1", 110.72899999999998],
+          ["isDraftable dist/immer.mjs:54", 93.35300000000001],
+          ["peek dist/immer.mjs:486", 84.43900000000002],
+          ["(anonymous) src/perception.ts:1", 80.69700000000003],
+          ["has dist/immer.mjs:90", 80.66799999999998],
+          ["matchesStatusCondition src/status-effects.ts:1", 74.93700000000003]
         ]
       }
     },
@@ -289,54 +145,18 @@
         },
         "finalWorldDigest": "d6953837b32419f6aee852cb49116f8ed5ddf211beca3fbe55cb43c75c276989",
         "hottestSelfMs": [
-          [
-            "shallowCopy dist/immer.mjs:121",
-            84.80099999999999
-          ],
-          [
-            "get dist/immer.mjs:382",
-            52.96400000000001
-          ],
-          [
-            "advanceWorldWork src/kernel.ts:1",
-            52.54
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            47.954999999999984
-          ],
-          [
-            "matchesStatusCondition src/status-effects.ts:1",
-            46.278
-          ],
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            33.17
-          ],
-          [
-            "(garbage collector) :0",
-            31.738999999999997
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            25.801999999999996
-          ],
-          [
-            "advanceStatusEffects src/status-effects.ts:1",
-            25.466
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            25.286
-          ],
-          [
-            "has dist/immer.mjs:90",
-            23.997999999999998
-          ],
-          [
-            "getOwnPropertyDescriptor dist/immer.mjs:447",
-            21.830999999999996
-          ]
+          ["shallowCopy dist/immer.mjs:121", 84.80099999999999],
+          ["get dist/immer.mjs:382", 52.96400000000001],
+          ["advanceWorldWork src/kernel.ts:1", 52.54],
+          ["finalizeProperty dist/immer.mjs:314", 47.954999999999984],
+          ["matchesStatusCondition src/status-effects.ts:1", 46.278],
+          ["(anonymous) src/perception-frame.ts:1", 33.17],
+          ["(garbage collector) :0", 31.738999999999997],
+          ["isPlainObject dist/immer.mjs:60", 25.801999999999996],
+          ["advanceStatusEffects src/status-effects.ts:1", 25.466],
+          ["updateEncounters src/kernel.ts:1", 25.286],
+          ["has dist/immer.mjs:90", 23.997999999999998],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 21.830999999999996]
         ]
       },
       "after": {
@@ -355,54 +175,18 @@
         },
         "finalWorldDigest": "d6953837b32419f6aee852cb49116f8ed5ddf211beca3fbe55cb43c75c276989",
         "hottestSelfMs": [
-          [
-            "get dist/immer.mjs:382",
-            48.318
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            46.65200000000001
-          ],
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            45.04
-          ],
-          [
-            "advanceWorldWork src/kernel.ts:1",
-            43.486000000000004
-          ],
-          [
-            "createPerceptionFrame src/perception-frame.ts:1",
-            35.226000000000006
-          ],
-          [
-            "getOwnPropertyDescriptor dist/immer.mjs:447",
-            33.019
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            29.825999999999997
-          ],
-          [
-            "matchesStatusCondition src/status-effects.ts:1",
-            27.928000000000004
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            26.777
-          ],
-          [
-            "has dist/immer.mjs:90",
-            20.410000000000004
-          ],
-          [
-            "(garbage collector) :0",
-            19.519
-          ],
-          [
-            "advanceStatusEffects src/status-effects.ts:1",
-            19.198000000000004
-          ]
+          ["get dist/immer.mjs:382", 48.318],
+          ["finalizeProperty dist/immer.mjs:314", 46.65200000000001],
+          ["(anonymous) src/perception-frame.ts:1", 45.04],
+          ["advanceWorldWork src/kernel.ts:1", 43.486000000000004],
+          ["createPerceptionFrame src/perception-frame.ts:1", 35.226000000000006],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 33.019],
+          ["isPlainObject dist/immer.mjs:60", 29.825999999999997],
+          ["matchesStatusCondition src/status-effects.ts:1", 27.928000000000004],
+          ["updateEncounters src/kernel.ts:1", 26.777],
+          ["has dist/immer.mjs:90", 20.410000000000004],
+          ["(garbage collector) :0", 19.519],
+          ["advanceStatusEffects src/status-effects.ts:1", 19.198000000000004]
         ]
       }
     },
@@ -423,54 +207,18 @@
         },
         "finalWorldDigest": "3ec66b192da5c80d625dc85f9be8de7379601dfc37ee02dfb8c0b13a9562fb2e",
         "hottestSelfMs": [
-          [
-            "shallowCopy dist/immer.mjs:121",
-            271.95200000000034
-          ],
-          [
-            "get dist/immer.mjs:382",
-            164.05400000000003
-          ],
-          [
-            "advanceWorldWork src/kernel.ts:1",
-            141.56900000000007
-          ],
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            138.09300000000005
-          ],
-          [
-            "getOwnPropertyDescriptor dist/immer.mjs:447",
-            116.42699999999996
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            115.088
-          ],
-          [
-            "matchesStatusCondition src/status-effects.ts:1",
-            101.05000000000001
-          ],
-          [
-            "advanceStatusEffects src/status-effects.ts:1",
-            86.11000000000003
-          ],
-          [
-            "has dist/immer.mjs:90",
-            70.54300000000003
-          ],
-          [
-            "(garbage collector) :0",
-            62.12799999999999
-          ],
-          [
-            "getArchtype dist/immer.mjs:86",
-            58.516000000000005
-          ],
-          [
-            "isDraft dist/immer.mjs:51",
-            57.37399999999999
-          ]
+          ["shallowCopy dist/immer.mjs:121", 271.95200000000034],
+          ["get dist/immer.mjs:382", 164.05400000000003],
+          ["advanceWorldWork src/kernel.ts:1", 141.56900000000007],
+          ["(anonymous) src/perception-frame.ts:1", 138.09300000000005],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 116.42699999999996],
+          ["finalizeProperty dist/immer.mjs:314", 115.088],
+          ["matchesStatusCondition src/status-effects.ts:1", 101.05000000000001],
+          ["advanceStatusEffects src/status-effects.ts:1", 86.11000000000003],
+          ["has dist/immer.mjs:90", 70.54300000000003],
+          ["(garbage collector) :0", 62.12799999999999],
+          ["getArchtype dist/immer.mjs:86", 58.516000000000005],
+          ["isDraft dist/immer.mjs:51", 57.37399999999999]
         ]
       },
       "after": {
@@ -489,54 +237,18 @@
         },
         "finalWorldDigest": "3ec66b192da5c80d625dc85f9be8de7379601dfc37ee02dfb8c0b13a9562fb2e",
         "hottestSelfMs": [
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            245.28300000000007
-          ],
-          [
-            "get dist/immer.mjs:382",
-            152.26200000000009
-          ],
-          [
-            "advanceWorldWork src/kernel.ts:1",
-            147.64899999999997
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            115.04299999999996
-          ],
-          [
-            "getOwnPropertyDescriptor dist/immer.mjs:447",
-            107.65399999999994
-          ],
-          [
-            "createPerceptionFrame src/perception-frame.ts:1",
-            85.08099999999996
-          ],
-          [
-            "matchesStatusCondition src/status-effects.ts:1",
-            84.99000000000002
-          ],
-          [
-            "advanceStatusEffects src/status-effects.ts:1",
-            75.58099999999999
-          ],
-          [
-            "has dist/immer.mjs:90",
-            66.01
-          ],
-          [
-            "shallowCopy dist/immer.mjs:121",
-            63.31500000000001
-          ],
-          [
-            "peek dist/immer.mjs:486",
-            62.25700000000001
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            59.12599999999999
-          ]
+          ["(anonymous) src/perception-frame.ts:1", 245.28300000000007],
+          ["get dist/immer.mjs:382", 152.26200000000009],
+          ["advanceWorldWork src/kernel.ts:1", 147.64899999999997],
+          ["finalizeProperty dist/immer.mjs:314", 115.04299999999996],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 107.65399999999994],
+          ["createPerceptionFrame src/perception-frame.ts:1", 85.08099999999996],
+          ["matchesStatusCondition src/status-effects.ts:1", 84.99000000000002],
+          ["advanceStatusEffects src/status-effects.ts:1", 75.58099999999999],
+          ["has dist/immer.mjs:90", 66.01],
+          ["shallowCopy dist/immer.mjs:121", 63.31500000000001],
+          ["peek dist/immer.mjs:486", 62.25700000000001],
+          ["isPlainObject dist/immer.mjs:60", 59.12599999999999]
         ]
       }
     },
@@ -557,54 +269,18 @@
         },
         "finalWorldDigest": "dbbf5eb3e90966bd3078ad177f00174fb28495904450babbf9650b8ddc0b662e",
         "hottestSelfMs": [
-          [
-            "updateEncounters src/kernel.ts:1",
-            952.5469999999946
-          ],
-          [
-            "shallowCopy dist/immer.mjs:121",
-            639.7639999999984
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            457.09599999999983
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            386.15900000000045
-          ],
-          [
-            "get dist/immer.mjs:382",
-            241.40900000000022
-          ],
-          [
-            "recordEvent src/events.ts:1",
-            230.00900000000016
-          ],
-          [
-            "(garbage collector) :0",
-            226.70899999999997
-          ],
-          [
-            "isDraftable dist/immer.mjs:54",
-            190.0650000000001
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            185.68200000000022
-          ],
-          [
-            "freeze dist/immer.mjs:161",
-            173.81700000000015
-          ],
-          [
-            "(anonymous) src/memory-perspective.ts:1",
-            137.16100000000006
-          ],
-          [
-            "advanceWorldWork src/kernel.ts:1",
-            122.306
-          ]
+          ["updateEncounters src/kernel.ts:1", 952.5469999999946],
+          ["shallowCopy dist/immer.mjs:121", 639.7639999999984],
+          ["(anonymous) src/kernel.ts:1", 457.09599999999983],
+          ["finalizeProperty dist/immer.mjs:314", 386.15900000000045],
+          ["get dist/immer.mjs:382", 241.40900000000022],
+          ["recordEvent src/events.ts:1", 230.00900000000016],
+          ["(garbage collector) :0", 226.70899999999997],
+          ["isDraftable dist/immer.mjs:54", 190.0650000000001],
+          ["isPlainObject dist/immer.mjs:60", 185.68200000000022],
+          ["freeze dist/immer.mjs:161", 173.81700000000015],
+          ["(anonymous) src/memory-perspective.ts:1", 137.16100000000006],
+          ["advanceWorldWork src/kernel.ts:1", 122.306]
         ]
       },
       "after": {
@@ -623,54 +299,18 @@
         },
         "finalWorldDigest": "dbbf5eb3e90966bd3078ad177f00174fb28495904450babbf9650b8ddc0b662e",
         "hottestSelfMs": [
-          [
-            "updateEncounters src/kernel.ts:1",
-            930.4419999999985
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            563.838
-          ],
-          [
-            "(garbage collector) :0",
-            287.1760000000001
-          ],
-          [
-            "get dist/immer.mjs:382",
-            254.68100000000032
-          ],
-          [
-            "recordEvent src/events.ts:1",
-            224.39500000000027
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            195.241
-          ],
-          [
-            "freeze dist/immer.mjs:161",
-            161.28800000000018
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            160.20800000000006
-          ],
-          [
-            "isDraftable dist/immer.mjs:54",
-            147.70000000000007
-          ],
-          [
-            "(anonymous) src/memory-perspective.ts:1",
-            137.08000000000007
-          ],
-          [
-            "advanceWorldWork src/kernel.ts:1",
-            129.582
-          ],
-          [
-            "intersectsSegment src/geometry.ts:1",
-            113.38699999999997
-          ]
+          ["updateEncounters src/kernel.ts:1", 930.4419999999985],
+          ["(anonymous) src/kernel.ts:1", 563.838],
+          ["(garbage collector) :0", 287.1760000000001],
+          ["get dist/immer.mjs:382", 254.68100000000032],
+          ["recordEvent src/events.ts:1", 224.39500000000027],
+          ["finalizeProperty dist/immer.mjs:314", 195.241],
+          ["freeze dist/immer.mjs:161", 161.28800000000018],
+          ["isPlainObject dist/immer.mjs:60", 160.20800000000006],
+          ["isDraftable dist/immer.mjs:54", 147.70000000000007],
+          ["(anonymous) src/memory-perspective.ts:1", 137.08000000000007],
+          ["advanceWorldWork src/kernel.ts:1", 129.582],
+          ["intersectsSegment src/geometry.ts:1", 113.38699999999997]
         ]
       }
     }

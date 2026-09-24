@@ -179,3 +179,9 @@ Aligned current action docs with scoped binding/approval authority, native-behav
 Recorded private visual-acquisition semantics, bounded experience batches, exposure/feature reuse, ordered reaction intake and cooperative native checkpoints. Updated EPR/PF delivery state, current development format 13, measured native/HTTP evidence and deferred automated coverage. Superseded the SR10 requirement to reproduce broadcast acquisition audiences while retaining outward-event equivalence requirements.
 
 The optional scalar-only capture experiment was rejected after a warm-workload deadline failure. Recorded the unchanged qualified implementation, the warm mixed result without a throughput gain, and the dense-scene capacity failure instead of reporting universal scalability.
+
+## Main rebase and measured acquisition follow-up
+
+Reconciled the action/perception branch with main's in-place save policy, generic status effects, observer knowledge and current-evidence scheduling. The old temporary-runner history is retained on a backup branch; active source uses the actual rebased implementation. Per-feature save-reset instructions are superseded by the active save owner, while historical measurement reports remain unchanged.
+
+Added the reusable full-server profiler and recorded its continuous-presence correction, native warm/dense results and limits. The patch-removal experiment was not retained. Moved bundled follow tuning to its base-world source, retained the existing execution adapter and reserved invention-workflow reconciliation section, and added deferred regression coverage without running automated suites.

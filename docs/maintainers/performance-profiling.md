@@ -27,3 +27,22 @@ Objects are synthetic resource entities with independent IDs, not stacks hidden 
 Reports include setup/initial-freeze cost, native step percentiles, total measured time, process CPU time, final heap usage, event/awareness counts, final-world digest and hot CPU functions. Headroom divides measured native throughput by `60 × speed`: values below 1 cannot sustain that rate even before persistence and other server work. Values above 1 do not prove end-to-end capacity. Compare identical input, scenario, warm-up, Node version and machine load; repeat runs rather than relying on one tail percentile. Digests compare native final state only, not all intermediate outcomes.
 
 This first version excludes real-time clock debt, database commits, browser frames, cognition admission/context preparation and paid model calls. Use the running server's `/api/performance` for tick/debt and cognition spans. Long history, constrained cognition capacity and dense encounter fan-out remain distinct workloads; do not treat a successful gem scenario as 100-agent qualification.
+
+## Full-server workload
+
+Run a generated, disposable scene through the real server timer, SQLite, SSE and a separate-process client:
+
+```sh
+pnpm run build
+node --import tsx scripts/performance/profile-server.mjs scripts/performance/scenarios/mixed.json /tmp/openlegend-server-report.json 15 1,3,8
+```
+
+The output path must be new. The duration accepts 5–60 seconds per phase; supported requested speeds are 1, 3 and 8. Setup creates a private temporary data directory, populates a generated scenario with the timer disabled, then restarts the same world for actual timed measurement. User-save inputs are rejected. The profiler removes only its own temporary directory and disables all paid dispatch. It is not a PostgreSQL, browser, hosted-player or live-cognition benchmark.
+
+A separate process reads state at 4 Hz, submits short move/cancel intentions at 2 Hz, consumes SSE, and sends presence heartbeats every 3 seconds. Each request lane has bounded concurrency. The report separates rejected requests, errors, request-scheduling lateness and skipped intervals from successful command latency; it cannot silently count an ungenerated request as success. SSE reports bytes/chunks, not browser render completion.
+
+The first phase includes acquisition after ordinary bootstrap. Later phases reuse the evolving world and start at their recorded simulation time; do not describe these as independent identical fresh worlds. Before/after runs use the same host and scripted load, but wall-timed physics can diverge and small samples have noisy tails. Native fixed-step digest comparisons are separate evidence.
+
+Report nominal elapsed-time achieved speed together with admitted/requested clock counters, pending debt and excluded gaps. Pending debt excludes elapsed wall time that an in-progress timer operation has not yet admitted. Existing >2-second callback-gap detection can misclassify long synchronous persistence as absence; the dense case does not qualify that boundary. Metric totals/counts are phase deltas, while `cumulativeMaxMs` is explicitly since startup. Keep initial presence-expiry runs separate from continuous-presence capacity evidence.
+
+Long soaks, larger successful-command samples, genuine multiple players, slow consumers, PostgreSQL, browser rendering and no-network cognition/maintenance fixtures remain PF00/PF11 acceptance work.

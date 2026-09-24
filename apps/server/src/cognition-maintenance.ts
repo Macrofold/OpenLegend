@@ -116,24 +116,28 @@ export class CognitionMaintenance {
     try {
       const current = this.service.world;
       timedSync('cognition.maintenanceRefresh', () =>
-        this.work.refresh(current, (id) => {
-          const actor = current.entities[id]!.actor!;
-          return [
-            actor.controller,
-            actor.incapacitated,
-            actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
-            !nativeNeedBelow(actor, 'fullness', 30),
-            actor.action?.type,
-            dreamStatus(current, current.entities[id])?.episode,
-            current.memories[id],
-            current.experience?.awareness[id],
-            current.experience?.summaries[id],
-            current.minds?.[id],
-            current.innerWorlds?.[id],
-            current.cognitionPolicy,
-            this.service.memoryBacklog,
-          ];
-        }, this.service.memoryBacklog),
+        this.work.refresh(
+          current,
+          (id) => {
+            const actor = current.entities[id]!.actor!;
+            return [
+              actor.controller,
+              actor.incapacitated,
+              actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
+              !nativeNeedBelow(actor, 'fullness', 30),
+              actor.action?.type,
+              dreamStatus(current, current.entities[id])?.episode,
+              current.memories[id],
+              current.experience?.awareness[id],
+              current.experience?.summaries[id],
+              current.minds?.[id],
+              current.innerWorlds?.[id],
+              current.cognitionPolicy,
+              this.service.memoryBacklog,
+            ];
+          },
+          this.service.memoryBacklog,
+        ),
       );
       const actors = this.work
         .ready(this.now(), current.simTime)
@@ -559,11 +563,39 @@ export class CognitionMaintenance {
           async () => await this.macrofold.reflect(request, snapshot.files),
         ),
       );
-      reflectionSchema.parse({ thoughts: value.thoughts, goalChanges: value.goalChanges, knowledgeChanges: value.knowledgeChanges, nameChanges: value.nameChanges });
-      const edits = resolveResponseEntities({operations: [
-        ...value.nameChanges.map((name, i) => ({localId: `name${i}`, requiresAccepted: [], talk: null, act: null, think: null, goal: null, plan: null, name})),
-        ...value.knowledgeChanges.map((note, i) => ({localId: `note${i}`, requiresAccepted: [], talk: null, act: null, think: null, goal: null, plan: null, note})),
-      ]}, prepared.entityReferences);
+      reflectionSchema.parse({
+        thoughts: value.thoughts,
+        goalChanges: value.goalChanges,
+        knowledgeChanges: value.knowledgeChanges,
+        nameChanges: value.nameChanges,
+      });
+      const edits = resolveResponseEntities(
+        {
+          operations: [
+            ...value.nameChanges.map((name, i) => ({
+              localId: `name${i}`,
+              requiresAccepted: [],
+              talk: null,
+              act: null,
+              think: null,
+              goal: null,
+              plan: null,
+              name,
+            })),
+            ...value.knowledgeChanges.map((note, i) => ({
+              localId: `note${i}`,
+              requiresAccepted: [],
+              talk: null,
+              act: null,
+              think: null,
+              goal: null,
+              plan: null,
+              note,
+            })),
+          ],
+        },
+        prepared.entityReferences,
+      );
       if (
         obligations !==
         digest((this.service.world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment'))
@@ -587,8 +619,8 @@ export class CognitionMaintenance {
           null,
           0,
           value.goalChanges,
-          edits.operations.flatMap(op => op.note ? [op.note] : []),
-          edits.operations.flatMap(op => op.name ? [op.name] : []),
+          edits.operations.flatMap((op) => (op.note ? [op.note] : [])),
+          edits.operations.flatMap((op) => (op.name ? [op.name] : [])),
           prepared.binding.entityIds,
         ),
       );

@@ -249,7 +249,11 @@ export class AiDirector {
             };
       if (this.service.paused)
         return { ok: false, code: 'paused', message: 'Resume before attempting an action.' };
-      if (!actor?.alive || actor.incapacitated || capabilityBlocked(this.service.world, this.service.world.entities[actorId], 'actions'))
+      if (
+        !actor?.alive ||
+        actor.incapacitated ||
+        capabilityBlocked(this.service.world, this.service.world.entities[actorId], 'actions')
+      )
         return { ok: false, code: 'actor-unavailable', message: 'Your character cannot act now.' };
       if (
         targetId &&
@@ -1941,7 +1945,8 @@ export class AiDirector {
         const sentence = [
           ...latest.map((m) => m.summary),
           ...matches.map(
-            (id) => `I notice ${observerDescription(world, entity.id, id)}, relevant to my current interest.`,
+            (id) =>
+              `I notice ${observerDescription(world, entity.id, id)}, relevant to my current interest.`,
           ),
           `My current goal is ${currentGoal(actor)}.`,
           ...projectAttributes(world, entity, 'owner')

@@ -33,7 +33,11 @@ function gatherDescription(entity: Entity): string {
   return `Gather ${entity.name}: base yield ${SIMULATION_RULES.gatherQuantity} ${resource.definitionId} per batch, up to 4 with a compatible carried gathering tool (${resource.quantity} currently available), ${resource.workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty.`;
 }
 
-function describeTargets(service: WorldService, actorId: string, candidates: CandidateAction[]): CandidateAction[] {
+function describeTargets(
+  service: WorldService,
+  actorId: string,
+  candidates: CandidateAction[],
+): CandidateAction[] {
   return candidates.map((candidate) => {
     const command = candidate.command;
     const id = command && 'targetId' in command ? command.targetId : undefined;

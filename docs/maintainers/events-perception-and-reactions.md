@@ -51,10 +51,10 @@ Run relevant tests as each slice lands. EPR08 save semantics must be considered 
 
 **Dependencies:** none. Coordinate with PF00/PF09.
 
-- [ ] Record the current commit and locate the actual implementations and completed work. Confirm the active no-legacy-support policy; use disposable current-format saves for experiments.
+- [ ] Record the current commit and locate the actual implementations and completed work. Confirm the active identity-preserving in-place upgrade policy; use disposable worlds for experiments.
 - [ ] Trace one directed speech request, one living-actor encounter, one ordinary-object acquisition, one need-protection episode, one reflection wakeup, and one story-selector decision. Separate physical occurrence, evidence, wakeup, model dispatch, and effect admission.
 - [ ] Add bounded counters to existing profiling: full entity traversals, spatial builds, query candidates, exact sense tests, event-audience candidates, actor input scans, retained experiences inspected, accepted/deferred opportunities, and queue age. No per-counter SQL writes.
-- [ ] Record current numerical thresholds and their distinct policy roles. Preserve existing survival, sleep, model gating, cooldown, and urgent-single-refresh behavior unless a later task explicitly changes the documented semantic boundary.
+- [ ] Record current numerical thresholds and their distinct policy roles. Preserve existing survival, sleep, model gating, unchanged-opportunity suppression, and urgent-single-refresh behavior unless a later task explicitly changes the documented semantic boundary.
 - [ ] Record the current save/restore invalidation hooks and authority-generation identity. Find existing startup/cursor recovery rather than inventing another durable queue.
 - [ ] Resolve tracker overlap: PF09 links to EPR02/EPR05/EPR10 for this subsystem; PF02 links to EPR05 for remaining trigger intake. Do not duplicate detailed task bodies or alter existing completed states.
 
@@ -252,10 +252,16 @@ The coarse-contact slice adds saved private onset/detail/end episodes, receiver-
 - [x] Reuse native exposure membership when the relevant observer/source/map/sense facts are unchanged; preserve stationary-observer source-motion invalidation, current coarse feature changes, asleep/sightless behavior and same-version baselines.
 - [x] Share immutable inert-source descriptors; use existing current observations for ongoing stimuli instead of duplicating an event every tick.
 - [x] Reuse `ActorWork` with frozen-snapshot deduplication, at most 64 eligible schedule reads per pass, rotating inspected tickets and generation-safe wake acknowledgements. Eligible trigger selection uses ordered unconsumed evidence instead of full recall reconstruction.
-- [x] Goal/learned-technique changes can create an ordinary reconsideration opportunity under existing Jev routing, cooldown, fairness and budgets. They do not directly buy generation or grant private knowledge.
+- [x] Goal/learned-technique changes can create an ordinary reconsideration opportunity under existing Jev routing, current eligibility, fairness and budgets. They do not directly buy generation or grant private knowledge.
 - [x] Cooperative native checkpoints preserve full-step atomicity and event-time evidence while allowing host I/O to run. These are not later-game-tick delivery or a second simulation owner.
 - [ ] Complete the general EPR01 typed source/episode interfaces, arbitrary sensory-detail evaluators, owner-private threshold/reminder generalization, source-correction cursors and feature-specific policy. The native finite feature adapter is not those systems.
 - [ ] Replace the remaining lightweight per-mind/per-entity signature pass and conservative global inventory/manifest invalidation only when profiles justify a mutation-fed regional index. General external-event audience discovery still uses the exact existing path, not a speculative reverse graph.
 - [ ] Qualify cold rotation of own-response provenance, fairness under long-running provider work, all-speed long-session/recovery and concurrent editor mutations. The current shared workflow's finite concurrency and protected native survival are unchanged.
 
 Current facts are in [Architecture](../architecture.md#change-driven-exposure-and-reaction-intake); actual runtime/performance evidence is in [Verification](../verification.md#perception-performance-implementation). Deferred automated cases remain in [TODO](TODO.md#perception-performance--deferred-automated-validation). Do not mark the broader EPR00–EPR10 acceptance complete from these native observations.
+
+## Rebased implementation boundary
+
+Private acquisition batching, scalar frame capture, category-local exposure reuse, unchanged-episode reuse and status-aware perception loss are implemented. The existing knowledge owner retains observer labels and continuous recognition; shared descriptors do not grant shared knowledge. Current-evidence coalescing follows main rather than an oldest-history dispatch backlog. These implementations do not complete EPR's richer sense semantics, regional mutation-fed indexes, reminders or full failure/scale matrix.
+
+Measured kernel/server work and residual persistence gates belong to [PF](performance.md#perceptionevidence-and-burst-delivery); automated regression work remains in [TODO](TODO.md#rebased-actionperception-regression-todos). No new scheduler, sensory registry or inference loop was introduced.

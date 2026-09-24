@@ -1,7 +1,180 @@
 {
-  "scope": "15-second phases with continuous presence; no browser/PostgreSQL/providers; see raw reports for counts and cumulative metric caveats.",
-  "run": "35964827954",
-  "results": {
+  "scope": "Final rebased implementation summary; raw profile reports retain measurements and caveats. No unit/browser suites or live model calls.",
+  "main": "fc01e19b30060e6c7213b1c5405be13df209297e",
+  "rebasedBaseline": "3be6601f862a48fe1facf951943f53c16024cb1f",
+  "measurementRun": "35964827954",
+  "paidModelCalls": 0,
+  "native": {
+    "mixed-cold": {
+      "requestedSpeed": 3,
+      "sameFinalDigest": true,
+      "before": {
+        "totalMs": 1487.588241,
+        "p50Ms": 6.438034000000016,
+        "p95Ms": 9.449533999999971,
+        "maxStepMs": 266.168151,
+        "nativeHeadroomAtRequestedSpeed": 0.6722290298071804,
+        "finalCounts": {
+          "entities": 344,
+          "events": 3254,
+          "awareness": 3474
+        }
+      },
+      "after": {
+        "totalMs": 1030.4680859999999,
+        "p50Ms": 4.52240299999994,
+        "p95Ms": 5.787444999999934,
+        "maxStepMs": 183.58682800000003,
+        "nativeHeadroomAtRequestedSpeed": 0.9704327708796215,
+        "finalCounts": {
+          "entities": 344,
+          "events": 3254,
+          "awareness": 3474
+        }
+      }
+    },
+    "mixed-warm": {
+      "requestedSpeed": 3,
+      "sameFinalDigest": true,
+      "before": {
+        "totalMs": 4398.231895,
+        "p50Ms": 7.159228999999868,
+        "p95Ms": 9.265907999999854,
+        "maxStepMs": 17.434929999999895,
+        "nativeHeadroomAtRequestedSpeed": 0.7578803057480291,
+        "finalCounts": {
+          "entities": 344,
+          "events": 3274,
+          "awareness": 3504
+        }
+      },
+      "after": {
+        "totalMs": 3072.609017,
+        "p50Ms": 4.904807999999775,
+        "p95Ms": 6.271924000000126,
+        "maxStepMs": 16.66466700000001,
+        "nativeHeadroomAtRequestedSpeed": 1.0848543745366914,
+        "finalCounts": {
+          "entities": 344,
+          "events": 3274,
+          "awareness": 3504
+        }
+      }
+    },
+    "gems-cold": {
+      "requestedSpeed": 3,
+      "sameFinalDigest": true,
+      "before": {
+        "totalMs": 966.9872969999999,
+        "p50Ms": 4.478846999999973,
+        "p95Ms": 6.331773999999996,
+        "maxStepMs": 108.83500399999997,
+        "nativeHeadroomAtRequestedSpeed": 1.0341397483735508,
+        "finalCounts": {
+          "entities": 514,
+          "events": 1024,
+          "awareness": 1024
+        }
+      },
+      "after": {
+        "totalMs": 790.8230289999999,
+        "p50Ms": 3.733002000000056,
+        "p95Ms": 5.012455999999986,
+        "maxStepMs": 78.14263299999999,
+        "nativeHeadroomAtRequestedSpeed": 1.264505411867565,
+        "finalCounts": {
+          "entities": 514,
+          "events": 1024,
+          "awareness": 1024
+        }
+      }
+    },
+    "gems-warm": {
+      "requestedSpeed": 3,
+      "sameFinalDigest": true,
+      "before": {
+        "totalMs": 2906.3236439999996,
+        "p50Ms": 4.61596899999995,
+        "p95Ms": 5.778948000000128,
+        "maxStepMs": 10.98394200000007,
+        "nativeHeadroomAtRequestedSpeed": 1.1469243421030826,
+        "finalCounts": {
+          "entities": 514,
+          "events": 1027,
+          "awareness": 1027
+        }
+      },
+      "after": {
+        "totalMs": 2368.915458,
+        "p50Ms": 3.778099999999995,
+        "p95Ms": 4.551703000000089,
+        "maxStepMs": 7.619354000000044,
+        "nativeHeadroomAtRequestedSpeed": 1.407113673928896,
+        "finalCounts": {
+          "entities": 514,
+          "events": 1027,
+          "awareness": 1027
+        }
+      }
+    },
+    "dense-cold": {
+      "requestedSpeed": 1,
+      "sameFinalDigest": true,
+      "before": {
+        "totalMs": 8921.892461000001,
+        "p50Ms": 26.369681000000128,
+        "p95Ms": 29.13810100000046,
+        "maxStepMs": 3786.6441109999996,
+        "nativeHeadroomAtRequestedSpeed": 0.3362515310640438,
+        "finalCounts": {
+          "entities": 614,
+          "events": 62559,
+          "awareness": 67707
+        }
+      },
+      "after": {
+        "totalMs": 4460.02973,
+        "p50Ms": 11.323073999999906,
+        "p95Ms": 13.168337999999949,
+        "maxStepMs": 2329.098561,
+        "nativeHeadroomAtRequestedSpeed": 0.6726412561379944,
+        "finalCounts": {
+          "entities": 614,
+          "events": 62559,
+          "awareness": 67707
+        }
+      }
+    },
+    "dense-warm": {
+      "requestedSpeed": 1,
+      "sameFinalDigest": true,
+      "before": {
+        "totalMs": 76703.39821799999,
+        "p50Ms": 176.04263899999933,
+        "p95Ms": 190.0559280000016,
+        "maxStepMs": 277.0454059999993,
+        "nativeHeadroomAtRequestedSpeed": 0.1303723202924965,
+        "finalCounts": {
+          "entities": 614,
+          "events": 62617,
+          "awareness": 67864
+        }
+      },
+      "after": {
+        "totalMs": 9932.450832999999,
+        "p50Ms": 16.573257000000012,
+        "p95Ms": 21.076026999999158,
+        "maxStepMs": 102.63766200000009,
+        "nativeHeadroomAtRequestedSpeed": 1.006800855915196,
+        "finalCounts": {
+          "entities": 614,
+          "events": 62617,
+          "awareness": 67864
+        }
+      }
+    }
+  },
+  "server": {
     "small": {
       "before": [
         {

@@ -41,38 +41,14 @@
         },
         "headroom": 0.787313794894408,
         "hottest": [
-          [
-            "post node:inspector:118",
-            214.685
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            149.34499999999994
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            140.02699999999984
-          ],
-          [
-            "(garbage collector) :0",
-            117.52199999999995
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            65.88700000000001
-          ],
-          [
-            "get dist/immer.mjs:382",
-            60.13099999999999
-          ],
-          [
-            "recordEvent src/events.ts:1",
-            57.84700000000001
-          ],
-          [
-            "(anonymous) src/spatial.ts:1",
-            40.52300000000001
-          ]
+          ["post node:inspector:118", 214.685],
+          ["finalizeProperty dist/immer.mjs:314", 149.34499999999994],
+          ["updateEncounters src/kernel.ts:1", 140.02699999999984],
+          ["(garbage collector) :0", 117.52199999999995],
+          ["(anonymous) src/kernel.ts:1", 65.88700000000001],
+          ["get dist/immer.mjs:382", 60.13099999999999],
+          ["recordEvent src/events.ts:1", 57.84700000000001],
+          ["(anonymous) src/spatial.ts:1", 40.52300000000001]
         ]
       },
       "after": {
@@ -88,38 +64,14 @@
         },
         "headroom": 0.7800603086934375,
         "hottest": [
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            155.91899999999984
-          ],
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            91.38299999999998
-          ],
-          [
-            "get dist/immer.mjs:382",
-            90.09899999999998
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            84.64199999999998
-          ],
-          [
-            "visibleFeature src/perception-frame.ts:1",
-            65.68500000000003
-          ],
-          [
-            "createPerceptionFrame src/perception-frame.ts:1",
-            60.07900000000002
-          ],
-          [
-            "isDraftable dist/immer.mjs:54",
-            46.454
-          ],
-          [
-            "recordEvent src/events.ts:1",
-            45.849
-          ]
+          ["finalizeProperty dist/immer.mjs:314", 155.91899999999984],
+          ["(anonymous) src/perception-frame.ts:1", 91.38299999999998],
+          ["get dist/immer.mjs:382", 90.09899999999998],
+          ["updateEncounters src/kernel.ts:1", 84.64199999999998],
+          ["visibleFeature src/perception-frame.ts:1", 65.68500000000003],
+          ["createPerceptionFrame src/perception-frame.ts:1", 60.07900000000002],
+          ["isDraftable dist/immer.mjs:54", 46.454],
+          ["recordEvent src/events.ts:1", 45.849]
         ]
       }
     },
@@ -137,38 +89,14 @@
         },
         "headroom": 0.6879558621277976,
         "hottest": [
-          [
-            "intersectsSegment src/geometry.ts:1",
-            172.009
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            118.64899999999992
-          ],
-          [
-            "(anonymous) src/geometry.ts:1",
-            114.58199999999995
-          ],
-          [
-            "(anonymous) src/kernel.ts:1",
-            101.26599999999993
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            93.04199999999999
-          ],
-          [
-            "(anonymous) src/perception.ts:1",
-            89.40599999999996
-          ],
-          [
-            "get dist/immer.mjs:382",
-            73.15000000000002
-          ],
-          [
-            "(garbage collector) :0",
-            62.159
-          ]
+          ["intersectsSegment src/geometry.ts:1", 172.009],
+          ["updateEncounters src/kernel.ts:1", 118.64899999999992],
+          ["(anonymous) src/geometry.ts:1", 114.58199999999995],
+          ["(anonymous) src/kernel.ts:1", 101.26599999999993],
+          ["finalizeProperty dist/immer.mjs:314", 93.04199999999999],
+          ["(anonymous) src/perception.ts:1", 89.40599999999996],
+          ["get dist/immer.mjs:382", 73.15000000000002],
+          ["(garbage collector) :0", 62.159]
         ]
       },
       "after": {
@@ -184,38 +112,14 @@
         },
         "headroom": 0.8768355904227162,
         "hottest": [
-          [
-            "(anonymous) src/perception-frame.ts:1",
-            109.50699999999998
-          ],
-          [
-            "createPerceptionFrame src/perception-frame.ts:1",
-            100.23399999999995
-          ],
-          [
-            "finalizeProperty dist/immer.mjs:314",
-            99.49699999999997
-          ],
-          [
-            "get dist/immer.mjs:382",
-            95.406
-          ],
-          [
-            "visibleFeature src/perception-frame.ts:1",
-            73.93200000000002
-          ],
-          [
-            "(garbage collector) :0",
-            52.720000000000006
-          ],
-          [
-            "isPlainObject dist/immer.mjs:60",
-            44.41500000000002
-          ],
-          [
-            "updateEncounters src/kernel.ts:1",
-            42.675000000000004
-          ]
+          ["(anonymous) src/perception-frame.ts:1", 109.50699999999998],
+          ["createPerceptionFrame src/perception-frame.ts:1", 100.23399999999995],
+          ["finalizeProperty dist/immer.mjs:314", 99.49699999999997],
+          ["get dist/immer.mjs:382", 95.406],
+          ["visibleFeature src/perception-frame.ts:1", 73.93200000000002],
+          ["(garbage collector) :0", 52.720000000000006],
+          ["isPlainObject dist/immer.mjs:60", 44.41500000000002],
+          ["updateEncounters src/kernel.ts:1", 42.675000000000004]
         ]
       }
     }

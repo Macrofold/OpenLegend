@@ -16,9 +16,7 @@
         "z": 14
       },
       "semanticCalls": 0,
-      "bindings": [
-        "action"
-      ]
+      "bindings": ["action"]
     },
     {
       "name": "distinct-intent-slots",

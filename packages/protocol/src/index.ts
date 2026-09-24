@@ -379,8 +379,18 @@ export interface GodWorldEventsEditorView {
 export interface GodMindView {
   worldId?: string;
   generation?: string;
-  notepads?: {subjectId: string | null; label: string; text: string; revision: number; characters: number; maxCharacters: number}[];
-  identities?: Record<string, {givenName: string; revision: number; encounterId: string | null; authored: boolean}>;
+  notepads?: {
+    subjectId: string | null;
+    label: string;
+    text: string;
+    revision: number;
+    characters: number;
+    maxCharacters: number;
+  }[];
+  identities?: Record<
+    string,
+    { givenName: string; revision: number; encounterId: string | null; authored: boolean }
+  >;
   corrections?: Record<string, string>;
   legacyThoughts?: Array<{
     decisionId: string;

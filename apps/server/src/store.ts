@@ -771,7 +771,11 @@ export class SqliteStore implements GameRepository {
             .prepare('INSERT INTO world_journal (revision,payload,created_at) VALUES (?,?,?)')
             .run(revision, changesPayload, Date.now());
         }
-        await new KnowledgeStore(this.db).project(this.acceptedState?.world, state.world, !!historyProjection?.restore);
+        await new KnowledgeStore(this.db).project(
+          this.acceptedState?.world,
+          state.world,
+          !!historyProjection?.restore,
+        );
         if (this.db.dialect === 'postgres')
           for (const row of changedRows) {
             await this.db

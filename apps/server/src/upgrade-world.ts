@@ -9,6 +9,18 @@ import {
  * docs/save-and-load.md#active-development-policy
  */
 export function upgradeWorldState(world: WorldState): void {
+  // Earlier pending requests had no explicit target/mode scope. Preserve the request;
+  // a stored alternative retains its mode, otherwise queueing grants no replace authority.
+  for (const entity of Object.values(world.entities ?? {})) {
+    const attempts = entity.actor?.agency?.attempts;
+    if (!Array.isArray(attempts)) continue;
+    for (const attempt of attempts) {
+      if (!attempt || typeof attempt !== 'object') continue;
+      if (!Object.hasOwn(attempt, 'targetEntityId')) attempt.targetEntityId = null;
+      if (!Object.hasOwn(attempt, 'mode')) attempt.mode = attempt.alternative?.mode ?? 'enqueue';
+    }
+  }
+
   // Preserve old facts and IDs while ordering raw source arrays for cursor reads.
   // Missing sequence remains unknown (zero); malformed numeric data is left for validation.
   for (const rows of [
