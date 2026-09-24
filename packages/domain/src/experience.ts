@@ -1065,7 +1065,7 @@ export function* experiencesSince(
     const a = aware[ai],
       m = memories[mi],
       s = summaries[si];
-    const as = a?.sequence ?? Infinity,
+    const as = a ? (a.sequence ?? 0) : Infinity,
       ms = m ? (m.sequence ?? 0) : Infinity,
       ss = s ? (s.sequence ?? 0) : Infinity;
     if (m && ms <= as && ms <= ss) {

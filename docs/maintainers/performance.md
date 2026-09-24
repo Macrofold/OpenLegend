@@ -237,3 +237,13 @@ Treat this as an attribution target, not a result of multiplying microbenchmark 
 
 - [x] Remove the action panel's independent two-second polling and reuse bounded player state patches. Grounding reuses its request observation, scopes explicit targets before truncation, and reuses identical within-response interpretations without duplicating native invocation identities.
 - [ ] Qualify and reduce first-exposure encounter/event/awareness fan-out before a population-scale claim. The existing mixed native scenario still exhibits a large cold maximum; record matched baseline/current measurements separately from steady-state percentiles. Preserve EPR's audience/knowledge semantics and existing deterministic event/RNG invariants rather than dropping exposures or silently batching away elapsed work. See [action review evidence](../verification.md#action-capability-review).
+
+## Perception/evidence and burst delivery
+
+- [x] Remove private-acquisition audience amplification, batch through the existing experience owner, reuse unchanged exposure and immutable source metadata, and seal newly owned evidence at the final native phase.
+- [x] Remove the duplicate all-observer sensory scan from thought admission and diagnostic telemetry as a cognition invalidator. Consume the ordered new-evidence tail; bound schedule reads and preserve newer dirty generations.
+- [x] Add cooperative native checkpoints under the existing single mutation lane. Measure CPU, wall time, yields and longest slices separately; reads never see partial native state.
+- [x] Run matched original/final cold and warm native profiles, mature-tail lookup and a real HTTP/SQLite burst/restart exercise. See [evidence](../verification.md#perception-performance-implementation), not a population guarantee.
+- [ ] Further reduce indivisible finalization, a single path query, projection/serialization and commit spikes when they dominate measured full-stack tails. A long-lived worker or isolated serializer remains PF10-gated; it cannot create another writer or copy the full world each frame.
+- [ ] Qualify sustained 1×/3×/8× real-time debt and command latency with representative moving observers, history, database and browser load. The larger native profile and profiler headroom exclude those costs.
+- [ ] Flat active-evidence arrays still have copy-on-write append cost; current backlog/consolidation policy bounds them. Profile legitimate mature workloads before introducing paged active state or replacing Immer.

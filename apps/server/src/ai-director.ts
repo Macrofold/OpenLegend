@@ -1751,7 +1751,6 @@ export class AiDirector {
             world.items,
             world.knowledge[id],
             world.moduleManifest,
-            world.perceptionFeatures,
             nativeNeedBelow(actor, 'fullness', 20),
             nativeNeedBelow(actor, 'energy', 15),
             nativeNeedBelow(actor, 'energy', 10),
@@ -1835,7 +1834,10 @@ export class AiDirector {
         const fingerprint = digest({
           matches,
           nativeProtection,
-          // Goal edits refresh interests but do not buy a new response by themselves.
+          // Relevant intent/knowledge changes create an ordinary opportunity, not mandatory generation.
+          // docs/architecture.md#change-driven-exposure-and-reaction-intake
+          goal: currentGoal(actor),
+          knowledge: (world.knowledge[entity.id] ?? []).map((record) => record.recipeId),
           need: nativeNeedBelow(actor, 'fullness', 20)
             ? 'hungry'
             : nativeNeedBelow(actor, 'energy', 15)
@@ -1968,7 +1970,8 @@ export class AiDirector {
               policy: policy.revision,
               stimulus: sentence,
               coalescedSources: latest.map((m) => m.id),
-              deferredCount: latest.length - latest.length,
+              deferredCount: latest.length < 8 ? 0 : null,
+              selectedSourceLimit: 8,
               offeredRoutes: [0, 1, 2, 3, 4, 5],
             },
           });

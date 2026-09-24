@@ -99,7 +99,7 @@ The browser check needs Playwright Chromium (`pnpm exec playwright install chrom
 
 Open **Character → Take an action** to submit a character intention separately from dialogue. Exact requests such as `go to x=12, z=14` and unqualified `follow Ada` can run without AI. Other wording uses configured Jev first, then bounded interpretation when needed. Disclosed tolerable omissions can run as partial fulfillment; uncertain revisions wait for **Accept revised action** or **Decline / withdraw**. Follow means remaining near a visible living target, not stealth, scent tracking, or a sunset deadline. Use the explicit support identifier when floors overlap. Choose Queue or Replace deliberately. Invention does not need to be unlocked.
 
-This branch uses development format 11; select a fresh data directory for earlier worlds. See [action capabilities](docs/action-capabilities.md), its [workflow reconciliation boundary](docs/action-capabilities.md#mechanical-workflow-reconciliation), and [runtime evidence](docs/verification.md#action-capability-native-slice).
+This branch uses development format 13; select a fresh data directory for earlier worlds. See [action capabilities](docs/action-capabilities.md), its [workflow reconciliation boundary](docs/action-capabilities.md#mechanical-workflow-reconciliation), and [runtime evidence](docs/verification.md#action-capability-native-slice).
 
 ## Explore the project
 
@@ -131,3 +131,5 @@ First-party material in this repository is licensed under **GNU AGPL version 3 o
 The licensing guide explains the intended separation between the shared engine, future permissive SDKs, private world data, and separately licensed mechanics packs. Linked third-party artwork and other external references retain their own rights. The AGPL decision does not change the license of Macrofold or any other repository.
 
 For repeatable native performance experiments, use the [stress profiling guide](docs/maintainers/performance-profiling.md), including the 500-ground-gem scenario.
+
+The native perception/runtime changes and their measured limits are documented in [perception performance verification](docs/verification.md#perception-performance-implementation).

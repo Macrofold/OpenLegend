@@ -61,3 +61,10 @@ Parameterized move/follow, Jev-first text grounding and explicit approval of unc
 ## Action capability review
 
 Implemented scope: operation-scoped native bindings and manifest admission pins; pending target/mode identity; queued-intent revision fencing; native-behavior fulfillment review; explicit revision approval; shared state-stream UI; production provider-schema extraction. The existing narrow point-move/follow executor is retained, not replaced by a general workflow engine. Current development saves require schema 11. [Architecture](../../docs/architecture.md#reviewed-action-binding-and-approval-boundaries) owns details, [AC tracker](../../docs/maintainers/action-capabilities.md#delivered-scope-and-remaining-work) owns gaps, and [Verification](../../docs/verification.md#action-capability-review) owns measured scope. General INV/workflow integration, live semantic quality, browser accessibility and population-scale qualification remain open.
+
+
+## Native perception and reaction-performance slice
+
+Implemented: observer-private visual acquisitions, bounded experience admission, unchanged-exposure reuse with source/geometry/sense invalidation, current coarse feature deltas, shared immutable inert-source descriptors, new-evidence intake, generation-safe bounded scheduler tickets and cooperative checkpoints within native steps. Existing domain/experience/ActorWork/world-writer owners remain authoritative. Current development format is 13; same-version exposure/feature baselines survive restart.
+
+Evidence and residual limits are in [Verification](../../docs/verification.md#perception-performance-implementation). General sensory schemas, fully mutation-fed regional intake, arbitrary persistent-stimulus reminders, dedicated simulation workers, all-speed long-session/end-to-end capacity, PostgreSQL and browser acceptance remain incomplete; [EPR](../../docs/maintainers/events-perception-and-reactions.md) and [PF](../../docs/maintainers/performance.md) retain ownership.

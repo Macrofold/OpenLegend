@@ -519,10 +519,10 @@ The final native guard rejects contradictory structured targets before exact-tex
 
 Both revisions ran on the same Ubuntu GitHub runner, Node v22.23.2, Intel Xeon 6973P-C. The unchanged built-in scenarios each contain 180 measured one-second native advances, zero warm-up and requested speed 3. Baseline is the pre-review commit above. These are single paired measurements, not statistically established speedups. Final entity/event/awareness counts matched across each pair; that is not proof of complete behavioral equivalence.
 
-| Scenario | Baseline total ms | Reviewed total ms | p95 baseline / reviewed ms | Maximum baseline / reviewed ms |
-| --- | --- | --- | --- | --- |
-| mixed (344 entities) | 1272.80 | 1179.83 | 4.41 / 4.12 | 687.35 / 659.51 |
-| gems (514 entities) | 848.06 | 847.87 | 5.39 / 5.94 | 92.12 / 89.90 |
+| Scenario             | Baseline total ms | Reviewed total ms | p95 baseline / reviewed ms | Maximum baseline / reviewed ms |
+| -------------------- | ----------------- | ----------------- | -------------------------- | ------------------------------ |
+| mixed (344 entities) | 1272.80           | 1179.83           | 4.41 / 4.12                | 687.35 / 659.51                |
+| gems (514 entities)  | 848.06            | 847.87            | 5.39 / 5.94                | 92.12 / 89.90                  |
 
 The isolated fifty-follower workload admitted all 50 actors and retained all 50 activities after 180 one-second advances. Median was 3.25 ms, p95 6.19 ms, maximum 18.16 ms, total 687.62 ms. It deliberately disables cognition/memory and uses repeated fixture positions to isolate native controllers; it is not crowd collision, social-memory, browser, persistence or end-to-end population qualification.
 
@@ -533,3 +533,22 @@ The isolated fifty-follower workload admitted all 50 actors and retained all 50 
 Live Jev/LLM fidelity and threshold calibration; actual NPC acceptance decisions; browser interaction/accessibility and UI-scope races; full crash/permission/replay matrix; PostgreSQL/manual-save variants; general constraints/roles/parameter questions; definition-specific dependency invalidation; and invention/workflow integration remain open in [AC](maintainers/action-capabilities.md#delivered-scope-and-remaining-work), [TODO](maintainers/TODO.md#action-review-regression-todos) and [PF](maintainers/performance.md#action-capability-review-observations). Existing test fixtures need the current schema 11 rather than legacy conversion. Native point movement/follow is implemented, not the entire action repertoire.
 
 Temporary branch-only review runners are removed at closeout and the original CI workflow is restored. No test suite was disabled permanently, and `main` was not changed by this review.
+
+## Perception performance implementation
+
+Production TypeScript/Vite builds and ad hoc native/service exercises were run; no unit or browser suite was written or run and paid model usage was $0. These results do not establish live Jev/LLM quality, PostgreSQL behavior, browser responsiveness or production population capacity.
+
+The [private-acquisition report](verification/perception-private-batching.json) records the intentional audience correction: mixed-scene awareness fell from 31,756 to 3,474 with the same 3,254 event count. The [exposure report](verification/perception-exposure-reuse.json) verifies unchanged visibility reuse, stationary-source feature changes, moved-source invalidation and same-version rebaselining. The [intake report](verification/perception-intake.json) includes 1,001 identical-snapshot refreshes with two actor inspections, preservation of a newer wake and 1,000 one-record lookups over 20,000 retained synthetic records. Synthetic oversized lookup history is not a gameplay backlog-capacity claim.
+
+The [cooperative report](verification/perception-cooperative.json) compares complete native transition bytes with synchronous execution, without changing the frozen input; timer callbacks run during a cold-exposure burst. Its geometry caches were warmed by the synchronous oracle, so it is not an independent cold-host latency measurement. The [service report](verification/perception-service.json) exercises real loopback HTTP, queued native cancellation, full-step publication, SQLite restart and 130-mind ticket pagination. Its timers and fixture data are not a browser suite.
+
+The [final matched-host report](verification/perception-final-performance.json) alternates original `0582e86` and final code in separate processes on one runner, three cold runs per scenario, plus a warm run and a bounded larger scene. Profiler overhead is included. Below are medians across the three run-level summaries, **not pooled latency percentiles**; headroom uses the scenario's requested 3× rate and excludes database, browser and inference costs.
+
+| Scenario | Build  | Total ms, 180 advances | Run p95 ms | Run maximum ms | Native headroom |
+| -------- | ------ | ---------------------: | ---------: | -------------: | --------------: |
+| mixed    | before |                 2041.6 |       6.51 |         1224.3 |            0.49 |
+| mixed    | after  |                 1060.6 |       5.49 |          358.0 |            0.94 |
+| gems     | before |                 1353.0 |       9.07 |          175.7 |            0.74 |
+| gems     | after  |                  661.2 |       4.53 |          143.9 |            1.51 |
+
+Cold maxima, warm throughput, longest cooperative slices and full-stack command latency are separate measures. No promise that every native suboperation fits eight milliseconds is made. Remaining indivisible finalization/path/projection/commit work and larger-world qualification stay in PF/EPR. Private-acquisition audience/evidence differences are intentional; old broadcast-event digest equality is not the correctness oracle.

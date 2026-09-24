@@ -143,3 +143,7 @@ Added current move/follow, Jev-first grounding and revised-action approval facts
 ## 2026-09-24 — Action capability code review
 
 Aligned current action docs with scoped binding/approval authority, native-behavior review and state-stream presentation. Marked the delivered narrow tasks separately from broad AC acceptance, recorded regression work in Maintainer TODO, preserved the invention-workflow reconciliation section, and advanced current development-save references to schema 11 without legacy readers. Runtime/performance evidence is recorded separately.
+
+## 2026-09-24 — Perception and reaction performance
+
+Recorded private visual-acquisition semantics, bounded experience batches, exposure/feature reuse, ordered reaction intake and cooperative native checkpoints. Updated EPR/PF delivery state, current development format 13, measured native/HTTP evidence and deferred automated coverage. Superseded the SR10 requirement to reproduce broadcast acquisition audiences while retaining outward-event equivalence requirements.

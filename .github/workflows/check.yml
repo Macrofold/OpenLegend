@@ -1,86 +1,11 @@
-name: Perception final qualification
+name: Code checks
 on:
   push:
   pull_request:
 permissions:
   contents: read
 jobs:
-  qualification:
-    if: github.ref == 'refs/heads/design/action-repertoire-and-capability-grounding' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-    env:
-      AI_BUDGET_USD: '0'
-      OPEN_LEGEND_DATABASE_URL: ''
-      OPEN_LEGEND_DATA_DIR: /tmp/perception-final-world
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Final source review and production build
-        run: |
-          python .github/perception-review.py
-          pnpm exec prettier --write apps/server/src/ai-director.ts packages/domain/src/experience.ts
-          pnpm run build
-      - name: Real HTTP and SQLite native exercise
-        run: node --import tsx .github/perception-service.mjs
-      - name: Prepare original baseline independently
-        run: |
-          git fetch --depth=1 origin 0582e8660e154e6383a407ffb09e75f0b8c6223a
-          git worktree add --detach /tmp/openlegend-baseline 0582e8660e154e6383a407ffb09e75f0b8c6223a
-          pnpm -C /tmp/openlegend-baseline install --frozen-lockfile
-      - name: Alternating matched cold and warm native profiles
-        run: |
-          for scene in mixed gems; do
-            for i in 1 2 3; do
-              (cd /tmp/openlegend-baseline && node --import tsx scripts/stress-native.ts scripts/performance/scenarios/$scene.json /tmp/final-before-$scene-$i.cpuprofile > /tmp/final-before-$scene-$i.json)
-              node --import tsx scripts/stress-native.ts scripts/performance/scenarios/$scene.json /tmp/final-after-$scene-$i.cpuprofile > /tmp/final-after-$scene-$i.json
-            done
-            python - "$scene" <<'PY'
-          import json,sys
-          s=json.load(open(f'scripts/performance/scenarios/{sys.argv[1]}.json'));s['warmup']=30;s['steps']=600
-          json.dump(s,open(f'/tmp/warm-{sys.argv[1]}.json','w'))
-          PY
-            (cd /tmp/openlegend-baseline && node --import tsx scripts/stress-native.ts /tmp/warm-$scene.json /tmp/final-before-$scene-warm.cpuprofile > /tmp/final-before-$scene-warm.json)
-            node --import tsx scripts/stress-native.ts /tmp/warm-$scene.json /tmp/final-after-$scene-warm.cpuprofile > /tmp/final-after-$scene-warm.json
-          done
-      - name: Bounded larger native workload
-        run: |
-          python - <<'PY'
-          import json
-          s=json.load(open('scripts/performance/scenarios/gems.json'));s['people']=98;s['timeoutSeconds']=90;s['steps']=180
-          json.dump(s,open('/tmp/larger-perception.json','w'))
-          PY
-          set +e
-          node --import tsx scripts/stress-native.ts /tmp/larger-perception.json /tmp/final-larger.cpuprofile > /tmp/final-larger.json
-          echo "$?" > /tmp/final-larger-exit
-          exit 0
-      - name: Record evidence, reconcile docs and remove temporary runners
-        run: |
-          node .github/perception-final-report.mjs
-          python .github/perception-docs.py
-          pnpm exec prettier --write docs/architecture.md docs/performance.md docs/maintainers/events-perception-and-reactions.md docs/maintainers/performance.md docs/maintainers/TODO.md docs/verification.md docs/documentation-changelog.md archive/05-project/implementation-status.md README.md
-          git diff --check
-      - name: Commit completed implementation and evidence
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add packages apps docs archive README.md .github
-          git commit -m '[skip ci] perf: qualify private perception, change-driven intake and cooperative bursts'
-          git push origin HEAD:design/action-repertoire-and-capability-grounding
-      - name: Diagnostics
-        if: always()
-        run: git diff --stat
   check:
-    if: github.ref != 'refs/heads/design/action-repertoire-and-capability-grounding'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
