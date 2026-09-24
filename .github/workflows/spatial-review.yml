@@ -1,0 +1,36 @@
+name: Commit reviewed spatial fixes
+on:
+  push:
+    branches: [feature/spatial-world-3d]
+    paths: [.github/workflows/spatial-review.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply only reviewed runtime patches and build
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 7d99b1e018a91cd5586cc2358ec14b73396111ca
+          git apply --check --unidiff-zero .github/spatial-review-native.patch .github/spatial-review-render.patch
+          git apply --unidiff-zero .github/spatial-review-native.patch .github/spatial-review-render.patch
+          pnpm exec prettier --write apps/client/src/billboard.ts apps/client/src/scene.ts apps/client/src/spatial-art.ts apps/client/src/world-presentation.ts apps/server/src/navigation/backend.ts apps/server/src/navigation/coordinator.ts packages/domain/src/events.ts packages/domain/src/kernel.ts packages/spatial/src/geometry.ts
+          pnpm run build
+          git add apps/client/src/billboard.ts apps/client/src/scene.ts apps/client/src/spatial-art.ts apps/client/src/world-presentation.ts apps/server/src/navigation/backend.ts apps/server/src/navigation/coordinator.ts packages/domain/src/events.ts packages/domain/src/kernel.ts packages/spatial/src/geometry.ts
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m '[skip ci] Fix acquisition privacy and full-facing sprite rendering; reduce repeated spatial work'
+          git push origin HEAD:refs/heads/feature/spatial-world-3d
