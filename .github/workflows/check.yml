@@ -1,4 +1,4 @@
-name: Rebased performance review
+name: Final rebased performance review
 on:
   push:
     branches: [design/action-repertoire-and-capability-grounding]
@@ -8,7 +8,7 @@ concurrency:
   group: action-native-performance
   cancel-in-progress: true
 jobs:
-  review:
+  finish:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     env:
@@ -25,14 +25,22 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Finish migration and documentation ownership
+      - name: Apply reviewed migration, ownership and documentation
         run: |
-          python .github/perf-closeout.py
+          python .github/perf-closeout.py > /tmp/documentation-review.json
+          python .github/perf-final-polish.py
           python - <<'PY'
-          import pathlib,subprocess
+          import pathlib,subprocess,json
+          for name,key in [('action-server-summary.json','results'),('action-perf-closeout.json','server')]:
+            path=pathlib.Path('docs/verification')/name;data=json.loads(path.read_text())
+            for variants in data[key].values():
+              for rows in variants.values():
+                for row in rows:
+                  if 'rejected' in row:row['commandCodes']=row.pop('rejected')
+            path.write_text(json.dumps(data,indent=2)+'\n')
           changed=subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMR','fc01e19b30060e6c7213b1c5405be13df209297e'],text=True).splitlines()
           paths=[p for p in changed if not p.startswith('.github/') and pathlib.Path(p).suffix in ['.ts','.tsx','.mjs','.md','.json']]
-          paths+=['packages/domain/src/worlds/base/navigation.ts','docs/worlds/base/navigation.md']
+          paths+=['packages/domain/src/worlds/base/navigation.ts','docs/worlds/base/navigation.md','archive/05-project/implementation-status.md','docs/verification/action-perf-closeout.json']
           subprocess.run(['pnpm','exec','prettier','--write',*sorted(set(paths))],check=True)
           PY
           pnpm run build
@@ -42,21 +50,32 @@ jobs:
           cp /tmp/integration-final.json docs/verification/action-perf-integration.json
           python .github/perf-review-static.py
           git diff --check
-      - name: Commit reviewed source and current documentation
+      - name: Confirm current main, record final scope and clean up
+        run: |
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = fc01e19b30060e6c7213b1c5405be13df209297e
+          git merge-base --is-ancestor origin/main HEAD
+          python - <<'PY'
+          import pathlib,json,os,shutil,subprocess
+          root=pathlib.Path.cwd();audit=json.loads((root/'docs/verification/action-perf-static-review.json').read_text())
+          if audit['newBrokenLinks'] or audit['duplicateLevelTwoHeadings']:raise RuntimeError('Unresolved documentation links or duplicate ownership headings')
+          native=json.loads((root/'docs/verification/action-perf-final-native.json').read_text())
+          if not all(row['sameFinalDigest'] for row in native['cases'].values()):raise RuntimeError('Unresolved native outcome difference')
+          helpers=['perf-rebase-work.py','perf-rebase-exercise.mjs','perf-density-edit.py','perf-density.py','perf-exposure-edit.py','perf-integrate-edit.py','perf-integration-exercise.mjs','perf-server-fix.py','perf-closeout.py','perf-upgrade-exercise.mjs','perf-review-static.py','perf-final-polish.py']
+          for name in helpers:(root/'.github'/name).unlink(missing_ok=True)
+          for name in ['server-diagnostics','closeout-diagnostics']:shutil.rmtree(root/'.github'/name,ignore_errors=True)
+          workflow=subprocess.check_output(['git','show','fc01e19b30060e6c7213b1c5405be13df209297e:.github/workflows/check.yml'],text=True)
+          (root/'.github/workflows/check.yml').write_text(workflow)
+          report={'scope':'Final production build, targeted formatting, native integration/upgrades and static diff review. No unit or browser suite written/run; no live provider calls.','main':'fc01e19b30060e6c7213b1c5405be13df209297e','backup':'backup/action-capabilities-before-main-20260924','rebasedBaseline':'3be6601f862a48fe1facf951943f53c16024cb1f','inputCommit':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'build':'passed','newBrokenDocumentationLinks':0,'duplicateOwnershipHeadings':0,'matchingNativeCases':len(native['cases']),'paidModelCalls':0,'temporaryRunnerFilesRemoved':helpers,'normalWorkflowRestored':True,'remaining':['Dense legitimate acquisition and synchronous SQLite commit tails','Current callback-gap absence heuristic under multi-second synchronous work','Long soaks, PostgreSQL, browser rendering and no-network cognition/maintenance load','Shared INV/AG invocation and delayed recognition/definition lifetime contracts']}
+          (root/'docs/verification/action-perf-final-review.json').write_text(json.dumps(report,indent=2)+'\n')
+          PY
+          pnpm exec prettier --write docs/verification/action-perf-final-review.json docs/verification/action-perf-static-review.json docs/verification/action-perf-pending-upgrade.json docs/verification/action-perf-integration.json .github/workflows/check.yml
+          git diff --check
+          test -z "$(git diff --name-only fc01e19b30060e6c7213b1c5405be13df209297e -- .github)"
+      - name: Commit final reviewed implementation
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add packages apps scripts docs README.md archive
-          git diff --cached --quiet || git commit -m '[skip ci] fix: preserve pending upgrades and reconcile performance ownership'
-          git push origin HEAD:design/action-repertoire-and-capability-grounding
-      - name: Retain focused failure diagnostics
-        if: failure()
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          mkdir -p .github/closeout-diagnostics
-          git diff > .github/closeout-diagnostics/source.patch
-          for f in /tmp/pending-upgrade.json /tmp/integration-final.json; do test ! -f "$f" || cp "$f" .github/closeout-diagnostics/; done
-          git add .github/closeout-diagnostics
-          git diff --cached --quiet || git commit -m '[skip ci] chore: retain review diagnostics'
+          git add -A .github packages apps scripts docs README.md archive
+          git diff --cached --quiet || git commit -m '[skip ci] fix: finish main integration, measured performance and save preservation'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
