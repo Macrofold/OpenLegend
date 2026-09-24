@@ -8,7 +8,11 @@ Required-data wait is technical time, not an actor action duration: preserve adm
 
 Renderer load is separate: many lit sprites, proxy shadows, shadowed point lights, overlapping read-through fragments, camera updates and alpha picking can dominate. Reuse materials/masks/meshes, keep lights bounded and avoid target-by-occluder CPU raycasts. Do not cull genuine authorized details or sensory evidence to manufacture a performance result. Eligibility/readability and dynamic lighting semantics belong to [World presentation](world-presentation.md).
 
-A further 90% whole-game reduction requires end-to-end attribution (PF00), not repeated optimization of an already sub-millisecond inner query. Existing native participant, independent-copy and experience-membership improvements remain; first acquisition/event fan-out, the EPR03 privacy correction, snapshots and synchronous finalization remain distinct costs. Detailed deferred cases live in SW19/PF and maintainer TODO, not a competing performance list here.
+A further 90% whole-game reduction requires end-to-end attribution (PF00), not repeated optimization of an already sub-millisecond inner query. Existing native participant, independent-copy and experience-membership improvements remain; genuine first-acquisition work, external-event fan-out, snapshots and synchronous finalization remain distinct costs. Detailed deferred cases live in SW19/PF and maintainer TODO, not a competing performance list here.
+
+## Navigation failure and shutdown
+
+Navigation workers are derived computation, not persistence authority. Normal exit while active, asynchronous worker errors and synchronous launch/message-clone failures use the same bounded failure path. Failed result publication pauses on the existing storage-error boundary rather than repeatedly recomputing an uncommittable result. No new work starts while storage is faulted. Shutdown drains in-flight result publication and already-started termination before closing the store; replaced worlds fence results by existing map/timeline/action identity. Worker failure and stale retirement remain distinct metrics. A queue waiting on required data never becomes a false no-route answer.
 
 ## Selected approach
 
@@ -126,7 +130,7 @@ Perception should read position and capability scalars once after movement, quer
 
 Scale cognitive eligibility separately from native movement. Signature-based dirty detection still costs work if every actor's visibility and history must be computed to discover that nothing changed. Prefer committed component/region invalidation and due deadlines; measure eligible-actor queue age as well as CPU time. Autonomous cognition has no actor cooldown or global thought interval; the remaining shared execution slot must be measured before changing provider concurrency. Faster simulation must not silently multiply paid dispatch.
 
-Dense arrivals are a distinct workload: each observer can acquire many private perception records at once, while outward actions can have many witnesses. Track events, audience writes and source-admission scans independently; avoid repeatedly scanning growing awareness arrays for duplicate admission. Preserve witness semantics and source revocation rather than claiming spatial indexes make concentrated crowds cheap. Observer acquisition is private evidence through EPR03; optimizations must preserve that boundary and cannot turn it into an outward action.
+Dense arrivals are a distinct workload. Initial visual acquisitions now have one observer-private recipient, eliminating the incorrect external witness multiplier; this is an evidence-scope correction, not dropped legitimate perception. Every real observer/source acquisition still requires storage. External speech/actions still use event-time audiences, and genuine all-to-all interactions can remain quadratic. Track events, recipient writes, history lookup and source-admission scans separately. EPR owns exposure deltas and hysteresis; PF owns commit/finalization costs. A synthetic scene's improvement does not authorize weaker perception, arbitrary event dropping or a higher supported population.
 
 ## Bounded batching, backpressure and publication
 

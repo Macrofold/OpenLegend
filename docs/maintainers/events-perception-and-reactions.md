@@ -4,7 +4,7 @@
 
 Use [SW04/SW08/SW09](spatial-world.md) for geometry, height-aware senses and camera exposure. Retain EPR scope, hysteresis, observer detail, coalescing and privacy gates here. Current coarse intelligible-only sound is not the full auditory-contact contract; do not broaden its exact-word audience to simulate a muffled unidentified sound.
 
-**Status:** proposed work; no item is complete merely because this tracker exists. Implement when requested. [Design](../events-perception-and-reactions.md) owns the contract; [research](../../archive/02-research/engine-perception-and-event-architectures.md) owns external evidence and the pinned source audit.
+**Status:** partial native delivery; checked subsets describe implemented code, not completion of the broader acceptance gates. [Design](../events-perception-and-reactions.md) owns the contract; [research](../../archive/02-research/engine-perception-and-event-architectures.md) owns external evidence and the pinned source audit.
 
 This tracker owns the new stimulus/perception/reaction integration. PF retains general performance qualification, CR retains cognition/recall behavior, NC retains conversations/story, and SL retains save/load. Cross-reference their work; do not recreate completed actor, Narrator, history, or save systems.
 
@@ -73,7 +73,7 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 - [ ] Classify new fields as saved authority, deterministic derived state, or process resources. Update the save manifest/current format only when needed; add no old-format reader or migration.
 - [ ] Preserve native consequences in the existing ordered transition. Define which later consumers receive after-commit IDs rather than callbacks capable of mutating world state immediately.
 
-**Tests:** scope cannot be forged; system-only signals never produce awareness; private records remain absent from another actor, ordinary client, and story-selector input; accepted IDs survive same-version save/load.
+**Tests:** scope cannot be forged; system-only signals never produce awareness; private thoughts remain absent from ordinary story input, and another actor's private evidence remains absent from the viewer; the viewer's own designated visual acquisition can reach its story selector; accepted IDs survive same-version save/load.
 
 **Exit:** external and internal sources can express the same intake metadata without sharing an unsafe audience or retention policy.
 
@@ -81,12 +81,12 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 
 **Dependencies:** EPR01 contract sufficient; does not require new private-event behavior. Coordinate with PF09, not a second spatial implementation.
 
-- [ ] Qualify the implemented scalar spatial candidate pass, unchanged visibility-array identity and observer-private encounter publication within the fixed-position encounter phase. General external-event candidate reuse, event-time invalidation, broader acquisition deltas and differential acceptance remain open; do not repeat the old scan rewrite. New automated coverage belongs to SR10 in [maintainer TODO](TODO.md#spatial-review-regression-todos).
-- [ ] Restrict external-event audience discovery to relevant listener candidates, then apply the exact existing hearing/sight, capability, life, and sleep rules. Preserve self handling deliberately.
-- [ ] Do not repeatedly call `nearbyEntities` on a mutable draft: its current implementation rebuilds. Introduce explicit phase-valid query context or equivalent reuse, with a safe rebuild/fallback when validity cannot be proved.
-- [ ] Invalidate candidate geometry after every relevant movement, teleport, spawn, removal, or sense-range change. An event's audience must use positions at that event's occurrence, not the end of a multi-step batch.
-- [ ] Preserve deterministic candidate/recipient ordering, existing sense formulas, domain transition boundaries, and RNG use. Do not replace `advanceWorld(1)` with a multi-second call as part of this optimization.
-- [ ] Record rebuild and candidate counts. Retain current grid structure initially; do not add a BVH, worker, or persistent reverse graph in this task.
+- [ ] Qualify the implemented scalar spatial candidate pass and unchanged visibility-array identity. Initial acquisition no longer calls an external audience resolver; general external-event candidate reuse and event-time invalidation remain open. SR10 in [maintainer TODO](TODO.md#spatial-review-regression-todos) owns observer-private acquisition and introduction regression coverage rather than the removed phase-local audience-cache implementation.
+- [ ] Restrict external-event audience discovery to relevant listener candidates, then apply exact hearing/sight, capability, life and sleep rules. Preserve self handling deliberately.
+- [ ] Avoid repeated mutable-draft `nearbyEntities` index rebuilds in external-event emission. Use an explicit event/phase-valid candidate context or equivalent reuse, with safe rebuilding when validity cannot be proved.
+- [ ] Invalidate candidates on relevant movement, teleport, spawn, removal and sense-range changes. An event's audience uses positions at its occurrence, not the end of a multi-step batch.
+- [ ] Preserve deterministic candidate/recipient ordering, sense formulas, native transition boundaries and RNG use. Do not replace `advanceWorld(1)` with a multi-second call to obtain a benchmark speedup.
+- [ ] Record candidate/rebuild counts before extending the existing dynamic spatial index. Static SW geometry already has its own index; this task does not require a new worker or persistent reverse graph.
 
 **Tests:** current-schema naive-query oracle versus optimized queries for random seeded positions, boundaries, obstacles where applicable, movement during a step, source removal after emission, sleepers, and ordinary/native animals. Compare audiences and event order, not only final position. Add a deliberately invalid index case that fails safely or rebuilds.
 
@@ -96,7 +96,7 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 
 **Dependencies:** EPR01–EPR02. This task includes intentional semantics, so distinguish it from the behavior-preserving optimization above.
 
-- [x] Separate encounter acquisition from outwardly observable actions: living-actor and object encounters use the existing private event/experience mutation entrypoint, retaining observed modality without broadcasting around the observer.
+- [x] Separate native visual acquisition from an outwardly observable encounter/action. `recordVisualAcquisition` records observed evidence for only its awake observer through the existing ledger/experience owner, with living-entry cognition behavior retained. Designated introductions remain available only to that observer through the ordinary story policy. This completes the initial scope correction, not the broader exposure-delta/hysteresis tasks below.
 - [ ] Use current versus prior exposure to produce entry/exit/meaningful-feature deltas. Retain living-actor encounter opportunities, current ordinary-object baseline behavior, and supported recognition uncertainty.
 - [ ] Keep live exposure, last-seen evidence, and encounter-episode hysteresis distinct. Linger must not provide current hidden updates or extend action reach.
 - [ ] Add invalidation for stationary observers seeing moved sources, movement within a cell, source feature changes, sense/capability changes, and removal. Do not depend only on observer movement.
