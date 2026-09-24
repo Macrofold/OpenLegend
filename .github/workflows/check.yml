@@ -1,4 +1,4 @@
-name: Rebased server qualification
+name: Sustained rebased qualification
 on:
   push:
     branches: [design/action-repertoire-and-capability-grounding]
@@ -25,20 +25,19 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Review fixes and production build
+      - name: Finish reviewed runtime and profiling boundaries
         run: |
-          python .github/perf-integrate-edit.py
-          pnpm exec prettier --write packages/domain/src/kernel.ts apps/server/src/action-grounding.ts apps/server/src/upgrade-world.ts scripts/performance/profile-server.mjs
+          python .github/perf-server-fix.py
+          pnpm exec prettier --write packages/domain/src/kernel.ts scripts/performance/profile-server.mjs
           pnpm run build
           node --import tsx .github/perf-integration-exercise.mjs > /tmp/action-integration.json
           cp /tmp/action-integration.json docs/verification/action-perf-integration.json
-      - name: Real server smoke and matched workload
+      - name: Sustained server and matched native workloads
         run: |
-          echo '{"seed":73,"people":0,"animals":0,"layout":"scattered","steps":180,"warmup":0,"speed":1,"objects":[]}' > /tmp/server-small.json
-          node --import tsx scripts/performance/profile-server.mjs /tmp/server-small.json /tmp/server-smoke.json 5 1
           git worktree add --detach /tmp/server-baseline 3be6601f862a48fe1facf951943f53c16024cb1f
           cp scripts/performance/profile-server.mjs /tmp/server-baseline/scripts/performance/profile-server.mjs
           (cd /tmp/server-baseline && pnpm install --frozen-lockfile)
+          echo '{"seed":73,"people":0,"animals":0,"layout":"scattered","steps":180,"warmup":0,"speed":1,"objects":[]}' > /tmp/server-small.json
           for scene in small mixed; do
             if [ "$scene" = small ]; then config=/tmp/server-small.json; else config=$PWD/scripts/performance/scenarios/mixed.json; fi
             (cd /tmp/server-baseline && node --import tsx scripts/performance/profile-server.mjs "$config" "/tmp/server-$scene-before.json" 15 1,3,8)
@@ -49,13 +48,35 @@ jobs:
           echo '{"seed":73,"people":100,"animals":0,"layout":"crowded","steps":180,"warmup":0,"speed":1,"timeoutSeconds":120,"objects":[{"count":500,"name":"Profiling gem","properties":["rigid"]}]}' > /tmp/server-dense.json
           node --import tsx scripts/performance/profile-server.mjs /tmp/server-dense.json /tmp/server-dense-after.json 15 1
           cp /tmp/server-dense-after.json docs/verification/action-server-dense-after.json
+          python - <<'PY'
+          import json,pathlib,subprocess,os
+          root=pathlib.Path.cwd();report={'scope':'Matched rebased baseline/final native profiles; same runner; no automated suites or providers. Final runtime retains intentional privacy/migration corrections.','baseline':'3be6601f862a48fe1facf951943f53c16024cb1f','inputCommit':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'cases':{}}
+          for name in ['mixed','gems','dense']:
+            cfg=json.load(open('/tmp/server-dense.json' if name=='dense' else f'scripts/performance/scenarios/{name}.json'));cfg['timeoutSeconds']=120
+            for warm in [False,True]:
+              c={**cfg,'warmup':30 if warm else 0,'steps':600 if warm else 180};path=f'/tmp/native-{name}-{warm}.json';pathlib.Path(path).write_text(json.dumps(c));row={}
+              for variant,cwd in [('before','/tmp/server-baseline'),('after',str(root))]:
+                p=subprocess.run(['node','--import','tsx','scripts/stress-native.ts',path,f'/tmp/native-{name}-{warm}-{variant}.cpuprofile'],cwd=cwd,text=True,capture_output=True,timeout=140)
+                if p.returncode:raise RuntimeError(p.stderr[-5000:])
+                d=json.loads(p.stdout);row[variant]={k:d[k] for k in ['node','steps','warmupSteps','totalMs','p50Ms','p95Ms','maxStepMs','nativeHeadroomAtRequestedSpeed','finalCounts','finalWorldDigest','hottestSelfMs']}
+              row['sameFinalDigest']=row['before']['finalWorldDigest']==row['after']['finalWorldDigest'];report['cases'][name+('-warm' if warm else '-cold')]=row
+          pathlib.Path('docs/verification/action-perf-final-native.json').write_text(json.dumps(report,indent=2)+'\n')
+          summary={}
+          for name in ['small','mixed','dense']:
+            summary[name]={}
+            for variant in ['before','after']:
+              p=pathlib.Path(f'docs/verification/action-server-{name}-{variant}.json')
+              if not p.exists():continue
+              d=json.loads(p.read_text());summary[name][variant]=[{'speed':v['speed'],'achievedSpeed':v['achievedSpeed'],'startingSimTime':v['startingSimTime'],'commands':v['client']['commands'],'rejected':v['client']['commandCodes'],'eventLoop':v['eventLoop'],'cpuMs':v['serverCpuMs'],'debt':v['gauges'].get('clock.pendingSimSeconds'),'storageError':v['storageError'],'memoryBacklog':v['memoryBacklog'],'clientErrors':v['client']['errors']} for v in d['phases']]
+          pathlib.Path('docs/verification/action-server-summary.json').write_text(json.dumps({'scope':'15-second phases with continuous presence; no browser/PostgreSQL/providers; see raw reports for counts and cumulative metric caveats.','run':os.environ['GITHUB_RUN_ID'],'results':summary},indent=2)+'\n')
+          PY
       - name: Commit reviewed source and measurements
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git diff --check
           git add packages apps scripts docs
-          git diff --cached --quiet || git commit -m '[skip ci] fix: preserve main privacy and upgrades; measure real-server performance'
+          git diff --cached --quiet || git commit -m '[skip ci] perf: qualify sustained server load and final native paths'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
       - name: Retain focused diagnostics
         if: failure()
