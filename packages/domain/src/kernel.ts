@@ -1692,7 +1692,7 @@ function updateEncounters(
   let nearbyAll: ReturnType<typeof spatialCandidates<(typeof entities)[number]>> | undefined;
   const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
   for (const actor of entities.filter(
-    (e) => e.alive && e.memory && !e.entity.actor!.rest?.asleep,
+    (e) => e.alive && e.memory && !capabilityBlocked(world, e.entity, 'perception'),
   )) {
     const radius = visionRadius(world, actor.entity);
     const sees = visionQuery(world, actor.entity);

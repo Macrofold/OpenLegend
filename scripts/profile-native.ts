@@ -1,3 +1,4 @@
+import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { populateScenario, type Scenario } from './performance/scenario.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { Session } from 'node:inspector/promises';
@@ -20,6 +21,7 @@ if (
 const scenario: Scenario | undefined =
   experiment === '--scenario' ? JSON.parse(scenarioArgument ?? 'null') : undefined;
 const mutable = experiment === '--mutable-snapshots';
+await initializeCollisionRuntime();
 console.error('profile stage: loading/setup');
 const setupAt = performance.now();
 const parsed = input === '-' && scenario ? {} : JSON.parse(await readFile(input, 'utf8'));
@@ -45,7 +47,11 @@ const step = () => {
 const setupMs = performance.now() - setupAt;
 const warmupSteps = scenario?.warmup ?? 30;
 console.error('profile stage: warmup');
-for (let index = 0; index < warmupSteps; index++) step();
+for (let index = 0; index < warmupSteps; index++) {
+  const before = world.simTime;
+  step();
+  if (world.simTime === before) break;
+}
 console.error('profile stage: measured steps');
 const session = new Session();
 session.connect();
@@ -53,13 +59,21 @@ try {
   await session.post('Profiler.enable');
   await session.post('Profiler.start');
   const durations: number[] = [];
+  const simulationStartedAt = world.simTime;
+  let completedSteps = 0;
   const cpuAt = process.cpuUsage();
   const started = performance.now();
   for (let index = 0; index < steps; index++) {
     const at = performance.now();
+    const before = world.simTime;
     step();
     durations.push(performance.now() - at);
+    // A pending Recast request advances no game time. Never report rejected/no-op
+    // iterations as throughput: docs/maintainers/performance-profiling.md.
+    if (world.simTime === before) break;
+    completedSteps++;
   }
+  const simulatedSeconds = world.simTime - simulationStartedAt;
   const totalMs = performance.now() - started;
   const cpu = process.cpuUsage(cpuAt);
   console.error('profile stage: writing results');
@@ -79,6 +93,10 @@ try {
     JSON.stringify(
       {
         node: process.version,
+        status: completedSteps === steps ? 'completed' : 'blocked',
+        simulatedSeconds,
+        completedSteps,
+        attemptedSteps: durations.length,
         initial,
         frozenSnapshots: !mutable,
         initialFreezeMs,
@@ -87,7 +105,8 @@ try {
         setupMs,
         cpuMs: (cpu.user + cpu.system) / 1000,
         heapUsedBytes: process.memoryUsage().heapUsed,
-        nativeHeadroomAtRequestedSpeed: (steps * 1000) / totalMs / (60 * (scenario?.speed ?? 1)),
+        nativeHeadroomAtRequestedSpeed:
+          (simulatedSeconds * 1000) / totalMs / (60 * (scenario?.speed ?? 1)),
         finalCounts: {
           entities: Object.keys(world.entities).length,
           events: world.events.length,
@@ -98,10 +117,10 @@ try {
         },
         steps,
         totalMs,
-        p50Ms: durations[Math.ceil(steps * 0.5) - 1],
-        p95Ms: durations[Math.ceil(steps * 0.95) - 1],
+        p50Ms: durations[Math.ceil(durations.length * 0.5) - 1],
+        p95Ms: durations[Math.ceil(durations.length * 0.95) - 1],
         maxStepMs: durations.at(-1),
-        nativeSecondsPerWallSecond: (steps * 1000) / totalMs,
+        nativeSecondsPerWallSecond: (simulatedSeconds * 1000) / totalMs,
         finalWorldDigest: createHash('sha256').update(JSON.stringify(world)).digest('hex'),
         hottestSelfMs: [...self].sort((a, b) => b[1] - a[1]).slice(0, 12),
       },

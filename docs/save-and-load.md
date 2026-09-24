@@ -2,7 +2,7 @@
 
 ## Navigation and presentation state
 
-Current schema-10 saves include pending/accepted navigation actions, replan counters and plain semantic support points. Reconstruct Recast meshes and collision caches after initialization/load; do not persist native handles, worker IDs, polygon refs or GPU resources. Result admission checks the new timeline and opens restored worlds paused. Player reveal mode/radius/strength belong to the existing profile store, not world mechanics; camera orientation remains local presentation state. Incompatible development saves are rejected, never deleted or silently converted.
+Current saves include pending/accepted navigation actions, replan counters and plain semantic support points. Reconstruct Recast meshes and collision caches after initialization/load; do not persist native handles, worker IDs, polygon refs or GPU resources. Result admission checks the new timeline and opens restored worlds paused. Player reveal mode/radius/strength belong to the existing profile store, not world mechanics; camera orientation remains local presentation state. Apply small explicit in-place updates before validating the current model; preserve identity and unrelated state. Malformed or ambiguous state remains an error, never a reason to reset a world.
 
 ## Spatial state
 
