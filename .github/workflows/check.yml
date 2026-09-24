@@ -41,7 +41,7 @@ jobs:
       - name: Apply bounded implementation slice
         run: |
           sed -i 's/config.openaiKey/config.llmKey/g' .github/action-slice.py
-          python .github/action-slice.py
+          python .github/action-finish.py
       - name: Format affected source
         run: |
           git ls-files -m -o --exclude-standard apps packages docs archive README.md | grep -E '\.(ts|tsx|md)$' | while IFS= read -r file; do if [ -f "$file" ]; then printf '%s\n' "$file"; fi; done | xargs -r pnpm exec prettier --write
