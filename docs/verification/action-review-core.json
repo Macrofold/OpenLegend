@@ -1,0 +1,78 @@
+{
+  "scope": "Ad hoc native runtime exercise, no unit/browser suite and no live model calls.",
+  "run": "35951782587",
+  "paidModelCalls": 0,
+  "cases": [
+    {
+      "name": "exact-move",
+      "outcome": {
+        "ok": true,
+        "code": "responded",
+        "message": "Response completed."
+      },
+      "position": {
+        "x": 12,
+        "y": 0,
+        "z": 14
+      },
+      "semanticCalls": 0,
+      "bindings": [
+        "action"
+      ]
+    },
+    {
+      "name": "distinct-intent-slots",
+      "attempts": [
+        {
+          "id": "target-one",
+          "target": "entity-0002",
+          "mode": "enqueue"
+        },
+        {
+          "id": "target-two",
+          "target": "entity-0001",
+          "mode": "enqueue"
+        },
+        {
+          "id": "mode-three",
+          "target": "entity-0002",
+          "mode": "replace"
+        }
+      ]
+    },
+    {
+      "name": "queued-intent-invalidates-old-replacement",
+      "outcome": {
+        "ok": false,
+        "code": "stale-alternative",
+        "message": "Mechanics or current work changed. Submit a fresh action instead of accepting this old replacement."
+      },
+      "planRetained": true
+    },
+    {
+      "name": "operation-binding-scope",
+      "components": {
+        "first": {
+          "ok": false,
+          "code": "needs-confirmation",
+          "message": "Accept revised action? Follow Ada at ordinary distance; no stealth. Not fulfilled: without being noticed"
+        },
+        "second": {
+          "ok": true,
+          "code": "attempt-deferred",
+          "message": "Intent retained privately without an executable binding; no action was performed or invention admitted."
+        }
+      },
+      "attempts": [
+        {
+          "target": "entity-0002",
+          "status": "awaiting-confirmation"
+        },
+        {
+          "target": "entity-0001",
+          "status": "needs-interpretation"
+        }
+      ]
+    }
+  ]
+}

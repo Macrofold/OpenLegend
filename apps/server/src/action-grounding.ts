@@ -3,6 +3,7 @@ import {
   bindNavigationInvocation,
   NAVIGATION_CAPABILITIES,
   normalizeAttempt,
+  sameAttempt,
   observeActor,
   type ActionFulfillment,
   type ActorResponse,
@@ -28,8 +29,11 @@ interface GroundingPorts {
   judge(request: Omit<JudgeRequest, 'requestId' | 'signal'>): Promise<JudgeValue>;
   generate(request: Pick<GenerateRequest, 'instructions' | 'context' | 'schema'>): Promise<unknown>;
   record(kind: string, input: unknown, output: unknown): Promise<void>;
+  signal?: AbortSignal;
+  /** Explicit player resubmission may retry unavailable grounding; NPC retries remain bounded. */
+  retryUnresolved?: boolean;
 }
-const normalize = (text: string) => normalizeAttempt(text).replace(/[.!?]+$/u, '');
+const normalize = normalizeAttempt;
 const confident = (value: JudgeValue, key: string) => {
   const answer = value.answers[key];
   return answer && 'choice' in answer && (answer.probabilities[answer.choice] ?? 0) >= 0.8
@@ -45,6 +49,7 @@ export function exactNavigation(
   world: WorldState,
   actorId: string,
   targetId?: string | null,
+  visibleEntities?: NonNullable<ReturnType<typeof observeActor>>['visibleEntities'],
 ): NavigationInvocation | undefined {
   const number = '(-?\\d+(?:\\.\\d+)?)';
   const point = new RegExp(
@@ -63,10 +68,9 @@ export function exactNavigation(
   const following = /^follow\s+(.+?)[.!]?$/iu.exec(text.trim());
   if (!following) return;
   const name = normalize(following[1]!).replace(/^the\s+/u, '');
-  const visible =
-    observeActor(world, actorId)?.visibleEntities.filter(
-      (e) => e.actor?.alive && e.id !== actorId,
-    ) ?? [];
+  const visible = (visibleEntities ?? observeActor(world, actorId)?.visibleEntities ?? []).filter(
+    (e) => e.actor?.alive && e.id !== actorId,
+  );
   const matches = visible.filter(
     (e) =>
       (normalize(e.name) === name ||
@@ -97,7 +101,7 @@ export async function groundActionAttempts(
   ports: GroundingPorts,
 ): Promise<AttemptBinding[]> {
   const observed = observeActor(world, actorId);
-  if (!observed) return bindings;
+  if (!observed) return [];
   const actor = observed.actor.actor!;
   const entityIds = [actorId, ...observed.visibleEntities.map((e) => e.id)];
   const proposals = response.operations
@@ -113,256 +117,293 @@ export async function groundActionAttempts(
   for (const op of proposals) {
     const act = op.act!;
     const text = act.description!;
-    const normalized = normalize(text);
+    ports.signal?.throwIfAborted();
+    const normalized = JSON.stringify([normalize(text), act.targetEntityId, act.mode]);
     if (
       seen.has(normalized) ||
       actor.agency.attempts.some(
         (a) =>
-          normalize(a.description) === normalized &&
-          a.manifestRevision === world.moduleManifest.revision,
+          sameAttempt(a, text, act.targetEntityId, act.mode) &&
+          a.manifestRevision === world.moduleManifest.revision &&
+          (a.status === 'awaiting-confirmation' || !ports.retryUnresolved),
       )
     )
       continue;
     seen.add(normalized);
-    if (bindings.some((b) => normalize(b.description) === normalized)) continue;
-    let commands: Command[] | undefined;
-    const exact = exactNavigation(text, world, actorId, act.targetEntityId);
-    if (exact) {
-      const bound = bindNavigationInvocation(world, actorId, op.localId, exact, entityIds);
-      if (!('ok' in bound)) commands = [bound];
-      else {
-        await ports.record('Action binding unavailable', { text, invocation: exact }, bound);
+    try {
+      let commands: Command[] | undefined;
+      const exact = exactNavigation(
+        text,
+        world,
+        actorId,
+        act.targetEntityId,
+        observed.visibleEntities,
+      );
+      if (exact) {
+        const bound = bindNavigationInvocation(world, actorId, op.localId, exact, entityIds);
+        if (!('ok' in bound)) commands = [bound];
+        else {
+          await ports.record('Action binding unavailable', { text, invocation: exact }, bound);
+          continue;
+        }
+      }
+      if (commands) {
+        const fulfillment: ActionFulfillment = {
+          requested: text,
+          executableDescription: text,
+          verdict: 'exact',
+          supported: [text],
+          omitted: [],
+          reason: 'Complete native form bound without inference.',
+        };
+        additions.push({
+          operationId: op.localId,
+          manifestRevision: world.moduleManifest.revision,
+          description: text,
+          commands,
+          fulfillment,
+        });
+        await ports.record('Action fulfillment', { text }, fulfillment);
         continue;
       }
-    }
-    if (commands) {
-      const fulfillment: ActionFulfillment = {
-        requested: text,
-        executableDescription: text,
-        verdict: 'exact',
-        supported: [text],
-        omitted: [],
-        reason: 'Complete native form bound without inference.',
-      };
-      additions.push({ description: text, commands, fulfillment });
-      await ports.record('Action fulfillment', { text }, fulfillment);
-      continue;
-    }
-    const choices = bindings.filter((b) => b.commands.length === 1).slice(0, 48);
-    for (const target of observed.visibleEntities
-      .filter((e) => e.actor?.alive && e.id !== actorId)
-      .slice(0, 16)) {
-      choices.push({
-        description: `Follow ${target.name} [${target.id}] at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
-        commands: [{ id: op.localId, actorId, type: 'follow', targetId: target.id, distance: 3 }],
-      });
-    }
-    const scoped = choices.filter(
-      (c) =>
-        !act.targetEntityId ||
-        c.commands.some((cmd) => 'targetId' in cmd && cmd.targetId === act.targetEntityId),
-    );
-    const context = {
-      request: text,
-      targetEntityId: act.targetEntityId,
-      actor: {
-        name: observed.actor.name,
-        goals: actor.agency.goals.filter((g) => g.status === 'active').map((g) => g.objective),
-        currentWork: actor.action?.type ?? null,
-      },
-      position: observed.actor.position,
-      support: observed.actor.spatial.supportSurfaceId,
-      entities: observed.visibleEntities.slice(0, 64).map((e) => ({
-        id: e.id,
-        name: e.name,
-        position: e.position,
-        surfaceId: e.spatial.supportSurfaceId,
-        living: !!e.actor?.alive,
-      })),
-      publicSupports:
-        world.map.spatial.disclosure === 'public'
-          ? world.map.spatial.surfaces.map((s) => ({ id: s.id, name: s.name }))
-          : [],
-      capabilities: NAVIGATION_CAPABILITIES,
-      choices: scoped.map((c, index) => ({ id: `n${index}`, description: c.description })),
-    };
-    if (Buffer.byteLength(JSON.stringify(context)) > 32000) {
-      await ports.record(
-        'Action grounding deferred',
-        { text },
-        { reason: 'Scoped input budget exceeded.' },
+      const choices = bindings.filter((b) => b.commands.length === 1).slice(0, 48);
+      for (const target of observed.visibleEntities
+        .filter((e) => e.actor?.alive && e.id !== actorId)
+        .slice(0, 16)) {
+        choices.push({
+          description: `Follow ${target.name} [${target.id}] at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
+          commands: [{ id: op.localId, actorId, type: 'follow', targetId: target.id, distance: 3 }],
+        });
+      }
+      const scoped = choices.filter(
+        (c) =>
+          !act.targetEntityId ||
+          c.commands.some((cmd) => 'targetId' in cmd && cmd.targetId === act.targetEntityId),
       );
-      continue;
-    }
-    const criteria: Record<string, string> = Object.fromEntries(
-      scoped.map((c, index) => [
-        `n${index}`,
-        `This exact existing command fully satisfies the whole request with no qualifier or required step omitted: ${c.description}`,
-      ]),
-    );
-    criteria['interpret'] =
-      'Parameterized navigation, composition, or a useful supported subset may exist, but needs structured interpretation and a report of all omitted requirements.';
-    criteria['unresolved'] =
-      'No useful supported action can be selected; the request needs a new mechanic, more information, or an entirely unresolved plan. Do not fabricate success.';
-    const selected = await ports.judge({
-      state: context,
-      questions: {
-        route: {
-          type: 'choice',
-          instructions:
-            policy +
-            ' Choose an existing handle only for full semantic fulfillment. Uncertainty or potentially tolerable missing criteria should select interpret.',
-          criteria,
+      const context = {
+        request: text,
+        targetEntityId: act.targetEntityId,
+        actor: {
+          name: observed.actor.name,
+          goals: actor.agency.goals.filter((g) => g.status === 'active').map((g) => g.objective),
+          currentWork: actor.action?.type ?? null,
         },
-      },
-    });
-    const route = confident(selected, 'route');
-    await ports.record('Action classification', context, selected);
-    const chosen = route && /^n\d+$/u.test(route) ? scoped[Number(route.slice(1))] : undefined;
-    if (chosen) {
-      const fulfillment: ActionFulfillment = {
-        requested: text,
-        executableDescription: chosen.description,
-        verdict: 'exact',
-        supported: [text],
-        omitted: [],
-        reason: 'Jev selected a fully matching native binding.',
+        position: observed.actor.position,
+        support: observed.actor.spatial.supportSurfaceId,
+        entities: observed.visibleEntities.slice(0, 64).map((e) => ({
+          id: e.id,
+          name: e.name,
+          position: e.position,
+          surfaceId: e.spatial.supportSurfaceId,
+          living: !!e.actor?.alive,
+        })),
+        publicSupports:
+          world.map.spatial.disclosure === 'public'
+            ? world.map.spatial.surfaces.map((s) => ({ id: s.id, name: s.name }))
+            : [],
+        capabilities: NAVIGATION_CAPABILITIES,
+        choices: scoped.map((c, index) => ({ id: `n${index}`, description: c.description })),
       };
-      additions.push({ description: text, commands: chosen.commands, fulfillment });
-      await ports.record('Action fulfillment', { text }, fulfillment);
-      continue;
-    }
-    if (route === 'unresolved') continue;
-    const handle = scoped.length
-      ? z.enum(scoped.map((_, index) => `n${index}`) as [string, ...string[]]).nullable()
-      : z.null();
-    const schema = z
-      .object({
-        disposition: z.enum(['execute', 'confirm', 'unresolved']),
-        revised: z.string().min(1).max(1000),
-        supported: z.array(z.string().min(1).max(500)).max(8),
-        omitted: z
-          .array(
-            z
-              .object({
-                requirement: z.string().min(1).max(500),
-                reason: z.string().min(1).max(500),
-              })
-              .strict(),
-          )
-          .max(8),
-        reason: z.string().min(1).max(1000),
-        steps: z
-          .array(
-            z
-              .object({ actionId: handle, invocation: navigationInvocationSchema.nullable() })
-              .strict(),
-          )
-          .max(8),
-      })
-      .strict();
-    const result = schema.parse(
-      await ports.generate({
-        instructions:
-          policy +
-          ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or navigation invocation. Only move/follow support generated parameters. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON.',
-        context,
-        schema: z.toJSONSchema(schema, { target: 'draft-7' }),
-      }),
-    );
-    if (result.disposition === 'unresolved' || !result.steps.length) {
-      await ports.record('Action unresolved', { text }, result);
-      continue;
-    }
-    const boundCommands: Command[] = [];
-    let invalid = false;
-    for (const [index, step] of result.steps.entries()) {
-      if ((step.actionId === null) === (step.invocation === null)) {
-        invalid = true;
-        break;
+      if (Buffer.byteLength(JSON.stringify(context)) > 32000) {
+        await ports.record(
+          'Action grounding deferred',
+          { text },
+          { reason: 'Scoped input budget exceeded.' },
+        );
+        continue;
       }
-      const selectedCommand =
-        step.actionId !== null
-          ? scoped[Number(step.actionId.slice(1))]?.commands[0]
-          : bindNavigationInvocation(
-              world,
-              actorId,
-              `${op.localId}:${index}`,
-              step.invocation,
-              entityIds,
-            );
-      if (
-        !selectedCommand ||
-        'ok' in selectedCommand ||
-        (act.targetEntityId &&
-          'targetId' in selectedCommand &&
-          selectedCommand.targetId !== act.targetEntityId)
-      ) {
-        invalid = true;
-        break;
-      }
-      boundCommands.push(selectedCommand);
-    }
-    if (invalid) {
-      await ports.record('Action binding rejected', { text }, result);
-      continue;
-    }
-    let verdict: ActionFulfillment['verdict'] =
-      result.disposition === 'confirm' ? 'confirm' : result.omitted.length ? 'partial' : 'exact';
-    if (result.omitted.length && verdict !== 'confirm') {
-      const review = await ports.judge({
-        state: { ...context, proposed: result },
+      const criteria: Record<string, string> = Object.fromEntries(
+        scoped.map((c, index) => [
+          `n${index}`,
+          `This exact existing command fully satisfies the whole request with no qualifier or required step omitted: ${c.description}`,
+        ]),
+      );
+      criteria['interpret'] =
+        'Parameterized navigation, composition, or a useful supported subset may exist, but needs structured interpretation and a report of all omitted requirements.';
+      criteria['unresolved'] =
+        'No useful supported action can be selected; the request needs a new mechanic, more information, or an entirely unresolved plan. Do not fabricate success.';
+      const selected = await ports.judge({
+        state: context,
         questions: {
-          fulfillment: {
+          route: {
             type: 'choice',
             instructions:
               policy +
-              ' Decide whether the documented omissions are tolerable for this actor now. Be pragmatic about optional detail but do not assume consent to a materially different action. Removing a stopping condition can lengthen activity: account for that explicitly. When unsure, ask the initiator. Classification does not override native authority.',
-            criteria: {
-              tolerable:
-                'Core intent remains useful; all omitted requirements are tolerably optional in this context.',
-              ask: 'The omitted criteria may be essential or materially change risk, scope, recipient, method, duration or cost; obtain initiator acceptance.',
-              reject:
-                'The candidate contradicts the request or cannot be treated as a useful supported revision.',
-            },
+              ' Choose an existing handle only for full semantic fulfillment. Uncertainty or potentially tolerable missing criteria should select interpret.',
+            criteria,
           },
         },
       });
-      await ports.record('Action fulfillment classification', { text, proposed: result }, review);
-      const disposition = confident(review, 'fulfillment');
-      if (disposition === 'reject') continue;
-      if (disposition !== 'tolerable') verdict = 'confirm';
-    }
-    const nativeDescription = boundCommands
-      .map((command) => {
-        if (command.type === 'move')
-          return `Walk to x=${command.destination.x}, z=${command.destination.z} on ${command.destination.surfaceId}.`;
-        if (command.type === 'follow')
-          return `Follow ${observed.visibleEntities.find((e) => e.id === command.targetId)?.name ?? 'the selected actor'} at ${command.distance ?? 3} world units until cancelled, interrupted or lost from sight. No stealth or sunset stop.`;
-        return (
-          scoped.find((choice) => choice.commands[0] === command)?.description ??
-          `Perform ${command.type}.`
-        );
-      })
-      .join(' Then: ');
-    if (nativeDescription.length > 1000) {
-      await ports.record(
-        'Action explanation budget exceeded',
-        { text },
-        { steps: boundCommands.length },
+      const route = confident(selected, 'route');
+      await ports.record('Action classification', context, selected);
+      const chosen = route && /^n\d+$/u.test(route) ? scoped[Number(route.slice(1))] : undefined;
+      if (chosen) {
+        const fulfillment: ActionFulfillment = {
+          requested: text,
+          executableDescription: chosen.description,
+          verdict: 'exact',
+          supported: [text],
+          omitted: [],
+          reason: 'Jev selected a fully matching native binding.',
+        };
+        additions.push({
+          operationId: op.localId,
+          manifestRevision: world.moduleManifest.revision,
+          description: text,
+          commands: chosen.commands,
+          fulfillment,
+        });
+        await ports.record('Action fulfillment', { text }, fulfillment);
+        continue;
+      }
+      if (route === 'unresolved') continue;
+      const handle = scoped.length
+        ? z.enum(scoped.map((_, index) => `n${index}`) as [string, ...string[]]).nullable()
+        : z.null();
+      const schema = z
+        .object({
+          disposition: z.enum(['execute', 'confirm', 'unresolved']),
+          revised: z.string().min(1).max(1000),
+          supported: z.array(z.string().min(1).max(500)).max(8),
+          omitted: z
+            .array(
+              z
+                .object({
+                  requirement: z.string().min(1).max(500),
+                  reason: z.string().min(1).max(500),
+                })
+                .strict(),
+            )
+            .max(8),
+          reason: z.string().min(1).max(1000),
+          steps: z
+            .array(
+              z
+                .object({ actionId: handle, invocation: navigationInvocationSchema.nullable() })
+                .strict(),
+            )
+            .max(8),
+        })
+        .strict();
+      const result = schema.parse(
+        await ports.generate({
+          instructions:
+            policy +
+            ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or navigation invocation. Only move/follow support generated parameters. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON.',
+          context,
+          schema: z.toJSONSchema(schema, { target: 'draft-7' }),
+        }),
       );
-      continue;
+      if (result.disposition === 'unresolved' || !result.steps.length) {
+        await ports.record('Action unresolved', { text }, result);
+        continue;
+      }
+      const boundCommands: Command[] = [];
+      let invalid = false;
+      for (const [index, step] of result.steps.entries()) {
+        if ((step.actionId === null) === (step.invocation === null)) {
+          invalid = true;
+          break;
+        }
+        const selectedCommand =
+          step.actionId !== null
+            ? scoped[Number(step.actionId.slice(1))]?.commands[0]
+            : bindNavigationInvocation(
+                world,
+                actorId,
+                `${op.localId}:${index}`,
+                step.invocation,
+                entityIds,
+              );
+        if (
+          !selectedCommand ||
+          'ok' in selectedCommand ||
+          (act.targetEntityId &&
+            'targetId' in selectedCommand &&
+            selectedCommand.targetId !== act.targetEntityId)
+        ) {
+          invalid = true;
+          break;
+        }
+        boundCommands.push(selectedCommand);
+      }
+      if (invalid) {
+        await ports.record('Action binding rejected', { text }, result);
+        continue;
+      }
+      let verdict: ActionFulfillment['verdict'] =
+        result.disposition === 'confirm' ? 'confirm' : result.omitted.length ? 'partial' : 'exact';
+      if (result.omitted.length && verdict !== 'confirm') {
+        const review = await ports.judge({
+          state: { ...context, proposed: result },
+          questions: {
+            fulfillment: {
+              type: 'choice',
+              instructions:
+                policy +
+                ' Decide whether the documented omissions are tolerable for this actor now. Be pragmatic about optional detail but do not assume consent to a materially different action. Removing a stopping condition can lengthen activity: account for that explicitly. When unsure, ask the initiator. Classification does not override native authority.',
+              criteria: {
+                tolerable:
+                  'Core intent remains useful; all omitted requirements are tolerably optional in this context.',
+                ask: 'The omitted criteria may be essential or materially change risk, scope, recipient, method, duration or cost; obtain initiator acceptance.',
+                reject:
+                  'The candidate contradicts the request or cannot be treated as a useful supported revision.',
+              },
+            },
+          },
+        });
+        await ports.record('Action fulfillment classification', { text, proposed: result }, review);
+        const disposition = confident(review, 'fulfillment');
+        if (disposition === 'reject') continue;
+        if (disposition !== 'tolerable') verdict = 'confirm';
+      }
+      const nativeDescription = boundCommands
+        .map((command) => {
+          if (command.type === 'move')
+            return `Walk to x=${command.destination.x}, z=${command.destination.z} on ${command.destination.surfaceId}.`;
+          if (command.type === 'follow')
+            return `Follow ${observed.visibleEntities.find((e) => e.id === command.targetId)?.name ?? 'the selected actor'} at ${command.distance ?? 3} world units until cancelled, interrupted or lost from sight. No stealth or sunset stop.`;
+          return (
+            scoped.find((choice) => choice.commands[0] === command)?.description ??
+            `Perform ${command.type}.`
+          );
+        })
+        .join(' Then: ');
+      if (nativeDescription.length > 1000) {
+        await ports.record(
+          'Action explanation budget exceeded',
+          { text },
+          { steps: boundCommands.length },
+        );
+        continue;
+      }
+      const fulfillment: ActionFulfillment = {
+        requested: text,
+        executableDescription: nativeDescription,
+        verdict,
+        supported: result.supported,
+        omitted: result.omitted,
+        reason: result.reason,
+      };
+      additions.push({
+        operationId: op.localId,
+        manifestRevision: world.moduleManifest.revision,
+        description: text,
+        commands: boundCommands,
+        fulfillment,
+      });
+      await ports.record('Action fulfillment', { text, commands: boundCommands }, fulfillment);
+    } catch (error) {
+      ports.signal?.throwIfAborted();
+      await ports.record(
+        'Action grounding unavailable',
+        { text, operationId: op.localId },
+        {
+          reason: error instanceof Error ? error.message.slice(0, 1000) : 'Unavailable',
+          retry: 'explicit only',
+        },
+      );
     }
-    const fulfillment: ActionFulfillment = {
-      requested: text,
-      executableDescription: nativeDescription,
-      verdict,
-      supported: result.supported,
-      omitted: result.omitted,
-      reason: result.reason,
-    };
-    additions.push({ description: text, commands: boundCommands, fulfillment });
-    await ports.record('Action fulfillment', { text, commands: boundCommands }, fulfillment);
   }
-  return [...bindings, ...additions];
+  return additions;
 }

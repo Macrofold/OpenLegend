@@ -294,6 +294,8 @@ export class AiDirector {
     const manifest = world.moduleManifest.revision;
     let serial = 0;
     const resolved = await groundActionAttempts(world, actorId, response, bindings, {
+      signal: run.controller.signal,
+      retryUnresolved: run.job.kind === 'action',
       judge: (request) =>
         this.call(run, 'jev', `${operation}:classify:${serial++}`, (requestId) =>
           this.client.judge({ ...request, requestId, signal: run.controller.signal }),
@@ -1538,14 +1540,14 @@ export class AiDirector {
       { accepted: true },
       parsingStartedAt,
     );
-    let attemptBindings = prepared.attemptBindings;
+    let attemptBindings: AttemptBinding[] = [];
     if (nativeReply.operations.some((op) => op.act?.kind === 'proposal')) {
       try {
         attemptBindings = await this.groundAttempts(
           run,
           actorId,
           nativeReply,
-          attemptBindings,
+          prepared.attemptBindings,
           `attempt:${attempt}`,
         );
       } catch (error) {

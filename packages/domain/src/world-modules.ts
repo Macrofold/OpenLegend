@@ -491,7 +491,7 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
-  if (world.schemaVersion !== 10 || !world.moduleManifest)
+  if (world.schemaVersion !== 11 || !world.moduleManifest)
     throw new Error(
       'Incompatible development world schema. This build requires 3D format 9; use a separate OPEN_LEGEND_DATA_DIR for a fresh world. Existing saves are preserved, not migrated.',
     );

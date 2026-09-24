@@ -7,7 +7,6 @@ import {
 import { proposeActionRevision } from './agency.js';
 import { hasMemory, supportsManualWork } from './living.js';
 import {
-  normalizeAttempt,
   resolveAttempt,
   deferAttempt,
   arrangePlan,
@@ -54,6 +53,9 @@ export interface ActorResponse {
   operations: ResponseOperation[];
 }
 export interface AttemptBinding {
+  /** Only resolved request-local operations carry these pins; offered descriptions are not authority. */
+  operationId?: string;
+  manifestRevision?: number;
   fulfillment?: ActionFulfillment;
   description: string;
   commands: Command[];
@@ -438,13 +440,21 @@ export function commitActorResponse(
       // Server-scoped interpretation chooses existing commands, never effects. Admission
       // remains native and a composition queues sequential work rather than executing it here.
       // docs/architecture.md#actor-agency-foundation
-      const normalize = (text: string) => normalizeAttempt(text).replace(/[.!?]+$/u, '');
       const matches = attemptBindings.filter(
-        (binding) => normalize(binding.description) === normalize(act.description!),
+        (binding) => binding.operationId === localId && binding.description === act.description,
       );
       const component = world.entities[actorId]!.actor!;
       if (matches.length === 1) {
-        const selected = matches[0]!.commands;
+        const binding = matches[0]!;
+        if (binding.manifestRevision !== world.moduleManifest.revision) {
+          components[localId] = outcome(
+            false,
+            'stale-mechanics',
+            'Mechanics changed after this action was interpreted.',
+          );
+          continue;
+        }
+        const selected = binding.commands;
         // A lexical binding cannot override the explicit target, even before revision review.
         // docs/architecture.md#action-fulfillment-and-revision-approval
         if (
@@ -465,7 +475,11 @@ export function commitActorResponse(
           continue;
         }
         const fulfillment = matches[0]!.fulfillment;
-        if (fulfillment && !validActionFulfillment(fulfillment)) {
+        if (
+          !fulfillment ||
+          !validActionFulfillment(fulfillment) ||
+          fulfillment.requested !== act.description
+        ) {
           components[localId] = outcome(
             false,
             'invalid-fulfillment',
@@ -473,7 +487,14 @@ export function commitActorResponse(
           );
           continue;
         }
-        if (fulfillment?.verdict === 'confirm') {
+        if (fulfillment.verdict === 'confirm') {
+          if (
+            act.mode === 'replace' &&
+            input.entities[actorId]!.actor!.planGeneration !== expectedPlan
+          ) {
+            components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
+            continue;
+          }
           components[localId] = proposeActionRevision(
             world,
             actorId,
@@ -481,7 +502,8 @@ export function commitActorResponse(
             selected.map((c, index) => ({ ...c, actorId, id: `${id}:${localId}:${index}` })),
             fulfillment,
             act.mode,
-            expectedPlan,
+            component.planGeneration,
+            act.targetEntityId,
           );
           continue;
         }
@@ -516,9 +538,21 @@ export function commitActorResponse(
             null,
           );
         if (components[localId]?.ok)
-          resolveAttempt(world.entities[actorId]!.actor!, act.description!);
+          resolveAttempt(
+            world.entities[actorId]!.actor!,
+            act.description!,
+            act.targetEntityId,
+            act.mode,
+          );
       } else
-        components[localId] = deferAttempt(world, actorId, `${id}:${localId}`, act.description!);
+        components[localId] = deferAttempt(
+          world,
+          actorId,
+          `${id}:${localId}`,
+          act.description!,
+          act.targetEntityId,
+          act.mode,
+        );
     }
 
     if (op.think) {

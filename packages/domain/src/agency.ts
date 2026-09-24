@@ -1,4 +1,5 @@
 import { validActionFulfillment, type ActionFulfillment } from './action-capabilities.js';
+import { FOLLOW_RULES } from './follow.js';
 import { finitePoint } from '@open-legend/spatial';
 import { cloneValue } from './draft.js';
 import { appendMemory, outcome } from './events.js';
@@ -50,6 +51,8 @@ export interface ActorAgency {
     id: string;
     description: string;
     normalized: string;
+    targetEntityId: string | null;
+    mode: 'enqueue' | 'replace';
     manifestRevision: number;
     status: 'needs-interpretation' | 'awaiting-confirmation';
     alternative?: {
@@ -308,10 +311,7 @@ export function arrangePlan(
       agency.history = agency.history.slice(-AGENCY_LIMITS.history);
     }
     // Explicit replacement follows native cancellation: spent inputs are never refunded.
-    if (mode === 'replace' && actor.action) {
-      actor.action = null;
-      actor.planGeneration++;
-    }
+    if (mode === 'replace' && actor.action) actor.action = null;
     agency.plan = {
       id,
       revision: (current?.revision ?? 0) + 1,
@@ -325,6 +325,9 @@ export function arrangePlan(
     };
   }
   agency.revision++;
+  // Queued edits are new execution intent too, even before any physical step starts.
+  // docs/architecture.md#action-fulfillment-and-revision-approval
+  actor.planGeneration++;
   return {
     ...outcome(true, 'queued', 'Native work queued; it has not completed.'),
     planId: agency.plan!.id,
@@ -345,6 +348,7 @@ export function cancelPlan(actor: ActorComponent): void {
   plan.status = 'cancelled';
   plan.revision++;
   actor.agency.revision++;
+  actor.planGeneration++;
 }
 export function finishPlanAction(
   world: WorldState,
@@ -412,9 +416,12 @@ export function validateAgency(world: WorldState): void {
       (!action.follow ||
         !isSafeRecordId(action.targetId) ||
         !Number.isFinite(action.follow.distance) ||
-        action.follow.distance < 1.5 ||
-        action.follow.distance > 12 ||
-        !Number.isFinite(action.follow.nextRepathAt))
+        action.follow.distance < FOLLOW_RULES.minimumDistance ||
+        action.follow.distance > FOLLOW_RULES.maximumDistance ||
+        !Number.isFinite(action.follow.nextRepathAt) ||
+        action.follow.nextRepathAt < 0 ||
+        (action.follow.lastObservedPosition !== undefined &&
+          !finitePoint(action.follow.lastObservedPosition)))
     )
       throw new Error('Invalid saved follow activity.');
     const agency = entity.actor.agency;
@@ -441,7 +448,9 @@ export function validateAgency(world: WorldState): void {
         !attempt.description.trim() ||
         attempt.description.length > 500 ||
         typeof attempt.normalized !== 'string' ||
-        attempt.normalized.length > 1000 ||
+        attempt.normalized !== normalizeAttempt(attempt.description) ||
+        !(attempt.targetEntityId === null || isSafeRecordId(attempt.targetEntityId)) ||
+        !['enqueue', 'replace'].includes(attempt.mode) ||
         !Number.isSafeInteger(attempt.manifestRevision) ||
         attempt.manifestRevision < 1 ||
         !['needs-interpretation', 'awaiting-confirmation'].includes(attempt.status)
@@ -452,12 +461,16 @@ export function validateAgency(world: WorldState): void {
         if (
           !a ||
           !validActionFulfillment(a.fulfillment) ||
+          a.fulfillment.verdict !== 'confirm' ||
+          a.fulfillment.requested !== attempt.description ||
+          a.mode !== attempt.mode ||
           !['enqueue', 'replace'].includes(a.mode) ||
           !Number.isSafeInteger(a.expectedPlan) ||
           a.expectedPlan < 0 ||
           !Array.isArray(a.commands) ||
           !a.commands.length ||
           a.commands.length > AGENCY_LIMITS.steps ||
+          !validOutputReferences(a.commands) ||
           a.commands.some((c) => !isPlannedCommand(c) || c.actorId !== entity.id)
         )
           throw new Error('Invalid saved action alternative.');
@@ -551,9 +564,27 @@ export function withdrawAttempt(actor: ActorComponent, id: string): Outcome {
   return outcome(true, 'attempt-withdrawn', 'Private intent withdrawn; ongoing work is unchanged.');
 }
 
-export function resolveAttempt(actor: ActorComponent, description: string): void {
-  const matching = actor.agency.attempts.filter(
-    (attempt) => attempt.normalized === normalizeAttempt(description),
+export function sameAttempt(
+  attempt: ActorAgency['attempts'][number],
+  description: string,
+  targetEntityId: string | null = null,
+  mode: 'enqueue' | 'replace' = 'enqueue',
+): boolean {
+  return (
+    attempt.normalized === normalizeAttempt(description) &&
+    attempt.targetEntityId === targetEntityId &&
+    attempt.mode === mode
+  );
+}
+
+export function resolveAttempt(
+  actor: ActorComponent,
+  description: string,
+  targetEntityId: string | null = null,
+  mode: 'enqueue' | 'replace' = 'enqueue',
+): void {
+  const matching = actor.agency.attempts.filter((attempt) =>
+    sameAttempt(attempt, description, targetEntityId, mode),
   );
   for (const pending of matching) withdrawAttempt(actor, pending.id);
 }
@@ -564,14 +595,23 @@ export function deferAttempt(
   actorId: string,
   id: string,
   description: string,
+  targetEntityId: string | null = null,
+  mode: 'enqueue' | 'replace' = 'enqueue',
 ): Outcome {
-  if (!isSafeRecordId(id) || !description.trim() || description.length > 500)
+  if (
+    !isSafeRecordId(id) ||
+    typeof description !== 'string' ||
+    !description.trim() ||
+    description.length > 500 ||
+    !(targetEntityId === null || isSafeRecordId(targetEntityId)) ||
+    !['enqueue', 'replace'].includes(mode)
+  )
     return outcome(false, 'invalid-attempt', 'An attempt needs 1–500 characters.');
   const actor = world.entities[actorId]!.actor!;
   const normalized = normalizeAttempt(description);
   const prior = actor.agency.attempts.find(
     (attempt) =>
-      attempt.normalized === normalized &&
+      sameAttempt(attempt, description, targetEntityId, mode) &&
       attempt.manifestRevision === world.moduleManifest.revision,
   );
   if (prior)
@@ -582,10 +622,14 @@ export function deferAttempt(
     );
   if (actor.agency.attempts.length >= 4)
     return outcome(false, 'attempt-limit', 'Four unlisted intents already await interpretation.');
+  if (actor.agency.attempts.some((attempt) => attempt.id === id))
+    return outcome(false, 'attempt-conflict', 'This attempt identity belongs to different intent.');
   actor.agency.attempts.push({
     id,
     description: description.trim(),
     normalized,
+    targetEntityId,
+    mode,
     manifestRevision: world.moduleManifest.revision,
     status: 'needs-interpretation',
   });
@@ -607,7 +651,9 @@ function isPhysicalCommand(command: Command): boolean {
       return (
         isSafeRecordId(command.targetId) &&
         (command.distance === undefined ||
-          (Number.isFinite(command.distance) && command.distance >= 1.5 && command.distance <= 12))
+          (Number.isFinite(command.distance) &&
+            command.distance >= FOLLOW_RULES.minimumDistance &&
+            command.distance <= FOLLOW_RULES.maximumDistance))
       );
     case 'gather':
     case 'harvest':
@@ -690,9 +736,15 @@ export function proposeActionRevision(
   fulfillment: ActionFulfillment,
   mode: 'enqueue' | 'replace',
   expectedPlan: number,
+  targetEntityId: string | null = null,
 ): Outcome {
   if (
     !validActionFulfillment(fulfillment) ||
+    fulfillment.verdict !== 'confirm' ||
+    !['enqueue', 'replace'].includes(mode) ||
+    !Number.isSafeInteger(expectedPlan) ||
+    expectedPlan < 0 ||
+    !validOutputReferences(commands) ||
     !commands.length ||
     commands.length > AGENCY_LIMITS.steps ||
     commands.some((c) => !isPlannedCommand(c) || c.actorId !== actorId)
@@ -702,12 +754,12 @@ export function proposeActionRevision(
       'invalid-alternative',
       'The revised action is not a supported native plan.',
     );
-  const held = deferAttempt(world, actorId, id, fulfillment.requested);
+  const held = deferAttempt(world, actorId, id, fulfillment.requested, targetEntityId, mode);
   if (!held.ok) return held;
   const actor = world.entities[actorId]!.actor!;
   const pending = actor.agency.attempts.find(
     (a) =>
-      a.normalized === normalizeAttempt(fulfillment.requested) &&
+      sameAttempt(a, fulfillment.requested, targetEntityId, mode) &&
       a.manifestRevision === world.moduleManifest.revision,
   )!;
   if (pending.status !== 'awaiting-confirmation') {
@@ -740,7 +792,13 @@ export function confirmActionRevision(
   attemptId: string,
   id: string,
 ): Outcome {
-  const actor = world.entities[actorId]!.actor!;
+  const actor = Object.hasOwn(world.entities, actorId) ? world.entities[actorId]?.actor : undefined;
+  if (!actor?.alive || actor.incapacitated || actor.rest?.asleep)
+    return outcome(
+      false,
+      'actor-unavailable',
+      'The actor must be awake and able to approve new work.',
+    );
   const pending = actor.agency.attempts.find(
     (a) => a.id === attemptId && a.status === 'awaiting-confirmation',
   );
