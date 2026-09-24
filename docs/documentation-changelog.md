@@ -33,6 +33,7 @@
 - Reconciled the accepted invention packet from `69897a356c959677cfbf7fe1785f2b9db0271b43` with spatial/runtime main `7bba4866819e5623fc4e42d6f8d82f96ca25877d`, preserving the existing engine boundary and XYZ/camera work rather than reintroducing a flat-world assumption.
 - Added small server query/serialization fixes, recorded exact current limits and measured evidence, and kept unimplemented art/constitution/episode-budget/verification features pending. Corrected funded-result publication semantics and specified bounded validation-planner work and camera-valid art.
 - Preserved existing task states; new requested regression cases live in `docs/maintainers/TODO.md`. No unit suites, browser automation or paid model calls were executed. Native stress failures remain disclosed under their existing PF/EPR owners.
+
 ## In-place development updates
 
 Corrected the policy: small migrations are allowed and preferred; maintaining legacy game versions is not required. Removed automatic fresh-world recovery and its per-feature save-format gate. The preceding startup recovery did reset the development gameplay world while retaining accounting; that behavior is superseded, not an acceptance requirement. Current behavior is owned by Save/load and Architecture.
@@ -213,3 +214,7 @@ Moved the sleep specification to `docs/worlds/base/sleep.md` and repaired inboun
 - Removed the implementation-chosen 256-summary quota from the consolidation contract and snapshot. Memory retention no longer constrains semantic grouping by remaining slots; request-size limits and atomic multi-request publication have separate ownership in the memory design and runtime snapshot.
 
 Knowledge canvas mechanics now have one engine owner in `docs/knowledge.md`; bundled limits/naming/recognition live in `docs/worlds/base/knowledge.md`. This replaces the proposed naming-heavy YAML state example and the external-beliefs-in-one-inner-world-text direction. The observer-known-name decision is resolved; aggregate storage remains open.
+
+## Reviewed MCP write foundation
+
+Added native kind-backed operational draft/review sessions, a thin writable MCP transport and a server-selected Macrofold native owner execution profile. The initial read-only bootstrap remains the disabled-by-default transport configuration, not the product destination. Permanent world receipts, not model text, certify Apply; the existing ledger owns session exposure. Updated current status, manual evidence and deferred MW regression coverage without marking live harness or unimplemented art/physics complete.

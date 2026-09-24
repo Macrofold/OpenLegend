@@ -1,5 +1,7 @@
 import {
   HOST_IMPLEMENTATIONS,
+  DEFAULT_COGNITION_POLICY,
+  type StatusCondition,
   SUPPORTED_INVENTION_FAMILIES,
   INVENTION_FAMILY_INTERFACES,
   inventionFamily,
@@ -26,10 +28,13 @@ export const DEFINITION_KINDS = [
   'sense',
   'host',
   'family',
+  'status-effect',
+  'status-effect-policy',
+  'cognition-policy',
 ] as const;
 
 export const DEFINITION_COVERAGE = [
-  'Exact current recipe/material/base references and installed attribute/sense implementation bindings only.',
+  'Exact current recipe/material/base, attribute/sense bindings, and explicit status/cognition policy references. Status reads/rates describe only their supported native operators.',
   'Not a complete read/effect, property-consumer, world-law or interaction-validation graph.',
   'Historical bases absent from this world are reference-only nodes, not installed definitions.',
 ] as const;
@@ -114,6 +119,55 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
       });
     link(add('sense', value.id, value.id, value), host, 'implements');
   }
+  const statusPolicy = add(
+    'status-effect-policy',
+    'current',
+    'Status effect policy',
+    world.statusEffectPolicy,
+  );
+  const cognitionPolicy = add(
+    'cognition-policy',
+    'current',
+    'Cognition policy',
+    world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY,
+  );
+  for (const d of world.statusEffectPolicy.definitions)
+    link(add('status-effect', d.id, d.label, d), statusPolicy, 'governed_by');
+  const dream = resolve(
+    'status-effect',
+    (world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).dream.statusEffectId,
+  );
+  if (dream) link(cognitionPolicy, dream.node.ref, 'requires', 'dream-state');
+  for (const d of world.statusEffectPolicy.definitions) {
+    const source = resolve('status-effect', d.id)!.node.ref;
+    const pending: StatusCondition[] = [
+      d.requires,
+      ...[d.activationCondition, d.automaticActivation, d.automaticDeactivation].filter(
+        (v): v is StatusCondition => !!v,
+      ),
+    ];
+    for (const op of d.whileActive)
+      if ('changeRate' in op) {
+        const target = resolve('attribute', op.changeRate.attribute);
+        if (target) link(source, target.node.ref, 'contributes_to', op.changeRate.target);
+        if (op.when) pending.push(op.when);
+      }
+    // Traverse the native condition AST, not arbitrary properties or invented prose.
+    for (let i = 0; i < pending.length; i++) {
+      if (i > 10000)
+        throw new GraphReadError('capacity', 'Status relationship extraction is too large.');
+      const c = pending[i]!;
+      if ('all' in c) pending.push(...c.all);
+      else if ('any' in c) pending.push(...c.any);
+      else if ('compare' in c) {
+        const target = resolve('attribute', c.compare.attribute);
+        if (target) link(source, target.node.ref, 'uses', `condition:${c.compare.target}`);
+      } else if ('statusActive' in c) {
+        const target = resolve('status-effect', c.statusActive.definitionId);
+        if (target) link(source, target.node.ref, 'requires', `condition:${c.statusActive.target}`);
+      }
+    }
+  }
   for (const value of Object.values(world.recipes)) {
     const ref = resolve('recipe', value.id)!.node.ref;
     const family = inventionFamily(value),
@@ -171,7 +225,7 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
     index: new RelationshipIndex(
       JSON.stringify([world.id, generation, world.moduleManifest.revision]),
       sortedNodes,
-      edges,
+      [...new Map(edges.map((e) => [e.id, e])).values()],
       DEFINITION_COVERAGE,
     ),
     records,
@@ -188,6 +242,8 @@ export class WorldGraphReader {
     items: WorldState['itemDefinitions'];
     recipes: WorldState['recipes'];
     manifest: WorldState['moduleManifest'];
+    status: WorldState['statusEffectPolicy'];
+    cognition: WorldState['cognitionPolicy'];
     value: DefinitionProjection;
   };
   read(world: WorldState, generation: string): DefinitionProjection {
@@ -199,6 +255,8 @@ export class WorldGraphReader {
       c.items === world.itemDefinitions &&
       c.recipes === world.recipes &&
       c.manifest === world.moduleManifest &&
+      c.status === world.statusEffectPolicy &&
+      c.cognition === world.cognitionPolicy &&
       Object.isFrozen(c.items) &&
       Object.isFrozen(c.recipes) &&
       Object.isFrozen(c.manifest)
@@ -211,6 +269,8 @@ export class WorldGraphReader {
       items: world.itemDefinitions,
       recipes: world.recipes,
       manifest: world.moduleManifest,
+      status: world.statusEffectPolicy,
+      cognition: world.cognitionPolicy,
       value,
     };
     return value;

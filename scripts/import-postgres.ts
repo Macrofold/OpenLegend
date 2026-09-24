@@ -1,3 +1,4 @@
+import { WORLD_AGENT_TABLES } from '../apps/server/src/world-agent-store.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { COMMAND_TABLES } from '../apps/server/src/command-receipts.js';
 import { DatabaseSync } from 'node:sqlite';
@@ -29,7 +30,7 @@ const tables = [
   'meta',
   'player_profiles',
   'game_saves',
-  ...[...HISTORY_TABLES, ...COMMAND_TABLES].filter((name) =>
+  ...[...HISTORY_TABLES, ...COMMAND_TABLES, ...WORLD_AGENT_TABLES].filter((name) =>
     sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name),
   ),
 ] as const;
@@ -81,7 +82,7 @@ try {
     'intelligence_calls',
     'player_profiles',
     'game_saves',
-    ...[...HISTORY_TABLES, ...COMMAND_TABLES],
+    ...[...HISTORY_TABLES, ...COMMAND_TABLES, ...WORLD_AGENT_TABLES],
   ])
     if (Number((await db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get())?.['count']))
       throw new Error('Destination has existing accounting or profiles; import refused.');

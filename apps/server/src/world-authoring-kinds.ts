@@ -29,6 +29,7 @@ export interface AuthoringDraft {
   policyRevision: number;
   base: {
     manifest?: string;
+    actionRules?: string;
     policy?: string;
     materials?: Record<string, string>;
     recipe?: { recipeId: string; version: number; digest: string };
@@ -83,6 +84,7 @@ export function draftBase(
     };
   }
   return {
+    ...(kind === 'action' ? { actionRules: actionRules(world) } : {}),
     manifest: fingerprint(world.moduleManifest),
     ...(kind === 'status-effect-policy' ? { policy: fingerprint(world.statusEffectPolicy) } : {}),
     ...(kind === 'cognition-policy'
@@ -90,7 +92,17 @@ export function draftBase(
       : {}),
   };
 }
+// Conservative definition-only fence until each native command exposes finer dependency summaries.
+function actionRules(world: WorldState) {
+  return fingerprint([
+    world.recipes,
+    world.itemDefinitions,
+    world.statusEffectPolicy,
+    world.cognitionPolicy,
+  ]);
+}
 export function currentDraftBase(world: WorldState, d: AuthoringDraft): boolean {
+  if (d.base.actionRules && d.base.actionRules !== actionRules(world)) return false;
   if (d.base.manifest && d.base.manifest !== fingerprint(world.moduleManifest)) return false;
   if (d.kind === 'status-effect-policy' && d.base.policy !== fingerprint(world.statusEffectPolicy))
     return false;
@@ -209,9 +221,18 @@ export function authoringTransition(
   }
 }
 export function validateAuthoring(service: WorldService, d: AuthoringDraft) {
+  const action = d.kind === 'action' ? commandInputSchema.safeParse(d.payload) : undefined;
   const t =
     d.kind === 'action'
-      ? { outcome: service.previewCommand(commandInputSchema.parse(d.payload), d.actorId) }
+      ? {
+          outcome: action?.success
+            ? service.previewCommand(action.data, d.actorId)
+            : {
+                ok: false,
+                code: 'invalid-action',
+                message: 'Payload does not match a native command.',
+              },
+        }
       : authoringTransition(
           service,
           d.kind === 'recipe' ? { ...service.world, paused: false } : service.world,

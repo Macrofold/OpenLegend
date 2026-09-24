@@ -1,3 +1,5 @@
+import { authoringKind } from './world-authoring-contracts.js';
+import { describeAuthoringKind } from './world-authoring-metadata.js';
 import { memoryRef, projectMemoryRecord } from './evidence-relationships.js';
 import { z } from 'zod';
 import {
@@ -30,6 +32,11 @@ const paging = {
  * docs/world-agent-mcp.md#implemented-read-only-bootstrap
  */
 export const WORLD_READ_TOOLS = {
+  ol_schema: {
+    description:
+      'Read the actual supported authoring shape, current example, limits and change semantics for a native kind. Guidance is not validation or permission.',
+    schema: z.object({ kind: authoringKind }).strict(),
+  },
   ol_context: {
     description:
       'Inspect the authorized world profile, installed families, policy and implemented tool coverage. This is an out-of-world read, not NPC knowledge.',
@@ -191,6 +198,8 @@ export class WorldToolService {
     generation: string,
   ): unknown {
     switch (name) {
+      case 'ol_schema':
+        return describeAuthoringKind(world, (raw as { kind: z.infer<typeof authoringKind> }).kind);
       case 'ol_context':
         return {
           profile: world.profile,
@@ -204,8 +213,8 @@ export class WorldToolService {
           recipeContract: DECLARATION_CONTRACT,
           recipeSchema: declarationSchema,
           limitations: [
-            'Read/preview bootstrap, not a connected native Macrofold harness or unified conversation.',
-            'No mutation, funding-session creation, generic impact proof, joint physics, information-artifact or agreement authoring is exposed here.',
+            'Read tools do not authorize writes. Authoring requires an application-issued session context and exact human approval.',
+            'No complete interaction proof, arbitrary process compiler, joint physics, information-artifact or agreement authoring is implemented.',
           ],
         };
       case 'ol_find': {

@@ -20,11 +20,11 @@ After an actual native Resume and speech action, retained personal commitment ev
 
 The synthetic graph contains one high-degree root and source-labelled leaf records, not an actual world of that many admitted mechanics. Each size ran 1,000 first-page queries returning 50 edges. A no-match relation filter had to page through the root and could examine no more than 1,024 entries per call. Returned-copy mutation did not alter the index, and a cursor against a changed source was rejected as stale.
 
-| Synthetic graph | Build | Median page query | No-match continuation pages |
-| --- | --- | --- | --- |
-| 1,001 nodes / 1,000 edges | 3.18 ms | 0.151 ms | 1 |
-| 10,001 nodes / 10,000 edges | 22.16 ms | 0.150 ms | 10 |
-| 30,001 nodes / 30,000 edges | 74.12 ms | 0.153 ms | 30 |
+| Synthetic graph             | Build    | Median page query | No-match continuation pages |
+| --------------------------- | -------- | ----------------- | --------------------------- |
+| 1,001 nodes / 1,000 edges   | 3.18 ms  | 0.151 ms          | 1                           |
+| 10,001 nodes / 10,000 edges | 22.16 ms | 0.150 ms          | 10                          |
+| 30,001 nodes / 30,000 edges | 74.12 ms | 0.153 ms          | 30                          |
 
 Build includes indexing/sorting/snapshot identity; it is not zero cost and is not performed per simulation tick. Queries measure bounded adjacency only, not all-source extraction, transitive closure, database I/O, model use or UI layout. The raw record includes sampled RSS changes; they are not peak-memory or zero-allocation claims. Multi-hop impact jobs, persistent source indexing and all-family coverage remain pending.
 
@@ -32,17 +32,16 @@ Build includes indexing/sorting/snapshot identity; it is not zero cost and is no
 
 The existing `scripts/stress-native.ts` runner executed the committed `gems.json` and `mixed.json` scenarios for 180 steps with no warmup, frozen snapshots and a requested 3× rate (180 native seconds per real second). A headroom below 1 does not sustain that requested rate.
 
-| Scenario | Native loop | Largest step | 3× headroom |
-| --- | --- | --- | --- |
-| gems / 514 entities | 1122.59 ms | 116.59 ms | 0.891 |
-| mixed / 344 entities | 1674.33 ms | 955.58 ms | 0.597 |
+| Scenario             | Native loop | Largest step | 3× headroom |
+| -------------------- | ----------- | ------------ | ----------- |
+| gems / 514 entities  | 1122.59 ms  | 116.59 ms    | 0.891       |
+| mixed / 344 entities | 1674.33 ms  | 955.58 ms    | 0.597       |
 
 The mixed world retained 3,254 events and 31,756 awareness entries. These current-baseline samples still show meaningful cold-step cost and do not qualify large-population hosting. The source/adjacency work does not claim to improve native simulation. No witness, event, physical effect or simulation time was dropped to improve a score. Follow [PF09](maintainers/performance.md#pf09--population-work-follows-relevance) and the [encounter design](encounter-scaling.md); do not infer a cross-review speedup from different hardware or earlier baselines.
 
 ### UI and integration limits
 
 Documentation path/heading checks covered 142 Markdown files and found no newly introduced unresolved link relative to the integrated baseline. Existing checked maintainer entries were preserved; the reader/MCP subsets have separate implementation marks and their automated acceptance remains pending. Source-comment documentation anchors were also checked. This is documentation verification, not runtime acceptance.
-
 
 The owner relationship-list component builds successfully and its actual shared HTTP route was exercised. A manual Chromium navigation failed with `ERR_BLOCKED_BY_ADMINISTRATOR` in this environment; no visual, keyboard, accessibility or end-to-end browser acceptance is claimed. The restriction was not bypassed. Actual Macrofold provisioning/harness forwarding, modern protocol profile, multi-user credential/recipient controls, full output-schema qualification, larger source stores, shutdown/body-abuse matrices and full-stack sustained load remain explicit task gates.
 
@@ -818,3 +817,7 @@ Production TypeScript/Vite build passed after the shared knowledge changes settl
 The isolated zero-budget browser world on port 3227 verified arrow-key navigation and selection in the nested God item catalogue, adding a Bone fragment to an existing pile, Pick Up All before alphabetically earlier Bone fragment, and Escape closing the pickup pullout while retaining the root menu. Pile ghost cleanup was code-reviewed; comprehensive renderer/occlusion and large-hover viewport checks remain deferred. No live user-world mutations or paid calls were made.
 
 A five-run synthetic frozen-world exercise with one portable stack per visible pile measured pickup-option construction at 10/100/300 piles. Before: median 6.22/65.61/539.34ms. After shared immutable custody lookup and scheduled-preview admission without action-start finalization: 0.53/5.24/30.98ms (300-pile maximum 41.35ms). This isolates option construction, not browser paint or end-to-end projection. The existing mixed native scenario (344 entities, 180 cold steps, requested 3×) measured total 1,671.90ms, p50 7.03ms, p95 12.50ms and maximum 277.04ms. The one-second 3× budget is still missed; native scale work remains PF00/PF03. Concurrent workspace activity prevents causal attribution of native timings. Local evidence: `/tmp/base-items-review-runtime.log`, `/tmp/base-items-review-after.log`, `/tmp/base-items-review-native.log`, `/tmp/base-items-review-native.cpuprofile` and `/tmp/base-items-review-build.log`. Generated-config validation, focused formatting and whitespace checks passed. The 123-document link audit found two unrelated references to the removed `open-decisions.md#observer-known-names` anchor in concurrent cognition/knowledge documentation; item and base-world links passed. Spend: $0. No automated tests were written or run.
+
+## Reviewed authoring transport development
+
+Production TypeScript and the client build pass at the write-transport stage. A temporary manual script used a disposable SQLite world, real local HTTP/MCP transport and synthetic credentials with zero funding. It negotiated the 2025-11-25 MCP profile (the SDK returned an SSE envelope), discovered 18 implemented tools, saved a custom charge-attribute draft, repeated the same operation without creating another draft, ran native validation, prepared a review, rejected unapproved Apply, accepted an exact human decision through the local route, applied through MCP, and repeated Apply without incrementing the manifest again. Graph search found the actual accepted definition. Reopening the application retained the definition and review; reported spending/reservations were zero. This is native/transport evidence, not a model, browser, hosted security or PostgreSQL acceptance claim. No automated tests or paid providers were run.

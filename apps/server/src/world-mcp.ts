@@ -1,11 +1,14 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
+import { z } from 'zod';
+import { WORLD_AUTHORING_TOOLS } from './world-authoring-contracts.js';
+import type { WorldAuthoringService } from './world-authoring.js';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import type { McpReadConfig } from './mcp-config.js';
 import { WORLD_READ_TOOLS, type WorldToolService } from './world-tools.js';
 
-const MAX_BODY = 32 * 1024,
+const MAX_BODY = 128 * 1024,
   MAX_INFLIGHT = 8,
   READ_TIMEOUT_MS = 10_000;
 function fail(response: ServerResponse, status: number, message: string) {
@@ -38,14 +41,15 @@ async function body(request: IncomingMessage): Promise<unknown> {
   }
 }
 
-/** Stateless MCP transport only. The shared service owns semantics and explicit source coverage.
- * No connector mutation or paid tool is enabled by this read-only bootstrap.
- * docs/world-agent-mcp.md#implemented-read-only-bootstrap
+/** Stateless transport over shared services. Connector identity is not a session grant;
+ * every write also checks a short-lived, application-issued context and exact review.
+ * docs/world-agent-runtime.md#durable-write-sessions
  */
 export function createWorldMcp(
   tools: WorldToolService,
   config: McpReadConfig | null,
   current: () => { worldId: string; loading: boolean },
+  authoring?: WorldAuthoringService,
 ) {
   if (!config)
     return {
@@ -55,7 +59,8 @@ export function createWorldMcp(
     };
   let inflight = 0,
     closed = false;
-  // A dedicated service credential is read-only and world-bound; it is never an NPC identity.
+  const drains = new Set<() => void>();
+  // A world-bound service credential is not an NPC identity or permission to approve a change.
   const validScope = () =>
     !!config &&
     Date.now() < config.expiresAt &&
@@ -64,7 +69,7 @@ export function createWorldMcp(
     !closed;
   const entry = createMcpHandler(
     () => {
-      const server = new McpServer({ name: 'openlegend-world-inspection', version: '1.0.0' });
+      const server = new McpServer({ name: 'openlegend-world-agent', version: '1.1.0' });
       for (const [name, tool] of Object.entries(WORLD_READ_TOOLS)) {
         server.registerTool(
           name,
@@ -104,6 +109,56 @@ export function createWorldMcp(
           },
         );
       }
+      if (config.allowWrites && authoring)
+        for (const [name, tool] of Object.entries(WORLD_AUTHORING_TOOLS)) {
+          server.registerTool(
+            name,
+            {
+              description: tool.description,
+              inputSchema: tool.schema.extend({ contextHandle: z.string().min(32).max(256) }),
+              annotations: {
+                readOnlyHint: [
+                  'ol_session',
+                  'ol_draft_read',
+                  'ol_compare',
+                  'ol_validate',
+                  'ol_approval_request',
+                ].includes(name),
+                destructiveHint: name === 'ol_change_apply',
+                idempotentHint: true,
+                openWorldHint: false,
+              },
+            },
+            async (raw: unknown) => {
+              const { contextHandle, ...args } = raw as {
+                contextHandle: string;
+                [key: string]: unknown;
+              };
+              let result = validScope()
+                ? await authoring.execute(name, args, contextHandle)
+                : {
+                    status: 'forbidden',
+                    message: 'World grant is unavailable.',
+                    cost: 'no-paid-work',
+                  };
+              const reply = () => ({
+                isError: ['invalid', 'forbidden', 'unavailable', 'capacity'].includes(
+                  result.status,
+                ),
+                structuredContent: { ...result },
+                content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+              });
+              if (Buffer.byteLength(JSON.stringify(reply())) > 256 * 1024)
+                result = {
+                  status: 'capacity',
+                  message:
+                    'Result is too large. Read the exact record in a smaller operation; a prior write may already be committed.',
+                  cost: 'no-paid-work',
+                };
+              return reply();
+            },
+          );
+        }
       return server;
     },
     { legacy: 'stateless', responseMode: 'json', maxSubscriptions: 0 },
@@ -156,11 +211,16 @@ export function createWorldMcp(
         else if (!response.writableEnded) response.end();
       } finally {
         inflight--;
+        if (!inflight) {
+          for (const resolve of drains) resolve();
+          drains.clear();
+        }
       }
     },
     async close() {
       closed = true;
       await entry.close();
+      if (inflight) await new Promise<void>((resolve) => drains.add(resolve));
     },
   };
 }
