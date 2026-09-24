@@ -30,7 +30,7 @@ jobs:
           node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/epr-before-mixed.cpuprofile > /tmp/epr-before-mixed.json
           node --import tsx scripts/stress-native.ts scripts/performance/scenarios/gems.json /tmp/epr-before-gems.cpuprofile > /tmp/epr-before-gems.json
       - name: Apply bounded reaction intake
-        run: python .github/intake-edit.py
+        run: python .github/intake-run.py
       - name: Format and production build, no test suites
         run: |
           git diff --name-only -- '*.ts' '*.tsx' | xargs -r pnpm exec prettier --write
