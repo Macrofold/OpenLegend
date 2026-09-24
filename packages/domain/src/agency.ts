@@ -1,3 +1,4 @@
+import { validActionFulfillment, type ActionFulfillment } from './action-capabilities.js';
 import { finitePoint } from '@open-legend/spatial';
 import { cloneValue } from './draft.js';
 import { appendMemory, outcome } from './events.js';
@@ -50,7 +51,13 @@ export interface ActorAgency {
     description: string;
     normalized: string;
     manifestRevision: number;
-    status: 'needs-interpretation';
+    status: 'needs-interpretation' | 'awaiting-confirmation';
+    alternative?: {
+      commands: Command[];
+      fulfillment: ActionFulfillment;
+      mode: 'enqueue' | 'replace';
+      expectedPlan: number;
+    };
   }[];
   revision: number;
   goals: ActorGoal[];
@@ -399,6 +406,17 @@ export function readyPlanStep(world: WorldState, actorId: string): PlanStep | un
 export function validateAgency(world: WorldState): void {
   for (const entity of Object.values(world.entities)) {
     if (!entity.actor) continue;
+    const action = entity.actor.action;
+    if (
+      action?.type === 'follow' &&
+      (!action.follow ||
+        !isSafeRecordId(action.targetId) ||
+        !Number.isFinite(action.follow.distance) ||
+        action.follow.distance < 1.5 ||
+        action.follow.distance > 12 ||
+        !Number.isFinite(action.follow.nextRepathAt))
+    )
+      throw new Error('Invalid saved follow activity.');
     const agency = entity.actor.agency;
     if (
       !agency ||
@@ -426,9 +444,24 @@ export function validateAgency(world: WorldState): void {
         attempt.normalized.length > 1000 ||
         !Number.isSafeInteger(attempt.manifestRevision) ||
         attempt.manifestRevision < 1 ||
-        attempt.status !== 'needs-interpretation'
+        !['needs-interpretation', 'awaiting-confirmation'].includes(attempt.status)
       )
         throw new Error('Invalid saved unlisted attempt.');
+      if (attempt.status === 'awaiting-confirmation') {
+        const a = attempt.alternative;
+        if (
+          !a ||
+          !validActionFulfillment(a.fulfillment) ||
+          !['enqueue', 'replace'].includes(a.mode) ||
+          !Number.isSafeInteger(a.expectedPlan) ||
+          a.expectedPlan < 0 ||
+          !Array.isArray(a.commands) ||
+          !a.commands.length ||
+          a.commands.length > AGENCY_LIMITS.steps ||
+          a.commands.some((c) => !isPlannedCommand(c) || c.actorId !== entity.id)
+        )
+          throw new Error('Invalid saved action alternative.');
+      }
     }
     const ids = new Set<string>();
     for (const goal of agency.goals) {
@@ -644,4 +677,95 @@ export function resolvePlanCommand(plan: ActorPlan, step: PlanStep): Command | u
   return base.type === 'cook'
     ? { ...base, type: 'cook', itemId, heatId: heatId! }
     : { ...base, type: base.type, itemId };
+}
+
+/** An uncertain relaxation has no execution authority until the owner chooses it.
+ * docs/architecture.md#action-fulfillment-and-revision-approval
+ */
+export function proposeActionRevision(
+  world: WorldState,
+  actorId: string,
+  id: string,
+  commands: Command[],
+  fulfillment: ActionFulfillment,
+  mode: 'enqueue' | 'replace',
+  expectedPlan: number,
+): Outcome {
+  if (
+    !validActionFulfillment(fulfillment) ||
+    !commands.length ||
+    commands.length > AGENCY_LIMITS.steps ||
+    commands.some((c) => !isPlannedCommand(c) || c.actorId !== actorId)
+  )
+    return outcome(
+      false,
+      'invalid-alternative',
+      'The revised action is not a supported native plan.',
+    );
+  const held = deferAttempt(world, actorId, id, fulfillment.requested);
+  if (!held.ok) return held;
+  const actor = world.entities[actorId]!.actor!;
+  const pending = actor.agency.attempts.find(
+    (a) => a.normalized === normalizeAttempt(fulfillment.requested),
+  )!;
+  if (pending.status !== 'awaiting-confirmation') {
+    pending.status = 'awaiting-confirmation';
+    pending.alternative = {
+      commands: cloneValue(commands),
+      fulfillment: cloneValue(fulfillment),
+      mode,
+      expectedPlan,
+    };
+    actor.agency.revision++;
+    appendMemory(world, actorId, {
+      kind: 'episode',
+      source: 'internal',
+      summary: `A revised action needs my decision: ${fulfillment.executableDescription}. Not fulfilled: ${fulfillment.omitted.map((o) => o.requirement).join('; ')}.`,
+      entityIds: [actorId],
+      importance: 6,
+    });
+  }
+  return outcome(
+    false,
+    'needs-confirmation',
+    `Accept revised action? ${fulfillment.executableDescription} Not fulfilled: ${fulfillment.omitted.map((o) => o.requirement).join('; ')}`,
+  );
+}
+
+export function confirmActionRevision(
+  world: WorldState,
+  actorId: string,
+  attemptId: string,
+  id: string,
+): Outcome {
+  const actor = world.entities[actorId]!.actor!;
+  const pending = actor.agency.attempts.find(
+    (a) => a.id === attemptId && a.status === 'awaiting-confirmation',
+  );
+  const alternative = pending?.alternative;
+  if (!pending || !alternative)
+    return outcome(
+      false,
+      'attempt-unavailable',
+      'That revised action is no longer awaiting your decision.',
+    );
+  if (
+    pending.manifestRevision !== world.moduleManifest.revision ||
+    (alternative.mode === 'replace' && actor.planGeneration !== alternative.expectedPlan)
+  )
+    return outcome(
+      false,
+      'stale-alternative',
+      'Mechanics or current work changed. Submit a fresh action instead of accepting this old replacement.',
+    );
+  const result = arrangePlan(
+    actor,
+    id,
+    alternative.commands.map((c, index) => ({ ...c, actorId, id: `${id}:${index}` })),
+    alternative.mode,
+    actor.agency.plan?.revision ?? 0,
+    null,
+  );
+  if (result.ok) withdrawAttempt(actor, attemptId);
+  return result;
 }

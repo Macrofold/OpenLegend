@@ -9,6 +9,8 @@ export interface CommandInput {
     | 'conversation'
     | 'move'
     | 'follow'
+    | 'confirm-attempt'
+    | 'withdraw-attempt'
     | 'gather'
     | 'prepare'
     | 'craft'
@@ -32,6 +34,7 @@ export interface CommandInput {
   ammunitionId?: string;
   position?: SurfacePoint;
   distance?: number;
+  attemptId?: string;
   quantity?: number;
   preparation?: 'fiber' | 'cord';
 }

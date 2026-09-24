@@ -326,7 +326,7 @@ export type Command = Envelope &
     | { type: 'rest' | 'cancel' | 'recover' }
     | { type: 'say'; text: string; targetId?: string }
     | { type: 'goal'; text: string }
-    | { type: 'withdraw-attempt'; attemptId: string }
+    | { type: 'withdraw-attempt' | 'confirm-attempt'; attemptId: string }
     | { type: 'teach'; targetId: string; recipeId: string }
   );
 export interface Transition {

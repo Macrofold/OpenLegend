@@ -12,6 +12,9 @@ import type { CommandInput } from '@open-legend/protocol';
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
   conversation:
     'Join or leave a nearby conversation. Membership never grants earlier unheard speech.',
+  'confirm-attempt':
+    'Accept the exact revised action and its disclosed omissions. Native prerequisites are rechecked before execution.',
+  'withdraw-attempt': 'Decline or withdraw a pending action; ongoing work is unchanged.',
   follow:
     'Follow a currently perceived actor, stopping when the target is lost or the activity is interrupted. No attack or stealth is implied.',
   move: 'Walk to the chosen location along a traversable route. This replaces your current work.',

@@ -293,3 +293,5 @@ No automated tests were written or run for this slice at the owner's request. Im
 ## Action capability slice: deferred automated coverage
 
 No new unit/browser tests are written or run for this task at the owner's request. Add automated cases for direct/queued follow admission, self/hidden/dead targets, blocked/multi-level routes, visual loss, hold/resume hysteresis, cancellation, interrupted plans, same-version save/load and bounded replanning. Runtime smoke and existing stress scripts provide separate limited evidence, not these tests. Follow-up acceptance is owned by [AC04/AC05](action-capabilities.md).
+
+- Add deferred automated coverage for invocation field/target scope, coordinate/floor ambiguity, direct actor move/follow, exact pending-alternative acceptance, decline, stale replacement, manifest changes, save/load, and no physical mutation before confirmation. No tests are added by this implementation slice.

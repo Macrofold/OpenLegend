@@ -1,3 +1,4 @@
+import { confirmActionRevision } from './agency.js';
 import { gatheringYield, BASE_GATHER_QUANTITY } from './gathering.js';
 import { current, isDraft } from 'immer';
 import { canWalkSegment, finitePoint, interpolate, type SurfacePoint } from '@open-legend/spatial';
@@ -533,6 +534,10 @@ export function executeCommand(original: WorldState, command: Command): Transiti
         return reject('not-applicable', 'This body does not use wilderness rest.');
       action = createAction(world, 'rest', SIMULATION_RULES.nativeRestSeconds);
       break;
+    case 'confirm-attempt': {
+      result = confirmActionRevision(world, actor.id, command.attemptId, command.id);
+      break;
+    }
     case 'withdraw-attempt': {
       result = withdrawAttempt(component, command.attemptId);
       break;

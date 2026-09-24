@@ -1,3 +1,10 @@
+import {
+  bindNavigationInvocation,
+  validActionFulfillment,
+  type NavigationInvocation,
+  type ActionFulfillment,
+} from './action-capabilities.js';
+import { proposeActionRevision } from './agency.js';
 import { hasMemory, supportsManualWork } from './living.js';
 import {
   normalizeAttempt,
@@ -22,7 +29,8 @@ export interface ResponseOperation {
   requiresAccepted: string[];
   talk: { text: string; addresseeEntityId: string } | null;
   act: {
-    kind: 'known' | 'expression' | 'proposal';
+    kind: 'known' | 'expression' | 'proposal' | 'invoke';
+    invocation?: NavigationInvocation | null;
     actionId: string | null;
     verb: 'nod' | 'smile' | 'frown' | 'wave' | 'shrug' | 'shake_head' | 'slap' | null;
     targetEntityId: string | null;
@@ -46,6 +54,7 @@ export interface ActorResponse {
   operations: ResponseOperation[];
 }
 export interface AttemptBinding {
+  fulfillment?: ActionFulfillment;
   description: string;
   commands: Command[];
 }
@@ -113,8 +122,16 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
       return false;
     if (
       op.act &&
-      (!record(op.act, ['kind', 'actionId', 'verb', 'targetEntityId', 'description', 'mode']) ||
-        !['known', 'expression', 'proposal'].includes(op.act.kind) ||
+      (!record(op.act, [
+        'kind',
+        'actionId',
+        'verb',
+        'targetEntityId',
+        'description',
+        'mode',
+        ...(op.act.invocation !== undefined ? ['invocation'] : []),
+      ]) ||
+        !['known', 'expression', 'proposal', 'invoke'].includes(op.act.kind) ||
         !['enqueue', 'replace'].includes(op.act.mode) ||
         ![op.act.actionId, op.act.verb, op.act.targetEntityId, op.act.description].every(
           nullableText,
@@ -289,21 +306,47 @@ export function commitActorResponse(
     const act = op.act;
     const invalidActShape =
       !!act &&
-      ((act.kind === 'known' &&
-        (!act.actionId || act.verb || act.targetEntityId || act.description)) ||
+      ((act.kind !== 'invoke' && act.invocation != null) ||
+        (act.kind === 'invoke' &&
+          (!act.invocation || act.actionId || act.verb || act.targetEntityId || act.description)) ||
+        (act.kind === 'known' &&
+          (!act.actionId || act.verb || act.targetEntityId || act.description)) ||
         (act.kind === 'expression' && (!act.verb || act.actionId || act.description)) ||
         (act.kind === 'proposal' &&
           (!act.description ||
             act.description.length > 500 ||
             act.actionId ||
             act.verb ||
-            act.targetEntityId)));
+            (act.targetEntityId && !permitted.has(act.targetEntityId)))));
     if (invalidActShape) {
       components[localId] = outcome(
         false,
         'invalid-action-response',
         'The proposed action fields do not match its kind.',
       );
+    } else if (act?.kind === 'invoke') {
+      const bound = bindNavigationInvocation(
+        world,
+        actorId,
+        `${id}:${localId}`,
+        act.invocation,
+        entityIds,
+      );
+      if ('ok' in bound) components[localId] = bound;
+      else if (
+        act.mode === 'replace' &&
+        input.entities[actorId]!.actor!.planGeneration !== expectedPlan
+      )
+        components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
+      else
+        components[localId] = arrangePlan(
+          world.entities[actorId]!.actor!,
+          `${id}:${localId}`,
+          [bound],
+          act.mode,
+          world.entities[actorId]!.actor!.agency.plan?.revision ?? 0,
+          null,
+        );
     } else if (act?.kind === 'known' && !Object.hasOwn(actions, act.actionId!)) {
       components[localId] = outcome(
         false,
@@ -316,7 +359,14 @@ export function commitActorResponse(
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
       else if (
         selected &&
-        ['conversation', 'teach', 'cancel', 'recover', 'withdraw-attempt'].includes(selected.type)
+        [
+          'conversation',
+          'teach',
+          'cancel',
+          'recover',
+          'withdraw-attempt',
+          'confirm-attempt',
+        ].includes(selected.type)
       )
         command('act', { ...selected, actorId, id: `${id}:${localId}` });
       else if (selected)
@@ -395,6 +445,27 @@ export function commitActorResponse(
       const component = world.entities[actorId]!.actor!;
       if (matches.length === 1) {
         const selected = matches[0]!.commands;
+        const fulfillment = matches[0]!.fulfillment;
+        if (fulfillment && !validActionFulfillment(fulfillment)) {
+          components[localId] = outcome(
+            false,
+            'invalid-fulfillment',
+            'The action fulfillment report is invalid.',
+          );
+          continue;
+        }
+        if (fulfillment?.verdict === 'confirm') {
+          components[localId] = proposeActionRevision(
+            world,
+            actorId,
+            `${id}:${localId}`,
+            selected.map((c, index) => ({ ...c, actorId, id: `${id}:${localId}:${index}` })),
+            fulfillment,
+            act.mode,
+            expectedPlan,
+          );
+          continue;
+        }
         if (
           act.mode === 'replace' &&
           input.entities[actorId]!.actor!.planGeneration !== expectedPlan
@@ -402,9 +473,14 @@ export function commitActorResponse(
           components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
         else if (
           selected.length === 1 &&
-          ['conversation', 'teach', 'cancel', 'recover', 'withdraw-attempt'].includes(
-            selected[0]!.type,
-          )
+          [
+            'conversation',
+            'teach',
+            'cancel',
+            'recover',
+            'withdraw-attempt',
+            'confirm-attempt',
+          ].includes(selected[0]!.type)
         )
           command('act', { ...selected[0]!, actorId, id: `${id}:${localId}` });
         else

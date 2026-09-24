@@ -352,3 +352,7 @@ The generic strict-schema walker distinguishes property-name maps from schema no
 ## Native follow activity
 
 The native `follow` command uses the existing physical action lane and movement owner. It follows a currently visible living actor at a bounded desired distance (default 3 world units), with a 0.75-unit hold/resume band and bounded target-displacement replanning. Losing current visual evidence, losing support, or an invalid route ends the activity honestly; there is no hidden-position tracking, scent, stealth or sunset condition. Holding near the target remains running. Explicit cancellation/replacement and plan interruption retain their existing semantics. This is the initial ground/visual adapter, not a universal locomotion controller.
+
+## Action fulfillment and revision approval
+
+Parameterized `invoke` operations bind native move/follow arguments through one domain adapter. Explicit freeform proposals can retain a scoped target reference. A server-produced fulfillment report can require confirmation: the proposed command sequence and omissions then live in the actor's existing private pending-intent owner, without starting or replacing work. The actor may select an explicit accept or withdraw handle in a later ordinary decision; player accept/decline uses the same native command owner. Acceptance pins the stored alternative, rechecks manifest and replacement-work freshness, and queues ordinary native steps whose live prerequisites are checked at execution. This is not a new invention registry or a general workflow interpreter.

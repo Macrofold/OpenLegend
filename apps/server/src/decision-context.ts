@@ -9,7 +9,11 @@ import { npcCandidates, planningCandidates } from './context.js';
 import { domainCommand } from './cognition.js';
 import { candidateSet, gameTime, type RecallService } from './recall.js';
 import type { WorldService } from './world-service.js';
-import { COGNITION_VERSION, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
+import {
+  COGNITION_VERSION,
+  RESPONSE_INSTRUCTIONS,
+  NAVIGATION_INSTRUCTIONS,
+} from './cognition-contracts.js';
 import { readableDecisionContext, responseReferences } from './response-context.js';
 import { batchedAttentionQuestions } from './jev-questions.js';
 const RECENT_CONVERSATION_EVENTS = 32;
@@ -78,11 +82,27 @@ export async function prepareDecision(
     ...candidate,
     id: `p${index}`,
   }));
-  const intentActions = observed.actor.actor!.agency.attempts.map((attempt, index) => ({
-    id: `w${index}`,
-    description: `Withdraw my pending intent: ${attempt.description}`,
-    command: { type: 'withdraw-attempt' as const, id: jobId, actorId, attemptId: attempt.id },
-  }));
+  const intentActions = observed.actor.actor!.agency.attempts.flatMap((attempt, index) => [
+    {
+      id: `w${index}`,
+      description: `Decline/withdraw pending intent: ${attempt.description}`,
+      command: { type: 'withdraw-attempt' as const, id: jobId, actorId, attemptId: attempt.id },
+    },
+    ...(attempt.alternative
+      ? [
+          {
+            id: `c${index}`,
+            description: `Accept this revised action? ${attempt.alternative.fulfillment.executableDescription}. Not fulfilled: ${attempt.alternative.fulfillment.omitted.map((o) => o.requirement).join('; ')}. ${attempt.alternative.fulfillment.reason}`,
+            command: {
+              type: 'confirm-attempt' as const,
+              id: jobId,
+              actorId,
+              attemptId: attempt.id,
+            },
+          },
+        ]
+      : []),
+  ]);
   const planActions = Object.fromEntries(
     planOffers
       .map((candidate) => [candidate.id, domainCommand(candidate.command!, actorId, jobId)])
@@ -97,6 +117,13 @@ export async function prepareDecision(
   const triggerIdSet = new Set(requiredIds);
   const requiredContext: Record<string, unknown> = {
     stimulus,
+    navigation: NAVIGATION_INSTRUCTIONS,
+    currentPosition: observed.actor.position,
+    currentSupport: observed.actor.spatial.supportSurfaceId,
+    publicSurfaces:
+      world.map.spatial.disclosure === 'public'
+        ? world.map.spatial.surfaces.map(({ id, name }) => ({ id, name }))
+        : [],
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     planOffers: planOffers.map(({ id, description }) => ({ id, description })),
     references: responseReferences(
@@ -191,6 +218,13 @@ export async function prepareDecision(
   const actor = currentObserved.actor.actor!;
   const context: Record<string, unknown> = {
     stimulus,
+    navigation: NAVIGATION_INSTRUCTIONS,
+    currentPosition: currentObserved.actor.position,
+    currentSupport: currentObserved.actor.spatial.supportSurfaceId,
+    publicSurfaces:
+      currentWorld.map.spatial.disclosure === 'public'
+        ? currentWorld.map.spatial.surfaces.map(({ id, name }) => ({ id, name }))
+        : [],
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     identity: `I am ${currentObserved.actor.name}.${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(world, actorId)
@@ -263,7 +297,9 @@ export async function prepareDecision(
     actions: planActions,
   };
   const offered: { id: string; description: string }[] = [];
-  const prompt = readableDecisionContext(context, offered, false);
+  const prompt =
+    readableDecisionContext(context, offered, false) +
+    `\nNavigation: ${NAVIGATION_INSTRUCTIONS}\nPosition/support: ${JSON.stringify({ position: currentObserved.actor.position, support: currentObserved.actor.spatial.supportSurfaceId })}\nPublic supports: ${JSON.stringify(context['publicSurfaces'])}`;
   const bytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   if (bytes > 100000)
     throw new Error('Complete accepted inner world and required context exceed the input budget.');

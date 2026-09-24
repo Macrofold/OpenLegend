@@ -85,6 +85,8 @@ export const commandInputSchema = z
       'conversation',
       'move',
       'follow',
+      'confirm-attempt',
+      'withdraw-attempt',
       'gather',
       'prepare',
       'craft',
@@ -104,6 +106,7 @@ export const commandInputSchema = z
     operation: z.enum(['join', 'leave']).optional(),
     targetId: id.optional(),
     distance: z.number().min(1.5).max(12).optional(),
+    attemptId: id.optional(),
     itemId: id.optional(),
     recipeId: id.optional(),
     attributeId: id.optional(),
@@ -1276,6 +1279,12 @@ export class WorldService {
         if (!input.position)
           return { ok: false, code: 'position', message: 'Choose a destination.' };
         command = { ...envelope, type: 'move', destination: input.position };
+        break;
+      case 'confirm-attempt':
+      case 'withdraw-attempt':
+        if (!input.attemptId)
+          return { ok: false, code: 'attempt', message: 'Choose a pending action.' };
+        command = { ...envelope, type: input.type, attemptId: input.attemptId };
         break;
       case 'follow':
         if (!input.targetId)

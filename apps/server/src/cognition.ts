@@ -102,6 +102,9 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
       };
     case 'move':
       return { ...base, type: 'move', destination: input.position! };
+    case 'confirm-attempt':
+    case 'withdraw-attempt':
+      return { ...base, type: input.type, attemptId: input.attemptId! };
     case 'follow':
       return {
         ...base,
