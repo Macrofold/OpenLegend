@@ -1,4 +1,4 @@
-name: Perception performance implementation
+name: Perception exposure implementation
 on:
   push:
   pull_request:
@@ -25,30 +25,29 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Matched baseline native profiles
+      - name: Previous slice native profiles
         run: |
           node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/epr-before-mixed.cpuprofile > /tmp/epr-before-mixed.json
           node --import tsx scripts/stress-native.ts scripts/performance/scenarios/gems.json /tmp/epr-before-gems.cpuprofile > /tmp/epr-before-gems.json
-      - name: Apply private acquisition and batch admission
-        run: |
-          python .github/perception-edit.py
-          python .github/perception-schema.py
+      - name: Apply change-driven exposure reuse
+        run: python .github/exposure-edit.py
       - name: Format and production build, no test suites
         run: |
           git diff --name-only -- '*.ts' '*.tsx' | xargs -r pnpm exec prettier --write
+          pnpm exec prettier --write packages/domain/src/perception-frame.ts
           pnpm run build
       - name: Runtime exercise and matched profiles
         run: |
           node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/epr-after-mixed.cpuprofile > /tmp/epr-after-mixed.json
           node --import tsx scripts/stress-native.ts scripts/performance/scenarios/gems.json /tmp/epr-after-gems.cpuprofile > /tmp/epr-after-gems.json
-          node --import tsx .github/perception-runtime.mjs
+          node --import tsx .github/exposure-runtime.mjs
       - name: Commit working slice
         run: |
           git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add packages apps docs
-          git commit -m '[skip ci] perf: keep perception acquisitions private and batch evidence admission'
+          git commit -m '[skip ci] perf: reuse unchanged visual exposures and preserve feature deltas'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
       - name: Diagnostics
         if: always()

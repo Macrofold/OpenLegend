@@ -1,0 +1,116 @@
+import { current, isDraft } from 'immer';
+import { visionQuery, visionRadius } from './perception.js';
+import { bodyProfile, spatialMap } from './spatial-state.js';
+import { spatialCandidates } from './spatial.js';
+import { isSafeRecordId } from './records.js';
+import type { Entity, Position, WorldState } from './types.js';
+
+interface Source {
+  id: string;
+  position: Position;
+  height: number;
+  eyeHeight: number;
+  radius: number;
+  alive: boolean;
+  memory: boolean;
+  sleeping: boolean;
+  object: boolean;
+  feature: string;
+  detail: string;
+}
+interface Exposure { people: string[]; objects: string[] }
+interface Frame {
+  geometry: object;
+  senses: object;
+  sources: Map<string, Source>;
+  exposures: Map<string, Exposure>;
+  stats: { reused: number; queried: number; candidates: number };
+}
+const frames = new WeakMap<WorldState, Frame>();
+const plain = <T extends object>(value: T): T => isDraft(value) ? current(value) : value;
+const samePosition = (a: Position, b: Position) => a.x === b.x && a.y === b.y && a.z === b.z;
+const sameSource = (a: Source | undefined, b: Source) => !!a &&
+  samePosition(a.position, b.position) && a.height === b.height &&
+  a.alive === b.alive && a.object === b.object;
+const nearby = (observer: Source, target: Source) =>
+  Math.hypot(observer.position.x - target.position.x, observer.position.z - target.position.z) <= observer.radius + 2;
+
+/** Only current coarse outward facts, not physiology, private traits or intentions.
+ * Add supported detail here when a real sensory consumer exists, not by hashing the whole entity.
+ * docs/architecture.md#change-driven-exposure-and-reaction-intake
+ */
+function visibleFeature(entity: Entity): { feature: string; detail: string } {
+  const facts = [entity.name, entity.kind, entity.appearance ?? 'sprite',
+    entity.actor ? (entity.actor.alive ? (entity.actor.incapacitated ? 'incapacitated' : 'alive') : 'dead') : '',
+    entity.heat ? (entity.heat.lit ? 'burning' : 'unlit') : '',
+    entity.resource ? (entity.resource.quantity > 0 ? 'material present' : 'depleted') : '',
+    entity.remains ? (entity.remains.harvested ? 'harvested' : 'unharvested') : ''];
+  return { feature: JSON.stringify(facts), detail: facts.filter(Boolean).join(', ') };
+}
+
+/** Derived fixed-phase visibility reuse. Cache entries contain scalar snapshots, never drafts.
+ * Source motion invalidates nearby stationary observers; geometry/senses invalidate all.
+ * Queries retain existing exact vision and spatial-candidate ordering.
+ */
+export function createPerceptionFrame(world: WorldState, previous: WorldState) {
+  const old = Object.isFrozen(previous) ? frames.get(previous) : undefined;
+  const samples: Source[] = Object.values(world.entities).map(entity => {
+    const body = bodyProfile(entity);
+    return { id: entity.id, position: plain(entity.position), height: body.height,
+      eyeHeight: body.eyeHeight, radius: entity.actor ? visionRadius(world, entity) : 0,
+      alive: !!entity.actor?.alive, memory: !!entity.actor && entity.actor.capabilities?.memory !== false,
+      sleeping: !!entity.actor?.rest?.asleep, object: !entity.actor && !entity.animal,
+      ...visibleFeature(entity) };
+  });
+  const next: Frame = { geometry: spatialMap(world), senses: plain(world.moduleManifest),
+    sources: new Map(samples.map(source => [source.id, source])), exposures: new Map(),
+    stats: { reused: 0, queried: 0, candidates: 0 } };
+  const compatible = old?.geometry === next.geometry && old?.senses === next.senses;
+  const changed = compatible ? samples.filter(source => !sameSource(old!.sources.get(source.id), source)) : samples;
+  const removed = compatible ? [...old!.sources.values()].filter(source => !next.sources.has(source.id)) : [];
+  let living: ReturnType<typeof spatialCandidates<Source>> | undefined;
+  let objects: ReturnType<typeof spatialCandidates<Source>> | undefined;
+  return {
+    sources: samples,
+    changedFeatures: new Set(samples.filter(source =>
+      previous.perceptionFeatures[source.id] !== undefined && previous.perceptionFeatures[source.id] !== source.feature).map(source => source.id)),
+    query(observer: Source): Exposure {
+      const prior = old?.sources.get(observer.id), exposed = old?.exposures.get(observer.id);
+      if (compatible && exposed && prior && sameSource(prior, observer) &&
+        prior.radius === observer.radius && prior.eyeHeight === observer.eyeHeight &&
+        prior.sleeping === observer.sleeping && prior.memory === observer.memory &&
+        !changed.some(source => nearby(observer, source) || !!old!.sources.get(source.id) && nearby(observer, old!.sources.get(source.id)!)) &&
+        !removed.some(source => nearby(observer, source))) {
+        next.stats.reused++;
+        next.exposures.set(observer.id, exposed);
+        return exposed;
+      }
+      const sees = visionQuery(world, world.entities[observer.id]!);
+      living ??= spatialCandidates(samples.filter(source => source.alive));
+      objects ??= spatialCandidates(samples.filter(source => source.object));
+      const people = living(observer.position, observer.radius + 2);
+      const things = objects(observer.position, observer.radius);
+      next.stats.queried++;
+      next.stats.candidates += people.length + things.length;
+      const result = { people: people.filter(source => source.id !== observer.id && sees(source)).map(source => source.id),
+        objects: things.filter(source => sees(source)).map(source => source.id) };
+      next.exposures.set(observer.id, result);
+      return result;
+    },
+    finish() {
+      if (samples.length !== Object.keys(previous.perceptionFeatures).length || samples.some(source => previous.perceptionFeatures[source.id] !== source.feature))
+        world.perceptionFeatures = Object.fromEntries(samples.map(source => [source.id, source.feature]));
+    },
+    retain(committed: WorldState) { frames.set(committed, next); },
+  };
+}
+export function perceptionFrameStats(world: WorldState) {
+  const stats = frames.get(world)?.stats;
+  return stats ? { ...stats } : undefined;
+}
+export function validatePerceptionState(world: WorldState): void {
+  const values = world.perceptionFeatures;
+  if (!values || typeof values !== 'object' || Array.isArray(values) ||
+    Object.entries(values).some(([id, value]) => !isSafeRecordId(id) || typeof value !== 'string' || value.length > 2048))
+    throw new Error('Invalid saved perception feature baseline.');
+}
