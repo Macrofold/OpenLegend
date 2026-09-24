@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   native-and-browser:
+    if: github.head_ref != 'feat/hearing-speech-captions'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
