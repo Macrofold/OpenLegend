@@ -239,5 +239,27 @@
       "heapUsedBytes": 45096104,
       "finalWorldDigest": "ca8b21ad0d40b77ce8c5932b6af54d3fb62fa91670b4cf1819731baac920a970"
     }
+  },
+  "explicitTargetAdmission": {
+    "run": "35950355436",
+    "scope": "Native runtime exercise; no provider calls or test framework.",
+    "mismatch": {
+      "ok": false,
+      "code": "target-mismatch",
+      "message": "The explicit target does not match the resolved native action."
+    },
+    "mismatchPlan": null,
+    "matching": {
+      "ok": true,
+      "code": "responded",
+      "message": "Response completed."
+    },
+    "matchingAction": "follow",
+    "contradictoryApproval": {
+      "ok": false,
+      "code": "target-mismatch",
+      "message": "The explicit target does not match the resolved native action."
+    },
+    "pendingAfterContradiction": 0
   }
 }

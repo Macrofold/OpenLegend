@@ -445,6 +445,25 @@ export function commitActorResponse(
       const component = world.entities[actorId]!.actor!;
       if (matches.length === 1) {
         const selected = matches[0]!.commands;
+        // A lexical binding cannot override the explicit target, even before revision review.
+        // docs/architecture.md#action-fulfillment-and-revision-approval
+        if (
+          act.targetEntityId &&
+          selected.some(
+            (command) =>
+              ('targetId' in command &&
+                command.targetId !== undefined &&
+                command.targetId !== act.targetEntityId) ||
+              ('heatId' in command && command.heatId !== act.targetEntityId),
+          )
+        ) {
+          components[localId] = outcome(
+            false,
+            'target-mismatch',
+            'The explicit target does not match the resolved native action.',
+          );
+          continue;
+        }
         const fulfillment = matches[0]!.fulfillment;
         if (fulfillment && !validActionFulfillment(fulfillment)) {
           components[localId] = outcome(

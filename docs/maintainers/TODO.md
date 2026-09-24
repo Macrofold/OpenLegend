@@ -307,3 +307,5 @@ No new unit/browser tests are written or run for this task at the owner's reques
 
 - Action acceptance follow-up: run capped live Jev/full-match and partial-revision examples, including the actor's subsequent accept/decline choice. The injected smoke outputs establish control flow, not semantic quality. Qualify the Character panel's visual layout, keyboard controls and stale-load draft/error behavior.
 - Profile the existing mixed scenario's cold advance spike through the performance owner before making population/hitch-free claims; do not add an unrelated scheduler rewrite to action grounding.
+
+- Add automated coverage for contradictory explicit target references versus exact/normalized text bindings, including confirmation alternatives and cooking heat targets. Native admission rejects the mismatch before work or a misleading approval is created.
