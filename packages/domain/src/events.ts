@@ -84,12 +84,11 @@ function eventAudience(
   type: string,
   source: Entity | undefined,
   scope: 'external' | 'private',
-  candidates?: Entity[],
 ): string[] {
   const audience =
     scope === 'private' || !source
       ? []
-      : (candidates ?? Object.values(world.entities))
+      : Object.values(world.entities)
           .filter(
             (entity) =>
               hasMemory(entity) &&
@@ -104,38 +103,35 @@ function eventAudience(
   return audience;
 }
 
-/** Only for the synchronous post-movement encounter phase: emitting encounters changes
- * experience, not positions or sensory capabilities. Never retain this resolver across motion.
- * The usual recordEvent path still owns every ledger, memory and commitment mutation.
- * EPR03 still owns private acquisition; this optimization does not redefine witness semantics.
- * docs/events-perception-and-reactions.md#6-spatial-work-and-invalidation
+/** Seeing a source is the observer's evidence, not an outward action witnessed by others.
+ * Keep the existing encounter family/importance for living-source reconsideration, but route
+ * acquisition through the same scoped experience owner as all other awareness.
+ * docs/events-perception-and-reactions.md#perception-acquisition-is-normally-private
  */
-export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
-  let observers: Entity[] | undefined;
-  const audiences = new Map<string, string[]>();
-  return (source: Entity, targetId: string, meaningful: boolean): WorldEvent => {
-    let audience = audiences.get(source.id);
-    if (!audience) {
-      observers ??= Object.values(world.entities).filter(
-        (e) => hasMemory(e) && e.actor?.alive && !e.actor.rest?.asleep,
-      );
-      audience = eventAudience(world, 'encounter', source, 'external', observers);
-      audiences.set(source.id, audience);
-    }
-    return recordEvent(
-      world,
-      events,
-      'encounter',
-      `${source.name} encountered ${world.entities[targetId]!.name}.`,
-      audience,
-      source,
-      targetId,
-      meaningful
-        ? { importance: 6, semanticTrigger: true }
-        : { importance: 0, urgency: 0, semanticTrigger: false },
-      'external',
-    );
-  };
+export function recordVisualAcquisition(
+  world: WorldState,
+  events: WorldEvent[],
+  observer: Entity,
+  targetId: string,
+  meaningful: boolean,
+): void {
+  if (!hasMemory(observer) || !observer.actor?.alive || observer.actor.rest?.asleep) return;
+  recordEvent(
+    world,
+    events,
+    'encounter',
+    `${observer.name} encountered ${world.entities[targetId]!.name}.`,
+    [observer.id],
+    observer,
+    targetId,
+    {
+      acquisition: 'visual',
+      importance: meaningful ? 6 : 0,
+      urgency: meaningful ? 2 : 0,
+      semanticTrigger: meaningful,
+    },
+    'private',
+  );
 }
 
 function recordEvent(
@@ -216,7 +212,9 @@ function recordEvent(
               scope === 'private'
                 ? type === 'contact'
                   ? 'felt'
-                  : 'internal'
+                  : data?.['acquisition'] === 'visual'
+                    ? 'observed'
+                    : 'internal'
                 : type === 'speech'
                   ? 'heard'
                   : 'observed',
