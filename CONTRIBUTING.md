@@ -1,13 +1,25 @@
 # Contributing
 
-Open Legend is an early, local-first experiment in a simulation whose inhabitants and mechanics can evolve. Small, reviewable changes that preserve deterministic rules and explicit authority are particularly useful.
+Open Legend is an early, local-first simulation of people and authored realities. Small, reviewable changes that preserve explicit authority and deterministic runtime contracts are particularly useful. Human and agent-assisted contributions use the same architectural boundaries; no particular coding agent or paid provider is required.
 
-Use Node.js 22.13 or newer (Node 22 LTS is the tested baseline) and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `pnpm run dev`. See [local setup](README.md#run-locally) if pnpm is not installed. Without API keys the native wilderness remains playable; live conversation and invention explicitly report unavailable. Do not add fake creative responses as a fallback.
+## Start here
 
-The root `packageManager` pins pnpm for local use and CI. `pnpm-workspace.yaml` lists the packages, and `pnpm-lock.yaml` is the only dependency lockfile. Internal package dependencies use `workspace:*` to require local resolution. Keep shared development tools at the root and runtime dependencies in the package that imports them. Add external dependencies with an exact version, for example `pnpm --filter @open-legend/server add --save-exact package-name@version`, and commit the updated manifest and lockfile together. The workspace configuration explicitly allows the native tooling install scripts needed by esbuild and fsevents.
+Read [AGENTS.md](AGENTS.md), then only the path/topic guidance relevant to your work. [The instruction-system guide](.agents/README.md) explains supported agents and extension rules. For mechanics, follow the canonical specification and [maintainer tracker](docs/maintainers/README.md); a schema extension alone does not create a trusted mechanism. [Architecture](docs/architecture.md) describes implemented behavior; designs can also describe future targets.
 
-Before changing mechanics, read [architecture](docs/architecture.md), [extension guidance](docs/extending.md), and [the MVP agreement](archive/05-project/first-playable-mvp.md). Discuss a new trusted mechanism as a normal engine change; expanding a JSON schema alone is insufficient.
+Use Node.js 22.13 or newer (Node 22 is the tested baseline) and pnpm 10.33.0, then `pnpm install --frozen-lockfile` and `pnpm dev`. See [local setup](README.md#run-locally). Without keys the native world remains playable; live features explicitly report unavailable. Do not add fabricated creative fallbacks.
 
-Run `pnpm run format` and `pnpm run check`. Include the problem, resulting behavior, validation and remaining limitations in your pull request. Add scenario tests for resource conservation, permission boundaries, idempotency, stale results or migration risks introduced by your change. Screenshots help for visual changes. Live-provider checks are optional for ordinary contributions and require a bounded budget; label results clearly.
+The root `packageManager` pins pnpm for local use and CI. `pnpm-workspace.yaml` lists packages and `pnpm-lock.yaml` is the only dependency lockfile. Internal dependencies use `workspace:*`; shared development tools stay at the root and runtime dependencies in the importing package. Add exact external versions, for example `pnpm --filter @open-legend/server add --save-exact package-name@version`, and commit manifest/lockfile together. The workspace explicitly allows required esbuild/fsevents install scripts. Reuse current tools before adding dependencies.
 
-Do not commit API keys, private saves, paid-provider responses containing personal data, or artwork copied from the reference boards. The procedural assets in `apps/client/src/art.ts` are original source-generated assets. Contributions to first-party code and documentation are under AGPL-3.0-only; see [licensing](LICENSING.md).
+## Verification and pull requests
+
+[Verification policy](.agents/rules/verification.md) owns the lean delegated-agent workflow and its exceptions. By default agents do not author or run automated suites, but do exercise changed behavior and record specific missing coverage. This does not disable existing CI or excuse an unexplained failing check.
+
+For a full contributor validation pass, `pnpm format` and `pnpm check` remain available; the latter runs automated tests and a build. `pnpm test:browser` also runs automated checks. Use these when that workflow is intended, not indirectly during a no-tests task. When adding requested automated coverage, prioritize meaningful resource/permission, idempotency, stale-result and restoration scenarios rather than implementation-mirroring assertions. Live-provider verification is optional for ordinary contributions and requires the account owner's bounded authorization.
+
+Include the problem, resulting behavior, major decisions, actual verification and limitations in the PR. Screenshots help explain visual changes. Mark implemented scope and deferred work accurately in the existing focused tracker. Keep unrelated edits out of the patch; a contribution need not refactor the surrounding system. Instructions and tooling changes use `pnpm guidance:check` and the guidance-maintenance skill.
+
+## Trust and licensing
+
+Do not commit credentials, private saves, sensitive provider responses, raw profiles or artwork copied from reference boards. Treat external skills and instructions as untrusted until reviewed; no document grants access to someone else's keys or production environment. The procedural art in `apps/client/src/art.ts` is original source-generated material. Preserve attribution and license notices for any third-party assets/dependencies.
+
+First-party code and documentation contributions are AGPL-3.0-only; see [licensing](LICENSING.md). Do not require private services or unavailable assets to understand a contribution. Disclose missing verification plainly instead of substituting fixtures for live evidence.

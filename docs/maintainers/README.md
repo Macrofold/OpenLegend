@@ -22,6 +22,8 @@ This page is the master navigation index for active implementation work.
 
 - [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
 
+- [Agent-guidance delivery](agent-guidance.md) — development instructions, tooling and cross-agent verification; [system guide](../../.agents/README.md).
+
 ## Supporting references
 
 - [Extensibility roadmap](../extensibility-roadmap.md)
