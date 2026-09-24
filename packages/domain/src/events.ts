@@ -13,7 +13,7 @@ import { appraiseEvent } from './social.js';
 import { mutateExperience } from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';
-import { finishWorld, cloneValue, appendSnapshot } from './draft.js';
+import { finishWorld, cloneValue, appendEvents } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { seesEntity } from './perception.js';
@@ -218,9 +218,6 @@ function recordEvent(
     const conversation = world.conversations?.records[conversationId];
     if (conversation) conversation.lastActivityAt = world.simTime;
   }
-  if (audience.length || importance >= (world.socialPolicy?.notableThreshold ?? 8))
-    world.events =
-      appendSnapshot(world.events, [cloneValue(event)]) ?? (world.events.push(event), world.events);
   events.push(event);
   if (world.experience) {
     for (const actorId of audience) {
@@ -283,6 +280,9 @@ function recordEvent(
     }
   }
   learnSpeechIntroduction(world, event);
+  // Finalize optional native metadata before handing an immutable record to persistence.
+  if (audience.length || importance >= (world.socialPolicy?.notableThreshold ?? 8))
+    appendEvents(world, [cloneValue(event)]);
   appraiseEvent(world, event);
   recordSpokenPromise(world, event);
   advanceCommitments(world, [event]);

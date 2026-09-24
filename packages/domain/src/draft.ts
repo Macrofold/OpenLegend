@@ -17,6 +17,36 @@ function recordAppend(before: readonly unknown[], after: readonly unknown[]): vo
   lineage.tip = after;
   appendLineages.set(after, lineage);
 }
+type EventBuffer = { before: WorldEvent[]; values: WorldEvent[] };
+const eventBuffers = new WeakMap<WorldState, EventBuffer>();
+/** A native transition can emit many occurrences. Copy its retained prefix once, not once
+ * per occurrence. Only this helper appends to the owned buffer; edits enter a new draft.
+ * A nested draft seals its parent first, so forks never share a mutable buffer.
+ * docs/hearing-and-speech.md#performance-and-invalidation
+ */
+export function appendEvents(world: WorldState, owned: WorldEvent[]): void {
+  const entries = isDraft(world.events) ? current(world.events) : world.events;
+  let buffer = eventBuffers.get(world);
+  if (buffer && entries !== buffer.values) {
+    sealEvents(world);
+    buffer = undefined;
+  }
+  if (!buffer && isDraft(world) && Object.isFrozen(entries)) {
+    buffer = { before: entries, values: [...entries] };
+    eventBuffers.set(world, buffer);
+    world.events = buffer.values;
+  }
+  if (buffer) buffer.values.push(...owned.map((event) => freeze(event, true)));
+  else world.events.push(...owned);
+}
+function sealEvents(world: WorldState): void {
+  const buffer = eventBuffers.get(world);
+  if (!buffer) return;
+  eventBuffers.delete(world);
+  Object.freeze(buffer.values);
+  const entries = isDraft(world.events) ? current(world.events) : world.events;
+  if (entries === buffer.values) recordAppend(buffer.before, buffer.values);
+}
 /** Frozen prefix plus owned new values avoids Immer traversing each historical row again.
  * New values must belong to the caller; never freeze a model/client-owned object in place.
  * Plain mutable builders take their existing mutation path. This proves append, not authority.
@@ -51,9 +81,11 @@ export function freezeWorld(world: WorldState): WorldState {
   return freeze(world, true);
 }
 export function draftWorld(world: WorldState): WorldState {
+  sealEvents(world);
   return drafts.createDraft(isDraft(world) ? current(world) : world);
 }
 export function finishWorld(world: WorldState): WorldState {
+  sealEvents(world);
   if (!isDraft(world)) return world;
   const before = original(world)!.events;
   let appendOnly = true;

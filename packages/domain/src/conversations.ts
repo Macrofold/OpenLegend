@@ -1,3 +1,5 @@
+import { current, isDraft } from 'immer';
+import { spatialMap } from './spatial-state.js';
 import { withinHearingRange } from './perception.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import type { WorldState, Transition } from './types.js';
@@ -213,36 +215,129 @@ export function changeConversation(
   world.commandReceipts[id] = { digest, outcome: result };
   return finish(world, [], result);
 }
+type ContinuityPose = {
+  id: string;
+  position: WorldState['entities'][string]['position'];
+  body: string;
+  alive: boolean;
+  senses: string;
+};
+type Continuity = {
+  active: object;
+  map: object;
+  manifest: object;
+  timeout: number;
+  checkedAt: number;
+  nextExpiry: number;
+  poses: ContinuityPose[];
+};
+const continuity = new WeakMap<object, Continuity>();
+/** Successful continuity is reusable until a pose, binding, geometry, membership or expiry
+ * changes. This is not an evidence cache: every utterance still resolves its actual audience.
+ * docs/hearing-and-speech.md#performance-and-invalidation
+ */
 export function reconcileConversations(world: WorldState): void {
   if (!world.conversations) return;
-  // Conversation continuity is a potential communication link, not access to future words.
-  // A distant exchange using raised voices must not be closed by ordinary-speech range.
-  const loudest = loudestSpeechVolume(world.moduleManifest.acoustics);
-  for (const [actorId, id] of Object.entries(world.conversations.active)) {
+  const records = isDraft(world.conversations.records)
+    ? current(world.conversations.records)
+    : world.conversations.records;
+  const active = isDraft(world.conversations.active)
+    ? current(world.conversations.active)
+    : world.conversations.active;
+  const map = spatialMap(world);
+  const manifest = isDraft(world.moduleManifest)
+    ? current(world.moduleManifest)
+    : world.moduleManifest;
+  const timeout = world.socialPolicy?.conversationInactivitySeconds ?? 1800;
+  const old = Object.isFrozen(records) ? continuity.get(records) : undefined;
+  if (
+    old &&
+    old.active === active &&
+    old.map === map &&
+    old.manifest === manifest &&
+    old.timeout === timeout &&
+    world.simTime >= old.checkedAt &&
+    world.simTime < old.nextExpiry &&
+    old.poses.every((pose) => {
+      const entity = world.entities[pose.id];
+      const position =
+        entity && (isDraft(entity.position) ? current(entity.position) : entity.position);
+      return (
+        position === pose.position &&
+        entity!.spatial.bodyProfileId === pose.body &&
+        !!entity!.actor?.alive === pose.alive &&
+        (entity!.actor?.senses?.join('|') ?? 'default') === pose.senses
+      );
+    })
+  )
+    return;
+  const loudest = loudestSpeechVolume(manifest.acoustics);
+  const membersByConversation = new Map<string, string[]>();
+  let nextExpiry = Infinity;
+  for (const [actorId, id] of Object.entries(active)) {
     const entity = world.entities[actorId];
     if (!entity?.actor?.alive) {
       leaveConversation(world, actorId, 'death');
       continue;
     }
     const conversation = world.conversations.records[id]!;
-    if (
-      world.simTime - (conversation.lastActivityAt ?? conversation.startedAt) >=
-      (world.socialPolicy?.conversationInactivitySeconds ?? 1800)
-    ) {
+    const expires = (conversation.lastActivityAt ?? conversation.startedAt) + timeout;
+    if (world.simTime >= expires) {
       leaveConversation(world, actorId, 'inactivity');
       continue;
     }
-    const members = conversation.intervals.filter(
-      (i) => i.leftAt === undefined && i.actorId !== actorId,
-    );
-    if (
-      members.length &&
-      !members.some(
-        (i) =>
-          world.entities[i.actorId] &&
-          withinHearingRange(world, entity, world.entities[i.actorId]!, loudest),
-      )
-    )
-      leaveConversation(world, actorId, 'out-of-range');
+    nextExpiry = Math.min(nextExpiry, expires);
+    let members = membersByConversation.get(id);
+    if (!members) {
+      members = conversation.intervals.filter((i) => i.leftAt === undefined).map((i) => i.actorId);
+      membersByConversation.set(id, members);
+    }
+    let hasOther = false,
+      connected = false;
+    for (const member of members) {
+      // An earlier leave in this pass must affect later members exactly as the live intervals do.
+      if (member === actorId || world.conversations.active[member] !== id) continue;
+      hasOther = true;
+      if (
+        world.entities[member] &&
+        withinHearingRange(world, entity, world.entities[member]!, loudest)
+      ) {
+        connected = true;
+        break;
+      }
+    }
+    if (hasOther && !connected) leaveConversation(world, actorId, 'out-of-range');
+  }
+  // Cache only a pass which made no membership mutation. Changed registries warm next time.
+  const finalActive = isDraft(world.conversations.active)
+    ? current(world.conversations.active)
+    : world.conversations.active;
+  if (
+    finalActive === active &&
+    Object.isFrozen(records) &&
+    Object.isFrozen(active) &&
+    Object.isFrozen(map) &&
+    Object.isFrozen(manifest)
+  ) {
+    const poses = Object.keys(active).map((id): ContinuityPose => {
+      const entity = world.entities[id]!;
+      return {
+        id,
+        position: isDraft(entity.position) ? current(entity.position) : entity.position,
+        body: entity.spatial.bodyProfileId,
+        alive: !!entity.actor?.alive,
+        senses: entity.actor?.senses?.join('|') ?? 'default',
+      };
+    });
+    if (poses.every((pose) => Object.isFrozen(pose.position)))
+      continuity.set(records, {
+        active,
+        map,
+        manifest,
+        timeout,
+        checkedAt: world.simTime,
+        nextExpiry,
+        poses,
+      });
   }
 }

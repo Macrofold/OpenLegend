@@ -19,7 +19,8 @@ import {
   type PlannedCommand,
 } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
-import { draftWorld } from './draft.js';
+import { current, isDraft } from 'immer';
+import { appendSnapshot, appendedEventCount, cloneValue, draftWorld } from './draft.js';
 import { executeCommand, SIMULATION_RULES } from './kernel.js';
 import { appendMemory, canonicalJson, emit, finish, outcome } from './events.js';
 import { seesEntity } from './perception.js';
@@ -31,7 +32,12 @@ export interface ResponseOperation {
   name?: GivenNameEdit | null;
   localId: string;
   requiresAccepted: string[];
-  talk: { text: string; addresseeEntityId: string; volume: SpeechVolume; selfIntroduction?: string | null } | null;
+  talk: {
+    text: string;
+    addresseeEntityId: string;
+    volume: SpeechVolume;
+    selfIntroduction?: string | null;
+  } | null;
   act: {
     kind: 'known' | 'expression' | 'proposal';
     actionId: string | null;
@@ -111,8 +117,10 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
     const strings = (value: unknown) => Array.isArray(value) && value.every(text);
     if (
       op.talk &&
-      (!(record(op.talk, ['text', 'addresseeEntityId', 'volume']) ||
-        record(op.talk, ['text', 'addresseeEntityId', 'volume', 'selfIntroduction'])) ||
+      (!(
+        record(op.talk, ['text', 'addresseeEntityId', 'volume']) ||
+        record(op.talk, ['text', 'addresseeEntityId', 'volume', 'selfIntroduction'])
+      ) ||
         !isSpeechVolume(op.talk.volume) ||
         !text(op.talk.text) ||
         !text(op.talk.addresseeEntityId) ||
@@ -261,7 +269,9 @@ export function commitActorResponse(
   const events: Transition['events'] = [];
   const components: ResponseReceipt['components'] = {};
   let localId = '';
+  let appendOnlyCommands = true;
   const command = (part: 'talk' | 'act', value: Command) => {
+    const beforeEvents = isDraft(world.events) ? current(world.events) : world.events;
     let transition = executeCommand(world, value);
     // Speaking aloud preserves intent without claiming the recipient heard or joined.
     // docs/narration-and-conversations.md#speech-intent-and-audience
@@ -281,9 +291,29 @@ export function commitActorResponse(
         volume: value.volume,
       });
     world = draftWorld(transition.world);
-    for (const event of transition.events) {
-      const saved = world.events.find((entry) => entry.id === event.id);
-      if (saved) saved.data = { ...saved.data, responseId: id };
+    const emitted = new Set(transition.events.map((event) => event.id));
+    const appended = appendedEventCount(beforeEvents, transition.world.events);
+    appendOnlyCommands &&= appended !== undefined;
+    // Metadata belongs to these new occurrences, not a mutation of retained history.
+    // Keep the proven prefix through nested response commands for the journal/history writers.
+    // docs/hearing-and-speech.md#performance-and-invalidation
+    const annotated =
+      appended === undefined
+        ? undefined
+        : appendSnapshot(
+            beforeEvents,
+            transition.world.events.slice(beforeEvents.length).map((event) => ({
+              ...cloneValue(event),
+              ...(emitted.has(event.id) ? { data: { ...event.data, responseId: id } } : {}),
+            })),
+          );
+    if (annotated) world.events = annotated;
+    else if (emitted.size) {
+      // Non-append commands retain the ordinary mutation path; never invent an append proof.
+      for (let i = world.events.length - 1; i >= 0 && emitted.size; i--) {
+        const saved = world.events[i]!;
+        if (emitted.delete(saved.id)) saved.data = { ...saved.data, responseId: id };
+      }
     }
     events.push(
       ...transition.events.map((event) => ({ ...event, data: { ...event.data, responseId: id } })),
@@ -615,6 +645,13 @@ export function commitActorResponse(
           goalId,
         );
     }
+  }
+  if (appendOnlyCommands && world.events !== input.events) {
+    // All command prefixes were proved; expressions only append. Seal the composed suffix
+    // once so intermediate metadata forks do not force durable history to diff the old prefix.
+    const entries = isDraft(world.events) ? current(world.events) : world.events;
+    world.events =
+      appendSnapshot(input.events, cloneValue(entries.slice(input.events.length))) ?? world.events;
   }
   const accepted = Object.values(components).filter((part) => part.ok).length;
   const rejected = Object.values(components).filter((part) => !part.ok).length;
