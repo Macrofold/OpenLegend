@@ -521,3 +521,5 @@ export interface InventionHistory {
   requests: InventionRequestView[];
   next?: { createdAt: number; id: string };
 }
+
+export * from './relationships.js';
