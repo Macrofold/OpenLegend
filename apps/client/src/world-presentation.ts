@@ -59,6 +59,7 @@ export class WorldPresentation {
   readonly layer: pc.Layer;
   private revealMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly proxyMaterial: pc.StandardMaterial;
+  private proxyMesh?: pc.Mesh;
   private readonly worldLayer: pc.Layer;
   private readonly lights: pc.Entity[] = [];
   private readonly frame: pc.CameraFrame;
@@ -218,10 +219,19 @@ export class WorldPresentation {
       }
   }
   shadowProxy(parent: pc.Entity, width: number, height: number, depth = width): pc.Entity {
+    if (!this.proxyMesh) {
+      // Soft shadow proxies need no full-detail sphere. One retained mesh serves every
+      // body/canopy and survives world resets that momentarily remove all instances.
+      // docs/world-presentation.md#continuous-shadows
+      this.proxyMesh = pc.Mesh.fromGeometry(
+        this.app.graphicsDevice,
+        new pc.SphereGeometry({ latitudeBands: 8, longitudeBands: 12 }),
+      );
+      this.proxyMesh.incRefCount();
+    }
     const proxy = new pc.Entity('Shadow-only body', this.app);
     proxy.addComponent('render', {
-      type: 'sphere',
-      material: this.proxyMaterial,
+      meshInstances: [new pc.MeshInstance(this.proxyMesh, this.proxyMaterial, proxy)],
       castShadows: true,
       receiveShadows: false,
       layers: [],
@@ -288,5 +298,10 @@ export class WorldPresentation {
     this.revealMaterials.clear();
     for (const light of this.lights) light.destroy();
     this.proxyMaterial.destroy();
+    if (this.proxyMesh) {
+      this.proxyMesh.decRefCount();
+      if (this.proxyMesh.refCount === 0) this.proxyMesh.destroy();
+      this.proxyMesh = undefined;
+    }
   }
 }
