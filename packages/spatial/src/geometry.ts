@@ -532,12 +532,42 @@ export function canWalkSegment(
     )
   )
     return false;
-  if (a.material === 'ground') {
-    const samples = Math.max(1, Math.ceil(horizontalDistance(from, to) * 4));
-    for (let i = 0; i <= samples; i++)
-      if (!terrainWalkable(map, interpolate(from, to, i / samples))) return false;
+  return a.material !== 'ground' || terrainSegmentWalkable(map, from, to);
+}
+/** Visit crossed terrain cells exactly instead of sampling every 25 cm. Short diagonal
+ * water crossings must not disappear between samples; this is not position quantization.
+ * docs/spatial-world.md#movement
+ */
+function terrainSegmentWalkable(map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean {
+  let x = Math.round(from.x),
+    z = Math.round(from.z);
+  const dx = to.x - from.x,
+    dz = to.z - from.z;
+  const sx = Math.sign(dx),
+    sz = Math.sign(dz);
+  const stepX = dx === 0 ? Infinity : 1 / Math.abs(dx);
+  const stepZ = dz === 0 ? Infinity : 1 / Math.abs(dz);
+  let tx = dx === 0 ? Infinity : (x + sx * 0.5 - from.x) / dx;
+  let tz = dz === 0 ? Infinity : (z + sz * 0.5 - from.z) / dz;
+  const allowed = (cx: number, cz: number): boolean => {
+    const tile = map.tiles[cz]?.[cx];
+    return tile === 'grass' || tile === 'sand';
+  };
+  while (true) {
+    if (!allowed(x, z)) return false;
+    const next = Math.min(tx, tz);
+    if (next >= 1) return terrainWalkable(map, to);
+    // An exact corner cannot squeeze between two non-walkable cells.
+    if (tx === tz && (!allowed(x + sx, z) || !allowed(x, z + sz))) return false;
+    if (tx === next) {
+      x += sx;
+      tx += stepX;
+    }
+    if (tz === next) {
+      z += sz;
+      tz += stepZ;
+    }
   }
-  return true;
 }
 export function canFlySegment(
   map: SpatialMap,

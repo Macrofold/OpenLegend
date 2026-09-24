@@ -64,7 +64,14 @@ import {
 } from './status-effects.js';
 import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
-import { appendMemory, canonicalJson, emit, encounterEmitter, finish, outcome } from './events.js';
+import {
+  appendMemory,
+  canonicalJson,
+  emit,
+  recordVisualAcquisition,
+  finish,
+  outcome,
+} from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   hearsEntity,
@@ -1669,7 +1676,6 @@ function updateEncounters(
   if (!actorIds.some((id) => world.entities[id]?.actor?.alive && hasMemory(world.entities[id])))
     return;
   const hadObjectExposures = original.visibleObjects !== undefined;
-  const encounter = encounterEmitter(world, events);
 
   // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
   // Snapshot identity, transforms and body height; event mutations still use the authoritative draft.
@@ -1685,7 +1691,9 @@ function updateEncounters(
   const nearby = spatialCandidates(entities.filter((e) => e.alive));
   let nearbyAll: ReturnType<typeof spatialCandidates<(typeof entities)[number]>> | undefined;
   const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
-  for (const actor of entities.filter((e) => e.alive && e.memory)) {
+  for (const actor of entities.filter(
+    (e) => e.alive && e.memory && !e.entity.actor!.rest?.asleep,
+  )) {
     const radius = visionRadius(world, actor.entity);
     const sees = visionQuery(world, actor.entity);
     const touch = sensesFor(world, actor.entity).find(
@@ -1798,7 +1806,7 @@ function updateEncounters(
           (m.summary.startsWith('I saw ') || m.eventType === 'encounter') &&
           world.simTime - m.at < 3600,
       );
-      if (!recent) encounter(actor.entity, id, true);
+      if (!recent) recordVisualAcquisition(world, events, actor.entity, id, true);
     }
     if (
       !original.visiblePeople?.[actor.id] ||
@@ -1812,7 +1820,8 @@ function updateEncounters(
         (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
     );
     for (const entity of objects)
-      if (!priorObjects.has(entity.id)) encounter(actor.entity, entity.id, false);
+      if (!priorObjects.has(entity.id))
+        recordVisualAcquisition(world, events, actor.entity, entity.id, false);
     const previousObjects = original.visibleObjects?.[actor.id];
     // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).
     if (

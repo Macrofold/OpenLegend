@@ -90,12 +90,11 @@ function eventAudience(
   type: string,
   source: Entity | undefined,
   scope: 'external' | 'private',
-  candidates?: Entity[],
 ): string[] {
   const audience =
     scope === 'private' || !source
       ? []
-      : (candidates ?? Object.values(world.entities))
+      : Object.values(world.entities)
           .filter(
             (entity) =>
               hasMemory(entity) &&
@@ -110,23 +109,35 @@ function eventAudience(
   return audience;
 }
 
-/** Noticing a source is private evidence, not an outward action others can witness.
+/** Seeing a source is the observer's evidence, not an outward action witnessed by others.
+ * Keep the existing encounter family/importance for living-source reconsideration, but route
+ * acquisition through the same scoped experience owner as all other awareness.
  * docs/events-perception-and-reactions.md#perception-acquisition-is-normally-private
  */
-export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
-  return (source: Entity, targetId: string, meaningful: boolean): WorldEvent =>
-    emit(
-      world,
-      events,
-      'encounter',
-      `${source.name} encountered ${observerDescription(world, source.id, targetId)}.`,
-      source,
-      targetId,
-      meaningful
-        ? { importance: 6, semanticTrigger: true }
-        : { importance: 0, urgency: 0, semanticTrigger: false },
-      'private',
-    );
+export function recordVisualAcquisition(
+  world: WorldState,
+  events: WorldEvent[],
+  observer: Entity,
+  targetId: string,
+  meaningful: boolean,
+): void {
+  if (!hasMemory(observer) || !observer.actor?.alive || capabilityBlocked(world, observer, 'perception')) return;
+  recordEvent(
+    world,
+    events,
+    'encounter',
+    `${observer.name} encountered ${observerDescription(world, observer.id, targetId)}.`,
+    [observer.id],
+    observer,
+    targetId,
+    {
+      acquisition: 'visual',
+      importance: meaningful ? 6 : 0,
+      urgency: meaningful ? 2 : 0,
+      semanticTrigger: meaningful,
+    },
+    'private',
+  );
 }
 
 function recordEvent(
