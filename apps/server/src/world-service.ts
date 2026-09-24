@@ -1,3 +1,6 @@
+import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/domain';
+import { createGodItem, type GodItemRequest } from '@open-legend/domain';
+import { inventoryFor, projectStatusEffects } from '@open-legend/domain';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
@@ -83,16 +86,19 @@ export const commandInputSchema = z
   .object({
     type: z.enum([
       'conversation',
+      'pickup',
+      'drop',
       'move',
       'gather',
       'prepare',
       'craft',
       'equip',
+      'strike',
       'hunt',
       'harvest',
       'cook',
       'eat',
-      'rest',
+      'status-effect',
       'replenish',
       'cancel',
       'recover',
@@ -101,7 +107,9 @@ export const commandInputSchema = z
     conversationId: id.optional(),
     generation: z.number().int().nonnegative().optional(),
     operation: z.enum(['join', 'leave']).optional(),
+    effectOperation: z.enum(['activate', 'deactivate']).optional(),
     targetId: id.optional(),
+    definitionId: id.optional(),
     itemId: id.optional(),
     recipeId: id.optional(),
     attributeId: id.optional(),
@@ -115,7 +123,7 @@ export const commandInputSchema = z
       })
       .strict()
       .optional(),
-    quantity: z.number().int().min(1).max(20).optional(),
+    quantity: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
     preparation: z.enum(['fiber', 'cord']).optional(),
   })
   .strict();
@@ -875,6 +883,27 @@ export class WorldService {
     });
   }
 
+  async godKnowledge(value: import('@open-legend/domain').KnowledgeEdit & {
+    worldId: string; generation: string; actorId: string; givenName?: string; nameRevision?: number;
+  }): Promise<ApiResult> {
+    if (!this.config.godMode) return {ok: false, code: 'forbidden', message: 'God access required.'};
+    return this.godTransition(world => {
+              if (world.id !== value.worldId || this.generation !== value.generation)
+                return {world, events: [], outcome: {ok: false, code: 'stale-world', message: 'The world changed. Reload the editor.'}};
+              let edited: import('@open-legend/domain').Outcome = {ok: false, code: 'knowledge-rejected', message: 'Knowledge edit rejected.'};
+              const candidate = updateWorld(world, draft => {
+              const permitted = value.subjectId ? [value.subjectId] : [];
+              if (value.givenName !== undefined && value.subjectId) {
+                const named = assignGivenName(draft, value.actorId, {subjectId: value.subjectId, givenName: value.givenName, expectedRevision: value.nameRevision ?? 0}, permitted, true);
+                if (!named.ok) {edited = named; return;}
+              }
+              edited = editKnowledge(draft, value.actorId, value, permitted);
+              if (edited.ok && value.subjectId) rememberSubject(draft, value.actorId, value.subjectId, true);
+              });
+              return {world: edited.ok ? candidate : world, events: [], outcome: edited};
+    });
+  }
+
   async godKinship(fact: Kinship): Promise<ApiResult> {
     return this.godTransition((world) => establishKinship(world, fact));
   }
@@ -885,6 +914,10 @@ export class WorldService {
     expected: Record<string, number>,
   ): Promise<ApiResult> {
     return this.godTransition((world) => applyBodyEffects(world, id, effects, expected));
+  }
+
+  async createItem(request: GodItemRequest): Promise<ApiResult> {
+    return this.godTransition((world) => createGodItem(world, request));
   }
 
   async spawn(draft: GodSpawnDraft): Promise<ApiResult> {
@@ -985,7 +1018,18 @@ export class WorldService {
       ok: true,
       revision: this.viewRevision,
       actorId,
+      statuses: [
+        !entity.actor.alive ? 'Dead' : entity.actor.incapacitated ? 'Incapacitated' : 'Alive',
+        ...projectStatusEffects(this.world, entity).map((effect) => effect.label),
+      ],
+      itemOptions: Object.values(this.world.itemDefinitions)
+        .map((item) => ({ id: item.id, name: item.name }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
       person: {
+        inventory: inventoryFor(this.world, actorId).map(({ definitionId, quantity }) => ({
+          definitionId,
+          quantity,
+        })),
         name: entity.name,
         description:
           entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
@@ -1023,9 +1067,13 @@ export class WorldService {
     return this.mutate(async () => {
       await this.ready;
       const entity = this.world.entities[actorId];
-      if (!entity?.actor || entity.kind !== 'npc')
+      if (!entity?.actor || !hasMemory(entity))
         return { ok: false, code: 'actor', message: 'Choose a person.' };
       const currentPerson: GodPersonEditorDraft = {
+        inventory: inventoryFor(this.world, actorId).map(({ definitionId, quantity }) => ({
+          definitionId,
+          quantity,
+        })),
         name: entity.name,
         description:
           entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
@@ -1275,6 +1323,35 @@ export class WorldService {
           return { ok: false, code: 'position', message: 'Choose a destination.' };
         command = { ...envelope, type: 'move', destination: input.position };
         break;
+      case 'status-effect':
+        if (!input.targetId || !input.definitionId || !input.effectOperation)
+          return {
+            ok: false,
+            code: 'binding',
+            message: 'Choose a status effect, operation and target.',
+          };
+        command = {
+          ...envelope,
+          type: 'status-effect',
+          targetId: input.targetId,
+          definitionId: input.definitionId,
+          operation: input.effectOperation,
+        };
+        break;
+      case 'pickup':
+        if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a pile.' };
+        command = {
+          ...envelope,
+          type: 'pickup',
+          targetId: input.targetId,
+          ...(input.itemId ? { itemId: input.itemId } : {}),
+        };
+        break;
+      case 'drop':
+        if (!input.itemId || input.quantity === undefined)
+          return { ok: false, code: 'item', message: 'Choose an item and quantity.' };
+        command = { ...envelope, type: 'drop', itemId: input.itemId, quantity: input.quantity };
+        break;
       case 'gather':
       case 'harvest':
         if (!input.targetId) return { ok: false, code: 'target', message: 'Choose a target.' };
@@ -1317,6 +1394,16 @@ export class WorldService {
         command = { ...envelope, type: 'cook', itemId: input.itemId, heatId };
         break;
       }
+      case 'strike':
+        if (!input.targetId || !input.definitionId)
+          return { ok: false, code: 'target', message: 'Choose a strike and target.' };
+        command = {
+          ...envelope,
+          type: 'strike',
+          targetId: input.targetId,
+          definitionId: input.definitionId,
+        };
+        break;
       case 'hunt':
         if (!input.targetId) return { ok: false, code: 'target', message: 'Choose an animal.' };
         command = {
@@ -1342,7 +1429,7 @@ export class WorldService {
     }
     if (preview) {
       if (this.paused) return { ok: false, code: 'paused', message: 'Resume the world to act.' };
-      const { outcome } = executeCommand(this.world, command);
+      const { outcome } = executeCommand(this.world, command, { preview: true });
       return { ok: outcome.ok, code: outcome.code, message: outcome.message };
     }
     return this.transition((world) => executeCommand(world, command), gameplay);

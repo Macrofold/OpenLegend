@@ -63,7 +63,7 @@ The nodes represent responsibilities; this does not require deploying a separate
 | Intent mapping, bounded applicability judgment, novelty detection | Brief typed inference such as Jev, with an explicit unknown route | Candidate set, relevant context, acceptance and fallback policy |
 | NPC dialogue and immediate planning | Jev attention/escalation, level-2 mini or level-3/4 complex calls | Compact English/full About me, permitted evidence/actions and response deadlines; no compulsory tool loop |
 | Routine memory consolidation | Hourly small-model job over raw experience older than six game hours | Deduplicated awareness/personal evidence, salience, commitments, attribution and atomic summaries |
-| Inner-world reflection/dreams | Independent background file harness and accepted PostgreSQL text publication | Authored perspective, quotas, fresh sessions, revision conflicts and short god-only thoughts; eight-hour daily rest/two-hour sleep eligibility |
+| Inner-world reflection/dreams | Independent background file harness and accepted PostgreSQL text publication | Authored perspective, quotas, fresh sessions, revision conflicts and short god-only thoughts; configured energy-based sleep and continuous-sleep dream eligibility |
 | New mechanics or recipes | Generative reasoning followed by isolated code/tests where needed | Primitive vocabulary, invariants, compatibility, admission and promotion criteria |
 | Optional world events or narrative direction | Budgeted scheduled/event-triggered planner | Which events are allowed and who may approve or activate them |
 | Later asset production and evaluations | Existing provider tools or isolated artifact jobs, with common traces | Style/asset contracts and game-specific expected behavior |

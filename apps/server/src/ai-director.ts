@@ -1,5 +1,8 @@
 import { prepareInventionWorkshop } from './invention-workshop.js';
 import { inventionAttemptBudget } from './invention-context.js';
+import { observerDescription } from '@open-legend/domain';
+import { resolveResponseEntities, resolveEntityMarkers } from './entity-references.js';
+import { capabilityBlocked } from '@open-legend/domain';
 import { searchInventions } from './invention-search.js';
 import type { InventionContinuation } from '@open-legend/protocol';
 import {
@@ -118,7 +121,6 @@ export class AiDirector {
     return next;
   }
 
-  private nextThoughtAt = 0;
   private readonly schedules = new Map<string, ThoughtSchedule | undefined>();
   private readonly thoughtWork = new ActorWork();
   private readonly unsubscribe: () => void;
@@ -184,6 +186,22 @@ export class AiDirector {
         run.controller.abort();
         return;
       }
+      // A reply may itself activate a restricting state: its already-committed receipt is not pending work.
+      // docs/status-effects.md#capabilities-and-presentation
+      if (run && run.job.kind !== 'invention' && !service.world.responseReceipts?.[run.job.id]) {
+        const entity =
+          service.world.entities[run.job.request.npcId ?? service.defaultResidentEntityId];
+        if (
+          entity?.actor &&
+          (capabilityBlocked(this.service.world, entity, 'speech') ||
+            entity.actor.incapacitated ||
+            !entity.actor.alive)
+        ) {
+          run.cancelReason = `${entity.name} became unavailable; the pending reply was cancelled.`;
+          run.controller.abort();
+          return;
+        }
+      }
       const watch = run?.responseWatch;
       if (!run || !watch || watch.attempt > 0 || run.supersession || run.cancelReason) return;
       const interruptions = this.responseInterruptions(watch.actorId, watch.afterSequence);
@@ -233,7 +251,6 @@ export class AiDirector {
       run.cancelReason = 'Request cancelled.';
       await this.update(run, run.job.status, 'Cancelling request…');
       run.controller.abort();
-      this.nextThoughtAt = this.now() + this.service.config.thoughtIntervalMs;
     }
     return { ok: true, code: 'cancelling', message: 'Cancellation requested.', jobId };
   }
@@ -550,7 +567,9 @@ export class AiDirector {
           return { ok: false, code: 'target', message: 'Choose a person to talk with.' };
         if (
           original &&
-          (!target.actor.alive || target.actor.incapacitated || target.actor.rest?.asleep)
+          (!target.actor.alive ||
+            target.actor.incapacitated ||
+            capabilityBlocked(this.service.world, target, 'speech'))
         )
           return {
             ok: false,
@@ -818,7 +837,7 @@ export class AiDirector {
             this.running = null;
             this.pending = null;
           }
-          this.nextThoughtAt = this.now() + this.service.config.thoughtIntervalMs;
+
           this.service.notify();
           // A fresh explicit actor choice may submit once; recovery never replays this dispatch.
           // docs/architecture.md#shared-invention-workflow
@@ -1123,7 +1142,16 @@ export class AiDirector {
         : (run.job.stimulusEvidenceIds ?? [])),
       ...interruptionEvidenceIds,
     ];
-    const stimulus = responseTrigger(this.service, actorId, evidenceIds, run.job.request.text);
+    // A single cause explains why this decision runs; coalesced evidence stays in context.
+    // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
+    const triggerEvidenceId =
+      interruptionEvidenceIds.at(-1) ?? run.playerSpeechEventId ?? run.job.triggerEvidenceId;
+    const stimulus = responseTrigger(
+      this.service,
+      actorId,
+      triggerEvidenceId,
+      run.job.request.text,
+    );
     const addressedSpeech = evidenceIds.some((id) => {
       if (
         this.service.world.experience?.awareness[actorId]?.some(
@@ -1167,6 +1195,7 @@ export class AiDirector {
       this.service.config.budgetUsd,
       speech,
       attempt,
+      triggerEvidenceId,
     );
     this.current(run);
     await this.log.record(
@@ -1344,7 +1373,7 @@ export class AiDirector {
     const c = this.service.config;
     const actorInvention = await prepareActorInvention(this.service, actorId);
     const baseSchema = boundResponseSchema(
-      prepared.binding.entityIds,
+      Object.keys(prepared.entityReferences),
       Object.keys(prepared.binding.actions),
     );
     const schema = actorInvention.enabled
@@ -1384,7 +1413,7 @@ export class AiDirector {
     const reply = schema.parse(value);
     // Authoring metadata must not invalidate the strict native response envelope.
     // docs/architecture.md#shared-invention-workflow
-    const nativeReply = { operations: reply.operations };
+    let nativeReply: import('@open-legend/domain').ActorResponse = { operations: reply.operations };
     const proposedInvention =
       actorInvention.enabled && 'invention' in reply
         ? actorInvention.schema.parse(reply.invention)
@@ -1438,6 +1467,14 @@ export class AiDirector {
       this.current(run);
       if (await retryForUrgentAwareness()) return;
     }
+    nativeReply = resolveResponseEntities(nativeReply, prepared.entityReferences);
+    attemptBindings = attemptBindings.map((binding) => ({
+      ...binding,
+      description: resolveEntityMarkers(binding.description, {
+        ...prepared.visibleEntityReferences,
+        ...prepared.entityReferences,
+      }),
+    }));
     run.responseWatch = undefined;
     const commitStartedAt = new Date().toISOString();
     const commit = () =>
@@ -1453,6 +1490,8 @@ export class AiDirector {
             prepared.binding.entityIds,
             prepared.binding.expectedPlan,
             attemptBindings,
+            prepared.binding.entityEpisodes,
+            prepared.binding.evidenceIds,
           );
         },
         undefined,
@@ -1618,8 +1657,7 @@ export class AiDirector {
           'Cognition maintenance scheduling failed; simulation paused. Restart and reconcile storage.';
         this.service.notify();
       });
-      if (this.running || this.stopped || this.service.paused || this.now() < this.nextThoughtAt)
-        return;
+      if (this.running || this.stopped || this.service.paused) return;
       const world = this.service.world;
       const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
       const visible = new Map<string, string[]>();
@@ -1640,7 +1678,7 @@ export class AiDirector {
             nativeNeedBelow(actor, 'fullness', 20),
             nativeNeedBelow(actor, 'energy', 15),
             nativeNeedBelow(actor, 'energy', 10),
-            actor.rest?.asleep,
+            capabilityBlocked(world, entity, 'actions'),
             projectAttributes(world, entity, 'owner')
               .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
               .map((v) => v.id)
@@ -1673,18 +1711,30 @@ export class AiDirector {
         if (!actor.alive || actor.incapacitated) continue;
         const key = `semantic-schedule:${world.id}:${entity.id}`;
         const last = scheduled.get(entity.id);
-        if (last && this.now() - last.at < policy.cooldownSeconds * 1000) {
-          this.thoughtWork.defer(entity.id, last.at + policy.cooldownSeconds * 1000);
-          continue;
-        }
         const all = experiences(world, entity.id);
+        // Completed direct replies already handled exactly their own speech event, not all
+        // intervening awareness. Reuse durable jobs so restart retains this distinction.
+        // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
+        const speechJobs = await this.service.store.getSpeechJobs(
+          all
+            .filter(
+              (memory) =>
+                memory.eventType === 'speech' && (memory.sequence ?? 0) > (last?.watermark ?? 0),
+            )
+            .map((memory) => memory.eventId ?? memory.id),
+        );
         const unseen = all
           .filter((memory) => {
             const event = this.service.worldEvent(memory.eventId ?? '');
+            const speechJob = speechJobs.get(memory.eventId ?? memory.id);
+            const handledByChat =
+              speechJob?.status === 'completed' &&
+              (speechJob.request.npcId ?? this.service.defaultResidentEntityId) === entity.id;
             const ownResponse =
               event?.actorId === entity.id && typeof event.data?.['responseId'] === 'string';
             return (
               !ownResponse &&
+              !handledByChat &&
               (memory.importance >= 6 ||
                 policy.significantEventTypes.includes(event?.type ?? '')) &&
               (memory.sequence ?? 0) > (last?.watermark ?? 0)
@@ -1727,20 +1777,20 @@ export class AiDirector {
             .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
             .map((v) => [v.id, v.concern]),
           mind: world.innerWorlds?.[entity.id]?.revision,
+          knowledge: world.knowledgeRevisions?.[entity.id] ?? 0,
           policy: policy.revision,
         });
         const opportunity = digest({ fingerprint, evidence: latest.map((memory) => memory.id) });
 
         if (
           (last?.fingerprint === fingerprint && !unseen.length) ||
-          last?.attemptedOpportunity === opportunity ||
-          (last && this.now() - last.at < policy.cooldownSeconds * 1000)
+          last?.attemptedOpportunity === opportunity
         )
           continue;
         const sentence = [
           ...latest.map((m) => m.summary),
           ...matches.map(
-            (id) => `I notice ${world.entities[id]!.name}, relevant to my current interest.`,
+            (id) => `I notice ${observerDescription(world, entity.id, id)}, relevant to my current interest.`,
           ),
           `My current goal is ${currentGoal(actor)}.`,
           ...projectAttributes(world, entity, 'owner')
@@ -1753,15 +1803,17 @@ export class AiDirector {
         const diagnosticTrigger = urgentNeed
           ? urgentNeed
           : latest.length
-            ? `${latest.length} new significant ${latest.length === 1 ? 'experience' : 'experiences'}; latest: ${diagnosticExcerpt(latest[0]!.summary)}`
+            ? responseTrigger(
+                this.service,
+                entity.id,
+                latest[0]!.eventId ?? latest[0]!.id,
+                latest[0]!.summary,
+              )
             : matches.length
-              ? `A nearby interest became relevant: ${matches
-                  .map((match) => world.entities[match]?.name)
-                  .filter(Boolean)
-                  .join(', ')}.`
+              ? `A nearby interest became relevant: ${observerDescription(world, entity.id, matches[0]!)}.`
               : 'A goal, surrounding, or internal state changed.';
         const diagnosticTriggerType = urgentNeed
-          ? 'Native survival need'
+          ? `Cognition skipped · ${urgentNeed}`
           : latest.length
             ? 'Autonomous cognition · New experience'
             : matches.length
@@ -1779,12 +1831,13 @@ export class AiDirector {
             triggerType: diagnosticTriggerType,
             startedAt: new Date().toISOString(),
             status: 'completed',
-            disposition: 'native',
+            disposition: 'skipped',
             route: 'level0',
             gameTime: world.simTime,
             input: {
               reason: urgentNeed,
-              stimulus: sentence,
+              stimulus: diagnosticTrigger,
+              coalescedContext: sentence,
             },
             exchanges: [],
           });
@@ -1806,7 +1859,7 @@ export class AiDirector {
           watermark: snapshotWatermark,
           attemptedOpportunity: opportunity,
         });
-        this.nextThoughtAt = this.now() + this.service.config.thoughtIntervalMs;
+
         const significant = world.experience?.awareness[entity.id]?.some(
           (a) =>
             latest.some((m) => m.id === a.eventId) &&
@@ -1822,8 +1875,9 @@ export class AiDirector {
             message: 'Considering a semantic event.',
             diagnosticTrigger,
             diagnosticTriggerType,
-            stimulusEvidenceIds: latest.map((m) => m.id),
-            request: { text: sentence, npcId: entity.id },
+            triggerEvidenceId: latest[0]?.eventId ?? latest[0]?.id,
+            stimulusEvidenceIds: latest.map((m) => m.eventId ?? m.id),
+            request: { text: diagnosticTrigger, npcId: entity.id },
             createdAt: this.now(),
           },
           async () => {
@@ -1842,7 +1896,18 @@ export class AiDirector {
             ...trace,
             input: {
               policy: policy.revision,
-              stimulus: sentence,
+              scheduling: {
+                reason:
+                  'Current significant evidence or changed interests/state; shared execution slot available; no actor cooldown.',
+                priorActorOpportunityAt: last?.at,
+                admittedAt: this.now(),
+                triggerGameTime: latest[0]?.at,
+                triggerAgeGameSeconds: latest[0]
+                  ? Math.max(0, world.simTime - latest[0].at)
+                  : undefined,
+              },
+              stimulus: diagnosticTrigger,
+              coalescedContext: sentence,
               coalescedSources: latest.map((m) => m.id),
               observedSinceLastOpportunity: unseen.length,
               coalescedCount: unseen.length - latest.length,
@@ -1865,11 +1930,6 @@ export class AiDirector {
     // This director is the sole schedule writer. Failed writes never update its cache.
     await this.service.store.putIntegration(key, value);
     this.schedules.set(key, value);
-    this.thoughtWork.defer(
-      key.slice(`semantic-schedule:${this.service.world.id}:`.length),
-      value.at +
-        (this.service.world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).cooldownSeconds * 1000,
-    );
   }
   private async think(run: Running): Promise<void> {
     return await this.decide(run, false);

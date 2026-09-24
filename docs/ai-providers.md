@@ -86,6 +86,8 @@ The routing example illustrates transport structure; production context must inc
 
 ## Provider behavior and limits
 
+Context/action relevance uses one Noul per candidate with the shared rubric in `state.attentionPolicy`; each short question explicitly references its candidate because question keys are not model input. Noul directly supplies P(yes), without repeated yes/no option descriptions. [Noul documentation](https://docs.typesafe.ai/primitives/noul).
+
 Jev uses `POST https://api.typesafe.ai/v1/systemone` with bearer authentication and `{model,state,questions}`. Choice returns an option, probability distribution, and confidence; Score returns a rubric position, legend, distribution, and confidence; Noul returns a value between zero and one. Question IDs are bookkeeping, so instructions must carry the complete question. This adapter supports text instructions and string rubric descriptions, a deliberately narrower subset of the provider’s structured-instruction features. [HTTP API reference](https://docs.typesafe.ai/api).
 
 The client requires at least one question but imposes no question-count maximum; Choice admits 2–255 options and Score 2–10 levels. Jev documents a 64k total context and a 32k state-plus-longest-question limit. We conservatively estimate four characters per token and allow 55k total and 28k state-plus-longest-question; this is a heuristic, not tokenizer-exact accounting. Oversize requests fail locally with explicit reasons before dispatch. [Model limits](https://docs.typesafe.ai/models). Score levels start at zero, and interpolation is a rubric position, not a physical constant or calibrated outcome probability. [Score documentation](https://docs.typesafe.ai/primitives/score).

@@ -6,28 +6,28 @@ The [capability specification](../action-capabilities.md) owns behavior/contract
 
 ## Ownership and dependencies
 
-| Parent owner | Dependency used here | Work that remains there |
-| --- | --- | --- |
-| [AG01–AG05](agent-agency.md) | Existing operation lists, private attempts, goals, frontier and receipts | Overall agency lifecycle and acceptance; AC supplies detailed parameter binding/activity work |
-| [AG06–AG09](agent-agency.md) | Scoped context, meaningful reconsideration, actor invention return, persistence | No new goal store, cognitive opportunity service or invention loop |
-| [INV-3 and INV-7](inventions-and-world-evolution.md) | Common family metadata, discovery/execution and missing-capability classification | Definition authoring, policy locks, admission, version activation and later G2/G3 |
-| [EWF](extensible-world-foundation.md) | Shared module/manifest and typed service contracts | Common registry/state owner rather than an AC-specific plugin platform |
-| [SW](spatial-world.md) | Destination/support binding, native routes, spatial knowledge and movement | Geometry/pathfinding algorithms, modes, collision, body support and flight |
-| [EPR](events-perception-and-reactions.md) | Perception/evidence, event identity and reaction delivery | Sensory production, audience scope and global reaction scheduling |
-| [NC](narration-and-conversations.md) | Conversation, expressions, communication effects | Speech/gesture implementation, private/public narration and social projections |
-| [SL](save-and-load.md), [PF](performance.md) | Same-version state, epochs, native scheduling and measurement | Global persistence and performance architecture |
+| Parent owner                                         | Dependency used here                                                              | Work that remains there                                                                       |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [AG01–AG05](agent-agency.md)                         | Existing operation lists, private attempts, goals, frontier and receipts          | Overall agency lifecycle and acceptance; AC supplies detailed parameter binding/activity work |
+| [AG06–AG09](agent-agency.md)                         | Scoped context, meaningful reconsideration, actor invention return, persistence   | No new goal store, cognitive opportunity service or invention loop                            |
+| [INV-3 and INV-7](inventions-and-world-evolution.md) | Common family metadata, discovery/execution and missing-capability classification | Definition authoring, policy locks, admission, version activation and later G2/G3             |
+| [EWF](extensible-world-foundation.md)                | Shared module/manifest and typed service contracts                                | Common registry/state owner rather than an AC-specific plugin platform                        |
+| [SW](spatial-world.md)                               | Destination/support binding, native routes, spatial knowledge and movement        | Geometry/pathfinding algorithms, modes, collision, body support and flight                    |
+| [EPR](events-perception-and-reactions.md)            | Perception/evidence, event identity and reaction delivery                         | Sensory production, audience scope and global reaction scheduling                             |
+| [NC](narration-and-conversations.md)                 | Conversation, expressions, communication effects                                  | Speech/gesture implementation, private/public narration and social projections                |
+| [SL](save-and-load.md), [PF](performance.md)         | Same-version state, epochs, native scheduling and measurement                     | Global persistence and performance architecture                                               |
 
 ## Delivery slices
 
 The first playable slice is **parameterized movement through the existing native executor**, not a generic scripting runtime. Subsequent slices add genuinely reusable semantics demonstrated by repertoire cases. Do not wait for fire, vehicles, cooperative lifting or arbitrary world invention to make point movement work.
 
-| Slice | Tasks | Playable/evaluable result | Explicitly not a prerequisite |
-| --- | --- | --- | --- |
-| A — Ground and move | AC01–AC04 plus applicable AC10–AC12 checks | An unlisted “go to this coordinate/support” becomes real timed movement through either player or NPC text input | New physics, full INV registry rewrite, general plan graphs |
-| B — Persist relations | AC05 plus AC08/AC10 checks | Follow a visible target, hold a relation, lose it honestly, cancel and restore | Scent, footprints, perfect stealth, general crowd simulation |
-| C — Compose methods | AC06–AC08 | Short sequences, real result bindings, waits, conditions and bounded repetition | Global optimal planner, arbitrary expressions, parallel execution |
-| D — Broaden ordinary use | AC09 plus domain-owner family work | Shared menus/NPC/text invocation for compatible inventory, devices, care and other families | Hard-coding every catalogue example |
-| E — Qualify across constitutions | AC10–AC12 | Same outer invocation/lifecycle tested against different bodies, senses and topology contracts | Implementing every fantasy/sci-fi world example |
+| Slice                            | Tasks                                      | Playable/evaluable result                                                                                       | Explicitly not a prerequisite                                     |
+| -------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| A — Ground and move              | AC01–AC04 plus applicable AC10–AC12 checks | An unlisted “go to this coordinate/support” becomes real timed movement through either player or NPC text input | New physics, full INV registry rewrite, general plan graphs       |
+| B — Persist relations            | AC05 plus AC08/AC10 checks                 | Follow a visible target, hold a relation, lose it honestly, cancel and restore                                  | Scent, footprints, perfect stealth, general crowd simulation      |
+| C — Compose methods              | AC06–AC08                                  | Short sequences, real result bindings, waits, conditions and bounded repetition                                 | Global optimal planner, arbitrary expressions, parallel execution |
+| D — Broaden ordinary use         | AC09 plus domain-owner family work         | Shared menus/NPC/text invocation for compatible inventory, devices, care and other families                     | Hard-coding every catalogue example                               |
+| E — Qualify across constitutions | AC10–AC12                                  | Same outer invocation/lifecycle tested against different bodies, senses and topology contracts                  | Implementing every fantasy/sci-fi world example                   |
 
 ## AC01 — Reference-bearing intent contract
 
@@ -176,80 +176,80 @@ The first playable slice is **parameterized movement through the existing native
 
 Each row is a required test scenario for its applicable slice, not evidence that the test currently exists or passes. Tests must use independent outcome invariants rather than mirror implementation switches. Native fixtures make no external provider calls.
 
-| ID | Scenario | Required oracle |
-| --- | --- | --- |
-| AX01 | A thought says “I should open the door.” | No door command or physical effect. |
-| AX02 | Quoted speech contains an imperative. | The quote remains data; no nested command execution. |
-| AX03 | “Do not pick up the stone.” | Negation cannot become pickup. |
-| AX04 | “I might follow the deer tomorrow.” | Hypothetical prose does not start a follow activity. |
-| AX05 | “Pretend to duel.” | No real combat or damage event. |
-| AX06 | Unlisted move with empty action suggestions. | Capability grounding still runs; no permission/vocabulary dead end. |
-| AX07 | Two visible actors share a name. | Use a supplied unambiguous reference or clarify; never pick hidden identity. |
-| AX08 | Exact instrument and recipient specified. | Both remain unchanged through binding, queuing and execution. |
-| AX09 | Whisper/stealth/non-disturbance unavailable. | No silent downgrade to loud or disturbing behavior. |
-| AX10 | Exactly one unit requested from a fixed larger batch. | No silent overcollection; supported exact binding, clarification or limitation. |
-| AX11 | Explicit point on an upper support. | Correct floor, actual timed route and true arrival. |
-| AX12 | Coordinate pair overlaps two floors. | Clarify support rather than choose by arbitrary nearest projection. |
-| AX13 | Actor-relative movement while camera rotates. | Destination uses actor frame, not camera orientation. |
-| AX14 | Travel to a remembered observation location. | Destination stays that recorded location after target moves unseen. |
-| AX15 | Followed target leaves perception. | No hidden current-position updates. |
-| AX16 | Behind relation without heading evidence. | Unknown/clarification or explicitly accepted alternative; no fabricated heading. |
-| AX17 | Scent tracking without a scent family. | Unsupported capability, not visible-follow with hidden coordinates. |
-| AX18 | Target changes surface or requires unsupported flight. | Honest route/mode outcome; no planar shortcut or teleport. |
-| AX19 | “Nearest” target with a closer hidden candidate. | Hidden candidate cannot influence actor selection. |
-| AX20 | Coarse unidentified contact. | No exact identity/location gained through grounding. |
-| AX21 | Another actor knows a private recipe. | Registry/discovery cannot reveal or teach it. |
-| AX22 | Inspect an object with unknown material properties. | Unknown retained; no default immunity or perfect material report. |
-| AX23 | Carry a sealed container. | Movement can proceed without disclosing its contents. |
-| AX24 | Branch predicate is unknown. | Explicit unknown disposition; no false-branch shortcut. |
-| AX25 | Wait for a signal outside active hearing. | Undelivered signal cannot complete wait. |
-| AX26 | Physical check knows a hidden obstruction. | Actor feedback does not reveal exact unseen geometry/cause. |
-| AX27 | Several timed actions in one response. | Sequential starts follow actual terminal outcomes, not immediate command loops. |
-| AX28 | Gather then eat/equip a produced item. | Consumer binds actual successful typed output. |
-| AX29 | Save after selecting a branch. | Restore cannot retrospectively choose another branch. |
-| AX30 | Duplicate an iteration completion. | No duplicate material effect or next iteration. |
-| AX31 | Empty response during work. | Existing activity, goal and subscriptions remain unchanged. |
-| AX32 | Late replace arrives after plan changes. | Relevant stale intent rejected; unrelated valid components survive. |
-| AX33 | Cancel after materials are consumed. | Committed costs remain spent; future work stops. |
-| AX34 | Pause/resume requested for a non-resumable family. | Honest unsupported lifecycle result; no invented retained progress. |
-| AX35 | Sequence contains an indefinite follow then craft. | Craft does not start until actual declared termination. |
-| AX36 | Simulation speed/pause and route preparation vary. | Work uses simulation time; technical cache delay follows SW, not provider latency. |
-| AX37 | Two actors take the last available item. | At most one successful transfer; loser gets a real outcome. |
-| AX38 | Custody differs from ownership. | Item movement does not silently rewrite ownership. |
-| AX39 | Barter offer changes before acceptance. | Exact offer revision revalidated; no accidental unilateral settlement. |
-| AX40 | Offer food versus give food versus feed. | Distinct communicated, transferred and consumed results. |
-| AX41 | Ask an NPC to help. | No direct target-plan mutation or forged acceptance. |
-| AX42 | Helper accepted but has not arrived. | Joint physical work cannot start as though ready. |
-| AX43 | Participant withdraws during joint load bearing. | Actual family interruption/support consequences; no ghost participant. |
-| AX44 | Simultaneous body actions exceed supported lanes. | Reject/arbitrate; speech/private exceptions do not create extra manipulators. |
-| AX45 | Target jitters near follow-distance threshold. | Hysteresis and bounded replanning; no paid or native storm. |
-| AX46 | Last-known-location loss policy. | Stop/reconsider at that location unless a separate search was authorized. |
-| AX47 | Route becomes blocked mid-activity. | Stay at valid position, preserve goal, emit correct scoped failure. |
-| AX48 | Termination condition arrives before the next motion step. | No unauthorized additional pursuit after termination admission. |
-| AX49 | Repetition or selector exceeds per-turn budget. | Bounded scheduling disposition; no unbounded loop or invented completion. |
-| AX50 | Actor leaves a running automatic device. | Device follows its own process lifetime; manual work does not become autonomous. |
-| AX51 | Watching actor sleeps, departs or loses its sense. | Observation coverage changes; no omniscient continuing watch. |
-| AX52 | Request includes wind-based concealment with no wind/scent model. | Preserve unsupported clause; no falsely successful stealth. |
-| AX53 | Move/eat/use known action while NPC invention is locked. | Ordinary authorized use does not require opening authoring. |
-| AX54 | Known spell used for a novel ordinary goal. | Invoke existing definition, not unnecessary reinvention. |
-| AX55 | Missing fire/flow/force implementation. | No effect from prose, tags, art or an invented G1 field. |
-| AX56 | Unresolved method reaches INV. | Preserve actor origin/method and locks; no hidden finished solution or auto-build. |
-| AX57 | Definition changes during interpretation or active work. | Apply exact pin/activation policy; never silently retarget. |
-| AX58 | In-world theft or compulsion versus platform authority. | World rules do not grant raw private data or control of human accounts. |
-| AX59 | Duplicate response after hot receipts rotate. | Durable identity prevents duplicated effects. |
-| AX60 | Load a save while old native/model/asset callbacks remain. | Old epoch rejected; no abandoned-future effects or disclosures. |
-| AX61 | Restore a wait, follow or partially completed method. | Cursor, evidence, outputs and native continuation remain coherent. |
-| AX62 | Relevant dependency changes versus unrelated ticks. | Retry invalidates only for the appropriate cause; paraphrases do not bypass blocks. |
-| AX63 | Rebuild caches and subscriptions. | No extra native RNG draws, past branch changes or event replay. |
-| AX64 | Optional interpretation fails after valid speech generation. | Preserve valid components and unresolved intent; no automatic paid repair. |
-| AX65 | Touch-only actor receives an action request. | No new sight, map oracle or precise hidden contact identity. |
-| AX66 | Finite-charge non-biological actor acts and replenishes. | No mandatory hunger, human anatomy or food semantics. |
-| AX67 | Graph-world contract fixture uses navigation. | Outer invocation/lifecycle works without required XYZ/support/human fields. |
-| AX68 | Payload includes code, effect setters or unregistered predicates. | Reject before mutation; no eval or host-operation creation. |
-| AX69 | Direct structured or Jev-selected grounded action. | No mandatory generative translation; native continuation also makes zero paid calls. |
-| AX70 | Large partially searched scope. | Bounded paging with honest partial coverage; not “all clear.” |
-| AX71 | Art delivery fails or arrives for an old version. | Mechanics unchanged; fallback remains; old asset cannot alter authority. |
-| AX72 | Fixture acceptance compared with live evaluation. | Reports label actual test scope and calls/costs; no fabricated model-quality evidence. |
+| ID   | Scenario                                                          | Required oracle                                                                        |
+| ---- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| AX01 | A thought says “I should open the door.”                          | No door command or physical effect.                                                    |
+| AX02 | Quoted speech contains an imperative.                             | The quote remains data; no nested command execution.                                   |
+| AX03 | “Do not pick up the stone.”                                       | Negation cannot become pickup.                                                         |
+| AX04 | “I might follow the deer tomorrow.”                               | Hypothetical prose does not start a follow activity.                                   |
+| AX05 | “Pretend to duel.”                                                | No real combat or damage event.                                                        |
+| AX06 | Unlisted move with empty action suggestions.                      | Capability grounding still runs; no permission/vocabulary dead end.                    |
+| AX07 | Two visible actors share a name.                                  | Use a supplied unambiguous reference or clarify; never pick hidden identity.           |
+| AX08 | Exact instrument and recipient specified.                         | Both remain unchanged through binding, queuing and execution.                          |
+| AX09 | Whisper/stealth/non-disturbance unavailable.                      | No silent downgrade to loud or disturbing behavior.                                    |
+| AX10 | Exactly one unit requested from a fixed larger batch.             | No silent overcollection; supported exact binding, clarification or limitation.        |
+| AX11 | Explicit point on an upper support.                               | Correct floor, actual timed route and true arrival.                                    |
+| AX12 | Coordinate pair overlaps two floors.                              | Clarify support rather than choose by arbitrary nearest projection.                    |
+| AX13 | Actor-relative movement while camera rotates.                     | Destination uses actor frame, not camera orientation.                                  |
+| AX14 | Travel to a remembered observation location.                      | Destination stays that recorded location after target moves unseen.                    |
+| AX15 | Followed target leaves perception.                                | No hidden current-position updates.                                                    |
+| AX16 | Behind relation without heading evidence.                         | Unknown/clarification or explicitly accepted alternative; no fabricated heading.       |
+| AX17 | Scent tracking without a scent family.                            | Unsupported capability, not visible-follow with hidden coordinates.                    |
+| AX18 | Target changes surface or requires unsupported flight.            | Honest route/mode outcome; no planar shortcut or teleport.                             |
+| AX19 | “Nearest” target with a closer hidden candidate.                  | Hidden candidate cannot influence actor selection.                                     |
+| AX20 | Coarse unidentified contact.                                      | No exact identity/location gained through grounding.                                   |
+| AX21 | Another actor knows a private recipe.                             | Registry/discovery cannot reveal or teach it.                                          |
+| AX22 | Inspect an object with unknown material properties.               | Unknown retained; no default immunity or perfect material report.                      |
+| AX23 | Carry a sealed container.                                         | Movement can proceed without disclosing its contents.                                  |
+| AX24 | Branch predicate is unknown.                                      | Explicit unknown disposition; no false-branch shortcut.                                |
+| AX25 | Wait for a signal outside active hearing.                         | Undelivered signal cannot complete wait.                                               |
+| AX26 | Physical check knows a hidden obstruction.                        | Actor feedback does not reveal exact unseen geometry/cause.                            |
+| AX27 | Several timed actions in one response.                            | Sequential starts follow actual terminal outcomes, not immediate command loops.        |
+| AX28 | Gather then eat/equip a produced item.                            | Consumer binds actual successful typed output.                                         |
+| AX29 | Save after selecting a branch.                                    | Restore cannot retrospectively choose another branch.                                  |
+| AX30 | Duplicate an iteration completion.                                | No duplicate material effect or next iteration.                                        |
+| AX31 | Empty response during work.                                       | Existing activity, goal and subscriptions remain unchanged.                            |
+| AX32 | Late replace arrives after plan changes.                          | Relevant stale intent rejected; unrelated valid components survive.                    |
+| AX33 | Cancel after materials are consumed.                              | Committed costs remain spent; future work stops.                                       |
+| AX34 | Pause/resume requested for a non-resumable family.                | Honest unsupported lifecycle result; no invented retained progress.                    |
+| AX35 | Sequence contains an indefinite follow then craft.                | Craft does not start until actual declared termination.                                |
+| AX36 | Simulation speed/pause and route preparation vary.                | Work uses simulation time; technical cache delay follows SW, not provider latency.     |
+| AX37 | Two actors take the last available item.                          | At most one successful transfer; loser gets a real outcome.                            |
+| AX38 | Custody differs from ownership.                                   | Item movement does not silently rewrite ownership.                                     |
+| AX39 | Barter offer changes before acceptance.                           | Exact offer revision revalidated; no accidental unilateral settlement.                 |
+| AX40 | Offer food versus give food versus feed.                          | Distinct communicated, transferred and consumed results.                               |
+| AX41 | Ask an NPC to help.                                               | No direct target-plan mutation or forged acceptance.                                   |
+| AX42 | Helper accepted but has not arrived.                              | Joint physical work cannot start as though ready.                                      |
+| AX43 | Participant withdraws during joint load bearing.                  | Actual family interruption/support consequences; no ghost participant.                 |
+| AX44 | Simultaneous body actions exceed supported lanes.                 | Reject/arbitrate; speech/private exceptions do not create extra manipulators.          |
+| AX45 | Target jitters near follow-distance threshold.                    | Hysteresis and bounded replanning; no paid or native storm.                            |
+| AX46 | Last-known-location loss policy.                                  | Stop/reconsider at that location unless a separate search was authorized.              |
+| AX47 | Route becomes blocked mid-activity.                               | Stay at valid position, preserve goal, emit correct scoped failure.                    |
+| AX48 | Termination condition arrives before the next motion step.        | No unauthorized additional pursuit after termination admission.                        |
+| AX49 | Repetition or selector exceeds per-turn budget.                   | Bounded scheduling disposition; no unbounded loop or invented completion.              |
+| AX50 | Actor leaves a running automatic device.                          | Device follows its own process lifetime; manual work does not become autonomous.       |
+| AX51 | Watching actor sleeps, departs or loses its sense.                | Observation coverage changes; no omniscient continuing watch.                          |
+| AX52 | Request includes wind-based concealment with no wind/scent model. | Preserve unsupported clause; no falsely successful stealth.                            |
+| AX53 | Move/eat/use known action while NPC invention is locked.          | Ordinary authorized use does not require opening authoring.                            |
+| AX54 | Known spell used for a novel ordinary goal.                       | Invoke existing definition, not unnecessary reinvention.                               |
+| AX55 | Missing fire/flow/force implementation.                           | No effect from prose, tags, art or an invented G1 field.                               |
+| AX56 | Unresolved method reaches INV.                                    | Preserve actor origin/method and locks; no hidden finished solution or auto-build.     |
+| AX57 | Definition changes during interpretation or active work.          | Apply exact pin/activation policy; never silently retarget.                            |
+| AX58 | In-world theft or compulsion versus platform authority.           | World rules do not grant raw private data or control of human accounts.                |
+| AX59 | Duplicate response after hot receipts rotate.                     | Durable identity prevents duplicated effects.                                          |
+| AX60 | Load a save while old native/model/asset callbacks remain.        | Old epoch rejected; no abandoned-future effects or disclosures.                        |
+| AX61 | Restore a wait, follow or partially completed method.             | Cursor, evidence, outputs and native continuation remain coherent.                     |
+| AX62 | Relevant dependency changes versus unrelated ticks.               | Retry invalidates only for the appropriate cause; paraphrases do not bypass blocks.    |
+| AX63 | Rebuild caches and subscriptions.                                 | No extra native RNG draws, past branch changes or event replay.                        |
+| AX64 | Optional interpretation fails after valid speech generation.      | Preserve valid components and unresolved intent; no automatic paid repair.             |
+| AX65 | Touch-only actor receives an action request.                      | No new sight, map oracle or precise hidden contact identity.                           |
+| AX66 | Finite-charge non-biological actor acts and replenishes.          | No mandatory hunger, human anatomy or food semantics.                                  |
+| AX67 | Graph-world contract fixture uses navigation.                     | Outer invocation/lifecycle works without required XYZ/support/human fields.            |
+| AX68 | Payload includes code, effect setters or unregistered predicates. | Reject before mutation; no eval or host-operation creation.                            |
+| AX69 | Direct structured or Jev-selected grounded action.                | No mandatory generative translation; native continuation also makes zero paid calls.   |
+| AX70 | Large partially searched scope.                                   | Bounded paging with honest partial coverage; not “all clear.”                          |
+| AX71 | Art delivery fails or arrives for an old version.                 | Mechanics unchanged; fallback remains; old asset cannot alter authority.               |
+| AX72 | Fixture acceptance compared with live evaluation.                 | Reports label actual test scope and calls/costs; no fabricated model-quality evidence. |
 
 ## Documentation and review gate
 

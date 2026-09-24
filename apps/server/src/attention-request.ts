@@ -8,7 +8,11 @@ import { batchedAttentionQuestions } from './jev-questions.js';
 /** Fit actual descriptions and question text, rather than silently imposing a question count.
  * docs/memory-architecture.md#4-jev-attention-before-context-inclusion
  */
-export function attentionRequest(state: Record<string, unknown>, entries: [string, string][]) {
+export function attentionRequest(
+  state: Record<string, unknown>,
+  entries: [string, string][],
+  purpose: 'context' | 'actions' = 'context',
+) {
   const candidates: Record<string, string> = {};
   const questions: TypedQuestionMap = {};
   let stateCharacters = JSON.stringify({ ...state, candidates }).length;
@@ -16,7 +20,7 @@ export function attentionRequest(state: Record<string, unknown>, entries: [strin
   let longestQuestion = 0;
   let count = 0;
   for (const [id, text] of entries) {
-    const question = batchedAttentionQuestions([id])[id]!;
+    const question = batchedAttentionQuestions([id], purpose)[id]!;
     const questionCharacters = JSON.stringify(question).length;
     const candidateAddition = JSON.stringify({ [id]: text }).length - 2 + (count ? 1 : 0);
     const questionAddition = JSON.stringify({ [id]: question }).length - 2 + (count ? 1 : 0);

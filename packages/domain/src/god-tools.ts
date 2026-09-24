@@ -1,5 +1,7 @@
+import { personTraits, spawnedEntity } from './worlds/base/spawn.js';
+import { interruptStatusEffects } from './status-effects.js';
 import { BODY_PROFILES, canStand } from '@open-legend/spatial';
-import { groundedSpatial, spatialMap } from './spatial-state.js';
+import { spatialMap } from './spatial-state.js';
 import { goalTexts, replaceGoals } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
@@ -9,10 +11,10 @@ import {
   initializeAttributes,
   HOST_IMPLEMENTATIONS,
 } from './world-modules.js';
-import { hasWildernessNeeds, setWildernessNeed } from './wilderness-needs.js';
-import { nativeActor, canSpeak, hasMemory, reconcileBody } from './living.js';
+import { hasWildernessNeeds, setWildernessNeed } from './worlds/base/needs.js';
+import { canSpeak, hasMemory, reconcileBody } from './living.js';
 import { draftWorld } from './draft.js';
-import { addItem, createActor, nextId, TRAIT_BANK } from './data.js';
+import { addItem, TRAIT_BANK } from './data.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
 import { mindFor } from './mind.js';
 import {
@@ -28,124 +30,19 @@ import { distance, isWalkable } from './spatial.js';
 import type {
   Entity,
   GodPersonEdit,
-  GodPersonDraft,
   GodPersonEditorDraft,
   GodSpawnDraft,
-  GodSpawnType,
   MemoryRecord,
   Transition,
   WorldEvent,
   WorldState,
 } from './types.js';
 
-export const GOD_SPAWN_OPTIONS: ReadonlyArray<{ id: GodSpawnType; label: string }> = [
-  { id: 'person', label: 'Person' },
-  { id: 'banked-campfire', label: 'Banked campfire' },
-  { id: 'berry-bush', label: 'Berry bush' },
-  { id: 'berry-thicket', label: 'Berry thicket' },
-  { id: 'deer', label: 'Deer' },
-  { id: 'dry-grass-fibers', label: 'Dry grass fibers' },
-  { id: 'fallen-branches', label: 'Fallen branches' },
-  { id: 'hare', label: 'Hare' },
-  { id: 'river-reeds', label: 'River reeds' },
-  { id: 'river-stones', label: 'River stones' },
-];
+import { GOD_SPAWN_OPTIONS } from './worlds/base/catalogue.js';
+export { GOD_SPAWN_OPTIONS } from './worlds/base/catalogue.js';
 
 function reject(world: WorldState, code: string, message: string): Transition {
   return { world, events: [], outcome: outcome(false, code, message) };
-}
-
-function personTraits(draft: Pick<GodPersonDraft | GodPersonEditorDraft, 'traitIds'>) {
-  const ids = [...new Set(draft.traitIds)];
-  if (ids.length > 8) return null;
-  const traits = ids.map((id) => TRAIT_BANK.find((trait) => trait.id === id));
-  return traits.every((trait) => !!trait) ? traits.map((trait) => ({ ...trait! })) : null;
-}
-
-function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity | null {
-  const id = nextId(world, draft.type === 'person' ? 'person' : draft.type);
-  const base = {
-    id,
-    position: { x: draft.position.x, y: draft.position.y, z: draft.position.z },
-    spatial: groundedSpatial(
-      draft.type === 'person'
-        ? 'person'
-        : draft.type === 'hare'
-          ? 'hare'
-          : draft.type === 'deer'
-            ? 'deer'
-            : 'object',
-      draft.position.surfaceId,
-    ),
-  };
-  switch (draft.type) {
-    case 'person': {
-      if (!draft.person) return null;
-      const traits = personTraits(draft.person);
-      if (!traits) return null;
-      return {
-        ...base,
-        name: draft.person.name.trim(),
-        kind: 'npc',
-        actor: createActor(world, 'npc', 75, {
-          ...(traits.length ? { traits } : {}),
-          personality: draft.person.personality.trim(),
-          backstory: draft.person.backstory.trim(),
-          initialGoals: draft.person.initialGoals,
-        }),
-      };
-    }
-    case 'banked-campfire':
-      return {
-        ...base,
-        name: 'Banked campfire',
-        kind: 'campfire',
-        heat: { lit: true, fuelSeconds: 172800 },
-      };
-    case 'berry-bush':
-    case 'berry-thicket':
-      return {
-        ...base,
-        name: draft.type === 'berry-bush' ? 'Berry bush' : 'Berry thicket',
-        kind: 'resource',
-        resource: { definitionId: 'berries', quantity: 36, workSeconds: 30 },
-      };
-    case 'dry-grass-fibers':
-    case 'river-reeds':
-      return {
-        ...base,
-        name: draft.type === 'river-reeds' ? 'River reeds' : 'Dry grass fibers',
-        kind: 'resource',
-        resource: { definitionId: 'raw_fiber', quantity: 36, workSeconds: 36 },
-      };
-    case 'fallen-branches':
-      return {
-        ...base,
-        name: 'Fallen branches',
-        kind: 'resource',
-        resource: { definitionId: 'wood', quantity: 36, workSeconds: 42 },
-      };
-    case 'river-stones':
-      return {
-        ...base,
-        name: 'River stones',
-        kind: 'resource',
-        resource: { definitionId: 'stone', quantity: 60, workSeconds: 24 },
-      };
-    case 'hare':
-    case 'deer':
-      return {
-        ...base,
-        name: draft.type === 'hare' ? 'Hare' : 'Deer',
-        kind: 'animal',
-        actor: nativeActor(draft.type, world.simTime),
-        animal: {
-          fleeFrom: null,
-          fleeSeconds: 0,
-          wanderSeconds: draft.type === 'hare' ? 150 : 200,
-        },
-      };
-  }
 }
 
 export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Transition {
@@ -254,6 +151,7 @@ export function reviveActor(
   actor.alive = true;
   actor.incapacitated = false;
   actor.health = actor.body!.maxHealth;
+  actor.energy = 100;
   if (hasWildernessNeeds(actor)) {
     setWildernessNeed(actor, 'fullness', 100);
     setWildernessNeed(actor, 'energy', 100);
@@ -262,8 +160,8 @@ export function reviveActor(
   actor.planGeneration++;
   actor.body!.conditions = { injury: 0, wetness: 0, burning: 0 };
   delete entity.remains;
-  if (actor.rest) actor.rest.asleep = false;
   const events: WorldEvent[] = [];
+  interruptStatusEffects(world, entity, events, 'revived');
   reconcileBody(world, entity, events, 'revival');
   emit(world, events, 'god-revived', `${entity.name} returned to life.`, entity, undefined, {
     significant: true,
@@ -342,6 +240,31 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     new Set(draft.memoryChanges.map((change) => change.entryId)).size !== draft.memoryChanges.length
   )
     return reject(original, 'invalid-memory', 'A memory may only be changed once per save.');
+  const inventory = draft.person.inventory;
+  const owned = Object.values(original.items).filter((item) => item.ownerId === draft.actorId);
+  const ownedQuantities = new Map(owned.map((item) => [item.definitionId, item.quantity]));
+  const inventoryChanged =
+    inventory !== undefined &&
+    (inventory.filter((item) => item.quantity > 0).length !== owned.length ||
+      inventory.some((item) => (ownedQuantities.get(item.definitionId) ?? 0) !== item.quantity));
+  if (
+    inventory &&
+    (new Set(inventory.map((item) => item.definitionId)).size !== inventory.length ||
+      inventory.some(
+        (item) =>
+          !getOwn(original.itemDefinitions, item.definitionId) ||
+          !Number.isSafeInteger(item.quantity) ||
+          item.quantity < 0,
+      ))
+  )
+    return reject(
+      original,
+      'inventory',
+      'Choose each existing item type once and use nonnegative whole quantities.',
+    );
+  // Active work can hold item references; stop it before replacing its inventory.
+  if (inventoryChanged && current.actor.action)
+    return reject(original, 'inventory-busy', 'Stop current work before editing inventory.');
   const currentExperience = experienceEntries(original, draft.actorId);
   for (const change of draft.memoryChanges) {
     const current = currentExperience.get(change.entryId);
@@ -405,6 +328,20 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
       setWildernessNeed(entity.actor!, 'fullness', draft.person.stats.fullness!);
       setWildernessNeed(entity.actor!, 'energy', draft.person.stats.energy!);
     }
+  }
+  if (inventoryChanged && inventory) {
+    const quantities = new Map(inventory.map((item) => [item.definitionId, item.quantity]));
+    for (const item of owned) {
+      const quantity = quantities.get(item.definitionId) ?? 0;
+      if (quantity > 0) world.items[item.id]!.quantity = quantity;
+      else {
+        if (entity.actor!.equippedItemId === item.id) entity.actor!.equippedItemId = null;
+        delete world.items[item.id];
+      }
+      quantities.delete(item.definitionId);
+    }
+    for (const [definitionId, quantity] of quantities)
+      if (quantity > 0) addItem(world, draft.actorId, definitionId, quantity);
   }
   migrateCognition(world);
   const invalidated = new Set<string>();

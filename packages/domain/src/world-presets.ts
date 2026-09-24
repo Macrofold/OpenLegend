@@ -60,7 +60,7 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     actor.capabilities!.needs = false;
     delete actor.fullness;
     delete actor.energy;
-    delete actor.rest;
+    delete entity.statusEffects;
     initializeAttributes(actor, RESERVOIR_DEMO_ATTRIBUTES);
     actor.agency = seedAgency(['Stay charged and explore the clearing.']);
   }

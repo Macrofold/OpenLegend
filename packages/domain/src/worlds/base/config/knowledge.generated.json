@@ -1,0 +1,7 @@
+{
+  "knowledge": {
+    "policy": "editable-notepads",
+    "maxCharacters": { "general": 5000, "subject": 1000 }
+  },
+  "observerIdentity": { "policy": "observer-given-names" }
+}

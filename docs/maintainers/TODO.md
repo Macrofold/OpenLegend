@@ -74,7 +74,7 @@ Runtime latency, database scheduling, native CPU, buffering and long-session opt
 
 ## Spatial review regression TODOs
 
-No automated tests were written or run for the spatial scaling reviews. The third pass adds [manual/build evidence](../verification.md#spatial-scaling-review-third-pass), not automated qualification. Manual runtime and production-build evidence belongs in [Verification](../verification.md#spatial-scaling-review); SW/PF/EPR retain feature ownership. The earlier spatial fixtures/browser result does not certify these changes. Old schema-8 fixture targets below have been superseded by schema 9; retain their behavioral cases, not an old-save conversion task.
+No automated tests were written or run for the spatial scaling reviews. The third pass adds [manual/build evidence](../verification.md#spatial-scaling-review-third-pass), not automated qualification. Manual runtime and production-build evidence belongs in [Verification](../verification.md#spatial-scaling-review); SW/PF/EPR retain feature ownership. The earlier spatial fixtures/browser result does not certify these changes. Old schema-8 fixture targets below have been superseded by schema 10; retain their behavioral cases, not an old-save conversion task.
 
 - [ ] **SR01 — Indexed geometry equivalence:** compare the full-extent tree against a simple complete scan for rays, support selection, sweeps and acoustic ordering. Cover large solids with centers outside the query, stacked/coplanar surfaces, sloped/filled ramps, negative coordinates, exact tangencies, zero-length segments, shared boundaries and shape-limit rejection. Exercise support-ID lookup, changed revisions and candidate Immer geometry before commit; no missed broad-phase candidate may imply clear space. Include center-based partitioning of wide stacked slabs and equivalence of early-exit boolean stance/sweep queries to complete sorted hits; sound must retain canonical crossing order.
 - [ ] **SR02 — Navigation and stance work:** cover many stacked floors, height-tolerance seams, disconnected supports, directed edges, equal-cost ordering, cold/warm profiles, actual node/search/output limits and several valid/invalid interaction stances. Coarse support groups and fully explored closed-region facts can prove disconnection, never a positive route; eagerly computing weak graph components is no longer a requirement. Preserve native durations/consumption, exact surface endpoints and distinguish incomplete search from physical impossibility at the future status integration.
@@ -99,17 +99,17 @@ No automated tests were written or run for the spatial scaling reviews. The thir
 
 No automated tests were written or run for this implementation, at the owner's request. Production build and manual runtime observations are recorded separately in [Verification](../verification.md#shared-inventions-and-plan-outputs).
 
-- [ ] Update existing response fixtures from `plan.actionIds` to total `plan.steps`, and save fixtures to schema 9 / `development-2026-09-22-spatial1`. Automate strict provider encoding, backward-only references, missing/consumed/foreign outputs, merged stacks, chained cooking, restored running work, interruption and no continuation inference.
+- [ ] Update existing response fixtures from `plan.actionIds` to total `plan.steps`, and save fixtures to the current state shape. Automate strict provider encoding, backward-only references, missing/consumed/foreign outputs, merged stacks, chained cooking, restored running work, interruption and no continuation inference.
 - [ ] Automate shared-service routing/reuse, candidate checkpoint and commit crash boundaries, cancellation while queued for the writer, lock/reopen, policy/world changes, replay conflicts, typed provider failures, unknown billing, browser reload and scoped paginated history (including equal timestamps). Cover restoration that removes a formerly admitted recipe without deleting request history or replaying spend. Extend manual SQLite evidence to PostgreSQL.
 - [ ] Add generic schema-walker coverage for fields named `properties`, `$ref` and other schema keywords; distinguish literal `const`/`enum` data from schema nodes, reject actual references/open objects, and verify invalid trusted schemas fail before provider dispatch. Re-run the revised plan envelope through live providers and broader browser/accessibility scenarios under a separate bounded qualification run.
 
 ## Deferred attribution validation
 
-- [ ] Update declaration/save/view fixtures for schema 9 and required authorship records. Automate multiple world creators, player-as-creator deduplication, NPC/player ownership, unknown player accounts, independent identical inventions, request replay/conflicts, teaching without ownership transfer, controller/membership changes after creation, known-only filtering, private account-ID omission, same-version save/load and missing-record rejection. No automated tests were written or run for this slice.
+- [ ] Update declaration/save/view fixtures for schema 10 and required authorship records. Automate multiple world creators, player-as-creator deduplication, NPC/player ownership, unknown player accounts, independent identical inventions, request replay/conflicts, teaching without ownership transfer, controller/membership changes after creation, known-only filtering, private account-ID omission, same-version save/load and missing-record rejection. No automated tests were written or run for this slice.
 
 ## Deferred invention-policy validation
 
-- [ ] Update existing declaration/save fixtures for required origin stamps and schema 9, then automate independent locks, pre-dispatch denial, lock/reopen revocation, unrelated-group changes, cancellation accounting, owner definition/state distinctions, stale settings, restore-generation fencing and same-version save recovery. Cover missing/forged origin, non-god endpoints, public settings and UI persistence. Do not add legacy migrations; fixture changes and automated suites were deferred at the owner's request.
+- [ ] Update existing declaration/save fixtures for required origin stamps and schema 10, then automate independent locks, pre-dispatch denial, lock/reopen revocation, unrelated-group changes, cancellation accounting, owner definition/state distinctions, stale settings, restore-generation fencing and same-version save recovery. Cover missing/forged origin, non-god endpoints, public settings and UI persistence. Prefer small in-place updates; fixture changes and automated suites were deferred at the owner's request.
 
 ## Deferred agency validation
 
@@ -140,7 +140,7 @@ Automated tests were explicitly excluded for this slice. Production compilation 
 - [x] Replace the interim six-question Cartesian-choice workaround with native `{state, questions}` Macrofold inference. Attention uses one bounded map; route/reflection and invention admissibility/mechanism are separate named questions. Live choice/score and eight rubric scenarios succeeded. Preserve native probabilities and confidence separately; broader calibration remains open.
 - [ ] Verify Macrofold guarded `worktree_files` access, binary file read/write operations, ETag/worktree-revision correspondence, operation polling, warm-worker fresh-session isolation, and file reset after canceled/forgotten jobs. Shell and external tools stay denied. Reflection output has at most three thoughts, twenty words each; files are at most ten, 500 words and 8,000 bytes each. Legacy imports preserve over-quota content and reject workspace dispatch until reconciled, rather than truncating it.
 - [ ] Confirm the native harness tool-event guard in a live bounded run. Eight tool calls is the application publication ceiling; event polling cancels/rejects an overrun, but the current Macrofold native API has no pre-dispatch tool-round cap. Timeout and monetary caps remain enforced; provider-side round admission would be needed for an exact no-overshoot guarantee. Do not claim that a prompt alone enforces a tool limit.
-- [ ] Validate retention/tuning assumptions: raw recall six hours; 8,192-record backlog safety pause; 256 summaries, ordinary summary expiry after thirty game days, protected high-salience summaries; 100 presentation thoughts; 1,000 diagnostic roots/stages combined. Exhausted protected capacity pauses rather than silently dropping important memory. Rest credit uses calendar game days and allows split rest, sleep starts after fifteen uninterrupted resting minutes, and debt modestly increases fatigue. Native promise recognition initially requires explicit “I promise to …” speech; broader paraphrases must use an admitted interpretation rather than invent obligations.
+- [ ] Validate retention/tuning assumptions: raw recall six hours; 8,192-record backlog safety pause; summary retention without a fixed count ceiling, ordinary summary expiry after thirty game days, protected high-salience summaries; 100 presentation thoughts; 1,000 diagnostic roots/stages combined. Exhausted protected capacity pauses rather than silently dropping important memory. Native promise recognition initially requires explicit “I promise to …” speech; broader paraphrases must use an admitted interpretation rather than invent obligations.
 - [ ] Exercise grouped god debugging entirely from the UI: routing, no-call/deferred/coalesced outcomes, candidate scores and unknowns, input/output/receipt details, background publication, late billing, filters, paging, follow/pause, new activity indicators, reading position/focus, revocation/world changes and bounded capture gaps. Verify private accepted text, thoughts and legacy audit history never enter ordinary actor/client recall. Inspection must issue no inference calls.
 - [ ] Keep selective-recall tools behind the documented demonstrated-omission gate. No validated omission case was produced in this no-test batch; existing scoped recall supports assembly, while model-facing recall tools remain gated. Reflection file access is independent and implemented.
 - [ ] Reconcile cross-cutting documentation after validation where evidence changes several owners. Explain prerequisites, configuration, quotas, tuning and real adapter limitations; do not mark a task complete from static compilation or proposed behavior.
@@ -349,3 +349,98 @@ No automated tests were written or run for this slice at the owner's request. Im
 - [ ] Cover complete permitted action-library indexing, stale revisions, permission isolation, top-300 retrieval, cached reuse, unavailable deterministic fallback, prompt handles, size omissions and unlisted interpretation beyond 64 choices.
 - [ ] Cover coalesced evidence snapshot admission, no retained-history draining after success/failure/native handling, new evidence during dispatch, changed goals and interests, cooldown/restart, and separate consolidation retention.
 - [ ] Cover diagnostics for all five operation kinds, repeated operations, dependencies, empty continuation, malformed/missing envelopes, and large retained requests without misleading empty-output summaries.
+
+## Sleeping character presentation
+
+- [ ] Cover authoritative asleep projection for player/NPC, immediate Sleep and full-energy waking, wake/death transitions, and same-version sleep save/load. Verify horizontal sprite/head-marker alignment under orbit, tilt, perspective, facing and floor changes; alpha picking, observation loss, pause, reduced motion and renderer cleanup. No automated tests were written or run for this presentation change.
+
+## Targeted-strike validation
+
+- [ ] Automate target scope/self/dead/missing rejection, unsupported bodies and airborne stance, unknown/version-mismatched definitions, automatic approach enabled/disabled, moving targets, line-of-effect/elevation obstruction and range changes during wind-up.
+- [ ] Cover one-hit/idempotency, cancel/replacement/pause, body susceptibility and lethal impact, animal flee and perceived attacker appraisal, same-version save/load during approach/wind-up and rejection of incompatible active definitions.
+- [ ] Cover player catalogue/command transport, NPC known/proposed/plan bindings, public animation filtering, progress across pause/completion/cancel, sprite guard/extension/recovery and reduced-motion presentation. Qualify many simultaneously pursuing attackers before adding pursuit coordination or animation infrastructure.
+
+- [ ] Cover serialized completion/cancellation deltas explicitly clearing `actionAnimation` with null, merged player state returning to idle without reload, and sprite-only punch frames replacing the original arm (including facing, pause and no subsequent snapshots).
+
+## Encounter acquisition privacy
+
+- [ ] Cover living-actor and object encounters with observer-only awareness, observed modality, separate opportunities for each observer, no witness/hidden-target leakage, no public story eligibility, and unchanged external speech/action witnessing. Verify save/load preserves private scope and audience. Existing contaminated historical records are not retroactively repaired by this emission fix.
+
+## God-mode character controls
+
+- [ ] Cover character-panel/context-menu parity for revive and cognition grants, owner-only visibility, offline/pending disabling, selected-target identity, stale body revisions and removal of Revive after success. Verify person editing and private-mind inspection target the selected character or controlled player correctly.
+
+## Status effects — deferred automated validation
+
+- [ ] Cover in-place status-effect conversion on configured startup and manual-save loading: stable world/action identities, rest progress, preserved energy/history/accounting/profile/integration records, persisted upgrade diffs, idempotent restart, checksum checks before conversion, and rejection of malformed current state or corrupt journals without replacement. Verify startup on both SQLite and PostgreSQL; fresh-database checks alone do not qualify this path.
+
+- [ ] Cover strict policy schemas, unsupported operations/attributes/targets, condition complexity limits, missing-value inequality, revision races, and changed/removed definitions ending active instances without resetting unchanged episodes.
+- [ ] Cover actor and object instances, explicit subject/source/actionTarget bindings, cross-entity reservoir rates, clamping, vanished targets, inactive markers, duplicate instance/action ownership, and current-state save/load integrity. Verify no raw binding IDs or private object attributes leak through observations.
+- [ ] Cover default zero/70/100 energy boundaries, midnight windows, player automatic exemption, explicit activation, wake grace, grounded eligibility, all actor kinds, full-energy completion without same-step expenditure, and interruption/plan/resource accounting, including an occupying effect that forbids voluntary/new-action interruption. Update old rest-command and sleep-policy fixtures to generic status-effect commands/state; retain their behavioral cases.
+- [ ] Cover restriction composition, explicit deactivation under action restrictions, other-target range/permission, native movement/flight/perception, body cleanup, conversation membership while perception is unavailable, and past-tense observed narration. Verify menus and NPC candidates consume the same definitions.
+- [ ] Cover cancellation during every provider/admission stage, late results, no accepted speech on rejection, a committed reply that activates a restriction, audience-scoped SQL history, and effect-bound dream eligibility/episode deduplication across pause/restart.
+- [ ] Cover generic horizontal pose and multiple particle markers, changed text, loss of observation, floor visibility, pause/reduced motion, cleanup and restoration of upright walking/punch animation. Basic horizontal/particle/wake behavior has manual browser evidence; broader visual coverage remains outstanding.
+- [ ] Add world-agent/settings authoring through the existing validated registry admission; expose object attribute authoring through its own owner. Extend capability effects to other recipients, target selectors, stacking or conserved transfers only with a concrete mechanic; the finite current primitives do not imply those capabilities.
+
+- [ ] Cover God editor Character/Inventory/Identity tab isolation and shared save/discard, typeahead selection, add/remove/zero quantities, duplicate or unknown types, unsafe quantities, stale inventory rejection, active-work rejection, equipped-stack removal, retained stack identity, generated item definitions and same-version save/load after edits.
+
+## Readable cognition context — deferred automated validation
+
+- [ ] Cover the shared attention/decision projection: categorized included context, explicit inventory ownership/equipment and all supported properties, meaningful resource contents, no false idle claim, relative bearings across heading wraparound, co-located/elevated objects, scoped definitions and absent private routes.
+- [ ] Cover movement refreshing model text without changing semantic-vector revision, semantic content changes invalidating vectors, optional-relevance failure preserving hard facts, and forgetting/correction during both successful and failed attention discarding stale decisions.
+- [ ] Cover current body/intent/contact facts in relevance, refreshed appraisal/kinship and interest inputs, chronological conversation and retained recall guarantees. Keep live model-quality acceptance separate from projection/runtime checks.
+
+- [ ] Cover numeric body-context values, units/ranges, native fullness direction, retained concern prose, healthy/noncritical meters, custom reservoirs, categorical attributes and unknown values.
+
+## Intelligence readability — deferred automated validation
+
+- [ ] Cover actor and trigger-category icons, subtype/ellipsis hover text, compact wall time, separate world time, normalized historical trigger descriptions, operation summaries and proposed-versus-committed labels. Include removed actors and failed roots.
+- [ ] Cover counted independent Jev choice/score/Noul filters, the 0.5 boundary, missing answers, zero-count options, all options hidden and reset on trace change; ensure Noul rubric true/false labels do not create duplicate filter tabs.
+- [ ] Cover input/output clipboard success/failure, visible collapsed-stage errors, billing loading/empty/partial/error states, receipt-only run IDs, composite stage IDs and independently failing billing/events requests.
+- [ ] Cover desktop drag/vertical resize, narrow sheets, scrolling/focus, loss of god access, trace switching and Follow-off root-only polling; compare compact SQLite/PostgreSQL list projections and expression-index plans with full detail output.
+
+## Short entity references — deferred automated validation
+
+- [ ] Cover repeated same-species actors, named versus species-only display labels, species projection, four-character collisions/expansion, immutable-snapshot cache reuse, unknown and out-of-scope tokens, structured response reverse mapping and native authority revalidation.
+- [ ] Cover token annotations in proposals/thoughts/goals, canonical persistence and later reprojection, selected action and planning targets outside the hard-query baseline, remembered identity references without newly disclosing names, stale/deleted identities, and ambiguous bare prose without guessed name matching.
+- [ ] Cover inventory section ownership without repeated “I have”; entity handles must not pollute semantic embeddings or trigger paid re-embedding when only display handles change.
+
+- [ ] Cover Intelligence rich previews on pointer hover, keyboard focus, Escape, scrolling and viewport edges; all repeated speech/action/thought operations and plan steps; long failure/output text beside fixed-width timestamps; level badges and visible trigger subtypes. Verify contextual grouping across retries, unmatched records and support failures without dropping IDs/copyable data.
+- [ ] Cover action-specific reasonable-now questions versus memory/context relevance, explicit candidate references, unchanged uncertainty policy and transport accounting of longer question text. Live judgment quality remains separate from request-construction verification.
+
+## Trace attribution and autonomous pacing — deferred automated validation
+
+- [ ] Cover direct-Jev/skipped-vector status, zero scored results versus rejected candidates, mandatory/automatic counts, partial judgments and selected counts against captured traces.
+- [ ] Cover back-to-back different actors at unchanged wall time, serial admission, same-actor cooldown, oldest-opportunity fairness, cancellation/restart and unchanged-evidence suppression; ensure no global post-completion throttle returns.
+- [ ] Cover individual named episodes, generic species grouping without actor IDs, preserved source IDs/corrections, renamed/deleted subjects, mandatory evidence and chronological conversation turns. Personal aliases remain outside this implementation.
+- [ ] Cover directed statements/greetings/questions versus overheard speech, explicit trigger age/current visibility, two same-species actors, and conditional reply instructions in attention, routing and generation context.
+- [ ] Cover speech fallback preserving intended recipient without inventing delivery or conversation membership, actor-local perceived roles, unseen recipients and save/load omission preservation. Historical records without intent must stay unknown.
+- [ ] Live model-quality follow-up: replay the two-hare scenario with current context; verify deliberate overheard participation, correct target choice, reduced repeated introductions and useful silence. Synthetic runtime checks do not establish these outcomes.
+
+- [ ] Cover trigger facts through strict AI request serialization for speech, non-speech and missing awareness. Non-speech roles must be omitted, never `undefined`; serialized diagnostic snapshots alone cannot detect this regression because JSON.stringify drops undefined properties. Verify local validation failures remain distinguishable from dispatched provider failures.
+
+## Base-world items — deferred automated validation
+
+- [ ] Cover owner/origin/generation denial and idempotent God creation; unknown definitions, invalid/overflow quantities, portable/nonportable definitions, existing-world migration preserving identity/creator policy, and save/load during approach.
+- [ ] Cover two actors collecting the final stack, partial/full drops, equipped references, canceled/unreachable/occluded pickup, distinct supports, identical-position merging, nonportable contents in Pick Up All, and no duplicated quantity or empty pile.
+- [ ] Cover categorized hover/click/keyboard pullouts, searchable catalogues, player/other-actor inventory controls, quantity errors, observer-scoped hover/inspection, menu invalidation after movement or body/policy changes, unseen-pile removal, representative-art caps and whole-list accessibility.
+- [ ] Cover immutable custody-cache invalidation after transfers and load replacement, fresh mutable/draft reads, and scheduled-preview/execution admission equivalence including status interruptions, materials and RNG. Cover capability loss during approach versus in-reach work, pile-body placement rejection, portaled arrow/Escape handling, Pick Up All ordering and single-stack item-name search.
+- [ ] Cover post-merge typed invocation/revised-action/readiness integration without replacing the native transfer owner. Benchmark large mixed piles and many visible piles separately from native actor population.
+
+- [ ] Cover skipped native-protection trace presentation for existing `native` and new `skipped` records: reason/subtype, neutral status icon, zero child stages and no fabricated execution-stage card; preserve root-only world-agent output rendering.
+
+- [ ] Cover autonomous cognition immediately reconsidering new qualifying evidence after a prior opportunity, unchanged evidence/failed opportunities remaining suppressed, shared-slot fairness, and native-protection checks without delayed wakeups. Cover in-place removal of saved cognition `cooldownSeconds` and admission of the reduced policy; keep reflection timing separate.
+
+## Consolidation request sizing — deferred validation
+
+- [ ] Cover more than 256 existing and newly produced summaries; lossless singleton groups; input/output partition boundaries and oversized single sources; protected chronological gaps; stale/forgotten sources and missing/duplicate handles. Verify second-chunk failure/cancellation/budget exhaustion preserves every original and makes no automatic retry. Include Unicode/token-estimate drift and later-review compression across chunk boundaries.
+- [ ] Verify live small-model grouping quality and output-budget adequacy on repetitive and distinct whole-day memories; synthetic execution does not establish paid model quality. Measure retained-summary growth under the existing age/protection policy before proposing a new storage quota.
+
+## Knowledge documents — deferred automated validation
+
+- [ ] Cover general/subject code-point limits (including emoji), exact-boundary replacement, rejected overflow, stale edits, clear/recreate tombstones and independent speech acceptance.
+- [ ] Cover observer isolation, deliberate naming including “Deer,” introductions, authored acquaintance, continuous encounter, out-of-view/re-entry, reference collision extension and stale-encounter fencing.
+- [ ] Cover direct required context and optional semantic retrieval, provenance/uncertainty, absence of private name/position leakage, knowledge/interest invalidation and no capability grant from prose.
+- [ ] Cover lossless in-place migration, oversized migration refusal, transactional PostgreSQL/SQLite rows, save/restore generation, interrupted commits and projection corruption detection.
+- [ ] Cover owner editor counts/stale-save feedback, reflection identity preservation, Unicode output budgets, forgotten/corrected evidence, no automatic paid repair, and structured diagnostic note/name presentation.
+- [ ] After outstanding action-repertoire/hearing/spatial branches merge, exercise their response schemas, event attribution and encounter hooks with CR13/BW08; do not duplicate their executors.

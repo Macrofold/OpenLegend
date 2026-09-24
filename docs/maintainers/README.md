@@ -24,6 +24,8 @@ This page is the master navigation index for active implementation work.
 
 Begin with [Invention foundation](../invention-foundation.md) for coordination and canonical ownership. Supporting specifications are [World constitution](../world-constitution.md), [Validation and compositional evidence](../invention-validation.md), [Runtime art pipeline](../invention-art-pipeline.md), and [Budgets and runtime cost](../invention-budgets.md). Their detailed tasks remain in the single INV tracker, including INV-9–INV-14; this index does not duplicate task bodies or status.
 
+- [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
+
 ## Supporting references
 
 - [Repertoire foundation](../repertoire-foundation.md) — detailed integration contract and INV-20 delivery; live arrangements, information, commitments, methods and observer-relative art.
@@ -51,3 +53,5 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 - [Documentation changelog](../documentation-changelog.md)
 
 This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in verification, open choices in open decisions, and history in the documentation changelog.
+
+Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).

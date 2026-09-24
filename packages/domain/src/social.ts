@@ -27,14 +27,14 @@ export function appraiseEvent(world: WorldState, event: WorldEvent): void {
   )
     return;
   const damage =
-    event.type === 'shot'
+    event.type === 'shot' || event.type === 'struck'
       ? event.data?.['damage']
       : event.type === 'body-effect'
         ? -Number(event.data?.['healthDelta'] ?? 0)
         : 0;
   if (typeof damage !== 'number' || damage <= 0) return;
   const actorId = event.targetId;
-  const feeling = event.type === 'shot' ? 'fear' : 'discomfort';
+  const feeling = event.type === 'shot' || event.type === 'struck' ? 'fear' : 'discomfort';
   const targetId = event.actorId ?? actorId;
   const key = `${feeling}:${targetId}`;
   const current = activeAppraisals(world, actorId).filter((value) => value.key !== key);

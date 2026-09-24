@@ -107,15 +107,15 @@ Use the current single writer and existing stores first. No new platform depende
 
 ### AG07 — Meaningful feedback, survival and bounded reconsideration
 
-- [x] Emit one private experience on frontier failure/interruption, suppress unchanged retries, and remove goal-only edits from the autonomous response fingerprint. Existing actor/global cooldowns remain authoritative.
+- [x] Emit one private experience on frontier failure/interruption, suppress unchanged retries, and remove goal-only edits from the autonomous response fingerprint. Duplicate suppression and spending admission remain authoritative; autonomous actor/global cooldowns are removed.
 
 **Owner:** existing server actor scheduler and native controller policy. **Depends on:** AG03–AG06; current awareness/perception boundary. **Touchpoints:** `apps/server/src/ai-director.ts`, `actor-work.ts`, `interests.ts`, domain cognition policy and native outcome emission.
 
 - [ ] Connect private goal-review, native action-result and invention-result opportunities through the existing scheduler. Integrate the [EPR01/EPR05 scope and intake contract](events-perception-and-reactions.md); no parallel opportunity schema or universal event bus. AG01–AG04 can use existing receipts before full EPR delivery; AG07 qualifies the shared intake integration.
 - [x] Distinguish unresolved/deferred opportunities from completed consideration. Replace native-urgency cursor advancement that would incorrectly consume needed semantic evidence without a later path to reconsider it.
 - [x] Remove the categorical low-fullness semantic dead end for capable actors. Use native-response adequacy and urgency while preserving immediate native survival, actual incapacity/sleep/cognition capability checks and bounded spending.
-- [ ] Suppress self-thought/self-goal immediate wake loops, repeated unchanged failures and recursive result-to-result churn. Preserve episode identity, coalescing, per-actor/global cooldowns and hysteresis under the existing D54 policy ownership.
-- [ ] Keep simulation deadlines separate from wall-time cooldown/spend. Measure fairness under the current single global workflow before adding bounded concurrency; maintain one authoritative writer.
+- [ ] Suppress self-thought/self-goal immediate wake loops, repeated unchanged failures and recursive result-to-result churn. Preserve episode identity, coalescing, spending admission and hysteresis under the existing D54 policy ownership.
+- [ ] Keep simulation deadlines separate from wall-time provider deadlines/spend. Measure fairness under the current single global workflow before adding bounded concurrency; maintain one authoritative writer.
 
 **Exit evidence:** a conscious hungry actor with no adequate native solution gets an eligible bounded planning/help opportunity rather than permanent suppression. A meaningful hunger opportunity remains eligible during long work, allowing foreground goal/plan revision and explicit interruption while preserving the longer-term intention. Food becoming available resumes the relevant native plan without compulsory thought. Repeated hunger samples, self-authored thoughts and unchanged invention failures do not create paid storms. Deferred urgent evidence remains available; restarts do not fabricate new encounters.
 

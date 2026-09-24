@@ -6,7 +6,7 @@ For the accepted next-generation authoring design, start with [player/NPC target
 
 The current world supports real elevation and stacked surfaces with generated sprites and simple 3D scenery. The timber lookout in the northeast has a ramp, a passage underneath and a gatherable crate; a small native bird flies between heights and perches on the deck. The bottom-right camera toolbar provides orbit, pitch, projection, floor focus and a checked follow-player toggle beside recenter. Drag pans; Shift-drag orbits/tilts; wheel zooms. With the canvas focused, arrows rotate/tilt, Page Up/Down selects a level, P switches projection and Home recenters. Rotation can be locked. Selecting a lower level cuts away upper presentation, not its physical geometry.
 
-This branch requires **development save format 9**. Existing earlier worlds are not migrated or deleted. To try it without touching your existing `.data`, run `OPEN_LEGEND_DATABASE_URL= OPEN_LEGEND_DATA_DIR=.data-spatial-3d AI_BUDGET_USD=0 pnpm run dev` from the branch, then open the usual local game URL. This explicitly selects a separate SQLite world even when `.env` contains a PostgreSQL URL; it preserves the existing database and disables paid work. The native 3D loop requires no AI key. Use the usual live-AI setup only for paid character/invention features.
+Development worlds must satisfy the current [save contract](docs/save-and-load.md#active-development-policy), including the [status-effect registry](docs/status-effects.md). Startup upgrades a world missing the status-effect registry in place, preserving its identity, progress and accounting. Malformed current state and journal integrity failures remain explicit errors. The native simulation needs no AI key; set `AI_BUDGET_USD=0` for native-only work.
 
 See [spatial-world behavior](docs/spatial-world.md), [technical provider](archive/07-technical-architecture/spatial-world-runtime.md), [SW delivery tasks](docs/maintainers/spatial-world.md), and [verification](docs/verification.md#spatial-world-runtime). This is not a free rigid-body sandbox or a completed generic 3D-asset authoring platform.
 
@@ -42,7 +42,7 @@ Open Talk through a nearby person or quick suggestion. Until AI is configured, i
 
 Click the ground to walk; click a thing to **Look closer**, or right-click / Control-click for its actions. Object menus stay scoped to that object, self menus contain personal work, and empty-ground menus offer walking. **Show Unavailable Actions** reveals blocked options and saves that preference. Hover or keyboard-focus an action for a one-second explanation with actual material/time facts. Search retains **Search actions or invent something…**: unmatched Enter opens an editable invention draft, and only **Send** dispatches it.
 
-With `OPEN_LEGEND_GOD_MODE=true`, right-click a dead actor to **Revive**, or right-click blank walkable ground and choose **Add something**. The searchable list contains every currently supported placeable world entity, with Person first and the remainder alphabetized; it shows eight rows before scrolling. Creating a person accepts a name, personality, backstory, described trait tags and initial goals. Leaving traits empty assigns the usual three saved random traits. God mode also offers **Grant cognition and speech** for an ordinary animal. Revival fully restores the body even after harvesting; harvested inventory is preserved. These owner-only mutations work while paused and are labeled **God mode**.
+With `OPEN_LEGEND_GOD_MODE=true`, right-click a dead actor to **Revive**, or right-click blank walkable ground and choose **Add something**. The creation pullouts group known Items, Actors and Environment. Choose an item and quantity to place it on the ground. Player Inventory also offers **God mode · Add item**. Portable ground items can be picked up individually or with **Pick Up All**; inventory details support dropping a chosen quantity. Creating a person accepts a name, personality, backstory, described trait tags and initial goals. Leaving traits empty assigns the usual three saved random traits. God mode also offers **Grant cognition and speech** for an ordinary animal. Revival fully restores the body even after harvesting; harvested inventory is preserved. These owner-only mutations work while paused and are labeled **God mode**.
 
 Drag with the primary, right or middle mouse button to pan. A stationary right-click opens actions on release. Scroll to zoom or use the camera buttons to zoom/recenter and the visible icons for rotation, tilt and projection. Follow keeps the player centered; dragging or choosing a floor stops following. Hover or focus the information icon for shortcuts. Dismissing a menu by clicking the world never walks.
 
@@ -98,6 +98,8 @@ The browser check needs Playwright Chromium (`pnpm exec playwright install chrom
 | `packages/protocol` | Public client DTOs and command intentions                                              |
 | `apps/server`       | Context, routing, durable spending, persistence, admission and HTTP                    |
 | `apps/client`       | PlayCanvas world and React / React Aria HUD                                            |
+
+See the [base-world mechanics](docs/worlds/base/README.md) for authored rules and their separation from the engine.
 
 ## Explore the project
 

@@ -1,0 +1,37 @@
+.ol-status-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: var(--z-world-label);
+}
+.ol-status-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--world-text);
+  text-shadow: var(--world-text-shadow);
+  font: italic 600 18px var(--font-ui);
+}
+.ol-status-marker span {
+  display: block;
+  transform: translate(-10px, -24px);
+  animation: ol-status-drift 3.2s ease-out infinite;
+}
+.ol-status-layer.is-paused span {
+  animation-play-state: paused;
+}
+@keyframes ol-status-drift {
+  0% {
+    opacity: 0;
+    transform: translate(-10px, -14px) scale(0.75);
+  }
+  20% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: translate(-45px, -68px) scale(1.15);
+  }
+}

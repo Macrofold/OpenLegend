@@ -256,8 +256,10 @@ export function Launcher({
 /** Only symbolic styles and text cross this boundary; definitions cannot supply CSS. */
 export function Condition({
   attributes,
+  onValueChange,
 }: {
-  attributes: import('@open-legend/protocol').AttributeView[];
+  attributes: Omit<import('@open-legend/protocol').AttributeView, 'version' | 'revision'>[];
+  onValueChange?(id: string, value: number): void;
 }) {
   return (
     <div className="ol-condition">
@@ -300,7 +302,25 @@ export function Condition({
             >
               <span className="ol-meter-fill" />
             </span>
-            <span className="ol-meter-value">{display}</span>
+            {onValueChange ? (
+              <span className="ol-meter-value ol-meter-editable">
+                <input
+                  aria-label={name}
+                  type="number"
+                  min={min}
+                  max={max}
+                  step="any"
+                  value={value}
+                  onChange={(event) => {
+                    const next = event.currentTarget.valueAsNumber;
+                    if (Number.isFinite(next)) onValueChange(id, next);
+                  }}
+                />
+                {unit}
+              </span>
+            ) : (
+              <span className="ol-meter-value">{display}</span>
+            )}
           </div>
         );
       })}
@@ -319,6 +339,7 @@ export function Panel({
   id,
   hidden,
   draggable = false,
+  resizable = false,
 }: {
   title: string;
   onClose(): void;
@@ -331,6 +352,7 @@ export function Panel({
   id?: string;
   hidden?: boolean;
   draggable?: boolean;
+  resizable?: boolean;
 }) {
   const titleId = useId();
   const body = useRef<HTMLDivElement>(null),
@@ -393,6 +415,7 @@ export function Panel({
       aria-labelledby={titleId}
       hidden={hidden}
       data-draggable={draggable || undefined}
+      data-resizable={resizable || undefined}
       style={{ translate: `${offset.x}px ${offset.y}px` }}
     >
       <header
@@ -586,6 +609,9 @@ export function symbol(id: string): string {
     harvest: 'action.gather',
     cook: 'action.fire',
     equip: 'ui.inventory',
+    pickup: 'ui.inventory',
+    drop: 'ui.inventory',
+    'item-pile': 'ui.inventory',
     cancel: 'ui.close',
     recover: 'meter.health',
     teach: 'action.talk',

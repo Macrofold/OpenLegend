@@ -1,7 +1,8 @@
 import type { ItemDefinition, WorldState } from './types.js';
 import { DECLARATION_CONTRACT } from './invention-families.js';
 
-export const BASE_GATHER_QUANTITY = 2;
+import { BASE_GATHER_QUANTITY } from './worlds/base/actions.js';
+export { BASE_GATHER_QUANTITY } from './worlds/base/actions.js';
 
 /** Wilderness v1: one carried tool's yield, never stacked multipliers or extra resources.
  * docs/architecture.md#shared-invention-workflow

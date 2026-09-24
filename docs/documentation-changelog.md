@@ -33,6 +33,9 @@
 - Reconciled the accepted invention packet from `69897a356c959677cfbf7fe1785f2b9db0271b43` with spatial/runtime main `7bba4866819e5623fc4e42d6f8d82f96ca25877d`, preserving the existing engine boundary and XYZ/camera work rather than reintroducing a flat-world assumption.
 - Added small server query/serialization fixes, recorded exact current limits and measured evidence, and kept unimplemented art/constitution/episode-budget/verification features pending. Corrected funded-result publication semantics and specified bounded validation-planner work and camera-valid art.
 - Preserved existing task states; new requested regression cases live in `docs/maintainers/TODO.md`. No unit suites, browser automation or paid model calls were executed. Native stress failures remain disclosed under their existing PF/EPR owners.
+## In-place development updates
+
+Corrected the policy: small migrations are allowed and preferred; maintaining legacy game versions is not required. Removed automatic fresh-world recovery and its per-feature save-format gate. The preceding startup recovery did reset the development gameplay world while retaining accounting; that behavior is superseded, not an acceptance requirement. Current behavior is owned by Save/load and Architecture.
 
 ## Spatial scaling continuation and reconciliation
 
@@ -188,3 +191,25 @@ Recorded the passing branch-only GitHub Actions production build, 24 focused tes
 ## Cognition context and opportunity correction
 
 The September 23 review replaces the conflicting deferred-evidence cursor requirements with fresh opportunity snapshots and retained, independently queryable history. Commit `2fce978` (September 20) introduced oldest-eight backlog selection; `4040ccb` added the 100-finalist context policy while generic validation still allowed only 32 questions. Commit `ab13896` (September 22) changed actor responses to `operations[]` without updating the diagnostics renderer. These were implementation/contract synchronization gaps, not evidence that empty thought/speech was generated. Current contracts and coverage tasks now describe the corrected behavior.
+
+## Actor sleep policy
+
+The owner replaced the eight-hour daily rest quota, split-rest credit, sleep debt and fifteen-minute onset with scheduled energy thresholds, immediate voluntary sleep and full-energy waking. Physical policy now belongs to `docs/worlds/base/sleep.md`; memory architecture retains dream content/admission. Development format 10 rejects old sleep accounting without a migration.
+
+## Conversation snapshot and duplicate speech-trigger correction
+
+The September 23 trace review found an autonomous opportunity presenting an already-answered question as new addressed speech even though its prior answer was present in recent memory. The accepted correction reuses durable completed direct-response jobs for exact-event suppression and replaces trigger-sequence/newest-32 conversation cutoffs with the complete available conversation snapshot. No response-behavior enforcement or additional prompt labels were introduced.
+
+## Generic status-effect ownership
+
+The sleep-specific numeric policy, actor rest flag and named renderer checks were superseded by an entity-scoped status-effect registry. `docs/status-effects.md` owns generic schema, targets, operations, transitions and capability consumers; `docs/worlds/base/sleep.md` retains only the authored default mechanic. Anytime automatic activation changed from energy below 20 to energy at or below zero; player automatic activation remains excluded. Dream eligibility moved to cognition policy. Narration uses “fell asleep” and “woke up.” Deferred validation replaced obsolete policy/command cases without claiming automated acceptance.
+
+- Replaced the global autonomous-thought interval with per-actor cognition-policy pacing; removed the `NPC_THOUGHT_INTERVAL_SECONDS` example setting. Defined named/generic recall and speech intent versus delivery in their canonical owners. Personal aliases remain unimplemented.
+
+## Base-world ownership
+
+Moved the sleep specification to `docs/worlds/base/sleep.md` and repaired inbound references. Added the base-world mechanics index, item/ground-pile specification, survival/combat ownership and BW delivery tracker. Moved authored defaults/configuration under `packages/domain/src/worlds/base/`; generic runtime contracts remain with their existing owners. AGENTS.md requires this separation for subsequent work.
+
+- Removed the implementation-chosen 256-summary quota from the consolidation contract and snapshot. Memory retention no longer constrains semantic grouping by remaining slots; request-size limits and atomic multi-request publication have separate ownership in the memory design and runtime snapshot.
+
+Knowledge canvas mechanics now have one engine owner in `docs/knowledge.md`; bundled limits/naming/recognition live in `docs/worlds/base/knowledge.md`. This replaces the proposed naming-heavy YAML state example and the external-beliefs-in-one-inner-world-text direction. The observer-known-name decision is resolved; aggregate storage remains open.

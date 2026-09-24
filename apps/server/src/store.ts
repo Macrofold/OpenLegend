@@ -1,3 +1,6 @@
+import { KnowledgeStore } from './knowledge-store.js';
+import { validateKnowledge } from '@open-legend/domain';
+import { upgradeWorldState } from './upgrade-world.js';
 import { validateWorldModules } from '@open-legend/domain';
 import { GameSaves, type RestoreSave } from './game-saves.js';
 import { timed, timedSync } from './performance.js';
@@ -40,6 +43,7 @@ export interface SavedWorld {
   manuallyPaused: boolean;
   milestones?: Record<string, boolean>;
 }
+
 export type WorldChange =
   | { op: 'set'; path: Array<string | number>; value: unknown }
   | {
@@ -58,6 +62,7 @@ export interface JobRecord extends AiJobView {
   diagnosticTriggerType?: string;
   retryOf?: string;
   playerSpeechEventId?: string;
+  triggerEvidenceId?: string;
   stimulusEvidenceIds?: string[];
   fingerprint: string;
   createdAt: number;
@@ -421,7 +426,7 @@ export class SqliteStore implements GameRepository {
     if (!parentIds.length) return [];
     const fields = details
       ? 'payload'
-      : `id,started_at,json_extract(payload, '$.parentId') AS parent_id,json_extract(payload, '$.kind') AS kind,json_extract(payload, '$.status') AS status,json_extract(payload, '$.output.receipt') AS receipt`;
+      : `id,started_at,json_extract(payload, '$.parentId') AS parent_id,json_extract(payload, '$.kind') AS kind,json_extract(payload, '$.status') AS status,json_extract(payload, '$.output.receipt') AS receipt,json_extract(payload, '$.input.proposed.operations') AS proposed_operations,json_extract(payload, '$.output.value.operations') AS response_operations,CASE WHEN json_extract(payload, '$.kind') = 'Action context' THEN json_extract(payload, '$.output') END AS action_options,json_extract(payload, '$.output.reason') AS reason,json_extract(payload, '$.output.error') AS error,json_extract(payload, '$.output.message') AS message`;
     const rows = await this.db
       .prepare(
         `SELECT ${fields} FROM intelligence_calls WHERE json_extract(payload, '$.parentId') IN (${parentIds.map(() => '?').join(',')}) ORDER BY started_at,id LIMIT 1000`,
@@ -436,8 +441,20 @@ export class SqliteStore implements GameRepository {
             kind: String(row['kind']),
             startedAt: String(row['started_at']),
             status: String(row['status']) as IntelligenceCall['status'],
-            input: null,
-            output: row['receipt'] ? { receipt: JSON.parse(String(row['receipt'])) } : undefined,
+            input: row['proposed_operations']
+              ? { proposed: { operations: JSON.parse(String(row['proposed_operations'])) } }
+              : null,
+            output: row['action_options']
+              ? JSON.parse(String(row['action_options']))
+              : {
+                  ...(row['receipt'] ? { receipt: JSON.parse(String(row['receipt'])) } : {}),
+                  ...(row['response_operations']
+                    ? { value: { operations: JSON.parse(String(row['response_operations'])) } }
+                    : {}),
+                  reason: row['reason'],
+                  error: row['error'],
+                  message: row['message'],
+                },
             exchanges: [],
           },
     );
@@ -485,6 +502,7 @@ export class SqliteStore implements GameRepository {
       CREATE INDEX IF NOT EXISTS attempt_actor ON attempt_scopes(actor_id,attempt_id);
       CREATE TABLE IF NOT EXISTS intelligence_calls (id TEXT PRIMARY KEY, started_at TEXT NOT NULL, payload TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS intelligence_calls_time ON intelligence_calls(started_at DESC, id DESC);
+      CREATE INDEX IF NOT EXISTS intelligence_calls_parent_time ON intelligence_calls(json_extract(payload, '$.parentId'), started_at DESC, id DESC);
       CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS player_profiles (
         id TEXT PRIMARY KEY, revision INTEGER NOT NULL,
@@ -503,6 +521,7 @@ export class SqliteStore implements GameRepository {
       this.vectors = new VectorStore(this.db);
       await this.vectors.initialize();
     }
+    await new KnowledgeStore(this.db).initialize();
     await this.history.initialize();
     await this.saves.initialize();
     await this.commands.initialize();
@@ -544,6 +563,10 @@ export class SqliteStore implements GameRepository {
     const head = await this.getIntegration('world-journal-head');
     if (head !== undefined && head !== null && Number(head) !== revision)
       throw new Error('World journal head mismatch; refusing incomplete recovery.');
+    // Diff against the persisted shape so startup commits the upgrade, not just its later edits.
+    // docs/save-and-load.md#active-development-policy
+    const acceptedState = structuredClone(state);
+    upgradeWorldState(state.world);
     validateWorldModules(state.world);
     if (
       state.world.archivedEventCount &&
@@ -569,7 +592,9 @@ export class SqliteStore implements GameRepository {
           );
       }
     }
-    this.acceptedState = structuredClone(state);
+    validateKnowledge(state.world);
+    if (state.world.actorKnowledge) await new KnowledgeStore(this.db).verify(acceptedState.world);
+    this.acceptedState = acceptedState;
     this.acceptedRevision = revision;
     return { revision, state };
   }
@@ -755,6 +780,7 @@ export class SqliteStore implements GameRepository {
             .prepare('INSERT INTO world_journal (revision,payload,created_at) VALUES (?,?,?)')
             .run(revision, changesPayload, Date.now());
         }
+        await new KnowledgeStore(this.db).project(this.acceptedState?.world, state.world, !!historyProjection?.restore);
         if (this.db.dialect === 'postgres')
           for (const row of changedRows) {
             await this.db

@@ -1,11 +1,12 @@
-import { validateWorldModules } from '@open-legend/domain';
+import { upgradeWorldState } from './upgrade-world.js';
+import { validateKnowledge, validateWorldModules } from '@open-legend/domain';
 import { HISTORY_TABLES } from './history.js';
 import { digest, type SavedWorld, type SqlDatabase } from './store.js';
 import type { GameSaveSummary } from '@open-legend/protocol';
 import { SaveFiles } from './save-files.js';
 
-// 2026-09-21: no real players. No legacy readers or migrations until the owner lifts
-// docs/save-and-load.md#active-development-policy. Bump this on incompatible changes.
+// The envelope label is not a per-feature compatibility gate. Validate and upgrade the
+// actual state: docs/save-and-load.md#active-development-policy.
 export class GameSaveError extends Error {}
 export const SAVE_FORMAT = 'development-2026-09-22-spatial1';
 const MAX_SAVES = 20;
@@ -51,19 +52,20 @@ export class GameSaves {
       label: String(row['label']),
       createdAt: String(row['created_at']),
       simTime: Number(row['sim_time']),
-      compatible: row['format'] === SAVE_FORMAT,
+      compatible: typeof row['format'] === 'string',
     }));
     const manual = (await this.files.list(worldId)).map((metadata) => ({
       id: metadata.id,
       label: metadata.label,
       createdAt: metadata.createdAt,
       simTime: metadata.simTime,
-      compatible: metadata.format === SAVE_FORMAT,
+      compatible: typeof metadata.format === 'string',
     }));
     return [...manual, ...recovery].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
   async capture(state: SavedWorld): Promise<SavePayload> {
     validateWorldModules(state.world);
+    validateKnowledge(state.world);
     const history = {} as SavePayload['history'];
     for (const table of HISTORY_TABLES)
       history[table] = await this.db
@@ -125,24 +127,22 @@ export class GameSaves {
     if (!row) throw new GameSaveError('That save no longer exists.');
     if ('worldId' in row && row.worldId !== worldId)
       throw new GameSaveError('Save belongs to another world.');
-    if (row['format'] !== SAVE_FORMAT)
-      throw new GameSaveError(
-        'This development save is incompatible. Older versions are not supported.',
-      );
     const encoded =
       'payload' in row ? String(row['payload']) : await this.files.read(id, MAX_BYTES);
     if (Buffer.byteLength(encoded) > MAX_BYTES)
       throw new GameSaveError('Save exceeds the supported size.');
     const payload = JSON.parse(encoded) as SavePayload;
     if (
-      payload.format !== SAVE_FORMAT ||
+      typeof payload.format !== 'string' ||
+      payload.format !== row['format'] ||
       digest(payload) !== row['checksum'] ||
       payload.state?.world?.id !== worldId ||
-      payload.state.world.schemaVersion !== 9 ||
       !HISTORY_TABLES.every((table) => Array.isArray(payload.history?.[table]))
     )
       throw new GameSaveError('Save integrity check failed.');
+    upgradeWorldState(payload.state.world);
     validateWorldModules(payload.state.world);
+    validateKnowledge(payload.state.world);
     return payload;
   }
   async delete(worldId: string, id: string) {
@@ -158,6 +158,7 @@ export class GameSaves {
   /** Called inside the world commit. Keep accounting and external operation journals untouched. */
   async install(current: SavedWorld, restore: RestoreSave) {
     validateWorldModules(restore.payload.state.world);
+    validateKnowledge(restore.payload.state.world);
     const before = await this.capture(current);
     await this.delete(current.world.id, 'before-load');
     await this.insert('before-load', 'Before last load', before);

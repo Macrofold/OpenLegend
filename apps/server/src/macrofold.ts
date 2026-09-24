@@ -583,6 +583,8 @@ export class MacrofoldBackend implements AiClient {
     AiResult<{
       thoughts: string[];
       goalChanges: import('@open-legend/domain').GoalChange[];
+      knowledgeChanges: import('@open-legend/domain').KnowledgeEdit[];
+      nameChanges: import('@open-legend/domain').GivenNameEdit[];
       files: import('@open-legend/domain').InnerWorld['files'];
       revision: string;
     }>
@@ -627,6 +629,8 @@ export class MacrofoldBackend implements AiClient {
       const value = validateMacrofoldValue<{
         thoughts: string[];
         goalChanges: import('@open-legend/domain').GoalChange[];
+      knowledgeChanges: import('@open-legend/domain').KnowledgeEdit[];
+      nameChanges: import('@open-legend/domain').GivenNameEdit[];
       }>(request.schema, JSON.parse(output));
       const exported = await adapter.export(workspace.worktreeId, signal);
       return { outcome: 'value', value: { ...value, ...exported }, receipt };
@@ -1135,6 +1139,8 @@ export class MacrofoldBackend implements AiClient {
       )
         runs.add(output['run_id']);
     }
+    const storedReceipt = (call.output as { receipt?: AiReceipt } | undefined)?.receipt;
+    if (storedReceipt?.providerRequestId) runs.add(storedReceipt.providerRequestId);
     const readPages = async (path: string) => {
       const data: unknown[] = [];
       let cursor: string | null = null;
@@ -1162,8 +1168,8 @@ export class MacrofoldBackend implements AiClient {
         to: new Date().toISOString(),
       });
       const [events, billing] = await Promise.allSettled([
-        await readPages(`/v1/runs/${encodeURIComponent(run)}/events`),
-        await readPages(`/v1/billing/usage?${query}`),
+        readPages(`/v1/runs/${encodeURIComponent(run)}/events`),
+        readPages(`/v1/billing/usage?${query}`),
       ]);
       const value = (result: PromiseSettledResult<unknown>) =>
         result.status === 'fulfilled'
