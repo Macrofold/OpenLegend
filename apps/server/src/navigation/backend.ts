@@ -11,7 +11,7 @@ import {
   simplifySurfacePath,
   surfaceContains,
   surfaceHeight,
-  supportSurfaces,
+  surfacesInBounds,
   validateSpatialMap,
   type BodyProfile,
   type NavigationRequest,
@@ -174,8 +174,7 @@ function projectCorridor(
   to: SurfacePoint,
   body: BodyProfile,
 ): SurfacePoint[] | null {
-  const surfaces = supportSurfaces(map),
-    out: SurfacePoint[] = [];
+  const out: SurfacePoint[] = [];
   let current = from;
   const append = (p: SurfacePoint): boolean => {
     if (distance3D(current, p) < 1e-7 && current.surfaceId === p.surfaceId) return true;
@@ -189,13 +188,20 @@ function projectCorridor(
     const a = points[i - 1]!,
       b = points[i]!;
     if (Math.hypot(b.x - a.x, b.z - a.z) < 1e-7) continue;
-    const candidates = surfaces.filter(
-      (s) =>
-        Math.min(a.x, b.x) <= s.maxX + 1e-5 &&
-        Math.max(a.x, b.x) >= s.minX - 1e-5 &&
-        Math.min(a.z, b.z) <= s.maxZ + 1e-5 &&
-        Math.max(a.z, b.z) >= s.minZ - 1e-5,
-    );
+    // Reuse the physical support index: remote floors cannot support this corridor segment.
+    const padding = MOVEMENT.projectionTolerance + SPATIAL_LIMITS.epsilon;
+    const candidates = surfacesInBounds(map, {
+      min: {
+        x: Math.min(a.x, b.x) - padding,
+        y: Math.min(a.y, b.y) - padding,
+        z: Math.min(a.z, b.z) - padding,
+      },
+      max: {
+        x: Math.max(a.x, b.x) + padding,
+        y: Math.max(a.y, b.y) + padding,
+        z: Math.max(a.z, b.z) + padding,
+      },
+    });
     const times = [0, 1];
     for (const s of candidates)
       for (const [axis, edges] of [

@@ -56,6 +56,33 @@ export function surfaceMesh(device: pc.GraphicsDevice, surface: WalkableSurface)
   mesh.update();
   return mesh;
 }
+/** Painted-size plank seams share one receiver mesh instead of one shadow-casting box each.
+ * These are surface detail, not independent geometry or physical obstacles. */
+export function surfaceSeamsMesh(device: pc.GraphicsDevice, surface: WalkableSurface): pc.Mesh {
+  const positions: number[] = [],
+    normals: number[] = [],
+    indices: number[] = [];
+  const length = Math.hypot(surface.slopeX, 1, surface.slopeZ);
+  for (let x = surface.minX + 0.4; x < surface.maxX; x += 0.5) {
+    const first = positions.length / 3;
+    for (const [px, pz] of [
+      [x - 0.009, surface.minZ],
+      [x - 0.009, surface.maxZ],
+      [Math.min(x + 0.009, surface.maxX), surface.maxZ],
+      [Math.min(x + 0.009, surface.maxX), surface.minZ],
+    ]) {
+      positions.push(px!, surfaceHeight(surface, px!, pz!) + 0.014, pz!);
+      normals.push(-surface.slopeX / length, 1 / length, -surface.slopeZ / length);
+    }
+    indices.push(first, first + 1, first + 2, first, first + 2, first + 3);
+  }
+  const mesh = new pc.Mesh(device);
+  mesh.setPositions(positions);
+  mesh.setNormals(normals);
+  mesh.setIndices(indices);
+  mesh.update();
+  return mesh;
+}
 export function birdArt(frame: number, dead = false): HTMLCanvasElement {
   const image = document.createElement('canvas');
   image.width = 72;

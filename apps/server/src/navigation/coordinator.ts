@@ -30,7 +30,8 @@ export class NavigationCoordinator {
   private requestId = 0;
   private closed = false;
   private failed = false;
-  private retiring = false;
+  private retiring?: Promise<number>;
+  private completion?: Promise<void>;
   private readonly unsubscribe: () => void;
   constructor(private readonly service: WorldService) {
     this.unsubscribe = service.subscribe(() => this.schedule());
@@ -44,7 +45,7 @@ export class NavigationCoordinator {
       });
   }
   private reconcile() {
-    if (this.closed) return;
+    if (this.closed || this.service.storageError) return;
     const { world, timelineId } = this.service;
     if (this.map !== world.map || this.timeline !== timelineId) {
       this.map = world.map;
@@ -102,13 +103,13 @@ export class NavigationCoordinator {
       });
       const worker = this.worker;
       worker.on('message', (reply: NavigationReply) => {
-        if (this.worker === worker) void this.completed(reply);
+        if (this.worker === worker) this.completion = this.completed(reply);
       });
       worker.on('error', () => {
         if (this.worker === worker) void this.failedWorker();
       });
-      worker.on('exit', (code) => {
-        if (code !== 0 && !this.closed && this.worker === worker) void this.failedWorker();
+      worker.on('exit', () => {
+        if (!this.closed && this.worker === worker) void this.failedWorker();
       });
     } else if (!task && this.preparedKey === this.key) return;
     const id = ++this.requestId;
@@ -145,26 +146,34 @@ export class NavigationCoordinator {
           active.task.timeline,
         );
     } catch {
-      countMetric('navigation.commitFailure');
+      this.commitFailed();
     } finally {
       if (this.active === active) this.active = undefined;
       this.schedule();
     }
   }
+  private commitFailed() {
+    // Storage failure is not permission to retry the same computation indefinitely.
+    // docs/performance.md#navigation-failure-and-shutdown
+    countMetric('navigation.commitFailure');
+    this.service.storageError =
+      'Navigation persistence failed; simulation paused. Restart and reconcile storage.';
+    this.service.notify();
+  }
   private async failedWorker(markUnavailable = true) {
     const worker = this.worker;
     if (!worker) return;
-    this.retiring = true;
     const active = this.active;
     this.active = undefined;
     this.worker = undefined;
     this.preparedKey = '';
     clearTimeout(this.timer);
     this.failed = true;
-    await worker.terminate();
-    if (markUnavailable && active?.task) {
-      const t = active.task;
-      try {
+    this.retiring = worker.terminate();
+    try {
+      await this.retiring;
+      if (markUnavailable && active?.task && !this.closed) {
+        const t = active.task;
         await this.service.preparedNavigation(
           t.actorId,
           t.actionId,
@@ -173,19 +182,27 @@ export class NavigationCoordinator {
           t.map,
           t.timeline,
         );
-      } catch {}
+      }
+    } catch {
+      this.commitFailed();
+    } finally {
+      this.retiring = undefined;
+      countMetric(markUnavailable ? 'navigation.workerFailure' : 'navigation.obsoleteWorker');
+      this.failed = markUnavailable;
+      this.schedule();
     }
-    this.retiring = false;
-    countMetric(markUnavailable ? 'navigation.workerFailure' : 'navigation.obsoleteWorker');
-    this.failed = markUnavailable;
-    this.schedule();
   }
   async close() {
     this.closed = true;
     this.unsubscribe();
     clearImmediate(this.scheduled);
     clearTimeout(this.timer);
-    await this.worker?.terminate();
+    const worker = this.worker;
     this.worker = undefined;
+    // Retirement and reply publication can already be underway when the host closes.
+    // Drain them before the application's store is closed; never publish after disposal.
+    await Promise.all([worker?.terminate(), this.retiring, this.completion]);
+    this.active = undefined;
+    this.queue = [];
   }
 }

@@ -39,9 +39,15 @@ export function lightSprite(material: pc.StandardMaterial): void {
 }
 
 export interface RevealBinding {
+  sourceMesh?: pc.MeshInstance;
   meshes: pc.MeshInstance[];
   strength: number;
   frame: pc.StandardMaterial;
+  center: Float32Array;
+  size: Float32Array;
+  foot: Float32Array;
+  spriteSize: Float32Array;
+  lastStrength: number;
 }
 
 /** Only hidden fragments of currently authorized targets are drawn. This is the compositing
@@ -53,14 +59,16 @@ export class WorldPresentation {
   readonly layer: pc.Layer;
   private revealMaterials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly proxyMaterial: pc.StandardMaterial;
+  private readonly worldLayer: pc.Layer;
   private readonly lights: pc.Entity[] = [];
   private readonly frame: pc.CameraFrame;
-  private readonly hiddenMaterials = new WeakMap<pc.MeshInstance, pc.Material>();
+  private readonly hiddenMeshes = new WeakSet<pc.MeshInstance>();
   constructor(
     private app: pc.Application,
     private camera: pc.Entity,
     private sun: pc.Entity,
   ) {
+    this.worldLayer = app.scene.layers.getLayerById(pc.LAYERID_WORLD)!;
     this.layer = new pc.Layer({ name: 'Authorized read-through' });
     // Last world pass; DOM UI is separate. Depth from the ordinary world is retained.
     app.scene.layers.push(this.layer);
@@ -127,7 +135,25 @@ export class WorldPresentation {
       return copy;
     });
     this.layer.addMeshInstances(meshes, true);
-    return { meshes, strength: 0, frame: material };
+    const binding: RevealBinding = {
+      meshes,
+      sourceMesh: sprite.render?.meshInstances[0],
+      strength: 0,
+      frame: material,
+      lastStrength: 0,
+      center: new Float32Array(3),
+      size: new Float32Array(3),
+      foot: new Float32Array(3),
+      spriteSize: new Float32Array(2),
+    };
+    for (const mi of meshes) {
+      mi.setParameter('ol_revealCenter', binding.center);
+      mi.setParameter('ol_revealSize', binding.size);
+      mi.setParameter('ol_spriteFoot', binding.foot);
+      mi.setParameter('ol_spriteSize', binding.spriteSize);
+      mi.setParameter('ol_revealStrength', 0);
+    }
+    return binding;
   }
   updateReveal(
     binding: RevealBinding,
@@ -139,23 +165,34 @@ export class WorldPresentation {
     dt: number,
     authorized: boolean,
   ): void {
-    // Revoked knowledge disappears immediately; only still-authorized presentation eases out.
+    // Most targets are outside the local reveal. Skip both allocations and uniform writes
+    // once hidden, but always process revocation of a previously visible target immediately.
+    const target = authorized ? strength : 0;
+    if (target === 0 && binding.strength === 0) return;
     binding.strength = authorized
-      ? binding.strength + (strength - binding.strength) * (1 - Math.exp(-dt * 12))
+      ? binding.strength + (target - binding.strength) * (1 - Math.exp(-Math.min(dt, 0.1) * 12))
       : 0;
+    if (Math.abs(binding.strength - target) < 0.001) binding.strength = target;
+    binding.center[0] = foot.x;
+    binding.center[1] = foot.y + height / 2;
+    binding.center[2] = foot.z;
+    binding.size[0] = binding.size[2] = Math.max(width * 0.7, 0.1);
+    binding.size[1] = Math.max(height * 0.65, 0.1);
+    const spriteFoot = (
+      binding.sourceMesh?.getParameter('ol_spriteFoot') as { data?: ArrayLike<number> } | undefined
+    )?.data;
+    binding.foot[0] = spriteFoot?.[0] ?? foot.x;
+    binding.foot[1] = spriteFoot?.[1] ?? foot.y;
+    binding.foot[2] = spriteFoot?.[2] ?? foot.z;
+    binding.spriteSize[0] = width;
+    binding.spriteSize[1] = height;
     for (const mi of binding.meshes) {
       mi.visible = binding.strength > 0.01;
       if (source !== binding.frame) mi.material = this.revealMaterial(source);
-      mi.setParameter('ol_revealStrength', binding.strength);
-      mi.setParameter('ol_revealCenter', [foot.x, foot.y + height / 2, foot.z]);
-      mi.setParameter('ol_revealSize', [
-        Math.max(width * 0.7, 0.1),
-        Math.max(height * 0.65, 0.1),
-        Math.max(width * 0.7, 0.1),
-      ]);
-      mi.setParameter('ol_spriteFoot', [foot.x, foot.y, foot.z]);
-      mi.setParameter('ol_spriteSize', [width, height]);
+      if (binding.lastStrength !== binding.strength)
+        mi.setParameter('ol_revealStrength', binding.strength);
     }
+    binding.lastStrength = binding.strength;
     binding.frame = source;
   }
   removeReveal(binding: RevealBinding): void {
@@ -170,13 +207,13 @@ export class WorldPresentation {
   setCutaway(node: pc.Entity, hidden: boolean): void {
     for (const render of node.findComponents('render') as pc.RenderComponent[])
       for (const mi of render.meshInstances) {
-        const source = this.hiddenMaterials.get(mi);
-        if (hidden && !source) {
-          this.hiddenMaterials.set(mi, mi.material);
-          mi.material = this.proxyMaterial;
-        } else if (!hidden && source) {
-          mi.material = source;
-          this.hiddenMaterials.delete(mi);
+        const wasHidden = this.hiddenMeshes.has(mi);
+        if (hidden && !wasHidden) {
+          this.hiddenMeshes.add(mi);
+          this.worldLayer.removeMeshInstances([mi], true);
+        } else if (!hidden && wasHidden) {
+          this.hiddenMeshes.delete(mi);
+          this.worldLayer.addMeshInstances([mi], true);
         }
       }
   }
@@ -187,11 +224,20 @@ export class WorldPresentation {
       material: this.proxyMaterial,
       castShadows: true,
       receiveShadows: false,
+      layers: [],
     });
+    const meshes = [...proxy.render!.meshInstances];
+    this.worldLayer.addShadowCasters(meshes);
+    proxy.on('destroy', () => this.worldLayer.removeShadowCasters(meshes));
     proxy.setLocalPosition(0, height / 2, 0);
     proxy.setLocalScale(width, height, depth);
     parent.addChild(proxy);
     return proxy;
+  }
+  setShadowVisible(proxy: pc.Entity, visible: boolean): void {
+    // layers:[] means component hierarchy changes cannot reinsert invisible color draws.
+    // The caller supplies current authorization/floor visibility, not the last-seen ghost.
+    for (const mi of proxy.render!.meshInstances) mi.castShadow = visible;
   }
   lighting(view: GameView): void {
     const daylight = Math.max(0, Math.sin(((view.clock.hour - 6) * Math.PI) / 12));
