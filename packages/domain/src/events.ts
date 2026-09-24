@@ -132,7 +132,7 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       events,
       'encounter',
       detail
-        ? `${source.name} notices ${world.entities[targetId]!.name}: ${detail}.`
+        ? `${source.name} noticed ${world.entities[targetId]!.name}: ${detail}.`
         : `${source.name} saw ${world.entities[targetId]!.name}.`,
       [source.id],
       source,

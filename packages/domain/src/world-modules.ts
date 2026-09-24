@@ -1,3 +1,4 @@
+import { validateExperienceOrder } from './experience.js';
 import { validatePerceptionState } from './perception-frame.js';
 import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
@@ -513,6 +514,7 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Missing or invalid saved invention origin.');
   }
   validateAgency(world);
+  validateExperienceOrder(world);
   validateModuleManifest(world.moduleManifest);
   for (const e of Object.values(world.entities)) {
     if (

@@ -38,7 +38,7 @@ import {
   commitBodyEffects,
 } from './living.js';
 import { draftWorld, cloneValue } from './draft.js';
-import { experiences } from './experience.js';
+import { experiences, sealNativeEvidence } from './experience.js';
 import { accountRest, REST_RULES } from './sleep.js';
 import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
@@ -1338,6 +1338,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
     }
   }
   const perception = updateEncounters(world, original, events, participants.actors);
+  sealNativeEvidence(world, events, participants.actors);
   const result = finish(
     world,
     events,
@@ -1357,14 +1358,11 @@ function updateEncounters(
   if (!actorIds.some((id) => world.entities[id]?.actor?.alive && hasMemory(world.entities[id])))
     return;
   const frame = createPerceptionFrame(world, original);
-  const entities = frame.sources.map((source) => ({
-    ...source,
-    entity: world.entities[source.id]!,
-  }));
-  const byId = new Map(entities.map((source) => [source.id, source]));
+  const entities = frame.sources;
   const encounter = encounterEmitter(world, events);
   let nearbyAll: ReturnType<typeof spatialCandidates<(typeof entities)[number]>> | undefined;
-  for (const actor of entities.filter((source) => source.alive && hasMemory(source.entity))) {
+  for (const actor of entities.filter((source) => source.alive && source.memory)) {
+    const observer = world.entities[actor.id]!;
     const radius = actor.radius;
     const clearSight = () => {
       if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
@@ -1375,12 +1373,12 @@ function updateEncounters(
       clearSight();
       continue;
     }
-    const touch = sensesFor(world, actor.entity).find(
+    const touch = sensesFor(world, observer).find(
       (s) => s.implementation === 'contact-proximity-v1',
     );
     if (touch) {
       nearbyAll ??= spatialCandidates(entities);
-      const prior = actor.entity.actor!.contacts ?? {};
+      const prior = observer.actor!.contacts ?? {};
       const contacts: NonNullable<ActorComponent['contacts']> = {};
       // Source IDs stay in private state; acquisition is owner-scoped, never a public encounter.
       // docs/events-perception-and-reactions.md#9-reaction-intake-and-scheduling owns intake.
@@ -1389,7 +1387,7 @@ function updateEncounters(
           (e) =>
             e.id !== actor.id &&
             distance(actor.position, e.position) <= touch.radius &&
-            hasLineOfEffect(world, actor.entity, e.entity),
+            hasLineOfEffect(world, observer, world.entities[e.id]!),
         )
         .slice(0, 32)) {
         const oldPosition = original.entities[source.id]?.position;
@@ -1414,7 +1412,7 @@ function updateEncounters(
             detail === 'moving'
               ? 'I feel an unidentified moving contact.'
               : 'I feel an unidentified contact.',
-            actor.entity,
+            observer,
             undefined,
             {
               contactId: contacts[source.id]!.id,
@@ -1434,7 +1432,7 @@ function updateEncounters(
             events,
             'contact',
             'A contact is no longer present.',
-            actor.entity,
+            observer,
             undefined,
             {
               contactId: episode.id,
@@ -1449,7 +1447,7 @@ function updateEncounters(
         Object.keys(contacts).length !== Object.keys(prior).length ||
         Object.entries(contacts).some(([id, c]) => c !== prior[id])
       )
-        actor.entity.actor!.contacts = contacts;
+        observer.actor!.contacts = contacts;
     }
 
     if (radius === 0) {
@@ -1473,10 +1471,10 @@ function updateEncounters(
             .flatMap((m) => m.entityIds)
         : [],
     );
-    for (const id of acquired) if (!recent.has(id)) encounter(actor.entity, id, true);
+    for (const id of acquired) if (!recent.has(id)) encounter(observer, id, true);
     for (const id of seen)
       if (previouslySeen.has(id) && frame.changedFeatures.has(id))
-        encounter(actor.entity, id, true, byId.get(id)!.detail);
+        encounter(observer, id, true, frame.source(id)!.detail);
     if (
       !original.visiblePeople?.[actor.id] ||
       seen.length !== previous.length ||
@@ -1487,9 +1485,9 @@ function updateEncounters(
     const previousObjects = original.visibleObjects?.[actor.id] ?? [];
     const priorObjects = new Set(previousObjects);
     for (const id of objectIds) {
-      if (!priorObjects.has(id)) encounter(actor.entity, id, false);
+      if (!priorObjects.has(id)) encounter(observer, id, false);
       else if (frame.changedFeatures.has(id))
-        encounter(actor.entity, id, false, byId.get(id)!.detail);
+        encounter(observer, id, false, frame.source(id)!.detail);
     }
     if (
       !original.visibleObjects?.[actor.id] ||

@@ -1,4 +1,5 @@
 import { current, isDraft } from 'immer';
+import { hasMemory } from './living.js';
 import { visionQuery, visionRadius } from './perception.js';
 import { bodyProfile, spatialMap } from './spatial-state.js';
 import { spatialCandidates } from './spatial.js';
@@ -65,27 +66,39 @@ function visibleFeature(entity: Entity): { feature: string; detail: string } {
   return { feature: JSON.stringify(facts), detail: facts.filter(Boolean).join(', ') };
 }
 
+const inertSources = new WeakMap<Entity, Source>();
+function captureSource(world: WorldState, value: Entity): Source {
+  const entity = value.actor ? value : plain(value);
+  const immutable = !entity.actor && Object.isFrozen(entity);
+  const cached = immutable ? inertSources.get(entity) : undefined;
+  if (cached) return cached;
+  const body = bodyProfile(entity);
+  const source: Source = {
+    id: entity.id,
+    position: plain(entity.position),
+    height: body.height,
+    eyeHeight: body.eyeHeight,
+    radius: entity.actor ? visionRadius(world, entity) : 0,
+    alive: !!entity.actor?.alive,
+    memory: hasMemory(entity),
+    sleeping: !!entity.actor?.rest?.asleep,
+    object: !entity.actor && !entity.animal,
+    ...visibleFeature(entity),
+  };
+
+  if (immutable) inertSources.set(entity, source);
+  return source;
+}
+
 /** Derived fixed-phase visibility reuse. Cache entries contain scalar snapshots, never drafts.
  * Source motion invalidates nearby stationary observers; geometry/senses invalidate all.
  * Queries retain existing exact vision and spatial-candidate ordering.
  */
 export function createPerceptionFrame(world: WorldState, previous: WorldState) {
   const old = Object.isFrozen(previous) ? frames.get(previous) : undefined;
-  const samples: Source[] = Object.values(world.entities).map((entity) => {
-    const body = bodyProfile(entity);
-    return {
-      id: entity.id,
-      position: plain(entity.position),
-      height: body.height,
-      eyeHeight: body.eyeHeight,
-      radius: entity.actor ? visionRadius(world, entity) : 0,
-      alive: !!entity.actor?.alive,
-      memory: !!entity.actor && entity.actor.capabilities?.memory !== false,
-      sleeping: !!entity.actor?.rest?.asleep,
-      object: !entity.actor && !entity.animal,
-      ...visibleFeature(entity),
-    };
-  });
+  const samples = Object.values(plain(world.entities)).map((entity) =>
+    captureSource(world, entity),
+  );
   const next: Frame = {
     geometry: spatialMap(world),
     senses: plain(world.moduleManifest),
@@ -104,6 +117,9 @@ export function createPerceptionFrame(world: WorldState, previous: WorldState) {
   let objects: ReturnType<typeof spatialCandidates<Source>> | undefined;
   return {
     sources: samples,
+    source(id: string) {
+      return next.sources.get(id);
+    },
     changedFeatures: new Set(
       samples
         .filter(

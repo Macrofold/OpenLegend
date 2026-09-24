@@ -1,4 +1,4 @@
-import { current, isDraft } from 'immer';
+import { current, isDraft, original, freeze } from 'immer';
 import { changeGoal, type GoalChange } from './agency.js';
 import { initializeIdentity } from './identity.js';
 import { hasMemory } from './living.js';
@@ -6,7 +6,7 @@ import { draftWorld, finishWorld, cloneValue } from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { memoryPerspective } from './memory-perspective.js';
-import type { ExperienceEntry, MemoryRecord, Transition, WorldState } from './types.js';
+import type { ExperienceEntry, MemoryRecord, Transition, WorldState, WorldEvent } from './types.js';
 
 export const EXPERIENCE_LIMITS = {
   rawHours: 6,
@@ -311,6 +311,16 @@ export function mutateExperience(
       additions.some((entry) => 'actorId' in entry.value && entry.value.actorId !== actorId)
     )
       return null;
+    const tails = {
+      awareness: world.experience?.awareness[actorId]?.at(-1)?.sequence ?? 0,
+      memory: world.memories[actorId]?.at(-1)?.sequence ?? 0,
+    };
+    for (const entry of additions) {
+      if (entry.source === 'summary') continue;
+      const sequence = entry.value.sequence ?? 0;
+      if (!Number.isSafeInteger(sequence) || sequence < tails[entry.source]) return null;
+      tails[entry.source] = sequence;
+    }
     for (const entry of additions) {
       if (entry.source === 'awareness')
         appendEntry((world.experience!.awareness[actorId] ??= []), entry.value, 'eventId');
@@ -599,35 +609,12 @@ export function experiences(
   );
   const events: MemoryRecord[] = aware
     .filter((a) => !forgotten.has(a.eventId))
-    .map((a) => ({
-      id: a.eventId,
-      eventId: a.eventId,
-      actorId,
-      at: a.at,
-      sequence: a.sequence,
-      kind: 'episode',
-      source: a.modality,
-      summary: a.text,
-      entityIds: a.entityIds,
-      importance: a.importance,
-      eventType: a.eventType,
-      speakerId: a.sourceId,
-    }));
+    .map((a) => awarenessMemory(actorId, a));
   const summaries: MemoryRecord[] = (state?.summaries[actorId] ?? [])
     .filter(
       (s) => !s.sourceIds.some((id) => forgotten.has(id) || !!state?.corrections?.[actorId]?.[id]),
     )
-    .map((s) => ({
-      id: s.id,
-      actorId,
-      at: s.to,
-      kind: 'reflection',
-      source: 'inferred',
-      summary: `Summary of remembered experience: ${s.text}`,
-      entityIds: s.entityIds,
-      importance: s.importance,
-      sequence: s.sequence,
-    }));
+    .map((s) => summaryMemory(actorId, s));
   const raw = [...personal.filter((m) => m.kind !== 'commitment'), ...events];
   // Age makes a source eligible for consolidation, not ineligible for remembering.
   // Bound initial context candidates while retaining the full backlog for maintenance.
@@ -1000,4 +987,141 @@ export function correctExperience(
     ),
     invalidatedMemoryIds: { [actorId]: invalidated },
   };
+}
+
+function awarenessMemory(actorId: string, a: Awareness): MemoryRecord {
+  return {
+    id: a.eventId,
+    eventId: a.eventId,
+    actorId,
+    at: a.at,
+    sequence: a.sequence,
+    kind: 'episode',
+    source: a.modality,
+    summary: a.text,
+    entityIds: a.entityIds,
+    importance: a.importance,
+    eventType: a.eventType,
+    speakerId: a.sourceId,
+  };
+}
+
+function summaryMemory(actorId: string, s: ExperienceSummary): MemoryRecord {
+  return {
+    id: s.id,
+    actorId,
+    at: s.to,
+    kind: 'reflection',
+    source: 'inferred',
+    summary: `Summary of remembered experience: ${s.text}`,
+    entityIds: s.entityIds,
+    importance: s.importance,
+    sequence: s.sequence,
+  };
+}
+
+/** Ordered raw sequence is an admission/load invariant, not an assumption about arbitrary JSON. */
+function afterSequence<T extends { sequence?: number }>(
+  entries: readonly T[],
+  watermark: number,
+): number {
+  let lo = 0,
+    hi = entries.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if ((entries[mid]!.sequence ?? 0) <= watermark) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/** New evidence for reaction intake; do not reconstruct/sort an actor's entire recall corpus.
+ * Summaries retain their independently bounded ordering; raw additions are monotonic.
+ * docs/architecture.md#change-driven-exposure-and-reaction-intake
+ */
+export function* experiencesSince(
+  world: WorldState,
+  actorId: string,
+  watermark: number,
+): Generator<MemoryRecord> {
+  if (!Object.hasOwn(world.entities, actorId) || !world.entities[actorId]?.actor) return;
+  const state = world.experience,
+    aware = state?.awareness[actorId] ?? [],
+    memories = world.memories[actorId] ?? [];
+  const forgotten = new Set(state?.forgotten[actorId] ?? []);
+  const summaries = (state?.summaries[actorId] ?? [])
+    .filter(
+      (s) =>
+        (s.sequence ?? 0) > watermark &&
+        !s.sourceIds.some((id) => forgotten.has(id) || !!state?.corrections?.[actorId]?.[id]),
+    )
+    .slice()
+    .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+  let ai = afterSequence(aware, watermark),
+    mi = afterSequence(memories, watermark),
+    si = 0;
+  let eventIds: Set<string> | undefined;
+  while (ai < aware.length || mi < memories.length || si < summaries.length) {
+    const a = aware[ai],
+      m = memories[mi],
+      s = summaries[si];
+    const as = a?.sequence ?? Infinity,
+      ms = m ? (m.sequence ?? 0) : Infinity,
+      ss = s ? (s.sequence ?? 0) : Infinity;
+    if (m && ms <= as && ms <= ss) {
+      mi++;
+      if (
+        forgotten.has(m.id) ||
+        forgotten.has(m.eventId ?? '') ||
+        !(m.kind === 'commitment' || (m.kind === 'episode' && m.source !== 'inferred'))
+      )
+        continue;
+      if (m.eventId && m.kind === 'episode') {
+        eventIds ??= new Set(aware.map((entry) => entry.eventId));
+        if (eventIds.has(m.eventId)) continue;
+      }
+      yield m;
+    } else if (a && as <= ss) {
+      ai++;
+      if (!forgotten.has(a.eventId)) yield awarenessMemory(actorId, a);
+    } else if (s) {
+      si++;
+      yield summaryMemory(actorId, s);
+    }
+  }
+}
+export function validateExperienceOrder(world: WorldState): void {
+  for (const rows of [
+    ...Object.values(world.experience?.awareness ?? {}),
+    ...Object.values(world.memories),
+  ]) {
+    let last = 0;
+    for (const row of rows) {
+      const seq = row.sequence ?? 0;
+      if (!Number.isSafeInteger(seq) || seq < last)
+        throw new Error('Experience sequence must be monotonic.');
+      last = seq;
+    }
+  }
+}
+
+/** Seal only newly owned evidence after the final native phase. Old mutable builder data
+ * must not be frozen as a side effect. Later transitions still edit through fresh drafts.
+ * This avoids repeated deep finalization without changing event append lineage.
+ */
+export function sealNativeEvidence(
+  world: WorldState,
+  events: WorldEvent[],
+  actorIds: readonly string[],
+): void {
+  if (!isDraft(world) || !Object.isFrozen(original(world))) return;
+  for (const event of events) if (!isDraft(event)) freeze(event, true);
+  for (const id of actorIds) {
+    const rows = world.experience?.awareness[id];
+    if (!rows || !isDraft(rows)) continue;
+    const before = original(rows)!;
+    if (rows.length <= before.length) continue;
+    const snapshot = current(rows);
+    for (let i = before.length; i < snapshot.length; i++) freeze(snapshot[i]!, true);
+  }
 }

@@ -20,7 +20,7 @@ export class ActorWork {
 
   refresh(world: WorldState, inputs: (id: string) => unknown[], context?: unknown): void {
     // Diagnostics and repeated scheduler checks of one snapshot are not new stimuli.
-    if (this.lastWorld === world && this.context === context) return;
+    if (Object.isFrozen(world) && this.lastWorld === world && this.context === context) return;
     this.lastWorld = world;
     this.context = context;
     if (this.worldId !== world.id) {
@@ -34,9 +34,18 @@ export class ActorWork {
       present.add(id);
       const next = inputs(id);
       const ticket = this.tickets.get(id);
-      if (!ticket) this.tickets.set(id, { inputs: next, dirty: true, wallAt: 0,
-        simAt: Infinity, version: ++this.nextVersion });
-      else if (next.length !== ticket.inputs.length || next.some((value, i) => value !== ticket.inputs[i])) {
+      if (!ticket)
+        this.tickets.set(id, {
+          inputs: next,
+          dirty: true,
+          wallAt: 0,
+          simAt: Infinity,
+          version: ++this.nextVersion,
+        });
+      else if (
+        next.length !== ticket.inputs.length ||
+        next.some((value, i) => value !== ticket.inputs[i])
+      ) {
         ticket.inputs = next;
         ticket.dirty = true;
         ticket.version = ++this.nextVersion;
@@ -48,16 +57,22 @@ export class ActorWork {
   ready(now: number, simTime: number, eligible: (id: string) => boolean = () => true): string[] {
     const ready: string[] = [];
     for (const [id, ticket] of this.tickets) {
-      if (now >= ticket.wallAt && (ticket.dirty || simTime >= ticket.simAt) && eligible(id)) ready.push(id);
+      if (now >= ticket.wallAt && (ticket.dirty || simTime >= ticket.simAt) && eligible(id))
+        ready.push(id);
       if (ready.length === 64) break; // Bound schedule reads before any asynchronous fan-out.
     }
     return ready;
   }
-  version(id: string): number | undefined { return this.tickets.get(id)?.version; }
+  version(id: string): number | undefined {
+    return this.tickets.get(id)?.version;
+  }
 
   defer(id: string, wallAt: number): void {
     const ticket = this.tickets.get(id);
-    if (ticket) { ticket.wallAt = wallAt; ticket.dirty = true; }
+    if (ticket) {
+      ticket.wallAt = wallAt;
+      ticket.dirty = true;
+    }
   }
 
   inspected(id: string, simAt = Infinity, version = this.version(id)): void {
@@ -73,6 +88,9 @@ export class ActorWork {
 
   wake(id: string): void {
     const ticket = this.tickets.get(id);
-    if (ticket) { ticket.dirty = true; ticket.version = ++this.nextVersion; }
+    if (ticket) {
+      ticket.dirty = true;
+      ticket.version = ++this.nextVersion;
+    }
   }
 }

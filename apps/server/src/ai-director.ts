@@ -1,3 +1,4 @@
+import { experiencesSince } from '@open-legend/domain';
 import { groundActionAttempts, exactNavigation } from './action-grounding.js';
 import { actionResponse } from './action-response.js';
 import { npcCandidates, planningCandidates } from './context.js';
@@ -1734,21 +1735,23 @@ export class AiDirector {
         return;
       const world = this.service.world;
       const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
-      const visible = new Map<string, string[]>();
       timedSync('cognition.thoughtRefresh', () =>
         this.thoughtWork.refresh(world, (id) => {
           const entity = world.entities[id]!,
             actor = entity.actor!;
-          const ids = nearbyEntities(world, entity.position, visionRadius(world, entity))
-            .filter((other) => other.id !== id && seesEntity(world, entity, other))
-            .map((other) => other.id);
-          visible.set(id, ids);
           return [
             actor.controller,
             actor.incapacitated,
             currentGoal(actor),
             actor.agency.plan?.revision,
-            nativeProtectionReason(world, id),
+            actor.action?.id,
+            actor.action?.type,
+            actor.agency.revision,
+            actor.capabilities,
+            world.items,
+            world.knowledge[id],
+            world.moduleManifest,
+            world.perceptionFeatures,
             nativeNeedBelow(actor, 'fullness', 20),
             nativeNeedBelow(actor, 'energy', 15),
             nativeNeedBelow(actor, 'energy', 10),
@@ -1757,20 +1760,27 @@ export class AiDirector {
               .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
               .map((v) => v.id)
               .join('|'),
-            ids.join('\0'),
+            world.visiblePeople?.[id],
+            world.visibleObjects?.[id],
             world.memories[id],
             world.experience?.awareness[id],
             world.experience?.summaries[id],
             world.innerWorlds?.[id],
             world.cognitionPolicy,
-            this.service.telemetryRevision,
           ];
         }),
       );
       const actors = this.thoughtWork
-        .ready(this.now(), world.simTime)
+        .ready(
+          this.now(),
+          world.simTime,
+          (id) =>
+            world.entities[id]?.actor?.controller === 'npc' &&
+            !world.entities[id]?.actor?.incapacitated,
+        )
         .map((id) => world.entities[id]!)
         .filter((entity) => entity.actor?.controller === 'npc');
+      const workVersions = new Map(actors.map((e) => [e.id, this.thoughtWork.version(e.id)]));
       const scheduled = new Map(
         await Promise.all(
           actors.map(
@@ -1789,21 +1799,19 @@ export class AiDirector {
           this.thoughtWork.defer(entity.id, last.at + policy.cooldownSeconds * 1000);
           continue;
         }
-        const all = experiences(world, entity.id);
-        const unseen = all
-          .filter((memory) => {
-            const event = this.service.worldEvent(memory.eventId ?? '');
-            const ownResponse =
-              event?.actorId === entity.id && typeof event.data?.['responseId'] === 'string';
-            return (
-              !ownResponse &&
-              (memory.importance >= 6 ||
-                policy.significantEventTypes.includes(event?.type ?? '')) &&
-              (memory.sequence ?? 0) > (last?.watermark ?? 0)
-            );
-          })
-          .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
-        const latest = unseen.slice(0, 8);
+        const latest = [] as ReturnType<typeof experiences>;
+        for (const memory of experiencesSince(world, entity.id, last?.watermark ?? 0)) {
+          const event = this.service.worldEvent(memory.eventId ?? '');
+          const ownResponse =
+            event?.actorId === entity.id && typeof event.data?.['responseId'] === 'string';
+          if (
+            !ownResponse &&
+            (memory.importance >= 6 ||
+              policy.significantEventTypes.includes(memory.eventType ?? event?.type ?? ''))
+          )
+            latest.push(memory);
+          if (latest.length === 8) break;
+        }
         const subscription = (await this.service.store.getIntegration(
           `interests:${world.id}:${entity.id}`,
         )) as InterestSubscription | undefined;
@@ -1812,12 +1820,16 @@ export class AiDirector {
           subscription && subscription.expiresAt > world.simTime
             ? subscription.expiresAt
             : Infinity,
+          workVersions.get(entity.id),
         );
         const matches = interestMatches(
           world,
           entity.id,
           subscription,
-          visible.get(entity.id) ?? [],
+          [
+            ...(world.visiblePeople?.[entity.id] ?? []),
+            ...(world.visibleObjects?.[entity.id] ?? []),
+          ].filter((id) => !!world.entities[id] && seesEntity(world, entity, world.entities[id]!)),
         );
         const nativeProtection = nativeProtectionReason(world, entity.id);
         const fingerprint = digest({
@@ -1838,7 +1850,7 @@ export class AiDirector {
         const opportunity = digest({ fingerprint, evidence: latest.map((memory) => memory.id) });
 
         if (
-          (last?.fingerprint === fingerprint && !unseen.length) ||
+          (last?.fingerprint === fingerprint && !latest.length) ||
           last?.attemptedOpportunity === opportunity ||
           (last && this.now() - last.at < policy.cooldownSeconds * 1000)
         )
@@ -1914,10 +1926,12 @@ export class AiDirector {
           attemptedOpportunity: opportunity,
         });
         this.nextThoughtAt = this.now() + this.service.config.thoughtIntervalMs;
-        const significant = world.experience?.awareness[entity.id]?.some(
-          (a) =>
-            latest.some((m) => m.id === a.eventId) &&
-            policy.significantEventTypes.includes(this.service.worldEvent(a.eventId)?.type ?? ''),
+        const significant = latest.some(
+          (m) =>
+            m.id === m.eventId &&
+            policy.significantEventTypes.includes(
+              m.eventType ?? this.service.worldEvent(m.id)?.type ?? '',
+            ),
         );
         if (significant) await this.maintenance.enqueue(entity.id, id, sentence);
         await this.begin(
@@ -1954,7 +1968,7 @@ export class AiDirector {
               policy: policy.revision,
               stimulus: sentence,
               coalescedSources: latest.map((m) => m.id),
-              deferredCount: unseen.length - latest.length,
+              deferredCount: latest.length - latest.length,
               offeredRoutes: [0, 1, 2, 3, 4, 5],
             },
           });
