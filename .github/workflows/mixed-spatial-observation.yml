@@ -29,6 +29,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/observations" "$RUNNER_TEMP/probe-source"
           cp .github/mixed-scene-* "$RUNNER_TEMP/probe-source/"
           git worktree add --detach "$RUNNER_TEMP/baseline" 78f423892c9a1067b8afd4b1a6eb8ccbce5bf60d
+          OBS_FAILED=0
           for variant in baseline revised; do
             if [ "$variant" = baseline ]; then cd "$RUNNER_TEMP/baseline"; else cd "$ROOT"; fi
             pnpm install --frozen-lockfile
@@ -43,11 +44,12 @@ jobs:
             node --import tsx .github/mixed-scene-server.mjs > "$OBS_OUT/server.log" 2>&1 & PID=$!
             trap 'kill -TERM "$PID" 2>/dev/null || true' EXIT
             for i in $(seq 1 60); do if curl -fsS "http://127.0.0.1:$PORT/api/state" > /dev/null; then break; fi; sleep 1; done
-            node .github/mixed-scene-browser.mjs
+            node .github/mixed-scene-browser.mjs || OBS_FAILED=1
             kill -TERM "$PID"
             wait "$PID"
             trap - EXIT
           done
+          test "$OBS_FAILED" = 0
       - uses: actions/upload-artifact@v4
         if: always()
         with:

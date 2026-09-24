@@ -36,6 +36,7 @@ function resources(){
 }
 (window as any).review = {
  ready:false,report,
+ freeze(){orbit=false;measuring=false;scene.app.autoRender=false;},
  start(){report.frames=[];report.update=[];report.draws=[];report.polls=[];report.setView=[];measuring=true;orbit=true;},
  stop(){measuring=false;orbit=false;return {report,resources:resources(),simTime:view.clock};},
  pose(yaw:number,pitch:number,projection:string){
