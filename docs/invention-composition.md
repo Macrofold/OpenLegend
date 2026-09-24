@@ -99,3 +99,7 @@ The World Agent can reach full authorized definitions, effects, relationships, m
 Generation levels still apply: G1 configures/composes supported behavior, G2 requires a separately qualified restricted interface, and G3 is engineering. Unknown behavior should produce a retained unsupported-capability request with the required computation and a supported alternative only if it genuinely meets an accepted narrower goal.
 
 The release path in [scenarios](invention-scenarios.md) proves a real object loop, a non-human attribute/sense loop, a cross-subsystem composition, and finally a live law change. It is ambitious through reusable capabilities, not by claiming a universal engine can be implemented in one slice.
+
+## Repertoire integration
+
+[Repertoire foundation](repertoire-foundation.md) defines the integration of live arrangements, activity-owned versus machine-owned work, information, obligations and temporal constraints. [Action capabilities](action-capabilities.md) owns runtime method composition; reusable definition composition remains here. A novel arrangement using installed laws is not necessarily a new definition.

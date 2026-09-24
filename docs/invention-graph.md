@@ -105,3 +105,7 @@ Expanding a node queries the same service the agent uses. An agent cites node/ed
 First expose existing recipe/material/base/module pins with honest extraction coverage. Next add enforced port/effect/resource summaries for one real composition, reverse impact checks, and a focused visualization. Then add world-authored obligations and shared-law change analysis. Live-instance overlays, extensive history, and cross-world comparison follow actual consumers.
 
 A graph can initially be useful before it is sufficient to certify arbitrary composition. Tooling must report that distinction. The scenario packet's shelter, charge-creature, and invented-combustion journeys are the generality proofs; no special case for the word `combustibility` may be the reason the common graph works.
+
+## Repertoire integration
+
+[Definition/live/evidence views and identifiable multi-party relations](repertoire-foundation.md#3-definition-live-arrangement-and-evidence-views) refine the overlay contract. Attachments, support, custody, shared work and evidence remain owned by their real subsystems. No graph-edge mutation installs behavior.

@@ -248,3 +248,7 @@ The following decisions are final architectural constraints; detailed tasks rema
 | Cheap paths and deliberate optional enrichment                                     | Sections 5 and 11, validation routing, and art stages. |
 
 The exact provider, confidence calibration, numeric work limits, and entitlement amounts are configuration/research decisions under their existing owners. They must be explicit and qualified before enabling the corresponding capability, rather than silently treated as unlimited or zero cost. They do not change this feature's authority boundaries.
+
+## Repertoire integration
+
+[Repertoire foundation](repertoire-foundation.md) maps the action examples to definition authoring, ordinary invocations, retained methods, live structures, participants, information and obligations. It refines graph/presentation/integration without replacing AC/AG/INV ownership.
