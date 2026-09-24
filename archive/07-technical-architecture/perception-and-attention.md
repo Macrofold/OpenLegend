@@ -114,12 +114,12 @@ Persist historical observation payloads, or sufficient immutable versioned facts
 
 ## 7. Sensory event generation
 
-An external physical occurrence and an individual observer acquiring evidence are distinct. The proposed [private-acquisition boundary](../../docs/events-perception-and-reactions.md#4-scope-and-event-identity) owns their scope and identity.
+An external physical occurrence and an individual observer acquiring evidence are distinct. The [private-acquisition boundary](../../docs/events-perception-and-reactions.md#4-scope-and-event-identity) owns their scope and identity.
 
 Deterministic geometry and propagation establish what can reach an actor before any semantic attention step. Exposure changes create bounded typed evidence with source, medium, strength, detail tier, time and audience. Visual and acoustic evidence must remain distinct from belief, memory selection, conversation membership and model attention. Coalesce routine unchanged exposure; preserve meaningful entry, exit, occlusion and state changes without requiring a paid call per object.
 
 ## 8. Acceptance criteria
 
-Cross-consumer and private-acquisition coverage belongs to proposed [EPR03](../../docs/maintainers/events-perception-and-reactions.md#epr03--actor-private-perception-acquisition-and-exposure-deltas) and [EPR09](../../docs/maintainers/events-perception-and-reactions.md#epr09--differential-and-performance-acceptance); sensory correctness remains here.
+Cross-consumer and private-acquisition coverage belongs to [EPR03](../../docs/maintainers/events-perception-and-reactions.md#epr03--actor-private-perception-acquisition-and-exposure-deltas) and [EPR09](../../docs/maintainers/events-perception-and-reactions.md#epr09--differential-and-performance-acceptance); sensory correctness remains here.
 
 Verify visual and hearing boundaries against deterministic scenes with walls, openings, distance bands, movement and changing sources. Player overlays and actor evidence must derive from the same authoritative geometry while respecting their distinct camera/body scopes. Tests must cover occlusion, partial detail, source disappearance, simultaneous emissions, coalescing, restart and strict exclusion of unseen or unheard facts. Performance evidence must report scene size, moving sources, update cadence and dropped/coalesced events.

@@ -1,12 +1,16 @@
 # Implementation status
 
+## Mixed spatial review
+
+The current renderer keeps 2D images facing the camera under yaw and pitch, using shared upright virtual depth for lighting/picking while bodies and shadow proxies remain world-space. Shadow-only casters do not occupy color layers; proxy geometry, reveal uniforms and plank detail are reused. Native visual acquisition is observer-private; the designated introduction selector admits only the observer's own acquisition, not private thoughts or third-party evidence. Indexed route-support projection, crossed-cell terrain checks and worker failure/shutdown handling are implemented. [Evidence](../../docs/verification/mixed-spatial-review.md) and SW/EPR/PF/SR trackers separate these facts from unqualified GPU, crowd, exposure and lifecycle limits.
+
 ## Spatial-world foundation
 
 Schema 10 uses continuous XYZ/support state, shared capsule/cylinder body profiles, server-worker Recast/Detour ground corridors and Rapier shape-level clearance. Exact support reconstruction, checked string-pulling and bounded replans replace the former lattice planner. Required pending work holds simulation time without retaining the writer. Ordinary native movement/flight, analytic sight/hearing and ledger/effect owners remain authoritative.
 
-The client has upright lit sprites beside meshes, sun/local-fire lighting, multi-receiver shadow maps with simple body proxies, continuous right-drag orbit/pitch and profile-configurable local authorized read-through. Ramp display interpolation preserves common seams; cutaway geometry retains shadows. The target-only reveal pass does not open holes onto unknown background content. This is not full per-pixel occluder-opacity editing or inferred 3D art.
+The client has camera-facing lit sprites with separate upright virtual depth beside meshes, sun/local-fire lighting, multi-receiver shadow maps with simple body proxies, continuous right-drag orbit/pitch and profile-configurable local authorized read-through. Ramp display interpolation preserves common seams; cutaway geometry retains shadows. The target-only reveal pass does not open holes onto unknown background content. This is not full per-pixel occluder-opacity editing or inferred 3D art.
 
-Current facts: [Architecture](../../docs/architecture.md#spatial-world-foundation). Current observations: [Recast integration](../../docs/verification/recast-integration.md). [SW](../../docs/maintainers/spatial-world.md) retains incomplete tile-update, sliding-controller, crowd, flight-graph, private-acquisition, viewport, model-loader and sustained graphics/load work. Earlier lattice benchmarks are historical. No automated suites were run for this delivery.
+Current facts: [Architecture](../../docs/architecture.md#spatial-world-foundation). Current observations: [Recast integration](../../docs/verification/recast-integration.md). [SW](../../docs/maintainers/spatial-world.md) retains incomplete tile-update, sliding-controller, crowd, flight-graph, exposure-delta, viewport, model-loader and sustained graphics/load work. Earlier lattice benchmarks are historical. No automated suites were run for this delivery.
 
 This is the current subsystem snapshot. Architecture details belong to [Architecture](../../docs/architecture.md), evidence to [Verification](../../docs/verification.md), and detailed pending work to the [maintainer index](../../docs/maintainers/README.md).
 
