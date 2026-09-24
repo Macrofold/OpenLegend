@@ -1,0 +1,60 @@
+name: Prepare MCP write implementation base
+on:
+  push:
+    branches: [feature/invention-mcp-writes]
+    paths: [.github/workflows/publish-write-base.yml]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          git config user.name 'OpenLegend implementation'
+          git config user.email 'implementation@users.noreply.github.com'
+          git checkout cbe34ac7517397ca44963bf88f9ca00575f76f5e
+          git merge --no-commit --no-ff fc01e19b30060e6c7213b1c5405be13df209297e || test -f .git/MERGE_HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess
+          files=subprocess.check_output(['git','diff','--name-only','--diff-filter=U'],text=True).splitlines()
+          assert set(files)=={'apps/server/src/ai-director.ts','apps/server/src/context.ts','apps/server/src/jev-questions.ts','docs/architecture.md','docs/documentation-changelog.md','docs/maintainers/README.md','docs/maintainers/extensible-world-foundation.md','pnpm-lock.yaml'},files
+          for f in files:
+            def resolve(m):
+              a,b=m.group(1,2)
+              if f=='apps/server/src/jev-questions.ts':return b
+              if f=='docs/maintainers/README.md':return b+'\n'+a[a.index('## Invention foundation packet'):]
+              if f=='docs/architecture.md':return b+'\n'+a
+              return a+'\n'+b
+            s=re.sub(r'^<<<<<<< HEAD\n(.*?)^=======\n(.*?)^>>>>>>> fc01e19b30060e6c7213b1c5405be13df209297e\n',resolve,Path(f).read_text(),flags=re.M|re.S)
+            assert '<<<<<<<' not in s and '>>>>>>>' not in s,f
+            Path(f).write_text(s)
+          subprocess.run(['git','add','.'],check=True)
+          PY
+          test "$(git write-tree)" = abfaf913b3bd5fe403ee8e741240f8d53a125a5b
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: |
+          pnpm exec tsc --noEmit -p tsconfig.build.json
+          pnpm exec vite build --config apps/client/vite.config.ts
+      - run: |
+          commit=$(printf '%s\n' '[skip ci] Integrate current world owners before session-bound MCP writes' | git commit-tree abfaf913b3bd5fe403ee8e741240f8d53a125a5b -p "$GITHUB_SHA" -p fc01e19b30060e6c7213b1c5405be13df209297e)
+          git push origin "$commit:refs/heads/feature/invention-mcp-writes"
+          git branch mcp-write-base "$commit"
+          git bundle create /tmp/mcp-write-base.bundle --all
+          tar -czf /tmp/mcp-write-dependencies.tar.gz node_modules apps/*/node_modules packages/*/node_modules
+          echo "Published $commit"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mcp-write-base
+          path: |
+            /tmp/mcp-write-base.bundle
+            /tmp/mcp-write-dependencies.tar.gz
+          retention-days: 1
