@@ -1,18 +1,28 @@
-name: Code checks
+name: Action implementation workspace
 on:
   push:
-  pull_request:
+    branches: [design/action-repertoire-and-capability-grounding]
 permissions:
   contents: read
 jobs:
-  check:
+  workspace:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run check
+      # Temporary source/dependency bundle for offline implementation and native stress runs.
+      # No secrets, local saves, Git credentials, or test-suite execution are included.
+      - run: tar --exclude=.git --exclude=.data --exclude=.env -czf /tmp/openlegend-workspace.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: action-implementation-workspace
+          path: /tmp/openlegend-workspace.tar.gz
+          retention-days: 1
