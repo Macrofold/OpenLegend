@@ -388,7 +388,7 @@ export function npcCandidates(
           command: { type: 'cook', itemId: item.id, targetId: cookingFire.id },
         });
     }
-  for (const recipe of observed.knownRecipes.slice(-12)) {
+  for (const recipe of observed.knownRecipes) {
     const required = new Map<string, number>();
     for (const input of recipe.inputs)
       required.set(input.definitionId, (required.get(input.definitionId) ?? 0) + input.quantity);
@@ -411,7 +411,6 @@ export function planningCandidates(service: WorldService, actorId: string): Cand
   return [
     ...observed.visibleEntities
       .filter((entity) => entity.resource && entity.resource.quantity > 0)
-      .slice(0, 8)
       .map((entity) => ({
         id: `plan-gather:${entity.id}`,
         description: gatherDescription(entity),
@@ -422,7 +421,7 @@ export function planningCandidates(service: WorldService, actorId: string): Cand
       description: `Prepare ${recipe.outputQuantity} ${recipe.output}; needs ${recipe.inputQuantity} ${recipe.input} at start, ${recipe.workSeconds} work seconds.`,
       command: { type: 'prepare' as const, preparation: preparation as 'fiber' | 'cord' },
     })),
-    ...observed.knownRecipes.slice(0, 16).map((recipe) => ({
+    ...observed.knownRecipes.map((recipe) => ({
       id: `plan-craft:${recipe.id}`,
       description: `Craft one ${recipe.outputDefinitionId} (${recipe.name}); ${recipe.workSeconds} work seconds, needs ${recipe.inputs.map((input) => `${input.quantity} ${input.definitionId}`).join(', ')} at start.`,
       command: { type: 'craft' as const, recipeId: recipe.id },

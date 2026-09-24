@@ -97,11 +97,14 @@ export class IntelligenceLog {
     if (this.closed) return;
     try {
       const captured = clean(call) as IntelligenceCall;
-      if (Buffer.byteLength(JSON.stringify(captured.input ?? null)) > 150000)
+      if (Buffer.byteLength(JSON.stringify(captured.input ?? null)) > 500000)
         captured.input = { unavailable: 'Diagnostic input exceeded capture limit.' };
-      if (Buffer.byteLength(JSON.stringify(captured)) > 500000) {
+      if (Buffer.byteLength(JSON.stringify(captured)) > 1000000) {
         captured.exchanges = [];
-        captured.output = { unavailable: 'Capture limit exceeded; receipt remains in accounting.' };
+        if (Buffer.byteLength(JSON.stringify(captured)) > 1000000)
+          captured.output = {
+            unavailable: 'Capture limit exceeded; receipt remains in accounting.',
+          };
       }
       this.latest.delete(captured.id);
       this.latest.set(captured.id, structuredClone(captured));
@@ -151,7 +154,7 @@ export class IntelligenceLog {
       exchanges: [],
       timings: {},
     };
-    if (Buffer.byteLength(JSON.stringify(call.input)) > 150000)
+    if (Buffer.byteLength(JSON.stringify(call.input)) > 500000)
       call.input = { unavailable: 'Diagnostic input exceeded capture limit.' };
     await this.save(call);
     return this.context.run(call, async () => {

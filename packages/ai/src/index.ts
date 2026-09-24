@@ -15,6 +15,9 @@ export {
   compileSchema,
   InvalidData,
   validateQuestions,
+  validateJudgmentSize,
+  JUDGMENT_MAX_CHARACTERS,
+  JUDGMENT_STATE_QUESTION_CHARACTERS,
   decodeJudge,
   decodeUsage,
 } from './validation.js';

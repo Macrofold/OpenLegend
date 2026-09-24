@@ -1817,50 +1817,32 @@ body,
 }
 
 /* Camera controls are presentation only; level cutaways never remove physical surfaces. */
-.ol-camera-options {
-  position: relative;
-  align-self: center;
-}
-.ol-camera-options summary {
-  cursor: pointer;
-  padding: 0.65rem;
-  border-radius: var(--radius-sm);
-}
-.ol-camera-options summary:focus-visible {
-  outline: 2px solid var(--text);
-}
-.ol-camera-popover {
-  position: absolute;
-  bottom: calc(100% + 12px);
-  right: 0;
-  width: min(320px, calc(100vw / var(--ui-scale) - 32px));
-  max-height: min(70vh, 480px);
-  overflow: auto;
+/* Compact camera cluster stays visible without an options disclosure. */
+.ol-camera {
   display: grid;
-  gap: 8px;
-  padding: 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  box-shadow: var(--shadow-float);
+  grid-template-columns: repeat(4, var(--control-md));
+  gap: 2px;
 }
-.ol-camera-popover label {
-  display: grid;
-  gap: 6px;
-}
-.ol-camera-popover select {
+.ol-camera select {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
   font: inherit;
-  padding: 8px;
+  font-size: 12px;
+  padding: 6px;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
 }
-.ol-camera-popover p {
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 0;
+.ol-camera .ol-ibtn[aria-label='Follow player'][aria-pressed='true'] {
+  position: relative;
 }
-.ol-camera-row {
-  display: flex;
-  gap: 6px;
+.ol-camera .ol-ibtn[aria-label='Follow player'][aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  right: 1px;
+  top: -2px;
+  font-size: 11px;
+  font-weight: bold;
 }

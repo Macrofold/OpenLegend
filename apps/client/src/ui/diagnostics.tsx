@@ -331,6 +331,13 @@ function JevSummary({ call }: { call: IntelligenceCall }) {
     <div className="ol-jev-summary">
       <dl className="ol-diagnostic-fields ol-jev-purpose">
         <Labeled label="Jev stage">{jevPurpose(call)}</Labeled>
+        <Labeled label="Question count">{Object.keys(questions ?? {}).length}</Labeled>
+        {valueText(path(call.output, 'reason')) && (
+          <Labeled label="Failure">{valueText(path(call.output, 'reason'))}</Labeled>
+        )}
+        {path(call.output, 'receipt', 'dispatched') === false && (
+          <Labeled label="Dispatch">Not sent to provider</Labeled>
+        )}
       </dl>
       {[...groups.entries()].map(([groupKey, group]) => {
         const options = jevOptions(group.question);
@@ -390,37 +397,64 @@ function JevSummary({ call }: { call: IntelligenceCall }) {
 }
 
 function LmResponse({ value }: { value: JsonObject }) {
-  const talk = object(value['talk']);
-  const act = object(value['act']);
-  const think = object(value['think']);
-  const addressee = talk?.['addresseeEntityId'] ?? talk?.['addressee'];
-  const target = act?.['targetEntityId'] ?? act?.['target'];
-  const about = think?.['aboutEntityIds'] ?? think?.['about'];
-  const action = act
-    ? act['kind'] === 'expression'
-      ? `${humanize(String(act['verb'] ?? 'expression'))}${target ? ` → ${String(target)}` : ''}`
-      : act['kind'] === 'known'
-        ? `Use action ${String(act['actionId'] ?? 'unknown')}`
-        : valueText(act['description'])
-    : undefined;
+  // Follow the operation envelope; absent/malformed data must never masquerade as silence.
+  // docs/memory-architecture.md#god-mode-cognition-debugger
+  if (!Array.isArray(value['operations']))
+    return <p className="ol-prose">Response format unavailable. Inspect the raw record.</p>;
+  const operations = value['operations'].map(object);
+  if (!operations.length)
+    return <p className="ol-prose">No new operations proposed; continue existing behavior.</p>;
   return (
     <div className="ol-lm-components">
-      <section className="ol-diagnostic-card">
-        <span className="ol-eyebrow">Spoken response</span>
-        <p className="ol-prose">{valueText(talk?.['text']) ?? 'No speech proposed.'}</p>
-        {addressee !== undefined && <p className="ol-caption">To: {String(addressee)}</p>}
-      </section>
-      <section className="ol-diagnostic-card">
-        <span className="ol-eyebrow">Action</span>
-        <p className="ol-prose">{action ?? 'No action proposed.'}</p>
-      </section>
-      <section className="ol-diagnostic-card">
-        <span className="ol-eyebrow">Private thought</span>
-        <p className="ol-prose">{valueText(think?.['text']) ?? 'No private thought proposed.'}</p>
-        {Array.isArray(about) && about.length > 0 && (
-          <p className="ol-caption">About: {about.map(String).join(', ')}</p>
-        )}
-      </section>
+      {operations.map((operation, index) => {
+        const kinds = ['talk', 'act', 'think', 'goal', 'plan'].filter(
+          (kind) => operation?.[kind] != null,
+        );
+        if (!operation || kinds.length !== 1 || !object(operation[kinds[0]!]))
+          return <p key={index}>Malformed operation {index + 1}; inspect the raw record.</p>;
+        const kind = kinds[0]!;
+        const part = object(operation[kind])!;
+        const target = part['targetEntityId'] ?? part['addresseeEntityId'];
+        const description =
+          kind === 'act'
+            ? part['kind'] === 'known'
+              ? `Use action ${String(part['actionId'])}`
+              : part['kind'] === 'expression'
+                ? humanize(String(part['verb']))
+                : valueText(part['description'])
+            : kind === 'goal'
+              ? `${humanize(String(part['operation']))}: ${String(part['objective'] ?? part['goalId'] ?? '')}`
+              : kind === 'plan'
+                ? `${humanize(String(part['mode']))} plan; expected revision ${String(part['expectedRevision'])}`
+                : valueText(part['text']);
+        return (
+          <section className="ol-diagnostic-card" key={index}>
+            <span className="ol-eyebrow">
+              Proposed{' '}
+              {kind === 'talk'
+                ? 'speech'
+                : kind === 'think'
+                  ? 'private thought'
+                  : kind === 'act'
+                    ? 'action'
+                    : kind}{' '}
+              · {String(operation['localId'] ?? index + 1)}
+            </span>
+            <p className="ol-prose">{description ?? 'Details unavailable; inspect raw record.'}</p>
+            {target != null && <p className="ol-caption">Target: {String(target)}</p>}
+            {Array.isArray(part['aboutEntityIds']) && part['aboutEntityIds'].length > 0 && (
+              <p className="ol-caption">About: {part['aboutEntityIds'].map(String).join(', ')}</p>
+            )}
+            {kind === 'plan' && <pre>{JSON.stringify(part['steps'], null, 2)}</pre>}
+            {Array.isArray(operation['requiresAccepted']) &&
+              operation['requiresAccepted'].length > 0 && (
+                <p className="ol-caption">
+                  Requires accepted: {operation['requiresAccepted'].map(String).join(', ')}
+                </p>
+              )}
+          </section>
+        );
+      })}
     </div>
   );
 }
@@ -484,7 +518,7 @@ function LmSummary({ call, trigger }: { call: IntelligenceCall; trigger?: string
     valueText(output?.['reason']) ?? valueText(output?.['error']) ?? valueText(output?.['message']);
   const requestLabel =
     task === 'npc_response'
-      ? 'Player speech'
+      ? 'Cognition trigger'
       : task === 'invent_supported_technique'
         ? 'Invention request'
         : task === 'background_reflection'

@@ -19,6 +19,7 @@ import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
 import { nearbyEntities, seesEntity, visionRadius } from '@open-legend/domain';
 import { decisionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
+import { retrieveActions } from './action-retrieval.js';
 import { interestMatches, type InterestSubscription } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
@@ -154,8 +155,8 @@ export class AiDirector {
               },
               fetch: log.fetch,
               timeoutMs: config.aiTimeoutMs,
-              maxRequestBytes: 120_000,
-              maxResponseBytes: 100_000,
+              maxRequestBytes: 500_000,
+              maxResponseBytes: 500_000,
               maxOutputTokens: 8192,
             })),
     );
@@ -909,7 +910,7 @@ export class AiDirector {
     // Exact provider invoices remain external; custom prices must match the selected model.
     const prices = provider === 'jev' ? config.jevPrices : config.llmPrices;
     const boundedEstimate =
-      (120_000 *
+      (500_000 *
         Math.max(
           prices.inputUsdPerMillion,
           provider === 'openai' ? config.llmPrices.cacheWriteInputUsdPerMillion : 0,
@@ -1281,6 +1282,21 @@ export class AiDirector {
     if (semanticTrigger.checkActionSelection) {
       const actionsStartedAt = new Date().toISOString();
       prepared = refreshDecisionActions(this.service, prepared);
+      const retrieval = await retrieveActions(
+        this.service,
+        this.log,
+        actorId,
+        `${run.job.id}:attempt:${attempt}`,
+        `${currentGoal(this.service.world.entities[actorId]!.actor!)}\n${stimulus}`,
+        prepared.actionCandidates,
+        run.controller.signal,
+        async () => {
+          await this.awaitResume(run);
+          this.current(run);
+        },
+      );
+      this.current(run);
+      prepared = { ...prepared, actionCandidates: retrieval.candidates };
       let withActions: Awaited<ReturnType<typeof selectDecisionActions>>;
       try {
         withActions = await selectDecisionActions(
@@ -1309,7 +1325,15 @@ export class AiDirector {
       await this.log.record(
         `${run.job.id}:attempt:${attempt}:action-context`,
         'Action context',
-        { actionSelection: withActions.diagnostics.actionSelection, trigger: semanticTrigger },
+        {
+          actionSelection: withActions.diagnostics.actionSelection,
+          retrieval: {
+            status: retrieval.status,
+            eligible: retrieval.eligible,
+            returned: retrieval.candidates.length,
+          },
+          trigger: semanticTrigger,
+        },
         prepared.offered,
         actionsStartedAt,
       );
@@ -1666,8 +1690,14 @@ export class AiDirector {
               (memory.sequence ?? 0) > (last?.watermark ?? 0)
             );
           })
-          .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+          .sort((a, b) => (b.sequence ?? 0) - (a.sequence ?? 0));
         const latest = unseen.slice(0, 8);
+        // This is a wakeup snapshot, not a queue of memories owed future model calls.
+        // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
+        const snapshotWatermark = Math.max(
+          last?.watermark ?? 0,
+          ...all.map((memory) => memory.sequence ?? 0),
+        );
         const subscription = (await this.service.store.getIntegration(
           `interests:${world.id}:${entity.id}`,
         )) as InterestSubscription | undefined;
@@ -1687,7 +1717,7 @@ export class AiDirector {
         const fingerprint = digest({
           matches,
           nativeProtection,
-          // Goal edits refresh interests but do not buy a new response by themselves.
+          goal: currentGoal(actor),
           need: nativeNeedBelow(actor, 'fullness', 20)
             ? 'hungry'
             : nativeNeedBelow(actor, 'energy', 15)
@@ -1723,7 +1753,7 @@ export class AiDirector {
         const diagnosticTrigger = urgentNeed
           ? urgentNeed
           : latest.length
-            ? `${latest.length} new significant ${latest.length === 1 ? 'experience' : 'experiences'}; latest: ${diagnosticExcerpt(latest.at(-1)!.summary)}`
+            ? `${latest.length} new significant ${latest.length === 1 ? 'experience' : 'experiences'}; latest: ${diagnosticExcerpt(latest[0]!.summary)}`
             : matches.length
               ? `A nearby interest became relevant: ${matches
                   .map((match) => world.entities[match]?.name)
@@ -1761,20 +1791,19 @@ export class AiDirector {
           await this.writeSchedule(key, {
             fingerprint,
             at: this.now(),
-            // Deferral is not consideration; preserve urgent evidence until the actor can use it.
-            watermark: last?.watermark ?? 0,
+            // Evidence remains queryable; native handling does not queue semantic catch-up.
+            watermark: snapshotWatermark,
             ...(last?.attemptedOpportunity
               ? { attemptedOpportunity: last.attemptedOpportunity }
               : {}),
           });
           continue;
         }
-        // Persist dispatch deduplication before paid work, but consume evidence only
-        // after routing/generation reaches a completed disposition.
+        // A failed decision is not a debt to replay. New changes create fresh opportunities.
         await this.writeSchedule(key, {
           fingerprint,
           at: this.now(),
-          watermark: last?.watermark ?? 0,
+          watermark: snapshotWatermark,
           attemptedOpportunity: opportunity,
         });
         this.nextThoughtAt = this.now() + this.service.config.thoughtIntervalMs;
@@ -1802,10 +1831,7 @@ export class AiDirector {
             await this.writeSchedule(key, {
               fingerprint,
               at: this.now(),
-              watermark: Math.max(
-                current?.watermark ?? 0,
-                ...latest.map((memory) => memory.sequence ?? 0),
-              ),
+              watermark: Math.max(current?.watermark ?? 0, snapshotWatermark),
               attemptedOpportunity: opportunity,
             });
           },
@@ -1818,7 +1844,8 @@ export class AiDirector {
               policy: policy.revision,
               stimulus: sentence,
               coalescedSources: latest.map((m) => m.id),
-              deferredCount: unseen.length - latest.length,
+              observedSinceLastOpportunity: unseen.length,
+              coalescedCount: unseen.length - latest.length,
               offeredRoutes: [0, 1, 2, 3, 4, 5],
             },
           });
