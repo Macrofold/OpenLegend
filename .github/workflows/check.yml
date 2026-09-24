@@ -1,4 +1,4 @@
-name: Rebased exposure performance
+name: Rebased server qualification
 on:
   push:
     branches: [design/action-repertoire-and-capability-grounding]
@@ -8,7 +8,7 @@ concurrency:
   group: action-native-performance
   cancel-in-progress: true
 jobs:
-  performance:
+  qualification:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -25,21 +25,46 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Measure native dense and warm paths
+      - name: Review fixes and production build
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          s=Path('.github/perf-density.py').read_text()
-          s=s.replace("'packages/domain/src/draft.ts','packages/domain/src/experience.ts'", "'packages/domain/src/events.ts','packages/domain/src/status-effects.ts','packages/domain/src/experience.ts'")
-          s=s.replace('perf-density-edit.py','perf-exposure-edit.py').replace('action-perf-density.json','action-perf-exposure.json')
-          s=s.replace('owned-evidence and scalar-capture changes','category-local exposure and inactive status pruning')
-          exec(compile(s,'exposure-profile','exec'))
-          PY
-      - name: Commit measured work and evidence
+          python .github/perf-integrate-edit.py
+          pnpm exec prettier --write packages/domain/src/kernel.ts apps/server/src/action-grounding.ts apps/server/src/upgrade-world.ts scripts/performance/profile-server.mjs
+          pnpm run build
+          node --import tsx .github/perf-integration-exercise.mjs > /tmp/action-integration.json
+          cp /tmp/action-integration.json docs/verification/action-perf-integration.json
+      - name: Real server smoke and matched workload
+        run: |
+          echo '{"seed":73,"people":0,"animals":0,"layout":"scattered","steps":180,"warmup":0,"speed":1,"objects":[]}' > /tmp/server-small.json
+          node --import tsx scripts/performance/profile-server.mjs /tmp/server-small.json /tmp/server-smoke.json 5 1
+          git worktree add --detach /tmp/server-baseline 3be6601f862a48fe1facf951943f53c16024cb1f
+          cp scripts/performance/profile-server.mjs /tmp/server-baseline/scripts/performance/profile-server.mjs
+          (cd /tmp/server-baseline && pnpm install --frozen-lockfile)
+          for scene in small mixed; do
+            if [ "$scene" = small ]; then config=/tmp/server-small.json; else config=$PWD/scripts/performance/scenarios/mixed.json; fi
+            (cd /tmp/server-baseline && node --import tsx scripts/performance/profile-server.mjs "$config" "/tmp/server-$scene-before.json" 15 1,3,8)
+            node --import tsx scripts/performance/profile-server.mjs "$config" "/tmp/server-$scene-after.json" 15 1,3,8
+            cp "/tmp/server-$scene-before.json" "docs/verification/action-server-$scene-before.json"
+            cp "/tmp/server-$scene-after.json" "docs/verification/action-server-$scene-after.json"
+          done
+          echo '{"seed":73,"people":100,"animals":0,"layout":"crowded","steps":180,"warmup":0,"speed":1,"timeoutSeconds":120,"objects":[{"count":500,"name":"Profiling gem","properties":["rigid"]}]}' > /tmp/server-dense.json
+          node --import tsx scripts/performance/profile-server.mjs /tmp/server-dense.json /tmp/server-dense-after.json 15 1
+          cp /tmp/server-dense-after.json docs/verification/action-server-dense-after.json
+      - name: Commit reviewed source and measurements
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git diff --check
-          git add packages apps docs
-          git diff --cached --quiet || git commit -m '[skip ci] perf: reuse unchanged acquisition sets and prune inapplicable status work'
+          git add packages apps scripts docs
+          git diff --cached --quiet || git commit -m '[skip ci] fix: preserve main privacy and upgrades; measure real-server performance'
+          git push origin HEAD:design/action-repertoire-and-capability-grounding
+      - name: Retain focused diagnostics
+        if: failure()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          mkdir -p .github/server-diagnostics
+          for f in /tmp/server-*.json /tmp/action-integration.json; do test ! -f "$f" || cp "$f" .github/server-diagnostics/; done
+          git diff > .github/server-diagnostics/source.patch
+          git add .github/server-diagnostics
+          git diff --cached --quiet || git commit -m '[skip ci] chore: retain bounded server qualification diagnostics'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
