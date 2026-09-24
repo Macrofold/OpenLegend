@@ -33,6 +33,7 @@ export {
   canRecoverAtCamp,
   executeCommand,
   advanceWorld,
+  advanceWorldWork,
   observeActor,
   queryMemories,
   remember,

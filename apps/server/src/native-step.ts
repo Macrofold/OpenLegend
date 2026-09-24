@@ -8,7 +8,8 @@ import { countMetric, recordDuration } from './performance.js';
  * docs/architecture.md#cooperative-native-burst-handling
  */
 export async function advanceNativeStep(world: WorldState) {
-  if (!Object.isFrozen(world)) throw new Error('Cooperative native work requires an owned frozen snapshot.');
+  if (!Object.isFrozen(world))
+    throw new Error('Cooperative native work requires an owned frozen snapshot.');
   const work = advanceWorldWork(world, 1);
   const started = performance.now();
   let sliceStarted = started;

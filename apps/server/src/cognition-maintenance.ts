@@ -112,24 +112,28 @@ export class CognitionMaintenance {
     try {
       const current = this.service.world;
       timedSync('cognition.maintenanceRefresh', () =>
-        this.work.refresh(current, (id) => {
-          const actor = current.entities[id]!.actor!;
-          return [
-            actor.controller,
-            actor.incapacitated,
-            actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
-            !nativeNeedBelow(actor, 'fullness', 30),
-            actor.action?.type,
-            actor.rest?.asleep,
-            current.memories[id],
-            current.experience?.awareness[id],
-            current.experience?.summaries[id],
-            current.minds?.[id],
-            current.innerWorlds?.[id],
-            current.cognitionPolicy,
-            this.service.memoryBacklog,
-          ];
-        }),
+        this.work.refresh(
+          current,
+          (id) => {
+            const actor = current.entities[id]!.actor!;
+            return [
+              actor.controller,
+              actor.incapacitated,
+              actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
+              !nativeNeedBelow(actor, 'fullness', 30),
+              actor.action?.type,
+              actor.rest?.asleep,
+              current.memories[id],
+              current.experience?.awareness[id],
+              current.experience?.summaries[id],
+              current.minds?.[id],
+              current.innerWorlds?.[id],
+              current.cognitionPolicy,
+              this.service.memoryBacklog,
+            ];
+          },
+          this.service.memoryBacklog,
+        ),
       );
       const actors = this.work
         .ready(this.now(), current.simTime)

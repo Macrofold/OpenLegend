@@ -1244,6 +1244,21 @@ function nativeParticipants(world: WorldState): { actors: string[]; ambient: str
 
 /** Advance bounded one-second native steps. Paused time and absent-player catch-up are never inferred. */
 export function advanceWorld(original: WorldState, elapsedSimSeconds: number): Transition {
+  const work = advanceWorldWork(original, elapsedSimSeconds);
+  let result = work.next();
+  while (!result.done) result = work.next();
+  return result.value;
+}
+
+/** Cooperative checkpoints expose no candidate state. Draining synchronously and yielding
+ * between checkpoints have identical native ordering and simulation time. The application
+ * must hold exclusive mutation ownership until completion or discard the whole candidate.
+ * docs/architecture.md#cooperative-native-burst-handling
+ */
+export function* advanceWorldWork(
+  original: WorldState,
+  elapsedSimSeconds: number,
+): Generator<void, Transition, void> {
   if (
     !Number.isFinite(elapsedSimSeconds) ||
     elapsedSimSeconds < 0 ||
@@ -1319,6 +1334,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       }
       if (hasWildernessNeeds(component)) accountRest(component, world.simTime, seconds);
       advanceAction(world, actor, seconds, events);
+      yield;
     }
     // Only landing needs this index; rebuild once at that phase, then track subsequent moves.
     let occupancy: LandingOccupancy | undefined;
@@ -1335,10 +1351,12 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
           emit(world, events, 'fire-out', 'The campfire ran out of fuel.', entity);
         }
       }
+      yield;
     }
   }
-  const perception = updateEncounters(world, original, events, participants.actors);
-  sealNativeEvidence(world, events, participants.actors);
+  const perception = yield* updateEncounters(world, original, events, participants.actors);
+  yield* sealNativeEvidence(world, events, participants.actors);
+  yield;
   const result = finish(
     world,
     events,
@@ -1349,12 +1367,12 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
 }
 
 /** Positions stay fixed during this phase; never reuse a frame across intervening motion. */
-function updateEncounters(
+function* updateEncounters(
   world: WorldState,
   original: WorldState,
   events: WorldEvent[],
   actorIds: readonly string[],
-): ReturnType<typeof createPerceptionFrame> | undefined {
+): Generator<void, ReturnType<typeof createPerceptionFrame> | undefined, void> {
   if (!actorIds.some((id) => world.entities[id]?.actor?.alive && hasMemory(world.entities[id])))
     return;
   const frame = createPerceptionFrame(world, original);
@@ -1454,7 +1472,7 @@ function updateEncounters(
       clearSight();
       continue;
     }
-    const visible = frame.query(actor);
+    const visible = yield* frame.query(actor);
     const seen = visible.people;
     const previous = original.visiblePeople?.[actor.id] ?? [];
     const previouslySeen = new Set(previous);
@@ -1471,7 +1489,10 @@ function updateEncounters(
             .flatMap((m) => m.entityIds)
         : [],
     );
-    for (const id of acquired) if (!recent.has(id)) encounter(observer, id, true);
+    for (const [index, id] of acquired.entries()) {
+      if (!recent.has(id)) encounter(observer, id, true);
+      if ((index + 1) % 64 === 0) yield;
+    }
     for (const id of seen)
       if (previouslySeen.has(id) && frame.changedFeatures.has(id))
         encounter(observer, id, true, frame.source(id)!.detail);
@@ -1484,7 +1505,8 @@ function updateEncounters(
     const objectIds = visible.objects;
     const previousObjects = original.visibleObjects?.[actor.id] ?? [];
     const priorObjects = new Set(previousObjects);
-    for (const id of objectIds) {
+    for (const [index, id] of objectIds.entries()) {
+      if (index && index % 64 === 0) yield;
       if (!priorObjects.has(id)) encounter(observer, id, false);
       else if (frame.changedFeatures.has(id))
         encounter(observer, id, false, frame.source(id)!.detail);
@@ -1496,6 +1518,7 @@ function updateEncounters(
     )
       (world.visibleObjects ??= {})[actor.id] = objectIds;
     encounter.flush();
+    yield;
   }
   frame.finish();
   return frame;

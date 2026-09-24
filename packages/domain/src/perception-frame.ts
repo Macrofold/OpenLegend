@@ -129,7 +129,7 @@ export function createPerceptionFrame(world: WorldState, previous: WorldState) {
         )
         .map((source) => source.id),
     ),
-    query(observer: Source): Exposure {
+    *query(observer: Source): Generator<void, Exposure, void> {
       const prior = old?.sources.get(observer.id),
         exposed = old?.exposures.get(observer.id);
       if (
@@ -159,12 +159,16 @@ export function createPerceptionFrame(world: WorldState, previous: WorldState) {
       const things = objects(observer.position, observer.radius);
       next.stats.queried++;
       next.stats.candidates += people.length + things.length;
-      const result = {
-        people: people
-          .filter((source) => source.id !== observer.id && sees(source))
-          .map((source) => source.id),
-        objects: things.filter((source) => sees(source)).map((source) => source.id),
-      };
+      const result: Exposure = { people: [], objects: [] };
+      let examined = 0;
+      for (const source of people) {
+        if (source.id !== observer.id && sees(source)) result.people.push(source.id);
+        if (++examined % 64 === 0) yield;
+      }
+      for (const source of things) {
+        if (sees(source)) result.objects.push(source.id);
+        if (++examined % 64 === 0) yield;
+      }
       next.exposures.set(observer.id, result);
       return result;
     },

@@ -1,3 +1,4 @@
+import { advanceNativeStep } from './native-step.js';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
@@ -755,11 +756,12 @@ export class WorldService {
       let completedSteps = 0;
       gaugeMetric('tick.dueSteps', steps);
       // Publish a bounded prefix and release mutation ownership; retain the rest as debt.
-      // A single transition remains atomic even if it exceeds this time budget.
+      // Cooperative checkpoints keep I/O responsive; candidate state stays private until completion.
       for (; completedSteps < steps; ) {
-        const stepStarted = performance.now();
-        world = freezeWorld(advanceWorld(world, 1).world);
-        const stepMs = performance.now() - stepStarted;
+        const advanced = await advanceNativeStep(world);
+        const freezeStarted = performance.now();
+        world = freezeWorld(advanced.transition.world);
+        const stepMs = advanced.cpuMs + performance.now() - freezeStarted;
         nativeMs += stepMs;
         recordDuration('native.step', stepMs);
         completedSteps++;

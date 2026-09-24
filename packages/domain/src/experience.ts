@@ -1109,19 +1109,25 @@ export function validateExperienceOrder(world: WorldState): void {
  * must not be frozen as a side effect. Later transitions still edit through fresh drafts.
  * This avoids repeated deep finalization without changing event append lineage.
  */
-export function sealNativeEvidence(
+export function* sealNativeEvidence(
   world: WorldState,
   events: WorldEvent[],
   actorIds: readonly string[],
-): void {
+): Generator<void, void, void> {
   if (!isDraft(world) || !Object.isFrozen(original(world))) return;
-  for (const event of events) if (!isDraft(event)) freeze(event, true);
+  for (const [index, event] of events.entries()) {
+    if (!isDraft(event)) freeze(event, true);
+    if ((index + 1) % 128 === 0) yield;
+  }
   for (const id of actorIds) {
     const rows = world.experience?.awareness[id];
     if (!rows || !isDraft(rows)) continue;
     const before = original(rows)!;
     if (rows.length <= before.length) continue;
     const snapshot = current(rows);
-    for (let i = before.length; i < snapshot.length; i++) freeze(snapshot[i]!, true);
+    for (let i = before.length; i < snapshot.length; i++) {
+      freeze(snapshot[i]!, true);
+      if ((i - before.length + 1) % 128 === 0) yield;
+    }
   }
 }
