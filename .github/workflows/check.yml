@@ -1,4 +1,4 @@
-name: Rebased native performance
+name: Rebased dense performance
 on:
   push:
     branches: [design/action-repertoire-and-capability-grounding]
@@ -7,7 +7,7 @@ permissions:
 jobs:
   performance:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     env:
       AI_BUDGET_USD: '0'
       OPEN_LEGEND_DATABASE_URL: ''
@@ -20,13 +20,13 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Measure candidate against rebased baseline
-        run: python .github/perf-rebase-work.py
+      - name: Measure native dense and warm paths
+        run: python .github/perf-density.py
       - name: Commit measured work and evidence
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git diff --check
           git add packages apps docs
-          git diff --cached --quiet || git commit -m '[skip ci] perf: qualify native finalization against rebased main'
+          git diff --cached --quiet || git commit -m '[skip ci] perf: reduce owned-evidence and perception snapshot construction'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
