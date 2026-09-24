@@ -1,13 +1,11 @@
 from pathlib import Path
-import re
 
 def edit(path,old,new,count=1):
  p=Path(path);s=p.read_text()
  if old not in s:raise RuntimeError(f'Missing source {path}: {old[:100]}')
  p.write_text(s.replace(old,new,count))
 
-# Response readiness is independent of which provider ran last, including the zero-inference path.
-edit('apps/server/src/store.ts','export interface JobRecord {','export interface JobRecord {\n  responseReady?: boolean;')
+edit('apps/server/src/store.ts','export interface JobRecord extends AiJobView {','export interface JobRecord extends AiJobView {\n  responseReady?: boolean;')
 edit('apps/server/src/world-service.ts',"job.status !== 'generating'", "job.status !== 'generating' && !(job.responseReady && ['queued', 'judging'].includes(job.status))")
 edit('apps/server/src/ai-director.ts','  private async playerAction(run: Running): Promise<void> {', '''  /** Durable readiness is separate from provider stage; a Jev-only/exact response can commit too.
    * docs/architecture.md#actor-agency-foundation
@@ -25,8 +23,7 @@ edit('apps/server/src/ai-director.ts',"    const receipt = this.service.world.re
 edit('apps/server/src/ai-director.ts',"result.ok ? 'completed' : result.code === 'actor-unavailable' ? 'cancelled' : 'failed'", "result.ok || awaitingConfirmation ? 'completed' : result.code === 'actor-unavailable' ? 'cancelled' : 'failed'")
 edit('apps/server/src/ai-director.ts',"        disposition: result.code,\n        components: receipt?.components,", "        disposition: awaitingConfirmation ? 'awaiting-confirmation' : result.code,\n        components: receipt?.components,")
 edit('apps/server/src/action-grounding.ts',"answer.confidence >= 0.8", "(answer.probabilities[answer.choice] ?? 0) >= 0.8")
-edit('apps/server/src/response-context.ts',"unsupported mechanics require separate invention admission.", "unsupported mechanics cannot execute; proposals may use explicit partial fulfillment or ask the initiator to accept a revised action.")
-# Correct the manual visibility exercise: the starter map's far corner was still within its 28-unit view radius.
+p=Path('apps/server/src/response-context.ts');s=p.read_text();s=s.replace('unsupported mechanics require separate invention admission.', 'unsupported mechanics cannot execute; proposals may use explicit partial fulfillment or ask the initiator to accept a revised action.');p.write_text(s)
 p=Path('.github/action-smoke.mjs');s=p.read_text();s=s.replace("import { z } from 'zod';", "import { createRequire } from 'node:module';\nconst { z } = createRequire(new URL('../apps/server/package.json', import.meta.url))('zod');")
 s=s.replace('seedAgency }','seedAgency, seesEntity }')
 s=s.replace('entities:{...world.entities,[target.id]:','entities:{...world.entities,[player.id]:{...world.entities[player.id],position:{x:4,y:0,z:1}},[target.id]:')
