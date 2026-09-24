@@ -1,4 +1,4 @@
-import { inventionAttribution } from './invention-attribution.js';
+import { inventionAttribution, creatorInventionAttribution } from './invention-attribution.js';
 import { inventionPermission } from './invention-policy.js';
 import {
   attributeDefinition,
@@ -215,18 +215,23 @@ export function admitDeclaration(
     events: [],
     outcome: outcome(false, code, message),
   });
-  if (original.paused)
+  const creator = provenance?.creatorAccountId !== undefined;
+  const actorId = provenance?.actorId;
+  if (original.paused && !creator)
     return reject('paused', 'The world is paused. Revalidate the candidate after resuming.');
   if (
     !provenance ||
     !isSafeRecordId(provenance.requestId) ||
-    !getOwn(original.entities, provenance.actorId)?.actor?.alive ||
-    getOwn(original.entities, provenance.actorId)?.actor?.incapacitated ||
+    (creator
+      ? actorId !== undefined || !isSafeRecordId(provenance.creatorAccountId)
+      : !actorId ||
+        !getOwn(original.entities, actorId)?.actor?.alive ||
+        getOwn(original.entities, actorId)?.actor?.incapacitated) ||
     !['live-model', 'test-fixture', 'supplied-proposal'].includes(provenance.source)
   )
     return reject(
       'invalid-provenance',
-      'Declaration needs an active actor and a durable authoring request.',
+      'Declaration needs one valid actor or creator identity and a durable authoring request.',
     );
   const permission = inventionPermission(original, provenance.authority);
   if (!permission.ok) return { world: original, events: [], outcome: permission };
@@ -238,13 +243,15 @@ export function admitDeclaration(
       !base ||
       base.version !== provenance.derivedFrom.version ||
       base.digest !== provenance.derivedFrom.digest ||
-      !original.knowledge[provenance.actorId]?.some((entry) => entry.recipeId === base.id)
+      (!creator && !original.knowledge[actorId!]?.some((entry) => entry.recipeId === base.id))
     )
       return reject('stale-base', 'The selected base recipe is no longer known at that version.');
   }
   let attribution: ReturnType<typeof inventionAttribution>;
   try {
-    attribution = inventionAttribution(original, provenance.actorId);
+    attribution = creator
+      ? creatorInventionAttribution(original, provenance.creatorAccountId!)
+      : inventionAttribution(original, actorId!);
   } catch (error) {
     return reject(
       'invalid-attribution',
@@ -309,26 +316,29 @@ export function admitDeclaration(
     };
   }
   world.declarationReceipts[provenance.requestId] = { digest, recipeId, attribution };
-  const knowledge =
-    world.knowledge[provenance.actorId] ?? (world.knowledge[provenance.actorId] = []);
-  if (!knowledge.some((record) => record.recipeId === recipeId))
-    knowledge.push({
-      recipeId,
-      learnedAt: world.simTime,
-      source: 'invented',
-      evidenceId: provenance.requestId,
-    });
-  const actor = world.entities[provenance.actorId]!;
-  emit(
-    world,
-    events,
-    'declaration-admitted',
-    `${actor.name} worked out a technique: ${draft.name}.`,
-    actor,
-    undefined,
-    { recipeId, source: provenance.source },
-    'private',
-  );
+  // Admin authorship changes available definitions, not actor knowledge, motivation or lived events.
+  // docs/invention-composition.md#creator-authorship-without-an-inhabitant
+  if (!creator) {
+    const knowledge = world.knowledge[actorId!] ?? (world.knowledge[actorId!] = []);
+    if (!knowledge.some((record) => record.recipeId === recipeId))
+      knowledge.push({
+        recipeId,
+        learnedAt: world.simTime,
+        source: 'invented',
+        evidenceId: provenance.requestId,
+      });
+    const actor = world.entities[actorId!]!;
+    emit(
+      world,
+      events,
+      'declaration-admitted',
+      `${actor.name} worked out a technique: ${draft.name}.`,
+      actor,
+      undefined,
+      { recipeId, source: provenance.source },
+      'private',
+    );
+  }
   return finish(world, events, {
     ok: true,
     code: matching ? 'reused' : 'admitted',

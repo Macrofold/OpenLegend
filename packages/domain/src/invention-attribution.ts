@@ -12,7 +12,8 @@ export interface WorldAuthorship {
 }
 export interface InventionAttribution {
   worldId: string;
-  inventorActorId: string;
+  inventorActorId?: string;
+  creatorAuthored?: true;
   npcCreated: boolean;
   inventorAccountId?: string;
   ownerAccountIds: string[];
@@ -46,6 +47,24 @@ export function inventionAttribution(world: WorldState, actorId: string): Invent
   };
 }
 
+/** Creator authorship installs a definition without impersonating or teaching an inhabitant.
+ * docs/invention-composition.md#creator-authorship-without-an-inhabitant
+ */
+export function creatorInventionAttribution(
+  world: WorldState,
+  accountId: string,
+): InventionAttribution {
+  if (!isSafeRecordId(accountId) || !world.authorship.creatorAccountIds.includes(accountId))
+    throw new Error('Creator authoring requires a current world-creator account.');
+  return {
+    worldId: world.id,
+    creatorAuthored: true,
+    npcCreated: false,
+    inventorAccountId: accountId,
+    ownerAccountIds: [...world.authorship.creatorAccountIds].sort(),
+  };
+}
+
 export function validateInventionAttribution(world: WorldState): void {
   const authorship = world.authorship;
   if (
@@ -65,7 +84,9 @@ export function validateInventionAttribution(world: WorldState): void {
     if (
       !a ||
       a.worldId !== world.id ||
-      !isSafeRecordId(a.inventorActorId) ||
+      (a.creatorAuthored === true
+        ? a.inventorActorId !== undefined || a.npcCreated
+        : a.creatorAuthored !== undefined || !isSafeRecordId(a.inventorActorId)) ||
       typeof a.npcCreated !== 'boolean' ||
       !validAccounts(a.ownerAccountIds) ||
       (a.npcCreated
@@ -90,7 +111,10 @@ export function validateInventionAttribution(world: WorldState): void {
       !receipt ||
       receipt.recipeId !== recipe.id ||
       receipt.digest !== recipe.digest ||
-      receipt.attribution.inventorActorId !== recipe.provenance.actorId
+      receipt.attribution.inventorActorId !== recipe.provenance.actorId ||
+      (receipt.attribution.creatorAuthored === true
+        ? receipt.attribution.inventorAccountId !== recipe.provenance.creatorAccountId
+        : recipe.provenance.creatorAccountId !== undefined)
     )
       throw new Error('Missing original invention attribution.');
   }

@@ -1532,12 +1532,28 @@ export class WorldService {
     provenance: DeclarationProvenance,
     checkCurrent?: () => void,
   ): Promise<ApiResult> {
-    return await this.transition((world) => {
+    const apply = (world: WorldState) => {
       // Recheck cancellation after waiting for the writer, before publishing the candidate.
       // docs/architecture.md#shared-invention-workflow
       checkCurrent?.();
+      if (
+        provenance.creatorAccountId !== undefined &&
+        (!this.config.godMode || provenance.creatorAccountId !== this.profile.id)
+      )
+        return {
+          world,
+          events: [],
+          outcome: {
+            ok: false,
+            code: 'forbidden',
+            message: 'Creator admission requires the authenticated owner.',
+          },
+        };
       return admitDeclaration(world, draft, provenance);
-    });
+    };
+    return provenance.creatorAccountId !== undefined
+      ? this.godTransition(apply)
+      : this.transition(apply);
   }
 
   observe(actorId: string) {

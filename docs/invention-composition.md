@@ -103,3 +103,7 @@ The release path in [scenarios](invention-scenarios.md) proves a real object loo
 ## Repertoire integration
 
 [Repertoire foundation](repertoire-foundation.md) defines the integration of live arrangements, activity-owned versus machine-owned work, information, obligations and temporal constraints. [Action capabilities](action-capabilities.md) owns runtime method composition; reusable definition composition remains here. A novel arrangement using installed laws is not necessarily a new definition.
+
+## Creator authorship without an inhabitant
+
+Creator admission is an explicit application-bound mode of the same native recipe installer. It records the current creator account instead of inventing an actor identity, permits preparation/installation while paused, and never grants character knowledge, crafts an object or emits a fictional personal discovery. Ordinary player/NPC admission retains its living actor, known-base and private-discovery rules. Exact base references, material validation, native recipe capacity, immutable attribution, declaration receipts and the current player-invention lock still apply. Creator read scope does not silently exempt the author from the existing lock. The application checks its authenticated owner before invoking this mode; candidate JSON cannot supply creator authority.

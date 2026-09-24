@@ -73,7 +73,9 @@ export interface DeclarationProvenance {
   derivedFrom?: { recipeId: string; version: number; digest: string };
   authority: import('./invention-policy.js').InventionAuthority;
   requestId: string;
-  actorId: string;
+  actorId?: string;
+  /** Exclusive with actorId; set by authorized application admission, never candidate JSON. */
+  creatorAccountId?: string;
   source: 'live-model' | 'test-fixture' | 'supplied-proposal';
   model?: string;
   evidence?: string[];
