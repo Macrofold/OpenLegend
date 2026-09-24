@@ -10,7 +10,7 @@ import { RELATIONSHIP_KINDS, type RelationshipRef } from '@open-legend/protocol'
 import { declarationSchema } from './ai-schemas.js';
 import { normalizeInventionProposal } from './invention-service.js';
 import { fingerprint, GraphReadError, GRAPH_LIMITS, refKey } from './relationship-index.js';
-import { projectLiveSubject } from './live-relationships.js';
+import { inspectableEntity, projectLiveSubject } from './live-relationships.js';
 import { WorldGraphReader } from './world-graph.js';
 import type { WorldService } from './world-service.js';
 
@@ -277,18 +277,7 @@ export class WorldToolService {
           const entity = input.kind === 'entity' ? world.entities[input.id] : undefined;
           return {
             ref: projection.root,
-            data:
-              item ??
-              (entity && {
-                id: entity.id,
-                name: entity.name,
-                kind: entity.kind,
-                position: entity.position,
-                spatial: entity.spatial,
-                resource: entity.resource,
-                heat: entity.heat,
-                remains: entity.remains,
-              }),
+            data: item ?? (entity && inspectableEntity(entity)),
             relationships: {
               ...projection.index.neighborhood({ root: projection.root, direction: 'both' }),
               subject: { kind: input.kind, id: input.id },
