@@ -4,6 +4,10 @@
 
 Corrected the policy: small migrations are allowed and preferred; maintaining legacy game versions is not required. Removed automatic fresh-world recovery and its per-feature save-format gate. The preceding startup recovery did reset the development gameplay world while retaining accounting; that behavior is superseded, not an acceptance requirement. Current behavior is owned by Save/load and Architecture.
 
+## Camera-facing sprites and mixed spatial review
+
+Superseded upright-only Y-billboards with fully camera-facing artwork and separate virtual depth, without rotating mechanical bodies or shadow proxies. Recorded color-pass-free shared shadow proxies, batched plank detail, reveal uniform reuse, indexed corridor projection, exact terrain-cell crossings and worker failure/shutdown boundaries. Completed EPR03's initial private visual-acquisition scope correction and preserved the viewer's designated introduction; retained broader EPR exposure work. Updated obsolete audience-cache regression work and added SR21–SR23. Mixed browser/application observations and adverse limits belong in their evidence record, not a scale-certification claim.
+
 ## Recast and world-presentation integration
 
 Reconciled the complete movement/visual discussion: continuous arbitrary-angle positions (placement snapping optional), shared round-body clearance, Recast selection over navcat after qualification, selective Rapier without a second dynamics world, bounded worker/time barriers and distinct raster/contact tolerances. Added the canonical world-presentation owner for lit fallback sprites, multi-receiver shadow projection, correct depth, smooth right-drag and configurable local authorized reveal. Superseded native-lattice implementation claims and algorithm-only TODOs while preserving historical evidence and still-valid requirements. SW17–SW19 and SR16–SR20 distinguish delivery, deferred controller/tile/model/crowd work and unrun automation.

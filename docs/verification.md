@@ -1,5 +1,7 @@
 # Verification
 
+Current camera-facing sprite, privacy and combined-load evidence: [Mixed spatial review](verification/mixed-spatial-review.md). Earlier results below describe their own revisions.
+
 ## Recast and world-presentation integration
 
 See the [current integration record](verification/recast-integration.md) for the pinned worker/capsule implementation, sampled clearance calibration, running application, performance probes and browser evidence/limitations. Historical native lattice, schema-9 and earlier automated results below are not passing qualification for the new backend. No new unit, integration or browser test suites were run for this request.

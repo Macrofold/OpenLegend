@@ -405,6 +405,8 @@ Camera preferences can persist independently; selected entities/surfaces and vie
 
 ## 12. Performance, diagnostics, and extension limits
 
+Current runtime refinements use indexed support candidates during physical corridor projection and supercover ground-cell traversal during continuous displacement. They do not add placement snapping or use navigation rays for sensing. The [navigation failure/shutdown contract](../../docs/performance.md#navigation-failure-and-shutdown) owns bounded worker launch, retirement and publication failure handling; [world presentation](../../docs/world-presentation.md#motion-and-depth) owns full camera-facing artwork with separate virtual depth and physical bodies. Initial visual acquisitions use observer-private evidence; richer EPR exposure transitions remain separately tracked.
+
 Instrument spatial candidate count, exact query count, ray/sweep time, route query expansions, bake queue/build time, cache hit/miss, dirty tiles, preparation pauses, route revalidations, projection bytes, and renderer CPU/GPU/resource use. Keep native simulation cost, geometry/navigation CPU work, asset-provider spend, and semantic-model spend separate. Navigation is not scheduled under the AI director's global thought interval.
 
 Use dirty dependencies and bounded local candidate sets. Do not rebuild navigation for camera movement or animation. Do not re-embed descriptions for every Y change. Region streaming, extensive BVHs, crowd packages, and a volumetric flight provider are later measured optimizations; they are not required to get an elevated sprite walking correctly.

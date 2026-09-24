@@ -141,7 +141,7 @@ Remembering and currently perceiving are independent. Forgetting a memory while 
 
 ### Initial implementation: reuse correct candidate indexes
 
-Preserve and qualify the implemented phase-local scalar spatial candidate pass for object encounters, unchanged visibility-array identity and observer-private encounter publication in the fixed-position post-movement phase. Each event still commits independently through the existing mutation owner; the resolver cannot be reused after movement, life/sleep or sense changes. Complete general external-event candidate reuse, exact event-time validity, broader acquisition delta integration and differential acceptance. Do not recreate the old full-scan-to-grid rewrite or treat that partial improvement as complete EPR02 delivery.
+Preserve and qualify the implemented phase-local scalar spatial candidate pass for object encounters and unchanged visibility-array identity. Initial visual acquisition has only the observer as its private recipient, so it needs no external audience resolver. Each record still commits through the existing mutation owner. Complete general external-event candidate reuse, exact event-time validity, exposure deltas and differential acceptance; external audiences cannot be reused across movement, life/sleep or sense changes. Do not recreate the old full-scan-to-grid rewrite or treat these delivered subsets as complete EPR02/EPR03 delivery.
 
 Optimize external-event audiences with listener candidates appropriate to the event's sense and maximum reach. An owner-private internal event must bypass spatial audience discovery entirely.
 
