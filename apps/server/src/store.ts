@@ -49,6 +49,7 @@ export interface WorldChanges {
   operations: WorldChange[];
 }
 export interface JobRecord extends AiJobView {
+  responseReady?: boolean;
   diagnosticTrigger?: string;
   diagnosticTriggerType?: string;
   retryOf?: string;
@@ -59,6 +60,12 @@ export interface JobRecord extends AiJobView {
   createdAt: number;
   request: {
     text: string;
+    action?: {
+      mode: 'enqueue' | 'replace';
+      targetId?: string;
+      expectedPlan: number;
+      timelineId: string;
+    };
     npcId?: string;
     invention?: {
       candidate?: unknown;

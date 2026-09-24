@@ -77,6 +77,7 @@ export function createWorld(
 ): WorldState {
   const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
   const world: WorldState = {
+    perceptionFeatures: {},
     schemaVersion: 10,
     itemHandling: structuredClone(BASE_ITEM_HANDLING),
     statusEffectPolicy: structuredClone(DEFAULT_STATUS_EFFECT_POLICY),

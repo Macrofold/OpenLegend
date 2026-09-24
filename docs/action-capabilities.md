@@ -1,6 +1,6 @@
 # Action capabilities: grounding intent into simulation activity
 
-**Status: target specification, not implemented behavior.** The [action repertoire](repertoires/actions.md) supplies examples; [delivery and acceptance](maintainers/action-capabilities.md) belong to the focused AC subtracker. This design is grounded in that repertoire rather than a list of survival-game verbs. Current implementation and evidence remain in [Architecture](architecture.md) and [Verification](verification.md).
+**Status: target specification with a narrow implemented native slice.** The implementation and open gaps are distinguished in the linked tracker; the full repertoire is not implemented. The [action repertoire](repertoires/actions.md) supplies examples; [delivery and acceptance](maintainers/action-capabilities.md) belong to the focused AC subtracker. This design is grounded in that repertoire rather than a list of survival-game verbs. Current implementation and evidence remain in [Architecture](architecture.md) and [Verification](verification.md).
 
 ## Ownership and scope
 
@@ -66,7 +66,7 @@ This uses [the existing generation levels](../archive/07-technical-architecture/
 
 ### Composition is not an answer oracle
 
-A compiler may bind an actor's selected method or fill mechanical details within explicit defaults. It cannot replace “follow the deer” with “hunt the deer,” “offer a berry” with “feed the berry,” or “cross without cutting trees” with a tree-cutting plan. A goal with unspecified means can receive an actor-authored proposed plan, but that is an actual planning decision under AG, with its own evidence and budget, not hidden semantic substitution.
+A compiler may bind an actor's selected method or fill mechanical details within explicit defaults. Without disclosed tolerable relaxation or explicit initiator acceptance, it cannot replace “follow the deer” with “hunt the deer,” “offer a berry” with “feed the berry,” or “cross without cutting trees” with a tree-cutting plan. A goal with unspecified means can receive an actor-authored proposed plan, but that is an actual planning decision under AG, with its own evidence and budget, not hidden semantic substitution.
 
 Using existing causal rules creatively can produce new results without installing new laws. A placed plank may support a crossing; striking a pot may emit sound; covering a flame may reduce combustion. The respective mechanics must actually model those effects. If they do not, the compiler must not infer physical consequences from ordinary language or appearance.
 
@@ -204,6 +204,8 @@ Provider encodings can use strict nullable fields rather than this union. Their 
 **Only explicit action operations execute.** Dialogue, quoted text, memories, descriptions and private thoughts remain data. “Ada said ‘open the door’,” “I might open it,” “pretend to attack,” and “do not open it” cannot be mined for imperative substrings and executed.
 
 ### Preserve the consequential slots
+
+[Partial fulfillment and initiator review](#partial-fulfillment-and-initiator-review) permits explicit accepted relaxation; the requirement here is traceability and no silent change, not rejection of every unsupported qualifier.
 
 Grounding records a compact intent contract alongside the candidate: initiator; action versus goal versus hypothetical; target; affected object/part; instrument; recipient/participants; destination/frame; quantity and units; method; hard constraints; optional preferences; temporal extent; termination; replacement/queue mode; and authorized result dependencies. Only applicable slots are needed.
 
@@ -674,3 +676,39 @@ The layer does not implement new fluid physics, smell, deformable bodies, struct
 It also cannot guarantee semantic correctness for all natural language, physically plausible arbitrary inventions, globally optimal plans, perfect knowledge, guaranteed persuasion, unlimited population scale or zero-cost indefinite work. Exact domain implementations and acceptance evidence remain necessary.
 
 The stable design commitment is narrower and stronger: **one scoped, typed route from an actor's chosen meaning to existing authoritative capabilities; composable ongoing activity; truthful consequences; and an explicit boundary when a new world definition or host ability is actually needed.**
+
+## Partial fulfillment and initiator review
+
+This section refines the earlier strict fidelity wording: **never silently change intent**, but allow an explicit useful subset when its omissions are tolerable. Missing criteria do not automatically require invention or rejection. The grounding result accounts for supported and omitted clauses, why they were omitted, the concrete revised behavior, and whether the initiating player/actor must decide. Approximation is not fulfillment of an exact guarantee.
+
+Use exact complete binding without inference first. Otherwise use Jev for finite full-match selection/classification before generative parameterization. A clear matching handle needs no generative translation. A bounded generative stage supplies required parameters and the omission report; Jev checks every generated candidate proposed for execution against decoded native behavior, including candidates claiming no omissions. It distinguishes full fulfillment, completely documented tolerable omissions, required initiator acceptance and rejection. A candidate already held for confirmation needs no extra approval call. Initial required winning-choice probability is 0.8; uncertainty chooses interpretation or confirmation, not automatic execution. A model's semantic judgment never overrides native validation, scope, costs, or authority.
+
+For a tolerable subset, retain the original request, supported/omitted clauses and rationale in Intelligence. Show the actual native-derived behavior and missing criteria to the player. An uncertain revision is stored in the existing actor-private pending-intent owner with exact commands, mode and relevant revisions; it starts no action and changes no current work. The player gets Accept/Decline controls. An autonomous actor receives accept/withdraw handles on its next eligible ordinary decision; no extra always-running reviewer or fabricated in-world conversation is created. Acceptance queues only that stored revision. Replacements preview the first native step before interrupting current work; enqueued work may await future prerequisites, and every step rechecks live conditions at actual start.
+
+Removing `until sunset` can extend the activity rather than narrow it: disclose that no sunset termination is enforced and show the real cancellation/interruption/lost-target rules. `Without being noticed` may be central; uncertain removal must return to the initiator. Skipping a prerequisite must not count it as completed. Dropped requirements are not promised for later and do not automatically dispatch invention or paid retries. Partial fulfillment and later physical success/failure remain different records.
+
+## Mechanical workflow reconciliation
+
+**Reserved integration owner:** reconcile this section with the separately developed invention composition/runtime contracts before adding a second general mechanics interpreter. Invention authoring (draft, validate, revise, activate) remains a black-box application workflow. An invented mechanical workflow (select targets, consume resources, work, wait, effect) belongs to simulation execution and must share the relevant native invocation/predicate/output/lifecycle semantics with actor activities.
+
+| This branch uses now                                                                  | Future shared contract to reconcile                                     | Explicit non-goal here                                       |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Domain `NavigationInvocation` move/follow codec and native binding                    | Versioned invocation-facing descriptor in INV/EWF's common registry     | No second mechanics registry or universal verb enum          |
+| Existing concrete `Command` adapters and single AG action lane                        | Family admission, work/resource claims and executor interfaces          | No generated effects, raw state setters or host code         |
+| Existing bounded sequential plan and item receipts                                    | Shared typed result ports, predicates, wait/branch/repetition semantics | No new general workflow DSL in this slice                    |
+| `Action.follow` path/hold cursor through the kernel movement owner                    | Per-invocation activity state, interruption and definition pins         | No parallel movement/controller writer                       |
+| Existing actor-private attempts with an exact stored alternative                      | Common invocation identity, accepted scope and revision lifetime        | No alternate goal store or independent approval service      |
+| Per-operation manifest pins, execution-intent revision and existing world/load epochs | Exact installed definition dependencies and invalidation                | No silent upgrade of running work                            |
+| Jev-first classification and fulfillment reports                                      | Scoped discovery, native summaries and interpreter evidence             | No private invention registry leakage or automatic authoring |
+
+Built-in and invented families should eventually provide the same discoverable parameter/target schema, eligibility and knowledge policy, authoritative validation, resource/work contract, output ports, progress/completion/cancellation semantics and actor-safe projections. The action layer should not care whether an eligible installed implementation originated in code or an admitted definition. Method installation, learning, possession, action permission and execution remain distinct.
+
+Continue point movement, narrow follow and fulfillment review independently of invention's authoring pipeline. Before introducing general branching/repetition, compound mechanical effects or richer persistent processes, reconcile their execution representation with the invention branch. A temporary actor plan and a reusable definition need not be stored identically, but must not acquire contradictory semantics for costs, waits, results and cancellation. This section does not mark that integration complete.
+
+### Reconciliation notes from the implemented review
+
+The current adapter carries response-local operation identity, original request and manifest revision into native admission. Saved pending identity additionally includes explicit target and queue/replace mode; the exact alternative is never silently overwritten. These fields should map to the common invocation/authority contracts rather than become a competing definition registry. The current development snapshot is schema 11 / `development-2026-09-24-actions2`; no legacy reader was added.
+
+The implemented control vocabulary is still the existing flat sequential AG frontier plus a family-local indefinite follow activity. General wait/branch/repeat, finite follow termination, rich target roles, installed-definition dependency pins and arbitrary output ports remain to reconcile. An indefinite follow cannot be advertised as the completed prerequisite of a later generated step. Current confirmation stores only plan-eligible mechanical commands; confirmation of immediate social/control operations needs their own shared admission contract before claiming support.
+
+Automatic reason-specific retries are not implemented: explicit player resubmission may retry unresolved grounding, while autonomous unchanged retries remain bounded. The current UI negotiates an executable revision, not arbitrary missing-parameter forms. Broader live model evaluation and browser interaction/accessibility qualification remain open and are not replaced by injected semantic exercise results.

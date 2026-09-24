@@ -1,0 +1,223 @@
+{
+  "scope": "Ad hoc native exposure execution and matched-host profiles; no unit/browser suites or live models.",
+  "run": "35956593016",
+  "node": "v22.23.2",
+  "paidModelCalls": 0,
+  "cases": [
+    {
+      "name": "stationary-visibility-reuse",
+      "stats": {
+        "reused": 2,
+        "queried": 0,
+        "candidates": 0
+      }
+    },
+    {
+      "name": "stationary-feature-change",
+      "privateEvents": 2
+    },
+    {
+      "name": "restore-rebaseline",
+      "schema": 13,
+      "newAcquisitions": 0
+    },
+    {
+      "name": "source-motion-invalidates-stationary-observer",
+      "removed": true
+    }
+  ],
+  "stress": {
+    "mixed": {
+      "before": {
+        "steps": 180,
+        "totalMs": 1270.141596,
+        "p50Ms": 4.370097999999871,
+        "p95Ms": 7.213764999999967,
+        "maxMs": 417.4732160000001,
+        "counts": {
+          "entities": 344,
+          "events": 3254,
+          "awareness": 3474
+        },
+        "headroom": 0.787313794894408,
+        "hottest": [
+          [
+            "post node:inspector:118",
+            214.685
+          ],
+          [
+            "finalizeProperty dist/immer.mjs:314",
+            149.34499999999994
+          ],
+          [
+            "updateEncounters src/kernel.ts:1",
+            140.02699999999984
+          ],
+          [
+            "(garbage collector) :0",
+            117.52199999999995
+          ],
+          [
+            "(anonymous) src/kernel.ts:1",
+            65.88700000000001
+          ],
+          [
+            "get dist/immer.mjs:382",
+            60.13099999999999
+          ],
+          [
+            "recordEvent src/events.ts:1",
+            57.84700000000001
+          ],
+          [
+            "(anonymous) src/spatial.ts:1",
+            40.52300000000001
+          ]
+        ]
+      },
+      "after": {
+        "steps": 180,
+        "totalMs": 1281.9521630000002,
+        "p50Ms": 4.770156000000043,
+        "p95Ms": 6.48005999999998,
+        "maxMs": 363.233289,
+        "counts": {
+          "entities": 344,
+          "events": 3254,
+          "awareness": 3474
+        },
+        "headroom": 0.7800603086934375,
+        "hottest": [
+          [
+            "finalizeProperty dist/immer.mjs:314",
+            155.91899999999984
+          ],
+          [
+            "(anonymous) src/perception-frame.ts:1",
+            91.38299999999998
+          ],
+          [
+            "get dist/immer.mjs:382",
+            90.09899999999998
+          ],
+          [
+            "updateEncounters src/kernel.ts:1",
+            84.64199999999998
+          ],
+          [
+            "visibleFeature src/perception-frame.ts:1",
+            65.68500000000003
+          ],
+          [
+            "createPerceptionFrame src/perception-frame.ts:1",
+            60.07900000000002
+          ],
+          [
+            "isDraftable dist/immer.mjs:54",
+            46.454
+          ],
+          [
+            "recordEvent src/events.ts:1",
+            45.849
+          ]
+        ]
+      }
+    },
+    "gems": {
+      "before": {
+        "steps": 180,
+        "totalMs": 1453.581625,
+        "p50Ms": 6.93124499999999,
+        "p95Ms": 10.86295999999993,
+        "maxMs": 129.04930000000002,
+        "counts": {
+          "entities": 514,
+          "events": 1024,
+          "awareness": 1024
+        },
+        "headroom": 0.6879558621277976,
+        "hottest": [
+          [
+            "intersectsSegment src/geometry.ts:1",
+            172.009
+          ],
+          [
+            "updateEncounters src/kernel.ts:1",
+            118.64899999999992
+          ],
+          [
+            "(anonymous) src/geometry.ts:1",
+            114.58199999999995
+          ],
+          [
+            "(anonymous) src/kernel.ts:1",
+            101.26599999999993
+          ],
+          [
+            "finalizeProperty dist/immer.mjs:314",
+            93.04199999999999
+          ],
+          [
+            "(anonymous) src/perception.ts:1",
+            89.40599999999996
+          ],
+          [
+            "get dist/immer.mjs:382",
+            73.15000000000002
+          ],
+          [
+            "(garbage collector) :0",
+            62.159
+          ]
+        ]
+      },
+      "after": {
+        "steps": 180,
+        "totalMs": 1140.464656,
+        "p50Ms": 5.059307999999987,
+        "p95Ms": 7.715633999999909,
+        "maxMs": 137.280638,
+        "counts": {
+          "entities": 514,
+          "events": 1024,
+          "awareness": 1024
+        },
+        "headroom": 0.8768355904227162,
+        "hottest": [
+          [
+            "(anonymous) src/perception-frame.ts:1",
+            109.50699999999998
+          ],
+          [
+            "createPerceptionFrame src/perception-frame.ts:1",
+            100.23399999999995
+          ],
+          [
+            "finalizeProperty dist/immer.mjs:314",
+            99.49699999999997
+          ],
+          [
+            "get dist/immer.mjs:382",
+            95.406
+          ],
+          [
+            "visibleFeature src/perception-frame.ts:1",
+            73.93200000000002
+          ],
+          [
+            "(garbage collector) :0",
+            52.720000000000006
+          ],
+          [
+            "isPlainObject dist/immer.mjs:60",
+            44.41500000000002
+          ],
+          [
+            "updateEncounters src/kernel.ts:1",
+            42.675000000000004
+          ]
+        ]
+      }
+    }
+  }
+}

@@ -627,6 +627,22 @@ export async function createGameServer(
           });
 
         switch (url.pathname) {
+          case '/api/action-attempt': {
+            const value = z
+              .object({
+                requestId: requestIdSchema,
+                text: z.string().trim().min(1).max(500),
+                targetId: requestIdSchema.optional(),
+                mode: z.enum(['enqueue', 'replace']),
+              })
+              .strict()
+              .parse(body);
+            return send(
+              response,
+              200,
+              await director.submitAction(value.requestId, value.text, value.mode, value.targetId),
+            );
+          }
           case '/api/saves/list':
             return send(response, 200, {
               ok: true,

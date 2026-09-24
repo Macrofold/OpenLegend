@@ -9,6 +9,7 @@ import {
  * docs/save-and-load.md#active-development-policy
  */
 export function upgradeWorldState(world: WorldState): void {
+  if (!Object.hasOwn(world, 'perceptionFeatures')) world.perceptionFeatures = {};
   // Actor cognition is change-driven; remove the retired pacing field from saved policies.
   if (world.cognitionPolicy)
     delete (world.cognitionPolicy as typeof world.cognitionPolicy & { cooldownSeconds?: number })

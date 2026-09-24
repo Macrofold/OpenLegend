@@ -90,6 +90,7 @@ export type NativePreparation = 'fiber' | 'cord';
 export type ActionType =
   | 'pickup'
   | 'strike'
+  | 'follow'
   | 'move'
   | 'gather'
   | 'prepare'
@@ -100,6 +101,7 @@ export type ActionType =
   | 'status-effect'
   | 'replenish';
 export interface Action {
+  follow?: { distance: number; nextRepathAt: number; lastObservedPosition?: Position };
   id: string;
   type: ActionType;
   stage: 'approaching' | 'working';
@@ -267,6 +269,8 @@ export interface WorldState {
   perceptionEpisodes?: Record<string, Record<string, string>>;
   itemHandling: import('./item-handling.js').ItemHandlingPolicy;
   statusEffectPolicy: import('./status-effects.js').StatusEffectPolicy;
+  /** Shared outward-feature baseline for the completed perception phase, not private knowledge. */
+  perceptionFeatures: Record<string, string>;
   authorship: import('./invention-attribution.js').WorldAuthorship;
   inventionPolicy: import('./invention-policy.js').InventionPolicy;
   moduleManifest: import('./world-modules.js').WorldModuleManifest;
@@ -281,7 +285,7 @@ export interface WorldState {
   innerWorlds?: Record<string, import('./experience.js').InnerWorld>;
   cognitionPolicy?: import('./cognition-policy.js').CognitionPolicy;
   identity?: { controlledEntityId: string; defaultResidentEntityId: string | null };
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
   id: string;
   seed: number;
   rngState: number;
@@ -329,6 +333,7 @@ export type Command = Envelope &
     | { type: 'pickup'; targetId: string; itemId?: string }
     | { type: 'drop'; itemId: string; quantity: number }
     | { type: 'move'; destination: SurfacePoint }
+    | { type: 'follow'; targetId: string; distance?: number }
     | { type: 'gather' | 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }
     | { type: 'craft'; recipeId: string }
@@ -346,7 +351,7 @@ export type Command = Envelope &
     | { type: 'cancel' | 'recover' }
     | { type: 'say'; text: string; targetId?: string; intendedRecipientId?: string }
     | { type: 'goal'; text: string }
-    | { type: 'withdraw-attempt'; attemptId: string }
+    | { type: 'withdraw-attempt' | 'confirm-attempt'; attemptId: string }
     | { type: 'teach'; targetId: string; recipeId: string }
   );
 export interface Transition {

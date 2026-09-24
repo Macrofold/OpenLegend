@@ -80,3 +80,19 @@ Autonomous cognition has no actor cooldown: changed opportunities are eligible o
 Memory consolidation no longer imposes a 256-summary capacity or response-group cap. Chronological requests are sized independently of retained memory; all partitions must validate before atomic publication. Existing age/protected retention continues; broader live consolidation-quality acceptance remains pending.
 
 Editable actor knowledge now uses revisioned private documents, transactional database rows, optional cognition edits and owner inspection/editing. Base-world naming uses observer-specific given names and conservative encounter/authored recognition. See [current architecture](../../docs/architecture.md#editable-knowledge-and-observer-identities), [CR13](../../docs/maintainers/cognition-redesign.md#cr13--editable-knowledge-documents), and [BW08–BW09](../../docs/maintainers/base-world.md); live provider and richer-recognition qualification remain open.
+
+
+## Native action capability slice
+
+Parameterized move/follow, Jev-first text grounding and explicit approval of uncertain revised actions now use the existing response/plan/action owners. Player input is in Character → Take an action; actor proposals share the resolver. See [current architecture](../../docs/architecture.md#jev-first-action-grounding), [evidence](../../docs/verification.md#action-capability-native-slice) and [mechanical-workflow reconciliation](../../docs/action-capabilities.md#mechanical-workflow-reconciliation). Broader capability registration, authoring integration, conditional workflow nodes and alternate topology support remain future work.
+
+## Action capability review
+
+Implemented scope: operation-scoped native bindings and manifest admission pins; pending target/mode identity; queued-intent revision fencing; native-behavior fulfillment review; explicit revision approval; shared state-stream UI; production provider-schema extraction. The existing narrow point-move/follow executor is retained, not replaced by a general workflow engine. Current development saves require schema 11. [Architecture](../../docs/architecture.md#reviewed-action-binding-and-approval-boundaries) owns details, [AC tracker](../../docs/maintainers/action-capabilities.md#delivered-scope-and-remaining-work) owns gaps, and [Verification](../../docs/verification.md#action-capability-review) owns measured scope. General INV/workflow integration, live semantic quality, browser accessibility and population-scale qualification remain open.
+
+
+## Native perception and reaction-performance slice
+
+Implemented: observer-private visual acquisitions, bounded experience admission, unchanged-exposure reuse with source/geometry/sense invalidation, current coarse feature deltas, shared immutable inert-source descriptors, new-evidence intake, generation-safe bounded scheduler tickets and cooperative checkpoints within native steps. Existing domain/experience/ActorWork/world-writer owners remain authoritative. Current development format is 13; same-version exposure/feature baselines survive restart.
+
+Evidence and residual limits are in [Verification](../../docs/verification.md#perception-performance-implementation). General sensory schemas, fully mutation-fed regional intake, arbitrary persistent-stimulus reminders, dedicated simulation workers, all-speed long-session/end-to-end capacity, PostgreSQL and browser acceptance remain incomplete; [EPR](../../docs/maintainers/events-perception-and-reactions.md) and [PF](../../docs/maintainers/performance.md) retain ownership.

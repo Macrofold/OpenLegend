@@ -1,5 +1,6 @@
 import { resolveResponseEntities } from './entity-references.js';
 import { dreamStatus, dreamPolicy } from '@open-legend/domain';
+import { experiencesSince } from '@open-legend/domain';
 import { nativeNeedBelow } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { ActorWork } from './actor-work.js';
@@ -132,11 +133,12 @@ export class CognitionMaintenance {
             current.cognitionPolicy,
             this.service.memoryBacklog,
           ];
-        }),
+        }, this.service.memoryBacklog),
       );
       const actors = this.work
         .ready(this.now(), current.simTime)
         .map((id) => current.entities[id]!);
+      const workVersions = new Map(actors.map((e) => [e.id, this.work.version(e.id)]));
       const times = new Map(
         await Promise.all(actors.map(async (e) => [e.id, await this.last(e.id)] as const)),
       );
@@ -176,13 +178,13 @@ export class CognitionMaintenance {
             (entry) => entry.at + EXPERIENCE_LIMITS.rawHours * 3600,
           ),
         ].filter((at) => at > world.simTime);
-        this.work.inspected(entity.id, Math.min(...future));
+        this.work.inspected(entity.id, Math.min(...future), workVersions.get(entity.id));
         const dreamReady =
           safe &&
           !!dreamStatus(world, world.entities[entity.id]) &&
           dreamStatus(world, world.entities[entity.id])!.elapsedSeconds >=
             dreamPolicy(world).afterSeconds;
-        const hasMemories = experiences(world, entity.id, true).length > 0;
+        const hasMemories = !experiencesSince(world, entity.id, -1).next().done;
         const day = Math.floor(world.simTime / 86400);
         const reflectedToday =
           mind.lastReflectionAt > 0 && Math.floor(mind.lastReflectionAt / 86400) === day;

@@ -1,0 +1,378 @@
+{
+  "scope": "Ad hoc native/service runtime exercises with injected semantic outputs, not a test suite or live model-quality evidence.",
+  "node": "v22.23.2",
+  "run": "35952294828",
+  "paidModelCalls": 0,
+  "cases": [
+    {
+      "name": "unreported-omission-requires-approval",
+      "reviewSawNative": true,
+      "fulfillment": {
+        "requested": "Follow Ada without being noticed",
+        "executableDescription": "Follow Ada at 3 world units until cancelled, interrupted or lost from sight. No stealth or sunset stop.",
+        "verdict": "confirm",
+        "supported": [
+          "Follow Ada at 3 world units until cancelled, interrupted or lost from sight. No stealth or sunset stop."
+        ],
+        "omitted": [
+          {
+            "requirement": "Follow Ada without being noticed",
+            "reason": "Full fulfillment is unverified; the displayed native action is the proposed substitute."
+          }
+        ],
+        "reason": "Independent review did not establish full fulfillment or tolerable documented omissions. Accept only the displayed native behavior."
+      },
+      "physicalAction": null,
+      "attemptStatus": "awaiting-confirmation"
+    },
+    {
+      "name": "documented-partial",
+      "verdict": "partial",
+      "omitted": [
+        {
+          "requirement": "until sunset",
+          "reason": "Sunset deadline is unavailable"
+        }
+      ]
+    },
+    {
+      "name": "later-failure-preserves-earlier",
+      "operations": [
+        "move"
+      ]
+    },
+    {
+      "name": "repeated-operations-not-dropped",
+      "operations": [
+        "one",
+        "two"
+      ],
+      "semanticCalls": 0
+    },
+    {
+      "name": "explicit-retry-not-permanently-cached",
+      "classificationCalls": 1,
+      "bound": 0
+    },
+    {
+      "name": "approval-preflight-target-lost",
+      "outcome": {
+        "ok": false,
+        "code": "not-visible",
+        "message": "The action target is not currently perceived."
+      },
+      "pending": 1,
+      "plan": null
+    },
+    {
+      "name": "same-version-serialization",
+      "schema": 11,
+      "target": "entity-0002"
+    },
+    {
+      "name": "http-exact-action",
+      "submitted": {
+        "ok": true,
+        "code": "queued",
+        "message": "Resolving your action.",
+        "jobId": "d1e1115e-417d-49ed-a0f5-aabe50f70b88"
+      },
+      "jobStatus": "completed",
+      "result": {
+        "outcome": {
+          "ok": true,
+          "code": "queued",
+          "message": "Native work queued; it has not completed.",
+          "planId": "d1e1115e-417d-49ed-a0f5-aabe50f70b88:action"
+        },
+        "fulfillment": {
+          "requested": "go to x=12,z=14",
+          "executableDescription": "go to x=12,z=14",
+          "verdict": "exact",
+          "supported": [
+            "go to x=12,z=14"
+          ],
+          "omitted": [],
+          "reason": "Complete native form bound without inference."
+        }
+      }
+    },
+    {
+      "name": "approval-in-state-stream",
+      "attempts": [
+        {
+          "id": "persistent-review",
+          "description": "Follow Ada without being noticed",
+          "status": "awaiting-confirmation",
+          "mode": "enqueue",
+          "fulfillment": {
+            "requested": "Follow Ada without being noticed",
+            "executableDescription": "Follow Ada at 3 world units; no stealth.",
+            "verdict": "confirm",
+            "supported": [
+              "Follow Ada"
+            ],
+            "omitted": [
+              {
+                "requirement": "without being noticed",
+                "reason": "No stealth mechanic"
+              }
+            ],
+            "reason": "Need acceptance."
+          }
+        }
+      ],
+      "deltaContainsAttempts": true,
+      "rawCommandsDisclosed": false
+    },
+    {
+      "name": "sqlite-restart-approval",
+      "attempts": [
+        {
+          "id": "persistent-review",
+          "status": "awaiting-confirmation",
+          "mode": "enqueue"
+        }
+      ]
+    }
+  ],
+  "stress": {
+    "mixed": {
+      "node": "v22.23.2",
+      "initial": {
+        "simTime": 0,
+        "entities": 344,
+        "events": 30
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 7.5487340000000245,
+      "warmupSteps": 0,
+      "scenario": {
+        "seed": 73,
+        "people": 10,
+        "animals": 20,
+        "layout": "scattered",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 60,
+        "objects": [
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": [
+                "rigid",
+                "point"
+              ]
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-1",
+              "version": 1,
+              "name": "Food parcel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": [
+                "food"
+              ],
+              "nutrition": 20
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 5,
+            "workSeconds": 10,
+            "definition": {
+              "id": "profile-material-2",
+              "version": 1,
+              "name": "Dry fuel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": [
+                "fuel"
+              ]
+            }
+          }
+        ]
+      },
+      "setupMs": 106.67020699999998,
+      "cpuMs": 2755.208,
+      "heapUsedBytes": 48312000,
+      "nativeHeadroomAtRequestedSpeed": 0.4871741441407821,
+      "finalCounts": {
+        "entities": 344,
+        "events": 3254,
+        "awareness": 31756
+      },
+      "steps": 180,
+      "totalMs": 2052.654091,
+      "p50Ms": 4.326171999999815,
+      "p95Ms": 6.161546000000044,
+      "maxStepMs": 1224.887179,
+      "nativeSecondsPerWallSecond": 87.69134594534077,
+      "finalWorldDigest": "4236a9d489e7876379876772e85c600fc3ced5e6772d2f6c5aba83b7d5f4c21f",
+      "hottestSelfMs": [
+        [
+          "finalizeProperty dist/immer.mjs:314",
+          354.0079999999996
+        ],
+        [
+          "updateEncounters src/kernel.ts:1",
+          136.472
+        ],
+        [
+          "get dist/immer.mjs:382",
+          107.94299999999996
+        ],
+        [
+          "isPlainObject dist/immer.mjs:60",
+          95.86500000000001
+        ],
+        [
+          "recordEvent src/events.ts:1",
+          94.48299999999998
+        ],
+        [
+          "isDraftable dist/immer.mjs:54",
+          89.87499999999999
+        ],
+        [
+          "(anonymous) src/kernel.ts:1",
+          75.702
+        ],
+        [
+          "(garbage collector) :0",
+          66.743
+        ],
+        [
+          "isDraft dist/immer.mjs:51",
+          61.309000000000026
+        ],
+        [
+          "freeze dist/immer.mjs:161",
+          57.92900000000001
+        ],
+        [
+          "appendEntry src/experience.ts:1",
+          51.703
+        ],
+        [
+          "mutateExperience src/experience.ts:1",
+          49.334
+        ]
+      ]
+    },
+    "gems": {
+      "node": "v22.23.2",
+      "initial": {
+        "simTime": 0,
+        "entities": 514,
+        "events": 0
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 5.053688999999991,
+      "warmupSteps": 0,
+      "scenario": {
+        "seed": 73,
+        "people": 0,
+        "animals": 0,
+        "layout": "crowded",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 30,
+        "objects": [
+          {
+            "count": 500,
+            "quantity": 1,
+            "workSeconds": 2,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": [
+                "rigid",
+                "point"
+              ]
+            }
+          }
+        ]
+      },
+      "setupMs": 32.929419000000024,
+      "cpuMs": 1830.541,
+      "heapUsedBytes": 38876696,
+      "nativeHeadroomAtRequestedSpeed": 0.7290930382188887,
+      "finalCounts": {
+        "entities": 514,
+        "events": 1024,
+        "awareness": 2048
+      },
+      "steps": 180,
+      "totalMs": 1371.567067,
+      "p50Ms": 6.165023000000019,
+      "p95Ms": 8.683040999999946,
+      "maxStepMs": 176.71326700000003,
+      "nativeSecondsPerWallSecond": 131.23674687939996,
+      "finalWorldDigest": "e85e99b75a9acf81b9f505a2dfd2b89770d549f2428f0d208243077c7d37b0c2",
+      "hottestSelfMs": [
+        [
+          "intersectsSegment src/geometry.ts:1",
+          162.74699999999987
+        ],
+        [
+          "finalizeProperty dist/immer.mjs:314",
+          114.07199999999992
+        ],
+        [
+          "updateEncounters src/kernel.ts:1",
+          105.60599999999994
+        ],
+        [
+          "(anonymous) src/geometry.ts:1",
+          101.02599999999994
+        ],
+        [
+          "(anonymous) src/kernel.ts:1",
+          95.708
+        ],
+        [
+          "get dist/immer.mjs:382",
+          68.953
+        ],
+        [
+          "(garbage collector) :0",
+          67.75500000000001
+        ],
+        [
+          "__name src/bounds-index.ts:1",
+          47.434000000000005
+        ],
+        [
+          "shallowCopy dist/immer.mjs:121",
+          43.159
+        ],
+        [
+          "set filename :0",
+          42.22199999999999
+        ],
+        [
+          "(anonymous) src/perception.ts:1",
+          38.99400000000001
+        ],
+        [
+          "post node:inspector:118",
+          30.099
+        ]
+      ]
+    }
+  }
+}
