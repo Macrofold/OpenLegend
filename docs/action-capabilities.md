@@ -6,15 +6,15 @@
 
 This document owns the detailed **intent-grounding contract, capability invocation binding, and reusable activity-composition semantics** beneath [agency open-action resolution](../archive/07-technical-architecture/agent-agency-runtime.md#5-open-action-resolution). It refines, rather than replaces, the [action-family integration contract](../archive/07-technical-architecture/world-module-runtime.md#7-action-families-and-agency-integration).
 
-| Existing owner | Retained responsibility | This specification adds |
-| --- | --- | --- |
-| AG | Decision operations, goals, plan ownership, native continuation, actor choices | Parameterized calls, structured grounding and bounded activity steps in that same plan |
-| INV / common module runtime | Capability-family registration, definitions, admission, activation, world policy | The invocation view of those same descriptors; no second registry or invention lifecycle |
-| SW | Geometry, topology, movement, route admission, spatial knowledge | Destination/relative-intent binding and maintenance requests to existing movement services |
-| EPR / perception | Evidence production, scope, stimuli, reaction intake | Dependencies and observations used by guards, monitors and action-result consumers |
-| NC | Communication, expressions, conversations and narration | Typed adapters; speech and request attempts do not become target-state setters |
-| CR | Memory, attention, reflection and recall | Grounding references and retrieval remain within those boundaries |
-| SL / application storage | Same-version recovery, load fencing, real external accounting | Accepted activity state and subscriptions join existing persistence |
+| Existing owner              | Retained responsibility                                                          | This specification adds                                                                    |
+| --------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| AG                          | Decision operations, goals, plan ownership, native continuation, actor choices   | Parameterized calls, structured grounding and bounded activity steps in that same plan     |
+| INV / common module runtime | Capability-family registration, definitions, admission, activation, world policy | The invocation view of those same descriptors; no second registry or invention lifecycle   |
+| SW                          | Geometry, topology, movement, route admission, spatial knowledge                 | Destination/relative-intent binding and maintenance requests to existing movement services |
+| EPR / perception            | Evidence production, scope, stimuli, reaction intake                             | Dependencies and observations used by guards, monitors and action-result consumers         |
+| NC                          | Communication, expressions, conversations and narration                          | Typed adapters; speech and request attempts do not become target-state setters             |
+| CR                          | Memory, attention, reflection and recall                                         | Grounding references and retrieval remain within those boundaries                          |
+| SL / application storage    | Same-version recovery, load fencing, real external accounting                    | Accepted activity state and subscriptions join existing persistence                        |
 
 No new ECS, distributed broker, general programming language, independent planner database, parallel action catalogue, perpetual LLM loop, or host scripting permission is required. Existing task IDs and acceptance states remain valid. Authoring, owner administration and in-world action use remain separate authority surfaces.
 
@@ -48,19 +48,19 @@ Likewise, persistence does not make something invention. Saving a route, plan or
 
 Resolve using the least powerful faithful route, not the closest convenient action.
 
-| Request situation | Resolution | Meaning |
-| --- | --- | --- |
-| A supplied grounded handle already matches | Bind that call | Zero semantic inference |
-| A known capability needs new legal arguments | Parameterized invocation | New parameters are not a new mechanic |
-| Several known calls express the chosen method | Bounded composition | Separate steps, costs, outcomes and dependencies |
-| A known method must persist or react | Native activity template | Observe/act/hold/repeat without per-tick generation |
-| Means are genuinely undecided | Actor planning or a retained goal | Do not disguise planning as interpretation |
-| A target, quantity or consequential method is ambiguous | Clarification or unresolved intent | No arbitrary target or silent weakening |
-| Necessary evidence is unavailable | Scoped inspection, recall, inquiry or deferral | Unknown is not false or impossible |
-| A supported method is currently blocked | Concrete blocked result | No definition invention to evade the obstacle |
-| A missing reusable definition is expressible through installed authoring families | INV request | Preserve actor method and existing locks |
-| A required implementation/interface is absent | Unsupported capability | Later G2 only if its qualified interface already suffices; otherwise G3 engineering |
-| The relevant policy forbids the operation | Named policy refusal | Rephrasing cannot change authority |
+| Request situation                                                                 | Resolution                                     | Meaning                                                                             |
+| --------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------- |
+| A supplied grounded handle already matches                                        | Bind that call                                 | Zero semantic inference                                                             |
+| A known capability needs new legal arguments                                      | Parameterized invocation                       | New parameters are not a new mechanic                                               |
+| Several known calls express the chosen method                                     | Bounded composition                            | Separate steps, costs, outcomes and dependencies                                    |
+| A known method must persist or react                                              | Native activity template                       | Observe/act/hold/repeat without per-tick generation                                 |
+| Means are genuinely undecided                                                     | Actor planning or a retained goal              | Do not disguise planning as interpretation                                          |
+| A target, quantity or consequential method is ambiguous                           | Clarification or unresolved intent             | No arbitrary target or silent weakening                                             |
+| Necessary evidence is unavailable                                                 | Scoped inspection, recall, inquiry or deferral | Unknown is not false or impossible                                                  |
+| A supported method is currently blocked                                           | Concrete blocked result                        | No definition invention to evade the obstacle                                       |
+| A missing reusable definition is expressible through installed authoring families | INV request                                    | Preserve actor method and existing locks                                            |
+| A required implementation/interface is absent                                     | Unsupported capability                         | Later G2 only if its qualified interface already suffices; otherwise G3 engineering |
+| The relevant policy forbids the operation                                         | Named policy refusal                           | Rephrasing cannot change authority                                                  |
 
 This uses [the existing generation levels](../archive/07-technical-architecture/declarations-and-evolution.md#generation-levels-and-executable-references). One-off plans are generally G0. Declarative definitions/compositions can be G1. A new bounded algorithm is G2 only through a qualified isolated runtime and permitted interfaces. A new host primitive or privilege is G3. The subject matter—fire, tracking, magic, society—does not determine the level.
 
@@ -78,17 +78,17 @@ Using existing causal rules creatively can produce new results without installin
 
 These are engine/application responsibilities, never inventions:
 
-| Substrate service | Contract |
-| --- | --- |
-| Intent admission and reference binding | Bind the real principal/controller, actor and request; resolve only permitted references |
-| Descriptor lookup and typed argument validation | One INV/module registry; family-specific schemas and exact definition pins |
-| Native dispatch and outcome identity | Start/advance/complete through owning mutations; truthful idempotent receipts |
-| Bounded sequence, choice, wait and iteration | Native control flow over supported calls and predicates; no arbitrary evaluation |
-| Activity lifecycle and resource arbitration | One current physical lane initially; interruption, cancellation, resumption and ownership |
-| Scoped observation and dependency delivery | Consume permitted evidence, not raw hidden world state |
-| Simulation clocks and deterministic budgets | Native time for work; external time/money for providers; bounded computation |
-| Persistence and load fencing | Preserve accepted work and reject abandoned-timeline callbacks |
-| Safe projections and diagnostics | Distinguish intent, admission, progress, outcome, evidence and presentation |
+| Substrate service                               | Contract                                                                                  |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Intent admission and reference binding          | Bind the real principal/controller, actor and request; resolve only permitted references  |
+| Descriptor lookup and typed argument validation | One INV/module registry; family-specific schemas and exact definition pins                |
+| Native dispatch and outcome identity            | Start/advance/complete through owning mutations; truthful idempotent receipts             |
+| Bounded sequence, choice, wait and iteration    | Native control flow over supported calls and predicates; no arbitrary evaluation          |
+| Activity lifecycle and resource arbitration     | One current physical lane initially; interruption, cancellation, resumption and ownership |
+| Scoped observation and dependency delivery      | Consume permitted evidence, not raw hidden world state                                    |
+| Simulation clocks and deterministic budgets     | Native time for work; external time/money for providers; bounded computation              |
+| Persistence and load fencing                    | Preserve accepted work and reject abandoned-timeline callbacks                            |
+| Safe projections and diagnostics                | Distinguish intent, admission, progress, outcome, evidence and presentation               |
 
 The substrate does not expose generic `set_property`, `change_health`, `spawn_anything`, `grant_knowledge`, `control_other_actor`, or `run_code` to ordinary actors.
 
@@ -96,24 +96,24 @@ The substrate does not expose generic `set_property`, `change_health`, `spawn_an
 
 The following are selected for the foundational design. Their availability is still conditional; delivery is staged in the tracker.
 
-| Template / operation | Parameter space | Repertoire witnesses | Required limitations |
-| --- | --- | --- | --- |
-| Navigate to a location | Point/support, known place, actor-relative displacement, topology-owned location reference | NAV-01–04, NAV-07–08 | No invented coordinates for an unresolved place; no wrong-floor projection |
-| Approach once | Target, allowed proximity/stance, observation policy | NAV-05, REL-03 | Choose a reachable stance, not necessarily the target center |
-| Depart / retreat | Threat/region, desired separation, route constraints | REL-05, CBT-08 | No guarantee of safety; no hidden target updates |
-| Maintain a spatial relation | Near, behind, beside, between, facing where supported; tolerances; termination | REL-01–04, CBT-07 | Relation-specific geometry and knowledge; not merely one distance scalar |
-| Visit a known route / patrol | Ordered scoped waypoints, repeat/termination policy | NAV-07, REL-07 | Persist cursor; changing geometry can interrupt |
-| Orient | Known target, relative direction or supported frame | BOD-01 | Compatible body/pose provider; no implicit locomotion |
-| Inspect / sample available evidence | Target/part/region, installed sense or query, desired detail | OBS-01–04 | No new sensing power or universal property inspection |
-| Scan / search a bounded accessible scope | Scope, known predicate, coverage policy, budget | OBS-04, OBS-06 | Negative coverage is not proof of global absence |
-| Monitor a permitted condition | Scope, predicate/event, edge/level policy, review/stop policy | OBS-05, AUT-04 | No omniscient event subscription or private-state alarm |
-| Wait | Simulation duration/deadline, observed event or supported predicate | AUT-01–02 | Unknown and unavailable conditions are explicit |
-| Sequence | Ordered calls with terminal outcome dependencies | AUT-03, MAK-12 | No immediate loop over timed commands |
-| Conditional branch | Typed observable predicate, true/false/unknown dispositions | AUT-05 | Unknown never silently becomes false |
-| Bounded iteration | Count, finite set, until condition or persistent qualified activity | RES-11, AUT-06–07 | Per-step budget, finite output and explicit continuation authority |
-| Lifecycle control | Cancel, replace, pause where supported, resume after revalidation | AUT-11–12, MND-03–04 | Future authority changes, not rollback or refunds |
-| Standard agency mutations | Own goals, review cues, attempts, private thought and existing recall/reflection operations | MND-01–12 | Available only to compatible controllers; use existing AG/CR owners |
-| Interaction request / handoff pattern | Recipient, proposed role or task, expiry and actual acceptance | COM-05, COOP-04, CARE-12 | Communication and participation remain world capabilities; no forced second actor |
+| Template / operation                     | Parameter space                                                                             | Repertoire witnesses     | Required limitations                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------- |
+| Navigate to a location                   | Point/support, known place, actor-relative displacement, topology-owned location reference  | NAV-01–04, NAV-07–08     | No invented coordinates for an unresolved place; no wrong-floor projection        |
+| Approach once                            | Target, allowed proximity/stance, observation policy                                        | NAV-05, REL-03           | Choose a reachable stance, not necessarily the target center                      |
+| Depart / retreat                         | Threat/region, desired separation, route constraints                                        | REL-05, CBT-08           | No guarantee of safety; no hidden target updates                                  |
+| Maintain a spatial relation              | Near, behind, beside, between, facing where supported; tolerances; termination              | REL-01–04, CBT-07        | Relation-specific geometry and knowledge; not merely one distance scalar          |
+| Visit a known route / patrol             | Ordered scoped waypoints, repeat/termination policy                                         | NAV-07, REL-07           | Persist cursor; changing geometry can interrupt                                   |
+| Orient                                   | Known target, relative direction or supported frame                                         | BOD-01                   | Compatible body/pose provider; no implicit locomotion                             |
+| Inspect / sample available evidence      | Target/part/region, installed sense or query, desired detail                                | OBS-01–04                | No new sensing power or universal property inspection                             |
+| Scan / search a bounded accessible scope | Scope, known predicate, coverage policy, budget                                             | OBS-04, OBS-06           | Negative coverage is not proof of global absence                                  |
+| Monitor a permitted condition            | Scope, predicate/event, edge/level policy, review/stop policy                               | OBS-05, AUT-04           | No omniscient event subscription or private-state alarm                           |
+| Wait                                     | Simulation duration/deadline, observed event or supported predicate                         | AUT-01–02                | Unknown and unavailable conditions are explicit                                   |
+| Sequence                                 | Ordered calls with terminal outcome dependencies                                            | AUT-03, MAK-12           | No immediate loop over timed commands                                             |
+| Conditional branch                       | Typed observable predicate, true/false/unknown dispositions                                 | AUT-05                   | Unknown never silently becomes false                                              |
+| Bounded iteration                        | Count, finite set, until condition or persistent qualified activity                         | RES-11, AUT-06–07        | Per-step budget, finite output and explicit continuation authority                |
+| Lifecycle control                        | Cancel, replace, pause where supported, resume after revalidation                           | AUT-11–12, MND-03–04     | Future authority changes, not rollback or refunds                                 |
+| Standard agency mutations                | Own goals, review cues, attempts, private thought and existing recall/reflection operations | MND-01–12                | Available only to compatible controllers; use existing AG/CR owners               |
+| Interaction request / handoff pattern    | Recipient, proposed role or task, expiry and actual acceptance                              | COM-05, COOP-04, CARE-12 | Communication and participation remain world capabilities; no forced second actor |
 
 The foundation supports **calling any registered compatible family**, not only these templates. These templates reduce repeated implementation of common control semantics. They do not subsume all object mechanics.
 
@@ -121,16 +121,16 @@ The foundation supports **calling any registered compatible family**, not only t
 
 The normal OpenLegend world should expose ordinary actions in these families when their mechanics are implemented. They require no invention merely to use them. Some already have narrow native implementations; others need new engineering. Refer to Architecture for that distinction rather than inferring implementation from this target list.
 
-| Family cluster | Ordinary invocations to expose | What remains family/world-specific |
-| --- | --- | --- |
-| Existing survival and work | Gather, prepare, craft a known method, equip, hunt, harvest, cook, eat, replenish, rest, recover, cancel | Current material/body/recipe rules; native batch quantities and output types |
-| Communication and expression | Say, ask, reply, join/leave, gesture; whisper/shout only when supported | Channel reach, intelligibility, anatomy, expressive versus mechanical effects |
-| Possessions and containment | Pick up, put down, transfer, offer/accept, insert/remove, split/combine, carry | Capacity, load, access, custody, ownership, participation and stack semantics |
-| Manipulation and devices | Open/close, turn, press, attach/detach, hold, move with supported force | State domains, geometry, resource channels and downstream mechanics |
-| Care and social interaction | Help request, permitted treatment, rescue, teach a known technique, practice | Consent/emergency rules, anatomy, learning, skill and independent social response |
-| Environmental use | Ignite with a source, extinguish by a method, pour, fill, heat, cool, plant, harvest | Combustion, fluids, growth, material compatibility and passive consequences |
-| Worksites and transport | Build a known design, repair, disassemble, board, operate, unload | Structural/vehicle mechanics, shared work, production recipes and lifecycle |
-| World-defined special abilities | Cast a known spell, use a configured machine, invoke an admitted body transformation | Applicable constitution, resources, target contracts and privileged effect owners |
+| Family cluster                  | Ordinary invocations to expose                                                                           | What remains family/world-specific                                                |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Existing survival and work      | Gather, prepare, craft a known method, equip, hunt, harvest, cook, eat, replenish, rest, recover, cancel | Current material/body/recipe rules; native batch quantities and output types      |
+| Communication and expression    | Say, ask, reply, join/leave, gesture; whisper/shout only when supported                                  | Channel reach, intelligibility, anatomy, expressive versus mechanical effects     |
+| Possessions and containment     | Pick up, put down, transfer, offer/accept, insert/remove, split/combine, carry                           | Capacity, load, access, custody, ownership, participation and stack semantics     |
+| Manipulation and devices        | Open/close, turn, press, attach/detach, hold, move with supported force                                  | State domains, geometry, resource channels and downstream mechanics               |
+| Care and social interaction     | Help request, permitted treatment, rescue, teach a known technique, practice                             | Consent/emergency rules, anatomy, learning, skill and independent social response |
+| Environmental use               | Ignite with a source, extinguish by a method, pour, fill, heat, cool, plant, harvest                     | Combustion, fluids, growth, material compatibility and passive consequences       |
+| Worksites and transport         | Build a known design, repair, disassemble, board, operate, unload                                        | Structural/vehicle mechanics, shared work, production recipes and lifecycle       |
+| World-defined special abilities | Cast a known spell, use a configured machine, invoke an admitted body transformation                     | Applicable constitution, resources, target contracts and privileged effect owners |
 
 Do not implement every row as a new switch branch. Expose the actual family invocation and target/quantity schema; let synonyms and compositions share it. “Pick up,” “give,” “offer,” and “eat” may all involve an item but have different semantics and cannot collapse into an unqualified transfer.
 
@@ -140,19 +140,19 @@ Use INV-3 and the common manifest as the registry of record. A **host descriptor
 
 The descriptor supplies the following invocation-facing fields. Names are illustrative contracts, not existing API fields.
 
-| Descriptor field | Owner and semantics |
-| --- | --- |
-| Stable family/interface ID and version | Common runtime/INV; not an authorization token |
-| Invocation codec | Family-owned strict argument schema, units, defaults, target and output ports |
-| Applicability and discoverability | Pure family logic consuming permitted actor context; distinguish available, blocked, unknown and not disclosed |
-| Semantic hints | Bounded labels, aliases, examples and contrast cases; never executable instructions |
-| Knowledge requirements | Intrinsic body use, known technique, observable operation or explicit trial policy |
-| Binding rules | Allowed reference kinds, early/late binding, exact quantities, instrument and participant requirements |
-| Native admission and executor | Trusted code or qualified admitted implementation; never a model-supplied function path |
-| Work and effect contract | Inputs, resource claims, start/progress/commit points, outputs, side effects and effect bounds |
-| Lifecycle | Instant, durative, activity or process initiation; termination, interruption, pause/resume support |
-| Dependencies and freshness | Mandatory family reads, relevant definition/configuration versions, authoritative versus evidence dependencies |
-| Outcome projection | Actor-visible result, public sensory effects, private/system diagnostics, safe text/icon defaults |
+| Descriptor field                       | Owner and semantics                                                                                            |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Stable family/interface ID and version | Common runtime/INV; not an authorization token                                                                 |
+| Invocation codec                       | Family-owned strict argument schema, units, defaults, target and output ports                                  |
+| Applicability and discoverability      | Pure family logic consuming permitted actor context; distinguish available, blocked, unknown and not disclosed |
+| Semantic hints                         | Bounded labels, aliases, examples and contrast cases; never executable instructions                            |
+| Knowledge requirements                 | Intrinsic body use, known technique, observable operation or explicit trial policy                             |
+| Binding rules                          | Allowed reference kinds, early/late binding, exact quantities, instrument and participant requirements         |
+| Native admission and executor          | Trusted code or qualified admitted implementation; never a model-supplied function path                        |
+| Work and effect contract               | Inputs, resource claims, start/progress/commit points, outputs, side effects and effect bounds                 |
+| Lifecycle                              | Instant, durative, activity or process initiation; termination, interruption, pause/resume support             |
+| Dependencies and freshness             | Mandatory family reads, relevant definition/configuration versions, authoritative versus evidence dependencies |
+| Outcome projection                     | Actor-visible result, public sensory effects, private/system diagnostics, safe text/icon defaults              |
 
 A descriptor's mandatory validation, dependencies and cost limits cannot be overwritten by an invocation or generated definition. The invocation does not declare its own trusted effect summary. The implementation supplies it, conservatively covering its actual behavior.
 
@@ -185,7 +185,8 @@ type ActionIntent =
       constraints: IntentConstraint[];
     };
 
-interface IntentContext { // constructed by the server, never supplied by a model
+interface IntentContext {
+  // constructed by the server, never supplied by a model
   requestId: string;
   worldId: string;
   loadEpoch: string;
@@ -206,18 +207,18 @@ Provider encodings can use strict nullable fields rather than this union. Their 
 
 Grounding records a compact intent contract alongside the candidate: initiator; action versus goal versus hypothetical; target; affected object/part; instrument; recipient/participants; destination/frame; quantity and units; method; hard constraints; optional preferences; temporal extent; termination; replacement/queue mode; and authorized result dependencies. Only applicable slots are needed.
 
-| Phrase | Required interpretation |
-| --- | --- |
-| “Follow that deer” | Specific scoped target; ongoing pursuit; no attack; explicit loss behavior |
-| “Give her one berry” | Recipient and exact amount; transfer, not consume or spawn |
-| “Use the stone, not the axe” | Preserve exact instrument or report incompatibility |
-| “Only take fallen branches” | Source restriction, not merely a preferred label |
-| “Quietly” | Use supported low-noise behavior or clarify; never promise undetectability |
-| “Without harming it” | Preserve hard constraint; if a method cannot guarantee the stated bound, do not silently claim compliance |
-| “Until sunset” | Simulation-time termination, not a wall-clock provider timeout |
-| “Ask Ada to help” | Communication, not direct mutation of Ada's work |
-| “Make Ada trust me” | Goal/social attempt; no direct relationship-state setter |
-| “Build a shelter” | Known method plus work, actor planning, or invention depending on actual knowledge/capabilities |
+| Phrase                       | Required interpretation                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| “Follow that deer”           | Specific scoped target; ongoing pursuit; no attack; explicit loss behavior                                |
+| “Give her one berry”         | Recipient and exact amount; transfer, not consume or spawn                                                |
+| “Use the stone, not the axe” | Preserve exact instrument or report incompatibility                                                       |
+| “Only take fallen branches”  | Source restriction, not merely a preferred label                                                          |
+| “Quietly”                    | Use supported low-noise behavior or clarify; never promise undetectability                                |
+| “Without harming it”         | Preserve hard constraint; if a method cannot guarantee the stated bound, do not silently claim compliance |
+| “Until sunset”               | Simulation-time termination, not a wall-clock provider timeout                                            |
+| “Ask Ada to help”            | Communication, not direct mutation of Ada's work                                                          |
+| “Make Ada trust me”          | Goal/social attempt; no direct relationship-state setter                                                  |
+| “Build a shelter”            | Known method plus work, actor planning, or invention depending on actual knowledge/capabilities           |
 
 A schema validates structure, not fidelity to arbitrary natural language. Even a second model cannot prove that translation always preserves intent. Use deterministic handle/parameter binding where possible, contrastive tests, original-text retention, scoped references and player-visible normalized previews for consequential ambiguity. Native validation proves only the invariants actually encoded by its trusted family, not arbitrary physical plausibility or all emergent side effects.
 
@@ -235,14 +236,14 @@ When work persists beyond the request, store a typed bound target with its ident
 
 ### 6.2 Binding time is part of meaning
 
-| Binding | Example | Required behavior |
-| --- | --- | --- |
-| Snapshot location | Go where the deer was last seen | Persist that observed location/region; never chase the hidden current entity |
-| Identity with live observation | Follow this visible deer | Same target identity; refresh position only through permitted evidence |
-| Late finite selection | Take the next ripe fruit from this observed patch | Persist selector and scope; bind actual item at start with a deterministic tie policy |
-| Earlier result | Equip the tool produced by step A | Bind a typed output port from the actual successful receipt |
-| Shared agreement | Accept offer O, revision R | Validate exact current terms and participants |
-| Definition pin | Invoke known method D, version V | No silent replacement with a changed installed definition |
+| Binding                        | Example                                           | Required behavior                                                                     |
+| ------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Snapshot location              | Go where the deer was last seen                   | Persist that observed location/region; never chase the hidden current entity          |
+| Identity with live observation | Follow this visible deer                          | Same target identity; refresh position only through permitted evidence                |
+| Late finite selection          | Take the next ripe fruit from this observed patch | Persist selector and scope; bind actual item at start with a deterministic tie policy |
+| Earlier result                 | Equip the tool produced by step A                 | Bind a typed output port from the actual successful receipt                           |
+| Shared agreement               | Accept offer O, revision R                        | Validate exact current terms and participants                                         |
+| Definition pin                 | Invoke known method D, version V                  | No silent replacement with a changed installed definition                             |
 
 “Nearest” needs a declared metric and scope. “All” needs a bounded set/region and a snapshot-versus-future-arrivals policy. “The other one” needs resolved discourse context. “Mine” may be actor belief or authoritative ownership depending on the method; do not erase that distinction.
 
@@ -312,13 +313,16 @@ type ActivityNode =
   | { kind: 'invoke'; call: BoundInvocation }
   | { kind: 'sequence'; children: ActivityNode[] }
   | {
-      kind: 'branch'; predicate: BoundPredicate;
-      whenTrue: ActivityNode; whenFalse?: ActivityNode;
+      kind: 'branch';
+      predicate: BoundPredicate;
+      whenTrue: ActivityNode;
+      whenFalse?: ActivityNode;
       whenUnknown: 'wait' | 'stop' | 'request_reconsideration';
     }
   | { kind: 'wait'; condition: BoundWait; deadline?: SimulationDeadline }
   | {
-      kind: 'repeat'; body: ActivityNode;
+      kind: 'repeat';
+      body: ActivityNode;
       policy: CountOrScopedUntilPolicy;
     };
 ```
@@ -391,15 +395,15 @@ Behind/beside need an observed reference frame or heading, not a raw hidden tran
 
 Use family-local state within the AG activity:
 
-| State | Native behavior | Transition |
-| --- | --- | --- |
-| Acquire | Validate target reference and permitted current evidence | Move/hold, or unresolved/lost |
-| Moving | Request a route/stance; advance through the movement owner | Hold when the relation is satisfied; replan only when necessary |
-| Holding | Remain active without declaring terminal success | Move when the relation crosses the outer tolerance |
-| Target lost | Stop receiving live target updates | Apply the accepted loss policy |
-| Last-observation approach | Move only to the saved observed location | Reacquire through real perception, or stop/reconsider there |
-| Blocked | Retain intent and a scoped dependency reason | Native recheck or actor reconsideration under policy |
-| Terminal | Emit the appropriate completion/cancellation/failure receipt | Release owned resources/subscriptions |
+| State                     | Native behavior                                              | Transition                                                      |
+| ------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------- |
+| Acquire                   | Validate target reference and permitted current evidence     | Move/hold, or unresolved/lost                                   |
+| Moving                    | Request a route/stance; advance through the movement owner   | Hold when the relation is satisfied; replan only when necessary |
+| Holding                   | Remain active without declaring terminal success             | Move when the relation crosses the outer tolerance              |
+| Target lost               | Stop receiving live target updates                           | Apply the accepted loss policy                                  |
+| Last-observation approach | Move only to the saved observed location                     | Reacquire through real perception, or stop/reconsider there     |
+| Blocked                   | Retain intent and a scoped dependency reason                 | Native recheck or actor reconsideration under policy            |
+| Terminal                  | Emit the appropriate completion/cancellation/failure receipt | Release owned resources/subscriptions                           |
 
 Use hysteresis to prevent oscillation at the band boundary and threshold/cadence-based native replanning. Check current physical segments as SW requires. Do not run a full entity scan or path search every tick simply because the target still exists.
 
@@ -493,17 +497,17 @@ Interruption rules include safe boundary, committed costs/effects, retainable pr
 
 The family supplies mandatory authoritative dependencies; the activity adds evidence, plan and binding dependencies. A model may identify useful concerns but cannot omit reads from the trusted invalidation contract.
 
-| Result/state | Relevant invalidation examples | Not a sufficient retry cause |
-| --- | --- | --- |
-| Missing item | Inventory/containment change for the scoped requirement | Rewording the same request |
-| Unknown target location | New permitted observation/testimony/recall result | Target moving unseen in truth |
-| Lost visible target | Actual reacquisition under permitted sensing | Continued existence of its entity ID |
-| No known route | Known topology/body/traversal change | Unrelated world tick |
-| Unsupported implementation | Relevant host/interface/manifest change | Repeated semantic paraphrase |
-| Forbidden operation | Relevant authorization/policy revision | Using an NPC or alternate synonym |
-| Unknown technique | Authorized learning/independent accepted method | Similarity search finding another actor's private design |
-| Blocked joint work | Participant/readiness/resource change | Repeatedly asking the same absent helper |
-| Provider failure | Explicit allowed retry/new decision | Automatic error-repair recursion |
+| Result/state               | Relevant invalidation examples                          | Not a sufficient retry cause                             |
+| -------------------------- | ------------------------------------------------------- | -------------------------------------------------------- |
+| Missing item               | Inventory/containment change for the scoped requirement | Rewording the same request                               |
+| Unknown target location    | New permitted observation/testimony/recall result       | Target moving unseen in truth                            |
+| Lost visible target        | Actual reacquisition under permitted sensing            | Continued existence of its entity ID                     |
+| No known route             | Known topology/body/traversal change                    | Unrelated world tick                                     |
+| Unsupported implementation | Relevant host/interface/manifest change                 | Repeated semantic paraphrase                             |
+| Forbidden operation        | Relevant authorization/policy revision                  | Using an NPC or alternate synonym                        |
+| Unknown technique          | Authorized learning/independent accepted method         | Similarity search finding another actor's private design |
+| Blocked joint work         | Participant/readiness/resource change                   | Repeatedly asking the same absent helper                 |
+| Provider failure           | Explicit allowed retry/new decision                     | Automatic error-repair recursion                         |
 
 Cache structured normalized intent with actor scope, target binding, method/constraints and the relevant version/dependency signature. Text normalization alone is insufficient for semantic equivalence. Do not globally publish private failed inventions or reuse another actor's private explanation. Conservative cache misses may cost another legitimate decision; overly broad cache hits must not suppress meaningfully different requests.
 
@@ -643,17 +647,17 @@ The common invocation/lifecycle contract is reusable. The physical/sensory famil
 
 ## 21. Alternatives considered
 
-| Alternative | Why it is insufficient | What to retain |
-| --- | --- | --- |
-| One native enum entry per verb | Synonyms proliferate; no arbitrary parameters or compositions; every extension changes central switches | Convenient typed wrappers delegating to shared families |
-| Only select pre-generated action handles | Good for cheap decisions, but cannot cover continuous destinations, quantities, roles and unlisted combinations | Fast exact/finite selection path |
-| Generic `set_state` or desired-effect JSON | Bypasses embodiment, costs, physics, privacy and causal truth | Nothing in ordinary actor authority |
-| Ask an LLM what happens after every action | Loses native determinism and makes ongoing work expensive/unreliable | Models propose meanings and decisions, not authoritative effects |
-| Generate unrestricted code for every new intent | Requires a new security/runtime/verification system and can bypass supported semantics | Later INV G2 only through qualified isolated interfaces |
-| A full global GOAP/HTN solver before movement works | Large planning ontology and optimization scope are unnecessary for parameterized native actions | Small explicit methods/frontiers; add a planner only for a demonstrated need |
-| Behavior trees as a complete answer | Useful control flow does not itself solve scope, binding, knowledge, effects or persistence | Small bounded reactive/sequence semantics under existing owners |
-| Treat every useful arrangement as an invention | Prevents emergent play and clutters the definition registry | Separate runtime instance composition from reusable rule authoring |
-| Make all game families kernel-native | Imposes one reality and body model on every world | Stable interfaces around replaceable world implementations |
+| Alternative                                         | Why it is insufficient                                                                                          | What to retain                                                               |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| One native enum entry per verb                      | Synonyms proliferate; no arbitrary parameters or compositions; every extension changes central switches         | Convenient typed wrappers delegating to shared families                      |
+| Only select pre-generated action handles            | Good for cheap decisions, but cannot cover continuous destinations, quantities, roles and unlisted combinations | Fast exact/finite selection path                                             |
+| Generic `set_state` or desired-effect JSON          | Bypasses embodiment, costs, physics, privacy and causal truth                                                   | Nothing in ordinary actor authority                                          |
+| Ask an LLM what happens after every action          | Loses native determinism and makes ongoing work expensive/unreliable                                            | Models propose meanings and decisions, not authoritative effects             |
+| Generate unrestricted code for every new intent     | Requires a new security/runtime/verification system and can bypass supported semantics                          | Later INV G2 only through qualified isolated interfaces                      |
+| A full global GOAP/HTN solver before movement works | Large planning ontology and optimization scope are unnecessary for parameterized native actions                 | Small explicit methods/frontiers; add a planner only for a demonstrated need |
+| Behavior trees as a complete answer                 | Useful control flow does not itself solve scope, binding, knowledge, effects or persistence                     | Small bounded reactive/sequence semantics under existing owners              |
+| Treat every useful arrangement as an invention      | Prevents emergent play and clutters the definition registry                                                     | Separate runtime instance composition from reusable rule authoring           |
+| Make all game families kernel-native                | Imposes one reality and body model on every world                                                               | Stable interfaces around replaceable world implementations                   |
 
 ## 22. Research connections and limits
 
@@ -670,3 +674,31 @@ The layer does not implement new fluid physics, smell, deformable bodies, struct
 It also cannot guarantee semantic correctness for all natural language, physically plausible arbitrary inventions, globally optimal plans, perfect knowledge, guaranteed persuasion, unlimited population scale or zero-cost indefinite work. Exact domain implementations and acceptance evidence remain necessary.
 
 The stable design commitment is narrower and stronger: **one scoped, typed route from an actor's chosen meaning to existing authoritative capabilities; composable ongoing activity; truthful consequences; and an explicit boundary when a new world definition or host ability is actually needed.**
+
+## Partial fulfillment and initiator review
+
+This section refines the earlier strict fidelity wording: **never silently change intent**, but allow an explicit useful subset when its omissions are tolerable. Missing criteria do not automatically require invention or rejection. The grounding result accounts for supported and omitted clauses, why they were omitted, the concrete revised behavior, and whether the initiating player/actor must decide. Approximation is not fulfillment of an exact guarantee.
+
+Use exact complete binding without inference first. Otherwise use Jev for finite full-match selection/classification before generative parameterization. A clear matching handle needs no generative translation. A bounded generative stage supplies required parameters and the omission report; Jev can classify whether a proposed omission is tolerable, needs the initiator's decision, or invalidates the method. Initial classification confidence is 0.8; uncertainty chooses interpretation or confirmation, not automatic execution. A model's semantic judgment never overrides native validation, scope, costs, or authority.
+
+For a tolerable subset, retain the original request, supported/omitted clauses and rationale in Intelligence. Show the actual native-derived behavior and missing criteria to the player. An uncertain revision is stored in the existing actor-private pending-intent owner with exact commands, mode and relevant revisions; it starts no action and changes no current work. The player gets Accept/Decline controls. An autonomous actor receives accept/withdraw handles on its next eligible ordinary decision; no extra always-running reviewer or fabricated in-world conversation is created. Acceptance queues only that stored revision and rechecks live prerequisites.
+
+Removing `until sunset` can extend the activity rather than narrow it: disclose that no sunset termination is enforced and show the real cancellation/interruption/lost-target rules. `Without being noticed` may be central; uncertain removal must return to the initiator. Skipping a prerequisite must not count it as completed. Dropped requirements are not promised for later and do not automatically dispatch invention or paid retries. Partial fulfillment and later physical success/failure remain different records.
+
+## Mechanical workflow reconciliation
+
+**Reserved integration owner:** reconcile this section with the separately developed invention composition/runtime contracts before adding a second general mechanics interpreter. Invention authoring (draft, validate, revise, activate) remains a black-box application workflow. An invented mechanical workflow (select targets, consume resources, work, wait, effect) belongs to simulation execution and must share the relevant native invocation/predicate/output/lifecycle semantics with actor activities.
+
+| This branch uses now                                               | Future shared contract to reconcile                                     | Explicit non-goal here                                       |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Domain `NavigationInvocation` move/follow codec and native binding | Versioned invocation-facing descriptor in INV/EWF's common registry     | No second mechanics registry or universal verb enum          |
+| Existing concrete `Command` adapters and single AG action lane     | Family admission, work/resource claims and executor interfaces          | No generated effects, raw state setters or host code         |
+| Existing bounded sequential plan and item receipts                 | Shared typed result ports, predicates, wait/branch/repetition semantics | No new general workflow DSL in this slice                    |
+| `Action.follow` path/hold cursor through the kernel movement owner | Per-invocation activity state, interruption and definition pins         | No parallel movement/controller writer                       |
+| Existing actor-private attempts with an exact stored alternative   | Common invocation identity, accepted scope and revision lifetime        | No alternate goal store or independent approval service      |
+| World manifest revision plus existing world/load epochs            | Exact installed definition dependencies and invalidation                | No silent upgrade of running work                            |
+| Jev-first classification and fulfillment reports                   | Scoped discovery, native summaries and interpreter evidence             | No private invention registry leakage or automatic authoring |
+
+Built-in and invented families should eventually provide the same discoverable parameter/target schema, eligibility and knowledge policy, authoritative validation, resource/work contract, output ports, progress/completion/cancellation semantics and actor-safe projections. The action layer should not care whether an eligible installed implementation originated in code or an admitted definition. Method installation, learning, possession, action permission and execution remain distinct.
+
+Continue point movement, narrow follow and fulfillment review independently of invention's authoring pipeline. Before introducing general branching/repetition, compound mechanical effects or richer persistent processes, reconcile their execution representation with the invention branch. A temporary actor plan and a reusable definition need not be stored identically, but must not acquire contradictory semantics for costs, waits, results and cancellation. This section does not mark that integration complete.

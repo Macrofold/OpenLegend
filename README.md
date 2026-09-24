@@ -4,7 +4,7 @@
 
 The current world supports real elevation and stacked surfaces with generated sprites and simple 3D scenery. The timber lookout in the northeast has a ramp, a passage underneath and a gatherable crate; a small native bird flies between heights and perches on the deck. Camera **View** controls provide orbit, pitch, projection and floor focus. Drag pans; Shift-drag orbits/tilts; wheel zooms. With the canvas focused, arrows rotate/tilt, Page Up/Down selects a level, P switches projection and Home recenters. Rotation can be locked. Selecting a lower level cuts away upper presentation, not its physical geometry.
 
-This branch requires **development save format 9**. Existing earlier worlds are not migrated or deleted. To try it without touching your existing `.data`, run `OPEN_LEGEND_DATABASE_URL= OPEN_LEGEND_DATA_DIR=.data-spatial-3d AI_BUDGET_USD=0 pnpm run dev` from the branch, then open the usual local game URL. This explicitly selects a separate SQLite world even when `.env` contains a PostgreSQL URL; it preserves the existing database and disables paid work. The native 3D loop requires no AI key. Use the usual live-AI setup only for paid character/invention features.
+This branch requires **development save format 10**. Existing earlier worlds are not migrated or deleted. To try it without touching your existing `.data`, run `OPEN_LEGEND_DATABASE_URL= OPEN_LEGEND_DATA_DIR=.data-spatial-3d AI_BUDGET_USD=0 pnpm run dev` from the branch, then open the usual local game URL. This explicitly selects a separate SQLite world even when `.env` contains a PostgreSQL URL; it preserves the existing database and disables paid work. The native 3D loop requires no AI key. Use the usual live-AI setup only for paid character/invention features.
 
 See [spatial-world behavior](docs/spatial-world.md), [technical provider](archive/07-technical-architecture/spatial-world-runtime.md), [SW delivery tasks](docs/maintainers/spatial-world.md), and [verification](docs/verification.md#spatial-world-runtime). This is not a free rigid-body sandbox or a completed generic 3D-asset authoring platform.
 
@@ -73,7 +73,7 @@ Use a separate new data directory and disable paid work:
 OPEN_LEGEND_DATA_DIR=/tmp/openlegend-reservoir-demo OPEN_LEGEND_WORLD_PRESET=reservoir-demo AI_BUDGET_USD=0 PORT=3218 node --import tsx apps/server/src/main.ts
 ```
 
-Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Schema 9 rejects older development saves without modifying them; select a fresh directory for either preset. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
+Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Schema 10 rejects older development saves without modifying them; select a fresh directory for either preset. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
 
 For the coarse touch-only resident, use a separate data directory and `OPEN_LEGEND_WORLD_PRESET=touch-demo`. The player retains sight; the resident receives only unidentified contacts and short direct probe choices. God inspection is administrative evidence, not the resident's knowledge. See the [implemented limits](docs/architecture.md#registered-senses-and-coarse-contact).
 
@@ -94,6 +94,12 @@ The browser check needs Playwright Chromium (`pnpm exec playwright install chrom
 | `packages/protocol` | Public client DTOs and command intentions                                              |
 | `apps/server`       | Context, routing, durable spending, persistence, admission and HTTP                    |
 | `apps/client`       | PlayCanvas world and React / React Aria HUD                                            |
+
+## Text actions and revised-action approval
+
+Open **Character → Take an action** to submit a character intention separately from dialogue. Exact requests such as `go to x=12, z=14` and unqualified `follow Ada` can run without AI. Other wording uses configured Jev first, then bounded interpretation when needed. Disclosed tolerable omissions can run as partial fulfillment; uncertain revisions wait for **Accept revised action** or **Decline / withdraw**. Follow means remaining near a visible living target, not stealth, scent tracking, or a sunset deadline. Use the explicit support identifier when floors overlap. Choose Queue or Replace deliberately. Invention does not need to be unlocked.
+
+This branch uses development format 10; select a fresh data directory for earlier worlds. See [action capabilities](docs/action-capabilities.md), its [workflow reconciliation boundary](docs/action-capabilities.md#mechanical-workflow-reconciliation), and [runtime evidence](docs/verification.md#action-capability-native-slice).
 
 ## Explore the project
 

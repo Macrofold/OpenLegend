@@ -1,4 +1,4 @@
-import { groundActionAttempts } from './action-grounding.js';
+import { groundActionAttempts, exactNavigation } from './action-grounding.js';
 import { actionResponse } from './action-response.js';
 import { npcCandidates, planningCandidates } from './context.js';
 import { domainCommand } from './cognition.js';
@@ -247,6 +247,17 @@ export class AiDirector {
           code: 'busy',
           message: 'Another intelligence request is in progress; try again after it finishes.',
         };
+      const config = this.service.config;
+      if (
+        !exactNavigation(text, this.service.world, actorId, targetId) &&
+        (!config.budgetUsd || (!config.macrofoldKey && (!config.jevKey || !config.llmKey)))
+      )
+        return {
+          ok: false,
+          code: 'ai-unavailable',
+          message:
+            'This wording needs configured Jev and language-model access with an allowance. Exact coordinate movement and unqualified visible-target following need no AI.',
+        };
       this.maintenance.cancel();
       const job: JobRecord = {
         id,
@@ -344,21 +355,30 @@ export class AiDirector {
     this.current(run);
     const observed = this.service.observe(actorId);
     const refs = [actorId, ...(observed?.visibleEntities.map((e) => e.id) ?? [])];
-    const result = await this.service.transition(
-      (world) =>
-        commitActorResponse(
-          world,
-          run.job.id,
-          actorId,
-          response,
-          {},
-          refs,
-          request.expectedPlan,
-          bindings,
-        ),
-      undefined,
-      run.job.id,
-    );
+    const commit = () =>
+      this.service.transition(
+        (world) => {
+          this.current(run);
+          return commitActorResponse(
+            world,
+            run.job.id,
+            actorId,
+            response,
+            {},
+            refs,
+            request.expectedPlan,
+            bindings,
+          );
+        },
+        undefined,
+        run.job.id,
+      );
+    let result = await commit();
+    while (!result.ok && result.code === 'paused') {
+      await this.awaitResume(run, true);
+      this.current(run);
+      result = await commit();
+    }
     const component = this.service.world.responseReceipts?.[run.job.id]?.components['action'];
     const fulfillment = bindings.find((b) => b.description === run.job.request.text)?.fulfillment;
     const message =

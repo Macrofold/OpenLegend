@@ -239,7 +239,7 @@ export function npcCandidates(
   ];
   for (const target of observed.visibleEntities
     .filter((e) => e.actor?.alive && e.id !== actorId)
-    .slice(0, 16)) {
+    .slice(0, 4)) {
     const command: CommandInput = { type: 'follow', targetId: target.id };
     if (service.previewCommand(command, actorId).ok)
       actions.push({

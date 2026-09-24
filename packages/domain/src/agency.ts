@@ -706,7 +706,9 @@ export function proposeActionRevision(
   if (!held.ok) return held;
   const actor = world.entities[actorId]!.actor!;
   const pending = actor.agency.attempts.find(
-    (a) => a.normalized === normalizeAttempt(fulfillment.requested),
+    (a) =>
+      a.normalized === normalizeAttempt(fulfillment.requested) &&
+      a.manifestRevision === world.moduleManifest.revision,
   )!;
   if (pending.status !== 'awaiting-confirmation') {
     pending.status = 'awaiting-confirmation';

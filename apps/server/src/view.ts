@@ -588,7 +588,7 @@ export async function projectView(
             advancing: !paused && actor.action.stage === 'working',
             label: workLabels[actor.action.type] ?? 'Working',
             progress:
-              actor.action.stage === 'approaching'
+              actor.action.stage === 'approaching' || actor.action.type === 'follow'
                 ? 0
                 : actor.action.totalSeconds === 0
                   ? 1
