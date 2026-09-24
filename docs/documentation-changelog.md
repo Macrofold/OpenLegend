@@ -173,3 +173,7 @@ Moved the sleep specification to `docs/worlds/base/sleep.md` and repaired inboun
 - Removed the implementation-chosen 256-summary quota from the consolidation contract and snapshot. Memory retention no longer constrains semantic grouping by remaining slots; request-size limits and atomic multi-request publication have separate ownership in the memory design and runtime snapshot.
 
 Knowledge canvas mechanics now have one engine owner in `docs/knowledge.md`; bundled limits/naming/recognition live in `docs/worlds/base/knowledge.md`. This replaces the proposed naming-heavy YAML state example and the external-beliefs-in-one-inner-world-text direction. The observer-known-name decision is resolved; aggregate storage remains open.
+
+## Spatial main rebase and eight-times budget
+
+Preserved current-main world/status/item/identity/camera and in-place save semantics while replaying the spatial commits. Removed superseded fresh-save instructions from active spatial guidance and reconciled own-observer story eligibility. Added actual-progress profiling, thresholded acoustic rejection, current runtime evidence and PF12's budgeted optimization direction. Existing task IDs/remaining qualification are retained; historical measurements do not certify the rebased runtime.

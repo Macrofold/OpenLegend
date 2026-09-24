@@ -15,7 +15,7 @@ The current provider is pinned Recast/Detour in one reused server worker with se
 | Workstream | Implemented now                                                                                                    | Remaining / activation condition                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
 | SW01       | Recast 0.43.1 and Rapier 0.20.0 pinned/initialized; isolated earlier library qualification; plain interfaces       | Import guards, full collision family coverage, air-graph library qualification; navcat not a production dependency |
-| SW02       | Required XYZ/support, body profiles, shared margin/raster contract and schema-10 save rejection                    | Generic transform/locomotion family schemas; no mandatory tile snapping                                            |
+| SW02       | Required XYZ/support, body profiles, shared margin/raster contract and current-model in-place save updates         | Generic transform/locomotion family schemas; no mandatory tile snapping                                            |
 | SW03       | Finite slabs/ramps/boxes, stable support IDs and safe atomic replacement                                           | Arbitrary triangle/rotated shape authoring, traversals, supported destruction and affected-tile edits              |
 | SW04       | Static AABB tree, exact support/analytic sensory rays, Rapier capsule/cylinder overlap and sweeps                  | Dynamic moving-body broad phase/crowds, full controller sliding/stepping, general convex authoring                 |
 | SW05       | Direct validated paths; Recast straight corridors, exact support projection, checked simplification, typed failure | Hidden maps, area/link permissions, general endpoint/stance coverage and partial tile updates                      |
@@ -325,3 +325,7 @@ Track only concrete future gaps here once evidenced: full volumetric/SVO navigat
 - [ ] **SW19.4** Keep EPR first-exposure/audience privacy/fan-out, hidden-map navigation, crowd/landing fairness and D51 viewport admission with their owners. Faster geometry and read-through do not complete those correctness contracts.
 
 Automated regression additions for this delivery are SR16–SR20 in [TODO](TODO.md#spatial-review-regression-todos). No test suite is reported passing for this implementation.
+
+## Eight-times integration priority
+
+[PF12](performance.md#pf12--eight-times-spatial-and-sensory-execution) owns the cross-system budget/order. SW17 retains geometry/navigation work and SW18 retains rendering work; do not duplicate task bodies. The main rebase preserves fully camera-facing assets alongside horizontal status-effect poses, item handling/strikes and follow-camera controls. Existing worlds use the main branch's current-model in-place update owner, not a fresh-directory cutover. Thresholded acoustic rejection is implemented for the finite attenuation-only family; complete transmission retains ordered numeric semantics. Dense 8x remains unqualified.

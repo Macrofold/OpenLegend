@@ -409,10 +409,36 @@ export function rayHits(
 }
 export const clearSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean =>
   !visitHits(map, from, to, 'sight', EMPTY_IDS, undefined, () => true);
-export function soundTransmission(map: SpatialMap, from: WorldPoint, to: WorldPoint): number {
-  // Preserve canonical hit order for numeric stability; only acoustic queries need all crossings.
-  return rayHits(map, from, to, 'sound').reduce((value, hit) => value * hit.transmission, 1);
+/** Exact ordered transmission, or null once attenuation proves this threshold impossible.
+ * Every admitted factor is in [0,1]: a single weaker crossing can reject before the remaining
+ * tree/ray work. Successful answers retain canonical multiplication order and full precision.
+ * docs/performance.md#eight-times-spatial-and-sensory-budget
+ */
+export function soundTransmissionAtLeast(
+  map: SpatialMap,
+  from: WorldPoint,
+  to: WorldPoint,
+  minimum: number,
+): number | null {
+  if (!Number.isFinite(minimum) || minimum < 0 || minimum > 1)
+    throw new Error('Invalid sound transmission threshold.');
+  const hits: { id: string; fraction: number; transmission: number }[] = [];
+  if (
+    visitHits(map, from, to, 'sound', EMPTY_IDS, undefined, (shape, interval) => {
+      if (shape.transmission < minimum) return true;
+      hits.push({ id: shape.id, fraction: interval[0], transmission: shape.transmission });
+      return false;
+    })
+  )
+    return null;
+  hits.sort((a, b) => a.fraction - b.fraction || a.id.localeCompare(b.id));
+  const value = hits.reduce((total, hit) => total * hit.transmission, 1);
+  return value < minimum ? null : value;
 }
+export function soundTransmission(map: SpatialMap, from: WorldPoint, to: WorldPoint): number {
+  return soundTransmissionAtLeast(map, from, to, 0)!;
+}
+
 function onlySupportContact(
   map: SpatialMap,
   shape: PreparedShape,
