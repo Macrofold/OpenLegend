@@ -14,11 +14,13 @@ export class WorkshopRepository {
     expected: unknown,
     value: unknown,
     related: { key: string; value: unknown }[] = [],
+    check: () => void = () => {},
   ): Promise<boolean> {
     await this.store.ready;
     if (related.length > 8 || related.some((entry) => entry.key === key))
       throw new Error('Invalid operational batch.');
     return this.db.transaction(async () => {
+      check();
       const row =
         expected === undefined
           ? await this.db

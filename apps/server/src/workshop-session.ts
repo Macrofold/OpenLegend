@@ -30,6 +30,7 @@ export interface WorkshopSession {
   closed: boolean;
   selected?: WorkshopDraft;
   approval?: { digest: string; dependencies: string; requested: boolean; approvedBy?: string };
+  application?: { operationId: string; requestId: string; state: 'pending' | 'applied' };
 }
 export class WorkshopError extends Error {
   constructor(
@@ -129,6 +130,7 @@ export class WorkshopSessions {
     previous: WorkshopSession,
     next: WorkshopSession,
     related: { key: string; value: unknown }[] = [],
+    check: () => void = () => {},
   ) {
     this.assertCurrent(previous);
     if (
@@ -137,6 +139,10 @@ export class WorkshopSessions {
         previous,
         { ...next, revision: previous.revision + 1 },
         related,
+        () => {
+          this.assertCurrent(previous);
+          check();
+        },
       ))
     )
       throw new WorkshopError(
