@@ -8,96 +8,131 @@ def edit(path, old, new, count=1):
     if s.count(old)!=count: raise RuntimeError(f'Ambiguous source in {path}: {old[:100]} ({s.count(old)})')
     p.write_text(s.replace(old,new))
 
-Path('packages/domain/src/follow.ts').write_text('''import { seesEntity } from './perception.js';
-import { canReachEntity, distance, findApproachPath } from './spatial.js';
-import { supportedPosition } from './spatial-state.js';
-import type { Action, Entity, WorldState } from './types.js';
+def prepend(path, text):
+    p=Path(path); s=p.read_text()
+    if text not in s: p.write_text(text+s)
 
-export const FOLLOW_RULES = {
-  defaultDistance: 3,
-  minimumDistance: 1.5,
-  maximumDistance: 12,
-  resumeMargin: 0.75,
-  repathSeconds: 4,
-  targetDisplacement: 1,
-} as const;
+prepend('packages/domain/src/agency.ts',"import { validActionFulfillment, type ActionFulfillment } from './action-capabilities.js';\n")
+edit('packages/domain/src/agency.ts',"    status: 'needs-interpretation';", """    status: 'needs-interpretation' | 'awaiting-confirmation';
+    alternative?: {
+      commands: Command[];
+      fulfillment: ActionFulfillment;
+      mode: 'enqueue' | 'replace';
+      expectedPlan: number;
+    };""")
+edit('packages/domain/src/agency.ts',"attempt.status !== 'needs-interpretation'", "!['needs-interpretation', 'awaiting-confirmation'].includes(attempt.status)")
+edit('packages/domain/src/agency.ts',"throw new Error('Invalid saved unlisted attempt.');", """throw new Error('Invalid saved unlisted attempt.');
+      if (attempt.status === 'awaiting-confirmation') {
+        const a = attempt.alternative;
+        if (!a || !validActionFulfillment(a.fulfillment) || !['enqueue','replace'].includes(a.mode) || !Number.isSafeInteger(a.expectedPlan) || a.expectedPlan < 0 || !Array.isArray(a.commands) || !a.commands.length || a.commands.length > AGENCY_LIMITS.steps || a.commands.some(c => !isPlannedCommand(c) || c.actorId !== entity.id))
+          throw new Error('Invalid saved action alternative.');
+      }""")
+edit('packages/domain/src/agency.ts',"    if (!entity.actor) continue;\n    const agency", """    if (!entity.actor) continue;
+    const action = entity.actor.action;
+    if (action?.type === 'follow' && (!action.follow || !isSafeRecordId(action.targetId) || !Number.isFinite(action.follow.distance) || action.follow.distance < 1.5 || action.follow.distance > 12 || !Number.isFinite(action.follow.nextRepathAt)))
+      throw new Error('Invalid saved follow activity.');
+    const agency""")
+p=Path('packages/domain/src/agency.ts'); p.write_text(p.read_text()+'''
 
-/** Follow owns only its path/hold state; the kernel remains the sole movement owner.
- * docs/architecture.md#native-follow-activity
+/** An uncertain relaxation has no execution authority until the owner chooses it.
+ * docs/architecture.md#action-fulfillment-and-revision-approval
  */
-export function updateFollowPath(world: WorldState, actor: Entity, action: Action): string | null {
-  const follow = action.follow;
-  const target = action.targetId && Object.hasOwn(world.entities, action.targetId)
-    ? world.entities[action.targetId] : undefined;
-  // Check current evidence before reading a target transform: identity is not tracking permission.
-  if (!follow || !target || !seesEntity(world, actor, target)) return 'the followed target is no longer perceived.';
-  if (!target.actor?.alive) return 'the followed actor is no longer alive.';
-  if (!supportedPosition(actor)) return 'a supported ground stance is required.';
-  const stopDistance = follow.distance + (action.stage === 'working' ? FOLLOW_RULES.resumeMargin : 0);
-  if (canReachEntity(world, actor, target, stopDistance)) {
-    action.stage = 'working';
-    if (action.path.length) action.path = [];
-    return null;
+export function proposeActionRevision(world: WorldState, actorId: string, id: string, commands: Command[], fulfillment: ActionFulfillment, mode: 'enqueue' | 'replace', expectedPlan: number): Outcome {
+  if (!validActionFulfillment(fulfillment) || !commands.length || commands.length > AGENCY_LIMITS.steps || commands.some(c => !isPlannedCommand(c) || c.actorId !== actorId))
+    return outcome(false, 'invalid-alternative', 'The revised action is not a supported native plan.');
+  const held = deferAttempt(world, actorId, id, fulfillment.requested);
+  if (!held.ok) return held;
+  const actor = world.entities[actorId]!.actor!;
+  const pending = actor.agency.attempts.find(a => a.normalized === normalizeAttempt(fulfillment.requested))!;
+  if (pending.status !== 'awaiting-confirmation') {
+    pending.status = 'awaiting-confirmation';
+    pending.alternative = { commands: cloneValue(commands), fulfillment: cloneValue(fulfillment), mode, expectedPlan };
+    actor.agency.revision++;
+    appendMemory(world, actorId, { kind:'episode', source:'internal', summary:`A revised action needs my decision: ${fulfillment.executableDescription}. Not fulfilled: ${fulfillment.omitted.map(o => o.requirement).join('; ')}.`, entityIds:[actorId], importance:6 });
   }
-  action.stage = 'approaching';
-  const moved = !follow.lastObservedPosition || distance(follow.lastObservedPosition, target.position) >= FOLLOW_RULES.targetDisplacement;
-  if (!action.path.length || (moved && world.simTime >= follow.nextRepathAt)) {
-    const path = findApproachPath(world, actor, target, follow.distance);
-    if (!path) return 'no supported route to the perceived target remains.';
-    action.path = path;
-    follow.lastObservedPosition = { ...target.position };
-    follow.nextRepathAt = world.simTime + FOLLOW_RULES.repathSeconds;
-  }
-  return null;
+  return outcome(false, 'needs-confirmation', `Accept revised action? ${fulfillment.executableDescription} Not fulfilled: ${fulfillment.omitted.map(o => o.requirement).join('; ')}`);
+}
+
+export function confirmActionRevision(world: WorldState, actorId: string, attemptId: string, id: string): Outcome {
+  const actor = world.entities[actorId]!.actor!;
+  const pending = actor.agency.attempts.find(a => a.id === attemptId && a.status === 'awaiting-confirmation');
+  const alternative = pending?.alternative;
+  if (!pending || !alternative) return outcome(false, 'attempt-unavailable', 'That revised action is no longer awaiting your decision.');
+  if (pending.manifestRevision !== world.moduleManifest.revision || (alternative.mode === 'replace' && actor.planGeneration !== alternative.expectedPlan))
+    return outcome(false, 'stale-alternative', 'Mechanics or current work changed. Submit a fresh action instead of accepting this old replacement.');
+  const result = arrangePlan(actor, id, alternative.commands.map((c,index) => ({...c, actorId, id:`${id}:${index}`})), alternative.mode, actor.agency.plan?.revision ?? 0, null);
+  if (result.ok) withdrawAttempt(actor, attemptId);
+  return result;
 }
 ''')
-edit('packages/domain/src/types.ts',"export type ActionType =\n  | 'move'", "export type ActionType =\n  | 'follow'\n  | 'move'")
-edit('packages/domain/src/types.ts',"export interface Action {\n  id: string;", "export interface Action {\n  follow?: { distance: number; nextRepathAt: number; lastObservedPosition?: Position };\n  id: string;")
-edit('packages/domain/src/types.ts',"| { type: 'move'; destination: SurfacePoint }", "| { type: 'move'; destination: SurfacePoint }\n    | { type: 'follow'; targetId: string; distance?: number }")
-edit('packages/domain/src/kernel.ts',"import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';", "import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';\nimport { FOLLOW_RULES, updateFollowPath } from './follow.js';")
-edit('packages/domain/src/kernel.ts',"['gather', 'harvest', 'hunt', 'replenish'].includes(command.type)","['gather', 'harvest', 'hunt', 'replenish', 'follow'].includes(command.type)")
-edit('packages/domain/src/kernel.ts',"switch (command.type) {\n    case 'move': {", """switch (command.type) {
-    case 'follow': {
-      const desiredDistance = command.distance ?? FOLLOW_RULES.defaultDistance;
-      if (command.targetId === actor.id || !Number.isFinite(desiredDistance) || desiredDistance < FOLLOW_RULES.minimumDistance || desiredDistance > FOLLOW_RULES.maximumDistance)
-        return reject('invalid-follow', 'Choose another perceived actor and a following distance between 1.5 and 12 world units.');
-      action = createAction(world, 'follow', 0);
-      action.targetId = command.targetId;
-      action.follow = { distance: desiredDistance, nextRepathAt: 0 };
-      const error = updateFollowPath(world, actor, action);
-      if (error) return reject('follow-unavailable', error);
-      break;
-    }
-    case 'move': {""")
-edit('packages/domain/src/kernel.ts',"if (action.stage === 'working') {\n      const error = startWork", "if (action.stage === 'working' && action.type !== 'follow') {\n      const error = startWork")
-edit('packages/domain/src/kernel.ts',"  if (!action) return;\n  if (action.stage === 'approaching') {", """  if (!action) return;
-  if (action.type === 'follow') {
-    const error = updateFollowPath(world, actor, action);
-    if (error) { failAction(world, actor, events, error); return; }
-    if (action.stage === 'approaching' && !moveAlongPath(world, actor, action.path,
-      SIMULATION_RULES.movementTilesPerSecond * seconds * (1 - (actor.actor?.body?.conditions.injury ?? 0) / 200)))
-      failAction(world, actor, events, 'the following route became physically blocked.');
-    return; // Holding is still an active activity, never a completed arrival.
-  }
-  if (action.stage === 'approaching') {""")
-edit('packages/domain/src/agency.ts',"    case 'move':\n      return finitePoint(command.destination) && isSafeRecordId(command.destination.surfaceId);", """    case 'move':
-      return finitePoint(command.destination) && isSafeRecordId(command.destination.surfaceId);
-    case 'follow':
-      return isSafeRecordId(command.targetId) && (command.distance === undefined || (Number.isFinite(command.distance) && command.distance >= 1.5 && command.distance <= 12));""")
-edit('packages/protocol/src/index.ts',"    | 'move'\n", "    | 'move'\n    | 'follow'\n")
-edit('packages/protocol/src/index.ts',"  position?: SurfacePoint;\n  quantity?: number;", "  position?: SurfacePoint;\n  distance?: number;\n  quantity?: number;")
-edit('apps/server/src/world-service.ts',"      'move',\n", "      'move',\n      'follow',\n")
-edit('apps/server/src/world-service.ts',"    targetId: id.optional(),", "    targetId: id.optional(),\n    distance: z.number().min(1.5).max(12).optional(),")
-edit('apps/server/src/world-service.ts',"      case 'gather':\n      case 'harvest':", """      case 'follow':
-        if (!input.targetId) return { ok: false, code: 'target', message: 'Choose an actor to follow.' };
-        command = { ...envelope, type: 'follow', targetId: input.targetId, ...(input.distance !== undefined ? { distance: input.distance } : {}) };
+edit('packages/domain/src/types.ts',"| { type: 'withdraw-attempt'; attemptId: string }", "| { type: 'withdraw-attempt' | 'confirm-attempt'; attemptId: string }")
+prepend('packages/domain/src/kernel.ts',"import { confirmActionRevision } from './agency.js';\n")
+edit('packages/domain/src/kernel.ts',"    case 'withdraw-attempt': {", "    case 'confirm-attempt': {\n      result = confirmActionRevision(world, actor.id, command.attemptId, command.id);\n      break;\n    }\n    case 'withdraw-attempt': {")
+prepend('packages/domain/src/response.ts',"import { bindNavigationInvocation, validActionFulfillment, type NavigationInvocation, type ActionFulfillment } from './action-capabilities.js';\nimport { proposeActionRevision } from './agency.js';\n")
+edit('packages/domain/src/response.ts',"kind: 'known' | 'expression' | 'proposal';", "kind: 'known' | 'expression' | 'proposal' | 'invoke';\n    invocation?: NavigationInvocation | null;")
+edit('packages/domain/src/response.ts',"export interface AttemptBinding {\n  description: string;", "export interface AttemptBinding {\n  fulfillment?: ActionFulfillment;\n  description: string;")
+edit('packages/domain/src/response.ts',"['kind', 'actionId', 'verb', 'targetEntityId', 'description', 'mode']", "['kind', 'actionId', 'verb', 'targetEntityId', 'description', 'mode', ...(op.act.invocation !== undefined ? ['invocation'] : [])]")
+edit('packages/domain/src/response.ts',"!['known', 'expression', 'proposal'].includes(op.act.kind)", "!['known', 'expression', 'proposal', 'invoke'].includes(op.act.kind)")
+p=Path('packages/domain/src/response.ts'); s=p.read_text(); a=s.index('    const invalidActShape ='); b=s.index('    if (invalidActShape)',a)
+s=s[:a]+'''    const invalidActShape = !!act && (
+      (act.kind !== 'invoke' && act.invocation != null) ||
+      (act.kind === 'invoke' && (!act.invocation || act.actionId || act.verb || act.targetEntityId || act.description)) ||
+      (act.kind === 'known' && (!act.actionId || act.verb || act.targetEntityId || act.description)) ||
+      (act.kind === 'expression' && (!act.verb || act.actionId || act.description)) ||
+      (act.kind === 'proposal' && (!act.description || act.description.length > 500 || act.actionId || act.verb || (act.targetEntityId && !permitted.has(act.targetEntityId))))
+    );
+'''+s[b:]; p.write_text(s)
+edit('packages/domain/src/response.ts',"    } else if (act?.kind === 'known' && !Object.hasOwn(actions, act.actionId!)) {", """    } else if (act?.kind === 'invoke') {
+      const bound = bindNavigationInvocation(world, actorId, `${id}:${localId}`, act.invocation, entityIds);
+      if ('ok' in bound) components[localId] = bound;
+      else if (act.mode === 'replace' && input.entities[actorId]!.actor!.planGeneration !== expectedPlan)
+        components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
+      else components[localId] = arrangePlan(world.entities[actorId]!.actor!, `${id}:${localId}`, [bound], act.mode, world.entities[actorId]!.actor!.agency.plan?.revision ?? 0, null);
+    } else if (act?.kind === 'known' && !Object.hasOwn(actions, act.actionId!)) {""")
+edit('packages/domain/src/response.ts',"'cancel', 'recover', 'withdraw-attempt'", "'cancel', 'recover', 'withdraw-attempt', 'confirm-attempt'",2)
+edit('packages/domain/src/response.ts',"        const selected = matches[0]!.commands;\n        if (", """        const selected = matches[0]!.commands;
+        const fulfillment = matches[0]!.fulfillment;
+        if (fulfillment && !validActionFulfillment(fulfillment)) {
+          components[localId] = outcome(false, 'invalid-fulfillment', 'The action fulfillment report is invalid.');
+          continue;
+        }
+        if (fulfillment?.verdict === 'confirm') {
+          components[localId] = proposeActionRevision(world, actorId, `${id}:${localId}`, selected.map((c,index) => ({...c,actorId,id:`${id}:${localId}:${index}`})), fulfillment, act.mode, expectedPlan);
+          continue;
+        }
+        if (""")
+edit('packages/domain/src/index.ts',"export * from './agency.js';", "export * from './agency.js';\nexport * from './action-capabilities.js';")
+# Native command adapters share existing user authority; callers cannot select another actor.
+edit('packages/protocol/src/index.ts',"    | 'follow'", "    | 'follow'\n    | 'confirm-attempt'\n    | 'withdraw-attempt'")
+edit('packages/protocol/src/index.ts',"  distance?: number;", "  distance?: number;\n  attemptId?: string;")
+edit('apps/server/src/world-service.ts',"      'follow',", "      'follow',\n      'confirm-attempt',\n      'withdraw-attempt',")
+edit('apps/server/src/world-service.ts',"    distance: z.number().min(1.5).max(12).optional(),", "    distance: z.number().min(1.5).max(12).optional(),\n    attemptId: id.optional(),")
+edit('apps/server/src/world-service.ts',"      case 'follow':", """      case 'confirm-attempt':
+      case 'withdraw-attempt':
+        if (!input.attemptId) return { ok: false, code: 'attempt', message: 'Choose a pending action.' };
+        command = { ...envelope, type: input.type, attemptId: input.attemptId };
         break;
-      case 'gather':
-      case 'harvest':""")
-edit('apps/server/src/cognition.ts',"    case 'move':\n      return { ...base, type: 'move', destination: input.position! };", """    case 'move':
-      return { ...base, type: 'move', destination: input.position! };
-    case 'follow':
-      return { ...base, type: 'follow', targetId: input.targetId!, ...(input.distance !== undefined ? { distance: input.distance } : {}) };""")
-edit('apps/server/src/action-descriptions.ts',"  move: 'Walk", "  follow: 'Follow a currently perceived actor, stopping when the target is lost or the activity is interrupted. No attack or stealth is implied.',\n  move: 'Walk")
-with Path('docs/architecture.md').open('a') as f: f.write('''\n\n## Native follow activity\n\nThe native `follow` command uses the existing physical action lane and movement owner. It follows a currently visible living actor at a bounded desired distance (default 3 world units), with a 0.75-unit hold/resume band and bounded target-displacement replanning. Losing current visual evidence, losing support, or an invalid route ends the activity honestly; there is no hidden-position tracking, scent, stealth or sunset condition. Holding near the target remains running. Explicit cancellation/replacement and plan interruption retain their existing semantics. This is the initial ground/visual adapter, not a universal locomotion controller.\n''')
-with Path('docs/maintainers/TODO.md').open('a') as f: f.write('''\n\n## Action capability slice: deferred automated coverage\n\nNo new unit/browser tests are written or run for this task at the owner's request. Add automated cases for direct/queued follow admission, self/hidden/dead targets, blocked/multi-level routes, visual loss, hold/resume hysteresis, cancellation, interrupted plans, same-version save/load and bounded replanning. Runtime smoke and existing stress scripts provide separate limited evidence, not these tests. Follow-up acceptance is owned by [AC04/AC05](action-capabilities.md).\n''')
+      case 'follow':""")
+edit('apps/server/src/cognition.ts',"    case 'follow':", "    case 'confirm-attempt':\n    case 'withdraw-attempt':\n      return { ...base, type: input.type, attemptId: input.attemptId! };\n    case 'follow':")
+edit('apps/server/src/action-descriptions.ts',"  follow:", "  'confirm-attempt': 'Accept the exact revised action and its disclosed omissions. Native prerequisites are rechecked before execution.',\n  'withdraw-attempt': 'Decline or withdraw a pending action; ongoing work is unchanged.',\n  follow:")
+# The parser still uses the ordinary bounded response envelope, with explicit invocation arguments.
+prepend('apps/server/src/cognition-contracts.ts',"export const NAVIGATION_INSTRUCTIONS = 'For movement not listed in suggestions use act.kind=invoke and invocation={family:move,x,z,surfaceId,targetEntityId:null,distance:null}; coordinates are world X/Z, not height. For ordinary visible following use invocation={family:follow,x:null,z:null,surfaceId:null,targetEntityId:exactReference,distance:null}. Other act fields are null. Follow stops on lost sight, cancellation or native interruption; it does not support stealth or sunset termination. Put a request with unsupported qualifiers in kind=proposal instead, preserving its text and optional targetEntityId, so fulfillment can be reviewed. Never silently drop a requirement by choosing a direct invocation. For any non-invoke act, invocation is null.';\n")
+edit('apps/server/src/cognition-contracts.ts',"kind: z.enum(['known', 'expression', 'proposal']),", """kind: z.enum(['known', 'expression', 'proposal', 'invoke']),
+        invocation: z.object({family:z.enum(['move','follow']),x:z.number().finite().nullable(),z:z.number().finite().nullable(),surfaceId:z.string().min(1).max(120).nullable(),targetEntityId:z.string().min(1).max(120).nullable(),distance:z.number().min(1.5).max(12).nullable()}).strict().nullable().optional(),""")
+# The current schema remains a request-bound provider view; domain validates the exact references again.
+edit('apps/server/src/decision-context.ts',"COGNITION_VERSION, RESPONSE_INSTRUCTIONS", "COGNITION_VERSION, RESPONSE_INSTRUCTIONS, NAVIGATION_INSTRUCTIONS")
+edit('apps/server/src/decision-context.ts',"    stimulus,\n    intentActions:", "    stimulus,\n    navigation: NAVIGATION_INSTRUCTIONS,\n    currentPosition: observed.actor.position,\n    currentSupport: observed.actor.spatial.supportSurfaceId,\n    publicSurfaces: world.map.spatial.disclosure === 'public' ? world.map.spatial.surfaces.map(({id,name}) => ({id,name})) : [],\n    intentActions:",1)
+# There are two context assemblies, with the refreshed one using current state.
+edit('apps/server/src/decision-context.ts',"    stimulus,\n    intentActions:", "    stimulus,\n    navigation: NAVIGATION_INSTRUCTIONS,\n    currentPosition: currentObserved.actor.position,\n    currentSupport: currentObserved.actor.spatial.supportSurfaceId,\n    publicSurfaces: currentWorld.map.spatial.disclosure === 'public' ? currentWorld.map.spatial.surfaces.map(({id,name}) => ({id,name})) : [],\n    intentActions:",1)
+# Extra metadata must actually reach the readable prompt, not sit in unused context fields.
+edit('apps/server/src/decision-context.ts',"const prompt = readableDecisionContext(context, offered, false);", "const prompt = readableDecisionContext(context, offered, false) + `\\nNavigation: ${NAVIGATION_INSTRUCTIONS}\\nPosition/support: ${JSON.stringify({position:currentObserved.actor.position,support:currentObserved.actor.spatial.supportSurfaceId})}\\nPublic supports: ${JSON.stringify(context['publicSurfaces'])}`;")
+# Pending alternatives are explicitly offered to the actor, not accepted on its behalf.
+p=Path('apps/server/src/decision-context.ts'); s=p.read_text(); start=s.index('  const intentActions ='); end=s.index('  const planActions =',start)
+s=s[:start]+'''  const intentActions = observed.actor.actor!.agency.attempts.flatMap((attempt, index) => [
+    { id:`w${index}`, description:`Decline/withdraw pending intent: ${attempt.description}`, command:{type:'withdraw-attempt' as const,id:jobId,actorId,attemptId:attempt.id} },
+    ...(attempt.alternative ? [{ id:`c${index}`, description:`Accept this revised action? ${attempt.alternative.fulfillment.executableDescription}. Not fulfilled: ${attempt.alternative.fulfillment.omitted.map(o => o.requirement).join('; ')}. ${attempt.alternative.fulfillment.reason}`, command:{type:'confirm-attempt' as const,id:jobId,actorId,attemptId:attempt.id} }] : [])
+  ]);
+'''+s[end:]; p.write_text(s)
+with Path('docs/architecture.md').open('a') as f: f.write('''\n\n## Action fulfillment and revision approval\n\nParameterized `invoke` operations bind native move/follow arguments through one domain adapter. Explicit freeform proposals can retain a scoped target reference. A server-produced fulfillment report can require confirmation: the proposed command sequence and omissions then live in the actor's existing private pending-intent owner, without starting or replacing work. The actor may select an explicit accept or withdraw handle in a later ordinary decision; player accept/decline uses the same native command owner. Acceptance pins the stored alternative, rechecks manifest and replacement-work freshness, and queues ordinary native steps whose live prerequisites are checked at execution. This is not a new invention registry or a general workflow interpreter.\n''')
+with Path('docs/maintainers/TODO.md').open('a') as f: f.write('''\n- Add deferred automated coverage for invocation field/target scope, coordinate/floor ambiguity, direct actor move/follow, exact pending-alternative acceptance, decline, stale replacement, manifest changes, save/load, and no physical mutation before confirmation. No tests are added by this implementation slice.\n''')
+Path('/tmp/action-message').write_text('[skip ci] feat: bind native navigation and persist owner-approved action revisions')

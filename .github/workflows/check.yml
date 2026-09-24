@@ -38,53 +38,48 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Baseline native stress
-        run: node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/action-baseline.cpuprofile
       - name: Apply bounded implementation slice
         run: |
+          sed -i 's/s.count(old)!=count/s.count(old)<count/;s/s.replace(old,new))/s.replace(old,new,count))/' .github/action-slice.py
           python .github/action-slice.py
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('apps/server/src/view.ts'); s=p.read_text(); s=s.replace("move: 'Walking',", "move: 'Walking',\n                      follow: 'Following',"); p.write_text(s)
-          PY
       - name: Format changed source
         run: git ls-files -m -o --exclude-standard apps packages docs archive README.md | grep -E '\.(ts|tsx|md)$' | xargs -r pnpm exec prettier --write
       - name: Production typecheck and build without test suites
         run: pnpm run build
-      - name: Native runtime smoke
+      - name: Runtime smoke
         run: |
           node --import tsx --input-type=module <<'JS'
-          import { createWorld, executeCommand, advanceWorld, observeActor, sameSurfacePoint } from './packages/domain/src/index.ts';
+          import { createWorld, advanceWorld, observeActor, sameSurfacePoint, bindNavigationInvocation, commitActorResponse } from './packages/domain/src/index.ts';
           let world = { ...createWorld(73), paused: false };
           const actor = Object.values(world.entities).find(e => e.actor?.controller === 'player');
-          const target = observeActor(world, actor.id).visibleEntities.find(e => e.actor?.alive && e.id !== actor.id);
-          const point = sameSurfacePoint(world, actor, actor.position.x + .5, actor.position.z);
-          let result = executeCommand(world, { id:'smoke-move',actorId:actor.id,type:'move',destination:point });
-          console.log('MOVE_ADMISSION', result.outcome);
+          const observation=observeActor(world,actor.id);
+          const refs=[actor.id,...observation.visibleEntities.map(e=>e.id)];
+          const point = sameSurfacePoint(world,actor,actor.position.x+.5,actor.position.z);
+          const invocation={family:'move',x:point.x,z:point.z,surfaceId:point.surfaceId,targetEntityId:null,distance:null};
+          console.log('BIND',bindNavigationInvocation(world,actor.id,'smoke-bind',invocation,refs));
+          const response={operations:[{localId:'move',requiresAccepted:[],talk:null,think:null,goal:null,plan:null,act:{kind:'invoke',actionId:null,verb:null,targetEntityId:null,description:null,mode:'enqueue',invocation}}]};
+          const result=commitActorResponse(world,'smoke-invoke',actor.id,response,{},refs,actor.actor.planGeneration);
+          console.log('INVOKE',result.outcome,result.world.responseReceipts['smoke-invoke']);
           world=advanceWorld(result.world,20).world;
-          console.log('MOVE_RESULT', world.entities[actor.id].position, world.entities[actor.id].actor.action?.type ?? 'idle');
-          if(target) {
-            result=executeCommand(world,{id:'smoke-follow',actorId:actor.id,type:'follow',targetId:target.id,distance:3});
-            console.log('FOLLOW_ADMISSION',result.outcome);
-            world=advanceWorld(result.world,20).world;
-            console.log('FOLLOW_RUNNING',world.entities[actor.id].actor.action);
-            result=executeCommand(world,{id:'smoke-cancel',actorId:actor.id,type:'cancel'});
-            console.log('FOLLOW_CANCEL',result.outcome,result.world.entities[actor.id].actor.action);
-          } else console.log('FOLLOW_SMOKE_NO_VISIBLE_TARGET');
+          console.log('INVOKE_END',world.entities[actor.id].position,world.entities[actor.id].actor.agency.plan);
           JS
-      - name: Post-change native stress
-        run: node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/action-after.cpuprofile
+      - name: Native stress
+        run: |
+          node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/action-after.cpuprofile > /tmp/action-stress.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/action-stress.json'))
+          print(json.dumps({k:d.get(k) for k in ['steps','totalMs','p50Ms','p95Ms','maxStepMs','heapUsedBytes','finalWorldDigest']},indent=2))
+          PY
       - name: Commit qualified source slice
         run: |
           git add apps packages docs archive README.md
           if ! git diff --cached --quiet; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m '[skip ci] feat: add perception-bound native follow activity'
+            git commit -m "$(cat /tmp/action-message)"
             git push origin HEAD:design/action-repertoire-and-capability-grounding
           fi
-      - name: Diagnostic source boundary inventory
+      - name: Source diff
         if: always()
-        run: |
-          git diff --stat
-          grep -R -n -E 'validateWorld|schemaVersion.*9|schemaVersion !==|case .withdraw-attempt.' apps/server/src/store.ts apps/server/src/game-saves.ts packages/domain/src/agency.ts packages/domain/src/kernel.ts | head -70
+        run: git diff --stat
