@@ -247,3 +247,8 @@ Treat this as an attribution target, not a result of multiplying microbenchmark 
 - [ ] Further reduce indivisible finalization, a single path query, projection/serialization and commit spikes when they dominate measured full-stack tails. A long-lived worker or isolated serializer remains PF10-gated; it cannot create another writer or copy the full world each frame.
 - [ ] Qualify sustained 1×/3×/8× real-time debt and command latency with representative moving observers, history, database and browser load. The larger native profile and profiler headroom exclude those costs.
 - [ ] Flat active-evidence arrays still have copy-on-write append cost; current backlog/consolidation policy bounds them. Profile legitimate mature workloads before introducing paged active state or replacing Immer.
+
+### Residual capture and dense-scene gate
+
+- [ ] Investigate the warm-path timeout from the rejected per-entity capture experiment before replacing whole-roster `current` materialization. The 200-step equality trace passed but the warm gem profile did not finish within 30 seconds; no candidate performance result was accepted. The verified implementation still pays roster-snapshot/copying cost. See [record](../verification/perception-capture-deferred.json).
+- [ ] Reduce and remeasure genuine dense acquisition bursts after the private-audience correction. The final 612-entity workload failed requested 3× native capacity with a 4.46-second cold maximum; first acquisition, finalization, active evidence representation and main-thread service tails need separate attribution. Workers can improve isolation but do not remove necessary output construction or permit dropping witnesses.

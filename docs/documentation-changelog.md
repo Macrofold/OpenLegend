@@ -147,3 +147,5 @@ Aligned current action docs with scoped binding/approval authority, native-behav
 ## 2026-09-24 — Perception and reaction performance
 
 Recorded private visual-acquisition semantics, bounded experience batches, exposure/feature reuse, ordered reaction intake and cooperative native checkpoints. Updated EPR/PF delivery state, current development format 13, measured native/HTTP evidence and deferred automated coverage. Superseded the SR10 requirement to reproduce broadcast acquisition audiences while retaining outward-event equivalence requirements.
+
+The optional scalar-only capture experiment was rejected after a warm-workload deadline failure. Recorded the unchanged qualified implementation, the warm mixed result without a throughput gain, and the dense-scene capacity failure instead of reporting universal scalability.

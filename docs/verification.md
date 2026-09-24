@@ -552,3 +552,9 @@ The [final matched-host report](verification/perception-final-performance.json) 
 | gems     | after  |                  661.2 |       4.53 |          143.9 |            1.51 |
 
 Cold maxima, warm throughput, longest cooperative slices and full-stack command latency are separate measures. No promise that every native suboperation fits eight milliseconds is made. Remaining indivisible finalization/path/projection/commit work and larger-world qualification stay in PF/EPR. Private-acquisition audience/evidence differences are intentional; old broadcast-event digest equality is not the correctness oracle.
+
+### Rejected optional capture experiment
+
+An additional attempt to replace `current(world.entities)` with per-entity reads compiled and matched complete transition digests over a 200-step native trace, but the warm gem workload failed its 30-second deadline during measured advances. The change was **not committed to runtime source**. The preceding qualified implementation and its final matched-host report remain the current result; do not claim scalar-only actor capture or extrapolate the short trace into performance safety. The [rejection record](verification/perception-capture-deferred.json) preserves the exact scope. Investigate draft/proxy allocation and warm-path behavior before trying that optimization again.
+
+The full-package warm mixed run did not show a throughput improvement: approximately 2,959 ms before versus 2,989 ms after across 600 measured advances, with run p95 5.77 ms versus 7.43 ms. Cold-burst gains must not be presented as a universal steady-state speedup. The larger 612-entity scene produced 61,135 events and 66,083 awareness records, took approximately 8.21 seconds for 180 advances and had a 4.46-second cold maximum; native headroom at requested 3× was 0.12. This is a measured failing capacity case, not 100-observer qualification.
