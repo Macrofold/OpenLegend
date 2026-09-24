@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import { performance } from 'node:perf_hooks';
+import * as D from '../packages/domain/src/index.ts';
+import { ActorWork } from '../apps/server/src/actor-work.ts';
+const cases=[];
+let world=D.createWorld(73);D.migrateCognition(world);
+world=D.freezeWorld(D.advanceWorld(D.freezeWorld(world),1).world);
+D.validateWorldModules(world);
+const work=new ActorWork();let inspections=0;
+const inputs=id=>{inspections++;return [world.experience.awareness[id],world.visiblePeople?.[id],world.visibleObjects?.[id]]};
+work.refresh(world,inputs);const initial=inspections;
+for(let i=0;i<1000;i++)work.refresh(world,inputs);
+if(inspections!==initial)throw Error('Unchanged snapshot rescanned');
+const id=D.NPC_ID, version=work.version(id);
+work.wake(id);work.inspected(id,Infinity,version);
+if(!work.ready(0,world.simTime).includes(id))throw Error('New wake lost');
+cases.push({name:'snapshot-and-wake-intake',refreshes:1001,inputInspections:inspections,newWakeRetained:true});
+const all=D.experiences(world,id,true).filter(m=>(m.sequence??0)>0).sort((a,b)=>(a.sequence??0)-(b.sequence??0));
+const tail=[...D.experiencesSince(world,id,0)];
+if(JSON.stringify(all.map(m=>m.id).sort())!==JSON.stringify(tail.map(m=>m.id).sort()))throw Error('Reaction evidence coverage mismatch');
+cases.push({name:'reaction-evidence-coverage',full:all.length,tail:tail.length});
+const mature=D.updateWorld(world,d=>{
+  const start=d.nextId;
+  const additions=Array.from({length:20000},(_,i)=>({operation:'add',entry:{source:'awareness',value:{eventId:`synthetic-${i}`,actorId:id,text:'Synthetic private profiling evidence',at:d.simTime,sequence:start+i,modality:'observed',recognized:true,intelligible:true,entityIds:[],importance:0}}}));
+  if(D.mutateExperience(d,id,additions)===null)throw Error('Mature setup failed');
+  d.nextId=start+20001;
+});
+const last=mature.experience.awareness[id].at(-1).sequence;
+const t=performance.now();let n=0;
+for(let i=0;i<1000;i++)n += [...D.experiencesSince(mature,id,last-1)].length;
+cases.push({name:'mature-source-tail',retained:20000,queries:1000,returned:n,totalMs:performance.now()-t});
+if(n!==1000)throw Error('Tail query did not honor watermark');
+const before=JSON.stringify(world);
+const next=D.advanceWorld(world,1).world;
+if(JSON.stringify(world)!==before)throw Error('Native evidence mutated input');
+const aware=world.experience.awareness[id]?.[0];
+if(aware){const edited=D.updateWorld(world,d=>{D.mutateExperience(d,id,{operation:'update',entryId:`awareness:${aware.eventId}`,entry:{source:'awareness',value:{...aware,text:'Reviewed private evidence'}}})});if(edited.experience.awareness[id][0].text===aware.text)throw Error('Sealed evidence could not be edited through owner');}
+cases.push({name:'evidence-sealing-integrity',inputUnchanged:true,laterOwnerEdit:true});
+function compact(path){const r=JSON.parse(fs.readFileSync(path));return {totalMs:r.totalMs,p50Ms:r.p50Ms,p95Ms:r.p95Ms,maxMs:r.maxStepMs,counts:r.finalCounts,headroom:r.nativeHeadroomAtRequestedSpeed,hottest:r.hottestSelfMs?.slice(0,8)};}
+const report={scope:'Ad hoc native/intake runtime and matched-host profiling, no automated suite or live models.',node:process.version,run:process.env.GITHUB_RUN_ID,paidModelCalls:0,cases,stress:{}};
+for(const s of ['mixed','gems'])report.stress[s]={before:compact(`/tmp/epr-before-${s}.json`),after:compact(`/tmp/epr-after-${s}.json`)};
+fs.writeFileSync('docs/verification/perception-intake.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
