@@ -282,6 +282,13 @@ export class WildernessScene implements WorldRenderer {
           ? entry.width
           : undefined;
         this.orientCard(entry.sprite);
+        for (const mesh of entry.sprite.render?.meshInstances ?? [])
+          mesh.setParameter(
+            'ol_spriteSize',
+            card.horizontalHeight === undefined
+              ? [entry.width, entry.height]
+              : [entry.height, entry.width],
+          );
       }
       entry.view = entity;
       entry.observed = true;
@@ -528,11 +535,13 @@ export class WildernessScene implements WorldRenderer {
     // supplied by the shared billboard shader; collision and shadow proxies never rotate.
     sprite.setRotation(this.camera.getRotation());
     sprite.rotateLocal(90, 0, 0);
+    if (binding.horizontalHeight !== undefined) sprite.rotateLocal(0, 90, 0);
+    const height = binding.horizontalHeight ?? binding.height;
     const up = this.camera.up;
     sprite.setLocalPosition(
-      binding.x + up.x * (binding.height / 2 + bob),
-      binding.y + up.y * (binding.height / 2 + bob),
-      binding.z + up.z * (binding.height / 2 + bob),
+      binding.x + up.x * (height / 2 + bob),
+      binding.y + up.y * (height / 2 + bob),
+      binding.z + up.z * (height / 2 + bob),
     );
     const foot = sprite.parent!.getPosition();
     for (const mi of sprite.render?.meshInstances ?? [])
@@ -1077,8 +1086,8 @@ export class WildernessScene implements WorldRenderer {
         entry.reveal,
         entry.materials[Math.max(0, entry.lastFrame) % entry.materials.length]!,
         position,
-        entry.width,
-        entry.height,
+        this.cards.get(entry.sprite)?.horizontalHeight === undefined ? entry.width : entry.height,
+        this.cards.get(entry.sprite)?.horizontalHeight ?? entry.height,
         this.revealStrength(entry),
         dt,
         entry.observed && entry.root.enabled,

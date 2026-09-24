@@ -377,9 +377,8 @@ export function npcCandidates(
   );
   for (const entity of observed.visibleEntities) {
     const approach = approaches.get(entity.id);
-    const position = approach?.status === 'pending'
-      ? approach.request.destinations[0]
-      : approach?.path.at(-1);
+    const position =
+      approach?.status === 'pending' ? approach.request.destinations[0] : approach?.path.at(-1);
     if (!position) continue;
     const command: CommandInput = { type: 'move', position };
     if (service.previewCommand(command, actorId).ok)
@@ -427,11 +426,12 @@ export function npcCandidates(
     // Target discovery uses only this actor's perception. Terrain is the same public
     // geometry used by native movement, never a search for hidden entities/items.
     const reach = entity.animal && launcher ? launcher.range : SIMULATION_RULES.interactionRadius;
-    const route = reach === SIMULATION_RULES.interactionRadius
-      ? approaches.get(entity.id)
-      : canReachEntity(service.world, observed.actor, entity, reach)
-      ? { status: 'reached', path: [] as import('@open-legend/spatial').SurfacePoint[] }
-      : findApproachPath(service.world, observed.actor, entity, reach);
+    const route =
+      reach === SIMULATION_RULES.interactionRadius
+        ? approaches.get(entity.id)
+        : canReachEntity(service.world, observed.actor, entity, reach)
+          ? { status: 'reached', path: [] as import('@open-legend/spatial').SurfacePoint[] }
+          : findApproachPath(service.world, observed.actor, entity, reach);
     if (!route) continue;
     const path = route.path;
     if (entity.actor?.alive && entity.id !== actorId && supportsManualWork(observed.actor))

@@ -121,7 +121,12 @@ export function recordVisualAcquisition(
   targetId: string,
   meaningful: boolean,
 ): void {
-  if (!hasMemory(observer) || !observer.actor?.alive || capabilityBlocked(world, observer, 'perception')) return;
+  if (
+    !hasMemory(observer) ||
+    !observer.actor?.alive ||
+    capabilityBlocked(world, observer, 'perception')
+  )
+    return;
   recordEvent(
     world,
     events,
