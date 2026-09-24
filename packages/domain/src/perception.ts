@@ -5,7 +5,7 @@ import {
   clearSegment,
   distance3D,
   resolveSupport,
-  soundTransmission,
+  soundTransmissionAtLeast,
   type SurfacePoint,
 } from '@open-legend/spatial';
 import { bodyProfile, spatialMap } from './spatial-state.js';
@@ -175,11 +175,11 @@ export function withinHearingRange(world: WorldState, observer: Entity, source: 
   const origin = { ...source.position, y: source.position.y + bodyProfile(source).earHeight };
   const separation = distance3D(listener, origin);
   if (separation > radius) return false;
-  const transmission = soundTransmission(spatialMap(world), listener, origin);
+  const transmission = soundTransmissionAtLeast(spatialMap(world), listener, origin, 0.65);
   // Current speech consumers assume intelligible words and identity. Until EPR supplies
   // graded auditory contacts, do not put an indistinct sound in that full-text audience.
   // docs/spatial-world.md#seeing-and-hearing-in-3d
-  return transmission >= 0.65 && separation <= radius * transmission;
+  return transmission !== null && separation <= radius * transmission;
 }
 export function contactViews(entity: Entity): ContactView[] {
   return Object.values(entity.actor?.contacts ?? {}).map((c) => ({
@@ -216,6 +216,6 @@ export function canSee(from: Position, to: Position): boolean {
 export function canHear(world: WorldState, from: Position, to: Position): boolean {
   const separation = distance(from, to);
   if (separation > PERCEPTION_RULES.hearingRadius) return false;
-  const transmission = soundTransmission(spatialMap(world), from, to);
-  return transmission >= 0.65 && separation <= PERCEPTION_RULES.hearingRadius * transmission;
+  const transmission = soundTransmissionAtLeast(spatialMap(world), from, to, 0.65);
+  return transmission !== null && separation <= PERCEPTION_RULES.hearingRadius * transmission;
 }

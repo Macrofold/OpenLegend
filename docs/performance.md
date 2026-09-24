@@ -176,3 +176,71 @@ Keep CPU-bound work in a worker only when it removes a measured event-loop bottl
 | A 10,000× target can encourage premature infrastructure                             | Optimize and remeasure one bottleneck at a time; defer larger mechanisms until their gate is met                                            |
 
 The immediate sequence needs no new product decision: it preserves authority, durable command acknowledgements, event retention and gameplay timing. Product-sensitive alternatives are centralized in [D58](../archive/05-project/open-decisions.md#d58--durability-and-storage-placement), [D59](../archive/05-project/open-decisions.md#d59--historical-retention-and-command-retry-horizon), and the existing D03/D09/D22 choices for overload, supported devices and density. Unresolved research belongs to [R12](../archive/05-project/research-backlog.md), not a claim that this design already supports thousands of active players.
+
+## Eight-times spatial and sensory budget
+
+This is the accepted optimization direction, not a declaration that dense 8x performance has passed. PF12 sequences work in the existing PF/SW/EPR owners. [Rebase and runtime evidence](verification/spatial-rebase-eightx.md) records the measured starting point.
+
+### Define the rate before optimizing
+
+The current host has a base ratio of 60 simulated seconds per real second: 8x requests **480 simulated seconds per real second**, not eight. A serial one-simulated-second transition therefore has only 2.08 ms of total wall-service allowance at saturation. Aim below 1 ms of steady native work per such transition to leave headroom for durable boundaries, publication, commands and GC. Retain the existing approximately 8 ms cooperative batch budget; one oversized atomic step can still exceed it. Short samples do not prove a tail-latency guarantee.
+
+Measure actual world-time progress against monotonic elapsed wall time, separately recording explicit pauses, required-navigation waits, admitted debt, not-yet-admitted busy callback time, and queue age. A blocked native call is not completed simulation. Report cold preparation separately but also include its visible delay in command-to-movement latency. Required-data exclusions cannot be used to claim cold navigation is instant or an overloaded world sustains 8x.
+
+Use the starter scene, the current 318-entity sensing workload, and the earlier combined 329-entity/23-surface workload as initial reproducible cases, not population limits or a promise that every spatial distribution passes. Independently vary history, observer count, moving targets, sounds, profile count, stacked floors, render coverage and geometry edits. Current evidence supports the starter's short server run; dense 8x remains unqualified.
+
+### Strict behavior and elastic presentation
+
+| Preserve exactly                                                                                      | May reduce or defer within this contract                                                                    |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Body clearance, intended support/floor, action timing, conservation and ordered consequential effects | Visual particles, decorative grass density, shadow detail/resolution and non-authoritative post-processing  |
+| Character-specific sight/hearing and observer-private evidence; immediate revocation                  | Fewer redundant geometry queries when a conservative proof remains valid; never fewer legitimate recipients |
+| Simulation time, retained admitted debt and deterministic native ordering                             | Fewer replacement-only pose publications per real second, with smooth authorized presentation               |
+| Existing command durability and forgetting/accounting boundaries                                      | Batched encodings/writes within existing transactions; no enlarged crash-loss window by stealth             |
+| Read-through eligibility, meaningful interactions and native survival independent of camera position  | Camera-frustum render culling and distance/detail levels that do not affect simulation or knowledge         |
+
+Do not cap heard speech, drop visibility entries, sleep an offscreen actor, shorten sensory range, or replace several fixed steps with a single coarse step to meet the target. The current straight-line acoustic family remains intentionally simpler than diffraction/reverberation; a new room-acoustic model is not a prerequisite for optimizing it.
+
+### 1. Separate unchanged static work from changed agents
+
+The highest-value hypothesis is to cache **dependency-valid results**, not just individual ray intersections. A stationary observer looking at unchanged objects and geometry should not rebuild the same object-visible list every simulated second. Keep static object membership/poses separate from moving actor targets. Geometry, source identity/pose/body, observer pose/anchors/range/capability and relevant detector policy are explicit invalidators; metadata/recognition remains freshly observer-scoped rather than cached with geometric visibility.
+
+Use dirty entity/region work from the existing mutation owner and a phase-local scalar view, not a full-world deep copy into each worker. Snapshot/fork/load boundaries must not share mutable or revoked draft references. Start with unchanged static objects, then incremental cell membership. Moving entities update only affected neighborhoods. Preserve deterministic candidate/event order; unchanged arrays can be retained, while changed membership produces the same acquisition/loss semantics.
+
+More aggressive kinetic certificates are conditional: an outside-range pair may remain rejected until a conservative distance-to-boundary divided by relative maximum speed deadline, with immediate invalidation on teleport, sense or geometry changes. Range certificates do not prove unchanged line of sight. A skipped LOS query needs a valid swept-corridor/unchanged-geometry proof; otherwise perform the exact query. Do not implement arbitrary time throttles disguised as these proofs.
+
+### 2. Invert hearing queries around receiver volumes
+
+For sparse sounds, index eligible listeners' 3D sensory bounds and point-query the emission origin, rather than scan every world entity. Receiver ranges may differ, so do not assume one universal speaker radius. Use a bounds tree/hierarchical structure for very large extents rather than replicating them into unbounded hash cells. Resolve event-time availability, exact anchors, distance and transmission only for conservative candidates, then deliver to every qualified recipient in the established order.
+
+The current thresholded transmission query is implemented: an admitted attenuation factor below the requested minimum proves rejection immediately, without constructing/sorting the remaining crossings. Successful numeric answers and full-transmission callers retain canonical multiplication order. This relies on the finite family's factors being in [0,1]; amplifying authored media require new valid bounds. Do not prune a marginal multi-barrier product by a differently ordered floating-point approximation.
+
+Next reuse geometry-only acoustic transfer for identical emission/listener anchors and relevant geometry versions, separately applying event semantics and listener thresholds. Retain historical emission origins. Batch sounds sharing the same stable sensing boundary, not merely sounds arriving in the same wall-time interval. Full/muffled detection, localization and word/identity disclosure remain distinct EPR responsibilities. Playback mixing can be budgeted independently; the awareness ledger cannot lose events because the audio mixer is full.
+
+### 3. Keep continuous travel cheap after a route is known
+
+Retain Recast and the exact direct-path shortcut. Prewarm common profiles and reuse compatible prepared data; no per-actor WASM instance. Coalesce identical derived requests only when geometry, body envelope, support endpoints, traversal policy and knowledge scope all match. Keep the existing bounded worker/queue, deterministic admission and stale-result fences.
+
+For static geometry, consider a revision/body-bound certificate for an accepted segment: following a subset of a validated swept capsule corridor should not redo every identical static query. Dynamic occupancy, current capabilities, support transitions, destination validity and state-dependent effects still need their checks. Far-away geometry changes should eventually invalidate relevant tiles/segments rather than the entire world, but only after provenance and dirty-region coverage are complete.
+
+Whole-revision construction and first-use profile stalls remain measured limits. Bring forward affected-tile preparation when edits/content cause them; extra workers can improve responsiveness/parallel throughput but cannot repair excessive total work. Do not turn a technical wait into in-world hunger or resource-order disadvantage merely to avoid a visible preparation pause. Crowds/landing fairness and special traversal remain separately scoped features.
+
+### 4. Stop paying for old state and irrelevant status rules
+
+The rebased host already has bounded routine persistence, frozen snapshots, append-aware history, fixed-step yielding and trigger-based background work. Reuse them rather than adding a second journal or another universal queue. Profile applicability/deadline indexes for status effects and active component families; inert props must not repeatedly traverse rules that cannot apply to them. Indefinite sleep/needs/wake effects still advance semantically.
+
+Move genuinely cold historical data off repeated finalization/serialization paths under PF08 while retaining evidence, stable IDs, pending commitments, current knowledge and explicit durable reads. A time range of equivalent routine state updates may eventually be computed analytically to its next event boundary, but only with differential intermediate-event/RNG evidence. This is not permission to skip fixed-step interactions in dense active scenes.
+
+### 5. Separate simulation, replication and rendering rates
+
+Simulation speed is not the display refresh rate. Use existing publication owners to coalesce replacement-only poses to a measured real-time cadence (20 Hz is a starting experiment), while rendering camera/animation at device cadence. Action acknowledgement, removals, authorization revocation and ordered story/speech/effect records must not wait for that pose throttle. Slow clients resume from authoritative scoped state plus reliable history, not a backlog of every obsolete pose. Never send an NPC's future path to make interpolation easy.
+
+Measure browser/SSE/React work separately from the server's native budget. Existing main-thread yielding is useful; if unavoidable aggregate native work still monopolizes the host, evaluate one long-lived simulation owner worker receiving commands and sending permitted deltas, not full-world copies every tick. This is PF10's gated ownership change, not an additional competing world writer.
+
+### 6. Batch render cost without altering the world
+
+Prioritize shared-mesh shadow-proxy instancing, then static grass/foliage chunks, then resource atlases/instancing. Group by compatible material and spatial chunk, preserving per-instance alpha, virtual depth, orientation and reveal data. Whole-scene instancing can defeat culling; chunk by camera and light influence and retain offscreen casters whose shadows reach visible receivers.
+
+Avoid regenerating unchanged static shadow contributions; invalidate on light, relevant geometry/caster and shadow-volume changes. Camera-dependent cascades may still require updates. Keep the principal sun and a bounded local-shadow budget. Expose reduced-quality presentation rather than silently changing bodily sight/hearing or removing meaningful nearby items. Actual hardware-GPU measurements determine shadow/material/overdraw budgets; software-rendered frame rates do not establish desktop capacity.
+
+Further sealed-room/portal rejection, hierarchical route planners, simulation workers and regional partitioning follow evidence. A coarse region graph may conservatively reject impossible work; it cannot invent visibility, erase overlapping floors or grant hidden topology. The near-term strategy is less repeated work at one authoritative boundary, not a replacement engine.
