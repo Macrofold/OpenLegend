@@ -12,6 +12,7 @@ function fail(response: ServerResponse, status: number, message: string) {
   response.writeHead(status, {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-store',
+    Connection: 'close',
     ...(status === 401 ? { 'WWW-Authenticate': 'Bearer' } : {}),
     ...(status === 405 ? { Allow: 'POST' } : {}),
   });
@@ -46,6 +47,12 @@ export function createWorldMcp(
   config: McpReadConfig | null,
   current: () => { worldId: string; loading: boolean },
 ) {
+  if (!config)
+    return {
+      handle: async (_request: IncomingMessage, response: ServerResponse) =>
+        fail(response, 404, 'MCP is disabled.'),
+      close: async () => {},
+    };
   let inflight = 0,
     closed = false;
   // A dedicated service credential is read-only and world-bound; it is never an NPC identity.
@@ -72,7 +79,7 @@ export function createWorldMcp(
             },
           },
           async (args: unknown) => {
-            const result = validScope()
+            let result = validScope()
               ? tools.execute(name, args, {
                   worldId: config!.worldId,
                   principal: 'configured-mcp-world-reader',
@@ -82,11 +89,18 @@ export function createWorldMcp(
                   message: 'World read grant expired, changed, or is unavailable.',
                   cost: 'no-paid-work',
                 };
-            return {
+            const reply = () => ({
               isError: result.status !== 'ok',
               structuredContent: { ...result },
               content: [{ type: 'text' as const, text: JSON.stringify(result) }],
-            };
+            });
+            if (Buffer.byteLength(JSON.stringify(reply())) > 160 * 1024)
+              result = {
+                status: 'capacity',
+                message: 'MCP result exceeds its wire envelope; select a smaller page.',
+                cost: 'no-paid-work',
+              };
+            return reply();
           },
         );
       }

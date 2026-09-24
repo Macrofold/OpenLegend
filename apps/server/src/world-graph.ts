@@ -143,6 +143,7 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
           ref: reference,
           label: 'Historical recipe base',
           layer: 'definition',
+          availability: 'reference-only',
         });
       link(ref, reference, 'derives_from');
     }

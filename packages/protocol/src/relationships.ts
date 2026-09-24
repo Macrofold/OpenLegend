@@ -8,6 +8,7 @@ export interface RelationshipNode {
   ref: RelationshipRef;
   label: string;
   layer: 'definition' | 'live' | 'evidence';
+  availability?: 'reference-only';
 }
 export const RELATIONSHIP_KINDS = [
   'requires',
@@ -25,6 +26,8 @@ export const RELATIONSHIP_KINDS = [
   'observes',
   'governed_by',
   'represented_by',
+  'held_by',
+  'evidenced_by',
 ] as const;
 export type RelationshipKind = (typeof RELATIONSHIP_KINDS)[number];
 export interface RelationshipEdge {

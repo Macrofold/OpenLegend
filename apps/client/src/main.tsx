@@ -633,6 +633,9 @@ function App() {
       case 'agent':
         return (
           <WorldAgent
+            actorId={view.player.id}
+            godMode={view.godMode}
+            saveTimeline={view.saveTimeline}
             key={view.worldId}
             worldId={view.worldId}
             recipes={view.recipes}
