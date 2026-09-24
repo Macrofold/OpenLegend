@@ -27,7 +27,7 @@ async function clientLoad() {
   const settingsReady = once(process, 'message');
   process.send({ booted: true });
   const [settings] = await settingsReady;
-  const { base, cookie, epoch, position, seconds } = settings;
+  const { base, cookie, epoch, position, seconds, presenceId } = settings;
   const streamAbort = new AbortController();
   const stream = await fetch(base + '/api/events', {
     headers: { cookie },
@@ -78,6 +78,16 @@ async function clientLoad() {
     }
   };
   await Promise.all([
+    periodic(3000, async (i) => {
+      const response = await fetch(base + '/api/presence', {
+        method: 'POST',
+        headers: { cookie, origin: base, 'content-type': 'application/json' },
+        body: JSON.stringify({ clientId: presenceId, visible: true, sequence: i + 2 }),
+        signal: AbortSignal.timeout(15000),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw Error('Presence heartbeat failed');
+    }),
     periodic(500, async (i) => {
       const at = performance.now();
       const command =
@@ -218,7 +228,7 @@ async function main() {
   config.embeddingKey = '';
   const report = {
     scope:
-      'Real server timer, SQLite, SSE and separate-process HTTP load; no browser, PostgreSQL or live model calls. Cold acquisition is included in the first speed phase; later phases reuse this world. Phase metric maxima are cumulative since startup, not per-phase percentiles.',
+      'Real server timer, SQLite, SSE and separate-process HTTP load with presence heartbeats; no browser, PostgreSQL or live model calls. Cold acquisition is included in the first speed phase; later phases reuse this world. Phase metric maxima are cumulative since startup, not per-phase percentiles.',
     node: process.version,
     cpu: cpus()[0]?.model,
     run: process.env.GITHUB_RUN_ID,
@@ -229,11 +239,11 @@ async function main() {
   };
   let game, load;
   try {
-    game = await createGameServer({ config, production: true, tick: true });
+    game = await createGameServer({ config, production: true, tick: false });
     await new Promise((done) => game.server.listen(0, config.host, done));
-    const base = 'http://' + config.host + ':' + game.server.address().port;
-    const response = await fetch(base + '/api/state');
-    const cookie = response.headers.get('set-cookie')?.split(';')[0];
+    let base = 'http://' + config.host + ':' + game.server.address().port;
+    let response = await fetch(base + '/api/state');
+    let cookie = response.headers.get('set-cookie')?.split(';')[0];
     await response.arrayBuffer();
     if (!cookie) throw Error('No local session');
     await game.service.setConnection('profile-setup', true);
@@ -244,11 +254,29 @@ async function main() {
       outcome: { ok: true, code: 'profile-setup', message: 'Disposable profiling scene' },
     }));
     await game.service.control({ paused: true });
+    await game.service.flush();
+    await game.close();
+    // Start the actual timer only after scene construction: cold acquisition belongs
+    // to the measured first phase, not an incidental setup timer callback.
+    game = await createGameServer({ config, production: true, tick: true });
+    await new Promise((done) => game.server.listen(0, config.host, done));
+    base = 'http://' + config.host + ':' + game.server.address().port;
+    response = await fetch(base + '/api/state');
+    cookie = response.headers.get('set-cookie')?.split(';')[0];
+    await response.arrayBuffer();
+    if (!cookie) throw Error('No restarted local session');
     const actor = game.service.world.entities[game.service.controlledEntityId];
     const position = { ...actor.position, surfaceId: actor.spatial.supportSurfaceId };
-    let seq = 1;
     for (const speed of speeds) {
-      load = await startLoad({ base, cookie, epoch: game.service.commandEpoch, position, seconds });
+      const presenceId = 'profile-' + randomUUID();
+      load = await startLoad({
+        base,
+        cookie,
+        epoch: game.service.commandEpoch,
+        position,
+        seconds,
+        presenceId,
+      });
       const before = performanceSnapshot();
       const sim = game.service.world.simTime;
       const cpu = process.cpuUsage();
@@ -258,8 +286,8 @@ async function main() {
       await game.service.control({
         paused: false,
         speed,
-        clientId: 'profile-setup',
-        presenceSequence: ++seq,
+        clientId: presenceId,
+        presenceSequence: 1,
       });
       load.child.send({ go: true });
       const client = await load.result;
@@ -271,6 +299,7 @@ async function main() {
         advanced = game.service.world.simTime - sim;
       report.phases.push({
         speed,
+        startingSimTime: sim,
         elapsedSeconds: elapsed,
         advancedSimSeconds: advanced,
         expectedSimSeconds: elapsed * config.baseRatio * speed,

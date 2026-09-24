@@ -1,8 +1,8 @@
 {
-  "scope": "Real server timer, SQLite, SSE and separate-process HTTP load; no browser, PostgreSQL or live model calls. Cold acquisition is included in the first speed phase; later phases reuse this world. Phase metric maxima are cumulative since startup, not per-phase percentiles.",
+  "scope": "Real server timer, SQLite, SSE and separate-process HTTP load with presence heartbeats; no browser, PostgreSQL or live model calls. Cold acquisition is included in the first speed phase; later phases reuse this world. Phase metric maxima are cumulative since startup, not per-phase percentiles.",
   "node": "v22.23.2",
-  "cpu": "AMD EPYC 7763 64-Core Processor",
-  "run": "35963844148",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "run": "35964827954",
   "secondsPerPhase": 15,
   "scenario": {
     "seed": 73,
@@ -19,455 +19,455 @@
   "phases": [
     {
       "speed": 1,
-      "elapsedSeconds": 15.007503144,
-      "advancedSimSeconds": 718,
-      "expectedSimSeconds": 900.45018864,
-      "achievedSpeed": 0.7973789211865626,
-      "serverCpuMs": 1700.439,
+      "startingSimTime": 0,
+      "elapsedSeconds": 15.078742537999998,
+      "advancedSimSeconds": 904,
+      "expectedSimSeconds": 904.7245522799999,
+      "achievedSpeed": 0.9991991459962328,
+      "serverCpuMs": 1610.47,
       "eventLoop": {
-        "p50Ms": 10.125311,
-        "p95Ms": 11.214847,
-        "maxMs": 20.185087
+        "p50Ms": 10.100735,
+        "p95Ms": 11.288575,
+        "maxMs": 87.556095
       },
-      "heapUsedBytes": 43262616,
+      "heapUsedBytes": 42849944,
       "storageError": null,
       "memoryBacklog": null,
       "client": {
-        "elapsedSeconds": 15.005511634000001,
+        "elapsedSeconds": 15.02469033,
         "commands": {
-          "count": 24,
-          "p50Ms": 5.334881999999197,
-          "p95Ms": 7.748243000000002,
-          "maxMs": 22.489513000000045
+          "count": 31,
+          "p50Ms": 4.624166000000059,
+          "p95Ms": 28.07883800000002,
+          "maxMs": 86.80102600000009
         },
         "rejectedCommands": {
-          "count": 7,
-          "p50Ms": 2.9741400000002614,
-          "p95Ms": 3.240805999999793,
-          "maxMs": 3.240805999999793
+          "count": 0,
+          "p50Ms": null,
+          "p95Ms": null,
+          "maxMs": null
         },
         "commandCodes": {
-          "accepted": 16,
-          "cancelled": 8,
-          "paused": 7
+          "accepted": 21,
+          "cancelled": 10
         },
         "reads": {
           "count": 61,
-          "p50Ms": 3.0050279999995837,
-          "p95Ms": 6.683635000000322,
-          "maxMs": 23.401903000000004
+          "p50Ms": 2.6547840000002907,
+          "p95Ms": 8.205643999999893,
+          "maxMs": 29.808520000000044
         },
         "requestTimerLateness": {
-          "count": 92,
+          "count": 98,
           "p50Ms": 0,
-          "p95Ms": 0.4847120000013092,
-          "maxMs": 3.3818600000000174
+          "p95Ms": 0.9164210000000139,
+          "maxMs": 4.497726
         },
         "skippedIntervals": 0,
-        "streamBytes": 526003,
-        "streamChunks": 272,
+        "streamBytes": 652105,
+        "streamChunks": 335,
         "errors": []
       },
       "counters": {
-        "clock.activeRealSeconds": 11.976529388000007,
-        "clock.requestedSimSeconds": 718.5917632799999,
+        "clock.activeRealSeconds": 15.082148342000004,
+        "clock.requestedSimSeconds": 904.9289005199997,
         "native.cooperativeYields": 1,
-        "clock.advancedSimSeconds": 718
+        "clock.advancedSimSeconds": 904
       },
       "gauges": {
-        "clock.pendingSimSeconds": 0,
+        "clock.pendingSimSeconds": 0.9289005200000373,
         "clock.requestedSpeed": 1,
         "tick.dueSteps": 3,
-        "process.cpuPercent": 0.9985198133433355,
-        "process.heapUsedBytes": 42373576,
-        "eventLoop.p95Ms": 21.299199,
-        "eventLoop.maxMs": 21.544959
+        "process.cpuPercent": 9.732515330660203,
+        "process.heapUsedBytes": 46004272,
+        "eventLoop.p95Ms": 21.676031,
+        "eventLoop.maxMs": 22.560767
       },
       "metrics": {
         "sqlite.statement": {
-          "count": 222,
-          "totalMs": 8.79834300000266,
-          "cumulativeMaxMs": 0.4420650000000137
+          "count": 274,
+          "totalMs": 9.664630000008174,
+          "cumulativeMaxMs": 0.3067420000000993
         },
         "persistence.diff": {
-          "count": 26,
-          "totalMs": 4.909337999999252,
-          "cumulativeMaxMs": 2.7211390000001074
+          "count": 32,
+          "totalMs": 4.479842000000872,
+          "cumulativeMaxMs": 0.5121510000000171
         },
         "persistence.journalEncode": {
-          "count": 26,
-          "totalMs": 1.1048820000019077,
-          "cumulativeMaxMs": 0.10914299999990362
+          "count": 32,
+          "totalMs": 1.1394319999994877,
+          "cumulativeMaxMs": 0.09802700000000186
         },
         "persistence.transaction": {
-          "count": 26,
-          "totalMs": 31.127333000000817,
-          "cumulativeMaxMs": 3.663374000000033
+          "count": 32,
+          "totalMs": 202.519409,
+          "cumulativeMaxMs": 83.03839500000049
+        },
+        "gc.pause": {
+          "count": 24,
+          "totalMs": 19.46026800002437,
+          "cumulativeMaxMs": 3.0822010000119917
         },
         "public.projection": {
-          "count": 280,
-          "totalMs": 223.49590799999123,
-          "cumulativeMaxMs": 7.3893450000000485
+          "count": 345,
+          "totalMs": 216.25101600000175,
+          "cumulativeMaxMs": 4.5354520000000775
         },
         "mutation.wait": {
-          "count": 334,
-          "totalMs": 4.1372420000004695,
-          "cumulativeMaxMs": 0.23677099999997608
+          "count": 339,
+          "totalMs": 5.243073000016807,
+          "cumulativeMaxMs": 0.08656999999993786
         },
         "world.commit": {
-          "count": 26,
-          "totalMs": 37.92727200000127,
-          "cumulativeMaxMs": 4.079852999999957
+          "count": 32,
+          "totalMs": 208.90606499999046,
+          "cumulativeMaxMs": 83.27922699999999
         },
         "timer.lateness": {
           "count": 299,
-          "totalMs": 74.47503599999482,
-          "cumulativeMaxMs": 23.149659999999926
+          "totalMs": 166.7954429999943,
+          "cumulativeMaxMs": 76.12540100000025
         },
         "tick.wall": {
           "count": 299,
-          "totalMs": 778.7692480000044,
-          "cumulativeMaxMs": 18.688192000000072
+          "totalMs": 730.2523040000015,
+          "cumulativeMaxMs": 23.54257399999983
         },
-        "gc.pause": {
-          "count": 19,
-          "totalMs": 18.408938999971724,
-          "cumulativeMaxMs": 3.9754350000002887
+        "native.slice": {
+          "count": 905,
+          "totalMs": 677.8049079999769,
+          "cumulativeMaxMs": 9.035812000000078
+        },
+        "native.stepWall": {
+          "count": 904,
+          "totalMs": 678.1873729999768,
+          "cumulativeMaxMs": 12.201074000000062
+        },
+        "native.step": {
+          "count": 904,
+          "totalMs": 692.0750579999744,
+          "cumulativeMaxMs": 11.892540000000054
+        },
+        "tick.nativeWork": {
+          "count": 300,
+          "totalMs": 692.0750579999744,
+          "cumulativeMaxMs": 11.892540000000054
+        },
+        "tick.yieldWait": {
+          "count": 1,
+          "totalMs": 6.779246999999941,
+          "cumulativeMaxMs": 6.779246999999941
         },
         "command.durable": {
           "count": 31,
-          "totalMs": 61.364003999998886,
-          "cumulativeMaxMs": 6.841775000000098
-        },
-        "native.slice": {
-          "count": 719,
-          "totalMs": 736.9319350000167,
-          "cumulativeMaxMs": 10.208145999999942
-        },
-        "native.stepWall": {
-          "count": 718,
-          "totalMs": 737.1181620000168,
-          "cumulativeMaxMs": 13.837166000000025
-        },
-        "native.step": {
-          "count": 718,
-          "totalMs": 752.1751350000377,
-          "cumulativeMaxMs": 13.759981999999809
-        },
-        "tick.nativeWork": {
-          "count": 241,
-          "totalMs": 752.1751350000377,
-          "cumulativeMaxMs": 13.759981999999809
-        },
-        "tick.yieldWait": {
-          "count": 2,
-          "totalMs": 0.09314399999993839,
-          "cumulativeMaxMs": 0.057156999999961045
+          "totalMs": 184.81265700000267,
+          "cumulativeMaxMs": 84.40294799999992
         }
       }
     },
     {
       "speed": 3,
-      "elapsedSeconds": 15.006453855,
-      "advancedSimSeconds": 2162,
-      "expectedSimSeconds": 2701.1616939,
-      "achievedSpeed": 2.4011890938062885,
-      "serverCpuMs": 2656.089,
+      "startingSimTime": 904,
+      "elapsedSeconds": 15.007179035000002,
+      "advancedSimSeconds": 2694,
+      "expectedSimSeconds": 2701.2922263,
+      "achievedSpeed": 2.9919014023410693,
+      "serverCpuMs": 2868.957,
       "eventLoop": {
-        "p50Ms": 10.117119,
-        "p95Ms": 17.530879,
-        "maxMs": 21.676031
+        "p50Ms": 10.125311,
+        "p95Ms": 14.983167,
+        "maxMs": 135.528447
       },
-      "heapUsedBytes": 68041144,
+      "heapUsedBytes": 33566096,
       "storageError": null,
       "memoryBacklog": null,
       "client": {
-        "elapsedSeconds": 15.004323385,
+        "elapsedSeconds": 15.005575443,
         "commands": {
-          "count": 24,
-          "p50Ms": 5.526011999999923,
-          "p95Ms": 7.097771000000648,
-          "maxMs": 20.856825999999955
+          "count": 31,
+          "p50Ms": 6.347997999999961,
+          "p95Ms": 125.93751300000076,
+          "maxMs": 131.34607900000083
         },
         "rejectedCommands": {
-          "count": 7,
-          "p50Ms": 3.0280500000008033,
-          "p95Ms": 3.936713000000964,
-          "maxMs": 3.936713000000964
+          "count": 0,
+          "p50Ms": null,
+          "p95Ms": null,
+          "maxMs": null
         },
         "commandCodes": {
-          "accepted": 16,
-          "cancelled": 8,
-          "paused": 7
+          "accepted": 21,
+          "cancelled": 10
         },
         "reads": {
           "count": 61,
-          "p50Ms": 2.7225610000004963,
-          "p95Ms": 6.929316000000199,
-          "maxMs": 19.47052500000001
+          "p50Ms": 4.213048000001436,
+          "p95Ms": 51.78975299999911,
+          "maxMs": 135.5519230000009
         },
         "requestTimerLateness": {
-          "count": 92,
+          "count": 98,
           "p50Ms": 0,
-          "p95Ms": 0.4899749999985943,
-          "maxMs": 4.668143999999984
+          "p95Ms": 0.887140000000727,
+          "maxMs": 3.621627999999987
         },
         "skippedIntervals": 0,
-        "streamBytes": 639204,
-        "streamChunks": 273,
+        "streamBytes": 759733,
+        "streamChunks": 315,
         "errors": []
       },
       "counters": {
-        "clock.activeRealSeconds": 12.012399969000015,
-        "clock.requestedSimSeconds": 2162.23199442,
+        "clock.activeRealSeconds": 14.971494367999988,
+        "clock.requestedSimSeconds": 2694.8689862399997,
         "native.cooperativeYields": 0,
-        "clock.advancedSimSeconds": 2162
+        "clock.advancedSimSeconds": 2694
       },
       "gauges": {
-        "clock.pendingSimSeconds": 0,
+        "clock.pendingSimSeconds": 0.8689862399999466,
         "clock.requestedSpeed": 3,
         "tick.dueSteps": 9,
-        "process.cpuPercent": 1.0362051219734207,
-        "process.heapUsedBytes": 67501896,
-        "eventLoop.p95Ms": 20.496383,
-        "eventLoop.maxMs": 20.594687
+        "process.cpuPercent": 18.36540077497714,
+        "process.heapUsedBytes": 43578560,
+        "eventLoop.p95Ms": 21.168127,
+        "eventLoop.maxMs": 27.885567
       },
       "metrics": {
         "sqlite.statement": {
-          "count": 222,
-          "totalMs": 9.17059399999198,
-          "cumulativeMaxMs": 0.4420650000000137
+          "count": 275,
+          "totalMs": 10.451842999995279,
+          "cumulativeMaxMs": 0.3067420000000993
         },
         "persistence.diff": {
-          "count": 26,
-          "totalMs": 4.213448000009521,
-          "cumulativeMaxMs": 2.7211390000001074
+          "count": 32,
+          "totalMs": 3.6249119999993127,
+          "cumulativeMaxMs": 0.5121510000000171
         },
         "persistence.journalEncode": {
-          "count": 26,
-          "totalMs": 1.2461180000027525,
-          "cumulativeMaxMs": 0.10914299999990362
+          "count": 32,
+          "totalMs": 1.2201830000049085,
+          "cumulativeMaxMs": 0.09802700000000186
         },
         "persistence.transaction": {
-          "count": 26,
-          "totalMs": 34.609852000012324,
-          "cumulativeMaxMs": 3.663374000000033
-        },
-        "public.projection": {
-          "count": 281,
-          "totalMs": 191.66981900003157,
-          "cumulativeMaxMs": 7.3893450000000485
-        },
-        "mutation.wait": {
-          "count": 353,
-          "totalMs": 3.8563179999800923,
-          "cumulativeMaxMs": 0.23677099999997608
-        },
-        "world.commit": {
-          "count": 26,
-          "totalMs": 40.55105999999432,
-          "cumulativeMaxMs": 4.079852999999957
-        },
-        "timer.lateness": {
-          "count": 300,
-          "totalMs": 69.6647589999775,
-          "cumulativeMaxMs": 23.149659999999926
-        },
-        "tick.wall": {
-          "count": 300,
-          "totalMs": 1964.7162970000354,
-          "cumulativeMaxMs": 18.688192000000072
+          "count": 32,
+          "totalMs": 610.7985170000065,
+          "cumulativeMaxMs": 128.4072890000025
         },
         "gc.pause": {
-          "count": 40,
-          "totalMs": 35.36962499996298,
-          "cumulativeMaxMs": 3.9754350000002887
+          "count": 55,
+          "totalMs": 45.8038420000521,
+          "cumulativeMaxMs": 3.0822010000119917
+        },
+        "public.projection": {
+          "count": 329,
+          "totalMs": 197.91925699995772,
+          "cumulativeMaxMs": 4.5354520000000775
+        },
+        "mutation.wait": {
+          "count": 338,
+          "totalMs": 4.872283000047901,
+          "cumulativeMaxMs": 0.08656999999993786
+        },
+        "world.commit": {
+          "count": 32,
+          "totalMs": 616.2292139999881,
+          "cumulativeMaxMs": 128.5569140000007
+        },
+        "timer.lateness": {
+          "count": 291,
+          "totalMs": 459.9604970000328,
+          "cumulativeMaxMs": 121.38638999999966
+        },
+        "tick.wall": {
+          "count": 291,
+          "totalMs": 1745.5914079999854,
+          "cumulativeMaxMs": 23.54257399999983
+        },
+        "native.slice": {
+          "count": 2694,
+          "totalMs": 1667.7312380000185,
+          "cumulativeMaxMs": 9.035812000000078
+        },
+        "native.stepWall": {
+          "count": 2694,
+          "totalMs": 1667.7312380000187,
+          "cumulativeMaxMs": 12.201074000000062
+        },
+        "native.step": {
+          "count": 2694,
+          "totalMs": 1703.9989890001525,
+          "cumulativeMaxMs": 11.892540000000054
+        },
+        "tick.nativeWork": {
+          "count": 299,
+          "totalMs": 1703.9989890001525,
+          "cumulativeMaxMs": 11.892540000000054
+        },
+        "tick.yieldWait": {
+          "count": 8,
+          "totalMs": 8.464593000000605,
+          "cumulativeMaxMs": 6.779246999999941
         },
         "command.durable": {
           "count": 31,
-          "totalMs": 60.777218999999604,
-          "cumulativeMaxMs": 6.841775000000098
-        },
-        "native.slice": {
-          "count": 2162,
-          "totalMs": 1892.4091349998746,
-          "cumulativeMaxMs": 10.208145999999942
-        },
-        "native.stepWall": {
-          "count": 2162,
-          "totalMs": 1892.4091349998746,
-          "cumulativeMaxMs": 13.837166000000025
-        },
-        "native.step": {
-          "count": 2162,
-          "totalMs": 1931.3936879998764,
-          "cumulativeMaxMs": 13.759981999999809
-        },
-        "tick.nativeWork": {
-          "count": 260,
-          "totalMs": 1931.3936879998764,
-          "cumulativeMaxMs": 13.759981999999809
-        },
-        "tick.yieldWait": {
-          "count": 20,
-          "totalMs": 4.477417999998579,
-          "cumulativeMaxMs": 1.0652240000017628
+          "totalMs": 638.944029000002,
+          "cumulativeMaxMs": 129.0499349999991
         }
       }
     },
     {
       "speed": 8,
-      "elapsedSeconds": 15.007170638999996,
-      "advancedSimSeconds": 5750,
-      "expectedSimSeconds": 7203.441906719998,
-      "achievedSpeed": 6.385836187154809,
-      "serverCpuMs": 6824.598,
+      "startingSimTime": 3598,
+      "elapsedSeconds": 15.005372744999997,
+      "advancedSimSeconds": 7211,
+      "expectedSimSeconds": 7202.578917599999,
+      "achievedSpeed": 8.00935340799049,
+      "serverCpuMs": 6361.901,
       "eventLoop": {
-        "p50Ms": 10.149887,
-        "p95Ms": 20.463615,
-        "maxMs": 26.394623
+        "p50Ms": 10.108927,
+        "p95Ms": 20.840447,
+        "maxMs": 54.099967
       },
-      "heapUsedBytes": 46248112,
+      "heapUsedBytes": 36013080,
       "storageError": null,
       "memoryBacklog": null,
       "client": {
-        "elapsedSeconds": 15.005222487,
+        "elapsedSeconds": 15.003474729,
         "commands": {
-          "count": 24,
-          "p50Ms": 5.646799000000101,
-          "p95Ms": 12.351435999999921,
-          "maxMs": 14.710616999999957
+          "count": 30,
+          "p50Ms": 4.999450999999681,
+          "p95Ms": 16.256903000000023,
+          "maxMs": 51.36548300000004
         },
         "rejectedCommands": {
-          "count": 7,
-          "p50Ms": 2.8230690000000322,
-          "p95Ms": 3.1811560000005557,
-          "maxMs": 3.1811560000005557
+          "count": 0,
+          "p50Ms": null,
+          "p95Ms": null,
+          "maxMs": null
         },
         "commandCodes": {
-          "accepted": 16,
-          "cancelled": 8,
-          "paused": 7
+          "accepted": 20,
+          "cancelled": 10
         },
         "reads": {
           "count": 61,
-          "p50Ms": 5.49623100000008,
-          "p95Ms": 12.975784000000203,
-          "maxMs": 15.099173000000064
+          "p50Ms": 3.3000829999999723,
+          "p95Ms": 12.01710600000024,
+          "maxMs": 60.52561199999991
         },
         "requestTimerLateness": {
-          "count": 92,
+          "count": 97,
           "p50Ms": 0,
-          "p95Ms": 0.3606130000000576,
-          "maxMs": 4.001426000000038
+          "p95Ms": 0.896548000000621,
+          "maxMs": 3.589669000000015
         },
         "skippedIntervals": 0,
-        "streamBytes": 1230402,
-        "streamChunks": 498,
+        "streamBytes": 1267102,
+        "streamChunks": 353,
         "errors": []
       },
       "counters": {
-        "clock.activeRealSeconds": 11.980221582999999,
-        "clock.requestedSimSeconds": 5750.506359840001,
+        "clock.activeRealSeconds": 15.024094318000003,
+        "clock.requestedSimSeconds": 7211.56527264,
         "native.cooperativeYields": 0,
-        "clock.advancedSimSeconds": 5750
+        "clock.advancedSimSeconds": 7211
       },
       "gauges": {
-        "clock.pendingSimSeconds": 0,
+        "clock.pendingSimSeconds": 0.565272639999737,
         "clock.requestedSpeed": 8,
-        "tick.dueSteps": 1,
-        "process.cpuPercent": 1.0261949048154588,
-        "process.heapUsedBytes": 45447232,
-        "eventLoop.p95Ms": 20.938751,
-        "eventLoop.maxMs": 21.053439
+        "tick.dueSteps": 10,
+        "process.cpuPercent": 42.731004460912345,
+        "process.heapUsedBytes": 37328312,
+        "eventLoop.p95Ms": 31.735807,
+        "eventLoop.maxMs": 33.390591
       },
       "metrics": {
         "sqlite.statement": {
-          "count": 229,
-          "totalMs": 10.184977999950206,
-          "cumulativeMaxMs": 0.4420650000000137
+          "count": 271,
+          "totalMs": 11.470700999936525,
+          "cumulativeMaxMs": 0.3067420000000993
         },
         "persistence.diff": {
-          "count": 26,
-          "totalMs": 4.997910999998567,
-          "cumulativeMaxMs": 2.7211390000001074
+          "count": 31,
+          "totalMs": 4.702271000020119,
+          "cumulativeMaxMs": 0.5121510000000171
         },
         "persistence.journalEncode": {
-          "count": 26,
-          "totalMs": 1.5316999999668042,
-          "cumulativeMaxMs": 0.10914299999990362
+          "count": 31,
+          "totalMs": 1.4910010000239708,
+          "cumulativeMaxMs": 0.1063300000023446
         },
         "persistence.transaction": {
-          "count": 26,
-          "totalMs": 31.892877999998746,
-          "cumulativeMaxMs": 3.663374000000033
+          "count": 31,
+          "totalMs": 79.54943900001308,
+          "cumulativeMaxMs": 128.4072890000025
+        },
+        "gc.pause": {
+          "count": 132,
+          "totalMs": 103.80343500015442,
+          "cumulativeMaxMs": 3.0822010000119917
         },
         "public.projection": {
-          "count": 520,
-          "totalMs": 360.60939499991946,
-          "cumulativeMaxMs": 7.3893450000000485
+          "count": 376,
+          "totalMs": 246.98053399992932,
+          "cumulativeMaxMs": 4.5354520000000775
         },
         "mutation.wait": {
-          "count": 816,
-          "totalMs": 4.784268000035809,
-          "cumulativeMaxMs": 0.23677099999997608
+          "count": 658,
+          "totalMs": 5.216633999993064,
+          "cumulativeMaxMs": 0.08656999999993786
         },
         "world.commit": {
-          "count": 26,
-          "totalMs": 38.91877999999633,
-          "cumulativeMaxMs": 4.079852999999957
+          "count": 31,
+          "totalMs": 86.25877699998819,
+          "cumulativeMaxMs": 128.5569140000007
         },
         "timer.lateness": {
           "count": 299,
-          "totalMs": 70.45948299999509,
-          "cumulativeMaxMs": 23.149659999999926
+          "totalMs": 115.13667700000951,
+          "cumulativeMaxMs": 121.38638999999966
         },
         "tick.wall": {
           "count": 299,
-          "totalMs": 5461.458517000025,
-          "cumulativeMaxMs": 35.412781999999424
-        },
-        "gc.pause": {
-          "count": 109,
-          "totalMs": 94.38327199977357,
-          "cumulativeMaxMs": 3.9754350000002887
-        },
-        "command.durable": {
-          "count": 31,
-          "totalMs": 60.29245800000717,
-          "cumulativeMaxMs": 6.841775000000098
+          "totalMs": 4537.467551000016,
+          "cumulativeMaxMs": 28.974803000004613
         },
         "native.slice": {
-          "count": 5750,
-          "totalMs": 4954.028006000077,
-          "cumulativeMaxMs": 10.208145999999942
+          "count": 7211,
+          "totalMs": 4292.838614000142,
+          "cumulativeMaxMs": 9.035812000000078
         },
         "native.stepWall": {
-          "count": 5750,
-          "totalMs": 4954.028006000077,
-          "cumulativeMaxMs": 13.837166000000025
+          "count": 7211,
+          "totalMs": 4292.838614000142,
+          "cumulativeMaxMs": 12.201074000000062
         },
         "native.step": {
-          "count": 5750,
-          "totalMs": 5055.977754000032,
-          "cumulativeMaxMs": 13.759981999999809
+          "count": 7211,
+          "totalMs": 4386.617251000145,
+          "cumulativeMaxMs": 11.892540000000054
         },
         "tick.nativeWork": {
-          "count": 723,
-          "totalMs": 5055.977754000032,
-          "cumulativeMaxMs": 13.759981999999809
+          "count": 620,
+          "totalMs": 4386.617251000145,
+          "cumulativeMaxMs": 11.892540000000054
         },
         "tick.yieldWait": {
-          "count": 484,
-          "totalMs": 341.7007890000532,
-          "cumulativeMaxMs": 6.425912999999127
+          "count": 321,
+          "totalMs": 94.45248499989975,
+          "cumulativeMaxMs": 6.779246999999941
+        },
+        "command.durable": {
+          "count": 30,
+          "totalMs": 109.96339399999488,
+          "cumulativeMaxMs": 129.0499349999991
         }
       }
     }
   ],
   "finalCounts": {
     "entities": 14,
-    "events": 186,
-    "awareness": 300
+    "events": 243,
+    "awareness": 405
   }
 }

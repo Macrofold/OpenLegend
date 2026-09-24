@@ -1,0 +1,347 @@
+{
+  "scope": "15-second phases with continuous presence; no browser/PostgreSQL/providers; see raw reports for counts and cumulative metric caveats.",
+  "run": "35964827954",
+  "results": {
+    "small": {
+      "before": [
+        {
+          "speed": 1,
+          "achievedSpeed": 0.9971237864888427,
+          "startingSimTime": 0,
+          "commands": {
+            "count": 31,
+            "p50Ms": 4.7027539999999135,
+            "p95Ms": 59.38513699999976,
+            "maxMs": 60.71322599999985
+          },
+          "rejected": {
+            "accepted": 21,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 10.133503,
+            "p95Ms": 11.272191,
+            "maxMs": 69.206015
+          },
+          "cpuMs": 1950.233,
+          "debt": 0.9783859400000123,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        },
+        {
+          "speed": 3,
+          "achievedSpeed": 3.004919029428633,
+          "startingSimTime": 898,
+          "commands": {
+            "count": 30,
+            "p50Ms": 5.209025000000111,
+            "p95Ms": 128.50474200000008,
+            "maxMs": 345.1491440000009
+          },
+          "rejected": {
+            "accepted": 20,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 10.100735,
+            "p95Ms": 17.694719,
+            "maxMs": 352.321535
+          },
+          "cpuMs": 3490.947,
+          "debt": 0.5850387199996305,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        },
+        {
+          "speed": 8,
+          "achievedSpeed": 7.985189356289407,
+          "startingSimTime": 3605,
+          "commands": {
+            "count": 30,
+            "p50Ms": 5.094483000000764,
+            "p95Ms": 249.3102370000006,
+            "maxMs": 268.6516260000001
+          },
+          "rejected": {
+            "accepted": 20,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 10.100735,
+            "p95Ms": 20.758527,
+            "maxMs": 279.969791
+          },
+          "cpuMs": 7650.623,
+          "debt": 0.9999291199992868,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        }
+      ],
+      "after": [
+        {
+          "speed": 1,
+          "achievedSpeed": 0.9991991459962328,
+          "startingSimTime": 0,
+          "commands": {
+            "count": 31,
+            "p50Ms": 4.624166000000059,
+            "p95Ms": 28.07883800000002,
+            "maxMs": 86.80102600000009
+          },
+          "rejected": {
+            "accepted": 21,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 10.100735,
+            "p95Ms": 11.288575,
+            "maxMs": 87.556095
+          },
+          "cpuMs": 1610.47,
+          "debt": 0.9289005200000373,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        },
+        {
+          "speed": 3,
+          "achievedSpeed": 2.9919014023410693,
+          "startingSimTime": 904,
+          "commands": {
+            "count": 31,
+            "p50Ms": 6.347997999999961,
+            "p95Ms": 125.93751300000076,
+            "maxMs": 131.34607900000083
+          },
+          "rejected": {
+            "accepted": 21,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 10.125311,
+            "p95Ms": 14.983167,
+            "maxMs": 135.528447
+          },
+          "cpuMs": 2868.957,
+          "debt": 0.8689862399999466,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        },
+        {
+          "speed": 8,
+          "achievedSpeed": 8.00935340799049,
+          "startingSimTime": 3598,
+          "commands": {
+            "count": 30,
+            "p50Ms": 4.999450999999681,
+            "p95Ms": 16.256903000000023,
+            "maxMs": 51.36548300000004
+          },
+          "rejected": {
+            "accepted": 20,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 10.108927,
+            "p95Ms": 20.840447,
+            "maxMs": 54.099967
+          },
+          "cpuMs": 6361.901,
+          "debt": 0.565272639999737,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        }
+      ]
+    },
+    "mixed": {
+      "before": [
+        {
+          "speed": 1,
+          "achievedSpeed": 0.998199525953927,
+          "startingSimTime": 0,
+          "commands": {
+            "count": 30,
+            "p50Ms": 14.856097000001682,
+            "p95Ms": 22.639666999999918,
+            "maxMs": 180.55406499999992
+          },
+          "rejected": {
+            "accepted": 20,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 10.436607,
+            "p95Ms": 30.769151,
+            "maxMs": 189.136895
+          },
+          "cpuMs": 11274.6,
+          "debt": 0.6938113199999862,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        },
+        {
+          "speed": 3,
+          "achievedSpeed": 1.8289276805317471,
+          "startingSimTime": 900,
+          "commands": {
+            "count": 30,
+            "p50Ms": 23.205141000000367,
+            "p95Ms": 127.77026699999988,
+            "maxMs": 139.97540599999957
+          },
+          "rejected": {
+            "accepted": 20,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 16.637951,
+            "p95Ms": 23.920639,
+            "maxMs": 145.883135
+          },
+          "cpuMs": 15996.439,
+          "debt": 303.22813308000013,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        },
+        {
+          "speed": 8,
+          "achievedSpeed": 1.8491250631700729,
+          "startingSimTime": 2550,
+          "commands": {
+            "count": 30,
+            "p50Ms": 19.92651399999977,
+            "p95Ms": 84.87281699999994,
+            "maxMs": 97.84130800000003
+          },
+          "rejected": {
+            "accepted": 20,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 16.646143,
+            "p95Ms": 23.822335,
+            "maxMs": 105.447423
+          },
+          "cpuMs": 15744.959,
+          "debt": 2589.2759009599995,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        }
+      ],
+      "after": [
+        {
+          "speed": 1,
+          "achievedSpeed": 0.9988663449048973,
+          "startingSimTime": 0,
+          "commands": {
+            "count": 31,
+            "p50Ms": 16.232127000001128,
+            "p95Ms": 116.61221300000034,
+            "maxMs": 151.77614899999992
+          },
+          "rejected": {
+            "accepted": 21,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 10.133503,
+            "p95Ms": 24.969215,
+            "maxMs": 178.520063
+          },
+          "cpuMs": 8947.087,
+          "debt": 1.9944259199999808,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        },
+        {
+          "speed": 3,
+          "achievedSpeed": 2.4983380446544188,
+          "startingSimTime": 903,
+          "commands": {
+            "count": 31,
+            "p50Ms": 18.304307000000335,
+            "p95Ms": 22.465423000000555,
+            "maxMs": 35.439384999999675
+          },
+          "rejected": {
+            "accepted": 21,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 13.811711,
+            "p95Ms": 24.510463,
+            "maxMs": 38.535167
+          },
+          "cpuMs": 15898.568,
+          "debt": 117.38340491999986,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        },
+        {
+          "speed": 8,
+          "achievedSpeed": 2.5226280773849252,
+          "startingSimTime": 3157,
+          "commands": {
+            "count": 31,
+            "p50Ms": 18.092913000000408,
+            "p95Ms": 156.71106900000086,
+            "maxMs": 160.4714520000016
+          },
+          "rejected": {
+            "accepted": 21,
+            "cancelled": 10
+          },
+          "eventLoop": {
+            "p50Ms": 13.975551,
+            "p95Ms": 24.543231,
+            "maxMs": 176.947199
+          },
+          "cpuMs": 15979.731,
+          "debt": 2907.36151728,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        }
+      ]
+    },
+    "dense": {
+      "after": [
+        {
+          "speed": 1,
+          "achievedSpeed": 0.10287201638969397,
+          "startingSimTime": 0,
+          "commands": {
+            "count": 22,
+            "p50Ms": 147.80726500000128,
+            "p95Ms": 323.1165469999996,
+            "maxMs": 5448.745732
+          },
+          "rejected": {
+            "accepted": 15,
+            "cancelled": 7
+          },
+          "eventLoop": {
+            "p50Ms": 16.941055,
+            "p95Ms": 52.035583,
+            "maxMs": 3821.010943
+          },
+          "cpuMs": 15505.524,
+          "debt": 92.88058151999999,
+          "storageError": null,
+          "memoryBacklog": null,
+          "clientErrors": []
+        }
+      ]
+    }
+  }
+}

@@ -1493,8 +1493,11 @@ export function* advanceWorldWork(
     remaining -= seconds;
     world.simTime += seconds;
     // Status operations also apply to non-actor entities, in saved entity/definition order.
-    for (const entity of Object.values(world.entities))
+    for (const [index, entity] of Object.values(world.entities).entries()) {
       advanceStatusEffects(world, entity, seconds, events);
+      // Retain saved definition/entity order while letting I/O run during large status phases.
+      if ((index + 1) % 32 === 0) yield;
+    }
     // Stable actor order resolves finite-resource claims; no asynchronous writer mutates a step.
     for (const actorId of participants.actors) {
       let actor = world.entities[actorId]!;
