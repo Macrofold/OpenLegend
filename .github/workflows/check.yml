@@ -1,20 +1,18 @@
-name: Perception scalar capture closeout
+name: Perception verified closeout
 on:
   push:
-  pull_request:
 permissions:
   contents: read
 jobs:
   closeout:
-    if: github.ref == 'refs/heads/design/action-repertoire-and-capability-grounding' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/design/action-repertoire-and-capability-grounding'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 6
     permissions:
       contents: write
     env:
       AI_BUDGET_USD: '0'
       OPEN_LEGEND_DATABASE_URL: ''
-      OPEN_LEGEND_DATA_DIR: /tmp/perception-capture-world
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,44 +23,17 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Preserve baseline and measure existing capture
+      - name: Confirm qualified source, record rejected experiment and restore CI
         run: |
-          git fetch --depth=1 origin cb830dbce0f475b442b8417c5d3a1bf9b529eb37 9fd8b5e75967d381df5af756a2eb0b6f05b654d1 0582e8660e154e6383a407ffb09e75f0b8c6223a
-          git show cb830dbce0f475b442b8417c5d3a1bf9b529eb37:.github/workflows/check.yml > /tmp/standard-check.yml
-          node --import tsx .github/perception-capture-runtime.mjs before
-          for scene in mixed gems; do
-            node --import tsx scripts/stress-native.ts scripts/performance/scenarios/$scene.json /tmp/capture-before-$scene.cpuprofile > /tmp/capture-before-$scene.json
-            python - "$scene" <<'PY'
-          import json,sys
-          s=json.load(open(f'scripts/performance/scenarios/{sys.argv[1]}.json'));s['warmup']=30;s['steps']=600
-          json.dump(s,open(f'/tmp/capture-warm-{sys.argv[1]}.json','w'))
-          PY
-            node --import tsx scripts/stress-native.ts /tmp/capture-warm-$scene.json /tmp/capture-before-$scene-warm.cpuprofile > /tmp/capture-before-$scene-warm.json
-          done
-      - name: Apply smaller capture and compile
-        run: |
-          python .github/perception-capture.py
-          pnpm exec prettier --write packages/domain/src/perception-frame.ts
+          git fetch --depth=1 origin cb830dbce0f475b442b8417c5d3a1bf9b529eb37 0582e8660e154e6383a407ffb09e75f0b8c6223a
+          python .github/perception-closeout.py
+          pnpm exec prettier --write docs/verification.md docs/maintainers/performance.md docs/maintainers/TODO.md docs/documentation-changelog.md
           pnpm run build
-          node --import tsx .github/perception-capture-runtime.mjs after
-      - name: Measure final capture and repeat real service exercise
-        run: |
-          for scene in mixed gems; do
-            node --import tsx scripts/stress-native.ts scripts/performance/scenarios/$scene.json /tmp/capture-after-$scene.cpuprofile > /tmp/capture-after-$scene.json
-            node --import tsx scripts/stress-native.ts /tmp/capture-warm-$scene.json /tmp/capture-after-$scene-warm.cpuprofile > /tmp/capture-after-$scene-warm.json
-          done
-          git show 9fd8b5e75967d381df5af756a2eb0b6f05b654d1:.github/perception-service.mjs > .github/perception-capture-service.mjs
-          node --import tsx .github/perception-capture-service.mjs
-          node .github/perception-capture-report.mjs
-      - name: Documentation and cleanup
-        run: |
-          python .github/perception-capture-docs.py
-          pnpm exec prettier --write docs/architecture.md docs/verification.md docs/maintainers/TODO.md
           git diff --check
       - name: Commit qualified closeout
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add packages apps docs .github
-          git commit -m '[skip ci] perf: avoid copying whole actor state for perception capture'
+          git add docs .github
+          git commit -m '[skip ci] docs: close perception performance work with measured limits'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
