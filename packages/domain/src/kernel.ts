@@ -375,8 +375,9 @@ export function executeCommand(
   const scopedTargetId =
     command.type === 'cook'
       ? command.heatId
-      : ['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(command.type) &&
-          'targetId' in command
+      : ['gather', 'harvest', 'hunt', 'replenish', 'strike', 'pickup', 'follow'].includes(
+            command.type,
+          ) && 'targetId' in command
         ? command.targetId
         : undefined;
   if (scopedTargetId) {
@@ -1558,7 +1559,7 @@ export function* advanceWorldWork(
     }
   }
   const perception = yield* updateEncounters(world, original, events, participants.actors);
-  yield* sealNativeEvidence(world, events, participants.actors);
+  yield* sealNativeEvidence(world, events);
   yield;
   const result = finish(
     world,

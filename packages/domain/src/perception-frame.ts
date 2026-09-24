@@ -97,8 +97,10 @@ function captureSource(world: WorldState, value: Entity): Source {
  */
 export function createPerceptionFrame(world: WorldState, previous: WorldState) {
   const old = Object.isFrozen(previous) ? frames.get(previous) : undefined;
-  const samples = Object.values(plain(world.entities)).map((entity) =>
-    captureSource(world, entity),
+  // Reading scalar fields avoids materializing every changed action/status/agency subtree.
+  // Keep live draft values so same-step movement and capability changes remain visible.
+  const samples = Object.keys(world.entities).map((id) =>
+    captureSource(world, world.entities[id]!),
   );
   const next: Frame = {
     geometry: spatialMap(world),

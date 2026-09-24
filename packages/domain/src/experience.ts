@@ -301,7 +301,11 @@ export function mutateExperience(
     }
     const additions = mutations.map((change) => {
       if (change.operation !== 'add') throw new Error('Mixed experience mutation batch.');
-      return cloneValue(change.entry);
+      const entry = cloneValue(change.entry);
+      // Freeze the owned copy before insertion, not a detached current(rows) snapshot.
+      // Fresh drafts can still edit it; caller-owned builder data stays untouched.
+      // docs/architecture.md#private-perception-and-evidence-batches
+      return isDraft(world) && Object.isFrozen(original(world)) ? freeze(entry, true) : entry;
     });
     const keys = additions.map((entry) =>
       entry.source === 'awareness'
@@ -1162,22 +1166,10 @@ export function validateExperienceOrder(world: WorldState): void {
 export function* sealNativeEvidence(
   world: WorldState,
   events: WorldEvent[],
-  actorIds: readonly string[],
 ): Generator<void, void, void> {
   if (!isDraft(world) || !Object.isFrozen(original(world))) return;
   for (const [index, event] of events.entries()) {
     if (!isDraft(event)) freeze(event, true);
     if ((index + 1) % 128 === 0) yield;
-  }
-  for (const id of actorIds) {
-    const rows = world.experience?.awareness[id];
-    if (!rows || !isDraft(rows)) continue;
-    const before = original(rows)!;
-    if (rows.length <= before.length) continue;
-    const snapshot = current(rows);
-    for (let i = before.length; i < snapshot.length; i++) {
-      freeze(snapshot[i]!, true);
-      if ((i - before.length + 1) % 128 === 0) yield;
-    }
   }
 }

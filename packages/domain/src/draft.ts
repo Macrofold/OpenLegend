@@ -1,9 +1,10 @@
-import { Immer, current, isDraft, original, freeze } from 'immer';
+import { Immer, current, isDraft, original, enablePatches, freeze } from 'immer';
 import type { WorldEvent, WorldState } from './types.js';
 
 // One isolated instance: drafts never cross the domain boundary. Unchanged branches
 // retain identity for persistence and projection; legacy seed/migration data stays mutable.
 const drafts = new Immer({ autoFreeze: false });
+enablePatches();
 type EventLineage = { tip: WorldEvent[] };
 const eventLineages = new WeakMap<WorldEvent[], EventLineage>();
 
@@ -27,13 +28,18 @@ export function draftWorld(world: WorldState): WorldState {
 export function finishWorld(world: WorldState): WorldState {
   if (!isDraft(world)) return world;
   const before = original(world)!.events;
-  const result = drafts.finishDraft(world);
-  // Only append candidates need a prefix proof. Avoid generating and cloning patches for
-  // every actor/evidence mutation merely to certify the event-history optimization.
-  // docs/architecture.md#state-and-transitions
-  const appendOnly =
-    result.events.length > before.length &&
-    before.every((event, index) => result.events[index] === event);
+  let appendOnly = true;
+  const result = drafts.finishDraft(world, (patches) => {
+    // Inspect changed paths, not every historical record (docs/architecture.md#state-and-transitions).
+    appendOnly = patches.every(
+      ({ op, path }) =>
+        path[0] !== 'events' ||
+        (op === 'add' &&
+          path.length === 2 &&
+          typeof path[1] === 'number' &&
+          path[1] >= before.length),
+    );
+  });
   if (result.events !== before && appendOnly && result.events.length >= before.length) {
     let lineage = eventLineages.get(before);
     if (!lineage) {
