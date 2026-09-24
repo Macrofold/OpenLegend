@@ -1,7 +1,7 @@
 {
   "scope": "No-network native/manual runtime exercise with injected semantic outputs. Not a unit/browser suite or live-model quality evidence.",
   "node": "v22.23.2",
-  "run": "35948736395",
+  "run": "35949420195",
   "paidModelCalls": 0,
   "cases": [
     {
@@ -65,8 +65,9 @@
     },
     {
       "name": "lost-sight-stops",
-      "physicalAction": "follow",
-      "plan": "active"
+      "visibleBeforeAdvance": false,
+      "physicalAction": null,
+      "plan": "blocked"
     },
     {
       "name": "explicit-cancel",
@@ -87,16 +88,17 @@
         "ok": true,
         "code": "queued",
         "message": "Resolving your action.",
-        "jobId": "c29beaa6-6558-4304-a919-d99f637f7ef9"
+        "jobId": "ce0e28ed-6a12-4f3d-9c49-0c91f8904a0a"
       },
       "job": {
         "status": "completed",
-        "message": "This response identity is retired or was never admitted; no effects were applied.",
+        "message": "Native work queued; it has not completed.",
         "result": {
           "outcome": {
-            "ok": false,
-            "code": "retired-response",
-            "message": "This response identity is retired or was never admitted; no effects were applied."
+            "ok": true,
+            "code": "queued",
+            "message": "Native work queued; it has not completed.",
+            "planId": "ce0e28ed-6a12-4f3d-9c49-0c91f8904a0a:action"
           },
           "fulfillment": {
             "requested": "go to x=11.5, z=13 on terrain",
@@ -129,10 +131,10 @@
     "followers": {
       "actors": 50,
       "steps": 180,
-      "totalMs": 947.9009329999992,
-      "p50Ms": 4.987509999999929,
-      "p95Ms": 7.514093999999886,
-      "maxMs": 12.231195999999954,
+      "totalMs": 892.9294049999992,
+      "p50Ms": 4.68940299999997,
+      "p95Ms": 7.148633000000018,
+      "maxMs": 10.241446999999994,
       "activeAtEnd": 50,
       "description": "One moving fixture leader, fifty native followers, no cognitive or paid calls. Not a population scalability claim."
     },
@@ -192,11 +194,11 @@
         "events": 30
       },
       "steps": 180,
-      "totalMs": 1295.5581339999999,
-      "p50Ms": 3.1312900000000354,
-      "p95Ms": 4.968361000000186,
-      "maxStepMs": 682.332085,
-      "heapUsedBytes": 53520664,
+      "totalMs": 1001.546083,
+      "p50Ms": 2.348172000000204,
+      "p95Ms": 3.4162130000000843,
+      "maxStepMs": 558.1238659999999,
+      "heapUsedBytes": 43535368,
       "finalWorldDigest": "c1fe3cf35808a7e9c1abcf8ed059ed67e34d71c4c2c20bdea6d13b8856934335"
     },
     "gems": {
@@ -230,11 +232,11 @@
         "events": 0
       },
       "steps": 180,
-      "totalMs": 929.122189,
-      "p50Ms": 4.018011999999999,
-      "p95Ms": 6.936329999999998,
-      "maxStepMs": 96.67924300000001,
-      "heapUsedBytes": 39076624,
+      "totalMs": 751.700352,
+      "p50Ms": 3.392646999999897,
+      "p95Ms": 6.231508999999988,
+      "maxStepMs": 77.48428200000001,
+      "heapUsedBytes": 45096104,
       "finalWorldDigest": "ca8b21ad0d40b77ce8c5932b6af54d3fb62fa91670b4cf1819731baac920a970"
     }
   }

@@ -815,7 +815,12 @@ export class WorldService {
       // the same mutation lane as commit (docs/architecture.md#actor-agency-foundation).
       if (responseJobId) {
         const job = await this.store.getJob(responseJobId);
-        if (!job || (!this.world.responseReceipts?.[responseJobId] && job.status !== 'generating'))
+        if (
+          !job ||
+          (!this.world.responseReceipts?.[responseJobId] &&
+            job.status !== 'generating' &&
+            !(job.responseReady && ['queued', 'judging'].includes(job.status)))
+        )
           return {
             ok: false,
             code: 'retired-response',

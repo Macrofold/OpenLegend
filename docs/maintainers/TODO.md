@@ -302,3 +302,5 @@ No new unit/browser tests are written or run for this task at the owner's reques
 - Keep full repository typecheck repair separate: older test fixtures contain pre-existing async API, authority-provenance and removed goal-field errors. Production build/typecheck is exercised in this slice; no unit/browser suites or test-file changes are included.
 
 - Add runtime action admission coverage for pause winning the serialized writer queue: resuming repeats only the original unpaid commit, never grounding or provider dispatch. Verify a new manifest cannot select an old pending revision with matching text.
+
+- Add automated coverage for durable response readiness on exact player text actions, Jev-only full matches and NPC proposals whose final provider phase is Jev classification. Retired/terminal jobs must still fail closed. Verify an actor's confirmation question is a normal completed interpretation, not a provider retry trigger.

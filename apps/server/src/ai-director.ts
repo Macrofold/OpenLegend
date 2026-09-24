@@ -323,6 +323,15 @@ export class AiDirector {
     return resolved;
   }
 
+  /** Durable readiness is separate from provider stage; a Jev-only/exact response can commit too.
+   * docs/architecture.md#actor-agency-foundation
+   */
+  private async prepareResponseAdmission(run: Running): Promise<void> {
+    this.current(run);
+    run.job = { ...run.job, responseReady: true };
+    await this.service.store.putJob(run.job);
+  }
+
   private async playerAction(run: Running): Promise<void> {
     const actorId = run.job.request.npcId!;
     const request = run.job.request.action!;
@@ -351,6 +360,7 @@ export class AiDirector {
     );
     const unique = [...new Map(choices.map((c) => [JSON.stringify(c), c])).values()];
     const bindings = await this.groundAttempts(run, actorId, response, unique, 'player-action');
+    await this.prepareResponseAdmission(run);
     await this.awaitResume(run, true);
     this.current(run);
     const observed = this.service.observe(actorId);
@@ -1551,6 +1561,7 @@ export class AiDirector {
       if (await retryForUrgentAwareness()) return;
     }
     run.responseWatch = undefined;
+    await this.prepareResponseAdmission(run);
     const commitStartedAt = new Date().toISOString();
     const commit = () =>
       this.service.transition(
@@ -1577,6 +1588,9 @@ export class AiDirector {
       result = await commit();
     }
     const receipt = this.service.world.responseReceipts?.[run.job.id];
+    const awaitingConfirmation = Object.values(receipt?.components ?? {}).some(
+      (part) => part.code === 'needs-confirmation',
+    );
     await this.log.record(
       `${run.job.id}:commit`,
       'Response admission',
@@ -1586,10 +1600,14 @@ export class AiDirector {
     );
     await this.update(
       run,
-      result.ok ? 'completed' : result.code === 'actor-unavailable' ? 'cancelled' : 'failed',
+      result.ok || awaitingConfirmation
+        ? 'completed'
+        : result.code === 'actor-unavailable'
+          ? 'cancelled'
+          : 'failed',
       result.message,
       {
-        disposition: result.code,
+        disposition: awaitingConfirmation ? 'awaiting-confirmation' : result.code,
         components: receipt?.components,
         trigger: semanticTrigger,
       },
