@@ -545,7 +545,7 @@ export class CognitionMaintenance {
         actorScope: actorId,
         execution: 'full',
         task: 'background_reflection',
-        instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. General knowledge allows 5000 Unicode code points; subject notepads allow 1000 each. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Do not echo identity file contents.`,
+        instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. Follow the supplied knowledge policy and character limits. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Do not echo identity file contents.`,
         context: prepared.context,
         schema: z.toJSONSchema(reflectionSchema, { target: 'draft-7' }),
         signal: controller.signal,
@@ -557,11 +557,40 @@ export class CognitionMaintenance {
           async () => await this.macrofold.reflect(request, snapshot.files),
         ),
       );
-      reflectionSchema.parse({ thoughts: value.thoughts, goalChanges: value.goalChanges, knowledgeChanges: value.knowledgeChanges, nameChanges: value.nameChanges });
-      const edits = resolveResponseEntities({operations: [
-        ...value.nameChanges.map((name, i) => ({localId: `name${i}`, requiresAccepted: [], talk: null, act: null, think: null, goal: null, plan: null, name})),
-        ...value.knowledgeChanges.map((note, i) => ({localId: `note${i}`, requiresAccepted: [], talk: null, act: null, think: null, goal: null, plan: null, note})),
-      ]}, prepared.entityReferences);
+      reflectionSchema.parse({
+        thoughts: value.thoughts,
+        goalChanges: value.goalChanges,
+        knowledgeChanges: value.knowledgeChanges,
+        nameChanges: value.nameChanges,
+      });
+      const edits = resolveResponseEntities(
+        {
+          operations: [
+            ...value.nameChanges.map((name, i) => ({
+              localId: `name${i}`,
+              requiresAccepted: [],
+              talk: null,
+              act: null,
+              think: null,
+              goal: null,
+              plan: null,
+              name,
+            })),
+            ...value.knowledgeChanges.map((note, i) => ({
+              localId: `note${i}`,
+              requiresAccepted: [],
+              talk: null,
+              act: null,
+              think: null,
+              goal: null,
+              plan: null,
+              note,
+            })),
+          ],
+        },
+        prepared.entityReferences,
+        prepared.binding.knowledgeReferences,
+      );
       if (
         obligations !==
         digest((this.service.world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment'))
@@ -585,9 +614,11 @@ export class CognitionMaintenance {
           null,
           0,
           value.goalChanges,
-          edits.operations.flatMap(op => op.note ? [op.note] : []),
-          edits.operations.flatMap(op => op.name ? [op.name] : []),
+          edits.operations.flatMap((op) => (op.note ? [op.note] : [])),
+          edits.operations.flatMap((op) => (op.name ? [op.name] : [])),
           prepared.binding.entityIds,
+          prepared.binding.entityEpisodes,
+          prepared.binding.knowledgeReferences,
         ),
       );
       if (!accepted.ok) throw new Error(accepted.message);

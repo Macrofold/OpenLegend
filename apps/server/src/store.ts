@@ -1,5 +1,4 @@
 import { KnowledgeStore } from './knowledge-store.js';
-import { validateKnowledge } from '@open-legend/domain';
 import { upgradeWorldState } from './upgrade-world.js';
 import { validateWorldModules } from '@open-legend/domain';
 import { GameSaves, type RestoreSave } from './game-saves.js';
@@ -576,7 +575,6 @@ export class SqliteStore implements GameRepository {
           );
       }
     }
-    validateKnowledge(state.world);
     if (state.world.actorKnowledge) await new KnowledgeStore(this.db).verify(acceptedState.world);
     this.acceptedState = acceptedState;
     this.acceptedRevision = revision;
@@ -764,7 +762,11 @@ export class SqliteStore implements GameRepository {
             .prepare('INSERT INTO world_journal (revision,payload,created_at) VALUES (?,?,?)')
             .run(revision, changesPayload, Date.now());
         }
-        await new KnowledgeStore(this.db).project(this.acceptedState?.world, state.world, !!historyProjection?.restore);
+        await new KnowledgeStore(this.db).project(
+          this.acceptedState?.world,
+          state.world,
+          !!historyProjection?.restore,
+        );
         if (this.db.dialect === 'postgres')
           for (const row of changedRows) {
             await this.db
@@ -950,7 +952,7 @@ export class SqliteStore implements GameRepository {
       throw new Error('Invalid spending reservation.');
     const monthStart = new Date();
     const start = Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth(), 1);
-    return this.db.transaction(async () => {
+    const accepted = await this.db.transaction(async () => {
       const existing = await this.db
         .prepare('SELECT provider,reserved FROM attempts WHERE id = ?')
         .get(id);
@@ -984,11 +986,13 @@ export class SqliteStore implements GameRepository {
       await this.db.prepare('INSERT INTO attempt_scopes VALUES (?,?)').run(id, actorId);
       return true;
     });
+    if (accepted) this.usageCache = undefined;
+    return accepted;
   }
 
   async settle(id: string, receipt: AiReceipt): Promise<void> {
     await this.ready;
-    return this.db.transaction(async () => {
+    await this.db.transaction(async () => {
       const row = await this.db
         .prepare('SELECT status,reserved,receipt FROM attempts WHERE id = ?')
         .get(id);
@@ -1023,6 +1027,7 @@ export class SqliteStore implements GameRepository {
           id,
         );
     });
+    this.usageCache = undefined;
   }
 
   /** A restart never resends an admitted call whose external outcome is unknown. */
@@ -1032,6 +1037,7 @@ export class SqliteStore implements GameRepository {
     await this.db.exec(
       "UPDATE attempts SET status='uncertain', spent=reserved WHERE status='reserved'",
     );
+    this.usageCache = undefined;
     for (const row of await this.db.prepare('SELECT payload FROM jobs').all()) {
       const job = JSON.parse(String(row['payload'])) as JobRecord;
       if (['queued', 'judging', 'generating'].includes(job.status)) {
@@ -1061,7 +1067,30 @@ export class SqliteStore implements GameRepository {
     }
   }
 
+  private usageCache?: {
+    period: string;
+    ceiling: number;
+    value: ReturnType<SqliteStore['readUsage']>;
+  };
+
   async usage(ceilingUsd: number) {
+    const period = new Date().toISOString().slice(0, 7);
+    let cached = this.usageCache;
+    if (!cached || cached.period !== period || cached.ceiling !== ceilingUsd) {
+      // Display-only totals change with accounting writes, not movement or job progress.
+      // Budget admission still queries the ledger: docs/performance.md#browser-and-provider-polling.
+      cached = { period, ceiling: ceilingUsd, value: this.readUsage(ceilingUsd) };
+      this.usageCache = cached;
+    }
+    try {
+      return structuredClone(await cached.value);
+    } catch (error) {
+      if (this.usageCache === cached) this.usageCache = undefined;
+      throw error;
+    }
+  }
+
+  private async readUsage(ceilingUsd: number) {
     await this.ready;
 
     const rows = await this.db

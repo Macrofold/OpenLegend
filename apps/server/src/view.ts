@@ -1,3 +1,4 @@
+import { observerDescription } from '@open-legend/domain';
 import { dropItemReason, capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
@@ -246,6 +247,8 @@ export async function projectView(
         `entity:${entity.id}`,
         [
           entity,
+          world.observerIdentities?.[service.controlledEntityId]?.[entity.id],
+          world.perceptionEpisodes?.[service.controlledEntityId]?.[entity.id],
           entity.kind === 'item-pile' ? pileContents.get(entity.id) : undefined,
           world.itemDefinitions,
           active,
@@ -263,6 +266,7 @@ export async function projectView(
           world.statusEffectPolicy,
         ],
         () => {
+          const displayName = observerDescription(world, service.controlledEntityId, entity.id);
           const actions: ActionOption[] = [];
           for (const option of pickupActions(world, player, entity, (command) =>
             service.previewCommand(command),
@@ -300,15 +304,15 @@ export async function projectView(
           const talkUnavailableReason = !entity.actor
             ? undefined
             : !speechCapable
-              ? `${entity.name} cannot speak.`
+              ? `${displayName} cannot speak.`
               : !entity.actor.alive
-                ? `${entity.name} is dead and cannot respond.`
+                ? `${displayName} is dead and cannot respond.`
                 : entity.actor.incapacitated
-                  ? `${entity.name} is incapacitated and cannot respond.`
+                  ? `${displayName} is incapacitated and cannot respond.`
                   : capabilityBlocked(world, entity, 'speech')
-                    ? `${entity.name} cannot speak in their current state.`
+                    ? `${displayName} cannot speak in their current state.`
                     : !hearsEntity(world, entity, player)
-                      ? `Move within hearing range of ${entity.name} to talk.`
+                      ? `Move within hearing range of ${displayName} to talk.`
                       : undefined;
           if (entity.replenisher) {
             const definition = attributeDefinition(world, entity.replenisher.attributeId);
@@ -385,9 +389,9 @@ export async function projectView(
                       : 'station';
           return {
             id: entity.id,
-            name: entity.name,
+            name: displayName,
             ...(entity.kind === 'item-pile' ? { contents: pileContents.get(entity.id) ?? [] } : {}),
-            description: describeEntity(entity, world.itemDefinitions),
+            description: describeEntity({ ...entity, name: displayName }, world.itemDefinitions),
             ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),
             kind,
             subtype: entity.actor?.species ?? entity.resource?.definitionId ?? entity.kind,
@@ -786,7 +790,7 @@ export async function projectView(
           "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.";
       // Only an actual failed job is a failed message. Cancellation and stale
       // work end pending UI without relabeling an interaction as a technical failure.
-      // See docs/architecture.md#react-ui-and-design-system.
+      // See docs/architecture.md#react-presentation-and-character-traits.
       const terminalFailure = legacyIdentityFailure || reply?.status === 'failed';
       const replyStatus = terminalFailure ? 'failed' : reply?.status;
       const replyMessage = legacyIdentityFailure
@@ -805,7 +809,9 @@ export async function projectView(
             }
           : {}),
         speakerId: event.actorId!,
-        speaker: world.entities[event.actorId!]?.name ?? 'Someone',
+        speaker: event.actorId
+          ? observerDescription(world, service.controlledEntityId, event.actorId)
+          : 'Someone',
         text: String(event.data?.['text'] ?? event.text),
         time: event.at,
       };

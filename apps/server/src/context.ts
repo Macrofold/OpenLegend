@@ -33,7 +33,11 @@ function gatherDescription(entity: Entity): string {
   return `Gather ${entity.name}: base yield ${SIMULATION_RULES.gatherQuantity} ${resource.definitionId} per batch, up to 4 with a compatible carried gathering tool (${resource.quantity} currently available), ${resource.workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty.`;
 }
 
-function describeTargets(service: WorldService, actorId: string, candidates: CandidateAction[]): CandidateAction[] {
+function describeTargets(
+  service: WorldService,
+  actorId: string,
+  candidates: CandidateAction[],
+): CandidateAction[] {
   return candidates.map((candidate) => {
     const command = candidate.command;
     const id = command && 'targetId' in command ? command.targetId : undefined;
@@ -356,7 +360,33 @@ export function npcCandidates(
       });
     return describeTargets(service, actorId, actions);
   }
-  if (!supportsManualWork(observed.actor)) return actions;
+  // Locomotion is available to every capable body, independently of hand/tool work.
+  // Bind a perceived destination, not continuous tracking: docs/agent-agency.md#5-trying-something-outside-the-shortlist.
+  const approaches = new Map(
+    observed.visibleEntities.map((entity) => [
+      entity.id,
+      canReachEntity(service.world, observed.actor, entity, SIMULATION_RULES.interactionRadius)
+        ? []
+        : findApproachPath(
+            service.world,
+            observed.actor,
+            entity,
+            SIMULATION_RULES.interactionRadius,
+          ),
+    ]),
+  );
+  for (const entity of observed.visibleEntities) {
+    const position = approaches.get(entity.id)?.at(-1);
+    if (!position) continue;
+    const command: CommandInput = { type: 'move', position };
+    if (service.previewCommand(command, actorId).ok)
+      actions.push({
+        id: `approach:${entity.id}`,
+        description: `Move near the currently observed position of ${entityLabel(service.world, entity, actorId)}. This moves to that location once; it does not follow later movement.`,
+        command,
+      });
+  }
+  if (!supportsManualWork(observed.actor)) return describeTargets(service, actorId, actions);
   for (const [preparation, recipe] of Object.entries(NATIVE_PREPARATIONS)) {
     if (quantity(recipe.input) >= recipe.inputQuantity)
       actions.push({
@@ -394,9 +424,12 @@ export function npcCandidates(
     // Target discovery uses only this actor's perception. Terrain is the same public
     // geometry used by native movement, never a search for hidden entities/items.
     const reach = entity.animal && launcher ? launcher.range : SIMULATION_RULES.interactionRadius;
-    const path = canReachEntity(service.world, observed.actor, entity, reach)
-      ? []
-      : findApproachPath(service.world, observed.actor, entity, reach);
+    const path =
+      reach === SIMULATION_RULES.interactionRadius
+        ? approaches.get(entity.id)
+        : canReachEntity(service.world, observed.actor, entity, reach)
+          ? []
+          : findApproachPath(service.world, observed.actor, entity, reach);
     if (!path) continue;
     if (entity.actor?.alive && entity.id !== actorId && supportsManualWork(observed.actor))
       for (const definition of Object.values(NATIVE_STRIKES))

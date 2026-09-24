@@ -102,7 +102,7 @@ Recent events are experiences, not a separate duplicated context section. One re
 
 ### Metadata stays in the server binding
 
-Entity references use `display name (ID:token)` in cognition context. Tokens are opaque hexadecimal prefixes of a hash of the canonical entity ID, initially four characters, with colliding prefixes expanded until unique. No species prefix appears in a token. A server-only map for each decision resolves only its permitted references; unknown tokens fail rather than selecting a same-named actor. The domain still receives canonical IDs and rechecks authority. Every observed actor includes an explicit species (or unknown); an obvious species-only display label is rendered with an indefinite article, such as “a deer.” Observer-learned names remain the separate open design in [observer-known names](../archive/05-project/open-decisions.md#observer-known-names).
+Entity references use `display name (ID:token)` in cognition context. The [knowledge reference contract](knowledge.md#subject-binding) defines observer/encounter-scoped opaque tokens and collision handling. No species prefix appears in a token. A server-only map for each decision resolves only its permitted references; unknown tokens fail rather than selecting a same-named actor. The domain still receives canonical IDs and rechecks authority. Every observed actor includes an explicit species (or unknown); an obvious species-only display label is rendered with an indefinite article, such as “a deer.” Observer-known names follow the [base-world identity policy](worlds/base/knowledge.md#identity-and-recognition); visibility alone does not reveal them.
 
 Structured speech targets, expression targets and thought references use the token alone. Explicit `(ID:token)` annotations in proposed actions, private thoughts and goal objectives resolve to canonical annotations before persistence and reproject to short tokens in later context. Native attempt interpretation sees the same short references as the original decision; bare ambiguous prose never authorizes name-based target matching. Quotes, old prose and names are not rewritten by substring guesses. Memory entity references are labeled as referenced identities, not inferred subject/object roles. Short tokens and relative positions stay out of entity embedding text. Tokens identify offered references, not knowledge of names or permission to act. Observer-scoped encounter references and recognition are governed by [Knowledge](knowledge.md#subject-binding).
 
@@ -194,6 +194,8 @@ All actors, including the player, have limited awareness. Record event-time awar
 
 ### Personal perspective and acquisition
 
+Model-facing speech history states the speaker, perceived intended recipient, and whether it was addressed to the observer or overheard. A currently continuous perception episode can bind an unnamed speaker to a supplied handle; a stored canonical source ID alone cannot identify a new exposure. Preserve quoted words and acquisition uncertainty, and keep the observer's own speech distinct from replies. Trigger facts separate the event source from its subject and report their current visibility independently.
+
 Store individual memories in their owner's perspective, not merely as first-person text rendered by the UI. An actor's own actions and experiences use “I,” “me” and “my.” Accounts of other people use their known names and carry a qualifier explaining how the owner acquired the information. Use **observed** for witnessing and **heard** for testimony; retain **inferred** and **imagined** distinctions for interpretations and dreams. First-person wording does not replace source attribution.
 
 | Memory owner and acquisition          | Stored wording              | Attribution                                                                |
@@ -260,6 +262,8 @@ Corrections and contradictory testimony should update later interpretation witho
 
 ## 7. Minimal outputs and independent commits
 
+Offer only the actor's supported speech and expression capabilities in both prose and the request-scoped output schema. Cognition does not grant a new body or gesture family. Validate the complete operation envelope, including mutually exclusive operation kinds and backward dependencies, before optional interpretation or admission; malformed output is a failed parsing stage with its input preserved, never a successful parse followed by unexplained admission failure.
+
 A simple conversation may need only speech or no new response. [Agent agency](agent-agency.md) owns optional repeated operations; its [admission contract](../archive/07-technical-architecture/agent-agency-runtime.md#4-admission-ordering-and-physical-execution) owns independent outcomes, exactly-once private experience and receipts. Current response bounds belong in [Architecture](architecture.md#actor-agency-foundation), not a second target schema here.
 
 Context uses English sections and durable event-time attribution. The conservative speech action-context gate and optional action-relevance fallback follow the [conversation context contract](narration-and-conversations.md#explicit-triggers-and-readable-context); omitted suggestions do not remove open attempts. Acquisition labels describe evidence and need not be recited in dialogue. Ordinary responses exclude mind patches and server metadata, and intentional thought remains fictional authored experience rather than provider reasoning. Native memory ingestion does not require an LLM; immediate response and background reflection have independent commit boundaries.
@@ -267,6 +271,8 @@ Context uses English sections and durable event-time attribution. The conservati
 Reflection changes files through scoped workspace capabilities. Its final response returns **one or more short presentation thoughts, each no more than 20 words**. Choose a finite per-job count during implementation. These are authored character narration for the game, not provider private deliberation. It must not echo the entire edited inner world or its database metadata in JSON. Invalid output/publication preserves the previous accepted state; there is no automatic paid repair.
 
 ### Validation and recovery
+
+Provider response schemas encode exactly one non-null operation kind per entry, including body/speech capability restrictions. This prevents mixed speech/action entries before admission; local validation still checks cross-operation dependencies and current authority. Heard non-speech events remain observations, not quoted speech.
 
 Validation is deterministic code: check shape and size, the admitted actor/job, relevant revisions, offered action handles, current resources/targets/knowledge and already-committed results. Recheck relevant dependencies rather than rejecting a historical reflection merely because an unrelated world tick advanced. A delayed action must not act on a dead actor, moved target or consumed item.
 
@@ -349,7 +355,7 @@ Record routes, attention coverage, prompt/schema/response size, reasoning tokens
 
 Recalled episodes about another individually named actor retain that actor's identity and are not text-deduplicated. Unnamed actors are represented by species without individual entity handles; equivalent generic episodes may be grouped, retaining original source evidence internally. The observer's own identity does not prevent grouping encounters with unnamed animals. Conversation turns and mandatory evidence remain separate regardless of generic naming. This is a recall projection, not deletion of underlying events or authoritative attribution.
 
-The current naming convention treats a blank name or a name equal to the species/default person noun as generic; another authored name is individual. Current perception and the immediate triggering event can still distinguish unnamed bodies with scoped handles for targeting. Generic recollection does not identify which presently visible animal was involved. Personal aliases and inferred identity across encounters are not implemented.
+Individual naming follows the observer's assigned given name under the [base-world identity policy](worlds/base/knowledge.md#identity-and-recognition), independently of the entity's global name. An explicitly assigned “Deer” is individual even though it matches a species noun. Remembered named episodes remain separate after losing the current recognition binding; they do not thereby identify a newly visible individual. Current perception and an event's still-valid exposure binding can distinguish unnamed bodies with scoped handles for targeting. Generic recollection does not identify which presently visible animal was involved.
 
 ### God-mode cognition debugger
 

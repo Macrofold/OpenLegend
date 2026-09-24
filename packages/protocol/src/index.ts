@@ -371,10 +371,21 @@ export interface GodWorldEventsEditorView {
 
 /** Private inspection DTO: returned only by the separately authorized god endpoint. */
 export interface GodMindView {
+  knowledgeLimits?: { general: number; subject: number };
   worldId?: string;
   generation?: string;
-  notepads?: {subjectId: string | null; label: string; text: string; revision: number; characters: number; maxCharacters: number}[];
-  identities?: Record<string, {givenName: string; revision: number; encounterId: string | null; authored: boolean}>;
+  notepads?: {
+    subjectId: string | null;
+    label: string;
+    text: string;
+    revision: number;
+    characters: number;
+    maxCharacters: number;
+  }[];
+  identities?: Record<
+    string,
+    { givenName: string; revision: number; encounterId: string | null; authored: boolean }
+  >;
   corrections?: Record<string, string>;
   legacyThoughts?: Array<{
     decisionId: string;

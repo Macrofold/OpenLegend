@@ -83,6 +83,8 @@ Owner: server director/cognition and AI adapters. Depends on: CR01. Exit evidenc
 
 ### CR03 — Compact English context
 
+- [x] Encode single-kind operations in provider schemas, validate remaining envelope constraints before interpretation, and scope speech/gesture options to actor capabilities. Identify speaker/recipient/overheard roles in current speech recall, distinguish trigger source from subject, and suppress duplicate references, excessive floating-point display precision and empty planning/withdrawal instructions. Limited live human/animal and private-thought observations are in [Verification](../verification.md#simulation-and-cognition-audit); broader CR12 acceptance remains open.
+
 - [x] Build one projection contract for semantic calls: actual stimulus, complete accepted “About me” text, relevant body/environment, attended possessions/knowledge, and one recall section. Render calendar day/time and available temperature/weather in ordinary language; do not invent unimplemented weather.
 - [x] Render each recalled experience as a string with permitted names, readable game time and source/uncertainty where useful. Combine recent aware events and raw/consolidated memories without repetition.
 - [x] Omit world/profile IDs, raw simulation seconds, NPC type flags, storage envelopes and quota reports from ordinary cognition. Supply quotas/file instructions only to reflection; attach all concurrency/coverage data to server receipts.
@@ -426,20 +428,19 @@ These pending checks directly define cognition completion and were moved from th
 
 - [x] Render compact inventory entries and opaque, collision-checked entity references with species-aware anonymous wording.
 - [x] Bind response tokens and explicit intention annotations to permitted canonical identities before native admission; retain canonical identity across later context projection.
-- [ ] Implement observer-owned learned names after resolving [name knowledge and initial seeding](../../archive/05-project/open-decisions.md#observer-known-names); visibility must not imply name knowledge.
+- [x] Implement observer-owned learned names and explicit acquaintance seeding under [BW08](base-world.md); visibility does not imply name knowledge. Richer recognition remains BW09.
 
 - [x] Revise inspector hierarchy: explicit trigger subtype/level, bottom-right timestamps, rich response previews, compact collapsed stage input/output, and identity-linked supporting records nested under their consuming call. Automated interaction coverage remains in TODO.
 
 ### Trace attribution and pacing
 
 - [x] Distinguish skipped vector search from Jev selections and hard-query evidence in the inspector.
-- [x] Remove global autonomous post-completion waiting while retaining per-actor pacing, serial admission, fairness and spending checks; capture scheduling reason and trigger age.
+- [x] Remove global autonomous post-completion waiting and per-actor cooldowns while retaining serial admission, fairness and spending checks; capture scheduling reason and trigger age.
 - [x] Preserve speech intent independently of delivery, show actor-permitted trigger facts, and condition reply encouragement on directed speech.
 - [x] Keep trigger facts JSON-typed and omit inapplicable speech roles before strict AI serialization; use direct awareness lookup without rebuilding an index for one event. Deferred regression coverage remains in [TODO](TODO.md).
-- [x] Project generic species memories without individual handles and preserve named actors' episodes without text deduplication. Personal aliases are excluded; deferred regression and live-quality work remain in TODO.
+- [x] Project generic species memories without individual handles and preserve observer-named actors' episodes without text deduplication. Naming and recognition follow BW08; deferred regression and live-quality work remain in TODO.
 
 - [x] Separate consolidation request sizing from summary retention: remove fixed storage/schema/group-count ceilings, partition by input/output allowance, retain chronological barriers and atomically publish only a complete validated review.
-
 
 ### CR13 — Editable knowledge documents
 

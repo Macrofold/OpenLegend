@@ -96,11 +96,15 @@ The simulation timer must not await a full cognition-maintenance scheduling scan
 
 ### Browser and provider polling
 
+Cache display-only usage totals by accounting changes and UTC month, sharing concurrent reads. Reservation, settlement (including late billing) and recovery invalidate the display snapshot only after their writes succeed. Budget admission must continue to query current durable spending; a display cache never authorizes a call.
+
 Use scoped conversation/narration revisions on the existing SSE stream to invalidate visible history pages. Load once on opening, once on reconnect/reset and when that scope changes; fetch older pages only on demand. Keep a slow, backoff-based fallback only if the notification contract is unavailable. Hidden panels perform no history polling.
 
 Keep presence heartbeats because they establish liveness, and retain diagnostics' existing visible-panel cadence while making reads coalesced, bounded and independent of gameplay. Provider operation polling may remain necessary where no reliable callback/stream exists; back off while idle, respect provider limits, and preserve receipt reconciliation. Do not treat all timers as defects.
 
 ## Simulation CPU and growing history
+
+Read immutable installed attribute/sense/status definitions outside draft proxies only where admission replaces them wholesale. Never use that shortcut for mutable actor state. Bounded visibility caches must degrade to uncached exact queries at capacity rather than evicting the whole working set on each sequential scan. Cache limits restrict retained optimization state, not the number of sources perceived.
 
 The proposed [spatial validity contract](events-perception-and-reactions.md#6-spatial-work-and-invalidation) covers event-time geometry and receiver/source invalidation; performance budgets and escalation gates remain here.
 
@@ -130,7 +134,7 @@ Perception should read position and capability scalars once after movement, quer
 
 Scale cognitive eligibility separately from native movement. Signature-based dirty detection still costs work if every actor's visibility and history must be computed to discover that nothing changed. Prefer committed component/region invalidation and due deadlines; measure eligible-actor queue age as well as CPU time. Autonomous cognition has no actor cooldown or global thought interval; the remaining shared execution slot must be measured before changing provider concurrency. Faster simulation must not silently multiply paid dispatch.
 
-Dense arrivals are a distinct workload: pairwise encounter events can each have many witnesses. Track events, audience writes and source-admission scans independently; avoid repeatedly scanning growing awareness arrays for duplicate admission. Preserve witness semantics and source revocation rather than claiming spatial indexes make concentrated crowds cheap. EPR03 separately replaces observer-acquisition broadcast with private evidence; that is a privacy and fan-out correction, not a permissible silent cache optimization. The current encounter broadcast is not safe for learning about an unseen target through another observer.
+Dense arrivals are a distinct workload: each observer can acquire many private perception records at once, while outward actions can have many witnesses. Track events, audience writes and source-admission scans independently; avoid repeatedly scanning growing awareness arrays for duplicate admission. Preserve witness semantics and source revocation rather than claiming spatial indexes make concentrated crowds cheap. Observer acquisition is private evidence through EPR03; optimizations must preserve that boundary and cannot turn it into an outward action.
 
 ## Bounded batching, backpressure and publication
 

@@ -1280,13 +1280,26 @@ export async function createGameServer(
             });
           }
           case '/api/god/knowledge': {
-            if (!config.godMode) return send(response, 403, {ok: false, message: 'God editing is disabled.'});
-            const value = z.object({worldId: requestIdSchema, generation: requestIdSchema, actorId: requestIdSchema,
-              subjectId: requestIdSchema.nullable(), expectedRevision: z.number().int().nonnegative(), text: z.string(),
-              givenName: z.string().optional(), nameRevision: z.number().int().nonnegative().optional(),
-            }).strict().parse(body);
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'God editing is disabled.' });
+            const value = z
+              .object({
+                worldId: requestIdSchema,
+                generation: requestIdSchema,
+                actorId: requestIdSchema,
+                subjectId: requestIdSchema.nullable(),
+                expectedRevision: z.number().int().nonnegative(),
+                text: z.string(),
+                givenName: z.string().optional(),
+                nameRevision: z.number().int().nonnegative().optional(),
+              })
+              .strict()
+              .parse(body);
             const result = await service.godKnowledge(value);
-            return send(response, 200, {...result, ...(result.ok ? {mind: inspectGodMind(service, value.actorId)} : {})});
+            return send(response, 200, {
+              ...result,
+              ...(result.ok ? { mind: inspectGodMind(service, value.actorId) } : {}),
+            });
           }
           case '/api/god/mind': {
             if (!config.godMode)

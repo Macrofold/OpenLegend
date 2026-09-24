@@ -1,4 +1,4 @@
-import { observerGivenName, recognizesSubject } from '@open-legend/domain';
+import { observerDescription, recognizesSubject } from '@open-legend/domain';
 import type { ActorResponse, Entity, WorldState } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 
@@ -7,11 +7,22 @@ const cache = new WeakMap<WorldState, Map<string, Map<string, string>>>();
 /** Opaque presentation references are not domain identities or authority.
  * docs/memory-architecture.md#metadata-stays-in-the-server-binding
  */
-export function entityHandles(world: WorldState, observerId = world.identity?.controlledEntityId ?? ''): Map<string, string> {
+export function entityHandles(
+  world: WorldState,
+  observerId = world.identity?.controlledEntityId ?? '',
+): Map<string, string> {
   const cached = cache.get(world)?.get(observerId);
   if (cached) return cached;
   const hashes = Object.keys(world.entities).map(
-    (id) => [id, createHash('sha256').update(`${observerId}:${id}:${world.perceptionEpisodes?.[observerId]?.[id] ?? (recognizesSubject(world, observerId, id) ? 'known' : world.sequence)}`).digest('hex')] as const,
+    (id) =>
+      [
+        id,
+        createHash('sha256')
+          .update(
+            `${observerId}:${id}:${world.perceptionEpisodes?.[observerId]?.[id] ?? (recognizesSubject(world, observerId, id) ? 'known' : world.sequence)}`,
+          )
+          .digest('hex'),
+      ] as const,
   );
   const groups = new Map<string, typeof hashes>();
   for (const entry of hashes) {
@@ -29,42 +40,29 @@ export function entityHandles(world: WorldState, observerId = world.identity?.co
     for (const [id, hash] of group) handles.set(id, hash.slice(0, length));
   }
   const observers = cache.get(world) ?? new Map<string, Map<string, string>>();
-  observers.set(observerId, handles); cache.set(world, observers);
+  observers.set(observerId, handles);
+  cache.set(world, observers);
   return handles;
 }
 
-/** Native species labels are descriptions, not individual names. */
-export function hasIndividualName(entity: Entity): boolean {
-  const species = entity.actor?.species;
-  return (
-    !!entity.name.trim() &&
-    ![species, species === 'human' || !species ? 'person' : species].includes(
-      entity.name.trim().toLowerCase(),
-    )
-  );
-}
-
-export function entityDisplayName(entity: Entity, recognized = true): string {
-  if (!entity.actor) return recognized ? entity.name : 'an unidentified object';
-  const species = entity.actor.species;
-  const noun = species === 'human' || !species ? 'person' : species;
-  const generic = !hasIndividualName(entity);
-  return recognized && !generic ? entity.name : `${/^[aeiou]/i.test(noun) ? 'an' : 'a'} ${noun}`;
-}
-
 export function entityLabel(world: WorldState, entity: Entity, observerId: string): string {
-  const givenName = observerGivenName(world, observerId, entity.id);
-  const label = givenName ?? (entity.actor ? entityDisplayName(entity, false) : entity.name);
+  const label = observerDescription(world, observerId, entity.id);
   return `${label} (ID:${entityHandles(world, observerId).get(entity.id)!})`;
 }
 
-export function entityReferenceMap(world: WorldState, ids: string[], observerId: string): Record<string, string> {
+export function entityReferenceMap(
+  world: WorldState,
+  ids: string[],
+  observerId: string,
+): Record<string, string> {
   const handles = entityHandles(world, observerId);
-  return Object.fromEntries(ids.map(id => {
-    const handle = handles.get(id);
-    if (!handle) throw new Error('Referenced entity is unavailable.');
-    return [handle, id];
-  }));
+  return Object.fromEntries(
+    ids.map((id) => {
+      const handle = handles.get(id);
+      if (!handle) throw new Error('Referenced entity is unavailable.');
+      return [handle, id];
+    }),
+  );
 }
 
 export function resolveEntityMarkers(text: string, references: Record<string, string>): string {
@@ -79,7 +77,11 @@ export function resolveEntityMarkers(text: string, references: Record<string, st
 export function projectEntityMarkers(text: string, world: WorldState, observerId: string): string {
   const handles = entityHandles(world, observerId);
   return text.replace(/\(ID:([^()\s]+)\)/g, (original, id: string) =>
-    handles.has(id) ? recognizesSubject(world, observerId, id) ? `(ID:${handles.get(id)})` : '(unrecognized identity)' : original,
+    handles.has(id)
+      ? recognizesSubject(world, observerId, id)
+        ? `(ID:${handles.get(id)})`
+        : '(unrecognized identity)'
+      : original,
   );
 }
 
@@ -87,6 +89,7 @@ export function projectEntityMarkers(text: string, world: WorldState, observerId
 export function resolveResponseEntities(
   response: ActorResponse,
   references: Record<string, string>,
+  knowledgeReferences: Record<string, string> = {},
 ): ActorResponse {
   const resolve = (handle: string) => {
     if (!Object.hasOwn(references, handle))
@@ -96,8 +99,20 @@ export function resolveResponseEntities(
   return {
     operations: response.operations.map((op) => ({
       ...op,
-      ...(op.note ? {note: {...op.note, subjectId: op.note.subjectId ? resolve(op.note.subjectId) : null, text: resolveEntityMarkers(op.note.text, references)}} : {}),
-      ...(op.name ? {name: {...op.name, subjectId: resolve(op.name.subjectId)}} : {}),
+      ...(op.note
+        ? {
+            note: {
+              ...op.note,
+              subjectId: op.note.subjectId
+                ? Object.hasOwn(knowledgeReferences, op.note.subjectId)
+                  ? op.note.subjectId
+                  : resolve(op.note.subjectId)
+                : null,
+              text: resolveEntityMarkers(op.note.text, references),
+            },
+          }
+        : {}),
+      ...(op.name ? { name: { ...op.name, subjectId: resolve(op.name.subjectId) } } : {}),
       talk: op.talk ? { ...op.talk, addresseeEntityId: resolve(op.talk.addresseeEntityId) } : null,
       act: op.act
         ? {
@@ -125,4 +140,22 @@ export function resolveResponseEntities(
         : null,
     })),
   };
+}
+
+/** An old event's canonical source cannot identify a new, unrecognized exposure. */
+export function awarenessBindsSubject(
+  world: WorldState,
+  observerId: string,
+  aware: import('@open-legend/domain').Awareness,
+  subjectId: string,
+): boolean {
+  if (subjectId === observerId) return true;
+  if (
+    aware.recognized &&
+    subjectId === aware.sourceId &&
+    recognizesSubject(world, observerId, subjectId)
+  )
+    return true;
+  const episode = aware.entityEpisodes?.[subjectId];
+  return !!episode && episode === world.perceptionEpisodes?.[observerId]?.[subjectId];
 }

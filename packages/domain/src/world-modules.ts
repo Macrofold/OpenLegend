@@ -1,3 +1,6 @@
+import { isDraft, original } from 'immer';
+import { validateObserverIdentities } from './worlds/base/knowledge.js';
+import { validateKnowledge } from './knowledge.js';
 import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 export { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 import { validateStatusEffects } from './status-effect-validation.js';
@@ -306,7 +309,10 @@ export function attributeDefinition(
   world: WorldState,
   id: string,
 ): AttributeDefinition | undefined {
-  return world.moduleManifest?.definitions.find((d) => d.id === id);
+  // Definitions are replaced at admission, never edited during a native step.
+  // docs/performance.md#simulation-cpu-and-growing-history
+  const manifest = world.moduleManifest;
+  return (isDraft(manifest) ? original(manifest)! : manifest)?.definitions.find((d) => d.id === id);
 }
 export function readAttribute(
   actor: ActorComponent,
@@ -448,7 +454,7 @@ export function bodyContext(world: WorldState, entity: Entity): string {
         v.status === 'unknown'
           ? `${name}: unknown.`
           : v.display === 'meter'
-            ? `${name}: ${v.value}${v.unit ? ` ${v.unit}` : ''} (range ${v.min}–${v.max}${v.unit ? ` ${v.unit}` : ''}).`
+            ? `${name}: ${typeof v.value === 'number' ? Number(v.value.toFixed(1)) : v.value}${v.unit ? ` ${v.unit}` : ''} (range ${v.min}–${v.max}${v.unit ? ` ${v.unit}` : ''}).`
             : `${name}: ${v.value}.`;
       return v.concern ? [measurement, v.concern] : [measurement];
     }),
@@ -479,6 +485,8 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  validateKnowledge(world);
+  validateObserverIdentities(world);
   // Disposable development saves use current-state validation, not per-feature version gates.
   // docs/save-and-load.md#active-development-policy
   if (!world.moduleManifest) throw new Error('World module manifest is missing.');

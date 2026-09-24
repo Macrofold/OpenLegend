@@ -553,7 +553,7 @@ export class WorldService {
     return this.mutate(async () => {
       await this.flush();
       const restored = structuredClone(payload.state);
-      // 2026-09-21: development saves use only the current model; no legacy migrations.
+      // Candidate loading applies the current in-place migrations before timeline installation.
       const ledger = (await this.store.getIntegration(`forget-ledger:${this.world.id}`)) as
         | Record<string, string[]>
         | undefined;
@@ -883,24 +883,57 @@ export class WorldService {
     });
   }
 
-  async godKnowledge(value: import('@open-legend/domain').KnowledgeEdit & {
-    worldId: string; generation: string; actorId: string; givenName?: string; nameRevision?: number;
-  }): Promise<ApiResult> {
-    if (!this.config.godMode) return {ok: false, code: 'forbidden', message: 'God access required.'};
-    return this.godTransition(world => {
-              if (world.id !== value.worldId || this.generation !== value.generation)
-                return {world, events: [], outcome: {ok: false, code: 'stale-world', message: 'The world changed. Reload the editor.'}};
-              let edited: import('@open-legend/domain').Outcome = {ok: false, code: 'knowledge-rejected', message: 'Knowledge edit rejected.'};
-              const candidate = updateWorld(world, draft => {
-              const permitted = value.subjectId ? [value.subjectId] : [];
-              if (value.givenName !== undefined && value.subjectId) {
-                const named = assignGivenName(draft, value.actorId, {subjectId: value.subjectId, givenName: value.givenName, expectedRevision: value.nameRevision ?? 0}, permitted, true);
-                if (!named.ok) {edited = named; return;}
-              }
-              edited = editKnowledge(draft, value.actorId, value, permitted);
-              if (edited.ok && value.subjectId) rememberSubject(draft, value.actorId, value.subjectId, true);
-              });
-              return {world: edited.ok ? candidate : world, events: [], outcome: edited};
+  async godKnowledge(
+    value: import('@open-legend/domain').KnowledgeEdit & {
+      worldId: string;
+      generation: string;
+      actorId: string;
+      givenName?: string;
+      nameRevision?: number;
+    },
+  ): Promise<ApiResult> {
+    if (!this.config.godMode)
+      return { ok: false, code: 'forbidden', message: 'God access required.' };
+    return this.godTransition((world) => {
+      if (world.id !== value.worldId || this.generation !== value.generation)
+        return {
+          world,
+          events: [],
+          outcome: {
+            ok: false,
+            code: 'stale-world',
+            message: 'The world changed. Reload the editor.',
+          },
+        };
+      let edited: import('@open-legend/domain').Outcome = {
+        ok: false,
+        code: 'knowledge-rejected',
+        message: 'Knowledge edit rejected.',
+      };
+      const candidate = updateWorld(world, (draft) => {
+        const permitted = value.subjectId ? [value.subjectId] : [];
+        if (value.givenName !== undefined && value.subjectId) {
+          const named = assignGivenName(
+            draft,
+            value.actorId,
+            {
+              subjectId: value.subjectId,
+              givenName: value.givenName,
+              expectedRevision: value.nameRevision ?? 0,
+            },
+            permitted,
+            true,
+          );
+          if (!named.ok) {
+            edited = named;
+            return;
+          }
+        }
+        edited = editKnowledge(draft, value.actorId, value, permitted);
+        if (edited.ok && value.subjectId)
+          rememberSubject(draft, value.actorId, value.subjectId, true);
+      });
+      return { world: edited.ok ? candidate : world, events: [], outcome: edited };
     });
   }
 

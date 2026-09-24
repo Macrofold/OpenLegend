@@ -20,9 +20,11 @@ Canonical subject IDs identify storage and mutation targets, not evidence of rec
 
 Model references are opaque observer-scoped tokens, normally four hexadecimal characters and extended on collisions. Unrecognized exposures get episode-scoped references; unavailable exposure uses snapshot scope. Only offered references resolve in responses. Delayed note/name edits recheck their encounter binding. Persist full IDs only inside server state; reproject permitted annotations for later context. Historical unbound references do not become current visible targets through their canonical IDs.
 
+Selected existing pads also receive document-only references, accepted only by note edits. These let an actor revise or summarize remembered knowledge after losing recognition, including knowledge about a retired subject. Their server binding resolves to that actor's existing document and still checks its revision and evidence. They cannot address speech, actions, naming or a visible entity, and editing through them does not establish a new recognition association.
+
 ## Context selection
 
-Include the bounded general pad directly in cognition and relevance context. Load notes for directly involved recognized subjects as required context; optional subject notes use the existing actor-scoped retrieval, vector and relevance path. Required documents survive optional relevance failure and remain subject to the complete request budget. Index revisions independently of current presentation labels. Never expose another actor's pads through an unrestricted subject join.
+Include the bounded general pad directly in cognition and relevance context. Load notes for directly involved recognized subjects as required context; optional subject notes use the existing actor-scoped retrieval, vector and relevance path. Required documents survive optional relevance failure and remain subject to the complete request budget. Semantic revisions include document revision and the stored preferred name, excluding changing exposure tokens and current location. Never expose another actor's pads through an unrestricted subject join.
 
 Unbound remembered subjects can contribute subjective note text to recall without claiming that they match a currently visible individual. Do not expose a hidden document's revision, contents or name through a newly observed stranger's reference. New observations alone create no pads; deliberate editing or naming establishes a sparse personal record.
 

@@ -1,3 +1,4 @@
+import { observerDescription } from './worlds/base/knowledge.js';
 import { BASE_ACTION_DEFAULTS } from './worlds/base/actions.js';
 import {
   canHandleItems,
@@ -684,7 +685,11 @@ export function executeCommand(
         `${actor.name}: ${command.text.trim()}`,
         actor,
         command.targetId,
-        { text: command.text.trim(), ...(intendedRecipientId ? { intendedRecipientId } : {}) },
+        {
+          text: command.text.trim(),
+          ...(intendedRecipientId ? { intendedRecipientId } : {}),
+          ...(command.selfIntroduction ? { selfIntroduction: command.selfIntroduction } : {}),
+        },
       );
       result = outcome(true, 'spoken', 'Speech delivered to nearby listeners.');
       break;
@@ -1607,6 +1612,19 @@ function updateEncounters(
     const seen = nearby(actor.position, radius + 2)
       .filter((e) => e.id !== actor.id && e.alive && sees(e))
       .map((e) => e.id);
+    const objects = nearbyObjects(actor.position, radius).filter((entity) => sees(entity));
+    const objectIds = objects.map((entity) => entity.id);
+    // Persistent exposure episodes do not imply identity recognition across a disappearance.
+    // docs/knowledge.md#subject-binding
+    const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
+    const exposed = [...seen, ...objectIds];
+    if (
+      exposed.length !== Object.keys(priorEpisodes).length ||
+      exposed.some((id) => !priorEpisodes[id])
+    )
+      (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
+        exposed.map((id) => [id, priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`]),
+      );
     for (const id of seen.filter((id) => !previouslySeen.has(id))) {
       const recent = (world.memories[actor.id] ?? []).some(
         (m) =>
@@ -1624,25 +1642,12 @@ function updateEncounters(
     )
       (world.visiblePeople ??= {})[actor.id] = seen;
     // Object exposures use the same committed awareness path without a cognition trigger.
-    const objects = nearbyObjects(actor.position, radius).filter((entity) => sees(entity));
     const priorObjects = new Set(
       original.visibleObjects?.[actor.id] ??
         (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
     );
     for (const entity of objects)
       if (!priorObjects.has(entity.id)) encounter(actor.entity, entity.id, false);
-    const objectIds = objects.map((entity) => entity.id);
-    // Persistent exposure episodes do not imply identity recognition across a disappearance.
-    // docs/knowledge.md#subject-binding
-    const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
-    const exposed = [...seen, ...objectIds];
-    if (
-      exposed.length !== Object.keys(priorEpisodes).length ||
-      exposed.some((id) => !priorEpisodes[id])
-    )
-      (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
-        exposed.map((id) => [id, priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`]),
-      );
     const previousObjects = original.visibleObjects?.[actor.id];
     // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).
     if (
@@ -1698,6 +1703,7 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
       // docs/architecture.md#dependencies-and-authority
       const copy: Entity = {
         ...entity,
+        name: observerDescription(world, actorId, entity.id),
         spatial: { ...entity.spatial },
         ...(entity.actor
           ? {

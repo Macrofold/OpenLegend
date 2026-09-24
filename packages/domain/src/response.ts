@@ -1,5 +1,10 @@
-import { editKnowledge, type KnowledgeEdit } from './knowledge.js';
-import { assignGivenName, canRememberSubject, rememberSubject, type GivenNameEdit } from './worlds/base/knowledge.js';
+import { editKnowledge, knowledgeDocument, type KnowledgeEdit } from './knowledge.js';
+import {
+  assignGivenName,
+  canRememberSubject,
+  rememberSubject,
+  type GivenNameEdit,
+} from './worlds/base/knowledge.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { hasMemory, supportsManualWork } from './living.js';
 import {
@@ -25,7 +30,7 @@ export interface ResponseOperation {
   name?: GivenNameEdit | null;
   localId: string;
   requiresAccepted: string[];
-  talk: { text: string; addresseeEntityId: string } | null;
+  talk: { text: string; addresseeEntityId: string; selfIntroduction?: string | null } | null;
   act: {
     kind: 'known' | 'expression' | 'proposal';
     actionId: string | null;
@@ -77,7 +82,7 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
   for (const op of value.operations) {
     if (
       !op ||
-      Object.keys(op).some(key => !['localId', 'requiresAccepted', ...fields].includes(key)) ||
+      Object.keys(op).some((key) => !['localId', 'requiresAccepted', ...fields].includes(key)) ||
       Object.keys(op).length < 7 ||
       !/^[a-z][a-z0-9_]{0,23}$/.test(op.localId) ||
       !isSafeRecordId(op.localId) ||
@@ -105,9 +110,13 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
     const strings = (value: unknown) => Array.isArray(value) && value.every(text);
     if (
       op.talk &&
-      (!record(op.talk, ['text', 'addresseeEntityId']) ||
+      (!(
+        record(op.talk, ['text', 'addresseeEntityId']) ||
+        record(op.talk, ['text', 'addresseeEntityId', 'selfIntroduction'])
+      ) ||
         !text(op.talk.text) ||
-        !text(op.talk.addresseeEntityId))
+        !text(op.talk.addresseeEntityId) ||
+        (op.talk.selfIntroduction !== undefined && !nullableText(op.talk.selfIntroduction)))
     )
       return false;
     if (
@@ -163,10 +172,22 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
         ))
     )
       return false;
-    if (op.note && (!record(op.note, ['subjectId', 'expectedRevision', 'text']) ||
-        !nullableText(op.note.subjectId) || !text(op.note.text) || !Number.isSafeInteger(op.note.expectedRevision))) return false;
-    if (op.name && (!record(op.name, ['subjectId', 'expectedRevision', 'givenName']) ||
-        !text(op.name.subjectId) || !text(op.name.givenName) || !Number.isSafeInteger(op.name.expectedRevision))) return false;
+    if (
+      op.note &&
+      (!record(op.note, ['subjectId', 'expectedRevision', 'text']) ||
+        !nullableText(op.note.subjectId) ||
+        !text(op.note.text) ||
+        !Number.isSafeInteger(op.note.expectedRevision))
+    )
+      return false;
+    if (
+      op.name &&
+      (!record(op.name, ['subjectId', 'expectedRevision', 'givenName']) ||
+        !text(op.name.subjectId) ||
+        !text(op.name.givenName) ||
+        !Number.isSafeInteger(op.name.expectedRevision))
+    )
+      return false;
     ids.add(op.localId);
   }
   return true;
@@ -185,6 +206,7 @@ export function commitActorResponse(
   attemptBindings: AttemptBinding[] = [],
   expectedEncounters?: Record<string, string>,
   evidenceIds: string[] = [],
+  knowledgeReferences: Record<string, string> = {},
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -207,6 +229,7 @@ export function commitActorResponse(
     attemptBindings,
     expectedEncounters,
     evidenceIds,
+    knowledgeReferences,
   });
   const prior = getOwn(input.responseReceipts ?? {}, id);
   if (prior) {
@@ -253,6 +276,7 @@ export function commitActorResponse(
         actorId: value.actorId,
         type: 'say',
         text: value.text,
+        ...(value.selfIntroduction ? { selfIntroduction: value.selfIntroduction } : {}),
         intendedRecipientId: value.targetId,
       });
     world = draftWorld(transition.world);
@@ -281,18 +305,47 @@ export function commitActorResponse(
       return op.requiresAccepted.includes(alias) ? components[alias]?.goalId : undefined;
     };
     const subject = op.name?.subjectId ?? op.note?.subjectId;
-    if (subject && expectedEncounters && expectedEncounters[subject] !== world.perceptionEpisodes?.[actorId]?.[subject]) {
-      components[localId] = outcome(false, 'stale-encounter', 'The perceived subject encounter changed.');
+    const rememberedSubject = op.note?.subjectId
+      ? getOwn(knowledgeReferences, op.note.subjectId)
+      : undefined;
+    if (
+      subject &&
+      !rememberedSubject &&
+      expectedEncounters &&
+      expectedEncounters[subject] !== world.perceptionEpisodes?.[actorId]?.[subject]
+    ) {
+      components[localId] = outcome(
+        false,
+        'stale-encounter',
+        'The perceived subject encounter changed.',
+      );
       continue;
     }
     if (op.name) components[localId] = assignGivenName(world, actorId, op.name, entityIds);
     if (op.note) {
-      const subjectId = op.note.subjectId;
-      if (subjectId !== null && !canRememberSubject(world, actorId, subjectId))
-        components[localId] = outcome(false, 'recognition-unavailable', 'The subject has no supported identity binding.');
+      const subjectId = rememberedSubject ?? op.note.subjectId;
+      const existingDocument = rememberedSubject && knowledgeDocument(world, actorId, subjectId);
+      if (
+        subjectId !== null &&
+        (rememberedSubject ? !existingDocument : !canRememberSubject(world, actorId, subjectId))
+      )
+        components[localId] = outcome(
+          false,
+          'recognition-unavailable',
+          'The subject has no supported identity binding.',
+        );
       else {
-        components[localId] = editKnowledge(world, actorId, op.note, entityIds, evidenceIds);
-        if (components[localId]!.ok && subjectId !== null) rememberSubject(world, actorId, subjectId);
+        // Editing a remembered document does not identify a new exposure of its subject.
+        // docs/knowledge.md#subject-binding
+        components[localId] = editKnowledge(
+          world,
+          actorId,
+          { ...op.note, subjectId },
+          rememberedSubject ? [rememberedSubject] : entityIds,
+          evidenceIds,
+        );
+        if (components[localId]!.ok && subjectId !== null && !rememberedSubject)
+          rememberSubject(world, actorId, subjectId);
       }
     }
     if (op.talk) {
@@ -313,6 +366,7 @@ export function commitActorResponse(
           actorId,
           type: 'say',
           text: op.talk.text,
+          ...(op.talk.selfIntroduction ? { selfIntroduction: op.talk.selfIntroduction } : {}),
           targetId: op.talk.addresseeEntityId,
         });
     }

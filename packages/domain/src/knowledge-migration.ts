@@ -12,19 +12,25 @@ export function migrateKnowledge(world: WorldState): void {
   for (const [actorId, inner] of Object.entries(world.innerWorlds ?? {})) {
     if (Object.hasOwn(world.actorKnowledge, actorId)) continue;
     const mind = world.minds?.[actorId];
-    const protectedPaths = new Set(mind?.documents.filter(d => d.protected).map(d => `${d.id}.md`) ?? ['identity.md']);
-    const moved = inner.files.filter(f => !protectedPaths.has(f.path));
-    const text = moved.map(f => `# ${f.path}\n${f.text}`).join('\n\n');
+    const protectedPaths = new Set(
+      mind?.documents.filter((d) => d.protected).map((d) => `${d.id}.md`) ?? ['identity.md'],
+    );
+    const moved = inner.files.filter((f) => !protectedPaths.has(f.path));
+    const text = moved.map((f) => `# ${f.path}\n${f.text}`).join('\n\n');
     if (characterCount(text) > world.knowledgePolicy.maxCharacters.general)
-      throw new Error(`Knowledge migration for ${actorId} needs an owner-reviewed rewrite: ${characterCount(text)} characters exceed the general notepad limit. Stored state was not discarded.`);
-    world.actorKnowledge[actorId] = text ? { general: { subjectId: null, text, revision: 1, evidenceIds: [...inner.evidenceIds] } } : {};
+      throw new Error(
+        `Knowledge migration for ${actorId} needs an owner-reviewed rewrite: ${characterCount(text)} characters exceed the general notepad limit. Stored state was not discarded.`,
+      );
+    world.actorKnowledge[actorId] = text
+      ? { general: { subjectId: null, text, revision: 1, evidenceIds: [...inner.evidenceIds] } }
+      : {};
     if (!moved.length) continue;
-    inner.files = inner.files.filter(f => protectedPaths.has(f.path));
-    inner.text = inner.files.map(f => `# ${f.path}\n${f.text}`).join('\n\n');
+    inner.files = inner.files.filter((f) => protectedPaths.has(f.path));
+    inner.text = inner.files.map((f) => `# ${f.path}\n${f.text}`).join('\n\n');
     inner.revision++;
     if (mind) {
-      mind.documents = mind.documents.filter(d => d.protected);
-      mind.records = mind.records.filter(r => mind.documents.some(d => d.id === r.documentId));
+      mind.documents = mind.documents.filter((d) => d.protected);
+      mind.records = mind.records.filter((r) => mind.documents.some((d) => d.id === r.documentId));
       mind.revision = inner.revision;
     }
   }

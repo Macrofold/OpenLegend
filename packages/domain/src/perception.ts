@@ -101,7 +101,7 @@ interface ObserverSight {
   eyeHeight: number;
   targets: Map<Position, SightResult>;
 }
-// Bounded memoization only, never an exposure limit. Dense scenes may evict and recompute.
+// Bounded memoization only, never an exposure limit. Uncached targets use exact geometry.
 const SIGHT_CACHE_LIMITS = { observers: 128, targets: 512 } as const;
 const visibility = new WeakMap<WorldState['map'], Map<string, ObserverSight>>();
 /** Bind one stable sensing boundary instead of rereading an observer's Immer proxies per target.
@@ -140,9 +140,10 @@ export function visionQuery(world: WorldState, observer: Entity): (source: Sight
     const seen = [0.85, 0.5, 0.15].some((fraction) =>
       clearSegment(map, eye, { x: p.x, y: p.y + source.height * fraction, z: p.z }),
     );
-    if (reusable) {
-      if (!reusable.has(p) && reusable.size >= SIGHT_CACHE_LIMITS.targets)
-        reusable.delete(reusable.keys().next().value!);
+    // Keep the admitted stable transforms when a dense scan exceeds capacity. Evicting
+    // its first entry on every miss makes a 513-target scan miss all 512 entries forever.
+    // docs/performance.md#simulation-cpu-and-growing-history
+    if (reusable && (reusable.has(p) || reusable.size < SIGHT_CACHE_LIMITS.targets)) {
       reusable.set(p, { height: source.height, seen });
     }
     return seen;

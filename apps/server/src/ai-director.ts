@@ -1,4 +1,9 @@
-import { observerDescription } from '@open-legend/domain';
+import {
+  observerDescription,
+  canSpeak,
+  supportsManualWork,
+  validResponseEnvelope,
+} from '@open-legend/domain';
 import { resolveResponseEntities, resolveEntityMarkers } from './entity-references.js';
 import { capabilityBlocked } from '@open-legend/domain';
 import { searchInventions } from './invention-search.js';
@@ -1324,6 +1329,11 @@ export class AiDirector {
     const baseSchema = boundResponseSchema(
       Object.keys(prepared.entityReferences),
       Object.keys(prepared.binding.actions),
+      {
+        speech: canSpeak(this.service.world.entities[actorId]),
+        expressions: supportsManualWork(this.service.world.entities[actorId]),
+      },
+      Object.keys(prepared.binding.knowledgeReferences ?? {}),
     );
     const schema = actorInvention.enabled
       ? baseSchema.extend({ invention: actorInvention.schema })
@@ -1358,8 +1368,21 @@ export class AiDirector {
     );
     this.current(run);
     if (await retryForUrgentAwareness()) return;
-    const parsingStartedAt = new Date().toISOString();
-    const reply = schema.parse(value);
+    const reply = await this.log.run(
+      'Response parsing',
+      { schema: 'actor-response', value },
+      async () => {
+        const parsed = schema.parse(value);
+        // Provider schemas describe fields; cross-field admission rules still need validation.
+        // docs/architecture.md#actor-agency-foundation
+        if (!validResponseEnvelope({ operations: parsed.operations }))
+          throw new Error(
+            'Invalid decision envelope: use exactly one non-null operation kind per entry, unique localIds and dependencies on earlier entries only.',
+          );
+        return parsed;
+      },
+      { id: `${run.job.id}:attempt:${attempt}:parse` },
+    );
     // Authoring metadata must not invalidate the strict native response envelope.
     // docs/architecture.md#shared-invention-workflow
     let nativeReply: import('@open-legend/domain').ActorResponse = { operations: reply.operations };
@@ -1367,13 +1390,6 @@ export class AiDirector {
       actorInvention.enabled && 'invention' in reply
         ? actorInvention.schema.parse(reply.invention)
         : null;
-    await this.log.record(
-      `${run.job.id}:attempt:${attempt}:parse`,
-      'Response parsing',
-      { schema: 'actor-response' },
-      { accepted: true },
-      parsingStartedAt,
-    );
     let attemptBindings = prepared.attemptBindings;
     const interpretationManifest = this.service.world.moduleManifest.revision;
     const interpretation = prepareAttemptInterpretation(
@@ -1416,7 +1432,11 @@ export class AiDirector {
       this.current(run);
       if (await retryForUrgentAwareness()) return;
     }
-    nativeReply = resolveResponseEntities(nativeReply, prepared.entityReferences);
+    nativeReply = resolveResponseEntities(
+      nativeReply,
+      prepared.entityReferences,
+      prepared.binding.knowledgeReferences,
+    );
     attemptBindings = attemptBindings.map((binding) => ({
       ...binding,
       description: resolveEntityMarkers(binding.description, {
@@ -1441,6 +1461,7 @@ export class AiDirector {
             attemptBindings,
             prepared.binding.entityEpisodes,
             prepared.binding.evidenceIds,
+            prepared.binding.knowledgeReferences,
           );
         },
         undefined,
@@ -1719,7 +1740,8 @@ export class AiDirector {
         const sentence = [
           ...latest.map((m) => m.summary),
           ...matches.map(
-            (id) => `I notice ${observerDescription(world, entity.id, id)}, relevant to my current interest.`,
+            (id) =>
+              `I notice ${observerDescription(world, entity.id, id)}, relevant to my current interest.`,
           ),
           `My current goal is ${currentGoal(actor)}.`,
           ...projectAttributes(world, entity, 'owner')

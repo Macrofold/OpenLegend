@@ -1,4 +1,8 @@
-import { observerDescription, recognizesSubject } from './worlds/base/knowledge.js';
+import {
+  observerDescription,
+  recognizesSubject,
+  learnSpeechIntroduction,
+} from './worlds/base/knowledge.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { appraiseEvent } from './social.js';
 import { mutateExperience } from './experience.js';
@@ -232,7 +236,14 @@ function recordEvent(
                 : type === 'speech'
                   ? 'heard'
                   : 'observed',
-            recognized: type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
+            entityEpisodes: Object.fromEntries(
+              [source?.id, type === 'speech' ? perceivedRecipient : targetId].flatMap((id) => {
+                const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
+                return id && episode ? [[id, episode]] : [];
+              }),
+            ),
+            recognized:
+              type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
             intelligible: true,
             entityIds: [source?.id, type === 'speech' ? perceivedRecipient : targetId].filter(
               (id): id is string => !!id,
@@ -261,12 +272,16 @@ function recordEvent(
                   : targetId === actorId
                     ? 'directed_action'
                     : 'observed_event',
-            content: typeof data?.['text'] === 'string' ? data['text'] : memoryPerspective(world, actorId, text, false, source?.id),
+            content:
+              typeof data?.['text'] === 'string'
+                ? data['text']
+                : memoryPerspective(world, actorId, text, false, source?.id),
           },
         },
       });
     }
   }
+  learnSpeechIntroduction(world, event);
   appraiseEvent(world, event);
   recordSpokenPromise(world, event);
   advanceCommitments(world, [event]);

@@ -1,5 +1,10 @@
 import { knowledgeDocument, characterCount, recognizesSubject } from '@open-legend/domain';
-import { entityLabel, entityReferenceMap, entityHandles } from './entity-references.js';
+import {
+  awarenessBindsSubject,
+  entityLabel,
+  entityReferenceMap,
+  entityHandles,
+} from './entity-references.js';
 import { seesEntity, type WorldState } from '@open-legend/domain';
 import { gameTime } from './recall.js';
 import type { JsonValue } from '@open-legend/ai';
@@ -33,11 +38,11 @@ export function responseTrigger(
           ? 'directed_action'
           : 'observed_event');
   const source =
-    aware.recognized && sourceId && world.entities[sourceId]
+    sourceId && awarenessBindsSubject(world, actorId, aware, sourceId) && world.entities[sourceId]
       ? entityLabel(world, world.entities[sourceId]!, actorId)
-      : 'An unidentified person';
+      : 'An unidentified individual';
   const time = `(${gameTime(aware.at)})`;
-  if (eventType === 'speech' || aware.modality === 'heard') {
+  if (eventType === 'speech') {
     if (!aware.intelligible)
       return `${triggerKind === 'addressed_speech' ? 'Addressed speech' : 'Overheard speech'}: I heard indistinct speech. ${time}`;
     const words =
@@ -64,9 +69,15 @@ export function responseTriggerContext(
   const world = service.world;
   const aware = world.experience?.awareness[actorId]?.find((entry) => entry.eventId === eventId);
   if (!aware) return undefined;
-  const source = aware.recognized && aware.sourceId ? world.entities[aware.sourceId] : undefined;
+  const source =
+    aware.sourceId && awarenessBindsSubject(world, actorId, aware, aware.sourceId)
+      ? world.entities[aware.sourceId]
+      : undefined;
   const recipientId = aware.intendedRecipientId ?? aware.targetId;
-  const recipient = recipientId ? world.entities[recipientId] : undefined;
+  const recipient =
+    recipientId && awarenessBindsSubject(world, actorId, aware, recipientId)
+      ? world.entities[recipientId]
+      : undefined;
   const observer = world.entities[actorId];
   return {
     eventId: aware.eventId,
@@ -83,6 +94,15 @@ export function responseTriggerContext(
             : 'Unknown; no recipient identity perceived',
         }
       : {}),
+    ...(source && aware.eventType !== 'speech'
+      ? { source: entityLabel(world, source, actorId), sourceIsMe: source.id === actorId }
+      : {}),
+    ...(aware.eventType !== 'speech' && recipient
+      ? {
+          subject: entityLabel(world, recipient, actorId),
+          subjectCurrentlyVisible: !!(observer && seesEntity(world, observer, recipient)),
+        }
+      : {}),
     sourceCurrentlyVisible: !!(source && observer && seesEntity(world, observer, source)),
   };
 }
@@ -92,18 +112,32 @@ export function readableDecisionContext(
   actions: { id: string; description: string }[],
   includeActions = false,
 ): string {
+  const capabilities = context['capabilities'] as
+    | { speech: boolean; expressions: boolean }
+    | undefined;
+  const expressionGuidance = capabilities?.expressions
+    ? 'Supported gestures: nod, smile, frown, wave, shrug, shake_head, slap. Expressions have no mechanical effects; a slap requires contact range.'
+    : 'This body has no supported gesture expressions. Do not use act.kind=expression or describe human gestures as performed.';
   const list = (value: unknown) =>
     Array.isArray(value) && value.length
       ? value.map((line) => `- ${String(line).replace(/\n/g, '\n  ')}`).join('\n')
       : 'None supplied.';
   const sections = [
-    `## Me\n${context['identity']}\n${context['aboutMe']}\n${context['body']} ${context['feelings'] ?? ''} ${context['kinship'] ?? ''}${context['food'] ? `\n${context['food']}` : ''}`,
+    `## Me\n${context['identity']}\n${context['aboutMe']}\n${context['body']} ${context['feelings'] ?? ''} ${context['kinship'] ?? ''}${context['food'] ? `\n${context['food']}` : ''}\n${expressionGuidance}${capabilities?.speech === false ? '\nI cannot speak; talk must be null.' : ''}`,
     `## Trigger\n${context['stimulus']}`,
     `## Trigger facts\n${JSON.stringify(context['triggerFacts'] ?? {})}\nEvent-time identity and current visibility are separate. Another nearby individual of the same species is not the speaker. Reconsider whether an older social opportunity still warrants a response; overhearing does not imply an invitation, but deliberate participation is allowed.`,
     `## Task\nChoose only warranted speech, actions, private thoughts, goals or a short native plan. Each kind is optional and may repeat.${(context['triggerFacts'] as { observerRelationship?: string } | undefined)?.observerRelationship === 'addressed_speech' ? ' Speech directed at me normally deserves a natural conversational response, whether a question, statement or greeting.' : ''} Silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.`,
-    `## Conversation so far\nSpeech I personally experienced in this exchange:\n${list(context['conversation'])}`,
-    `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\nPrerequisites must be obtained first. These handles can be queued without a current action shortlist.`,
-    `## Private intent controls\n${JSON.stringify(context['intentActions'] ?? [])}\nUse a known action handle to withdraw an unresolved intent. Withdrawal does not cancel physical work and cannot be queued in a plan.`,
+    `## Conversation so far\nSpeech I personally experienced in this exchange:\n${list(context['conversation'])}\nA turn marked "I said" is my own speech, not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
+    ...(Array.isArray(context['planOffers']) && context['planOffers'].length
+      ? [
+          `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\nPrerequisites must be obtained first. These handles can be queued without a current action shortlist.`,
+        ]
+      : []),
+    ...(Array.isArray(context['intentActions']) && context['intentActions'].length
+      ? [
+          `## Private intent controls\n${JSON.stringify(context['intentActions'] ?? [])}\nUse a known action handle to withdraw an unresolved intent. Withdrawal does not cancel physical work and cannot be queued in a plan.`,
+        ]
+      : []),
     `## Private intentions and native work\n${JSON.stringify(context['agency'] ?? { goals: [], plan: null })}\nThese are intentions and actual step dispositions, never proof that an objective was achieved.`,
     `## Current time\n${context['now']}`,
     `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
@@ -113,20 +147,17 @@ export function readableDecisionContext(
     `## Knowledge\n${list(context['knowledge'])}`,
   ];
   if (includeActions)
-    sections.splice(
-      6,
-      0,
-      `## Actions\nOptional relevant executable choices; selection is not mandatory:\n${actions.length ? actions.map((action) => `- ${action.id}: ${action.description}`).join('\n') : 'No shortlisted mechanical action.'}\nI may instead express a gesture (nod, smile, frown, wave, shrug, shake_head, slap), or propose an unlisted action. I should not prefer an existing action just because it is listed. Expressions have no mechanical effects; a slap requires contact range. A proposal is an intention, not a completed action; unsupported mechanics require separate invention admission.`,
+    sections.push(
+      `## Actions\nOptional relevant executable choices; selection is not mandatory:\n${actions.length ? actions.map((action) => `- ${action.id}: ${action.description}`).join('\n') : 'No shortlisted mechanical action.'}\nI may propose an unlisted action. I should not prefer an existing action just because it is listed. A proposal is an intention, not a completed action; unsupported mechanics require separate invention admission.`,
     );
   sections.push(
     `## Response format\nReturn {"operations":[]} to continue without intervention. At most 16 operations and 40000 UTF-8 bytes in total. Each operation has localId (unique lowercase letter followed by letters/digits/underscores, max 24), requiresAccepted (earlier localIds only), and exactly one non-null field among talk, act, think, goal, plan, note, name; all six unused fields must be null. Operations are admitted in order; requiresAccepted means admission, never physical completion.
-Speech: talk={"text":"words","addresseeEntityId":"permitted ID"}, max 1200 characters. Thought: think={"text":"brief private feeling","aboutEntityIds":[]}, max 240 characters.
-Action: act={"kind":"known|expression|proposal","actionId":null,"verb":null,"targetEntityId":null,"description":null,"mode":"enqueue|replace"}. For known, fill only actionId; for expression, fill verb and optionally targetEntityId; for proposal, fill description (max 500). Expressions and unlisted attempts remain available with no action suggestions. No unsupported effects are implied.
+Speech: talk={"text":"words","addresseeEntityId":"permitted ID","selfIntroduction":null}, max 1200 characters. Thought: think={"text":"brief private feeling","aboutEntityIds":[]}, max 240 characters.
+Action: act={"kind":"${capabilities?.expressions ? 'known|expression|proposal' : 'known|proposal'}","actionId":null,"verb":null,"targetEntityId":null,"description":null,"mode":"enqueue|replace"}. For known, fill only actionId; ${capabilities?.expressions ? 'for expression, fill verb and optionally targetEntityId; ' : ''}for proposal, fill description (max 500). Unlisted attempts remain available with no action suggestions. No unsupported effects are implied.
 Goal: goal={"operation":"create|revise|pause|resume|complete|abandon","goalId":null,"expectedRevision":null,"objective":null,"parentId":null}. Create supplies objective (max 500), optional parentId; revise supplies existing goalId/revision, objective and optional parentId. Status changes supply only existing goalId/revision. Eight active/paused goals maximum. Completion is a subjective declaration.
 Plan: plan={"mode":"enqueue|replace|cancel","expectedRevision":0,"goalId":null,"steps":[]}. Copy current plan revision (0 if absent). At most eight sequential steps. A step selects {"actionId":"supplied handle","itemFromStep":null,"useItemAs":null}, or consumes an earlier item output with {"actionId":null,"itemFromStep":0,"useItemAs":"equip"} (also "eat"). Indexes are zero-based within this submitted frontier. Only gather, prepare, craft and cook supply item outputs. Later steps wait for earlier completion and recheck prerequisites. Cancel has empty steps and null goalId. A new goal may be referenced as "$localId" only with that localId in requiresAccepted. Physical work takes simulation time. A plan may have no goal.
-Knowledge: note={"subjectId":null,"expectedRevision":0,"text":"replacement text"}. Null subject is general knowledge (5000 characters); a supplied entity token selects its subject pad (1000). Count Unicode code points including whitespace. Copy the current revision, or 0 for a missing pad. Rewrite, summarize or shorten the complete pad to fit; never truncate facts mechanically. Use empty text to clear. These are editable beliefs, not events or capabilities. Do not repeat About me, inventory or operational goals. Useful uncertainty matters. Notes are optional; do not edit just to fill the schema.
-Given name: name={"subjectId":"supplied entity token","expectedRevision":0,"givenName":"preferred individual label"}. Deliberately individuate a currently observed subject or update a recognized individual's preferred name. Observation alone does not assign a name. Accepting an introduction can update it; no global renaming occurs. Use a separate operation before the note with requiresAccepted if the edit depends on naming. Re-identification after losing sight needs supported recognition; do not guess from the server reference.
-Examples: empty {"operations":[]}; speech alone {"operations":[{"localId":"reply","requiresAccepted":[],"talk":{"text":"Hello.","addresseeEntityId":"COPY_PERMITTED_ID"},"act":null,"think":null,"goal":null,"plan":null,"note":null,"name":null}]}; combined decisions can contain separate speech and thought operations, repeated kinds, or a goal creation followed by a plan requiring that goal's admission. Never invent a goal or thought just to fill the schema. No reasoning transcript or fabricated completion.`,
+${context['knowledgeInstructions'] ?? 'Knowledge edits are unavailable.'}
+Examples: empty {"operations":[]}; speech alone {"operations":[{"localId":"reply","requiresAccepted":[],"talk":{"text":"Hello.","addresseeEntityId":"COPY_PERMITTED_ID","selfIntroduction":null},"act":null,"think":null,"goal":null,"plan":null,"note":null,"name":null}]}; combined decisions can contain separate speech and thought operations, repeated kinds, or a goal creation followed by a plan requiring that goal's admission. Never invent a goal or thought just to fill the schema. No reasoning transcript or fabricated completion.`,
   );
   sections.push(`## References
 Names are display prose, never identifiers. Copy the opaque ID token from (ID:token) into structured entity fields. Never invent a token or use a species name as an ID. Include (ID:token) in an unlisted proposal when identifying its target.
@@ -152,11 +183,11 @@ export function responseReferences(
       ...visibleIds,
       ...rememberedIds.filter((id) => Object.hasOwn(world.entities, id)),
       ...awareness
-        .flatMap((entry) => [
-          entry.sourceId,
-          entry.intendedRecipientId ?? entry.targetId,
-          ...entry.entityIds,
-        ])
+        .flatMap((entry) =>
+          [entry.sourceId, entry.intendedRecipientId ?? entry.targetId, ...entry.entityIds].filter(
+            (id): id is string => !!id && awarenessBindsSubject(world, actorId, entry, id),
+          ),
+        )
         .filter((id): id is string => !!id && Object.hasOwn(world.entities, id)),
     ]),
   ];
@@ -168,9 +199,12 @@ export function responseReferences(
     if (entry.intendedRecipientId) recognizedIds.add(entry.intendedRecipientId);
     for (const [id, role] of [
       [entry.sourceId, 'source'],
-      [entry.intendedRecipientId ?? entry.targetId, 'intended_recipient'],
+      [
+        entry.intendedRecipientId ?? entry.targetId,
+        entry.eventType === 'speech' ? 'intended_recipient' : 'subject',
+      ],
     ] as const) {
-      if (!id) continue;
+      if (!id || !awarenessBindsSubject(world, actorId, entry, id)) continue;
       const entries = roles.get(id) ?? [];
       entries.push({ evidenceId: entry.eventId, role });
       roles.set(id, entries);
@@ -188,11 +222,13 @@ export function responseReferences(
         : {}),
       ...(id === actorId ? { relation: 'myself' } : {}),
       ...(visible.has(id) ? { position: entity.position } : {}),
-      ...(recognizesSubject(world, actorId, id) || !world.observerIdentities?.[actorId]?.[id] ? {
-        noteRevision: knowledgeDocument(world, actorId, id)?.revision ?? 0,
-        noteCharacters: characterCount(knowledgeDocument(world, actorId, id)?.text ?? ''),
-        nameRevision: world.observerIdentities?.[actorId]?.[id]?.revision ?? 0,
-      } : {knowledgeBinding: 'unresolved'}),
+      ...(recognizesSubject(world, actorId, id) || !world.observerIdentities?.[actorId]?.[id]
+        ? {
+            noteRevision: knowledgeDocument(world, actorId, id)?.revision ?? 0,
+            noteCharacters: characterCount(knowledgeDocument(world, actorId, id)?.text ?? ''),
+            nameRevision: world.observerIdentities?.[actorId]?.[id]?.revision ?? 0,
+          }
+        : { knowledgeBinding: 'unresolved' }),
       triggerRoles: roles.get(id) ?? [],
     });
   });

@@ -77,6 +77,9 @@ Use the current single writer and existing stores first. No new platform depende
 
 ### AG05 — Resolve unlisted attempts to existing mechanics
 
+- [x] Offer body-admitted one-shot approaches to visible entities, including cognitive animals, through native movement. Preserve separate target descriptions when approach destinations coincide.
+- [ ] Extend locomotion with sustained target following when that behavior is taken on; keep it distinct from one-time destination movement and define target-loss/reacquisition behavior at the existing perception boundary.
+
 - [x] Retain bounded private unlisted intents and reuse exact normalized request-bound native descriptions without another provider call.
 - [x] Interpret up to four new proposals in one optional bounded call through the existing durable response job. Bind only scoped native handles, keep original proposal/component identity, preserve other components on interpretation failure, suppress unchanged repeats and reject stale manifest results. See [observed cases](../verification.md#native-attempt-resolution).
 - [x] Add explicit withdrawal/resolution of the four unresolved intent slots through the scoped interpreter and private native controls; do not silently evict unresolved work. The INV bridge remains AG08 work.

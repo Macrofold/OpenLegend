@@ -1,0 +1,276 @@
+{
+  "environment": {
+    "hardware": "Apple M1 Pro",
+    "os": "Darwin arm64",
+    "node": "22.23.2",
+    "mode": "tsx development/native standalone profilers",
+    "date": "2026-09-24"
+  },
+  "scope": "Native fixture/snapshot execution and bounded live observations; not scale certification or an automated test suite.",
+  "native": {
+    "paired-before": {
+      "node": "v22.23.2",
+      "initial": {
+        "simTime": 519217,
+        "entities": 14,
+        "events": 4226
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 40.740332999999964,
+      "warmupSteps": 30,
+      "setupMs": 98.93187499999999,
+      "cpuMs": 3070.431,
+      "heapUsedBytes": 48543528,
+      "nativeHeadroomAtRequestedSpeed": 30.316450392420123,
+      "finalCounts": {
+        "entities": 14,
+        "events": 4282,
+        "awareness": 5396
+      },
+      "steps": 5000,
+      "totalMs": 2748.782666,
+      "p50Ms": 0.4418749999999818,
+      "p95Ms": 0.9296249999997599,
+      "maxStepMs": 6.69787499999984,
+      "nativeSecondsPerWallSecond": 1818.9870235452074,
+      "finalWorldDigest": "99018616dcae6d49e9d8308873e71c24c9cd293a5d928ce943d41258cad81e69"
+    },
+    "paired-after": {
+      "node": "v22.23.2",
+      "initial": {
+        "simTime": 519217,
+        "entities": 14,
+        "events": 4226
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 20.867999999999995,
+      "warmupSteps": 30,
+      "setupMs": 60.550375,
+      "cpuMs": 2731.986,
+      "heapUsedBytes": 49045960,
+      "nativeHeadroomAtRequestedSpeed": 35.792247631325885,
+      "finalCounts": {
+        "entities": 14,
+        "events": 4282,
+        "awareness": 5396
+      },
+      "steps": 5000,
+      "totalMs": 2328.250916,
+      "p50Ms": 0.3855829999999969,
+      "p95Ms": 0.6169170000000008,
+      "maxStepMs": 8.804624999999987,
+      "nativeSecondsPerWallSecond": 2147.5348578795533,
+      "finalWorldDigest": "99018616dcae6d49e9d8308873e71c24c9cd293a5d928ce943d41258cad81e69"
+    },
+    "sight-before": {
+      "node": "v22.23.2",
+      "initial": {
+        "simTime": 0,
+        "entities": 514,
+        "events": 0
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 3.367709000000005,
+      "warmupSteps": 30,
+      "setupMs": 6.387957999999998,
+      "cpuMs": 1629.438,
+      "heapUsedBytes": 50157952,
+      "nativeHeadroomAtRequestedSpeed": 1.816475203398721,
+      "finalCounts": {
+        "entities": 514,
+        "events": 1027,
+        "awareness": 1027
+      },
+      "steps": 180,
+      "totalMs": 1651.5502079999999,
+      "p50Ms": 7.413124999999809,
+      "p95Ms": 14.798958000000084,
+      "maxStepMs": 96.75079099999994,
+      "nativeSecondsPerWallSecond": 108.98851220392326,
+      "finalWorldDigest": "88e3d3bb439c703f1985fb5e0d5ff39d4558175a5cbd9b8de2808a3bee88fee8"
+    },
+    "sight-after": {
+      "node": "v22.23.2",
+      "initial": {
+        "simTime": 0,
+        "entities": 514,
+        "events": 0
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 2.858292000000006,
+      "warmupSteps": 30,
+      "setupMs": 7.4940840000000435,
+      "cpuMs": 1051.509,
+      "heapUsedBytes": 26201048,
+      "nativeHeadroomAtRequestedSpeed": 3.341079685982255,
+      "finalCounts": {
+        "entities": 514,
+        "events": 1027,
+        "awareness": 1027
+      },
+      "steps": 180,
+      "totalMs": 897.9133340000001,
+      "p50Ms": 4.787040999999931,
+      "p95Ms": 6.537958000000117,
+      "maxStepMs": 9.332666999999901,
+      "nativeSecondsPerWallSecond": 200.4647811589353,
+      "finalWorldDigest": "88e3d3bb439c703f1985fb5e0d5ff39d4558175a5cbd9b8de2808a3bee88fee8"
+    },
+    "mixed": {
+      "node": "v22.23.2",
+      "initial": {
+        "simTime": 0,
+        "entities": 344,
+        "events": 30
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 4.110291999999987,
+      "warmupSteps": 0,
+      "setupMs": 73.20195900000002,
+      "cpuMs": 1905.938,
+      "heapUsedBytes": 32133304,
+      "nativeHeadroomAtRequestedSpeed": 0.5804740851663405,
+      "finalCounts": {
+        "entities": 344,
+        "events": 3254,
+        "awareness": 3474
+      },
+      "steps": 180,
+      "totalMs": 1722.729792,
+      "p50Ms": 6.404791000000046,
+      "p95Ms": 12.263417000000004,
+      "maxStepMs": 386.98308299999997,
+      "nativeSecondsPerWallSecond": 104.48533532994128,
+      "finalWorldDigest": "ec1ff970ea9a5344976df5d54ad0fbf73ca7fbbf677c1a6f36d7311642ab6771"
+    },
+    "gems": {
+      "node": "v22.23.2",
+      "initial": {
+        "simTime": 0,
+        "entities": 514,
+        "events": 0
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 2.836416999999983,
+      "warmupSteps": 0,
+      "setupMs": 26.942750000000018,
+      "cpuMs": 2168.115,
+      "heapUsedBytes": 37984824,
+      "nativeHeadroomAtRequestedSpeed": 0.47342814492892366,
+      "finalCounts": {
+        "entities": 514,
+        "events": 1024,
+        "awareness": 1024
+      },
+      "steps": 180,
+      "totalMs": 2112.2529590000004,
+      "p50Ms": 7.18874999999997,
+      "p95Ms": 32.173082999999906,
+      "maxStepMs": 106.42312499999997,
+      "nativeSecondsPerWallSecond": 85.21706608720626,
+      "finalWorldDigest": "662f336191bfdf665c1b9eec2a2e38cbad62184d37db87397c0ef8c89cc63274"
+    },
+    "crowd": {
+      "node": "v22.23.2",
+      "initial": {
+        "simTime": 0,
+        "entities": 164,
+        "events": 150
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 17.828457999999955,
+      "warmupSteps": 30,
+      "setupMs": 720.7566250000001,
+      "cpuMs": 2462.771,
+      "heapUsedBytes": 67968128,
+      "nativeHeadroomAtRequestedSpeed": 1.3055963502795607,
+      "finalCounts": {
+        "entities": 164,
+        "events": 8586,
+        "awareness": 14975
+      },
+      "steps": 180,
+      "totalMs": 2297.800541,
+      "p50Ms": 11.630625000000236,
+      "p95Ms": 18.786541999999827,
+      "maxStepMs": 39.56462499999998,
+      "nativeSecondsPerWallSecond": 78.33578101677364,
+      "finalWorldDigest": "25b3750b3b9e6e1f619a976f94113bfd11d800c1406340d827373c4c468efbd2"
+    }
+  },
+  "usageReads": {
+    "baselineMs": [
+      23.595790999999963, 29.864041999999984, 22.930999999999983, 22.567833000000007,
+      13.757375000000025, 10.588540999999964, 22.25524999999999, 7.567125000000033,
+      8.25124999999997, 8.25687499999998, 9.305207999999993, 7.830209000000025, 7.766458,
+      10.169583000000046, 7.0862920000000145, 11.943125000000009, 7.300082999999972,
+      13.676207999999974, 7.1514589999999885, 7.896749999999997
+    ],
+    "cachedMs": [
+      10.285959000000048, 0.01745800000003328, 0.00870800000006966, 0.007375000000024556,
+      0.014749999999935426, 0.015125000000011823, 0.009125000000040018, 0.0072499999999990905,
+      0.007582999999954154, 0.00791700000002038, 0.008249999999975444, 0.010583999999994376,
+      0.006791000000021086, 0.006250000000022737, 0.006209000000012566, 0.0061249999999972715,
+      0.006041999999979453, 0.00620800000001509, 0.0061249999999972715, 0.0061670000000049185
+    ],
+    "queries": {
+      "baseline": 20,
+      "cached": 1
+    },
+    "equal": true,
+    "calls": 2428
+  },
+  "liveStream": {
+    "count": 336,
+    "bytes": 307196,
+    "p50": 50.628749999999854,
+    "p95": 61.56641599999989,
+    "max": 103.19708300000002,
+    "over100": 1,
+    "over250": 0
+  },
+  "browserFrames": [
+    {
+      "samples": 583,
+      "p50Ms": 16.7,
+      "p95Ms": 18.5,
+      "maxMs": 100,
+      "sceneUpdateP50Ms": 0.1,
+      "sceneUpdateP95Ms": 0.2
+    },
+    {
+      "samples": 601,
+      "p50Ms": 16.7,
+      "p95Ms": 18.5,
+      "maxMs": 18.7,
+      "sceneUpdateP50Ms": 0.1,
+      "sceneUpdateP95Ms": 0.2
+    }
+  ],
+  "liveVerification": {
+    "population": 34,
+    "addedPeople": 8,
+    "addedAnimals": 12,
+    "cognitionEnabledAnimals": 5,
+    "directSpeechResponses": 8,
+    "autonomousResponses": 3,
+    "outOfHearingRejections": 2,
+    "estimatedSettledUsd": 0.045406,
+    "reservedUsdForCompletedRuns": 0,
+    "interruptedEarlierScenarioAllowanceUsd": 0.5,
+    "totalConservativeCeilingUsd": 0.545406,
+    "notes": "Earlier scenario exited while waiting for presence renewal; its account allowance is retained conservatively. Later runs maintained presence. Original user world was not reset or populated by these fixtures.",
+    "movementScenarios": {
+      "runs": 3,
+      "malformedEnvelope": 1,
+      "deferredMissingTargetChoice": 1,
+      "acceptedMovingResponse": 1,
+      "estimatedSettledUsd": 0.010893,
+      "jevCalls": 9,
+      "llmCalls": 4,
+      "arrivalVerified": false
+    },
+    "completedConversationScenarios": 2,
+    "conversationModelResponses": 11
+  }
+}

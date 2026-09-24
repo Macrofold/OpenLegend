@@ -1,5 +1,10 @@
 import { migrateKnowledge } from './knowledge-migration.js';
-import { editKnowledge, advanceKnowledgeRevision, type KnowledgeEdit } from './knowledge.js';
+import {
+  editKnowledge,
+  knowledgeDocument,
+  advanceKnowledgeRevision,
+  type KnowledgeEdit,
+} from './knowledge.js';
 import {
   assignGivenName,
   canRememberSubject,
@@ -27,6 +32,7 @@ export const EXPERIENCE_LIMITS = {
   historyDays: 30,
 } as const;
 export interface Awareness {
+  entityEpisodes?: Record<string, string>;
   eventId: string;
   actorId: string;
   text: string;
@@ -898,6 +904,8 @@ export function publishInnerWorld(
   knowledgeChanges: KnowledgeEdit[] = [],
   nameChanges: GivenNameEdit[] = [],
   permittedSubjects: string[] = [],
+  expectedEncounters?: Record<string, string>,
+  knowledgeReferences: Record<string, string> = {},
 ): Transition {
   const reject = (message: string) => ({
     world: input,
@@ -949,16 +957,47 @@ export function publishInnerWorld(
   const world = draftWorld(input);
   if (knowledgeChanges.length > 16 || nameChanges.length > 16)
     return reject('Too many knowledge changes.');
+  if (
+    expectedEncounters &&
+    [
+      ...nameChanges,
+      ...knowledgeChanges.filter(
+        (edit) => !edit.subjectId || !Object.hasOwn(knowledgeReferences, edit.subjectId),
+      ),
+    ].some(
+      (edit) =>
+        edit.subjectId &&
+        expectedEncounters[edit.subjectId] !==
+          world.perceptionEpisodes?.[actorId]?.[edit.subjectId],
+    )
+  )
+    return reject('A knowledge subject encounter changed during reflection.');
   for (const edit of nameChanges) {
     const result = assignGivenName(world, actorId, edit, permittedSubjects);
     if (!result.ok) return reject(result.message);
   }
   for (const edit of knowledgeChanges) {
-    if (edit.subjectId !== null && !canRememberSubject(world, actorId, edit.subjectId))
+    const rememberedSubject =
+      edit.subjectId && Object.hasOwn(knowledgeReferences, edit.subjectId)
+        ? knowledgeReferences[edit.subjectId]
+        : undefined;
+    const subjectId = rememberedSubject ?? edit.subjectId;
+    if (
+      subjectId !== null &&
+      (rememberedSubject
+        ? !knowledgeDocument(world, actorId, subjectId)
+        : !canRememberSubject(world, actorId, subjectId))
+    )
       return reject('Knowledge subject is not recognized.');
-    const result = editKnowledge(world, actorId, edit, permittedSubjects, evidenceIds);
+    const result = editKnowledge(
+      world,
+      actorId,
+      { ...edit, subjectId },
+      rememberedSubject ? [rememberedSubject] : permittedSubjects,
+      evidenceIds,
+    );
     if (!result.ok) return reject(result.message);
-    if (edit.subjectId !== null) rememberSubject(world, actorId, edit.subjectId);
+    if (subjectId !== null && !rememberedSubject) rememberSubject(world, actorId, subjectId);
   }
   if (goalChanges.length > 8 || (actor.controller === 'player' && goalChanges.length))
     return reject('Reflection cannot replace player intentions or exceed eight goal changes.');

@@ -1,4 +1,5 @@
-import { generalKnowledgeContext } from './knowledge-context.js';
+import { knowledgePolicyInstructions } from '@open-legend/domain';
+import { generalKnowledgeContext, selectedKnowledgeReferences } from './knowledge-context.js';
 import {
   entityLabel,
   entityReferenceMap,
@@ -9,7 +10,7 @@ import { digest } from './store.js';
 import { contextSections } from './perceived-context.js';
 import { dreamStatus } from '@open-legend/domain';
 import { type AttemptBinding, currentGoal } from '@open-legend/domain';
-import { bodyContext, hasWildernessNeeds } from '@open-legend/domain';
+import { bodyContext, hasWildernessNeeds, supportsManualWork, canSpeak } from '@open-legend/domain';
 import { activeAppraisals } from '@open-legend/domain';
 
 import { compileInterests } from './interests.js';
@@ -54,6 +55,18 @@ function fitActionCandidates(
     remaining -= bytes;
     return true;
   });
+}
+
+function distinctActions(candidates: CandidateAction[]): CandidateAction[] {
+  return [
+    ...new Map(
+      candidates.map((candidate) => [
+        // Different perceived targets may share an approach tile; keep each intent selectable.
+        candidate.command?.type === 'move' ? candidate.id : JSON.stringify(candidate.command),
+        candidate,
+      ]),
+    ).values(),
+  ];
 }
 
 function currentConversationEvidenceIds(
@@ -118,14 +131,7 @@ export async function prepareDecision(
       : [];
   const automaticIds = conversation;
   const planning = planningCandidates(service, actorId);
-  const availableActions = [
-    ...new Map(
-      [...npcCandidates(service, actorId), ...planning].map((candidate) => [
-        JSON.stringify(candidate.command),
-        candidate,
-      ]),
-    ).values(),
-  ];
+  const availableActions = distinctActions([...npcCandidates(service, actorId), ...planning]);
   const planOffers = [...planning]
     .sort((a, b) => a.id.localeCompare(b.id))
     .slice(0, 16)
@@ -154,8 +160,15 @@ export async function prepareDecision(
   const snapshotActor = observed.actor.actor!;
   const triggerIdSet = new Set(requiredIds);
   const requiredContext: Record<string, unknown> = {
+    capabilities: {
+      speech: canSpeak(observed.actor),
+      expressions: supportsManualWork(observed.actor),
+    },
     stimulus,
     notepad: generalKnowledgeContext(world, actorId),
+    knowledgeInstructions: world.knowledgePolicy
+      ? knowledgePolicyInstructions(world.knowledgePolicy)
+      : 'Knowledge is unavailable.',
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId) ?? null,
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     planOffers: planOffers.map(({ id, description }) => ({ id, description })),
@@ -301,8 +314,15 @@ export async function prepareDecision(
     compileInterests(currentWorld, actorId, currentSelection),
   );
   const context: Record<string, unknown> = {
+    capabilities: {
+      speech: canSpeak(currentObserved.actor),
+      expressions: supportsManualWork(currentObserved.actor),
+    },
     stimulus,
     notepad: generalKnowledgeContext(currentWorld, actorId),
+    knowledgeInstructions: currentWorld.knowledgePolicy
+      ? knowledgePolicyInstructions(currentWorld.knowledgePolicy)
+      : 'Knowledge is unavailable.',
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId) ?? null,
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     identity: `I am ${entityLabel(currentWorld, currentObserved.actor, actorId)}. Species: ${actor.species ?? 'unknown'}.${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
@@ -357,7 +377,12 @@ export async function prepareDecision(
     requiredIds,
     [
       ...currentSelection
-        .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation' || candidate.kind === 'knowledge')
+        .filter(
+          (candidate) =>
+            candidate.kind === 'memory' ||
+            candidate.kind === 'conversation' ||
+            candidate.kind === 'knowledge',
+        )
         .flatMap((candidate) => candidate.entityIds),
       ...socialEntityIds(currentWorld, actorId),
     ],
@@ -376,6 +401,7 @@ export async function prepareDecision(
     ...entityReferenceMap(currentWorld, planningTargetIds, actorId),
   };
   const binding: CognitionBinding = {
+    knowledgeReferences: selectedKnowledgeReferences(currentWorld, actorId, currentSelection),
     actorId,
     decisionId: jobId,
     policy: MIND_POLICY,
@@ -386,10 +412,12 @@ export async function prepareDecision(
       .filter((c) => c.kind === 'memory' || c.kind === 'conversation')
       .flatMap((c) => c.sourceIds ?? [c.id]),
     entityIds: Object.values(entityReferences),
-    entityEpisodes: Object.fromEntries(Object.values(entityReferences).flatMap(id => {
-      const episode = currentWorld.perceptionEpisodes?.[actorId]?.[id];
-      return episode ? [[id, episode]] : [];
-    })),
+    entityEpisodes: Object.fromEntries(
+      Object.values(entityReferences).flatMap((id) => {
+        const episode = currentWorld.perceptionEpisodes?.[actorId]?.[id];
+        return episode ? [[id, episode]] : [];
+      }),
+    ),
     expectedPlan: actor.planGeneration,
     restEpisode: dreamStatus(currentWorld, currentWorld.entities[actorId])?.episode ?? null,
     actions: planActions,
@@ -397,7 +425,8 @@ export async function prepareDecision(
   const offered: { id: string; description: string }[] = [];
   for (const key of Object.keys(context)) {
     const value = context[key];
-    if (typeof value === 'string') context[key] = projectEntityMarkers(value, currentWorld, actorId);
+    if (typeof value === 'string')
+      context[key] = projectEntityMarkers(value, currentWorld, actorId);
     else if (value != null)
       context[key] = JSON.parse(
         projectEntityMarkers(JSON.stringify(value), currentWorld, actorId),
@@ -559,14 +588,10 @@ export function refreshDecisionActions(
   if (!actor) throw new Error('Actor unavailable.');
   return {
     ...prepared,
-    actionCandidates: [
-      ...new Map(
-        [
-          ...npcCandidates(service, prepared.binding.actorId),
-          ...planningCandidates(service, prepared.binding.actorId),
-        ].map((candidate) => [JSON.stringify(candidate.command), candidate]),
-      ).values(),
-    ],
+    actionCandidates: distinctActions([
+      ...npcCandidates(service, prepared.binding.actorId),
+      ...planningCandidates(service, prepared.binding.actorId),
+    ]),
     binding: { ...prepared.binding, expectedPlan: actor.planGeneration },
   };
 }
