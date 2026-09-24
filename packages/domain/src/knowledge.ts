@@ -59,7 +59,8 @@ export function editKnowledge(
     subjectId: edit.subjectId,
     text: edit.text,
     revision: (current?.revision ?? 0) + 1,
-    evidenceIds: edit.text ? [...new Set([...(current?.evidenceIds ?? []), ...evidenceIds])] : [],
+    // Current publication evidence stays bounded by admitted context; prior provenance remains in committed history.
+    evidenceIds: edit.text ? [...new Set(evidenceIds.length ? evidenceIds : current?.evidenceIds ?? [])] : [],
   };
   advanceKnowledgeRevision(world, actorId);
   return outcome(true, 'knowledge-edited', 'Knowledge updated.');
