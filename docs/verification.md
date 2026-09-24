@@ -1,5 +1,9 @@
 # Verification
 
+## Recast and world-presentation integration
+
+See the [current integration record](verification/recast-integration.md) for the pinned worker/capsule implementation, sampled clearance calibration, running application, performance probes and browser evidence/limitations. Historical native lattice, schema-9 and earlier automated results below are not passing qualification for the new backend. No new unit, integration or browser test suites were run for this request.
+
 This file records current reproducible evidence and acceptance gaps. Fixture evidence does not establish live model quality, provider cost, hosted security, capacity or balance.
 
 ## Macrofold worker reuse

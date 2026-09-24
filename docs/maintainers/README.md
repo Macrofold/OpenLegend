@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Presentation and navigation delivery
+
+[SW17–SW19](spatial-world.md) own the current Recast/capsule and visual delivery. [World presentation](../world-presentation.md) is the canonical visual specification. [TODO SR16–SR20](TODO.md#recast-and-presentation-regression-todos) contains the requested deferred automation; [verification](../verification/recast-integration.md) records executed application/stress observations only.
+
 This page is the master navigation index for active implementation work.
 
 ## Focused work

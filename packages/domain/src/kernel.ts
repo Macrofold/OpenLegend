@@ -247,6 +247,27 @@ function approach(world: WorldState, actor: Entity, action: Action): Outcome | n
   action.navigation = path.status === 'pending' ? { request: path.request } : undefined;
   return null;
 }
+/** Required navigation is a technical barrier, not an in-world wait. Stale requests do not
+ * block time: the next native step reconciles them. Never include another actor's destination
+ * in the public barrier indicator. docs/architecture.md#navigation-preparation
+ */
+export function navigationBlocked(world: WorldState): boolean {
+  return Object.values(world.entities).some((entity) => {
+    const request = entity.actor?.action?.navigation;
+    if (!entity.actor?.alive || entity.actor.incapacitated || !request || request.failure)
+      return false;
+    const body = bodyProfile(entity);
+    return (
+      request.request.geometryRevision === world.map.spatial.revision &&
+      request.request.from.surfaceId === entity.spatial.supportSurfaceId &&
+      distance(entity.position, request.request.from) < 1e-7 &&
+      body.radius === request.request.body.radius &&
+      body.height === request.request.body.height &&
+      body.maxSlope === request.request.body.maxSlope
+    );
+  });
+}
+
 /** Route results are untrusted derived data. Only a matching current action may accept them;
  * preparation may finish while paused, but this transition never moves or consumes anything.
  * archive/07-technical-architecture/spatial-world-runtime.md#navigation-preparation
@@ -266,6 +287,8 @@ export function completeNavigation(
     outcome: outcome(false, 'stale-route', 'The route request is no longer current.'),
   });
   if (
+    !source?.actor?.alive ||
+    source.actor.incapacitated ||
     !action ||
     action.id !== actionId ||
     !action.navigation ||
@@ -295,8 +318,8 @@ export function completeNavigation(
   if (result.status === 'reached') {
     let previous = request.from;
     if (!Array.isArray(result.path) || result.path.length > SPATIAL_LIMITS.maxPathPoints)
-      return stale();
-    for (const point of result.path) {
+      failure = 'navigation returned an invalid route.';
+    for (const point of failure ? [] : result.path) {
       if (!finitePoint(point) || !canWalkSegment(spatialMap(original), previous, point, profile)) {
         failure = 'the prepared route became physically blocked.';
         break;
@@ -962,14 +985,22 @@ function moveAlongPath(
   while (path.length && remaining > 0) {
     const point = path[0]!,
       start = supportedPosition(actor);
-    if (!start || !canWalkSegment(map, start, point, profile)) return false;
+    if (!start) return false;
     const delta = distance(start, point);
+    const next =
+      delta <= remaining
+        ? point
+        : {
+            ...interpolate(start, point, remaining / delta),
+            surfaceId: start.surfaceId,
+          };
+    if (!canWalkSegment(map, start, next, profile)) return false;
     if (delta <= remaining) {
       setSpatialPosition(actor, point, point.surfaceId);
       path.shift();
       remaining -= delta;
     } else {
-      setSpatialPosition(actor, interpolate(start, point, remaining / delta), start.surfaceId);
+      setSpatialPosition(actor, next, start.surfaceId);
       remaining = 0;
     }
   }
@@ -1321,14 +1352,20 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
         'Advance duration must be between zero and one simulated day.',
       ),
     };
-  if (original.paused || elapsedSimSeconds === 0)
+  if (original.paused || elapsedSimSeconds === 0 || navigationBlocked(original))
     return {
       world: original,
       events: [],
       outcome: outcome(
         true,
-        original.paused ? 'paused' : 'unchanged',
-        original.paused ? 'World time is paused.' : 'No time elapsed.',
+        original.paused
+          ? 'paused'
+          : navigationBlocked(original)
+            ? 'navigation-pending'
+            : 'unchanged',
+        original.paused
+          ? 'World time is paused.'
+          : 'No time advanced while required data is pending.',
       ),
     };
   let participants = nativeParticipants(original);
@@ -1336,6 +1373,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
   const events: WorldEvent[] = [];
   let remaining = elapsedSimSeconds;
   while (remaining > 0) {
+    if (navigationBlocked(world)) break;
     const seconds = Math.min(1, remaining);
     remaining -= seconds;
     world.simTime += seconds;
@@ -1404,7 +1442,11 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
   return finish(
     world,
     events,
-    outcome(true, 'advanced', `Advanced ${elapsedSimSeconds} simulation seconds.`),
+    outcome(
+      true,
+      remaining > 0 ? 'navigation-pending' : 'advanced',
+      `Advanced ${elapsedSimSeconds - remaining} simulation seconds.`,
+    ),
   );
 }
 

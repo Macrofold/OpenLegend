@@ -200,6 +200,8 @@ export interface GameView {
     baseRatio: number;
     paused: boolean;
     pauseReason: 'manual' | 'away' | 'storage' | null;
+    /** Technical preparation only; this exposes no other actor's route or intent. */
+    preparingNavigation?: boolean;
   };
   player: {
     id: string;

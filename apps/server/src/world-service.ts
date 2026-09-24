@@ -1,4 +1,4 @@
-import { completeNavigation } from '@open-legend/domain';
+import { completeNavigation, navigationBlocked } from '@open-legend/domain';
 import type { NavigationRequest, NavigationResult } from '@open-legend/spatial';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
@@ -691,7 +691,7 @@ export class WorldService {
       await this.tickBatch(elapsedRealSeconds, suspendedRealSeconds);
       elapsedRealSeconds = 0;
       suspendedRealSeconds = 0;
-      if (this.paused || this.debtSeconds < 1) return;
+      if (this.paused || this.debtSeconds < 1 || navigationBlocked(this.world)) return;
       // Release the mutation queue before yielding so commands can interleave with catch-up.
       const yieldedAt = performance.now();
       await new Promise<void>((resolve) => setImmediate(resolve));
@@ -738,6 +738,15 @@ export class WorldService {
         this.memoryBacklog = null;
         this.notify(false);
       }
+      // Keep admitted debt, but do not charge the world hunger/action time for CPU preparation.
+      // A canceled action, failed request or completed route releases this technical barrier.
+      // docs/architecture.md#navigation-preparation
+      if (navigationBlocked(this.world)) {
+        countMetric('clock.navigationExcludedRealSeconds', elapsedRealSeconds);
+        gaugeMetric('navigation.blocked', 1);
+        return;
+      }
+      gaugeMetric('navigation.blocked', 0);
       const requested = elapsedRealSeconds * this.config.baseRatio * this.speed;
       countMetric('clock.activeRealSeconds', elapsedRealSeconds);
       countMetric('clock.requestedSimSeconds', requested);
@@ -754,6 +763,7 @@ export class WorldService {
       // Publish a bounded prefix and release mutation ownership; retain the rest as debt.
       // A single transition remains atomic even if it exceeds this time budget.
       for (; completedSteps < steps; ) {
+        if (navigationBlocked(world)) break;
         const stepStarted = performance.now();
         world = freezeWorld(advanceWorld(world, 1).world);
         const stepMs = performance.now() - stepStarted;

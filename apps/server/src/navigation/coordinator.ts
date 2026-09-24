@@ -30,6 +30,7 @@ export class NavigationCoordinator {
   private requestId = 0;
   private closed = false;
   private failed = false;
+  private retiring = false;
   private readonly unsubscribe: () => void;
   constructor(private readonly service: WorldService) {
     this.unsubscribe = service.subscribe(() => this.schedule());
@@ -49,6 +50,12 @@ export class NavigationCoordinator {
       this.map = world.map;
       this.timeline = timelineId;
       this.key = `${world.id}:${timelineId}:${++this.serial}`;
+      // Do not make a loaded/replaced world wait for an obsolete heavy build. Termination
+      // finishes before another worker is created, keeping the pool bounded to one.
+      if (this.active) {
+        void this.failedWorker(false);
+        return;
+      }
     }
     const previous = new Map(this.queue.map((t) => [t.actionId, t]));
     this.queue = [];
@@ -82,7 +89,7 @@ export class NavigationCoordinator {
     this.pump();
   }
   private pump() {
-    if (this.active || this.closed || !this.map) return;
+    if (this.active || this.retiring || this.closed || !this.map) return;
     const task = this.queue.shift();
     // A failed worker does not restart on an idle timer. A newly requested action permits one retry.
     if (!task && this.failed) return;
@@ -140,20 +147,22 @@ export class NavigationCoordinator {
     } catch {
       countMetric('navigation.commitFailure');
     } finally {
-      this.active = undefined;
+      if (this.active === active) this.active = undefined;
       this.schedule();
     }
   }
-  private async failedWorker() {
+  private async failedWorker(markUnavailable = true) {
     const worker = this.worker;
     if (!worker) return;
+    this.retiring = true;
+    const active = this.active;
+    this.active = undefined;
     this.worker = undefined;
     this.preparedKey = '';
     clearTimeout(this.timer);
     this.failed = true;
     await worker.terminate();
-    const active = this.active;
-    if (active?.task) {
+    if (markUnavailable && active?.task) {
       const t = active.task;
       try {
         await this.service.preparedNavigation(
@@ -166,8 +175,9 @@ export class NavigationCoordinator {
         );
       } catch {}
     }
-    this.active = undefined;
-    countMetric('navigation.workerFailure');
+    this.retiring = false;
+    countMetric(markUnavailable ? 'navigation.workerFailure' : 'navigation.obsoleteWorker');
+    this.failed = markUnavailable;
     this.schedule();
   }
   async close() {

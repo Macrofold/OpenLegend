@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## Recast and world-presentation integration
+
+Reconciled the complete movement/visual discussion: continuous arbitrary-angle positions (placement snapping optional), shared round-body clearance, Recast selection over navcat after qualification, selective Rapier without a second dynamics world, bounded worker/time barriers and distinct raster/contact tolerances. Added the canonical world-presentation owner for lit fallback sprites, multi-receiver shadow projection, correct depth, smooth right-drag and configurable local authorized reveal. Superseded native-lattice implementation claims and algorithm-only TODOs while preserving historical evidence and still-valid requirements. SW17–SW19 and SR16–SR20 distinguish delivery, deferred controller/tile/model/crowd work and unrun automation.
+
 ## Spatial scaling continuation and reconciliation
 
 Preserved the concurrent third-pass lazy graph, closed-region proofs, native roster and observation sanitation. Added movement-only support equivalence, weak exact-stance memoization and independent JSON-copy allocation reduction to implemented owners. Allocated SW04.1c/SW05.1d and SR13–SR15 without replacing existing task IDs or evidence. Current limits and matched continuation observations remain distinct from earlier timings; no automated tests were added or run.

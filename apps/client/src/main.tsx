@@ -827,7 +827,11 @@ function App() {
                       {String(Math.floor(view.clock.seconds / 60) % 60).padStart(2, '0')}
                     </span>
                     <div className="ol-caption">
-                      {view.clock.paused ? 'Paused' : 'Time in the wilderness'}
+                      {view.clock.paused
+                        ? 'Paused'
+                        : view.clock.preparingNavigation
+                          ? 'Preparing navigation…'
+                          : 'Time in the wilderness'}
                     </div>
                   </div>
                 </div>

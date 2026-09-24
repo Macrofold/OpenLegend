@@ -1,5 +1,9 @@
 # Spatial world: 3D simulation, tactical cameras, and mixed-dimensional art
 
+## Presentation contract
+
+[World presentation](world-presentation.md) is the canonical owner for default-lit sprite/mesh artwork, multi-receiver dynamic shadows, depth/read-through behavior, configurable player visibility settings and smooth right-drag camera controls. These never change physical sight, sound, support or action authority.
+
 ## Renderer boundary
 
 Physical data is renderer-independent. The current `WorldRenderer` boundary accepts the existing authorized `GameView` DTO and returns intentions; it does not expose PlayCanvas objects to React or the domain. This minimal implemented interface is smaller than the eventual rendering projection described in the [runtime contract](../archive/07-technical-architecture/spatial-world-runtime.md#10-playcanvas-isolation-and-hybrid-assets). [Architecture](architecture.md#spatial-world-foundation) identifies delivered behavior; the remaining target is not implicitly complete.
@@ -45,19 +49,15 @@ The first useful environment includes a lower path, an elevated deck with a ramp
 
 Geometry changes preserve physical consequences. Removing support cannot leave an actor floating. Supported changes either lead to a bounded native fall/landing outcome or are rejected when the relevant recovery behavior is not available. Destruction, structural engineering, and falling debris are not implicitly implemented by permitting a platform to exist.
 
-## Movement and action
+## Movement
 
-A requested destination specifies which surface or air region is intended. Selecting the bridge must not silently select the ground beneath it. The engine may project a slightly imprecise click onto the chosen valid surface within a declared tolerance; it may not snap to a different floor or teleport through an obstacle.
+Placement and locomotion use continuous world coordinates and arbitrary angles. Grid snapping may be offered for construction but is not mandatory; 8-direction graph search is not a gameplay target. Travel directly when clear, otherwise follow a Recast corridor with full-body-checked simplification. Preserve exact support seams so a shorter-looking line cannot cut through a ramp crest, floor or wall. Walking bodies have circular footprints (upright capsules or suitable short cylinders) from a shared movement profile.
 
-Ground routes are sequences across traversable surfaces embedded in 3D. Their length, slope, clearance, and supported transitions matter. This is fully compatible with a 3D world even though a walking creature remains constrained to a surface. A dense grid of every cubic point in space is unnecessary.
+Navigation approximates walkable space; physical support and collision decide the accepted result. A 1.5 cm support comparison is not placement fidelity. The [calibration contract](../archive/07-technical-architecture/spatial-world-runtime.md#movement-calibration) permits practical Recast raster resolution while retaining storey identity and continuous feet. A returned partial route is not success. Stop safely and replan within a small bound when geometry changes; do not alternate between small waypoints, overshoot an endpoint, smooth through obstacles or retry forever.
 
-The native simulation performs movement and work. A renderer, pathfinder, or animation cannot complete an action on its own. Navigation suggests a route; authoritative movement checks that the next segment is still valid. Work begins only when its actual prerequisites are satisfied, and consumption follows the owning action's rules.
+Required route preparation is a technical hold outside the mutation lane, not paid deliberation or extra world time. The current world stops native time until admitted required data is ready, with cancellation/read/pause/restore still available. CPU speed must not change how hungry an actor becomes while planning the same route. Saved pending work can resume after load by reconstructing derived navigation data.
 
-The actor does not need a model call to follow a route or continue a valid plan. Native behavior can run with zero model calls. Jev can select a supplied feasible action through the existing level-1 design; higher-level generation remains available for new goals, changed plans, unlisted attempts, or invention. These routes all use the same spatial admission and execution rules.
-
-“Within reach” is not just a center-distance test. A hand action needs compatible contact geometry, access, and a reachable stance. Ranged actions use the supported 3D range and obstruction rule. A bird high above someone cannot be punched because their horizontal coordinates coincide. An actor cannot harvest through a floor or cook at a fire on another inaccessible level.
-
-A path that reaches only part of the destination is partial, not successful arrival. A temporarily unavailable navigation cache is a technical condition, not evidence that the character discovered an impassable landscape. Changes such as a closed door or an exhausted target can stop or invalidate future work; they do not erase the actor's longer-term goal.
+Special traversals require their own native actions and capabilities. Teleporting to a known valid destination does not need a walking route; planning an itinerary that uses portals belongs above ordinary ground navigation. Flight remains a separate constrained native family.
 
 ## Flying creatures
 
@@ -93,7 +93,7 @@ A level selector changes the focus and displayed slice, not the actor's position
 
 When a roof or upper floor obscures the selected lower area, presentation can fade or cut away the covering geometry. Its collision, support, sight blocking, and acoustic effects remain intact. Concealed entities are not sent to the ordinary client merely because a roof has been faded. A separately authorized god view can inspect them without granting character knowledge.
 
-The existing embodied-visual-parity policy remains: the active server-approved viewport narrows the character's bodily visual exposure; it does not replace the body with the camera. A camera-side wall may also hide a body-visible object from the displayed view; approved presentation cutaways can remove that camera obstruction, never the body's physical one. NPC vision remains independent of the player's viewport. The sensory owner retains the hidden-tab and multi-view policies and their unresolved details.
+The settled default is bodily knowledge with local authorized read-through; a camera-side tree should not force constant rotation to discover nearby character-visible details. The broader server-approved viewport/active-view policy remains D51 work, not an implemented requirement of current reveal. Cutaways never remove the body's physical occlusion; NPC vision remains camera-independent. See [World presentation](world-presentation.md#local-read-through).
 
 ### Picking and controls
 
@@ -109,7 +109,7 @@ Every visual attaches to a stable gameplay entity and an explicit world-space an
 
 Single-view sprites may face the camera as an acknowledged visual approximation. Directional sprites select a view from relative actor/camera orientation. A 2D image cannot reveal a correct previously unseen backside; missing directions use a declared fallback rather than silently generating art on every camera turn. Full mesh models naturally support more viewing directions, but art quality and animation coverage remain separate work.
 
-A sprite's ground anchor follows the actual surface height. A flying sprite remains at its real altitude with an appropriate projected shadow or height indicator. Billboard tilt, animation bobbing, and painted perspective are presentation offsets only. Contact shadows follow a relevant surface below; they must not always appear on a fictitious global ground plane.
+A sprite's ground anchor follows the actual surface height. A flying sprite remains at its real altitude with an appropriate projected shadow or height indicator. Billboard tilt, animation bobbing, and painted perspective are presentation offsets only. Dynamic shadows project onto actual receiving surfaces, including multiple receivers beneath one footprint; they do not snap wholesale between centroid-selected floors. [World presentation](world-presentation.md#continuous-shadows) owns lighting and shadow policy.
 
 Static landscape and buildings may use simple 3D geometry with painted textures. A flat backdrop cannot remain geometrically correct under arbitrary orbit; identify such backgrounds as decorative and exclude them from interaction or constrain the associated camera profile. Interactable surfaces must be depicted consistently enough to make their height and boundaries understandable.
 
