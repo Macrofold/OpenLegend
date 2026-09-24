@@ -139,3 +139,7 @@ Recorded the passing branch-only GitHub Actions production build, 24 focused tes
 ## Action invocation and partial-fulfillment implementation
 
 Added current move/follow, Jev-first grounding and revised-action approval facts to Architecture and implementation status, with native/HTTP/stress evidence in Verification. Refined the action capability specification to permit explicit partial fulfillment and initiator review, and reserved Mechanical workflow reconciliation for integration with the separate invention work. The example repertoire remains aspirational. Broader AC/AG/INV acceptance is not marked complete. Temporary implementation/verification workflow files are removed and the original CI workflow is restored.
+
+## 2026-09-24 — Action capability code review
+
+Aligned current action docs with scoped binding/approval authority, native-behavior review and state-stream presentation. Marked the delivered narrow tasks separately from broad AC acceptance, recorded regression work in Maintainer TODO, preserved the invention-workflow reconciliation section, and advanced current development-save references to schema 11 without legacy readers. Runtime/performance evidence is recorded separately.

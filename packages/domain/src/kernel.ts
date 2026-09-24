@@ -535,9 +535,11 @@ export function executeCommand(original: WorldState, command: Command): Transiti
       action = createAction(world, 'rest', SIMULATION_RULES.nativeRestSeconds);
       break;
     case 'confirm-attempt': {
-      const first = component.agency.attempts.find((attempt) => attempt.id === command.attemptId)
-        ?.alternative?.commands[0];
-      if (first) {
+      const alternative = component.agency.attempts.find(
+        (attempt) => attempt.id === command.attemptId,
+      )?.alternative;
+      const first = alternative?.commands[0];
+      if (first && alternative?.mode === 'replace') {
         // Disposable native admission, just like menu preview: no effects or RNG are published.
         const preview = executeCommand(original, {
           ...first,

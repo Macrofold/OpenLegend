@@ -145,7 +145,7 @@ export function validActionFulfillment(raw: unknown): raw is ActionFulfillment {
   if (!raw || typeof raw !== 'object') return false;
   const r = raw as ActionFulfillment;
   const text = (v: unknown, max: number) =>
-    typeof v === 'string' && v.length > 0 && v.length <= max;
+    typeof v === 'string' && v.trim().length > 0 && v.length <= max;
   return (
     ['exact', 'partial', 'confirm'].includes(r.verdict) &&
     text(r.requested, 500) &&
@@ -157,6 +157,7 @@ export function validActionFulfillment(raw: unknown): raw is ActionFulfillment {
     Array.isArray(r.omitted) &&
     r.omitted.length <= 8 &&
     r.omitted.every((v) => v && text(v.requirement, 500) && text(v.reason, 500)) &&
-    (r.verdict !== 'exact' || r.omitted.length === 0)
+    (r.verdict !== 'exact' || r.omitted.length === 0) &&
+    (r.verdict !== 'partial' || r.omitted.length > 0)
   );
 }

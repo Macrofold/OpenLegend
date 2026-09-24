@@ -232,3 +232,8 @@ SW04/SW05/SW08/SW10 now own indexed static geometry, height-local graph construc
 ### A further 90% end-to-end reduction
 
 Treat this as an attribution target, not a result of multiplying microbenchmark speedups. PF00 must separate queue/native/commit/projection/SSE/render spans on the same scenario. Reducing one fraction of latency by 90% cannot reduce the whole by 90% unless it dominates. Use lazy spatial work and participant reuse already delivered; next target the measured dominant remaining layer through PF01/PF05/PF08/PF09 and EPR02/EPR03 rather than adding another cache speculatively. Keep first acquisition, dense no-route search, mature history, ordinary movement and full-stack sustained load separate. Do not change visibility, auditory evidence, durability or simulation time to meet a number.
+
+## Action capability review observations
+
+- [x] Remove the action panel's independent two-second polling and reuse bounded player state patches. Grounding reuses its request observation, scopes explicit targets before truncation, and reuses identical within-response interpretations without duplicating native invocation identities.
+- [ ] Qualify and reduce first-exposure encounter/event/awareness fan-out before a population-scale claim. The existing mixed native scenario still exhibits a large cold maximum; record matched baseline/current measurements separately from steady-state percentiles. Preserve EPR's audience/knowledge semantics and existing deterministic event/RNG invariants rather than dropping exposures or silently batching away elapsed work. See [action review evidence](../verification.md#action-capability-review).

@@ -4,6 +4,19 @@
 
 The [capability specification](../action-capabilities.md) owns behavior/contracts. The [action repertoire](../repertoires/actions.md) owns example intents. [Architecture](../architecture.md) owns current facts; [Verification](../verification.md) owns actual evidence. The [maintainer index](README.md) remains navigation only.
 
+## Delivered scope and remaining work
+
+| Area                                 | Implemented                                                                                                                                                                          | Not yet delivered or qualified                                                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Intent binding (AC01/AC03)           | Optional explicit target, queue/replace, typed move/follow, response-local binding/manifest pins, scoped pending identities, repeated-operation reuse, per-operation error isolation | General role/quantity/part codecs; reason-specific autonomous retry dependencies                                               |
+| Fulfillment (AC03/AC08)              | Jev-first full-match routing, generated native-behavior review, documented partial use, immutable pending revision and explicit accept/withdraw                                      | Live semantic reliability; calibrated thresholds; arbitrary parameter questions; confirmation of immediate non-plan operations |
+| Native navigation (AC04/AC05)        | Actual point movement and ground/visual proximity following, hysteresis, bounded replanning, native interruption and lost-sight stop                                                 | Behind/beside, patrol/search templates, sunset/time predicates, stealth, scent, explicit last-known-location pursuit           |
+| Approval and persistence (AC08/AC10) | New queued intent invalidates old replacement authority; first-step replacement preflight; current-format restart and scoped projection                                              | Full crash/race matrix, PostgreSQL/browser acceptance, exact installed-definition dependency pins                              |
+| Presentation/performance (AC11)      | Existing state stream replaces action polling; scoped drafts and retry identity; explicit target retained before caps; shared schema module                                          | Accessibility/browser interaction qualification; cold encounter/fan-out work; scale capacity evidence                          |
+| Common workflow (AC02/AC06/AC09)     | Existing concrete-command adapter and AG sequential frontier only                                                                                                                    | INV/EWF descriptor integration, general predicates/waits/branches/repetition/output ports and new mechanical families          |
+
+Checked items below mark delivered implementation scope, not passing automated acceptance matrices. All requested automated coverage remains in [TODO](TODO.md#action-review-regression-todos); the actual no-network runtime and stress evidence is in [Verification](../verification.md#action-capability-review). Do not reset parent AG/INV tasks or mark the complete action catalogue supported.
+
 ## Ownership and dependencies
 
 | Parent owner                                         | Dependency used here                                                              | Work that remains there                                                                       |
@@ -36,7 +49,7 @@ The first playable slice is **parameterized movement through the existing native
 - [ ] AC01.1 Add logical offered/invoke/attempt variants to the existing optional operation path, retaining server-bound authority and bounded structured role references. Provider-specific nullable encoding must preserve the same logical semantics.
 - [ ] AC01.2 Preserve original text and consequential slots: target, part, instrument, recipient, amount/unit, frame, method constraints, time/termination and queue/replace mode. Distinguish goals, hypotheticals, quotes and performance from effectful requests.
 - [ ] AC01.3 Validate reference type/scope, exact keys, aggregate limits and local identities before mutation or paid dispatch. Names and inherited dictionary keys cannot stand in for authorized references.
-- [ ] AC01.4 Preserve valid independent speech/thought/goal components when an attempt cannot bind. Empty output continues work. Do not create a second response or pending-intent store.
+- [x] AC01.4 Preserve valid independent speech/thought/goal components when an attempt cannot bind. Empty output continues work. Do not create a second response or pending-intent store.
 
 **Exit:** AX01–AX10 and AX64 pass as no-network fixtures. A proposal can carry its target instead of reconstructing identity from prose; it still cannot carry authoritative effects or another actor's authority.
 
@@ -53,9 +66,9 @@ The first playable slice is **parameterized movement through the existing native
 
 ## AC03 — Bounded action grounding
 
-**Owner:** server interpretation and actor decision preparation. **Depends on:** AC01–AC02. **Touchpoints:** `attempt-interpretation.ts`, `decision-context.ts`, `cognition-contracts.ts`, `ai-director.ts`; generic provider adapters remain policy-free.
+**Owner:** server interpretation and actor decision preparation. **Depends on:** AC01–AC02. **Touchpoints:** `action-grounding.ts` / `navigation-contracts.ts`, `decision-context.ts`, `cognition-contracts.ts`, `ai-director.ts`; generic provider adapters remain policy-free.
 
-- [ ] AC03.1 Keep the exact handle/direct structured invocation fast path; add safe unambiguous parameter binding. A valid Jev-selected concrete action still reaches native admission without a generative call.
+- [x] AC03.1 Keep the exact handle/direct structured invocation fast path; add safe unambiguous parameter binding. A valid Jev-selected concrete action still reaches native admission without a generative call.
 - [ ] AC03.2 Supply bounded relevant family schemas and scoped references for freeform interpretation, even with an empty/omitted suggestion shortlist. Do not enumerate every coordinate/quantity or load the idea catalogue into prompts.
 - [ ] AC03.3 Return structured resolution categories and original operation identity; distinguish unresolved planning from faithful method interpretation. Do not substitute a feasible but different objective.
 - [ ] AC03.4 Integrate `needs_definition` with the INV-owned request/classification interface under existing actor-origin policy. Unsupported host capability and provider unavailability remain distinct. Do not auto-invent to bypass a missing runtime implementation or lock.
@@ -69,7 +82,7 @@ The first playable slice is **parameterized movement through the existing native
 
 - [ ] AC04.1 Bind explicit surface points, actor-relative displacement and permitted remembered locations to the existing native move command. Make the coordinate frame and support choice explicit.
 - [ ] AC04.2 Clarify ambiguous stacked surfaces and refuse unsupported traversal without rewriting the destination. Preserve public-terrain versus actor-known geometry policy and coarse-contact restrictions.
-- [ ] AC04.3 Route queued movement through the existing physical lane and plan receipts. Do not execute several timed moves immediately or directly set position from the model response.
+- [x] AC04.3 Route queued movement through the existing physical lane and plan receipts. Do not execute several timed moves immediately or directly set position from the model response.
 - [ ] AC04.4 Expose movement independently of manual-work/human-hands capability where the installed body supports it. Native survival and explicit replace/cancel remain coherent.
 - [ ] AC04.5 Exercise player text, actor text, direct structured output and a selected grounded candidate against the same destination/execution path, including no-AI runtime continuation.
 
@@ -80,8 +93,8 @@ The first playable slice is **parameterized movement through the existing native
 **Owner:** native AG activity and SW movement adapter. **Depends on:** AC04 plus existing perception. **Touchpoints:** `Action`/plan state, native movement helpers, actor-observation projection and scheduler dependencies.
 
 - [ ] AC05.1 Implement a supplied follow/maintain invocation with typed relation, tolerances, extent, observed target binding, termination and loss policy. Start with near/follow; qualify heading-dependent behind/beside only with actual supported pose evidence.
-- [ ] AC05.2 Keep one authoritative physical owner. Store controller/cursor state inside the current AG action/step; reuse native route/motion services without an independent position writer.
-- [ ] AC05.3 Implement acquire/move/hold/lost/blocked/terminal transitions, hysteresis and bounded replanning. Holding a relation is not terminal success for a maintain activity.
+- [x] AC05.2 Keep one authoritative physical owner. Store controller/cursor state inside the current AG action/step; reuse native route/motion services without an independent position writer.
+- [x] AC05.3 Implement acquire/move/hold/lost/blocked/terminal transitions, hysteresis and bounded replanning. Holding a relation is not terminal success for a maintain activity.
 - [ ] AC05.4 Read live target positions only through permitted observation; default to stopping on lost evidence. Implement last-observed-location continuation only as an explicit disclosed option, with no automatic hidden tracking or search.
 - [ ] AC05.5 Cancel, replace, disable, restore and revalidate activity state without lost subscriptions, duplicated movement, forgotten goals or repeated paid decisions. Keep SW's route/preparation failure semantics.
 
