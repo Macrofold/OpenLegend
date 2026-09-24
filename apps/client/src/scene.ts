@@ -23,11 +23,12 @@ import {
   type CameraCommand,
   type CameraState,
 } from './world-camera';
-import type { SceneCallbacks, WorldRenderer } from './world-renderer';
+import type { SceneCallbacks, WorldRenderer, SpeechCaptionOptions } from './world-renderer';
 import { birdArt, surfaceMesh } from './spatial-art';
 import { playerEntity } from './entity-view';
 import { VisionBlur, VISION_FOCUS } from './vision-blur';
 import { CharacterStatuses } from './character-status';
+import { SpeechCaptions, type CaptionPoint } from './speech-captions';
 import {
   animalArt,
   earthArt,
@@ -98,6 +99,7 @@ export class WildernessScene implements WorldRenderer {
   private visionBlur: VisionBlur;
   readonly statuses: CharacterStatuses;
   private statusIndicators: StatusIndicators;
+  private readonly speech: SpeechCaptions;
   private drag: {
     pointerId: number;
     x: number;
@@ -140,6 +142,7 @@ export class WildernessScene implements WorldRenderer {
     this.visionBlur = new VisionBlur(canvas);
     this.statuses = new CharacterStatuses(canvas);
     this.statusIndicators = new StatusIndicators(canvas);
+    this.speech = new SpeechCaptions(canvas);
     try {
       this.camera = new pc.Entity('Camera', this.app);
       this.landscape = new pc.Entity('Landscape', this.app);
@@ -290,6 +293,7 @@ export class WildernessScene implements WorldRenderer {
     this.applyLevelFocus();
     this.statuses.observe(view);
     this.statusIndicators.observe(entities);
+    this.speech.observe(view);
     if (!this.readyRequested) {
       this.readyRequested = true;
       // An existing WebGL context alone does not prove that the world rendered.
@@ -299,6 +303,12 @@ export class WildernessScene implements WorldRenderer {
     }
   }
 
+  setCaptionOptions(options: SpeechCaptionOptions): void {
+    this.speech.setOptions(options);
+  }
+  resetTransientCaptions(): void {
+    this.speech.resetBaseline();
+  }
   select(id: string | null): void {
     this.selected = id;
   }
@@ -410,6 +420,68 @@ export class WildernessScene implements WorldRenderer {
         2,
       y: Math.min(...points.map((point) => point.y)),
     };
+  }
+
+  /** Only permitted bearings and the listener's own pose enter this projection.
+   * docs/hearing-and-speech.md#8-listener-centered-directional-captions */
+  private updateSpeech(): void {
+    const view = this.view;
+    if (!view) return;
+    const width = this.canvas.clientWidth,
+      height = this.canvas.clientHeight;
+    const player = view.player.position;
+    const project = (point: pc.Vec3): CaptionPoint | null => {
+      if (point.clone().sub(this.camera.getPosition()).dot(this.camera.forward) <= 0) return null;
+      const screen = this.camera.camera!.worldToScreen(point);
+      return { x: screen.x, y: screen.y };
+    };
+    const origin = new pc.Vec3(player.x, player.y + 1, player.z);
+    const center = project(origin);
+    const inView =
+      center &&
+      center.x >= 32 &&
+      center.x <= width - 32 &&
+      center.y >= 100 &&
+      center.y <= height - 32;
+    this.speech.update({
+      width,
+      height,
+      head: (id) => {
+        const entity = this.actors.get(id);
+        if (!entity || !project(entity.root.getPosition())) return null;
+        const p = this.statusAnchor(id);
+        // Reserve space for native work/status notices; never follow remembered ghosts.
+        return p ? { x: p.x, y: p.y - 54 } : null;
+      },
+      direction: (speech, captionWidth, captionHeight) => {
+        if (!inView || !speech.direction || view.hearing.referenceRadius <= 0) return null;
+        const heardAt = speech.listenerPosition;
+        if (Math.hypot(player.x - heardAt.x, player.y - heardAt.y, player.z - heardAt.z) > 0.5)
+          return null;
+        const radius = Math.min(3, view.hearing.referenceRadius * 0.3);
+        const angle = (speech.direction.sector * Math.PI) / 4;
+        for (const scale of [1, 0.75, 0.5, 0.25]) {
+          const point = project(
+            origin
+              .clone()
+              .add(
+                new pc.Vec3(Math.cos(angle) * radius * scale, 0, Math.sin(angle) * radius * scale),
+              ),
+          );
+          if (!point || !center || Math.hypot(point.x - center.x, point.y - center.y) < 2) continue;
+          if (
+            point.x - captionWidth / 2 < 8 ||
+            point.x + captionWidth / 2 > width - 8 ||
+            point.y - captionHeight < 8 ||
+            point.y > height - 8
+          )
+            continue;
+          return { ...point, arrow: Math.atan2(point.y - center.y, point.x - center.x) };
+        }
+        return null;
+      },
+      neutral: () => ({ x: width / 2, y: height - 90 }),
+    });
   }
 
   private resize(): void {
@@ -1087,6 +1159,7 @@ export class WildernessScene implements WorldRenderer {
       const point = this.camera.camera!.worldToScreen(head);
       return { x: point.x, y: point.y };
     }, !!this.view?.clock.paused);
+    this.updateSpeech();
     // Reevaluate stationary pointers as actors move or the camera changes.
     if (this.hoverPoint && !this.drag && this.elapsed >= this.nextHoverAt) {
       this.nextHoverAt = this.elapsed + 0.05;
@@ -1363,6 +1436,7 @@ export class WildernessScene implements WorldRenderer {
     this.visionBlur.destroy();
     this.statuses.destroy();
     this.statusIndicators.destroy();
+    this.speech.destroy();
     this.app.destroy();
   }
 }

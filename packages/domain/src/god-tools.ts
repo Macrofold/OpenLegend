@@ -270,6 +270,17 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     const current = currentExperience.get(change.entryId);
     if (!current) return reject(original, 'invalid-memory', 'That memory no longer exists.');
     if (
+      current.source === 'awareness' &&
+      (current.value.eventType === 'speech' || current.value.speech) &&
+      change.replacement &&
+      !sameStructure(current.value, change.replacement.value, ['importance'])
+    )
+      return reject(
+        original,
+        'speech-immutable',
+        'Committed speech cannot be rewritten through the generic editor.',
+      );
+    if (
       change.replacement &&
       (current.source !== change.replacement.source ||
         !sameStructure(current.value, change.replacement.value, ['text', 'summary', 'importance']))
@@ -454,6 +465,14 @@ export function editWorldEvents(
   for (const change of changes) {
     const current = eventsById.get(change.id);
     if (!current) return reject(original, 'invalid-events', 'That event no longer exists.');
+    // A raw rewrite cannot safely update listener-specific missing words.
+    // docs/hearing-and-speech.md#editing-committed-speech
+    if (current.type === 'speech' && change.replacement && change.replacement.text !== current.text)
+      return reject(
+        original,
+        'speech-immutable',
+        'Committed speech cannot be rewritten through the generic editor.',
+      );
     if (change.replacement && !sameStructure(current, change.replacement, ['text']))
       return reject(
         original,

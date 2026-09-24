@@ -6,6 +6,7 @@ import { draftWorld } from './draft.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { canSpeak } from './living.js';
 import { hearsEntity } from './perception.js';
+import { loudestSpeechVolume } from './acoustics.js';
 
 export interface Conversation {
   id: string;
@@ -214,6 +215,9 @@ export function changeConversation(
 }
 export function reconcileConversations(world: WorldState): void {
   if (!world.conversations) return;
+  // Conversation continuity is a potential communication link, not access to future words.
+  // A distant exchange using raised voices must not be closed by ordinary-speech range.
+  const loudest = loudestSpeechVolume(world.moduleManifest.acoustics);
   for (const [actorId, id] of Object.entries(world.conversations.active)) {
     const entity = world.entities[actorId];
     if (!entity?.actor?.alive) {
@@ -236,7 +240,7 @@ export function reconcileConversations(world: WorldState): void {
       !members.some(
         (i) =>
           world.entities[i.actorId] &&
-          withinHearingRange(world, entity, world.entities[i.actorId]!),
+          withinHearingRange(world, entity, world.entities[i.actorId]!, loudest),
       )
     )
       leaveConversation(world, actorId, 'out-of-range');

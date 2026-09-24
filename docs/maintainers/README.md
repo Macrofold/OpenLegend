@@ -20,6 +20,8 @@ This page is the master navigation index for active implementation work.
 | Inventions, declarations, conjuring and world evolution                | [Inventions and world evolution](inventions-and-world-evolution.md) | [Declarations and evolution](../../archive/07-technical-architecture/declarations-and-evolution.md)                                                                                                                                                            |
 | Production data, persistence and scale                                 | [Production data](production-data.md)                               | [Production data model](../../archive/07-technical-architecture/production-data-model.md), [queries](../../archive/07-technical-architecture/data-queries-and-mcp.md) and [delivery/scale](../../archive/07-technical-architecture/data-delivery-and-scale.md) |
 
+| Hearing, spatial captions and perceived-event history | [Hearing delivery](hearing-and-speech.md) | [Hearing and speech](../hearing-and-speech.md), [timed UI](../timed-ui.md), and [World Events](../perceived-world-events.md) |
+
 - [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
 
 ## Supporting references

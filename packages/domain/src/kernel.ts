@@ -9,6 +9,7 @@ import {
 } from './item-handling.js';
 import { strikeDefinition } from './strikes.js';
 import { gatheringYield } from './gathering.js';
+import { isSpeechVolume } from './acoustics.js';
 import { current, isDraft } from 'immer';
 import { canWalkSegment, finitePoint, interpolate, type SurfacePoint } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
@@ -669,15 +670,23 @@ export function executeCommand(
         command.text.length > 1500
       )
         return reject('invalid-speech', 'Speech must contain 1–1500 characters.');
+      const volume = command.volume ?? 'normal';
+      if (!isSpeechVolume(volume))
+        return reject('invalid-volume', 'Choose whisper, normal or shout.');
       const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
       const intendedRecipientId = command.targetId ?? command.intendedRecipientId;
       if (intendedRecipientId && !getOwn(world.entities, intendedRecipientId))
         return reject('invalid-recipient', 'The intended recipient no longer exists.');
       if (
         command.targetId &&
-        (!target?.actor?.alive || !hasMemory(target) || !hearsEntity(world, target, actor))
+        (!target?.actor?.alive ||
+          !hasMemory(target) ||
+          capabilityBlocked(world, target, 'perception') ||
+          target.actor.incapacitated)
       )
-        return reject('not-heard', 'The listener is not within hearing range.');
+        return reject('not-heard', 'The intended listener is unavailable.');
+      // Intention is not delivery: a quiet utterance can miss its target and still be overheard.
+      // docs/hearing-and-speech.md#4-speech-volume-and-admission
       emit(
         world,
         events,
@@ -689,9 +698,14 @@ export function executeCommand(
           text: command.text.trim(),
           ...(intendedRecipientId ? { intendedRecipientId } : {}),
           ...(command.selfIntroduction ? { selfIntroduction: command.selfIntroduction } : {}),
+          utteranceId: command.id,
+          volume,
+          acousticPolicyId: world.moduleManifest.acoustics.id,
+          acousticPolicyVersion: world.moduleManifest.acoustics.version,
+          sourceLevelDbSplAt1m: world.moduleManifest.acoustics.sourceLevelDbSplAt1m[volume],
         },
       );
-      result = outcome(true, 'spoken', 'Speech delivered to nearby listeners.');
+      result = outcome(true, 'spoken', 'Spoken.');
       break;
     }
     case 'goal': {
@@ -710,7 +724,13 @@ export function executeCommand(
       if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
       const target = getOwn(world.entities, command.targetId);
       const recipe = getOwn(world.recipes, command.recipeId);
-      if (!target?.actor?.alive || !hasMemory(target) || !hearsEntity(world, target, actor))
+      if (
+        !target?.actor?.alive ||
+        !hasMemory(target) ||
+        capabilityBlocked(world, target, 'perception') ||
+        target.actor.incapacitated ||
+        !hearsEntity(world, target, actor)
+      )
         return reject('not-heard', 'Teaching needs a nearby listener.');
       if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
         return reject('not-learned', 'You cannot teach a technique you do not know.');
@@ -1762,9 +1782,15 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
           ...(aware.targetId ? { targetId: aware.targetId } : {}),
           // Actor context is prose-first. Structured event fields stay authoritative in
           // world state; only the event's authored context text crosses this boundary.
-          ...(aware.content !== undefined ? { data: { text: aware.content } } : {}),
+          ...(aware.content !== undefined
+            ? {
+                data: {
+                  text: aware.speech ? aware.text : aware.content,
+                },
+              }
+            : {}),
         }))
-      : world.events.filter((event) => event.audience.includes(actorId)).slice(-24),
+      : [],
   });
 }
 

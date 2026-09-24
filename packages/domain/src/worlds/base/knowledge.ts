@@ -171,6 +171,11 @@ export function learnSpeechIntroduction(world: WorldState, event: WorldEvent): v
     const observer = world.entities[observerId];
     if (observerId === source.id || !observer?.actor || !seesEntity(world, observer, source))
       continue;
+    const evidence = world.experience?.awareness[observerId]?.at(-1);
+    if (evidence?.eventId !== event.id || !evidence.speech ||
+        evidence.speech.perception !== 'heard' ||
+        !evidence.speech.segments.some((part) => part.kind === 'heard' && part.text.includes(proposed.trim())))
+      continue;
     assignGivenName(
       world,
       observerId,

@@ -6,6 +6,7 @@ import {
   type GivenNameEdit,
 } from './worlds/base/knowledge.js';
 import { capabilityBlocked } from './status-capabilities.js';
+import { isSpeechVolume, type SpeechVolume } from './acoustics.js';
 import { hasMemory, supportsManualWork } from './living.js';
 import {
   normalizeAttempt,
@@ -30,7 +31,7 @@ export interface ResponseOperation {
   name?: GivenNameEdit | null;
   localId: string;
   requiresAccepted: string[];
-  talk: { text: string; addresseeEntityId: string; selfIntroduction?: string | null } | null;
+  talk: { text: string; addresseeEntityId: string; volume: SpeechVolume; selfIntroduction?: string | null } | null;
   act: {
     kind: 'known' | 'expression' | 'proposal';
     actionId: string | null;
@@ -110,10 +111,9 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
     const strings = (value: unknown) => Array.isArray(value) && value.every(text);
     if (
       op.talk &&
-      (!(
-        record(op.talk, ['text', 'addresseeEntityId']) ||
-        record(op.talk, ['text', 'addresseeEntityId', 'selfIntroduction'])
-      ) ||
+      (!(record(op.talk, ['text', 'addresseeEntityId', 'volume']) ||
+        record(op.talk, ['text', 'addresseeEntityId', 'volume', 'selfIntroduction'])) ||
+        !isSpeechVolume(op.talk.volume) ||
         !text(op.talk.text) ||
         !text(op.talk.addresseeEntityId) ||
         (op.talk.selfIntroduction !== undefined && !nullableText(op.talk.selfIntroduction)))
@@ -278,6 +278,7 @@ export function commitActorResponse(
         text: value.text,
         ...(value.selfIntroduction ? { selfIntroduction: value.selfIntroduction } : {}),
         intendedRecipientId: value.targetId,
+        volume: value.volume,
       });
     world = draftWorld(transition.world);
     for (const event of transition.events) {
@@ -367,6 +368,7 @@ export function commitActorResponse(
           type: 'say',
           text: op.talk.text,
           ...(op.talk.selfIntroduction ? { selfIntroduction: op.talk.selfIntroduction } : {}),
+          volume: op.talk.volume,
           targetId: op.talk.addresseeEntityId,
         });
     }

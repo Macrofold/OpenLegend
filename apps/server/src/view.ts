@@ -5,6 +5,14 @@ import { statusEffectActions } from './status-effect-actions.js';
 import { isConversationEvent } from '@open-legend/domain';
 import { NATIVE_STRIKES, supportsManualWork } from '@open-legend/domain';
 import { actionAnimation } from './action-animation.js';
+import { loudestSpeechVolume } from '@open-legend/domain';
+import { publicEvent } from './perceived-events.js';
+import {
+  projectEventEvidence,
+  hearingReferenceRadius,
+  speechExposure,
+  type ActorEvent,
+} from '@open-legend/domain';
 import { knownRecipeAttribution } from '@open-legend/domain';
 import { hasWildernessNeeds } from '@open-legend/domain';
 import { projectAttributes, attributeDefinition, readAttribute } from '@open-legend/domain';
@@ -311,7 +319,7 @@ export async function projectView(
                   ? `${displayName} is incapacitated and cannot respond.`
                   : capabilityBlocked(world, entity, 'speech')
                     ? `${displayName} cannot speak in their current state.`
-                    : !hearsEntity(world, entity, player)
+                    : speechExposure(world, entity, player, loudestSpeechVolume(world.moduleManifest.acoustics)).detail === 'undetected'
                       ? `Move within hearing range of ${displayName} to talk.`
                       : undefined;
           if (entity.replenisher) {
@@ -473,17 +481,14 @@ export async function projectView(
     [world.events, world.experience?.awareness[service.controlledEntityId]],
     () => {
       const awareness = world.experience?.awareness[service.controlledEntityId];
-      const visible = awareness
-        ? awareness
-            .slice(-512)
-            .reverse()
-            .map((entry) => service.worldEvent(entry.eventId))
-            .filter((event) => event !== undefined)
-        : world.events
-            .slice(-512)
-            .reverse()
-            .filter((event) => event.audience.includes(service.controlledEntityId));
-      const bounded: WorldEvent[] = [];
+      const visible = (awareness ?? [])
+        .slice(-512)
+        .reverse()
+        .flatMap((entry) => {
+          const event = service.worldEvent(entry.eventId);
+          return event ? [projectEventEvidence(event, entry)] : [];
+        });
+      const bounded: ActorEvent[] = [];
       let journal = 0;
       let conversation = 0;
       for (const event of visible) {
@@ -591,6 +596,7 @@ export async function projectView(
   };
   return {
     schemaVersion: 2,
+    worldEventsRevision: service.worldEventsRevision,
     historyRevision: service.historyRevision,
     historyEpoch: service.historyEpoch,
     narrator: optional(
@@ -634,6 +640,7 @@ export async function projectView(
       : {}),
     profile: profile,
     vision: { radius: visionRadius(world, player) },
+    hearing: { referenceRadius: hearingReferenceRadius(world, player) },
     map: memo<GameView['map']>('map', [world.map, world.seed], () => ({
       ...world.map,
       seed: world.seed,
@@ -773,14 +780,7 @@ export async function projectView(
         // Recognize legacy movement records that predate structured action types.
         .filter(isJournalEvent)
         .slice(-60)
-        .map((event) => ({
-          id: event.id,
-          time: event.at,
-          type: event.type,
-          text: event.text,
-          ...(event.actorId ? { actorId: event.actorId } : {}),
-          ...(event.targetId ? { targetId: event.targetId } : {}),
-        })),
+        .map(publicEvent),
     ),
     conversation: conversationEntries.map((event) => {
       const reply = replies.get(event.id);
@@ -808,11 +808,15 @@ export async function projectView(
               ...(replyStatus === 'failed' ? { replyFailure: replyMessage } : {}),
             }
           : {}),
-        speakerId: event.actorId!,
-        speaker: event.actorId
-          ? observerDescription(world, service.controlledEntityId, event.actorId)
-          : 'Someone',
-        text: String(event.data?.['text'] ?? event.text),
+        speakerId: event.actorId,
+        speech: event.speech,
+        speaker: event.speech
+          ? (event.speech.speaker?.nameAtTime ?? 'Someone')
+          : (event.actorId ? observerDescription(world, service.controlledEntityId, event.actorId) : 'Someone'),
+        text:
+          event.speech?.intelligibility === 'none'
+            ? event.text
+            : String(event.data?.['text'] ?? event.text),
         time: event.at,
       };
     }),
@@ -911,6 +915,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
     !same(previous.inventionPolicy, next.inventionPolicy) ||
     !same(previous.godTools, next.godTools) ||
     !same(previous.vision, next.vision) ||
+    !same(previous.hearing, next.hearing) ||
     !same(previous.map, next.map)
   )
     return null;
@@ -931,6 +936,9 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
     ...(previous.commandEpoch !== next.commandEpoch ? { commandEpoch: next.commandEpoch } : {}),
     baseRevision: previous.revision,
     revision: next.revision,
+    ...(previous.worldEventsRevision !== next.worldEventsRevision
+      ? { worldEventsRevision: next.worldEventsRevision }
+      : {}),
     ...(previous.historyRevision !== next.historyRevision
       ? { historyRevision: next.historyRevision }
       : {}),

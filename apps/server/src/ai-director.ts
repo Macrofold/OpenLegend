@@ -6,6 +6,7 @@ import {
 } from '@open-legend/domain';
 import { resolveResponseEntities, resolveEntityMarkers } from './entity-references.js';
 import { capabilityBlocked } from '@open-legend/domain';
+import type { SpeechVolume } from '@open-legend/domain';
 import { searchInventions } from './invention-search.js';
 import type { InventionContinuation } from '@open-legend/protocol';
 import {
@@ -223,6 +224,7 @@ export class AiDirector {
     conversationId?: string,
     continuation?: InventionContinuation,
     candidate?: unknown,
+    volume: SpeechVolume = 'normal',
   ): Promise<ApiResult> {
     // Independent inference does not wait for remote reflection cancellation/cleanup.
     this.maintenance.cancel();
@@ -239,6 +241,9 @@ export class AiDirector {
       conversationId,
       continuation,
       candidate,
+      undefined,
+      undefined,
+      volume,
     );
   }
 
@@ -265,6 +270,7 @@ export class AiDirector {
     candidate?: unknown,
     initiatingActor?: string,
     initiatingPolicyRevision?: number,
+    volume: SpeechVolume = 'normal',
   ): Promise<ApiResult> {
     return this.admission(async () => {
       candidate = normalizeInventionProposal(candidate);
@@ -292,6 +298,8 @@ export class AiDirector {
             'Supply a proposal of at most 12,000 characters for authoring, separately from reuse or search.',
         };
       let original: JobRecord | undefined;
+      let spokenEventId: string | undefined;
+      let targetHeard = true;
       if (retryOf) {
         original = await this.service.store.getJob(retryOf);
         if (
@@ -323,12 +331,14 @@ export class AiDirector {
           };
         kind = 'chat';
         text = original.request.text;
+        volume = original.request.volume ?? 'normal';
         npcId = original.request.npcId;
       }
       const targetId =
         kind === 'chat' ? (npcId ?? this.service.defaultResidentEntityId) : undefined;
       const fingerprint = digest({
         kind,
+        ...(kind === 'chat' ? { volume } : {}),
         text,
         targetId,
         worldId: this.service.world.id,
@@ -544,8 +554,27 @@ export class AiDirector {
             this.service.controlledEntityId,
             text,
             targetId,
+            volume,
           );
           if (!spoken.ok) return spoken;
+          for (let i = this.service.world.events.length - 1; i >= 0; i--) {
+            const event = this.service.world.events[i]!;
+            if (
+              event.actorId === this.service.controlledEntityId &&
+              event.data?.['utteranceId'] === `${id}:player`
+            ) {
+              spokenEventId = event.id;
+              break;
+            }
+          }
+          targetHeard =
+            !!spokenEventId &&
+            !!this.service.world.experience?.awareness[targetId!]?.some(
+              (entry) =>
+                entry.eventId === spokenEventId &&
+                entry.speech?.perception === 'heard' &&
+                entry.speech.intelligibility !== 'none',
+            );
         }
       }
       const job: JobRecord = {
@@ -553,13 +582,15 @@ export class AiDirector {
         kind,
         ...(invention ? { invention: { code: 'queued' } } : {}),
         fingerprint,
-        status: 'queued',
+        status: targetHeard ? 'queued' : 'completed',
+        ...(spokenEventId ? { playerSpeechEventId: spokenEventId } : {}),
         message:
           kind === 'chat'
             ? `${this.service.world.entities[targetId!]?.name ?? 'The person'} is considering your words.`
             : 'Checking known techniques and supported mechanisms.',
         request: {
           text,
+          ...(kind === 'chat' ? { volume } : {}),
           ...(targetId ? { npcId: targetId } : {}),
           ...(invention ? { invention } : {}),
         },
@@ -568,6 +599,13 @@ export class AiDirector {
           : {}),
         createdAt: Math.max(this.now(), (original?.createdAt ?? 0) + 1),
       };
+      if (!targetHeard) {
+        // The utterance committed normally; no paid interactive response gets nonexistent evidence.
+        job.message = 'Spoken. No conversational reply was requested.';
+        await this.service.store.putJob(job);
+        this.service.notify();
+        return { ok: true, code: 'spoken', message: job.message, jobId: id };
+      }
       if (parent && !(await this.service.store.claimInventionContinuation(job, parent.id)))
         return {
           ok: false,
@@ -698,19 +736,7 @@ export class AiDirector {
       controller: new AbortController(),
       generation: this.service.generation,
     };
-    if (job.kind === 'chat')
-      run.playerSpeechEventId =
-        job.playerSpeechEventId ??
-        [...this.service.world.events]
-          .reverse()
-          .find(
-            (event) =>
-              event.type === 'speech' &&
-              event.actorId === this.service.controlledEntityId &&
-              event.targetId === (job.request.npcId ?? this.service.defaultResidentEntityId) &&
-              event.data?.['text'] === job.request.text.trim() &&
-              event.audience.includes(job.request.npcId ?? this.service.defaultResidentEntityId),
-          )?.id;
+    if (job.kind === 'chat') run.playerSpeechEventId = job.playerSpeechEventId;
     if (run.playerSpeechEventId) job.playerSpeechEventId = run.playerSpeechEventId;
     this.running = run;
     await this.service.store.putJob(job);
@@ -1082,6 +1108,19 @@ export class AiDirector {
     interruptionEvidenceIds: string[],
   ): Promise<void> {
     const actorId = run.job.request.npcId ?? this.service.defaultResidentEntityId;
+    if (
+      run.job.kind === 'chat' &&
+      !this.service.world.experience?.awareness[actorId]?.some(
+        (entry) =>
+          entry.eventId === run.playerSpeechEventId &&
+          entry.speech?.perception === 'heard' &&
+          entry.speech.intelligibility !== 'none',
+      )
+    )
+      throw new StopJob(
+        'stale',
+        'The original intelligible speech evidence is no longer available.',
+      );
     run.responseWatch = {
       actorId,
       afterSequence: Math.max(
@@ -1104,29 +1143,17 @@ export class AiDirector {
       this.service,
       actorId,
       triggerEvidenceId,
-      run.job.request.text,
+      run.job.kind === 'chat' ? 'Speech evidence unavailable.' : run.job.request.text,
     );
-    const addressedSpeech = evidenceIds.some((id) => {
-      if (
-        this.service.world.experience?.awareness[actorId]?.some(
-          (aware) => aware.eventId === id && aware.triggerKind === 'addressed_speech',
-        )
-      )
-        return true;
-      const event = this.service.worldEvent(id);
-      return (
-        event?.type === 'speech' &&
-        event.targetId === actorId &&
-        event.actorId !== actorId &&
-        event.audience.includes(actorId)
-      );
-    });
-    const speechTrigger = evidenceIds.some(
-      (id) =>
-        this.service.world.experience?.awareness[actorId]?.some(
-          (aware) =>
-            aware.eventId === id && (aware.eventType === 'speech' || aware.modality === 'heard'),
-        ) || this.service.worldEvent(id)?.type === 'speech',
+    const awareness = this.service.world.experience?.awareness[actorId] ?? [];
+    const addressedSpeech = evidenceIds.some((id) =>
+      awareness.some((entry) => entry.eventId === id && entry.triggerKind === 'addressed_speech'),
+    );
+    const speechTrigger = evidenceIds.some((id) =>
+      awareness.some(
+        (entry) =>
+          entry.eventId === id && entry.eventType === 'speech' && entry.modality !== 'observed',
+      ),
     );
     let attentionCall = 0;
     const contextStartedAt = new Date().toISOString();

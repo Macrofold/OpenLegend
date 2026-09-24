@@ -33,6 +33,7 @@ export const EXPERIENCE_LIMITS = {
 } as const;
 export interface Awareness {
   entityEpisodes?: Record<string, string>;
+  speech?: import('./speech.js').PerceivedSpeech;
   eventId: string;
   actorId: string;
   text: string;
@@ -135,7 +136,11 @@ function stableExperienceUpdate(previous: ExperienceEntry, next: ExperienceEntry
   if (previous.source !== next.source) return false;
   const editable =
     previous.source === 'awareness'
-      ? new Set(['text', 'content', 'importance'])
+      ? new Set(
+          previous.value.eventType === 'speech' || previous.value.speech
+            ? ['importance']
+            : ['text', 'content', 'importance'],
+        )
       : previous.source === 'memory'
         ? new Set(['summary', 'importance'])
         : new Set(['text', 'importance']);
@@ -439,11 +444,11 @@ export function flattenFiles(files: InnerWorld['files']): string {
     .map((f) => `# ${f.path}\n${f.text}`)
     .join('\n\n');
 }
-/** Additive migration: legacy payloads remain audit data; only proven event copies are deduplicated. */
+/** Historical name retained for callers; only initialize newly capable actors.
+ * Never fill absent roles from raw events: absence can mean an unidentified voice.
+ * docs/hearing-and-speech.md#5-one-occurrence-listener-specific-evidence */
 export function migrateCognition(world: WorldState): void {
   initializeIdentity(world);
-  const initial = !world.experience;
-  if (world.schemaVersion === 1) world.schemaVersion = 2;
   world.experience ??= {
     version: 1,
     awareness: {},
@@ -453,159 +458,44 @@ export function migrateCognition(world: WorldState): void {
   };
   world.innerWorlds ??= {};
   for (const entity of Object.values(world.entities)) {
-    if (!hasMemory(entity) || world.innerWorlds[entity.id]) continue;
+    if (!hasMemory(entity)) continue;
+    world.experience.awareness[entity.id] ??= [];
+    if (world.innerWorlds[entity.id]) continue;
     const mind = ((world.minds ??= {})[entity.id] ??= mindFor(world, entity.id));
     const files = mind.documents.map((doc) => ({
       path: `${doc.id}.md`,
-      text: `${doc.title}\n\n${doc.text}${mind.records
-        .filter((r) => r.documentId === doc.id && r.kind !== 'identity')
-        .map(
-          (r) =>
-            `\nLegacy ${r.kind}${r.subjectId ? ` about ${world.entities[r.subjectId]?.name ?? 'an unidentified person'}` : ''}: ${r.source}, ${r.status}, confidence ${r.confidence}${r.trust !== null ? `, directional trust ${r.trust}` : ''}.`,
-        )
-        .join('')}`,
+      text: `${doc.title}\n\n${doc.text}`,
     }));
-    // Legacy imports preserve over-quota content until an explicit migration reconciles it.
-    const text = [...files]
-      .sort((a, b) => a.path.localeCompare(b.path, 'en'))
-      .map((f) => `# ${f.path}\n${f.text}`)
-      .join('\n\n');
     world.innerWorlds[entity.id] = {
-      text,
+      text: [...files]
+        .sort((a, b) => a.path.localeCompare(b.path, 'en'))
+        .map((file) => `# ${file.path}\n${file.text}`)
+        .join('\n\n'),
       files,
       revision: mind.revision,
-      sourceSnapshot: 'legacy-import',
-      publicationJobId: 'legacy-import',
+      sourceSnapshot: 'actor-initialization',
+      publicationJobId: 'actor-initialization',
       evidenceIds: mind.documents.flatMap((d) => d.evidence.map((e) => e.id)),
     };
-    world.experience.awareness[entity.id] ??= (initial ? world.events : [])
-      .filter((e) => e.audience.includes(entity.id))
-      .map((e) => ({
-        eventId: e.id,
-        actorId: entity.id,
-        text: memoryPerspective(world, entity.id, e.text, e.type === 'speech', e.actorId),
-        at: e.at,
-        sequence: Number(e.id.split('-').at(-1)) || 0,
-        modality: e.type === 'speech' ? 'heard' : 'observed',
-        recognized: true,
-        intelligible: true,
-        entityIds: [e.actorId, e.targetId].filter((id): id is string => !!id),
-        importance: e.importance ?? (e.type === 'speech' ? 7 : 3),
-        urgency:
-          e.urgency ??
-          (['death', 'incapacitated'].includes(e.type) ? 10 : e.type === 'speech' ? 4 : 2),
-        eventType: e.type,
-        ...(e.actorId ? { sourceId: e.actorId } : {}),
-        ...(e.targetId ? { targetId: e.targetId } : {}),
-        triggerKind:
-          e.actorId === entity.id
-            ? 'self_event'
-            : e.type === 'speech'
-              ? e.targetId === entity.id
-                ? 'addressed_speech'
-                : 'overheard_speech'
-              : e.targetId === entity.id
-                ? 'directed_action'
-                : 'observed_event',
-        content: typeof e.data?.['text'] === 'string' ? e.data['text'] : e.text,
-      }));
-  }
-  const events = new Map(world.events.map((event) => [event.id, event]));
-  // Trigger metadata is an additive idempotent migration independent of the older
-  // perspective rewrite version, so already-migrated saves receive it too.
-  for (const entity of Object.values(world.entities)) {
-    if (!hasMemory(entity)) continue;
-    for (const aware of world.experience.awareness[entity.id] ?? []) {
-      const event = events.get(aware.eventId);
-      if (event) {
-        // New captures deliberately omit imperceptible recipients. Do not refill them on load.
-        if (
-          !aware.eventType &&
-          event.targetId &&
-          (aware.entityIds.includes(event.targetId) ||
-            event.targetId === entity.id ||
-            event.actorId === entity.id)
-        )
-          aware.targetId ??= event.targetId;
-        aware.eventType ??= event.type;
-        aware.sourceId ??= event.actorId;
-        if (aware.intelligible)
-          aware.content ??=
-            typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text;
-        aware.triggerKind ??=
-          event.actorId === entity.id
-            ? 'self_event'
-            : event.type === 'speech'
-              ? event.targetId === entity.id
-                ? 'addressed_speech'
-                : 'overheard_speech'
-              : event.targetId === entity.id
-                ? 'directed_action'
-                : 'observed_event';
-      }
-    }
   }
   migrateKnowledge(world);
-  // Perspective rewrites are idempotent and retain original event IDs and acquisition metadata.
-  if (world.experience.perspectiveVersion === 1) return;
-  for (const entity of Object.values(world.entities)) {
-    if (!hasMemory(entity)) continue;
-    for (const aware of world.experience.awareness[entity.id] ?? []) {
-      aware.text = memoryPerspective(
-        world,
-        entity.id,
-        aware.text,
-        aware.modality === 'heard',
-        aware.sourceId,
-      );
-    }
-    for (const memory of world.memories[entity.id] ?? [])
-      memory.summary = memoryPerspective(
-        world,
-        entity.id,
-        memory.summary,
-        memory.eventType === 'speech' || events.get(memory.eventId ?? '')?.type === 'speech',
-        events.get(memory.eventId ?? '')?.actorId,
-      );
-    for (const summary of world.experience.summaries[entity.id] ?? []) {
-      const text = memoryPerspective(world, entity.id, summary.text);
-      if (text !== summary.text) {
-        summary.text = text;
-        summary.revision = (summary.revision ?? 0) + 1;
-      }
-    }
-    const inner = world.innerWorlds[entity.id];
-    if (inner) {
-      let changed = false;
-      for (const file of inner.files) {
-        const text = memoryPerspective(world, entity.id, file.text);
-        if (text !== file.text) {
-          file.text = text;
-          changed = true;
-        }
-      }
-      if (changed) {
-        inner.text = [...inner.files]
-          .sort((a, b) => a.path.localeCompare(b.path, 'en'))
-          .map((file) => `# ${file.path}\n${file.text}`)
-          .join('\n\n');
-        inner.revision++;
-        inner.reconsiderationRequired = true;
-      }
-    }
-    const mind = world.minds?.[entity.id];
-    if (mind) {
-      for (const doc of mind.documents) {
-        const text = memoryPerspective(world, entity.id, doc.text);
-        if (text !== doc.text) {
-          doc.text = text;
-          doc.revision++;
-          mind.revision++;
-        }
-      }
-    }
-  }
-  world.experience.perspectiveVersion = 1;
+}
+/** One projection for recall and derived speech indexing; never consult the raw world event. */
+export function awarenessMemory(entry: Awareness): MemoryRecord {
+  return {
+    id: entry.eventId,
+    eventId: entry.eventId,
+    actorId: entry.actorId,
+    at: entry.at,
+    sequence: entry.sequence,
+    kind: 'episode',
+    source: entry.modality,
+    summary: entry.text,
+    entityIds: entry.entityIds,
+    importance: entry.importance,
+    eventType: entry.eventType,
+    speakerId: entry.sourceId,
+  };
 }
 export function experiences(
   world: WorldState,
@@ -627,20 +517,7 @@ export function experiences(
   );
   const events: MemoryRecord[] = aware
     .filter((a) => !forgotten.has(a.eventId))
-    .map((a) => ({
-      id: a.eventId,
-      eventId: a.eventId,
-      actorId,
-      at: a.at,
-      sequence: a.sequence,
-      kind: 'episode',
-      source: a.modality,
-      summary: a.text,
-      entityIds: a.entityIds,
-      importance: a.importance,
-      eventType: a.eventType,
-      speakerId: a.sourceId,
-    }));
+    .map(awarenessMemory);
   const summaries: MemoryRecord[] = (state?.summaries[actorId] ?? [])
     .filter(
       (s) => !s.sourceIds.some((id) => forgotten.has(id) || !!state?.corrections?.[actorId]?.[id]),

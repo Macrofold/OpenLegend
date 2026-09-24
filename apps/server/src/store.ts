@@ -57,6 +57,7 @@ export interface JobRecord extends AiJobView {
   fingerprint: string;
   createdAt: number;
   request: {
+    volume?: import('@open-legend/domain').SpeechVolume;
     text: string;
     npcId?: string;
     invention?: {

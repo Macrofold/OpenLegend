@@ -1,9 +1,10 @@
 import { useChatHistory } from './use-chat-history';
 import { useEffect, useRef, useState } from 'react';
-import type { GameView } from '@open-legend/protocol';
+import type { GameView, SpeechVolume } from '@open-legend/protocol';
 import { Button, Tag, SegmentedControl } from '../design-system/components';
 import { aiSetupReason } from '../ai-readiness';
 import { post } from '../api';
+import { useLocal } from './storage';
 import { readDraft, saveDraft, type ComposerDraft } from '../draft';
 import {
   ConversationComposer,
@@ -34,6 +35,11 @@ export function Composer({
 }) {
   const [draft, setDraft] = useState(readDraft),
     [sending, setSending] = useState(false);
+  const [volume, setVolume] = useLocal<SpeechVolume>(
+    'open-legend:speech-volume',
+    'normal',
+    (v): v is SpeechVolume => v === 'whisper' || v === 'normal' || v === 'shout',
+  );
   const input = useRef<HTMLTextAreaElement>(null);
   const retryKeys = useRef(new Map<string, string>());
   const retryLock = useRef(new Set<string>());
@@ -104,7 +110,7 @@ export function Composer({
       ) : (
         <ConversationMessage
           role={message.speakerId === view.player.id ? 'you' : 'agent'}
-          label={message.speaker}
+          label={`${message.speaker}${message.speech?.delivery === 'whisper' ? ' · Whispering' : message.speech?.delivery === 'shout' ? ' · Shouting' : ''}${message.speech?.intelligibility === 'partial' ? ' · Partly heard' : ''}`}
           text={message.text}
           failureReason={
             message.replyStatus === 'failed' && !retrying[message.replyRequestId ?? '']
@@ -132,7 +138,7 @@ export function Composer({
       const result = await post(sent.mode === 'chat' ? '/api/chat' : '/api/invent', {
         requestId: crypto.randomUUID(),
         text: sent.text.trim(),
-        ...(sent.mode === 'chat' ? { npcId: npc?.id } : {}),
+        ...(sent.mode === 'chat' ? { npcId: npc?.id, volume } : {}),
       });
       if (result.ok)
         setDraft((current) =>
@@ -162,6 +168,26 @@ export function Composer({
         <>
           <p className="ol-meta">
             {npc ? `Talk with ${npc.name}` : 'Find someone in the clearing.'}
+          </p>
+          <label className="ol-speech-volume">
+            Speech volume{' '}
+            <select
+              aria-label="Speech volume"
+              value={volume}
+              disabled={sending}
+              onChange={(e) => setVolume(e.target.value as SpeechVolume)}
+            >
+              <option value="whisper">Whisper</option>
+              <option value="normal">Normal</option>
+              <option value="shout">Shout</option>
+            </select>
+          </label>
+          <p className="ol-meta">
+            {volume === 'whisper'
+              ? 'Nearby listeners may still overhear a whisper.'
+              : volume === 'shout'
+                ? 'Shouting can be heard from much farther away.'
+                : 'People nearby can overhear.'}
           </p>
           {history.error && <p role="alert">{history.error}</p>}
           <ConversationThread

@@ -8,6 +8,12 @@ import {
   soundTransmission,
   type SurfacePoint,
 } from '@open-legend/spatial';
+import {
+  acousticExposure,
+  acousticReach,
+  type AcousticExposure,
+  type SpeechVolume,
+} from './acoustics.js';
 import { bodyProfile, spatialMap } from './spatial-state.js';
 import { current, isDraft, original } from 'immer';
 import { distance } from './spatial.js';
@@ -17,16 +23,15 @@ export { PERCEPTION_RULES } from './worlds/base/senses.js';
 /** Reviewed detector versions are pinned in each world's resolved manifest. */
 export const SENSE_IMPLEMENTATIONS = [
   'vision-geometry-v1',
-  'hearing-transmission-v1',
+  'hearing-db-v1',
   'contact-proximity-v1',
 ] as const;
 export type SenseImplementation = (typeof SENSE_IMPLEMENTATIONS)[number];
-export interface SenseDefinition {
-  id: string;
-  version: 1;
-  implementation: SenseImplementation;
-  radius: number;
-}
+export type SenseDefinition = { id: string; version: 1 } & (
+  | { implementation: 'vision-geometry-v1'; radius: number }
+  | { implementation: 'contact-proximity-v1'; radius: number }
+  | { implementation: 'hearing-db-v1'; hearingFloorDbSpl: number }
+);
 export { DEFAULT_SENSES } from './worlds/base/senses.js';
 export const COARSE_TOUCH: SenseDefinition = {
   id: 'contact:touch',
@@ -51,7 +56,7 @@ export interface ContactView {
 type ResolvedSenses = {
   definitions: SenseDefinition[];
   vision: number;
-  hearing: number;
+  hearingFloor: number | null;
 };
 const resolvedSenses = new WeakMap<object, Map<string, ResolvedSenses>>();
 function resolveSenses(world: WorldState, entity: Entity): ResolvedSenses {
@@ -71,7 +76,8 @@ function resolveSenses(world: WorldState, entity: Entity): ResolvedSenses {
     result = {
       definitions,
       vision: definitions.find((s) => s.implementation === 'vision-geometry-v1')?.radius ?? 0,
-      hearing: definitions.find((s) => s.implementation === 'hearing-transmission-v1')?.radius ?? 0,
+      hearingFloor:
+        definitions.find((s) => s.implementation === 'hearing-db-v1')?.hearingFloorDbSpl ?? null,
     };
     byBinding.set(key, result);
   }
@@ -159,27 +165,64 @@ export function seesEntity(world: WorldState, observer: Entity, source: Entity):
     height: bodyProfile(source).height,
   });
 }
-export function hearsEntity(world: WorldState, observer: Entity, source: Entity): boolean {
-  return (
-    !capabilityBlocked(world, observer, 'perception') && withinHearingRange(world, observer, source)
+export function soundOrigin(entity: Entity): Position {
+  return { ...entity.position, y: entity.position.y + bodyProfile(entity).earHeight };
+}
+export function hearingReferenceRadius(world: WorldState, observer: Entity): number {
+  const floor = resolveSenses(world, observer).hearingFloor;
+  return floor === null
+    ? 0
+    : acousticReach(
+        world.moduleManifest.acoustics,
+        floor,
+        'normal',
+        world.moduleManifest.acoustics.thresholdsDb.clear,
+      );
+}
+function physicalSpeechExposure(
+  world: WorldState,
+  observer: Entity,
+  source: Entity,
+  volume: SpeechVolume = 'normal',
+): AcousticExposure {
+  const floor = resolveSenses(world, observer).hearingFloor;
+  const silent: AcousticExposure = {
+    detail: 'undetected',
+    receivedLevelDbSpl: null,
+    clarityMarginDb: null,
+  };
+  if (floor === null) return silent;
+  const listener = soundOrigin(observer),
+    origin = soundOrigin(source);
+  const separation = distance3D(listener, origin),
+    policy = world.moduleManifest.acoustics;
+  // Cheap rejection precedes all barrier work; listener sensitivity is part of this bound.
+  if (separation > Math.max(0.25, acousticReach(policy, floor, volume))) return silent;
+  return acousticExposure(
+    policy,
+    floor,
+    volume,
+    separation,
+    soundTransmission(spatialMap(world), listener, origin),
   );
 }
-/** Conversation membership uses physical range, not temporary receiver availability. */
-export function withinHearingRange(world: WorldState, observer: Entity, source: Entity): boolean {
-  const radius = resolveSenses(world, observer).hearing;
-  if (radius <= 0) return false;
-  const listener = {
-    ...observer.position,
-    y: observer.position.y + bodyProfile(observer).earHeight,
-  };
-  const origin = { ...source.position, y: source.position.y + bodyProfile(source).earHeight };
-  const separation = distance3D(listener, origin);
-  if (separation > radius) return false;
-  const transmission = soundTransmission(spatialMap(world), listener, origin);
-  // Current speech consumers assume intelligible words and identity. Until EPR supplies
-  // graded auditory contacts, do not put an indistinct sound in that full-text audience.
-  // docs/spatial-world.md#seeing-and-hearing-in-3d
-  return transmission >= 0.65 && separation <= radius * transmission;
+export function speechExposure(
+  world: WorldState, observer: Entity, source: Entity, volume: SpeechVolume = 'normal',
+): AcousticExposure {
+  if (capabilityBlocked(world, observer, 'perception'))
+    return { detail: 'undetected', receivedLevelDbSpl: null, clarityMarginDb: null };
+  return physicalSpeechExposure(world, observer, source, volume);
+}
+/** Conversation continuity ignores temporary incapacity; it never grants heard evidence. */
+export function withinHearingRange(
+  world: WorldState, observer: Entity, source: Entity, volume: SpeechVolume = 'normal',
+): boolean {
+  return physicalSpeechExposure(world, observer, source, volume).detail !== 'undetected';
+}
+/** Eligibility helpers retain the strong meaning of understanding ordinary speech.
+ * Detection/partial evidence is delivered separately at emission, never through this boolean. */
+export function hearsEntity(world: WorldState, observer: Entity, source: Entity): boolean {
+  return speechExposure(world, observer, source).detail === 'clear';
 }
 export function contactViews(entity: Entity): ContactView[] {
   return Object.values(entity.actor?.contacts ?? {}).map((c) => ({
@@ -214,8 +257,17 @@ export function canSee(from: Position, to: Position): boolean {
   return distance(from, to) <= PERCEPTION_RULES.sightRadius;
 }
 export function canHear(world: WorldState, from: Position, to: Position): boolean {
-  const separation = distance(from, to);
-  if (separation > PERCEPTION_RULES.hearingRadius) return false;
-  const transmission = soundTransmission(spatialMap(world), from, to);
-  return transmission >= 0.65 && separation <= PERCEPTION_RULES.hearingRadius * transmission;
+  const policy = world.moduleManifest.acoustics;
+  const separation = distance3D(from, to);
+  if (separation > Math.max(0.25, acousticReach(policy, 0, 'normal', policy.thresholdsDb.clear)))
+    return false;
+  return (
+    acousticExposure(
+      policy,
+      0,
+      'normal',
+      separation,
+      soundTransmission(spatialMap(world), from, to),
+    ).detail === 'clear'
+  );
 }
