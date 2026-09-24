@@ -4,6 +4,9 @@ on:
     branches: [design/action-repertoire-and-capability-grounding]
 permissions:
   contents: write
+concurrency:
+  group: action-native-performance
+  cancel-in-progress: true
 jobs:
   performance:
     runs-on: ubuntu-latest
@@ -14,6 +17,8 @@ jobs:
       OPEN_LEGEND_DATA_DIR: /tmp/rebased-perf-world
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
