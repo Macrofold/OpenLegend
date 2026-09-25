@@ -53,6 +53,8 @@ jobs:
           data=gzip.decompress(base64.b64decode(parts))
           if hashlib.sha256(data).hexdigest()!='4e34ee8a5e1d287051407aa3edec26d9562622cd1a3033374ca80ff55220ef61':raise RuntimeError('Reviewed patch integrity mismatch')
           subprocess.run(['patch','--batch','-p1'],input=data,cwd='merged',check=True)
+          p=pathlib.Path('control/.github/action-review-runtime.mjs')
+          p.write_text(p.read_text().replace("load('node_modules/pg/lib/index.js')", "load('apps/server/node_modules/pg/lib/index.js')"))
           PY
           mkdir -p reports
       - uses: pnpm/action-setup@v4
@@ -65,9 +67,10 @@ jobs:
           cache-dependency-path: merged/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
         working-directory: merged
+      - run: pnpm install --frozen-lockfile
+        working-directory: baseline
       - name: Production and static checks
         run: |
-          ln -s ../merged/node_modules baseline/node_modules
           cd merged
           pnpm run build > ../reports/build.txt 2>&1
           pnpm config:check > ../reports/config.txt 2>&1
