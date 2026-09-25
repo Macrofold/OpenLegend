@@ -1,4 +1,4 @@
-import { timed, recordDuration } from './performance.js';
+import { timed, recordDuration, gaugeMetric } from './performance.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { Worker } from 'node:worker_threads';
 import type { SqlDatabase } from './store.js';
@@ -25,6 +25,8 @@ export class SqliteDatabase implements SqlDatabase {
   private serial = 0;
   private fatal?: Error;
   private closing = false;
+  private closed = false;
+  private queued = 0;
   private closeResult?: Promise<void>;
   private readonly pending = new Map<
     number,
@@ -61,8 +63,9 @@ export class SqliteDatabase implements SqlDatabase {
       else call.resolve(reply.value);
     });
     this.worker.on('error', (error) => this.fail(error));
+    this.worker.on('messageerror', (error) => this.fail(error));
     this.worker.on('exit', (code) => {
-      if (!this.closing || this.pending.size)
+      if (!this.closed || this.pending.size)
         this.fail(
           new Error(`SQLite worker exited (${code}); reconcile durable state before restarting.`),
         );
@@ -96,7 +99,13 @@ export class SqliteDatabase implements SqlDatabase {
   private run<T>(operation: () => T | Promise<T>): Promise<T> {
     if (this.context.getStore()?.active) return Promise.resolve().then(operation);
     if (this.closing) return Promise.reject(new Error('SQLite connection is closing.'));
-    const next = this.tail.then(operation);
+    if (this.fatal) return Promise.reject(this.fatal);
+    // A slow transaction must not retain an unlimited queue of optional reads/requests.
+    if (this.queued >= 256) return Promise.reject(new Error('SQLite admission queue is full.'));
+    gaugeMetric('sqlite.queuedOperations', ++this.queued);
+    const next = this.tail.then(operation).finally(() => {
+      gaugeMetric('sqlite.queuedOperations', --this.queued);
+    });
     this.tail = next.catch(() => undefined);
     return next;
   }
@@ -155,12 +164,15 @@ export class SqliteDatabase implements SqlDatabase {
     };
   }
   close(): Promise<void> {
+    if (this.context.getStore()?.active)
+      return Promise.reject(new Error('Close SQLite after the transaction completes.'));
     if (this.closeResult) return this.closeResult;
     this.closing = true;
     return (this.closeResult = (async () => {
       try {
         await this.tail;
         await this.request<void>('close');
+        this.closed = true;
       } finally {
         await this.worker.terminate();
       }
