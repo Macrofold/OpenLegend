@@ -26,7 +26,7 @@ Committed speech appears as plain captions with a small remaining-reading-time r
 
 **World Events**, immediately below **Journal**, shows read-only perceived history. Its **Speech** filter includes overheard speech across conversations; **Load older events** reaches durable history beyond the recent HUD feed. The god-only event editor remains separate.
 
-This feature requires a fresh format-10 development world; no old-event migration, correction or deletion is performed. See [the hearing design](docs/hearing-and-speech.md), [current implementation](docs/architecture.md#hearing-captions-and-perceived-events), and [verification limits](docs/verification.md#hearing-runtime-and-performance). Full PlayCanvas/browser and live-provider qualification remain pending; native behavior and offline DOM observations are not those gates.
+Hearing uses the current resolved acoustic/sense descriptors. Past utterances are not re-heard or remasked. Development updates follow the [in-place save policy](docs/save-and-load.md#active-development-policy), not a per-feature replacement-world requirement; the remaining pre-hearing descriptor/history compatibility gap is tracked in HE05. See [the hearing design](docs/hearing-and-speech.md), [current implementation](docs/architecture.md#hearing-captions-and-perceived-events), and [verification limits](docs/verification.md#hearing-runtime-and-performance). Full PlayCanvas/browser and live-provider qualification remain pending; native behavior and offline DOM observations are not those gates.
 
 ## Run locally
 
