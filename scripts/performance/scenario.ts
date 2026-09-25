@@ -18,6 +18,7 @@ export interface Scenario {
   warmup: number;
   speed: number;
   timeoutSeconds: number;
+  execution?: 'single-step' | 'native-slice';
   objects: Array<{
     count: number;
     definition: ItemDefinition;
@@ -59,6 +60,7 @@ export function parseScenario(value: unknown): Scenario {
         'warmup',
         'speed',
         'timeoutSeconds',
+        'execution',
         'objects',
       ].includes(key)
     )
@@ -67,6 +69,8 @@ export function parseScenario(value: unknown): Scenario {
     throw new Error('input must be a file path.');
   if (v.layout !== undefined && !['crowded', 'scattered'].includes(String(v.layout)))
     throw new Error('Unknown layout.');
+  if (v.execution !== undefined && !['single-step', 'native-slice'].includes(String(v.execution)))
+    throw new Error('Unknown native execution mode.');
   if (v.objects !== undefined && !Array.isArray(v.objects))
     throw new Error('objects must be an array.');
   const objects = ((v.objects ?? []) as Record<string, unknown>[]).map((group, index) => {
@@ -97,6 +101,7 @@ export function parseScenario(value: unknown): Scenario {
   });
   const scenario: Scenario = {
     input: v.input as string | undefined,
+    execution: (v.execution ?? 'single-step') as Scenario['execution'],
     seed: integer(v.seed, 73, 1, 0x7fffffff),
     people: integer(v.people, 0, 0, 1000),
     animals: integer(v.animals, 0, 0, 10000),
