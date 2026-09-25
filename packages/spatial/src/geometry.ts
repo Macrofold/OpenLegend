@@ -11,6 +11,7 @@ import {
   type SpatialBlocker,
 } from './types.js';
 import { BoundsIndex } from './bounds-index.js';
+import { segmentBoundsQuery } from './segment-bounds.js';
 const EPS = SPATIAL_LIMITS.epsilon;
 const EMPTY_IDS: ReadonlySet<string> = new Set();
 export const distance3D = (a: WorldPoint, b: WorldPoint): number =>
@@ -234,31 +235,6 @@ function surfaceBounds(s: WalkableSurface, topOnly = false): Bounds3 {
     max: { x: s.maxX, y: Math.max(...ys), z: s.maxZ },
   };
 }
-/** Broad-phase slab test deliberately includes boundary contacts; exact halfspaces decide them. */
-function intersectsSegment(
-  bounds: Bounds3,
-  from: WorldPoint,
-  to: WorldPoint,
-  body?: BodyProfile,
-): boolean {
-  let enter = 0,
-    exit = 1;
-  for (const axis of ['x', 'y', 'z'] as const) {
-    const min = bounds.min[axis] - (axis === 'y' ? (body?.height ?? 0) : (body?.radius ?? 0));
-    const max = bounds.max[axis] + (axis === 'y' ? 0 : (body?.radius ?? 0));
-    const delta = to[axis] - from[axis];
-    if (Math.abs(delta) < EPS) {
-      if (from[axis] < min - EPS || from[axis] > max + EPS) return false;
-      continue;
-    }
-    const a = (min - EPS - from[axis]) / delta,
-      b = (max + EPS - from[axis]) / delta;
-    enter = Math.max(enter, Math.min(a, b));
-    exit = Math.min(exit, Math.max(a, b));
-    if (enter > exit) return false;
-  }
-  return true;
-}
 function preparedShapes(map: SpatialMap) {
   const cached = shapeCache.get(map);
   if (cached?.revision === map.spatial.revision) return cached;
@@ -363,19 +339,16 @@ function visitHits(
   visit: (shape: PreparedShape, interval: [number, number]) => boolean,
 ): boolean {
   if (!finitePoint(from) || !finitePoint(to)) throw new Error('Invalid spatial ray.');
-  return preparedShapes(map).shapeIndex.visit(
-    (bounds) => intersectsSegment(bounds, from, to, body),
-    (shape) => {
-      if (
-        ignore.has(shape.id) ||
-        (channel === 'sight' && !shape.sight) ||
-        (channel === 'movement' && !shape.movement)
-      )
-        return false;
-      const interval = clipSegment(from, to, shape.planes, body);
-      return !!interval && visit(shape, interval);
-    },
-  );
+  return preparedShapes(map).shapeIndex.visit(segmentBoundsQuery(from, to, body), (shape) => {
+    if (
+      ignore.has(shape.id) ||
+      (channel === 'sight' && !shape.sight) ||
+      (channel === 'movement' && !shape.movement)
+    )
+      return false;
+    const interval = clipSegment(from, to, shape.planes, body);
+    return !!interval && visit(shape, interval);
+  });
 }
 export function rayHits(
   map: SpatialMap,
@@ -553,13 +526,10 @@ export function pickSurfaces(
 ): Array<{ point: SurfacePoint; fraction: number }> {
   const hits: Array<{ point: SurfacePoint; fraction: number }> = [];
   const candidates: WalkableSurface[] = [];
-  preparedShapes(map).supportIndex.visit(
-    (bounds) => intersectsSegment(bounds, from, to),
-    ({ surface }) => {
-      candidates.push(surface);
-      return false;
-    },
-  );
+  preparedShapes(map).supportIndex.visit(segmentBoundsQuery(from, to), ({ surface }) => {
+    candidates.push(surface);
+    return false;
+  });
   for (const surface of candidates) {
     if (levelId && surface.levelId !== levelId) continue;
     const dy = to.y - from.y - surface.slopeX * (to.x - from.x) - surface.slopeZ * (to.z - from.z);
