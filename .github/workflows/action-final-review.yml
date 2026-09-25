@@ -1,0 +1,28 @@
+name: Action final review
+on:
+  push:
+    branches: [review/action-capabilities-main-20260924]
+    paths: [.github/workflows/action-final-review.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read pinned latest-main snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import os, urllib.request, pathlib
+          request=urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/tarball/03105fed9209c126e4e69e9faeb4687f42d1e74a',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+          with urllib.request.urlopen(request,timeout=60) as response:
+            pathlib.Path('/tmp/latest-main.tgz').write_bytes(response.read())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: latest-main-source
+          path: /tmp/latest-main.tgz
+          retention-days: 1
+          compression-level: 0
