@@ -238,7 +238,13 @@ const visibility = new WeakMap<WorldState['map'], Map<string, ObserverSight>>();
  */
 export function visionQuery(world: WorldState, observer: Entity): (source: SightTarget) => boolean {
   if (capabilityBlocked(world, observer, 'perception')) return () => false;
-  const radius = visionRadius(world, observer);
+  return unblockedVisionQuery(world, observer);
+}
+function unblockedVisionQuery(
+  world: WorldState,
+  observer: Entity,
+): (source: SightTarget) => boolean {
+  const radius = resolveSenses(world, observer).vision;
   const from = isDraft(observer.position) ? current(observer.position) : observer.position;
   const eyeHeight = bodyProfile(observer).eyeHeight;
   const eye = { x: from.x, y: from.y + eyeHeight, z: from.z };
@@ -329,6 +335,25 @@ export function speechExposure(
   if (capabilityBlocked(world, observer, 'perception'))
     return { detail: 'undetected', receivedLevelDbSpl: null, clarityMarginDb: null };
   return physicalSpeechExposure(world, observer, source, volume);
+}
+/** One synchronous listener query owns permission plus both sensory channels. It may be
+ * reused for the intended recipient in this same utterance, not across world changes.
+ * docs/hearing-and-speech.md#performance-and-invalidation */
+export function speechPerception(
+  world: WorldState,
+  observer: Entity,
+  source: Entity,
+  volume: SpeechVolume,
+) {
+  if (capabilityBlocked(world, observer, 'perception')) return null;
+  const sight = unblockedVisionQuery(world, observer);
+  const sees = (entity: Entity) =>
+    sight({
+      id: entity.id,
+      position: isDraft(entity.position) ? current(entity.position) : entity.position,
+      height: bodyProfile(entity).height,
+    });
+  return { detail: physicalSpeechExposure(world, observer, source, volume).detail, sees };
 }
 /** Conversation continuity ignores temporary incapacity; it never grants heard evidence. */
 export function withinHearingRange(

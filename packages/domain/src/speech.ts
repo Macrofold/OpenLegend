@@ -1,7 +1,6 @@
-import { capabilityBlocked } from './status-capabilities.js';
 import { observerDescription, recognizesSubject } from './worlds/base/knowledge.js';
 import { hasMemory } from './living.js';
-import { seesEntity, speechExposure } from './perception.js';
+import { speechPerception } from './perception.js';
 import { contentLabel } from './events.js';
 import type { SpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
@@ -88,14 +87,12 @@ export function perceiveSpeech(
   words?: ReturnType<typeof prepareSpeechWords>,
 ): Awareness | null {
   const self = observer.id === source.id;
-  if (
-    !hasMemory(observer) ||
-    (!self &&
-      (!observer.actor?.alive || capabilityBlocked(world, observer, 'perception') || observer.actor.incapacitated))
-  )
+  if (!hasMemory(observer) || (!self && (!observer.actor?.alive || observer.actor.incapacitated)))
     return null;
-  const detail = self ? 'clear' : speechExposure(world, observer, source, volume).detail;
-  const visible = self || seesEntity(world, observer, source);
+  const contact = self ? null : speechPerception(world, observer, source, volume);
+  if (!self && !contact) return null;
+  const detail = self ? 'clear' : contact!.detail;
+  const visible = self || contact!.sees(source);
   if (detail === 'undetected' && !visible) return null;
   const perception = self ? 'self' : detail === 'undetected' ? 'seen' : 'heard';
   const raw = String(event.data?.['text'] ?? '');
@@ -111,7 +108,9 @@ export function perceiveSpeech(
         : detail === 'partial'
           ? partialSpeech(raw, `${world.seed}:${event.id}:${observer.id}`, words)
           : [],
-    speaker: visible ? { entityId: source.id, nameAtTime: observerDescription(world, observer.id, source.id) } : null,
+    speaker: visible
+      ? { entityId: source.id, nameAtTime: observerDescription(world, observer.id, source.id) }
+      : null,
     delivery: visible && perception !== 'seen' ? volume : null,
     // A coarse direct-path bearing is not a source location or a future tracking handle.
     direction:
@@ -126,16 +125,31 @@ export function perceiveSpeech(
   if (!speech.segments.some((part) => part.kind === 'heard' && part.text.trim()))
     speech.intelligibility = 'none';
   // Communicative intent is not available merely because the server knows targetId.
-  const intendedId = typeof event.data?.['intendedRecipientId'] === 'string'
-    ? event.data['intendedRecipientId'] : event.targetId;
+  const intendedId =
+    typeof event.data?.['intendedRecipientId'] === 'string'
+      ? event.data['intendedRecipientId']
+      : event.targetId;
   const recipient = intendedId ? world.entities[intendedId] : undefined;
-  const perceivedRecipient = intendedId && (self ||
-    (speech.intelligibility !== 'none' && visible &&
-      (intendedId === observer.id || (recipient && seesEntity(world, observer, recipient)))))
-    ? intendedId : undefined;
+  const perceivedRecipient =
+    intendedId &&
+    (self ||
+      (speech.intelligibility !== 'none' &&
+        visible &&
+        (intendedId === observer.id || (recipient && contact?.sees(recipient)))))
+      ? intendedId
+      : undefined;
   const addressed = !self && perceivedRecipient === observer.id;
-  const targetId = self ? event.targetId : event.targetId === perceivedRecipient ? perceivedRecipient : undefined;
-  const entityIds = [...new Set([...(visible ? [source.id] : []), ...(perceivedRecipient ? [perceivedRecipient] : [])])];
+  const targetId = self
+    ? event.targetId
+    : event.targetId === perceivedRecipient
+      ? perceivedRecipient
+      : undefined;
+  const entityIds = [
+    ...new Set([
+      ...(visible ? [source.id] : []),
+      ...(perceivedRecipient ? [perceivedRecipient] : []),
+    ]),
+  ];
   return {
     eventId: event.id,
     actorId: observer.id,
@@ -152,10 +166,12 @@ export function perceiveSpeech(
     ...(targetId ? { targetId } : {}),
     ...(perceivedRecipient ? { intendedRecipientId: perceivedRecipient } : {}),
     entityIds,
-    entityEpisodes: Object.fromEntries(entityIds.flatMap((id) => {
-      const episode = world.perceptionEpisodes?.[observer.id]?.[id];
-      return episode ? [[id, episode]] : [];
-    })),
+    entityEpisodes: Object.fromEntries(
+      entityIds.flatMap((id) => {
+        const episode = world.perceptionEpisodes?.[observer.id]?.[id];
+        return episode ? [[id, episode]] : [];
+      }),
+    ),
     importance:
       perception === 'seen' || speech.intelligibility === 'none' ? 3 : (event.importance ?? 7),
     urgency: event.urgency ?? 4,
@@ -206,7 +222,9 @@ export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence)
           speech: evidence.speech,
           data: {
             text: speechWords(evidence.speech),
-            ...(evidence.intendedRecipientId ? { intendedRecipientId: evidence.intendedRecipientId } : {}),
+            ...(evidence.intendedRecipientId
+              ? { intendedRecipientId: evidence.intendedRecipientId }
+              : {}),
             ...(evidence.speech.delivery ? { volume: evidence.speech.delivery } : {}),
             ...(typeof event.data?.['responseId'] === 'string'
               ? { responseId: event.data['responseId'] }

@@ -10,7 +10,7 @@ import { isSpeechVolume } from './acoustics.js';
 import type { Awareness } from './experience.js';
 import { soundOrigin, speechObservers } from './perception.js';
 import { appraiseEvent } from './social.js';
-import { mutateExperience } from './experience.js';
+import { mutateExperience, acquireEventAwareness } from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';
 import { finishWorld, cloneValue, appendEvents } from './draft.js';
@@ -220,64 +220,54 @@ function recordEvent(
   }
   events.push(event);
   if (world.experience) {
+    const acquired: Awareness[] = [];
     for (const actorId of audience) {
       const speech = speechAwareness.get(actorId);
       if (speech) {
-        mutateExperience(world, actorId, {
-          operation: 'add',
-          entry: { source: 'awareness', value: speech },
-        });
+        acquired.push(speech);
         continue;
       }
-      mutateExperience(world, actorId, {
-        operation: 'add',
-        entry: {
-          source: 'awareness',
-          value: {
-            eventId: event.id,
-            actorId,
-            text: memoryPerspective(world, actorId, text, type === 'speech', source?.id),
-            at: event.at,
-            sequence: world.nextId,
-            modality:
-              scope === 'private'
-                ? type === 'contact'
-                  ? 'felt'
-                  : type === 'encounter'
-                    ? 'observed'
-                    : 'internal'
-                : type === 'speech'
-                  ? 'heard'
-                  : 'observed',
-            entityEpisodes: Object.fromEntries(
-              [source?.id, targetId].flatMap((id) => {
-                const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
-                return id && episode ? [[id, episode]] : [];
-              }),
-            ),
-            recognized:
-              type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
-            intelligible: true,
-            entityIds: [source?.id, targetId].filter((id): id is string => !!id),
-            importance: event.importance ?? importance,
-            urgency: event.urgency ?? urgency,
-            eventType: type,
-            ...(source ? { sourceId: source.id } : {}),
-            ...(targetId ? { targetId } : {}),
-            triggerKind:
-              source?.id === actorId
-                ? 'self_event'
-                : targetId === actorId
-                  ? 'directed_action'
-                  : 'observed_event',
-            content:
-              typeof data?.['text'] === 'string'
-                ? data['text']
-                : memoryPerspective(world, actorId, text, false, source?.id),
-          },
-        },
+      const perceivedText = memoryPerspective(world, actorId, text, type === 'speech', source?.id);
+      acquired.push({
+        eventId: event.id,
+        actorId,
+        text: perceivedText,
+        at: event.at,
+        sequence: world.nextId,
+        modality:
+          scope === 'private'
+            ? type === 'contact'
+              ? 'felt'
+              : type === 'encounter'
+                ? 'observed'
+                : 'internal'
+            : type === 'speech'
+              ? 'heard'
+              : 'observed',
+        entityEpisodes: Object.fromEntries(
+          [source?.id, targetId].flatMap((id) => {
+            const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
+            return id && episode ? [[id, episode]] : [];
+          }),
+        ),
+        recognized: type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
+        intelligible: true,
+        entityIds: [source?.id, targetId].filter((id): id is string => !!id),
+        importance: event.importance ?? importance,
+        urgency: event.urgency ?? urgency,
+        eventType: type,
+        ...(source ? { sourceId: source.id } : {}),
+        ...(targetId ? { targetId } : {}),
+        triggerKind:
+          source?.id === actorId
+            ? 'self_event'
+            : targetId === actorId
+              ? 'directed_action'
+              : 'observed_event',
+        content: typeof data?.['text'] === 'string' ? data['text'] : perceivedText,
       });
     }
+    acquireEventAwareness(world, acquired);
   }
   learnSpeechIntroduction(world, event);
   // Finalize optional native metadata before handing an immutable record to persistence.
