@@ -3,6 +3,12 @@ import type { RelationshipNode, RelationshipPage, RelationshipRef } from '@open-
 import { Button, Tag } from '../design-system/components';
 import { post } from '../api';
 
+type Trace = {
+  nodes: RelationshipNode[];
+  edges: RelationshipPage['edges'];
+  coverage: { status: string; reason: string | null; limitations: string[] };
+  frontier: { ref: RelationshipRef; depth: number; cursor?: string }[];
+};
 type Inspection = {
   node?: RelationshipNode;
   ref?: RelationshipRef;
@@ -16,6 +22,8 @@ const key = (ref: RelationshipRef) => JSON.stringify([ref.kind, ref.id, ref.vers
 export function WorldInspection({ actorId }: { actorId: string }) {
   const [query, setQuery] = useState(''),
     [nodes, setNodes] = useState<RelationshipNode[]>([]);
+  const [searchKind, setSearchKind] = useState<'definitions' | 'entities'>('definitions');
+  const [trace, setTrace] = useState<Trace>();
   const [cursor, setCursor] = useState<string | null>(null),
     [submitted, setSubmitted] = useState('');
   const [inspection, setInspection] = useState<Inspection>(),
@@ -56,10 +64,11 @@ export function WorldInspection({ actorId }: { actorId: string }) {
       setInspection(value);
       setDirection(ref.kind === 'entity' || ref.kind === 'item' ? 'both' : 'out');
       setExtra(undefined);
+      setTrace(undefined);
     });
   const search = (next?: string) =>
     void read<{ nodes: RelationshipNode[]; nextCursor: string | null }>(
-      'ol_find',
+      searchKind === 'entities' ? 'ol_entities' : 'ol_find',
       { query: next ? submitted : query, limit: 15, ...(next ? { cursor: next } : {}) },
       (value) => {
         setNodes(value.nodes);
@@ -70,6 +79,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
   const root = inspection?.node?.ref ?? inspection?.ref;
   function relationships(direction: 'out' | 'in' | 'both', next?: string) {
     if (!root || !inspection) return;
+    setTrace(undefined);
     void read<Inspection['relationships']>(
       'ol_graph',
       {
@@ -98,7 +108,22 @@ export function WorldInspection({ actorId }: { actorId: string }) {
         }}
       >
         <label>
-          Find definitions{' '}
+          Search scope{' '}
+          <select
+            value={searchKind}
+            disabled={busy}
+            onChange={(event) => {
+              setSearchKind(event.target.value === 'entities' ? 'entities' : 'definitions');
+              setNodes([]);
+              setCursor(null);
+            }}
+          >
+            <option value="definitions">Definitions</option>
+            <option value="entities">World entities</option>
+          </select>
+        </label>
+        <label>
+          Name or ID{' '}
           <input value={query} maxLength={200} onChange={(event) => setQuery(event.target.value)} />
         </label>
         <Button type="submit" size="sm" disabled={busy}>
@@ -130,7 +155,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
         </p>
       )}
       {busy && <p role="status">Reading current records…</p>}
-      <ul aria-label="Definition search results">
+      <ul aria-label="World search results">
         {nodes.map((node) => (
           <li key={key(node.ref)}>
             <Button
@@ -150,7 +175,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
       </ul>
       {cursor && (
         <Button size="sm" disabled={busy} onPress={() => search(cursor)}>
-          Next definition page
+          Next search page
         </Button>
       )}
       {root && page && (
@@ -185,6 +210,21 @@ export function WorldInspection({ actorId }: { actorId: string }) {
                     : 'Both directions'}
               </Button>
             ))}
+            {!page.subject && root.kind !== 'memory-record' && (
+              <Button
+                size="sm"
+                disabled={busy}
+                onPress={() =>
+                  void read<Trace>(
+                    'ol_trace',
+                    { root, direction, maxDepth: 4, maxNodes: 40 },
+                    setTrace,
+                  )
+                }
+              >
+                Trace these relationships
+              </Button>
+            )}
           </div>
           <p>
             {page.coverage.status === 'page'
@@ -246,6 +286,44 @@ export function WorldInspection({ actorId }: { actorId: string }) {
             </pre>
           </details>
         </>
+      )}
+      {trace && (
+        <section aria-label="Projected relationship trace">
+          <h3>Relationship reachability</h3>
+          <p>
+            {trace.nodes.length} projected records · {trace.edges.length} witness connections.
+            {trace.coverage.status === 'complete'
+              ? ' Complete for this projection and filter only.'
+              : ` Bounded result (${trace.coverage.reason ?? trace.coverage.status}); expand frontier records for more.`}{' '}
+            This is not a complete interaction-validation report.
+          </p>
+          <ul>
+            {trace.nodes.map((node) => (
+              <li key={key(node.ref)}>
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  disabled={busy || !node.canInspect || !!node.availability}
+                  onPress={() => inspect(node.ref)}
+                >
+                  {node.label}
+                </Button>{' '}
+                <span className="ol-caption">
+                  {node.ref.kind}
+                  {trace.frontier.some((entry) => key(entry.ref) === key(node.ref))
+                    ? ' · frontier'
+                    : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <details>
+            <summary>Source-backed witness connections and limits</summary>
+            <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+              {JSON.stringify(trace, null, 2)}
+            </pre>
+          </details>
+        </section>
       )}
       {extra !== undefined && (
         <details open>
