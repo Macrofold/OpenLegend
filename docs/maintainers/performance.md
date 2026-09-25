@@ -271,6 +271,6 @@ The execution contract remains [compact transactional persistence](../performanc
 - [x] DP01 — Replace per-witness awareness/forgetting searches with commit-local indexes; preserve append/edit/forget/revocation ownership. Separate history projection, prepared writes and SQLite transaction-boundary spans.
 - [x] DP02 — Bound history row preparation and encoding buffers; shorten the open-transaction CPU path without publishing a partial world or bypassing edit/revocation handling.
 - [x] DP03 — Remove redundant parsing of the native private acquisition template through the shared event owner. Retain independent transition-return copies; further allocation/state representation changes remain measured PF03/PF08 work.
-- [ ] DP04 — Qualify residual blocking and introduce database/CPU isolation only at PF10's measured gate. Do not create a second writer or acknowledge uncommitted actions.
+- [x] DP04 — Introduce single-connection SQLite worker isolation at the measured dense-commit gate. Preserve serialized reads, COMMIT acknowledgement and fail-closed reconciliation; broader CPU-worker/auxiliary-reader work remains PF10/PF04-gated.
 - [ ] DP05 — Correct measured overload being misclassified as suspension using explicit attribution, without permitting catch-up after real suspension.
 - [ ] DP06 — Record matched native/history/full-server measurements and recovery exercises, including mature history and bounded high-command-count work. Long soaks, PostgreSQL, browser and live cognition remain separate qualification.

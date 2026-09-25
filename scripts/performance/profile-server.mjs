@@ -18,6 +18,7 @@ const distribution = (values) => ({
   count: values.length,
   p50Ms: percentile(values, 0.5),
   p95Ms: percentile(values, 0.95),
+  p99Ms: percentile(values, 0.99),
   maxMs: values.length ? Math.max(...values) : null,
 });
 
@@ -88,7 +89,7 @@ async function clientLoad() {
       const result = await response.json();
       if (!response.ok || !result.ok) throw Error('Presence heartbeat failed');
     }),
-    periodic(500, async (i) => {
+    periodic(settings.commandIntervalMs ?? 500, async (i) => {
       const at = performance.now();
       const command =
         i % 3 === 2
@@ -192,8 +193,10 @@ function metricDelta(before, after) {
 }
 
 async function main() {
-  const [scenarioPath, output, secondsText = '15', speedText = '1,3,8'] = process.argv.slice(2);
+  const [scenarioPath, output, secondsText = '15', speedText = '1,3,8', intervalText = '500'] =
+    process.argv.slice(2);
   const seconds = Number(secondsText),
+    commandIntervalMs = Number(intervalText),
     speeds = speedText.split(',').map(Number);
   if (
     !scenarioPath ||
@@ -201,12 +204,15 @@ async function main() {
     !Number.isInteger(seconds) ||
     seconds < 5 ||
     seconds > 60 ||
+    !Number.isInteger(commandIntervalMs) ||
+    commandIntervalMs < 25 ||
+    commandIntervalMs > 1000 ||
     !speeds.length ||
     speeds.length > 3 ||
     speeds.some((n) => ![1, 3, 8].includes(n))
   )
     throw Error(
-      'Usage: node --import tsx scripts/performance/profile-server.mjs SCENARIO.json NEW_REPORT.json [5..60 seconds per phase] [1,3,8]',
+      'Usage: node --import tsx scripts/performance/profile-server.mjs SCENARIO.json NEW_REPORT.json [5..60 seconds per phase] [1,3,8] [25..1000 command interval ms]',
     );
   const scenario = parseScenario(JSON.parse(await readFile(scenarioPath, 'utf8')));
   if (scenario.input)
@@ -233,6 +239,7 @@ async function main() {
     cpu: cpus()[0]?.model,
     run: process.env.GITHUB_RUN_ID,
     secondsPerPhase: seconds,
+    commandIntervalMs,
     scenario,
     paidModelCalls: 0,
     phases: [],
@@ -276,6 +283,7 @@ async function main() {
         position,
         seconds,
         presenceId,
+        commandIntervalMs,
       });
       const before = performanceSnapshot();
       const sim = game.service.world.simTime;
