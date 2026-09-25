@@ -1,3 +1,4 @@
+import { workshopRunAllocation } from './macrofold-allocation.js';
 import type { WorldAgentTurn } from './world-authoring.js';
 import { interactiveAllowance } from './cognition-budget.js';
 import { ActorWorkspaceFiles } from './workspace.js';
@@ -1094,6 +1095,22 @@ export class MacrofoldBackend implements AiClient {
       : `conversation:${value.conversationId}`;
     if (this.busy.has(name))
       return { ok: false, code: 'busy', message: 'This conversation is already running.' };
+    if (worldAgent) {
+      const lane = await this.load<Lane>(`lane:${name}`);
+      const allocated = await workshopRunAllocation(this.service.store, worldAgent, {
+        key: lane?.worktree ? this.workerKey(lane.worktree) : undefined,
+        sandbox: lane?.sandbox,
+        allocationUsd: this.service.config.macrofoldComputeUsd,
+      });
+      if (!allocated)
+        return {
+          ok: false,
+          code: 'budget',
+          message:
+            'Session allowance cannot cover the remaining worker allocation and a model run.',
+        };
+      worldAgent = allocated;
+    }
     const id = this.key(key);
     if (
       !(await this.service.store.reserve(
