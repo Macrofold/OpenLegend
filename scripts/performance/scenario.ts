@@ -8,6 +8,9 @@ import {
   type WorldState,
 } from '../../packages/domain/src/index.js';
 
+/** Give the integrator room to choose its own boundary; not a one-second tick. */
+export const DEFAULT_PROFILE_INTERVAL_SECONDS = 60;
+
 export interface Scenario {
   input?: string;
   seed: number;
@@ -106,7 +109,7 @@ export function parseScenario(value: unknown): Scenario {
     layout: (v.layout ?? 'scattered') as Scenario['layout'],
     steps: integer(v.steps, 180, 1, 100000),
     warmup: integer(v.warmup, 30, 0, 10000),
-    intervalSeconds: integer(v.intervalSeconds, 1, 1, 86400),
+    intervalSeconds: integer(v.intervalSeconds, DEFAULT_PROFILE_INTERVAL_SECONDS, 1, 86400),
     speed: integer(v.speed, 1, 1, 100),
     timeoutSeconds: integer(v.timeoutSeconds, 60, 1, 600),
     objects,
