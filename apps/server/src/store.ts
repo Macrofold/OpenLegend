@@ -1,3 +1,4 @@
+import { readAttemptBudget, type AttemptBudgetSnapshot } from './attempt-budget.js';
 import { WorldAgentStore } from './world-agent-store.js';
 import { KnowledgeStore } from './knowledge-store.js';
 import { validateKnowledge } from '@open-legend/domain';
@@ -318,6 +319,7 @@ export interface GameRepository extends WorldStore {
     reuse?: 'compute-allocation',
     budget?: AttemptBudget,
   ): Promise<boolean>;
+  attemptBudget(budgetId: string, allocationId?: string): Promise<AttemptBudgetSnapshot>;
   settle(id: string, receipt: AiReceipt): Promise<void>;
   recoverInterruptedWork(): Promise<void>;
   usage(ceilingUsd: number): Promise<{
@@ -965,6 +967,11 @@ export class SqliteStore implements GameRepository {
         'INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE meta.value IS DISTINCT FROM excluded.value',
       )
       .run(`integration:${key}`, JSON.stringify(value));
+  }
+
+  async attemptBudget(budgetId: string, allocationId?: string): Promise<AttemptBudgetSnapshot> {
+    await this.ready;
+    return readAttemptBudget(this.db, budgetId, allocationId);
   }
 
   async reserve(
