@@ -14,15 +14,15 @@ Committed speech from any speech-capable entity, including the controlled charac
 
 A visible, associated speaker receives a plain caption above its head. Speech from an unseen, unrecognized, or off-camera source uses the listener-centered directional presentation in section 8 when a bearing is available. Missing bearing produces a neutral nearby-caption fallback. Identity, localization, and understanding are independent.
 
-| Perception | Example presentation |
-| --- | --- |
-| Clear words, visible associated speaker | Speech icon and `“Meet me behind the mill.”` above the speaker |
-| Clear words, unidentified source | `You hear someone talking nearby: “Meet me behind the mill.”` on the directional ring, when localized |
-| Partial words, unidentified source | `You partly hear someone nearby: “Meet me […] mill.”` |
-| Detected speech, no intelligible words | `You hear indistinct speech nearby.` No quotation |
-| Recognized speaker and delivery, no words | `John is whispering something.` No quotation |
-| No sound detected | No auditory caption or heard evidence |
-| A separately permitted visible speaking action, without sound | `John appears to be speaking.` Visual evidence only |
+| Perception                                                    | Example presentation                                                                                  |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Clear words, visible associated speaker                       | Speech icon and `“Meet me behind the mill.”` above the speaker                                        |
+| Clear words, unidentified source                              | `You hear someone talking nearby: “Meet me behind the mill.”` on the directional ring, when localized |
+| Partial words, unidentified source                            | `You partly hear someone nearby: “Meet me […] mill.”`                                                 |
+| Detected speech, no intelligible words                        | `You hear indistinct speech nearby.` No quotation                                                     |
+| Recognized speaker and delivery, no words                     | `John is whispering something.` No quotation                                                          |
+| No sound detected                                             | No auditory caption or heard evidence                                                                 |
+| A separately permitted visible speaking action, without sound | `John appears to be speaking.` Visual evidence only                                                   |
 
 “Faint talking” means audible sound with potentially unintelligible words, not clear words from an unknown source. Use **unintelligible speech** for that state. Reserve **inaudible** for no detected sound. A caption must never invent speech content, identity, recipient, delivery mode, or direction.
 
@@ -54,12 +54,12 @@ margin = received - floor
 
 The quarter-metre clamp avoids singular/coincident positions; it is a v1 near-field approximation. Use existing body ears for listeners. Until a sound/mouth anchor exists, use the existing source ear-height anchor and document that approximation, rather than deriving emission from sprite artwork.
 
-| Margin using provisional default thresholds | Outcome | Allowed words |
-| --- | --- | --- |
-| Below 0 dB | Undetected | None; no heard entry |
-| At least 0, below 6 dB | Detected, unintelligible | None; descriptive auditory evidence |
-| At least 6, below 12 dB | Partial | Approximately 50% of words, as stable fragments |
-| At least 12 dB | Clear | Full linguistic content within supported language capability |
+| Margin using provisional default thresholds | Outcome                  | Allowed words                                                |
+| ------------------------------------------- | ------------------------ | ------------------------------------------------------------ |
+| Below 0 dB                                  | Undetected               | None; no heard entry                                         |
+| At least 0, below 6 dB                      | Detected, unintelligible | None; descriptive auditory evidence                          |
+| At least 6, below 12 dB                     | Partial                  | Approximately 50% of words, as stable fragments              |
+| At least 12 dB                              | Clear                    | Full linguistic content within supported language capability |
 
 Boundary equality belongs to the higher tier. These thresholds are **gameplay choices**, not universal human intelligibility thresholds. Preserve the continuous measurements so future policies can use more bands, a different partial fraction, or a continuous intelligibility curve without changing event identity or caption contracts. No per-decibel awareness event is emitted.
 
@@ -72,10 +72,10 @@ Start with normal speech at 60 dB SPL at one metre, whispering at 40, shouting a
 With no barriers, these defaults imply approximately:
 
 | Delivery | Clear words through | Some words through | Speech detection through |
-| --- | ---: | ---: | ---: |
-| Whisper | 1.0 m | 2.0 m | 4.0 m |
-| Normal | 10.0 m | 20.0 m | 39.8 m |
-| Shout | 56.2 m | 112.2 m | 223.9 m |
+| -------- | ------------------: | -----------------: | -----------------------: |
+| Whisper  |               1.0 m |              2.0 m |                    4.0 m |
+| Normal   |              10.0 m |             20.0 m |                   39.8 m |
+| Shout    |              56.2 m |            112.2 m |                  223.9 m |
 
 The normal clear boundary intentionally retains the existing unobstructed 10-unit baseline. This does **not** preserve the old obstruction gate or add an undocumented 10-unit hard cap. Shouting can reach an entire small map. Tune source presets or world acoustic policy if that is undesirable; never silently truncate an otherwise authorized audience as a performance optimization.
 
@@ -118,7 +118,7 @@ An addressed utterance is still external sound. Conversation membership, intende
 
 An out-of-range addressed reply may still be spoken aloud under the existing response policy. Its fallback must preserve whisper/shout mode and all other emission semantics. Never escalate volume or teleport words to the intended recipient. Revalidate source capability, life/sleep state and event-time geometry when committing a generated reply. Use the existing independent component-outcome and paid-execution boundaries.
 
-The speaker does not receive an omniscient list of listeners. Likewise, an actual recipient ID is not automatically a *perceived* recipient identity for an eavesdropper. Addressed/overheard reaction cues must be derived from evidence available to that listener, without exposing hidden communicative intent.
+The speaker does not receive an omniscient list of listeners. Likewise, an actual recipient ID is not automatically a _perceived_ recipient identity for an eavesdropper. Addressed/overheard reaction cues must be derived from evidence available to that listener, without exposing hidden communicative intent.
 
 ## 5. One occurrence, listener-specific evidence
 
@@ -129,9 +129,7 @@ For each eligible listener, native perception produces one actor/event awareness
 The following is a conceptual **safe projection**, not a second persisted event schema:
 
 ```ts
-type SpeechSegment =
-  | { kind: 'heard'; text: string }
-  | { kind: 'unintelligible' };
+type SpeechSegment = { kind: 'heard'; text: string } | { kind: 'unintelligible' };
 
 type PerceivedSpeech = {
   intelligibility: 'none' | 'partial' | 'clear';
@@ -225,7 +223,7 @@ Deduplicate transient captions by world, controlled actor, save timeline/generat
 
 ## 10. Persistence, cutover, and integration boundaries
 
-Store new speech metadata and event-time projections through existing event/awareness/perspective transactions and same-version saves. Include any new policy pins and privacy-relevant fields in validation and snapshot capture. Resolve the next development schema version at implementation time; do not add old-save migrations or compatibility readers. Explicitly reject incompatible saves without altering them, per the active development policy.
+Store new speech metadata and event-time projections through existing event/awareness/perspective transactions and same-version saves. Include any new policy pins and privacy-relevant fields in validation and snapshot capture. Follow the [active development policy](save-and-load.md#active-development-policy): evolve supported saved shapes with small in-place updates that preserve world identity and unrelated progress. Do not introduce a hearing-specific reset/format gate or maintain multiple runtime versions. This does not require recomputing old audiences or remasking past utterances; missing historical sensory facts stay unavailable. Reject unsupported state explicitly without silently resetting it.
 
 Do not redefine `hearsEntity()` from “eligible for full speech” to “detected something” while callers still assume full quotes and identity. Introduce a rich hearing query and migrate callers coherently. Audit `say`, teaching eligibility, conversation joins, action catalogue, response fallback, direct-response dispatch, autonomous reaction intake, observation and every context/history projection. A person can be physically present and within detection range without understanding a teaching action. Preserve the owning mechanic's supported requirements; do not grant a recipe from partial words.
 

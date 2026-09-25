@@ -8,5 +8,11 @@
   "speed": 8,
   "execution": "native-slice",
   "timeoutSeconds": 120,
-  "objects": [{ "count": 300, "name": "Observation object", "properties": ["rigid"] }]
+  "objects": [
+    {
+      "count": 300,
+      "name": "Observation object",
+      "properties": ["rigid"]
+    }
+  ]
 }

@@ -30,3 +30,15 @@ Reports include setup/initial-freeze cost, execution mode, slice counts/sizes, n
 This first version excludes real-time clock debt, database commits, browser frames, cognition admission/context preparation and paid model calls. Use the running server's `/api/performance` for tick/debt and cognition spans. Long history, constrained cognition capacity and dense encounter fan-out remain distinct workloads; do not treat a successful gem scenario as 100-agent qualification.
 
 For accelerated-play qualification, copy a scenario outside the repository and set `execution` to `native-slice`, `speed` to `8`, and `steps` to a representative sustained duration (for example 2400). Compare it with `single-step` on the same scenario and acquisition policy. The profiler measures actual consumed simulated time and fails on non-progress; it never assumes every invocation advances the requested duration. A native-slice result still excludes server scheduling, persistence and rendering.
+
+## Hearing with the actual server and disk
+
+```sh
+node --import tsx scripts/stress-hearing.ts /tmp/hearing-run-unique 60 10 8
+```
+
+The output directory must not exist; its parent must exist. Arguments are wall seconds (1–120), added people (0–100), and scheduled speech per real second (0–20). The fixed seed-73 fixture also adds 20 animals and 300 objects. It constructs the real WorldService with a private disk-backed SQLite world and zero provider budget, runs at 8×, keeps presence alive, commits alternating whisper/normal/shout, and generates/encodes complete public views. It neither loads `.env` nor opens an existing game database. The setup population is outside the measured interval. Invalid/unavailable speech aborts the run rather than being counted as accepted.
+
+`report.json` records scheduled versus accepted utterances, actual wall/simulation time, final clock debt, native/SQL metrics, commit/projection distributions, view bytes and final heap. The final drain and flush count toward wall time. The driver awaits each native turn, so overload can reduce submissions; a drained queue alone is not a pass. Check both achieved speed and accepted work. Output snapshots/profile data remain private and untracked. This runner has bounded inputs, not a parent-process hard timeout; use an external process deadline for hostile or pathological workloads.
+
+This is a service/persistence workload, not a full graphical client, independent concurrent producers, live AI, network SSE or production PostgreSQL. Full-view JSON bytes are not actual delta traffic. Run the same fixture on the target host, include cold tails, and extend qualification with genuine concurrency before making broader capacity claims. Do not interpret `async` calls or zero storage errors as proof of frame-time responsiveness.
