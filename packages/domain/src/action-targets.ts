@@ -1,12 +1,11 @@
+import { subjectReferenceCurrent } from './worlds/base/knowledge.js';
 import { isSafeRecordId } from './records.js';
 import type { WorldState } from './types.js';
 
 export type ActionTarget = { actorId: string; targetId?: string; heatId?: string };
 export type ActionTargetEpisodes = Record<string, string | null>;
 const targets = (command: ActionTarget) =>
-  [command.targetId, command.heatId].filter(
-    (id): id is string => !!id && id !== command.actorId,
-  );
+  [command.targetId, command.heatId].filter((id): id is string => !!id && id !== command.actorId);
 
 /** A saved entity ID is not proof that an anonymous person was re-identified.
  * Reuse the existing perception-episode/creator-authored identity boundary.
@@ -35,11 +34,11 @@ export function actionTargetsCurrent(
   return commands.every((command) =>
     targets(command).every((id) => {
       if (!world.entities[id]?.actor) return true; // Native admission handles missing objects.
-      if (world.observerIdentities?.[actorId]?.[id]?.authored) return true;
-      return (
-        !!expected &&
-        Object.hasOwn(expected, id) &&
-        expected[id] === (world.perceptionEpisodes?.[actorId]?.[id] ?? null)
+      return subjectReferenceCurrent(
+        world,
+        actorId,
+        id,
+        expected && Object.hasOwn(expected, id) ? expected[id] : undefined,
       );
     }),
   );
