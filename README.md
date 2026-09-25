@@ -1,5 +1,9 @@
 # Open Legend
 
+## Simulation cadence
+
+One real second equals one game minute at normal speed; that does not mean sixty simulation ticks. Native work now integrates elapsed time to mechanical/fidelity boundaries, independently of the 50 ms host wake and browser frame cadence. Rendering is not capped at 20 FPS. Existing worlds update in place; do not reset a save for this change. [Time contract](docs/simulation-time.md), [PF13 delivery](docs/maintainers/simulation-time.md), [future bounds](docs/maintainers/simulation-boundaries.md) and [runtime evidence](docs/verification/simulation-cadence.md) distinguish the implemented slice from exact fleeting-exposure, regional and full-stack scale qualification.
+
 ## Movement and lighting
 
 The game uses Recast/Detour in one reused navigation worker and Rapier capsule/cylinder queries for physical clearance. Clear moves need no worker; detours follow smoothed arbitrary-angle routes. **Preparing navigation** is technical waiting, not elapsed game time. Existing worlds follow the current in-place development update policy; no new save or data directory is required for this rebase. Ordinary 2D sprites remain front-facing under both camera orbit and pitch, without changing their image proportions. They respond to ambient/local lighting and cast simple world-anchored proxy shadows onto the actual receiving surfaces; physical bodies do not rotate with the artwork. **Settings and help → World visibility** configures nearby character-visible read-through, radius and strength. See [presentation](docs/world-presentation.md), [implementation evidence](docs/verification/recast-integration.md), and [final browser/runtime observations](docs/verification/recast-finalization.md); high-end art, crowd dynamics and arbitrary 3D model delivery remain future work.

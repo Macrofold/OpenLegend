@@ -717,3 +717,13 @@ A synthetic speech-fan-out exercise (12 executions per mode/population) measured
 ## Spatial rebase and eight-times review
 
 [Conflict resolutions, running 8x server measurements, acoustic query observations and remaining limits](verification/spatial-rebase-eightx.md). Dense 8x is not certified by the successful starter run or isolated acoustic pruning.
+
+## Walking under consolidation pressure
+
+The running PostgreSQL world had Hare at 8,207 awareness records, above the old 8,192-record gate. Mike's queued walk remained at zero progress while the clock was unpaused; the public projection incorrectly labeled this memory pressure a save error. After making pressure nonblocking, the same world resumed the queued walk without a reset. A browser click to nearby clear ground then moved Mike from approximately (11.09, 0, 17.84) to (12.41, 0, 15.64), completed the action and displayed Saved.
+
+A separate manual execution loaded a copy of the blocked snapshot into disposable in-memory SQLite, without an AI director or external archived history. Sixty native seconds completed the original queued walk in about 150 ms; all original awareness source IDs remained present and persistence displayed Saved despite continuing consolidation pressure. An injected storage-error condition still paused time and displayed the error. This is a small runtime check, not a long-session storage/scaling qualification; cold-history growth remains PF08. No provider calls or automated tests were made. Production TypeScript/Vite build passed with the existing bundle-size warning. Deferred regression cases are in [TODO](maintainers/TODO.md#movement-under-memory-pressure); local output is `/tmp/ol-walk-exercise.log`.
+
+## Elapsed-time integration
+
+[Cadence evidence](verification/simulation-cadence.md) records actual clock progress, integration counts, finite boundary probes and short running-server workloads. [PF13](maintainers/simulation-time.md) distinguishes implementation from the combined sound-branch, regional and sustained scale gates. The older per-second 8x reports remain historical measurements, not a mandatory cadence.
