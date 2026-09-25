@@ -13,8 +13,6 @@ export const MIND_LIMITS = {
   documentBytes: 8000,
   proposalBytes: 100000,
   records: 80,
-  experiences: 300,
-  experienceBytes: 400000,
   thoughts: 100,
 } as const;
 export type EvidenceLink = {

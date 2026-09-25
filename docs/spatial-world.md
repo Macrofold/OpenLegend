@@ -124,3 +124,11 @@ The first substantial release delivers meaningful elevation, overlapping surface
 It does not imply turn-based combat, a cover system, arbitrary destruction, swimming, ropes, vehicles, procedural skeletal animation for every invention, full atmospheric acoustics, or a new multiplayer architecture. The interfaces should admit these through later native families rather than pretending their mechanics already exist.
 
 The key invariant is simple: **one spatial world, one source of physical truth, and several ways to draw it.**
+
+## Physical contact
+
+Entity contact means their physical body surfaces meet or their occupied volumes overlap, not that their position markers fall within a sensory radius. The current body representation uses upright cylinders: compare horizontal separation against the sum of body radii and require overlapping vertical height intervals, with the spatial provider's numerical tolerance. A character standing within a campfire's occupied volume or resting on its top counts as contact; a nearby character outside that volume does not. Height separation matters even at identical horizontal coordinates. A physical barrier must not become a sensed contact through a wall.
+
+The optional body-contact detector uses this relation and existing barrier checks to produce private contact episodes for actors granted that sense. Its radius field is zero and grants no remote perception. Broad candidate lookup derives its search extent from physical body sizes, then checks exact contact. It does not grant sight, identity, deliberate examination or damage. Ordinary movement and collision checks do not depend on contact sensing. The current campfire uses the existing generic object body profile; detailed flame shapes, temperature exposure, burns and contact with map surfaces are separate mechanics.
+
+Existing saved proximity-detector definitions upgrade in place to body contact with their authored bindings preserved. Obsolete active proximity contacts are cleared and actual contacts are reacquired; historical experiences remain historical evidence rather than current contact state. No world reset or replacement sense is introduced.

@@ -62,7 +62,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     databasePath: resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data', 'world.sqlite'),
     seed: numberSetting(env, 'WORLD_SEED', 1086, 1, 0x7fffffff),
     baseRatio: 60,
-    budgetUsd: Math.min(50, numberSetting(env, 'AI_BUDGET_USD', 50, 0, 100)),
+    budgetUsd: numberSetting(env, 'AI_BUDGET_USD', 50, 0, 100),
     conversationInactivitySeconds: numberSetting(
       env,
       'CONVERSATION_INACTIVITY_SECONDS',
