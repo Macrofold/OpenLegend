@@ -127,13 +127,19 @@ export function createPerceptionFrame(world: WorldState, previous: WorldState) {
   return {
     sources: samples,
     contactCandidates(observer: Source): Source[] {
-      physical ??= spatialCandidates(samples);
       bodyExtent ??= samples.reduce(
         (largest, source) => ({
           radius: Math.max(largest.radius, source.bodyRadius),
           height: Math.max(largest.height, source.height),
         }),
         { radius: 0, height: 0 },
+      );
+      // Contact reach is body-sized, not sight-sized. Bound cell traversal by the largest
+      // actual body while preserving source order and every exact contact candidate.
+      // docs/spatial-world.md#physical-contact
+      physical ??= spatialCandidates(
+        samples,
+        Math.max(bodyExtent.radius * 2, bodyExtent.height) + SPATIAL_LIMITS.epsilon,
       );
       // This point grid is 3D: include vertical body extent as well as horizontal reach.
       // Exact overlap/occlusion remains the contact detector's decision.
