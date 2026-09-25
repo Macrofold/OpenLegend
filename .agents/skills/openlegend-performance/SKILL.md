@@ -1,18 +1,18 @@
 ---
 name: openlegend-performance
 description: >-
-  Investigate or change OpenLegend simulation hot paths, hearing/perception, scheduling, scaling,
-  browser latency or performance experiments.
+  Investigate or change OpenLegend hot paths, perception queries, scheduling, scaling or browser
+  latency. Not prose-only mentions of performance or routine cosmetic edits.
 ---
 
 # Bound work, preserve meaning, measure
 
-Identify the workload and critical path before optimizing: population/density/history, cold versus warm state, requested simulation speed, host/device and input responsiveness. Translate a requested 8× target into native throughput plus server/renderer headroom; do not apply it as a universal promise or treat speed configuration as a benchmark.
+Identify the workload and critical path: population/density/history, cold versus warm state, requested simulation speed, host/device and responsiveness. Distinguish 8× simulation speed from 8× workload size using the task and current contract. Define a measurable target with native/server/renderer headroom; speed configuration alone is no benchmark.
 
-Read the affected [performance contract](../../../docs/performance.md), focused tracker and [native stress guide](../../../docs/maintainers/performance-profiling.md). Reuse existing instrumentation and scenarios. Compare equivalent inputs/versions/machines; include setup, tail latency, memory and elapsed work, not one favorable average. Native headroom excludes persistence, browser and AI orchestration, so an isolated pass is not end-to-end qualification.
+For server/native work read the applicable [performance contract](../../../docs/performance.md) and tracker; use the [native stress guide](../../../docs/maintainers/performance-profiling.md) only for native simulation experiments. Browser work uses browser/renderer measurements; an unrelated native benchmark provides no evidence. Compare matched inputs/versions/machines, including setup, tail latency, memory and elapsed work. Native headroom excludes persistence, browser and AI orchestration.
 
-Remove unnecessary work first. Prefer meaningful change triggers, cheap conservative rejection before exact queries, bounded candidate sets, existing indexes, immutable shared definitions and dependency-correct cache reuse. Include observer scope, geometry/state revisions and lifecycle in invalidation. Budget exhaustion is not evidence of absence or unreachability. For hearing, distance/spatial filtering must not drop actually audible recipients or weaken privacy/intelligibility rules.
+Remove unnecessary work first: meaningful change triggers, conservative rejection before exact queries, bounded candidates, existing indexes, shared immutable definitions and dependency-correct caches. Include observer scope, geometry/state revisions and lifecycle in invalidation. Budget exhaustion is not evidence of absence or unreachability. Hearing filtering must preserve actually audible recipients and privacy/intelligibility semantics.
 
-Move non-authoritative diagnostics/I/O off critical paths when ordering and failure semantics permit. Add batching, queues, pooling, workers or hierarchical structures only for a justified bottleneck; bound concurrency and backlog and define cancellation/backpressure. Async syntax does not offload CPU. Preserve commit order, RNG draws, simulation steps, source attribution and exact mechanical/disclosure checks unless an explicitly accepted behavior change says otherwise.
+Move non-authoritative diagnostics/I/O off critical paths when ordering, durability and failure semantics permit. Coalesce replaceable snapshots, not distinct speech, acquisition events or committed effects; skipping work must preserve its required outcome. Add batching, queues, pooling, workers or hierarchy only for a justified bottleneck; bound concurrency/backlog and define cancellation/backpressure. Async syntax does not offload CPU. Preserve commit order, RNG draws, simulation steps, attribution and mechanical/disclosure checks unless an accepted behavior change explicitly allows otherwise.
 
-For relevant runtime changes, run a bounded stress experiment and the changed live native path under [verification rules](../../rules/verification.md). Use disposable worlds and new output paths; keep private profiles outside Git. A timeout or unavailable environment is an incomplete measurement. Record matched before/after evidence and residual limits in the existing owners. Do not force stress runs for documentation, trivial presentation or unrelated edits.
+Exercise a relevant bounded stress workload and the changed runtime path under [Verification](../../rules/verification.md). Use disposable worlds and new private output paths. Record matched before/after evidence, variance and remaining bottlenecks; unavailable baseline or runtime access is a limit, not invented improvement. A timeout is incomplete, not a capacity pass. Do not require stress for unrelated edits or weaken behavior just to hit a timing number.

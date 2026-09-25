@@ -1,27 +1,35 @@
 # Agent guidance system
 
-[AGENTS.md](../AGENTS.md) is the entrypoint for people and agents. It routes by task intent and affected paths; the linked rule/skill body is read only when applicable. No global instruction glob, network setup or proprietary agent is required.
+[AGENTS.md](../AGENTS.md) is the entrypoint for people and agents. It routes by task intent and affected paths; matching rule/skill bodies are read on demand. No global instruction glob, network setup or proprietary agent is required.
 
 ## Layout and authority
 
-Root instructions hold universal constraints and the only task-routing index. Package `AGENTS.md` files hold local boundaries. `rules/` owns cross-cutting development policy; `skills/*/SKILL.md` owns reusable procedures. Existing specifications remain authoritative for behavior; local code comments retain non-obvious reasons. References are optional research, never automatic prerequisites.
+Root instructions hold universal constraints and top-level routing. `.agents/rules/` is a repository convention, not a native Codex permission-rule format. Package `AGENTS.md` files hold local boundaries; `rules/` owns development policy; `skills/*/SKILL.md` owns reusable procedures. Topic-specific details can route through their applicable parent instead of expanding the root. Existing specifications own behavior; comments retain local reasons. References are optional research, not routing prerequisites.
 
-The current task can change its workflow explicitly; tool/platform instructions and actual authorization still apply. A nested file refines its subtree, not permission to bypass privacy, billing or data ownership. Do not copy the policy into editor-specific files.
+Markdown links resolve from the containing document; shell commands run from the repository root unless stated otherwise. A skill read by itself still needs root and applicable path guidance.
+
+The task determines whether to explain, design, review or implement; loading a skill never authorizes another mode. Explicit task instructions can change workflow, not grant someone else's credentials or bypass platform constraints. Nested guidance refines its scope. Do not fork policy into editor-specific copies.
 
 ## Compatibility
 
-- **Codex:** Native `AGENTS.md` and `.agents/skills/`; root routes also require explicit reads for affected paths outside the startup instruction chain.
-- **OpenCode:** Native `AGENTS.md` and `.agents/skills/`; follow explicit topic links rather than assuming linked documents are included automatically.
-- **Cursor:** Native `AGENTS.md` and `.agents/skills/`; no additional `.mdc` copies or always-on skill mode is needed.
-- **Claude Code:** The root `CLAUDE.md` imports `AGENTS.md`; its task routing directs Claude to open canonical skill files as ordinary files. No duplicate `.claude/skills/` bodies or native slash-menu entries are installed.
-- **Other agents:** Start with “Read AGENTS.md and the applicable path/topic guidance before this task.” Plain Markdown is the fallback when native discovery is absent.
+- **Codex:** Native `AGENTS.md` and `.agents/skills/`; explicitly read applicable instructions outside the startup root-to-working-directory chain. Existing sessions may need restarting after instruction changes.
+- **OpenCode:** Native `AGENTS.md` and `.agents/skills/`; explicit topic links remain the fallback, not automatic imports.
+- **Cursor:** Native `AGENTS.md` and `.agents/skills/`; no duplicate `.mdc` tree or always-on skill mode is needed.
+- **Claude Code:** `CLAUDE.md` imports only `AGENTS.md`. The root then directs explicit reads of applicable nested instructions and canonical topic files. No duplicate `.claude/skills/` bodies or native slash-menu entries are installed.
+- **Other agents:** Start with “Read AGENTS.md and applicable path/topic guidance before this task.” Plain Markdown is the fallback when native discovery is absent.
 
-Loading details vary by agent/version. In particular, Codex documents a startup root-to-working-directory chain, not automatic inclusion of every descendant file on access. Claude's native skill directory differs; the file-reading fallback avoids symlinks that can fail in Windows checkouts and duplicate discovery in other clients. These are documented integration paths, not claims of verified behavior in every agent. [Sources](references/research.md) and [remaining validation](../docs/maintainers/agent-guidance.md) make that distinction explicit.
+Loading varies by version and settings. Claude's native AGENTS fallback can be suppressed by CLAUDE files; our import deliberately retains explicit nested/topic reads. Adding `@` imports for every topic would preload them, not make them conditional. Native skill menus and successful task routing are different capabilities. [Sources](references/research.md) and [remaining validation](../docs/maintainers/agent-guidance.md) distinguish documented behavior from observed dispatch. Global/private settings and override files can change loading outside this checker's view. Reported sizes assume the canonical files; they are not an effective-policy resolver. No adapter changes tool permissions.
 
 ## Maintaining the system
 
-Use the [guidance-maintenance skill](skills/openlegend-guidance/SKILL.md). Keep descriptions narrowly useful, read only matching procedures and split supporting detail before growing the root. `pnpm guidance:check` validates the canonical import, skill metadata, root rule/skill coverage and relative links between instruction-system files. It reports advisory byte budgets; it does not truncate prose, resolve arbitrary code/specification links or prove agent compliance. General documentation references still need review.
+Use the [guidance-maintenance skill](skills/openlegend-guidance/SKILL.md). Keep one instruction owner, narrow triggers and exact meaning. Add supporting detail behind conditional links; avoid mandatory repeated reads or a root entry for every subtopic.
 
-Examples of expected routing: a Jev rubric change loads server guidance, TypeScript, AI and verification; a camera change loads client, TypeScript, PlayCanvas and verification; a typo-only design-doc correction loads documentation, not all design/performance/AI skills. A cross-boundary change loads the applicable union, not an arbitrary maximum number of files.
+After the frozen-lockfile install, `pnpm guidance:check` uses Git's inventory and the pinned YAML parser. It checks metadata, the Claude import, local inline-link targets and structural rule/skill reachability from root/scoped AGENTS. Optional guide/research links cannot rescue an orphan; an incidental link in an operational file can still satisfy the graph. Correct triggers require review, not graph inference.
 
-No generated wrapper copies, automatic skill installers, permission changes or model-specific settings are included. Official vendor skills may be reviewed and pinned later when they add missing context; installing whole collections is not a prerequisite to contributing.
+Use ordinary, non-symlink guidance files and versioned link targets; newly created non-ignored files are included before staging. Local-only/ignored targets cannot satisfy the check. It also checks contributor/template/tracker links and warns about visible override or alternate CLAUDE entrypoints. Fenced examples, comments and inline code are not navigation; heading anchors, reference-style links, arbitrary Markdown and agent compliance remain outside its scope.
+
+Size reports cover the root, longest AGENTS ancestry and total skill discovery text (names, descriptions and paths). They exclude harness overhead and loaded topic bodies, and are bytes, not tokens. Assess representative task context as well; a smaller root can still trigger excessive reading. Keep native skills directly under `.agents/skills/<name>/SKILL.md`, with shallow links to details rather than a deep skill-folder hierarchy.
+
+Expected routing: a Jev rubric change loads server, TypeScript, AI and verification; a camera change loads client, TypeScript, PlayCanvas and verification; a typo-only document correction loads documentation. A cross-boundary change loads the applicable union. Reading guidance for maintenance does not activate every procedure it describes.
+
+No generated wrapper copies, skill installers, permission changes or model settings are included. Review and pin vendor skills only when they add missing context; whole collections are not prerequisites to contributing.

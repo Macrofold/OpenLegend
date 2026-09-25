@@ -1,6 +1,6 @@
 # Contributing
 
-Open Legend is an early, local-first simulation of people and authored realities. Small, reviewable changes that preserve explicit authority and deterministic runtime contracts are particularly useful. Human and agent-assisted contributions use the same architectural boundaries; no particular coding agent or paid provider is required.
+Open Legend is an early, local-first simulation of people and authored realities. Small, reviewable changes that preserve explicit authority and deterministic runtime contracts are particularly useful. The contributor remains responsible for the complete diff, including agent output. Human and agent-assisted contributions use the same architectural boundaries; no particular coding agent or paid provider is required.
 
 ## Start here
 
@@ -12,11 +12,11 @@ The root `packageManager` pins pnpm for local use and CI. `pnpm-workspace.yaml` 
 
 ## Verification and pull requests
 
-[Verification policy](.agents/rules/verification.md) owns the lean delegated-agent workflow and its exceptions. By default agents do not author or run automated suites, but do exercise changed behavior and record specific missing coverage. This does not disable existing CI or excuse an unexplained failing check.
+[Verification policy](.agents/rules/verification.md) owns the lean delegated-agent workflow and its exceptions. By default agents do not author or run automated suites, but do exercise changed behavior and record specific missing coverage. This does not disable CI, waive merge requirements or excuse an unexplained failing check.
 
-For a full contributor validation pass, `pnpm format` and `pnpm check` remain available; the latter runs automated tests and a build. `pnpm test:browser` also runs automated checks. Use these when that workflow is intended, not indirectly during a no-tests task. When adding requested automated coverage, prioritize meaningful resource/permission, idempotency, stale-result and restoration scenarios rather than implementation-mirroring assertions. Live-provider verification is optional for ordinary contributions and requires the account owner's bounded authorization.
+For a full contributor validation pass, format changed files with pinned Prettier and run `pnpm check`; it includes automated tests and a build. `pnpm test:browser` also runs automated checks. Human contributors may use the full workflow directly; delegated agents use it when requested, not indirectly during a no-tests task. Requested coverage should prioritize meaningful resource/permission, idempotency, stale-result and restoration scenarios rather than implementation-mirroring assertions. Live-provider verification is optional for ordinary contributions and requires the account owner's bounded authorization.
 
-Include the problem, resulting behavior, major decisions, actual verification and limitations in the PR. Screenshots help explain visual changes. Mark implemented scope and deferred work accurately in the existing focused tracker. Keep unrelated edits out of the patch; a contribution need not refactor the surrounding system. Instructions and tooling changes use `pnpm guidance:check` and the guidance-maintenance skill.
+Include the problem, resulting behavior, major decisions, actual verification and limitations in the PR. Screenshots help explain visual changes. Mark implemented scope and deferred work accurately in the focused tracker. Keep unrelated edits out of the patch; a contribution need not refactor the surrounding system. If validation fails, distinguish introduced failures from existing failures with evidence; a narrower build pass is not a green full check. Guidance changes use `pnpm guidance:check` and the guidance-maintenance skill.
 
 ## Trust and licensing
 

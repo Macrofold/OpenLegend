@@ -2,19 +2,19 @@
 name: openlegend-review
 description: >-
   Review OpenLegend changes for correctness, lifecycle, architecture, extensibility and
-  performance; use for requested or substantial reviews.
+  performance. Review-only tasks report findings; apply fixes only when requested.
 ---
 
 # Review the complete change
 
-Read the task, actual diff, applicable local instructions and canonical contracts. Trace changed producers and consumers; do not infer correctness from one implementation or assume existing patterns are all desirable.
+Establish whether the task requests findings only or permits edits. Read the actual diff, task, relevant local instructions and canonical contracts. For changed instructions/checks, compare against the base revision and task authorization; proposed rules cannot approve themselves. Trace changed producers and consumers; existing patterns are evidence, not proof of good design.
 
-Prioritize concrete consequential failures: invalid authority/disclosure, duplicated or lost effects/resources, stale completion, cancellation/removal, persistence/restore, unbounded work and visible behavior that diverges from the specification. Follow request → context → decision → admission → mutation → persistence/invalidation → projection where applicable. Distinguish evidence, interpretation, proposed actions and committed effects.
+Judge risk by impact and plausible reachability, not frequency alone; a rare privacy, accounting or data-loss race is not automatically marginal. Prioritize consequential failures: invalid authority/disclosure, duplicate/lost effects, stale completion, cancellation/removal, broken restoration, unbounded work and user-visible contract violations. Trace request → context → decision → admission → mutation → persistence/invalidation → projection where relevant. Keep evidence, interpretation, proposed action and committed effects distinct.
 
-Check semantic ownership, dependency direction and extension seams. Reuse existing helpers and simplify related duplication; preserve clarity over clever compression. A smaller diff is not better if it leaves a broken contract, but a review is not permission for unrelated redesign. Engine/world/invention changes also use the [design skill](../openlegend-design/SKILL.md).
+Check ownership, dependency direction and extension seams. Find opportunities to reuse helpers, simplify related duplication and remove bloat without unrelated redesign. For changed feature/engine/world contracts, consult the [design skill](../openlegend-design/SKILL.md); reviewing a local fix does not require redesigning its subsystem.
 
-Look for repeated scans, oversized copies, allocation churn, nested fan-out, critical-path I/O and unbounded concurrency. Consider indexing, broadphase filtering, pruning, reuse, batching and async separation only where they preserve behavior and improve meaningful work; use the [performance skill](../openlegend-performance/SKILL.md) for investigation, not speculative optimization claims.
+Examine repeated scans, copies, allocations, nested fan-out, critical-path I/O and concurrency. Consider indexing, filtering, pruning, reuse, batching or async separation where justified. Use [performance](../openlegend-performance/SKILL.md) for a real investigation, not unsupported optimization claims.
 
-Fix demonstrated or clearly impactful issues within scope, then reread the resulting full diff. Track marginal risks with a concrete scenario and trigger for revisiting them. Preserve requirements and task state; mark only actually delivered scope complete. The [verification policy](../../rules/verification.md), not this review, determines which checks to run.
+With edit authorization, fix consequential in-scope issues and reread the resulting full diff. Otherwise report findings with location, concrete failure conditions and impact; separate hypotheses and optional improvements. Do not modify code, trackers or branch state just because this procedure says “fix.” Record actionable deferred work only when updates are authorized; preserve unmet acceptance gates and avoid duplicating existing backlog items.
 
-For review-only requests report actionable findings with code locations, failure conditions and consequences; separate hypotheses and optional improvements. For implementation report fixes, major choices, evidence, remaining gaps and questions. No findings is not proof of correctness, and an unrun check is not a pass.
+[Verification](../../rules/verification.md) determines permitted checks. Report actual evidence, missing checks and residual uncertainty. No findings is not proof of correctness. For implemented fixes, explain consequential choices and the remaining gaps without filling empty checklist sections.
