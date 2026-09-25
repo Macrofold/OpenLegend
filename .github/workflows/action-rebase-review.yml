@@ -1,0 +1,60 @@
+name: Action rebase review
+on:
+  push:
+    branches: [review/action-capabilities-fdcbd31]
+    paths: ['.github/workflows/action-rebase-review.yml', '.github/action-review/**']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 94a7682aee9f100ccb54e073969bb4ed4f9fea49
+          path: _before
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fc01e19b30060e6c7213b1c5405be13df209297e
+          path: _ancestor
+          persist-credentials: false
+      - name: Inspect three-way file reconciliation
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess, difflib, hashlib, json
+          root=Path.cwd(); before=root/'_before'; ancestor=root/'_ancestor'
+          def files(p):
+            return {str(f.relative_to(p)) for f in p.rglob('*') if f.is_file() and '.git' not in f.relative_to(p).parts}
+          conflicts=[]; adopted=[]; merged=[]
+          for name in sorted(files(before)|files(ancestor)):
+            a=ancestor/name; b=before/name; target=root/name
+            ab=a.read_bytes() if a.exists() else None; bb=b.read_bytes() if b.exists() else None
+            if ab==bb: continue
+            current=target.read_bytes() if target.exists() else None
+            if current==bb: continue
+            if current==ab:
+              if bb is None: target.unlink(missing_ok=True)
+              else: target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(bb)
+              adopted.append(name); continue
+            if ab is None or bb is None or current is None:
+              conflicts.append(name); print('FILE_LIFECYCLE_CONFLICT',name); continue
+            result=subprocess.run(['diff3','-m','-L','MAIN','-L','BASE','-L','BRANCH',str(target),str(a),str(b)],capture_output=True)
+            if result.returncode not in (0,1): raise RuntimeError(result.stderr.decode())
+            target.write_bytes(result.stdout)
+            if result.returncode==0: merged.append(name); continue
+            conflicts.append(name); lines=result.stdout.decode().splitlines(); print('\nCONFLICT_FILE',name)
+            ranges=[]
+            for i,line in enumerate(lines):
+              if line.startswith('<<<<<<<'): start=max(0,i-4)
+              if line.startswith('>>>>>>>'): ranges.append((start,min(len(lines),i+5)))
+            for lo,hi in ranges:
+              print('\n'.join(f'{i+1}: {lines[i]}' for i in range(lo,hi)))
+          print('\nRECONCILIATION_SUMMARY',json.dumps({'conflicts':conflicts,'automaticMerged':merged,'adopted':adopted},indent=2))
+          for name in ['apps/server/AGENTS.md','packages/domain/AGENTS.md','packages/protocol/AGENTS.md','apps/client/AGENTS.md','packages/ai/AGENTS.md','packages/spatial/AGENTS.md']:
+            print('\nAPPLICABLE_GUIDANCE',name); print((root/name).read_text())
