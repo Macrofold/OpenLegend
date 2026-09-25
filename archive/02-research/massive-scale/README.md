@@ -12,6 +12,14 @@ The owner has since selected a **shared world divided into regions, with indepen
 
 The newer audit also preserves removal of arbitrary lifetime content-count caps, actual physical-contact semantics, human-private data restrictions and safe in-place development migration. [Mechanic-growth guidance](../../../docs/scaling/mechanic-growth.md) and the updated declaration/feature specifications carry these learnings into ongoing work without replacing their semantic owners.
 
+### Tracked NOW, SOON and LATER work
+
+The [complete research-to-work map](../../../docs/scaling/research-coverage.md) maps every dossier chapter to a canonical task owner or conditional evaluation. [G0–G4 sequencing](../../../docs/scaling/sequence-and-gates.md) distinguishes immediate foundations, growing-world requirements, public shared-release safeguards and genuinely deferred expansion. [Feature integration](../../../docs/scaling/feature-integration.md) and the [product roadmap](../../05-project/roadmap.md#massive-scale-research-integration-by-product-stage) tie these gates to P1–P7.
+
+[SC01–SC16](../../../docs/maintainers/scaling.md) now contain specific child IDs with deliverables and exit evidence. [SF01–SF18](../../../docs/maintainers/scaling-feature-readiness.md) track shared measurement, release and feature-integration cases. Existing [PF](../../../docs/maintainers/performance.md) and [D0–D6](../../../docs/maintainers/production-data.md) tasks are refined in place, not replaced by a second backlog. Each new or clarified item is marked **Massive-scale research** and links its relevant chapter.
+
+The [separate long-term backlog](../../../docs/maintainers/scaling-long-term/README.md) contains regional authority, large memory/storage, advanced simulation and fleet/geographic/serving tasks. They are **deferred**, not near-term requirements; promotion needs a named need or measured bottleneck, relevant decisions, ready dependencies and authorized scope. Voice/assets/economy are gated by their actual product features and do not automatically wait for massive distributed scale.
+
 ## The central recommendation
 
 Preserve the expressive game by making **authority, knowledge, work, and lifecycle boundaries explicit**, rather than buying a distributed database or distributing every entity immediately. Establish a measurable, recoverable multiplayer world and region-compatible access contracts. Qualify regional execution and cross-boundary interaction when the shared-world workload requires them; independent-world fleet scaling remains supported but is not a substitute.
@@ -25,6 +33,7 @@ The existing repository already anticipates many of the right boundaries. Its pr
 | Your question | Read |
 |---|---|
 | What is actionable in current code? | [Current-code limitations](../../../docs/scaling/current-code-audit.md) and [maintainer work](../../../docs/maintainers/scaling.md) |
+| Where is each recommendation tracked and when should it be done? | [Research coverage](../../../docs/scaling/research-coverage.md), [sequence](../../../docs/scaling/sequence-and-gates.md) and [deferred backlog](../../../docs/maintainers/scaling-long-term/README.md) |
 | What should the eventual system look like? | [Target architecture research](target-architecture.md), [hot-world partitioning](later/hot-world.md), and [whole-world fleet](later/world-fleet.md); apply the current shared-world priority above |
 | What decisions could become painful within a year? | [NOW: foundations](now/foundations.md), [contract review](now/contracts.md), [decision questions](decision-questions.md) |
 | What do we build before public multiplayer? | [SOON: production world](soon/production-world.md), [data migration](soon/data-migration.md), [operational readiness](soon/operational-readiness.md) |
@@ -53,7 +62,7 @@ Sources distinguish papers, preprints, official implementation documentation, an
 
 ## Documentation ownership
 
-This folder owns the research synthesis and its proposed experiments. It does not become a second specification or implementation backlog. The [production-data tracker](../../../docs/maintainers/production-data.md) remains the sole owner of D0–D6; [performance](../../../docs/maintainers/performance.md), [spatial work](../../../docs/maintainers/spatial-world.md), [cognition](../../../docs/maintainers/cognition-redesign.md), and [event/perception work](../../../docs/maintainers/events-perception-and-reactions.md) retain their work items and acceptance gates. [SC01–SC16](../../../docs/maintainers/scaling.md) hold focused new child details once and route already owned work back to those trackers. Unresolved product decisions still belong in [open decisions](../../05-project/open-decisions.md); accepted changes must be reconciled there and in their specifications.
+This folder owns the research synthesis and its proposed experiments. It does not become a second specification or implementation backlog. The [production-data tracker](../../../docs/maintainers/production-data.md) remains the sole owner of D0–D6; [performance](../../../docs/maintainers/performance.md), [spatial work](../../../docs/maintainers/spatial-world.md), [cognition](../../../docs/maintainers/cognition-redesign.md), and [event/perception work](../../../docs/maintainers/events-perception-and-reactions.md) retain their work items and acceptance gates. [SC01–SC16](../../../docs/maintainers/scaling.md) hold focused child details once and route already owned work back to those trackers. SF/LT children have the same single-owner rule. Unresolved product decisions still belong in [open decisions](../../05-project/open-decisions.md); accepted changes must be reconciled there and in their specifications.
 
 This research adds no permission to reduce required perception cadence, discard legitimate witnesses, fabricate unobserved history, erase protected commitments, truncate required character continuity, weaken ownership, or retry unknown paid effects. Approximation and gameplay limits are explicit product choices, not hidden performance fixes.
 
