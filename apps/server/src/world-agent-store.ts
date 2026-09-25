@@ -1,3 +1,4 @@
+import { readAttemptBudget } from './attempt-budget.js';
 import type {
   WorldAgentReply,
   WorldAgentTurnCursor,
@@ -157,19 +158,7 @@ export class WorldAgentStore {
       next: rows.length > 20 && last ? { sequence: last.sequence, id: last.id } : null,
     };
   }
-  async exposure(budgetId: string) {
-    const row = await this.db
-      .prepare(
-        `SELECT COALESCE(SUM(a.spent),0) AS spent,
-      COALESCE(SUM(CASE WHEN a.status='reserved' THEN a.reserved ELSE 0 END),0) AS reserved,
-      COALESCE(SUM(CASE WHEN a.status='uncertain' THEN a.spent ELSE 0 END),0) AS uncertain
-      FROM attempts a JOIN attempt_budgets b ON b.attempt_id=a.id WHERE b.budget_id=?`,
-      )
-      .get(budgetId);
-    return {
-      spentUsd: Number(row?.['spent'] ?? 0) / 1e6,
-      reservedUsd: Number(row?.['reserved'] ?? 0) / 1e6,
-      uncertainUsd: Number(row?.['uncertain'] ?? 0) / 1e6,
-    };
+  exposure(budgetId: string) {
+    return readAttemptBudget(this.db, budgetId);
   }
 }
