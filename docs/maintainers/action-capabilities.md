@@ -1,8 +1,21 @@
 # Action capability grounding and activities: delivery tracker
 
-**Status: design and acceptance work; all new tasks below are unimplemented/unqualified.** This is the focused subtracker for the detailed parameterized invocation and activity contract beneath AG05, with AG03 continuation and INV-3 family integration. It does not replace their IDs, reset their checkboxes, or duplicate their complete acceptance programs.
+**Status: delivery and acceptance tracker.** A narrow native slice is implemented; unchecked tasks retain broader scope or qualification requirements. Current runtime facts and evidence are linked below. This is the focused subtracker for the detailed parameterized invocation and activity contract beneath AG05, with AG03 continuation and INV-3 family integration. It does not replace their IDs, reset their checkboxes, or duplicate their complete acceptance programs.
 
 The [capability specification](../action-capabilities.md) owns behavior/contracts. The [action repertoire](../repertoires/actions.md) owns example intents. [Architecture](../architecture.md) owns current facts; [Verification](../verification.md) owns actual evidence. The [maintainer index](README.md) remains navigation only.
+
+## Delivered scope and remaining work
+
+| Area                                 | Implemented                                                                                                                                                                          | Not yet delivered or qualified                                                                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Intent binding (AC01/AC03)           | Optional explicit target, queue/replace, typed move/follow, response-local binding/manifest pins, scoped pending identities, repeated-operation reuse, per-operation error isolation | General role/quantity/part codecs; reason-specific autonomous retry dependencies                                                          |
+| Fulfillment (AC03/AC08)              | Jev-first full-match routing, generated native-behavior review, documented partial use, immutable pending revision and explicit accept/withdraw                                      | Live semantic reliability; calibrated thresholds; arbitrary parameter questions; confirmation of immediate non-plan operations            |
+| Native navigation (AC04/AC05)        | Actual point movement and ground/visual proximity following, hysteresis, bounded replanning, native interruption and lost-sight stop                                                 | Behind/beside, patrol/search templates, sunset/time predicates, stealth, scent, explicit last-known-location pursuit                      |
+| Approval and persistence (AC08/AC10) | New queued intent invalidates old replacement authority; first-step replacement preflight; current-format restart and scoped projection                                              | Full crash/race matrix, PostgreSQL/browser acceptance, exact installed-definition dependency pins                                         |
+| Presentation/performance (AC11)      | Existing state stream replaces action polling; scoped drafts and retry identity; explicit target retained before caps; shared schema module                                          | Accessibility/browser interaction qualification; remaining dense-state/persistence tails and population capacity qualification (PF-owned) |
+| Common workflow (AC02/AC06/AC09)     | Existing concrete-command adapter and AG sequential frontier only                                                                                                                    | INV/EWF descriptor integration, general predicates/waits/branches/repetition/output ports and new mechanical families                     |
+
+Checked items below mark delivered implementation scope, not passing automated acceptance matrices. All requested automated coverage remains in [TODO](TODO.md#action-review-regression-todos); the actual no-network runtime and stress evidence is in [Verification](../verification.md#action-capability-review). Do not reset parent AG/INV tasks or mark the complete action catalogue supported.
 
 ## Ownership and dependencies
 
@@ -36,7 +49,7 @@ The first playable slice is **parameterized movement through the existing native
 - [ ] AC01.1 Add logical offered/invoke/attempt variants to the existing optional operation path, retaining server-bound authority and bounded structured role references. Provider-specific nullable encoding must preserve the same logical semantics.
 - [ ] AC01.2 Preserve original text and consequential slots: target, part, instrument, recipient, amount/unit, frame, method constraints, time/termination and queue/replace mode. Distinguish goals, hypotheticals, quotes and performance from effectful requests.
 - [ ] AC01.3 Validate reference type/scope, exact keys, aggregate limits and local identities before mutation or paid dispatch. Names and inherited dictionary keys cannot stand in for authorized references.
-- [ ] AC01.4 Preserve valid independent speech/thought/goal components when an attempt cannot bind. Empty output continues work. Do not create a second response or pending-intent store.
+- [x] AC01.4 Preserve valid independent speech/thought/goal components when an attempt cannot bind. Empty output continues work. Do not create a second response or pending-intent store.
 
 **Exit:** AX01–AX10 and AX64 pass as no-network fixtures. A proposal can carry its target instead of reconstructing identity from prose; it still cannot carry authoritative effects or another actor's authority.
 
@@ -53,9 +66,9 @@ The first playable slice is **parameterized movement through the existing native
 
 ## AC03 — Bounded action grounding
 
-**Owner:** server interpretation and actor decision preparation. **Depends on:** AC01–AC02. **Touchpoints:** `attempt-interpretation.ts`, `decision-context.ts`, `cognition-contracts.ts`, `ai-director.ts`; generic provider adapters remain policy-free.
+**Owner:** server interpretation and actor decision preparation. **Depends on:** AC01–AC02. **Touchpoints:** `action-grounding.ts` / `navigation-contracts.ts`, `decision-context.ts`, `cognition-contracts.ts`, `ai-director.ts`; generic provider adapters remain policy-free.
 
-- [ ] AC03.1 Keep the exact handle/direct structured invocation fast path; add safe unambiguous parameter binding. A valid Jev-selected concrete action still reaches native admission without a generative call.
+- [x] AC03.1 Keep the exact handle/direct structured invocation fast path; add safe unambiguous parameter binding. A valid Jev-selected concrete action still reaches native admission without a generative call.
 - [ ] AC03.2 Supply bounded relevant family schemas and scoped references for freeform interpretation, even with an empty/omitted suggestion shortlist. Do not enumerate every coordinate/quantity or load the idea catalogue into prompts.
 - [ ] AC03.3 Return structured resolution categories and original operation identity; distinguish unresolved planning from faithful method interpretation. Do not substitute a feasible but different objective.
 - [ ] AC03.4 Integrate `needs_definition` with the INV-owned request/classification interface under existing actor-origin policy. Unsupported host capability and provider unavailability remain distinct. Do not auto-invent to bypass a missing runtime implementation or lock.
@@ -69,7 +82,7 @@ The first playable slice is **parameterized movement through the existing native
 
 - [ ] AC04.1 Bind explicit surface points, actor-relative displacement and permitted remembered locations to the existing native move command. Make the coordinate frame and support choice explicit.
 - [ ] AC04.2 Clarify ambiguous stacked surfaces and refuse unsupported traversal without rewriting the destination. Preserve public-terrain versus actor-known geometry policy and coarse-contact restrictions.
-- [ ] AC04.3 Route queued movement through the existing physical lane and plan receipts. Do not execute several timed moves immediately or directly set position from the model response.
+- [x] AC04.3 Route queued movement through the existing physical lane and plan receipts. Do not execute several timed moves immediately or directly set position from the model response.
 - [ ] AC04.4 Expose movement independently of manual-work/human-hands capability where the installed body supports it. Native survival and explicit replace/cancel remain coherent.
 - [ ] AC04.5 Exercise player text, actor text, direct structured output and a selected grounded candidate against the same destination/execution path, including no-AI runtime continuation.
 
@@ -80,8 +93,8 @@ The first playable slice is **parameterized movement through the existing native
 **Owner:** native AG activity and SW movement adapter. **Depends on:** AC04 plus existing perception. **Touchpoints:** `Action`/plan state, native movement helpers, actor-observation projection and scheduler dependencies.
 
 - [ ] AC05.1 Implement a supplied follow/maintain invocation with typed relation, tolerances, extent, observed target binding, termination and loss policy. Start with near/follow; qualify heading-dependent behind/beside only with actual supported pose evidence.
-- [ ] AC05.2 Keep one authoritative physical owner. Store controller/cursor state inside the current AG action/step; reuse native route/motion services without an independent position writer.
-- [ ] AC05.3 Implement acquire/move/hold/lost/blocked/terminal transitions, hysteresis and bounded replanning. Holding a relation is not terminal success for a maintain activity.
+- [x] AC05.2 Keep one authoritative physical owner. Store controller/cursor state inside the current AG action/step; reuse native route/motion services without an independent position writer.
+- [x] AC05.3 Implement acquire/move/hold/lost/blocked/terminal transitions, hysteresis and bounded replanning. Holding a relation is not terminal success for a maintain activity.
 - [ ] AC05.4 Read live target positions only through permitted observation; default to stopping on lost evidence. Implement last-observed-location continuation only as an explicit disclosed option, with no automatic hidden tracking or search.
 - [ ] AC05.5 Cancel, replace, disable, restore and revalidate activity state without lost subscriptions, duplicated movement, forgotten goals or repeated paid decisions. Keep SW's route/preparation failure semantics.
 
@@ -141,7 +154,7 @@ The first playable slice is **parameterized movement through the existing native
 - [ ] AC10.2 Fence old native preparation, perception, interpretation and asset callbacks by world/load epoch and relevant revisions. Rebuild derived watches without replaying paid calls or old events.
 - [ ] AC10.3 Reuse durable admission/idempotency beyond hot receipt windows; preserve uncertain real accounting and native RNG. Reject identity reuse with altered content.
 - [ ] AC10.4 Enforce private actor evidence versus authoritative adjudication versus projected feedback. Reject raw world queries, new host privileges and generated code through ordinary invocations.
-- [ ] AC10.5 Reject incompatible development saves explicitly. Do not add old-format migrations. Apply canonical active-definition policies rather than silently upgrading running calls.
+- [ ] AC10.5 Apply small identity-preserving upgrades under the active save/load policy. Reject unsafe or corrupt current state without reset. Definition activation must not silently retarget running calls.
 
 **Exit:** AX19–AX26, AX53–AX68 and AX71 pass. Same-version replay continues the same accepted work with no extra effect, knowledge, charge or native random draw.
 
@@ -253,3 +266,7 @@ Each row is a required test scenario for its applicable slice, not evidence that
 - [ ] Keep runtime facts in Architecture, observed evidence in Verification, open incompatible decisions in `archive/05-project/open-decisions.md`, and active research questions in the research backlog. Do not duplicate those records here.
 - [ ] Review inbound links, target anchors, repertoire IDs, task ownership and the complete diff for information loss. Preserve all unrelated work and existing checkboxes.
 - [ ] Change runtime code only as required for the delivered slice, using small shared adapters and actual tested extension seams. This design is not approval to implement every aspirational action or a speculative general language first.
+
+## Current delivered slice
+
+Native move/follow invocation binding, scoped target-bearing proposals, stored revised-action approval, Jev-first text grounding, player Character action controls and actor accept/withdraw handles are implemented narrowly. The actual scope and run evidence are in [Architecture](../architecture.md#jev-first-action-grounding) and [Verification](../verification.md#action-capability-native-slice). Existing task checkboxes above retain their broader acceptance requirements; no automatic completion of AC01–AC12 or AX tests is implied. Requested automated tests are collected in [TODO](TODO.md#action-capability-slice-deferred-automated-coverage).

@@ -176,6 +176,30 @@ Moved the sleep specification to `docs/worlds/base/sleep.md` and repaired inboun
 
 Knowledge canvas mechanics now have one engine owner in `docs/knowledge.md`; bundled limits/naming/recognition live in `docs/worlds/base/knowledge.md`. This replaces the proposed naming-heavy YAML state example and the external-beliefs-in-one-inner-world-text direction. The observer-known-name decision is resolved; aggregate storage remains open.
 
+## Action invocation and partial-fulfillment implementation
+
+Added current move/follow, Jev-first grounding and revised-action approval facts to Architecture and implementation status, with native/HTTP/stress evidence in Verification. Refined the action capability specification to permit explicit partial fulfillment and initiator review, and reserved Mechanical workflow reconciliation for integration with the separate invention work. The example repertoire remains aspirational. Broader AC/AG/INV acceptance is not marked complete. Temporary implementation/verification workflow files are removed and the original CI workflow is restored.
+
+## 2026-09-24 — Action capability code review
+
+Aligned current action docs with scoped binding/approval authority, native-behavior review and state-stream presentation. Marked the delivered narrow tasks separately from broad AC acceptance, recorded regression work in Maintainer TODO, preserved the invention-workflow reconciliation section, and advanced current development-save references to schema 11 without legacy readers. Runtime/performance evidence is recorded separately.
+
+## 2026-09-24 — Perception and reaction performance
+
+Recorded private visual-acquisition semantics, bounded experience batches, exposure/feature reuse, ordered reaction intake and cooperative native checkpoints. Updated EPR/PF delivery state, current development format 13, measured native/HTTP evidence and deferred automated coverage. Superseded the SR10 requirement to reproduce broadcast acquisition audiences while retaining outward-event equivalence requirements.
+
+The optional scalar-only capture experiment was rejected after a warm-workload deadline failure. Recorded the unchanged qualified implementation, the warm mixed result without a throughput gain, and the dense-scene capacity failure instead of reporting universal scalability.
+
+## Main rebase and measured acquisition follow-up
+
+Reconciled the action/perception branch with main's in-place save policy, generic status effects, observer knowledge and current-evidence scheduling. The old temporary-runner history is retained on a backup branch; active source uses the actual rebased implementation. Per-feature save-reset instructions are superseded by the active save owner, while historical measurement reports remain unchanged.
+
+Added the reusable full-server profiler and recorded its continuous-presence correction, native warm/dense results and limits. The patch-removal experiment was not retained. Moved bundled follow tuning to its base-world source, retained the existing execution adapter and reserved invention-workflow reconciliation section, and added deferred regression coverage without running automated suites.
+
+## Dense persistence and local database isolation
+
+Recorded DP01–DP06 scope under the existing PF owner. History preparation and bounded source buffers refine compact atomic persistence; the measured local SQLite worker is a PF10 subset, not a second database or an implemented general simulation worker. Runtime facts, performance evidence and deferred automated coverage remain in Architecture, Verification and Maintainer TODO respectively. The previous synchronous-SQLite wording is superseded for the local adapter; dense CPU/clock and broader qualification remain explicit.
+
 ## Limits audit implementation
 
 Updated current implementation descriptions after removing undocumented small content-count ceilings, the named-save count and the hidden spending clamp. The architecture owns current behavior; cross-cutting deferred verification is in TODO. Original audit entry numbers remain in the external limits reports with completed removals labeled explicitly.

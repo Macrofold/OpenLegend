@@ -50,7 +50,7 @@ Select a resource and Gather. Your character approaches it, completes the work, 
 
 Pause and **0.5× / 1× / 3× / 8×** controls use one simulation clock. At **1×, one real second advances one game minute**: a full game day takes 24 real minutes (48 minutes at 0.5×, 8 minutes at 3×, 3 minutes at 8×). Open **Time settings** beside the speed buttons to change **Pause game when hidden**. It is checked by default and saved to your local player profile. Checked, hiding the tab or moving focus away pauses the game; unchecked, the server continues while a game tab remains connected, even if background heartbeats are throttled. Manual pause always wins. Closing all game connections pauses progression after disconnect detection; server downtime and computer sleep produce no offline catch-up. An already dispatched model request may still incur usage, but a paused world cannot accept its effects.
 
-Open **Game**, directly below **World agent** on the right rail, to save the current world or choose a saved game to load paused. Each named save appears in the menu's Saved games list. Manual saves live in `.data/saves/<save-id>/` as `metadata.json` and `world.json`; `.data/` is gitignored. The server keeps named manual saves without a fixed slot count and a “Before last load” recovery slot in `.data/world.sqlite`. Development saves support only the current format; autosaves are not implemented. Stop the server before copying the whole `.data` directory for a local backup, including the save folder. Use another `OPEN_LEGEND_DATA_DIR` for a separate world and save folder. There is no silent save reset or destructive reset button. For a production client build served locally:
+Open **Game**, directly below **World agent** on the right rail, to save the current world or choose a saved game to load paused. Each named save appears in the menu's Saved games list. Manual saves live in `.data/saves/<save-id>/` as `metadata.json` and `world.json`; `.data/` is gitignored. The server keeps named manual saves without a fixed slot count and a “Before last load” recovery slot in `.data/world.sqlite`. Development saves are upgraded in place where a safe small conversion is available; corruption remains an explicit error. Autosaves are not implemented. Stop the server before copying the whole `.data` directory for a local backup, including the save folder. Use another `OPEN_LEGEND_DATA_DIR` for a separate world and save folder. There is no silent save reset or destructive reset button. For a production client build served locally:
 
 ```sh
 pnpm run build
@@ -73,7 +73,7 @@ Use a separate new data directory and disable paid work:
 OPEN_LEGEND_DATA_DIR=/tmp/openlegend-reservoir-demo OPEN_LEGEND_WORLD_PRESET=reservoir-demo AI_BUDGET_USD=0 PORT=3218 node --import tsx apps/server/src/main.ts
 ```
 
-Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Schema 9 rejects older development saves without modifying them; select a fresh directory for either preset. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
+Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. A separate directory selects a deliberately different demo world, not a required upgrade path; ordinary existing worlds evolve in place. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
 
 For the coarse touch-only resident, use a separate data directory and `OPEN_LEGEND_WORLD_PRESET=touch-demo`. The player retains sight; the resident receives only unidentified contacts and short direct probe choices. God inspection is administrative evidence, not the resident's knowledge. See the [implemented limits](docs/architecture.md#registered-senses-and-coarse-contact).
 
@@ -97,11 +97,17 @@ The browser check needs Playwright Chromium (`pnpm exec playwright install chrom
 
 See the [base-world mechanics](docs/worlds/base/README.md) for authored rules and their separation from the engine.
 
+## Text actions and revised-action approval
+
+Open **Character → Take an action** to submit a character intention separately from dialogue. Exact requests such as `go to x=12, z=14` and unqualified following of a currently recognized or explicitly selected actor can run without AI. Other wording uses configured Jev first, then bounded interpretation when needed. Disclosed tolerable omissions can run as partial fulfillment; uncertain revisions wait for **Accept revised action** or **Decline / withdraw**. Follow means remaining near a visible living target, not stealth, scent tracking, or a sunset deadline. Use the explicit support identifier when floors overlap. Choose Queue or Replace deliberately. Invention does not need to be unlocked.
+
+See [action capabilities](docs/action-capabilities.md), its [workflow reconciliation boundary](docs/action-capabilities.md#mechanical-workflow-reconciliation), and [runtime evidence](docs/verification.md#action-capability-native-slice).
+
 ## Explore the project
 
 The [Narrator and conversation design](docs/narration-and-conversations.md) now includes readable actor context, explicit direct-address/overhearing triggers and optional talk/act/think reactions. Supported expressions have no mechanical effects; private thoughts stay private. Its broader [NC01–NC13 tasks](docs/maintainers/narration-and-conversations.md), cover durable group membership and private Narrator prose; broader acceptance remains open and automatic action/effect invention is deferred.
 
-The [agent agency design](docs/agent-agency.md) adds optional repeated decisions, persistent goals and short native plans, and actor-led invention through existing mechanical admission. Its [runtime contract](archive/07-technical-architecture/agent-agency-runtime.md) integrates with the newer [event/reaction intake](docs/events-perception-and-reactions.md); [AG01–AG12](docs/maintainers/agent-agency.md) are uncompleted implementation and acceptance work.
+The [agent agency design](docs/agent-agency.md) adds optional repeated decisions, persistent goals and short native plans, and actor-led invention through existing mechanical admission. Its [runtime contract](archive/07-technical-architecture/agent-agency-runtime.md) integrates with the newer [event/reaction intake](docs/events-perception-and-reactions.md); [AG01–AG12](docs/maintainers/agent-agency.md) distinguish delivered native work from remaining implementation and acceptance.
 
 The [perception and attention design](archive/07-technical-architecture/perception-and-attention.md) now has an initial visual experiment: sight reaches 28 map units, with a clear central field and a strongly blurred outer band instead of a dark fog. Previously seen objects can remain as frozen, non-interactive blurred images after leaving sight. Finite 3D floor/wall occlusion is implemented; distance-specific descriptions and hearing gradients remain future work; scoped semantic attention and embeddings are implemented.
 
@@ -127,3 +133,5 @@ First-party material in this repository is licensed under **GNU AGPL version 3 o
 The licensing guide explains the intended separation between the shared engine, future permissive SDKs, private world data, and separately licensed mechanics packs. Linked third-party artwork and other external references retain their own rights. The AGPL decision does not change the license of Macrofold or any other repository.
 
 For repeatable native performance experiments, use the [stress profiling guide](docs/maintainers/performance-profiling.md), including the 500-ground-gem scenario.
+
+The native perception/runtime changes and their measured limits are documented in [perception performance verification](docs/verification.md#perception-performance-implementation).

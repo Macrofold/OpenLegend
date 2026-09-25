@@ -10,6 +10,35 @@ import {
  * docs/save-and-load.md#active-development-policy
  */
 export function upgradeWorldState(world: WorldState): void {
+  // Earlier pending requests had no explicit target/mode scope. Preserve the request;
+  // a stored alternative retains its mode, otherwise queueing grants no replace authority.
+  for (const entity of Object.values(world.entities ?? {})) {
+    const attempts = entity.actor?.agency?.attempts;
+    if (!Array.isArray(attempts)) continue;
+    for (const attempt of attempts) {
+      if (!attempt || typeof attempt !== 'object') continue;
+      if (!Object.hasOwn(attempt, 'targetEntityId')) attempt.targetEntityId = null;
+      if (!Object.hasOwn(attempt, 'mode')) attempt.mode = attempt.alternative?.mode ?? 'enqueue';
+    }
+  }
+
+  // Preserve old facts and IDs while ordering raw source arrays for cursor reads.
+  // Missing sequence remains unknown (zero); malformed numeric data is left for validation.
+  for (const rows of [
+    ...Object.values(world.memories ?? {}),
+    ...Object.values(world.experience?.awareness ?? {}),
+  ]) {
+    if (
+      Array.isArray(rows) &&
+      rows.every(
+        (row) => row && Number.isSafeInteger(row.sequence ?? 0) && (row.sequence ?? 0) >= 0,
+      ) &&
+      rows.some((row, i) => i > 0 && (row.sequence ?? 0) < (rows[i - 1]!.sequence ?? 0))
+    )
+      rows.sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+  }
+
+  if (!Object.hasOwn(world, 'perceptionFeatures')) world.perceptionFeatures = {};
   // Correct the retired detector in place; preserve authored bindings and historical evidence.
   // docs/spatial-world.md#physical-contact
   const retired = new Set<string>();

@@ -1,0 +1,386 @@
+{
+  "scope": "Matched rebased baseline/final native profiles; same runner; no automated suites or providers. Final runtime retains intentional privacy/migration corrections.",
+  "baseline": "3be6601f862a48fe1facf951943f53c16024cb1f",
+  "inputCommit": "c6c6500bbc13c6f6e6e89c9ff355c6b37204d0b2",
+  "run": "35964827954",
+  "cases": {
+    "mixed-cold": {
+      "before": {
+        "node": "v22.23.2",
+        "steps": 180,
+        "warmupSteps": 0,
+        "totalMs": 1487.588241,
+        "p50Ms": 6.438034000000016,
+        "p95Ms": 9.449533999999971,
+        "maxStepMs": 266.168151,
+        "nativeHeadroomAtRequestedSpeed": 0.6722290298071804,
+        "finalCounts": {
+          "entities": 344,
+          "events": 3254,
+          "awareness": 3474
+        },
+        "finalWorldDigest": "bd90f41c3357e0d0bdee6a478153abb457d7b61f4a8ec217168bf155630491e9",
+        "hottestSelfMs": [
+          ["shallowCopy dist/immer.mjs:121", 214.85799999999998],
+          ["finalizeProperty dist/immer.mjs:314", 111.68899999999996],
+          ["get dist/immer.mjs:382", 83.25199999999998],
+          ["updateEncounters src/kernel.ts:1", 78.78699999999998],
+          ["isPlainObject dist/immer.mjs:60", 57.77100000000001],
+          ["getArchtype dist/immer.mjs:86", 47.30100000000001],
+          ["(anonymous) src/kernel.ts:1", 47.239000000000004],
+          ["each dist/immer.mjs:77", 47.041000000000004],
+          ["(garbage collector) :0", 44.419],
+          ["isDraftable dist/immer.mjs:54", 42.857000000000006],
+          ["advanceWorldWork src/kernel.ts:1", 41.550000000000004],
+          ["matchesStatusCondition src/status-effects.ts:1", 38.60600000000001]
+        ]
+      },
+      "after": {
+        "node": "v22.23.2",
+        "steps": 180,
+        "warmupSteps": 0,
+        "totalMs": 1030.4680859999999,
+        "p50Ms": 4.52240299999994,
+        "p95Ms": 5.787444999999934,
+        "maxStepMs": 183.58682800000003,
+        "nativeHeadroomAtRequestedSpeed": 0.9704327708796215,
+        "finalCounts": {
+          "entities": 344,
+          "events": 3254,
+          "awareness": 3474
+        },
+        "finalWorldDigest": "bd90f41c3357e0d0bdee6a478153abb457d7b61f4a8ec217168bf155630491e9",
+        "hottestSelfMs": [
+          ["finalizeProperty dist/immer.mjs:314", 97.336],
+          ["get dist/immer.mjs:382", 69.791],
+          ["isPlainObject dist/immer.mjs:60", 50.304000000000016],
+          ["(anonymous) src/perception-frame.ts:1", 47.815000000000005],
+          ["advanceWorldWork src/kernel.ts:1", 44.12700000000002],
+          ["isDraftable dist/immer.mjs:54", 42.743],
+          ["matchesStatusCondition src/status-effects.ts:1", 40.541999999999994],
+          ["getArchtype dist/immer.mjs:86", 34.29400000000001],
+          ["has dist/immer.mjs:90", 32.022],
+          ["recordEvent src/events.ts:1", 31.68],
+          ["createPerceptionFrame src/perception-frame.ts:1", 28.957],
+          ["(garbage collector) :0", 28.574000000000005]
+        ]
+      },
+      "sameFinalDigest": true
+    },
+    "mixed-warm": {
+      "before": {
+        "node": "v22.23.2",
+        "steps": 600,
+        "warmupSteps": 30,
+        "totalMs": 4398.231895,
+        "p50Ms": 7.159228999999868,
+        "p95Ms": 9.265907999999854,
+        "maxStepMs": 17.434929999999895,
+        "nativeHeadroomAtRequestedSpeed": 0.7578803057480291,
+        "finalCounts": {
+          "entities": 344,
+          "events": 3274,
+          "awareness": 3504
+        },
+        "finalWorldDigest": "4d75009742740880627d2d14f341fed31791903e1ba473dc0933c6c014981871",
+        "hottestSelfMs": [
+          ["shallowCopy dist/immer.mjs:121", 630.946000000001],
+          ["finalizeProperty dist/immer.mjs:314", 364.30799999999977],
+          ["get dist/immer.mjs:382", 274.327],
+          ["updateEncounters src/kernel.ts:1", 244.3179999999998],
+          ["(anonymous) src/kernel.ts:1", 156.79500000000004],
+          ["advanceWorldWork src/kernel.ts:1", 155.147],
+          ["isDraftable dist/immer.mjs:54", 147.33299999999994],
+          ["isPlainObject dist/immer.mjs:60", 137.492],
+          ["(anonymous) src/perception-frame.ts:1", 125.91200000000003],
+          ["getArchtype dist/immer.mjs:86", 124.58000000000006],
+          ["each dist/immer.mjs:77", 123.76699999999988],
+          ["matchesStatusCondition src/status-effects.ts:1", 122.27799999999999]
+        ]
+      },
+      "after": {
+        "node": "v22.23.2",
+        "steps": 600,
+        "warmupSteps": 30,
+        "totalMs": 3072.609017,
+        "p50Ms": 4.904807999999775,
+        "p95Ms": 6.271924000000126,
+        "maxStepMs": 16.66466700000001,
+        "nativeHeadroomAtRequestedSpeed": 1.0848543745366914,
+        "finalCounts": {
+          "entities": 344,
+          "events": 3274,
+          "awareness": 3504
+        },
+        "finalWorldDigest": "4d75009742740880627d2d14f341fed31791903e1ba473dc0933c6c014981871",
+        "hottestSelfMs": [
+          ["finalizeProperty dist/immer.mjs:314", 364.041],
+          ["get dist/immer.mjs:382", 245.901],
+          ["(anonymous) src/perception-frame.ts:1", 205.5539999999999],
+          ["isPlainObject dist/immer.mjs:60", 160.6250000000001],
+          ["advanceWorldWork src/kernel.ts:1", 160.52400000000006],
+          ["getArchtype dist/immer.mjs:86", 127.25499999999998],
+          ["isDraftable dist/immer.mjs:54", 111.99899999999997],
+          ["advanceStatusEffects src/status-effects.ts:1", 99.10399999999998],
+          ["has dist/immer.mjs:90", 98.922],
+          ["createPerceptionFrame src/perception-frame.ts:1", 86.54599999999999],
+          ["peek dist/immer.mjs:486", 86.40600000000003],
+          ["matchesStatusCondition src/status-effects.ts:1", 78.86699999999999]
+        ]
+      },
+      "sameFinalDigest": true
+    },
+    "gems-cold": {
+      "before": {
+        "node": "v22.23.2",
+        "steps": 180,
+        "warmupSteps": 0,
+        "totalMs": 966.9872969999999,
+        "p50Ms": 4.478846999999973,
+        "p95Ms": 6.331773999999996,
+        "maxStepMs": 108.83500399999997,
+        "nativeHeadroomAtRequestedSpeed": 1.0341397483735508,
+        "finalCounts": {
+          "entities": 514,
+          "events": 1024,
+          "awareness": 1024
+        },
+        "finalWorldDigest": "d6953837b32419f6aee852cb49116f8ed5ddf211beca3fbe55cb43c75c276989",
+        "hottestSelfMs": [
+          ["shallowCopy dist/immer.mjs:121", 126.96499999999996],
+          ["finalizeProperty dist/immer.mjs:314", 74.96099999999998],
+          ["get dist/immer.mjs:382", 68.856],
+          ["advanceWorldWork src/kernel.ts:1", 60.14600000000001],
+          ["(anonymous) src/perception-frame.ts:1", 38.28200000000001],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 35.881],
+          ["advanceStatusEffects src/status-effects.ts:1", 33.077000000000005],
+          ["matchesStatusCondition src/status-effects.ts:1", 33.003],
+          ["isDraft dist/immer.mjs:51", 29.049],
+          ["each dist/immer.mjs:77", 27.095000000000006],
+          ["getArchtype dist/immer.mjs:86", 26.673000000000002],
+          ["(garbage collector) :0", 25.548000000000005]
+        ]
+      },
+      "after": {
+        "node": "v22.23.2",
+        "steps": 180,
+        "warmupSteps": 0,
+        "totalMs": 790.8230289999999,
+        "p50Ms": 3.733002000000056,
+        "p95Ms": 5.012455999999986,
+        "maxStepMs": 78.14263299999999,
+        "nativeHeadroomAtRequestedSpeed": 1.264505411867565,
+        "finalCounts": {
+          "entities": 514,
+          "events": 1024,
+          "awareness": 1024
+        },
+        "finalWorldDigest": "d6953837b32419f6aee852cb49116f8ed5ddf211beca3fbe55cb43c75c276989",
+        "hottestSelfMs": [
+          ["finalizeProperty dist/immer.mjs:314", 66.92399999999998],
+          ["advanceWorldWork src/kernel.ts:1", 65.934],
+          ["(anonymous) src/perception-frame.ts:1", 61.738000000000014],
+          ["get dist/immer.mjs:382", 53.99700000000001],
+          ["advanceStatusEffects src/status-effects.ts:1", 38.07500000000001],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 36.44299999999999],
+          ["has dist/immer.mjs:90", 34.195],
+          ["createPerceptionFrame src/perception-frame.ts:1", 33.706],
+          ["matchesStatusCondition src/status-effects.ts:1", 30.979000000000003],
+          ["isPlainObject dist/immer.mjs:60", 25.732000000000003],
+          ["peek dist/immer.mjs:486", 24.55],
+          ["(garbage collector) :0", 24.483999999999998]
+        ]
+      },
+      "sameFinalDigest": true
+    },
+    "gems-warm": {
+      "before": {
+        "node": "v22.23.2",
+        "steps": 600,
+        "warmupSteps": 30,
+        "totalMs": 2906.3236439999996,
+        "p50Ms": 4.61596899999995,
+        "p95Ms": 5.778948000000128,
+        "maxStepMs": 10.98394200000007,
+        "nativeHeadroomAtRequestedSpeed": 1.1469243421030826,
+        "finalCounts": {
+          "entities": 514,
+          "events": 1027,
+          "awareness": 1027
+        },
+        "finalWorldDigest": "3ec66b192da5c80d625dc85f9be8de7379601dfc37ee02dfb8c0b13a9562fb2e",
+        "hottestSelfMs": [
+          ["shallowCopy dist/immer.mjs:121", 364.5189999999999],
+          ["get dist/immer.mjs:382", 219.79200000000003],
+          ["finalizeProperty dist/immer.mjs:314", 188.286],
+          ["advanceWorldWork src/kernel.ts:1", 164.45199999999997],
+          ["matchesStatusCondition src/status-effects.ts:1", 155.876],
+          ["(anonymous) dist/immer.mjs:79", 148.98499999999993],
+          ["(anonymous) src/perception-frame.ts:1", 144.4580000000001],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 113.45199999999993],
+          ["isDraft dist/immer.mjs:51", 104.48400000000002],
+          ["has dist/immer.mjs:90", 103.626],
+          ["getArchtype dist/immer.mjs:86", 87.64599999999994],
+          ["advanceStatusEffects src/status-effects.ts:1", 87.40300000000002]
+        ]
+      },
+      "after": {
+        "node": "v22.23.2",
+        "steps": 600,
+        "warmupSteps": 30,
+        "totalMs": 2368.915458,
+        "p50Ms": 3.778099999999995,
+        "p95Ms": 4.551703000000089,
+        "maxStepMs": 7.619354000000044,
+        "nativeHeadroomAtRequestedSpeed": 1.407113673928896,
+        "finalCounts": {
+          "entities": 514,
+          "events": 1027,
+          "awareness": 1027
+        },
+        "finalWorldDigest": "3ec66b192da5c80d625dc85f9be8de7379601dfc37ee02dfb8c0b13a9562fb2e",
+        "hottestSelfMs": [
+          ["(anonymous) src/perception-frame.ts:1", 241.23700000000017],
+          ["advanceWorldWork src/kernel.ts:1", 186.00399999999996],
+          ["get dist/immer.mjs:382", 185.41000000000003],
+          ["finalizeProperty dist/immer.mjs:314", 172.59300000000005],
+          ["createPerceptionFrame src/perception-frame.ts:1", 131.06499999999994],
+          ["getOwnPropertyDescriptor dist/immer.mjs:447", 112.13400000000001],
+          ["advanceStatusEffects src/status-effects.ts:1", 108.55400000000003],
+          ["matchesStatusCondition src/status-effects.ts:1", 103.48600000000002],
+          ["peek dist/immer.mjs:486", 97.39899999999999],
+          ["has dist/immer.mjs:90", 92.14800000000002],
+          ["getArchtype dist/immer.mjs:86", 88.771],
+          ["isPlainObject dist/immer.mjs:60", 86.79199999999997]
+        ]
+      },
+      "sameFinalDigest": true
+    },
+    "dense-cold": {
+      "before": {
+        "node": "v22.23.2",
+        "steps": 180,
+        "warmupSteps": 0,
+        "totalMs": 8921.892461000001,
+        "p50Ms": 26.369681000000128,
+        "p95Ms": 29.13810100000046,
+        "maxStepMs": 3786.6441109999996,
+        "nativeHeadroomAtRequestedSpeed": 0.3362515310640438,
+        "finalCounts": {
+          "entities": 614,
+          "events": 62559,
+          "awareness": 67707
+        },
+        "finalWorldDigest": "dbbf5eb3e90966bd3078ad177f00174fb28495904450babbf9650b8ddc0b662e",
+        "hottestSelfMs": [
+          ["updateEncounters src/kernel.ts:1", 1329.8409999999958],
+          ["shallowCopy dist/immer.mjs:121", 923.8700000000016],
+          ["(anonymous) src/kernel.ts:1", 776.427000000002],
+          ["finalizeProperty dist/immer.mjs:314", 560.1399999999995],
+          ["(garbage collector) :0", 402.974],
+          ["recordEvent src/events.ts:1", 334.71000000000026],
+          ["isDraftable dist/immer.mjs:54", 309.0410000000002],
+          ["get dist/immer.mjs:382", 308.5610000000001],
+          ["isPlainObject dist/immer.mjs:60", 301.0740000000002],
+          ["freeze dist/immer.mjs:161", 265.0950000000002],
+          ["(anonymous) src/memory-perspective.ts:1", 187.13600000000014],
+          ["each dist/immer.mjs:77", 178.1220000000002]
+        ]
+      },
+      "after": {
+        "node": "v22.23.2",
+        "steps": 180,
+        "warmupSteps": 0,
+        "totalMs": 4460.02973,
+        "p50Ms": 11.323073999999906,
+        "p95Ms": 13.168337999999949,
+        "maxStepMs": 2329.098561,
+        "nativeHeadroomAtRequestedSpeed": 0.6726412561379944,
+        "finalCounts": {
+          "entities": 614,
+          "events": 62559,
+          "awareness": 67707
+        },
+        "finalWorldDigest": "dbbf5eb3e90966bd3078ad177f00174fb28495904450babbf9650b8ddc0b662e",
+        "hottestSelfMs": [
+          ["recordEvent src/events.ts:1", 322.8050000000002],
+          ["get dist/immer.mjs:382", 317.59499999999997],
+          ["finalizeProperty dist/immer.mjs:314", 292.18399999999986],
+          ["isPlainObject dist/immer.mjs:60", 230.09099999999998],
+          ["isDraftable dist/immer.mjs:54", 224.27300000000008],
+          ["(garbage collector) :0", 222.00100000000015],
+          ["freeze dist/immer.mjs:161", 196.10700000000014],
+          ["updateEncounters src/kernel.ts:1", 181.18400000000005],
+          ["getArchtype dist/immer.mjs:86", 135.57399999999996],
+          ["has dist/immer.mjs:90", 104.52099999999997],
+          ["peek dist/immer.mjs:486", 99.682],
+          ["advanceWorldWork src/kernel.ts:1", 94.05399999999996]
+        ]
+      },
+      "sameFinalDigest": true
+    },
+    "dense-warm": {
+      "before": {
+        "node": "v22.23.2",
+        "steps": 600,
+        "warmupSteps": 30,
+        "totalMs": 76703.39821799999,
+        "p50Ms": 176.04263899999933,
+        "p95Ms": 190.0559280000016,
+        "maxStepMs": 277.0454059999993,
+        "nativeHeadroomAtRequestedSpeed": 0.1303723202924965,
+        "finalCounts": {
+          "entities": 614,
+          "events": 62617,
+          "awareness": 67864
+        },
+        "finalWorldDigest": "dc3afd2239811766c34b750edd0ab1f1f5d0a8cc035426748e6598adb50b7715",
+        "hottestSelfMs": [
+          ["intersectsSegment src/geometry.ts:1", 18651.207000000173],
+          ["(anonymous) src/perception.ts:1", 11491.019999999622],
+          ["(anonymous) src/geometry.ts:1", 8897.691999999926],
+          ["(garbage collector) :0", 5102.403000000059],
+          ["__name src/bounds-index.ts:1", 4358.284000000006],
+          ["updateEncounters src/kernel.ts:1", 4232.454000000004],
+          ["set filename :0", 4118.866999999988],
+          ["query src/perception-frame.ts:1", 3182.026999999998],
+          ["(anonymous) src/kernel.ts:1", 2979.85099999999],
+          ["shallowCopy dist/immer.mjs:121", 1671.8149999999898],
+          ["(anonymous) src/bounds-index.ts:1", 1168.3959999999986],
+          ["finalizeProperty dist/immer.mjs:314", 1060.4929999999988]
+        ]
+      },
+      "after": {
+        "node": "v22.23.2",
+        "steps": 600,
+        "warmupSteps": 30,
+        "totalMs": 9932.450832999999,
+        "p50Ms": 16.573257000000012,
+        "p95Ms": 21.076026999999158,
+        "maxStepMs": 102.63766200000009,
+        "nativeHeadroomAtRequestedSpeed": 1.006800855915196,
+        "finalCounts": {
+          "entities": 614,
+          "events": 62617,
+          "awareness": 67864
+        },
+        "finalWorldDigest": "dc3afd2239811766c34b750edd0ab1f1f5d0a8cc035426748e6598adb50b7715",
+        "hottestSelfMs": [
+          ["(anonymous) src/perception-frame.ts:1", 1150.2300000000012],
+          ["finalizeProperty dist/immer.mjs:314", 1043.849999999999],
+          ["get dist/immer.mjs:382", 686.132],
+          ["isPlainObject dist/immer.mjs:60", 456.8229999999998],
+          ["isDraftable dist/immer.mjs:54", 421.68299999999977],
+          ["(anonymous) src/perception.ts:1", 318.5139999999999],
+          ["(garbage collector) :0", 318.10800000000006],
+          ["peek dist/immer.mjs:486", 295.8350000000003],
+          ["updateEncounters src/kernel.ts:1", 284.6720000000002],
+          ["advanceWorldWork src/kernel.ts:1", 269.003],
+          ["getArchtype dist/immer.mjs:86", 260.2260000000001],
+          ["has dist/immer.mjs:90", 256.8360000000002]
+        ]
+      },
+      "sameFinalDigest": true
+    }
+  }
+}

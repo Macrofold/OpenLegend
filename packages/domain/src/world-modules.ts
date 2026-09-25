@@ -6,6 +6,8 @@ export { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 import { validateStatusEffects } from './status-effect-validation.js';
 import { activeStatusEffects } from './status-capabilities.js';
 import { strikeDefinition } from './strikes.js';
+import { validateExperienceOrder } from './experience.js';
+import { validatePerceptionState } from './perception-frame.js';
 import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
 import { validateItemHandling } from './item-handling.js';
@@ -492,6 +494,7 @@ export function validateWorldModules(world: WorldState): void {
   if (!world.moduleManifest) throw new Error('World module manifest is missing.');
   validateStatusEffects(world);
   validateSpatialWorld(world);
+  validatePerceptionState(world);
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
   validateGatheringTools(world);
@@ -508,6 +511,7 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Missing or invalid saved invention origin.');
   }
   validateAgency(world);
+  validateExperienceOrder(world);
   validateModuleManifest(world.moduleManifest);
   for (const e of Object.values(world.entities)) {
     if (e.actor)

@@ -286,6 +286,17 @@ export function npcCandidates(
       command: null,
     },
   ];
+  for (const target of observed.visibleEntities
+    .filter((e) => e.actor?.alive && e.id !== actorId)
+    .slice(0, 4)) {
+    const command: CommandInput = { type: 'follow', targetId: target.id };
+    if (service.previewCommand(command, actorId).ok)
+      actions.push({
+        id: `follow:${target.id}`,
+        description: `Follow ${target.name} while visible; no stealth or automatic sunset stop.`,
+        command,
+      });
+  }
   const activeId = service.world.conversations?.active[actorId];
   if (activeId) {
     const active = service.world.conversations!.records[activeId]!;
