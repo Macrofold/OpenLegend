@@ -1,3 +1,4 @@
+import { attributeValueSchema } from './world-authoring-values.js';
 import { attributeBindingSchema } from './world-authoring-bindings.js';
 import { z } from 'zod';
 import {
@@ -45,6 +46,17 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
           'Use ol_activity to inspect the current body and ol_inspect to read each installed attribute first. Only custom reservoir/category attributes are eligible.',
           'Each new attribute starts at its declared initial value. Native needs, existing values, senses, controller and active work are preserved. Existing bindings cannot be reset or removed here.',
           'Added reservoirs use their existing drain/replenishment and concern projections. This does not create a compatible charging source or a new sensor.',
+        ],
+      };
+    case 'attribute-values':
+      return {
+        ...common,
+        schema: z.toJSONSchema(attributeValueSchema),
+        notes: [
+          'Explicit world-owner intervention on already attached custom reservoir/category values, not an ordinary actor action or recharge. All changes are shown and require exact approval.',
+          'Use ol_entities to locate the body, ol_activity to read current attribute values and revisions, and ol_inspect for the definition/range. Supply expectedRevision from the inspected value; never guess it.',
+          'This can create/remove fictional quantity without debiting a source. Native physiology, definition parameters, senses, controller and unrelated attributes are unchanged.',
+          'If draining or another edit changes a value before Apply, refresh the value and submit a revised payload. Pausing the world while editing is a human choice, never silently done by this tool.',
         ],
       };
     case 'attribute':

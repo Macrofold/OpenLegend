@@ -9,6 +9,7 @@ export type WorldAuthoringKind =
   | 'recipe'
   | 'attribute'
   | 'attribute-bindings'
+  | 'attribute-values'
   | 'status-effect-policy'
   | 'cognition-policy'
   | 'action';
