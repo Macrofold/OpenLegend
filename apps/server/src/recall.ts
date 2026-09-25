@@ -1,9 +1,10 @@
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
-import { recognizesSubject, observerGivenName } from '@open-legend/domain';
+import { recognizesSubject, observerGivenName, observerDescription } from '@open-legend/domain';
 import {
   entityHandles,
   projectEntityMarkers,
-  entityDisplayName,
+  entityLabel,
+  awarenessBindsSubject,
 } from './entity-references.js';
 import {
   contextSections,
@@ -20,6 +21,7 @@ import {
   mindFor,
   type MemoryRecord,
   type WorldState,
+  type Awareness,
 } from '@open-legend/domain';
 import {
   createEmbeddingClient,
@@ -74,13 +76,33 @@ function memoryCandidate(
   conversationIds: Set<string>,
   corrections: Record<string, string>,
   correctedIds: Set<string>,
+  awareness?: Awareness,
 ): AttentionCandidate {
   const matches = (ids: Set<string>) =>
     ids.has(memory.id) || (memory.eventId ? ids.has(memory.eventId) : false);
-  const summary = memory.summary.replace(/\(ID:([^()\s]+)\)/g, (marker, id: string) => {
+  let summary = memory.summary.replace(/\(ID:([^()\s]+)\)/g, (marker, id: string) => {
     const entity = world.entities[id];
-    return entity?.actor && !observerGivenName(world, actorId, entity.id) ? entityDisplayName(entity) : marker;
+    return entity?.actor && !observerGivenName(world, actorId, entity.id)
+      ? observerDescription(world, actorId, entity.id)
+      : marker;
   });
+  // Preserve who spoke to whom using this observer's event-time evidence. An ongoing
+  // exposure can bind an unnamed speaker; an old canonical ID cannot identify a new exposure.
+  // docs/memory-architecture.md#personal-perspective-and-acquisition
+  if (awareness?.eventType === 'speech' && awareness.content !== undefined) {
+    const participant = (id: string | undefined) =>
+      id && world.entities[id] && awarenessBindsSubject(world, actorId, awareness, id)
+        ? entityLabel(world, world.entities[id]!, actorId)
+        : 'an unidentified individual';
+    const recipient = awareness.intendedRecipientId;
+    const relation =
+      awareness.sourceId === actorId
+        ? `I said${recipient ? ` to ${recipient === actorId ? 'myself' : participant(recipient)}` : ''}`
+        : `${participant(awareness.sourceId)} said${recipient === actorId ? ' to me' : recipient ? ` to ${participant(recipient)} (overheard; not addressed to me)` : ' nearby (recipient unknown)'}`;
+    summary = awareness.intelligible
+      ? `${relation}: ${JSON.stringify(awareness.content)}`
+      : 'I heard indistinct speech.';
+  }
   return {
     id: memory.id,
     kind: matches(conversationIds) ? 'conversation' : 'memory',
@@ -92,8 +114,10 @@ function memoryCandidate(
       !!corrections[memory.id] ||
       correctedIds.has(memory.id),
     automatic: matches(automaticIds),
-    entityIds: memory.entityIds.filter(
-      (id) => !world.entities[id]?.actor || !!observerGivenName(world, actorId, id),
+    entityIds: [...new Set(memory.entityIds)].filter(
+      (id) =>
+        recognizesSubject(world, actorId, id) ||
+        (awareness?.eventType === 'speech' && awarenessBindsSubject(world, actorId, awareness, id)),
     ),
     at: memory.at,
     salience: memory.importance,
@@ -108,6 +132,9 @@ function speechCandidates(world: WorldState, actorId: string): AttentionCandidat
     .slice(-EXPERIENCE_LIMITS.conversationSpeech);
   const ids = new Set(speech.map((memory) => memory.eventId ?? memory.id));
   const corrections = world.experience?.corrections?.[actorId] ?? {};
+  const awareness = new Map(
+    (world.experience?.awareness[actorId] ?? []).map((entry) => [entry.eventId, entry]),
+  );
   return speech.map((memory) =>
     memoryCandidate(
       memory,
@@ -118,6 +145,7 @@ function speechCandidates(world: WorldState, actorId: string): AttentionCandidat
       ids,
       corrections,
       new Set(Object.values(corrections)),
+      awareness.get(memory.eventId ?? memory.id),
     ),
   );
 }
@@ -134,6 +162,9 @@ export function candidateSet(
   const conversationIdSet = new Set(conversationIds);
   const corrections = world.experience?.corrections?.[actorId] ?? {};
   const correctedIdSet = new Set(Object.values(corrections));
+  const awareness = new Map(
+    (world.experience?.awareness[actorId] ?? []).map((entry) => [entry.eventId, entry]),
+  );
   const matches = (ids: Set<string>, memory: { id: string; eventId?: string }) =>
     ids.has(memory.id) || (memory.eventId ? ids.has(memory.eventId) : false);
   const recallable = experiences(world, actorId);
@@ -158,17 +189,26 @@ export function candidateSet(
       conversationIdSet,
       corrections,
       correctedIdSet,
+      awareness.get(memory.eventId ?? memory.id),
     ),
   );
   const candidates: AttentionCandidate[] = [];
   const duplicateMemories = new Map<string, AttentionCandidate>();
+  // Remembering a named individual is separate from recognizing a current exposure.
+  const namedMemoryIds = new Set(
+    recallable
+      .filter((memory) =>
+        memory.entityIds.some(
+          (id) => id !== actorId && !!world.observerIdentities?.[actorId]?.[id]?.givenName,
+        ),
+      )
+      .map((memory) => memory.id),
+  );
   for (const memory of memories) {
     // Named others remain individual episodes; generic species recall has no actor handles.
     // The observer's own identity does not prevent grouping encounters with unnamed animals.
     // docs/memory-architecture.md#named-and-generic-memory-subjects
-    const namedOther = memory.entityIds.some(
-      (id) => id !== actorId && world.entities[id]?.actor && !!observerGivenName(world, actorId, id),
-    );
+    const namedOther = namedMemoryIds.has(memory.id);
     if (memory.required || memory.automatic || namedOther) {
       candidates.push(memory);
       continue;
@@ -197,8 +237,10 @@ export function candidateSet(
   for (const memory of candidates) {
     memory.embeddingText = memory.text;
     memory.text = projectEntityMarkers(memory.text, world, actorId);
-    const identities = memory.entityIds.flatMap((id) =>
-      world.entities[id] ? [`(ID:${entityHandles(world, actorId).get(id)})`] : [],
+    const identities = [...new Set(memory.entityIds)].flatMap((id) =>
+      world.entities[id] && !memory.text.includes(`(ID:${entityHandles(world, actorId).get(id)})`)
+        ? [`(ID:${entityHandles(world, actorId).get(id)})`]
+        : [],
     );
     if (identities.length) memory.text += ` Referenced entities: ${identities.join('; ')}.`;
   }
@@ -296,8 +338,8 @@ export function candidateSet(
       .map((c) => c.id),
   ]);
   for (const candidate of candidates) if (hardIds.has(candidate.id)) candidate.required = true;
-  const involved = new Set(observed.visibleEntities.map(entity => entity.id));
-  for (const candidate of candidates.filter(c => c.required || c.automatic))
+  const involved = new Set(observed.visibleEntities.map((entity) => entity.id));
+  for (const candidate of candidates.filter((c) => c.required || c.automatic))
     for (const id of candidate.entityIds) involved.add(id);
   candidates.push(...subjectKnowledgeCandidates(world, actorId, involved));
   return candidates;
@@ -716,7 +758,11 @@ export class RecallService {
           {
             stimulus,
             ...(cues ? { innerWorldExcerpt: cues } : {}),
-            goal: projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world, actorId),
+            goal: projectEntityMarkers(
+              currentGoal(world.entities[actorId]!.actor!),
+              world,
+              actorId,
+            ),
             includedContext: {
               ...immediateContext,
               ...contextSections([...automatic, ...mandatory]),

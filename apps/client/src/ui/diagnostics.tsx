@@ -55,34 +55,100 @@ function InlineJson({ title, value }: { title: string; value: unknown }) {
   );
 }
 
-function KnowledgeEditor({mind, onSaved}: {mind: GodMindView; onSaved: (mind: GodMindView) => void}) {
+function KnowledgeEditor({
+  mind,
+  onSaved,
+}: {
+  mind: GodMindView;
+  onSaved: (mind: GodMindView) => void;
+}) {
   const [subject, setSubject] = useState('');
-  const document = mind.notepads?.find(doc => doc.subjectId === (subject || null));
+  const document = mind.notepads?.find((doc) => doc.subjectId === (subject || null));
   const identity = subject ? mind.identities?.[subject] : undefined;
   const [text, setText] = useState(document?.text ?? '');
   const [name, setName] = useState(identity?.givenName ?? '');
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
-  useEffect(() => {setText(document?.text ?? ''); setName(identity?.givenName ?? ''); setMessage('');}, [subject, document?.revision, identity?.revision]);
-  const limit = document?.maxCharacters ?? (subject ? 1000 : 5000);
+  useEffect(() => setMessage(''), [subject]);
+  useEffect(() => {
+    setText(document?.text ?? '');
+    setName(identity?.givenName ?? '');
+  }, [subject, document?.revision, identity?.revision]);
+  const limit =
+    document?.maxCharacters ?? mind.knowledgeLimits?.[subject ? 'subject' : 'general'] ?? 0;
   const characters = Array.from(text).length;
-  return <Section title="Knowledge notepads">
-    <label>Subject ID (blank for general knowledge)<input value={subject} onChange={event => setSubject(event.target.value)} list="knowledge-subjects" /></label>
-    <datalist id="knowledge-subjects">{mind.notepads?.filter(doc => doc.subjectId).map(doc => <option key={doc.subjectId} value={doc.subjectId!}>{doc.label}</option>)}</datalist>
-    {subject && <label>Given name known by this observer<input value={name} onChange={event => setName(event.target.value)} /></label>}
-    <label>Editable knowledge<textarea rows={8} value={text} onChange={event => setText(event.target.value)} /></label>
-    <p>{characters.toLocaleString()} / {limit.toLocaleString()} characters. {characters > limit ? 'Rewrite or shorten before saving.' : 'Saving a subject pad authors an acquaintance for this observer.'}</p>
-    <Button disabled={saving || characters > limit} onPress={() => {
-      setSaving(true); setMessage('');
-      void post<{ok: boolean; message?: string; mind?: GodMindView}>('/api/god/knowledge', {
-        actorId: mind.actorId, worldId: mind.worldId, generation: mind.generation, subjectId: subject || null,
-        expectedRevision: document?.revision ?? 0, text,
-        ...(subject && name.trim() && name !== identity?.givenName ? {givenName: name, nameRevision: identity?.revision ?? 0} : {}),
-      }).then(result => {setMessage(result.message ?? ''); if (result.ok && result.mind) onSaved(result.mind);})
-        .catch(error => setMessage(String(error))).finally(() => setSaving(false));
-    }}>Save knowledge</Button>
-    {message && <p role="status">{message}</p>}
-  </Section>;
+  return (
+    <Section title="Knowledge notepads">
+      <label>
+        Subject ID (blank for general knowledge)
+        <input
+          disabled={saving}
+          value={subject}
+          onChange={(event) => setSubject(event.target.value)}
+          list="knowledge-subjects"
+        />
+      </label>
+      <datalist id="knowledge-subjects">
+        {mind.notepads
+          ?.filter((doc) => doc.subjectId)
+          .map((doc) => (
+            <option key={doc.subjectId} value={doc.subjectId!}>
+              {doc.label}
+            </option>
+          ))}
+      </datalist>
+      {subject && (
+        <label>
+          Given name known by this observer
+          <input disabled={saving} value={name} onChange={(event) => setName(event.target.value)} />
+        </label>
+      )}
+      <label>
+        Editable knowledge
+        <textarea
+          rows={8}
+          disabled={saving}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+        />
+      </label>
+      <p>
+        {characters.toLocaleString()} / {limit.toLocaleString()} characters.{' '}
+        {characters > limit
+          ? 'Rewrite or shorten before saving.'
+          : subject
+            ? 'Saving a subject pad authors an acquaintance for this observer.'
+            : 'Record current understanding; rewrite when space is needed.'}
+      </p>
+      <Button
+        disabled={saving || characters > limit}
+        onPress={() => {
+          setSaving(true);
+          setMessage('');
+          void post<{ ok: boolean; message?: string; mind?: GodMindView }>('/api/god/knowledge', {
+            actorId: mind.actorId,
+            worldId: mind.worldId,
+            generation: mind.generation,
+            subjectId: subject || null,
+            expectedRevision: document?.revision ?? 0,
+            text,
+            ...(subject && name.trim() && name !== identity?.givenName
+              ? { givenName: name, nameRevision: identity?.revision ?? 0 }
+              : {}),
+          })
+            .then((result) => {
+              setMessage(result.message ?? '');
+              if (result.ok && result.mind) onSaved(result.mind);
+            })
+            .catch((error) => setMessage(String(error)))
+            .finally(() => setSaving(false));
+        }}
+      >
+        Save knowledge
+      </Button>
+      {message && <p role="status">{message}</p>}
+    </Section>
+  );
 }
 
 export function Mind({ actorId }: { actorId: string }) {

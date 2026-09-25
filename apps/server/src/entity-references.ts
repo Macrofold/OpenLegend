@@ -1,4 +1,4 @@
-import { observerGivenName, recognizesSubject } from '@open-legend/domain';
+import { observerDescription, recognizesSubject } from '@open-legend/domain';
 import type { ActorResponse, Entity, WorldState } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 
@@ -45,28 +45,8 @@ export function entityHandles(
   return handles;
 }
 
-/** Native species labels are descriptions, not individual names. */
-export function hasIndividualName(entity: Entity): boolean {
-  const species = entity.actor?.species;
-  return (
-    !!entity.name.trim() &&
-    ![species, species === 'human' || !species ? 'person' : species].includes(
-      entity.name.trim().toLowerCase(),
-    )
-  );
-}
-
-export function entityDisplayName(entity: Entity, recognized = true): string {
-  if (!entity.actor) return recognized ? entity.name : 'an unidentified object';
-  const species = entity.actor.species;
-  const noun = species === 'human' || !species ? 'person' : species;
-  const generic = !hasIndividualName(entity);
-  return recognized && !generic ? entity.name : `${/^[aeiou]/i.test(noun) ? 'an' : 'a'} ${noun}`;
-}
-
 export function entityLabel(world: WorldState, entity: Entity, observerId: string): string {
-  const givenName = observerGivenName(world, observerId, entity.id);
-  const label = givenName ?? (entity.actor ? entityDisplayName(entity, false) : entity.name);
+  const label = observerDescription(world, observerId, entity.id);
   return `${label} (ID:${entityHandles(world, observerId).get(entity.id)!})`;
 }
 
@@ -109,6 +89,7 @@ export function projectEntityMarkers(text: string, world: WorldState, observerId
 export function resolveResponseEntities(
   response: ActorResponse,
   references: Record<string, string>,
+  knowledgeReferences: Record<string, string> = {},
 ): ActorResponse {
   const resolve = (handle: string) => {
     if (!Object.hasOwn(references, handle))
@@ -122,7 +103,11 @@ export function resolveResponseEntities(
         ? {
             note: {
               ...op.note,
-              subjectId: op.note.subjectId ? resolve(op.note.subjectId) : null,
+              subjectId: op.note.subjectId
+                ? Object.hasOwn(knowledgeReferences, op.note.subjectId)
+                  ? op.note.subjectId
+                  : resolve(op.note.subjectId)
+                : null,
               text: resolveEntityMarkers(op.note.text, references),
             },
           }
@@ -165,4 +150,22 @@ export function resolveResponseEntities(
         : null,
     })),
   };
+}
+
+/** An old event's canonical source cannot identify a new, unrecognized exposure. */
+export function awarenessBindsSubject(
+  world: WorldState,
+  observerId: string,
+  aware: import('@open-legend/domain').Awareness,
+  subjectId: string,
+): boolean {
+  if (subjectId === observerId) return true;
+  if (
+    aware.recognized &&
+    subjectId === aware.sourceId &&
+    recognizesSubject(world, observerId, subjectId)
+  )
+    return true;
+  const episode = aware.entityEpisodes?.[subjectId];
+  return !!episode && episode === world.perceptionEpisodes?.[observerId]?.[subjectId];
 }

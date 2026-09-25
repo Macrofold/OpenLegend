@@ -20,7 +20,10 @@ export function memoryPerspective(
   if (speech) {
     const separator = text.indexOf(':');
     if (separator < 0) return text;
-    const speaker = sourceEntityId && world.entities[sourceEntityId] ? `${observerDescription(world, actorId, sourceEntityId)} said` : 'An unidentified speaker said';
+    const speaker =
+      sourceEntityId && world.entities[sourceEntityId]
+        ? `${observerDescription(world, actorId, sourceEntityId)} said`
+        : 'An unidentified speaker said';
     return `${sourceEntityId === actorId ? 'I said' : speaker}${text.slice(separator)}`;
   }
   // Quoted testimony keeps the speaker's exact words, including names/pronouns.
@@ -32,7 +35,11 @@ export function memoryPerspective(
       // Attribution is evidence, not a name match; unknown legacy subjects stay in third person.
       if (sourceEntityId !== actorId) {
         const source = sourceEntityId ? world.entities[sourceEntityId] : undefined;
-        if (index === 0 && source) result = result.replace(new RegExp(`^${escape(source.name)}(?=\\s|[.,:’'])`), observerDescription(world, actorId, source.id));
+        if (index === 0 && source)
+          result = result.replace(
+            new RegExp(`^${escape(source.name)}(?=\\s|[.,:’'])`),
+            observerDescription(world, actorId, source.id),
+          );
         return result;
       }
       const name = escape(actor.name);

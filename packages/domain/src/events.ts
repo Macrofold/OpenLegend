@@ -1,4 +1,8 @@
-import { observerDescription, recognizesSubject } from './worlds/base/knowledge.js';
+import {
+  observerDescription,
+  recognizesSubject,
+  learnSpeechIntroduction,
+} from './worlds/base/knowledge.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { appraiseEvent } from './social.js';
 import { mutateExperience, type ExperienceMutation } from './experience.js';
@@ -280,6 +284,12 @@ function recordEvent(
                 : type === 'speech'
                   ? 'heard'
                   : 'observed',
+            entityEpisodes: Object.fromEntries(
+              [source?.id, type === 'speech' ? perceivedRecipient : targetId].flatMap((id) => {
+                const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
+                return id && episode ? [[id, episode]] : [];
+              }),
+            ),
             recognized:
               type !== 'contact' && !!source && recognizesSubject(world, actorId, source.id),
             intelligible: true,
@@ -325,6 +335,7 @@ function recordEvent(
       else mutateExperience(world, actorId, addition);
     }
   }
+  learnSpeechIntroduction(world, event);
   appraiseEvent(world, event);
   recordSpokenPromise(world, event);
   advanceCommitments(world, [event]);

@@ -86,6 +86,7 @@ export interface MindProposal {
   removeRecords: Array<{ id: string; expectedRevision: number }>;
 }
 export interface CognitionBinding {
+  knowledgeReferences?: Record<string, string>;
   actorId: string;
   decisionId: string;
   policy: string;
