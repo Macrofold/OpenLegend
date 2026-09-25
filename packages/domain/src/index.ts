@@ -87,6 +87,7 @@ export { editActorAttributes, type AttributeEditRequest } from './god-tools.js';
 
 export * from './agency.js';
 export * from './action-capabilities.js';
+export * from './action-reference-pins.js';
 
 export * from './invention-policy.js';
 
