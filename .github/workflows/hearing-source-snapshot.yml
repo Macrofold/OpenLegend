@@ -1,0 +1,41 @@
+name: Hearing source snapshot
+on:
+  push:
+    branches: [feat/hearing-speech-captions]
+    paths: ['.github/workflows/hearing-source-snapshot.yml']
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b72b683181f5a3147d603be619ad6dffb8efa988
+          path: feature
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fdcbd31fc9e4eb31daaf00d997648aba588c8577
+          path: upstream
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: c466b63f818021a6cd65d0809b94f220cce642d4
+          path: common
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: feature/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile
+        working-directory: feature
+      - run: tar --exclude=.git -czf /tmp/hearing-sources.tgz feature upstream common
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hearing-pinned-sources
+          path: /tmp/hearing-sources.tgz
+          retention-days: 1
