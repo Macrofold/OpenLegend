@@ -4,6 +4,7 @@ import { sensesFor } from './perception.js';
 import type { Entity, Position, WorldState } from './types.js';
 
 type Footprint = {
+  entity: Entity;
   id: string;
   position: Position;
   body: string;
@@ -16,6 +17,7 @@ type Footprint = {
 type ExposureStamp = {
   map: WorldState['map'];
   manifest: WorldState['moduleManifest'];
+  restrictions: WorldState['statusEffectPolicy'];
   entities: Footprint[];
   touch: boolean;
 };
@@ -23,6 +25,7 @@ const completed = new WeakMap<WorldState, ExposureStamp>();
 function footprint(entity: Entity, world: WorldState): Footprint {
   const observer = !!entity.actor?.alive && hasMemory(entity);
   return {
+    entity,
     id: entity.id,
     position: entity.position,
     body: entity.spatial.bodyProfileId,
@@ -44,7 +47,14 @@ export function encounterPhase(previous: WorldState, snapshot: WorldState) {
     return { unchanged: false, complete: (_world: WorldState) => {} };
   const entities = Object.values(snapshot.entities);
   const prior = completed.get(previous);
-  const footprints = entities.map((entity) => footprint(entity, snapshot));
+  // Inert objects dominate most scenes. Their unchanged immutable record already proves
+  // every footprint field; only changed records/rules need another live restriction read.
+  const footprints = entities.map((entity, i) => {
+    const old = prior?.entities[i];
+    return old?.entity === entity && prior?.restrictions === snapshot.statusEffectPolicy
+      ? old
+      : footprint(entity, snapshot);
+  });
   const unchanged =
     !!prior &&
     !prior.touch &&
@@ -69,6 +79,7 @@ export function encounterPhase(previous: WorldState, snapshot: WorldState) {
     : {
         map: snapshot.map,
         manifest: snapshot.moduleManifest,
+        restrictions: snapshot.statusEffectPolicy,
         entities: footprints,
         touch: entities.some(
           (entity, i) =>
