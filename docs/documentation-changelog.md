@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-25 — Task-based development and approval workflow
+
+Updated [agent routing](../AGENTS.md) and its existing skills instead of adding parallel instruction bodies. Development now refreshes main/rebases off-main before edits and stops all work for any uncertain conflict resolution. Code reviews include in-scope fixes unless explicitly read-only, consider product intent, UX, scale and future capabilities, and reconcile delivered/deferred work. Every task handoff states major decisions/assumptions and ends with open decisions/questions and suggested next steps, including “None” when appropriate.
+
+[Design](../.agents/skills/openlegend-design/SKILL.md) now creates paired project feature specs/technical designs and turns approval into linked maintainer work, current-doc integration and implementation. The owner's 45-minute batch estimate and one-hour continuation window are separate constraints; explicit scope, completion, blockers and safety/platform limits still govern. [Documentation](../.agents/rules/documentation.md) separates project context/history, accepted targets and current runtime truth. Existing no-test-authoring, ad-hoc runtime verification, CI and spending policies remain intact. [CG08](maintainers/agent-guidance.md) records instruction delivery; native dispatch and full-checkout integration evidence remain separate CG05/CG07 gates. No gameplay code changed.
+
 ## 2026-09-25 — Supported-gameplay data foundation implementation
 
 Replaced operational world JSON/journal authority with independently addressable SQL records through the existing world transaction and native owners. Added database-selected memory recall/editor pages, source-version and annotation backing, durable indexing claims, exact eligible vector search, actor-private inspection guards and creator/host save capability checks. Existing importance, consolidation and forgetting rules remain unchanged; no punch/walk classifier or new dropping policy was added.
