@@ -332,7 +332,6 @@ const statusEligibility = new WeakMap<
   { definitions: StatusEffectDefinition[]; manifest: object; eligible: boolean }
 >();
 export function mayAdvanceStatusEffects(world: WorldState, entity: Entity): boolean {
-  if (entity.actor) return true;
   const definitions = statusDefinitions(world),
     manifest = isDraft(world.moduleManifest) ? current(world.moduleManifest) : world.moduleManifest;
   const reusable =

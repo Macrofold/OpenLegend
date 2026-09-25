@@ -405,6 +405,7 @@ Automated suites were neither added nor run at the owner's request. Manual execu
 - [ ] Compare attribute lookup and sight outcomes with uncached execution, including 511/512/513+ targets, moving targets/observers, body height, changed senses/maps, mutable builders and save/load. Extra targets must remain visible even when uncached; cache capacity must not create repeated whole-scan eviction.
 - [ ] Cover display usage read coalescing, failed reads/writes, concurrent reservation/settlement, uncertain-to-priced billing, restart recovery, UTC month rollover, changed display ceilings and caller mutation. The reservation ledger must remain uncached and independent of displayed totals.
 - [ ] Extend the live scenarios to long-running mixed cognition at 1×/3×/8× with PostgreSQL vectors, reflection/dreams, queue-age/fairness, stable foreground frame timing and larger populations. Provider-side uncertain outcomes need a useful reason/correlation trail; the two inspected failed Jev runs exposed only `uncertain` even through their run-event API. Do not retry those calls automatically or infer zero cost.
+
 ## Hearing captions and perceived events — deferred validation
 
 Target contracts: [hearing and speech](../hearing-and-speech.md), [timed UI](../timed-ui.md), and [perceived World Events](../perceived-world-events.md). Implementation sequencing belongs to [HE01–HE05](hearing-and-speech.md). These automated cases are deferred, not written or run by the documentation pass; they do not replace existing SR/EPR/NC/CR/PF validation.
@@ -416,7 +417,6 @@ Target contracts: [hearing and speech](../hearing-and-speech.md), [timed UI](../
 - [ ] **HE-T05 — Lifetimes and accessibility:** cover one shared presentation clock, queue activation, pause/resume, simulation speed independence, hidden-tab backlog policy, chunk timing from permitted text only, reduced motion, HUD scaling/contrast, semantic ARIA use, no repeated announcements, ring disposal, queued overflow and unknown/invalid durations. Reusing a ring must not turn caption expiry into work completion, cooldown admission or acoustic duration.
 - [ ] **HE-T06 — Comprehensive history:** cover all retained permitted event types including those hidden by Journal, Speech across multiple conversations, unseen/private/narrator exclusion, filtering before pagination, equal timestamps, stable high-watermarks, more than 60/512 events, cold storage, loading/error/empty states, scope-bound cursors, old-page scroll, new-entry notices, changing filters and late responses. A known event ID cannot bypass scope or recover raw text.
 - [ ] **HE-T07 — Recovery and scale:** cover save/control/timeline changes, history epochs and erasure, no old-save migration, no retroactive audience upgrade or caption replay, publication gaps and slow readers, larger supported listener/event populations, immutable-draft boundaries, bounded overlay retention and real browser/history workloads. Keep native stress, runtime smoke and live-provider evidence distinct; baseline performance commands and required measurements are in HE05.
-
 
 ### Hearing delivery follow-up
 
@@ -444,7 +444,6 @@ Implementation remains in [HE](hearing-and-speech.md); [runtime observations](..
 - [ ] Exercise empty vector reconcile/write/search batches without SQL, retaining vector/limit validation before an empty search result and preserving existing nonempty paths. Qualify PostgreSQL separately; a counting non-network adapter is not database integration evidence.
 - [ ] Cover all eight display slots blocked by layout, deferred residence equality/expiry, pending priority, previously visible then hidden chunks, visible long speech, manual/presentation pause, document visibility, settings and world/scope resets. Verify old hidden captions cannot block new captions indefinitely, reading budget is not consumed while hidden, and dropping stale presentation never removes evidence/history. Overflow notice and richer layout priority remain HE expansion work.
 
-
 ## Hearing third review — deferred regression coverage
 
 Implementation lives in [HE](hearing-and-speech.md); [runtime evidence](../verification.md#hearing-third-review) is not an automated suite. No automated tests were written or run for this review.
@@ -454,7 +453,6 @@ Implementation lives in [HE](hearing-and-speech.md); [runtime evidence](../verif
 - [ ] Reproduce delayed background callbacks created inside real commit notifications, overlapping vector invalidation/forgetting, stale generation/model/ownership, revised or removed sources and publication errors. Background publication must take a fresh mutation turn despite inherited AsyncLocalStorage context. Cover foreground mixed-recall vector/query-cache publication against the same overlapping invalidation, including unchanged-scope success; qualify actual PostgreSQL transactions and remaining derived writers in their CR/INV owners.
 - [ ] Cover UTF-8 and escaped JSON byte accounting, exact count/byte limits, a reserved query prefix, mixed long/short sources, empty/oversized optional records, generator continuation and response/source index correspondence. Compare background speech and foreground recall with actual adapter admission without external calls. Required query text is never truncated; optional non-indexable evidence remains structured.
 - [ ] Hold Talk/Journal reads and optional speech-job lookups across forgetting, actor/timeline/epoch changes and active conversation switches; stale responses must not return old text. Preserve stable-scope pages, ordinary append notifications, error recovery and the separate World Events guard. Extend the runtime SQLite observation to PostgreSQL/concurrent readers.
-
 
 ## Movement under memory pressure
 
@@ -473,3 +471,9 @@ Implementation lives in [HE](hearing-and-speech.md); [runtime evidence](../verif
 
 - [x] Replace proximity-as-touch with physical body contact, preserving barrier checks and upgrading saved detector definitions/active episodes in place.
 - [ ] Add regression coverage for campfire edge/overlap/top contact, separated heights, numerical tolerance and spatial-cell boundaries; verify nearby non-contact objects produce no felt events, stable contacts do not repeat, and saved upgrades preserve identity and unrelated evidence. Add separate acceptance for future non-cylindrical body geometry and physical contact with map surfaces.
+
+## Hearing native-slice deferred regression coverage
+
+- [ ] Compare repeated one-second and bounded-slice execution under the same acquisition policy: final state, RNG, event/awareness order, native sequence, deadlines, hunger/energy transitions, plan completion, source disappearance, silent perception restrictions and nested commands. Include early slice exit, fractional phase offsets, pauses, real host debt accounting and queue yield. No automated cases were authored or run in this work.
+- [ ] Cover the conservative status/work roster for native animals without needs, mutable builders, newly activated effects, attribute creation through future operations, changed world policy and physical-contact worlds. A new native operation that changes participation must refresh the roster.
+- [ ] Verify explicit visual-discovery sampling and exact intervening speech/inspection: brief appearances, stationary-after-move, source/view changes after restore, loss/reacquisition, no periodic replay and no omitted acoustic recipients. Qualify the base-world compromise under RP03 before fast stealth/combat mechanics.

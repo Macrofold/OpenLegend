@@ -49,7 +49,7 @@ import {
   EXPERIENCE_LIMITS,
   mindFor,
   executeCommand,
-  advanceWorld,
+  advanceNativeBatch,
   admitDeclaration,
   experienceEntry,
   experienceEntries,
@@ -797,11 +797,12 @@ export class WorldService {
       // A single transition remains atomic even if it exceeds this time budget.
       for (; completedSteps < steps; ) {
         const stepStarted = performance.now();
-        world = freezeWorld(advanceWorld(world, 1).world);
+        const previousTime = world.simTime;
+        world = freezeWorld(advanceNativeBatch(world, steps - completedSteps).world);
         const stepMs = performance.now() - stepStarted;
         nativeMs += stepMs;
-        recordDuration('native.step', stepMs);
-        completedSteps++;
+        recordDuration('native.slice', stepMs);
+        completedSteps += world.simTime - previousTime;
         if (performance.now() - batchStarted >= 8) break;
       }
       recordDuration('tick.nativeWork', nativeMs);

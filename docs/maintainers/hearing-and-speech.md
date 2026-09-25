@@ -39,6 +39,9 @@ Do not write or run automated tests for this requested pass. Future automated ca
 
 ### HE05 — Runtime and performance qualification
 
+- [x] Integrate main through `03105fed9209c126e4e69e9faeb4687f42d1e74a`, preserving physical contact, nonblocking memory pressure, upstream content/retention rules and listener evidence. Integration preserves checkpoints with a connector-published merge rather than an unsafe force rebase.
+- [x] Add conservative native work pruning and bounded snapshot slices at the authored visual-discovery cadence. Keep one-second physics/sequence/commitment boundaries, stop early on occurrences/restriction changes, retain single-step contact and fresh-root evaluation, and account actual host debt. Broader 8× qualification remains below.
+
 - [x] Run the production-only build without invoking `check`, Vitest or Playwright suites. Native/SQLite/HTTP observations cover clear/partial/unintelligible speech, volume, durable pagination, unchanged fragments after same-format database restart and an unheard recipient that causes no paid interactive dispatch. [Verification](../verification.md#hearing-runtime-and-performance) records the scope and failures separately.
 - [x] Run existing native baseline scenarios on the same machine and inputs before/after implementation, using unique output paths:
 

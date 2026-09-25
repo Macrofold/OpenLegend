@@ -32,7 +32,7 @@ export const SENSE_IMPLEMENTATIONS = [
 ] as const;
 export type SenseImplementation = (typeof SENSE_IMPLEMENTATIONS)[number];
 export type SenseDefinition = { id: string; version: 1 } & (
-  | { implementation: 'vision-geometry-v1'; radius: number }
+  | { implementation: 'vision-geometry-v1'; radius: number; acquisitionIntervalSeconds?: number }
   | { implementation: 'body-contact-v1'; radius: number }
   | { implementation: 'hearing-db-v1'; hearingFloorDbSpl: number }
 );

@@ -43,7 +43,7 @@ import {
 } from './world-modules.js';
 import { spatialCandidates, nearbyEntities } from './spatial.js';
 import { objectExposureQuery } from './object-exposure.js';
-import { encounterPhase } from './encounter-cache.js';
+import { encounterPhase, nativeBatchSeconds } from './encounter-cache.js';
 import { changeConversation } from './conversations.js';
 import {
   canSpeak,
@@ -64,7 +64,15 @@ import {
 } from './status-effects.js';
 import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
-import { appendMemory, canonicalJson, emit, encounterEmitter, finish, outcome } from './events.js';
+import {
+  appendMemory,
+  canonicalJson,
+  emit,
+  encounterEmitter,
+  finish,
+  settleEvents,
+  outcome,
+} from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   hearsEntity,
@@ -1402,6 +1410,7 @@ function nativeReservoirResponse(world: WorldState, actor: Entity): void {
  */
 function nativeParticipants(world: WorldState): {
   actors: string[];
+  work: string[];
   ambient: string[];
   status: string[];
 } {
@@ -1410,15 +1419,45 @@ function nativeParticipants(world: WorldState): {
   const active = entries
     .filter((e) => e.actor || e.animal || e.heat)
     .sort((a, b) => a.id.localeCompare(b.id));
+  const status = entries.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id);
+  const changingStatus = new Set(status);
   return {
     actors: active.filter((e) => e.actor).map((e) => e.id),
+    // A native animal with no physiology, attributes, plan, action or possible effect has
+    // no actor work; it still participates in movement, collision and sensory delivery.
+    work: active
+      .filter(
+        (e) =>
+          e.actor &&
+          (hasWildernessNeeds(e.actor) ||
+            e.actor.attributes ||
+            e.actor.action ||
+            e.actor.agency.plan ||
+            changingStatus.has(e.id)),
+      )
+      .map((e) => e.id),
     ambient: active.map((e) => e.id),
-    status: entries.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id),
+    status,
   };
 }
 
 /** Advance bounded one-second native steps. Paused time and absent-player catch-up are never inferred. */
 export function advanceWorld(original: WorldState, elapsedSimSeconds: number): Transition {
+  return advance(original, elapsedSimSeconds, false);
+}
+/** Server execution slice: preserve one-second physics and settle every logical boundary.
+ * Do not wait to fill a batch, merge speech, or delay meaningful native occurrences.
+ * docs/performance.md#native-execution-slices */
+export function advanceNativeBatch(original: WorldState, availableSeconds: number): Transition {
+  if (!Number.isFinite(availableSeconds) || availableSeconds < 1)
+    return advanceWorld(original, availableSeconds);
+  return advance(original, nativeBatchSeconds(original, availableSeconds), true);
+}
+function advance(
+  original: WorldState,
+  elapsedSimSeconds: number,
+  fixedBoundaries: boolean,
+): Transition {
   if (
     !Number.isFinite(elapsedSimSeconds) ||
     elapsedSimSeconds < 0 ||
@@ -1447,21 +1486,26 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
   let world = draftWorld(original);
   const events: WorldEvent[] = [];
   let remaining = elapsedSimSeconds;
-  let initialStatus: string[] | undefined = participants.status;
+  const observerRestrictions = fixedBoundaries
+    ? participants.actors
+        .filter((id) => hasMemory(original.entities[id]))
+        .map((id) => ({
+          id,
+          blocked: capabilityBlocked(original, original.entities[id], 'perception'),
+        }))
+    : [];
   while (remaining > 0) {
+    const stepNextId = world.nextId;
     const seconds = Math.min(1, remaining);
     remaining -= seconds;
     world.simTime += seconds;
     // Status operations also apply to non-actor entities, in saved entity/definition order.
-    const statusIds =
-      initialStatus ??
-      Object.values(isDraft(world.entities) ? current(world.entities) : world.entities)
-        .filter((entity) => mayAdvanceStatusEffects(world, entity))
-        .map((entity) => entity.id);
-    initialStatus = undefined;
-    for (const id of statusIds) advanceStatusEffects(world, world.entities[id]!, seconds, events);
+    // Native rates cannot create absent capability/attribute fields. Nested commands refresh
+    // this conservative roster; do not materialize all entities again for every substep.
+    for (const id of participants.status)
+      advanceStatusEffects(world, world.entities[id]!, seconds, events);
     // Stable actor order resolves finite-resource claims; no asynchronous writer mutates a step.
-    for (const actorId of participants.actors) {
+    for (const actorId of participants.work) {
       let actor = world.entities[actorId]!;
       let component = actor.actor!;
       if (!component.alive || component.incapacitated) continue;
@@ -1527,6 +1571,20 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
         }
       }
     }
+    if (fixedBoundaries && remaining > 0) {
+      // End early after an occurrence or logical deadline; the normal finish path publishes it.
+      if (
+        world.nextId !== stepNextId ||
+        observerRestrictions.some(
+          ({ id, blocked }) =>
+            capabilityBlocked(world, world.entities[id], 'perception') !== blocked,
+        )
+      )
+        break;
+      settleEvents(world, []);
+      if (world.nextId !== stepNextId) break;
+      world.sequence++;
+    }
   }
   // Finalize changed physical state once rather than materializing it for sensing and
   // traversing it again at publication. This neither advances time nor emits/commits an event.
@@ -1538,7 +1596,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
   const result = finish(
     world,
     events,
-    outcome(true, 'advanced', `Advanced ${elapsedSimSeconds} simulation seconds.`),
+    outcome(true, 'advanced', `Advanced ${world.simTime - original.simTime} simulation seconds.`),
   );
   exposure.complete(result.world);
   return result;

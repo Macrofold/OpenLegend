@@ -22,6 +22,16 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 **Decision authority:** Project maintainer, with the save/load design owner. Preserve stored state while a consequential compatibility decision remains unresolved; privacy and external accounting remain protected.
 
+## RP03 — Base-world visual discovery cadence
+
+**Current policy:** [Routine visual discovery](../worlds/base/survival.md#routine-visual-discovery). Native batching is governed separately by [execution slices](../performance.md#native-execution-slices); neither policy relaxes speech, interaction authorization or privacy.
+
+**Why revisit:** Four simulated seconds trades potentially missed brief visual-only exposure for responsive accelerated play. It is a world-policy tuning choice, not a universal sensory law.
+
+**Review trigger:** Fast stealth/combat, materially faster movement, timed hiding, different clock ratios or playtesting demonstrates missed meaningful sightings. Reevaluate the cadence or add event-driven acquisition under EPR rather than enlarging hearing reach or dropping listeners. Other worlds can already choose their own descriptor interval.
+
+**Decision authority:** The game/design owner, with EPR/SW and performance owners; Mike authorized this task's reasonable performance tradeoffs.
+
 ## Maintaining this register
 
 Keep stable IDs, a canonical policy link, the reason to revisit, a concrete trigger and decision authority. Add only known revisitable decisions, not every constant or hypothetical concern. When a trigger is relevant, raise it in the task/PR; put resulting work or unresolved choices in their existing owners. An accepted change updates the policy, affected summaries and this entry together; significant decisions go in the [decision history](../documentation-changelog.md). Retire superseded entries with a link to their replacement or recorded decision, not another copy of the contract.

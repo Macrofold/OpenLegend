@@ -201,13 +201,19 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       sense,
       sense.implementation === 'hearing-db-v1'
         ? ['id', 'version', 'implementation', 'hearingFloorDbSpl']
-        : ['id', 'version', 'implementation', 'radius'],
+        : sense.implementation === 'vision-geometry-v1'
+          ? ['id', 'version', 'implementation', 'radius', 'acquisitionIntervalSeconds']
+          : ['id', 'version', 'implementation', 'radius'],
     );
     if (
       !namespace.test(sense.id) ||
       senseIds.has(sense.id) ||
       sense.version !== 1 ||
       !SENSE_IMPLEMENTATIONS.includes(sense.implementation) ||
+      (sense.implementation === 'vision-geometry-v1' &&
+        sense.acquisitionIntervalSeconds !== undefined &&
+        (!Number.isSafeInteger(sense.acquisitionIntervalSeconds) ||
+          sense.acquisitionIntervalSeconds < 1)) ||
       (sense.implementation === 'hearing-db-v1'
         ? !finite(sense.hearingFloorDbSpl) ||
           sense.hearingFloorDbSpl < -120 ||

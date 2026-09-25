@@ -280,9 +280,13 @@ function recordEvent(
   advanceCommitments(world, [event]);
   return event;
 }
-export function finish(world: WorldState, events: WorldEvent[], result: Outcome): Transition {
+/** Native batching may settle each logical boundary without publishing a new snapshot. */
+export function settleEvents(world: WorldState, events: WorldEvent[]): void {
   advanceCommitments(world, events);
   reconcileConversations(world);
+}
+export function finish(world: WorldState, events: WorldEvent[], result: Outcome): Transition {
+  settleEvents(world, events);
   world.sequence++;
   const committedEvents = cloneValue(events);
   return { world: finishWorld(world), events: committedEvents, outcome: result };

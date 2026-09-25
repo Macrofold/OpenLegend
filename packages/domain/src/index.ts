@@ -36,6 +36,7 @@ export {
   canRecoverAtCamp,
   executeCommand,
   advanceWorld,
+  advanceNativeBatch,
   observeActor,
   queryMemories,
   remember,

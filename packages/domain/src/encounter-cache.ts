@@ -55,7 +55,7 @@ export function encounterPhase(previous: WorldState, snapshot: WorldState) {
       ? old
       : footprint(entity, snapshot);
   });
-  const unchanged =
+  const stableRules =
     !!prior &&
     !prior.touch &&
     prior.map === snapshot.map &&
@@ -65,7 +65,6 @@ export function encounterPhase(previous: WorldState, snapshot: WorldState) {
       const old = prior.entities[i]!;
       return (
         old.id === next.id &&
-        old.position === next.position &&
         old.body === next.body &&
         old.alive === next.alive &&
         old.observer === next.observer &&
@@ -74,6 +73,21 @@ export function encounterPhase(previous: WorldState, snapshot: WorldState) {
         old.blocked === next.blocked
       );
     });
+  const unchanged =
+    stableRules && footprints.every((next, i) => prior.entities[i]!.position === next.position);
+  const interval =
+    snapshot.moduleManifest.senses.find((sense) => sense.implementation === 'vision-geometry-v1')
+      ?.acquisitionIntervalSeconds ?? 1;
+  // Only routine visual discovery is sampled. Speech/events, body contact and changed rules
+  // remain immediate. Retain the last evaluated poses, not deferred poses, so a target that
+  // moves then stops is still discovered on the next sample. No evidence is deleted.
+  // docs/worlds/base/survival.md#routine-visual-discovery
+  if (
+    !unchanged &&
+    stableRules &&
+    Math.floor(previous.simTime / interval) === Math.floor(snapshot.simTime / interval)
+  )
+    return { unchanged: true, complete: (world: WorldState) => completed.set(world, prior) };
   const stamp: ExposureStamp = unchanged
     ? prior
     : {
@@ -84,10 +98,20 @@ export function encounterPhase(previous: WorldState, snapshot: WorldState) {
         touch: entities.some(
           (entity, i) =>
             footprints[i]!.observer &&
-            sensesFor(snapshot, entity).some(
-              (sense) => sense.implementation === 'body-contact-v1',
-            ),
+            sensesFor(snapshot, entity).some((sense) => sense.implementation === 'body-contact-v1'),
         ),
       };
   return { unchanged, complete: (world: WorldState) => completed.set(world, stamp) };
+}
+
+/** Batch only already-established exposure phases, stopping at the next authored sample.
+ * Touch, mutable worlds and fresh command/restore roots retain single-step boundaries. */
+export function nativeBatchSeconds(world: WorldState, available: number): number {
+  const stamp = completed.get(world);
+  const interval =
+    world.moduleManifest.senses.find((sense) => sense.implementation === 'vision-geometry-v1')
+      ?.acquisitionIntervalSeconds ?? 1;
+  if (!Object.isFrozen(world) || !stamp || stamp.touch || interval < 2) return 1;
+  const untilSample = interval - (world.simTime % interval);
+  return Math.max(1, Math.min(4, Math.floor(available), Math.floor(untilSample)));
 }
