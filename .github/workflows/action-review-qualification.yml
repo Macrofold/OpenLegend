@@ -1,0 +1,126 @@
+name: Action reconciliation qualification
+on:
+  push:
+    branches: [review/action-reconcile-fdcbd31]
+    paths: [.github/workflows/action-review-qualification.yml]
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: openlegend_review
+          POSTGRES_USER: review
+          POSTGRES_PASSWORD: disposable-review-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U review -d openlegend_review"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      AI_BUDGET_USD: '0'
+      REVIEW_DATABASE_URL: postgresql://review:disposable-review-only@127.0.0.1:5432/openlegend_review
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 94a7682aee9f100ccb54e073969bb4ed4f9fea49
+          path: branch
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fc01e19b30060e6c7213b1c5405be13df209297e
+          path: ancestor
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fdcbd31fc9e4eb31daaf00d997648aba588c8577
+          path: upstream
+          persist-credentials: false
+      - name: Reconcile file contents and apply reviewed fixes
+        run: |
+          python control/.github/action-reconcile.py
+          cp -a merged baseline
+          python - <<'PY'
+          import pathlib,gzip,base64,hashlib,subprocess
+          parts=''.join((pathlib.Path('control/.github')/f'action-review.payload.{i}').read_text().strip() for i in range(3))
+          data=gzip.decompress(base64.b64decode(parts))
+          if hashlib.sha256(data).hexdigest()!='4e34ee8a5e1d287051407aa3edec26d9562622cd1a3033374ca80ff55220ef61':raise RuntimeError('Reviewed patch integrity mismatch')
+          subprocess.run(['patch','--batch','-p1'],input=data,cwd='merged',check=True)
+          PY
+          mkdir -p reports
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: merged/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: merged/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: merged
+      - name: Production and static checks
+        run: |
+          ln -s ../merged/node_modules baseline/node_modules
+          cd merged
+          pnpm run build > ../reports/build.txt 2>&1
+          pnpm config:check > ../reports/config.txt 2>&1
+          pnpm typecheck > ../reports/typecheck-current.txt 2>&1 || true
+          cd ../baseline
+          pnpm typecheck > ../reports/typecheck-baseline.txt 2>&1 || true
+          cd ../upstream
+          ln -s ../merged/node_modules node_modules
+          pnpm guidance:check > ../reports/guidance.txt 2>&1
+      - name: Actual native and transaction boundaries
+        run: |
+          cd merged
+          node --import tsx ../control/.github/action-review-runtime.mjs grounding > ../reports/grounding.json
+          node --import tsx ../control/.github/action-review-runtime.mjs postgres > ../reports/postgres-lease.json
+          cd ../baseline
+          node --import tsx ../control/.github/action-review-runtime.mjs native > ../reports/native-before.json
+          cd ../merged
+          node --import tsx ../control/.github/action-review-runtime.mjs native > ../reports/native-after.json
+          cd ..
+          python - <<'PY'
+          import json,pathlib
+          a=json.loads(pathlib.Path('reports/native-before.json').read_text());b=json.loads(pathlib.Path('reports/native-after.json').read_text())
+          if a['hash']!=b['hash']:raise RuntimeError('Native final state differs')
+          PY
+      - name: Full PostgreSQL timer HTTP SSE workload
+        run: |
+          cd baseline
+          node --import tsx ../control/.github/action-review-runtime.mjs server ../reports/postgres-server-before.json
+          cd ../merged
+          node --import tsx ../control/.github/action-review-runtime.mjs server ../reports/postgres-server-after.json
+      - name: Record exact changed file manifest
+        if: always()
+        run: |
+          python - <<'PY'
+          import pathlib,json,hashlib
+          root=pathlib.Path.cwd()
+          def files(base):
+            return {str(p.relative_to(base)):p for p in base.rglob('*') if p.is_file() and not any(x in ['node_modules','.git','dist','.data'] for x in p.relative_to(base).parts)}
+          before=files(root/'upstream');after=files(root/'merged');rows=[]
+          for name in sorted(set(before)|set(after)):
+            p=after.get(name);q=before.get(name)
+            if p and q and p.read_bytes()==q.read_bytes():continue
+            data=p.read_bytes() if p else None
+            rows.append({'path':name,'mode':'100755' if p and p.stat().st_mode&0o111 else '100644','type':'blob','sha':hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest() if data is not None else None,'bytes':len(data) if data is not None else 0})
+          pathlib.Path('reports').mkdir(exist_ok=True)
+          pathlib.Path('reports/changed-files.json').write_text(json.dumps(rows,indent=2)+'\n')
+          PY
+          cp reconciliation.json reports/ || true
+          tar --exclude=node_modules --exclude=.git --exclude=dist --exclude=.data -czf /tmp/action-reviewed-source.tgz merged reports
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: action-reviewed-source
+          path: /tmp/action-reviewed-source.tgz
+          compression-level: 0
+          retention-days: 1
