@@ -1,0 +1,144 @@
+{
+  "sourceBase": "e7ae25457ee6bf790c6cdab2e0ec56dec2029923",
+  "implementationCheckpoint": "d4aee57b00a8b11d7c3274746415525494b39d90",
+  "date": "2026-09-25",
+  "environment": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "cpuCount": 5,
+    "node": "22.16.0"
+  },
+  "actualProviderSpendUsd": 0,
+  "httpMcp": {
+    "scope": "actual local HTTP/MCP, synthetic candidate, no model",
+    "actualProviderSpendUsd": 0,
+    "observations": [
+      { "case": "large-multibyte-local-draft", "status": 200, "wireBytes": 28673, "payloadBytes": 23000, "draftRevision": 1 },
+      { "case": "draft-replay", "sameId": true },
+      { "case": "apply-unapproved", "status": "needs_approval" },
+      { "case": "approved-apply-replay", "status": "ok", "revision": 2, "unchanged": true },
+      { "case": "actual-mcp", "initialized": 200, "tools": 18, "readStatus": "ok" },
+      { "case": "large-mcp-draft-approve-apply", "draft": "ok", "applied": "ok", "revision": 3 },
+      { "case": "invalid-mcp-utf8", "status": 400 },
+      { "case": "invalid-utf8", "status": 400, "body": { "ok": false, "code": "invalid-input", "message": "The request does not match the supported bounded input." } },
+      { "case": "ordinary-limit-unchanged", "status": 400 },
+      { "case": "inner-candidate-still-bounded", "status": "invalid" },
+      { "case": "slow-body-deadline", "outcome": "ECONNRESET", "elapsedMs": 10004 },
+      { "case": "restart", "revision": 3, "plan": "applied", "spentUsd": 0, "reservedUsd": 0 }
+    ]
+  },
+  "allocation": {
+    "kind": "synthetic-accounting-only",
+    "actualProviderSpendUsd": 0,
+    "observations": [
+      { "case": "fresh-worker", "runUsd": 0.4, "modelReserved": true, "workerReserved": true, "exposure": { "spentUsd": 0, "reservedUsd": 0.5, "uncertainUsd": 0 } },
+      { "case": "uncertain-recovery-marker-missing-config-increased", "runUsd": 0.4, "exposure": { "spentUsd": 0.1, "reservedUsd": 0, "uncertainUsd": 0.1 } },
+      { "case": "reused-worker", "runUsd": 0.5 },
+      { "case": "only-compute-fits", "quote": null }
+    ]
+  },
+  "nativeAdapter": {
+    "scope": "actual OpenLegend HTTP runner, Macrofold encoder and native adapter against synthetic loopback provider",
+    "actualProviderSpendUsd": 0,
+    "modelUsefulness": "not evaluated",
+    "traces": [
+      { "operation": "worker-create", "cap": "100000" },
+      { "operation": "run-create", "cap": "400000", "continuation": false, "worldTools": 18 },
+      { "operation": "turn-complete", "code": "completed", "redacted": true, "replayed": true },
+      { "operation": "run-create", "cap": "360000", "continuation": true, "worldTools": "retained" },
+      { "operation": "turn-complete", "code": "completed", "redacted": true, "replayed": true },
+      { "operation": "session-budget", "budget": { "limitUsd": 0.5, "spentUsd": 0.18, "reservedUsd": 0, "uncertainUsd": 0.1, "availableUsd": 0.32, "note": "Uncertain cost is included in spent, not an additional charge. Image generation is not implemented yet." } }
+    ]
+  },
+  "allocationStress": {
+    "scope": "synthetic local SQLite, 25000 unrelated attempts plus 50 root attempts",
+    "setupMs": 43.67101499999998,
+    "iterations": 100,
+    "medianMs": 0.03361000000001013,
+    "p95Ms": 0.11905899999999292,
+    "maxMs": 0.92098900000002,
+    "quotedUsd": 0.39995,
+    "queryPlan": [
+      { "id": 5, "parent": 0, "notused": 56, "detail": "SEARCH b USING COVERING INDEX attempt_budget_scope (budget_id=?)" },
+      { "id": 11, "parent": 0, "notused": 46, "detail": "SEARCH a USING INDEX sqlite_autoindex_attempts_1 (id=?)" }
+    ],
+    "actualProviderSpendUsd": 0
+  },
+  "nativeGems": {
+    "node": "v22.16.0",
+    "initial": { "simTime": 0, "entities": 514, "events": 0 },
+    "frozenSnapshots": true,
+    "initialFreezeMs": 3.161896000000013,
+    "warmupSteps": 0,
+    "scenario": {
+      "seed": 73, "people": 0, "animals": 0, "layout": "crowded", "steps": 180, "warmup": 0, "speed": 3, "timeoutSeconds": 30,
+      "objects": [{ "count": 500, "quantity": 1, "workSeconds": 2, "definition": { "id": "profile-material-0", "version": 1, "name": "Rare gem", "description": "Synthetic profiling fixture; not an authored game asset.", "properties": ["rigid", "point"] } }]
+    },
+    "setupMs": 26.836805999999996,
+    "cpuMs": 2268.626,
+    "heapUsedBytes": 37890568,
+    "nativeHeadroomAtRequestedSpeed": 0.6501919656668266,
+    "finalCounts": { "entities": 514, "events": 1024, "awareness": 1024 },
+    "steps": 180,
+    "totalMs": 1538.007316,
+    "p50Ms": 7.582881999999984,
+    "p95Ms": 10.883924999999863,
+    "maxStepMs": 100.56426699999997,
+    "nativeSecondsPerWallSecond": 117.03455382002878,
+    "finalWorldDigest": "73d397f96f31efc73799e93eb1c87ac11d94cc77d1a7cd50390be46523b19898",
+    "hottestSelfMs": [
+      ["intersectsSegment src/geometry.ts:1",139.77399999999994],
+      ["(anonymous) src/kernel.ts:1",102.21000000000002],
+      ["get dist/immer.mjs:382",95.92199999999994],
+      ["finalizeProperty dist/immer.mjs:314",92.78800000000001],
+      ["(anonymous) src/geometry.ts:1",80.032],
+      ["(anonymous) src/perception.ts:1",79.70800000000003],
+      ["updateEncounters src/kernel.ts:1",74.24500000000002],
+      ["advanceWorld src/kernel.ts:1",52.263999999999996],
+      ["(garbage collector) :0",51.537000000000006],
+      ["getOwnPropertyDescriptor dist/immer.mjs:447",46.155],
+      ["getArchtype dist/immer.mjs:86",45.423000000000016],
+      ["matchesStatusCondition src/status-effects.ts:1",44.307000000000016]
+    ]
+  },
+  "nativeMixed": {
+    "node": "v22.16.0",
+    "initial": { "simTime": 0, "entities": 344, "events": 30 },
+    "frozenSnapshots": true,
+    "initialFreezeMs": 4.233034999999973,
+    "warmupSteps": 0,
+    "scenario": {
+      "seed": 73, "people": 10, "animals": 20, "layout": "scattered", "steps": 180, "warmup": 0, "speed": 3, "timeoutSeconds": 60,
+      "objects": [
+        { "count": 100, "quantity": 1, "workSeconds": 1, "definition": { "id": "profile-material-0", "version": 1, "name": "Rare gem", "description": "Synthetic profiling fixture; not an authored game asset.", "properties": ["rigid", "point"] } },
+        { "count": 100, "quantity": 1, "workSeconds": 1, "definition": { "id": "profile-material-1", "version": 1, "name": "Food parcel", "description": "Synthetic profiling fixture; not an authored game asset.", "properties": ["food"], "nutrition": 20 } },
+        { "count": 100, "quantity": 5, "workSeconds": 10, "definition": { "id": "profile-material-2", "version": 1, "name": "Dry fuel", "description": "Synthetic profiling fixture; not an authored game asset.", "properties": ["fuel"] } }
+      ]
+    },
+    "setupMs": 72.71053699999999,
+    "cpuMs": 1891.705,
+    "heapUsedBytes": 23889896,
+    "nativeHeadroomAtRequestedSpeed": 0.7256781579764731,
+    "finalCounts": { "entities": 344, "events": 3254, "awareness": 3474 },
+    "steps": 180,
+    "totalMs": 1378.021357,
+    "p50Ms": 6.108251000000109,
+    "p95Ms": 7.058795000000146,
+    "maxStepMs": 259.696672,
+    "nativeSecondsPerWallSecond": 130.62206843576516,
+    "finalWorldDigest": "4e97fbf8c05c5fbdb32c3a15b9e9d043c28633cf1a0fc213cf0d4fc1549c772b",
+    "hottestSelfMs": [
+      ["finalizeProperty dist/immer.mjs:314",111.38199999999998],
+      ["updateEncounters src/kernel.ts:1",103.64299999999997],
+      ["(anonymous) src/kernel.ts:1",94.46999999999997],
+      ["get dist/immer.mjs:382",92.85900000000001],
+      ["isPlainObject dist/immer.mjs:60",60.77000000000003],
+      ["(anonymous) dist/immer.mjs:79",51.001999999999995],
+      ["advanceWorld src/kernel.ts:1",47.76200000000001],
+      ["getArchtype dist/immer.mjs:86",45.48899999999998],
+      ["isDraftable dist/immer.mjs:54",44.452],
+      ["(garbage collector) :0",40.77300000000002],
+      ["matchesStatusCondition src/status-effects.ts:1",39.94000000000001],
+      ["isDraft dist/immer.mjs:51",36.751]
+    ]
+  }
+}
