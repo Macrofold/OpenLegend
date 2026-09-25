@@ -1,0 +1,56 @@
+name: Action capability review
+on:
+  push:
+    branches: [review/action-capabilities-main-20260924]
+    paths: [.github/workflows/action-capability-review.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Compare pinned source snapshots without changing Git state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import urllib.request, os, tarfile, io, pathlib, subprocess, hashlib
+          root=pathlib.Path('/tmp/openlegend-reconcile'); root.mkdir()
+          refs={'base':'fc01e19b30060e6c7213b1c5405be13df209297e','main':'3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238','branch':'94a7682aee9f100ccb54e073969bb4ed4f9fea49'}
+          maps={}
+          for label,ref in refs.items():
+            request=urllib.request.Request(f'https://api.github.com/repos/Macrofold/OpenLegend/tarball/{ref}',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+            with urllib.request.urlopen(request,timeout=60) as response: payload=response.read()
+            files={}
+            with tarfile.open(fileobj=io.BytesIO(payload),mode='r:gz') as archive:
+              for entry in archive:
+                if not entry.isfile(): continue
+                path=pathlib.PurePosixPath(entry.name)
+                relative=pathlib.PurePosixPath(*path.parts[1:])
+                if '..' in relative.parts: raise RuntimeError('Unsafe archive path')
+                data=archive.extractfile(entry).read(); files[str(relative)]=data
+                target=root/label/relative; target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(data)
+            maps[label]=files
+          conflicts=[]; clean=[]
+          for path in sorted(set(maps['base'])|set(maps['main'])|set(maps['branch'])):
+            b=maps['base'].get(path); m=maps['main'].get(path); a=maps['branch'].get(path)
+            if m==b or m==a: continue
+            if a==b:
+              print('MAIN_ONLY',path); continue
+            if None in (b,m,a):
+              conflicts.append(path); print('STRUCTURAL_CONFLICT',path); continue
+            merged=subprocess.run(['diff3','-m',str(root/'branch'/path),str(root/'base'/path),str(root/'main'/path)],capture_output=True)
+            if merged.returncode>1: raise RuntimeError('diff3 failed for '+path)
+            if merged.returncode==1:
+              conflicts.append(path); print('\nCONFLICT_FILE',path)
+              lines=merged.stdout.decode().splitlines(); inside=False
+              for i,line in enumerate(lines):
+                if line.startswith('<<<<<<<'): inside=True
+                if inside: print(str(i+1)+': '+line)
+                if line.startswith('>>>>>>>'): inside=False
+            else:
+              clean.append(path); print('CLEAN_MERGE',path)
+          print('\nCONFLICTS',conflicts)
+          print('CLEAN_MERGES',clean)
+          PY
