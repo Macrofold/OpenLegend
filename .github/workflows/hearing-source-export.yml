@@ -1,0 +1,32 @@
+name: Hearing source export
+on:
+  push:
+    branches: [feat/hearing-speech-captions]
+    paths: [.github/workflows/hearing-source-export.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Export source archive and frozen dependencies
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -eu
+          mkdir /tmp/hearing-workspace
+          curl --fail --location --retry 2 "https://api.github.com/repos/Macrofold/OpenLegend/tarball/$SOURCE_SHA" -o /tmp/source.tar.gz
+          tar -xzf /tmp/source.tar.gz -C /tmp/hearing-workspace --strip-components=1
+          cd /tmp/hearing-workspace
+          corepack enable
+          pnpm install --frozen-lockfile
+          tar -czf /tmp/hearing-workspace.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hearing-current-workspace
+          path: /tmp/hearing-workspace.tar.gz
+          retention-days: 1
