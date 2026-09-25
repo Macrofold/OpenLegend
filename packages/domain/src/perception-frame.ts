@@ -12,6 +12,7 @@ interface Source {
   position: Position;
   height: number;
   eyeHeight: number;
+  bodyRadius: number;
   radius: number;
   alive: boolean;
   memory: boolean;
@@ -79,6 +80,7 @@ function captureSource(world: WorldState, value: Entity): Source {
     position: plain(entity.position),
     height: body.height,
     eyeHeight: body.eyeHeight,
+    bodyRadius: body.radius,
     radius: entity.actor ? visionRadius(world, entity) : 0,
     alive: !!entity.actor?.alive,
     memory: hasMemory(entity),
