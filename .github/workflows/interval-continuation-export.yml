@@ -1,4 +1,4 @@
-name: Interval common-base inputs
+name: Interval completion inputs
 on:
   push:
     branches: [feature/spatial-world-3d]
@@ -8,27 +8,56 @@ permissions:
 jobs:
   export:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: c466b63f818021a6cd65d0809b94f220cce642d4
+          ref: 476c534c15a920c1ccdfeead5b7b60564e089c93
+          path: spatial
           persist-credentials: false
-      - name: Package common-base source without credentials
+      - uses: actions/checkout@v4
+        with:
+          ref: 03105fed9209c126e4e69e9faeb4687f42d1e74a
+          path: current-main
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: f1ee3ffb799239888eb0e8e025cf4f5193e50198
+          path: hearing
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: spatial/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile
+        working-directory: spatial
+      - name: Package source and pinned dependencies without credentials or saves
         run: |
           python3 - <<'PY'
-          import os,pathlib,zipfile
+          import os,pathlib,zipfile,tarfile
           root=pathlib.Path.cwd()
-          with zipfile.ZipFile(pathlib.Path(os.environ['RUNNER_TEMP'])/'common-base.zip','w',zipfile.ZIP_DEFLATED) as z:
-              for directory,dirs,files in os.walk(root):
-                  dirs[:]=[d for d in dirs if d not in ('.git','node_modules','dist') and not d.startswith('.data')]
-                  for f in files:
-                      p=pathlib.Path(directory)/f
-                      if not p.is_symlink() and (not f.startswith('.env') or f.endswith('.example')):
-                          z.write(p,p.relative_to(root))
+          with zipfile.ZipFile('/tmp/interval-completion-source.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for folder in ('spatial','current-main','hearing'):
+                  for directory,dirs,files in os.walk(root/folder):
+                      dirs[:]=[d for d in dirs if d not in ('.git','node_modules','dist') and not d.startswith('.data')]
+                      for f in files:
+                          p=pathlib.Path(directory)/f
+                          if not p.is_symlink() and (not f.startswith('.env') or f.endswith('.example')):
+                              z.write(p,p.relative_to(root))
+          with tarfile.open('/tmp/interval-completion-dependencies.tar.gz','w:gz') as t:
+              for directory,dirs,files in os.walk(root/'spatial'):
+                  if 'node_modules' in dirs:
+                      p=pathlib.Path(directory)/'node_modules'
+                      t.add(p,arcname=p.relative_to(root/'spatial'))
+                      dirs.remove('node_modules')
+                  dirs[:]=[d for d in dirs if d!='.git' and not d.startswith('.data')]
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: interval-common-base
-          path: ${{ runner.temp }}/common-base.zip
+          name: interval-completion-inputs
+          path: |
+            /tmp/interval-completion-source.zip
+            /tmp/interval-completion-dependencies.tar.gz
           retention-days: 2
