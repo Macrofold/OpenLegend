@@ -193,3 +193,11 @@ Measure spend per accepted and actually usable result, time to usable fallback, 
 Admission-time cost is not the whole product cost. Retention, serving, native simulation, review labor, and downstream cognition may dominate a frequently used mechanic. Report unmeasured components rather than label them free.
 
 Numeric caps, confidence thresholds, population fixtures, and quality policies must be explicit versioned deployment settings with measured qualification before enablement. This design establishes the ownership and enforcement rules, not unsupported dollar or latency guarantees.
+
+## Native worker and run allocation
+
+The native World Agent adapter quotes its model-run allowance from current session exposure and any **additional** worker allocation before reserving the run. Use the same scoped attempt ledger projection as the owner session view. Existing worker identity, the retained worker-creation body, its compute receipt and recovery marker determine whether another allocation is actually required; a configured amount alone is insufficient. An already-accounted uncertain allocation stays counted but is not reserved again, including when its operational marker was lost.
+
+The quote leaves room for new compute and caps both the model reservation and outbound provider limit at the same conservative integer-microdollar amount. A session that can cover only compute admits no model run. Reused compute does not consume another allowance. Existing actor-month and session atomic reservations remain the authority: the preflight is advisory, outside the world writer, and concurrent spending can still cause a later reservation to fail safely. It does not raise a cap, refund uncertainty, create a wallet, or automatically replace/renew a worker.
+
+Current implementation coordinates native run and worker funding only. Actual provider caps, cross-world payer limits, long-month accounting scaling and image-job integration remain separately qualified work. When image generation is implemented, it joins this same session envelope; no new art allowance is implied and an agent run must not reserve all available funds needed for its own authorized child work. [Runtime evidence](verification/workshop-transport-funding.md) distinguishes local ledger and synthetic transport observations from live billing.
