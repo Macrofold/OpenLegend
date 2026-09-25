@@ -707,6 +707,7 @@ Manual isolated runtime execution with the actual WorldService, response admissi
 One live direct `gpt-5.6-luna` call answered a name question with “My name is Ada.” and `selfIntroduction: Ada`. The production bound schema and native response admission accepted it; the player’s projected name became Ada. Usage was 4,514 input and 73 output tokens; estimated cost $0.00121595, no uncertain completion or retry. This is one behavioral example, not broad language-quality qualification.
 
 A synthetic speech-fan-out exercise (12 executions per mode/population) measured plain/introduction median 2.47/3.30 ms with 25 additional listeners and 13.79/19.52 ms with 200. The introduction maximum at 200 was 146.23 ms under concurrent workspace load. This isolates native event reception, not end-to-end simulation or provider throughput. The isolated browser walkthrough was unavailable: IPv6 loopback was blocked by the browser and a separate-browser connection timed out. Server projection and persistence were executed directly. Production TypeScript/Vite build, generated-config validation, focused formatting and documentation link checks passed; the existing bundle-size warning remains. No automated tests were authored or run; deferred cases are in TODO. Local evidence: `/tmp/ol-introductions-runtime.log` and `/tmp/ol-introductions-provider.log`.
+
 ## Hearing runtime and performance
 
 Scope: the feature branch's schema-10 hearing/captions/World Events implementation. No automated tests or test files were written or run. Paid provider spending was $0. Production-only `npm run build` completed, including TypeScript and Vite; Vite retained its large-bundle warning. Full repository checks that invoke existing test suites were intentionally not run.
@@ -725,10 +726,10 @@ Browser navigation to the local game failed with `ERR_BLOCKED_BY_ADMINISTRATOR`;
 
 Node v22.16.0, same container, seed 73, 180 native one-second steps, warmup 0, requested speed 3×. The existing `gems.json` adds 500 ground objects (514 total entities); `mixed.json` adds 10 people, 20 animals and 300 objects (344 entities). Baselines were captured before the feature's runtime changes; final samples include the committed native logic and shared source tokenization. Times below are baseline / final, in milliseconds.
 
-| Scenario | Total ms | p95 step ms | Maximum step ms | Native headroom at 3× |
-| --- | ---: | ---: | ---: | ---: |
-| gems | 1153.7 / 1192.1 | 8.05 / 8.29 | 126.7 / 115.1 | 0.87 / 0.84 |
-| mixed | 1556.5 / 1588.5 | 5.63 / 5.94 | 879.1 / 901.4 | 0.64 / 0.63 |
+| Scenario |        Total ms | p95 step ms | Maximum step ms | Native headroom at 3× |
+| -------- | --------------: | ----------: | --------------: | --------------------: |
+| gems     | 1153.7 / 1192.1 | 8.05 / 8.29 |   126.7 / 115.1 |           0.87 / 0.84 |
+| mixed    | 1556.5 / 1588.5 | 5.63 / 5.94 |   879.1 / 901.4 |           0.64 / 0.63 |
 
 An intermediate pair varied in the other direction (gems 1085.6 ms, mixed 1631.4 ms); these are short, noisy samples, not statistically established gains or regressions. Final event/awareness counts agree with the baseline for both existing scenarios. Maximum steps include dense first exposure. Both scenarios remain below 1.0 native headroom at the requested 3× speed, even before database/browser/inference work, so this is not a capacity pass.
 
@@ -748,10 +749,10 @@ A freshly emitted, partially understood unknown voice retained exactly the same 
 
 An in-memory SQLite dataset contained 100,000 synthetic global events, 2,000 perspectives for one actor, and 100 speech perspectives for that actor. The same dataset was queried before and after adding the perspective-order/type indexes; newest-page medians use 15 reads of 50 rows. Complete keyset traversal returned exactly the same 2,000 All and 100 Speech records without duplicates.
 
-| Query | Before median ms | Reviewed median ms |
-| --- | ---: | ---: |
-| All newest page | 2.280 | 0.452 |
-| Speech newest page | 37.448 | 0.612 |
+| Query              | Before median ms | Reviewed median ms |
+| ------------------ | ---------------: | -----------------: |
+| All newest page    |            2.280 |              0.452 |
+| Speech newest page |           37.448 |              0.612 |
 
 SQLite EXPLAIN changed from the global event-order index to the actor perspective-order/type-order indexes; deep pages included an indexed order ceiling/range seek. The experiment measures read/query planning on synthetic in-memory SQLite, not network/disk latency, production PostgreSQL or end-to-end UI capacity.
 
@@ -759,12 +760,12 @@ SQLite EXPLAIN changed from the global event-order index to the actor perspectiv
 
 Two runs used the same reviewed native domain and the old versus reviewed HistoryRepository writer. The seeded workload added 100 people and 500 objects and committed 250 utterances to at most 102 listeners. Both accepted all utterances and retained 25,765 perspectives. The common native domain means its timing differences are repetition variance, not a before/after native optimization claim.
 
-| SQLite writer | Before | Reviewed |
-| --- | ---: | ---: |
-| Total persistence ms | 1840.44 | 945.16 |
-| Median per commit ms | 7.040 | 3.545 |
-| p95 per commit ms | 12.557 | 5.806 |
-| Maximum per commit ms | 20.452 | 15.657 |
+| SQLite writer         |  Before | Reviewed |
+| --------------------- | ------: | -------: |
+| Total persistence ms  | 1840.44 |   945.16 |
+| Median per commit ms  |   7.040 |    3.545 |
+| p95 per commit ms     |  12.557 |    5.806 |
+| Maximum per commit ms |  20.452 |   15.657 |
 
 This isolates per-actor tail evidence resolution, shared event hashing and the new perspective indexes. It excludes fsync/network, browser and inference. It is a bounded sample, not a production throughput guarantee.
 
@@ -772,10 +773,10 @@ This isolates per-actor tail evidence resolution, shared event hashing and the n
 
 Node 22.16.0, seed 73, 180 one-second native steps, warmup 0, requested speed 3×; the existing gems/mixed scenarios ran in baseline and reviewed worktrees on the same machine.
 
-| Scenario | Before / reviewed total ms | Before / reviewed p95 ms | Before / reviewed maximum ms | Before / reviewed 3× headroom |
-| --- | ---: | ---: | ---: | ---: |
-| 500 added objects | 1174.49 / 1088.19 | 8.751 / 7.083 | 149.25 / 127.77 | 0.851 / 0.919 |
-| 10 people, 20 animals, 300 objects | 1583.64 / 1699.29 | 4.881 / 5.446 | 905.42 / 977.30 | 0.631 / 0.588 |
+| Scenario                           | Before / reviewed total ms | Before / reviewed p95 ms | Before / reviewed maximum ms | Before / reviewed 3× headroom |
+| ---------------------------------- | -------------------------: | -----------------------: | ---------------------------: | ----------------------------: |
+| 500 added objects                  |          1174.49 / 1088.19 |            8.751 / 7.083 |              149.25 / 127.77 |                 0.851 / 0.919 |
+| 10 people, 20 animals, 300 objects |          1583.64 / 1699.29 |            4.881 / 5.446 |              905.42 / 977.30 |                 0.631 / 0.588 |
 
 Event/awareness counts matched for each pair: 1024/2048 for gems and 3254/31756 for mixed. Dense first-exposure work remains the dominant maximum step. These short samples move in different directions; no statistically established native gain/regression is claimed. Both are below 1.0 native 3× headroom before database/browser/inference costs. The remaining candidate, fan-out and long-history work stays open under HE/EPR/PF.
 
@@ -793,12 +794,12 @@ Scope: feature branch based on `7ec34d9`, without merging the concurrent main ch
 
 An in-memory SQLite fixture contained 100,000 global events, 2,000 perspectives for one actor, and 100 understood speech perspectives for that actor. The real HistoryRepository transcript path was sampled 11 times for newest pages of 40 items, followed by full explicit pagination. Before / final median milliseconds:
 
-| Transcript mode | Before ms | Final ms | Returned / unique records |
-| --- | ---: | ---: | ---: |
-| Journal | 10.773 | 0.950 | 2000 / 2000 |
-| Talk speech | 54.780 | 0.911 | 100 / 100 |
-| Selected participant | 53.919 | 1.134 | 100 / 100 |
-| Selected conversation | 53.770 | 0.915 | 100 / 100 |
+| Transcript mode       | Before ms | Final ms | Returned / unique records |
+| --------------------- | --------: | -------: | ------------------------: |
+| Journal               |    10.773 |    0.950 |               2000 / 2000 |
+| Talk speech           |    54.780 |    0.911 |                 100 / 100 |
+| Selected participant  |    53.919 |    1.134 |                 100 / 100 |
+| Selected conversation |    53.770 |    0.915 |                 100 / 100 |
 
 Counts and sampled page endpoints matched before/after; no duplicate IDs appeared during traversal. These measurements exclude fixture construction, disk/fsync, networking, PostgreSQL, concurrent narrations and UI cost. They demonstrate removal of the global-history access path in this fixture, not a production throughput guarantee.
 
@@ -816,15 +817,14 @@ Offline Chromium executed the actual SpeechCaptions/ProgressRing code with produ
 
 Node 22.16.0; seed 73; existing gems/mixed scenarios; 180 native one-second steps, warmup 0, requested speed 3x. Native domain sources are unchanged by this review. Final world digests and event/awareness counts matched before/after for each scenario. These short timing samples vary with runtime load; they establish neither a native optimization nor a regression.
 
-| Scenario | Before / final total ms | Before / final p95 ms | Before / final maximum ms | Before / final 3x headroom |
-| --- | ---: | ---: | ---: | ---: |
-| 500 added objects | 2131.64 / 2432.02 | 17.60 / 21.42 | 273.37 / 290.42 | 0.469 / 0.411 |
-| 10 people, 20 animals, 300 objects | 3069.73 / 3032.23 | 9.24 / 8.70 | 1862.91 / 1866.66 | 0.326 / 0.330 |
+| Scenario                           | Before / final total ms | Before / final p95 ms | Before / final maximum ms | Before / final 3x headroom |
+| ---------------------------------- | ----------------------: | --------------------: | ------------------------: | -------------------------: |
+| 500 added objects                  |       2131.64 / 2432.02 |         17.60 / 21.42 |           273.37 / 290.42 |              0.469 / 0.411 |
+| 10 people, 20 animals, 300 objects |       3069.73 / 3032.23 |           9.24 / 8.70 |         1862.91 / 1866.66 |              0.326 / 0.330 |
 
 Both scenarios remain below 1.0 native headroom at the requested 3x rate, excluding database, browser and inference. Dense first-exposure work remains a bottleneck. A separate native-only burst added 100 people and 500 objects, then committed 250 utterances across 101 NPC speakers cycling whisper/normal/shout: all accepted, 7573.59 ms total, 29.58 ms median, 40.39 ms p95, 75.90 ms maximum, 60.59 MiB final heap. It retained 350 events and 25,636 awareness entries including setup. This is one bounded run, not a sustained capacity pass or a comparison to a different prior fixture.
 
 Remaining qualification stays in [HE05](maintainers/hearing-and-speech.md#he05--runtime-and-performance-qualification): the combined main/feature tree, actual graphical placement, PostgreSQL and concurrency/erasure, live providers, named-save rewind, assistive technology, sustained loads and actor-local indexing invalidation. No old-event migration or re-authoring was added.
-
 
 ## Hearing third review
 
@@ -834,12 +834,12 @@ Scope: the feature branch based on `bdff720`, without merging concurrent main ch
 
 The actual RecallService indexed a synthetic frozen world with 48 NPCs, each holding 512 linguistic and 512 unrelated awareness entries. A counting, non-network vector adapter reported its supplied sources already indexed. After one initial pass, 15 publications changed one NPC's evidence while the other 47 remained unchanged. The same fixture ran against the baseline and reviewed code.
 
-| Measurement | Before | Reviewed |
-| --- | ---: | ---: |
-| Initial actor reconciliations | 48 | 48 |
-| Reconciliations across 15 updates | 720 | 15 |
-| Sources supplied across those updates | 368640 | 7680 |
-| Median update CPU/await time, ms | 159.682 | 2.434 |
+| Measurement                           |  Before | Reviewed |
+| ------------------------------------- | ------: | -------: |
+| Initial actor reconciliations         |      48 |       48 |
+| Reconciliations across 15 updates     |     720 |       15 |
+| Sources supplied across those updates |  368640 |     7680 |
+| Median update CPU/await time, ms      | 159.682 |    2.434 |
 
 This measures source preparation, hashing and mock-call overhead, not SQL, network or provider speed. The completed actor cache and direct linguistic projection remove most work for unchanged NPCs in this fixture; roster checks remain linear in the number of actors. Separate executions showed that one actor's corrections/forgetting invalidated only that actor, generation replacement reconsidered both fixture actors, and removed actors left neither completion nor attempt state. Mutable-state and larger fleet qualification remains deferred.
 
@@ -867,15 +867,14 @@ Seven transport invocations in this observation were in-memory fixture functions
 
 Node 22.16.0, seed 73, existing gems/mixed scenarios, 180 one-second native steps, warmup 0, requested speed 3x. Baseline and reviewed worktrees ran sequentially on the same machine. Final world digests and event/awareness counts matched for each pair: 1024/2048 for gems and 3254/31756 for mixed.
 
-| Scenario | Before / reviewed total ms | Before / reviewed p95 ms | Before / reviewed maximum ms | Before / reviewed 3x headroom |
-| --- | ---: | ---: | ---: | ---: |
-| 500 added objects | 1533.92 / 1462.35 | 11.09 / 10.86 | 164.50 / 151.90 | 0.652 / 0.684 |
-| 10 people, 20 animals, 300 objects | 2108.20 / 2238.72 | 7.82 / 7.46 | 1177.29 / 1271.93 | 0.474 / 0.447 |
+| Scenario                           | Before / reviewed total ms | Before / reviewed p95 ms | Before / reviewed maximum ms | Before / reviewed 3x headroom |
+| ---------------------------------- | -------------------------: | -----------------------: | ---------------------------: | ----------------------------: |
+| 500 added objects                  |          1533.92 / 1462.35 |            11.09 / 10.86 |              164.50 / 151.90 |                 0.652 / 0.684 |
+| 10 people, 20 animals, 300 objects |          2108.20 / 2238.72 |              7.82 / 7.46 |            1177.29 / 1271.93 |                 0.474 / 0.447 |
 
 These short native timings vary in both directions; the pure awareness projection extraction preserves outcomes and is not a claimed native optimization. Both scenarios remain below 1.0 native 3x headroom before database/browser/inference work. Dense first-exposure and required recipient fan-out remain EPR/PF limits, not solved by skipping optional background indexing.
 
 [HE05](maintainers/hearing-and-speech.md#he05--runtime-and-performance-qualification) retains combined-main, graphical, PostgreSQL, live-provider, named-save, accessibility and sustained-load qualification. The [TODO](maintainers/TODO.md#hearing-third-review--deferred-regression-coverage) records automated regression cases. This review adds no historical-event migration or re-authoring policy.
-
 
 ## Walking under consolidation pressure
 
@@ -898,3 +897,58 @@ Production build and generated configuration checks passed, with the existing br
 Manual native execution in an isolated touch-demo world verified that a character 0.8 world units from a campfire has neither physical contact nor a perceived campfire contact. At the 0.48-unit combined body-radius edge and at overlapping ground positions, physical contact and the emitted contact agree. The shared physical check accepts resting on the object's 0.7-unit top and rejects a 0.01-unit air gap above it. These use the current generic object cylinder, not artwork or a flame mesh. In-place upgrade changed an old proximity descriptor to body contact, cleared its stale contact and passed current world validation.
 
 Twelve independent native steps with 25/100/250 nearby but non-touching synthetic objects produced zero contacts, with medians 4.99/11.01/23.50 ms and maxima 6.58/40.94/27.99 ms. This is a native-only stress exercise without persistence, browser load or AI; it is not matched evidence of a walking speed improvement. Production build passed with existing bundle warnings. No automated suites or paid calls were run. Remaining coverage is in [TODO](maintainers/TODO.md#physical-contact-correction); local evidence is `/tmp/ol-body-contact.log`. Earlier dense-contact measurements describe the retired proximity semantics.
+
+## Hearing 8x runtime qualification
+
+Scope: continued qualification from `9766841`, already integrated with main through `03105fed9209c126e4e69e9faeb4687f42d1e74a` and the `fdcbd31` guidance update. Integration preserved branch checkpoints with connector-published merges, not a force-rebased linear history. This pass changed native profiling, ray-bound setup, receiver geometry reuse and native supply lookup. No manual automated suite or test file was written/run; normal repository CI was left enabled. Paid provider spending was $0. Node 22.16.0, one shared container; raw profiles and disposable databases were kept outside the repository.
+
+### Real native execution measurements
+
+The existing profiler supports `execution: native-slice` in addition to its reference one-second path. Warm-up and duration count actual consumed simulated seconds. It reports slice sizes/counts and whole-call latency; setting `speed: 8` alone never accelerates the benchmark or proves the server keeps up. The committed `scripts/performance/scenarios/mixed-8x.json` supplies a repeatable 2,400-second native workload. Native headroom excludes SQL, publication, providers and graphics.
+
+A 344-entity mixed scenario (10 added people, 20 animals and 300 objects, seed 73) completed 2,400 simulated seconds in 3,930.0 ms before the small optimizations in this pass: 610.7 simulated seconds/wall second, or 1.27 native headroom against the required 480. This includes cold initial exposure. A separate 434-entity scene with 100 added people, 20 animals and 300 objects did not qualify: 960 simulated seconds took 7,688.2 ms before scalar ray setup and 7,410.3 ms afterward, with the same final world digest. Dense visual discovery and status work dominate this case; a 1.1-second cold slice remains. These are short matched samples, not a general population guarantee.
+
+### Geometry work without disclosure changes
+
+An ad-hoc bound-query experiment compared 400,000 original/new classifications including upright-body expansion, parallel/zero-length and boundary cases. Both returned the same 5,286 hits with zero differences; measured old/new query time was 48.35/16.18 ms. Scalar setup is bound once per segment, while division/epsilon arithmetic and exact halfspace tests are unchanged. This is not exhaustive geometric qualification.
+
+The receiver experiment used 100 added people, 20 animals and 500 objects, with 501 immutable snapshots that changed only actor energy and three voice modes per snapshot. All 1,503 candidate queries returned identical ordered-ID digests. Total old/new time was 845.13/112.85 ms; median three-query pass 1.425/0.185 ms, p95 2.593/0.358 ms. One hundred additional mutable/frozen pose, hearing-binding and memory-membership variants also matched. The index retains geometric inputs/IDs, rebinds current entities, and does not cache live hearing permissions or linguistic evidence.
+
+### Evolving-world bottleneck and correction
+
+A first 60-second disk-backed server run at the requested 8× slowed after food supplies were depleted. It advanced 29,018 simulated seconds in 68,200.6 wall ms including its final drain: 7.09×. Only 193 of the scheduled 480 utterances were delivered because the diagnostic driver awaited an overloaded tick. A final empty debt queue therefore did not mean that this run passed.
+
+Profiling the saved evolved scene identified native hunger fallback repeatedly enumerating/proxying every scenery object for every hungry NPC. A resource-definition index in the existing native participant roster preserves live quantity, visibility, nearest-target order and approach checks while removing that scan. Advancing the identical evolved world by another 2,400 simulated seconds took 14,031.9 ms before and 3,954.3 ms afterward (171.0/606.9 simulated seconds per wall second). The entire final-world digest and 4,679-event/7,988-awareness counts matched. No survival or hearing rule was relaxed.
+
+### Disk-backed accelerated-play envelope
+
+The corrected run used the actual `WorldService`, native `executeCommand`, disk-backed SQLite transactions, heartbeat, real elapsed-time `tick` calls and `projectView` plus full JSON serialization. It contained 344 entities with 11 NPC speakers. Eight roughly 100-character utterances were offered per real second, rotating whisper/normal/shout. No model provider or browser was involved. The driver targeted 50 ms updates and awaited each tick/publication; offered versus delivered speech is reported explicitly rather than hidden by this scheduling constraint.
+
+| Measurement                               |                     Corrected run |
+| ----------------------------------------- | --------------------------------: |
+| Wall duration including final drain/flush |                       60,060.3 ms |
+| Actual simulated time advanced            | 28,806 seconds (8.002 game hours) |
+| Effective multiplier                      |                           7.9936× |
+| Offered / accepted utterances             |                         480 / 480 |
+| Public full-view projections/encodings    |                             1,077 |
+| Final admitted simulation debt            |           0.731 simulated seconds |
+| Speech transition median / p95 / maximum  |        5.791 / 8.172 / 135.302 ms |
+| Tick-call median / p95 / maximum          |      41.187 / 57.857 / 274.957 ms |
+| Public projection+encoding median / p95   |                  6.138 / 8.001 ms |
+| Final heap / storage error                |                   102.3 MB / none |
+
+This run kept up with 8× to timer/flush granularity and delivered every offered utterance through the depleted-food period. Full-view JSON totaled 239.5 MB; this is not actual SSE network traffic because the driver encoded full views rather than patches. Tick timings include multiple internal yielding slices, not one uninterrupted event-loop block. Cold stalls and final heap are observations, not frame-latency or leak certification. Longer sessions, independent concurrent producers, slow clients, actual AI, PostgreSQL and graphics remain separate gates.
+
+The maintained `scripts/stress-hearing.ts` driver repeated the 60-second, 10-added-person, eight-utterance workload using its documented CLI. It accepted all 480 scheduled utterances and advanced 28,804 simulated seconds in 60,079.6 wall ms (7.9905×), with 0.683 simulated seconds of remaining debt and no storage error. Speech p95 was 9.249 ms; final heap was 74.7 MB. Its separate five-second smoke run accepted all 40 scheduled utterances. The repeat supports the bounded envelope while demonstrating normal host/timer variance; it does not add a graphical or larger-population claim.
+
+### Concentrated hearing and durable evidence
+
+A separate native speech plus disk-SQLite burst contained 614 entities, including 101 NPC speakers and 500 added objects. All 400 utterances committed, delivering 34,799 listener perspectives (38,718 total awareness entries including setup) in 4,066.1 ms. Median/p95/maximum speech transaction latency was 9.164/12.524/212.276 ms; final heap 104.7 MB and no storage error. Voice modes rotated without recipient truncation. This isolates audible delivery/persistence throughput; no native time advanced, so it is not an 8× full-world population pass.
+
+### Build and static checks
+
+The generated-status configuration check, production TypeScript and Vite build completed successfully. Full-repository typechecking reports exactly the same 168 diagnostics as the pinned pre-pass snapshot, all in existing test/fixture sources; no test files were edited and no suite was run to hide this baseline failure. The checkout-dependent agent-guidance checker could not run from the source archive because it requires a Git index; this is not a claimed passing guidance check. A separate filesystem link/anchor audit covers changed documentation. Normal repository CI remains unchanged.
+
+### Remaining qualification
+
+The 344-entity disk-backed result does not close the 100-person dense full-native case. [HE05](maintainers/hearing-and-speech.md#he05--runtime-and-performance-qualification), PF03 and SW08 retain dense discovery/status cost, cold-tail responsiveness, sustained history and independent producer qualification. The prior fixed-anchor DOM checks do not establish real PlayCanvas/camera performance. New automated regression cases are in [TODO](maintainers/TODO.md#hearing-8-runtime--deferred-regression-coverage). No historical event remasking, audio-recipient pruning, asynchronous uncommitted speech or alternate writable world state was introduced.
