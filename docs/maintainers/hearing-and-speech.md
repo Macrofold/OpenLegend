@@ -6,6 +6,22 @@ Focused implementation plan for [Hearing and speech](../hearing-and-speech.md), 
 
 Do not write or run automated tests for this requested pass. Future automated cases live only in [TODO](TODO.md#hearing-captions-and-perceived-events--deferred-validation). Production build, manual execution and native stress profiling are distinct from automated suites and are required during gameplay implementation. Do not claim live model quality from native fixtures. The total paid authorization is $10 for the task, not per agent/provider; start with zero paid calls.
 
+## Recovery checkpoint and next execution
+
+Resume on `feat/hearing-speech-captions` from `9964c18bb00d4279c8a848a74a0173490e51190d` or a newer verified branch head. Main was integrated through `03105fed9209c126e4e69e9faeb4687f42d1e74a`, including the `fdcbd31` guidance; compare current refs before integration. Use the GitHub connector for all Git actions, commit coherent progress at least every five minutes, and leave main untouched. Read applicable AGENTS and review/performance/documentation rules before implementation.
+
+The current evidence is [the cache-review annex](../verification/hearing-cache-review.md), not an uncommitted workspace or an interrupted assistant claim. The cache-overflow fix and independent speech producer are committed. The proposed native mutable-entity ownership shortcut was **not** published or qualified; do not assume it is implemented. Fresh host evidence failed whole-runtime 8× despite accepting all scheduled speech. This gate remains open.
+
+Execution order under existing **HE05 / PF03 / SW08** (task criteria remain below and in [the performance tracker](performance.md#pf03--native-cpu-and-incremental-admission)):
+
+1. Reconstruct and verify the current source, then repeat the mixed native-slice and independent speech/disk workloads on the same runtime. Record actual offered demand, consumed simulated time, tail latency and debt; separate cold/warm and native/server measurements.
+2. Attribute the status-condition/rate and snapshot/finalization costs. Remove redundant interpretation, allocation or patch generation only with dependency-correct reuse and preserved mutation ownership. Do not introduce an unmeasured mutable-entity fast path or move authoritative effects outside their commit.
+3. Exercise each retained change on matching reference/native-slice inputs and meaningful boundary cases: effect activation/deactivation, nested commands, movement, speech admission, recipients, ordering, RNG, and immutable parent/fork snapshots. Revert regressions; a final-state timing alone does not qualify intermediate semantics.
+4. Repeat the disk-backed 344-entity workload with eight independently scheduled utterances per wall second at 8×, then the existing dense population case as runtime permits. Unmet input demand, growing debt, excessive blocking or a timeout is a failed gate, not permission to prune legitimate listeners.
+5. Review the final diff and synchronize the canonical owners: `docs/performance.md` for accepted execution semantics, `docs/architecture.md` and `archive/05-project/implementation-status.md` for delivered behavior, this HE tracker plus PF03 for remaining work, and `docs/verification.md` / its linked annex for actual measurements. Add specific missing automated coverage to `docs/maintainers/TODO.md` per this task; do not remove unmet acceptance criteria.
+
+Strict invariants: every committed utterance and eligible listener, event-time intelligibility/privacy, source order, one-second physical evolution, authored status rates and thresholds, atomic persistence, and original-world/fork isolation. Optional derived indexing and visual notices may defer only under their existing policies. No historical utterance remasking, new per-feature save format, CI weakening, automatic world reset, or paid execution is required for this performance pass. Additional machinery or changed gameplay cadence requires a measured need and an explicitly documented tradeoff.
+
 ## Delivery order
 
 ### HE01 — Acoustic policy and rich exposure
@@ -47,7 +63,7 @@ Do not write or run automated tests for this requested pass. Future automated ca
 
 ```sh
 AI_BUDGET_USD=0 node --import tsx scripts/stress-native.ts scripts/performance/scenarios/gems.json /tmp/hearing-gems.cpuprofile > /tmp/hearing-gems-report.json
-AI_BUDGET_USD=0 node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/hearing-mixed.cpuprofile > /tmp/hearing-mixed-report.json
+AI_BUDGET_USD=0 node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/hearing-mixed-report.cpuprofile > /tmp/hearing-mixed-report.json
 ```
 
 - [x] Run a bounded native speech fan-out experiment with 100 added actors, 500 objects and 250 accepted whisper/normal/shout utterances. It measures native transitions, not database, browser or provider capacity. Reusing parsed source words avoids per-listener tokenization; this does not establish a statistically significant latency improvement.
