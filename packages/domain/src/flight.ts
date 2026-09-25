@@ -102,6 +102,38 @@ export class LandingOccupancy {
 
 /** A small native locomotion family: explicit corridors, not free-flight physics or AI per frame.
  * docs/spatial-world.md#flying-creatures. Gravity is a game-time tuning value, not Earth physics. */
+const FALL_ACCELERATION = 0.04,
+  TERMINAL_FALL_SPEED = 3;
+/** Closed-form displacement keeps falling independent of host interval size. */
+function fallingDisplacement(velocity: number, seconds: number): number {
+  const v = Math.max(0, Math.min(TERMINAL_FALL_SPEED, -velocity));
+  const accelerating = Math.min(seconds, (TERMINAL_FALL_SPEED - v) / FALL_ACCELERATION);
+  return (
+    v * accelerating +
+    (FALL_ACCELERATION * accelerating * accelerating) / 2 +
+    TERMINAL_FALL_SPEED * (seconds - accelerating)
+  );
+}
+export function fallingDuration(velocity: number, distance: number): number {
+  if (distance <= 0) return 0;
+  const v = Math.max(0, Math.min(TERMINAL_FALL_SPEED, -velocity));
+  const accelerationTime = (TERMINAL_FALL_SPEED - v) / FALL_ACCELERATION;
+  const accelerationDistance = ((v + TERMINAL_FALL_SPEED) * accelerationTime) / 2;
+  return distance <= accelerationDistance
+    ? (Math.sqrt(v * v + 2 * FALL_ACCELERATION * distance) - v) / FALL_ACCELERATION
+    : accelerationTime + (distance - accelerationDistance) / TERMINAL_FALL_SPEED;
+}
+export function flightSpeed(
+  from: WorldPoint,
+  to: WorldPoint,
+  route: { speed: number; climbSpeed: number },
+): number {
+  const vertical = Math.abs(to.y - from.y),
+    separation = distance3D(from, to);
+  return vertical > 1e-6
+    ? Math.min(route.speed, (route.climbSpeed * separation) / vertical)
+    : route.speed;
+}
 export function advanceFlight(
   world: WorldState,
   entity: Entity,
@@ -123,8 +155,14 @@ export function advanceFlight(
     if (entity.actor) entity.actor.action = null;
   }
   if (state.fallVelocity !== undefined) {
-    const velocity = Math.max(-3, state.fallVelocity - 0.04 * seconds);
-    const destination = { ...entity.position, y: entity.position.y + velocity * seconds };
+    const velocity = Math.max(
+      -TERMINAL_FALL_SPEED,
+      state.fallVelocity - FALL_ACCELERATION * seconds,
+    );
+    const destination = {
+      ...entity.position,
+      y: entity.position.y - fallingDisplacement(state.fallVelocity, seconds),
+    };
     const support = supportBelow(map, entity.position);
     if (support && destination.y <= support.y) {
       setSpatialPosition(entity, support, support.surfaceId);
@@ -152,11 +190,24 @@ export function advanceFlight(
   const from = entity.position,
     to = waypoint.position;
   const separation = distance3D(from, to);
-  const vertical = Math.abs(to.y - from.y);
-  const speed =
-    vertical > 1e-6
-      ? Math.min(route.speed, (route.climbSpeed * separation) / vertical)
-      : route.speed;
+  const speed = flightSpeed(from, to, route);
+  if (seconds === 0 && separation > SPATIAL_LIMITS.epsilon) {
+    // Taking off is a start-boundary transition, not backdated after movement.
+    if (
+      state.supportSurfaceId !== null &&
+      canFlySegment(
+        map,
+        from,
+        interpolate(from, to, Math.min(1, 0.001 / separation)),
+        body,
+        [state.supportSurfaceId, waypoint.landingSurfaceId].filter((id): id is string => !!id),
+      )
+    ) {
+      setSpatialPosition(entity, from, null);
+      emit(world, events, 'takeoff', `${entity.name} took flight.`, entity);
+    }
+    return;
+  }
   const fraction = separation <= 1e-8 ? 1 : Math.min(1, (speed * seconds) / separation);
   const next = interpolate(from, to, fraction);
   const ignoredSupports = [state.supportSurfaceId, waypoint.landingSurfaceId].filter(
