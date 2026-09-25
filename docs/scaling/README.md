@@ -1,40 +1,47 @@
 # Scaling readiness
 
-**Status: current-code audit and planned remediation, not delivered scaling.** Reviewed 25 September 2026 against runtime commit [`03105fed`](https://github.com/Macrofold/OpenLegend/commit/03105fed9209c126e4e69e9faeb4687f42d1e74a). The research branch includes that main revision. No game, provider, failure-injection or load tests were run for this documentation audit.
+**Status: research-derived planning and current-code audit, not delivered scaling.** The runtime audit is pinned to [`03105fed`](https://github.com/Macrofold/OpenLegend/commit/03105fed9209c126e4e69e9faeb4687f42d1e74a), 25 September 2026. Implementation must inspect the then-current branch. No game, paid-provider, load or fault-injection tests were run for this documentation work.
 
 ## Start here
 
-- [Current-code limitations](current-code-audit.md): evidence, growth mechanisms, risky assumptions, existing protections and the work owner for every finding.
-- [Scaling remediation tracker](../maintainers/scaling.md): actionable child work, dependencies and exit evidence; links to existing tasks instead of duplicating them.
-- [Mechanic growth and invention](mechanic-growth.md): how library size, dependency changes and composed runtime effects affect extensibility.
-- [Research dossier](../../archive/02-research/massive-scale/README.md): papers, case studies and architectural alternatives. Its earlier independent-world-first recommendation is not the current product priority.
+| Need | Canonical entry point |
+|---|---|
+| What to do now, before feature growth, before public release, or much later | [Sequence and promotion gates](sequence-and-gates.md) |
+| How the findings affect each feature's architecture | [Feature integration](feature-integration.md) |
+| Where every research chapter is tracked | [Research-to-work coverage](research-coverage.md) |
+| What the current code actually limits | [SCA01–SCA52 audit](current-code-audit.md) |
+| Current cross-cutting implementation work | [SC01–SC16 with specific child tasks](../maintainers/scaling.md) |
+| Full-stack evidence and P3/P4/P5 feature readiness | [SF01–SF18](../maintainers/scaling-feature-readiness.md) |
+| Truly long-term, explicitly deferred work | [LT regional, memory, simulation and operations backlog](../maintainers/scaling-long-term/README.md) |
+| Invention libraries, dependencies and active-rule growth | [Mechanic growth](mechanic-growth.md) |
+| Papers, case studies and alternatives | [Massive-scale dossier](../../archive/02-research/massive-scale/README.md) |
 
 ## Current direction and ownership
 
-The accepted direction is a **shared world divided into regions, with independent worlds also supported**. Implement a correct small authoritative world first, but make its data access and ownership boundaries compatible with regional working sets. Adding independent worlds does not satisfy the main shared-world scaling goal. [Production delivery](../maintainers/production-data.md) retains D0–D6 and their release gates.
+The accepted direction is a **shared world divided into regions, with independent worlds also supported**. Build a correct small authoritative world first while keeping data access and ownership compatible with regional working sets. Independent-world throughput does not qualify the shared-world goal. [Production data](../maintainers/production-data.md) retains D0–D6; [product roadmap](../../archive/05-project/roadmap.md) retains P1–P7.
 
-[Performance](../performance.md) owns cadence and runtime budgets; [production data](../../archive/07-technical-architecture/production-data-model.md) owns records and transactions; [synchronization](../../archive/07-technical-architecture/realtime-synchronization.md) owns the wire protocol; [memory](../memory-architecture.md) and [EPR](../events-perception-and-reactions.md) own knowledge and acquisition. This folder owns the audit and its cross-cutting integration guidance, not replacement versions of those contracts.
+[Performance](../performance.md) owns cadence and runtime budgets; [production records](../../archive/07-technical-architecture/production-data-model.md) owns storage/transaction meaning; [synchronization](../../archive/07-technical-architecture/realtime-synchronization.md) owns the protocol; [memory](../memory-architecture.md) and [EPR](../events-perception-and-reactions.md) own knowledge/acquisition. This folder owns cross-cutting integration and sequencing, not replacement schemas or alternative writable systems.
 
-The SC items are focused child work under the existing phase/subsystem owners. Their detailed task bodies live in one place, the scaling tracker. Findings already covered in detail by EPR02, EPR05, PF08, SW or other tasks point directly there. Do not copy those task bodies into a second backlog.
+SC tasks are specific remediation children; SF tasks are shared scenario/release evidence children; LT tasks are deferred expansion/evaluation children. Existing PF/EPR/SW/CR/AG/INV/EWF/SL/D work stays in its owner. The [coverage map](research-coverage.md) links recommendations to those bodies and has no duplicate checkboxes. Every new or clarified research-derived item is labeled **Massive-scale research** with the relevant chapter and audit finding where applicable.
 
 ## What to do when
 
-**NOW — prevent assumptions spreading.** Bind human identity and control explicitly; use stable world/entity/source identities rather than machine or renderer identity; retain one mutation owner; give routine reads an affected-entity/region or indexed-query scope. Record changed identities at mutation time instead of rediscovering them by scanning growing dictionaries. Preserve scoped evidence, operation receipts and source versions. Address confirmed repeated scans through their existing owners after a short relevant baseline.
+**NOW / G0:** prevent assumptions spreading. Establish authenticated-control context, stable world/entity/source identity, exact units, one mutation owner, affected-record/region query scope and dirty identities. Remove a confirmed unwanted multiplier after a short relevant baseline. This does not require completing public authentication, a global database or a distributed engine before ordinary local features work.
 
-**SOON — before public shared play.** Deliver independent authenticated participants, per-recipient snapshots, bounded request admission, fair agent work, operational records and database-side recall selection. Qualify restart, duplicate requests, stale results, erasure, cold joins and real browser behavior. Ordinary people must not receive local-owner/god access merely because they can connect.
+**SOON / G1:** before the next history/library/population promise, implement consumed operational records and database-first selection, efficient recovery, bounded jobs and applicable-rule/resource queries. Faster JSON remains transitional; it cannot close D1/D2. Native work stays in memory and provider work stays outside transactions.
 
-**LATER — before multiple authorities or large retained datasets.** Qualify regional ownership/fencing, cross-boundary interaction and coherent recovery. Partition physical storage, specialize retrieval or offload kernels only for a demonstrated bottleneck. Global clocks, RNG, ownership and external effects need explicit protocols before parallel execution. Keep the earlier seams useful without deploying every eventual service today.
+**SOON / G2:** before public shared play, deliver independently authenticated humans, recipient-specific views, human-private denial, bounded/fair admission, erasure, recovery/deployment, browser behavior and measured cost. These safeguards apply at external P2 access, not only P6. P3 construction, P4 economy and P5 media have their own feature-specific SF gates.
 
-## Rules this audit must not weaken
+**LATER / G3–G4:** only after an explicit trigger, qualify regional authority, cross-boundary effects/time, physical storage distribution, specialized memory/search, fleet/geography and selected solver/fidelity experiments. The separate LT backlog is not the next-task queue. Promote in place with evidence and authorization, rather than copying tasks into a second tracker.
 
-A work budget is not an arbitrary lifetime content cap. Preserve the accepted removal of small recipe, memory, entity and save-count ceilings. Bound one request, transaction, execution slice, pending queue and active working set through paging, continuation, scheduling and measured admission. Do not silently delete records or prohibit growth to make a benchmark pass.
+## Rules this work must not weaken
 
-A full result can be inherently large. Preserve every legitimate witness and required native outcome; optimize candidate selection and shared work without inventing sensory absence. Incomplete navigation/search is not proof of impossibility. Missing vectors do not mean missing knowledge. A failed or uncertain paid request is not permission to repurchase automatically.
+A work budget is not an arbitrary lifetime content cap. Preserve the removal of small recipe, memory, entity and named-save ceilings. Bound requests, transaction work, execution slices, queues and active working sets through paging, continuation, scheduling and measured admission. Do not delete knowledge or prohibit growth merely to pass a benchmark.
 
-Creator authority does not include human-private messages or character notes. Current local-owner tooling is not evidence of that future shared-world privacy boundary. Physical archives never grant an NPC recall of forgotten, unperceived or otherwise ineligible sources. Save restoration must retain current erasure, permission and external-accounting protections.
+Preserve every legitimate witness and required native outcome. Optimize candidates/shared work without manufacturing sensory absence. Incomplete navigation/search is not proof of impossibility; missing vectors are not missing knowledge. Uncertain paid work is not permission to purchase again automatically.
 
-## How to close a finding
+Creator powers exclude human-private messages and character notes. A creator archive grants no NPC recall of forgotten/unperceived sources. Restoration retains current erasure, permissions and external accounting. No time dilation, cohort approximation, observer-dependent physics or new downtime catch-up is silently accepted.
 
-Inspect the implementation at the new head; preserve existing optimizations; implement through the named semantic owner; exercise the stated failure and workload cases. Record actual evidence in [Verification](../verification.md) and mark only the demonstrated child criterion complete. A table, type, queue library or passing native microbenchmark does not close a public multiplayer, privacy or recovery gate.
+## Closure
 
-This is a broad static review of the named paths, not a proof that every defect in the repository has been found. The audit states where a finding is an observed implementation property, a future-boundary risk, or an unqualified capacity assumption. Re-audit affected callers when a feature changes those assumptions.
+Inspect the new implementation, preserve existing optimizations, exercise the named workload and failure cases, and record actual evidence in [Verification](../verification.md). Close only the demonstrated child; parent release gates remain independent. A table, type, queue library or native microbenchmark does not qualify public multiplayer or million-player scale. The broad static audit does not prove that every possible defect has been found.

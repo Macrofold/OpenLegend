@@ -1,9 +1,9 @@
 # Technical design index
 
-Current implemented architecture is defined in [docs/architecture.md](../../docs/architecture.md). Active implementation work is indexed in [docs/maintainers/README.md](../../docs/maintainers/README.md), and structural history belongs to the [documentation changelog](../../docs/documentation-changelog.md).
+Current implemented architecture is defined in [docs/architecture.md](../../docs/architecture.md). Implementation work is indexed in [docs/maintainers/README.md](../../docs/maintainers/README.md), and structural history belongs to the [documentation changelog](../../docs/documentation-changelog.md).
 
 | Design owner | Scope |
-| --- | --- |
+|---|---|
 | [Spatial world](spatial-world-runtime.md) | Coordinates, physical geometry, navigation, camera and renderer boundary |
 | [World-module runtime](world-module-runtime.md) | Shared host binding, installed composition and subsystem integration |
 | [Context and inference](context-and-inference.md) | Scoped context assembly, routing and execution boundaries |
@@ -21,6 +21,10 @@ Supporting context: [extensibility roadmap](../../docs/extensibility-roadmap.md)
 
 ## Scaling research and implementation follow-through
 
-[Preparing for massive scale](../02-research/massive-scale/README.md) provides a pinned repository audit, annotated papers and MMO case studies, workload arithmetic, and NOW/SOON/LATER guidance. It is informational research, not another accepted specification or implementation tracker. Existing design owners and D0–D6 retain their contracts and acceptance gates.
+[Preparing for massive scale](../02-research/massive-scale/README.md) provides a pinned repository audit, annotated papers and MMO case studies, workload arithmetic and staged guidance. Existing design owners and D0–D6 retain contracts and acceptance; research is not implemented architecture.
 
-[Current-code scaling readiness](../../docs/scaling/README.md) adds the newer 52-finding audit and [SC01–SC16 remediation](../../docs/maintainers/scaling.md), with existing PF/EPR/SW/CR/INV/EWF/SL parent ownership preserved. Consult [mechanic-growth integration](../../docs/scaling/mechanic-growth.md) when extending libraries, selectors, effects, bodies or mutable geometry. The current accepted target prioritizes a region-divided shared world; older independent-world-first research is an alternative, not the product roadmap. None of these documents establishes runtime implementation or capacity evidence.
+[Feature integration](../../docs/scaling/feature-integration.md) maps the findings into identity, data, native time, spatial work, memory, agency, inventions, conversations, rendering/media and operations. [Sequencing](../../docs/scaling/sequence-and-gates.md) distinguishes early seams from growing-world/public-release gates and conditional distribution. [Research coverage](../../docs/scaling/research-coverage.md) maps every dossier chapter to one canonical work owner.
+
+[Current-code readiness](../../docs/scaling/README.md) retains SCA01–SCA52. [SC01–SC16](../../docs/maintainers/scaling.md) now have specific staged children; [SF01–SF18](../../docs/maintainers/scaling-feature-readiness.md) decompose feature/release evidence; D1/D2 records and PF measurements remain in their existing trackers. The [long-term backlog](../../docs/maintainers/scaling-long-term/README.md) separately owns deferred region, memory, simulation and operations tasks, so a future vendor/solver experiment is not mistaken for immediate work.
+
+Consult [mechanic growth](../../docs/scaling/mechanic-growth.md) before expanding libraries, selectors, effects, bodies or mutable geometry. The accepted target prioritizes a region-divided shared world; older independent-world-first research is an alternative, not the product sequence. Preserve source/permission, native fidelity and resource invariants throughout. None of these planning links establishes runtime or capacity evidence.
