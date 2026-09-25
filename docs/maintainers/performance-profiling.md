@@ -1,6 +1,6 @@
-# Native stress profiling
+# Native and full-server profiling
 
-Run disposable, deterministic scenarios through the existing native profiler. This tool never connects to a database or provider, changes a live save, or enables new gameplay mechanics. It is a performance experiment, not an automated correctness test. [Performance tracker](performance.md) owns remaining work; [Verification](../verification.md) owns measured evidence.
+The native-only profiler runs disposable deterministic scenarios without a database or provider. The full-server profiler below explicitly selects a disposable database. Neither changes a live save, enables gameplay mechanics or permits paid dispatch. These are performance experiments, not automated correctness tests. [Performance tracker](performance.md) owns remaining work; [Verification](../verification.md) owns measured evidence.
 
 ## Primary performance baseline
 
@@ -8,7 +8,7 @@ Run disposable, deterministic scenarios through the existing native profiler. Th
 
 SQLite is the local-development fallback. Retain correctness, recovery and lightweight local usability checks, but stop SQLite-specific optimization unless the owner explicitly prioritizes a local-development blocker. The existing SQLite worker is not a production-scaling improvement. Shared native/history optimizations apply to both adapters; their production benefit must be measured on PostgreSQL rather than inferred from SQLite timings.
 
-The full-server script below currently forces disposable SQLite. It is a secondary local benchmark, not the primary baseline, and changing environment variables alone does not turn it into a PostgreSQL run. Extending profiling to an explicitly isolated disposable PostgreSQL database remains PF00 work; never point destructive fixture setup at a live database. The PostgreSQL history-only comparison is repository-path evidence, not full-server qualification. Use the existing [PF00/PF11 tasks](performance.md) for remaining implementation and acceptance; this policy change does not complete those tasks.
+The full-server script now accepts an explicit `OPEN_LEGEND_PROFILE_POSTGRES_URL` for a loopback development PostgreSQL service. It creates a uniquely named database for each run; it never resets or profiles the database named by that administrative URL, and never inherits `OPEN_LEGEND_DATABASE_URL`. Without the profiling URL it uses disposable SQLite. The PostgreSQL history-only comparison remains repository-path evidence, not full-server qualification. Use the existing [PF00/PF11 tasks](performance.md) and [AR integration tracker](action-reconciliation.md) for remaining work; a working profiler does not complete capacity acceptance.
 
 ## Native CPU isolation
 
@@ -40,14 +40,25 @@ This first version excludes real-time clock debt, database commits, browser fram
 
 ## Full-server workload
 
-**Secondary local benchmark:** run a generated, disposable scene through the real server timer, SQLite, SSE and a separate-process client. See the [primary baseline](#primary-performance-baseline) before using these results to prioritize production work.
+Run a generated disposable scene through the real server timer, durable commands, SSE and a separate-process client. SQLite is the secondary local default; explicitly select PostgreSQL for the primary baseline.
 
 ```sh
 pnpm run build
 node --import tsx scripts/performance/profile-server.mjs scripts/performance/scenarios/mixed.json /tmp/openlegend-server-report.json 15 1,3,8
 ```
 
-The output path must be new. The duration accepts 5–60 seconds per phase; supported requested speeds are 1, 3 and 8. An optional final argument sets the command interval to 25–1,000 ms (default 500); `... 60 1 25` requests a one-minute high-command-count run, and `... 30 8 25` a shorter accelerated run. Report successful counts and rejected/skipped requests, not just the requested rate. Setup creates a private temporary data directory, populates a generated scenario with the timer disabled, then restarts the same world for actual timed measurement. User-save inputs are rejected. The profiler removes only its own temporary directory and disables all paid dispatch. It is not a PostgreSQL, browser, hosted-player or live-cognition benchmark.
+For PostgreSQL, use a disposable loopback service with `pgvector` installed and a role allowed to create databases and install the extension. For example, against a local service you already started:
+
+```sh
+OPEN_LEGEND_PROFILE_POSTGRES_URL='postgres://review:review@127.0.0.1:5432/postgres' \
+  node --import tsx scripts/performance/profile-server.mjs scripts/performance/scenarios/mixed.json /tmp/openlegend-postgres-report.json 15 1,3 25
+```
+
+The example credentials are for a disposable local service, not production. Only PostgreSQL URLs with host `127.0.0.1`, `localhost` or `[::1]`, without query/fragment overrides, are accepted. The helper creates `openlegend_profile_<random-id>`, runs both setup and restarted measurement on that database, then drops only that successfully created database. It never force-drops databases or terminates other sessions. The report identifies the adapter, loopback topology, server version and generated database name without storing the administrative URL or password. A failed cleanup is a nonzero result; the generated name identifies any resource requiring manual inspection. Remote topology benchmarking needs a separately reviewed safe fixture mechanism, not bypassing this guard.
+
+The profiler retains its own store through server startup so a failed initialization can close the connection/worker even before `createGameServer` returns a server handle. This does not fix the general factory's ownership gap for other callers; [AR07](action-reconciliation.md) remains separate. The current adapter initializes vector storage even when inference is disabled: plain PostgreSQL without `pgvector` is an initialization-failure workload, not a gameplay performance result. Keep a hard external deadline for manual profiling because native CPU work or broader shutdown failures can still prevent timely completion.
+
+The output path must be new. The duration accepts 5–60 seconds per phase; supported requested speeds are 1, 3 and 8. An optional final argument sets the command interval to 25–1,000 ms (default 500); `... 60 1 25` requests a one-minute high-command-count run, and `... 30 8 25` a shorter accelerated run. Report successful counts and rejected/skipped requests, not just the requested rate. Setup creates a private temporary data directory, populates a generated scenario with the timer disabled, then restarts the same world for actual timed measurement. User-save inputs are rejected. The profiler removes only its own temporary directory and disables all paid dispatch. PostgreSQL mode exercises that real adapter; neither mode qualifies browser rendering, hosted multiplayer or live cognition.
 
 A separate process reads state at 4 Hz, submits short move/cancel intentions at the selected interval (2 Hz by default), consumes SSE, and sends presence heartbeats every 3 seconds. Each request lane has bounded concurrency. The report separates rejected requests, errors, request-scheduling lateness and skipped intervals from successful command latency; it cannot silently count an ungenerated request as success. SSE reports bytes/chunks, not browser render completion.
 
@@ -55,4 +66,10 @@ The first phase includes acquisition after ordinary bootstrap. Later phases reus
 
 Report nominal elapsed-time achieved speed together with admitted/requested clock counters, pending debt and excluded gaps. Pending debt excludes elapsed wall time that an in-progress timer operation has not yet admitted. Existing >2-second callback-gap detection can misclassify long synchronous persistence as absence; the dense case does not qualify that boundary. Metric totals/counts are phase deltas, while `cumulativeMaxMs` is explicitly since startup. Keep initial presence-expiry runs separate from continuous-presence capacity evidence.
 
-The short high-command-count SQLite cases and PostgreSQL history-only exercise have [recorded evidence](../verification.md#dense-persistence-implementation). Long soaks, repeated independent percentile cases, genuine multiple players, slow consumers, full PostgreSQL server, browser rendering and no-network cognition/maintenance fixtures remain PF00/PF11 acceptance work. Phase heap usage is the main JavaScript isolate, not total process memory; `rssBytes` includes resident memory across threads, and the SQLite worker reports its own sampled heap gauge. None of these phase-end values is a measured peak.
+The short high-command-count SQLite cases and PostgreSQL history-only exercise have [recorded evidence](../verification.md#dense-persistence-implementation). The [action reconciliation observations](../verification/action-reconciliation.md) separately record current-source full-server PostgreSQL diagnostics and their failed throughput/dense-tail targets. Long soaks, repeated independent percentile cases, genuine multiple players, slow consumers, remote database topology, browser rendering and no-network cognition/maintenance fixtures remain PF00/PF11 acceptance work. Phase heap usage is the main JavaScript isolate, not total process memory; `rssBytes` includes resident memory across threads, and the SQLite worker reports its own sampled heap gauge. None of these phase-end values is a measured peak.
+
+## Contact candidate isolation
+
+`createPerceptionFrame` builds its optional physical-contact grid from current maximum body radius/height rather than the 28-unit vision cell size. The query still includes conservative horizontal and vertical body extent, preserves source order and performs the unchanged exact overlap/barrier checks. No contact count, physical range or sensory authority is reduced. Frame construction still samples the world; this is not a persistent regional index or a fix for general million-player scaling.
+
+Compare matched generated worlds with contact explicitly granted, fixed native steps and ordered contact/event/final-world digests before discussing throughput. The bundled default senses are sight/hearing, so a contact-only improvement cannot explain speed changes in an ordinary sight-only PostgreSQL workload. Dense coincident bodies still require proportional legitimate contact work. The [recorded contact experiment](../verification/action-reconciliation.md#physical-contact-candidate-experiment) reports isolated timings separately from database and real-timer measurements; existing [physical contact coverage](TODO.md#physical-contact-correction) remains deferred.
