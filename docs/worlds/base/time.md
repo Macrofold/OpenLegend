@@ -12,6 +12,8 @@ The first implementation chooses one global minimum interval. One fast mover can
 
 Native wandering retains each animal's saved countdown and a bounded 0.4-metre non-emitting impulse. Deadline/identity ordering governs due random choices. The sixty-second horizon is shorter than the minimum renewed wandering wait; callback partitioning must not discard the remaining wait or redraw solely on reload. Impulse observation is sampled, not full continuous crowd locomotion.
 
+A blocked native flyer holds its current position and retries at the next shared five-game-second boundary, using its existing saved wait. Collision and landing occupancy are checked again then. This avoids continuous near-zero retry at an occupied perch; it does not guarantee fair contention, search for another perch, or react immediately to a just-freed destination. Those are revisitable SW12/PF13 capabilities, not a reason to drop collision checks. Numerical waypoint/wait residue is resolved within existing spatial/time tolerances through the same validated arrival path. Many independent flight boundaries still expose the global scheduler's scaling limit.
+
 The current separate-clamp composition falls back to at most one game second for opposing status rates and coupled native reservoir/fullness rates. That conservative fallback preserves the existing operation ordering; it is not a general analytic solution for arbitrary coupled or nonlinear authored rules. Add a family-owned integrator/bound before relaxing it.
 
 ## Precision and presentation
