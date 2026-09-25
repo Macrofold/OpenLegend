@@ -76,3 +76,24 @@ export interface WorldAgentReviewView {
     base: unknown;
   };
 }
+
+export interface WorldAgentAvailability {
+  configured: boolean;
+  reason: string;
+  sessionAllowanceUsd: number;
+}
+export interface WorldAgentSessionSummary {
+  sessionId: string;
+  title: string;
+  createdAt: number;
+  closed: boolean;
+  available: boolean;
+}
+export interface WorldAgentSessionCursor {
+  createdAt: number;
+  id: string;
+}
+export interface WorldAgentSessionStatus {
+  data: WorldAgentSessionView | null;
+  availability: WorldAgentAvailability;
+}

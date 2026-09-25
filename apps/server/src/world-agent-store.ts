@@ -16,6 +16,7 @@ export interface AgentSession {
   principal: string;
   credential: string;
   contextHash: string;
+  title?: string;
   createdAt: number;
   expiresAt: number;
   closed: boolean;
@@ -42,12 +43,26 @@ export class WorldAgentStore {
       CREATE INDEX IF NOT EXISTS world_agent_world ON world_agent_sessions(world_id,id);
       CREATE INDEX IF NOT EXISTS world_agent_active ON world_agent_sessions(world_id,id)
         WHERE json_extract(payload,'$.activeTurn') IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS world_agent_owner_order
+        ON world_agent_sessions(world_id,json_extract(payload,'$.principal'),json_extract(payload,'$.createdAt'),id);
       CREATE TABLE IF NOT EXISTS world_agent_records (
         session_id TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL, payload TEXT NOT NULL,
         PRIMARY KEY(session_id,kind,id));
       CREATE INDEX IF NOT EXISTS world_agent_turn_order
         ON world_agent_records(session_id, COALESCE(json_extract(payload,'$.sequence'),0),id)
         WHERE kind='turn';`);
+  }
+  async sessions(worldId: string, principal: string, before?: { createdAt: number; id: string }) {
+    const cursor = before ?? { createdAt: Number.MAX_SAFE_INTEGER, id: '\uffff' };
+    const rows = await this.db
+      .prepare(
+        `SELECT payload FROM world_agent_sessions
+      WHERE world_id=? AND json_extract(payload,'$.principal')=?
+      AND (json_extract(payload,'$.createdAt'),id)<(?,?)
+      ORDER BY json_extract(payload,'$.createdAt') DESC,id DESC LIMIT 21`,
+      )
+      .all(worldId, principal, cursor.createdAt, cursor.id);
+    return rows.map((row) => JSON.parse(String(row['payload'])) as AgentSession);
   }
   async session(id: string): Promise<AgentSession | undefined> {
     const row = await this.db

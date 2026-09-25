@@ -70,9 +70,11 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
 export async function post<T extends { ok: boolean; message?: string } = ApiResult>(
   path: string,
   body: unknown,
+  signal?: AbortSignal,
 ): Promise<T> {
   const response = await fetch(path, {
     method: 'POST',
+    signal,
     credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json', 'X-OL-Generation': worldGeneration },
     body: JSON.stringify(body),

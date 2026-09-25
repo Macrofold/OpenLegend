@@ -1,8 +1,12 @@
+import { AuthoringRequestError } from './world-authoring-contracts.js';
 import { WORLD_READ_TOOLS } from './world-tools.js';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type {
   ApiResult,
   WorldAgentReply,
+  WorldAgentAvailability,
+  WorldAgentSessionCursor,
+  WorldAgentSessionSummary,
   WorldAgentSessionView,
   WorldAgentTurnCursor,
 } from '@open-legend/protocol';
@@ -84,7 +88,9 @@ export class WorldAuthoringService {
   private serial<T>(id: string, fn: () => Promise<T>): Promise<T> {
     if (this.queued >= 32)
       return Promise.reject(
-        new Error('Authoring is busy; retry after outstanding operations complete.'),
+        new AuthoringRequestError(
+          'Authoring is busy; retry after outstanding operations complete.',
+        ),
       );
     this.queued++;
     const previous = this.tails.get(id) ?? Promise.resolve();
@@ -105,6 +111,7 @@ export class WorldAuthoringService {
   private permitted(s: AgentSession) {
     return (
       this.available() &&
+      !this.service.storageError &&
       this.service.config.godMode &&
       !s.closed &&
       s.expiresAt > Date.now() &&
@@ -118,7 +125,7 @@ export class WorldAuthoringService {
   async requireSession(id: string): Promise<AgentSession> {
     const s = await this.records.session(id);
     if (!s || !this.permitted(s))
-      throw new Error(
+      throw new AuthoringRequestError(
         'Authoring session expired, closed, or belongs to an obsolete world or grant.',
       );
     return s;
@@ -129,17 +136,62 @@ export class WorldAuthoringService {
       limitUsd: Math.min(s.budgetUsd, this.service.config.inventionWorkshopUsd),
     };
   }
+  availability(): WorldAgentAvailability {
+    const c = this.service.config,
+      mcp = c.mcpRead;
+    const reason = !c.godMode
+      ? 'World-owner mode is required for this authoring surface.'
+      : !mcp?.allowWrites || mcp.worldId !== this.service.world.id || mcp.expiresAt <= Date.now()
+        ? 'Configure an unexpired writable OpenLegend MCP connector for this world.'
+        : !c.macrofoldKey || !/^[a-f0-9-]{36}$/i.test(c.macrofoldWorldConnectionId)
+          ? 'Configure the Macrofold API key and an approved World Agent connection.'
+          : c.budgetUsd <= 0
+            ? 'Paid execution is disabled by AI_BUDGET_USD; native drafts and approved Apply remain available.'
+            : !this.available() || !!this.service.storageError
+              ? 'The world is being restored or storage is unavailable.'
+              : null;
+    return {
+      configured: !reason,
+      reason:
+        reason ??
+        'Configured for native Macrofold execution. Connection and provider availability are checked when a turn starts.',
+      sessionAllowanceUsd: Math.min(5, c.inventionWorkshopUsd),
+    };
+  }
+  async sessions(before?: WorldAgentSessionCursor) {
+    if (!this.service.config.godMode)
+      throw new AuthoringRequestError('World-owner authoring is unavailable.');
+    const rows = await this.records.sessions(
+      this.service.world.id,
+      this.service.profile.id,
+      before,
+    );
+    const sessions: WorldAgentSessionSummary[] = rows.slice(0, 20).map((s) => ({
+      sessionId: s.id,
+      title: s.title ?? 'World conversation',
+      createdAt: s.createdAt,
+      closed: s.closed,
+      available: this.permitted(s),
+    }));
+    const last = rows.slice(0, 20).at(-1);
+    return {
+      sessions,
+      next: rows.length > 20 && last ? { createdAt: last.createdAt, id: last.id } : null,
+    };
+  }
   async open(id: string, worldId: string, budgetUsd?: number) {
     if (!this.service.config.godMode || worldId !== this.service.world.id)
-      throw new Error('World-owner authoring is unavailable.');
+      throw new AuthoringRequestError('World-owner authoring is unavailable.');
     return this.serial(id, () =>
       this.records.db.transaction(async () => {
         let s = await this.records.session(id);
         if (s) {
           if (!this.permitted(s) || s.activeTurn)
-            throw new Error('This session cannot be reopened while closed, stale or running.');
+            throw new AuthoringRequestError(
+              'This session cannot be reopened while closed, stale or running.',
+            );
           if (budgetUsd !== undefined && budgetUsd !== s.budgetUsd)
-            throw new Error('Reopening does not change the admitted allowance.');
+            throw new AuthoringRequestError('Reopening does not change the admitted allowance.');
         } else {
           s = {
             id,
@@ -167,7 +219,7 @@ export class WorldAuthoringService {
     return this.serial(id, async () => {
       const s = await this.records.session(id);
       if (!s || s.principal !== this.service.profile.id || s.worldId !== this.service.world.id)
-        throw new Error('Session unavailable.');
+        throw new AuthoringRequestError('Session unavailable.');
       s.closed = true;
       s.contextHash = contextHash(randomBytes(32).toString('hex'));
       await this.records.saveSession(s);
@@ -181,7 +233,7 @@ export class WorldAuthoringService {
       s.principal !== this.service.profile.id ||
       s.worldId !== this.service.world.id
     )
-      throw new Error('Session unavailable.');
+      throw new AuthoringRequestError('Session unavailable.');
     return s;
   }
   async turns(id: string, before?: WorldAgentTurnCursor) {
@@ -207,7 +259,7 @@ export class WorldAuthoringService {
       this.records.db.transaction(async () => {
         const s = await this.ownedSession(id);
         const turn = await this.records.get<AgentTurnRecord>(id, 'turn', requestId);
-        if (!turn) throw new Error('Turn unavailable.');
+        if (!turn) throw new AuthoringRequestError('Turn unavailable.');
         if (turn.response || s.activeTurn !== requestId) return false;
         turn.cancelRequested = true;
         // Fence subsequent MCP writes before signalling the remote worker. A committed
@@ -289,7 +341,7 @@ export class WorldAuthoringService {
         const prior = await this.records.get<AgentTurnRecord>(sessionId, 'turn', requestId);
         if (prior) {
           if (prior.fingerprint !== hash)
-            throw new Error('Message identity conflicts with prior text.');
+            throw new AuthoringRequestError('Message identity conflicts with prior text.');
           return {
             response: prior.response ?? {
               ok: s.activeTurn === requestId,
@@ -299,34 +351,26 @@ export class WorldAuthoringService {
             },
           };
         }
-        if (s.activeTurn) throw new Error('This session already has a running turn.');
-        if (
-          !config.mcpRead?.allowWrites ||
-          config.mcpRead.worldId !== s.worldId ||
-          config.mcpRead.expiresAt <= Date.now()
-        )
-          throw new Error(
-            'Configure the authenticated writable OpenLegend MCP connector before running this agent.',
-          );
-        if (!/^[a-f0-9-]{36}$/i.test(config.macrofoldWorldConnectionId) || !config.macrofoldKey)
-          throw new Error(
-            'Configure MACROFOLD_API_KEY and the approved MACROFOLD_WORLD_CONNECTION_ID.',
-          );
+        if (s.activeTurn)
+          throw new AuthoringRequestError('This session already has a running turn.');
+        const availability = this.availability();
+        if (!availability.configured) throw new AuthoringRequestError(availability.reason);
         if ((await this.records.count(sessionId, 'turn')) >= 256)
-          throw new Error('Session retained-turn limit reached.');
+          throw new AuthoringRequestError('Session retained-turn limit reached.');
         const exposure = await this.records.exposure(sessionBudgetId(s));
         const remaining = Math.max(
           0,
           this.budget(s).limitUsd - exposure.spentUsd - exposure.reservedUsd,
         );
         if (remaining < 0.000001)
-          throw new Error(
+          throw new AuthoringRequestError(
             'Session allowance is exhausted; saved drafts and approved Apply remain available.',
           );
         const contextHandle = randomBytes(32).toString('base64url');
         s.contextHash = contextHash(contextHandle);
         s.activeTurn = requestId;
         s.turnSequence = (s.turnSequence ?? 0) + 1;
+        s.title ??= text.slice(0, 60);
         // Commit both identity and handle before any external dispatch.
         await this.records.db.transaction(async () => {
           await this.records.put(sessionId, 'turn', requestId, {
@@ -379,13 +423,13 @@ export class WorldAuthoringService {
     const d = await this.records.get<AuthoringDraft>(s.id, 'revision', `${id}:${revision}`);
     const latest = current ? await this.records.get<AuthoringDraft>(s.id, 'draft', id) : undefined;
     if (!d || (current && latest?.revision !== revision))
-      throw new Error('Draft is unavailable or no longer selected.');
+      throw new AuthoringRequestError('Draft is unavailable or no longer selected.');
     return d;
   }
   async review(sessionId: string, planId: string) {
-    const s = await this.requireSession(sessionId),
+    const s = await this.ownedSession(sessionId),
       p = await this.records.get<ChangePlan>(sessionId, 'plan', planId);
-    if (!p) throw new Error('Change plan unavailable.');
+    if (!p) throw new AuthoringRequestError('Change plan unavailable.');
     return { plan: p, draft: await this.draft(s, p.draftId, p.revision) };
   }
   async decide(sessionId: string, planId: string, digest: string, decision: 'approve' | 'reject') {
@@ -393,21 +437,23 @@ export class WorldAuthoringService {
       const { plan, draft } = await this.review(sessionId, planId);
       await this.draft(await this.requireSession(sessionId), draft.id, draft.revision, true);
       if (plan.digest !== digest)
-        throw new Error('Review content changed. Refresh the exact plan.');
+        throw new AuthoringRequestError('Review content changed. Refresh the exact plan.');
       if (
         plan.status === 'applied' ||
         plan.status === (decision === 'approve' ? 'approved' : 'rejected')
       )
         return plan;
       if (plan.status !== 'pending')
-        throw new Error('This decision is final; prepare a new plan for another review.');
+        throw new AuthoringRequestError(
+          'This decision is final; prepare a new plan for another review.',
+        );
       if (decision === 'approve') {
         const validation = validateAuthoring(this.service, draft);
         if (
           !validation.ok ||
           authoringImpact(this.service.world, draft).token !== plan.impact.token
         )
-          throw new Error(
+          throw new AuthoringRequestError(
             'The reviewed change is no longer ready. Validate and prepare a new review.',
           );
       }
