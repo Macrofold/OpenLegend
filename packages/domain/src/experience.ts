@@ -16,7 +16,14 @@ import { current, isDraft } from 'immer';
 import { changeGoal, type GoalChange } from './agency.js';
 import { initializeIdentity } from './identity.js';
 import { hasMemory } from './living.js';
-import { draftWorld, finishWorld, cloneValue, appendSnapshot } from './draft.js';
+import {
+  draftWorld,
+  finishWorld,
+  cloneValue,
+  appendSnapshot,
+  isAppendBuffer,
+  sealAppends,
+} from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { memoryPerspective } from './memory-perspective.js';
@@ -180,22 +187,24 @@ function containsEntryId<T extends IdentifiedEntry>(
     }
     return index.ids.has(id);
   }
-  if (!isDraft(entries)) return entries.some((entry) => entry[field] === id);
+  if (!isDraft(entries) && !isAppendBuffer(entries))
+    return entries.some((entry) => entry[field] === id);
   let index = additionIndexes.get(entries);
   if (!index || index.length !== entries.length || index.field !== field) {
     // Read retained history without creating one Immer proxy per old experience.
-    index = { length: entries.length, field, ids: new Set(current(entries).map((e) => e[field])) };
+    index = { length: entries.length, field, ids: new Set(snapshot.map((e) => e[field])) };
     additionIndexes.set(entries, index);
   }
   return index.ids.has(id);
 }
 function appendEntries<T extends IdentifiedEntry>(
+  world: WorldState,
   entries: T[],
   values: T[],
   field: IdentityField,
 ): T[] {
   const snapshot = isDraft(entries) ? current(entries) : entries;
-  const appended = appendSnapshot(entries, values);
+  const appended = appendSnapshot(entries, values, world);
   if (appended) {
     const index = additionIndexes.get(snapshot);
     if (index?.field === field) {
@@ -227,27 +236,60 @@ function containsExperienceKey(world: WorldState, actorId: string, key: string):
   return false;
 }
 
-/** The one authoritative path for creator mutation of retained experience. */
+type ExperienceOperation =
+  | ExperienceMutation
+  | ExperienceMutation[]
+  | { operation: 'consolidate'; retiredIds: string[]; summaries: ExperienceSummary[] }
+  | { operation: 'correct'; sourceId: string; correctionEventId: string }
+  | {
+      operation: 'obligation';
+      id: string;
+      expectedRevision: number;
+      obligation: NonNullable<MemoryRecord['obligation']>;
+    };
+
+/** Public/editor additions remain independent copies and share the native admission owner. */
 export function mutateExperience(
   world: WorldState,
   actorId: string,
-  mutation:
-    | ExperienceMutation
-    | ExperienceMutation[]
-    | { operation: 'consolidate'; retiredIds: string[]; summaries: ExperienceSummary[] }
-    | { operation: 'correct'; sourceId: string; correctionEventId: string }
-    | {
-        operation: 'obligation';
-        id: string;
-        expectedRevision: number;
-        obligation: NonNullable<MemoryRecord['obligation']>;
-      },
+  mutation: ExperienceOperation,
 ): string[] | null {
   if (!world.experience) migrateCognition(world);
   if (!hasMemory(world.entities[actorId])) return null;
+  return applyExperienceMutation(world, actorId, mutation, 'copy');
+}
+/** Transfer fresh event-time evidence; this synchronous phase cannot change actor capability.
+ * Resolve membership once instead of creating actor proxies for every audience member.
+ * Duplicate/forgotten/ownership guards still run through the same mutation owner.
+ * Never pass provider/editor-owned objects here. docs/hearing-and-speech.md#performance-and-invalidation
+ */
+export function acquireEventAwareness(world: WorldState, entries: Awareness[]): void {
+  if (!entries.length) return;
+  if (!world.experience) migrateCognition(world);
+  const actors = isDraft(world.entities) ? current(world.entities) : world.entities;
+  for (const entry of entries) {
+    if (!hasMemory(actors[entry.actorId])) continue;
+    applyExperienceMutation(
+      world,
+      entry.actorId,
+      {
+        operation: 'add',
+        entry: { source: 'awareness', value: entry },
+      },
+      'transfer',
+    );
+  }
+}
+function applyExperienceMutation(
+  world: WorldState,
+  actorId: string,
+  mutation: ExperienceOperation,
+  ownership: 'copy' | 'transfer',
+): string[] | null {
   const additionsOnly = Array.isArray(mutation)
     ? mutation.every((change) => change.operation === 'add')
     : mutation.operation === 'add';
+  if (!additionsOnly) sealAppends(world);
   if (!additionsOnly)
     for (const entries of [
       world.experience!.awareness[actorId],
@@ -339,7 +381,7 @@ export function mutateExperience(
     }
     const additions = mutations.map((change) => {
       if (change.operation !== 'add') throw new Error('Mixed experience mutation batch.');
-      return cloneValue(change.entry);
+      return ownership === 'transfer' ? change.entry : cloneValue(change.entry);
     });
     const keys = additions.map((entry) =>
       entry.source === 'awareness'
@@ -372,14 +414,16 @@ export function mutateExperience(
     }
     if (awareness.length)
       world.experience!.awareness[actorId] = appendEntries(
+        world,
         world.experience!.awareness[actorId] ?? [],
         awareness,
         'eventId',
       );
     if (memories.length)
-      world.memories[actorId] = appendEntries(world.memories[actorId] ?? [], memories, 'id');
+      world.memories[actorId] = appendEntries(world, world.memories[actorId] ?? [], memories, 'id');
     if (summaries.length)
       world.experience!.summaries[actorId] = appendEntries(
+        world,
         world.experience!.summaries[actorId] ?? [],
         summaries,
         'id',
