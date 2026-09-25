@@ -8,6 +8,7 @@ This page is the master navigation index for active implementation work.
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Maintenance / cross-cutting deferred validation                        | [TODO](TODO.md)                                                     | Relevant canonical specifications                                                                                                                                                                                                                              |
 | Runtime performance and responsiveness                                 | [Performance](performance.md)                                       | [Runtime performance design](../performance.md)                                                                                                                                                                                                                |
+| Current-code scaling remediation and cross-cutting child work          | [Scaling remediation](scaling.md)                                   | [Scaling audit and integration guidance](../scaling/README.md); existing D/PF/EPR/SW/CR/INV/EWF/SL owners retain specifications and release gates                                                                                                                 |
 | Spatial world, navigation and tactical camera                          | [Spatial world](spatial-world.md)                                   | [Behavior](../spatial-world.md) and [runtime](../../archive/07-technical-architecture/spatial-world-runtime.md)                                                                                                                                                |
 | Gameplay save/load                                                     | [Save/load](save-and-load.md)                                       | [Save/load design](../save-and-load.md)                                                                                                                                                                                                                        |
 | Extensible world foundation                                            | [World foundation](extensible-world-foundation.md)                  | [Engine/world boundaries](../engine-and-world-boundaries.md) and [world-module runtime](../../archive/07-technical-architecture/world-module-runtime.md)                                                                                                       |
@@ -24,12 +25,16 @@ This page is the master navigation index for active implementation work.
 
 - [Agent-guidance delivery](agent-guidance.md) — development instructions, tooling and cross-agent verification; [system guide](../../.agents/README.md).
 
+The [scaling tracker](scaling.md) maps current-code findings to existing work and owns SC01–SC16's focused child details. Consult it when changing human control, persistence/recovery, queues, cognition/indexing, invention admission, active queries or save storage. It does not duplicate or complete the parent release gates.
+
 ## Supporting references
 
 - [Policies to revisit](revisitable-policies.md) — accepted but changeable decisions, canonical owners and review triggers; not an implementation backlog.
 - [Extensibility roadmap](../extensibility-roadmap.md)
 - [Extensible-world worked examples](../extensible-world-examples.md)
 - [Action and interaction repertoire](../repertoires/actions.md) — stable example IDs and related-mechanic references; idea catalogue, not implementation status
+- [Current-code scaling audit](../scaling/current-code-audit.md) — pinned findings, limitations and counterclaims; not measured capacity
+- [Invention and mechanic growth](../scaling/mechanic-growth.md) — library size, active work, dependency changes and INV/EWF integration cases
 
 - [Product baseline](../../archive/01-requirements/product-baseline.md)
 - [Product roadmap](../../archive/05-project/roadmap.md)
