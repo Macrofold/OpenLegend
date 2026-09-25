@@ -11,6 +11,8 @@ interface Source {
   id: string;
   position: Position;
   height: number;
+  // Body contact must not reuse the observer's visual range as a physical radius.
+  bodyRadius: number;
   eyeHeight: number;
   radius: number;
   alive: boolean;
@@ -78,6 +80,7 @@ function captureSource(world: WorldState, value: Entity): Source {
     id: entity.id,
     position: plain(entity.position),
     height: body.height,
+    bodyRadius: body.radius,
     eyeHeight: body.eyeHeight,
     radius: entity.actor ? visionRadius(world, entity) : 0,
     alive: !!entity.actor?.alive,
