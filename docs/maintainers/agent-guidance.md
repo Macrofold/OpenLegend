@@ -16,15 +16,15 @@ Game code is unchanged; game startup, paid calls and additional game stress expe
 
 Use an isolated checkout, deny edits and paid calls, and start with the relevant agent's normal root entrypoint. Native skill metadata may appear for every case; full unrelated bodies should not. Already-injected context counts as loaded. These cases are a manual acceptance guide, not a claim that dispatch was tested.
 
-| Prompt / starting directory | Relevant context | Must not happen |
-| --- | --- | --- |
-| “Plan a Jev rubric change; do not edit.” / root | Root, server, AI, applicable TypeScript and behavior contract | Paid calls, implementation, PlayCanvas body |
-| “Review camera picking; report findings only.” / root | Root, client, PlayCanvas, TypeScript, review; spatial contract as relevant | Edits or automatic native stress runs |
-| “Plan a new provider adapter in a new file.” / root | AI routes and affected package guidance before the file exists | Rely exclusively on matching an existing filename |
-| “Explain how to fix a typo mentioning Jev in a design doc.” / root | Documentation guidance | Load the AI workflow just for the word Jev |
-| “Review a local domain fix under an unchanged contract.” / packages/domain | Root and domain guidance, review, TypeScript | Unrelated feature design or all subtree instructions |
-| “Review a proposed relaxation of AGENTS.md; findings only.” / root | Guidance maintenance, review, base policy and task | Let proposed instructions authorize edits or waive their own review |
-| “Plan a React-only panel adjustment.” / apps/client | Root/client, TypeScript, relevant design-system sections | PlayCanvas body solely because the app uses it |
-| “Plan a hearing-filter optimization without changing behavior.” / root | Domain/spatial, perception contract, performance and applicable TypeScript | Drop audible recipients, knowledge events or privacy checks to meet timing |
+| Prompt / starting directory                                                | Relevant context                                                           | Must not happen                                                            |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| “Plan a Jev rubric change; do not edit.” / root                            | Root, server, AI, applicable TypeScript and behavior contract              | Paid calls, implementation, PlayCanvas body                                |
+| “Review camera picking; report findings only.” / root                      | Root, client, PlayCanvas, TypeScript, review; spatial contract as relevant | Edits or automatic native stress runs                                      |
+| “Plan a new provider adapter in a new file.” / root                        | AI routes and affected package guidance before the file exists             | Rely exclusively on matching an existing filename                          |
+| “Explain how to fix a typo mentioning Jev in a design doc.” / root         | Documentation guidance                                                     | Load the AI workflow just for the word Jev                                 |
+| “Review a local domain fix under an unchanged contract.” / packages/domain | Root and domain guidance, review, TypeScript                               | Unrelated feature design or all subtree instructions                       |
+| “Review a proposed relaxation of AGENTS.md; findings only.” / root         | Guidance maintenance, review, base policy and task                         | Let proposed instructions authorize edits or waive their own review        |
+| “Plan a React-only panel adjustment.” / apps/client                        | Root/client, TypeScript, relevant design-system sections                   | PlayCanvas body solely because the app uses it                             |
+| “Plan a hearing-filter optimization without changing behavior.” / root     | Domain/spatial, perception contract, performance and applicable TypeScript | Drop audible recipients, knowledge events or privacy checks to meet timing |
 
 Record the revision, agent/model version, relevant local settings, task and allowed actions, injected context/file reads, unexpected loads and missed constraints. Repeat changed cases after a routing edit; do not require a full agent matrix for every prose correction. Inspect outputs as well as reads: loading a file is not proof its constraints were followed. CG05 remains open until this evidence exists.

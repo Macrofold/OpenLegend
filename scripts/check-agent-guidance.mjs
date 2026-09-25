@@ -35,11 +35,7 @@ function prose(text) {
       const marker = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
       if (marker) {
         if (!fence) fence = marker[1];
-        else if (
-          marker[1][0] === fence[0] &&
-          marker[1].length >= fence.length &&
-          !marker[2].trim()
-        )
+        else if (marker[1][0] === fence[0] && marker[1].length >= fence.length && !marker[2].trim())
           fence = undefined;
         return false;
       }
@@ -73,7 +69,9 @@ function checkSkill(path, text, names) {
     name !== path.split('/').at(-2) ||
     names.has(name)
   )
-    errors.push(`${path}: name must be unique, directory-matched and 1–64 lowercase slug characters.`);
+    errors.push(
+      `${path}: name must be unique, directory-matched and 1–64 lowercase slug characters.`,
+    );
   names.add(name);
   if (typeof description !== 'string' || !description.trim() || description.length > 1024)
     errors.push(`${path}: description must be a nonempty string of at most 1024 characters.`);
@@ -106,7 +104,9 @@ async function main() {
         const metadata = await lstat(resolve(root, path));
         // Resolve before reading; a repository path may have a replaced/symlinked parent.
         if (physical !== path || metadata.isSymbolicLink())
-          errors.push(`${path}: guidance sources/targets must stay inside the repo without symlinks.`);
+          errors.push(
+            `${path}: guidance sources/targets must stay inside the repo without symlinks.`,
+          );
         else if (metadata.isFile() || metadata.isDirectory()) value = metadata;
       } catch (error) {
         if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') throw error;
@@ -197,7 +197,9 @@ async function main() {
     }
   for (const path of sources.keys())
     if ((isSkill(path) || isRule(path)) && !reachable.has(path))
-      errors.push(`${path}: no link path from root/scoped AGENTS through operational instructions.`);
+      errors.push(
+        `${path}: no link path from root/scoped AGENTS through operational instructions.`,
+      );
 
   const chainBytes = Math.max(
     0,
