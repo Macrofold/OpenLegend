@@ -11,7 +11,11 @@ import { SqliteDatabase } from './sqlite-database.js';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { appendedEventCount as provenAppendCount, type WorldState } from '@open-legend/domain';
+import {
+  appendedCount,
+  appendedEventCount as provenAppendCount,
+  type WorldState,
+} from '@open-legend/domain';
 import type { AiReceipt } from '@open-legend/ai';
 import type { AiJobView, PlayerProfile, PlayerPreferencePatch } from '@open-legend/protocol';
 
@@ -57,6 +61,7 @@ export interface JobRecord extends AiJobView {
   fingerprint: string;
   createdAt: number;
   request: {
+    volume?: import('@open-legend/domain').SpeechVolume;
     text: string;
     npcId?: string;
     invention?: {
@@ -139,6 +144,19 @@ function collectChanges(
     return;
   }
   if (Array.isArray(previous) && Array.isArray(next)) {
+    const appended = appendedCount(previous, next);
+    if (appended !== undefined) {
+      if (appended)
+        operations.push({
+          op: 'splice',
+          path,
+          index: previous.length,
+          deleteCount: 0,
+          values: next.slice(previous.length),
+        });
+      return;
+    }
+
     if (previous.length !== next.length) {
       let start = 0;
       while (start < Math.min(previous.length, next.length) && previous[start] === next[start])

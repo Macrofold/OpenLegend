@@ -23,7 +23,7 @@ Use `TextTooltip` for plain hover/focus labels such as Retry and short disabled 
 The attached reference instructions are design input. The user's explicit overrides govern this port:
 
 - Work above characters is a continuous white bar, interpolated against the server's simulation rate and frozen while paused. It disappears on completion/cancellation. Keep at most three transient notices, separate from active work.
-- Quick circles are contextual suggestions plus three persisted shortcuts. Rings are reserved for actual action cooldowns. Current actions have no cooldown contract, so no rings are shown; never feed work progress into them.
+- Quick circles are contextual suggestions plus three persisted shortcuts. In the quick-action bar, rings are reserved for actual action cooldowns. Current actions have no cooldown contract, so no rings are shown there; never feed work progress into them.
 - Pausing does not change clock width. World-agent and Talk/invention panels are 504px (1.5 × the normal 336px), with larger tabs and 32px close/new controls.
 - Search retains “Search actions or invent something…” and an inline invention affordance for unmatched text. Enter opens an editable invention draft; only explicit Send dispatches. There is no separate invention row below the search.
 - Look closer uses current server-projected descriptions. Hover facts use actual native work durations and material yields/costs; berry gathering is 30 game seconds plus travel and has no explicit energy cost.
@@ -32,6 +32,10 @@ The attached reference instructions are design input. The user's explicit overri
 - Conversation inputs begin at one line and grow with wrapping or explicit newlines. Active replies use an animated three-dot wave on the originating message; successful replies have no status badge, failures retain only a small red label inside the message with the reason on hover/focus, and interrupted replies use narration from the stored cause. Provider-stage and queue text stays out of the conversation UI.
 
 Primary dragging pans, as specified by the reference; secondary/middle dragging also pan. A stationary secondary click opens actions, and a map click that dismisses a picker never walks. Keyboard shortcuts do not intercept text fields. Panels use opening order and collapse older panels when space is insufficient; narrow layouts share one sheet. Theme/scale/reduced-motion preferences stay local and never alter game semantics.
+
+## Speech captions and perceived-event history
+
+[Hearing and speech](../../../../docs/hearing-and-speech.md) specifies plain overhead/directional speech captions from listener-permitted evidence. [Timed UI](../../../../docs/timed-ui.md) owns the reusable remaining-time ring and presentation clock; its caption use does not change the quick-action cooldown or native work-bar rules. [Perceived World Events](../../../../docs/perceived-world-events.md) specifies the read-only player history launcher below Journal and its Speech filter, distinct from the god-only editor. `SpeechCaptions`, `ProgressRing`, the local presentation lifetime helper, and the read-only World Events panel implement this slice. The scene supplies permitted head/bearing coordinates; React owns text while frame callbacks paint positions/fractions. [Architecture](../../../../docs/architecture.md#hearing-captions-and-perceived-events) records bounds and preferences; [HE01–HE05](../../../../docs/maintainers/hearing-and-speech.md) retains full-scene, accessibility and scale qualification.
 
 ## Present capability boundaries
 

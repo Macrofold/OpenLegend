@@ -9,7 +9,7 @@ import { SaveFiles } from './save-files.js';
 // The envelope label is not a per-feature compatibility gate. Validate and upgrade the
 // actual state: docs/save-and-load.md#active-development-policy.
 export class GameSaveError extends Error {}
-export const SAVE_FORMAT = 'development-2026-09-22-spatial1';
+export const SAVE_FORMAT = 'development-2026-09-24-hearing1';
 const MAX_SAVES = 20;
 const MAX_BYTES = 64 * 1024 * 1024;
 type Rows = Record<string, unknown>[];

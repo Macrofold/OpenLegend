@@ -9,6 +9,7 @@ import {
 } from './item-handling.js';
 import { strikeDefinition } from './strikes.js';
 import { gatheringYield } from './gathering.js';
+import { isSpeechVolume } from './acoustics.js';
 import { current, isDraft } from 'immer';
 import { canWalkSegment, finitePoint, interpolate, type SurfacePoint } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
@@ -35,6 +36,7 @@ import {
   advanceReservoirs,
 } from './world-modules.js';
 import { spatialCandidates, nearbyEntities } from './spatial.js';
+import { objectExposureQuery } from './object-exposure.js';
 import { changeConversation } from './conversations.js';
 import {
   canSpeak,
@@ -47,6 +49,7 @@ import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import {
   advanceStatusEffects,
+  mayAdvanceStatusEffects,
   activateStatusEffect,
   deactivateStatusEffect,
   interruptStatusEffects,
@@ -669,15 +672,23 @@ export function executeCommand(
         command.text.length > 1500
       )
         return reject('invalid-speech', 'Speech must contain 1–1500 characters.');
+      const volume = command.volume ?? 'normal';
+      if (!isSpeechVolume(volume))
+        return reject('invalid-volume', 'Choose whisper, normal or shout.');
       const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
       const intendedRecipientId = command.targetId ?? command.intendedRecipientId;
       if (intendedRecipientId && !getOwn(world.entities, intendedRecipientId))
         return reject('invalid-recipient', 'The intended recipient no longer exists.');
       if (
         command.targetId &&
-        (!target?.actor?.alive || !hasMemory(target) || !hearsEntity(world, target, actor))
+        (!target?.actor?.alive ||
+          !hasMemory(target) ||
+          capabilityBlocked(world, target, 'perception') ||
+          target.actor.incapacitated)
       )
-        return reject('not-heard', 'The listener is not within hearing range.');
+        return reject('not-heard', 'The intended listener is unavailable.');
+      // Intention is not delivery: a quiet utterance can miss its target and still be overheard.
+      // docs/hearing-and-speech.md#4-speech-volume-and-admission
       emit(
         world,
         events,
@@ -689,9 +700,14 @@ export function executeCommand(
           text: command.text.trim(),
           ...(intendedRecipientId ? { intendedRecipientId } : {}),
           ...(command.selfIntroduction ? { selfIntroduction: command.selfIntroduction } : {}),
+          utteranceId: command.id,
+          volume,
+          acousticPolicyId: world.moduleManifest.acoustics.id,
+          acousticPolicyVersion: world.moduleManifest.acoustics.version,
+          sourceLevelDbSplAt1m: world.moduleManifest.acoustics.sourceLevelDbSplAt1m[volume],
         },
       );
-      result = outcome(true, 'spoken', 'Speech delivered to nearby listeners.');
+      result = outcome(true, 'spoken', 'Spoken.');
       break;
     }
     case 'goal': {
@@ -710,7 +726,13 @@ export function executeCommand(
       if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
       const target = getOwn(world.entities, command.targetId);
       const recipe = getOwn(world.recipes, command.recipeId);
-      if (!target?.actor?.alive || !hasMemory(target) || !hearsEntity(world, target, actor))
+      if (
+        !target?.actor?.alive ||
+        !hasMemory(target) ||
+        capabilityBlocked(world, target, 'perception') ||
+        target.actor.incapacitated ||
+        !hearsEntity(world, target, actor)
+      )
         return reject('not-heard', 'Teaching needs a nearby listener.');
       if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
         return reject('not-learned', 'You cannot teach a technique you do not know.');
@@ -1416,8 +1438,11 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
     remaining -= seconds;
     world.simTime += seconds;
     // Status operations also apply to non-actor entities, in saved entity/definition order.
-    for (const entity of Object.values(world.entities))
-      advanceStatusEffects(world, entity, seconds, events);
+    const statusSnapshot = isDraft(world.entities) ? current(world.entities) : world.entities;
+    const statusIds = Object.values(statusSnapshot)
+      .filter((entity) => mayAdvanceStatusEffects(world, entity))
+      .map((entity) => entity.id);
+    for (const id of statusIds) advanceStatusEffects(world, world.entities[id]!, seconds, events);
     // Stable actor order resolves finite-resource claims; no asynchronous writer mutates a step.
     for (const actorId of participants.actors) {
       let actor = world.entities[actorId]!;
@@ -1494,6 +1519,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
   );
 }
 
+const episodeMembership = new WeakMap<object, { people: string[]; objects: string[] }>();
 /** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
 function updateEncounters(
   world: WorldState,
@@ -1508,7 +1534,8 @@ function updateEncounters(
 
   // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
   // Snapshot identity, transforms and body height; event mutations still use the authoritative draft.
-  const entities = Object.values(world.entities).map((entity) => ({
+  const snapshot = isDraft(world.entities) ? current(world.entities) : world.entities;
+  const entities = Object.values(snapshot).map((entity) => ({
     entity,
     id: entity.id,
     position: isDraft(entity.position) ? current(entity.position) : entity.position,
@@ -1519,7 +1546,10 @@ function updateEncounters(
   }));
   const nearby = spatialCandidates(entities.filter((e) => e.alive));
   let nearbyAll: ReturnType<typeof spatialCandidates<(typeof entities)[number]>> | undefined;
-  const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
+  const objectsFor = objectExposureQuery(
+    world,
+    entities.filter((e) => e.object),
+  );
   for (const actor of entities.filter((e) => e.alive && e.memory)) {
     const radius = visionRadius(world, actor.entity);
     const sees = visionQuery(world, actor.entity);
@@ -1597,7 +1627,7 @@ function updateEncounters(
         Object.keys(contacts).length !== Object.keys(prior).length ||
         Object.entries(contacts).some(([id, c]) => c !== prior[id])
       )
-        actor.entity.actor!.contacts = contacts;
+        world.entities[actor.id]!.actor!.contacts = contacts;
     }
     if (radius === 0) {
       if (
@@ -1608,24 +1638,42 @@ function updateEncounters(
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
-    const previouslySeen = new Set(previous);
-    const seen = nearby(actor.position, radius + 2)
+    let seen = nearby(actor.position, radius + 2)
       .filter((e) => e.id !== actor.id && e.alive && sees(e))
       .map((e) => e.id);
-    const objects = nearbyObjects(actor.position, radius).filter((entity) => sees(entity));
-    const objectIds = objects.map((entity) => entity.id);
+    let objectIds = objectsFor(actor.entity);
+    const previousObjects = original.visibleObjects?.[actor.id];
+    const samePeople = seen.length === previous.length && seen.every((id, i) => id === previous[i]);
+    const sameObjects =
+      !!previousObjects &&
+      (objectIds === previousObjects ||
+        (objectIds.length === previousObjects.length &&
+          objectIds.every((id, i) => id === previousObjects[i])));
+    if (samePeople) seen = previous;
+    if (sameObjects) objectIds = previousObjects!;
     // Persistent exposure episodes do not imply identity recognition across a disappearance.
     // docs/knowledge.md#subject-binding
     const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
-    const exposed = [...seen, ...objectIds];
-    if (
-      exposed.length !== Object.keys(priorEpisodes).length ||
-      exposed.some((id) => !priorEpisodes[id])
-    )
-      (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
-        exposed.map((id) => [id, priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`]),
-      );
-    for (const id of seen.filter((id) => !previouslySeen.has(id))) {
+    const certified = Object.isFrozen(priorEpisodes)
+      ? episodeMembership.get(priorEpisodes)
+      : undefined;
+    if (certified?.people !== seen || certified.objects !== objectIds) {
+      const exposed = [...seen, ...objectIds];
+      if (
+        exposed.length !== Object.keys(priorEpisodes).length ||
+        exposed.some((id) => !priorEpisodes[id])
+      )
+        (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
+          exposed.map((id) => [
+            id,
+            priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`,
+          ]),
+        );
+      else if (Object.isFrozen(priorEpisodes))
+        episodeMembership.set(priorEpisodes, { people: seen, objects: objectIds });
+    }
+    const previouslySeen = samePeople ? null : new Set(previous);
+    for (const id of samePeople ? [] : seen.filter((id) => !previouslySeen!.has(id))) {
       const recent = (world.memories[actor.id] ?? []).some(
         (m) =>
           m.kind === 'episode' &&
@@ -1635,27 +1683,15 @@ function updateEncounters(
       );
       if (!recent) encounter(actor.entity, id, true);
     }
-    if (
-      !original.visiblePeople?.[actor.id] ||
-      seen.length !== previous.length ||
-      seen.some((id, index) => id !== previous[index])
-    )
+    if (!original.visiblePeople?.[actor.id] || !samePeople)
       (world.visiblePeople ??= {})[actor.id] = seen;
-    // Object exposures use the same committed awareness path without a cognition trigger.
-    const priorObjects = new Set(
-      original.visibleObjects?.[actor.id] ??
-        (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
-    );
-    for (const entity of objects)
-      if (!priorObjects.has(entity.id)) encounter(actor.entity, entity.id, false);
-    const previousObjects = original.visibleObjects?.[actor.id];
-    // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).
-    if (
-      !previousObjects ||
-      objectIds.length !== previousObjects.length ||
-      objectIds.some((id, index) => id !== previousObjects[index])
-    )
+    if (!sameObjects) {
+      // Unchanged frozen membership needs neither a set rebuild nor another exposure scan.
+      // Captions/speech still resolve event-time evidence independently of this visual cache.
+      const priorObjects = new Set(previousObjects ?? (hadObjectExposures ? [] : objectIds));
+      for (const id of objectIds) if (!priorObjects.has(id)) encounter(actor.entity, id, false);
       (world.visibleObjects ??= {})[actor.id] = objectIds;
+    }
   }
 }
 
@@ -1762,9 +1798,15 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
           ...(aware.targetId ? { targetId: aware.targetId } : {}),
           // Actor context is prose-first. Structured event fields stay authoritative in
           // world state; only the event's authored context text crosses this boundary.
-          ...(aware.content !== undefined ? { data: { text: aware.content } } : {}),
+          ...(aware.content !== undefined
+            ? {
+                data: {
+                  text: aware.speech ? aware.text : aware.content,
+                },
+              }
+            : {}),
         }))
-      : world.events.filter((event) => event.audience.includes(actorId)).slice(-24),
+      : [],
   });
 }
 

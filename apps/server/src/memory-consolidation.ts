@@ -1,4 +1,5 @@
 import { gameTime } from './recall.js';
+import { retainedSpeechIds } from './speech-recall.js';
 import {
   experiences,
   EXPERIENCE_LIMITS,
@@ -21,13 +22,7 @@ export function consolidationBatch(
 ): ConsolidationBatch | null {
   const all = experiences(world, actorId, true);
   // Keep a bounded verbatim source pool for active conversation retrieval.
-  const retainedSpeech = new Set(
-    all
-      .filter((memory) => memory.kind === 'episode' && memory.eventType === 'speech')
-      .sort((a, b) => b.at - a.at || (b.sequence ?? 0) - (a.sequence ?? 0))
-      .slice(0, EXPERIENCE_LIMITS.conversationSpeech)
-      .map((memory) => memory.id),
-  );
+  const retainedSpeech = retainedSpeechIds(world, actorId);
   let sources: MemoryRecord[];
   if (mode === 'daily') {
     if (reviewDay === undefined || reviewDay < 0) return null;

@@ -1,3 +1,4 @@
+import { current, isDraft } from 'immer';
 import { statusDefinitions } from './status-capabilities.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { emit, finish, outcome, canonicalJson } from './events.js';
@@ -319,6 +320,40 @@ function applyRate(
   else if (d.implementation === 'native-fullness-v1')
     setWildernessNeed(entity.actor!, 'fullness', value);
   else setAttribute(world, entity, d, value, events);
+}
+/** A conservative participation check, not a condition evaluator. Native rate operations
+ * cannot add an absent attribute or actor component; every active instance still runs.
+ * Bindings for a new automatic instance all point to its subject. If a new operation can
+ * create these capabilities, extend this broad phase before admitting that operation.
+ * docs/status-effects.md#native-participation
+ */
+const statusEligibility = new WeakMap<
+  Entity,
+  { definitions: StatusEffectDefinition[]; manifest: object; eligible: boolean }
+>();
+export function mayAdvanceStatusEffects(world: WorldState, entity: Entity): boolean {
+  if (entity.actor) return true;
+  const definitions = statusDefinitions(world),
+    manifest = isDraft(world.moduleManifest) ? current(world.moduleManifest) : world.moduleManifest;
+  const reusable =
+    Object.isFrozen(entity) && Object.isFrozen(definitions) && Object.isFrozen(manifest);
+  const previous = reusable ? statusEligibility.get(entity) : undefined;
+  if (previous?.definitions === definitions && previous.manifest === manifest)
+    return previous.eligible;
+  const eligible = definitions.some(
+    (definition) =>
+      entity.statusEffects?.[definition.id]?.active ||
+      (definition.enabled &&
+        !!definition.automaticActivation &&
+        (!definition.occupiesAction || !!entity.actor) &&
+        definition.whileActive.every(
+          (operation) =>
+            !('changeRate' in operation) ||
+            typeof readEntityAttribute(world, entity, operation.changeRate.attribute) === 'number',
+        )),
+  );
+  if (reusable) statusEligibility.set(entity, { definitions, manifest, eligible });
+  return eligible;
 }
 export function advanceStatusEffects(
   world: WorldState,

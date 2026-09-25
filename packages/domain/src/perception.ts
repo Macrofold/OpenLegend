@@ -1,6 +1,7 @@
 import { DEFAULT_SENSES, PERCEPTION_RULES } from './worlds/base/senses.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import {
+  BoundsIndex,
   canWalkSegment,
   clearSegment,
   distance3D,
@@ -8,25 +9,32 @@ import {
   soundTransmission,
   type SurfacePoint,
 } from '@open-legend/spatial';
+import {
+  acousticExposure,
+  acousticReach,
+  type AcousticExposure,
+  SPEECH_VOLUMES,
+  type SpeechVolume,
+} from './acoustics.js';
 import { bodyProfile, spatialMap } from './spatial-state.js';
-import { current, isDraft, original } from 'immer';
+import { current, isDraft } from 'immer';
 import { distance } from './spatial.js';
+import { hasMemory } from './living.js';
 import type { Entity, Position, WorldState } from './types.js';
 
 export { PERCEPTION_RULES } from './worlds/base/senses.js';
 /** Reviewed detector versions are pinned in each world's resolved manifest. */
 export const SENSE_IMPLEMENTATIONS = [
   'vision-geometry-v1',
-  'hearing-transmission-v1',
+  'hearing-db-v1',
   'contact-proximity-v1',
 ] as const;
 export type SenseImplementation = (typeof SENSE_IMPLEMENTATIONS)[number];
-export interface SenseDefinition {
-  id: string;
-  version: 1;
-  implementation: SenseImplementation;
-  radius: number;
-}
+export type SenseDefinition = { id: string; version: 1 } & (
+  | { implementation: 'vision-geometry-v1'; radius: number }
+  | { implementation: 'contact-proximity-v1'; radius: number }
+  | { implementation: 'hearing-db-v1'; hearingFloorDbSpl: number }
+);
 export { DEFAULT_SENSES } from './worlds/base/senses.js';
 export const COARSE_TOUCH: SenseDefinition = {
   id: 'contact:touch',
@@ -51,31 +59,151 @@ export interface ContactView {
 type ResolvedSenses = {
   definitions: SenseDefinition[];
   vision: number;
-  hearing: number;
+  hearingFloor: number | null;
+  policy: WorldState['moduleManifest']['acoustics'];
+  reaches: Record<SpeechVolume, number>;
 };
 const resolvedSenses = new WeakMap<object, Map<string, ResolvedSenses>>();
 function resolveSenses(world: WorldState, entity: Entity): ResolvedSenses {
-  // Installed definitions/bindings are replaced, never edited in-place during a tick.
-  // Reuse immutable resolution across drafts: docs/performance.md#simulation-cpu-and-growing-history.
-  const manifest = isDraft(world.moduleManifest)
-    ? original(world.moduleManifest!)!
-    : world.moduleManifest!;
-  let byBinding = resolvedSenses.get(manifest);
-  if (!byBinding) resolvedSenses.set(manifest, (byBinding = new Map()));
+  // Capture the current definition snapshot; mutable authoring never populates the cache.
+  // docs/hearing-and-speech.md#performance-and-invalidation
+  const manifest = senseManifest(world);
+  const reusable = Object.isFrozen(manifest);
+  let byBinding = reusable ? resolvedSenses.get(manifest) : undefined;
+  if (!byBinding) {
+    byBinding = new Map();
+    if (reusable) resolvedSenses.set(manifest, byBinding);
+  }
   const bindings = entity.actor?.senses;
   const key = bindings?.join('|') ?? 'default';
   let result = byBinding.get(key);
   if (!result) {
     const ids = bindings ?? manifest.defaultSenses;
     const definitions = manifest.senses.filter((s) => ids.includes(s.id));
+    const floor =
+      definitions.find((s) => s.implementation === 'hearing-db-v1')?.hearingFloorDbSpl ?? null;
     result = {
       definitions,
+      policy: manifest.acoustics,
+      reaches: Object.fromEntries(
+        SPEECH_VOLUMES.map((volume) => [
+          volume,
+          floor === null ? 0 : acousticReach(manifest.acoustics, floor, volume),
+        ]),
+      ) as Record<SpeechVolume, number>,
       vision: definitions.find((s) => s.implementation === 'vision-geometry-v1')?.radius ?? 0,
-      hearing: definitions.find((s) => s.implementation === 'hearing-transmission-v1')?.radius ?? 0,
+      hearingFloor: floor,
     };
     byBinding.set(key, result);
   }
   return result;
+}
+function senseManifest(world: WorldState) {
+  return isDraft(world.moduleManifest) ? current(world.moduleManifest) : world.moduleManifest;
+}
+
+type Receiver = { entity: Entity; order: number };
+type ReceiverTree = Map<SpeechVolume, BoundsIndex<Receiver>>;
+const receivers = new WeakMap<object, WeakMap<object, ReceiverTree>>();
+/** Conservative full-extent broad phase, not an audience cap. Both foot and ear points are
+ * queried so visual-only cues and all body heights survive pruning. Exact perception follows.
+ * A current draft snapshot includes moves/spawns/sense edits; only frozen snapshots are reused.
+ * docs/hearing-and-speech.md#performance-and-invalidation
+ */
+export function speechObservers(world: WorldState, source: Entity, volume: SpeechVolume): Entity[] {
+  const entities = isDraft(world.entities) ? current(world.entities) : world.entities;
+  const manifest = senseManifest(world);
+  const reusable = Object.isFrozen(entities) && Object.isFrozen(manifest);
+  let byManifest = reusable ? receivers.get(entities) : undefined;
+  if (!byManifest) {
+    byManifest = new WeakMap();
+    if (reusable) receivers.set(entities, byManifest);
+  }
+  let trees = byManifest.get(manifest);
+  if (!trees) byManifest.set(manifest, (trees = new Map()));
+  let index = trees.get(volume);
+  if (!index) {
+    index = new BoundsIndex(
+      Object.values(entities).flatMap((entity, order) => {
+        if (!hasMemory(entity)) return [];
+        const senses = resolveSenses(world, entity);
+        const radius = Math.max(0.25, senses.reaches[volume]);
+        const p = entity.position;
+        const earY = p.y + bodyProfile(entity).earHeight;
+        const sight = senses.vision;
+        const reach = Math.max(radius, sight);
+        return [
+          {
+            value: { entity, order },
+            bounds: {
+              min: { x: p.x - reach, y: Math.min(p.y - sight, earY - radius), z: p.z - reach },
+              max: { x: p.x + reach, y: Math.max(p.y + sight, earY + radius), z: p.z + reach },
+            },
+          },
+        ];
+      }),
+    );
+    trees.set(volume, index);
+  }
+  const foot = source.position,
+    ear = soundOrigin(source);
+  const found: Receiver[] = [];
+  index.visit(
+    (b) =>
+      [foot, ear].some(
+        (p) =>
+          p.x >= b.min.x &&
+          p.x <= b.max.x &&
+          p.y >= b.min.y &&
+          p.y <= b.max.y &&
+          p.z >= b.min.z &&
+          p.z <= b.max.z,
+      ),
+    (entry) => {
+      found.push(entry);
+      return false;
+    },
+  );
+  // Keep established event audience order. Tree traversal order is an implementation detail.
+  return found.sort((a, b) => a.order - b.order).map((entry) => entry.entity);
+}
+
+type AcousticPath = { position: Position; ear: number; transmission: number };
+type AcousticSource = { position: Position; ear: number; targets: Map<string, AcousticPath> };
+const acousticPaths = new WeakMap<WorldState['map'], Map<string, AcousticSource>>();
+const ACOUSTIC_CACHE = { sources: 256, targets: 256 } as const;
+/** Reuse only ordered geometric crossings, never listener evidence or its permissions.
+ * Cache bounds limit memory, not exposure; misses always take the full physical path.
+ */
+function speechTransmission(world: WorldState, listener: Entity, source: Entity): number {
+  const map = spatialMap(world);
+  const from = isDraft(listener.position) ? current(listener.position) : listener.position;
+  const to = isDraft(source.position) ? current(source.position) : source.position;
+  const fromEar = bodyProfile(listener).earHeight,
+    toEar = bodyProfile(source).earHeight;
+  let cache: Map<string, AcousticPath> | undefined;
+  if (Object.isFrozen(map) && Object.isFrozen(from) && Object.isFrozen(to)) {
+    let observers = acousticPaths.get(map);
+    if (!observers) acousticPaths.set(map, (observers = new Map()));
+    let entry = observers.get(listener.id);
+    if (!entry || entry.position !== from || entry.ear !== fromEar) {
+      if (!entry && observers.size >= ACOUSTIC_CACHE.sources)
+        observers.delete(observers.keys().next().value!);
+      entry = { position: from, ear: fromEar, targets: new Map() };
+      observers.set(listener.id, entry);
+    }
+    cache = entry.targets;
+    const prior = cache.get(source.id);
+    if (prior?.position === to && prior.ear === toEar) return prior.transmission;
+  }
+  const transmission = soundTransmission(
+    map,
+    { x: from.x, y: from.y + fromEar, z: from.z },
+    { x: to.x, y: to.y + toEar, z: to.z },
+  );
+  if (cache && (cache.has(source.id) || cache.size < ACOUSTIC_CACHE.targets))
+    cache.set(source.id, { position: to, ear: toEar, transmission });
+  return transmission;
 }
 export function sensesFor(world: WorldState, entity: Entity): SenseDefinition[] {
   return capabilityBlocked(world, entity, 'perception')
@@ -159,27 +287,62 @@ export function seesEntity(world: WorldState, observer: Entity, source: Entity):
     height: bodyProfile(source).height,
   });
 }
-export function hearsEntity(world: WorldState, observer: Entity, source: Entity): boolean {
-  return (
-    !capabilityBlocked(world, observer, 'perception') && withinHearingRange(world, observer, source)
+export function soundOrigin(entity: Entity): Position {
+  return { ...entity.position, y: entity.position.y + bodyProfile(entity).earHeight };
+}
+export function hearingReferenceRadius(world: WorldState, observer: Entity): number {
+  const { hearingFloor: floor, policy } = resolveSenses(world, observer);
+  return floor === null ? 0 : acousticReach(policy, floor, 'normal', policy.thresholdsDb.clear);
+}
+function physicalSpeechExposure(
+  world: WorldState,
+  observer: Entity,
+  source: Entity,
+  volume: SpeechVolume = 'normal',
+): AcousticExposure {
+  const { hearingFloor: floor, policy, reaches } = resolveSenses(world, observer);
+  const silent: AcousticExposure = {
+    detail: 'undetected',
+    receivedLevelDbSpl: null,
+    clarityMarginDb: null,
+  };
+  if (floor === null) return silent;
+  const listener = soundOrigin(observer),
+    origin = soundOrigin(source);
+  const separation = distance3D(listener, origin);
+  // Cheap rejection precedes all barrier work; listener sensitivity is part of this bound.
+  if (separation > Math.max(0.25, reaches[volume])) return silent;
+  return acousticExposure(
+    policy,
+    floor,
+    volume,
+    separation,
+    speechTransmission(world, observer, source),
   );
 }
-/** Conversation membership uses physical range, not temporary receiver availability. */
-export function withinHearingRange(world: WorldState, observer: Entity, source: Entity): boolean {
-  const radius = resolveSenses(world, observer).hearing;
-  if (radius <= 0) return false;
-  const listener = {
-    ...observer.position,
-    y: observer.position.y + bodyProfile(observer).earHeight,
-  };
-  const origin = { ...source.position, y: source.position.y + bodyProfile(source).earHeight };
-  const separation = distance3D(listener, origin);
-  if (separation > radius) return false;
-  const transmission = soundTransmission(spatialMap(world), listener, origin);
-  // Current speech consumers assume intelligible words and identity. Until EPR supplies
-  // graded auditory contacts, do not put an indistinct sound in that full-text audience.
-  // docs/spatial-world.md#seeing-and-hearing-in-3d
-  return transmission >= 0.65 && separation <= radius * transmission;
+export function speechExposure(
+  world: WorldState,
+  observer: Entity,
+  source: Entity,
+  volume: SpeechVolume = 'normal',
+): AcousticExposure {
+  if (capabilityBlocked(world, observer, 'perception'))
+    return { detail: 'undetected', receivedLevelDbSpl: null, clarityMarginDb: null };
+  return physicalSpeechExposure(world, observer, source, volume);
+}
+/** Conversation continuity ignores temporary incapacity; it never grants heard evidence. */
+export function withinHearingRange(
+  world: WorldState,
+  observer: Entity,
+  source: Entity,
+  volume: SpeechVolume = 'normal',
+): boolean {
+  return physicalSpeechExposure(world, observer, source, volume).detail !== 'undetected';
+}
+/** Eligibility helpers retain the strong meaning of understanding ordinary speech.
+ * Detection/partial evidence is delivered separately at emission, never through this boolean. */
+export function hearsEntity(world: WorldState, observer: Entity, source: Entity): boolean {
+  return speechExposure(world, observer, source).detail === 'clear';
 }
 export function contactViews(entity: Entity): ContactView[] {
   return Object.values(entity.actor?.contacts ?? {}).map((c) => ({
@@ -214,8 +377,17 @@ export function canSee(from: Position, to: Position): boolean {
   return distance(from, to) <= PERCEPTION_RULES.sightRadius;
 }
 export function canHear(world: WorldState, from: Position, to: Position): boolean {
-  const separation = distance(from, to);
-  if (separation > PERCEPTION_RULES.hearingRadius) return false;
-  const transmission = soundTransmission(spatialMap(world), from, to);
-  return transmission >= 0.65 && separation <= PERCEPTION_RULES.hearingRadius * transmission;
+  const policy = world.moduleManifest.acoustics;
+  const separation = distance3D(from, to);
+  if (separation > Math.max(0.25, acousticReach(policy, 0, 'normal', policy.thresholdsDb.clear)))
+    return false;
+  return (
+    acousticExposure(
+      policy,
+      0,
+      'normal',
+      separation,
+      soundTransmission(spatialMap(world), from, to),
+    ).detail === 'clear'
+  );
 }

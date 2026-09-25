@@ -23,6 +23,9 @@ import {
   type WorldState,
   type Awareness,
 } from '@open-legend/domain';
+import { retainedSpeech, currentSpeechSources } from './speech-recall.js';
+import { embeddingBatches } from './embedding-batches.js';
+import { awarenessMemory } from '@open-legend/domain';
 import {
   createEmbeddingClient,
   type EmbeddingClient,
@@ -107,7 +110,8 @@ function memoryCandidate(
     id: memory.id,
     kind: matches(conversationIds) ? 'conversation' : 'memory',
     text: `${gameTime(memory.at)} [${memory.source}]: ${summary}`,
-    revision: digest({ ...memory, summary }),
+    ...(awareness?.speech ? { embeddingText: `${gameTime(memory.at)} [${memory.source}]: ${memory.summary}` } : {}),
+    revision: awareness?.speech ? digest(memory) : digest({ ...memory, summary }),
     required:
       matches(requiredIds) ||
       (memory.kind === 'commitment' && !memory.resolved) ||
@@ -126,25 +130,25 @@ function memoryCandidate(
 }
 
 function speechCandidates(world: WorldState, actorId: string): AttentionCandidate[] {
-  const speech = experiences(world, actorId, true)
-    .filter((memory) => memory.eventType === 'speech')
-    .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0) || a.at - b.at)
-    .slice(-EXPERIENCE_LIMITS.conversationSpeech);
-  const ids = new Set(speech.map((memory) => memory.eventId ?? memory.id));
+  const speech = retainedSpeech(world, actorId).map(awarenessMemory);
+  if (!speech.length) return [];
+  const ids = new Set(speech.map((memory) => memory.id));
   const corrections = world.experience?.corrections?.[actorId] ?? {};
   const awareness = new Map(
     (world.experience?.awareness[actorId] ?? []).map((entry) => [entry.eventId, entry]),
   );
+  const empty = new Set<string>();
+  const correctedIds = new Set(Object.values(corrections));
   return speech.map((memory) =>
     memoryCandidate(
       memory,
       world,
       actorId,
-      new Set(),
-      new Set(),
+      empty,
+      empty,
       ids,
       corrections,
-      new Set(Object.values(corrections)),
+      correctedIds,
       awareness.get(memory.eventId ?? memory.id),
     ),
   );
@@ -235,7 +239,7 @@ export function candidateSet(
     }
   }
   for (const memory of candidates) {
-    memory.embeddingText = memory.text;
+    memory.embeddingText ??= memory.text;
     memory.text = projectEntityMarkers(memory.text, world, actorId);
     const identities = [...new Set(memory.entityIds)].flatMap((id) =>
       world.entities[id] && !memory.text.includes(`(ID:${entityHandles(world, actorId).get(id)})`)
@@ -361,8 +365,10 @@ export class RecallService {
   private indexQueued = false;
   private indexWork: Promise<void> = Promise.resolve();
   private readonly indexController = new AbortController();
-  private readonly attemptedBackgroundSources = new Set<string>();
+  private readonly attemptedBackgroundSources = new Map<string, Set<string>>();
   private readonly backgroundInFlight = new Set<string>();
+  private readonly indexedSpeech = new Map<string, readonly unknown[]>();
+  private indexEpoch = '';
   private closed = false;
   constructor(
     private service: WorldService,
@@ -418,11 +424,39 @@ export class RecallService {
     const vectors = this.service.store.vectors;
     if (!vectors) return;
     const config = this.service.config;
-    const world = this.service.world;
-    for (const actorId of Object.keys(world.experience?.awareness ?? {})) {
-      if (this.closed) return;
+    const generation = this.service.generation;
+    const epoch = `${generation}:${this.service.world.id}:${config.embeddingModel}:${config.embeddingDimensions}`;
+    if (epoch !== this.indexEpoch) {
+      this.indexedSpeech.clear();
+      this.indexEpoch = epoch;
+    }
+    const inputs = (world: WorldState, actorId: string): readonly unknown[] => [
+      world.experience?.awareness[actorId],
+      world.experience?.forgotten[actorId],
+      world.experience?.corrections?.[actorId],
+    ];
+    const same = (a: readonly unknown[] | undefined, b: readonly unknown[]) =>
+      !!a && a.every((value, i) => value === b[i]);
+    const actorIds = Object.keys(this.service.world.experience?.awareness ?? {});
+    const present = new Set(actorIds);
+    for (const state of [this.indexedSpeech, this.attemptedBackgroundSources])
+      for (const actorId of state.keys()) if (!present.has(actorId)) state.delete(actorId);
+    for (const actorId of actorIds) {
+      if (this.closed || generation !== this.service.generation) return;
+      const world = this.service.world;
       // Player memory is rendered from history; only autonomous decision makers need vectors.
-      if (world.entities[actorId]?.actor?.controller !== 'npc') continue;
+      if (world.entities[actorId]?.actor?.controller !== 'npc') {
+        this.indexedSpeech.delete(actorId);
+        this.attemptedBackgroundSources.delete(actorId);
+        continue;
+      }
+      const snapshot = inputs(world, actorId);
+      // Cache only completed immutable actor-local work. Denial is not completion;
+      // failed source attempts stay fenced. Edits/forgetting replace these dependencies.
+      // docs/memory-architecture.md#conversation-speech-pool
+      if (snapshot.every(Object.isFrozen) && same(this.indexedSpeech.get(actorId), snapshot))
+        continue;
+      let complete = true;
       const scope = {
         key: `vectors:${world.id}:${actorId}`,
         model: config.embeddingModel,
@@ -432,17 +466,17 @@ export class RecallService {
       const activeKeys = new Set(
         candidates.map((candidate) => backgroundSourceKey(actorId, candidate)),
       );
-      for (const key of this.attemptedBackgroundSources)
-        if (key.startsWith(`${actorId}\u0000`) && !activeKeys.has(key))
-          this.attemptedBackgroundSources.delete(key);
+      let attempted = this.attemptedBackgroundSources.get(actorId);
+      if (!attempted) this.attemptedBackgroundSources.set(actorId, (attempted = new Set()));
+      for (const key of attempted) if (!activeKeys.has(key)) attempted.delete(key);
       const sources = candidates.map(({ id, revision }) => ({ id, revision }));
       const indexed = await vectors.reconcile(scope, sources);
       const missing = candidates.filter((candidate) => {
         const key = backgroundSourceKey(actorId, candidate);
-        return !indexed.has(candidate.id) && !this.attemptedBackgroundSources.has(key);
+        return !indexed.has(candidate.id) && !attempted.has(key);
       });
-      for (let offset = 0; offset < missing.length && !this.closed; offset += 32) {
-        const batch = missing.slice(offset, offset + 32);
+      for (const batch of embeddingBatches(missing)) {
+        if (this.closed || generation !== this.service.generation) return;
         const sourceKeys = batch.map((candidate) => backgroundSourceKey(actorId, candidate));
         sourceKeys.forEach((key) => this.backgroundInFlight.add(key));
         const requestId = `speech-index:${randomUUID()}`;
@@ -455,10 +489,10 @@ export class RecallService {
               Math.max(0, config.budgetUsd - interactiveAllowance(config)),
               actorId,
             ))
-          )
-            return;
-          // Do not automatically repurchase a failed or uncertain derived-data call.
-          sourceKeys.forEach((key) => this.attemptedBackgroundSources.add(key));
+          ) {
+            complete = false;
+            break; // One actor's cap must not starve everyone else.
+          }
           const result = await this.log.run(
             'Background speech embeddings',
             {
@@ -468,33 +502,70 @@ export class RecallService {
               dimensions: config.embeddingDimensions,
               sourceIds: batch.map((candidate) => candidate.id),
             },
-            async () =>
-              await this.embeddings.embed({
+            async () => {
+              // Storage and diagnostic preparation can yield. Check at the actual dispatch
+              // boundary too, not just when the source batch was selected.
+              if (
+                this.closed ||
+                generation !== this.service.generation ||
+                this.service.world.entities[actorId]?.actor?.controller !== 'npc' ||
+                currentSpeechSources(this.service.world, actorId, batch).length !== batch.length
+              ) {
+                const at = new Date().toISOString();
+                return {
+                  outcome: 'cancelled' as const,
+                  reason: 'Speech indexing source or execution scope changed before dispatch.',
+                  receipt: {
+                    requestId,
+                    provider: 'openai' as const,
+                    requestedModel: config.embeddingModel,
+                    model: config.embeddingModel,
+                    modelVersionStatus: 'unavailable' as const,
+                    contextDigest: '',
+                    startedAt: at,
+                    completedAt: at,
+                    latencyMs: 0,
+                    dispatched: false,
+                    completionUncertain: false,
+                  },
+                };
+              }
+              // Do not automatically repurchase a failed or uncertain background source.
+              sourceKeys.forEach((key) => attempted.add(key));
+              return this.embeddings.embed({
                 requestId,
                 texts: batch.map((candidate) => candidate.embeddingText ?? candidate.text),
                 signal: this.indexController.signal,
-              }),
+              });
+            },
           );
           await this.service.store.settle(requestId, result.receipt);
-          if (result.outcome !== 'value') return;
-          // Provider work is derived data: only publish rows that still match current speech.
-          const current = new Map(
-            speechCandidates(this.service.world, actorId).map((candidate) => [
-              candidate.id,
-              candidate,
-            ]),
+          // A provider outage is shared, unlike an actor's budget. Stop this pass rather
+          // than buying the same failing operation for every remaining actor.
+          if (result.outcome !== 'value' || this.closed) return;
+          // Paid work stays outside the world lane. Only bounded publication shares the
+          // mutation boundary, so forgetting cannot race a stale vector back into storage.
+          await this.service.publishSpeechVectors(
+            actorId,
+            generation,
+            scope,
+            batch.map((candidate, index) => ({
+              id: candidate.id,
+              revision: candidate.revision,
+              vector: result.value[index]!,
+            })),
           );
-          const additions = batch.flatMap((candidate, index) => {
-            const latest = current.get(candidate.id);
-            return latest?.revision === candidate.revision
-              ? [{ id: candidate.id, revision: candidate.revision, vector: result.value[index]! }]
-              : [];
-          });
-          if (additions.length) await vectors.put(scope, additions);
         } finally {
           sourceKeys.forEach((key) => this.backgroundInFlight.delete(key));
         }
       }
+      if (
+        complete &&
+        generation === this.service.generation &&
+        snapshot.every(Object.isFrozen) &&
+        same(snapshot, inputs(this.service.world, actorId))
+      )
+        this.indexedSpeech.set(actorId, snapshot);
     }
   }
 
@@ -517,6 +588,7 @@ export class RecallService {
     immediateContext: Record<string, unknown> = {},
   ) {
     const config = this.service.config;
+    const generation = this.service.generation;
     const inner = world.innerWorlds?.[actorId];
     const records = mindFor(world, actorId).records;
     const people = candidates
@@ -603,20 +675,19 @@ export class RecallService {
       this.backgroundInFlight.has(backgroundSourceKey(actorId, candidate)),
     );
     // Preserve structured priority while indexing only sections large enough to need semantic top-N.
-    const missing = ranked
-      .filter(
-        (candidate) =>
-          semanticIds.has(candidate.id) &&
-          !indexed.has(candidate.id) &&
-          !this.backgroundInFlight.has(backgroundSourceKey(actorId, candidate)),
-      )
-      .slice(0, 32);
+    const unindexed = ranked.filter(
+      (candidate) =>
+        semanticIds.has(candidate.id) &&
+        !indexed.has(candidate.id) &&
+        !this.backgroundInFlight.has(backgroundSourceKey(actorId, candidate)),
+    );
     const queryKey = digest({
       query: query.trim().replace(/\s+/g, ' ').toLocaleLowerCase(),
       revision: inner?.revision,
       forgotten: world.experience?.forgotten[actorId],
     });
     const cachedQuery = cache.queries[queryKey];
+    const missing = embeddingBatches(unindexed, cachedQuery ? [] : [query]).next().value ?? [];
     let embeddingStatus = !semanticPool.length
       ? 'skipped: every section is within the direct-Jev limit'
       : vectors
@@ -664,23 +735,25 @@ export class RecallService {
         }
       }
     }
-    // A late response must not repopulate corrected/forgotten content.
-    if (
-      !semanticPool.length ||
-      (digest(this.service.world.experience?.forgotten[actorId] ?? []) ===
-        digest(world.experience?.forgotten[actorId] ?? []) &&
-        digest(this.service.world.experience?.corrections?.[actorId] ?? {}) ===
-          digest(world.experience?.corrections?.[actorId] ?? {}))
-    ) {
-      if (vectors && additions.length) {
-        await vectors.put(scope, additions);
-        for (const source of additions) indexed.add(source.id);
-      }
-      if (semanticPool.length && vectors) await this.service.store.putIntegration(key, cache);
-    } else {
-      // Rebuilding from a changed privacy snapshot belongs to a fresh decision.
-      throw new Error('Recall sources changed during embedding; discard stale context.');
-    }
+    // Validation and bounded writes share the mutation turn with forgetting/restore.
+    // Provider work above remains outside; an inherited callback context cannot bypass it.
+    if (semanticPool.length && vectors)
+      await this.service.publishRecall(async () => {
+        if (
+          generation !== this.service.generation ||
+          world.id !== this.service.world.id ||
+          digest(this.service.world.experience?.forgotten[actorId] ?? []) !==
+            digest(world.experience?.forgotten[actorId] ?? []) ||
+          digest(this.service.world.experience?.corrections?.[actorId] ?? {}) !==
+            digest(world.experience?.corrections?.[actorId] ?? {})
+        )
+          throw new Error('Recall sources changed during embedding; discard stale context.');
+        if (additions.length) {
+          await vectors.put(scope, additions);
+          for (const source of additions) indexed.add(source.id);
+        }
+        await this.service.store.putIntegration(key, cache);
+      });
     const q = cache.queries[queryKey];
     const byId = new Map(searchable.map((c) => [c.id, c]));
     const priority = (c: AttentionCandidate) =>

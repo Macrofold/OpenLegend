@@ -20,6 +20,14 @@ The broader shared-world platform, arbitrary invented physics, hosted worlds, ma
 
 - [Engine/world boundaries](docs/engine-and-world-boundaries.md), [extensibility roadmap](docs/extensibility-roadmap.md) and [EWF work](docs/maintainers/extensible-world-foundation.md) — shared foundation and staged delivery
 
+## Hear the world
+
+Committed speech appears as plain captions with a small remaining-reading-time ring. Talk offers **Whisper / Normal / Shout**; whispering is not a private channel. Partial words are fixed at the time of hearing and stay partial in captions, history and actor context. Unseen voices use coarse directional captions around the listener; moving later never reveals their hidden position or missed words. **Settings and help → Speech captions** provides hide, pause and reading-speed preferences.
+
+**World Events**, immediately below **Journal**, shows read-only perceived history. Its **Speech** filter includes overheard speech across conversations; **Load older events** reaches durable history beyond the recent HUD feed. The god-only event editor remains separate.
+
+This feature requires a fresh format-10 development world; no old-event migration, correction or deletion is performed. See [the hearing design](docs/hearing-and-speech.md), [current implementation](docs/architecture.md#hearing-captions-and-perceived-events), and [verification limits](docs/verification.md#hearing-runtime-and-performance). Full PlayCanvas/browser and live-provider qualification remain pending; native behavior and offline DOM observations are not those gates.
+
 ## Run locally
 
 Use **Node.js 22.13+** and **pnpm 10.33.0**, pinned in `package.json`. Node 22 LTS is the tested baseline; its built-in SQLite module may print an experimental warning. If pnpm is not installed, use `corepack enable` with Node 22, or follow the [pnpm installation guide](https://pnpm.io/10.x/installation).
@@ -73,7 +81,7 @@ Use a separate new data directory and disable paid work:
 OPEN_LEGEND_DATA_DIR=/tmp/openlegend-reservoir-demo OPEN_LEGEND_WORLD_PRESET=reservoir-demo AI_BUDGET_USD=0 PORT=3218 node --import tsx apps/server/src/main.ts
 ```
 
-Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Schema 9 rejects older development saves without modifying them; select a fresh directory for either preset. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
+Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Schema 10 rejects older development saves without modifying them; select a fresh directory for either preset. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
 
 For the coarse touch-only resident, use a separate data directory and `OPEN_LEGEND_WORLD_PRESET=touch-demo`. The player retains sight; the resident receives only unidentified contacts and short direct probe choices. God inspection is administrative evidence, not the resident's knowledge. See the [implemented limits](docs/architecture.md#registered-senses-and-coarse-contact).
 
@@ -103,7 +111,7 @@ The [Narrator and conversation design](docs/narration-and-conversations.md) now 
 
 The [agent agency design](docs/agent-agency.md) adds optional repeated decisions, persistent goals and short native plans, and actor-led invention through existing mechanical admission. Its [runtime contract](archive/07-technical-architecture/agent-agency-runtime.md) integrates with the newer [event/reaction intake](docs/events-perception-and-reactions.md); [AG01–AG12](docs/maintainers/agent-agency.md) are uncompleted implementation and acceptance work.
 
-The [perception and attention design](archive/07-technical-architecture/perception-and-attention.md) now has an initial visual experiment: sight reaches 28 map units, with a clear central field and a strongly blurred outer band instead of a dark fog. Previously seen objects can remain as frozen, non-interactive blurred images after leaving sight. Finite 3D floor/wall occlusion is implemented; distance-specific descriptions and hearing gradients remain future work; scoped semantic attention and embeddings are implemented.
+The [perception and attention design](archive/07-technical-architecture/perception-and-attention.md) now has an initial visual experiment: sight reaches 28 map units, with a clear central field and a strongly blurred outer band instead of a dark fog. Previously seen objects can remain as frozen, non-interactive blurred images after leaving sight. Finite 3D floor/wall occlusion is implemented; distance-specific visual descriptions remain future work. Speech now uses continuous modeled dB levels and clear/partial/unintelligible hearing, with listener-specific history and cognition. Scoped semantic attention and embeddings are implemented.
 
 The latest design additions cover [world locks and invention ownership](archive/03-design-proposals/invention-governance-and-ownership.md), [playability and controls](archive/03-design-proposals/playability-and-controls.md), and [world logs and invention workshops](archive/03-design-proposals/world-agent-and-workshop.md). They describe planned extensions beyond the running prototype.
 

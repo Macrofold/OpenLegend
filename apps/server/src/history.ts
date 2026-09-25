@@ -1,3 +1,10 @@
+import { appendedCount } from '@open-legend/domain';
+import {
+  initializePerceivedEventIndexes,
+  readPerceivedEvents,
+  perspectiveField,
+} from './perceived-events.js';
+import { projectEventEvidence, memoryPerspective, type EventEvidence } from '@open-legend/domain';
 import {
   controlledEntityId,
   appendedEventCount,
@@ -25,6 +32,7 @@ export const HISTORY_TABLES = [
 ] as const;
 export type NarratorVoice = 'restrained' | 'lyrical' | 'wry';
 export interface StorySource {
+  evidence: EventEvidence;
   id: string;
   text: string;
   revision: string;
@@ -47,6 +55,32 @@ export interface StoryJob {
   selection?: { mechanism: string; version: number; policyRevision: number; policyDigest: string };
 }
 const revisionOf = (text: string) => createHash('sha256').update(text).digest('hex');
+function eventEvidence(awareness: EventEvidence): EventEvidence {
+  const {
+    actorId,
+    text,
+    content,
+    modality,
+    sourceId,
+    targetId,
+    intendedRecipientId,
+    speech,
+    importance,
+    urgency,
+  } = awareness;
+  return {
+    actorId,
+    text,
+    content,
+    modality,
+    sourceId,
+    targetId,
+    intendedRecipientId,
+    speech,
+    importance,
+    urgency,
+  };
+}
 /** Scoped durable history repository. Only the application binds owner and perspective. */
 export class HistoryRepository {
   constructor(
@@ -175,6 +209,7 @@ export class HistoryRepository {
         world_id TEXT NOT NULL, narration_id TEXT NOT NULL, owner_id TEXT NOT NULL, transition_id TEXT NOT NULL,
         PRIMARY KEY(world_id,narration_id,owner_id,transition_id));
     `);
+    await initializePerceivedEventIndexes(this.db);
   }
   private async revokeStories(worldId: string, id: string, ownerId?: string) {
     const rows = await this.db
@@ -269,13 +304,44 @@ export class HistoryRepository {
     const eventRows: unknown[][] = [],
       audienceRows: unknown[][] = [],
       perspectiveRows: unknown[][] = [];
+    // Resolve this commit's needed evidence once per actor, from the recent end.
+    // Never scan an actor's whole retained history once per recipient/event pair.
+    const wanted = new Map<string, Set<string>>();
+    for (const event of changed)
+      for (const actorId of event.audience) {
+        let ids = wanted.get(actorId);
+        if (!ids) wanted.set(actorId, (ids = new Set()));
+        ids.add(event.id);
+      }
+    const evidenceByActor = new Map<string, Map<string, EventEvidence>>();
+    for (const [actorId, ids] of wanted) {
+      const found = new Map<string, EventEvidence>();
+      const entries = world.experience?.awareness[actorId] ?? [];
+      for (let i = entries.length - 1; i >= 0 && ids.size; i--) {
+        const entry = entries[i]!;
+        if (ids.delete(entry.eventId)) found.set(entry.eventId, eventEvidence(entry));
+      }
+      evidenceByActor.set(actorId, found);
+    }
     for (const event of changed) {
       const encoded = JSON.stringify(event);
+      const eventRevision = revisionOf(encoded);
+      const retainedPerspectives = new Map<string, StorySource>();
       if (!fastAppend) {
         const retained = await this.db
           .prepare('SELECT payload FROM history_events WHERE world_id=? AND id=?')
           .get(world.id, event.id);
         if (retained?.['payload'] === encoded) continue;
+        if (retained)
+          for (const row of await this.db
+            .prepare(
+              'SELECT actor_id,payload FROM history_perspectives WHERE world_id=? AND event_id=?',
+            )
+            .all(world.id, event.id))
+            retainedPerspectives.set(
+              String(row['actor_id']),
+              JSON.parse(String(row['payload'])) as StorySource,
+            );
         await this.removeEvent(world.id, event.id);
       }
       const perspectives = new Map<string, StorySource>();
@@ -284,12 +350,33 @@ export class HistoryRepository {
       for (const actorId of new Set(event.audience)) {
         if (world.experience?.forgotten[actorId]?.includes(event.id)) continue;
         audienceRows.push([world.id, event.id, actorId]);
-        const awareness = world.experience?.awareness[actorId]?.find((a) => a.eventId === event.id);
-        const text = awareness?.text ?? event.text;
+        let evidence = evidenceByActor.get(actorId)?.get(event.id);
+        const retained = retainedPerspectives.get(actorId);
+        if (!evidence && retained) {
+          // Consolidation removes hot recall, not durable authorization. Reuse that perspective;
+          // the domain forbids speech rewrites, so this path only rephrases non-speech edits.
+          evidence =
+            event.type === 'speech'
+              ? retained.evidence
+              : {
+                  ...retained.evidence,
+                  text: memoryPerspective(
+                    world,
+                    actorId,
+                    event.text,
+                    false,
+                    retained.evidence.sourceId,
+                  ),
+                  content:
+                    typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text,
+                };
+        }
+        if (!evidence) throw new Error('Committed event audience is missing its perspective.');
         const source: StorySource = {
           id: event.id,
-          text,
-          revision: revisionOf(encoded + text),
+          text: evidence.text,
+          evidence,
+          revision: revisionOf(eventRevision + JSON.stringify(evidence)),
           time: event.at,
           order: position,
           type: event.type,
@@ -303,18 +390,19 @@ export class HistoryRepository {
           if (world.experience?.forgotten[principal.actorId]?.includes(event.id)) continue;
           const source = perspectives.get(principal.actorId);
           if (!source) continue;
+          const perceived = projectEventEvidence(event, source.evidence);
           const selection = selectStory(
             {
               viewerId: principal.actorId,
-              event,
+              event: perceived,
               sourceText: source.text,
-              source: world.entities[event.actorId ?? ''],
-              target: world.entities[event.targetId ?? ''],
+              source: world.entities[perceived.actorId ?? ''],
+              target: world.entities[perceived.targetId ?? ''],
             },
             policy,
           );
           if (selection.kind === 'candidate')
-            candidates.push({ event, position, principal, selection });
+            candidates.push({ event: perceived, position, principal, selection });
         }
     }
     // Persist sources before scheduling; selection follows docs/narration-and-conversations.md#replaceable-story-selection.
@@ -365,10 +453,20 @@ export class HistoryRepository {
     if (previous)
       for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {})) {
         if (entries === previous.experience?.awareness[actorId]) continue;
-        const old = new Map(previous.experience?.awareness[actorId]?.map((a) => [a.eventId, a]));
-        for (const entry of entries) {
+        const before = previous.experience?.awareness[actorId] ?? [];
+        if (appendedCount(before, entries) !== undefined) continue;
+        let prefix = 0;
+        while (prefix < before.length && entries[prefix] === before[prefix]) prefix++;
+        if (prefix === before.length) continue; // Unchanged or append-only, no edited old sources.
+        const old = new Map(before.slice(prefix).map((entry) => [entry.eventId, entry]));
+        for (const entry of entries.slice(prefix)) {
           const prior = old.get(entry.eventId);
-          if (!prior || (prior.text === entry.text && prior.content === entry.content)) continue;
+          if (
+            !prior ||
+            prior === entry ||
+            JSON.stringify(eventEvidence(prior)) === JSON.stringify(eventEvidence(entry))
+          )
+            continue;
           const row = await this.db
             .prepare(
               'SELECT payload FROM history_perspectives WHERE world_id=? AND event_id=? AND actor_id=?',
@@ -377,6 +475,7 @@ export class HistoryRepository {
           if (!row) continue;
           const source = JSON.parse(String(row['payload'])) as StorySource;
           source.text = entry.text;
+          source.evidence = eventEvidence(entry);
           source.revision = revisionOf(JSON.stringify(entry));
           await this.db
             .prepare(
@@ -609,7 +708,12 @@ export class HistoryRepository {
         .prepare('SELECT payload FROM history_events WHERE world_id=? AND id=?')
         .get(world.id, id);
       if (!row) return false;
-      const event = JSON.parse(String(row['payload'])) as WorldEvent;
+      const evidence = job.sources.find((source) => source.id === id)?.evidence;
+      if (!evidence) return false;
+      const event = projectEventEvidence(
+        JSON.parse(String(row['payload'])) as WorldEvent,
+        evidence,
+      );
       if (
         selectStory(
           {
@@ -821,6 +925,23 @@ export class HistoryRepository {
       .get(worldId, ownerId);
     return row ? (JSON.parse(String(row['payload'])) as TranscriptItem) : null;
   }
+  async perceivedEvents(
+    worldId: string,
+    ownerId: string,
+    actorId: string,
+    epoch: string,
+    options: { type?: string; cursor?: string; limit?: number } = {},
+  ) {
+    if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
+      throw new Error('Unsupported history principal.');
+    return readPerceivedEvents(
+      this.db,
+      worldId,
+      actorId,
+      JSON.stringify([worldId, ownerId, actorId, epoch]),
+      options,
+    );
+  }
   async transcript(
     worldId: string,
     ownerId: string,
@@ -839,11 +960,15 @@ export class HistoryRepository {
     if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
       throw new Error('Unsupported history principal.');
     const limit = Math.max(1, Math.min(100, options.limit ?? 40));
+    const position = perspectiveField(this.db, 'order', 'p');
+    const eventType = perspectiveField(this.db, 'type', 'p');
+    // Talk and Journal share the actor-scoped index; unseen global history must not
+    // turn each message-page read into a world-size scan.
     const maximum = await this.db
       .prepare(
-        'SELECT MAX(position) AS position FROM (SELECT position FROM history_events WHERE world_id=? UNION ALL SELECT position FROM story_narrations WHERE world_id=? AND owner_id=?) AS positions',
+        `SELECT MAX(position) AS position FROM (SELECT MAX(${position}) AS position FROM history_perspectives p WHERE p.world_id=? AND p.actor_id=? UNION ALL SELECT MAX(position) FROM story_narrations WHERE world_id=? AND owner_id=?) AS positions`,
       )
-      .get(worldId, worldId, ownerId);
+      .get(worldId, actorId, worldId, ownerId);
     const watermark = Math.min(
       options.watermark ?? Number(maximum?.['position'] ?? 0),
       Number(maximum?.['position'] ?? 0),
@@ -853,10 +978,10 @@ export class HistoryRepository {
     const storyFilter = options.conversationId ? ' AND conversation_id=?' : '';
     const args = options.conversationId ? [options.conversationId] : [];
     // Filter before pagination so journal activity cannot crowd speech out of the page.
-    const field = (key: string) =>
+    const identity = (key: 'sourceId' | 'targetId') =>
       this.db.dialect === 'postgres'
-        ? `(e.payload::jsonb->>'${key}')`
-        : `json_extract(e.payload, '$.${key}')`;
+        ? `(p.payload::jsonb #>> '{evidence,${key}}')`
+        : `json_extract(p.payload, '$.evidence.${key}')`;
     const responseId =
       this.db.dialect === 'postgres'
         ? `(e.payload::jsonb #>> '{data,responseId}')`
@@ -866,9 +991,9 @@ export class HistoryRepository {
         ? `(e.payload::jsonb #>> '{data,conversationRelevant}')='true'`
         : `json_extract(e.payload, '$.data.conversationRelevant')=1`;
     if (options.participantId) {
-      const speechParticipants = `((${field('actorId')}=? AND ${field('targetId')}=?) OR (${field('actorId')}=? AND (${field('targetId')}=? OR ${field('targetId')} IS NULL)))`;
+      const speechParticipants = `((${identity('sourceId')}=? AND ${identity('targetId')}=?) OR (${identity('sourceId')}=? AND (${identity('targetId')}=? OR ${identity('targetId')} IS NULL)))`;
       if (options.responseActions) {
-        filter += ` AND ((${field('type')}='speech' AND ${speechParticipants}) OR ((${responseId} IS NOT NULL OR ${relevant}) AND ${field('actorId')}=?))`;
+        filter += ` AND ((${eventType}='speech' AND ${speechParticipants}) OR ((${responseId} IS NOT NULL OR ${relevant}) AND ${identity('sourceId')}=?))`;
         args.push(
           actorId,
           options.participantId,
@@ -877,22 +1002,21 @@ export class HistoryRepository {
           options.participantId,
         );
       } else {
-        filter += ` AND ${field('type')}='speech' AND ${speechParticipants}`;
+        filter += ` AND ${eventType}='speech' AND ${speechParticipants}`;
         args.push(actorId, options.participantId, options.participantId, actorId);
       }
     } else if (options.speechOnly) {
       filter += options.responseActions
-        ? ` AND (${field('type')}='speech' OR ${responseId} IS NOT NULL OR ${relevant})`
-        : ` AND ${field('type')}='speech'`;
+        ? ` AND (${eventType}='speech' OR ${responseId} IS NOT NULL OR ${relevant})`
+        : ` AND ${eventType}='speech'`;
     }
     const events = await this.db
       .prepare(
-        `SELECT e.position,e.payload,p.payload AS perspective FROM history_events e LEFT JOIN history_perspectives p ON p.world_id=e.world_id AND p.event_id=e.id AND p.actor_id=? JOIN history_audiences a ON a.world_id=e.world_id AND a.event_id=e.id WHERE e.world_id=? AND a.actor_id=? AND e.position<?${filter} AND (?=1 OR NOT EXISTS (SELECT 1 FROM story_event_sources s JOIN story_narrations n ON n.world_id=s.world_id AND n.id=s.narration_id AND n.owner_id=s.owner_id WHERE s.world_id=e.world_id AND s.event_id=e.id AND s.owner_id=?)) ORDER BY e.position DESC,e.id DESC LIMIT ?`,
+        `SELECT ${position} AS position,e.payload,p.payload AS perspective FROM history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id JOIN history_audiences a ON a.world_id=p.world_id AND a.event_id=p.event_id AND a.actor_id=p.actor_id WHERE p.actor_id=? AND p.world_id=? AND ${position}<?${filter} AND (?=1 OR NOT EXISTS (SELECT 1 FROM story_event_sources s JOIN story_narrations n ON n.world_id=s.world_id AND n.id=s.narration_id AND n.owner_id=s.owner_id WHERE s.world_id=e.world_id AND s.event_id=e.id AND s.owner_id=?)) ORDER BY ${position} DESC,p.event_id DESC LIMIT ?`,
       )
       .all(
         actorId,
         worldId,
-        actorId,
         boundary,
         ...args,
         options.speechOnly || options.participantId ? 1 : 0,
@@ -908,16 +1032,21 @@ export class HistoryRepository {
             )
             .all(worldId, ownerId, boundary, ...args, limit + 1);
     const items: TranscriptItem[] = events.map((row) => {
-      const event = JSON.parse(String(row['payload'])) as WorldEvent;
+      const perspective = JSON.parse(String(row['perspective'])) as StorySource;
+      const event = projectEventEvidence(
+        JSON.parse(String(row['payload'])) as WorldEvent,
+        perspective.evidence,
+      );
       return {
         id: event.id,
         kind: event.type === 'speech' ? 'speech' : 'event',
         text:
-          (options.speechOnly || options.participantId) && typeof event.data?.['text'] === 'string'
+          event.speech?.intelligibility !== 'none' &&
+          (options.speechOnly || options.participantId) &&
+          typeof event.data?.['text'] === 'string'
             ? event.data['text']
-            : row['perspective']
-              ? (JSON.parse(String(row['perspective'])) as StorySource).text
-              : event.text,
+            : event.text,
+        speech: event.speech,
         time: event.at,
         order: Number(row['position']),
         conversationId: event.conversationId,

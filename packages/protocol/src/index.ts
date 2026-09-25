@@ -157,7 +157,24 @@ export interface RecipeView {
   actions: ActionOption[];
 }
 
+export type SpeechVolume = 'whisper' | 'normal' | 'shout';
+export interface PerceivedSpeech {
+  perception: 'heard' | 'seen' | 'self';
+  intelligibility: 'none' | 'partial' | 'clear';
+  segments: Array<{ kind: 'heard'; text: string } | { kind: 'unintelligible' }>;
+  speaker: { entityId: string; nameAtTime: string } | null;
+  delivery: SpeechVolume | null;
+  direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
+  listenerPosition: Position;
+}
+export interface PerceivedEventsPage {
+  events: PublicEvent[];
+  nextCursor?: string;
+}
+
 export interface PublicEvent {
+  speech?: PerceivedSpeech;
+  modality?: 'heard' | 'observed' | 'felt' | 'internal';
   id: string;
   time: number;
   type: string;
@@ -175,7 +192,8 @@ export interface ChatMessage {
   /** User-facing detail revealed from the message-local failure label. */
   replyFailure?: string;
   id: string;
-  speakerId: string;
+  speakerId?: string;
+  speech?: PerceivedSpeech;
   speaker: string;
   text: string;
   time: number;
@@ -194,6 +212,7 @@ export interface GameView {
   inventionPolicy: { revision: number; playerLocked: boolean; agentLocked: boolean };
   saveTimeline?: string;
   commandEpoch?: string;
+  worldEventsRevision?: string;
   historyRevision?: string;
   historyEpoch?: string;
   narrator?: TranscriptItem | null;
@@ -209,6 +228,7 @@ export interface GameView {
   profile: PlayerProfile;
   /** Authoritative sight radius; the client may style its boundary, not enlarge it. */
   vision: { radius: number };
+  hearing: { referenceRadius: number };
   map: {
     width: number;
     height: number;
@@ -289,6 +309,7 @@ export interface GameView {
 
 export interface GamePatch {
   commandEpoch?: string;
+  worldEventsRevision?: string;
   historyRevision?: string;
   historyEpoch?: string;
   schemaVersion: 2;
@@ -459,6 +480,7 @@ export interface IntelligenceCall {
 }
 
 export interface TranscriptItem {
+  speech?: PerceivedSpeech;
   id: string;
   kind: 'speech' | 'event' | 'narration';
   text: string;

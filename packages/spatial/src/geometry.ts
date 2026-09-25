@@ -401,6 +401,8 @@ export function rayHits(
 }
 export const clearSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean =>
   !visitHits(map, from, to, 'sight', EMPTY_IDS, undefined, () => true);
+/** Broadband energy ratio for the pinned hearing policy, not pressure amplitude.
+ * docs/hearing-and-speech.md#3-geometry-attenuation-and-noise */
 export function soundTransmission(map: SpatialMap, from: WorldPoint, to: WorldPoint): number {
   // Preserve canonical hit order for numeric stability; only acoustic queries need all crossings.
   return rayHits(map, from, to, 'sound').reduce((value, hit) => value * hit.transmission, 1);

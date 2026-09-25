@@ -353,6 +353,7 @@ export type Command = Envelope &
         targetId?: string;
         intendedRecipientId?: string;
         selfIntroduction?: string;
+        volume?: import('./acoustics.js').SpeechVolume;
       }
     | { type: 'goal'; text: string }
     | { type: 'withdraw-attempt'; attemptId: string }

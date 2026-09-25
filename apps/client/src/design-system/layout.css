@@ -2088,3 +2088,90 @@ body,
 .ol-diagnostic-detail-tools {
   flex-wrap: wrap;
 }
+
+/* Plain DOM speech stays crisp above the scene's visual blur. */
+.ol-speech-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: var(--z-world-label);
+  font-family: var(--font-ui);
+}
+.ol-speech-caption {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(calc(320px * var(--caption-scale, 1)), calc(100vw - 32px));
+  padding: 7px 9px;
+  border-radius: 4px;
+  color: #fff;
+  background: rgba(12, 16, 18, 0.86);
+  font-size: calc(16px * var(--caption-scale, 1));
+  line-height: 1.4;
+  font-weight: 400;
+  font-style: normal;
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+.ol-speech-caption-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: calc(12px * var(--caption-scale, 1));
+  margin-bottom: 3px;
+}
+.ol-speech-caption-text > .ol-icon-wrap {
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+.ol-speech-arrow {
+  flex: 0 0 auto;
+  font-size: 16px;
+}
+.ol-progress-ring {
+  display: inline-block;
+  vertical-align: -2px;
+}
+.ol-progress-ring circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+}
+.ol-progress-ring-track {
+  opacity: 0.3;
+}
+.ol-world-events {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+.ol-world-events > .ol-thread-shell {
+  flex: 1;
+  min-height: 0;
+}
+.ol-world-events .ol-thread {
+  height: 100%;
+  max-height: none;
+}
+.ol-panel-body:has(> .ol-world-events) {
+  overflow: hidden;
+}
+.ol-world-event-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+.ol-world-event {
+  padding: 8px 0;
+}
+.ol-world-event p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+}

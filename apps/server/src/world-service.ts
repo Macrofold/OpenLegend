@@ -1,6 +1,9 @@
 import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/domain';
 import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { inventoryFor, projectStatusEffects } from '@open-legend/domain';
+import type { SpeechVolume } from '@open-legend/domain';
+import { currentSpeechSources } from './speech-recall.js';
+import type { VectorScope, VectorSource } from './vector-store.js';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
@@ -280,7 +283,7 @@ export class WorldService {
       }),
     };
     this.saved = updateMilestones(this.saved, this.saved.world.events);
-    // Startup migrations may replace historical branches, so use the ordinary diff once.
+    // Startup initialization can add actor state, so use the ordinary diff once.
     const startupHistory = this.saved.world;
     if (store.history) this.saved = { ...this.saved, world: retainHotEvents(startupHistory) };
     this.persistedRevision = await store.commit(
@@ -323,6 +326,35 @@ export class WorldService {
   // principal; neither preferences nor action queries accept a client-selected actor.
   get profile(): PlayerProfile {
     return this.currentProfile;
+  }
+  /** A fresh turn for bounded recall writes; callers validate scope inside the callback.
+   * Async notifications may inherit an old reentrancy marker, which cannot grant this turn.
+   * Never await a provider here. docs/memory-architecture.md#conversation-speech-pool */
+  async publishRecall<T>(operation: () => Promise<T>): Promise<T> {
+    return this.mutationContext.exit(() => this.mutate(operation));
+  }
+  /** Only derived publication joins the mutation lane; provider work never holds it.
+   * docs/memory-architecture.md#conversation-speech-pool */
+  async publishSpeechVectors(
+    actorId: string,
+    generation: string,
+    scope: VectorScope,
+    sources: (VectorSource & { vector: number[] })[],
+  ): Promise<void> {
+    if (!sources.length) return;
+    await this.publishRecall(async () => {
+      if (
+        !this.store.vectors ||
+        generation !== this.generation ||
+        this.world.entities[actorId]?.actor?.controller !== 'npc' ||
+        scope.key !== `vectors:${this.world.id}:${actorId}` ||
+        scope.model !== this.config.embeddingModel ||
+        scope.dimensions !== this.config.embeddingDimensions
+      )
+        return;
+      const valid = currentSpeechSources(this.world, actorId, sources);
+      await this.store.vectors.put(scope, valid);
+    });
   }
   async setPreferences(preferences: PlayerPreferencePatch): Promise<PlayerProfile> {
     return this.mutate(async () => {
@@ -402,6 +434,10 @@ export class WorldService {
   private disconnectedAt: number | null = null;
   telemetryRevision = 0;
   private transcriptRevision = 0;
+  private eventViewRevision = 0;
+  get worldEventsRevision(): string {
+    return `${this.generation}:${this.eventViewRevision}:${this.transcriptEpoch}`;
+  }
   private transcriptEpoch = 0;
   get historyEpoch(): string {
     return `${this.generation}:${this.transcriptEpoch}`;
@@ -415,6 +451,13 @@ export class WorldService {
     count: number | undefined,
   ) {
     const actorId = this.controlledEntityId;
+    const perceived = (event: WorldEvent) => event.audience.includes(actorId);
+    const allChanged =
+      count === undefined
+        ? JSON.stringify(before.filter(perceived)) !== JSON.stringify(after.filter(perceived))
+        : after.slice(after.length - count).some(perceived);
+    if (allChanged) this.eventViewRevision++;
+    if (allChanged && count === undefined) this.transcriptEpoch++;
     const relevant = (event: WorldEvent) =>
       event.audience.includes(actorId) &&
       !(
@@ -427,7 +470,6 @@ export class WorldService {
         : after.slice(after.length - count).some(relevant);
     if (changed) {
       this.transcriptRevision++;
-      if (count === undefined) this.transcriptEpoch++;
     }
   }
   /** Presentation changes need the same refresh signal as committed journal sources. */
@@ -1473,6 +1515,7 @@ export class WorldService {
     actorId: string,
     text: string,
     targetId?: string,
+    volume: SpeechVolume = 'normal',
   ): Promise<ApiResult> {
     return await this.transition((world) =>
       executeCommand(world, {
@@ -1480,6 +1523,7 @@ export class WorldService {
         actorId,
         type: 'say',
         text,
+        volume,
         ...(targetId ? { targetId } : {}),
       }),
     );
