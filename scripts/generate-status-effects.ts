@@ -28,13 +28,31 @@ if (process.argv.includes('--check')) {
 }
 
 // The base world's notepad policy uses the same build-time authoring boundary.
-const knowledgeSource = new URL('../packages/domain/src/worlds/base/config/knowledge.yaml', import.meta.url);
-const knowledgeDestination = new URL('../packages/domain/src/worlds/base/config/knowledge.generated.json', import.meta.url);
+const knowledgeSource = new URL(
+  '../packages/domain/src/worlds/base/config/knowledge.yaml',
+  import.meta.url,
+);
+const knowledgeDestination = new URL(
+  '../packages/domain/src/worlds/base/config/knowledge.generated.json',
+  import.meta.url,
+);
 const knowledge = parse(await readFile(knowledgeSource, 'utf8'));
-if (knowledge?.knowledge?.policy !== 'editable-notepads' || knowledge?.observerIdentity?.policy !== 'observer-given-names' ||
-    !['general', 'subject'].every(key => Number.isSafeInteger(knowledge.knowledge.maxCharacters[key]) && knowledge.knowledge.maxCharacters[key] > 0))
+if (
+  knowledge?.knowledge?.policy !== 'editable-notepads' ||
+  knowledge?.observerIdentity?.policy !== 'observer-given-names' ||
+  !['general', 'subject'].every(
+    (key) =>
+      Number.isSafeInteger(knowledge.knowledge.maxCharacters[key]) &&
+      knowledge.knowledge.maxCharacters[key] > 0,
+  )
+)
   throw new Error('Invalid base-world knowledge policy.');
-const knowledgeOutput = await format(JSON.stringify(knowledge), { ...(await resolveConfig(knowledgeDestination.pathname)), parser: 'json' });
+const knowledgeOutput = await format(JSON.stringify(knowledge), {
+  ...(await resolveConfig(knowledgeDestination.pathname)),
+  parser: 'json',
+});
 if (process.argv.includes('--check')) {
-  if (await readFile(knowledgeDestination, 'utf8') !== knowledgeOutput) throw new Error('Generated knowledge policy is stale. Run pnpm config:generate.');
-} else if (await readFile(knowledgeDestination, 'utf8') !== knowledgeOutput) await writeFile(knowledgeDestination, knowledgeOutput);
+  if ((await readFile(knowledgeDestination, 'utf8')) !== knowledgeOutput)
+    throw new Error('Generated knowledge policy is stale. Run pnpm config:generate.');
+} else if ((await readFile(knowledgeDestination, 'utf8')) !== knowledgeOutput)
+  await writeFile(knowledgeDestination, knowledgeOutput);
