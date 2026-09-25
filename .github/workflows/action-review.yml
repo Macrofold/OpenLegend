@@ -20,7 +20,7 @@ jobs:
       - name: Inspect pinned three-way reconciliation
         shell: python
         run: |
-          import urllib.request, tarfile, io, pathlib, subprocess, hashlib, json
+          import urllib.request, tarfile, io, pathlib, subprocess, hashlib, json, re
           root=pathlib.Path('/tmp/action-reconcile'); root.mkdir()
           refs={'base':'3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238','main':'03105fed9209c126e4e69e9faeb4687f42d1e74a','action':'fdbd0413cdc75301401a20aad17b9fe534d654c4'}
           roots={}
@@ -42,13 +42,24 @@ jobs:
               conflicts.append(path);print('CONFLICT '+path+' add/delete');continue
             else:
               result=subprocess.run(['diff3','-m',str(maps['action'][path]),str(maps['base'][path]),str(maps['main'][path])],capture_output=True)
+              final=result.stdout
+              target=root/'merged'/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(final)
               if result.returncode:
-                conflicts.append(path);print('CONFLICT '+path+'\n'+result.stdout.decode());continue
-              final=result.stdout;merged.append(path)
-              print('MERGED_CONTENT '+path+'\n'+final.decode()+'\nEND_MERGED_CONTENT')
+                conflicts.append(path)
+                for block in re.findall(r'^<<<<<<<.*?^>>>>>>>[^\n]*',final.decode(),flags=re.M|re.S):print('CONFLICT '+path+'\n'+block)
+                continue
+              merged.append(path)
+              delta=subprocess.run(['diff','-u',str(maps['action'][path]),str(target)],capture_output=True)
+              print('CLEAN_MERGE '+path+'\n'+delta.stdout.decode())
             sha=hashlib.sha1(b'blob '+str(len(final)).encode()+b'\0'+final).hexdigest() if final is not None else None
             entries.append({'path':path,'sha':sha,'mode':'100644','type':'blob'})
-          print('RECONCILIATION_MANIFEST '+json.dumps({'refs':refs,'overlayOnAction':entries,'merged':merged,'conflicts':conflicts}))
-          for path in sorted(maps['main']):
-            if path.endswith('AGENTS.md') and path not in ['AGENTS.md'] and (path.startswith('apps/server/') or path.startswith('packages/domain/') or path.startswith('apps/client/') or path.startswith('docs/') or path.startswith('scripts/')):
-              print('LOCAL_INSTRUCTIONS '+path+'\n'+maps['main'][path].read_text()+'\nEND_LOCAL_INSTRUCTIONS')
+          manifest={'refs':refs,'overlayOnAction':entries,'merged':merged,'conflicts':conflicts}
+          (root/'manifest.json').write_text(json.dumps(manifest,indent=2))
+          print('RECONCILIATION_MANIFEST '+json.dumps(manifest))
+          with tarfile.open('/tmp/action-reconcile.tgz','w:gz') as archive:archive.add(root,arcname='action-reconcile')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: action-reconciliation-source
+          path: /tmp/action-reconcile.tgz
+          compression-level: 0
+          retention-days: 1
