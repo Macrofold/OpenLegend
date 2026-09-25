@@ -1,5 +1,7 @@
 # Verification
 
+Current elapsed-integration evidence: [actual boundary, HTTP/restart and stress observations](verification/elapsed-simulation.md). Prior fixed-step figures describe historical revisions; neither old tick counts nor a blocked call certify current throughput.
+
 Current camera-facing sprite, privacy and combined-load evidence: [Mixed spatial review](verification/mixed-spatial-review.md). Earlier results below describe their own revisions.
 
 ## Recast and world-presentation integration
@@ -717,7 +719,6 @@ A synthetic speech-fan-out exercise (12 executions per mode/population) measured
 ## Spatial rebase and eight-times review
 
 [Conflict resolutions, running 8x server measurements, acoustic query observations and remaining limits](verification/spatial-rebase-eightx.md). Dense 8x is not certified by the successful starter run or isolated acoustic pruning.
-
 
 ## Walking under consolidation pressure
 

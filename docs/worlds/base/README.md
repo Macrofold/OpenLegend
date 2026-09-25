@@ -7,6 +7,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Items, ground piles and possession](items.md)
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
+- [Time and observation fidelity](time.md)
 - [Combat](combat.md)
 - [Knowledge and observer identity](knowledge.md)
 

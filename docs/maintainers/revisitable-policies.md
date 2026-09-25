@@ -25,3 +25,13 @@ This register tracks accepted decisions likely to change, not unresolved choices
 ## Maintaining this register
 
 Keep stable IDs, a canonical policy link, the reason to revisit, a concrete trigger and decision authority. Add only known revisitable decisions, not every constant or hypothetical concern. When a trigger is relevant, raise it in the task/PR; put resulting work or unresolved choices in their existing owners. An accepted change updates the policy, affected summaries and this entry together; significant decisions go in the [decision history](../documentation-changelog.md). Retire superseded entries with a link to their replacement or recorded decision, not another copy of the contract.
+
+## RP03 — Global elapsed horizon and sampled discovery
+
+**Current policy:** [Base time and observation fidelity](../worlds/base/time.md), under [simulation time](../simulation-time.md). The current finite integrator uses a global minimum boundary, bounded movement sampling, coupled-rule fallbacks and a shared blocked-flight retry deadline.
+
+**Why revisit:** This is a small playable integration, not the final extreme-scale scheduler. Dense independent deadlines couple unrelated regions, and endpoint samples do not prove every transient contact/peek is detected.
+
+**Review trigger:** A measured contested-perch/crowded-motion workload misses the clock target, brief contact becomes consequential gameplay, another world needs coupled rates, or a concrete region-local scheduler is ready. The current contested-flight evidence has already crossed the performance trigger; PF13.9 retains the next work.
+
+**Decision authority:** Maintainer with spatial/perception/world owners. Mike decides material changes to discovery fidelity or game-time behavior. Do not silently relax collision, privacy, durability or meaningful events to meet a rate target.

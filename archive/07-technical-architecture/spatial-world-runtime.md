@@ -16,7 +16,7 @@ Validate physical endpoints, follow the corridor, split segments at support boun
 
 Only admitted pending native work requests a route. Direct clear moves bypass mesh search. A server coordinator prepares mechanical triangles, never sprite cards or unauthorized visual geometry, through one reused worker and per-profile meshes. The initial implementation sends whole admitted geometry revisions; tiled mesh generation does not imply affected-tile runtime updates. Limit queue length, prepared profiles, query nodes/path output, elapsed native worker allowance and retries. Queue pressure leaves saved actions pending, not falsely unreachable. No pending request or raw polygon reference is authoritative outside the native action owner.
 
-While required current navigation data is missing, preserve already admitted simulation debt but exclude technical real wait from newly admitted time. Pause before the next fixed step; do not let hunger, deadlines or birds advance solely because the host took longer to build. Keep reads/cancel/pause/restore responsive and show preparing status separately from deliberate pause. Waiting occurs outside the mutation lane. Resume ordinary fixed-step ordering once data is ready. Startup/background prewarming without required work is not a simulation barrier.
+While required current navigation data is missing, preserve already admitted simulation debt but exclude technical real wait from newly admitted time. Pause before the next native interval; do not let hunger, deadlines or birds advance solely because the host took longer to build. Keep reads/cancel/pause/restore responsive and show preparing status separately from deliberate pause. Waiting occurs outside the mutation lane. Resume the [elapsed-interval phase contract](../../docs/simulation-time.md) once data is ready. Startup/background prewarming without required work is not a simulation barrier.
 
 At result admission recheck world/load timeline, map identity/revision, action/request identity, source pose, body capability and life state. At execution recheck the actual swept displacement and support. Geometry replacement/load disposes or fences old work; termination completes before a replacement worker is started. A queued callback cannot clear a newer active task. Unavailable, unsafe, partial, invalid and exhausted results remain distinct from reached; no model call repairs navigation. A 20-second watchdog is a hard recovery limit, not a response-time target. Cold generation may take seconds off-thread; record queue, build, projection/validation, commit and display spans separately.
 
@@ -37,7 +37,7 @@ Retain the single authoritative simulation and PlayCanvas client. Add a small sp
 ```text
 admitted world geometry + actor bodies + current transforms
                |                           |
-       immutable spatial snapshot     native fixed-step movement
+       immutable spatial snapshot     native elapsed movement
                |                           ^
      numeric geometric queries ------------|
                |                           |
@@ -247,7 +247,7 @@ Client path previews use the same permitted discovery view. Hidden map seeds, na
 
 The domain remains the sole owner of position and movement time. Do not advance DetourCrowd or PlayCanvas bodies from browser frame delta and copy them into world state. The first release uses the existing native action controller extended for 3D routes. A future crowd backend is a separately qualified replacement for one defined controller responsibility, not a concurrent writer.
 
-Movement consumes a simulation-time budget along actual 3D segments. Speeds, slope effects, ascent/descent rates, and work durations are native data. Use finite swept-volume checks and bounded subdivision at corners/links. Large simulation advances and accelerated playback must not cross an entire barrier between collision samples. Respect the existing fixed-step order and time-debt policy; do not introduce a second simulation clock.
+Movement consumes a simulation-time budget along actual 3D segments. Speeds, slope effects, ascent/descent rates, and work durations are native data. Use finite swept-volume checks and bounded subdivision at corners/links. Large simulation advances and accelerated playback must not cross an entire barrier between collision samples. Respect start/end interval ownership and actual-progress debt accounting in [simulation time](../../docs/simulation-time.md); do not introduce a second simulation clock.
 
 For actor–actor conflicts, produce proposed movement from one step boundary, then resolve conflicting swept volumes in a stable native order. Initial behavior is wait/yield at a blocking actor, with saved waiting age and stable IDs for fair narrow-passage arbitration. Do not rebake the static navmesh for every moving creature. Keep bodies inside their valid surfaces/corridors while resolving conflicts. Independent avoidance systems cannot both steer the same actor.
 

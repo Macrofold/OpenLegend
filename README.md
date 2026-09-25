@@ -1,5 +1,9 @@
 # Open Legend
 
+## Clock and frame rate
+
+One real second represents one game minute at 1x; this is a clock conversion, not sixty world updates. Native simulation now integrates elapsed time to relevant boundaries, while rendering/camera input stay device-paced. See [simulation time](docs/simulation-time.md), [current observations and limits](docs/verification/elapsed-simulation.md), and the [running boundary catalogue](docs/maintainers/simulation-boundaries.md). Existing worlds evolve in place; no new save format or data directory is required by this change.
+
 ## Movement and lighting
 
 The game uses Recast/Detour in one reused navigation worker and Rapier capsule/cylinder queries for physical clearance. Clear moves need no worker; detours follow smoothed arbitrary-angle routes. **Preparing navigation** is technical waiting, not elapsed game time. Existing worlds follow the current in-place development update policy; no new save or data directory is required for this rebase. Ordinary 2D sprites remain front-facing under both camera orbit and pitch, without changing their image proportions. They respond to ambient/local lighting and cast simple world-anchored proxy shadows onto the actual receiving surfaces; physical bodies do not rotate with the artwork. **Settings and help → World visibility** configures nearby character-visible read-through, radius and strength. See [presentation](docs/world-presentation.md), [implementation evidence](docs/verification/recast-integration.md), and [final browser/runtime observations](docs/verification/recast-finalization.md); high-end art, crowd dynamics and arbitrary 3D model delivery remain future work.

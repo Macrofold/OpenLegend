@@ -1,5 +1,9 @@
 # Maintainer work index
 
+## Elapsed-time work
+
+[PF13](performance.md#pf13--elapsed-time-simulation) owns delivered elapsed integration and its remaining gates. [Simulation time](../simulation-time.md) is canonical; [base time](../worlds/base/time.md) owns bundled fidelity. The [running bounds catalogue](simulation-boundaries.md) collects implemented and future deadlines, while [speech integration](speech-time-integration.md) coordinates PR #3 without duplicating hearing requirements.
+
 ## Presentation and navigation delivery
 
 [SW17–SW19](spatial-world.md) own the current Recast/capsule and visual delivery. [World presentation](../world-presentation.md) is the canonical visual specification. [TODO SR16–SR20](TODO.md#recast-and-presentation-regression-todos) contains the requested deferred automation; [verification](../verification/recast-integration.md) records executed application/stress observations only.

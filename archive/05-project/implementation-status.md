@@ -1,5 +1,9 @@
 # Implementation status
 
+## Elapsed-time execution
+
+Clock conversion no longer imposes one whole-world update per game second. Finite rates, native work, movement/fall/flight and relevant status/deadline boundaries use the [elapsed contract](../../docs/simulation-time.md); actual progress is charged to host debt. Shared status/static-exposure helpers and bounded blocked-flight retries are delivered. No dependency, save version or renderer frame cap was added. The global minimum interval and sampled discovery remain limitations: the contested-perch stress scene does not sustain 8x. [PF13](../../docs/maintainers/performance.md#pf13--elapsed-time-simulation) owns remaining region/coupled/acceptance work; [evidence](../../docs/verification/elapsed-simulation.md) records actual HTTP/native runs and the unmerged hearing coordination.
+
 ## Mixed spatial review
 
 The current renderer keeps 2D images facing the camera under yaw and pitch, using shared upright virtual depth for lighting/picking while bodies and shadow proxies remain world-space. Shadow-only casters do not occupy color layers; proxy geometry, reveal uniforms and plank detail are reused. Native visual acquisition is observer-private; the designated introduction selector admits only the observer's own acquisition, not private thoughts or third-party evidence. Indexed route-support projection, crossed-cell terrain checks and worker failure/shutdown handling are implemented. [Evidence](../../docs/verification/mixed-spatial-review.md) and SW/EPR/PF/SR trackers separate these facts from unqualified GPU, crowd, exposure and lifecycle limits.

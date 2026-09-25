@@ -4,9 +4,9 @@ This is a coordination note, not a second hearing or simulation specification. [
 
 ## Inspected branches
 
-Inspected `feat/hearing-speech-captions` at `b72b683181f5a3147d603be619ad6dffb8efa988`, alongside the spatial branch based on `d67b99b21fff61580480d9740d4147db3aca713a`. Recheck tips before integration; this is not permission to overwrite newer work. The sound branch was read, not modified or merged by the cadence task.
+Inspected `feat/hearing-speech-captions` at `97668413082446e08d1e1fa5c3ee788067a1c7ef` (PR #3), alongside the spatial elapsed implementation merged with main `03105fed`. Recheck tips before integration; this is not permission to overwrite newer work. The sound branch was read, not modified or merged by the cadence task.
 
-The sound branch already implements graded dB hearing, whisper/normal/shout payload propagation, listener-specific stable fragments, scoped captions, listener candidate indexing, event/awareness batching, conservative status participation, unchanged static-object exposure reuse and episode-membership pruning. Its kernel/service still assumes one-game-second steps. Do not replace those hearing systems with the earlier spatial branch's binary 10 m / 0.65 gate or describe that older threshold shortcut as the new acoustic design.
+The sound branch already implements graded dB hearing, whisper/normal/shout payload propagation, listener-specific stable fragments, scoped captions, listener candidate indexing, event/awareness batching, conservative status participation, unchanged static-object exposure reuse and episode-membership pruning. HE05 now batches bounded snapshots but explicitly retains one-game-second physics/sequence boundaries; that optimization must be reconciled with elapsed intervals, not layered on as a second cadence. Do not replace those hearing systems with the earlier spatial branch's binary 10 m / 0.65 gate or describe that older threshold shortcut as the new acoustic design.
 
 ## Recommended order
 
@@ -37,3 +37,7 @@ No automated coverage is claimed by this note. TODO contains cadence/speech cros
 ## Message for the sound-branch implementer
 
 Keep your new acoustic calculations, listener index, batched evidence and caption clocks. The spatial branch now separates game-clock speed from integration frequency and retains continuous swept movement. Port your changes onto that boundary rather than copying the one-second loop back. The static-exposure and status-participation helpers are already being reused here; consolidate them, then resolve each shared kernel/event/service phase explicitly. No hearing re-authoring or new renderer is required for this integration.
+
+## Coordination status
+
+An integration note was posted on PR #3 (comment 5827327924), pointing out the obsolete 480-native-steps assumption, the shared helpers and the recommended merge order. The branch was inspected, not overwritten or merged by this task. Its PR body still contained older fresh-save instructions; current in-place preservation takes precedence. Recheck its tip before joining the branches and retain HE05's unqualified graphical/provider/scale gates.

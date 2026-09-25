@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-25 — Clock speed is not an update frequency
+
+The accepted time conversion was clarified: one real second is one game minute, but no sixty-per-second global stepping requirement follows. [Simulation time](simulation-time.md) now owns elapsed-rate integration, start/end consequence ordering and separate rendering/publication clocks. The finite implementation advances to relevant mechanical/fidelity boundaries, reuses existing state, and preserves actual debt. [Base time](worlds/base/time.md) explicitly owns the current global horizon, sampled discovery and blocked-flight retry tradeoffs; [RP03](maintainers/revisitable-policies.md#rp03--global-elapsed-horizon-and-sampled-discovery) records their review triggers.
+
+Main's requested agent guidance and newer contact/memory/save rules were preserved through a non-rewriting connector merge. The [catalogue](maintainers/simulation-boundaries.md) and [sound-branch handoff](maintainers/speech-time-integration.md) replace the assumption that every future bound must be designed now. PF13 marks finite delivery while retaining regional schedules, complex coupled rules and joint audio/graphics acceptance. [Executed evidence](verification/elapsed-simulation.md) includes a dense contested-flight failure; this is not a universal scale or graphics-performance claim.
+
 ## 2026-09-25 — Production data model review
 
 Reviewed the [production records](../archive/07-technical-architecture/production-data-model.md) against gameplay, current storage and accepted engine boundaries. Clarified one canonical owner per record, shared actor capabilities, operational goals/plans/due work, identity-preserving migration, timeline/source fencing and revision-aware recall indexes. [Queries](../archive/07-technical-architecture/data-queries-and-mcp.md) now specify database selection before bounded context preparation, with index gaps and the unmeasured 20 ms local-retrieval target explicit.
@@ -187,7 +193,6 @@ Knowledge canvas mechanics now have one engine owner in `docs/knowledge.md`; bun
 ## Spatial main rebase and eight-times budget
 
 Preserved current-main world/status/item/identity/camera and in-place save semantics while replaying the spatial commits. Removed superseded fresh-save instructions from active spatial guidance and reconciled own-observer story eligibility. Added actual-progress profiling, thresholded acoustic rejection, current runtime evidence and PF12's budgeted optimization direction. Existing task IDs/remaining qualification are retained; historical measurements do not certify the rebased runtime.
-
 
 ## Limits audit implementation
 
