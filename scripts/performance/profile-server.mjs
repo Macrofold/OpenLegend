@@ -11,6 +11,9 @@ import { parseScenario, populateScenario } from './scenario.ts';
 import { createGameServer } from '../../apps/server/src/http.ts';
 import { readConfig } from '../../apps/server/src/config.ts';
 import { performanceSnapshot } from '../../apps/server/src/performance.ts';
+import { SqliteStore } from '../../apps/server/src/store.ts';
+import { PostgresDatabase } from '../../apps/server/src/postgres.ts';
+import { createProfileDatabase } from './profile-database.mjs';
 
 const percentile = (values, p) =>
   values.length ? [...values].sort((a, b) => a - b)[Math.ceil(values.length * p) - 1] : null;
@@ -234,7 +237,7 @@ async function main() {
   config.embeddingKey = '';
   const report = {
     scope:
-      'Real server timer, SQLite, SSE and separate-process HTTP load with presence heartbeats; no browser, PostgreSQL or live model calls. Cold acquisition is included in the first speed phase; later phases reuse this world. Phase metric maxima are cumulative since startup, not per-phase percentiles.',
+      'Real server timer, explicit database adapter, SSE and separate-process HTTP load with presence heartbeats; no browser or live model calls. Cold acquisition is included in the first speed phase; later phases reuse this world. Phase metric maxima are cumulative since startup, not per-phase percentiles.',
     node: process.version,
     cpu: cpus()[0]?.model,
     run: process.env.GITHUB_RUN_ID,
@@ -244,9 +247,26 @@ async function main() {
     paidModelCalls: 0,
     phases: [],
   };
-  let game, load;
+  let game, load, database;
+  // Retain the resource until the factory returns a closeable server. An initialization
+  // failure otherwise leaves the database socket/worker alive with no returned handle.
+  const startGame = async (tick) => {
+    const store = new SqliteStore(
+      config.databasePath,
+      config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
+    );
+    try {
+      return await createGameServer({ config, production: true, tick, store });
+    } catch (error) {
+      await store.close().catch(() => {});
+      throw error;
+    }
+  };
   try {
-    game = await createGameServer({ config, production: true, tick: false });
+    database = await createProfileDatabase(process.env.OPEN_LEGEND_PROFILE_POSTGRES_URL);
+    config.databaseUrl = database.url;
+    report.database = database.details;
+    game = await startGame(false);
     await new Promise((done) => game.server.listen(0, config.host, done));
     let base = 'http://' + config.host + ':' + game.server.address().port;
     let response = await fetch(base + '/api/state');
@@ -263,9 +283,10 @@ async function main() {
     await game.service.control({ paused: true });
     await game.service.flush();
     await game.close();
+    game = undefined;
     // Start the actual timer only after scene construction: cold acquisition belongs
     // to the measured first phase, not an incidental setup timer callback.
-    game = await createGameServer({ config, production: true, tick: true });
+    game = await startGame(true);
     await new Promise((done) => game.server.listen(0, config.host, done));
     base = 'http://' + config.host + ':' + game.server.address().port;
     response = await fetch(base + '/api/state');
@@ -343,8 +364,22 @@ async function main() {
     process.exitCode = 1;
   } finally {
     load?.child.kill();
-    await game?.close();
-    await rm(dir, { recursive: true, force: true });
+    const cleanupErrors = [];
+    for (const [name, cleanup] of [
+      ['server', () => game?.close()],
+      ['database', () => database?.close()],
+      ['directory', () => rm(dir, { recursive: true, force: true })],
+    ]) {
+      try {
+        await cleanup();
+      } catch {
+        cleanupErrors.push(`${name} cleanup failed`);
+      }
+    }
+    if (cleanupErrors.length) {
+      report.cleanupErrors = cleanupErrors;
+      process.exitCode = 1;
+    }
     await writeFile(resolve(output), JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
   }
   console.log(
