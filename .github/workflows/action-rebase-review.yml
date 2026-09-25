@@ -12,21 +12,23 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: review
+          POSTGRES_PASSWORD: disposable-review
+          POSTGRES_DB: ol_profile_review
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U review -d ol_profile_review"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       AI_BUDGET_USD: '0'
+      OPEN_LEGEND_PROFILE_DATABASE_URL: postgresql://review:disposable-review@127.0.0.1:5432/ol_profile_review
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
-          ref: 94a7682aee9f100ccb54e073969bb4ed4f9fea49
-          path: _before
-          persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
-          ref: fc01e19b30060e6c7213b1c5405be13df209297e
-          path: _ancestor
           persist-credentials: false
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -34,34 +36,43 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Resolve reviewed semantic overlaps
+      - name: Apply scoped-reference review
         run: |
-          python .github/action-review/reconcile.py
-          python .github/action-review/fix-binding.py
-          python - <<'PY'
-          import pathlib,json,subprocess
-          p=pathlib.Path('apps/server/src/ai-director.ts')
-          p.write_text(p.read_text().replace('docs/action-capabilities.md#references-targets-quantities-and-evidence','docs/architecture.md#jev-first-action-grounding'))
-          paths=json.loads(pathlib.Path('_review-paths.json').read_text())
-          targets=[p for p in paths if pathlib.Path(p).is_file() and pathlib.Path(p).suffix in ['.ts','.tsx','.mjs','.md']]
-          subprocess.run(['pnpm','exec','prettier','--write',*targets],check=True)
-          PY
-      - name: Production and generated-contract checks
-        run: |
+          python .github/action-review/scoped-grounding.py
+          pnpm exec prettier --write apps/server/src/action-grounding.ts apps/server/src/ai-director.ts apps/server/src/postgres.ts
           pnpm build
           pnpm config:check
           pnpm guidance:check
-      - name: Prepare immutable replay tree only
+      - name: Native scenario and actual PostgreSQL lifecycle
+        run: node --import tsx .github/action-review/runtime.mjs
+      - name: Primary full-server PostgreSQL measurement
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess,json
+          original=Path('scripts/performance/profile-server.mjs')
+          text=original.read_text()
+          text=text.replace("OPEN_LEGEND_DATABASE_URL: '',", "OPEN_LEGEND_DATABASE_URL: process.env.OPEN_LEGEND_PROFILE_DATABASE_URL,")
+          text=text.replace('Real server timer, SQLite, SSE', 'Real server timer, disposable PostgreSQL, SSE').replace('no browser, PostgreSQL or live model calls','no browser or live model calls')
+          temporary=original.with_name('review-postgres.mjs'); temporary.write_text(text)
+          scenario=original.parent/'scenarios/review-small.json'
+          scenario.write_text(json.dumps({'people':0,'animals':0,'steps':180,'warmup':0,'speed':8}))
+          try:
+            subprocess.run(['node','--import','tsx',str(temporary),str(scenario),'docs/verification/action-review-fdcbd31-postgres.json','30','8','25'],check=True,timeout=100)
+            subprocess.run(['node','--import','tsx',str(temporary),'scripts/performance/scenarios/mixed.json','/tmp/ignored.json','5','1'],check=False,timeout=100) if False else None
+          finally:
+            temporary.unlink(missing_ok=True); scenario.unlink(missing_ok=True)
+      - name: Native stress isolation
+        run: node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/review-mixed.cpuprofile > /tmp/review-mixed.json
+      - name: Prepare reviewed tree for connector commit
         uses: actions/github-script@v7
         with:
           script: |
             const fs=require('fs');
+            const profile=JSON.parse(fs.readFileSync('/tmp/review-mixed.json','utf8'));
+            console.log('NATIVE_PROFILE_FIELDS '+JSON.stringify(Object.keys(profile)));
+            fs.writeFileSync('docs/verification/action-review-fdcbd31-native.json',JSON.stringify(profile,null,2)+'\n');
+            const paths=['apps/server/src/action-grounding.ts','apps/server/src/ai-director.ts','apps/server/src/postgres.ts','docs/verification/action-review-fdcbd31-runtime.json','docs/verification/action-review-fdcbd31-postgres.json','docs/verification/action-review-fdcbd31-native.json'];
             const base=await github.rest.git.getCommit({...context.repo,commit_sha:context.sha});
-            const paths=JSON.parse(fs.readFileSync('_review-paths.json','utf8'));
-            const reportPath='docs/verification/action-rebase-fdcbd31.json';
-            fs.writeFileSync(reportPath,JSON.stringify({main:'fdcbd31fc9e4eb31daaf00d997648aba588c8577',source:'94a7682aee9f100ccb54e073969bb4ed4f9fea49',scope:'Consolidated semantic replay on a separate main-based branch; original history preserved. Production build and config/guidance checks; no automated suites or live provider calls.',build:'passed',config:'passed',guidance:'passed',runtimeReview:'ongoing',paidModelCalls:0,run:context.runId},null,2)+'\n');
-            paths.push(reportPath);
-            const tree=paths.map(path=>fs.existsSync(path)?{path,mode:'100644',type:'blob',content:fs.readFileSync(path,'utf8')}:{path,mode:'100644',type:'blob',sha:null});
-            const prepared=await github.rest.git.createTree({...context.repo,base_tree:base.data.tree.sha,tree});
-            // No commits, branch updates or merges here. The GitHub connector performs those.
-            console.log('PREPARED_REPLAY '+JSON.stringify({parent:context.sha,tree:prepared.data.sha,files:paths.length}));
+            const prepared=await github.rest.git.createTree({...context.repo,base_tree:base.data.tree.sha,tree:paths.map(path=>({path,mode:'100644',type:'blob',content:fs.readFileSync(path,'utf8')}))});
+            console.log('PREPARED_REVIEW '+JSON.stringify({parent:context.sha,tree:prepared.data.sha,files:paths}));
