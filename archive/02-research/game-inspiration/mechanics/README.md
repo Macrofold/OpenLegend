@@ -4,6 +4,24 @@
 
 The [library index](../README.md) retains the complete comparative research. The game chapters retain earlier conclusions, reception, economic context, and video recommendations; this directory adds detailed system studies without replacing that material.
 
+## Detailed system studies
+
+Each study connects concrete rules and items to player choices, review disagreements, presentation, and available production evidence. Each has its own annotated sources. This is deeper coverage of selected systems, not a claim to exhaust every mechanic in every game.
+
+| Study | Concrete systems and interactions | Central design tension |
+| --- | --- | --- |
+| [Noita: wands, materials, and experimentation](noita-wands-materials-and-experimentation.md) | Trigger payloads, modifiers, multicast, cast timing, mana throughput, liquids, collateral effects | Extraordinary composition versus opaque learning and repeated loss |
+| [Factorio / Satisfactory: flows, blueprints, and place](factorio-satisfactory-flows-blueprints-and-place.md) | Coupled refinery outputs, circuit signals, parameterized layouts, pollution, spatial factories, cooperative roles | Preserving design authorship while removing repetitive execution |
+| [Wildermyth: bodies, relationships, and authored myth](wildermyth-bodies-relationships-and-authored-myth.md) | Interfusion, source-dependent magic, transformations, maiming, friendship/rivalry, legacy recruitment | Particular heroes versus interchangeable tactical bonuses |
+| [Caves of Qud: bodies, cooking, and social knowledge](caves-of-qud-bodies-cooking-and-social-knowledge.md) | Extra limbs and equipment, triggered meals, saved recipes, reputation, secrets, contextual quests | Expressive unfamiliarity versus discoverability and comprehension |
+| [Dwarf Fortress: artifacts, work, and remembered life](dwarf-fortress-artifacts-work-and-remembered-life.md) | Material versus artifact quality, strange moods, production orders, stress/memory, item history | Consequential simulation versus invisible value and interpretive labor |
+| [Stardew Valley: calendars, gifts, and routines](stardew-valley-calendars-gifts-and-useful-routines.md) | Artisan processing, seasonal opportunities, bundles/Joja, gifts, friendship, cooperative time | Comfort and accumulation versus pressure, chores, and transactional relationships |
+| [Valheim / Project Zomboid: preparation, risk, and home](valheim-zomboid-preparation-risk-and-home.md) | Food/readiness, transport restrictions, stamina, electricity/fuel loops, learning, self-sufficient bases | Meaningful preparation versus repetitive maintenance and exhausted purpose |
+| [Palworld: useful creatures, care, and automation](palworld-useful-creatures-care-and-automation.md) | Work suitability, shared infrastructure capabilities, partner skills, passive traits, assignment/navigation | Useful individuality versus unreliable delegation or optimized exploitation |
+| [Lethal Company: tools, information, and cooperation](lethal-company-tools-partial-information-and-cooperation.md) | Inventory opportunity cost, bulky loot, terminal roles, proximity audio, differing threat responses | Shared danger and comedy versus opaque loss, solo weakness, and accessibility costs |
+| [Scribblenauts / AI Dungeon: language, intent, and consequence](scribblenauts-ai-dungeon-language-intent-and-consequence.md) | Objects/adjectives, objective recognition, object sharing, Story Cards, context timing, narrative controls | Creative freedom versus trivial solutions, unrecognized intent, and continuity repair |
+| [Outer Wilds: tools, knowledge, and a changing world](outer-wilds-tools-knowledge-and-a-changing-world.md) | Scout, signalscope, translation, clue log, environmental timing, learned tool use, music | Discovery and personal inference versus unclear feedback and repetition; includes a spoiler-labeled section |
+
 ## Read by the question you are investigating
 
 | Question | Existing reference chapters |
@@ -14,6 +32,8 @@ The [library index](../README.md) retains the complete comparative research. The
 | How does danger make ordinary items and perception interesting? | [Project Zomboid](../games/project-zomboid.md), [Valheim](../games/valheim.md), [Among Us / Lethal Company](../games/among-us-and-lethal-company.md) |
 | How do home, routine, progression, and discovery reinforce one another? | [Stardew Valley](../games/stardew-valley.md), [Terraria](../games/terraria.md), [Outer Wilds](../games/outer-wilds.md) |
 | How does open input become a coherent playable outcome? | [Scribblenauts](../games/scribblenauts.md), [AI Dungeon](../games/ai-dungeon.md), [Garry's Mod](../games/garry-s-mod.md) |
+
+The earlier chapters and field guides remain the broader entry points, including the games not yet given a dedicated granular study. A new study supplements its linked chapter rather than superseding it.
 
 ## How to interpret a system study
 
@@ -31,4 +51,4 @@ A system can be both compelling and costly to use. Keep review disagreements rat
 - Give sources adjacent to detailed claims and annotate their limits. No invented test runs, player-survey percentages, sales attribution, or watched-video timestamps.
 - Preserve previous research when adding detail. Correct or qualify an unsupported factual claim explicitly rather than silently deleting its surrounding analysis.
 
-For reception methodology see the [review notebook](../references/review-evidence.md). For viewing routes see the [YouTube watchlist](../references/youtube-watchlist.md).
+For reception methodology see the [review notebook](../references/review-evidence.md). For viewing routes see the [YouTube watchlist](../references/youtube-watchlist.md). For older commercial milestones see the [popularity/economics ledger](../references/popularity-and-economics.md); these studies do not refresh it implicitly.
