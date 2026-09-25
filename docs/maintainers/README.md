@@ -20,6 +20,7 @@ This page is the master navigation index for active implementation work.
 | Inventions, declarations, conjuring and world evolution                | [Inventions and world evolution](inventions-and-world-evolution.md) | [Declarations and evolution](../../archive/07-technical-architecture/declarations-and-evolution.md)                                                                                                                                                            |
 | Production data, persistence and scale                                 | [Production data](production-data.md)                               | [Production data model](../../archive/07-technical-architecture/production-data-model.md), [queries](../../archive/07-technical-architecture/data-queries-and-mcp.md) and [delivery/scale](../../archive/07-technical-architecture/data-delivery-and-scale.md) |
 
+- [Action branch reconciliation and recovery](action-reconciliation.md) — AR01–AR06 integration tasks, source checkpoints and recovery order beneath the existing AC/PF owners.
 - [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
 
 - [Agent-guidance delivery](agent-guidance.md) — development instructions, tooling and cross-agent verification; [system guide](../../.agents/README.md).
