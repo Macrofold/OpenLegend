@@ -2,6 +2,16 @@
 
 Run disposable, deterministic scenarios through the existing native profiler. This tool never connects to a database or provider, changes a live save, or enables new gameplay mechanics. It is a performance experiment, not an automated correctness test. [Performance tracker](performance.md) owns remaining work; [Verification](../verification.md) owns measured evidence.
 
+## Primary performance baseline
+
+**Use the full PostgreSQL-backed server as the primary production-performance baseline.** Include the real timer, command admission and durable acknowledgement, history projection, SSE, and representative cognition/maintenance load with paid dispatch disabled. Record database version/topology, actual workload, cold versus warm behavior, achieved simulation speed, debt, latency and memory. Native-only profiles remain useful for isolating engine CPU costs, but do not establish whole-server capacity.
+
+SQLite is the local-development fallback. Retain correctness, recovery and lightweight local usability checks, but stop SQLite-specific optimization unless the owner explicitly prioritizes a local-development blocker. The existing SQLite worker is not a production-scaling improvement. Shared native/history optimizations apply to both adapters; their production benefit must be measured on PostgreSQL rather than inferred from SQLite timings.
+
+The full-server script below currently forces disposable SQLite. It is a secondary local benchmark, not the primary baseline, and changing environment variables alone does not turn it into a PostgreSQL run. Extending profiling to an explicitly isolated disposable PostgreSQL database remains PF00 work; never point destructive fixture setup at a live database. The PostgreSQL history-only comparison is repository-path evidence, not full-server qualification. Use the existing [PF00/PF11 tasks](performance.md) for remaining implementation and acceptance; this policy change does not complete those tasks.
+
+## Native CPU isolation
+
 ```sh
 node --import tsx scripts/stress-native.ts scripts/performance/scenarios/gems.json /tmp/gems.cpuprofile > /tmp/gems-report.json
 node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/mixed.cpuprofile > /tmp/mixed-report.json
@@ -30,7 +40,7 @@ This first version excludes real-time clock debt, database commits, browser fram
 
 ## Full-server workload
 
-Run a generated, disposable scene through the real server timer, SQLite, SSE and a separate-process client:
+**Secondary local benchmark:** run a generated, disposable scene through the real server timer, SQLite, SSE and a separate-process client. See the [primary baseline](#primary-performance-baseline) before using these results to prioritize production work.
 
 ```sh
 pnpm run build
