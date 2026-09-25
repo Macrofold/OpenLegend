@@ -5,52 +5,53 @@ on:
     paths: [.github/workflows/action-capability-review.yml]
 permissions:
   contents: read
+  actions: read
 jobs:
   inspect:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Compare pinned source snapshots without changing Git state
+      - name: Read pinned review preparation
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python - <<'PY'
-          import urllib.request, os, tarfile, io, pathlib, subprocess, hashlib
-          root=pathlib.Path('/tmp/openlegend-reconcile'); root.mkdir()
-          refs={'base':'fc01e19b30060e6c7213b1c5405be13df209297e','main':'3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238','branch':'94a7682aee9f100ccb54e073969bb4ed4f9fea49'}
-          maps={}
-          for label,ref in refs.items():
-            request=urllib.request.Request(f'https://api.github.com/repos/Macrofold/OpenLegend/tarball/{ref}',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-            with urllib.request.urlopen(request,timeout=60) as response: payload=response.read()
-            files={}
-            with tarfile.open(fileobj=io.BytesIO(payload),mode='r:gz') as archive:
-              for entry in archive:
-                if not entry.isfile(): continue
-                path=pathlib.PurePosixPath(entry.name)
-                relative=pathlib.PurePosixPath(*path.parts[1:])
-                if '..' in relative.parts: raise RuntimeError('Unsafe archive path')
-                data=archive.extractfile(entry).read(); files[str(relative)]=data
-                target=root/label/relative; target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(data)
-            maps[label]=files
-          conflicts=[]; clean=[]
-          for path in sorted(set(maps['base'])|set(maps['main'])|set(maps['branch'])):
-            b=maps['base'].get(path); m=maps['main'].get(path); a=maps['branch'].get(path)
-            if m==b or m==a: continue
-            if a==b:
-              print('MAIN_ONLY',path); continue
-            if None in (b,m,a):
-              conflicts.append(path); print('STRUCTURAL_CONFLICT',path); continue
-            merged=subprocess.run(['diff3','-m',str(root/'branch'/path),str(root/'base'/path),str(root/'main'/path)],capture_output=True)
-            if merged.returncode>1: raise RuntimeError('diff3 failed for '+path)
-            if merged.returncode==1:
-              conflicts.append(path); print('\nCONFLICT_FILE',path)
-              lines=merged.stdout.decode().splitlines(); inside=False
-              for i,line in enumerate(lines):
-                if line.startswith('<<<<<<<'): inside=True
-                if inside: print(str(i+1)+': '+line)
-                if line.startswith('>>>>>>>'): inside=False
-            else:
-              clean.append(path); print('CLEAN_MERGE',path)
-          print('\nCONFLICTS',conflicts)
-          print('CLEAN_MERGES',clean)
+          import urllib.request,os
+          req=urllib.request.Request('https://raw.githubusercontent.com/Macrofold/OpenLegend/'+os.environ['GITHUB_SHA']+'/.github/review-prepare.py',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN']})
+          with urllib.request.urlopen(req) as response: script=response.read()
+          exec(compile(script,'review-prepare.py','exec'))
+          PY
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare pinned dependencies without executing project checks
+        working-directory: /tmp/openlegend-reconcile/main
+        run: pnpm install --frozen-lockfile
+      - name: Package private source workspace
+        run: tar -C /tmp -czf /tmp/openlegend-review.tgz openlegend-reconcile
+      - uses: actions/upload-artifact@v4
+        id: workspace
+        with:
+          name: openlegend-review-workspace
+          path: /tmp/openlegend-review.tgz
+          compression-level: 0
+          retention-days: 1
+      - name: Expose temporary authenticated artifact location for review tools
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.workspace.outputs.artifact-id }}
+        run: |
+          python - <<'PY'
+          import urllib.request,urllib.error,os
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self,*args,**kwargs): return None
+          req=urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/'+os.environ['ARTIFACT_ID']+'/zip',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+          try:
+            urllib.request.build_opener(NoRedirect).open(req)
+          except urllib.error.HTTPError as response:
+            if response.code != 302: raise
+            print('PRIVATE_REVIEW_ARTIFACT_URL='+response.headers['Location'])
           PY
