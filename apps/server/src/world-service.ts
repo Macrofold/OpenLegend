@@ -699,7 +699,7 @@ export class WorldService {
       await this.tickBatch(elapsedRealSeconds, suspendedRealSeconds);
       elapsedRealSeconds = 0;
       suspendedRealSeconds = 0;
-      if (this.paused || this.debtSeconds < 1 || navigationBlocked(this.world)) return;
+      if (this.paused || this.debtSeconds < 1e-6 || navigationBlocked(this.world)) return;
       // Release the mutation queue before yielding so commands can interleave with catch-up.
       const yieldedAt = performance.now();
       await new Promise<void>((resolve) => setImmediate(resolve));
@@ -761,33 +761,40 @@ export class WorldService {
       gaugeMetric('clock.requestedSpeed', this.speed);
       this.debtSeconds += requested;
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
-      const steps = Math.floor(this.debtSeconds);
-      if (!steps) return;
+      const offered = Math.min(this.debtSeconds, 86400);
+      if (offered < 1e-6) return;
       let world = this.world;
       const batchStarted = performance.now();
       let nativeMs = 0;
-      let completedSteps = 0;
-      gaugeMetric('tick.dueSteps', steps);
-      // Publish a bounded prefix and release mutation ownership; retain the rest as debt.
+      let advancedSeconds = 0;
+      gaugeMetric('tick.dueSimSeconds', this.debtSeconds);
+      // Game-clock conversion is not an integration frequency. Accept one boundary-limited
+      // interval at a time and retain actual unadvanced time as debt. docs/simulation-time.md
       // A single transition remains atomic even if it exceeds this time budget.
-      for (; completedSteps < steps; ) {
+      while (advancedSeconds < offered) {
         if (navigationBlocked(world)) break;
         const stepStarted = performance.now();
-        world = freezeWorld(advanceWorld(world, 1).world);
+        const startTime = world.simTime;
+        world = freezeWorld(
+          advanceWorld(world, offered - advancedSeconds, { maxIntervals: 1 }).world,
+        );
+        const delta = world.simTime - startTime;
         const stepMs = performance.now() - stepStarted;
         nativeMs += stepMs;
         recordDuration('native.step', stepMs);
-        completedSteps++;
-        if (performance.now() - batchStarted >= 8) break;
+        recordDuration('native.intervalSimMs', delta * 1000);
+        advancedSeconds += delta;
+        if (delta <= 0 || performance.now() - batchStarted >= 8) break;
       }
       recordDuration('tick.nativeWork', nativeMs);
       const beforeSimTime = this.world.simTime;
       const saved = { ...this.saved, world };
       if (this.now() - this.lastRoutinePersistAt >= 1000) {
-        if (await this.commit(saved, undefined, 'append')) this.debtSeconds -= completedSteps;
+        if (await this.commit(saved, undefined, 'append'))
+          this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
       } else {
         this.acceptRoutine(saved);
-        this.debtSeconds -= completedSteps;
+        this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
       }
       countMetric('clock.advancedSimSeconds', this.world.simTime - beforeSimTime);
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);

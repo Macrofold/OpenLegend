@@ -1,3 +1,4 @@
+import { current, isDraft } from 'immer';
 import { statusDefinitions } from './status-capabilities.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { emit, finish, outcome, canonicalJson } from './events.js';
@@ -320,16 +321,66 @@ function applyRate(
     setWildernessNeed(entity.actor!, 'fullness', value);
   else setAttribute(world, entity, d, value, events);
 }
-export function advanceStatusEffects(
+/** A conservative participation check, not a condition evaluator. Native rate operations
+ * cannot add an absent attribute or actor component; every active instance still runs.
+ * Bindings for a new automatic instance all point to its subject. If a new operation can
+ * create these capabilities, extend this broad phase before admitting that operation.
+ * docs/status-effects.md#native-participation
+ */
+const statusEligibility = new WeakMap<
+  Entity,
+  { definitions: StatusEffectDefinition[]; manifest: object; eligible: boolean }
+>();
+export function mayAdvanceStatusEffects(world: WorldState, entity: Entity): boolean {
+  if (entity.actor) return true;
+  const definitions = statusDefinitions(world),
+    manifest = isDraft(world.moduleManifest) ? current(world.moduleManifest) : world.moduleManifest;
+  const reusable =
+    Object.isFrozen(entity) && Object.isFrozen(definitions) && Object.isFrozen(manifest);
+  const previous = reusable ? statusEligibility.get(entity) : undefined;
+  if (previous?.definitions === definitions && previous.manifest === manifest)
+    return previous.eligible;
+  const eligible = definitions.some(
+    (definition) =>
+      entity.statusEffects?.[definition.id]?.active ||
+      (definition.enabled &&
+        !!definition.automaticActivation &&
+        (!definition.occupiesAction || !!entity.actor) &&
+        definition.whileActive.every(
+          (operation) =>
+            !('changeRate' in operation) ||
+            typeof readEntityAttribute(world, entity, operation.changeRate.attribute) === 'number',
+        )),
+  );
+  if (reusable) statusEligibility.set(entity, { definitions, manifest, eligible });
+  return eligible;
+}
+/** Resolve due states without borrowing time from the next interval.
+ * docs/simulation-time.md#native-interval-contract */
+export function reconcileStatusEffects(
   world: WorldState,
   entity: Entity,
-  seconds: number,
   events: WorldEvent[],
 ): void {
   for (const d of statusDefinitions(world)) {
     const state = entity.statusEffects?.[d.id];
     if (!state?.active && (!d.enabled || !d.automaticActivation)) continue;
     let bindings = effectBindings(world, entity, state);
+    if (
+      state?.active &&
+      d.whileActive.some(
+        (op) =>
+          'changeRate' in op &&
+          typeof readEntityAttribute(
+            world,
+            resolve(op.changeRate.target, bindings),
+            op.changeRate.attribute,
+          ) !== 'number',
+      )
+    ) {
+      deactivateStatusEffect(world, entity, d, events, 'target-unavailable');
+      continue;
+    }
     if (state?.active) {
       const reason =
         !d.enabled || !matchesStatusCondition(world, bindings, d.requires)
@@ -352,39 +403,63 @@ export function advanceStatusEffects(
         continue;
     }
   }
-  // Resolve transitions before rates so newly completed states don't consume two
-  // mutually exclusive rates for the same interval. docs/status-effects.md#transitions
-  for (const d of statusDefinitions(world)) {
-    const state = entity.statusEffects?.[d.id];
+}
+export interface StatusRateInterval {
+  entityId: string;
+  episode: string;
+  definition: StatusEffectDefinition;
+  rates: Array<{ targetId: string; attribute: string; rate: number }>;
+}
+/** Conditions use one starting state, including cross-target rate predicates. */
+export function prepareStatusRates(world: WorldState, entity: Entity): StatusRateInterval[] {
+  const result: StatusRateInterval[] = [];
+  for (const definition of statusDefinitions(world)) {
+    const state = entity.statusEffects?.[definition.id];
     if (!state?.active) continue;
     const bindings = effectBindings(world, entity, state);
-    if (
-      d.whileActive.some(
-        (op) =>
-          'changeRate' in op &&
-          typeof readEntityAttribute(
-            world,
-            resolve(op.changeRate.target, bindings),
-            op.changeRate.attribute,
-          ) !== 'number',
-      )
-    ) {
-      deactivateStatusEffect(world, entity, d, events, 'target-unavailable');
-      continue;
+    const rates: StatusRateInterval['rates'] = [];
+    for (const op of definition.whileActive) {
+      if (!('changeRate' in op) || (op.when && !matchesStatusCondition(world, bindings, op.when)))
+        continue;
+      const target = resolve(op.changeRate.target, bindings);
+      if (target && typeof readEntityAttribute(world, target, op.changeRate.attribute) === 'number')
+        rates.push({
+          targetId: target.id,
+          attribute: op.changeRate.attribute,
+          rate: op.changeRate.amount,
+        });
     }
-    state.elapsedSeconds += seconds;
-    for (const op of d.whileActive)
-      if ('changeRate' in op && (!op.when || matchesStatusCondition(world, bindings, op.when))) {
-        const target = resolve(op.changeRate.target, bindings)!;
-        applyRate(world, target, op.changeRate.attribute, op.changeRate.amount * seconds, events);
-      }
-    if (
-      state.active &&
-      d.automaticDeactivation &&
-      matchesStatusCondition(world, bindings, d.automaticDeactivation)
-    )
-      deactivateStatusEffect(world, entity, d, events, 'completed');
+    result.push({ entityId: entity.id, episode: state.episode, definition, rates });
   }
+  return result;
+}
+export function integrateStatusRates(
+  world: WorldState,
+  intervals: readonly StatusRateInterval[],
+  seconds: number,
+  events: WorldEvent[],
+): void {
+  for (const interval of intervals) {
+    const entity = world.entities[interval.entityId];
+    const state = entity?.statusEffects?.[interval.definition.id];
+    if (!entity || !state?.active || state.episode !== interval.episode) continue;
+    state.elapsedSeconds += seconds;
+    for (const { targetId, attribute, rate } of interval.rates) {
+      const target = world.entities[targetId];
+      if (target) applyRate(world, target, attribute, rate * seconds, events);
+    }
+  }
+}
+/** Explicit effect-only advancement; the kernel captures all subjects before integrating. */
+export function advanceStatusEffects(
+  world: WorldState,
+  entity: Entity,
+  seconds: number,
+  events: WorldEvent[],
+): void {
+  reconcileStatusEffects(world, entity, events);
+  integrateStatusRates(world, prepareStatusRates(world, entity), seconds, events);
+  reconcileStatusEffects(world, entity, events);
 }
 export function admitStatusEffectPolicy(
   input: WorldState,

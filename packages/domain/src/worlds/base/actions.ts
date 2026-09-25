@@ -15,3 +15,16 @@ export const BASE_ACTION_DEFAULTS = {
   cookSeconds: 90,
   shotSeconds: 18,
 } as const;
+
+/** Native locomotion and deadline planning use the same authored speed. */
+export function nativeMovementSpeed(
+  entity: import('../../types.js').Entity,
+  fleeing = false,
+): number {
+  return (
+    (fleeing
+      ? BASE_ACTION_DEFAULTS.animalFleeTilesPerSecond
+      : BASE_ACTION_DEFAULTS.movementTilesPerSecond) *
+    (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200)
+  );
+}

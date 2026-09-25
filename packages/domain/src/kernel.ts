@@ -1,5 +1,7 @@
 import { observerDescription } from './worlds/base/knowledge.js';
-import { BASE_ACTION_DEFAULTS } from './worlds/base/actions.js';
+import { BASE_ACTION_DEFAULTS, nativeMovementSpeed } from './worlds/base/actions.js';
+import { nativeInterval } from './temporal-boundaries.js';
+import { advanceCommitments } from './commitments.js';
 import {
   canHandleItems,
   portableItems,
@@ -45,7 +47,7 @@ import {
   advanceReservoirs,
 } from './world-modules.js';
 import { spatialCandidates, nearbyEntities } from './spatial.js';
-import { changeConversation } from './conversations.js';
+import { reconcileConversations, changeConversation } from './conversations.js';
 import {
   canSpeak,
   hasMemory,
@@ -56,7 +58,10 @@ import {
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
 import {
-  advanceStatusEffects,
+  reconcileStatusEffects,
+  prepareStatusRates,
+  integrateStatusRates,
+  mayAdvanceStatusEffects,
   activateStatusEffect,
   deactivateStatusEffect,
   interruptStatusEffects,
@@ -108,8 +113,7 @@ import type {
 } from './types.js';
 
 export const SIMULATION_RULES = {
-  version: 2,
-  fixedStepSeconds: 1,
+  version: 3,
   maxAdvanceSeconds: 86400,
   ...BASE_ACTION_DEFAULTS,
 } as const;
@@ -1168,11 +1172,18 @@ function moveAlongPath(
   let remaining = distanceBudget;
   const map = spatialMap(world),
     profile = bodyProfile(actor);
-  while (path.length && remaining > 0) {
+  while (path.length) {
     const point = path[0]!,
       start = supportedPosition(actor);
     if (!start) return false;
     const delta = distance(start, point);
+    if (delta <= SPATIAL_LIMITS.epsilon) {
+      if (!canWalkSegment(map, start, point, profile)) return false;
+      setSpatialPosition(actor, point, point.surfaceId);
+      path.shift();
+      continue;
+    }
+    if (remaining <= 0) break;
     const next =
       delta <= remaining
         ? point
@@ -1250,6 +1261,7 @@ function advanceAction(
       failAction(world, actor, events, 'the target is no longer alive.');
       return;
     }
+    if (seconds === 0 && !moveAlongPath(world, actor, action.path, 0)) action.path = [];
     if (!actionInReach(world, actor, action)) {
       const last = action.path.at(-1);
       const endpointUseful =
@@ -1282,16 +1294,7 @@ function advanceAction(
         }
         if (action.navigation) return;
       }
-      if (
-        !moveAlongPath(
-          world,
-          actor,
-          action.path,
-          SIMULATION_RULES.movementTilesPerSecond *
-            seconds *
-            (1 - (actor.actor?.body?.conditions.injury ?? 0) / 200),
-        )
-      ) {
+      if (!moveAlongPath(world, actor, action.path, nativeMovementSpeed(actor) * seconds)) {
         action.path = [];
         if ((action.replans ?? 0) >= MOVEMENT.maxReplans)
           failAction(world, actor, events, 'the route became physically blocked.');
@@ -1385,18 +1388,8 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
     ]) {
       const destination = {
         y: 0,
-        x:
-          entity.position.x +
-          vector.x *
-            SIMULATION_RULES.animalFleeTilesPerSecond *
-            seconds *
-            (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200),
-        z:
-          entity.position.z +
-          vector.z *
-            SIMULATION_RULES.animalFleeTilesPerSecond *
-            seconds *
-            (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200),
+        x: entity.position.x + vector.x * nativeMovementSpeed(entity, true) * seconds,
+        z: entity.position.z + vector.z * nativeMovementSpeed(entity, true) * seconds,
       };
       const point = sameSurfacePoint(world, entity, destination.x, destination.z),
         start = supportedPosition(entity);
@@ -1418,7 +1411,8 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
         start = supportedPosition(entity);
       if (point && start && canWalkSegment(spatialMap(world), start, point, bodyProfile(entity)))
         setSpatialPosition(entity, point, point.surfaceId);
-      animal.wanderSeconds = 120 + Math.floor(nextRandom(world) * 120);
+      // Retain overshoot. The base horizon is shorter than this minimum wait.
+      animal.wanderSeconds += 120 + Math.floor(nextRandom(world) * 120);
     }
   }
 }
@@ -1542,12 +1536,21 @@ function nativeParticipants(world: WorldState): { actors: string[]; ambient: str
   };
 }
 
-/** Advance bounded one-second native steps. Paused time and absent-player catch-up are never inferred. */
-export function advanceWorld(original: WorldState, elapsedSimSeconds: number): Transition {
+/** Advance a bounded prefix of elapsed game time at meaningful/fidelity boundaries.
+ * docs/simulation-time.md#native-interval-contract */
+export function advanceWorld(
+  original: WorldState,
+  elapsedSimSeconds: number,
+  options: { maxIntervals?: number } = {},
+): Transition {
+  const maxIntervals = options.maxIntervals ?? 4096;
   if (
     !Number.isFinite(elapsedSimSeconds) ||
     elapsedSimSeconds < 0 ||
-    elapsedSimSeconds > SIMULATION_RULES.maxAdvanceSeconds
+    elapsedSimSeconds > SIMULATION_RULES.maxAdvanceSeconds ||
+    !Number.isSafeInteger(maxIntervals) ||
+    maxIntervals < 1 ||
+    maxIntervals > 4096
   )
     return {
       world: original,
@@ -1555,7 +1558,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       outcome: outcome(
         false,
         'invalid-duration',
-        'Advance duration must be between zero and one simulated day.',
+        'Supply zero to one game day and a bounded positive interval count.',
       ),
     };
   if (original.paused || elapsedSimSeconds === 0 || navigationBlocked(original))
@@ -1569,35 +1572,34 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
           : navigationBlocked(original)
             ? 'navigation-pending'
             : 'unchanged',
-        original.paused
-          ? 'World time is paused.'
-          : 'No time advanced while required data is pending.',
+        'No game time advanced.',
       ),
     };
   let participants = nativeParticipants(original);
-  let world = draftWorld(original);
+  let world = draftWorld(original),
+    before = original;
   const events: WorldEvent[] = [];
-  let remaining = elapsedSimSeconds;
-  while (remaining > 0) {
-    if (navigationBlocked(world)) break;
-    const seconds = Math.min(1, remaining);
-    remaining -= seconds;
-    world.simTime += seconds;
-    // Status operations also apply to non-actor entities, in saved entity/definition order.
-    for (const entity of Object.values(world.entities))
-      advanceStatusEffects(world, entity, seconds, events);
-    // Stable actor order resolves finite-resource claims; no asynchronous writer mutates a step.
+  let remaining = elapsedSimSeconds,
+    intervals = 0;
+  while (remaining > 0 && intervals < maxIntervals && !navigationBlocked(world)) {
+    let statusIds = Object.values(
+      isDraft(world.entities) ? current(world.entities) : world.entities,
+    )
+      .filter((e) => mayAdvanceStatusEffects(world, e))
+      .map((e) => e.id);
+    for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
+    advanceCommitments(world, []);
+    reconcileConversations(world);
     for (const actorId of participants.actors) {
-      let actor = world.entities[actorId]!;
-      let component = actor.actor!;
+      let actor = world.entities[actorId];
+      if (!actor?.actor) continue;
+      let component = actor.actor;
       if (!component.alive || component.incapacitated) continue;
-      if (hasWildernessNeeds(component)) {
-        if (advanceWildernessNeeds(actor, seconds)) reconcileBody(world, actor, events, 'needs');
-        if (component.health === 0) continue;
-        if (!capabilityBlocked(world, actor, 'actions') || component.fullness < 10)
-          nativeSurvival(world, actor, events);
-      }
-      advanceReservoirs(world, actor, seconds, events);
+      if (
+        hasWildernessNeeds(component) &&
+        (!capabilityBlocked(world, actor, 'actions') || component.fullness < 10)
+      )
+        nativeSurvival(world, actor, events);
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
       const step = readyPlanStep(world, actorId);
       if (step) {
@@ -1628,24 +1630,119 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
         if (!transition.outcome.ok || !component.action)
           finishPlanAction(world, actorId, started.actionId, transition.outcome);
       }
+
       if (
         !capabilityBlocked(world, actor, 'locomotion') ||
         component.action?.type === 'status-effect' ||
         component.action?.type === 'pickup'
       )
-        advanceAction(world, actor, seconds, events);
+        advanceAction(world, actor, 0, events);
     }
-    // Only landing needs this index; rebuild once at that phase, then track subsequent moves.
     let occupancy: LandingOccupancy | undefined;
     const landingOccupancy = () => (occupancy ??= new LandingOccupancy(world));
+    const trackOccupancy = (e: Entity) => occupancy?.update(e);
     for (const id of participants.ambient) {
-      const entity = world.entities[id]!;
+      const entity = world.entities[id];
+      if (!entity || capabilityBlocked(world, entity, 'locomotion')) continue;
+      advanceFlight(world, entity, 0, events, landingOccupancy);
+      advanceAnimal(world, entity, 0);
+      trackOccupancy(entity);
+    }
+    // Nested commands can replace entities or status attributes. Reuse the speech branch's
+    // conservative roster helper; never retain revoked draft references across that boundary.
+    statusIds = Object.values(isDraft(world.entities) ? current(world.entities) : world.entities)
+      .filter((e) => mayAdvanceStatusEffects(world, e))
+      .map((e) => e.id);
+    for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
+    if (navigationBlocked(world)) break;
+    const status = statusIds.flatMap((id) => prepareStatusRates(world, world.entities[id]!));
+    const interval = nativeInterval(
+      world,
+      remaining,
+      participants.actors,
+      participants.ambient,
+      statusIds,
+      status,
+    );
+    const seconds = interval.seconds;
+    const working = new Map(
+      participants.actors.flatMap((id) => {
+        const e = world.entities[id],
+          a = e?.actor?.action;
+        return e?.actor?.alive &&
+          !e.actor.incapacitated &&
+          a?.stage === 'working' &&
+          (!capabilityBlocked(world, e, 'locomotion') ||
+            a.type === 'status-effect' ||
+            a.type === 'pickup')
+          ? [[id, a.id] as const]
+          : [];
+      }),
+    );
+    world.simTime += seconds;
+    remaining = Math.max(0, remaining - seconds);
+    intervals++;
+    // Move before endpoint effects: a shot/death at the end cannot cause earlier fleeing.
+    for (const id of participants.actors) {
+      const actor = world.entities[id];
+      if (
+        actor?.actor?.alive &&
+        !actor.actor.incapacitated &&
+        actor.actor.action?.stage === 'approaching' &&
+        !capabilityBlocked(world, actor, 'locomotion')
+      )
+        advanceAction(world, actor, seconds, events);
+    }
+    // Non-emitting, bounded 0.4 m wander impulses retain their local timer remainder.
+    // Order due RNG draws by deadline then identity, independently of callback chunk size.
+    const wanderers = participants.ambient
+      .filter((id) => {
+        const e = world.entities[id];
+        return (
+          e?.animal &&
+          e.actor?.alive &&
+          !e.actor.incapacitated &&
+          !e.actor.action &&
+          !e.spatial.flight &&
+          e.spatial.fallVelocity === undefined &&
+          !(e.animal.fleeSeconds > 0 && e.animal.fleeFrom) &&
+          !capabilityBlocked(world, e, 'locomotion')
+        );
+      })
+      .sort(
+        (a, b) =>
+          world.entities[a]!.animal!.wanderSeconds - world.entities[b]!.animal!.wanderSeconds ||
+          a.localeCompare(b),
+      );
+    const wandered = new Set(wanderers);
+    for (const id of wanderers) advanceAnimal(world, world.entities[id]!, seconds);
+    occupancy = undefined;
+    for (const id of participants.ambient) {
+      const entity = world.entities[id];
+      if (!entity) continue;
       if (!capabilityBlocked(world, entity, 'locomotion')) {
         advanceFlight(world, entity, seconds, events, landingOccupancy);
-        advanceAnimal(world, entity, seconds);
+        if (!wandered.has(id)) advanceAnimal(world, entity, seconds);
       }
-      occupancy?.update(entity);
-      if (entity.heat?.lit) {
+      trackOccupancy(entity);
+    }
+    integrateStatusRates(world, status, seconds, events);
+    for (const id of participants.actors) {
+      const actor = world.entities[id],
+        component = actor?.actor;
+      if (!actor || !component?.alive || component.incapacitated) continue;
+      if (
+        hasWildernessNeeds(component) &&
+        advanceWildernessNeeds(actor, seconds, interval.exhausted.has(id) ? seconds : 0)
+      )
+        reconcileBody(world, actor, events, 'needs');
+      if (!component.alive || component.incapacitated) continue;
+      advanceReservoirs(world, actor, seconds, events);
+      if (working.get(id) === component.action?.id) advanceAction(world, actor, seconds, events);
+    }
+    for (const id of participants.ambient) {
+      const entity = world.entities[id];
+      if (entity?.heat?.lit) {
         entity.heat.fuelSeconds = Math.max(0, entity.heat.fuelSeconds - seconds);
         if (entity.heat.fuelSeconds === 0) {
           entity.heat.lit = false;
@@ -1653,15 +1750,37 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
         }
       }
     }
+    for (const id of statusIds) {
+      const entity = world.entities[id];
+      if (entity) reconcileStatusEffects(world, entity, events);
+    }
+    // Arrival starts new work now; only work already active at the start receives elapsed time.
+    for (const id of participants.actors) {
+      const actor = world.entities[id];
+      if (
+        actor?.actor?.alive &&
+        !actor.actor.incapacitated &&
+        actor.actor.action?.stage === 'approaching' &&
+        !capabilityBlocked(world, actor, 'locomotion')
+      )
+        advanceAction(world, actor, 0, events);
+    }
+    updateEncounters(world, before, events, participants.actors);
+    advanceCommitments(world, events);
+    reconcileConversations(world);
+    if (remaining > 0 && intervals < maxIntervals) before = current(world);
   }
-  updateEncounters(world, original, events, participants.actors);
   return finish(
     world,
     events,
     outcome(
       true,
-      remaining > 0 ? 'navigation-pending' : 'advanced',
-      `Advanced ${elapsedSimSeconds - remaining} simulation seconds.`,
+      navigationBlocked(world)
+        ? 'navigation-pending'
+        : remaining > 0
+          ? 'advance-budget'
+          : 'advanced',
+      `Advanced ${world.simTime - original.simTime} simulation seconds in ${intervals} intervals.`,
     ),
   );
 }

@@ -39,18 +39,29 @@ export function setWildernessNeed(
     throw new Error('Wilderness need is not applicable.');
   actor[need] = Math.max(0, Math.min(100, value));
 }
-export function advanceWildernessNeeds(entity: Entity, seconds: number): boolean {
+export function advanceWildernessNeeds(
+  entity: Entity,
+  seconds: number,
+  exhaustedSeconds = entity.actor?.energy === 0 ? seconds : 0,
+): boolean {
   const actor = entity.actor!;
   if (!hasWildernessNeeds(actor)) return false;
   const previous = actor.health;
+  const starvingSeconds = Math.max(
+    0,
+    seconds - actor.fullness / WILDERNESS_NEEDS.fullnessPerSecond,
+  );
   setWildernessNeed(
     actor,
     'fullness',
     actor.fullness - WILDERNESS_NEEDS.fullnessPerSecond * seconds,
   );
-  if (actor.fullness === 0)
-    actor.health = Math.max(0, actor.health - WILDERNESS_NEEDS.starvationDamagePerSecond * seconds);
-  if (actor.energy === 0)
-    actor.health = Math.max(0, actor.health - WILDERNESS_NEEDS.exhaustionDamagePerSecond * seconds);
+  // Depletion at the end cannot charge damage for the preceding fed interval.
+  actor.health = Math.max(
+    0,
+    actor.health -
+      WILDERNESS_NEEDS.starvationDamagePerSecond * starvingSeconds -
+      WILDERNESS_NEEDS.exhaustionDamagePerSecond * exhaustedSeconds,
+  );
   return actor.health !== previous;
 }
