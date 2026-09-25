@@ -1,0 +1,22 @@
+name: Workshop continuation source
+on:
+  push:
+    branches: [feature/invention-repertoire-foundation]
+    paths: [.github/workflows/workshop-continuation-source.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Export source only without tests or credentials
+        run: tar --exclude=.git -czf /tmp/workshop-continuation-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workshop-continuation-source
+          path: /tmp/workshop-continuation-source.tar.gz
+          retention-days: 1
