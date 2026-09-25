@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 12
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: openlegend_review
           POSTGRES_USER: review
@@ -25,9 +25,7 @@ jobs:
       REVIEW_DATABASE_URL: postgresql://review:disposable-review-only@127.0.0.1:5432/openlegend_review
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: control
-          persist-credentials: false
+        with: {path: control, persist-credentials: false}
       - uses: actions/checkout@v4
         with:
           ref: 94a7682aee9f100ccb54e073969bb4ed4f9fea49
@@ -56,10 +54,10 @@ jobs:
           p=pathlib.Path('control/.github/action-review-runtime.mjs')
           p.write_text(p.read_text().replace("load('node_modules/pg/lib/index.js')", "load('apps/server/node_modules/pg/lib/index.js')"))
           PY
+          REVIEW_FINISH_STAGE=prepare python control/.github/action-review-finish.py
           mkdir -p reports
       - uses: pnpm/action-setup@v4
-        with:
-          package_json_file: merged/package.json
+        with: {package_json_file: merged/package.json}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -76,6 +74,7 @@ jobs:
           pnpm config:check > ../reports/config.txt 2>&1
           pnpm typecheck > ../reports/typecheck-current.txt 2>&1 || true
           cd ../baseline
+          pnpm exec tsc --noEmit -p tsconfig.build.json > ../reports/build-baseline.txt 2>&1
           pnpm typecheck > ../reports/typecheck-baseline.txt 2>&1 || true
           cd ../upstream
           ln -s ../merged/node_modules node_modules
@@ -89,41 +88,103 @@ jobs:
           node --import tsx ../control/.github/action-review-runtime.mjs native > ../reports/native-before.json
           cd ../merged
           node --import tsx ../control/.github/action-review-runtime.mjs native > ../reports/native-after.json
-          cd ..
-          python - <<'PY'
-          import json,pathlib
-          a=json.loads(pathlib.Path('reports/native-before.json').read_text());b=json.loads(pathlib.Path('reports/native-after.json').read_text())
-          if a['hash']!=b['hash']:raise RuntimeError('Native final state differs')
-          PY
       - name: Full PostgreSQL timer HTTP SSE workload
         run: |
           cd baseline
-          node --import tsx ../control/.github/action-review-runtime.mjs server ../reports/postgres-server-before.json
+          timeout 180s node --import tsx ../control/.github/action-review-runtime.mjs server ../reports/postgres-server-before.json
           cd ../merged
-          node --import tsx ../control/.github/action-review-runtime.mjs server ../reports/postgres-server-after.json
-      - name: Record exact changed file manifest
+          timeout 180s node --import tsx ../control/.github/action-review-runtime.mjs server ../reports/postgres-server-after.json
+      - name: Record reviewed evidence and format touched files
+        run: |
+          python control/.github/action-review-finish.py
+          python - <<'PY'
+          import pathlib,subprocess
+          m=pathlib.Path('merged');b=pathlib.Path('baseline');u=pathlib.Path('upstream');paths=[]
+          for p in m.rglob('*'):
+            rel=p.relative_to(m)
+            if any(x in ['node_modules','.git','dist','.data'] for x in rel.parts) or not p.is_file() or p.suffix not in ['.ts','.tsx','.md','.mjs','.json']:continue
+            old=b/rel
+            if not old.exists() or p.read_bytes()!=old.read_bytes():paths.append(str(rel))
+          subprocess.run(['pnpm','exec','prettier','--write',*paths],cwd=m,check=True)
+          PY
+          cd merged
+          pnpm run build > ../reports/build-final.txt 2>&1
+      - name: Package source and measurements without changing Git history
         if: always()
         run: |
-          python - <<'PY'
-          import pathlib,json,hashlib
-          root=pathlib.Path.cwd()
-          def files(base):
-            return {str(p.relative_to(base)):p for p in base.rglob('*') if p.is_file() and not any(x in ['node_modules','.git','dist','.data'] for x in p.relative_to(base).parts)}
-          before=files(root/'upstream');after=files(root/'merged');rows=[]
-          for name in sorted(set(before)|set(after)):
-            p=after.get(name);q=before.get(name)
-            if p and q and p.read_bytes()==q.read_bytes():continue
-            data=p.read_bytes() if p else None
-            rows.append({'path':name,'mode':'100755' if p and p.stat().st_mode&0o111 else '100644','type':'blob','sha':hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest() if data is not None else None,'bytes':len(data) if data is not None else 0})
-          pathlib.Path('reports').mkdir(exist_ok=True)
-          pathlib.Path('reports/changed-files.json').write_text(json.dumps(rows,indent=2)+'\n')
-          PY
           cp reconciliation.json reports/ || true
-          tar --exclude=node_modules --exclude=.git --exclude=dist --exclude=.data -czf /tmp/action-reviewed-source.tgz merged reports
+          tar --exclude=node_modules --exclude=.git --exclude=dist --exclude=.data -czf /tmp/action-reviewed-source.tgz merged baseline reports
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: action-reviewed-source
           path: /tmp/action-reviewed-source.tgz
           compression-level: 0
+          retention-days: 1
+  objects:
+    needs: review
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: {name: action-reviewed-source}
+      - run: tar -xzf action-reviewed-source.tgz
+      - name: Stage content objects only for connector-owned commits
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const crypto = require('crypto');
+            const repo = {owner:'Macrofold',repo:'OpenLegend'};
+            const main = 'fdcbd31fc9e4eb31daaf00d997648aba588c8577';
+            const source = '94a7682aee9f100ccb54e073969bb4ed4f9fea49';
+            const mainCommit = (await github.rest.git.getCommit({...repo,commit_sha:main})).data;
+            const mainTree = (await github.rest.git.getTree({...repo,tree_sha:mainCommit.tree.sha,recursive:'1'})).data;
+            const sourceTree = (await github.rest.git.getTree({...repo,tree_sha:source,recursive:'1'})).data;
+            if(mainTree.truncated || sourceTree.truncated) throw Error('Incomplete tree inventory');
+            const before = new Map(mainTree.tree.filter(e=>e.type==='blob').map(e=>[e.path,e]));
+            const known = new Set([...mainTree.tree,...sourceTree.tree].map(e=>e.sha));
+            function inventory(dir,prefix='') {
+              const out=[];
+              for(const e of fs.readdirSync(dir,{withFileTypes:true})) {
+                if(['node_modules','.git','dist','.data'].includes(e.name))continue;
+                const name=prefix?prefix+'/'+e.name:e.name, full=path.join(dir,e.name);
+                if(e.isSymbolicLink())throw Error('Unexpected source symlink '+name);
+                if(e.isDirectory())out.push(...inventory(full,name));
+                else if(e.isFile())out.push({name,full});
+              }
+              return out;
+            }
+            const manifests={main,source,baseTree:mainCommit.tree.sha,run:context.runId};
+            for(const dir of ['baseline','merged']) {
+              const entries=[],present=new Set();
+              for(const {name,full} of inventory(dir).sort((a,b)=>a.name.localeCompare(b.name))) {
+                if(name.split('/').some(p=>p==='..'||p==='.env'||p.startsWith('.env.')))throw Error('Unexpected private path');
+                const data=fs.readFileSync(full);
+                const sha=crypto.createHash('sha1').update('blob '+data.length+'\0').update(data).digest('hex');
+                const mode=fs.statSync(full).mode&0o111?'100755':'100644';
+                present.add(name);
+                if(before.get(name)?.sha===sha && before.get(name)?.mode===mode)continue;
+                if(!known.has(sha)) {
+                  const blob=(await github.rest.git.createBlob({...repo,content:data.toString('base64'),encoding:'base64'})).data;
+                  if(blob.sha!==sha)throw Error('Content hash mismatch '+name);
+                  known.add(sha);
+                }
+                entries.push({path:name,mode,type:'blob',sha});
+              }
+              for(const [name,e] of before)if(!present.has(name))entries.push({path:name,mode:e.mode,type:'blob',sha:null});
+              if(entries.some(e=>e.path.startsWith('.github/')))throw Error('Unexpected CI difference');
+              manifests[dir]=entries;
+            }
+            // No trees, commits, branch updates, pushes or merges are performed by this job.
+            // Those authority-changing operations remain explicit GitHub connector calls.
+            fs.writeFileSync('connector-manifests.json',JSON.stringify(manifests,null,2)+'\n');
+      - uses: actions/upload-artifact@v4
+        with:
+          name: connector-commit-manifests
+          path: connector-manifests.json
           retention-days: 1
