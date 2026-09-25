@@ -26,6 +26,7 @@ This page is the master navigation index for active implementation work.
 
 ## Supporting references
 
+- [Policies to revisit](revisitable-policies.md) — accepted but changeable decisions, canonical owners and review triggers; not an implementation backlog.
 - [Extensibility roadmap](../extensibility-roadmap.md)
 - [Extensible-world worked examples](../extensible-world-examples.md)
 - [Action and interaction repertoire](../repertoires/actions.md) — stable example IDs and related-mechanic references; idea catalogue, not implementation status

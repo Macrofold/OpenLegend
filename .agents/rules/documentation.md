@@ -16,6 +16,8 @@ Before code or design changes, find related items through the maintainer index a
 
 Update affected items with the work, not afterward: completed/partial scope, blockers, dependencies and remaining tasks. Check only satisfied exit criteria; preserve unverified acceptance checks and reopen regressions. Keep IDs stable; remove only obsolete work and link replacements. Add uncovered substantive work to its focused tracker, or the general TODO when none applies; do not duplicate tasks. Reconcile status against the final diff and evidence before handoff.
 
+For accepted policies expected to change, maintain [Policies to revisit](../../docs/maintainers/revisitable-policies.md). Keep the current policy in its canonical owner; record why, when and by whom it should be reconsidered. Consult relevant entries when changing that policy or crossing its trigger. Update the owner, affected summaries and register together; a review trigger does not authorize relaxing the rule.
+
 ## Lightweight decision history
 
 In [the existing changelog](../../docs/documentation-changelog.md), record consequential accepted design/product decisions, major documentation revisions/reorganizations and major game changes in the same change. Judge significance by changed contracts, ownership, compatibility or capabilities, not diff size.
