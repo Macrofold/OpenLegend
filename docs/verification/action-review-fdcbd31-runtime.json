@@ -1,0 +1,26 @@
+{
+  "scope": "Native action approval with injected semantic outputs and actual disposable PostgreSQL transaction ownership. Not an automated suite or live-model quality acceptance.",
+  "run": "36087379352",
+  "paidModelCalls": 0,
+  "native": {
+    "targetToken": "927c",
+    "canonicalTarget": "entity-0002",
+    "canonicalIdsAbsentFromModelPackets": true,
+    "injectedSemanticCalls": 3,
+    "verdict": "confirm",
+    "acceptance": {
+      "ok": true,
+      "code": "queued",
+      "message": "Native work queued; it has not completed.",
+      "planId": "review-accept"
+    },
+    "active": "follow",
+    "acquisitionCarriesEpisode": true
+  },
+  "postgres": {
+    "detachedCallbackWaited": true,
+    "committedValueAfterRollback": 2,
+    "closeInsideTransactionRejected": true,
+    "closedConnectionRejected": true
+  }
+}

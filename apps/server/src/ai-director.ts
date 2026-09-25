@@ -1642,13 +1642,6 @@ export class AiDirector {
       if (await retryForUrgentAwareness()) return;
     }
 
-    attemptBindings = attemptBindings.map((binding) => ({
-      ...binding,
-      description: resolveEntityMarkers(binding.description, {
-        ...prepared.visibleEntityReferences,
-        ...prepared.entityReferences,
-      }),
-    }));
     run.responseWatch = undefined;
     await this.prepareResponseAdmission(run);
     const commitStartedAt = new Date().toISOString();

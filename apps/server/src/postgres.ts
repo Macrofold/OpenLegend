@@ -38,18 +38,21 @@ export class PostgresDatabase implements SqlDatabase {
   }
   private serial<T>(operation: () => Promise<T>): Promise<T> {
     if (this.closing) return Promise.reject(new Error('PostgreSQL connection is closing.'));
-    if (this.failed) return Promise.reject(new Error('PostgreSQL unavailable; restart and reconcile.'));
+    if (this.failed)
+      return Promise.reject(new Error('PostgreSQL unavailable; restart and reconcile.'));
     // Bound retained callbacks during a slow database operation; do not replay rejected work.
     // docs/performance.md#preserve-order-without-one-global-database-bottleneck
     if (this.queued >= 256) return Promise.reject(new Error('PostgreSQL admission queue is full.'));
     gaugeMetric('postgres.queuedOperations', ++this.queued);
     const queuedAt = performance.now();
-    const next = this.tail.then(() => {
-      recordDuration('postgres.wait', performance.now() - queuedAt);
-      return operation();
-    }).finally(() => {
-      gaugeMetric('postgres.queuedOperations', --this.queued);
-    });
+    const next = this.tail
+      .then(() => {
+        recordDuration('postgres.wait', performance.now() - queuedAt);
+        return operation();
+      })
+      .finally(() => {
+        gaugeMetric('postgres.queuedOperations', --this.queued);
+      });
     this.tail = next.catch(() => undefined);
     return next;
   }

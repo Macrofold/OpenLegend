@@ -1,0 +1,133 @@
+{
+  "node": "v22.23.2",
+  "initial": {
+    "simTime": 0,
+    "entities": 344,
+    "events": 30
+  },
+  "frozenSnapshots": true,
+  "initialFreezeMs": 8.62880100000001,
+  "warmupSteps": 0,
+  "scenario": {
+    "seed": 73,
+    "people": 10,
+    "animals": 20,
+    "layout": "scattered",
+    "steps": 180,
+    "warmup": 0,
+    "speed": 3,
+    "timeoutSeconds": 60,
+    "objects": [
+      {
+        "count": 100,
+        "quantity": 1,
+        "workSeconds": 1,
+        "definition": {
+          "id": "profile-material-0",
+          "version": 1,
+          "name": "Rare gem",
+          "description": "Synthetic profiling fixture; not an authored game asset.",
+          "properties": [
+            "rigid",
+            "point"
+          ]
+        }
+      },
+      {
+        "count": 100,
+        "quantity": 1,
+        "workSeconds": 1,
+        "definition": {
+          "id": "profile-material-1",
+          "version": 1,
+          "name": "Food parcel",
+          "description": "Synthetic profiling fixture; not an authored game asset.",
+          "properties": [
+            "food"
+          ],
+          "nutrition": 20
+        }
+      },
+      {
+        "count": 100,
+        "quantity": 5,
+        "workSeconds": 10,
+        "definition": {
+          "id": "profile-material-2",
+          "version": 1,
+          "name": "Dry fuel",
+          "description": "Synthetic profiling fixture; not an authored game asset.",
+          "properties": [
+            "fuel"
+          ]
+        }
+      }
+    ]
+  },
+  "setupMs": 109.080559,
+  "cpuMs": 1831.071,
+  "heapUsedBytes": 34135232,
+  "nativeHeadroomAtRequestedSpeed": 0.7237382266336317,
+  "finalCounts": {
+    "entities": 344,
+    "events": 3254,
+    "awareness": 3474
+  },
+  "steps": 180,
+  "totalMs": 1381.7150500000002,
+  "p50Ms": 5.862463000000162,
+  "p95Ms": 7.986511999999948,
+  "maxStepMs": 263.16336799999993,
+  "nativeSecondsPerWallSecond": 130.27288079405372,
+  "finalWorldDigest": "715bc155cfddec2db4276913e4768c4a87dea974931e47c40557cdba19945b26",
+  "hottestSelfMs": [
+    [
+      "finalizeProperty dist/immer.mjs:314",
+      141.08099999999996
+    ],
+    [
+      "get dist/immer.mjs:382",
+      109.86199999999997
+    ],
+    [
+      "isPlainObject dist/immer.mjs:60",
+      65.04900000000002
+    ],
+    [
+      "advanceWorldWork src/kernel.ts:1",
+      57.314
+    ],
+    [
+      "matchesStatusCondition src/status-effects.ts:1",
+      54.03700000000001
+    ],
+    [
+      "isDraftable dist/immer.mjs:54",
+      52.85399999999999
+    ],
+    [
+      "peek dist/immer.mjs:486",
+      50.622000000000014
+    ],
+    [
+      "(anonymous) src/perception-frame.ts:1",
+      49.628
+    ],
+    [
+      "recordEvent src/events.ts:1",
+      45.46199999999999
+    ],
+    [
+      "freeze dist/immer.mjs:161",
+      42.097
+    ],
+    [
+      "has dist/immer.mjs:90",
+      42.065999999999995
+    ],
+    [
+      "(garbage collector) :0",
+      37.764
+    ]
+  ]
+}

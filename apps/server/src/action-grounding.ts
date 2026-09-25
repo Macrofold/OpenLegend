@@ -1,3 +1,4 @@
+import { entityReferenceMap, resolveEntityMarkers } from './entity-references.js';
 import { navigationInvocationSchema } from './navigation-contracts.js';
 import { z } from 'zod';
 import {
@@ -97,6 +98,32 @@ export async function groundActionAttempts(
   if (!observed) return [];
   const actor = observed.actor.actor!;
   const entityIds = [actorId, ...observed.visibleEntities.map((e) => e.id)];
+  const references = entityReferenceMap(world, entityIds, actorId);
+  const handles = new Map(Object.entries(references).map(([handle, id]) => [id, handle]));
+  // Use the existing episode-scoped namespace throughout interpretation and review.
+  // Canonical identities remain in trusted bindings, not generated target parameters.
+  // docs/architecture.md#jev-first-action-grounding
+  const projectText = (value: string) =>
+    value.replace(/\(ID:([^()\s]+)\)/g, (marker, id: string) =>
+      handles.has(id)
+        ? `(ID:${handles.get(id)})`
+        : Object.hasOwn(references, id)
+          ? marker
+          : '(unavailable subject)',
+    );
+  const invocationSchema = navigationInvocationSchema.extend({
+    targetEntityId: z.enum(Object.keys(references) as [string, ...string[]]).nullable(),
+  });
+  const projectCommand = (command: Command) => {
+    const { actorId: _actorId, id: _id, ...value } = command;
+    return {
+      ...value,
+      ...('targetId' in value && value.targetId
+        ? { targetId: handles.get(value.targetId) ?? null }
+        : {}),
+      ...('heatId' in value ? { heatId: handles.get(value.heatId) ?? null } : {}),
+    };
+  };
   const proposals = response.operations
     .filter(
       (op) =>
@@ -198,7 +225,7 @@ export async function groundActionAttempts(
         )
         .slice(0, 16)) {
         scoped.push({
-          description: `Follow ${observerDescription(world, actorId, target.id)} [${target.id}] at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
+          description: `Follow ${observerDescription(world, actorId, target.id)} (ID:${handles.get(target.id)}) at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
           commands: [
             {
               id: op.localId,
@@ -211,17 +238,19 @@ export async function groundActionAttempts(
         });
       }
       const context = {
-        request: text,
-        targetEntityId: act.targetEntityId,
+        request: projectText(text),
+        targetEntityId: act.targetEntityId ? handles.get(act.targetEntityId) : null,
         actor: {
           name: observed.actor.name,
-          goals: actor.agency.goals.filter((g) => g.status === 'active').map((g) => g.objective),
+          goals: actor.agency.goals
+            .filter((g) => g.status === 'active')
+            .map((g) => projectText(g.objective)),
           currentWork: actor.action?.type ?? null,
         },
         position: observed.actor.position,
         support: observed.actor.spatial.supportSurfaceId,
         entities: visible.slice(0, 64).map((e) => ({
-          id: e.id,
+          id: handles.get(e.id),
           name: observerDescription(world, actorId, e.id),
           position: e.position,
           surfaceId: e.spatial.supportSurfaceId,
@@ -232,7 +261,10 @@ export async function groundActionAttempts(
             ? world.map.spatial.surfaces.map((s) => ({ id: s.id, name: s.name }))
             : [],
         capabilities: NAVIGATION_CAPABILITIES,
-        choices: scoped.map((c, index) => ({ id: `n${index}`, description: c.description })),
+        choices: scoped.map((c, index) => ({
+          id: `n${index}`,
+          description: projectText(c.description),
+        })),
       };
       if (Buffer.byteLength(JSON.stringify(context)) > 32000) {
         await ports.record(
@@ -245,7 +277,7 @@ export async function groundActionAttempts(
       const criteria: Record<string, string> = Object.fromEntries(
         scoped.map((c, index) => [
           `n${index}`,
-          `This exact existing command fully satisfies the whole request with no qualifier or required step omitted: ${c.description}`,
+          `This exact existing command fully satisfies the whole request with no qualifier or required step omitted: ${projectText(c.description)}`,
         ]),
       );
       criteria['interpret'] =
@@ -307,11 +339,7 @@ export async function groundActionAttempts(
             .max(8),
           reason: z.string().min(1).max(1000),
           steps: z
-            .array(
-              z
-                .object({ actionId: handle, invocation: navigationInvocationSchema.nullable() })
-                .strict(),
-            )
+            .array(z.object({ actionId: handle, invocation: invocationSchema.nullable() }).strict())
             .max(8),
         })
         .strict();
@@ -342,7 +370,14 @@ export async function groundActionAttempts(
                 world,
                 actorId,
                 `${op.localId}:${index}`,
-                step.invocation,
+                step.invocation
+                  ? {
+                      ...step.invocation,
+                      targetEntityId: step.invocation.targetEntityId
+                        ? (references[step.invocation.targetEntityId] ?? null)
+                        : null,
+                    }
+                  : null,
                 entityIds,
               );
         if (
@@ -391,19 +426,25 @@ export async function groundActionAttempts(
       }
       let verdict: ActionFulfillment['verdict'] =
         result.disposition === 'confirm' ? 'confirm' : result.omitted.length ? 'partial' : 'exact';
-      let reason = result.reason;
-      let omitted = result.omitted;
+      let reason = resolveEntityMarkers(result.reason, references);
+      let omitted = result.omitted.map((entry) => ({
+        requirement: resolveEntityMarkers(entry.requirement, references),
+        reason: resolveEntityMarkers(entry.reason, references),
+      }));
       // Review actual decoded behavior, including candidates that claim no omissions.
       // docs/architecture.md#action-fulfillment-and-revision-approval
       if (verdict !== 'confirm') {
         const review = await ports.judge({
           state: {
-            request: text,
-            targetEntityId: act.targetEntityId,
+            request: context.request,
+            targetEntityId: context.targetEntityId,
             actor: context.actor,
             capabilities: context.capabilities,
             declaredOmissions: result.omitted,
-            native: { description: nativeDescription, commands: boundCommands },
+            native: {
+              description: projectText(nativeDescription),
+              commands: boundCommands.map(projectCommand),
+            },
           },
           questions: {
             fulfillment: {
