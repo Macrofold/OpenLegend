@@ -243,14 +243,17 @@ function speechTransmission(world: WorldState, listener: Entity, source: Entity)
     let observers = acousticPaths.get(map);
     if (!observers) acousticPaths.set(map, (observers = new Map()));
     let entry = observers.get(listener.id);
-    if (!entry || entry.position !== from || entry.ear !== fromEar) {
-      if (!entry && observers.size >= ACOUSTIC_CACHE.sources)
-        observers.delete(observers.keys().next().value!);
+    // Keep admitted listeners when a crowd exceeds capacity. FIFO eviction makes every
+    // repeated 257-listener pass miss a 256-entry cache. Uncached listeners still hear exactly.
+    if (
+      (!entry || entry.position !== from || entry.ear !== fromEar) &&
+      (entry || observers.size < ACOUSTIC_CACHE.sources)
+    ) {
       entry = { position: from, ear: fromEar, targets: new Map() };
       observers.set(listener.id, entry);
     }
-    cache = entry.targets;
-    const prior = cache.get(source.id);
+    cache = entry?.targets;
+    const prior = cache?.get(source.id);
     if (prior?.position === to && prior.ear === toEar) return prior.transmission;
   }
   const transmission = soundTransmission(
@@ -312,13 +315,16 @@ function unblockedVisionQuery(
     let observers = visibility.get(map);
     if (!observers) visibility.set(map, (observers = new Map()));
     let entry = observers.get(observerId);
-    if (entry?.from !== from || entry.radius !== radius || entry.eyeHeight !== eyeHeight) {
-      if (!entry && observers.size >= SIGHT_CACHE_LIMITS.observers)
-        observers.delete(observers.keys().next().value!);
+    // As with acoustic paths, a bounded cache miss must not evict the whole working set
+    // during a dense round-robin scan. Pose changes still replace an admitted observer.
+    if (
+      (entry?.from !== from || entry.radius !== radius || entry.eyeHeight !== eyeHeight) &&
+      (entry || observers.size < SIGHT_CACHE_LIMITS.observers)
+    ) {
       entry = { from, radius, eyeHeight, targets: new Map() };
       observers.set(observerId, entry);
     }
-    cached = entry.targets;
+    cached = entry?.targets;
   }
   return (source) => {
     const p = source.position;
