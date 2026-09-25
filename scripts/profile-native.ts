@@ -1,5 +1,9 @@
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
-import { populateScenario, type Scenario } from './performance/scenario.js';
+import {
+  DEFAULT_PROFILE_INTERVAL_SECONDS,
+  populateScenario,
+  type Scenario,
+} from './performance/scenario.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { Session } from 'node:inspector/promises';
 import { createHash } from 'node:crypto';
@@ -42,7 +46,9 @@ if (!mutable) freezeWorld(world);
 const initialFreezeMs = performance.now() - freezeStarted;
 const step = () => {
   // One bounded prefix makes interval cost visible; throughput uses actual progressed time.
-  world = advanceWorld(world, scenario?.intervalSeconds ?? 1, { maxIntervals: 1 }).world;
+  world = advanceWorld(world, scenario?.intervalSeconds ?? DEFAULT_PROFILE_INTERVAL_SECONDS, {
+    maxIntervals: 1,
+  }).world;
   if (!mutable) freezeWorld(world);
 };
 const setupMs = performance.now() - setupAt;
@@ -96,7 +102,7 @@ try {
         node: process.version,
         status: completedSteps === steps ? 'completed' : 'blocked',
         simulatedSeconds,
-        offeredGameSecondsPerCall: scenario?.intervalSeconds ?? 1,
+        offeredGameSecondsPerCall: scenario?.intervalSeconds ?? DEFAULT_PROFILE_INTERVAL_SECONDS,
         integration: 'boundary-limited-prefix',
         completedSteps,
         attemptedSteps: durations.length,
