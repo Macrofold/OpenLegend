@@ -6,31 +6,60 @@ import type { SqlDatabase } from './store.js';
 export class SqliteDatabase implements SqlDatabase {
   private db: DatabaseSync;
   private tail: Promise<unknown> = Promise.resolve();
-  private context = new AsyncLocalStorage<boolean>();
-  constructor(path: string) {
-    this.db = new DatabaseSync(path);
+  private context = new AsyncLocalStorage<{
+    active: boolean;
+    committed: (() => void)[];
+    rolledBack: (() => void)[];
+  }>();
+  constructor(
+    path: string,
+    private readonly readOnly = false,
+  ) {
+    this.db = new DatabaseSync(path, { readOnly });
   }
   private run<T>(operation: () => T | Promise<T>): Promise<T> {
-    if (this.context.getStore()) return Promise.resolve().then(operation);
+    if (this.context.getStore()?.active) return Promise.resolve().then(operation);
     const next = this.tail.then(operation);
     this.tail = next.catch(() => undefined);
     return next;
   }
+  afterCommit(callback: () => void) {
+    const scope = this.context.getStore();
+    if (scope?.active) scope.committed.push(callback);
+    else callback();
+  }
+  afterRollback(callback: () => void) {
+    const scope = this.context.getStore();
+    if (scope?.active) scope.rolledBack.push(callback);
+  }
   transaction<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.context.getStore()) return operation();
-    return this.run(() =>
-      this.context.run(true, async () => {
-        this.db.exec('BEGIN IMMEDIATE');
+    if (this.context.getStore()?.active) return operation();
+    return this.run(() => {
+      const scope = {
+        active: true,
+        committed: [] as (() => void)[],
+        rolledBack: [] as (() => void)[],
+      };
+      return this.context.run(scope, async () => {
+        this.db.exec(this.readOnly ? 'BEGIN' : 'BEGIN IMMEDIATE');
+        let result: T;
         try {
-          const result = await operation();
+          result = await operation();
           this.db.exec('COMMIT');
-          return result;
         } catch (error) {
-          this.db.exec('ROLLBACK');
+          try {
+            this.db.exec('ROLLBACK');
+          } finally {
+            scope.active = false;
+            for (const callback of scope.rolledBack) callback();
+          }
           throw error;
         }
-      }),
-    );
+        scope.active = false;
+        for (const callback of scope.committed) callback();
+        return result;
+      });
+    });
   }
   exec(sql: string) {
     return this.run(() => this.db.exec(sql));

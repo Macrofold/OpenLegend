@@ -1,3 +1,7 @@
+import {
+  MEMORY_HISTORY_TABLES,
+  MEMORY_CACHE_TABLES,
+} from '../apps/server/src/memory-repository.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { randomUUID } from 'node:crypto';
 import { COMMAND_TABLES, type CommandEpoch } from '../apps/server/src/command-receipts.js';
@@ -8,6 +12,7 @@ import { readConfig } from '../apps/server/src/config.js';
 import { SqliteStore, digest, type SavedWorld } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { migrateActors, migrateCognition, forgetExperience } from '@open-legend/domain';
+import { upgradeWorldState } from '../apps/server/src/upgrade-world.js';
 const file = process.argv[2];
 if (!file)
   throw new Error(
@@ -32,6 +37,7 @@ const store = new SqliteStore(
 try {
   let current = await store.load();
   const state = JSON.parse(backup.tables.world[0]!.payload) as SavedWorld;
+  upgradeWorldState(state.world);
   const fenceCommands = async () => {
     const key = `command-epoch:${state.world.id}`;
     const epoch = (await store.getIntegration(key)) as CommandEpoch | undefined;
@@ -59,6 +65,9 @@ try {
       'player_profiles',
       'game_saves',
       ...COMMAND_TABLES,
+      ...MEMORY_HISTORY_TABLES,
+      'memory_index_attempts',
+      ...MEMORY_CACHE_TABLES,
       ...['attempt_scopes', ...HISTORY_TABLES],
     ];
     for (const table of tables)
@@ -80,7 +89,7 @@ try {
         }
       }
       // Keep restored story identities/revisions; projection fills only missing or changed sources.
-      await store.db.prepare('DELETE FROM meta WHERE key=?').run('world-journal-head');
+      await store.db.prepare('DELETE FROM meta WHERE key=?').run('integration:world-journal-head');
       migrateActors(state.world);
       migrateCognition(state.world);
       state.manuallyPaused = true;
@@ -125,12 +134,45 @@ try {
       : state.world;
     state.world = retainHotEvents(after);
     await store.db.transaction(async () => {
+      for (const row of backup.tables['memory_vector_cache'] ?? []) {
+        if (row['world_id'] !== state.world.id)
+          throw new Error('Backup vector cache belongs to another world.');
+        await store.db
+          .prepare('INSERT INTO memory_vector_cache VALUES (?,?,?,?,?,?,?) ON CONFLICT DO NOTHING')
+          .run(
+            ...[
+              'world_id',
+              'actor_id',
+              'source_id',
+              'source_revision',
+              'model',
+              'dimensions',
+              'embedding',
+            ].map((key) => row[key]),
+          );
+      }
       for (const row of backup.tables['gameplay_receipts'] ?? [])
         await store.db
           .prepare('INSERT INTO gameplay_receipts VALUES (?,?,?,?,?) ON CONFLICT DO NOTHING')
           .run(row['world_id'], row['id'], row['epoch'], row['expires_at'], row['payload']);
       await fenceCommands();
-      await store.commit(current!.revision, state, undefined, undefined, { before, after });
+      // Use the normal restore contract so timeline and vector publication are fenced.
+      const epoch = (await store.getIntegration(`command-epoch:${state.world.id}`)) as CommandEpoch;
+      const payload = {
+        format: 'backup',
+        state,
+        history: Object.fromEntries(
+          HISTORY_TABLES.map((table) => [table, backup.tables[table] ?? []]),
+        ) as import('../apps/server/src/game-saves.js').SavePayload['history'],
+        memory: Object.fromEntries(
+          MEMORY_HISTORY_TABLES.map((table) => [table, backup.tables[table] ?? []]),
+        ) as NonNullable<import('../apps/server/src/game-saves.js').SavePayload['memory']>,
+      };
+      await store.commit(current!.revision, state, undefined, undefined, {
+        before,
+        after,
+        restore: { id: 'backup', requestId: randomUUID(), payload, epoch, timeline: randomUUID() },
+      });
     });
     for (const actorId of Object.keys(state.world.entities)) {
       await store.putIntegration(`vectors:${state.world.id}:${actorId}`, null);

@@ -8,6 +8,8 @@ export function inspectGodMind(service: WorldService, actorId: string): GodMindV
   if (!service.config.godMode) throw new Error('God inspection is disabled by the host.');
   const entity = service.world.entities[actorId];
   if (!entity?.actor) throw new Error('Character not found.');
+  if (!service.mayInspectPrivate(actorId))
+    throw new Error('Human-private character content is unavailable to this principal.');
   const mind = mindFor(service.world, actorId);
   return {
     actorId,

@@ -1,5 +1,9 @@
 # Runtime performance design
 
+## Data foundation measurements
+
+Canonical record commits, independent read/write lanes and SQL-first memory retrieval are implemented. [Recorded runs](verification.md#data-foundation-runtime) separate structured/semantic retrieval, full local preparation, source indexing, cold extraction, native simulation, commit and recovery. Physical observation can omit memory preparation when its caller supplies SQL recall. Exact vector ranking remains the default; no arbitrary 20 ms limit or new searchable-history cap is imposed. Dense first exposure, active-history copying, checkpoint size and full browser/network/live-AI workloads remain qualification gates.
+
 ## Spatial cost and scheduling
 
 [SW14](maintainers/spatial-world.md) owns spatial measurements and [the native provider](../archive/07-technical-architecture/spatial-world-runtime.md#initial-native-provider) owns its finite bounds/cache identity. Navigation is unpaid native CPU work, not an AI-director job. Current graphs are prepared synchronously and memoized, so no new worker/queue race is introduced. Full-extent static indexes, on-demand support-group navigation, graph-local search scratch, sparse exact-coincident seams, bounded sight caching and phase-local landing occupancy are implemented; cold near-limit preparation and first-exposure fan-out remain measured bottlenecks in the [SW scaling next steps](maintainers/spatial-world.md#scaling-next-steps). General worker preparation stays SW06 work. Preserve fixed-step time/debt, single writer and measured optimization; orbit/animation never rebakes navigation or re-embeds actors.
@@ -19,6 +23,8 @@ The proposed [events, perception, and reactions contract](events-perception-and-
 Registered world modules declare relevant dependency keys, execution category and bounded work under the [shared runtime contract](../archive/07-technical-architecture/world-module-runtime.md#9-change-dependencies-and-work-budgets). Per-module bounds do not replace aggregate world/host limits. Reuse the existing dirty/deadline and spatial infrastructure; registration is not permission for global polling or an object-local queue.
 
 ## Selected approach
+
+The owner delegates overall architecture and performance decisions, including substantial redesign, and has withdrawn the arbitrary 20 ms retrieval target. Optimize complete interactions and sustained work under the [first-release and growth workloads](../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product); do not freeze the present pipeline or optimize only one query. Prefer less work, bounded active state, indexed scoped access, reusable validated results and batched changes. Measure tail latency, throughput, simulation progress, relevance, memory, storage and cost together. Existing small-world budgets are early regression guides, not final capacity proof. Record material tradeoffs and history-loss choices; privacy, action correctness and meaningful source fidelity remain requirements.
 
 Make the cost of an interaction follow the entities and records it changes, rather than total world age, history, observers elsewhere or background activity. Keep one authoritative writer per world initially. Retain PostgreSQL durability, use the existing journal and story jobs, and optimize them before adding infrastructure.
 

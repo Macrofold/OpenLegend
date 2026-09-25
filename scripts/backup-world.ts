@@ -1,3 +1,7 @@
+import {
+  MEMORY_HISTORY_TABLES,
+  MEMORY_CACHE_TABLES,
+} from '../apps/server/src/memory-repository.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { COMMAND_TABLES } from '../apps/server/src/command-receipts.js';
 import { writeFileSync } from 'node:fs';
@@ -13,36 +17,39 @@ const store = new SqliteStore(
 );
 try {
   await store.ready;
-  await store.db.exec('BEGIN IMMEDIATE');
-  const tables = Object.fromEntries(
-    await Promise.all(
-      [
-        'world',
-        'jobs',
-        'attempts',
-        'intelligence_calls',
-        'meta',
-        'player_profiles',
-        'game_saves',
-        ...COMMAND_TABLES,
-        ...['attempt_scopes', ...HISTORY_TABLES],
-      ].map(async (name) => [name, await store.db.prepare(`SELECT * FROM ${name}`).all()] as const),
-    ),
-  );
-  const latest = await store.load();
-  if (latest)
-    tables['world'] = [{ id: 1, revision: latest.revision, payload: JSON.stringify(latest.state) }];
-  writeFileSync(destination, JSON.stringify({ version: 1, digest: digest(tables), tables }), {
-    flag: 'wx',
-    mode: 0o600,
+  await store.load();
+  await store.db.transaction(async () => {
+    const tables = Object.fromEntries(
+      await Promise.all(
+        [
+          'world',
+          'jobs',
+          'attempts',
+          'intelligence_calls',
+          'meta',
+          'player_profiles',
+          'game_saves',
+          ...COMMAND_TABLES,
+          ...MEMORY_HISTORY_TABLES,
+          'memory_index_attempts',
+          ...MEMORY_CACHE_TABLES,
+          ...['attempt_scopes', ...HISTORY_TABLES],
+        ].map(
+          async (name) => [name, await store.db.prepare(`SELECT * FROM ${name}`).all()] as const,
+        ),
+      ),
+    );
+    const latest = await store.load();
+    if (latest)
+      tables['world'] = [
+        { id: 1, revision: latest.revision, payload: JSON.stringify(latest.state) },
+      ];
+    writeFileSync(destination, JSON.stringify({ version: 1, digest: digest(tables), tables }), {
+      flag: 'wx',
+      mode: 0o600,
+    });
   });
-  await store.db.exec('COMMIT');
   console.log('Consistent world, spending, integration and forgetting backup written.');
-} catch (error) {
-  try {
-    await store.db.exec('ROLLBACK');
-  } catch {}
-  throw error;
 } finally {
   await store.close();
 }

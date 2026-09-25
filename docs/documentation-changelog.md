@@ -1,5 +1,17 @@
 # Documentation changelog
 
+## 2026-09-25 — Supported-gameplay data foundation implementation
+
+Replaced operational world JSON/journal authority with independently addressable SQL records through the existing world transaction and native owners. Added database-selected memory recall/editor pages, source-version and annotation backing, durable indexing claims, exact eligible vector search, actor-private inspection guards and creator/host save capability checks. Existing importance, consolidation and forgetting rules remain unchanged; no punch/walk classifier or new dropping policy was added.
+
+Legacy worlds extract atomically in place; portable backup/import/restore preserve source fidelity, current privacy, accounting and reusable vector versions. PostgreSQL separates consistent reads from writes. Review fixes covered outer rollback notifications, stale selected-source publication, source-version vector reuse, duplicate observation work and indexed required evidence. [Architecture](architecture.md), [memory](memory-architecture.md#implemented-retrieval-and-storage), [save/load](save-and-load.md), [D1/D2](maintainers/production-data.md#remaining-d1d2-implementation-and-evidence), CR/PF/SL and [runtime evidence](verification.md#data-foundation-runtime) distinguish delivery from remaining qualification. Native stress found dense simulation/history costs still above the release target; no capacity claim or automated-test waiver follows.
+
+## 2026-09-25 — Foundation scope, capacity and delegated engineering decisions
+
+The owner selected the data foundation for supported gameplay; broader D3–D6 features remain tracked. [Capacity workloads](../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product) now specify first release at 100 players, 100 agents, 100 animals and 1,000 other objects, with half of each in one scene; growth targets 10,000 players and 200 players/agents combined in a scene. These are qualification targets, not measured results. The arbitrary 20 ms retrieval target below is superseded: architecture and performance choices are delegated to engineering using complete interaction, relevance and resource evidence.
+
+The [retention ledger](../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger) requires a rationale for future lossy policies. The owner clarified that this foundation supplies backing data only: no new semantic importance, classification, grouping or content-dropping rules, including walk-versus-punch examples. The [source/grouping contract](../archive/07-technical-architecture/production-data-model.md#semantic-history-and-grouping-support) preserves evidence and optional metadata for later memory/consolidation/dream systems while migrating existing behavior unchanged. Privacy is enforced through the game; direct database administrators are outside that guarantee. The world creator and authorized OpenLegend staff may save/load, without gaining private-content inspection. Reasonable recovery defaults are delegated; deployment-specific disaster objectives remain later qualification. Updated [D0–D6](maintainers/production-data.md), CR/PF/SL, related specifications and [D48/D58–D62](../archive/05-project/open-decisions.md); this records decisions only, with no runtime migration, data deletion or benchmark.
+
 ## 2026-09-25 — Production data model review
 
 Reviewed the [production records](../archive/07-technical-architecture/production-data-model.md) against gameplay, current storage and accepted engine boundaries. Clarified one canonical owner per record, shared actor capabilities, operational goals/plans/due work, identity-preserving migration, timeline/source fencing and revision-aware recall indexes. [Queries](../archive/07-technical-architecture/data-queries-and-mcp.md) now specify database selection before bounded context preparation, with index gaps and the unmeasured 20 ms local-retrieval target explicit.
@@ -183,3 +195,7 @@ Updated current implementation descriptions after removing undocumented small co
 ## Physical contact semantics
 
 Replaced the proximity-based touch approximation with body-surface contact. The spatial-world specification owns the physical rule and migration semantics; architecture reflects the optional detector's current behavior. Earlier dense-contact measurements describe the superseded proximity implementation.
+
+## Repository limits audit and dependency gate
+
+Imported the full 238-entry limits decision report from its temporary working artifact into `docs/maintainers/limits-audit.md`, preserving stable entry numbers, prior removal completion notes, classifications, recommendations and source references. The maintainer index and TODO link to this single follow-up owner. All remaining audit work is explicitly blocked on completion of the current data foundation, followed by a fresh review of every finding against the resulting implementation.

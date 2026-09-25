@@ -7,6 +7,17 @@ const drafts = new Immer({ autoFreeze: false });
 enablePatches();
 type EventLineage = { tip: WorldEvent[] };
 const eventLineages = new WeakMap<WorldEvent[], EventLineage>();
+type RecordLineage = { tip: unknown[] };
+const recordLineages = new WeakMap<unknown[], RecordLineage>();
+
+/** Persistence can skip old records only when the mutation owner proves an append. */
+export function appendedRecordCount(previous: unknown[], next: unknown[]): number | undefined {
+  if (previous === next) return 0;
+  const lineage = recordLineages.get(previous);
+  return lineage && lineage === recordLineages.get(next) && next.length >= previous.length
+    ? next.length - previous.length
+    : undefined;
+}
 
 /** Only draft-proven appends may skip retained history; unknown/forked arrays use a diff. */
 export function appendedEventCount(previous: WorldEvent[], next: WorldEvent[]): number | undefined {
@@ -27,9 +38,31 @@ export function draftWorld(world: WorldState): WorldState {
 }
 export function finishWorld(world: WorldState): WorldState {
   if (!isDraft(world)) return world;
-  const before = original(world)!.events;
+  const base = original(world)!;
+  const before = base.events;
   let appendOnly = true;
+  const arrays = new Map<unknown[], { path: (string | number)[]; appendOnly: boolean }>();
   const result = drafts.finishDraft(world, (patches) => {
+    for (const { op, path } of patches) {
+      let value: unknown = base;
+      for (let depth = 0; depth < path.length; depth++) {
+        if (Array.isArray(value)) {
+          const index = path[depth];
+          const appended =
+            op === 'add' &&
+            depth === path.length - 1 &&
+            typeof index === 'number' &&
+            index >= value.length;
+          const prior = arrays.get(value);
+          arrays.set(value, {
+            path: path.slice(0, depth),
+            appendOnly: appended && (prior?.appendOnly ?? true),
+          });
+        }
+        if (!value || typeof value !== 'object') break;
+        value = (value as Record<string | number, unknown>)[path[depth]!];
+      }
+    }
     // Inspect changed paths, not every historical record (docs/architecture.md#state-and-transitions).
     appendOnly = patches.every(
       ({ op, path }) =>
@@ -40,6 +73,21 @@ export function finishWorld(world: WorldState): WorldState {
           path[1] >= before.length),
     );
   });
+  for (const [previous, change] of arrays) {
+    if (!change.appendOnly) continue;
+    let next: unknown = result;
+    for (const key of change.path) next = (next as Record<string | number, unknown>)[key];
+    if (!Array.isArray(next) || next.length < previous.length) continue;
+    let lineage = recordLineages.get(previous);
+    if (!lineage) {
+      lineage = { tip: previous };
+      recordLineages.set(previous, lineage);
+    }
+    if (lineage.tip === previous) {
+      lineage.tip = next;
+      recordLineages.set(next, lineage);
+    }
+  }
   if (result.events !== before && appendOnly && result.events.length >= before.length) {
     let lineage = eventLineages.get(before);
     if (!lineage) {

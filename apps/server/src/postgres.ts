@@ -3,19 +3,36 @@ import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';
 
-/** One asynchronous connection and a transaction lane; no main-thread waits or paid retries. */
+/** Independent bounded read and write lanes; a large recall cannot occupy the writer. */
 export class PostgresDatabase implements SqlDatabase {
   readonly dialect = 'postgres';
   private client: pg.Client;
   private ready: Promise<void>;
+  private reader: pg.Client;
+  private readReady?: Promise<void>;
+  private readTail: Promise<unknown> = Promise.resolve();
   private tail: Promise<unknown> = Promise.resolve();
-  private transactionContext = new AsyncLocalStorage<boolean>();
+  private transactionContext = new AsyncLocalStorage<{
+    active: boolean;
+    client: pg.Client;
+    readOnly: boolean;
+    committed: (() => void)[];
+    rolledBack: (() => void)[];
+  }>();
   private failed = false;
   constructor(connectionString: string) {
     this.client = new pg.Client({
       connectionString,
       connectionTimeoutMillis: 5000,
       statement_timeout: 5000,
+    });
+    this.reader = new pg.Client({
+      connectionString,
+      connectionTimeoutMillis: 5000,
+      statement_timeout: 5000,
+    });
+    this.reader.on('error', () => {
+      this.failed = true;
     });
     this.ready = this.connect();
     this.ready.catch(() => {
@@ -42,23 +59,71 @@ export class PostgresDatabase implements SqlDatabase {
     this.tail = next.catch(() => undefined);
     return next;
   }
+  afterCommit(callback: () => void) {
+    const scope = this.transactionContext.getStore();
+    if (scope?.active) scope.committed.push(callback);
+    else callback();
+  }
+  afterRollback(callback: () => void) {
+    const scope = this.transactionContext.getStore();
+    if (scope?.active) scope.rolledBack.push(callback);
+  }
   async transaction<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.transactionContext.getStore()) return operation();
-    return this.serial(() =>
-      this.transactionContext.run(true, async () => {
-        await this.query('BEGIN');
-        try {
-          const result = await operation();
-          await this.query('COMMIT');
-          return result;
-        } catch (error) {
-          await this.query('ROLLBACK').catch(() => {
-            this.failed = true;
-          });
-          throw error;
-        }
-      }),
-    );
+    const existing = this.transactionContext.getStore();
+    if (existing?.active) {
+      if (existing.readOnly) throw new Error('A read snapshot cannot admit writes.');
+      return operation();
+    }
+    return this.serial(() => this.inTransaction(this.client, false, operation));
+  }
+  readTransaction<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.transactionContext.getStore()?.active) return operation();
+    const queuedAt = performance.now();
+    const next = this.readTail.then(async () => {
+      recordDuration('postgres.readWait', performance.now() - queuedAt);
+      this.readReady ??= this.ready.then(async () => {
+        await this.reader.connect();
+        await this.reader.query('SET search_path TO open_legend');
+      });
+      await this.readReady;
+      return this.inTransaction(this.reader, true, operation);
+    });
+    this.readTail = next.catch(() => undefined);
+    return next;
+  }
+  private inTransaction<T>(
+    client: pg.Client,
+    readOnly: boolean,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    const scope = {
+      active: true,
+      client,
+      readOnly,
+      committed: [] as (() => void)[],
+      rolledBack: [] as (() => void)[],
+    };
+    return this.transactionContext.run(scope, async () => {
+      await this.query(readOnly ? 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY' : 'BEGIN');
+      let result: T;
+      try {
+        // Cold extraction/restore can update an entire retained source set. Keep
+        // interactive read deadlines separate from these atomic write operations.
+        if (!readOnly) await this.query("SET LOCAL statement_timeout = '30s'");
+        result = await operation();
+        await this.query('COMMIT');
+      } catch (error) {
+        await this.query('ROLLBACK').catch(() => {
+          this.failed = true;
+        });
+        scope.active = false;
+        for (const callback of scope.rolledBack) callback();
+        throw error;
+      }
+      scope.active = false;
+      for (const callback of scope.committed) callback();
+      return result;
+    });
   }
   async query(sql: string, params: unknown[] = []) {
     const execute = async () => {
@@ -76,7 +141,10 @@ export class PostgresDatabase implements SqlDatabase {
         );
       try {
         const result = await timed('postgres.statement', () =>
-          this.client.query(translated, params),
+          (this.transactionContext.getStore()?.active
+            ? this.transactionContext.getStore()!.client
+            : this.client
+          ).query(translated, params),
         );
         return { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
       } catch (error) {
@@ -87,7 +155,7 @@ export class PostgresDatabase implements SqlDatabase {
         );
       }
     };
-    return this.transactionContext.getStore() ? execute() : this.serial(execute);
+    return this.transactionContext.getStore()?.active ? execute() : this.serial(execute);
   }
   async exec(sql: string): Promise<void> {
     await this.query(sql);
@@ -100,9 +168,13 @@ export class PostgresDatabase implements SqlDatabase {
     };
   }
   async close(): Promise<void> {
-    await this.tail;
+    await Promise.all([this.tail, this.readTail]);
     await this.ready.catch(() => undefined);
     this.failed = true;
     await this.client.end();
+    if (this.readReady) {
+      await this.readReady.catch(() => undefined);
+      await this.reader.end();
+    }
   }
 }

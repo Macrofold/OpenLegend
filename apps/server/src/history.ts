@@ -1,12 +1,18 @@
 import {
   controlledEntityId,
   appendedEventCount,
+  appendedRecordCount,
   defaultStoryPolicy,
   selectStory,
   type StorySelection,
 } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
-import type { WorldState, WorldEvent, ConversationTransition } from '@open-legend/domain';
+import type {
+  WorldState,
+  WorldEvent,
+  ConversationTransition,
+  Awareness,
+} from '@open-legend/domain';
 import type { TranscriptPage, TranscriptItem } from '@open-legend/protocol';
 import type { SqlDatabase } from './store.js';
 
@@ -269,6 +275,19 @@ export class HistoryRepository {
     const eventRows: unknown[][] = [],
       audienceRows: unknown[][] = [],
       perspectiveRows: unknown[][] = [];
+    const awarenessByActor = new Map<string, Map<string, Awareness>>();
+    const perspective = (actorId: string, eventId: string) => {
+      let index = awarenessByActor.get(actorId);
+      if (!index) {
+        const entries = world.experience?.awareness[actorId] ?? [];
+        const prior = previous?.experience?.awareness[actorId] ?? [];
+        const count = fastAppend ? appendedRecordCount(prior, entries) : undefined;
+        const relevant = count === undefined ? entries : entries.slice(prior.length);
+        index = new Map(relevant.map((entry) => [entry.eventId, entry]));
+        awarenessByActor.set(actorId, index);
+      }
+      return index.get(eventId);
+    };
     for (const event of changed) {
       const encoded = JSON.stringify(event);
       if (!fastAppend) {
@@ -284,7 +303,7 @@ export class HistoryRepository {
       for (const actorId of new Set(event.audience)) {
         if (world.experience?.forgotten[actorId]?.includes(event.id)) continue;
         audienceRows.push([world.id, event.id, actorId]);
-        const awareness = world.experience?.awareness[actorId]?.find((a) => a.eventId === event.id);
+        const awareness = perspective(actorId, event.id);
         const text = awareness?.text ?? event.text;
         const source: StorySource = {
           id: event.id,
@@ -364,7 +383,8 @@ export class HistoryRepository {
     // Editing awareness changes this actor's source capsule; consolidation alone does not revoke historical access.
     if (previous)
       for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {})) {
-        if (entries === previous.experience?.awareness[actorId]) continue;
+        const priorEntries = previous.experience?.awareness[actorId];
+        if (priorEntries && appendedRecordCount(priorEntries, entries) !== undefined) continue;
         const old = new Map(previous.experience?.awareness[actorId]?.map((a) => [a.eventId, a]));
         for (const entry of entries) {
           const prior = old.get(entry.eventId);

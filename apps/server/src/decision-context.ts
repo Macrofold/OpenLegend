@@ -117,20 +117,35 @@ export async function prepareDecision(
   attempt = 0,
   triggerEvidenceId?: string,
 ) {
+  await service.flush();
   const world = service.world;
+  const generation = service.generation;
   stimulus = projectEntityMarkers(stimulus, world, actorId);
-  const observed = observeActor(world, actorId);
+  const observed = observeActor(world, actorId, { includeMemories: false });
   if (!observed) throw new Error('Actor unavailable.');
-  const awarenessSequence = Math.max(
-    0,
-    ...(world.experience?.awareness[actorId] ?? []).map((entry) => entry.sequence),
-  );
-  const conversation =
+  const includeConversation =
     includeCurrentConversation ||
     !!world.conversations?.active[actorId] ||
-    requiredIds.some((id) => service.worldEvent(id)?.type === 'speech')
-      ? currentConversationEvidenceIds(service, actorId, requiredIds)
-      : [];
+    requiredIds.some((id) => service.worldEvent(id)?.type === 'speech');
+  const head = await service.store.records?.head();
+  const memoryContext =
+    service.store.memories && head
+      ? await service.store.memories.context(
+          { worldId: world.id, actorId, generation: head.generation },
+          requiredIds,
+          includeConversation,
+          world.conversations?.active[actorId],
+        )
+      : undefined;
+  const awarenessSequence =
+    memoryContext?.sequence ??
+    (world.experience?.awareness[actorId] ?? []).reduce(
+      (maximum, entry) => Math.max(maximum, entry.sequence),
+      0,
+    );
+  const conversation =
+    memoryContext?.conversationIds ??
+    (includeConversation ? currentConversationEvidenceIds(service, actorId, requiredIds) : []);
   const automaticIds = conversation;
   const planning = planningCandidates(service, actorId);
   const availableActions = distinctActions([...npcCandidates(service, actorId), ...planning]);
@@ -145,13 +160,17 @@ export async function prepareDecision(
     description: `Withdraw my pending intent: ${attempt.description}`,
     command: { type: 'withdraw-attempt' as const, id: jobId, actorId, attemptId: attempt.id },
   }));
-  const candidates = candidateSet(
+  const candidates = await recall.candidates(
     world,
     actorId,
     observed,
     requiredIds,
     automaticIds,
     conversation,
+    stimulus,
+    `${jobId}:attempt:${attempt}`,
+    signal,
+    budgetCeiling,
   );
   const snapshotActor = observed.actor.actor!;
   const triggerIdSet = new Set(requiredIds);
@@ -286,7 +305,11 @@ export async function prepareDecision(
     });
   // Attention can outlive a simulation transition. Refresh current state after
   // it returns; later actions still validate their authoritative prerequisites.
+  await service.flush();
+  await recall.validateSources(candidates, selection.selected);
   const currentWorld = service.world;
+  if (generation !== service.generation)
+    throw new Error('World restored during attention; discard this decision.');
   // Optional failure cannot revive evidence forgotten/corrected while the provider was running.
   // docs/memory-architecture.md#metadata-stays-in-the-server-binding
   const privacyRevision = (snapshot: typeof world) =>
@@ -296,10 +319,10 @@ export async function prepareDecision(
     });
   if (privacyRevision(world) !== privacyRevision(currentWorld))
     throw new Error('Recall permissions changed during attention; discard this decision.');
-  const currentObserved = observeActor(currentWorld, actorId);
+  const currentObserved = observeActor(currentWorld, actorId, { includeMemories: false });
   if (!currentObserved) throw new Error('Actor unavailable.');
   const actor = currentObserved.actor.actor!;
-  const currentFacts = candidateSet(currentWorld, actorId, currentObserved, [], []);
+  const currentFacts = candidateSet(currentWorld, actorId, currentObserved, [], [], [], []);
   const factsById = new Map(currentFacts.map((candidate) => [candidate.id, candidate]));
   const currentSelection = [
     ...new Map(

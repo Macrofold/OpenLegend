@@ -65,7 +65,7 @@ const excerpt = (text: string, limit: number) => {
 
 /** Relevance is local and deterministic. A model cannot broaden its own knowledge scope. */
 export function buildContext(service: WorldService, actorId: string, query: string) {
-  const observed = service.observe(actorId);
+  const observed = service.observe(actorId, { includeMemories: false });
   if (!observed) throw new Error('Actor unavailable');
   const words = [
     ...new Set(
@@ -219,7 +219,7 @@ export function npcCandidates(
   service: WorldService,
   actorId = service.defaultResidentEntityId,
 ): CandidateAction[] {
-  const observed = service.observe(actorId);
+  const observed = service.observe(actorId, { includeMemories: false });
   const actor = observed?.actor.actor;
   if (!observed || !actor?.alive || actor.incapacitated || service.paused) return [];
   const definitions = new Map(
@@ -510,7 +510,7 @@ export function npcCandidates(
  * Admission queues intentions; native dispatch still owns all physical prerequisites.
  */
 export function planningCandidates(service: WorldService, actorId: string): CandidateAction[] {
-  const observed = service.observe(actorId);
+  const observed = service.observe(actorId, { includeMemories: false });
   if (!observed || !supportsManualWork(observed.actor)) return [];
   return describeTargets(service, actorId, [
     ...observed.visibleEntities

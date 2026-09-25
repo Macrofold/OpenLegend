@@ -20,7 +20,7 @@ import { ACTION_DESCRIPTIONS, describeCommand, commandFacts } from './action-des
  * same rules as execution; its disposable effects/receipts never enter the save.
  */
 export function actionCatalogue(service: WorldService, context: ActionContext): ActionCatalogue {
-  const observation = service.observe(service.controlledEntityId)!;
+  const observation = service.observe(service.controlledEntityId, { includeMemories: false })!;
   const world = service.world;
   const targets = observation.visibleEntities.filter(
     (entity) => entity.id !== service.controlledEntityId,

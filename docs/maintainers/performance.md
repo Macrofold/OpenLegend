@@ -1,5 +1,9 @@
 # Performance implementation tracker
 
+## Data foundation follow-up
+
+The record/query migration and measurements are in [D1/D2](production-data.md#remaining-d1d2-implementation-and-evidence) and [Verification](../verification.md#data-foundation-runtime). Independent PostgreSQL read/write lanes, batched witness eligibility updates, indexed required evidence and skipping discarded memory observation work are implemented. PF08 remains open: initial perception creates large actor/evidence fan-out, Immer copies growing active arrays, and retained histories still occupy RAM. The 100/100/100/1000 and half-size scene runs recovered correctly but did not meet interactive capacity. Keep the 64 MiB checkpoint guard and serialization cost visible in SL/PF; do not close D5 from a scoped SQL benchmark.
+
 ## Spatial measurements
 
 Cross-link [SW06/SW14](spatial-world.md) for spatial readiness and measurements rather than adding another worker framework here. Retain the implemented static bounds index; qualify larger actor/geometry workloads before adding navmesh workers, tiled rebuilding or a crowd solver. Current graph/shape caches and camera-only updates must retain zero provider cost.
@@ -13,6 +17,8 @@ PF00/PF01/PF02/PF03/PF04/PF05/PF08/PF09 now include delivered work below. Remain
 This pass stops before multiplayer admission, per-player replication, the unattended-world toggle and verification with 100 agents, 100 players and thousands of animals. The local host's gameplay epoch mechanism is independent of future multiplayer controller admission. Native animals retain full simulation fidelity; dormancy and analytic updates remain gated on semantic equivalence.
 
 ## Order and stop rule
+
+For the selected data-foundation work, qualify the [first/growth workload profiles](../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product) and the [delegated performance direction](../performance.md#selected-approach). Tiny-world budgets below remain useful early checks; passing them alone does not complete the selected first-release target. PF11/D5 retain full player/network/browser qualification, and D6 retains distributed expansion. Replace the withdrawn 20 ms recall gate with measured end-to-end budgets and relevance evidence.
 
 Run PF00 as a short baseline pass, then take the highest measured cost per unit of implementation effort. The initial order below reflects the known query amplification and polling, not a measured ranking of live latency. After each task, repeat the same relevant workload, report before/after percentiles and costs, and rerank. Once the small-world budgets pass with headroom, stop adding mechanisms; retain later tasks as gated scale work.
 

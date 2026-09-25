@@ -1,3 +1,7 @@
+import { MemoryRepository } from './memory-repository.js';
+import { WorldRecords } from './world-records.js';
+import { isDeepStrictEqual } from 'node:util';
+import { randomUUID } from 'node:crypto';
 import { KnowledgeStore } from './knowledge-store.js';
 import { upgradeWorldState } from './upgrade-world.js';
 import { validateWorldModules } from '@open-legend/domain';
@@ -11,13 +15,21 @@ import { SqliteDatabase } from './sqlite-database.js';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { appendedEventCount as provenAppendCount, type WorldState } from '@open-legend/domain';
+import {
+  appendedEventCount as provenAppendCount,
+  appendedRecordCount,
+  updateWorld,
+  type WorldState,
+} from '@open-legend/domain';
 import type { AiReceipt } from '@open-legend/ai';
 import type { AiJobView, PlayerProfile, PlayerPreferencePatch } from '@open-legend/protocol';
 
 export interface SqlDatabase {
   dialect?: 'postgres';
   transaction<T>(operation: () => Promise<T>): Promise<T>;
+  readTransaction?<T>(operation: () => Promise<T>): Promise<T>;
+  afterCommit?(callback: () => void): void;
+  afterRollback?(callback: () => void): void;
   exec(sql: string): Promise<void>;
   prepare(sql: string): {
     get(...params: any[]): Promise<Record<string, unknown> | undefined>;
@@ -275,6 +287,8 @@ export interface GameRepository extends WorldStore {
   saves?: GameSaves;
   commands?: CommandReceipts;
   vectors?: VectorStore;
+  records?: WorldRecords;
+  memories?: MemoryRepository;
   readonly persistence?: 'postgres' | 'sqlite';
   putIntelligenceCall(call: IntelligenceCall): Promise<void>;
   intelligenceCalls(offset: number): Promise<IntelligenceCall[]>;
@@ -325,7 +339,8 @@ export interface GameRepository extends WorldStore {
 export class SqliteStore implements GameRepository {
   readonly commands: CommandReceipts;
   readonly db: SqlDatabase;
-  private acceptedRows = new Map<string, string>();
+  readonly records: WorldRecords;
+  readonly memories: MemoryRepository;
   private acceptedRevision = -1;
   private acceptedState: SavedWorld | null = null;
   private intelligenceWrites = 0;
@@ -452,6 +467,8 @@ export class SqliteStore implements GameRepository {
   constructor(path: string, database?: SqlDatabase) {
     if (!database && path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = database ?? new SqliteDatabase(path);
+    this.records = new WorldRecords(this.db);
+    this.memories = new MemoryRepository(this.db);
     this.history = new HistoryRepository(this.db);
     this.saves = new GameSaves(this.db, join(dirname(path), 'saves'));
     this.commands = new CommandReceipts(this.db);
@@ -505,6 +522,8 @@ export class SqliteStore implements GameRepository {
       await this.vectors.initialize();
     }
     await new KnowledgeStore(this.db).initialize();
+    await this.records.initialize();
+    await this.memories.initialize();
     await this.history.initialize();
     await this.saves.initialize();
     await this.commands.initialize();
@@ -529,8 +548,31 @@ export class SqliteStore implements GameRepository {
   async load(): Promise<{ revision: number; state: SavedWorld } | null> {
     await this.ready;
 
+    const canonical = await this.records.load();
+    if (canonical) {
+      const state = {
+        ...canonical.state,
+        world: updateWorld(canonical.state.world, upgradeWorldState),
+      };
+      validateWorldModules(state.world);
+      if (
+        state.world.archivedEventCount &&
+        (await this.history.eventCount(state.world.id)) !==
+          state.world.archivedEventCount + state.world.events.length
+      )
+        throw new Error(
+          'Archived history coverage disagrees with the records; restore the complete database.',
+        );
+      this.acceptedState = canonical.state;
+      this.acceptedRevision = canonical.revision;
+      return { revision: canonical.revision, state };
+    }
     const row = await this.db.prepare('SELECT revision, payload FROM world WHERE id = 1').get();
-    if (!row) return null;
+    if (!row) {
+      this.acceptedState = null;
+      this.acceptedRevision = 0;
+      return null;
+    }
     let state = JSON.parse(String(row['payload'])) as SavedWorld;
     let revision = Number(row['revision']);
     const journal = await this.db
@@ -576,6 +618,31 @@ export class SqliteStore implements GameRepository {
       }
     }
     if (state.world.actorKnowledge) await new KnowledgeStore(this.db).verify(acceptedState.world);
+    // Extract in place and compare the complete reconstructed value before retiring
+    // the old writable document. A failure rolls back every record and keeps the save.
+    await this.db.transaction(async () => {
+      await this.db
+        .prepare('INSERT INTO world_head VALUES (1,?,?,?)')
+        .run(acceptedState.world.id, revision, randomUUID());
+      const records = this.records.prepare(undefined, acceptedState);
+      await this.history.project(undefined, acceptedState.world);
+      const memoryChanges = await this.memories.project(acceptedState.world.id, revision, records);
+      await this.records.write(acceptedState.world.id, revision, records);
+      await this.memories.reconcile(acceptedState.world.id, memoryChanges);
+      const recovered = await this.records.load();
+      if (
+        !recovered ||
+        !isDeepStrictEqual(recovered.state, JSON.parse(JSON.stringify(acceptedState)))
+      )
+        throw new Error(
+          'Record migration did not preserve the complete world; migration rolled back.',
+        );
+      await this.db.exec(
+        'DELETE FROM world_journal; DELETE FROM world; DELETE FROM knowledge_documents',
+      );
+      if (this.db.dialect === 'postgres') await this.db.exec('DELETE FROM mind.inner_world');
+      await this.db.prepare('DELETE FROM meta WHERE key=?').run('integration:world-journal-head');
+    });
     this.acceptedState = acceptedState;
     this.acceptedRevision = revision;
     return { revision, state };
@@ -596,60 +663,30 @@ export class SqliteStore implements GameRepository {
   ): Promise<number> {
     await this.ready;
 
+    if (this.acceptedRevision !== expectedRevision) {
+      const persisted = await this.load();
+      if ((persisted?.revision ?? 0) !== expectedRevision)
+        throw new Error('Save conflict: another writer changed this world.');
+    }
     appendEventCount = this.acceptedState
       ? provenAppendCount(this.acceptedState.world.events, state.world.events)
       : undefined;
-    const changes = timedSync('persistence.diff', () =>
-      this.acceptedState
-        ? diffSavedWorld(this.acceptedState, state, appendEventCount)
-        : { operations: [] },
+    const changes = timedSync('persistence.prepareRecords', () =>
+      this.records.prepare(this.acceptedState ?? undefined, state),
     );
-    const changesPayload = timedSync('persistence.journalEncode', () => JSON.stringify(changes));
-    // Prepare the fixed candidate revision before acquiring the database transaction.
-    const snapshot =
-      !this.acceptedState ||
-      (expectedRevision + 1) % 120 === 0 ||
-      Buffer.byteLength(changesPayload) >= 1_048_576;
-    const snapshotPayload = snapshot
-      ? timedSync('persistence.snapshotEncode', () => JSON.stringify(state))
-      : undefined;
-    const changedRows = Object.entries(state.world.innerWorlds ?? {})
-      .filter(
-        ([actorId, inner]) =>
-          !!historyProjection?.restore ||
-          this.acceptedRevision !== expectedRevision ||
-          inner !== this.acceptedState?.world.innerWorlds?.[actorId],
-      )
-      .map(([actorId, inner]) => ({
-        key: `${state.world.id}:${actorId}`,
-        values: [
-          state.world.id,
-          actorId,
-          inner.revision,
-          inner.text,
-          inner.sourceSnapshot,
-          inner.publicationJobId,
-        ],
-      }))
-      .filter(
-        (row) =>
-          !!historyProjection?.restore ||
-          this.acceptedRevision !== expectedRevision ||
-          this.acceptedRows.get(row.key) !== JSON.stringify(row.values),
-      );
+    const publish = () => {
+      this.readyHistoryWorlds.add(state.world.id);
+      this.history.committed();
+      this.memories.committed(changes, !!historyProjection?.restore);
+    };
+    let publicationDeferred = false;
     const revision = await timed('persistence.transaction', () =>
       this.db.transaction(async () => {
-        const row = await this.db
-          .prepare(
-            'SELECT MAX(revision) AS revision FROM (SELECT revision FROM world WHERE id = 1 UNION ALL SELECT revision FROM world_journal) AS revisions',
-          )
-          .get();
-        const current =
-          row?.['revision'] === null || row?.['revision'] === undefined
-            ? 0
-            : Number(row['revision']);
-        if (current !== expectedRevision)
-          throw new Error('Save conflict: another writer changed this world.');
+        const revision = await this.records.advance(
+          state.world.id,
+          expectedRevision,
+          !!historyProjection?.restore,
+        );
         if (historyProjection?.restore) {
           if (!this.acceptedState) throw new Error('No active world to replace.');
           await this.saves.install(this.acceptedState, historyProjection.restore);
@@ -676,7 +713,7 @@ export class SqliteStore implements GameRepository {
         const invalidations: Record<string, string[]> = structuredClone(invalidatedMemoryIds ?? {});
         for (const [actorId, records] of Object.entries(state.world.memories)) {
           const prior = this.acceptedState?.world.memories[actorId];
-          if (!prior || prior === records) continue;
+          if (!prior || appendedRecordCount(prior, records) !== undefined) continue;
           const current = new Map(records.map((m) => [m.id, m]));
           const ids = prior
             .filter(
@@ -748,43 +785,47 @@ export class SqliteStore implements GameRepository {
               completedAt: Date.now(),
             });
         }
-        const revision = current + 1;
-        await this.putIntegration('world-journal-head', revision);
-        if (snapshot) {
-          await this.db
-            .prepare(
-              'INSERT INTO world VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision, payload=excluded.payload',
-            )
-            .run(revision, snapshotPayload!);
-          await this.db.prepare('DELETE FROM world_journal WHERE revision <= ?').run(revision);
-        } else {
-          await this.db
-            .prepare('INSERT INTO world_journal (revision,payload,created_at) VALUES (?,?,?)')
-            .run(revision, changesPayload, Date.now());
-        }
-        await new KnowledgeStore(this.db).project(
-          this.acceptedState?.world,
-          state.world,
-          !!historyProjection?.restore,
+        const memoryChanges = await this.memories.project(
+          state.world.id,
+          revision,
+          changes,
+          !historyProjection?.restore,
         );
-        if (this.db.dialect === 'postgres')
-          for (const row of changedRows) {
-            await this.db
-              .prepare(
-                `INSERT INTO mind.inner_world VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(world_id,actor_id) DO UPDATE SET revision=excluded.revision,text=excluded.text,source_snapshot=excluded.source_snapshot,publication_job_id=excluded.publication_job_id WHERE (inner_world.revision,inner_world.text,inner_world.source_snapshot,inner_world.publication_job_id) IS DISTINCT FROM (excluded.revision,excluded.text,excluded.source_snapshot,excluded.publication_job_id)`,
-              )
-              .run(...row.values);
-          }
+        await this.records.write(state.world.id, revision, changes);
+        await this.memories.reconcile(state.world.id, memoryChanges);
+        if (historyProjection?.restore || !this.acceptedState)
+          await this.memories.reuseVectors(state.world.id);
+        else {
+          const revisedSources = new Map<string, Set<string>>();
+          for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries'])
+            for (const row of changes.writes.get(table) ?? []) {
+              if (row.create) continue;
+              const path = JSON.parse(row.id) as string[],
+                actor = path[table === 'mind_memories' ? 2 : 3]!;
+              const ids = revisedSources.get(actor) ?? new Set<string>();
+              const source = JSON.parse(row.payload) as Record<string, unknown>;
+              ids.add(String(source[table === 'mind_awareness' ? 'eventId' : 'id']));
+              revisedSources.set(actor, ids);
+            }
+          if (revisedSources.size) await this.memories.reuseVectors(state.world.id, revisedSources);
+        }
+        // Nested importer/restore transactions may still roll back after this call.
+        // Keep their tentative baseline, but publish only after the outer COMMIT.
+        this.db.afterRollback?.(() => {
+          this.acceptedRevision = -1;
+          this.acceptedState = null;
+          this.readyHistoryWorlds.clear();
+        });
+        this.acceptedRevision = revision;
+        this.acceptedState = state;
+        if (this.db.afterCommit) {
+          this.db.afterCommit(publish);
+          publicationDeferred = true;
+        }
         return revision;
       }),
     );
-    // Cache only after COMMIT acknowledgement; failed writes never certify a row.
-    if (historyProjection?.restore) this.acceptedRows.clear();
-    for (const row of changedRows) this.acceptedRows.set(row.key, JSON.stringify(row.values));
-    this.acceptedRevision = revision;
-    this.acceptedState = state;
-    this.readyHistoryWorlds.add(state.world.id);
-    this.history.committed();
+    if (!publicationDeferred) publish();
     return revision;
   }
 

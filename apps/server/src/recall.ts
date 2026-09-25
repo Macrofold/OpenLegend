@@ -1,3 +1,4 @@
+import type { RetrievedMemory, MemoryScope } from './memory-repository.js';
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
 import { recognizesSubject, observerGivenName, observerDescription } from '@open-legend/domain';
 import {
@@ -125,30 +126,6 @@ function memoryCandidate(
   };
 }
 
-function speechCandidates(world: WorldState, actorId: string): AttentionCandidate[] {
-  const speech = experiences(world, actorId, true)
-    .filter((memory) => memory.eventType === 'speech')
-    .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0) || a.at - b.at)
-    .slice(-EXPERIENCE_LIMITS.conversationSpeech);
-  const ids = new Set(speech.map((memory) => memory.eventId ?? memory.id));
-  const corrections = world.experience?.corrections?.[actorId] ?? {};
-  const awareness = new Map(
-    (world.experience?.awareness[actorId] ?? []).map((entry) => [entry.eventId, entry]),
-  );
-  return speech.map((memory) =>
-    memoryCandidate(
-      memory,
-      world,
-      actorId,
-      new Set(),
-      new Set(),
-      ids,
-      corrections,
-      new Set(Object.values(corrections)),
-      awareness.get(memory.eventId ?? memory.id),
-    ),
-  );
-}
 export function candidateSet(
   world: WorldState,
   actorId: string,
@@ -156,6 +133,7 @@ export function candidateSet(
   requiredIds: string[],
   automaticIds: string[] = [],
   conversationIds: string[] = [],
+  retained?: RetrievedMemory[],
 ): AttentionCandidate[] {
   const requiredIdSet = new Set(requiredIds);
   const automaticIdSet = new Set(automaticIds);
@@ -163,14 +141,19 @@ export function candidateSet(
   const corrections = world.experience?.corrections?.[actorId] ?? {};
   const correctedIdSet = new Set(Object.values(corrections));
   const awareness = new Map(
-    (world.experience?.awareness[actorId] ?? []).map((entry) => [entry.eventId, entry]),
+    (retained
+      ? retained.flatMap((source) => (source.awareness ? [source.awareness] : []))
+      : (world.experience?.awareness[actorId] ?? [])
+    ).map((entry) => [entry.eventId, entry]),
   );
   const matches = (ids: Set<string>, memory: { id: string; eventId?: string }) =>
     ids.has(memory.id) || (memory.eventId ? ids.has(memory.eventId) : false);
-  const recallable = experiences(world, actorId);
+  const recallable = retained
+    ? retained.map((source) => source.memory)
+    : experiences(world, actorId);
   const included = new Set(recallable.map((m) => m.id));
   // The normal raw-source cap must not hide the event that triggered this decision.
-  for (const memory of experiences(world, actorId, true)) {
+  for (const memory of retained ? [] : experiences(world, actorId, true)) {
     const include =
       matches(requiredIdSet, memory) ||
       matches(automaticIdSet, memory) ||
@@ -349,21 +332,16 @@ interface VectorCache {
   dimensions: number;
   queries: Record<string, number[]>;
 }
-const backgroundSourceKey = (
-  actorId: string,
-  candidate: Pick<AttentionCandidate, 'id' | 'revision'>,
-) => `${actorId}\u0000${candidate.id}\u0000${candidate.revision}`;
 /** Scope is resolved before vector lookup. Every batch and result is bounded and revision-keyed. */
 export class RecallService {
   private embeddings: EmbeddingClient;
   private readonly unsubscribe: () => void;
-  private observedEvents: WorldState['events'];
+  private observedMemoryRevision = -1;
   private indexQueued = false;
   private indexWork: Promise<void> = Promise.resolve();
   private readonly indexController = new AbortController();
-  private readonly attemptedBackgroundSources = new Set<string>();
-  private readonly backgroundInFlight = new Set<string>();
   private closed = false;
+  private indexFailure: string | undefined;
   constructor(
     private service: WorldService,
     private log: IntelligenceLog,
@@ -379,22 +357,16 @@ export class RecallService {
         fetch: log.fetch,
         timeoutMs: c.aiTimeoutMs,
       });
-    this.observedEvents = service.world.events;
     this.unsubscribe = service.subscribe(() => {
-      const events = service.world.events;
-      const previous = this.observedEvents;
-      this.observedEvents = events;
-      if (events === previous) return;
-      const appendedSpeech =
-        events.length >= previous.length &&
-        events.slice(previous.length).some((event) => event.type === 'speech');
-      // A shorter/replaced history may change which retained speech belongs in the pool.
-      if (appendedSpeech || events.length <= previous.length) this.scheduleSpeechIndex();
+      const revision = service.store.memories?.publicationRevision ?? -1;
+      if (revision === this.observedMemoryRevision) return;
+      this.observedMemoryRevision = revision;
+      this.scheduleMemoryIndex();
     });
-    this.scheduleSpeechIndex();
+    this.scheduleMemoryIndex();
   }
 
-  private scheduleSpeechIndex(): void {
+  private scheduleMemoryIndex(): void {
     if (
       this.closed ||
       this.indexQueued ||
@@ -408,94 +380,209 @@ export class RecallService {
       .then(async () => {
         while (this.indexQueued && !this.closed) {
           this.indexQueued = false;
-          await this.indexSpeech();
+          await this.indexMemories();
         }
       })
-      .catch(() => undefined);
+      .catch(() => {
+        this.indexFailure =
+          'Memory indexing interrupted; dispatched sources require explicit reconciliation.';
+      });
   }
 
-  private async indexSpeech(): Promise<void> {
-    const vectors = this.service.store.vectors;
-    if (!vectors) return;
+  private async indexMemories(): Promise<void> {
+    const repository = this.service.store.memories;
+    const head = await this.service.store.records?.head();
+    if (!repository || !head) return;
     const config = this.service.config;
-    const world = this.service.world;
-    for (const actorId of Object.keys(world.experience?.awareness ?? {})) {
-      if (this.closed) return;
-      // Player memory is rendered from history; only autonomous decision makers need vectors.
-      if (world.entities[actorId]?.actor?.controller !== 'npc') continue;
-      const scope = {
-        key: `vectors:${world.id}:${actorId}`,
-        model: config.embeddingModel,
-        dimensions: config.embeddingDimensions,
-      };
-      const candidates = speechCandidates(world, actorId);
-      const activeKeys = new Set(
-        candidates.map((candidate) => backgroundSourceKey(actorId, candidate)),
+    const model = { model: config.embeddingModel, dimensions: config.embeddingDimensions };
+    const actors = Object.values(this.service.world.entities)
+      .filter((entity) => entity.actor?.controller === 'npc')
+      .map((entity) => entity.id);
+    // One batch per actor per round prevents a long-lived actor monopolizing the index budget.
+    while (actors.length && !this.closed) {
+      const actorId = actors.shift()!;
+      if (this.service.world.entities[actorId]?.actor?.controller !== 'npc') continue;
+      const scope: MemoryScope = { worldId: head.worldId, actorId, generation: head.generation };
+      const batch = await repository.pending(scope, model);
+      if (!batch.length) continue;
+      const requestId = `memory-index:${randomUUID()}`;
+      const admitted = await repository.markAttempt(
+        scope,
+        model,
+        batch,
+        requestId,
+        async () =>
+          this.service.world.entities[actorId]?.actor?.controller === 'npc' &&
+          !this.closed &&
+          this.service.store.reserve(
+            requestId,
+            'openai',
+            config.embeddingReserveUsd,
+            Math.max(0, config.budgetUsd - interactiveAllowance(config)),
+            actorId,
+          ),
       );
-      for (const key of this.attemptedBackgroundSources)
-        if (key.startsWith(`${actorId}\u0000`) && !activeKeys.has(key))
-          this.attemptedBackgroundSources.delete(key);
-      const sources = candidates.map(({ id, revision }) => ({ id, revision }));
-      const indexed = await vectors.reconcile(scope, sources);
-      const missing = candidates.filter((candidate) => {
-        const key = backgroundSourceKey(actorId, candidate);
-        return !indexed.has(candidate.id) && !this.attemptedBackgroundSources.has(key);
-      });
-      for (let offset = 0; offset < missing.length && !this.closed; offset += 32) {
-        const batch = missing.slice(offset, offset + 32);
-        const sourceKeys = batch.map((candidate) => backgroundSourceKey(actorId, candidate));
-        sourceKeys.forEach((key) => this.backgroundInFlight.add(key));
-        const requestId = `speech-index:${randomUUID()}`;
-        try {
-          if (
-            !(await this.service.store.reserve(
-              requestId,
-              'openai',
-              config.embeddingReserveUsd,
-              Math.max(0, config.budgetUsd - interactiveAllowance(config)),
-              actorId,
-            ))
-          )
-            return;
-          // Do not automatically repurchase a failed or uncertain derived-data call.
-          sourceKeys.forEach((key) => this.attemptedBackgroundSources.add(key));
-          const result = await this.log.run(
-            'Background speech embeddings',
-            {
-              requestId,
-              actorId,
-              model: config.embeddingModel,
-              dimensions: config.embeddingDimensions,
-              sourceIds: batch.map((candidate) => candidate.id),
-            },
-            async () =>
-              await this.embeddings.embed({
-                requestId,
-                texts: batch.map((candidate) => candidate.embeddingText ?? candidate.text),
-                signal: this.indexController.signal,
-              }),
-          );
-          await this.service.store.settle(requestId, result.receipt);
-          if (result.outcome !== 'value') return;
-          // Provider work is derived data: only publish rows that still match current speech.
-          const current = new Map(
-            speechCandidates(this.service.world, actorId).map((candidate) => [
-              candidate.id,
-              candidate,
-            ]),
-          );
-          const additions = batch.flatMap((candidate, index) => {
-            const latest = current.get(candidate.id);
-            return latest?.revision === candidate.revision
-              ? [{ id: candidate.id, revision: candidate.revision, vector: result.value[index]! }]
-              : [];
-          });
-          if (additions.length) await vectors.put(scope, additions);
-        } finally {
-          sourceKeys.forEach((key) => this.backgroundInFlight.delete(key));
-        }
-      }
+      if (!admitted) return;
+      const result = await this.log.run(
+        'Background memory embeddings',
+        { requestId, actorId, ...model, sourceIds: batch.map((source) => source.memory.id) },
+        () =>
+          this.embeddings.embed({
+            requestId,
+            texts: batch.map((source) => source.memory.summary),
+            signal: this.indexController.signal,
+          }),
+      );
+      await this.service.store.settle(requestId, result.receipt);
+      if (result.outcome !== 'value') return;
+      await repository.putVectors(
+        scope,
+        model,
+        batch.map((source, index) => ({
+          id: source.memory.id,
+          revision: source.revision,
+          vector: result.value[index]!,
+        })),
+      );
+      actors.push(actorId);
     }
+  }
+
+  private readonly retrieval = new WeakMap<
+    AttentionCandidate[],
+    { eligible: number; indexed: number; missing: number; status: string; generation: string }
+  >();
+  private readonly sourceBindings = new WeakMap<
+    AttentionCandidate[],
+    { scope: MemoryScope; sources: Map<string, string> }
+  >();
+  async validateSources(
+    candidates: AttentionCandidate[],
+    selected: AttentionCandidate[],
+  ): Promise<void> {
+    const binding = this.sourceBindings.get(candidates);
+    if (!binding || !this.service.store.memories) return;
+    const sources = selected.flatMap((candidate) => {
+      const revision = binding.sources.get(candidate.id);
+      return revision ? [{ id: candidate.id, revision }] : [];
+    });
+    if (!(await this.service.store.memories.current(binding.scope, sources)))
+      throw new Error('Selected memory changed during attention; discard this decision.');
+  }
+  async candidates(
+    world: WorldState,
+    actorId: string,
+    observed: NonNullable<ReturnType<WorldService['observe']>>,
+    requiredIds: string[],
+    automaticIds: string[],
+    conversationIds: string[],
+    stimulus: string,
+    requestId: string,
+    signal: AbortSignal,
+    budgetCeiling: number,
+  ): Promise<AttentionCandidate[]> {
+    const repository = this.service.store.memories;
+    const head = await this.service.store.records?.head();
+    if (!repository || !head)
+      return candidateSet(world, actorId, observed, requiredIds, automaticIds, conversationIds);
+    const scope: MemoryScope = { worldId: world.id, actorId, generation: head.generation };
+    const config = this.service.config;
+    const coverage = await repository.coverage(scope, {
+      model: config.embeddingModel,
+      dimensions: config.embeddingDimensions,
+    });
+    const count = coverage.eligible;
+    const inner = world.innerWorlds?.[actorId];
+    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(world.entities[actorId]!.actor!), world, actorId)}\n${inner?.text ?? ''}`;
+    const key = `memory-query:${world.id}:${actorId}`;
+    const queryKey = digest({ query, generation: scope.generation });
+    const cache = (await this.service.store.getIntegration(key)) as
+      | { key: string; model: string; dimensions: number; query: number[] }
+      | undefined;
+    let vector =
+      cache?.key === queryKey &&
+      cache.model === config.embeddingModel &&
+      cache.dimensions === config.embeddingDimensions
+        ? cache.query
+        : undefined;
+    let status =
+      count <= 300
+        ? 'direct: all eligible sources fit'
+        : vector
+          ? 'cached query'
+          : 'structured fallback: query embedding unavailable';
+    if (
+      count > 300 &&
+      !vector &&
+      this.service.store.vectors &&
+      config.embeddingKey &&
+      Buffer.byteLength(query) <= 8000
+    ) {
+      const id = `${requestId}:memory-query`;
+      signal.throwIfAborted();
+      if (
+        await this.service.store.reserve(
+          id,
+          'openai',
+          config.embeddingReserveUsd,
+          budgetCeiling,
+          actorId,
+        )
+      ) {
+        const result = await this.log.run(
+          'Memory query embedding',
+          { requestId: id, actorId, model: config.embeddingModel },
+          () => this.embeddings.embed({ requestId: id, texts: [query], signal }),
+        );
+        await this.service.store.settle(id, result.receipt);
+        status = result.outcome;
+        if (result.outcome === 'value') {
+          vector = result.value[0];
+          await this.service.store.putIntegration(key, {
+            key: queryKey,
+            model: config.embeddingModel,
+            dimensions: config.embeddingDimensions,
+            query: vector,
+          });
+        }
+      } else status = 'structured fallback: spending cap';
+    }
+    const required = await repository.required(scope, [
+      ...requiredIds,
+      ...automaticIds,
+      ...conversationIds,
+    ]);
+    const optional = await repository.select(
+      scope,
+      300,
+      vector
+        ? { query: vector, model: config.embeddingModel, dimensions: config.embeddingDimensions }
+        : undefined,
+    );
+    signal.throwIfAborted();
+    if ((await this.service.store.records?.head())?.generation !== scope.generation)
+      throw new Error('World restored during memory retrieval.');
+    const sources = [
+      ...new Map([...optional, ...required].map((source) => [source.memory.id, source])).values(),
+    ];
+    const candidates = candidateSet(
+      world,
+      actorId,
+      observed,
+      requiredIds,
+      automaticIds,
+      conversationIds,
+      sources,
+    );
+    const scores = new Map(sources.map((source) => [source.memory.id, source.score]));
+    for (const candidate of candidates)
+      if (scores.get(candidate.id) !== undefined) candidate.score = scores.get(candidate.id);
+    this.retrieval.set(candidates, { ...coverage, status, generation: scope.generation });
+    this.sourceBindings.set(candidates, {
+      scope,
+      sources: new Map(sources.map((source) => [source.memory.id, source.revision])),
+    });
+    return candidates;
   }
 
   async close(): Promise<void> {
@@ -579,7 +666,11 @@ export class RecallService {
     const sectionLimit = (_kind: AttentionCandidate['kind']) => 300;
     const semanticPool = sectionKinds.flatMap((kind) => {
       const section = sections.get(kind)!;
-      return section.length > sectionLimit(kind) ? section : [];
+      return (kind === 'memory' || kind === 'conversation') && this.retrieval.has(candidates)
+        ? []
+        : section.length > sectionLimit(kind)
+          ? section
+          : [];
     });
     const semanticIds = new Set(semanticPool.map((candidate) => candidate.id));
     const key = `vectors:${world.id}:${actorId}`;
@@ -599,17 +690,10 @@ export class RecallService {
       semanticPool.length && vectors
         ? await vectors.reconcile(scope, retainedSources)
         : new Set<string>();
-    const backgroundPending = semanticPool.some((candidate) =>
-      this.backgroundInFlight.has(backgroundSourceKey(actorId, candidate)),
-    );
+
     // Preserve structured priority while indexing only sections large enough to need semantic top-N.
     const missing = ranked
-      .filter(
-        (candidate) =>
-          semanticIds.has(candidate.id) &&
-          !indexed.has(candidate.id) &&
-          !this.backgroundInFlight.has(backgroundSourceKey(actorId, candidate)),
-      )
+      .filter((candidate) => semanticIds.has(candidate.id) && !indexed.has(candidate.id))
       .slice(0, 32);
     const queryKey = digest({
       query: query.trim().replace(/\s+/g, ' ').toLocaleLowerCase(),
@@ -620,9 +704,7 @@ export class RecallService {
     let embeddingStatus = !semanticPool.length
       ? 'skipped: every section is within the direct-Jev limit'
       : vectors
-        ? backgroundPending
-          ? 'background indexing in progress'
-          : 'cache'
+        ? 'cache'
         : 'unavailable: PostgreSQL with pgvector required';
     const additions: { id: string; revision: string; vector: number[] }[] = [];
     if (semanticPool.length && vectors && (missing.length || !cachedQuery)) {
@@ -808,6 +890,7 @@ export class RecallService {
     return {
       selected,
       diagnostics: {
+        memoryRetrieval: { ...this.retrieval.get(candidates), indexFailure: this.indexFailure },
         questionVersion: JEV_QUESTIONS_VERSION,
         attentionStatus,
         query,

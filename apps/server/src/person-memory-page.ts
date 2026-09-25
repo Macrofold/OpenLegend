@@ -1,4 +1,4 @@
-import { experienceEntries, type WorldState } from '@open-legend/domain';
+import { experienceEntries, type WorldState, type ExperienceEntry } from '@open-legend/domain';
 import type { GodMemoryEditorEntry } from '@open-legend/protocol';
 import { digest } from './store.js';
 
@@ -50,40 +50,44 @@ export function createPersonMemoryPager() {
     if (index === undefined) return undefined;
     const page: GodMemoryEditorEntry[] = cached.entries
       .slice(index + 1, index + 101)
-      .map(({ id, entry, time }) => {
-        const common = { id, time, hash: digest(entry.value) };
-        if (entry.source === 'awareness') {
-          const value = entry.value;
-          return {
-            ...common,
-            source: entry.source,
-            label: 'Raw',
-            text: value.text,
-            tags: [value.modality, ...(value.recognized ? ['recognized'] : []), ...value.entityIds],
-            eventType: value.eventType ?? value.modality,
-          };
-        }
-        if (entry.source === 'memory') {
-          const value = entry.value;
-          return {
-            ...common,
-            source: entry.source,
-            label: 'Raw',
-            text: value.summary,
-            tags: [value.kind, value.source, ...value.entityIds],
-          };
-        }
-        return {
-          ...common,
-          source: entry.source,
-          label: 'Consolidated',
-          text: entry.value.text,
-          tags: ['reflection', ...entry.value.entityIds],
-        };
-      });
+      .map(({ entry }) => formatMemoryEntry(entry));
     return {
       memories: page,
       before: index + 101 < cached.entries.length ? page.at(-1)?.id : undefined,
     };
+  };
+}
+
+export function formatMemoryEntry(entry: ExperienceEntry): GodMemoryEditorEntry {
+  const id = `${entry.source}:${entry.source === 'awareness' ? entry.value.eventId : entry.value.id}`;
+  const time = entry.source === 'summary' ? entry.value.to : entry.value.at;
+  const common = { id, time, hash: digest(entry.value) };
+  if (entry.source === 'awareness') {
+    const value = entry.value;
+    return {
+      ...common,
+      source: entry.source,
+      label: 'Raw',
+      text: value.text,
+      tags: [value.modality, ...(value.recognized ? ['recognized'] : []), ...value.entityIds],
+      eventType: value.eventType ?? value.modality,
+    };
+  }
+  if (entry.source === 'memory') {
+    const value = entry.value;
+    return {
+      ...common,
+      source: entry.source,
+      label: 'Raw',
+      text: value.summary,
+      tags: [value.kind, value.source, ...value.entityIds],
+    };
+  }
+  return {
+    ...common,
+    source: entry.source,
+    label: 'Consolidated',
+    text: entry.value.text,
+    tags: ['reflection', ...entry.value.entityIds],
   };
 }

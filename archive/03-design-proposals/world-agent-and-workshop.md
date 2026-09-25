@@ -90,7 +90,7 @@ The authorized god/creator agent must support queries over the entire world, inc
 | World creator/god      | World-wide state, inventions, event history and character context, including private NPC records | Separately granted creator commands and activation        |
 | Macrofold worker       | Resources/tools granted for this application, world, audience and task                           | Application-mediated proposals; no direct world authority |
 
-World context excludes credentials, unrelated worlds and unrelated private account data. Shared-world policy must disclose handling of human-private conversations and administrative inspection; those exact terms remain open. Broad creator access remains required. Creator-agent findings stay in the god surface and do not become NPC memories, speech or public events without an authorized in-world act. Recheck scope on retrieval and commit, including after role changes.
+World context excludes credentials, unrelated worlds and unrelated private account data. The selected game-level privacy boundary excludes human-private content from creator inspection; direct database/host administrators are outside that guarantee. Staff inspection/abuse-handling terms remain separate future policy, while the world creator and authorized OpenLegend system administrators may save/load through the service. Save/load does not grant plaintext private-content access. Creator-agent findings stay in the god surface and do not become NPC memories, speech or public events without an authorized in-world act. Recheck scope on retrieval and commit, including after role changes.
 
 ## Retrieval and execution
 
@@ -146,7 +146,7 @@ Capture stable author/world/invention/version IDs and durable admissions before 
 
 Acceptance covers history beyond scrollback; technical records after restart/run expiry; creator inspection without NPC leakage; author access after leaving a host; revocation or locking during generation; conflicting revisions; unsupported parameters; fuel-preserving migration; and full-pack cloning without private context or incompatible dependencies. Distinguish fixtures from live-provider evidence.
 
-Open choices include event coverage/retention budgets, human-private-record policies, co-author/moderator rights, migration defaults, world deletion versus author retention, workshop approval defaults and Macrofold interfaces available at implementation time.
+Engineering selects and records retention/loss policies under the [retention ledger](../07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger). Residual feature choices include private-channel timeline and staff-inspection terms, co-author/moderator rights, world deletion versus author retention, workshop approval defaults and Macrofold interfaces available at implementation time; settled creator privacy and save/load roles are not reopened.
 
 ## Delivery
 

@@ -1,5 +1,11 @@
 # Saving and loading game state
 
+## Current data foundation
+
+Current gameplay authority is the independent record catalog described in [Architecture](architecture.md#state-and-transitions). Recovery assembles those records at a consistent revision; current feature queries do not read a world snapshot. Legacy snapshot/journal worlds migrate atomically in their original database after complete-value comparison. No new per-feature save marker or replacement directory is required.
+
+Manual saves and portable backups capture native state, durable history, source-version history and optional source annotations. Restore installs these together, preserves present-day forgetting/accounting, and fences source/vector publication with a new generation. Dispatched indexing attempts remain outside gameplay rewind; compatible vectors may be reused, but old-generation completions cannot publish. The importer opens SQLite read-only, keeps an exclusive backup, verifies every copied auxiliary row and the reconstructed gameplay state, and refuses a nonempty PostgreSQL target. The current 64 MiB manual-save limit and synchronous serialization remain [SL/PF qualification work](maintainers/save-and-load.md); this foundation does not qualify a large-population save merely because record recovery succeeds.
+
 ## Spatial state
 
 The [spatial persistence contract](../archive/07-technical-architecture/spatial-world-runtime.md#11-persistence-restoration-and-versioning) identifies canonical XYZ/support, accepted routes, native flight/fall and geometry/profile records; SDK objects, GPU resources and shape/graph caches are derived. Current-format restoration preserves native progress without regenerating AI decisions. Current-state validation includes the [status-effect registry](status-effects.md#admission-and-persistence), entity instances and their action/attribute ownership. Apply the in-place development policy below when these records change.
@@ -102,6 +108,8 @@ Independent database records do not change this requirement. Capture and restore
 
 ## External work, privacy and shared authority
 
+The world creator and authorized OpenLegend system administrators may save and load that world through the game service. Ordinary participants have no world-rewind permission. Validate the principal and world scope on both request and installation, and record the administrative operation. This permission does not grant inspection of human-private content or authority to rewind external accounting. Shared restoration uses a coordinated complete world cut; it cannot roll back one player's side of a shared trade alone.
+
 Loading never refunds actual spending, erases uncertain paid attempts, reverses a provider call or restores revoked access. Current forgetting/erasure protections remain effective across older saves and their derived projections. The detailed policies belong to memory, billing and operations owners; save retention and export must respect them. Saves containing private minds and history require private access and must exclude credentials.
 
 Saved work intent and an external execution are different things. Work already committed before the cut restores its accepted result. In-flight work from the abandoned generation cannot publish into the restored world, even if IDs recur or cancellation fails. Work known never to have been dispatched may be reconsidered through normal admission after resume; uncertain completion stays uncertain and must not trigger an automatic paid retry. Restoring an accepted character workspace does not restore a live provider session or authorize continuing its abandoned context.
@@ -110,7 +118,7 @@ An operational recovery onto a fresh host must recover or reconcile the non-rewi
 
 The unit of rewind is the world or another explicitly defined, dependency-closed authority boundary. A future shared world cannot rewind one player's possessions while leaving the corresponding shared trades intact. Cross-world transfers and irreversible external effects require explicit reconciliation or branch isolation; distributed transactions are not required before those features exist. A new generation distinguishes old commands and callbacks even if in-world identifiers remain stable.
 
-Creator restore/export permission does not grant access to human-private messages or private character notes. Shared-world save tools must preserve these through authorized protected storage or explicitly exclude non-rewindable private-channel data under its chosen policy, without leaking plaintext to the creator. Storage scope and shared rewind rights remain D48/D60 decisions; do not silently omit gameplay-critical private state or claim a complete save when it is missing.
+Creator restore/export permission does not grant access to human-private messages or private character notes. Shared-world save tools must preserve these through authorized protected storage or explicitly exclude non-rewindable private-channel data under its chosen policy, without leaking plaintext through game interfaces. Direct database/host administrators are outside this game-level privacy guarantee. Private-channel timeline treatment and participant synchronization remain D48/D60 feature decisions; save/load roles are settled. Do not silently omit gameplay-critical private state or claim a complete save when it is missing.
 
 ## Compatibility and retention
 
@@ -120,7 +128,7 @@ Development migrations must be small, restart-safe and validated before atomic p
 
 Retained saves pin their necessary content, history and incremental bases. Garbage collection, history compaction and definition cleanup must account for those references. A save depending on mutable “latest” content or already-deleted journal entries is not retained successfully. Explicit privacy deletion overrides ordinary retention through the privacy policy, including handling affected backups.
 
-Use bounded rolling autosaves and separately retained manual saves when the feature is implemented. Autosave rotation must not evict a manual save implicitly or delete the last valid checkpoint before publishing its replacement. Exact cadence, retention and compatibility policy are tracked only in [D60](../archive/05-project/open-decisions.md#d60--gameplay-save-and-load-policy), alongside the existing historical-retention decisions. Cloud conflict handling and shared-world permissions also require explicit product policy before implementation; do not merge divergent simulations silently.
+Use bounded rolling autosaves and separately retained manual saves when the feature is implemented. Autosave rotation must not evict a manual save implicitly or delete the last valid checkpoint before publishing its replacement. Engineering selects reasonable cadence/recovery defaults and records retention choices under the [retention ledger](../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger). [D60](../archive/05-project/open-decisions.md#d60--gameplay-save-and-load-policy) retains conditional compatibility, notification and cloud conflict choices; save/load authorization is fixed above. Do not merge divergent simulations silently.
 
 ## Performance and evidence
 
@@ -131,3 +139,7 @@ Begin with the existing persistence capabilities and the simplest complete snaps
 Verification should demonstrate native continuation across partial work, death, random choices and simulation deadlines; complete restoration of cold and cross-store dependencies; safe handling of cycles and missing references; and migration of supported historical fixtures. Failure injection must cover interrupted publication/installation, corrupt or oversized input, missing content, exhausted storage and repeated load requests. External-work scenarios must prove that stale callbacks, uncertain attempts and old browser commands cannot create duplicate effects or spending, and that current privacy restrictions survive rewind.
 
 These are save/load acceptance principles, not completed tests or an implementation checklist. Concrete delivery tasks belong in focused maintainer trackers, and observed results in [Verification](verification.md).
+
+### Reusable index artifacts
+
+Operational backups also preserve revision-keyed vector cache records, including during a PostgreSQL-to-SQLite portable restore and later PostgreSQL import. The cache is outside gameplay rewind and outside ordinary recall. Only an eligible exact current source can republish a cached vector under the current generation; late old-generation results remain fenced. This is a derived-data reuse policy, not a new memory-retention or privacy policy.

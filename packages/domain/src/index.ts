@@ -66,7 +66,7 @@ export * from './cognition-policy.js';
 export * from './commitments.js';
 export * from './response.js';
 
-export { updateWorld, appendedEventCount, freezeWorld } from './draft.js';
+export { updateWorld, appendedEventCount, appendedRecordCount, freezeWorld } from './draft.js';
 
 export * from './living.js';
 

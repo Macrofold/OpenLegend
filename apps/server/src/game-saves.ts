@@ -1,3 +1,4 @@
+import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
 import { migrateCognition } from '@open-legend/domain';
 import { upgradeWorldState } from './upgrade-world.js';
 import { validateWorldModules } from '@open-legend/domain';
@@ -16,6 +17,7 @@ export interface SavePayload {
   format: string;
   state: SavedWorld;
   history: Record<(typeof HISTORY_TABLES)[number], Rows>;
+  memory?: Record<(typeof MEMORY_HISTORY_TABLES)[number], Rows>;
 }
 export interface RestoreSave {
   id: string;
@@ -70,7 +72,12 @@ export class GameSaves {
       history[table] = await this.db
         .prepare(`SELECT * FROM ${table} WHERE world_id=?`)
         .all(state.world.id);
-    return { format: SAVE_FORMAT, state, history };
+    const memory = {} as NonNullable<SavePayload['memory']>;
+    for (const table of MEMORY_HISTORY_TABLES)
+      memory[table] = await this.db
+        .prepare(`SELECT * FROM ${table} WHERE world_id=?`)
+        .all(state.world.id);
+    return { format: SAVE_FORMAT, state, history, memory };
   }
   async insert(id: string, label: string, payload: SavePayload) {
     const encoded = JSON.stringify(payload);
@@ -156,9 +163,12 @@ export class GameSaves {
     const before = await this.capture(current);
     await this.delete(current.world.id, 'before-load');
     await this.insert('before-load', 'Before last load', before);
-    for (const table of HISTORY_TABLES) {
+    for (const table of [...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES]) {
       await this.db.prepare(`DELETE FROM ${table} WHERE world_id=?`).run(current.world.id);
-      const rows = restore.payload.history[table];
+      const rows =
+        table in restore.payload.history
+          ? restore.payload.history[table as keyof SavePayload['history']]
+          : (restore.payload.memory?.[table as keyof NonNullable<SavePayload['memory']>] ?? []);
       const columns = Object.keys(rows[0] ?? {});
       if (columns.some((key) => !/^[a-z_]+$/.test(key)))
         throw new GameSaveError('Invalid save history.');
@@ -200,8 +210,6 @@ export class GameSaves {
         "UPDATE story_jobs SET state='cancelled' WHERE world_id=? AND state IN ('running','queued')",
       )
       .run(current.world.id);
-    if (this.db.dialect === 'postgres')
-      await this.db.prepare('DELETE FROM mind.inner_world WHERE world_id=?').run(current.world.id);
     for (const [key, value] of [
       [`command-epoch:${current.world.id}`, restore.epoch],
       [`world-timeline:${current.world.id}`, restore.timeline],

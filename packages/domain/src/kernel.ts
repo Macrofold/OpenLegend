@@ -1705,7 +1705,11 @@ export function queryMemories(
       .map((result) => result.memory),
   );
 }
-export function observeActor(world: WorldState, actorId: string): ActorObservation | null {
+export function observeActor(
+  world: WorldState,
+  actorId: string,
+  options: { includeMemories?: boolean } = {},
+): ActorObservation | null {
   const actor = getOwn(world.entities, actorId);
   if (!actor?.actor) return null;
   const inventory = inventoryFor(world, actorId);
@@ -1767,7 +1771,9 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
     inventory,
     itemDefinitions: [...definitionIds].map((id) => world.itemDefinitions[id]!).filter(Boolean),
     knownRecipes,
-    memories: queryMemories(world, actorId),
+    // SQL-backed cognition supplies recall separately; physical observation must
+    // not prepare that entire history only for its caller to discard it.
+    memories: options.includeMemories === false ? [] : queryMemories(world, actorId),
     recentEvents: world.experience
       ? (world.experience.awareness[actorId] ?? []).slice(-24).map((aware) => ({
           id: aware.eventId,

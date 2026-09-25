@@ -12,12 +12,12 @@ Coordinate module dependency capture and load validation with [EWF07](extensible
 
 ## Initial implemented slice
 
-- [x] SL00–SL03 foundations: a repository-owned current-format package captures `SavedWorld` plus durable history tables; manual slots publish atomically in the local save folder after transactional capture. No field-by-field world registry.
+- [x] SL00–SL03 foundations: a repository-owned current-format package captures `SavedWorld` plus durable history, retired source versions and optional annotations; manual slots publish atomically in the local save folder after transactional capture. Capture reuses the current canonical record owner.
 - [x] SL04–SL05 foundations: loading drains background workers, preserves external accounting/privacy authority, replaces history atomically with the world, rotates command/context generations and retains a pre-load slot. Restored pending narration is cancelled; world-agent sessions restart fresh.
 - [x] SL07 basic UI: Game below World agent offers named save, list, confirm-load and confirm-delete; successful load reopens paused. Named saves have no fixed count ceiling; one pre-load slot and 64 MiB per payload remain.
 - [x] Build and isolated native browser walkthrough: save, advance, restore earlier clock/meters and observe paused state. See [runtime evidence](../verification.md#manual-saveload-runtime).
 
-The detailed phase criteria below remain open where not fully established. Automated checks are deferred by instruction to [save/load validation TODO](TODO.md#manual-saveload-deferred-validation); PostgreSQL, live-provider and crash-boundary qualification have not been demonstrated. SL08 and SL10 are not implemented.
+The detailed phase criteria below remain open where not fully established. Automated checks are deferred by instruction to [save/load validation TODO](TODO.md#manual-saveload-deferred-validation); Native SQLite/PostgreSQL import, backup/restore, transactional rollback and one actual process-death drill are now recorded in [foundation evidence](../verification.md#data-foundation-runtime). Full crash-boundary and live-provider qualification remain open. SL08 and SL10 are not implemented.
 
 ## Delivery boundaries and sequence
 
@@ -133,7 +133,7 @@ Exit: published, reproducible no-cost correctness evidence and measured performa
 Dependencies: qualified personal-world flow, relevant D60 choices and production-data rollout gates. Not an initial-release prerequisite.
 
 - [ ] When portable export/import is selected, package required dependencies and validate target authority reconciliation, privacy and compatibility before installation.
-- [ ] When cloud or shared worlds are selected, implement the chosen branch/conflict policy, rewind authorization, participant synchronization and cross-world-effect boundaries.
+- [ ] For cloud/shared worlds, enforce the selected world-creator and authorized OpenLegend-system-admin save/load roles; deny ordinary participants and keep private-content inspection separate. Implement participant synchronization, branch/conflict policy and cross-world-effect boundaries without treating unresolved later features as foundation blockers.
 - [ ] When measurements justify incremental storage or distributed capture, preserve the same logical save contract and qualify bounded recovery with the relevant performance/production tasks.
 
 Exit: each enabled extension has scoped failure and recovery evidence; unsupported modes remain explicitly unavailable rather than inheriting personal-world guarantees.

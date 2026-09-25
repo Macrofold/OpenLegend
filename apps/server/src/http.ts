@@ -626,6 +626,11 @@ export async function createGameServer(
             message: 'The world changed. Reload this tab.',
           });
 
+        if (url.pathname.startsWith('/api/saves/') && !service.mayManageSaves())
+          return send(response, 403, {
+            ok: false,
+            message: 'World creator or host operator access required.',
+          });
         switch (url.pathname) {
           case '/api/saves/list':
             return send(response, 200, {
@@ -1308,6 +1313,11 @@ export async function createGameServer(
                 message: 'God inspection is disabled by the host.',
               });
             const { actorId } = z.object({ actorId: requestIdSchema }).strict().parse(body);
+            if (!service.mayInspectPrivate(actorId))
+              return send(response, 403, {
+                ok: false,
+                message: 'Human-private character content is unavailable to this principal.',
+              });
             return send(response, 200, { ok: true, mind: inspectGodMind(service, actorId) });
           }
           case '/api/control':

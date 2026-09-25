@@ -16,7 +16,7 @@ import type { SavePayload, RestoreSave } from './game-saves.js';
 import { recordDuration, timed, countMetric, gaugeMetric } from './performance.js';
 import { retainHotEvents } from './hot-events.js';
 import { COMMAND_RETRY_MS, type CommandEpoch, type GameplayReceipt } from './command-receipts.js';
-import { createPersonMemoryPager } from './person-memory-page.js';
+import { createPersonMemoryPager, formatMemoryEntry } from './person-memory-page.js';
 import {
   controlledEntityId,
   defaultStoryPolicy,
@@ -543,6 +543,8 @@ export class WorldService {
   async createSave(label: string, id: string): Promise<void> {
     return this.mutate(async () => {
       await this.flush();
+      if (!this.mayManageSaves())
+        throw new Error('World creator or host operator access required.');
       if (this.storageError || !this.store.saves)
         throw new Error(this.storageError ?? 'Saves unavailable.');
       await this.store.saves.create(this.saved, label, id);
@@ -552,6 +554,8 @@ export class WorldService {
   async restoreSave(id: string, requestId: string, payload: SavePayload): Promise<void> {
     return this.mutate(async () => {
       await this.flush();
+      if (!this.mayManageSaves())
+        throw new Error('World creator or host operator access required.');
       const restored = structuredClone(payload.state);
       // Candidate loading applies the current in-place migrations before timeline installation.
       const ledger = (await this.store.getIntegration(`forget-ledger:${this.world.id}`)) as
@@ -888,7 +892,18 @@ export class WorldService {
   ): Promise<ApiResult> {
     if (!this.config.godMode)
       return { ok: false, code: 'forbidden', message: 'God access required.' };
+
     return this.godTransition((world) => {
+      if (!this.mayInspectPrivate(value.actorId))
+        return {
+          world,
+          events: [],
+          outcome: {
+            ok: false,
+            code: 'forbidden',
+            message: 'Human-private character content is unavailable to this principal.',
+          },
+        };
       if (world.id !== value.worldId || this.generation !== value.generation)
         return {
           world,
@@ -1032,12 +1047,54 @@ export class WorldService {
     };
   }
 
+  /** The local principal owns the controlled actor. Creator capabilities do not
+   * grant another human's private mind; hosted principals must bind their own actor. */
+  mayInspectPrivate(actorId: string): boolean {
+    const actor = this.world.entities[actorId]?.actor;
+    return !!actor && (actor.controller !== 'player' || actorId === this.controlledEntityId);
+  }
+
+  /** Current local principal/host capability. Hosted staff authentication belongs
+   * to D5; a client-provided role never grants this capability. */
+  mayManageSaves(): boolean {
+    return this.config.godMode || this.world.authorship.creatorAccountIds.includes(this.profile.id);
+  }
+
   async personEditor(actorId: string, before?: string): Promise<GodPersonEditorView | ApiResult> {
     await this.ready;
+    if (!this.mayInspectPrivate(actorId))
+      return {
+        ok: false as const,
+        code: 'forbidden',
+        message: 'Human-private character content is unavailable to this principal.',
+      };
+    await this.flush();
+    const generation = this.generation;
     const entity = this.world.entities[actorId];
     if (!entity?.actor || !hasMemory(entity))
       return { ok: false, code: 'actor', message: 'Choose a person.' };
-    const page = this.personMemoryPage(this.world, actorId, before);
+    const head = await this.store.records?.head();
+    const selected =
+      this.store.memories && head
+        ? await this.store.memories.page(
+            { worldId: this.world.id, actorId, generation: head.generation },
+            before,
+          )
+        : undefined;
+    if (generation !== this.generation || !this.mayInspectPrivate(actorId))
+      return {
+        ok: false as const,
+        code: 'stale',
+        message: 'The character scope changed; refresh before reading.',
+      };
+    const entries = selected?.entries.map(formatMemoryEntry);
+    const page =
+      this.store.memories && head
+        ? selected && {
+            memories: entries!,
+            before: selected.more ? entries?.at(-1)?.id : undefined,
+          }
+        : this.personMemoryPage(this.world, actorId, before);
     if (!page)
       return { ok: false, code: 'stale', message: 'History changed; refresh before paging.' };
     return {
@@ -1075,7 +1132,28 @@ export class WorldService {
 
   async personMemoryJson(actorId: string, entryId: string) {
     await this.ready;
-    const entry = experienceEntry(this.world, actorId, entryId);
+    if (!this.mayInspectPrivate(actorId))
+      return {
+        ok: false as const,
+        code: 'forbidden',
+        message: 'Human-private character content is unavailable to this principal.',
+      };
+    await this.flush();
+    const generation = this.generation;
+    const head = await this.store.records?.head();
+    const entry =
+      this.store.memories && head
+        ? await this.store.memories.entry(
+            { worldId: this.world.id, actorId, generation: head.generation },
+            entryId,
+          )
+        : experienceEntry(this.world, actorId, entryId);
+    if (generation !== this.generation || !this.mayInspectPrivate(actorId))
+      return {
+        ok: false as const,
+        code: 'stale',
+        message: 'The character scope changed; refresh before reading.',
+      };
     return entry
       ? { ok: true as const, hash: digest(entry.value), json: JSON.stringify(entry.value, null, 2) }
       : { ok: false as const, code: 'memory', message: 'That memory no longer exists.' };
@@ -1093,6 +1171,12 @@ export class WorldService {
   ): Promise<ApiResult & { revision?: number }> {
     return this.mutate(async () => {
       await this.ready;
+      if (!this.mayInspectPrivate(actorId))
+        return {
+          ok: false as const,
+          code: 'forbidden',
+          message: 'Human-private character content is unavailable to this principal.',
+        };
       const entity = this.world.entities[actorId];
       if (!entity?.actor || !hasMemory(entity))
         return { ok: false, code: 'actor', message: 'Choose a person.' };
@@ -1486,6 +1570,12 @@ export class WorldService {
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
+      if (!this.mayInspectPrivate(actorId))
+        return {
+          ok: false as const,
+          code: 'forbidden',
+          message: 'Human-private character content is unavailable to this principal.',
+        };
 
       const invalidated = [
         sourceId,
@@ -1514,6 +1604,12 @@ export class WorldService {
   async forgetMemory(actorId: string, sourceId: string): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
+      if (!this.mayInspectPrivate(actorId))
+        return {
+          ok: false as const,
+          code: 'forbidden',
+          message: 'Human-private character content is unavailable to this principal.',
+        };
 
       if (!this.world.entities[actorId]?.actor)
         return { ok: false, code: 'actor', message: 'Unknown actor.' };
@@ -1567,7 +1663,7 @@ export class WorldService {
     });
   }
 
-  observe(actorId: string) {
-    return observeActor(this.world, actorId);
+  observe(actorId: string, options: { includeMemories?: boolean } = {}) {
+    return observeActor(this.world, actorId, options);
   }
 }
