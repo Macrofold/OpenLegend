@@ -13,7 +13,7 @@ export interface EntityQuery {
 
 /** On-demand roster discovery. Cursor identity excludes positions/needs so ordinary ticks do not
  * prevent paging. Returned exact refs describe current inspection data, not a frozen live world.
- * docs/invention-graph.md#live-entity-discovery
+ * docs/world-agent-inspection-and-edits.md#live-entity-discovery
  */
 export class EntityDirectory {
   private cached?: { source: WorldState['entities']; keys: string[]; revision: string };

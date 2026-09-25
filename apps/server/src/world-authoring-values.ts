@@ -37,7 +37,7 @@ export function attributeValueTarget(world: WorldState, payload: unknown) {
 
 /** Exact current-value edits are creator interventions, never a native recharge or an NPC power.
  * The native owner validates revisions/ranges and emits concern changes atomically.
- * docs/invention-composition.md#reviewed-custom-attribute-values
+ * docs/world-agent-inspection-and-edits.md#reviewed-custom-attribute-values
  */
 export function editAuthoringAttributeValues(
   world: WorldState,

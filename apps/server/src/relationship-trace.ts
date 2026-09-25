@@ -15,7 +15,7 @@ export interface TraceQuery extends Pick<NeighborhoodQuery, 'root' | 'direction'
 
 /** Bounded breadth-first investigation over the existing projection, never an acceptance proof.
  * Return witness edges, not every path/cycle. Frontier refs remain inspectable with ol_graph.
- * docs/invention-graph.md#bounded-relationship-traces
+ * docs/world-agent-inspection-and-edits.md#bounded-relationship-traces
  */
 export function traceRelationships(index: RelationshipIndex, query: TraceQuery) {
   const maxDepth = query.maxDepth ?? 4,
