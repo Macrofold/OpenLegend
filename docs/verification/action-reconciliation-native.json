@@ -1,0 +1,16 @@
+{
+  "scope": "Ad-hoc native runtime exercise of the local reconciled candidate; semantic outputs injected, no unit/browser suite or paid calls.",
+  "node": "v22.16.0",
+  "paidModelCalls": 0,
+  "checks": [
+    {"name":"acquisition-captures-current-target-episode","passed":true,"episode":"0:1:entity-0002","evidenceEpisode":"0:1:entity-0002"},
+    {"name":"decoded-reference-reaches-grounding-and-private-confirmation","passed":true,"judgeCalls":1,"generationCalls":1,"outcome":{"ok":false,"code":"response-rejected","message":"No response component was accepted. action: Accept revised action? Follow a person at 3 world units until cancelled, interrupted or lost from sight. No stealth or sunset stop. Not fulfilled: without being noticed"},"pendingEpisode":"0:1:entity-0002"},
+    {"name":"same-encounter-acceptance-starts-native-follow","passed":true,"outcome":{"ok":true,"code":"queued","message":"Native work queued; it has not completed.","planId":"review:accept"},"action":"follow"},
+    {"name":"reacquired-anonymous-target-cannot-reuse-old-approval","passed":true,"outcome":{"ok":false,"code":"stale-alternative","message":"The target encounter, mechanics or current work changed. Submit a fresh action instead of accepting this old revision."}},
+    {"name":"queued-native-follow-rechecks-target-episode-at-start","passed":true,"planStatus":"blocked","outcome":{"ok":false,"code":"stale-encounter","message":"The queued target encounter changed. Revise the plan."}},
+    {"name":"old-unpinned-approval-preserved-but-needs-refresh","passed":true,"outcome":{"ok":false,"code":"stale-alternative","message":"The target encounter, mechanics or current work changed. Submit a fresh action instead of accepting this old revision."}},
+    {"name":"speech-only-fixture-policy-admitted","passed":true,"outcome":{"ok":true,"code":"policy-admitted","message":"Status effect policy updated."}},
+    {"name":"speech-only-restriction-preserves-nonverbal-action","passed":true,"outcome":{"ok":true,"code":"responded","message":"Response completed."}},
+    {"name":"speech-only-restriction-still-rejects-speech","passed":true,"outcome":{"ok":false,"code":"response-rejected","message":"No response component was accepted. talk: Speech is unavailable."}}
+  ]
+}
