@@ -98,8 +98,22 @@ Changing an implementation or parameter can change cost without changing the out
 
 ## Delivery without premature infrastructure
 
-NOW: annotate supported family ownership/dependencies, retain immutable definitions and separate per-instance state, and route query/mutation access through existing owners. Keep source/operation identities, native/provider separation and deterministic ordering.
+**Massive-scale research:** [extensibility/security](../../archive/02-research/massive-scale/domains/extensibility-security.md), [environment systems](../../archive/02-research/massive-scale/domains/environment-systems.md), [architectural options](../../archive/02-research/massive-scale/architectural-options.md). The following table replaces broad NOW/SOON/LATER intentions with links to single-owner task bodies. [Sequence and gates](sequence-and-gates.md) supplies promotion rules, not another implementation checklist.
 
-SOON: implement library lookup/index work, reverse dependencies and incremental active queries as their current workloads require. Add the worked cases to INV/EWF/PF acceptance and preserve previously implemented reuse/modify/new functionality.
+| Specific work | Stage and trigger | Canonical child / parent |
+|---|---|---|
+| Exact recipe/family identity and collision-safe deduplication | G0/G1; current admission/search growth | SC12.1 under INV-1/INV-2.1a |
+| Background definition vectors instead of synchronous whole-library embedding | G1; learned-library growth, durable source/attempt identity first | SC12.2 under D2/INV |
+| Permission-first selection, currentness and library-growth evidence | G1; before claiming scalable discovery | SC12.3–SC12.4; SF05 where retrieval quality is affected |
+| Compiled scope, dependencies, per-invocation state and transitive work | G0 before extending composition | SC13.1 under EWF08/INV-3 |
+| Aggregate active workload and burst/cycle accounting | G1 before expanded mechanics | SC13.2 and SC13.4; no lifetime content cap |
+| Large body, mutable geometry, spawning and remote-effect capability checks | G1 at the actual new family | SC13.3 with SW/EPR; no invented distributed capability |
+| Reverse dependencies, prepared activation and old/new membership invalidation | G1/P3 before stateful definition evolution | SC14.1–SC14.3 under INV-5/EWF07 |
+| Applicable automatic rules and complete mutation-driven indexes | G0/G1 after attribution | SC15.1/SC15.3 under PF/EWF; first activation remains possible |
+| Durable authoring, rights, candidate/installations and account-library records | At the P3/P4 workshop/library consumer | [D4-MS01](../maintainers/production-data.md#d4-ms01) with INV; no parallel registry |
+| One supported construction/environment composition proof | P3 before its release | [SF13](../maintainers/scaling-feature-readiness.md#sf13); not all future physics |
+| Cross-owner effects and regional law upgrades | Deferred G3; actual multi-authority feature | [LT-R06](../maintainers/scaling-long-term/regions.md#lt-r06) and [LT-R08](../maintainers/scaling-long-term/regions.md#lt-r08) |
+| Connected physics or richer environmental models | Deferred G4; approved mechanic and measured need | [LT-S04/LT-S05](../maintainers/scaling-long-term/simulation.md) |
+| Isolated executable algorithms and new host capabilities | Conditional P7/G4; existing G1 composition cannot satisfy an approved consumer | Existing INV G2/D20 and EWF10; not a new sandbox task owner |
 
-LATER: activate cross-region effects, structural solvers, richer physics or isolated executable extensions only with a consuming mechanic, a tested protocol and an explicit support boundary. A generic registry, a WASM sandbox or a distributed database is not proof of semantic correctness or bounded aggregate work.
+The SC task bodies are [here](../maintainers/scaling.md#sc12). Existing INV/EWF release acceptance remains open until these cases and the feature's own gameplay gates pass. [Feature integration](feature-integration.md) connects mechanics to state, memory, perception, browser delivery and operations. None of these planned tasks implements a new family or authorizes paid work, deployment or changed laws.
