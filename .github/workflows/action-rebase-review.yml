@@ -4,7 +4,7 @@ on:
     branches: [review/action-capabilities-fdcbd31]
     paths: ['.github/workflows/action-rebase-review.yml', '.github/action-review/**']
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: action-fdcbd31-review
   cancel-in-progress: true
@@ -35,28 +35,33 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Resolve reviewed semantic overlaps
-        run: python .github/action-review/reconcile.py
-      - name: Production build
-        run: pnpm build
-      - name: Retain source and dependency workspace for review
-        if: always()
-        shell: python
         run: |
-          from pathlib import Path
-          import tarfile
-          root=Path.cwd()
-          def filter_entry(item):
-            if '.git' in Path(item.name).parts or item.name.startswith('./dist/') or item.name.startswith('./.data/'):
-              return None
-            return item
-          with tarfile.open('/tmp/reconciled-workspace.tgz','w:gz') as archive:
-            for path in root.iterdir():
-              if path.name not in ['.git','dist','.data']:
-                archive.add(path,arcname=path.name,filter=filter_entry)
-      - uses: actions/upload-artifact@v4
-        if: always()
+          python .github/action-review/reconcile.py
+          python .github/action-review/fix-binding.py
+          python - <<'PY'
+          import pathlib,json,subprocess
+          p=pathlib.Path('apps/server/src/ai-director.ts')
+          p.write_text(p.read_text().replace('docs/action-capabilities.md#references-targets-quantities-and-evidence','docs/architecture.md#jev-first-action-grounding'))
+          paths=json.loads(pathlib.Path('_review-paths.json').read_text())
+          targets=[p for p in paths if pathlib.Path(p).is_file() and pathlib.Path(p).suffix in ['.ts','.tsx','.mjs','.md']]
+          subprocess.run(['pnpm','exec','prettier','--write',*targets],check=True)
+          PY
+      - name: Production and generated-contract checks
+        run: |
+          pnpm build
+          pnpm config:check
+          pnpm guidance:check
+      - name: Prepare immutable replay tree only
+        uses: actions/github-script@v7
         with:
-          name: reconciled-workspace
-          path: /tmp/reconciled-workspace.tgz
-          compression-level: 0
-          retention-days: 1
+          script: |
+            const fs=require('fs');
+            const base=await github.rest.git.getCommit({...context.repo,commit_sha:context.sha});
+            const paths=JSON.parse(fs.readFileSync('_review-paths.json','utf8'));
+            const reportPath='docs/verification/action-rebase-fdcbd31.json';
+            fs.writeFileSync(reportPath,JSON.stringify({main:'fdcbd31fc9e4eb31daaf00d997648aba588c8577',source:'94a7682aee9f100ccb54e073969bb4ed4f9fea49',scope:'Consolidated semantic replay on a separate main-based branch; original history preserved. Production build and config/guidance checks; no automated suites or live provider calls.',build:'passed',config:'passed',guidance:'passed',runtimeReview:'ongoing',paidModelCalls:0,run:context.runId},null,2)+'\n');
+            paths.push(reportPath);
+            const tree=paths.map(path=>fs.existsSync(path)?{path,mode:'100644',type:'blob',content:fs.readFileSync(path,'utf8')}:{path,mode:'100644',type:'blob',sha:null});
+            const prepared=await github.rest.git.createTree({...context.repo,base_tree:base.data.tree.sha,tree});
+            // No commits, branch updates or merges here. The GitHub connector performs those.
+            console.log('PREPARED_REPLAY '+JSON.stringify({parent:context.sha,tree:prepared.data.sha,files:paths.length}));
