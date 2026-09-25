@@ -1,0 +1,15 @@
+import { writeFile } from 'node:fs/promises';
+import { createWorld, freezeWorld, advanceWorld, admitStatusEffectPolicy, executeCommand, commitActorResponse, PLAYER_ID, NPC_ID } from '../../packages/domain/src/index.ts';
+import { actionResponse } from '../../apps/server/src/action-response.ts';
+let world=freezeWorld(advanceWorld(freezeWorld(createWorld()),1).world);
+const definition={id:'review-silence',type:'statusEffect',target:'$subject',label:'Review speech-only restriction',enabled:true,requires:{field:{target:'$subject',name:'alive',operator:'equal',value:true}},reactivationDelaySeconds:0,occupiesAction:false,interruptOn:[],whileActive:[{restrictCapabilities:{target:'$subject',capabilities:['speech']}}],actions:{activate:'Silence',deactivate:'Unsilence',allowOther:false,activateOther:false}};
+let result=admitStatusEffectPolicy(world,{...world.statusEffectPolicy,revision:world.statusEffectPolicy.revision+1,definitions:[...world.statusEffectPolicy.definitions,definition]},world.statusEffectPolicy.revision);
+if(!result.outcome.ok)throw Error(JSON.stringify(result.outcome)); world=freezeWorld(result.world);
+result=executeCommand(world,{id:'review-silence',actorId:PLAYER_ID,targetId:PLAYER_ID,type:'status-effect',definitionId:definition.id,operation:'activate'});
+if(!result.outcome.ok)throw Error(JSON.stringify(result.outcome));world=freezeWorld(result.world);
+const response=actionResponse({kind:'invoke',verb:null,actionId:null,targetEntityId:null,description:null,mode:'enqueue',invocation:{family:'follow',targetEntityId:NPC_ID,x:null,z:null,surfaceId:null,distance:null}});
+result=commitActorResponse(world,'review-mute-follow',PLAYER_ID,response,{},[PLAYER_ID,NPC_ID],world.entities[PLAYER_ID].actor.planGeneration);
+if(!result.outcome.ok)throw Error(JSON.stringify(result.outcome));world=freezeWorld(advanceWorld(freezeWorld(result.world),1).world);
+const speech=executeCommand(world,{id:'review-no-speech',actorId:PLAYER_ID,type:'say',text:'Hello',targetId:NPC_ID});
+if(world.entities[PLAYER_ID].actor.action?.type!=='follow'||speech.outcome.ok)throw Error('Speech-only restriction crossed its capability boundary');
+await writeFile('docs/verification/action-review-fdcbd31-voice.json',JSON.stringify({scope:'One native admitted speech-only status scenario; no suites or live models. Director cancellation integration remains separately unqualified.',run:process.env.GITHUB_RUN_ID,paidModelCalls:0,action:result.outcome,active:'follow',speech:speech.outcome},null,2)+'\n');
