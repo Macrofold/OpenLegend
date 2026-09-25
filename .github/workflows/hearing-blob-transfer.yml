@@ -2,7 +2,7 @@ name: Hearing source blob transfer
 on:
   push:
     branches: [feat/hearing-speech-captions]
-    paths: [.github/hearing-source-edits.json]
+    paths: [.github/hearing-source-edits.json, .github/workflows/hearing-blob-transfer.yml]
 permissions:
   contents: write
 jobs:
@@ -16,7 +16,9 @@ jobs:
             const crypto = require('node:crypto');
             const repo = context.repo;
             const payload = await github.rest.repos.getContent({...repo, path: '.github/hearing-source-edits.json', ref: context.sha});
-            const edits = JSON.parse(Buffer.from(payload.data.content, 'base64').toString('utf8'));
+            // Restore JSON escaping of Markdown A-star; final content digests remain mandatory.
+            const raw = Buffer.from(payload.data.content, 'base64').toString('utf8');
+            const edits = JSON.parse(raw.replaceAll('\\*', '\\\\*'));
             if (!Array.isArray(edits) || edits.length > 100) throw new Error('Invalid transfer');
             const result = [];
             for (const entry of edits) {
@@ -39,4 +41,3 @@ jobs:
             }
             console.log('VERIFIED_TREE_ENTRIES=' + JSON.stringify(result));
             // This job never creates commits, moves refs, merges PRs or runs Git commands.
-            // The caller reviews the manifest and publishes through the GitHub connector.
