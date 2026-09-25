@@ -3,6 +3,7 @@ import { statusDefinitions } from './status-capabilities.js';
 import {
   effectBindings,
   readEntityAttribute,
+  matchesStatusCondition,
   type StatusCondition,
   type StatusRateInterval,
 } from './status-effects.js';
@@ -27,46 +28,89 @@ export function untilThreshold(value: number, rate: number, threshold: number): 
   const time = (threshold - value) / rate;
   return time >= 0 ? Math.max(TIME_EPSILON, time) : Infinity;
 }
-/** A compound condition can only change when one of its numeric/clock leaves changes. */
-function conditionBoundary(
+interface ConditionTransition {
+  matches: boolean;
+  afterSeconds: number;
+}
+/** Lower bound on a predicate changing, not a promise that a compound predicate will change.
+ * An AND cannot become true before every currently false child could change; a permanently
+ * false child therefore suppresses irrelevant numeric deadlines. OR has the dual rule.
+ * docs/simulation-time.md#native-interval-contract */
+function conditionTransition(
   world: WorldState,
   entity: Entity,
   state: Parameters<typeof effectBindings>[2],
   condition: StatusCondition,
   rates: AttributeRates,
-): number {
-  if ('all' in condition || 'any' in condition)
-    return Math.min(
-      ...('all' in condition ? condition.all : condition.any).map((c) =>
-        conditionBoundary(world, entity, state, c, rates),
-      ),
-    );
+): ConditionTransition {
+  if ('all' in condition || 'any' in condition) {
+    const conjunction = 'all' in condition;
+    const children = 'all' in condition ? condition.all : condition.any;
+    let earliest = Infinity,
+      blocking = 0,
+      hasBlocking = false;
+    for (const child of children) {
+      const transition = conditionTransition(world, entity, state, child, rates);
+      earliest = Math.min(earliest, transition.afterSeconds);
+      if (transition.matches !== conjunction) {
+        if (transition.afterSeconds === Infinity)
+          return { matches: !conjunction, afterSeconds: Infinity };
+        hasBlocking = true;
+        blocking = Math.max(blocking, transition.afterSeconds);
+      }
+    }
+    return {
+      matches: conjunction !== hasBlocking,
+      afterSeconds: hasBlocking ? blocking : earliest,
+    };
+  }
+  const bindings = effectBindings(world, entity, state);
+  const matches = matchesStatusCondition(world, bindings, condition);
   if ('dailyWindow' in condition) {
     const hour =
       (((world.simTime / 3600 + world.statusEffectPolicy.clockOffsetHours) % 24) + 24) % 24;
-    return Math.min(
-      ...[condition.dailyWindow.start, condition.dailyWindow.end].map((h) => {
-        const seconds = ((h - hour + 24) % 24) * 3600;
-        return seconds < TIME_EPSILON ? 86400 : seconds;
-      }),
-    );
+    return {
+      matches,
+      afterSeconds: Math.min(
+        ...[condition.dailyWindow.start, condition.dailyWindow.end].map((h) => {
+          const seconds = ((h - hour + 24) % 24) * 3600;
+          return seconds < TIME_EPSILON ? 86400 : seconds;
+        }),
+      ),
+    };
   }
-  if (!('compare' in condition)) return Infinity;
-  const c = condition.compare,
-    b = effectBindings(world, entity, state);
+  if (!('compare' in condition)) return { matches, afterSeconds: Infinity };
+  const c = condition.compare;
   const target =
-    c.target === '$subject' ? b.subject : c.target === '$source' ? b.source : b.actionTarget;
+    c.target === '$subject'
+      ? bindings.subject
+      : c.target === '$source'
+        ? bindings.source
+        : bindings.actionTarget;
   const value = readEntityAttribute(world, target, c.attribute);
-  if (!target || typeof value !== 'number') return Infinity;
+  if (!target || typeof value !== 'number') return { matches, afterSeconds: Infinity };
   const rate = rates.get(target.id)?.get(c.attribute) ?? 0;
   const schema = attributeDefinition(world, c.attribute)?.schema;
-  // A saturated outward rate cannot change a predicate, including a strict equality.
+  // A saturated outward rate cannot change a predicate, including equality.
   if (
-    schema?.kind === 'number' &&
-    ((value <= schema.min && rate < 0) || (value >= schema.max && rate > 0))
+    !rate ||
+    (schema?.kind === 'number' &&
+      ((value <= schema.min && rate < 0) || (value >= schema.max && rate > 0)))
   )
-    return Infinity;
-  return untilThreshold(value, rate, c.value);
+    return { matches, afterSeconds: Infinity };
+  if (value === c.value) {
+    const after =
+      c.operator === 'equal'
+        ? false
+        : c.operator === 'notEqual'
+          ? true
+          : c.operator === 'greaterThanOrEqual'
+            ? rate > 0
+            : rate < 0;
+    // A reached threshold only needs the strict-side micro-interval when its truth changes.
+    return { matches, afterSeconds: matches === after ? Infinity : TIME_EPSILON };
+  }
+  return { matches, afterSeconds: untilThreshold(value, rate, c.value) };
 }
 export function statusBoundary(
   world: WorldState,
@@ -79,20 +123,44 @@ export function statusBoundary(
     if (!entity) continue;
     for (const d of statusDefinitions(world)) {
       const state = entity.statusEffects?.[d.id];
-      if (!d.enabled && !state?.active) continue;
-      if (!state?.active && state && state.automaticAfter > world.simTime)
-        result = Math.min(result, state.automaticAfter - world.simTime);
+      if (!state?.active) {
+        // Only automatic activation can happen without a command. Retired episode bindings
+        // must not predict reactivation against its old source/target: activation binds self.
+        if (!d.enabled || !d.automaticActivation) continue;
+        const delay = (state?.automaticAfter ?? 0) - world.simTime;
+        if (delay > 0) {
+          result = Math.min(result, delay);
+          continue;
+        }
+        result = Math.min(
+          result,
+          conditionTransition(
+            world,
+            entity,
+            undefined,
+            {
+              all: [
+                d.requires,
+                ...(d.activationCondition ? [d.activationCondition] : []),
+                d.automaticActivation,
+              ],
+            },
+            rates,
+          ).afterSeconds,
+        );
+        continue;
+      }
       const conditions = [
         d.requires,
-        ...(state?.active
-          ? [
-              d.automaticDeactivation,
-              ...d.whileActive.map((op) => ('changeRate' in op ? op.when : undefined)),
-            ]
-          : [d.activationCondition, d.automaticActivation]),
+        d.automaticDeactivation,
+        ...d.whileActive.map((op) => ('changeRate' in op ? op.when : undefined)),
       ];
-      for (const c of conditions)
-        if (c) result = Math.min(result, conditionBoundary(world, entity, state, c, rates));
+      for (const condition of conditions)
+        if (condition)
+          result = Math.min(
+            result,
+            conditionTransition(world, entity, state, condition, rates).afterSeconds,
+          );
     }
   }
   return result;
