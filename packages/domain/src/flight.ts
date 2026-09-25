@@ -7,6 +7,7 @@ import {
   supportBelow,
   surfaceById,
   SPATIAL_LIMITS,
+  MOVEMENT,
   type BodyProfile,
   type WorldPoint,
 } from '@open-legend/spatial';
@@ -210,7 +211,15 @@ export function advanceFlight(
   }
   const fraction = separation <= 1e-8 ? 1 : Math.min(1, (speed * seconds) / separation);
   const next = interpolate(from, to, fraction);
-  const ignoredSupports = [state.supportSurfaceId, waypoint.landingSurfaceId].filter(
+  // Start-boundary takeoff has already cleared the grounded state, but its first
+  // sweep still touches the departure surface. Recover only a top-contact witness;
+  // canFlySegment continues to reject its underside. No hidden movement state is saved.
+  const contact = state.supportSurfaceId === null ? supportBelow(map, from) : undefined;
+  const departure =
+    contact && Math.abs(from.y - contact.y) <= SPATIAL_LIMITS.supportTolerance + MOVEMENT.skin
+      ? contact.surfaceId
+      : undefined;
+  const ignoredSupports = [state.supportSurfaceId, departure, waypoint.landingSurfaceId].filter(
     (id): id is string => !!id,
   );
   if (!canFlySegment(map, from, next, body, ignoredSupports)) return;
