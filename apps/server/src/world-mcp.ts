@@ -1,3 +1,4 @@
+import { AUTHORING_BODY_BYTES, readBoundedJson } from './http-json.js';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { WORLD_AUTHORING_TOOLS } from './world-authoring-contracts.js';
@@ -8,9 +9,7 @@ import { toNodeHandler } from '@modelcontextprotocol/node';
 import type { McpReadConfig } from './mcp-config.js';
 import { WORLD_READ_TOOLS, type WorldToolService } from './world-tools.js';
 
-const MAX_BODY = 128 * 1024,
-  MAX_INFLIGHT = 8,
-  READ_TIMEOUT_MS = 10_000;
+const MAX_INFLIGHT = 8;
 function fail(response: ServerResponse, status: number, message: string) {
   response.writeHead(status, {
     'Content-Type': 'application/json',
@@ -21,26 +20,6 @@ function fail(response: ServerResponse, status: number, message: string) {
   });
   response.end(JSON.stringify({ error: message }));
 }
-async function body(request: IncomingMessage): Promise<unknown> {
-  const timer = setTimeout(
-    () => request.destroy(new Error('MCP request timed out.')),
-    READ_TIMEOUT_MS,
-  );
-  const chunks: Buffer[] = [];
-  let size = 0;
-  try {
-    for await (const part of request) {
-      const chunk = Buffer.isBuffer(part) ? part : Buffer.from(part as string);
-      size += chunk.length;
-      if (size > MAX_BODY) throw new Error('MCP body limit exceeded.');
-      chunks.push(chunk);
-    }
-    return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 /** Stateless transport over shared services. Connector identity is not a session grant;
  * every write also checks a short-lived, application-issued context and exact review.
  * docs/world-agent-runtime.md#durable-write-sessions
@@ -196,12 +175,12 @@ export function createWorldMcp(
       )
         return fail(response, 415, 'Use uncompressed application/json.');
       const length = Number(request.headers['content-length'] ?? 0);
-      if (!Number.isSafeInteger(length) || length < 0 || length > MAX_BODY)
+      if (!Number.isSafeInteger(length) || length < 0 || length > AUTHORING_BODY_BYTES)
         return fail(response, 413, 'MCP body limit exceeded.');
       if (inflight >= MAX_INFLIGHT) return fail(response, 429, 'Too many concurrent MCP requests.');
       inflight++;
       try {
-        const parsed = await body(request);
+        const parsed = await readBoundedJson(request, AUTHORING_BODY_BYTES);
         if (!validScope()) return fail(response, 403, 'World read grant is unavailable.');
         // SDK supports bounded parsed input; we do not rely on an unbounded adapter body reader.
         await node(request, response, parsed);
