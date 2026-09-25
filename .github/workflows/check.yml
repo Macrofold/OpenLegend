@@ -1,33 +1,72 @@
-name: Persistence profiling workspace
+name: Dense persistence qualification
 on:
   push:
     branches: [design/action-repertoire-and-capability-grounding]
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: action-native-performance
+  cancel-in-progress: false
 jobs:
-  workspace:
+  persistence:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     env:
       AI_BUDGET_USD: '0'
+      OPENAI_API_KEY: ''
+      JEV_API_KEY: ''
+      MACROFOLD_API_KEY: ''
+      OPEN_LEGEND_DATABASE_URL: ''
+      OPEN_LEGEND_DATA_DIR: /tmp/persistence-review-world
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Package tracked source and installed dependencies only
+      - name: Baseline native and real server measurements
         run: |
-          git ls-files -z > /tmp/workspace-paths
-          find . -type d -name node_modules -prune -print0 >> /tmp/workspace-paths
-          tar --null -T /tmp/workspace-paths -czf /tmp/openlegend-workspace.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: openlegend-workspace
-          path: /tmp/openlegend-workspace.tgz
-          compression-level: 0
-          retention-days: 1
+          node --import tsx .github/persistence-exercise.mjs /tmp/persistence-before.json > /tmp/before.log
+          printf '%s\n' '{"seed":73,"people":100,"animals":0,"layout":"crowded","warmup":0,"objects":[{"count":500,"name":"Profiling gem","properties":["rigid"]}]}' > /tmp/dense.json
+          node --import tsx scripts/performance/profile-server.mjs /tmp/dense.json /tmp/server-before.json 15 1 > /tmp/server-before.log
+      - name: Implement and build the first slice
+        run: |
+          python .github/persistence-linearize.py
+          pnpm exec prettier --write apps/server/src/history.ts apps/server/src/store.ts apps/server/src/sqlite-database.ts apps/server/src/performance.ts docs/maintainers/performance.md docs/maintainers/TODO.md
+          pnpm run build
+          git diff --check
+      - name: Exercise native and transactional behavior after the change
+        run: |
+          node --import tsx .github/persistence-exercise.mjs /tmp/persistence-after.json > /tmp/after.log
+          node --import tsx scripts/performance/profile-server.mjs /tmp/dense.json /tmp/server-after.json 15 1 > /tmp/server-after.log
+          python - <<'PY'
+          import json,pathlib,os
+          before=json.loads(pathlib.Path('/tmp/persistence-before.json').read_text());after=json.loads(pathlib.Path('/tmp/persistence-after.json').read_text())
+          for old,new in zip(before['cases'],after['cases']):
+            if old['worldDigest']!=new['worldDigest'] or old['history']!=new['history']: raise RuntimeError('Changed authoritative native/history outcome: '+old['name'])
+          report={'scope':'Matched baseline/linear lookup slice on one runner; isolated SQLite history plus actual HTTP/SSE/timer/SQLite workload. No unit/browser suites or paid models.','baseline':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'before':before,'after':after,'serverBefore':json.loads(pathlib.Path('/tmp/server-before.json').read_text()),'serverAfter':json.loads(pathlib.Path('/tmp/server-after.json').read_text())}
+          pathlib.Path('docs/verification/persistence-linearization.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps({'nativeAndHistoryDigestsMatch':True,'commitsBefore':{r['name']:r['commits'] for r in before['cases']},'commitsAfter':{r['name']:r['commits'] for r in after['cases']},'beforeServer':report['serverBefore']['phases'][0]['achievedSpeed'],'afterServer':report['serverAfter']['phases'][0]['achievedSpeed']},indent=2))
+          PY
+      - name: Commit the verified implementation slice
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/server/src/history.ts apps/server/src/store.ts apps/server/src/sqlite-database.ts apps/server/src/performance.ts docs/maintainers/performance.md docs/maintainers/TODO.md docs/verification/persistence-linearization.json
+          git commit -m '[skip ci] perf: linearize history perspective lookup and attribute transaction costs'
+          git push origin HEAD:design/action-repertoire-and-capability-grounding
+      - name: Retain failure diagnostics
+        if: failure()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          mkdir -p .github/persistence-diagnostics
+          git diff > .github/persistence-diagnostics/source.patch
+          for f in /tmp/persistence-before.json /tmp/persistence-after.json /tmp/server-before.json /tmp/server-after.json /tmp/before.log /tmp/after.log /tmp/server-before.log /tmp/server-after.log; do test ! -f "$f" || cp "$f" .github/persistence-diagnostics/; done
+          git add .github/persistence-diagnostics
+          git diff --cached --quiet || git commit -m '[skip ci] chore: retain bounded persistence diagnostics'
+          git push origin HEAD:design/action-repertoire-and-capability-grounding
