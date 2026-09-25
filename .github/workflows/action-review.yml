@@ -1,0 +1,54 @@
+name: Action reconciliation review
+on:
+  push:
+    branches: [review/action-main-reconciled]
+permissions:
+  contents: read
+concurrency:
+  group: action-reconciliation-review
+  cancel-in-progress: true
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Inspect pinned three-way reconciliation
+        shell: python
+        run: |
+          import urllib.request, tarfile, io, pathlib, subprocess, hashlib, json
+          root=pathlib.Path('/tmp/action-reconcile'); root.mkdir()
+          refs={'base':'3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238','main':'03105fed9209c126e4e69e9faeb4687f42d1e74a','action':'fdbd0413cdc75301401a20aad17b9fe534d654c4'}
+          roots={}
+          for name,ref in refs.items():
+            data=urllib.request.urlopen(f'https://codeload.github.com/Macrofold/OpenLegend/tar.gz/{ref}',timeout=60).read()
+            target=root/name;target.mkdir()
+            with tarfile.open(fileobj=io.BytesIO(data),mode='r:gz') as archive: archive.extractall(target,filter='data')
+            roots[name]=next(target.iterdir())
+          def files(folder):return {str(p.relative_to(folder)):p for p in folder.rglob('*') if p.is_file()}
+          maps={k:files(v) for k,v in roots.items()}
+          entries=[]; conflicts=[]; merged=[]
+          for path in sorted(set().union(*[set(m) for m in maps.values()])):
+            raw={k:(m[path].read_bytes() if path in m else None) for k,m in maps.items()}
+            b,m,a=(raw[k] for k in ['base','main','action'])
+            if m==b or m==a:continue
+            if a==b:
+              final=m
+            elif None in [b,m,a]:
+              conflicts.append(path);print('CONFLICT '+path+' add/delete');continue
+            else:
+              result=subprocess.run(['diff3','-m',str(maps['action'][path]),str(maps['base'][path]),str(maps['main'][path])],capture_output=True)
+              if result.returncode:
+                conflicts.append(path);print('CONFLICT '+path+'\n'+result.stdout.decode());continue
+              final=result.stdout;merged.append(path)
+              print('MERGED_CONTENT '+path+'\n'+final.decode()+'\nEND_MERGED_CONTENT')
+            sha=hashlib.sha1(b'blob '+str(len(final)).encode()+b'\0'+final).hexdigest() if final is not None else None
+            entries.append({'path':path,'sha':sha,'mode':'100644','type':'blob'})
+          print('RECONCILIATION_MANIFEST '+json.dumps({'refs':refs,'overlayOnAction':entries,'merged':merged,'conflicts':conflicts}))
+          for path in sorted(maps['main']):
+            if path.endswith('AGENTS.md') and path not in ['AGENTS.md'] and (path.startswith('apps/server/') or path.startswith('packages/domain/') or path.startswith('apps/client/') or path.startswith('docs/') or path.startswith('scripts/')):
+              print('LOCAL_INSTRUCTIONS '+path+'\n'+maps['main'][path].read_text()+'\nEND_LOCAL_INSTRUCTIONS')
