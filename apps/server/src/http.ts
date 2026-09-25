@@ -1,3 +1,4 @@
+import { readHttpJson } from './http-json.js';
 import { WorldAgentRunner } from './world-agent-runner.js';
 import { WorldAgentStore } from './world-agent-store.js';
 import { WorldAuthoringService } from './world-authoring.js';
@@ -268,19 +269,6 @@ const godWorldEvent = z
     data: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
   })
   .strict();
-
-async function jsonBody(request: IncomingMessage): Promise<unknown> {
-  let bytes = 0;
-  const chunks: Buffer[] = [];
-  const limit = request.url?.startsWith('/api/god/editor/') ? 1_048_576 : 16_384;
-  for await (const chunk of request) {
-    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string);
-    bytes += buffer.length;
-    if (bytes > limit) throw new Error('body-limit');
-    chunks.push(buffer);
-  }
-  return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
-}
 
 function send(response: ServerResponse, status: number, value: unknown) {
   response.writeHead(status, {
@@ -662,7 +650,7 @@ export async function createGameServer(
             code: 'content-type',
             message: 'Use a JSON request.',
           });
-        const body = await jsonBody(request);
+        const body = await readHttpJson(request, url.pathname);
         if (loadingSave)
           return send(response, 409, {
             ok: false,
