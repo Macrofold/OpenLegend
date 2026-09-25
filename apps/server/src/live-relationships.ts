@@ -1,4 +1,4 @@
-import type { Entity, WorldState } from '@open-legend/domain';
+import { applicableAttributes, type Entity, type WorldState } from '@open-legend/domain';
 import type {
   RelationshipEdge,
   RelationshipKind,
@@ -9,7 +9,7 @@ import { fingerprint, GraphReadError, refKey, RelationshipIndex } from './relati
 import type { DefinitionProjection } from './world-graph.js';
 
 /** Exact inspectable entity projection; private cognition has separate owner-only readers. */
-export const inspectableEntity = (e: Entity) => ({
+export const inspectableEntity = (world: WorldState, e: Entity) => ({
   id: e.id,
   name: e.name,
   kind: e.kind,
@@ -18,8 +18,8 @@ export const inspectableEntity = (e: Entity) => ({
   resource: e.resource,
   heat: e.heat,
   remains: e.remains,
-  attributeIds: Object.keys(e.actor?.attributes ?? {}).sort(),
-  senseIds: e.actor?.senses,
+  attributeIds: e.actor ? applicableAttributes(world, e.actor).map((d) => d.id).sort() : [],
+  senseIds: e.actor ? (e.actor.senses ?? world.moduleManifest.defaultSenses) : [],
   actionId: e.actor?.action?.id,
   equippedItemId: e.actor?.equippedItemId,
 });
@@ -73,7 +73,7 @@ export function projectLiveSubject(
   const entity = (id: string) => {
     const e = Object.hasOwn(world.entities, id) ? world.entities[id] : undefined;
     if (!e) throw new GraphReadError('unavailable', 'Entity is unavailable.');
-    return add('entity', id, e.name, inspectableEntity(e));
+    return add('entity', id, e.name, inspectableEntity(world, e));
   };
   const item = (id: string) => {
     const i = Object.hasOwn(world.items, id) ? world.items[id] : undefined;
@@ -104,8 +104,8 @@ export function projectLiveSubject(
         'supported_by',
       );
     if (e.actor) {
-      for (const attributeId of Object.keys(e.actor.attributes ?? {}))
-        link(root, definition('attribute', attributeId), 'uses', 'attribute-binding');
+      for (const attribute of applicableAttributes(world, e.actor))
+        link(root, definition('attribute', attribute.id), 'uses', 'attribute-binding');
       for (const senseId of e.actor.senses ?? world.moduleManifest.defaultSenses)
         link(root, definition('sense', senseId), 'uses', 'sense-binding');
     }
@@ -133,7 +133,7 @@ export function projectLiveSubject(
     [...nodes.values()],
     [...edges.values()],
     [
-      'Current native support, inventory possession, equipment and active-action references only; not a complete physical contact or social-ownership graph.',
+      'Current native attribute/sense bindings, support, inventory possession, equipment and active-action references only; not a complete physical contact or social-ownership graph.',
       'Joint interactions, attachment/load-bearing, information carriers and agreements appear only after their owning systems exist.',
       'Observed here means read from authoritative live records by an authorized World Agent, not witnessed by an NPC.',
     ],
