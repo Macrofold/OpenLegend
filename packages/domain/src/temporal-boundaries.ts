@@ -200,10 +200,11 @@ export function nativeInterval(
   const signs = new Map<string, number>();
   for (const interval of status)
     for (const r of interval.rates) {
+      if (r.rate === 0) continue; // A no-op must not erase a preceding nonzero direction.
       const key = `${r.targetId}\0${r.attribute}`,
         sign = Math.sign(r.rate),
         old = signs.get(key);
-      if (old !== undefined && old !== sign && old !== 0 && sign !== 0) bound = Math.min(bound, 1);
+      if (old !== undefined && old !== sign) bound = Math.min(bound, 1);
       signs.set(key, sign);
     }
   return { seconds: Math.min(requested, Math.max(TIME_EPSILON, bound)), exhausted, starving };
