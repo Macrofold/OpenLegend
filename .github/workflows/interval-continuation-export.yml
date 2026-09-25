@@ -1,4 +1,4 @@
-name: Interval continuation inputs
+name: Interval common-base inputs
 on:
   push:
     branches: [feature/spatial-world-3d]
@@ -8,52 +8,27 @@ permissions:
 jobs:
   export:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
-          path: feature
+          ref: c466b63f818021a6cd65d0809b94f220cce642d4
           persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
-          ref: 03105fed9209c126e4e69e9faeb4687f42d1e74a
-          path: current-main
-          persist-credentials: false
-      - uses: pnpm/action-setup@v4
-        with:
-          package_json_file: feature/package.json
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: pnpm install --frozen-lockfile
-        working-directory: feature
-      - name: Package source and installed dependencies without credentials or runtime state
+      - name: Package common-base source without credentials
         run: |
           python3 - <<'PY'
-          import os, pathlib, zipfile, tarfile
+          import os,pathlib,zipfile
           root=pathlib.Path.cwd()
-          out=pathlib.Path(os.environ['RUNNER_TEMP'])
-          for name in ('feature','current-main'):
-              with zipfile.ZipFile(out/(name+'.zip'),'w',zipfile.ZIP_DEFLATED) as z:
-                  for directory, dirs, files in os.walk(root/name):
-                      dirs[:]=[d for d in dirs if d not in ('.git','node_modules','dist') and not d.startswith('.data')]
-                      for f in files:
-                          p=pathlib.Path(directory)/f
-                          if not p.is_symlink() and (not f.startswith('.env') or f.endswith('.example')):
-                              z.write(p,p.relative_to(root/name))
-          with tarfile.open(out/'dependencies.tar.gz','w:gz',dereference=False) as t:
-              for directory,dirs,files in os.walk(root/'feature'):
-                  if 'node_modules' in dirs:
-                      p=pathlib.Path(directory)/'node_modules'
-                      t.add(p,arcname=str(p.relative_to(root/'feature')))
-                      dirs.remove('node_modules')
-                  dirs[:]=[d for d in dirs if d!='.git']
+          with zipfile.ZipFile(pathlib.Path(os.environ['RUNNER_TEMP'])/'common-base.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for directory,dirs,files in os.walk(root):
+                  dirs[:]=[d for d in dirs if d not in ('.git','node_modules','dist') and not d.startswith('.data')]
+                  for f in files:
+                      p=pathlib.Path(directory)/f
+                      if not p.is_symlink() and (not f.startswith('.env') or f.endswith('.example')):
+                          z.write(p,p.relative_to(root))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: interval-continuation-inputs
-          path: |
-            ${{ runner.temp }}/feature.zip
-            ${{ runner.temp }}/current-main.zip
-            ${{ runner.temp }}/dependencies.tar.gz
+          name: interval-common-base
+          path: ${{ runner.temp }}/common-base.zip
           retention-days: 2
