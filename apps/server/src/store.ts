@@ -5,6 +5,7 @@ import { validateWorldModules } from '@open-legend/domain';
 import { GameSaves, type RestoreSave } from './game-saves.js';
 import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
+import { prepareHistory } from './history-preparation.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
 import type { IntelligenceCall } from '@open-legend/protocol';
@@ -49,6 +50,7 @@ export interface WorldChanges {
   operations: WorldChange[];
 }
 export interface JobRecord extends AiJobView {
+  responseReady?: boolean;
   diagnosticTrigger?: string;
   diagnosticTriggerType?: string;
   retryOf?: string;
@@ -59,6 +61,12 @@ export interface JobRecord extends AiJobView {
   createdAt: number;
   request: {
     text: string;
+    action?: {
+      mode: 'enqueue' | 'replace';
+      targetId?: string;
+      expectedPlan: number;
+      timelineId: string;
+    };
     npcId?: string;
     invention?: {
       candidate?: unknown;
@@ -639,6 +647,23 @@ export class SqliteStore implements GameRepository {
           this.acceptedRevision !== expectedRevision ||
           this.acceptedRows.get(row.key) !== JSON.stringify(row.values),
       );
+    const historyBefore = historyProjection?.before ?? this.acceptedState?.world;
+    const historyAfter = historyProjection?.after ?? state.world;
+    // The world writer owns this immutable candidate. Do not eagerly encode a second full burst;
+    // prepare lookup inputs here, then stream bounded rows within the atomic transaction.
+    const preparedHistory =
+      this.readyHistoryWorlds.has(state.world.id) &&
+      !historyProjection?.restore &&
+      Object.isFrozen(historyAfter) &&
+      (!historyBefore || Object.isFrozen(historyBefore))
+        ? prepareHistory(
+            historyBefore,
+            historyAfter,
+            historyBefore
+              ? provenAppendCount(historyBefore.events, historyAfter.events)
+              : undefined,
+          )
+        : undefined;
     const revision = await timed('persistence.transaction', () =>
       this.db.transaction(async () => {
         const row = await this.db
@@ -699,15 +724,18 @@ export class SqliteStore implements GameRepository {
         const historyKey = `history-schema:${state.world.id}`;
         const historyReady =
           this.readyHistoryWorlds.has(state.world.id) || (await this.getIntegration(historyKey));
-        await this.history.project(
-          historyReady ? (historyProjection?.before ?? this.acceptedState?.world) : undefined,
-          historyProjection?.after ?? state.world,
-          historyReady
-            ? provenAppendCount(
-                (historyProjection?.before ?? this.acceptedState?.world)?.events ?? [],
-                (historyProjection?.after ?? state.world).events,
-              )
-            : undefined,
+        await timed('history.project', () =>
+          this.history.project(
+            historyReady ? (historyProjection?.before ?? this.acceptedState?.world) : undefined,
+            historyProjection?.after ?? state.world,
+            historyReady
+              ? provenAppendCount(
+                  (historyProjection?.before ?? this.acceptedState?.world)?.events ?? [],
+                  (historyProjection?.after ?? state.world).events,
+                )
+              : undefined,
+            preparedHistory,
+          ),
         );
         if (!historyReady) await this.putIntegration(historyKey, 1);
         const outcomes = new Map<
@@ -764,7 +792,11 @@ export class SqliteStore implements GameRepository {
             .prepare('INSERT INTO world_journal (revision,payload,created_at) VALUES (?,?,?)')
             .run(revision, changesPayload, Date.now());
         }
-        await new KnowledgeStore(this.db).project(this.acceptedState?.world, state.world, !!historyProjection?.restore);
+        await new KnowledgeStore(this.db).project(
+          this.acceptedState?.world,
+          state.world,
+          !!historyProjection?.restore,
+        );
         if (this.db.dialect === 'postgres')
           for (const row of changedRows) {
             await this.db

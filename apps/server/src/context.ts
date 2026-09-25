@@ -33,7 +33,11 @@ function gatherDescription(entity: Entity): string {
   return `Gather ${entity.name}: base yield ${SIMULATION_RULES.gatherQuantity} ${resource.definitionId} per batch, up to 4 with a compatible carried gathering tool (${resource.quantity} currently available), ${resource.workSeconds} work seconds after approach; target must remain perceived, reachable and nonempty.`;
 }
 
-function describeTargets(service: WorldService, actorId: string, candidates: CandidateAction[]): CandidateAction[] {
+function describeTargets(
+  service: WorldService,
+  actorId: string,
+  candidates: CandidateAction[],
+): CandidateAction[] {
   return candidates.map((candidate) => {
     const command = candidate.command;
     const id = command && 'targetId' in command ? command.targetId : undefined;
@@ -282,6 +286,17 @@ export function npcCandidates(
       command: null,
     },
   ];
+  for (const target of observed.visibleEntities
+    .filter((e) => e.actor?.alive && e.id !== actorId)
+    .slice(0, 4)) {
+    const command: CommandInput = { type: 'follow', targetId: target.id };
+    if (service.previewCommand(command, actorId).ok)
+      actions.push({
+        id: `follow:${target.id}`,
+        description: `Follow ${target.name} while visible; no stealth or automatic sunset stop.`,
+        command,
+      });
+  }
   const activeId = service.world.conversations?.active[actorId];
   if (activeId) {
     const active = service.world.conversations!.records[activeId]!;
