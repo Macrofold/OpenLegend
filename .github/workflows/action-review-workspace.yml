@@ -1,0 +1,48 @@
+name: Action review workspace
+on:
+  push:
+    branches: [review/action-reconcile-fdcbd31]
+    paths: [.github/workflows/action-review-workspace.yml]
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 94a7682aee9f100ccb54e073969bb4ed4f9fea49
+          path: branch
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fc01e19b30060e6c7213b1c5405be13df209297e
+          path: ancestor
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fdcbd31fc9e4eb31daaf00d997648aba588c8577
+          path: upstream
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: branch/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: branch/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: branch
+      - name: Package isolated source and dependencies
+        run: |
+          tar --exclude=.git --exclude=.env --exclude='.env.*' --exclude=.data -czf /tmp/action-review-workspace.tgz branch ancestor upstream
+      - uses: actions/upload-artifact@v4
+        with:
+          name: action-review-workspace
+          path: /tmp/action-review-workspace.tgz
+          compression-level: 0
+          retention-days: 1
