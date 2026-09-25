@@ -51,6 +51,25 @@ The September 25 design review changes the implementation target, not current ru
 
 For latency qualification, report end-to-end p50/p95/p99/max and timeout rate, hardware/database layout, history sizes, actor/crowd distribution, simultaneous retrieval/commit load, warm/cold indexes, payload bytes, queue age and database plans. The requested 20 ms local-retrieval goal is unqualified; choose acceptance semantics under D62. Do not close this gate with a candidate-count estimate. Tests and runtime work require their normal separate implementation/verification scope; this design review runs none.
 
+## Current-code scaling child work
+
+The [52-finding audit](../scaling/current-code-audit.md) records observed limitations and conditional risks at runtime `03105fed`. Detailed new child work lives once in [SC01–SC16](scaling.md); this tracker retains the production phases and their acceptance gates. These additions do not mark existing narrow features unimplemented or close the missing operational-record work above.
+
+| Phase / related owner | Focused child work | Evidence to carry into the parent gate |
+|---|---|---|
+| D0/D1/D5 | [SC01](scaling.md#sc01) | Independent authenticated control, explicit permitted projections and human-private denial across all entry points. |
+| D0/D1/D6 | [SC04](scaling.md#sc04), [SC09](scaling.md#sc09) | Singleton storage/key migration, durable owner fencing, region-compatible identity/order and exact numeric/SQL boundaries. Removing the current lock is not a migration. |
+| D1/D2 | [SC05](scaling.md#sc05), [SC06](scaling.md#sc06) | Checked replay without one full-world clone per journal row, keyed startup verification, indexed scoped job recovery and durable source-to-paid-attempt reconciliation. |
+| D2 / EPR / CR | [SC08](scaling.md#sc08), [SC11](scaling.md#sc11) | Dirty-source indexing; one actor's budget failure does not stop others; current source-incarnation and erasure checks hold at publication, restore and index rebuild. |
+| D1/D5 / billing | [SC10](scaling.md#sc10) | One accepted spending-policy owner and exact reconciled aggregates; display cache never authorizes expenditure. Resolve the remaining enforcement/config discrepancy without automatically raising any allowance. |
+| D2/D4 / INV / EWF | [SC12](scaling.md#sc12), [SC14](scaling.md#sc14) | Indexed eligible invention lookup, exact content deduplication and reverse definition dependencies; no full-library preparation hidden behind a small result limit. |
+| D5 / PF / synchronization | [SC02](scaling.md#sc02), [SC03](scaling.md#sc03), [SC07](scaling.md#sc07) | Scoped join/replay, bounded queue admission/lifecycle, classified failures and fair multi-actor work under the admitted workload. |
+| D1/D2/D5 / SL | [SC16](scaling.md#sc16) | Coherent bounded save capture/restore, paged metadata and portable hosted storage; the removed named-slot count is not reinstated. |
+
+PF01/PF08 retain semantic dirty-change/checkpoint optimization; D1/D2 retain normalized operational records and database-first selection. SC05's faster transitional replay does not replace that migration. EPR owns sensory discovery/intake, and [SC13](scaling.md#sc13) refines EWF08/INV-3's composed-work contract before new mechanics expand query or authority scope. Cross-references are dependencies, not a new global rewrite prerequisite.
+
+Preserve arbitrary-content-cap removal through paging, bounded requests, working sets and explicit technical admission. Do not erase required sources, cap legitimate witnesses, change physical laws or return incomplete search as a negative result to satisfy a latency target. Each implementation reports the workload dimension it removed and the remaining boundary; table creation, an isolated vector query or a native microbenchmark is not full-stack qualification.
+
 ## Massive-scale research reference
 
 [The research dossier](../../archive/02-research/massive-scale/README.md) provides a pinned repository audit, source comparison, capacity arithmetic and staged guidance. It does not complete D0–D6 or create a second phase tracker. The September 25 shared-world regional priority above takes precedence over the earlier research recommendation to scale independent worlds first.

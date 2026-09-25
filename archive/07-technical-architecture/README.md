@@ -19,6 +19,8 @@ Current implemented architecture is defined in [docs/architecture.md](../../docs
 
 Supporting context: [extensibility roadmap](../../docs/extensibility-roadmap.md) and [worked examples](../../docs/extensible-world-examples.md).
 
-## Scaling research
+## Scaling research and implementation follow-through
 
 [Preparing for massive scale](../02-research/massive-scale/README.md) provides a pinned repository audit, annotated papers and MMO case studies, workload arithmetic, and NOW/SOON/LATER guidance. It is informational research, not another accepted specification or implementation tracker. Existing design owners and D0–D6 retain their contracts and acceptance gates.
+
+[Current-code scaling readiness](../../docs/scaling/README.md) adds the newer 52-finding audit and [SC01–SC16 remediation](../../docs/maintainers/scaling.md), with existing PF/EPR/SW/CR/INV/EWF/SL parent ownership preserved. Consult [mechanic-growth integration](../../docs/scaling/mechanic-growth.md) when extending libraries, selectors, effects, bodies or mutable geometry. The current accepted target prioritizes a region-divided shared world; older independent-world-first research is an alternative, not the product roadmap. None of these documents establishes runtime implementation or capacity evidence.

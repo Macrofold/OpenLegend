@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## 2026-09-25 — Current-code scaling audit and remediation
+
+Added [scaling readiness](scaling/README.md), a [52-finding code audit](scaling/current-code-audit.md) pinned to `03105fed9209c126e4e69e9faeb4687f42d1e74a`, and [SC01–SC16](maintainers/scaling.md) with staged work, dependencies and explicit exit evidence. Existing D/PF/EPR/SW/CR/AG/INV/EWF/SL tasks retain their semantic ownership and release gates; already owned scan/intake work is linked rather than duplicated. Findings distinguish observed implementation costs, conditional boundary risks and unqualified capacity, while preserving existing optimizations and integrity protections.
+
+Integrated the findings into identity/control, knowledge, status effects, targeted actions, extensibility, the canonical declaration design, EPR and production-data trackers, and both navigation indexes. [Mechanic-growth guidance](scaling/mechanic-growth.md) separates large learned libraries from active selector/effect work, and connects indexed discovery, aggregate recurrence/locality, reverse dependencies and coherent activation to existing INV/EWF work. Reconciled stale migration/contact wording and explicitly superseded the research's independent-world-first recommendation with the accepted shared-world regional priority. Human-private restrictions, actual body contact and removal of arbitrary lifetime content caps remain unchanged.
+
+This delivery changes documentation only: no runtime fixes, database migrations, deployments, paid calls, game tests or load qualification. No implementation/acceptance checkbox was completed. Static review covers the named critical paths, not every line or possible defect; the audit records its limits and requires reinspection at implementation time.
+
 ## 2026-09-25 — Massive-scale architecture research
 
 Added the [massive-scale research dossier](../archive/02-research/massive-scale/README.md): 33 reference documents with 65 annotated source entries, a repository audit pinned to `3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238`, MMO/research comparisons, capacity arithmetic, and NOW/SOON/LATER guidance. The report separates whole-world fleet growth from dense-scene scale, private memory eligibility from physical storage, and native simulation from asynchronous intelligence.
@@ -146,7 +154,6 @@ Moved five unchecked TODO items into the focused tracker: PostgreSQL measurement
 Recorded the statement-count fixture and investigation limits in Verification, including the correction of an unverified remote-database explanation. Added D58/D59 for durability/storage-placement and retention/retry-policy choices. Reviewed the design for missed wakeups, privacy/recovery boundaries, unsafe multi-step batching, hidden database contention and unsupported speedup claims; the selected design preserves those boundaries and gates more complex mechanisms on measurements.
 
 - 2026-09-20: Reconciled architecture, extension guidance, domain notes, performance guidance and implementation status for draft-proven event appends, routine milestone acceptance, actor-local Person pagination and importance-only retrieval invalidation. Recorded isolated runtime evidence and deferred regression/async-fixture work separately.
-- [Historical entries remain authoritative only for their dated implementation.] 
 - 2026-09-21: Separated Person creation provenance from live Person editing. Documented description/personality/backstory/trait/goal ownership, how the first goal drives native planning, and which authored identity fields enter actor-private decision context.
 - 2026-09-21: Added Person-editor survival-stat snapshots, explicit refresh and fill-to-100 behavior. Documented field-level save merging so untouched simulation drift is preserved and deliberate god-stat edits override the opened snapshot.
 - 2026-09-21: Reconciled the cognition debugger contract around stable references, typed concise triggers, semantic stage names and root-only world-agent failure detail. Full sanitized stimuli remain restricted to owner raw inspection; automated coverage is explicitly deferred.

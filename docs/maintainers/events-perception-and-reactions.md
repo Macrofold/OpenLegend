@@ -12,6 +12,14 @@ This tracker owns the new stimulus/perception/reaction integration. PF retains g
 
 Attribute concerns now have a native private event/awareness path, saved hysteresis and band-fed ActorWork invalidation. This is a first EPR01/EPR04/EPR05 integration, not complete scope/episode/reminder delivery; see [Architecture](../architecture.md#extensible-attribute-foundation).
 
+## Current-code scaling follow-through
+
+[Audit SCA21–SCA40](../scaling/current-code-audit.md#sca21), pinned to `03105fed`, confirms the remaining external-event full-world enumeration, draft/dictionary-driven candidate rebuilds, all-observer encounter preparation and expensive ActorWork inputs before eligibility. EPR02/EPR03/EPR05/EPR10 remain the canonical work owners; their existing implemented subsets are not undone by these findings.
+
+Qualify distant population independently of legitimate local audience, history independently of fresh trigger count, and body-size skew independently of body count. Current touch means physical body contact, not the earlier proximity approximation. A large-body broad-phase optimization must preserve every real contact and the existing line-of-effect rule. Finite native contact behavior is not proof of dense-world scalability.
+
+[SC08](scaling.md#sc08) supplies the focused dirty-source embedding/failure-isolation child under D2/EPR05/CR; it fixes whole-pass termination after one actor's budget failure without retrying that paid attempt. [SC07](scaling.md#sc07) owns separately gated multi-actor execution fairness; EPR05 itself need not change concurrency to fix intake. [SC11](scaling.md#sc11) supplies durable source/publication fencing for EPR08/D1/D2. [SC15](scaling.md#sc15) covers native automatic-rule/resource indexes, not a second sensory pipeline.
+
 ## Read first and establish the baseline
 
 Read `AGENTS.md`, `docs/architecture.md`, `docs/events-perception-and-reactions.md`, `docs/performance.md`, `docs/save-and-load.md`, `docs/memory-architecture.md`, and the existing PF, CR, NC, and SL trackers. Use `docs/maintainers/README.md` for current owners.
@@ -43,15 +51,15 @@ Do not rely on line numbers from an earlier audit. The research pins a reference
 7. EPR08 and EPR09: complete restore, failure, and performance qualification.
 8. EPR10: advanced indexing only if its measured gate is met.
 
-Run relevant tests as each slice lands. EPR08 save semantics must be considered during EPR01, not designed after adding new state. EPR00 is not a requirement to finish a large benchmarking platform before fixing a confirmed scan.
+Run relevant tests as each slice lands under the repository's verification/authorization policy. EPR08 save semantics must be considered during EPR01, not designed after adding new state. EPR00 is not a requirement to finish a large benchmarking platform before fixing a confirmed scan.
 
-**Non-goals:** a new engine/ECS, global broker, per-object queues, arbitrary executable subscriptions, automatic paid retries, legacy-save compatibility, all-world event sourcing, physics LOD, new population promises, or a broad rewrite of cognition.
+**Non-goals:** a new engine/ECS, global broker, per-object queues, arbitrary executable subscriptions, automatic paid retries, parallel legacy runtimes, all-world event sourcing, physics LOD, new population promises, or a broad rewrite of cognition. Safe in-place development migrations follow the active save/load policy.
 
 ## EPR00 — Baseline, invariants, and task ownership
 
 **Dependencies:** none. Coordinate with PF00/PF09.
 
-- [ ] Record the current commit and locate the actual implementations and completed work. Confirm the active no-legacy-support policy; use disposable current-format saves for experiments.
+- [ ] Record the current commit and locate the actual implementations and completed work. Follow the active in-place development-update policy without maintaining a parallel legacy runtime; use disposable current-format saves for experiments.
 - [ ] Trace one directed speech request, one living-actor encounter, one ordinary-object acquisition, one need-protection episode, one reflection wakeup, and one story-selector decision. Separate physical occurrence, evidence, wakeup, model dispatch, and effect admission.
 - [ ] Add bounded counters to existing profiling: full entity traversals, spatial builds, query candidates, exact sense tests, event-audience candidates, actor input scans, retained experiences inspected, accepted/deferred opportunities, and queue age. No per-counter SQL writes.
 - [ ] Record current numerical thresholds and their distinct policy roles. Preserve existing survival, sleep, model gating, cooldown, and urgent-single-refresh behavior unless a later task explicitly changes the documented semantic boundary.
@@ -70,7 +78,7 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 - [ ] Define typed actor-intake metadata: actor, authority generation, source/episode, stable order, reason, applicable policy revision, simulation/wall deadline kind, and disposition. Reuse existing response/job identities where applicable.
 - [ ] Require scope to be assigned by trusted native/server code. Reject arbitrary model/client changes to audience, internal owner, policy, or priority authority.
 - [ ] Keep payload projection separate from record identity. Owner-private internal payloads cannot pass through the current generic spatial-audience branch.
-- [ ] Classify new fields as saved authority, deterministic derived state, or process resources. Update the save manifest/current format only when needed; add no old-format reader or migration.
+- [ ] Classify new fields as saved authority, deterministic derived state, or process resources. Apply small safe in-place migrations where required by the current save/load policy; preserve existing identity and unrelated state without per-feature legacy runtimes.
 - [ ] Preserve native consequences in the existing ordered transition. Define which later consumers receive after-commit IDs rather than callbacks capable of mutating world state immediately.
 
 **Tests:** scope cannot be forged; system-only signals never produce awareness; private records remain absent from another actor, ordinary client, and story-selector input; accepted IDs survive same-version save/load.
@@ -87,10 +95,11 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 - [ ] Invalidate candidate geometry after every relevant movement, teleport, spawn, removal, or sense-range change. An event's audience must use positions at that event's occurrence, not the end of a multi-step batch.
 - [ ] Preserve deterministic candidate/recipient ordering, existing sense formulas, domain transition boundaries, and RNG use. Do not replace `advanceWorld(1)` with a multi-second call as part of this optimization.
 - [ ] Record rebuild and candidate counts. Retain current grid structure initially; do not add a BVH, worker, or persistent reverse graph in this task.
+- [ ] Add the [SCA21–SCA22](../scaling/current-code-audit.md#sca21) regression shape: hold local audience and emitted events fixed while increasing distant/inert entities; separately vary immutable dictionary churn, drafts and receiver ranges. Attribute enumeration, index construction, exact tests, required acquisitions and downstream persistence separately.
 
 **Tests:** current-schema naive-query oracle versus optimized queries for random seeded positions, boundaries, obstacles where applicable, movement during a step, source removal after emission, sleepers, and ordinary/native animals. Compare audiences and event order, not only final position. Add a deliberately invalid index case that fails safely or rebuilds.
 
-**Exit:** the common object pass no longer performs one full-world scan per observer, and stable-geometry event bursts reuse candidate work without altering sensory results. Record any event-time boundary that still requires a rebuild.
+**Exit:** the common object pass no longer performs one full-world scan per observer, and stable-geometry event bursts reuse candidate work without altering sensory results. Record any event-time boundary that still requires a rebuild. No acceptance result may depend on an arbitrary witness cap or labeling budget-exhausted sensing as absence.
 
 ## EPR03 — Actor-private perception acquisition and exposure deltas
 
@@ -134,12 +143,13 @@ Coordinate EWF05 sense evidence through [EWF](extensible-world-foundation.md); e
 - [ ] Extend the existing `ActorWork`, not a second scheduler. Feed precise accepted changes into actor-specific dirty reasons and due state.
 - [ ] Remove general `telemetryRevision` from cognitive invalidation after replacing any genuinely required dependencies. Opening diagnostics, changing unrelated UI state, or finishing unrelated logging must not rescan everyone's perception.
 - [ ] Avoid recomputing every actor's nearby visibility before checking per-actor eligibility. Cheap dirty/deadline state selects candidates; only sensory changes cause sensory recomputation.
-- [ ] Replace full retained-experience reconstruction for trigger selection with bounded new-awareness/typed-reason consumption. Use existing durable order/cursors; full recall remains available for actual context assembly.
+- [ ] Replace full retained-experience reconstruction for trigger selection with indexed actor-scoped source/order and reaction-reason reads. Preserve the fresh current-opportunity snapshot and completed direct-response suppression; do not recreate an oldest-owed-event queue. Full eligible recall remains available separately for actual context assembly.
 - [ ] Adapt direct speech, autonomous evidence, private thresholds, exposure changes, and reminders into one intake. Preserve interactive priority and ensure one directed turn does not also create duplicate autonomous admission for the same response.
-- [ ] Preserve fairness, current global concurrency, cancellation, and the explicitly bounded urgent context-refresh policy. Do not introduce automatic provider-failure retries or unlimited supersession loops.
+- [ ] Preserve fairness, current global concurrency, cancellation, and the explicitly bounded urgent context-refresh policy. Do not introduce automatic provider-failure retries or unlimited supersession loops. Broader concurrency/fair-service changes have the separate SC07 scope.
 - [ ] Keep attempted-opportunity and consumed-evidence state distinct. A coalesced or deferred item is not completed evidence.
 - [ ] Make dirty-state acknowledgement generation-aware: a wakeup arriving while processing must remain pending after that run finishes. A stale run cannot clear newer dirty reasons.
 - [ ] Hold paid wakeups until their required input evidence is durably available. Reuse after-commit signaling and startup reconciliation; do not add a new broker.
+- [ ] Use [SCA33–SCA34](../scaling/current-code-audit.md#sca33) to measure callback preparation before `ready()`, retained-history traversal, deadline allocation and source/job reads. Replace unbounded argument-spread reductions where a large history can exceed runtime argument limits; a small final trigger list is not evidence of bounded preparation.
 
 **Tests:** idle steady world produces no repeated visibility/history scans beyond explicitly due work; unrelated actor changes stay scoped; new autonomous evidence is eligible without an actor cooldown; new wake during completion is not lost; commit-before-notification crash recovers; uncommitted rollback schedules no paid work; explicit speech has one admitted response; no model credentials never block native work.
 
@@ -180,11 +190,11 @@ Coordinate EWF05 sense evidence through [EWF](extensible-world-foundation.md); e
 **Dependencies:** begin design with EPR01; complete after EPR05–EPR07. Coordinate SL and PF, retaining their ownership.
 
 - [ ] Register semantic episode/latch/deadline state in current-format save capture where it affects continuation. Rebuild only truly derived spatial/ready indexes.
-- [ ] Fence old callbacks and pending work by current restore authority generation even when world ID and entity IDs recur. Do not use a rotating command-retry token as an unexplained substitute.
+- [ ] Fence old callbacks and pending work by current restore authority generation even when world ID and entity IDs recur. Do not use a rotating command-retry token as an unexplained substitute. Coordinate durable source-incarnation/publication checks with SC11/D1/D2.
 - [ ] Restore paused, rebuild a correct baseline without new paid calls or fake entries, and preserve current forgetting/access/accounting authority.
 - [ ] Bound pending metadata by count/bytes and processing by the existing performance budgets. Coalesce repeated wakeups while retaining distinct authoritative evidence in existing durable records.
 - [ ] On overflow, retain unconsumed cursors/backlog and expose actual coverage/deferred counts; never advance past lost evidence or block native emergency behavior behind optional work.
-- [ ] Define shutdown treatment of optional notifications separately from authoritative commits and paid attempts. Do not add legacy readers or migration fixtures under the active development policy.
+- [ ] Define shutdown treatment of optional notifications separately from authoritative commits and paid attempts. Preserve safe in-place migration and current-format restore under the active development policy; no parallel legacy execution path is required.
 
 **Tests:** same-version save/restore mid-exposure, mid-threshold episode, and with pending due work; old result after restore; queue saturation; slow store; failure during commit; privacy deletion followed by load; zero replayed paid work; no new-world initialization hooks called during rebaseline.
 
@@ -220,6 +230,8 @@ Begin with two observers and hundreds of objects so the user's scenario has a co
 | Hidden object, visible observer        | Private acquisition versus broadcast    | No third-party knowledge leak                                            |
 | Diagnostics open/closed                | Non-semantic telemetry                  | No extra perception or paid admission from inspection                    |
 | Pause/speed/restore                    | Clock and generation                    | No fabricated elapsed simulation or encounters                           |
+| One unusually large body, many small bodies | Size skew versus physical-contact output | Conservative exact contact with measured broad-phase extent cost; no proximity substitution |
+| One actor's indexing allowance exhausted | Failure isolation versus global progress | Other eligible actors progress through SC08 without retrying the failed source work |
 
 Record: seed, commit, runtime/build, hardware, database topology, actor/object counts, distribution, movement rate, emitted/acquired events, candidate and index counts, heap/allocations, native CPU, achieved simulation speed/debt, queue age, and command latency. Use the existing PF target budgets rather than inventing a competing target table.
 
@@ -233,7 +245,7 @@ Initial attribution can be short. Larger tail-percentile or soak claims require 
 
 - [ ] Record the specific trigger and expected metric before implementation. Leave this task open and skip it when the gate is absent.
 - [ ] Maintain spatial membership by spawn/remove/move and sense-relevant revisions, separate from general immutable entity-container changes. Update old and new neighborhoods, including within-cell exact-query dirtiness.
-- [ ] Add reverse observer relationships only if routing source-feature changes is otherwise costly; cap/rebuild them by current generation and source lifetime.
+- [ ] Add reverse observer relationships only if routing source-feature changes is otherwise costly; cap/rebuild optimization state by current generation and source lifetime without capping legitimate sensory exposure.
 - [ ] Add a deadline heap only when due-ticket scans dominate; retain a distinct clock domain and deterministic same-time tie-breaking.
 - [ ] Re-run the same correctness and workload matrix, including cache invalidation failure, restore, crowded hotspots, and total index memory.
 
@@ -243,4 +255,4 @@ Initial attribution can be short. Larger tail-percentile or soak claims require 
 
 Report the actual commit, completed EPR IDs, touched canonical docs, native/fixture checks, unrun live checks, measured before/after counters and timings, unresolved product policies, and deferred gates. Do not label a proposed system implemented because the documents were added.
 
-The coarse-contact slice adds saved private onset/detail/end episodes, receiver-aware default vision/hearing adapters and `felt`/`internal` awareness modalities through the existing intake path. This is partial EPR01/EPR04 integration, not the generalized episode, reaction-disposition, timer or change-fed scheduling service. [Current scope](../architecture.md#registered-senses-and-coarse-contact) and [native evidence](../verification.md#extensible-attribute-runtime) retain those distinctions; the existing task exit criteria remain open.
+The initial contact slice adds saved private onset/detail/end episodes, receiver-aware default vision/hearing adapters and `felt`/`internal` awareness modalities through the existing intake path. Current main uses physical body contact; earlier proximity-only measurements are historical. This is partial EPR01/EPR04 integration, not the generalized episode, reaction-disposition, timer or change-fed scheduling service. [Current scope](../architecture.md#registered-senses-and-coarse-contact) and [native evidence](../verification.md#extensible-attribute-runtime) retain those distinctions; the existing task exit criteria remain open.
