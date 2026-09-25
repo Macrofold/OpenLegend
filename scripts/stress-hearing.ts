@@ -99,7 +99,13 @@ try {
   // A separate producer may enqueue speech while tick() drains already-due native work.
   // Keep one request in flight, report unmet demand, and never hide overload with a lower rate.
   const scheduleSpeech = () => {
-    if (stopping || !rate || failure || attempted >= scheduledUtterances || performance.now() >= deadline)
+    if (
+      stopping ||
+      !rate ||
+      failure ||
+      attempted >= scheduledUtterances ||
+      performance.now() >= deadline
+    )
       return;
     const due = start + (attempted * 1000) / rate;
     speechTimer = setTimeout(
