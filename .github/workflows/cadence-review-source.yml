@@ -1,0 +1,43 @@
+name: Cadence review source
+on:
+  push:
+    branches: [review/simulation-cadence-work]
+    paths: [.github/workflows/cadence-review-source.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 2ca8dfe65b15efc0f27ff7d04dfe564f1e5ed515
+          path: spatial
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fdcbd31fc9e4eb31daaf00d997648aba588c8577
+          path: upstream
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: b72b683181f5a3147d603be619ad6dffb8efa988
+          path: hearing
+          persist-credentials: false
+      - name: Archive source only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED
+          with ZipFile('/tmp/cadence-source.zip', 'w', ZIP_DEFLATED) as out:
+              for root in ('spatial', 'upstream', 'hearing'):
+                  for path in Path(root).rglob('*'):
+                      if path.is_file() and '.git' not in path.parts:
+                          out.write(path)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cadence-source
+          path: /tmp/cadence-source.zip
+          retention-days: 2
