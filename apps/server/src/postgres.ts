@@ -1,4 +1,4 @@
-import { timed, recordDuration } from './performance.js';
+import { timed, recordDuration, gaugeMetric } from './performance.js';
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';
@@ -9,8 +9,11 @@ export class PostgresDatabase implements SqlDatabase {
   private client: pg.Client;
   private ready: Promise<void>;
   private tail: Promise<unknown> = Promise.resolve();
-  private transactionContext = new AsyncLocalStorage<boolean>();
+  private transactionContext = new AsyncLocalStorage<{ active: boolean }>();
   private failed = false;
+  private closing = false;
+  private queued = 0;
+  private closeResult?: Promise<void>;
   constructor(connectionString: string) {
     this.client = new pg.Client({
       connectionString,
@@ -34,31 +37,45 @@ export class PostgresDatabase implements SqlDatabase {
     );
   }
   private serial<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.closing) return Promise.reject(new Error('PostgreSQL connection is closing.'));
+    if (this.failed) return Promise.reject(new Error('PostgreSQL unavailable; restart and reconcile.'));
+    // Bound retained callbacks during a slow database operation; do not replay rejected work.
+    // docs/performance.md#preserve-order-without-one-global-database-bottleneck
+    if (this.queued >= 256) return Promise.reject(new Error('PostgreSQL admission queue is full.'));
+    gaugeMetric('postgres.queuedOperations', ++this.queued);
     const queuedAt = performance.now();
     const next = this.tail.then(() => {
       recordDuration('postgres.wait', performance.now() - queuedAt);
       return operation();
+    }).finally(() => {
+      gaugeMetric('postgres.queuedOperations', --this.queued);
     });
     this.tail = next.catch(() => undefined);
     return next;
   }
   async transaction<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.transactionContext.getStore()) return operation();
-    return this.serial(() =>
-      this.transactionContext.run(true, async () => {
-        await this.query('BEGIN');
+    if (this.transactionContext.getStore()?.active) return operation();
+    return this.serial(() => {
+      const scope = { active: true };
+      return this.transactionContext.run(scope, async () => {
         try {
-          const result = await operation();
-          await this.query('COMMIT');
-          return result;
-        } catch (error) {
-          await this.query('ROLLBACK').catch(() => {
-            this.failed = true;
-          });
-          throw error;
+          await this.query('BEGIN');
+          try {
+            const result = await operation();
+            await this.query('COMMIT');
+            return result;
+          } catch (error) {
+            await this.query('ROLLBACK').catch(() => {
+              this.failed = true;
+            });
+            throw error;
+          }
+        } finally {
+          // A detached callback cannot join a later transaction using an expired context.
+          scope.active = false;
         }
-      }),
-    );
+      });
+    });
   }
   async query(sql: string, params: unknown[] = []) {
     const execute = async () => {
@@ -87,7 +104,7 @@ export class PostgresDatabase implements SqlDatabase {
         );
       }
     };
-    return this.transactionContext.getStore() ? execute() : this.serial(execute);
+    return this.transactionContext.getStore()?.active ? execute() : this.serial(execute);
   }
   async exec(sql: string): Promise<void> {
     await this.query(sql);
@@ -99,10 +116,16 @@ export class PostgresDatabase implements SqlDatabase {
       run: (...params: unknown[]) => this.query(sql, params),
     };
   }
-  async close(): Promise<void> {
-    await this.tail;
-    await this.ready.catch(() => undefined);
-    this.failed = true;
-    await this.client.end();
+  close(): Promise<void> {
+    if (this.transactionContext.getStore()?.active)
+      return Promise.reject(new Error('Close PostgreSQL after the transaction completes.'));
+    if (this.closeResult) return this.closeResult;
+    this.closing = true;
+    return (this.closeResult = (async () => {
+      await this.tail;
+      await this.ready.catch(() => undefined);
+      this.failed = true;
+      await this.client.end();
+    })());
   }
 }
