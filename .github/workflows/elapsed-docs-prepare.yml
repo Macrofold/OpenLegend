@@ -48,10 +48,23 @@ jobs:
             const {data:parent}=await github.rest.git.getCommit({owner,repo,commit_sha:context.sha});
             const {data:tree}=await github.rest.git.createTree({owner,repo,base_tree:parent.tree.sha,tree:entries});
             fs.writeFileSync(process.env.RUNNER_TEMP+'/prepared-elapsed-docs.json',JSON.stringify({parent:context.sha,tree:tree.sha,entries},null,2));
+      - name: Retain diagnostic sources for review without publishing them
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import pathlib,zipfile,os,re
+          root=pathlib.Path.cwd()
+          paths=set(re.findall(r"(?:paragraph|replace|append|after_title)\('([^']+)'",(root/'.github/elapsed-docs.py').read_text()))
+          paths.add('.github/elapsed-docs.py')
+          with zipfile.ZipFile(pathlib.Path(os.environ['RUNNER_TEMP'])/'elapsed-docs-inspection.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in sorted(paths): z.write(root/p,p)
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: prepared-elapsed-docs
-          path: ${{ runner.temp }}/prepared-elapsed-docs.json
+          path: |
+            ${{ runner.temp }}/prepared-elapsed-docs.json
+            ${{ runner.temp }}/elapsed-docs-inspection.zip
           if-no-files-found: warn
           retention-days: 2
