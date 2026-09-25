@@ -1,4 +1,4 @@
-name: Dense persistence qualification
+name: Bounded persistence qualification
 on:
   push:
     branches: [design/action-repertoire-and-capability-grounding]
@@ -28,18 +28,18 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Baseline native and real server measurements
+      - name: Matched baseline
         run: |
           node --import tsx .github/persistence-exercise.mjs /tmp/persistence-before.json > /tmp/before.log
           printf '%s\n' '{"seed":73,"people":100,"animals":0,"layout":"crowded","warmup":0,"objects":[{"count":500,"name":"Profiling gem","properties":["rigid"]}]}' > /tmp/dense.json
           node --import tsx scripts/performance/profile-server.mjs /tmp/dense.json /tmp/server-before.json 15 1 > /tmp/server-before.log
-      - name: Implement and build the first slice
+      - name: Implement bounded construction and build
         run: |
-          python .github/persistence-linearize.py
-          pnpm exec prettier --write apps/server/src/history.ts apps/server/src/store.ts apps/server/src/sqlite-database.ts apps/server/src/performance.ts docs/maintainers/performance.md docs/maintainers/TODO.md
+          python .github/persistence-bounded.py
+          pnpm exec prettier --write apps/server/src/history.ts apps/server/src/history-preparation.ts apps/server/src/history-batch.ts apps/server/src/store.ts packages/domain/src/events.ts docs/performance.md docs/architecture.md docs/maintainers/performance.md docs/maintainers/TODO.md
           pnpm run build
           git diff --check
-      - name: Exercise native and transactional behavior after the change
+      - name: Native and real server qualification
         run: |
           node --import tsx .github/persistence-exercise.mjs /tmp/persistence-after.json > /tmp/after.log
           node --import tsx scripts/performance/profile-server.mjs /tmp/dense.json /tmp/server-after.json 15 1 > /tmp/server-after.log
@@ -48,16 +48,23 @@ jobs:
           before=json.loads(pathlib.Path('/tmp/persistence-before.json').read_text());after=json.loads(pathlib.Path('/tmp/persistence-after.json').read_text())
           for old,new in zip(before['cases'],after['cases']):
             if old['worldDigest']!=new['worldDigest'] or old['history']!=new['history']: raise RuntimeError('Changed authoritative native/history outcome: '+old['name'])
-          report={'scope':'Matched baseline/linear lookup slice on one runner; isolated SQLite history plus actual HTTP/SSE/timer/SQLite workload. No unit/browser suites or paid models.','baseline':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'before':before,'after':after,'serverBefore':json.loads(pathlib.Path('/tmp/server-before.json').read_text()),'serverAfter':json.loads(pathlib.Path('/tmp/server-after.json').read_text())}
-          pathlib.Path('docs/verification/persistence-linearization.json').write_text(json.dumps(report,indent=2)+'\n')
-          print(json.dumps({'nativeAndHistoryDigestsMatch':True,'commitsBefore':{r['name']:r['commits'] for r in before['cases']},'commitsAfter':{r['name']:r['commits'] for r in after['cases']},'beforeServer':report['serverBefore']['phases'][0]['achievedSpeed'],'afterServer':report['serverAfter']['phases'][0]['achievedSpeed']},indent=2))
+          report={'scope':'Matched A/Bounded-construction slice on one runner; real SQLite history and HTTP/SSE/timer. No automated suites or paid models.','baseline':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'before':before,'after':after,'serverBefore':json.loads(pathlib.Path('/tmp/server-before.json').read_text()),'serverAfter':json.loads(pathlib.Path('/tmp/server-after.json').read_text())}
+          pathlib.Path('docs/verification/persistence-bounded.json').write_text(json.dumps(report,indent=2)+'\n')
+          summary={'run':report['run'],'cpu':after['cpu'],'nativeAndHistoryDigestsMatch':True,'before':{r['name']:{'nativeMs':r['nativeMs'],'commits':r['commits']} for r in before['cases']},'after':{r['name']:{'nativeMs':r['nativeMs'],'commits':r['commits']} for r in after['cases']}}
+          for variant in ['serverBefore','serverAfter']:
+            p=report[variant]['phases'][0]
+            summary[variant]={k:p[k] for k in ['achievedSpeed','eventLoop','heapUsedBytes','storageError','memoryBacklog','counters']}
+            summary[variant]['commands']=p['client']['commands']
+            summary[variant]['metrics']={k:v for k,v in p['metrics'].items() if k.startswith(('history.','sqlite.','persistence.','native.','public.'))}
+          pathlib.Path('docs/verification/persistence-bounded-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
           PY
-      - name: Commit the verified implementation slice
+      - name: Commit implemented slice
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add apps/server/src/history.ts apps/server/src/store.ts apps/server/src/sqlite-database.ts apps/server/src/performance.ts docs/maintainers/performance.md docs/maintainers/TODO.md docs/verification/persistence-linearization.json
-          git commit -m '[skip ci] perf: linearize history perspective lookup and attribute transaction costs'
+          git add apps/server/src/history.ts apps/server/src/history-preparation.ts apps/server/src/history-batch.ts apps/server/src/store.ts packages/domain/src/events.ts docs/performance.md docs/architecture.md docs/maintainers/performance.md docs/maintainers/TODO.md docs/verification/persistence-bounded.json docs/verification/persistence-bounded-summary.json
+          git commit -m '[skip ci] perf: bound history construction and avoid native perspective reparsing'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
       - name: Retain failure diagnostics
         if: failure()
