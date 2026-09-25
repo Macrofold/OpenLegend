@@ -16,6 +16,8 @@ export interface Scenario {
   layout: 'crowded' | 'scattered';
   steps: number;
   warmup: number;
+  /** Requested game time per diagnostic call, not a mandatory tick. */
+  intervalSeconds: number;
   speed: number;
   timeoutSeconds: number;
   objects: Array<{
@@ -57,6 +59,7 @@ export function parseScenario(value: unknown): Scenario {
         'layout',
         'steps',
         'warmup',
+        'intervalSeconds',
         'speed',
         'timeoutSeconds',
         'objects',
@@ -103,6 +106,7 @@ export function parseScenario(value: unknown): Scenario {
     layout: (v.layout ?? 'scattered') as Scenario['layout'],
     steps: integer(v.steps, 180, 1, 100000),
     warmup: integer(v.warmup, 30, 0, 10000),
+    intervalSeconds: integer(v.intervalSeconds, 1, 1, 86400),
     speed: integer(v.speed, 1, 1, 100),
     timeoutSeconds: integer(v.timeoutSeconds, 60, 1, 600),
     objects,
