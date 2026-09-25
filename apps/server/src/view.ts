@@ -419,6 +419,7 @@ export async function projectView(
                     ? ({
                         pickup: 'Picking up items',
                         move: 'Walking',
+                        follow: 'Following',
                         replenish: 'Replenishing',
                         gather: 'Gathering',
                         'status-effect': 'Active state',
@@ -576,6 +577,7 @@ export async function projectView(
     observation.visibleEntities.find((entity) => entity.id === work.targetId)?.name;
   const workLabels: Record<string, string> = {
     move: 'Walking',
+    follow: 'Following',
     replenish: 'Replenishing',
     'status-effect':
       world.statusEffectPolicy.definitions.find((d) => d.id === work?.definitionId)?.label ??
@@ -688,7 +690,7 @@ export async function projectView(
             advancing: !paused && actor.action.stage === 'working',
             label: workLabels[actor.action.type] ?? 'Working',
             progress:
-              actor.action.stage === 'approaching'
+              actor.action.stage === 'approaching' || actor.action.type === 'follow'
                 ? 0
                 : actor.action.totalSeconds === 0
                   ? 1
@@ -716,6 +718,15 @@ export async function projectView(
       ),
       history: `Your life in this clearing began on Day 1. You have lived here for ${Math.floor(world.simTime / 86400)} full days.`,
       inventory,
+      actionAttempts: memo('player-action-attempts', [actor.agency.attempts], () =>
+        actor.agency.attempts.map((attempt) => ({
+          id: attempt.id,
+          description: attempt.description,
+          status: attempt.status,
+          mode: attempt.mode,
+          ...(attempt.alternative ? { fulfillment: attempt.alternative.fulfillment } : {}),
+        })),
+      ),
       actions: playerActions,
     },
     entities,
