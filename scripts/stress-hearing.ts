@@ -36,9 +36,13 @@ const service = new WorldService(store, config);
 let heartbeat: ReturnType<typeof setInterval> | undefined;
 let heartbeatWork: Promise<unknown> | undefined;
 let failure: unknown;
+let stopping = false;
+let speechTimer: ReturnType<typeof setTimeout> | undefined;
+let speechWork: Promise<void> | undefined;
 const speechMs: number[] = [],
   tickMs: number[] = [],
-  projectionMs: number[] = [];
+  projectionMs: number[] = [],
+  speechLatenessMs: number[] = [];
 const summarize = (values: number[]) => {
   values.sort((a, b) => a - b);
   return {
@@ -85,31 +89,57 @@ try {
   }, 2000);
   const start = performance.now(),
     initialTime = service.world.simTime;
+  const deadline = start + seconds * 1000;
+  const scheduledUtterances = seconds * rate;
   let previous = start,
-    nextSpeech = start,
     accepted = 0,
+    attempted = 0,
     views = 0,
     encodedBytes = 0;
+  // A separate producer may enqueue speech while tick() drains already-due native work.
+  // Keep one request in flight, report unmet demand, and never hide overload with a lower rate.
+  const scheduleSpeech = () => {
+    if (stopping || !rate || failure || attempted >= scheduledUtterances || performance.now() >= deadline)
+      return;
+    const due = start + (attempted * 1000) / rate;
+    speechTimer = setTimeout(
+      () => {
+        speechTimer = undefined;
+        if (performance.now() >= deadline) return;
+        const index = attempted++;
+        const at = performance.now();
+        speechLatenessMs.push(Math.max(0, at - due));
+        speechWork = service
+          .transition((world) =>
+            executeCommand(world, {
+              id: `hearing-profile-${index}`,
+              type: 'say',
+              actorId: speakers[index % speakers.length]!,
+              text: `Observation ${index}: We can meet near the trees after dinner and decide where to build our shelter together.`,
+              volume: (['whisper', 'normal', 'shout'] as const)[index % 3],
+            }),
+          )
+          .then((result) => {
+            if (!result.ok) throw new Error(result.message);
+            speechMs.push(performance.now() - at);
+            accepted++;
+          })
+          .catch((error: unknown) => {
+            failure = error;
+          })
+          .finally(() => {
+            speechWork = undefined;
+            scheduleSpeech();
+          });
+      },
+      Math.max(0, due - performance.now()),
+    );
+  };
+  scheduleSpeech();
   console.error('hearing profile: native simulation, disk commits and full public views');
-  while (performance.now() - start < seconds * 1000) {
+  while (performance.now() < deadline) {
     if (failure) throw failure;
     const turn = performance.now();
-    if (rate && turn >= nextSpeech) {
-      const at = performance.now();
-      const result = await service.transition((world) =>
-        executeCommand(world, {
-          id: `hearing-profile-${accepted}`,
-          type: 'say',
-          actorId: speakers[accepted % speakers.length]!,
-          text: `Observation ${accepted}: We can meet near the trees after dinner and decide where to build our shelter together.`,
-          volume: (['whisper', 'normal', 'shout'] as const)[accepted % 3],
-        }),
-      );
-      if (!result.ok) throw new Error(result.message);
-      speechMs.push(performance.now() - at);
-      accepted++;
-      nextSpeech += 1000 / rate;
-    }
     const tickAt = performance.now();
     await service.tick((tickAt - previous) / 1000, 0);
     previous = tickAt;
@@ -122,6 +152,9 @@ try {
     const remaining = 50 - (performance.now() - turn);
     if (remaining > 0) await new Promise((done) => setTimeout(done, remaining));
   }
+  stopping = true;
+  if (speechTimer) clearTimeout(speechTimer);
+  await speechWork;
   // Account the final admitted interval; include the drain/flush in measured wall time.
   await service.tick((performance.now() - previous) / 1000, 0);
   await service.flush();
@@ -135,7 +168,9 @@ try {
     entities: Object.keys(service.world.entities).length,
     speakers: speakers.length,
     requestedSpeed: 8,
-    scheduledUtterances: seconds * rate,
+    scheduledUtterances,
+    attemptedUtterances: attempted,
+    unattemptedUtterances: scheduledUtterances - attempted,
     acceptedUtterances: accepted,
     wallMs,
     simulatedSeconds,
@@ -143,6 +178,7 @@ try {
     views,
     encodedBytes,
     speech: summarize(speechMs),
+    speechLateness: summarize(speechLatenessMs),
     ticks: summarize(tickMs),
     projection: summarize(projectionMs),
     heapBytes: process.memoryUsage().heapUsed,
@@ -155,6 +191,10 @@ try {
   });
   console.log(JSON.stringify(report, null, 2));
 } finally {
+  // Stop producers before draining their last admitted operation and closing the owned store.
+  if (speechTimer) clearTimeout(speechTimer);
+  stopping = true;
+  await speechWork;
   if (heartbeat) clearInterval(heartbeat);
   await heartbeatWork;
   await store.close();
