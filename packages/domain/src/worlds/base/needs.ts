@@ -43,14 +43,14 @@ export function advanceWildernessNeeds(
   entity: Entity,
   seconds: number,
   exhaustedSeconds = entity.actor?.energy === 0 ? seconds : 0,
+  starvingSeconds = Math.max(
+    0,
+    seconds - (entity.actor?.fullness ?? 0) / WILDERNESS_NEEDS.fullnessPerSecond,
+  ),
 ): boolean {
   const actor = entity.actor!;
   if (!hasWildernessNeeds(actor)) return false;
   const previous = actor.health;
-  const starvingSeconds = Math.max(
-    0,
-    seconds - actor.fullness / WILDERNESS_NEEDS.fullnessPerSecond,
-  );
   setWildernessNeed(
     actor,
     'fullness',

@@ -41,7 +41,8 @@ const freezeStarted = performance.now();
 if (!mutable) freezeWorld(world);
 const initialFreezeMs = performance.now() - freezeStarted;
 const step = () => {
-  world = advanceWorld(world, 1).world;
+  // One bounded prefix makes interval cost visible; throughput uses actual progressed time.
+  world = advanceWorld(world, scenario?.intervalSeconds ?? 1, { maxIntervals: 1 }).world;
   if (!mutable) freezeWorld(world);
 };
 const setupMs = performance.now() - setupAt;
@@ -95,6 +96,8 @@ try {
         node: process.version,
         status: completedSteps === steps ? 'completed' : 'blocked',
         simulatedSeconds,
+        offeredGameSecondsPerCall: scenario?.intervalSeconds ?? 1,
+        integration: 'boundary-limited-prefix',
         completedSteps,
         attemptedSteps: durations.length,
         initial,

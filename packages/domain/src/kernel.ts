@@ -1,3 +1,4 @@
+import { objectExposureQuery } from './object-exposure.js';
 import { observerDescription } from './worlds/base/knowledge.js';
 import { BASE_ACTION_DEFAULTS, nativeMovementSpeed } from './worlds/base/actions.js';
 import { nativeInterval } from './temporal-boundaries.js';
@@ -269,8 +270,11 @@ function approach(world: WorldState, actor: Entity, action: Action): Outcome | n
  * block time: the next native step reconciles them. Never include another actor's destination
  * in the public barrier indicator. docs/architecture.md#navigation-preparation
  */
-export function navigationBlocked(world: WorldState): boolean {
-  return Object.values(world.entities).some((entity) => {
+export function navigationBlocked(world: WorldState, actorIds?: readonly string[]): boolean {
+  const actors = actorIds
+    ? actorIds.map((id) => world.entities[id]!)
+    : Object.values(world.entities);
+  return actors.some((entity) => {
     const request = entity.actor?.action?.navigation;
     if (!entity.actor?.alive || entity.actor.incapacitated || !request || request.failure)
       return false;
@@ -1310,6 +1314,9 @@ function advanceAction(
       failAction(world, actor, events, error.message);
       return;
     }
+    // A moving target may enter reach during this phase. Work begins at that
+    // endpoint, never retroactively over the preceding approach interval.
+    seconds = 0;
   }
   if (
     ['gather', 'harvest', 'cook', 'pickup'].includes(action.type) &&
@@ -1520,12 +1527,16 @@ function nativeReservoirResponse(world: WorldState, actor: Entity): void {
 }
 
 /** This finite native step changes entity state, not participant components/membership.
- * Compile IDs outside the draft so inert scenery is not proxied/sorted every second. A nested
+ * Compile IDs outside the draft so inert scenery is not proxied/sorted every interval. A nested
  * command can install a new world; refresh there before the next native phase. Future native
  * spawning/component mutations must also refresh this roster, never retain revoked draft entities.
  * docs/performance.md#simulation-cpu-and-growing-history
  */
-function nativeParticipants(world: WorldState): { actors: string[]; ambient: string[] } {
+function nativeParticipants(world: WorldState): {
+  actors: string[];
+  ambient: string[];
+  statuses: string[];
+} {
   const source = isDraft(world.entities) ? current(world.entities) : world.entities;
   const active = Object.values(source)
     .filter((e) => e.actor || e.animal || e.heat)
@@ -1533,6 +1544,9 @@ function nativeParticipants(world: WorldState): { actors: string[]; ambient: str
   return {
     actors: active.filter((e) => e.actor).map((e) => e.id),
     ambient: active.map((e) => e.id),
+    statuses: Object.values(source)
+      .filter((e) => mayAdvanceStatusEffects(world, e))
+      .map((e) => e.id),
   };
 }
 
@@ -1581,12 +1595,12 @@ export function advanceWorld(
   const events: WorldEvent[] = [];
   let remaining = elapsedSimSeconds,
     intervals = 0;
-  while (remaining > 0 && intervals < maxIntervals && !navigationBlocked(world)) {
-    let statusIds = Object.values(
-      isDraft(world.entities) ? current(world.entities) : world.entities,
-    )
-      .filter((e) => mayAdvanceStatusEffects(world, e))
-      .map((e) => e.id);
+  while (
+    remaining > 0 &&
+    intervals < maxIntervals &&
+    !navigationBlocked(world, participants.actors)
+  ) {
+    let statusIds = participants.statuses;
     for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
     advanceCommitments(world, []);
     reconcileConversations(world);
@@ -1650,11 +1664,9 @@ export function advanceWorld(
     }
     // Nested commands can replace entities or status attributes. Reuse the speech branch's
     // conservative roster helper; never retain revoked draft references across that boundary.
-    statusIds = Object.values(isDraft(world.entities) ? current(world.entities) : world.entities)
-      .filter((e) => mayAdvanceStatusEffects(world, e))
-      .map((e) => e.id);
+    statusIds = participants.statuses;
     for (const id of statusIds) reconcileStatusEffects(world, world.entities[id]!, events);
-    if (navigationBlocked(world)) break;
+    if (navigationBlocked(world, participants.actors)) break;
     const status = statusIds.flatMap((id) => prepareStatusRates(world, world.entities[id]!));
     const interval = nativeInterval(
       world,
@@ -1733,7 +1745,12 @@ export function advanceWorld(
       if (!actor || !component?.alive || component.incapacitated) continue;
       if (
         hasWildernessNeeds(component) &&
-        advanceWildernessNeeds(actor, seconds, interval.exhausted.has(id) ? seconds : 0)
+        advanceWildernessNeeds(
+          actor,
+          seconds,
+          interval.exhausted.has(id) ? seconds : 0,
+          interval.starving.has(id) ? seconds : 0,
+        )
       )
         reconcileBody(world, actor, events, 'needs');
       if (!component.alive || component.incapacitated) continue;
@@ -1775,7 +1792,7 @@ export function advanceWorld(
     events,
     outcome(
       true,
-      navigationBlocked(world)
+      navigationBlocked(world, participants.actors)
         ? 'navigation-pending'
         : remaining > 0
           ? 'advance-budget'
@@ -1785,6 +1802,7 @@ export function advanceWorld(
   );
 }
 
+const episodeMembership = new WeakMap<object, { people: string[]; objects: string[] }>();
 /** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
 function updateEncounters(
   world: WorldState,
@@ -1795,10 +1813,13 @@ function updateEncounters(
   if (!actorIds.some((id) => world.entities[id]?.actor?.alive && hasMemory(world.entities[id])))
     return;
   const hadObjectExposures = original.visibleObjects !== undefined;
+  const encounter = (observer: Entity, id: string, meaningful: boolean) =>
+    recordVisualAcquisition(world, events, observer, id, meaningful);
 
   // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
   // Snapshot identity, transforms and body height; event mutations still use the authoritative draft.
-  const entities = Object.values(world.entities).map((entity) => ({
+  const snapshot = isDraft(world.entities) ? current(world.entities) : world.entities;
+  const entities = Object.values(snapshot).map((entity) => ({
     entity,
     id: entity.id,
     position: isDraft(entity.position) ? current(entity.position) : entity.position,
@@ -1809,7 +1830,10 @@ function updateEncounters(
   }));
   const nearby = spatialCandidates(entities.filter((e) => e.alive));
   let nearbyAll: ReturnType<typeof spatialCandidates<(typeof entities)[number]>> | undefined;
-  const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
+  const objectsFor = objectExposureQuery(
+    world,
+    entities.filter((e) => e.object),
+  );
   for (const actor of entities.filter(
     (e) => e.alive && e.memory && !capabilityBlocked(world, e.entity, 'perception'),
   )) {
@@ -1889,7 +1913,7 @@ function updateEncounters(
         Object.keys(contacts).length !== Object.keys(prior).length ||
         Object.entries(contacts).some(([id, c]) => c !== prior[id])
       )
-        actor.entity.actor!.contacts = contacts;
+        world.entities[actor.id]!.actor!.contacts = contacts;
     }
     if (radius === 0) {
       if (
@@ -1900,24 +1924,42 @@ function updateEncounters(
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
-    const previouslySeen = new Set(previous);
-    const seen = nearby(actor.position, radius + 2)
+    let seen = nearby(actor.position, radius + 2)
       .filter((e) => e.id !== actor.id && e.alive && sees(e))
       .map((e) => e.id);
-    const objects = nearbyObjects(actor.position, radius).filter((entity) => sees(entity));
-    const objectIds = objects.map((entity) => entity.id);
+    let objectIds = objectsFor(actor.entity);
+    const previousObjects = original.visibleObjects?.[actor.id];
+    const samePeople = seen.length === previous.length && seen.every((id, i) => id === previous[i]);
+    const sameObjects =
+      !!previousObjects &&
+      (objectIds === previousObjects ||
+        (objectIds.length === previousObjects.length &&
+          objectIds.every((id, i) => id === previousObjects[i])));
+    if (samePeople) seen = previous;
+    if (sameObjects) objectIds = previousObjects!;
     // Persistent exposure episodes do not imply identity recognition across a disappearance.
     // docs/knowledge.md#subject-binding
     const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
-    const exposed = [...seen, ...objectIds];
-    if (
-      exposed.length !== Object.keys(priorEpisodes).length ||
-      exposed.some((id) => !priorEpisodes[id])
-    )
-      (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
-        exposed.map((id) => [id, priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`]),
-      );
-    for (const id of seen.filter((id) => !previouslySeen.has(id))) {
+    const certified = Object.isFrozen(priorEpisodes)
+      ? episodeMembership.get(priorEpisodes)
+      : undefined;
+    if (certified?.people !== seen || certified.objects !== objectIds) {
+      const exposed = [...seen, ...objectIds];
+      if (
+        exposed.length !== Object.keys(priorEpisodes).length ||
+        exposed.some((id) => !priorEpisodes[id])
+      )
+        (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
+          exposed.map((id) => [
+            id,
+            priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`,
+          ]),
+        );
+      else if (Object.isFrozen(priorEpisodes))
+        episodeMembership.set(priorEpisodes, { people: seen, objects: objectIds });
+    }
+    const previouslySeen = samePeople ? null : new Set(previous);
+    for (const id of samePeople ? [] : seen.filter((id) => !previouslySeen!.has(id))) {
       const recent = (world.memories[actor.id] ?? []).some(
         (m) =>
           m.kind === 'episode' &&
@@ -1925,30 +1967,17 @@ function updateEncounters(
           (m.summary.startsWith('I saw ') || m.eventType === 'encounter') &&
           world.simTime - m.at < 3600,
       );
-      if (!recent) recordVisualAcquisition(world, events, actor.entity, id, true);
+      if (!recent) encounter(actor.entity, id, true);
     }
-    if (
-      !original.visiblePeople?.[actor.id] ||
-      seen.length !== previous.length ||
-      seen.some((id, index) => id !== previous[index])
-    )
+    if (!original.visiblePeople?.[actor.id] || !samePeople)
       (world.visiblePeople ??= {})[actor.id] = seen;
-    // Object exposures use the same committed awareness path without a cognition trigger.
-    const priorObjects = new Set(
-      original.visibleObjects?.[actor.id] ??
-        (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
-    );
-    for (const entity of objects)
-      if (!priorObjects.has(entity.id))
-        recordVisualAcquisition(world, events, actor.entity, entity.id, false);
-    const previousObjects = original.visibleObjects?.[actor.id];
-    // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).
-    if (
-      !previousObjects ||
-      objectIds.length !== previousObjects.length ||
-      objectIds.some((id, index) => id !== previousObjects[index])
-    )
+    if (!sameObjects) {
+      // Unchanged frozen membership needs neither a set rebuild nor another exposure scan.
+      // Captions/speech still resolve event-time evidence independently of this visual cache.
+      const priorObjects = new Set(previousObjects ?? (hadObjectExposures ? [] : objectIds));
+      for (const id of objectIds) if (!priorObjects.has(id)) encounter(actor.entity, id, false);
       (world.visibleObjects ??= {})[actor.id] = objectIds;
+    }
   }
 }
 

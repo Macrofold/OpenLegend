@@ -30,10 +30,11 @@ export function nativeInterval(
   ambientIds: readonly string[],
   statusIds: readonly string[],
   status: readonly StatusRateInterval[],
-): { seconds: number; exhausted: Set<string> } {
+): { seconds: number; exhausted: Set<string>; starving: Set<string> } {
   let bound = Math.min(requested, BASE_TIME_POLICY.idleHorizonSeconds);
   const rates = statusAttributeRates(status),
-    exhausted = new Set<string>();
+    exhausted = new Set<string>(),
+    starving = new Set<string>();
   const manifest = isDraft(world.moduleManifest)
     ? original(world.moduleManifest)!
     : world.moduleManifest;
@@ -55,6 +56,11 @@ export function nativeInterval(
     for (const d of manifest.definitions) {
       const value = readAttribute(actor, d);
       if (typeof value !== 'number' || d.schema.kind !== 'number') continue;
+      const statusRate = rates.get(id)?.get(d.id) ?? 0;
+      // Serial native/status clamps aren't a general coupled-flow solver. Keep these
+      // authored combinations conservative until a net-flow operation owns their semantics.
+      if (statusRate && (d.reservoir || d.implementation === 'native-fullness-v1'))
+        bound = Math.min(bound, 1);
       if (d.implementation === 'native-fullness-v1' && hasWildernessNeeds(actor))
         addRate(rates, id, d.id, -WILDERNESS_NEEDS.fullnessPerSecond);
       if (d.reservoir) addRate(rates, id, d.id, -d.reservoir.drainPerSecond);
@@ -70,6 +76,7 @@ export function nativeInterval(
         action.attributeId === d.id &&
         d.reservoir
       ) {
+        if (d.reservoir.drainPerSecond > 0) bound = Math.min(bound, 1);
         addRate(rates, id, d.id, d.reservoir.replenishPerSecond);
         if (action.targetId)
           supplies.set(
@@ -78,6 +85,7 @@ export function nativeInterval(
           );
       }
       const rate = rates.get(id)?.get(d.id) ?? 0;
+      if (d.implementation === 'native-fullness-v1' && value === 0 && rate <= 0) starving.add(id);
       const thresholds =
         d.implementation === 'native-fullness-v1'
           ? BASE_TIME_POLICY.fullnessBoundaries
@@ -95,12 +103,13 @@ export function nativeInterval(
     }
     if (hasWildernessNeeds(actor)) {
       const damage =
-        (actor.fullness === 0 ? WILDERNESS_NEEDS.starvationDamagePerSecond : 0) +
+        (starving.has(id) ? WILDERNESS_NEEDS.starvationDamagePerSecond : 0) +
         (exhausted.has(id) ? WILDERNESS_NEEDS.exhaustionDamagePerSecond : 0);
       if (damage) {
         bound = Math.min(bound, actor.health / damage);
         for (const d of manifest.definitions)
-          if (d.implementation === 'native-health-v1') addRate(rates, id, d.id, -damage);
+          if (d.implementation === 'native-health-v1')
+            addRate(rates, id, d.id, (-damage * 100) / (actor.body?.maxHealth ?? 100));
       }
     }
     if (!action || action.type === 'status-effect') continue;
@@ -193,5 +202,5 @@ export function nativeInterval(
       if (old !== undefined && old !== sign && old !== 0 && sign !== 0) bound = Math.min(bound, 1);
       signs.set(key, sign);
     }
-  return { seconds: Math.min(requested, Math.max(TIME_EPSILON, bound)), exhausted };
+  return { seconds: Math.min(requested, Math.max(TIME_EPSILON, bound)), exhausted, starving };
 }

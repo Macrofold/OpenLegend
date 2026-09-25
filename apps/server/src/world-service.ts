@@ -683,7 +683,7 @@ export class WorldService {
     });
   }
 
-  /** Fixed simulation steps with routine durability coalesced to one real second. */
+  /** Boundary-limited elapsed integration; routine durability retains its real-time policy. */
   async tick(
     elapsedRealSeconds: number,
     suspendedRealSeconds = elapsedRealSeconds > 2 ? elapsedRealSeconds : 0,
