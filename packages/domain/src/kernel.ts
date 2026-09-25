@@ -37,6 +37,7 @@ import {
 } from './world-modules.js';
 import { spatialCandidates, nearbyEntities } from './spatial.js';
 import { objectExposureQuery } from './object-exposure.js';
+import { encounterPhase } from './encounter-cache.js';
 import { changeConversation } from './conversations.js';
 import {
   canSpeak,
@@ -45,7 +46,7 @@ import {
   reconcileBody,
   commitBodyEffects,
 } from './living.js';
-import { draftWorld, cloneValue } from './draft.js';
+import { draftWorld, cloneValue, finishWorld, freezeWorld } from './draft.js';
 import { experiences } from './experience.js';
 import {
   advanceStatusEffects,
@@ -1392,14 +1393,20 @@ function nativeReservoirResponse(world: WorldState, actor: Entity): void {
  * spawning/component mutations must also refresh this roster, never retain revoked draft entities.
  * docs/performance.md#simulation-cpu-and-growing-history
  */
-function nativeParticipants(world: WorldState): { actors: string[]; ambient: string[] } {
+function nativeParticipants(world: WorldState): {
+  actors: string[];
+  ambient: string[];
+  status: string[];
+} {
   const source = isDraft(world.entities) ? current(world.entities) : world.entities;
-  const active = Object.values(source)
+  const entries = Object.values(source);
+  const active = entries
     .filter((e) => e.actor || e.animal || e.heat)
     .sort((a, b) => a.id.localeCompare(b.id));
   return {
     actors: active.filter((e) => e.actor).map((e) => e.id),
     ambient: active.map((e) => e.id),
+    status: entries.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id),
   };
 }
 
@@ -1433,15 +1440,18 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
   let world = draftWorld(original);
   const events: WorldEvent[] = [];
   let remaining = elapsedSimSeconds;
+  let initialStatus: string[] | undefined = participants.status;
   while (remaining > 0) {
     const seconds = Math.min(1, remaining);
     remaining -= seconds;
     world.simTime += seconds;
     // Status operations also apply to non-actor entities, in saved entity/definition order.
-    const statusSnapshot = isDraft(world.entities) ? current(world.entities) : world.entities;
-    const statusIds = Object.values(statusSnapshot)
-      .filter((entity) => mayAdvanceStatusEffects(world, entity))
-      .map((entity) => entity.id);
+    const statusIds =
+      initialStatus ??
+      Object.values(isDraft(world.entities) ? current(world.entities) : world.entities)
+        .filter((entity) => mayAdvanceStatusEffects(world, entity))
+        .map((entity) => entity.id);
+    initialStatus = undefined;
     for (const id of statusIds) advanceStatusEffects(world, world.entities[id]!, seconds, events);
     // Stable actor order resolves finite-resource claims; no asynchronous writer mutates a step.
     for (const actorId of participants.actors) {
@@ -1511,12 +1521,20 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
       }
     }
   }
-  updateEncounters(world, original, events, participants.actors);
-  return finish(
+  // Finalize changed physical state once rather than materializing it for sensing and
+  // traversing it again at publication. This neither advances time nor emits/commits an event.
+  // Mutable authoring inputs retain their existing ownership. docs/performance.md#simulation-cpu-and-growing-history
+  const physical = Object.isFrozen(original) ? freezeWorld(finishWorld(world)) : world;
+  const exposure = encounterPhase(original, physical);
+  world = physical === world ? world : draftWorld(physical);
+  if (!exposure.unchanged) updateEncounters(world, original, events, participants.actors);
+  const result = finish(
     world,
     events,
     outcome(true, 'advanced', `Advanced ${elapsedSimSeconds} simulation seconds.`),
   );
+  exposure.complete(result.world);
+  return result;
 }
 
 const episodeMembership = new WeakMap<object, { people: string[]; objects: string[] }>();
