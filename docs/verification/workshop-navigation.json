@@ -1,0 +1,111 @@
+{
+  "baseline": "4603a539fbc882f16e078207af815fe573e01451",
+  "environment": {
+    "node": "v22.16.0",
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "availableParallelism": 4,
+    "platform": "linux"
+  },
+  "paidUsd": 0,
+  "qualification": "Manual disposable application and synthetic workloads; no unit suite, live harness, browser or PostgreSQL qualification. Timings are single local workload observations, not production percentiles.",
+  "registeredTools": [
+    "ol_schema", "ol_context", "ol_find", "ol_entities", "ol_inspect", "ol_graph", "ol_trace", "ol_instances", "ol_evidence", "ol_activity", "ol_validate_recipe", "ol_session", "ol_draft_create", "ol_draft_read", "ol_draft_update", "ol_compare", "ol_validate", "ol_change_prepare", "ol_approval_request", "ol_change_apply"
+  ],
+  "httpMcp": {
+    "entityPage": { "count": 2, "more": true },
+    "readOnlyWorldUnchanged": true,
+    "initial": { "id": "exercise:charge", "version": 1, "name": "Review charge", "display": "meter", "presentation": "neutral", "value": 50, "status": "known", "critical": false, "revision": 0, "min": 0, "max": 100, "unit": "charge" },
+    "after": { "id": "exercise:charge", "version": 1, "name": "Review charge", "display": "meter", "presentation": "neutral", "value": 10, "status": "known", "critical": true, "revision": 1, "min": 0, "max": 100, "unit": "charge", "concern": "Charge is low." },
+    "afterTick": { "id": "exercise:charge", "version": 1, "name": "Review charge", "display": "meter", "presentation": "neutral", "value": 9, "status": "known", "critical": true, "revision": 2, "min": 0, "max": 100, "unit": "charge", "concern": "Charge is low." },
+    "afterRestart": { "value": 35, "revision": 3, "concernActive": false },
+    "sameValueAfterRestart": true,
+    "attempts": { "n": 0 }
+  },
+  "outcomes": {
+    "beforeApproval": { "status": "needs_approval", "message": "This exact plan is not approved." },
+    "edit": { "status": "ok", "message": "Applicable attributes updated." },
+    "replay": { "status": "ok", "message": "Applicable attributes updated." },
+    "staleApply": { "status": "blocked", "message": "Authority or affected instances changed; prepare another review." },
+    "revisedValidation": { "status": "ok", "message": null },
+    "revisedApply": { "status": "ok", "message": "Applicable attributes updated." }
+  },
+  "transport": { "calls": 33, "statuses": [200], "maximumMs": 27.50762199999997, "protocol": "2025-11-25", "client": "manual JSON/SSE reader, no model" },
+  "graph": {
+    "synthetic": true,
+    "cases": [
+      {
+        "query": { "root": { "kind": "definition", "id": "a", "version": "v1" }, "direction": "out", "target": { "kind": "definition", "id": "d", "version": "v1" }, "maxDepth": 8 },
+        "pathStatus": "found", "pathEdgeIds": ["1", "2", "4"],
+        "coverage": { "scope": "projected-reachability-witnesses", "status": "target-found", "reason": null, "impact": "not-evaluated" },
+        "work": { "pages": 3, "visitedNodes": 4, "maxDepth": 8, "maxNodes": 40 }, "frontierCount": 0
+      },
+      {
+        "query": { "root": { "kind": "definition", "id": "a", "version": "v1" }, "direction": "out", "target": { "kind": "definition", "id": "other", "version": "v1" }, "maxDepth": 8 },
+        "pathStatus": "not-found-in-projection", "pathEdgeIds": [],
+        "coverage": { "scope": "projected-reachability-witnesses", "status": "complete", "reason": null, "impact": "not-evaluated" },
+        "work": { "pages": 4, "visitedNodes": 4, "maxDepth": 8, "maxNodes": 40 }, "frontierCount": 0
+      },
+      {
+        "query": { "root": { "kind": "definition", "id": "a", "version": "v1" }, "direction": "out", "target": { "kind": "definition", "id": "d", "version": "v1" }, "maxDepth": 1 },
+        "pathStatus": "unresolved", "pathEdgeIds": [],
+        "coverage": { "scope": "projected-reachability-witnesses", "status": "bounded", "reason": "depth-limit", "impact": "not-evaluated" },
+        "work": { "pages": 1, "visitedNodes": 2, "maxDepth": 1, "maxNodes": 40 }, "frontierCount": 1
+      },
+      {
+        "query": { "root": { "kind": "definition", "id": "d", "version": "v1" }, "direction": "in", "target": { "kind": "definition", "id": "a", "version": "v1" }, "maxDepth": 8 },
+        "pathStatus": "found", "pathEdgeIds": ["4", "2", "1"],
+        "coverage": { "scope": "projected-reachability-witnesses", "status": "target-found", "reason": null, "impact": "not-evaluated" },
+        "work": { "pages": 3, "visitedNodes": 4, "maxDepth": 8, "maxNodes": 40 }, "frontierCount": 0
+      },
+      {
+        "query": { "root": { "kind": "definition", "id": "a", "version": "v1" }, "direction": "both", "target": { "kind": "definition", "id": "a", "version": "v1" } },
+        "pathStatus": "found", "pathEdgeIds": [],
+        "coverage": { "scope": "projected-reachability-witnesses", "status": "target-found", "reason": null, "impact": "not-evaluated" },
+        "work": { "pages": 0, "visitedNodes": 1, "maxDepth": 4, "maxNodes": 40 }, "frontierCount": 0
+      },
+      {
+        "query": { "root": { "kind": "definition", "id": "a", "version": "v1" }, "direction": "out", "maxDepth": 8, "maxNodes": 2 },
+        "pathStatus": null, "pathEdgeIds": [],
+        "coverage": { "scope": "projected-reachability-witnesses", "status": "bounded", "reason": "node-limit", "impact": "not-evaluated" },
+        "work": { "pages": 2, "visitedNodes": 2, "maxDepth": 8, "maxNodes": 2 }, "frontierCount": 1
+      }
+    ],
+    "stars": [
+      {
+        "shape": "star", "nodes": 1001, "buildMs": 2.4513550000000066, "medianMs": 0.42063199999998346, "maxMs": 1.708576000000022, "traceNodes": 40,
+        "traceWork": { "pages": 1, "visitedNodes": 40, "maxDepth": 8, "maxNodes": 40 }, "reason": "node-limit", "frontier": 40,
+        "filtered": { "work": { "pages": 1, "visitedNodes": 1, "maxDepth": 8, "maxNodes": 40 }, "coverage": { "scope": "projected-reachability-witnesses", "status": "complete", "reason": null, "impact": "not-evaluated" }, "frontierCount": 0 }
+      },
+      {
+        "shape": "star", "nodes": 10001, "buildMs": 27.343619999999987, "medianMs": 0.41305099999999584, "maxMs": 0.9288030000000163, "traceNodes": 40,
+        "traceWork": { "pages": 1, "visitedNodes": 40, "maxDepth": 8, "maxNodes": 40 }, "reason": "node-limit", "frontier": 40,
+        "filtered": { "work": { "pages": 10, "visitedNodes": 1, "maxDepth": 8, "maxNodes": 40 }, "coverage": { "scope": "projected-reachability-witnesses", "status": "complete", "reason": null, "impact": "not-evaluated" }, "frontierCount": 0 }
+      },
+      {
+        "shape": "star", "nodes": 30001, "buildMs": 71.292532, "medianMs": 0.36706299999997327, "maxMs": 2.797637000000009, "traceNodes": 40,
+        "traceWork": { "pages": 1, "visitedNodes": 40, "maxDepth": 8, "maxNodes": 40 }, "reason": "node-limit", "frontier": 40,
+        "filtered": { "work": { "pages": 16, "visitedNodes": 1, "maxDepth": 8, "maxNodes": 40 }, "coverage": { "scope": "projected-reachability-witnesses", "status": "bounded", "reason": "page-limit", "impact": "not-evaluated" }, "frontierCount": 1 }
+      }
+    ],
+    "stale": { "code": "unavailable", "message": "Trace reference is unavailable or changed." }
+  },
+  "entities": [
+    { "count": 1000, "initialMs": 0.9329299999999989, "cached100Ms": 9.61389799999995, "afterMoveMs": 0.4509360000000129, "continued": "body-0000020", "rosterRevisionPreserved": true, "renamedCode": "stale" },
+    { "count": 10000, "initialMs": 3.5850920000000315, "cached100Ms": 13.30253300000004, "afterMoveMs": 3.2540720000000647, "continued": "body-0000020", "rosterRevisionPreserved": true, "renamedCode": "stale" },
+    { "count": 30000, "initialMs": 10.144263000000024, "cached100Ms": 34.15252900000007, "afterMoveMs": 9.07971800000007, "continued": "body-0000020", "rosterRevisionPreserved": true, "renamedCode": "stale" }
+  ],
+  "nativeStress": {
+    "gems": {
+      "scenario": "scripts/performance/scenarios/gems.json", "initial": { "simTime": 0, "entities": 514, "events": 0 }, "frozenSnapshots": true, "warmupSteps": 0,
+      "setupMs": 24.409459, "initialFreezeMs": 3.133194000000003, "cpuMs": 2259.072, "heapUsedBytes": 37893960, "steps": 180, "totalMs": 1514.008038,
+      "p50Ms": 7.557757000000038, "p95Ms": 9.808676999999989, "maxStepMs": 108.24945200000002, "nativeSecondsPerWallSecond": 118.88972547185381, "nativeHeadroomAtRequestedSpeed": 0.6604984748436322,
+      "finalCounts": { "entities": 514, "events": 1024, "awareness": 1024 }, "finalWorldDigest": "73d397f96f31efc73799e93eb1c87ac11d94cc77d1a7cd50390be46523b19898", "requestedSpeed": 3
+    },
+    "mixed": {
+      "scenario": "scripts/performance/scenarios/mixed.json", "initial": { "simTime": 0, "entities": 344, "events": 30 }, "frozenSnapshots": true, "warmupSteps": 0,
+      "setupMs": 74.891188, "initialFreezeMs": 2.917114999999967, "cpuMs": 2030.661, "heapUsedBytes": 21465720, "steps": 180, "totalMs": 1459.4344389999999,
+      "p50Ms": 6.31564000000003, "p95Ms": 8.593147999999928, "maxStepMs": 275.089182, "nativeSecondsPerWallSecond": 123.33544775285381, "nativeHeadroomAtRequestedSpeed": 0.685196931960299,
+      "finalCounts": { "entities": 344, "events": 3254, "awareness": 3474 }, "finalWorldDigest": "4e97fbf8c05c5fbdb32c3a15b9e9d043c28633cf1a0fc213cf0d4fc1549c772b", "requestedSpeed": 3
+    }
+  }
+}
