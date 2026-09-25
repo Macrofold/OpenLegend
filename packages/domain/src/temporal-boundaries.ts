@@ -41,7 +41,13 @@ export function nativeInterval(
   let travel: number = BASE_TIME_POLICY.perceptionTravelMetres;
   for (const id of actorIds) {
     const entity = world.entities[id];
-    if (!entity || !hasMemory(entity) || !entity.actor?.alive || entity.actor.incapacitated)
+    if (
+      !entity ||
+      !hasMemory(entity) ||
+      !entity.actor?.alive ||
+      entity.actor.incapacitated ||
+      capabilityBlocked(world, entity, 'perception')
+    )
       continue;
     for (const sense of sensesFor(world, entity))
       if (sense.implementation !== 'hearing-transmission-v1' && sense.radius > 0)
