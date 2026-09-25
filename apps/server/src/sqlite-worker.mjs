@@ -6,6 +6,7 @@ if (!parentPort || typeof workerData?.path !== 'string')
 const db = new DatabaseSync(workerData.path);
 const statements = new Map();
 const MAX_STATEMENTS = 128;
+let lastMemoryReport = 0;
 
 // Bounded exact-SQL cache; parameters are never cached or logged.
 function prepare(sql) {
@@ -50,12 +51,16 @@ parentPort.on('message', ({ id, operation, sql, params }) => {
       ...(typeof cause?.errstr === 'string' ? { errstr: cause.errstr } : {}),
     };
   }
+  const now = performance.now();
+  const memory = now - lastMemoryReport >= 1000;
+  if (memory) lastMemoryReport = now;
   parentPort.postMessage({
     kind: 'result',
     id,
     value,
     error,
-    elapsedMs: performance.now() - started,
+    elapsedMs: now - started,
+    ...(memory ? { heapUsedBytes: process.memoryUsage().heapUsed } : {}),
   });
   if (operation === 'close') parentPort.close();
 });

@@ -8,7 +8,7 @@ This is the sole tracker for runtime performance optimization. [Runtime performa
 
 ## Delivery status
 
-PF00/PF01/PF02/PF03/PF05/PF08/PF09 now include delivered work below. Remaining measurement, failure coverage and legacy compatibility work stay unchecked. PF04/PF06/PF07/PF10 remain conditional without evidence justifying their extra mechanisms. PF11 is explicitly deferred.
+PF00/PF01/PF02/PF03/PF05/PF08/PF09 now include delivered work below. Remaining measurement, failure coverage and legacy compatibility work stay unchecked. PF10 now includes measured local SQLite worker isolation; additional simulation/serialization workers remain conditional. PF04/PF06/PF07 remain conditional without evidence justifying their extra mechanisms. PF11 is explicitly deferred.
 
 This pass stops before multiplayer admission, per-player replication, the unattended-world toggle and verification with 100 agents, 100 players and thousands of animals. The local host's gameplay epoch mechanism is independent of future multiplayer controller admission. Native animals retain full simulation fidelity; dormancy and analytic updates remain gated on semantic equivalence.
 
@@ -58,7 +58,7 @@ These are initial engineering targets for a named desktop and healthy same-host 
 
 An injected slow database may exceed normal latency budgets. Correct behavior is bounded queues, responsive pending/paused UI and truthful durability state. Do not pass by dropping events, lowering requested speed silently, disabling relevant background load or hiding confirmed latency behind prediction.
 
-PF03 snapshot freezing and bounded catch-up are implemented; [recorded profiling](../verification.md#mature-world-tick-profiling) includes mature-save before/after runtime measurements. The next priority is extended qualification of these boundaries and PF08 retained-history growth. PF04/PF07/PF10 remain gated on residual measured cost.
+PF03 snapshot freezing and bounded catch-up are implemented; [recorded profiling](../verification.md#mature-world-tick-profiling) includes mature-save before/after runtime measurements. The next priority is extended qualification of these boundaries and PF08 retained-history growth. PF04/PF07 and additional PF10 worker roles remain gated on residual measured cost; the local SQLite role is implemented below.
 
 ## PF00 — Baseline and attribution
 
@@ -209,6 +209,8 @@ Exit: cost follows active changes and relevant neighbors in sparse worlds; dense
 
 Dependencies: PF03/PF05; measured residual event-loop CPU or unavoidable confirmation RTT.
 
+- [x] Isolate the measured synchronous local SQLite connection in a long-lived worker through the existing transaction lane, with bounded admission and statement reuse. Preserve COMMIT acknowledgement, unrelated-read isolation and explicit recovery after worker failure. See [SQLite execution contract](../performance.md#sqlite-worker-isolation) and [qualification](../verification.md#dense-persistence-implementation). This does not complete simulation-worker or browser-prediction work.
+
 - [ ] If necessary, give a worker long-lived simulation ownership or offload a measured bounded path/serialization task. Send versioned compact messages, not full snapshots every frame. Revalidate results and define crash/recovery and ownership fencing.
 - [ ] Implement local movement prediction/reconciliation only through the real-time design's existing version/permission/receipt contract. Never use prediction to authorize reach, inventory or damage. Benchmark browser frame work and correction frequency.
 
@@ -255,7 +257,7 @@ Treat this as an attribution target, not a result of multiplying microbenchmark 
 - [x] Preserve generic status-effect behavior while pruning inactive actor-only automatic conditions on non-actors; retain deterministic cooperative checkpoints through status phases.
 - [x] Preserve main's current-evidence coalescing and diagnostic-independent ActorWork; do not restore fixed cognition cooldowns or a paid backlog-draining policy.
 - [x] Record matched rebased-baseline/final native profiles plus real SQLite/HTTP/SSE workloads with a separate client and continuous presence. These are bounded observations, not population qualification; see [verification](../verification.md#rebased-action-and-perception-performance).
-- [ ] Investigate the remaining dense first-commit cost through PF00/PF01: source/awareness construction, immutable state finalization, history encoding and SQLite transaction work must be attributed separately. Preserve individual evidence identity, privacy, revocation and atomicity. Do not yield a shared SQLite transaction to readers that could observe partial writes.
+- [x] Attribute dense first-commit history lookup/construction and SQL transaction boundaries; implement bounded source buffers and local worker isolation without exposing partial writes. Residual native state construction, finalization, changed-awareness scans and dense command latency remain open under DP06/PF03/PF08.
 - [ ] Repeat full-server measurements with at least 1,000 successful commands, long mature history, 30-minute soaks, PostgreSQL, browser rendering and deterministic cognition/maintenance fixtures. Short 15-second phases have noisy tails and no live-model load.
 - [ ] Address multi-second synchronous work interacting with the existing callback-gap suspension heuristic before claiming dense-world clock fidelity. Do not infer a new absence policy from CPU guesses or hide excluded time; remove blocking or qualify independent liveness evidence under PF10.
 - [ ] Qualify the remaining per-mind/source signature walks and active-evidence array copy-on-write cost before introducing regional indexes or paged state. No witness dropping, changed perception rules, or guessed capacity promises.
@@ -272,5 +274,11 @@ The execution contract remains [compact transactional persistence](../performanc
 - [x] DP02 — Bound history row preparation and encoding buffers; shorten the open-transaction CPU path without publishing a partial world or bypassing edit/revocation handling.
 - [x] DP03 — Remove redundant parsing of the native private acquisition template through the shared event owner. Retain independent transition-return copies; further allocation/state representation changes remain measured PF03/PF08 work.
 - [x] DP04 — Introduce single-connection SQLite worker isolation at the measured dense-commit gate. Preserve serialized reads, COMMIT acknowledgement and fail-closed reconciliation; broader CPU-worker/auxiliary-reader work remains PF10/PF04-gated.
-- [ ] DP05 — Correct measured overload being misclassified as suspension using explicit attribution, without permitting catch-up after real suspension.
-- [ ] DP06 — Record matched native/history/full-server measurements and recovery exercises, including mature history and bounded high-command-count work. Long soaks, PostgreSQL, browser and live cognition remain separate qualification.
+- [ ] DP05 — Qualify an independent liveness/clock signal before changing the remaining callback-gap heuristic. SQLite isolation removed excluded gaps in the measured dense run, but arbitrary multi-second native/encoding stalls can still be misclassified. Do not substitute CPU guesses or treat this as a completed clock-policy fix.
+- [x] DP06 — Record matched native/history/full-server measurements, worker recovery, dense warm execution and 2,401-command 1x / 1,200-command 8x small-server runs. Required history projection/edit/forgetting/rollback is equivalent on disposable SQLite and PostgreSQL; full PostgreSQL server, browser, live cognition and 30-minute soaks remain unqualified.
+
+### Remaining density boundary
+
+- [ ] Attribute and reduce dense native acquisition/finalization and observation/projection rebuilding under actual interleaved commands. A worker improved event-loop isolation but did not improve dense confirmed-command tails or simulation throughput; do not declare population capacity from the small-world result.
+- [ ] Profile affected-actor active-awareness index/edit scans and flat-array copy-on-write under growing history before paged active evidence or a new retained-state representation. Any grouping must retain exact source identities, audience, event-time knowledge and revocation. No lossless paging or asynchronous authoritative history projection is implemented by the bounded SQL-row buffer.
+- [ ] Complete longer repeated SQLite/PostgreSQL full-server cases, 30-minute soaks, browser timing, slow readers and explicit no-network cognition/maintenance work. The PostgreSQL history fixture alone is not end-to-end acceptance.

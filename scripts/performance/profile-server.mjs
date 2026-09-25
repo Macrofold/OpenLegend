@@ -319,6 +319,7 @@ async function main() {
           maxMs: loop.max / 1e6,
         },
         heapUsedBytes: process.memoryUsage().heapUsed,
+        rssBytes: process.memoryUsage().rss,
         storageError: game.service.storageError,
         memoryBacklog: game.service.memoryBacklog,
         client,

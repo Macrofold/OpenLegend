@@ -1,132 +1,18 @@
-name: Final persistence review
+name: Code checks
 on:
   push:
-    branches: [design/action-repertoire-and-capability-grounding]
+  pull_request:
 permissions:
-  contents: write
-concurrency:
-  group: action-native-performance
-  cancel-in-progress: false
+  contents: read
 jobs:
-  finish:
+  check:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
-    env:
-      AI_BUDGET_USD: '0'
-      OPENAI_API_KEY: ''
-      JEV_API_KEY: ''
-      MACROFOLD_API_KEY: ''
-      OPEN_LEGEND_DATABASE_URL: ''
-      OPEN_LEGEND_DATA_DIR: /tmp/persistence-review-world
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Final code and documentation review
-        run: |
-          python .github/persistence-closeout.py
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('docs/architecture.md');s=p.read_text()
-          s=s.replace('Incompatible old saves fail explicitly; there is no conversion/reset. Use a **separate** data directory to retain an old development world.', 'Supported in-place development upgrades preserve world identity and progress; unsupported or malformed spatial state fails explicitly without reset. A separate data directory is an optional independent world, not a required upgrade path.')
-          s=s.replace('Old development schemas are rejected without migration or deletion.', 'Unsupported or malformed state is rejected without deletion; currently implemented in-place upgrades follow the active save policy.')
-          p.write_text(s)
-          p=Path('.github/persistence-exercise.mjs');s=p.read_text();needle='        const originalRows = await historyDigest(db, after.id);'
-          extra="""        const duplicate = structuredClone(after);
-                  const source = after.events[0];
-                  duplicate.events.push({ ...source, id: 'duplicate-profile-source' }, { ...source, id: 'duplicate-profile-source', text: 'changed duplicate' });
-                  let duplicateRejected = false;
-                  try { await db.transaction(() => history.project(after, freezeWorld(duplicate))); }
-                  catch { duplicateRejected = true; }
-                  if (!duplicateRejected) throw Error('Duplicate changed source accepted');
-                  row.duplicateSourceRejected = true;
-          """
-          if s.count(needle)!=1: raise RuntimeError('Exercise marker changed')
-          p.write_text(s.replace(needle,extra+needle))
-          PY
-          python - <<'PY'
-          import pathlib,subprocess
-          baseline='fd5e8a3007c2eaef05f43f3a67e13f3443748168'
-          paths=subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMR',baseline],text=True).splitlines()
-          paths=[p for p in paths if not p.startswith('.github/') and pathlib.Path(p).suffix in ['.ts','.mjs','.md','.json']]
-          if paths:subprocess.run(['pnpm','exec','prettier','--write',*paths],check=True)
-          PY
-          pnpm run build
-          git diff --check
-      - name: Exercise final ownership and measurements
-        run: |
-          node --import tsx .github/persistence-worker-exercise.mjs /tmp/final-worker.json > /tmp/final-worker.log
-          node --import tsx .github/persistence-exercise.mjs /tmp/final-history.json > /tmp/final-history.log
-          printf '%s\n' '{"seed":73,"people":0,"animals":0,"warmup":0}' > /tmp/small.json
-          node --import tsx scripts/performance/profile-server.mjs /tmp/small.json /tmp/final-server.json 10 1 25 > /tmp/final-server.log
-          python - <<'PY'
-          import json,pathlib
-          before=json.loads(pathlib.Path('docs/verification/persistence-worker.json').read_text())['after']['cases']
-          after=json.loads(pathlib.Path('/tmp/final-history.json').read_text())['cases']
-          for a,b in zip(before,after):
-            if a['worldDigest']!=b['worldDigest'] or a['history']!=b['history']:raise RuntimeError('Final native/history digest mismatch')
-          pathlib.Path('docs/verification/persistence-final-history.json').write_text(pathlib.Path('/tmp/final-history.json').read_text())
-          pathlib.Path('docs/verification/persistence-final-worker.json').write_text(pathlib.Path('/tmp/final-worker.json').read_text())
-          pathlib.Path('docs/verification/persistence-final-server.json').write_text(pathlib.Path('/tmp/final-server.json').read_text())
-          PY
-      - name: Audit and restore original CI
-        run: |
-          python - <<'PY'
-          import pathlib,subprocess,json,os,re,urllib.parse
-          root=pathlib.Path.cwd();baseline='fd5e8a3007c2eaef05f43f3a67e13f3443748168'
-          paths=subprocess.check_output(['git','diff','--name-only','--diff-filter=ACMR',baseline],text=True).splitlines()
-          paths += subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines()
-          missing=[];duplicates=[];inherited=[]
-          for name in sorted(set(paths)):
-            p=root/name
-            if p.suffix!='.md' or not p.is_file() or name.startswith('.github/'):continue
-            text=p.read_text()
-            prior=subprocess.run(['git','show',baseline+':'+name],capture_output=True,text=True).stdout
-            headings=re.findall(r'^## (.+)$',text,re.M)
-            for heading in set(headings):
-              if headings.count(heading)>1:duplicates.append(name+': '+heading)
-            for link in re.findall(r'\]\(([^\s)]+)',text):
-              if link.startswith(('#','http:','https:','mailto:','data:')):continue
-              target=urllib.parse.unquote(link.split('#')[0])
-              if target and not (p.parent/target).exists():
-                (inherited if ']('+link in prior else missing).append(name+': '+link)
-          if missing or duplicates:raise RuntimeError(json.dumps({'missing':missing,'duplicates':duplicates}))
-          # Keep only current source and measured reports, not patch-generating helpers.
-          helpers=['persistence-linearize.py','persistence-exercise.mjs','persistence-bounded.py','persistence-worker.py','persistence-worker-exercise.mjs','persistence-review.py','persistence-postgres-exercise.mjs','persistence-closeout.py']
-          for name in helpers:(root/'.github'/name).unlink(missing_ok=True)
-          import shutil
-          shutil.rmtree(root/'.github/persistence-diagnostics',ignore_errors=True)
-          original=subprocess.check_output(['git','show','08ca98e268051b087b0e26fb9611e63307093ff5:.github/workflows/check.yml'],text=True)
-          (root/'.github/workflows/check.yml').write_text(original)
-          server=json.loads((root/'docs/verification/persistence-final-server.json').read_text())['phases'][0]
-          report={'scope':'Final production build, formatting, native/required-history equivalence, transactional worker exercise, real server smoke and documentation/diff audit. No unit/browser suites or paid model calls.','inputCommit':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'build':'passed','nativeAndRequiredHistoryHashesMatch':True,'newMissingDocumentationPaths':missing,'duplicateLevelTwoHeadings':duplicates,'inheritedMissingPaths':inherited,'paidModelCalls':0,'workerIsolation':'one existing SQLite connection; no early command acknowledgement or automatic replay','saveSchemaChanged':False,'normalWorkflowRestored':True,'temporaryHelpersRemoved':helpers,'finalServer':{k:server[k] for k in ['achievedSpeed','eventLoop','heapUsedBytes','rssBytes','storageError','memoryBacklog']},'finalCommands':server['client']['commands'],'remaining':['Dense native/state/projection cost and long confirmed-command tails','Independent suspension/liveness qualification; the callback-gap heuristic is unchanged','Paged active evidence/asynchronous authoritative projections remain conditional future work','Long repeated soaks, full PostgreSQL server, browser and live-cognition qualification']}
-          (root/'docs/verification/persistence-final-review.json').write_text(json.dumps(report,indent=2)+'\n')
-          print(json.dumps(report,indent=2))
-          PY
-          pnpm exec prettier --write docs/verification/persistence-final-review.json docs/verification/persistence-final-history.json docs/verification/persistence-final-worker.json docs/verification/persistence-final-server.json .github/workflows/check.yml
-          git diff --check
-          test -z "$(git diff --name-only 08ca98e268051b087b0e26fb9611e63307093ff5 -- .github)"
-      - name: Commit final implementation and documentation
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A .github apps/server/src scripts/performance docs archive/05-project/implementation-status.md
-          git diff --cached --quiet || git commit -m '[skip ci] fix: finalize dense persistence safeguards, measurements and delivery status'
-          git push origin HEAD:design/action-repertoire-and-capability-grounding
-      - name: Retain failure diagnostics
-        if: failure()
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          mkdir -p .github/persistence-diagnostics
-          git diff > .github/persistence-diagnostics/source.patch
-          for f in /tmp/final-worker.json /tmp/final-history.json /tmp/final-server.json /tmp/final-worker.log /tmp/final-history.log /tmp/final-server.log; do test ! -f "$f" || cp "$f" .github/persistence-diagnostics/; done
-          git add .github/persistence-diagnostics
-          git diff --cached --quiet || git commit -m '[skip ci] chore: retain final persistence diagnostics'
-          git push origin HEAD:design/action-repertoire-and-capability-grounding
+      - run: pnpm run check

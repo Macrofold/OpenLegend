@@ -50,7 +50,9 @@ export function startRuntimeMonitoring(): () => void {
       'process.cpuPercent',
       ((cpu.user - lastCpu.user + cpu.system - lastCpu.system) / 1000 / (now - lastAt)) * 100,
     );
-    gaugeMetric('process.heapUsedBytes', process.memoryUsage().heapUsed);
+    const memory = process.memoryUsage();
+    gaugeMetric('process.heapUsedBytes', memory.heapUsed);
+    gaugeMetric('process.rssBytes', memory.rss);
     gaugeMetric('eventLoop.p95Ms', delay.count ? delay.percentile(95) / 1e6 : 0);
     gaugeMetric('eventLoop.maxMs', delay.count ? delay.max / 1e6 : 0);
     lastCpu = cpu;

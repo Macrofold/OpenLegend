@@ -185,3 +185,7 @@ The optional scalar-only capture experiment was rejected after a warm-workload d
 Reconciled the action/perception branch with main's in-place save policy, generic status effects, observer knowledge and current-evidence scheduling. The old temporary-runner history is retained on a backup branch; active source uses the actual rebased implementation. Per-feature save-reset instructions are superseded by the active save owner, while historical measurement reports remain unchanged.
 
 Added the reusable full-server profiler and recorded its continuous-presence correction, native warm/dense results and limits. The patch-removal experiment was not retained. Moved bundled follow tuning to its base-world source, retained the existing execution adapter and reserved invention-workflow reconciliation section, and added deferred regression coverage without running automated suites.
+
+## Dense persistence and local database isolation
+
+Recorded DP01–DP06 scope under the existing PF owner. History preparation and bounded source buffers refine compact atomic persistence; the measured local SQLite worker is a PF10 subset, not a second database or an implemented general simulation worker. Runtime facts, performance evidence and deferred automated coverage remain in Architecture, Verification and Maintainer TODO respectively. The previous synchronous-SQLite wording is superseded for the local adapter; dense CPU/clock and broader qualification remain explicit.

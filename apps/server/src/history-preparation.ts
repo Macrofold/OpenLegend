@@ -25,6 +25,11 @@ export function prepareHistory(
       ? world.events.slice(previous!.events.length)
       : world.events.filter((event) => old!.get(event.id) !== event);
     const previousIds = old ? new Set(old.keys()) : undefined;
+    const changedIds = new Set<string>();
+    for (const event of changed) {
+      if (changedIds.has(event.id)) throw new Error('Duplicate changed history event identity.');
+      changedIds.add(event.id);
+    }
     const audience = new Set<string>();
     for (const event of changed) for (const actorId of event.audience) audience.add(actorId);
     const awarenessIndexes = new Map<string, Map<string, string>>();

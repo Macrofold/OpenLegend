@@ -11,6 +11,7 @@ type Reply =
       id: number;
       value?: unknown;
       elapsedMs: number;
+      heapUsedBytes?: number;
       error?: { message: string; code?: string; errcode?: number; errstr?: string };
     };
 
@@ -59,6 +60,8 @@ export class SqliteDatabase implements SqlDatabase {
       if (!call) return;
       this.pending.delete(reply.id);
       recordDuration('sqlite.workerExecution', reply.elapsedMs);
+      if (reply.heapUsedBytes !== undefined)
+        gaugeMetric('sqlite.workerHeapUsedBytes', reply.heapUsedBytes);
       if (reply.error) call.reject(Object.assign(new Error(reply.error.message), reply.error));
       else call.resolve(reply.value);
     });

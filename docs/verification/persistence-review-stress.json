@@ -31,9 +31,7 @@
             "version": 1,
             "name": "Profiling gem",
             "description": "Synthetic profiling fixture; not an authored game asset.",
-            "properties": [
-              "rigid"
-            ]
+            "properties": ["rigid"]
           }
         }
       ]
@@ -55,54 +53,18 @@
     "nativeSecondsPerWallSecond": 45.22804511777914,
     "finalWorldDigest": "dc3afd2239811766c34b750edd0ab1f1f5d0a8cc035426748e6598adb50b7715",
     "hottestSelfMs": [
-      [
-        "(anonymous) src/perception-frame.ts:1",
-        1444.7089999999969
-      ],
-      [
-        "finalizeProperty dist/immer.mjs:314",
-        1397.9259999999963
-      ],
-      [
-        "get dist/immer.mjs:382",
-        922.5299999999997
-      ],
-      [
-        "isPlainObject dist/immer.mjs:60",
-        695.0869999999998
-      ],
-      [
-        "isDraftable dist/immer.mjs:54",
-        540.0770000000003
-      ],
-      [
-        "advanceStatusEffects src/status-effects.ts:1",
-        420.53299999999984
-      ],
-      [
-        "advanceWorldWork src/kernel.ts:1",
-        417.77400000000006
-      ],
-      [
-        "getArchtype dist/immer.mjs:86",
-        404.5680000000002
-      ],
-      [
-        "peek dist/immer.mjs:486",
-        402.38199999999966
-      ],
-      [
-        "updateEncounters src/kernel.ts:1",
-        379.084
-      ],
-      [
-        "query src/perception-frame.ts:1",
-        349.81299999999993
-      ],
-      [
-        "(anonymous) src/perception.ts:1",
-        337.71799999999985
-      ]
+      ["(anonymous) src/perception-frame.ts:1", 1444.7089999999969],
+      ["finalizeProperty dist/immer.mjs:314", 1397.9259999999963],
+      ["get dist/immer.mjs:382", 922.5299999999997],
+      ["isPlainObject dist/immer.mjs:60", 695.0869999999998],
+      ["isDraftable dist/immer.mjs:54", 540.0770000000003],
+      ["advanceStatusEffects src/status-effects.ts:1", 420.53299999999984],
+      ["advanceWorldWork src/kernel.ts:1", 417.77400000000006],
+      ["getArchtype dist/immer.mjs:86", 404.5680000000002],
+      ["peek dist/immer.mjs:486", 402.38199999999966],
+      ["updateEncounters src/kernel.ts:1", 379.084],
+      ["query src/perception-frame.ts:1", 349.81299999999993],
+      ["(anonymous) src/perception.ts:1", 337.71799999999985]
     ]
   },
   "server": {
