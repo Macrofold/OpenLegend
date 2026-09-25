@@ -14,7 +14,7 @@ Coordinate module dependency capture and load validation with [EWF07](extensible
 
 - [x] SL00–SL03 foundations: a repository-owned current-format package captures `SavedWorld` plus durable history tables; manual slots publish atomically in the local save folder after transactional capture. No field-by-field world registry.
 - [x] SL04–SL05 foundations: loading drains background workers, preserves external accounting/privacy authority, replaces history atomically with the world, rotates command/context generations and retains a pre-load slot. Restored pending narration is cancelled; world-agent sessions restart fresh.
-- [x] SL07 basic UI: Game below World agent offers named save, list, confirm-load and confirm-delete; successful load reopens paused. Initial reversible limits are 20 manual slots plus one pre-load slot, 64 MiB per payload.
+- [x] SL07 basic UI: Game below World agent offers named save, list, confirm-load and confirm-delete; successful load reopens paused. Named saves have no fixed count ceiling; one pre-load slot and 64 MiB per payload remain.
 - [x] Build and isolated native browser walkthrough: save, advance, restore earlier clock/meters and observe paused state. See [runtime evidence](../verification.md#manual-saveload-runtime).
 
 The detailed phase criteria below remain open where not fully established. Automated checks are deferred by instruction to [save/load validation TODO](TODO.md#manual-saveload-deferred-validation); PostgreSQL, live-provider and crash-boundary qualification have not been demonstrated. SL08 and SL10 are not implemented.
