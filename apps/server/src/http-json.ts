@@ -36,7 +36,12 @@ export async function readHttpJson(
       if (bytes > limit) throw new Error('body-limit');
       chunks.push(buffer);
     }
-    const text = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
+    let text: string;
+    try {
+      text = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes));
+    } catch {
+      throw new SyntaxError('Invalid UTF-8 JSON.');
+    }
     return JSON.parse(text) as unknown;
   } finally {
     clearTimeout(timer);
