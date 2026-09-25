@@ -10,7 +10,6 @@ import { SaveFiles } from './save-files.js';
 // actual state: docs/save-and-load.md#active-development-policy.
 export class GameSaveError extends Error {}
 export const SAVE_FORMAT = 'development-2026-09-22-spatial1';
-const MAX_SAVES = 20;
 const MAX_BYTES = 64 * 1024 * 1024;
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
@@ -96,10 +95,6 @@ export class GameSaves {
       if (prior.worldId !== state.world.id) throw new GameSaveError('Save identity conflicts.');
       return;
     }
-    if ((await this.files.list(state.world.id)).length >= MAX_SAVES)
-      throw new GameSaveError(
-        'All 20 manual slots are in use. Delete a save before creating another.',
-      );
     const payload = await this.db.transaction(() => this.capture(state));
     const encoded = JSON.stringify(payload);
     if (Buffer.byteLength(encoded) > MAX_BYTES)

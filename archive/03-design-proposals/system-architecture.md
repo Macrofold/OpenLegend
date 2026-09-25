@@ -117,7 +117,7 @@ No global await-all barrier is needed. A slow resident continues its safe curren
 
 ## Persistence and replay
 
-Persist identities, inventories, accepted capability versions, durable memories, and meaningful committed effects. Keep a bounded journal of accepted commands/outcomes plus periodic sector snapshots. Do not begin with a distributed event-stream platform or journal every rendered footstep forever.
+Persist identities, inventories, accepted capability versions, durable memories, and meaningful committed effects as independently queryable records under the [production data model](../07-technical-architecture/production-data-model.md). Keep required receipts/history and complete checkpoints; generic change replay is conditional. Whole-world JSON remains an export/checkpoint representation in the target. The [delivery plan](../07-technical-architecture/data-delivery-and-scale.md) prioritizes shared-world regional working sets, then measured regional distribution, with independent worlds also supported. It owns retention and migration; the sections here summarize the boundary. Do not begin with a distributed event-stream platform or journal every rendered footstep forever.
 
 Choose durability by consequence: trades, ownership changes, births, deaths, and paid quota debits need durable transactional acknowledgment; movement can tolerate a defined checkpoint window. In the smallest version, durably record consequential outcomes before acknowledging success. An outbox associates durable events with publication; consumers deduplicate by event ID.
 

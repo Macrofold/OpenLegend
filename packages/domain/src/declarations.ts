@@ -124,7 +124,6 @@ export function validateDeclaration(world: WorldState, candidate: unknown): stri
     errors.push('Output name and description are required.');
   if (
     !Array.isArray(output.properties) ||
-    output.properties.length > 6 ||
     !output.properties.every(
       (property) =>
         properties.has(property as MaterialProperty) &&
@@ -269,14 +268,6 @@ export function admitDeclaration(
           },
         }
       : reject('idempotency-conflict', 'The authoring request already has a different result.');
-  if (
-    Object.keys(original.recipes).length >= 64 &&
-    !Object.values(original.recipes).some((recipe) => recipe.digest === digest)
-  )
-    return reject(
-      'registry-capacity',
-      'This world has reached its initial limit of 64 invented techniques.',
-    );
   const world = draftWorld(original);
   const events: Transition['events'] = [];
   let recipeId = `recipe-${contentLabel(digest)}`;

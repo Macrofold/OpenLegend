@@ -82,8 +82,7 @@ export { starterSpatialLayout, starterFlightRoutes } from './worlds/base/spatial
 export function validateSpatialWorld(world: WorldState): void {
   const map = spatialMap(world);
   validateSpatialMap(map);
-  if (!world.flightRoutes || Object.keys(world.flightRoutes).length > 16)
-    throw new Error('Invalid flight route registry.');
+  if (!world.flightRoutes) throw new Error('Invalid flight route registry.');
   for (const [routeId, route] of Object.entries(world.flightRoutes)) {
     if (
       !route ||
@@ -100,7 +99,6 @@ export function validateSpatialWorld(world: WorldState): void {
       route.climbSpeed > route.speed ||
       !Array.isArray(route.points) ||
       route.points.length < 2 ||
-      route.points.length > 32 ||
       route.points.some(
         (p) =>
           !finitePoint(p.position) ||

@@ -408,3 +408,17 @@ Automated suites were neither added nor run at the owner's request. Manual execu
 ## Movement under memory pressure
 
 - [ ] Cover awareness and personal-memory thresholds, failed/unconfigured/zero-budget consolidation, and a dead actor retaining a large history. Verify native time and queued walking continue, sources remain intact, pressure clears after accepted maintenance, and real storage failures still pause admission and display a save error. Tests deferred at the owner’s request.
+
+## Removed content-count ceilings
+
+- [x] Remove the limits-audit Remove recommendations (31, 37, 40, 41, 60, 77, 78, 108, 110, 119, 120, 123, 144, 153, 182, 219), plus the explicitly recommended touch-contact and named-save count removals (122, 176). Preserve validation and actual request/spending constraints; see [current behavior](../architecture.md#content-counts-and-request-limits).
+- [ ] Add regression coverage for more than 64 admitted recipes, output properties beyond six with material provenance checks, more than 32 attributes/16 category values, and larger narration policies and valid flight routes. Unsupported effects, duplicate detector owners, malformed data, blocked flight corridors and stale authority must still fail.
+- [ ] Add regression coverage for more than eight memory entity references, complete interest matches and more than 32 private contacts, including save/load, contact departure and no cross-actor disclosure.
+- [ ] Add regression coverage for more than sixteen planning options and four nearby conversations, request-size omission diagnostics and matching command bindings, and required evidence surviving optional retrieval failure. Larger menus must not bypass plan execution or final context validation.
+- [ ] Add regression coverage for 21 named saves and an explicitly configured $75 allowance, preserving save-size failures, duplicate-save identity handling and authoritative spending reservations.
+- [ ] Measure larger recipe/action libraries, rule collections and dense touch populations with real persistence and browser load; the small native capacity exercise does not establish an unlimited workload. Prioritize selective evaluation if measured costs become unacceptable.
+
+## Physical contact correction
+
+- [x] Replace proximity-as-touch with physical body contact, preserving barrier checks and upgrading saved detector definitions/active episodes in place.
+- [ ] Add regression coverage for campfire edge/overlap/top contact, separated heights, numerical tolerance and spatial-cell boundaries; verify nearby non-contact objects produce no felt events, stable contacts do not repeat, and saved upgrades preserve identity and unrelated evidence. Add separate acceptance for future non-cylindrical body geometry and physical contact with map surfaces.
