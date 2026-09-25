@@ -1,4 +1,4 @@
-name: Cadence document blob transfer
+name: Cadence reviewed text blob transfer
 on:
   push:
     branches: [feature/simulation-cadence]
@@ -20,8 +20,9 @@ jobs:
             if (!Array.isArray(edits) || edits.length > 40) throw new Error('Invalid transfer');
             const result = [];
             for (const entry of edits) {
-              if (!/^(packages|docs|archive)\//.test(entry.path) && entry.path !== 'README.md') throw new Error('Invalid documentation path');
-              if (!entry.path.endsWith('.md')) throw new Error('Documentation only');
+              if (!/^(apps|packages|docs|archive)\//.test(entry.path) && entry.path !== 'README.md') throw new Error('Invalid source path');
+              if (!/\.(md|ts|tsx)$/.test(entry.path) || /(^|\/)(\.\.?|node_modules|\.data)(\/|$)/.test(entry.path)) throw new Error('Reviewed text only');
+              if (!/^[0-9a-f]{40}$/.test(entry.before) || !/^[0-9a-f]{40}$/.test(entry.after)) throw new Error('Invalid content identity');
               const source = await github.rest.git.getBlob({...repo, file_sha: entry.before});
               const lines = Buffer.from(source.data.content, 'base64').toString('utf8').split('\n');
               let previous = lines.length + 1;
@@ -39,5 +40,6 @@ jobs:
               result.push({path: entry.path, mode: '100644', type: 'blob', sha: blob.data.sha});
             }
             console.log('VERIFIED_TREE_ENTRIES=' + JSON.stringify(result));
-            // Reuse the sound branch's blob-transfer pattern. No commits, refs,
-            // PR merges or Git commands run here; publication uses the connector.
+            // Existing exact-content upload helper only. No shell, Git commands, execution
+            // of transferred source, commits, trees, refs, merges or branch rewrites here.
+            // Reviewed trees and history are published explicitly through the GitHub connector.
