@@ -38,12 +38,12 @@ Three sequential full-hit/revised samples, in milliseconds, were 86.14/24.50, 79
 
 The checked-in `mixed-8x.json` workload used 10 added people, 20 animals, 300 rigid observation objects, seed 73, 2,400 simulated seconds, no warmup, requested speed 8 and native-slice execution. Matched sequential baseline/revised samples on this host:
 
-| Metric | Baseline | Revised |
-| --- | ---: | ---: |
-| Native elapsed ms | 3608.42 | 3382.57 |
-| p95 slice ms | 7.058 | 6.404 |
-| Maximum slice ms | 155.58 | 157.41 |
-| Native headroom versus 480 simulated seconds/wall second | 1.386 | 1.478 |
+| Metric                                                   | Baseline | Revised |
+| -------------------------------------------------------- | -------: | ------: |
+| Native elapsed ms                                        |  3608.42 | 3382.57 |
+| p95 slice ms                                             |    7.058 |   6.404 |
+| Maximum slice ms                                         |   155.58 |  157.41 |
+| Native headroom versus 480 simulated seconds/wall second |    1.386 |   1.478 |
 
 Both produced 344 entities, 3,342 events, 3,602 awareness entries and digest `2f3e7f706450419650af972894e544fb50d6d40bfeaae64d6a9189cbd0b401b4`. Short repeated predicate-only samples varied more than this single table suggests, so no statistically established end-to-end percentage improvement is claimed. Average throughput clears this workload's 8× requirement; the maximum indivisible slice still exceeds PF's 8 ms responsiveness target.
 
