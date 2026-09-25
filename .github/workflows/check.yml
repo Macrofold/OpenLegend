@@ -1,4 +1,4 @@
-name: SQLite isolation qualification
+name: Persistence review qualification
 on:
   push:
     branches: [design/action-repertoire-and-capability-grounding]
@@ -8,9 +8,23 @@ concurrency:
   group: action-native-performance
   cancel-in-progress: false
 jobs:
-  persistence:
+  review:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-profile-only
+          POSTGRES_DB: ol_persistence_profile
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       AI_BUDGET_USD: '0'
       OPENAI_API_KEY: ''
@@ -18,6 +32,7 @@ jobs:
       MACROFOLD_API_KEY: ''
       OPEN_LEGEND_DATABASE_URL: ''
       OPEN_LEGEND_DATA_DIR: /tmp/persistence-review-world
+      PROFILE_DATABASE_URL: postgresql://postgres:disposable-profile-only@127.0.0.1:5432/ol_persistence_profile
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,61 +43,42 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Matched baseline
+      - name: Review fixes and production build
         run: |
-          node --import tsx .github/persistence-exercise.mjs /tmp/persistence-before.json > /tmp/before.log
-          printf '%s\n' '{"seed":73,"people":100,"animals":0,"layout":"crowded","warmup":0,"objects":[{"count":500,"name":"Profiling gem","properties":["rigid"]}]}' > /tmp/dense.json
-          printf '%s\n' '{"seed":73,"people":0,"animals":0,"warmup":0}' > /tmp/small.json
-          node --import tsx scripts/performance/profile-server.mjs /tmp/dense.json /tmp/server-before.json 15 1 > /tmp/server-before.log
-      - name: Implement isolated SQLite and build
-        run: |
-          python .github/persistence-worker.py
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('apps/server/src/sqlite-database.ts');s=p.read_text().replace('workerData: { path }, execArgv: [],','workerData: { path }, execArgv: [],\n      env: process.env.TZ ? { TZ: process.env.TZ } : {},');p.write_text(s)
-          p=Path('scripts/performance/profile-server.mjs');s=p.read_text()
-          s=s.replace("const [scenarioPath, output, secondsText = '15', speedText = '1,3,8']", "const [scenarioPath, output, secondsText = '15', speedText = '1,3,8', intervalText = '500']")
-          s=s.replace('const seconds = Number(secondsText),','const seconds = Number(secondsText),\n    commandIntervalMs = Number(intervalText),')
-          s=s.replace('    seconds > 60 ||','    seconds > 60 ||\n    !Number.isInteger(commandIntervalMs) || commandIntervalMs < 25 || commandIntervalMs > 1000 ||')
-          s=s.replace('    secondsPerPhase: seconds,','    secondsPerPhase: seconds,\n    commandIntervalMs,')
-          s=s.replace('        presenceId,\n','        presenceId,\n        commandIntervalMs,\n')
-          s=s.replace('periodic(500, async (i) => {','periodic(settings.commandIntervalMs ?? 500, async (i) => {')
-          s=s.replace("[5..60 seconds per phase] [1,3,8]'", "[5..60 seconds per phase] [1,3,8] [25..1000 command interval ms]'" )
-          s=s.replace('  p95Ms: percentile(values, 0.95),','  p95Ms: percentile(values, 0.95),\n  p99Ms: percentile(values, 0.99),')
-          p.write_text(s)
-          PY
-          pnpm exec prettier --write apps/server/src/sqlite-database.ts apps/server/src/sqlite-worker.mjs scripts/performance/profile-server.mjs docs/performance.md docs/architecture.md docs/maintainers/performance.md docs/maintainers/TODO.md
+          python .github/persistence-review.py
+          pnpm exec prettier --write apps/server/src/sqlite-database.ts docs/performance.md docs/maintainers/TODO.md
           pnpm run build
           git diff --check
-      - name: Actual worker recovery, history and full server workload
+      - name: Execute recovery and actual PostgreSQL history
         run: |
-          node --import tsx .github/persistence-worker-exercise.mjs /tmp/worker-recovery.json > /tmp/recovery.log
-          node --import tsx .github/persistence-exercise.mjs /tmp/persistence-after.json > /tmp/after.log
-          node --import tsx scripts/performance/profile-server.mjs /tmp/dense.json /tmp/server-after.json 15 1 > /tmp/server-after.log
-          node --import tsx scripts/performance/profile-server.mjs /tmp/small.json /tmp/server-commands.json 60 1 25 > /tmp/server-commands.log
+          node --import tsx .github/persistence-worker-exercise.mjs /tmp/worker-review.json > /tmp/worker-review.log
+          node --import tsx .github/persistence-postgres-exercise.mjs /tmp/postgres-history.json > /tmp/postgres-history.log
+          mkdir -p docs/verification
+          cp /tmp/worker-review.json docs/verification/persistence-worker-review.json
+          cp /tmp/postgres-history.json docs/verification/persistence-postgres.json
+      - name: Profile mature dense native execution and 8x small server
+        run: |
+          printf '%s\n' '{"seed":73,"people":100,"animals":0,"layout":"crowded","warmup":30,"steps":600,"speed":1,"timeoutSeconds":120,"objects":[{"count":500,"name":"Profiling gem","properties":["rigid"]}]}' > /tmp/dense-warm.json
+          printf '%s\n' '{"seed":73,"people":0,"animals":0,"warmup":0}' > /tmp/small.json
+          node --import tsx scripts/stress-native.ts /tmp/dense-warm.json /tmp/dense-warm.cpuprofile > /tmp/dense-warm-result.json
+          node --import tsx scripts/performance/profile-server.mjs /tmp/small.json /tmp/server-fast.json 30 8 25 > /tmp/server-fast.log
           python - <<'PY'
           import json,pathlib,os
-          load=lambda name:json.loads(pathlib.Path('/tmp/'+name+'.json').read_text())
-          before=load('persistence-before');after=load('persistence-after')
-          for old,new in zip(before['cases'],after['cases']):
-            if old['worldDigest']!=new['worldDigest'] or old['history']!=new['history']: raise RuntimeError('Changed authoritative native/history outcome: '+old['name'])
-          report={'scope':'Matched in-process/worker SQLite on one runner; real rollback/recovery and HTTP/SSE/native timer plus bounded 60-second high-command-count run. No automated suites or paid models.','baseline':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'before':before,'after':after,'serverBefore':load('server-before'),'serverAfter':load('server-after'),'commands':load('server-commands'),'recovery':load('worker-recovery')}
-          pathlib.Path('docs/verification/persistence-worker.json').write_text(json.dumps(report,indent=2)+'\n')
-          summary={'run':report['run'],'cpu':after['cpu'],'nativeAndHistoryDigestsMatch':True,'before':{r['name']:{'nativeMs':r['nativeMs'],'commits':r['commits']} for r in before['cases']},'after':{r['name']:{'nativeMs':r['nativeMs'],'commits':r['commits']} for r in after['cases']},'recovery':report['recovery']}
-          for variant in ['serverBefore','serverAfter','commands']:
-            p=report[variant]['phases'][0]
-            summary[variant]={k:p[k] for k in ['achievedSpeed','eventLoop','heapUsedBytes','storageError','memoryBacklog','counters']}
-            summary[variant]['commands']=p['client']['commands'];summary[variant]['errors']=p['client']['errors']
-            summary[variant]['metrics']={k:v for k,v in p['metrics'].items() if k.startswith(('history.','sqlite.','persistence.','native.','public.'))}
-          pathlib.Path('docs/verification/persistence-worker-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+          native=json.loads(pathlib.Path('/tmp/dense-warm-result.json').read_text())
+          server=json.loads(pathlib.Path('/tmp/server-fast.json').read_text())
+          report={'scope':'Current implementation, mature native dense workload and 30-second 8x small-server load; not matched latency qualification, full PostgreSQL server, browser, live cognition or a long soak. No paid APIs.','inputCommit':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'native':native,'server':server}
+          pathlib.Path('docs/verification/persistence-review-stress.json').write_text(json.dumps(report,indent=2)+'\n')
+          p=server['phases'][0]
+          summary={'scope':report['scope'],'run':report['run'],'native':{k:native[k] for k in ['steps','warmupSteps','totalMs','p50Ms','p95Ms','maxStepMs','finalCounts','nativeHeadroomAtRequestedSpeed','hottestSelfMs']},'server':{k:p[k] for k in ['achievedSpeed','eventLoop','storageError','memoryBacklog','counters']},'commands':p['client']['commands'],'errors':p['client']['errors']}
+          pathlib.Path('docs/verification/persistence-review-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
           print(json.dumps(summary,indent=2))
           PY
-      - name: Commit isolated connection and qualification
+      - name: Commit reviewed implementation and evidence
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add apps/server/src/sqlite-database.ts apps/server/src/sqlite-worker.mjs scripts/performance/profile-server.mjs docs/performance.md docs/architecture.md docs/maintainers/performance.md docs/maintainers/TODO.md docs/verification/persistence-worker.json docs/verification/persistence-worker-summary.json
-          git commit -m '[skip ci] perf: isolate SQLite behind the existing single-writer transaction lane'
+          git add apps/server/src/sqlite-database.ts docs/performance.md docs/maintainers/TODO.md docs/verification/persistence-worker-review.json docs/verification/persistence-postgres.json docs/verification/persistence-review-stress.json docs/verification/persistence-review-summary.json
+          git commit -m '[skip ci] fix: bound SQLite admissions and fence shutdown failures'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
       - name: Retain failure diagnostics
         if: failure()
@@ -91,7 +87,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           mkdir -p .github/persistence-diagnostics
           git diff > .github/persistence-diagnostics/source.patch
-          for f in /tmp/persistence-before.json /tmp/persistence-after.json /tmp/server-before.json /tmp/server-after.json /tmp/worker-recovery.json /tmp/server-commands.json /tmp/recovery.log /tmp/before.log /tmp/after.log /tmp/server-before.log /tmp/server-after.log /tmp/server-commands.log; do test ! -f "$f" || cp "$f" .github/persistence-diagnostics/; done
+          for f in /tmp/worker-review.json /tmp/postgres-history.json /tmp/dense-warm-result.json /tmp/server-fast.json /tmp/worker-review.log /tmp/postgres-history.log /tmp/server-fast.log; do test ! -f "$f" || cp "$f" .github/persistence-diagnostics/; done
           git add .github/persistence-diagnostics
-          git diff --cached --quiet || git commit -m '[skip ci] chore: retain bounded persistence diagnostics'
+          git diff --cached --quiet || git commit -m '[skip ci] chore: retain persistence review diagnostics'
           git push origin HEAD:design/action-repertoire-and-capability-grounding
