@@ -377,8 +377,19 @@ export const clearSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint):
 /** Broadband energy ratio for the pinned hearing policy, not pressure amplitude.
  * docs/hearing-and-speech.md#3-geometry-attenuation-and-noise */
 export function soundTransmission(map: SpatialMap, from: WorldPoint, to: WorldPoint): number {
-  // Preserve canonical hit order for numeric stability; only acoustic queries need all crossings.
-  return rayHits(map, from, to, 'sound').reduce((value, hit) => value * hit.transmission, 1);
+  // Attenuation needs no display points or exit fractions. Preserve canonical multiplication
+  // order for non-neutral crossings; an opaque crossing makes every ordering exactly zero.
+  // docs/hearing-and-speech.md#performance-and-invalidation
+  const crossings: Pick<RayHit, 'id' | 'fraction' | 'transmission'>[] = [];
+  const blocked = visitHits(map, from, to, 'sound', EMPTY_IDS, undefined, (shape, interval) => {
+    if (shape.transmission === 0) return true;
+    if (shape.transmission !== 1)
+      crossings.push({ id: shape.id, fraction: interval[0], transmission: shape.transmission });
+    return false;
+  });
+  if (blocked) return 0;
+  crossings.sort((a, b) => a.fraction - b.fraction || a.id.localeCompare(b.id));
+  return crossings.reduce((value, hit) => value * hit.transmission, 1);
 }
 function onlySupportContact(
   map: SpatialMap,
