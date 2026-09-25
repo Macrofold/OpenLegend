@@ -1,3 +1,8 @@
+import {
+  actionTargetsCurrent,
+  type ActionTarget,
+  type ActionTargetEpisodes,
+} from './action-targets.js';
 import { editKnowledge, knowledgeDocument, type KnowledgeEdit } from './knowledge.js';
 import {
   assignGivenName,
@@ -6,9 +11,15 @@ import {
   type GivenNameEdit,
 } from './worlds/base/knowledge.js';
 import { capabilityBlocked } from './status-capabilities.js';
+import {
+  bindNavigationInvocation,
+  validActionFulfillment,
+  type NavigationInvocation,
+  type ActionFulfillment,
+} from './action-capabilities.js';
+import { proposeActionRevision } from './agency.js';
 import { hasMemory, supportsManualWork } from './living.js';
 import {
-  normalizeAttempt,
   resolveAttempt,
   deferAttempt,
   arrangePlan,
@@ -32,7 +43,8 @@ export interface ResponseOperation {
   requiresAccepted: string[];
   talk: { text: string; addresseeEntityId: string; selfIntroduction?: string | null } | null;
   act: {
-    kind: 'known' | 'expression' | 'proposal';
+    kind: 'known' | 'expression' | 'proposal' | 'invoke';
+    invocation?: NavigationInvocation | null;
     actionId: string | null;
     verb: 'nod' | 'smile' | 'frown' | 'wave' | 'shrug' | 'shake_head' | 'slap' | null;
     targetEntityId: string | null;
@@ -56,6 +68,11 @@ export interface ActorResponse {
   operations: ResponseOperation[];
 }
 export interface AttemptBinding {
+  /** Only resolved request-local operations carry these pins; offered descriptions are not authority. */
+  operationId?: string;
+  manifestRevision?: number;
+  targetEpisodes?: ActionTargetEpisodes;
+  fulfillment?: ActionFulfillment;
   description: string;
   commands: Command[];
 }
@@ -128,8 +145,16 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
       return false;
     if (
       op.act &&
-      (!record(op.act, ['kind', 'actionId', 'verb', 'targetEntityId', 'description', 'mode']) ||
-        !['known', 'expression', 'proposal'].includes(op.act.kind) ||
+      (!record(op.act, [
+        'kind',
+        'actionId',
+        'verb',
+        'targetEntityId',
+        'description',
+        'mode',
+        ...(op.act.invocation !== undefined ? ['invocation'] : []),
+      ]) ||
+        !['known', 'expression', 'proposal', 'invoke'].includes(op.act.kind) ||
         !['enqueue', 'replace'].includes(op.act.mode) ||
         ![op.act.actionId, op.act.verb, op.act.targetEntityId, op.act.description].every(
           nullableText,
@@ -254,9 +279,17 @@ export function commitActorResponse(
   if (!actor.actor.alive) return unavailable(`${actor.name} is dead and cannot respond.`);
   if (actor.actor.incapacitated)
     return unavailable(`${actor.name} is incapacitated and cannot respond.`);
-  if (capabilityBlocked(input, actor, 'speech'))
-    return unavailable(`${actor.name} cannot speak in their current state.`);
+  // A speech-only restriction must not suppress nonverbal decisions. Preserve the
+  // existing fully restricted response gate; native speech/action owners check each call.
+  // docs/architecture.md#reviewed-action-binding-and-approval-boundaries
+  if (capabilityBlocked(input, actor, 'speech') && capabilityBlocked(input, actor, 'actions'))
+    return unavailable(`${actor.name} cannot respond in their current state.`);
   const permitted = new Set(entityIds);
+  const targetEpisodes =
+    expectedEncounters &&
+    Object.fromEntries(
+      entityIds.map((targetId) => [targetId, expectedEncounters[targetId] ?? null]),
+    );
   let world = draftWorld(input);
   const events: Transition['events'] = [];
   const components: ResponseReceipt['components'] = {};
@@ -289,6 +322,14 @@ export function commitActorResponse(
     );
     components[localId] = transition.outcome;
   };
+  const queue = (
+    actor: Parameters<typeof arrangePlan>[0],
+    planId: string,
+    commands: PlannedCommand[],
+    mode: 'enqueue' | 'replace',
+    revision: number,
+    goalId: string | null,
+  ) => arrangePlan(actor, planId, commands, mode, revision, goalId, world);
   for (const op of response.operations) {
     localId = op.localId;
     if (op.requiresAccepted.some((dependency) => !components[dependency]?.ok)) {
@@ -304,6 +345,33 @@ export function commitActorResponse(
       const alias = ref.slice(1);
       return op.requiresAccepted.includes(alias) ? components[alias]?.goalId : undefined;
     };
+    const actionCommands: ActionTarget[] =
+      op.act?.kind === 'known'
+        ? [actions[op.act.actionId ?? '']].filter((c): c is Command => !!c)
+        : op.plan
+          ? op.plan.steps.flatMap((step) =>
+              step.actionId && actions[step.actionId] ? [actions[step.actionId]!] : [],
+            )
+          : [];
+    const directTarget =
+      op.talk?.addresseeEntityId ?? op.act?.invocation?.targetEntityId ?? op.act?.targetEntityId;
+    if (directTarget && !permitted.has(directTarget)) {
+      components[localId] = outcome(
+        false,
+        'unpermitted-target',
+        'The requested target was not in this decision context.',
+      );
+      continue;
+    }
+    if (directTarget) actionCommands.push({ actorId, targetId: directTarget });
+    if (targetEpisodes && !actionTargetsCurrent(world, actorId, actionCommands, targetEpisodes)) {
+      components[localId] = outcome(
+        false,
+        'stale-encounter',
+        'The referenced target encounter changed.',
+      );
+      continue;
+    }
     const subject = op.name?.subjectId ?? op.note?.subjectId;
     const rememberedSubject = op.note?.subjectId
       ? getOwn(knowledgeReferences, op.note.subjectId)
@@ -373,21 +441,47 @@ export function commitActorResponse(
     const act = op.act;
     const invalidActShape =
       !!act &&
-      ((act.kind === 'known' &&
-        (!act.actionId || act.verb || act.targetEntityId || act.description)) ||
+      ((act.kind !== 'invoke' && act.invocation != null) ||
+        (act.kind === 'invoke' &&
+          (!act.invocation || act.actionId || act.verb || act.targetEntityId || act.description)) ||
+        (act.kind === 'known' &&
+          (!act.actionId || act.verb || act.targetEntityId || act.description)) ||
         (act.kind === 'expression' && (!act.verb || act.actionId || act.description)) ||
         (act.kind === 'proposal' &&
           (!act.description ||
             act.description.length > 500 ||
             act.actionId ||
             act.verb ||
-            act.targetEntityId)));
+            (act.targetEntityId && !permitted.has(act.targetEntityId)))));
     if (invalidActShape) {
       components[localId] = outcome(
         false,
         'invalid-action-response',
         'The proposed action fields do not match its kind.',
       );
+    } else if (act?.kind === 'invoke') {
+      const bound = bindNavigationInvocation(
+        world,
+        actorId,
+        `${id}:${localId}`,
+        act.invocation,
+        entityIds,
+      );
+      if ('ok' in bound) components[localId] = bound;
+      else if (
+        act.mode === 'replace' &&
+        input.entities[actorId]!.actor!.planGeneration !== expectedPlan
+      )
+        components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
+      else
+        components[localId] = queue(
+          world.entities[actorId]!.actor!,
+          `${id}:${localId}`,
+          [bound],
+          act.mode,
+          world.entities[actorId]!.actor!.agency.plan?.revision ?? 0,
+          null,
+        );
     } else if (act?.kind === 'known' && !Object.hasOwn(actions, act.actionId!)) {
       components[localId] = outcome(
         false,
@@ -400,11 +494,18 @@ export function commitActorResponse(
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
       else if (
         selected &&
-        ['conversation', 'teach', 'cancel', 'recover', 'withdraw-attempt'].includes(selected.type)
+        [
+          'conversation',
+          'teach',
+          'cancel',
+          'recover',
+          'withdraw-attempt',
+          'confirm-attempt',
+        ].includes(selected.type)
       )
         command('act', { ...selected, actorId, id: `${id}:${localId}` });
       else if (selected)
-        components[localId] = arrangePlan(
+        components[localId] = queue(
           world.entities[actorId]!.actor!,
           `${id}:${localId}`,
           [{ ...selected, actorId, id: `${id}:${localId}` }],
@@ -472,13 +573,81 @@ export function commitActorResponse(
       // Server-scoped interpretation chooses existing commands, never effects. Admission
       // remains native and a composition queues sequential work rather than executing it here.
       // docs/architecture.md#actor-agency-foundation
-      const normalize = (text: string) => normalizeAttempt(text).replace(/[.!?]+$/u, '');
       const matches = attemptBindings.filter(
-        (binding) => normalize(binding.description) === normalize(act.description!),
+        (binding) => binding.operationId === localId && binding.description === act.description,
       );
       const component = world.entities[actorId]!.actor!;
       if (matches.length === 1) {
-        const selected = matches[0]!.commands;
+        const binding = matches[0]!;
+        if (binding.manifestRevision !== world.moduleManifest.revision) {
+          components[localId] = outcome(
+            false,
+            'stale-mechanics',
+            'Mechanics changed after this action was interpreted.',
+          );
+          continue;
+        }
+        const selected = binding.commands;
+        if (!actionTargetsCurrent(world, actorId, selected, binding.targetEpisodes)) {
+          components[localId] = outcome(
+            false,
+            'stale-encounter',
+            'The interpreted target encounter changed.',
+          );
+          continue;
+        }
+        // A lexical binding cannot override the explicit target, even before revision review.
+        // docs/architecture.md#action-fulfillment-and-revision-approval
+        if (
+          act.targetEntityId &&
+          selected.some(
+            (command) =>
+              ('targetId' in command &&
+                command.targetId !== undefined &&
+                command.targetId !== act.targetEntityId) ||
+              ('heatId' in command && command.heatId !== act.targetEntityId),
+          )
+        ) {
+          components[localId] = outcome(
+            false,
+            'target-mismatch',
+            'The explicit target does not match the resolved native action.',
+          );
+          continue;
+        }
+        const fulfillment = matches[0]!.fulfillment;
+        if (
+          !fulfillment ||
+          !validActionFulfillment(fulfillment) ||
+          fulfillment.requested !== act.description
+        ) {
+          components[localId] = outcome(
+            false,
+            'invalid-fulfillment',
+            'The action fulfillment report is invalid.',
+          );
+          continue;
+        }
+        if (fulfillment.verdict === 'confirm') {
+          if (
+            act.mode === 'replace' &&
+            input.entities[actorId]!.actor!.planGeneration !== expectedPlan
+          ) {
+            components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
+            continue;
+          }
+          components[localId] = proposeActionRevision(
+            world,
+            actorId,
+            `${id}:${localId}`,
+            selected.map((c, index) => ({ ...c, actorId, id: `${id}:${localId}:${index}` })),
+            fulfillment,
+            act.mode,
+            component.planGeneration,
+            act.targetEntityId,
+          );
+          continue;
+        }
         if (
           act.mode === 'replace' &&
           input.entities[actorId]!.actor!.planGeneration !== expectedPlan
@@ -486,13 +655,18 @@ export function commitActorResponse(
           components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
         else if (
           selected.length === 1 &&
-          ['conversation', 'teach', 'cancel', 'recover', 'withdraw-attempt'].includes(
-            selected[0]!.type,
-          )
+          [
+            'conversation',
+            'teach',
+            'cancel',
+            'recover',
+            'withdraw-attempt',
+            'confirm-attempt',
+          ].includes(selected[0]!.type)
         )
           command('act', { ...selected[0]!, actorId, id: `${id}:${localId}` });
         else
-          components[localId] = arrangePlan(
+          components[localId] = queue(
             component,
             `${id}:${localId}`,
             selected.map((command, index) => ({
@@ -505,9 +679,21 @@ export function commitActorResponse(
             null,
           );
         if (components[localId]?.ok)
-          resolveAttempt(world.entities[actorId]!.actor!, act.description!);
+          resolveAttempt(
+            world.entities[actorId]!.actor!,
+            act.description!,
+            act.targetEntityId,
+            act.mode,
+          );
       } else
-        components[localId] = deferAttempt(world, actorId, `${id}:${localId}`, act.description!);
+        components[localId] = deferAttempt(
+          world,
+          actorId,
+          `${id}:${localId}`,
+          act.description!,
+          act.targetEntityId,
+          act.mode,
+        );
     }
 
     if (op.think) {
@@ -590,7 +776,7 @@ export function commitActorResponse(
           );
         }
       } else
-        components[localId] = arrangePlan(
+        components[localId] = queue(
           component,
           `${id}:${localId}`,
           op.plan.steps.map(
