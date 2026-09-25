@@ -5,21 +5,21 @@ on:
     paths: [.github/workflows/action-capability-review.yml]
 permissions:
   contents: read
-  actions: read
 jobs:
   inspect:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Read pinned review preparation
+      - name: Prepare pinned source candidate
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python - <<'PY'
           import urllib.request,os
-          req=urllib.request.Request('https://raw.githubusercontent.com/Macrofold/OpenLegend/'+os.environ['GITHUB_SHA']+'/.github/review-prepare.py',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN']})
-          with urllib.request.urlopen(req) as response: script=response.read()
-          exec(compile(script,'review-prepare.py','exec'))
+          for name in ['review-prepare.py','review-reconcile.py']:
+            req=urllib.request.Request('https://raw.githubusercontent.com/Macrofold/OpenLegend/'+os.environ['GITHUB_SHA']+'/.github/'+name,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN']})
+            with urllib.request.urlopen(req) as response: script=response.read()
+            exec(compile(script,name,'exec'))
           PY
       - uses: pnpm/action-setup@v4
         with:
@@ -27,31 +27,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Prepare pinned dependencies without executing project checks
-        working-directory: /tmp/openlegend-reconcile/main
-        run: pnpm install --frozen-lockfile
-      - name: Package private source workspace
-        run: tar -C /tmp -czf /tmp/openlegend-review.tgz openlegend-reconcile
-      - uses: actions/upload-artifact@v4
-        id: workspace
-        with:
-          name: openlegend-review-workspace
-          path: /tmp/openlegend-review.tgz
-          compression-level: 0
-          retention-days: 1
-      - name: Expose temporary authenticated artifact location for review tools
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ARTIFACT_ID: ${{ steps.workspace.outputs.artifact-id }}
+      - name: Production build only
+        working-directory: /tmp/openlegend-reconcile/candidate
         run: |
-          python - <<'PY'
-          import urllib.request,urllib.error,os
-          class NoRedirect(urllib.request.HTTPRedirectHandler):
-            def redirect_request(self,*args,**kwargs): return None
-          req=urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/actions/artifacts/'+os.environ['ARTIFACT_ID']+'/zip',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-          try:
-            urllib.request.build_opener(NoRedirect).open(req)
-          except urllib.error.HTTPError as response:
-            if response.code != 302: raise
-            print('PRIVATE_REVIEW_ARTIFACT_URL='+response.headers['Location'])
-          PY
+          pnpm install --frozen-lockfile
+          pnpm run build
