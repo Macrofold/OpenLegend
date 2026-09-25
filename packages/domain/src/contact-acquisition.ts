@@ -84,7 +84,10 @@ export function* updateContactEpisodes(
         'private',
       );
   }
-  for (const [id, episode] of Object.entries(prior))
+  let retired = 0;
+  for (const [id, episode] of Object.entries(prior)) {
+    if (retired > 0 && retired % 64 === 0) yield;
+    retired++;
     if (!contacts[id] && episode.senseId === touch.id)
       emit(
         world,
@@ -102,6 +105,7 @@ export function* updateContactEpisodes(
         },
         'private',
       );
+  }
   if (
     Object.keys(contacts).length !== Object.keys(prior).length ||
     Object.entries(contacts).some(([id, episode]) => episode !== prior[id])
