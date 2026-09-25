@@ -5,6 +5,7 @@
 ## Start here
 
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
+- **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
 - **[What makes these worlds fun](essays/what-actually-makes-these-worlds-fun.md):** agency, constraints, relationships, legibility, failure, atmosphere, and authored/generated content.
 - **[Virality and discovery](essays/virality-and-discovery.md):** distinct player, creator, reuse, and distribution loops.
 - **[Production and platform pitfalls](essays/production-and-platform-pitfalls.md):** cancellations, unsustainable services, shallow freedom, expectation debt, and technical overreach.
@@ -29,6 +30,12 @@
 ### Cautionary cases and language-driven creation
 
 [Dreams / Project Spark](games/dreams-and-project-spark.md) · [EverQuest Next](games/everquest-next.md) · [Worlds Adrift](games/worlds-adrift.md) · [Spore](games/spore.md) · [No Man's Sky](games/no-man-s-sky.md) · [Ultima Online ecology](games/ultima-online-s-ecology.md) · [Scribblenauts](games/scribblenauts.md) · [AI Dungeon](games/ai-dungeon.md).
+
+## Deeper reading by system
+
+The [granular study index](mechanics/README.md#detailed-system-studies) links eleven extended studies covering fourteen games. They supplement, rather than replace, the game chapters above. Subjects include wand payloads, factory feedback loops, object blueprints, environment-powered magic, transformations, triggered meals, artifact history, social knowledge, seasonal opportunities, useful creature workers, cooperative information, language-driven objective recognition, and knowledge as progression.
+
+Start with a game chapter for its overall promise, history, reception, and videos. Follow a granular study to understand individual rules and their consequences. Return to the cross-game essays to compare the design tensions. Each study includes its own source annotations and labels worked examples separately from attributed incidents. Outer Wilds' specific discoveries are spoiler-marked.
 
 ## Evidence and preservation
 
