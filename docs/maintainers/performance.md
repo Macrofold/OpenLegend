@@ -1,5 +1,9 @@
 # Performance implementation tracker
 
+## Elapsed-time integration
+
+[PF13](simulation-time.md#pf13--elapsed-time-simulation) is the focused delivery tracker for independent clock rates, boundary-limited integration and its remaining qualification. [Simulation time](../simulation-time.md) owns the contract. PF12 remains the larger performance program; its older mandatory-step assumptions are superseded, not a requirement to restore a one-second loop.
+
 ## Spatial measurements
 
 Cross-link [SW06/SW14](spatial-world.md) for spatial readiness and measurements rather than adding another worker framework here. Retain the implemented static bounds index; one Recast worker and shape-level Rapier are now integrated. Qualify larger workloads before adding more workers, affected-tile rebuilding or a crowd solver. Derived caches and camera updates must retain zero provider cost; SW17–SW19 own current spatial/presentation scope.

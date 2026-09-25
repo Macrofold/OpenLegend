@@ -1,6 +1,6 @@
 # Sound/speech and elapsed-time integration handoff
 
-This is a coordination note, not a second hearing or simulation specification. [Simulation time](../simulation-time.md) owns clock/integration behavior. The sound branch owns its hearing/speech contract; preserve its canonical documentation when combining the branches. Work and validation remain with PF13, SW, EPR and the existing speech tracker.
+This is a coordination note, not a second hearing or simulation specification. [Simulation time](../simulation-time.md) owns clock/integration behavior. The sound branch owns its hearing/speech contract; preserve its canonical documentation when combining the branches. Work and validation remain with [PF13](simulation-time.md), SW, EPR and the existing speech tracker.
 
 ## Integration state
 
@@ -14,12 +14,12 @@ Its current performance checklist still describes 8x as 480 mandatory one-second
 
 Land or review the elapsed-time branch as the common integration base first, then rebase or merge sound/speech onto it. This consolidates Recast/Rapier initialization, pending route results, spatial support, elapsed integration and current persistence policy before resolving the event/presentation additions. If sound lands first, reverse the order but preserve the same responsibilities. Neither branch depends on a universal kinetic scheduler or volumetric acoustics.
 
-Do not resolve shared files by selecting a complete side. In particular, retain cadence's start/rate/end phases in `kernel.ts` and `world-service.ts`, while preserving sound's batched acquisitions, recipient-specific evidence, conversation eligibility and revocation-safe derived writes. Keep current-main world ownership and in-place save behavior. No new database, save reset, scheduler or writable store is needed.
+Do not resolve shared files by selecting a complete side. In particular, retain cadence's start/rate/end phases in `kernel.ts` and `world-service.ts`, while preserving sound's batched acquisitions, recipient-specific evidence, conversation eligibility and revocation-safe derived writes. Keep current-main world ownership, nonblocking consolidation pressure and in-place save behavior. No new database, save reset, scheduler or writable store is needed.
 
 ## Shared changes to reconcile
 
 - `status-effects.ts`: one `mayAdvanceStatusEffects` helper; preserve cadence's `reconcileStatusEffects`, `prepareStatusRates` and `integrateStatusRates`. Capture rates and conditional predicates at interval start for all subjects before applying endpoint effects. The effect-only helper is not the global integration loop.
-- `object-exposure.ts` and `kernel.ts`: keep one ID-only exposure cache and the unchanged episode-membership optimization, including geometry/body/pose/range invalidators and capability gates. Sound's acquisition batching may replace repeated acquisitions only within one stable post-motion sensing phase.
+- `object-exposure.ts`, `encounter-cache.ts` and `kernel.ts`: keep one ID-only exposure cache and the unchanged episode-membership optimization, including geometry/body/pose/range invalidators and capability gates. Sound's acquisition batching may replace repeated acquisitions only within one stable post-motion sensing phase. Its newer immutable physical-phase finalization/unchanged-exposure proof must apply per accepted elapsed interval, not once after an arbitrary multi-interval call. Keep touch moving-to-present transitions exact and retain command, status, body, geometry, policy and capability invalidation; an unchanged visual proof never skips speech admission.
 - `kernel.ts`: `advanceWorld` returns a bounded elapsed prefix. `maxIntervals` bounds work, not game seconds. A newly arrived or newly created action receives none of the preceding interval's work. Preserve swept body checks and explicit support seams.
 - `world-service.ts`: subtract actual `world.simTime` progress, retain debt, preserve navigation/pause/command fences and routine durability. Host wake frequency and one-second persistence policy are real-time coordination choices, not biological ticks.
 - `events.ts`, `speech.ts`, `acoustics.ts` and perception/history: calculate heard evidence at committed emission state, retaining listener-specific full/partial/no-word content and identity scope. Do not replace graded exposure with the older binary radius/0.65 gate. Threshold-pruning arithmetic valid for that older gate is not automatically a dB-policy implementation.
@@ -42,4 +42,4 @@ Cross-cutting coverage belongs in [TODO](TODO.md), not a duplicate test list her
 
 ## Message for the sound-branch implementer
 
-Use `feature/simulation-cadence` as the time-integration side. Keep your graded acoustics, receiver index, transfer reuse, batched evidence, real-time captions and latest asynchronous safety fixes. Reconcile shared helpers and each kernel/service phase, rather than copying a one-second loop back. Remove the 480-ticks-per-second assumption from HE05 and stress tooling: report game-time progression and measured integration calls separately. Caption animation remains at browser frame cadence. No hearing re-authoring or new renderer is required.
+Use `feature/simulation-cadence` as the time-integration side. Keep your graded acoustics, receiver index, transfer reuse, batched evidence, real-time captions, latest experience-index/finalization work and asynchronous safety fixes. Reconcile shared helpers and each kernel/service phase, rather than copying a one-second loop back. Remove the 480-ticks-per-second assumption from HE05 and stress tooling: report game-time progression and measured integration calls separately. Caption animation remains at browser frame cadence. No hearing re-authoring or new renderer is required.

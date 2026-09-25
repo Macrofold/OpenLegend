@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-25 — Elapsed time is not a tick requirement
+
+The accepted clock conversion (one real second to one game minute) no longer implies one-game-second integration. The finite native implementation resolves start-state conditions, integrates elapsed rates and existing work, and handles endpoint outcomes before selecting the next bound. Sparse simulation remains independent of browser frame cadence; source memory pressure cannot pause native time. Current status-effect/world ownership and in-place saves are preserved with the new agent guidance.
+
+[Simulation time](simulation-time.md) owns the contract; [base time](worlds/base/time.md) and RP03 own revisitable fidelity choices. [PF13](maintainers/simulation-time.md) owns delivery, the [boundary catalogue](maintainers/simulation-boundaries.md) collects future exact/local bounds, and [sound coordination](maintainers/speech-time-integration.md) prevents reintroducing a fixed-second loop while merging graded speech. Native/application observations are in [evidence](verification/simulation-cadence.md); regional scheduling, exact fleeting exposure and general coupled-flow integration remain future work. This supersedes the previous mandatory 480-ticks-per-second performance premise, not its historical measurements or the existing collision/privacy/durability rules.
+
 ## In-place development updates
 
 Corrected the policy: small migrations are allowed and preferred; maintaining legacy game versions is not required. Removed automatic fresh-world recovery and its per-feature save-format gate. The preceding startup recovery did reset the development gameplay world while retaining accounting; that behavior is superseded, not an acceptance requirement. Current behavior is owned by Save/load and Architecture.

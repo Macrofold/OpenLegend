@@ -1,6 +1,6 @@
 # Base-world time fidelity
 
-[Simulation time](../../simulation-time.md) owns the engine interval contract. This document owns the bundled world's current fidelity choices; the numbers are not universal laws of authored realities. [PF13](../../maintainers/performance.md#pf13--elapsed-time-simulation) owns delivery and qualification, and the [boundary catalogue](../../maintainers/simulation-boundaries.md) holds future exact bounds.
+[Simulation time](../../simulation-time.md) owns the engine interval contract. This document owns the bundled world's current fidelity choices; the numbers are not universal laws of authored realities. [PF13](../../maintainers/simulation-time.md#pf13--elapsed-time-simulation) owns delivery and qualification, and the [boundary catalogue](../../maintainers/simulation-boundaries.md) holds future exact bounds.
 
 ## Clock and fallback horizon
 
@@ -20,4 +20,4 @@ Some separately clamped native/status operations cannot yet be combined as one n
 
 ## Review trigger
 
-Revisit these bounds when fleeting encounters matter to a mechanic, new movement/sense ranges create excessive global interval splitting, an admitted operation has unknown within-interval changes, or mixed-load evidence identifies fallback work as a bottleneck. Keep the authored policy, its adapter, the catalogue and [RP03](../../maintainers/revisitable-policies.md#rp03--base-world-integration-fidelity) aligned. Changing fidelity is a visible behavioral decision; rendering performance alone cannot authorize it.
+Revisit these bounds when fleeting encounters matter to a mechanic, new movement/sense ranges create excessive global interval splitting, an admitted operation has unknown within-interval changes, or mixed-load evidence identifies fallback work as a bottleneck. Keep the authored policy, its adapter, the catalogue and [RP03](../../maintainers/revisitable-policies.md#rp03--elapsed-time-fidelity-and-integration-limits) aligned. Changing fidelity is a visible behavioral decision; rendering performance alone cannot authorize it.

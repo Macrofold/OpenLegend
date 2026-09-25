@@ -7,7 +7,7 @@ node --import tsx scripts/stress-native.ts scripts/performance/scenarios/gems.js
 node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/mixed.cpuprofile > /tmp/mixed-report.json
 ```
 
-Use a new output path per run. CPU profiles may contain local paths; keep profiles, reports and private input saves outside version control. Open `.cpuprofile` in a compatible CPU-profile viewer. Stderr reports loading/setup, warm-up, measured steps and output stages. A hard parent-process timeout covers setup as well as simulation; timeout exits with code 124 and is an incomplete result, never a capacity pass. A killed run may have no usable CPU profile or report.
+Use a new output path per run. CPU profiles may contain local paths; keep profiles, reports and private input saves outside version control. Open `.cpuprofile` in a compatible CPU-profile viewer. Stderr reports loading/setup, warm-up, measured calls and output stages. A hard parent-process timeout covers setup as well as simulation; timeout exits with code 124 and is an incomplete result, never a capacity pass. A killed run may have no usable CPU profile or report.
 
 Copy an example JSON and configure:
 
@@ -18,7 +18,8 @@ Copy an example JSON and configure:
 | `people`, `animals` | Additional people and deer, admitted through real spawn transitions; default zero. Fail explicitly if the map lacks free walkable tiles.                                                   |
 | `layout`            | `crowded`: nearest walkable tiles around the player; objects use the nearest nine tiles. `scattered`: seeded shuffle across available walkable tiles. A small map still limits separation. |
 | `objects`           | Groups with `count`, `name`, `properties`, optional `nutrition`, `quantity` (default 1), and `workSeconds` (default 1).                                                                    |
-| `steps`, `warmup`   | Measured native one-second steps (default 180) and excluded warm-up steps (default 30). Use warmup 0 to include first encounters.                                                          |
+| `steps`, `warmup`   | Measured integration calls (default 180) and excluded warm-up calls (default 30). Use warmup 0 to include first encounters.                                                          |
+| `intervalSeconds` | Maximum offered game seconds per call (default 1); use 60 to exercise sparse integration. Actual accepted time can be shorter at a boundary or zero when navigation is pending. |
 | `speed`             | Requested multiplier used only to calculate native capacity headroom; default 1, maximum 100. This is not a real-time scheduler run.                                                       |
 | `timeoutSeconds`    | Hard run deadline, default 60, maximum 600. Total added population is capped at 10,000.                                                                                                    |
 
@@ -31,3 +32,5 @@ This first version excludes real-time clock debt, database commits, browser fram
 ## Actual progress and pending navigation
 
 The profiler initializes the shared collision adapter before constructing/loading a world. Reports distinguish requested steps, attempted steps, completed steps and actual `simulatedSeconds`. A no-progress native call stops the measured loop with `status: blocked`; throughput/headroom use actual world-time progress, never requested iterations. This script does not run the navigation coordinator: a pending derived route requires the running-server diagnostic. Re-run on the same snapshot/seed for comparisons. CPU profiling adds instrumentation overhead, so the capacity gate remains an unprofiled full-server measurement.
+
+For cadence comparisons, record offered and actually integrated game seconds, interval count and input state. Equal call counts do not mean equal simulated work. A one-second diagnostic remains useful as a numerical reference but is not the production clock contract. See [PF13](simulation-time.md) and [cadence evidence](../verification/simulation-cadence.md).

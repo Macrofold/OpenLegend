@@ -6,6 +6,10 @@
 
 This page is the master navigation index for active implementation work.
 
+## Elapsed simulation
+
+[PF13 delivery](simulation-time.md) follows the [clock/integration contract](../simulation-time.md). The [boundary catalogue](simulation-boundaries.md) collects natural deadlines and conservative future bounds; [speech integration](speech-time-integration.md) coordinates the parallel sound branch. Neither is another task tracker or a completed universal scheduler.
+
 ## Focused work
 
 | Area                                                                   | Tracker                                                             | Design owner                                                                                                                                                                                                                                                   |
