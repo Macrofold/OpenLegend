@@ -11,7 +11,11 @@ import type {
   WorldAgentTurnCursor,
 } from '@open-legend/protocol';
 import { WorldAgentStore, type AgentSession, type AgentTurnRecord } from './world-agent-store.js';
-import { WORLD_AUTHORING_TOOLS, type WorldAuthoringToolName } from './world-authoring-contracts.js';
+import {
+  WORLD_AUTHORING_TOOLS,
+  parseWorldAuthoringCall,
+  type WorldAuthoringCall,
+} from './world-authoring-contracts.js';
 import {
   decodeAuthoringPayload,
   draftBase,
@@ -145,11 +149,13 @@ export class WorldAuthoringService {
         ? 'Configure an unexpired writable OpenLegend MCP connector for this world.'
         : !c.macrofoldKey || !/^[a-f0-9-]{36}$/i.test(c.macrofoldWorldConnectionId)
           ? 'Configure the Macrofold API key and an approved World Agent connection.'
-          : c.budgetUsd <= 0
-            ? 'Paid execution is disabled by AI_BUDGET_USD; native drafts and approved Apply remain available.'
-            : !this.available() || !!this.service.storageError
-              ? 'The world is being restored or storage is unavailable.'
-              : null;
+          : c.macrofoldComputeUsd <= 0
+            ? 'Configure MACROFOLD_COMPUTE_MAX_USD for the native agent worker; native drafts remain available.'
+            : c.budgetUsd <= 0
+              ? 'Paid execution is disabled by AI_BUDGET_USD; native drafts and approved Apply remain available.'
+              : !this.available() || !!this.service.storageError
+                ? 'The world is being restored or storage is unavailable.'
+                : null;
     return {
       configured: !reason,
       reason:
@@ -304,15 +310,10 @@ export class WorldAuthoringService {
   // while an interrupted remote worker is being reconciled. Charges stay in the existing ledger.
   async recover() {
     for (;;) {
-      const rows = await this.records.db
-        .prepare(
-          "SELECT payload FROM world_agent_sessions WHERE world_id=? AND json_extract(payload,'$.activeTurn') IS NOT NULL ORDER BY id LIMIT 50",
-        )
-        .all(this.service.world.id);
+      const rows = await this.records.activeSessions(this.service.world.id);
       if (!rows.length) break;
-      for (const row of rows)
+      for (const s of rows)
         await this.records.db.transaction(async () => {
-          const s = JSON.parse(String(row['payload'])) as AgentSession;
           const turn = await this.records.get<AgentTurnRecord>(s.id, 'turn', s.activeTurn!);
           if (turn && !turn.response)
             await this.records.put(s.id, 'turn', s.activeTurn!, {
@@ -416,7 +417,10 @@ export class WorldAuthoringService {
   }
   async applyLocal(sessionId: string, planId: string) {
     return this.serial(sessionId, async () =>
-      this.dispatch('ol_change_apply', { planId }, await this.requireSession(sessionId)),
+      this.dispatch(
+        { name: 'ol_change_apply', arguments: { planId } },
+        await this.requireSession(sessionId),
+      ),
     );
   }
   private async draft(s: AgentSession, id: string, revision: number, current = false) {
@@ -463,31 +467,29 @@ export class WorldAuthoringService {
     });
   }
   async execute(name: string, raw: unknown, handle: string): Promise<AuthoringResult> {
-    if (!Object.hasOwn(WORLD_AUTHORING_TOOLS, name))
-      return result('invalid', 'Unknown authoring tool.');
-    const tool = WORLD_AUTHORING_TOOLS[name as WorldAuthoringToolName],
-      parsed = tool.schema.safeParse(raw);
-    if (!parsed.success) return result('invalid', 'Arguments do not match this tool.');
-    if (JSON.stringify(parsed.data).includes(handle))
+    const call = parseWorldAuthoringCall(name, raw);
+    if (!call) return result('invalid', 'Unknown tool or arguments do not match this tool.');
+    if (JSON.stringify(call.arguments).includes(handle))
       return result('invalid', 'Do not place session context in artifact content.');
-    const s = await this.records.byContext(contextHash(handle));
-    if (!s || !this.permitted(s))
-      return result('forbidden', 'Session context is expired, revoked, or stale.');
     try {
+      const s = await this.records.byContext(contextHash(handle));
+      if (!s || !this.permitted(s))
+        return result('forbidden', 'Session context is expired, revoked, or stale.');
       return await this.serial(s.id, async () => {
         const current = await this.requireSession(s.id);
         if (current.contextHash !== contextHash(handle))
           return result('forbidden', 'Session context has been replaced.');
-        const args = parsed.data as Record<string, any>;
-        const execute = () => this.dispatch(name as WorldAuthoringToolName, args, current);
+        const args = call.arguments;
+        const operationId = 'operationId' in args ? args.operationId : undefined;
+        const execute = () => this.dispatch(call, current);
         // Only operational edits use this transaction. Apply enters the world lane first,
         // never with a database lock held (avoids writer/database lock inversion).
-        if (!args.operationId) return execute();
+        if (!operationId) return execute();
         return this.records.db.transaction(async () => {
           const prior = await this.records.get<{ fingerprint: string; response: AuthoringResult }>(
             s.id,
             'operation',
-            args.operationId,
+            operationId,
           );
           const hash = fingerprint({ name, args });
           if (prior)
@@ -497,7 +499,7 @@ export class WorldAuthoringService {
           if ((await this.records.count(s.id, 'operation')) >= 2048)
             return result('capacity', 'This session reached its retained edit limit.');
           const response = await execute();
-          await this.records.put(s.id, 'operation', args.operationId, {
+          await this.records.put(s.id, 'operation', operationId, {
             fingerprint: hash,
             response,
           });
@@ -506,16 +508,15 @@ export class WorldAuthoringService {
       });
     } catch (error) {
       return result(
-        'blocked',
-        error instanceof Error ? error.message : 'Authoring operation failed.',
+        error instanceof AuthoringRequestError ? 'blocked' : 'unavailable',
+        error instanceof AuthoringRequestError
+          ? error.message
+          : 'Authoring storage could not confirm the operation. Inspect saved records before retrying.',
       );
     }
   }
-  private async dispatch(
-    name: WorldAuthoringToolName,
-    a: Record<string, any>,
-    s: AgentSession,
-  ): Promise<AuthoringResult> {
+  private async dispatch(call: WorldAuthoringCall, s: AgentSession): Promise<AuthoringResult> {
+    const { name, arguments: a } = call;
     switch (name) {
       case 'ol_session':
         return result('ok', undefined, await this.view(s.id, a.afterDraft, a.afterPlan));
@@ -616,7 +617,9 @@ export class WorldAuthoringService {
         if (plan.status === 'applied') return result('ok', plan.result?.message, plan);
         if (plan.status !== 'approved')
           return result('needs_approval', 'This exact plan is not approved.', plan);
-        await this.draft(s, draft.id, draft.revision, true);
+        // The world receipt is checked before current-draft admission. A committed Apply
+        // remains recoverable if its operational projection failed before a later edit.
+        // docs/world-agent-runtime.md#durable-write-sessions
         const id = `wa-${plan.id}`;
         const applied = await this.service.reviewedTransition(
           id,
