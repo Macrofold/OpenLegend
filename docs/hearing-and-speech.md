@@ -161,7 +161,7 @@ A later identification is new evidence. It does not rewrite the original utteran
 
 ### Editing committed speech
 
-Generic event and awareness editors must not rewrite committed speech text or content independently of the listener capsule. Reject such rewrites clearly; existing guarded deletion and awareness-importance edits remain permitted. A correction spoken in the world is a new event, not a retroactive hearing upgrade. A dedicated administrative re-authoring operation needs explicit semantics for already-perceived fragments and their dependents; that unresolved extension is recorded in [D61](../archive/05-project/open-decisions.md#d61--re-authoring-committed-speech).
+Generic event and awareness editors must not rewrite committed speech text or content independently of the listener capsule. Reject such rewrites clearly; existing guarded deletion and awareness-importance edits remain permitted. A correction spoken in the world is a new event, not a retroactive hearing upgrade. A dedicated administrative re-authoring operation needs explicit semantics for already-perceived fragments and their dependents; that unresolved extension is recorded in [D63](../archive/05-project/open-decisions.md#d63--re-authoring-committed-speech).
 
 ### Native behavior and sleep
 
