@@ -21,13 +21,15 @@ Keep one region, one world owner and the existing transactional storage directio
 
 Do not implement every future production record without a consumer. Preserve the shared contracts while migrating the records needed for these scenarios.
 
-## Multiplayer semantics requiring an explicit answer
+## Implement accepted shared-world semantics; resolve the residual questions
 
-The current local-world pause setting cannot govern a persistent shared world by accident. Decide whether the world pauses when empty, continues exact supported processes, or uses an approved offline policy. One hidden tab must not pause everyone else. Decide what happens to disconnected actors, active conversations and obligations.
+[D03](../../../05-project/open-decisions.md) already specifies a world-level **Continue while unattended** toggle. Without it, a shared world pauses only when all players are disconnected or unfocused; manual/operator/storage pause takes precedence, and server downtime has no catch-up. The current local hidden-tab implementation is not evidence that this multiplayer target is delivered. One player's hidden tab must not accidentally pause everyone else.
 
-Specify who can restore a world when other people have acted in it, how they are notified, and what happens to pending external work. Decide whether creator powers are available during competitive/shared play and whether other participants can trust the same rules. These are product decisions with infrastructure consequences.
+Remaining decisions include disconnect grace and a disconnected character's exposure/removal, plus future load/rate limits. Preserve active conversation and obligation semantics through the chosen policy. A new implementation does not reopen the accepted clock merely because another game's tick frequency differs.
 
-Do not require every shared world to be permanent and globally connected immediately. A clearly scoped cooperative world can establish robust identity, evidence and persistence while leaving later world topology open.
+Specify who can restore a world when other people have acted in it, how they are notified, and what happens to pending external work under D60 and the save owner. Decide whether creator powers are available during competitive/shared play and how participants can understand those powers. These are product decisions with infrastructure consequences.
+
+Do not require every shared world to be permanently active and globally connected immediately. A clearly scoped cooperative world can establish robust identity, evidence and persistence while leaving later topology open.
 
 ## A recommended initial test fixture
 

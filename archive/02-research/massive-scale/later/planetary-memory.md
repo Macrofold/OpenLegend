@@ -2,6 +2,12 @@
 
 [Research index](../README.md) · Conditional storage expansion beneath the [memory semantics](../../../../docs/memory-architecture.md) and D2/D6. A billion retained records is not a reason to invent a new character-memory model.
 
+## Preserve the accepted recall boundary
+
+[D14](../../../05-project/open-decisions.md) retains six-game-hour raw recall, consolidation, bounded authored continuity and protected native commitments. **Cold personal recollection is unselected.** A creator's retained archive is not automatically an NPC's eligible memory. “Cold” below describes physical storage, not permission to undo forgetting, restore unperceived events or bypass the accepted recall windows.
+
+A physically cold but still eligible summary/commitment can be loaded through its normal authorized path. Retained raw historical sources outside an actor's eligibility remain unavailable to that actor even if an administrator can inspect them. All capacity alternatives must preserve this distinction.
+
 ## Follow the access pattern
 
 Most character recall is scoped to one actor and a limited set of permitted shared sources. Preserve that locality physically. Route to a bounded set of storage partitions, retrieve eligible records and rank within that corpus. A billion-record global dataset can still support small ordinary queries.
@@ -12,9 +18,9 @@ The current exact scoped vector store is a useful baseline. Replace it only afte
 
 ## Different data has different lifecycle
 
-Keep active commitments and required continuity readily available. Recent evidence and frequently recalled memories may remain in transactional/search storage. Older immutable source segments can move to archive with scoped readers and appropriate access latency. Rebuildable embeddings and lexical indexes can have their own lifecycle.
+Keep active commitments and required continuity readily available. Recent eligible evidence and frequently recalled summaries may remain in transactional/search storage. Older immutable source segments can move to a creator/operational archive with scoped readers and appropriate access latency. Rebuildable embeddings and lexical indexes can have their own lifecycle.
 
-Cold does not mean forgotten. A character may need an old promise or significant experience, and the semantic owners define that requirement. Do not silently age out required knowledge to satisfy a storage budget. Where archive retrieval is slower, represent the operational state honestly rather than inventing an answer.
+Do not silently age out required knowledge to satisfy a storage budget, or grant ineligible knowledge because cheaper storage retained it. Where loading eligible state is slower, represent the operational state honestly rather than inventing an answer. Retention, actor eligibility and storage temperature are separate dimensions.
 
 Source sharing can reduce duplicated payloads, but acquisition identity/detail still matters. An event heard by a crowd is not one identical memory automatically owned by everyone in the world.
 
@@ -30,7 +36,7 @@ Partition history for efficient scoped reads and lifecycle operations. Preserve 
 
 HNSW can be appropriate when its memory/update profile fits. SSD-oriented graph search can reduce resident vector requirements. Quantization trades representation accuracy for footprint. GPU-based search can favor batched workloads. None automatically supplies the required permissions or deletion semantics. [S24](../sources.md#s24), [S25](../sources.md#s25), [S26](../sources.md#s26)
 
-Benchmark real private-scope selectivity and adversarially sparse matches. Compare approximate recall against exact eligible search, including mandatory evidence. Report p99 latency, not only mean throughput. Distinguish cold index startup from warmed-cache results.
+Benchmark real private-scope selectivity and adversarially sparse matches. Compare approximate recall against exact eligible search, including mandatory evidence. Report p99 latency, not only mean throughput. Distinguish cold index startup from warmed-cache results. Evaluate filter-aware and streaming-index research when the measured workload calls for it. [S63](../sources.md#s63), [S64](../sources.md#s64), [S65](../sources.md#s65)
 
 A model change may require dual embeddings, dual indexes and a backfill while live ingestion continues. Record source-text revision, model and dimensions; suppress stale publication after correction. Measure the time and temporary capacity to complete this operation before promising frequent model upgrades.
 

@@ -18,3 +18,7 @@ Current implemented architecture is defined in [docs/architecture.md](../../docs
 | [Macrofold implementation brief](macrofold-implementation-brief.md) | Downstream execution-service requirements |
 
 Supporting context: [extensibility roadmap](../../docs/extensibility-roadmap.md) and [worked examples](../../docs/extensible-world-examples.md).
+
+## Scaling research
+
+[Preparing for massive scale](../02-research/massive-scale/README.md) provides a pinned repository audit, annotated papers and MMO case studies, workload arithmetic, and NOW/SOON/LATER guidance. It is informational research, not another accepted specification or implementation tracker. Existing design owners and D0–D6 retain their contracts and acceptance gates.

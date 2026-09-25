@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-25 — Massive-scale architecture research
+
+Added the [massive-scale research dossier](../archive/02-research/massive-scale/README.md): 33 reference documents with 65 annotated source entries, a repository audit pinned to `3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238`, MMO/research comparisons, capacity arithmetic, and NOW/SOON/LATER guidance. The report separates whole-world fleet growth from dense-scene scale, private memory eligibility from physical storage, and native simulation from asynchronous intelligence.
+
+Linked the technical index and production-data tracker without changing their ownership or phase status. Reconciled the research with D03's already accepted unattended-world policy and D14's recall/forgetting boundary; proposals do not reopen those decisions. Source read-depth, static-review limits and proposed experiments remain explicit. This documentation change implements no runtime behavior, runs no game/scale or live-model tests, and establishes no capacity guarantee.
+
 ## In-place development updates
 
 Corrected the policy: small migrations are allowed and preferred; maintaining legacy game versions is not required. Removed automatic fresh-world recovery and its per-feature save-format gate. The preceding startup recovery did reset the development gameplay world while retaining accounting; that behavior is superseded, not an acceptance requirement. Current behavior is owned by Save/load and Architecture.

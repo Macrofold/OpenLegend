@@ -2,7 +2,7 @@
 
 **Research dossier · 25 September 2026 · informational, not an accepted replacement architecture.**
 
-Repository baseline: [`3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238`](https://github.com/Macrofold/OpenLegend/commit/3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238). Branch: `research/massive-scale-readiness`. No capacity benchmark, runtime implementation, infrastructure deployment, or paid model evaluation is claimed by this dossier.
+Repository baseline: [`3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238`](https://github.com/Macrofold/OpenLegend/commit/3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238). Branch: `research/massive-scale-readiness`. This dossier contains **33 Markdown documents and 65 annotated source entries**, including papers, preprints, official documentation and engineering accounts. No capacity benchmark, runtime implementation, infrastructure deployment, or paid model evaluation is claimed.
 
 ## The central recommendation
 
@@ -10,7 +10,7 @@ Preserve the expressive game by making **authority, knowledge, work, and lifecyc
 
 A million registered accounts, a million simultaneously connected players, a million active minds, and a million mutually interacting bodies in one place are four radically different requirements. None follows automatically from the others. A browser is a delivery and rendering environment, not a reason to surrender server authority or a proof that rich simulation is impossible.
 
-The existing repository already anticipates many of the right boundaries. Its production target is substantially more scalable than a naive world-sized JSON save, but the current implementation has not completed that target. The highest-risk mistake would be to treat target documentation as delivered capacity—or to abandon its protections while optimizing. Start with the [repository audit](repository-audit.md).
+The existing repository already anticipates many of the right boundaries. Its production target is substantially more scalable than a naive world-sized JSON save, but the current implementation has not completed that target. The highest-risk mistake would be to treat target documentation as delivered capacity—or to abandon its protections while optimizing. Start with the [repository audit](repository-audit.md) and [code-grounded pressure points](repository-hot-paths.md).
 
 ## Reading routes
 
@@ -21,6 +21,7 @@ The existing repository already anticipates many of the right boundaries. Its pr
 | What do we build before public multiplayer? | [SOON: production world](soon/production-world.md), [data migration](soon/data-migration.md), [operational readiness](soon/operational-readiness.md) |
 | How much does a million-player version actually require? | [Capacity model](capacity-model.md), [benchmark plan](benchmark-plan.md), [operations and cost](domains/operations-cost.md) |
 | How do we retain deep simulation? | [Simulation and time](domains/simulation-time.md), [physics and navigation](domains/physics-navigation.md), [perception and interest](domains/perception-interest.md) |
+| What about fires, buildings, ecology and invented machines? | [Environmental and structural systems](domains/environment-systems.md), [admission and security](domains/extensibility-security.md) |
 | How do browsers stay responsive and synchronized? | [Networking and browser execution](domains/browser-networking.md), [media and assets](domains/media-assets.md) |
 | How do billions of memories remain useful and private? | [Memory and retrieval](domains/memory-retrieval.md), [planetary memory growth](later/planetary-memory.md), [agent compute](domains/agent-compute.md) |
 | How do trades, inventions, and social interactions survive failure? | [Persistence and consistency](domains/persistence-consistency.md), [economy and social systems](domains/economy-social.md), [extensibility and security](domains/extensibility-security.md) |
@@ -28,6 +29,12 @@ The existing repository already anticipates many of the right boundaries. Its pr
 | What might we still be overlooking? | [Risk register](risk-register.md), [creative architectural options](architectural-options.md), [research gaps](research-gaps.md) |
 
 Suggested first sitting: repository audit → NOW foundations → capacity model → target architecture. The domain chapters are a reference library, not a demand to implement every technique.
+
+## Preserve the already accepted choices
+
+The [existing decision register](../../05-project/open-decisions.md) retains accepted directions as well as residual questions. In particular, D03 already establishes the shared-world **Continue while unattended** toggle, all-player absence behavior, pause precedence and no server-downtime catch-up. The current local implementation does not demonstrate that hosted multiplayer target. The research discusses implementation and residual exposure/load questions, not reopening the accepted policy.
+
+D14 and the [memory specification](../../../docs/memory-architecture.md) preserve raw-recall eligibility, consolidation, bounded authored continuity and protected commitments. Physical cold storage or a creator's archive does **not** grant an NPC access to forgotten, unperceived or otherwise ineligible sources. Cold personal recollection is not selected by this dossier. Optional world transfer, runtime scripts and sector behavior retain their existing decision owners.
 
 ## What is known, recommended, and unproven
 
