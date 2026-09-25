@@ -7,16 +7,16 @@ import {
 } from '@open-legend/domain';
 import { fingerprint } from './relationship-index.js';
 
-const referenceId = z
+export const attributeReferenceId = z
   .string()
   .min(1)
   .max(120)
   .regex(/^[a-zA-Z0-9_.:-]+$/);
 export const attributeBindingSchema = z
   .object({
-    entityId: referenceId,
+    entityId: attributeReferenceId,
     attributeIds: z
-      .array(referenceId)
+      .array(attributeReferenceId)
       .min(1)
       .max(16)
       .refine((ids) => new Set(ids).size === ids.length, 'Choose each attribute once.'),
@@ -28,12 +28,12 @@ export const attributeBindingSchema = z
  */
 export function attributeBindingTarget(world: WorldState, payload: unknown) {
   const parsed = attributeBindingSchema.safeParse(payload);
-  const entity =
-    parsed.success && Object.hasOwn(world.entities, parsed.data.entityId)
-      ? world.entities[parsed.data.entityId]
-      : undefined;
+  return authoringBodyTarget(world, parsed.success ? parsed.data.entityId : '');
+}
+export function authoringBodyTarget(world: WorldState, entityId: string) {
+  const entity = Object.hasOwn(world.entities, entityId) ? world.entities[entityId] : undefined;
   return {
-    entityId: parsed.success ? parsed.data.entityId : '',
+    entityId,
     digest: fingerprint(entity?.actor ? [entity.id, entity.kind, entity.actor.bornAt] : null),
   };
 }
