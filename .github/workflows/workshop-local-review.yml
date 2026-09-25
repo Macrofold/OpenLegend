@@ -19,7 +19,7 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Export source and dependencies without tests or credentials
+      - name: Export pinned source and installed dependencies only
         run: tar --exclude=.git -czf /tmp/workshop-local-review.tar.gz .
       - uses: actions/upload-artifact@v4
         with:
