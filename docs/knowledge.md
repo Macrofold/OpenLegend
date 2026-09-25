@@ -38,6 +38,16 @@ Migrate existing non-protected accepted inner-world files into the general knowl
 
 Per-document limits do not impose a count limit. Existing request and save-size admission still applies; bounded hot retrieval and aggregate actor-storage quotas require measured scale work before large long-running worlds. No automatic eviction or invented ten-subject limit is part of this contract.
 
+## Scaling qualification and derivative work
+
+[The current-code audit](scaling/current-code-audit.md#sca09) distinguishes the existing transactional projection from completed D1/D2 operational storage. Current `KnowledgeStore.project` skips equal roots/documents but still enumerates changed actor maps; startup verification reads the whole world's knowledge. Current recall prepares many eligible records before final top-N selection. A small prompt or result count does not bound that upstream work.
+
+Keep DB-side owner/subject/source selection ahead of bounded text hydration under [D1/D2](maintainers/production-data.md#remaining-d1d2-implementation-and-evidence); CR13 retains document behavior. [SC05](maintainers/scaling.md#sc05) covers checked startup/recovery, and [SC11](maintainers/scaling.md#sc11) covers source incarnations and atomic derivative admission. A source ID/revision match alone must not authorize an old worker after restore/import recreated the same ID. Revalidate current eligibility at publication, including corrections that happen while work is in flight.
+
+Use reverse evidence dependencies for targeted invalidation when qualified. Do not replace the current conservative clearing policy with an incomplete dependency graph just to reduce cost. Derivative indexes, cached context, interests and exports must remain fenced while physical cleanup is pending. Retained archive bytes do not reauthorize forgotten NPC recall or creator access to human-private notes.
+
+Qualification varies total world documents, one actor's eligible documents, query result size and concurrent updates independently. Include cold reads, unindexed changes, tombstones, a retired subject, an equal-ID/equal-text restored source and a correction during index publication. Report candidate/text preparation, database work, serialization, peak bytes and latency together; the existing local-retrieval goal remains unqualified, not a guarantee established by a row index.
+
 ## Privacy and correction
 
 Fictional NPC pads and observer identities are private to their owner and authorized god inspection/editing. They never enter the public actor DTO. The production [human-private boundary](../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary) excludes human-private messages and private character notes from creator powers; they require their own participant/owner permissions and cannot be exposed through an NPC projection. This is a target for human-player storage, not a claim that such channels are already implemented. Restore generation and document revisions fence owner edits. Forgetting/correction must invalidate accepted knowledge and derived interests as well as memory. The current conservative invalidation clears knowledge text alongside the existing accepted-mind reset; forgetting also clears observer identity associations. More selective dependency invalidation requires evidence before replacing this safe boundary.

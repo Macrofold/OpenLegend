@@ -220,6 +220,25 @@ Keep invention identity and immutable versions separate from creator/account att
 
 The [workshop](../03-design-proposals/world-agent-and-workshop.md) uses this document's existing validation, activation and migration path. Editing creates a candidate version or explicit fork, previews the diff and affected instances/processes, and commits only with current authority and a valid migration. Preserve prior events and versions; a slower-burning revision cannot retroactively restore fuel already consumed. Every world has a complete logical invention-pack inventory; an export release pins versions and dependency closure, and exposes any rights or compatibility blockers instead of silently omitting entries.
 
+## Scaling follow-through for libraries and active mechanics
+
+The [current-code audit SCA41–SCA45](../../docs/scaling/current-code-audit.md#sca41) distinguishes implemented finite-family admission from the broader target above. Similar-invention search currently prepares all learned definitions and fills missing vectors during the request; exact admission deduplication and attribute dependency discovery scan growing collections. Those are explicit growth work, not reasons to mark the functioning narrow invention loop unimplemented.
+
+| Concern | Required integration | Canonical child work / parent |
+|---|---|---|
+| Learned library and reusable definition indexing | DB/indexed eligibility and exact content identity before bounded result preparation; background index coverage remains explicit; no hidden-knowledge disclosure | [SC12](../../docs/maintainers/scaling.md#sc12), INV-1/INV-2.1a/INV-3 and D2/D4 |
+| Active construct cost and locality | Transitive selector/descendant work, recurrence, read/write owners, query membership and old/new spatial extent through the existing runtime envelope | [SC13](../../docs/maintainers/scaling.md#sc13), EWF08 and INV-3/INV-7 |
+| Definition revision, retirement and activation | Reverse dependencies for state, processes, plans, pending jobs and retained pins; staged validation plus current dependency checks at activation | [SC14](../../docs/maintainers/scaling.md#sc14), INV-5/EWF07 and D4 |
+| Worker/source lifecycle | Stable source incarnations, durable logical attempts and atomic currentness checks across restore and independent execution | [SC06/SC11](../../docs/maintainers/scaling.md#sc06), D1/D2 and existing admission owners |
+
+Library size and active work are different axes. Many inactive definitions should not become per-tick work or a prompt-sized catalogue. A single admitted effect with many active targets can be expensive even with a tiny library. Do not replace either engineering problem with an arbitrary lifetime recipe/entity cap. Existing supported-family complexity validation remains in force; aggregate invocation/host work and explicit technical admission need their own proof.
+
+A shallow selector can have large fanout; a cheap callback can schedule many descendants; one large body can widen contact queries; a changed wall can affect navigation, sound, support and previously empty query membership. Parameter or port substitutions must revalidate those dependencies even when the outer schema is unchanged. The [worked mechanic-growth cases](../../docs/scaling/mechanic-growth.md) supply concrete tests without defining another compiler or effect language.
+
+The accepted target prioritizes a region-divided shared world. Preserve region-compatible query/mutation scope now; cross-region mechanics later require a supported authority/timing protocol, not arbitrary remote writes. Required physical effects and legitimate evidence cannot be silently dropped, narrowed or replaced with sampled witnesses. Optional reasoning/presentation may be separately scheduled under their existing rules. Unsupported computation remains an explicit technical outcome, not proof that the player's proposed action violates the world's premise.
+
+No index, distributed solver, expanded G1 family or G2 runtime is delivered by this section. Existing INV/EWF acceptance remains open; implementing the child work does not complete the parent release on its own.
+
 ## Open policies and acceptance evidence
 
 Before live admission, choose automatic versus reviewed envelopes, family fallback values, step size and allocation priorities, recovery behavior, evaluation requirements, replay retention and work budgets. First implement one profile, a few templates/material families, one sector, one modular shelter and explicit extension records. General pack management, unloaded-region migrations and live G2 follow a working creator loop.
@@ -249,4 +268,4 @@ These are proposed evaluation cases, not completed tests or guarantees. The acce
 
 ## Implementation tracker
 
-Delivery state, dependencies and exit criteria live in the [Inventions and world evolution implementation tracker](../../docs/maintainers/inventions-and-world-evolution.md).
+Delivery state, dependencies and exit criteria live in the [Inventions and world evolution implementation tracker](../../docs/maintainers/inventions-and-world-evolution.md). [SC12–SC14](../../docs/maintainers/scaling.md#sc12) are focused child work under the existing INV/EWF parents; their detailed bodies live there once, not in a second invention pipeline or duplicate release checklist.

@@ -25,3 +25,13 @@ The renderer uses cached pixel-sprite frames that replace the character's hangin
 Player target menus/catalogue and the NPC action candidates read the trusted definitions. Availability and final effects remain subject to domain admission. Offering Punch does not require a character to choose violence or introduce a native aggression controller. The catalogue explains reach, damage, timing and one-strike behavior.
 
 Implementation facts are in [Architecture](architecture.md#targeted-strikes); observations are in [Verification](verification.md#targeted-punch-runtime). Deferred validation lives in [TODO](maintainers/TODO.md#targeted-strike-validation).
+
+## Scaling and navigation-result integration
+
+The [source audit SCA31](scaling/current-code-audit.md#sca31) identifies a current shared-wrapper limitation: `findPath` returns a route only for `reached`, and bounded approach attempts otherwise return `null`. That value alone cannot distinguish unavailable coverage, exhausted work, partial search and proved unreachability. The unreachable-target behavior above must not be used to label an incomplete technical search as a discovered physical impossibility.
+
+[SW05/SW06](maintainers/spatial-world.md) and [AG05/action capabilities](maintainers/action-capabilities.md) retain the end-to-end correction: carry typed route outcomes into admission, ongoing actions, plans and UI. A deferred route is not successful arrival, cannot consume materials or deal damage early, and must not erase a longer-term goal merely because a cache or work slice is unavailable. Work limits remain useful; removing all bounds is not the fix.
+
+For growing populations, qualify many simultaneous approach requests, a moved target, changed support/occlusion, exhausted stance attempts and one actor whose route genuinely does not exist. Measure candidate creation, exact stance tests, repeated route requests and longest native transition, not only the final A* call. [PF/SW](maintainers/scaling.md#findings-already-owned-by-existing-work) own these measurements.
+
+Future longer-range, area, non-biped or cross-region strikes must declare their actual target/effect reach and dependency/ownership contract through [SC13](maintainers/scaling.md#sc13) and existing INV/EWF/SW owners. The current native strike does not establish scalable crowd collision, a distributed combat solver, or client authority over impacts. No balance or runtime behavior changes are delivered by this section.

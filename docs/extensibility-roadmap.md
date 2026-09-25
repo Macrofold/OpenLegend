@@ -55,7 +55,7 @@ Use current native protection before full EPR delivery. Provide EPR-compatible c
 
 Wrap the existing sight/hearing rules before changing their geometry. Introduce a supported third modality, including uncertain source identity and modality-specific detail. Prove that a blind tactile actor receives only permitted information, not an ordinary vision context with the display hidden.
 
-EPR remains responsible for scope, episodes, thresholds, dirty intake, and coalescing. CR/AG consume concerns and evidence; no separate tactile cognition service. Identify any unavailable contact/navigation capability honestly and implement only the approved coarse proof.
+EPR remains responsible for scope, episodes, thresholds, dirty intake, and coalescing. CR/AG consume concerns and evidence; no separate tactile cognition service. Identify any unavailable contact/navigation capability honestly and implement only the approved initial proof. The current physical-contact rule supersedes the earlier proximity approximation; scale work must not restore that approximation to reduce query cost.
 
 If exact audience semantics or private-acquisition behavior changes, test that as an explicit semantic change. Do not count an index optimization as proof that the knowledge boundary is correct.
 
@@ -75,7 +75,7 @@ Coordinate live activation with INV-5 rather than creating a module installer. S
 
 A local pack round-trip between two test worlds is enough to establish initial portability semantics. The destination can require bindings or adapters; refusal is a valid result. A marketplace, pricing scheme, or hosted account library is not required for the first local proof.
 
-Distinguish active-definition transformation from legacy-development-save compatibility. The no-legacy policy still permits refusing incompatible old development formats. It does not allow a live revision to orphan active state or a same-version save to depend on mutable “latest” behavior.
+Distinguish active-definition transformation from legacy-development-runtime support. The [active development policy](save-and-load.md#active-development-policy) prefers small safe in-place migrations that preserve identity and unrelated state, without maintaining a parallel legacy runtime. It does not allow a live revision to orphan active state or a same-version save to depend on mutable “latest” behavior.
 
 ## EW-R5: ambitious behavior only with explicit semantic owners
 
@@ -90,6 +90,16 @@ Behavioral claims need appropriate evidence. An influence prompt can guide a mod
 Keep restricted algorithms behind existing G2/G3 ownership. Select a sandbox only when a real mechanic exceeds supported composition. A new algorithm is permitted to compute within its admitted interface, not mutate arbitrary world state or install another interpreter. Declarative expressiveness, computational power, and authority remain distinct.
 
 Scale and public ecosystem work follow measured active populations, real concentrated fan-out, retained history, permission enforcement, and operational needs. Public library discovery and natural-language compatibility advice must not claim that a package is safe, legally reusable, or semantically correct solely from a model score.
+
+## Scaling foundations do not wait for EW-R7
+
+The [current-code audit](scaling/current-code-audit.md) distinguishes implemented finite-family behavior from remaining shared-world and data-growth work. The accepted main target is a shared world divided into regions, with independent worlds supported; independent-world sharding alone does not satisfy it. Keep region-compatible identity, query scope, mutation ownership and source/definition lifecycle in the early interfaces without deploying multiple authorities prematurely.
+
+Library growth and active simulation growth need different solutions. [SC12](maintainers/scaling.md#sc12) addresses invention lookup/indexing and exact deduplication as learned libraries grow. [SC13](maintainers/scaling.md#sc13) refines EWF08/INV-3's aggregate work, extent, recurrence and query-membership proof before broader constructs execute. [SC14](maintainers/scaling.md#sc14) covers INV-5/EWF07's reverse dependencies and coherent changes. The [worked mechanic-growth cases](scaling/mechanic-growth.md) are reference/acceptance inputs, not another construct schema.
+
+Qualify a large inactive library separately from many simultaneous invocations. Include newly applicable status effects, changed geometry seen by stationary observers, unusually large bodies and cyclic selectors. A small per-definition schema or nesting bound does not establish finite aggregate work, and a count cap is not a substitute for paging, incremental queries and measured admission. Preserve required effects, all legitimate evidence, current privacy restrictions and the no-automatic-paid-retry contract.
+
+The remaining local-player/service snapshot assumptions are tracked in [SC01–SC04](maintainers/scaling.md#sc01); independent records and DB-first recall remain D1/D2 work. Do not let a newly extensible field become another whole-world scan, private Entity projection or globally shared mutable value merely because its type is generic. Current implemented features remain implemented; these additional growth/qualification gates are not retroactive claims that their narrow releases never worked.
 
 ## Cross-cutting gates from the first slice
 

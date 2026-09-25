@@ -22,6 +22,18 @@ A saved world binding identifies the local controlled entity and the starting re
 
 The local host has one authenticated principal. Its history perspective follows the saved controlled entity binding. A future multi-user host must move control bindings to authenticated principal/world associations; it must not add a second role-derived entity ID or accept arbitrary client actor authority.
 
+## Shared-world scaling integration
+
+The [current-code audit](scaling/current-code-audit.md#sca01) identifies the remaining local-host assumptions: one profile, controlled actor, process session, presence policy and public snapshot. These are not a delivered multi-user authorization system. [SC01](maintainers/scaling.md#sc01) owns the focused control/privacy migration; [SC02](maintainers/scaling.md#sc02) owns recipient-specific view and replay integration under the synchronization owner.
+
+Keep account identity, authenticated session, controller generation, world/timeline, entity identity, authority placement/generation, source incarnation and observer reference distinct. Moving an entity or authority must not rename it. Reusing an entity/source ID after restore must not make an old model or index result current. The production-data source contract and [SC04/SC11](maintainers/scaling.md#sc04) own the corresponding durable checks; do not add a competing ID format here.
+
+Bind the acting human at every command, history, preference, conversation, save and editor entry point. Cache and continuation identities must carry the applicable observer/disclosure scope, not only a world revision. Creator powers exclude human-private messages and private character notes under the [human-private contract](../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary). A copied Entity record with a few private fields deleted is not a safe default for newly added private components; use explicitly permitted projection contracts and verify every consumer.
+
+Sequence/presence metadata also has a lifecycle. Expired session identities must be rejected before their anti-replay guards are reclaimed; neither unlimited process maps nor dropping watermarks without an expiry contract is sufficient. [SC03](maintainers/scaling.md#sc03) owns that admission/lifecycle work.
+
+Qualification must include two independently authenticated humans with different knowledge of the same entity, duplicate names, controller revocation, multiple tabs, old timeline requests and a delayed source result after restore. Each client/model receives only its permitted references and content. Adding more sockets or including an actor ID in a payload does not close the gate. No such qualification is claimed by this documentation update.
+
 ## Compatibility
 
 New worlds seed people as `entity-0001` and `entity-0002`; other existing definition and entity IDs remain stable keys. Loading older worlds adds the control binding from controller metadata once. Existing bindings are authoritative. This does not rename entities or rewrite historical IDs, request fingerprints, response digests or provider audit data. Old diagnostic fields are read only for display.
