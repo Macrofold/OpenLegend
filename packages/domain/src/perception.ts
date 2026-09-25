@@ -118,48 +118,89 @@ function senseManifest(world: WorldState) {
   return isDraft(world.moduleManifest) ? current(world.moduleManifest) : world.moduleManifest;
 }
 
-type Receiver = { entity: Entity; order: number };
-type ReceiverTree = Map<SpeechVolume, BoundsIndex<Receiver>>;
-const receivers = new WeakMap<object, WeakMap<object, ReceiverTree>>();
+type Receiver = {
+  id: string;
+  order: number;
+  position: Position;
+  ear: number;
+  senses: ResolvedSenses;
+};
+type ReceiverIndex = {
+  entries: Receiver[];
+  trees: Map<SpeechVolume, BoundsIndex<Receiver>>;
+};
+const receivers = new WeakMap<object, WeakMap<object, ReceiverIndex>>();
+const latestReceivers = new WeakMap<object, ReceiverIndex>();
+/** Cache geometry, never an observer's live permissions or a retained entity snapshot.
+ * Health/activity changes invalidate entity records without moving any acoustic bound.
+ * Compare the current receiver footprint once before reusing a tree across those changes.
+ * Mutable poses still take the uncached path. docs/hearing-and-speech.md#performance-and-invalidation
+ */
+function receiverIndex(world: WorldState, entities: WorldState['entities']): ReceiverIndex {
+  const manifest = senseManifest(world);
+  const frozen = Object.isFrozen(entities) && Object.isFrozen(manifest);
+  let byManifest = frozen ? receivers.get(entities) : undefined;
+  const existing = byManifest?.get(manifest);
+  if (existing) return existing;
+  const entries: Receiver[] = [];
+  for (const entity of Object.values(entities)) {
+    if (!hasMemory(entity)) continue;
+    entries.push({
+      id: entity.id,
+      order: entries.length,
+      position: entity.position,
+      ear: bodyProfile(entity).earHeight,
+      senses: resolveSenses(world, entity),
+    });
+  }
+  const reusable = Object.isFrozen(manifest) && entries.every((e) => Object.isFrozen(e.position));
+  const previous = reusable ? latestReceivers.get(manifest) : undefined;
+  const same =
+    previous?.entries.length === entries.length &&
+    entries.every((e, i) => {
+      const old = previous.entries[i]!;
+      return (
+        old.id === e.id &&
+        old.position === e.position &&
+        old.ear === e.ear &&
+        old.senses === e.senses
+      );
+    });
+  const prepared = same ? previous : { entries, trees: new Map() };
+  if (reusable) latestReceivers.set(manifest, prepared);
+  if (frozen) {
+    if (!byManifest) receivers.set(entities, (byManifest = new WeakMap()));
+    byManifest.set(manifest, prepared);
+  }
+  return prepared;
+}
 /** Conservative full-extent broad phase, not an audience cap. Both foot and ear points are
  * queried so visual-only cues and all body heights survive pruning. Exact perception follows.
- * A current draft snapshot includes moves/spawns/sense edits; only frozen snapshots are reused.
+ * The result binds IDs back to the current snapshot, never stale eligibility/knowledge.
  * docs/hearing-and-speech.md#performance-and-invalidation
  */
 export function speechObservers(world: WorldState, source: Entity, volume: SpeechVolume): Entity[] {
   const entities = isDraft(world.entities) ? current(world.entities) : world.entities;
-  const manifest = senseManifest(world);
-  const reusable = Object.isFrozen(entities) && Object.isFrozen(manifest);
-  let byManifest = reusable ? receivers.get(entities) : undefined;
-  if (!byManifest) {
-    byManifest = new WeakMap();
-    if (reusable) receivers.set(entities, byManifest);
-  }
-  let trees = byManifest.get(manifest);
-  if (!trees) byManifest.set(manifest, (trees = new Map()));
-  let index = trees.get(volume);
+  const prepared = receiverIndex(world, entities);
+  let index = prepared.trees.get(volume);
   if (!index) {
     index = new BoundsIndex(
-      Object.values(entities).flatMap((entity, order) => {
-        if (!hasMemory(entity)) return [];
-        const senses = resolveSenses(world, entity);
-        const radius = Math.max(0.25, senses.reaches[volume]);
-        const p = entity.position;
-        const earY = p.y + bodyProfile(entity).earHeight;
-        const sight = senses.vision;
+      prepared.entries.map((entry) => {
+        const radius = Math.max(0.25, entry.senses.reaches[volume]);
+        const p = entry.position;
+        const earY = p.y + entry.ear;
+        const sight = entry.senses.vision;
         const reach = Math.max(radius, sight);
-        return [
-          {
-            value: { entity, order },
-            bounds: {
-              min: { x: p.x - reach, y: Math.min(p.y - sight, earY - radius), z: p.z - reach },
-              max: { x: p.x + reach, y: Math.max(p.y + sight, earY + radius), z: p.z + reach },
-            },
+        return {
+          value: entry,
+          bounds: {
+            min: { x: p.x - reach, y: Math.min(p.y - sight, earY - radius), z: p.z - reach },
+            max: { x: p.x + reach, y: Math.max(p.y + sight, earY + radius), z: p.z + reach },
           },
-        ];
+        };
       }),
     );
-    trees.set(volume, index);
+    prepared.trees.set(volume, index);
   }
   const foot = source.position,
     ear = soundOrigin(source);
@@ -180,8 +221,8 @@ export function speechObservers(world: WorldState, source: Entity, volume: Speec
       return false;
     },
   );
-  // Keep established event audience order. Tree traversal order is an implementation detail.
-  return found.sort((a, b) => a.order - b.order).map((entry) => entry.entity);
+  // Relative receiver order is unchanged by inserting/removing non-observers.
+  return found.sort((a, b) => a.order - b.order).map((entry) => entities[entry.id]!);
 }
 
 type AcousticPath = { position: Position; ear: number; transmission: number };
