@@ -1,6 +1,6 @@
 import { emit } from './events.js';
 import { nextId } from './data.js';
-import { bodiesTouch, sensesFor } from './perception.js';
+import { bodiesTouch, sensesFor, type ContactEpisode } from './perception.js';
 import { distance, hasLineOfEffect } from './spatial.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import type { ActorComponent, Entity, Position, WorldEvent, WorldState } from './types.js';
@@ -36,7 +36,8 @@ export function* updateContactEpisodes(
   let examined = 0;
   for (const candidate of candidates()) {
     // Yield by candidates examined, not only accepted contacts; keep exact body/geometry checks.
-    if (examined++ && examined % 64 === 0) yield;
+    if (examined > 0 && examined % 64 === 0) yield;
+    examined++;
     const source = world.entities[candidate.id];
     if (
       !source ||
@@ -51,7 +52,7 @@ export function* updateContactEpisodes(
     // A replaced detector cannot inherit another detector's continuous episode or authority.
     const old = prior[source.id];
     const previous = old?.senseId === touch.id ? old : undefined;
-    const episode =
+    const episode: ContactEpisode =
       previous && previous.detail === detail
         ? previous
         : {
