@@ -1,4 +1,5 @@
   visionRadius,
   contactViews,
+  bodiesTouch,
   DEFAULT_SENSES,
   COARSE_TOUCH,

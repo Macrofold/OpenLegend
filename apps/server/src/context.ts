@@ -1,5 +1,5 @@
       nearbyConversations.set(id, entity.name);
   }
-  for (const [id, name] of [...nearbyConversations].slice(0, 4))
+  for (const [id, name] of nearbyConversations)
     actions.push({
       id: `join:${id}`,
