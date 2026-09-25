@@ -33,7 +33,6 @@ export const declarationSchema: JsonSchema = object({
     description: text(700),
     properties: {
       type: 'array',
-      maxItems: 6,
       items: {
         type: 'string',
         enum: ['fiber', 'binding', 'flexible', 'rigid', 'shaft', 'pouch', 'point', 'projectile'],

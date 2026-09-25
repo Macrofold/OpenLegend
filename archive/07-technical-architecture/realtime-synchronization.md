@@ -31,6 +31,8 @@ Run the shared simulation on authoritative servers with loaded state in memory. 
 
 The [production scope](production-data-model.md#implementation-scope-baseline-versus-conditional-expansion) starts with one writer per world, saved generation/revision checks and transactional current records. Multiple sector authorities, renewable leases and generic state-change replay are conditional expansions; scoped confirmations and duplicate protection still apply.
 
+The shared-world regional priority is owned by the [scale plan](data-delivery-and-scale.md#shared-world-regions-and-active-state). A region may initially share its process and database with others; physical splitting is not implied by a region ID. Use stable world/entity identity through movement and explicit writer/timeline generations through transfers and restore. One shared-world clock does not require one database transaction or a world-wide synchronization barrier for every local action. Before parallel region simulation, define the permitted time skew and causal boundary for each cross-region mechanic; until that is implemented, keep coupled work under one authority.
+
 These may start in one server application with separate modules and bounded queues. They are not a requirement to deploy six services initially.
 
 ```mermaid
@@ -108,6 +110,10 @@ The initial commit path is:
 Use one commit in flight per authority stream initially. Other worlds/sectors can continue independently. Speculative calculation ahead of that commit, if later added, remains bounded and unpublished, and must be discardable if the baseline fails. Long database stalls stop new authoritative advancement; a large unsaved in-memory future is not recovery.
 
 External tools, world-agent proposals and database administration cannot secretly modify live canonical rows behind the running authority's working set. Supported writes go through its command/migration interfaces; an operational repair fences/reloads the authority under an explicit procedure. This is necessary to keep RAM and persistent state coherent.
+
+Independent memory or indexing jobs follow the same ownership rule. Provider execution can run concurrently, but canonical publication is a short validated operation through the current owner, with timeline and source revisions checked. A source commit records any required durable job intent; after-commit notifications only wake it. A missing wakeup after a crash is recoverable without repeating a paid attempt whose outcome is uncertain.
+
+For reads after an action, return and accept the committed watermark. Route a dependent query to current data or explicitly wait within its budget; do not flush unrelated regions or treat a stale replica as current. The current local routine-progress durability window is a documented exception, not automatic permission to acknowledge undurable shared-world actions. [D58](../05-project/open-decisions.md#d58--durability-and-storage-placement) retains changes to that promise.
 
 ## 5. Prediction, interpolation and corrections
 

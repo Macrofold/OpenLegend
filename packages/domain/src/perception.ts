@@ -6,6 +6,7 @@ import {
   distance3D,
   resolveSupport,
   soundTransmissionAtLeast,
+  SPATIAL_LIMITS,
   type SurfacePoint,
 } from '@open-legend/spatial';
 import { bodyProfile, spatialMap } from './spatial-state.js';
@@ -18,7 +19,7 @@ export { PERCEPTION_RULES } from './worlds/base/senses.js';
 export const SENSE_IMPLEMENTATIONS = [
   'vision-geometry-v1',
   'hearing-transmission-v1',
-  'contact-proximity-v1',
+  'body-contact-v1',
 ] as const;
 export type SenseImplementation = (typeof SENSE_IMPLEMENTATIONS)[number];
 export interface SenseDefinition {
@@ -31,9 +32,24 @@ export { DEFAULT_SENSES } from './worlds/base/senses.js';
 export const COARSE_TOUCH: SenseDefinition = {
   id: 'contact:touch',
   version: 1,
-  implementation: 'contact-proximity-v1',
-  radius: 0.8,
+  implementation: 'body-contact-v1',
+  radius: 0,
 };
+/** Body profiles are upright cylinders; contact uses their surfaces, never a sense radius.
+ * docs/spatial-world.md#physical-contact */
+export function bodiesTouch(first: Entity, second: Entity): boolean {
+  if (first.id === second.id) return false;
+  const a = bodyProfile(first),
+    b = bodyProfile(second);
+  const tolerance = SPATIAL_LIMITS.epsilon;
+  const reach = a.radius + b.radius + tolerance;
+  return (
+    (first.position.x - second.position.x) ** 2 + (first.position.z - second.position.z) ** 2 <=
+      reach ** 2 &&
+    first.position.y <= second.position.y + b.height + tolerance &&
+    second.position.y <= first.position.y + a.height + tolerance
+  );
+}
 export interface ContactEpisode {
   id: string;
   senseId: string;

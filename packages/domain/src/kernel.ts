@@ -86,6 +86,7 @@ import {
   visionQuery,
   sensesFor,
   contactViews,
+  bodiesTouch,
   directProbe,
 } from './perception.js';
 import {
@@ -1824,12 +1825,21 @@ function updateEncounters(
     id: entity.id,
     position: isDraft(entity.position) ? current(entity.position) : entity.position,
     height: bodyProfile(entity).height,
+    radius: bodyProfile(entity).radius,
     alive: !!entity.actor?.alive,
     memory: hasMemory(entity),
     object: !entity.actor && !entity.animal,
   }));
   const nearby = spatialCandidates(entities.filter((e) => e.alive));
   let nearbyAll: ReturnType<typeof spatialCandidates<(typeof entities)[number]>> | undefined;
+  const maximumBodyHeight = entities.reduce(
+    (largest, entity) => Math.max(largest, entity.height),
+    0,
+  );
+  const maximumBodyRadius = entities.reduce(
+    (largest, entity) => Math.max(largest, entity.radius),
+    0,
+  );
   const objectsFor = objectExposureQuery(
     world,
     entities.filter((e) => e.object),
@@ -1840,7 +1850,7 @@ function updateEncounters(
     const radius = visionRadius(world, actor.entity);
     const sees = visionQuery(world, actor.entity);
     const touch = sensesFor(world, actor.entity).find(
-      (s) => s.implementation === 'contact-proximity-v1',
+      (s) => s.implementation === 'body-contact-v1',
     );
     if (touch) {
       nearbyAll ??= spatialCandidates(entities);
@@ -1848,14 +1858,16 @@ function updateEncounters(
       const contacts: NonNullable<ActorComponent['contacts']> = {};
       // Source IDs stay in private state; acquisition is owner-scoped, never a public encounter.
       // docs/events-perception-and-reactions.md#9-reaction-intake-and-scheduling owns intake.
-      for (const source of nearbyAll(actor.position, touch.radius)
-        .filter(
-          (e) =>
-            e.id !== actor.id &&
-            distance(actor.position, e.position) <= touch.radius &&
-            hasLineOfEffect(world, actor.entity, e.entity),
-        )
-        .slice(0, 32)) {
+      for (const source of nearbyAll(
+        actor.position,
+        Math.max(actor.radius + maximumBodyRadius, actor.height, maximumBodyHeight) +
+          SPATIAL_LIMITS.epsilon,
+      ).filter(
+        (e) =>
+          e.id !== actor.id &&
+          bodiesTouch(actor.entity, e.entity) &&
+          hasLineOfEffect(world, actor.entity, e.entity),
+      )) {
         const oldPosition = original.entities[source.id]?.position;
         const detail =
           oldPosition && distance(oldPosition, source.position) > 0.001 ? 'moving' : 'present';
