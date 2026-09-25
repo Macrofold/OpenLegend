@@ -42,26 +42,39 @@ export class WorldAgentStore {
       CREATE UNIQUE INDEX IF NOT EXISTS world_agent_context ON world_agent_sessions(context_hash);
       CREATE INDEX IF NOT EXISTS world_agent_world ON world_agent_sessions(world_id,id);
       CREATE INDEX IF NOT EXISTS world_agent_active ON world_agent_sessions(world_id,id)
-        WHERE json_extract(payload,'$.activeTurn') IS NOT NULL;
-      CREATE INDEX IF NOT EXISTS world_agent_owner_order
-        ON world_agent_sessions(world_id,json_extract(payload,'$.principal'),json_extract(payload,'$.createdAt'),id);
+        WHERE json_extract(payload, '$.activeTurn') IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS world_agent_owner_order_numeric
+        ON world_agent_sessions(world_id,json_extract(payload, '$.principal'),CAST(json_extract(payload, '$.createdAt') AS BIGINT),id);
       CREATE TABLE IF NOT EXISTS world_agent_records (
         session_id TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL, payload TEXT NOT NULL,
         PRIMARY KEY(session_id,kind,id));
-      CREATE INDEX IF NOT EXISTS world_agent_turn_order
-        ON world_agent_records(session_id, COALESCE(json_extract(payload,'$.sequence'),0),id)
-        WHERE kind='turn';`);
+      CREATE INDEX IF NOT EXISTS world_agent_turn_order_numeric
+        ON world_agent_records(session_id, COALESCE(CAST(json_extract(payload, '$.sequence') AS BIGINT),0),id)
+        WHERE kind='turn';
+      DROP INDEX IF EXISTS world_agent_owner_order;
+      DROP INDEX IF EXISTS world_agent_turn_order;`);
   }
+  // Cast sortable JSON numbers explicitly: PostgreSQL projects JSON as text.
+  // Keep index and query expressions identical in both database adapters.
   async sessions(worldId: string, principal: string, before?: { createdAt: number; id: string }) {
     const cursor = before ?? { createdAt: Number.MAX_SAFE_INTEGER, id: '\uffff' };
     const rows = await this.db
       .prepare(
         `SELECT payload FROM world_agent_sessions
-      WHERE world_id=? AND json_extract(payload,'$.principal')=?
-      AND (json_extract(payload,'$.createdAt'),id)<(?,?)
-      ORDER BY json_extract(payload,'$.createdAt') DESC,id DESC LIMIT 21`,
+      WHERE world_id=? AND json_extract(payload, '$.principal')=?
+      AND (CAST(json_extract(payload, '$.createdAt') AS BIGINT),id)<(?,?)
+      ORDER BY CAST(json_extract(payload, '$.createdAt') AS BIGINT) DESC,id DESC LIMIT 21`,
       )
       .all(worldId, principal, cursor.createdAt, cursor.id);
+    return rows.map((row) => JSON.parse(String(row['payload'])) as AgentSession);
+  }
+  async activeSessions(worldId: string): Promise<AgentSession[]> {
+    const rows = await this.db
+      .prepare(
+        `SELECT payload FROM world_agent_sessions WHERE world_id=?
+       AND json_extract(payload, '$.activeTurn') IS NOT NULL ORDER BY id LIMIT 50`,
+      )
+      .all(worldId);
     return rows.map((row) => JSON.parse(String(row['payload'])) as AgentSession);
   }
   async session(id: string): Promise<AgentSession | undefined> {
@@ -123,8 +136,8 @@ export class WorldAgentStore {
       .prepare(
         `SELECT id,payload FROM world_agent_records
       WHERE session_id=? AND kind='turn'
-      AND (COALESCE(json_extract(payload,'$.sequence'),0),id)<(?,?)
-      ORDER BY COALESCE(json_extract(payload,'$.sequence'),0) DESC,id DESC LIMIT 21`,
+      AND (COALESCE(CAST(json_extract(payload, '$.sequence') AS BIGINT),0),id)<(?,?)
+      ORDER BY COALESCE(CAST(json_extract(payload, '$.sequence') AS BIGINT),0) DESC,id DESC LIMIT 21`,
       )
       .all(sessionId, cursor.sequence, cursor.id);
     const items: WorldAgentTurnView[] = rows.slice(0, 20).map((row) => {
