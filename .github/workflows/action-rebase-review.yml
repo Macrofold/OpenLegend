@@ -30,49 +30,86 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fdcbd31fc9e4eb31daaf00d997648aba588c8577
+          path: _baseline
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Apply scoped-reference review
+      - run: |
+          pnpm install --frozen-lockfile
+          pnpm --dir _baseline install --frozen-lockfile
+      - name: Review corrections and current documentation
         run: |
-          python .github/action-review/scoped-grounding.py
-          pnpm exec prettier --write apps/server/src/action-grounding.ts apps/server/src/ai-director.ts apps/server/src/postgres.ts
+          python .github/action-review/closeout.py
+          python - <<'PY'
+          from pathlib import Path
+          import json,subprocess
+          p=Path('packages/domain/src/response.ts');s=p.read_text()
+          if s.count('capabilityBlocked')==1:p.write_text(s.replace("import { capabilityBlocked } from './status-capabilities.js';\n",''))
+          paths=json.loads(Path('_review-final-paths.json').read_text())
+          paths+=['apps/server/src/postgres.ts','docs/verification/action-rebase-fdcbd31.json','docs/verification/action-review-fdcbd31-runtime.json','docs/verification/action-review-fdcbd31-postgres.json','docs/verification/action-review-fdcbd31-native.json']
+          subprocess.run(['pnpm','exec','prettier','--write',*paths],check=True)
+          Path('_review-final-paths.json').write_text(json.dumps(sorted(set(paths))))
+          PY
           pnpm build
           pnpm config:check
           pnpm guidance:check
-      - name: Native scenario and actual PostgreSQL lifecycle
-        run: node --import tsx .github/action-review/runtime.mjs
-      - name: Primary full-server PostgreSQL measurement
+      - name: Final native and PostgreSQL ownership exercises
+        run: |
+          node --import tsx .github/action-review/runtime.mjs
+          node --import tsx .github/action-review/mute.mjs
+          pnpm exec prettier --write docs/verification/action-review-fdcbd31-runtime.json docs/verification/action-review-fdcbd31-voice.json
+      - name: Compare static failures and review local documentation links
         shell: python
         run: |
           from pathlib import Path
-          import subprocess,json
-          original=Path('scripts/performance/profile-server.mjs')
-          text=original.read_text()
-          text=text.replace("OPEN_LEGEND_DATABASE_URL: '',", "OPEN_LEGEND_DATABASE_URL: process.env.OPEN_LEGEND_PROFILE_DATABASE_URL,")
-          text=text.replace('Real server timer, SQLite, SSE', 'Real server timer, disposable PostgreSQL, SSE').replace('no browser, PostgreSQL or live model calls','no browser or live model calls')
-          temporary=original.with_name('review-postgres.mjs'); temporary.write_text(text)
-          scenario=original.parent/'scenarios/review-small.json'
-          scenario.write_text(json.dumps({'people':0,'animals':0,'steps':180,'warmup':0,'speed':8}))
-          try:
-            subprocess.run(['node','--import','tsx',str(temporary),str(scenario),'docs/verification/action-review-fdcbd31-postgres.json','30','8','25'],check=True,timeout=100)
-            subprocess.run(['node','--import','tsx',str(temporary),'scripts/performance/scenarios/mixed.json','/tmp/ignored.json','5','1'],check=False,timeout=100) if False else None
-          finally:
-            temporary.unlink(missing_ok=True); scenario.unlink(missing_ok=True)
-      - name: Native stress isolation
-        run: node --import tsx scripts/stress-native.ts scripts/performance/scenarios/mixed.json /tmp/review-mixed.cpuprofile > /tmp/review-mixed.json
-      - name: Prepare reviewed tree for connector commit
+          from collections import Counter
+          import subprocess,json,re
+          root=Path.cwd()
+          def check(cwd):
+            r=subprocess.run(['pnpm','typecheck'],cwd=cwd,text=True,capture_output=True)
+            errors=Counter(re.sub(r'\(\d+,\d+\)', '(line)', x) for x in r.stdout.splitlines() if 'error TS' in x)
+            return {'exit':r.returncode,'count':sum(errors.values()),'errors':errors}
+          before=check(root/'_baseline');after=check(root)
+          # A nested checkout is not part of the project, but some broad tsconfig globs include it.
+          ignored={k:v for k,v in after['errors'].items() if k.startswith('_baseline/')}
+          for k in ignored:del after['errors'][k]
+          after['count']=sum(after['errors'].values())
+          introduced=after['errors']-before['errors']
+          paths=json.loads(Path('_review-final-paths.json').read_text())
+          missing=[]
+          for name in paths:
+            if not name.endswith('.md'):continue
+            p=Path(name)
+            for match in re.finditer(r'\]\(([^\s)]+)\)',p.read_text()):
+              link=match.group(1)
+              if re.match(r'\w+:',link) or link.startswith('#'):continue
+              target=link.split('#')[0]
+              if target and not (p.parent/target).exists():missing.append({'source':name,'target':link})
+          if missing:raise RuntimeError('Broken documentation targets: '+json.dumps(missing))
+          report={'scope':'Production build plus pinned static checks and main-relative type diagnostics; no suites. Full CI is not waived.','main':'fdcbd31fc9e4eb31daaf00d997648aba588c8577','baseline':before,'current':after,'additionalDiagnostics':dict(introduced),'nestedCheckoutDiagnosticsExcluded':sum(ignored.values()),'missingTouchedDocumentationPaths':missing,'run':__import__('os').environ['GITHUB_RUN_ID']}
+          Path('docs/verification/action-review-fdcbd31-static.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps({k:v for k,v in report.items() if k not in ['baseline','current']},indent=2))
+          print('TYPECHECK_COUNTS',before['count'],after['count'])
+      - name: Prepare final review and remove temporary files
         uses: actions/github-script@v7
         with:
           script: |
             const fs=require('fs');
-            const profile=JSON.parse(fs.readFileSync('/tmp/review-mixed.json','utf8'));
-            console.log('NATIVE_PROFILE_FIELDS '+JSON.stringify(Object.keys(profile)));
-            fs.writeFileSync('docs/verification/action-review-fdcbd31-native.json',JSON.stringify(profile,null,2)+'\n');
-            const paths=['apps/server/src/action-grounding.ts','apps/server/src/ai-director.ts','apps/server/src/postgres.ts','docs/verification/action-review-fdcbd31-runtime.json','docs/verification/action-review-fdcbd31-postgres.json','docs/verification/action-review-fdcbd31-native.json'];
             const base=await github.rest.git.getCommit({...context.repo,commit_sha:context.sha});
-            const prepared=await github.rest.git.createTree({...context.repo,base_tree:base.data.tree.sha,tree:paths.map(path=>({path,mode:'100644',type:'blob',content:fs.readFileSync(path,'utf8')}))});
-            console.log('PREPARED_REVIEW '+JSON.stringify({parent:context.sha,tree:prepared.data.sha,files:paths}));
+            const latestMain=await github.rest.git.getRef({...context.repo,ref:'heads/main'});
+            const paths=JSON.parse(fs.readFileSync('_review-final-paths.json','utf8'));
+            paths.push('docs/verification/action-review-fdcbd31-runtime.json','docs/verification/action-review-fdcbd31-voice.json','docs/verification/action-review-fdcbd31-static.json');
+            const cleanup=['.github/action-review/reconcile.py','.github/action-review/fix-binding.py','.github/action-review/scoped-grounding.py','.github/action-review/runtime.mjs','.github/action-review/closeout.py','.github/action-review/mute.mjs','.github/workflows/action-rebase-review.yml'];
+            const status={scope:'Consolidated replay and review on a new main-based continuation, not an in-place original-branch rebase.',main:'fdcbd31fc9e4eb31daaf00d997648aba588c8577',mainAtFinish:latestMain.data.object.sha,originalBranch:'design/action-repertoire-and-capability-grounding',originalSha:'94a7682aee9f100ccb54e073969bb4ed4f9fea49',continuation:'review/action-capabilities-fdcbd31',sourceCommit:context.sha,run:context.runId,build:'passed',config:'passed',guidance:'passed',unitAndBrowserSuites:'not invoked',paidModelCalls:0,temporaryFilesRemoved:cleanup,normalCiUnchanged:true,remaining:['D61 delayed anonymous-reference lifetime','Dense performance qualification and targeted PF03/PF08/PF09 work','Live semantic/browser quality and full CI gate']};
+            const report='docs/verification/action-review-fdcbd31-final.json';
+            fs.writeFileSync(report,JSON.stringify(status,null,2)+'\n'); paths.push(report);
+            const tree=[...new Set(paths)].map(path=>({path,mode:'100644',type:'blob',content:fs.readFileSync(path,'utf8')}));
+            tree.push(...cleanup.map(path=>({path,mode:'100644',type:'blob',sha:null})));
+            const prepared=await github.rest.git.createTree({...context.repo,base_tree:base.data.tree.sha,tree});
+            console.log('PREPARED_FINAL '+JSON.stringify({parent:context.sha,tree:prepared.data.sha,mainAtFinish:latestMain.data.object.sha}));
