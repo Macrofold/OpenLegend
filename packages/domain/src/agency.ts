@@ -1,3 +1,9 @@
+import {
+  actionTargetsCurrent,
+  captureActionTargets,
+  validActionTargets,
+  type ActionTargetEpisodes,
+} from './action-targets.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { validActionFulfillment, type ActionFulfillment } from './action-capabilities.js';
 import { FOLLOW_RULES } from './follow.js';
@@ -34,6 +40,7 @@ export type ItemOutputCommand = {
 };
 export type PlannedCommand = Command | ItemOutputCommand;
 export interface PlanStep {
+  targetEpisodes?: ActionTargetEpisodes;
   id: string;
   command: PlannedCommand;
   status: 'queued' | 'running' | 'completed' | 'blocked' | 'cancelled';
@@ -57,6 +64,7 @@ export interface ActorAgency {
     manifestRevision: number;
     status: 'needs-interpretation' | 'awaiting-confirmation';
     alternative?: {
+      targetEpisodes?: ActionTargetEpisodes;
       commands: Command[];
       fulfillment: ActionFulfillment;
       mode: 'enqueue' | 'replace';
@@ -253,6 +261,7 @@ export function arrangePlan(
   mode: 'enqueue' | 'replace',
   expectedRevision: number,
   goalId: string | null,
+  world?: WorldState,
 ): Outcome {
   const agency = actor.agency;
   const current = agency.plan;
@@ -301,6 +310,9 @@ export function arrangePlan(
       ...commands.map((command) => ({
         id: command.id,
         command: cloneValue(command),
+        ...(world
+          ? { targetEpisodes: captureActionTargets(world, command.actorId, [command]) }
+          : {}),
         status: 'queued' as const,
       })),
     );
@@ -321,6 +333,9 @@ export function arrangePlan(
       steps: commands.map((command) => ({
         id: command.id,
         command: cloneValue(command),
+        ...(world
+          ? { targetEpisodes: captureActionTargets(world, command.actorId, [command]) }
+          : {}),
         status: 'queued',
       })),
     };
@@ -461,6 +476,7 @@ export function validateAgency(world: WorldState): void {
         const a = attempt.alternative;
         if (
           !a ||
+          (a.targetEpisodes !== undefined && !validActionTargets(a.targetEpisodes)) ||
           !validActionFulfillment(a.fulfillment) ||
           a.fulfillment.verdict !== 'confirm' ||
           a.fulfillment.requested !== attempt.description ||
@@ -532,6 +548,7 @@ export function validateAgency(world: WorldState): void {
       throw new Error('Invalid saved plan output references.');
     for (const step of [...(plan?.steps ?? []), ...agency.history]) {
       if (
+        (step.targetEpisodes !== undefined && !validActionTargets(step.targetEpisodes)) ||
         !isSafeRecordId(step.id) ||
         !isPlannedCommand(step.command) ||
         step.command.id !== step.id ||
@@ -784,6 +801,7 @@ export function proposeActionRevision(
     pending.status = 'awaiting-confirmation';
     pending.alternative = {
       commands: cloneValue(commands),
+      targetEpisodes: captureActionTargets(world, actorId, commands),
       fulfillment: cloneValue(fulfillment),
       mode,
       expectedPlan,
@@ -832,13 +850,14 @@ export function confirmActionRevision(
       'That revised action is no longer awaiting your decision.',
     );
   if (
+    !actionTargetsCurrent(world, actorId, alternative.commands, alternative.targetEpisodes) ||
     pending.manifestRevision !== world.moduleManifest.revision ||
     (alternative.mode === 'replace' && actor.planGeneration !== alternative.expectedPlan)
   )
     return outcome(
       false,
       'stale-alternative',
-      'Mechanics or current work changed. Submit a fresh action instead of accepting this old replacement.',
+      'The target encounter, mechanics or current work changed. Submit a fresh action instead of accepting this old revision.',
     );
   const result = arrangePlan(
     actor,
@@ -847,6 +866,7 @@ export function confirmActionRevision(
     alternative.mode,
     actor.agency.plan?.revision ?? 0,
     null,
+    world,
   );
   if (result.ok) withdrawAttempt(actor, attemptId);
   return result;
