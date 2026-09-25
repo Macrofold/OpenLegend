@@ -1,3 +1,5 @@
+import { EntityDirectory } from './entity-directory.js';
+import { traceRelationships, TRACE_LIMITS } from './relationship-trace.js';
 import { authoringKind } from './world-authoring-contracts.js';
 import { describeAuthoringKind } from './world-authoring-metadata.js';
 import { memoryRef, projectMemoryRecord } from './evidence-relationships.js';
@@ -53,6 +55,18 @@ export const WORLD_READ_TOOLS = {
       })
       .strict(),
   },
+  ol_entities: {
+    description:
+      'Find current world entities by name/ID, optional kind or controller. Use this to locate bodies for inspection and reviewed changes, independently of character knowledge. Inventory items use ol_instances. Empty pages can have a continuation.',
+    schema: z
+      .object({
+        query: z.string().max(200).default(''),
+        kind: id.optional(),
+        controller: id.optional(),
+        ...paging,
+      })
+      .strict(),
+  },
   ol_inspect: {
     description:
       'Inspect a current exact definition, live item/entity, or retained memory-record ref. Optional version detects stale selection. Owner evidence stays separate from private authoring provenance, learning and mutation.',
@@ -68,6 +82,20 @@ export const WORLD_READ_TOOLS = {
         direction: z.enum(['out', 'in', 'both']).default('both'),
         relations: z.array(z.enum(RELATIONSHIP_KINDS)).max(RELATIONSHIP_KINDS.length).optional(),
         ...paging,
+      })
+      .strict(),
+  },
+  ol_trace: {
+    description:
+      'Trace projected definition dependencies or reverse consumers, optionally explaining a path to an exact target. Bounded witness tree with explicit frontier; never a complete interaction proof. Use ol_graph to continue from frontier refs.',
+    schema: z
+      .object({
+        root: ref,
+        target: ref.optional(),
+        direction: z.enum(['out', 'in', 'both']).default('out'),
+        relations: z.array(z.enum(RELATIONSHIP_KINDS)).max(RELATIONSHIP_KINDS.length).optional(),
+        maxDepth: z.number().int().min(1).max(TRACE_LIMITS.depth).default(4),
+        maxNodes: z.number().int().min(2).max(TRACE_LIMITS.nodes).default(40),
       })
       .strict(),
   },
@@ -137,6 +165,7 @@ const nextPage = (binding: string, offset: number, total: number) =>
  */
 export class WorldToolService {
   private readonly graph = new WorldGraphReader();
+  private readonly entities = new EntityDirectory();
   private items?: { source: WorldState['items']; keys: string[]; revision: string };
   constructor(private readonly service: WorldService) {}
 
@@ -203,6 +232,7 @@ export class WorldToolService {
       case 'ol_context':
         return {
           profile: world.profile,
+          controlledActorId: this.service.controlledEntityId,
           policy: world.inventionPolicy,
           manifestRevision: world.moduleManifest.revision,
           tools: Object.entries(WORLD_READ_TOOLS).map(([name, tool]) => ({
@@ -257,6 +287,12 @@ export class WorldToolService {
           coverage: 'Current projected definitions; lexical matching only.',
         };
       }
+      case 'ol_entities':
+        return this.entities.read(
+          world,
+          generation,
+          raw as z.infer<typeof WORLD_READ_TOOLS.ol_entities.schema>,
+        );
       case 'ol_inspect': {
         const input = raw as z.infer<typeof select>;
         const definitions = this.graph.read(world, generation);
@@ -328,6 +364,11 @@ export class WorldToolService {
         }
         return definitions.index.neighborhood(input);
       }
+      case 'ol_trace':
+        return traceRelationships(
+          this.graph.read(world, generation).index,
+          raw as z.infer<typeof WORLD_READ_TOOLS.ol_trace.schema>,
+        );
       case 'ol_instances': {
         const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_instances.schema>;
         let items = this.items;
