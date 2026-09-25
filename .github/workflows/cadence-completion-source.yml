@@ -12,24 +12,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: a0a7745d232820c421576885f3d88e352bdb547a
+          ref: 03105fed9209c126e4e69e9faeb4687f42d1e74a
+          path: main-source
           persist-credentials: false
-      - name: Export reviewed repository source only
+      - uses: actions/checkout@v4
+        with:
+          ref: fdcbd31fc9e4eb31daaf00d997648aba588c8577
+          path: common-source
+          persist-credentials: false
+      - name: Export source only, without credentials, saves or git commands
         run: |
           python3 - <<'PY'
           import os, pathlib, zipfile
           root = pathlib.Path.cwd()
-          with zipfile.ZipFile('/tmp/cadence-reviewed-source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
-              for directory, dirs, files in os.walk(root):
-                  dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', '.data')]
-                  for name in files:
-                      if name == '.env' or name.startswith('.env.') and name != '.env.example':
-                          continue
-                      p = pathlib.Path(directory) / name
-                      archive.write(p, p.relative_to(root))
+          with zipfile.ZipFile('/tmp/cadence-main-reconciliation.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              for source in ('main-source', 'common-source'):
+                  for directory, dirs, files in os.walk(root / source):
+                      dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', '.data')]
+                      for name in files:
+                          if name == '.env' or name.startswith('.env.') and name != '.env.example':
+                              continue
+                          p = pathlib.Path(directory) / name
+                          archive.write(p, p.relative_to(root))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: cadence-reviewed-source
-          path: /tmp/cadence-reviewed-source.zip
+          name: cadence-main-reconciliation
+          path: /tmp/cadence-main-reconciliation.zip
           retention-days: 2
