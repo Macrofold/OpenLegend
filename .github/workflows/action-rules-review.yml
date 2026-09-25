@@ -1,0 +1,66 @@
+name: Action rules reconciliation review
+on:
+  push:
+    branches: [review/action-rules-candidate]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      AI_BUDGET_USD: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238
+          path: upstream
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: fc01e19b30060e6c7213b1c5405be13df209297e
+          path: ancestor
+          persist-credentials: false
+      - name: Inspect three-way file reconciliation without changing Git history
+        run: |
+          python - <<'PY'
+          import pathlib,subprocess,json,hashlib
+          roots=[pathlib.Path(x) for x in ('candidate','ancestor','upstream')]
+          def files(root):
+              return {str(p.relative_to(root)):p for p in root.rglob('*') if p.is_file() and '.git' not in p.relative_to(root).parts}
+          ours,base,theirs=map(files,roots)
+          report=[]
+          for path in sorted(set(base)|set(theirs)):
+              b=base[path].read_bytes() if path in base else None
+              t=theirs[path].read_bytes() if path in theirs else None
+              o=ours[path].read_bytes() if path in ours else None
+              if b==t:continue
+              if o==t:kind='already-present';data=o
+              elif o==b:kind='upstream-only';data=t
+              elif o is not None and b is not None and t is not None:
+                  p=subprocess.run(['diff3','-m',str(ours[path]),str(base[path]),str(theirs[path])],capture_output=True)
+                  if p.returncode not in (0,1):raise RuntimeError(p.stderr.decode())
+                  kind='conflict' if p.returncode else 'auto-merged';data=p.stdout
+              else:kind='structural-conflict';data=None
+              row={'path':path,'resolution':kind}
+              if data is not None:row['blob']=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest();row['bytes']=len(data)
+              report.append(row)
+              if kind=='conflict':
+                  text=data.decode();lines=text.splitlines()
+                  print('CONFLICT_FILE '+path)
+                  active=False
+                  for i,line in enumerate(lines):
+                      if line.startswith('<<<<<<<'):active=True;print('CONTEXT '+ '\n'.join(lines[max(0,i-4):i]))
+                      if active:print(line)
+                      if line.startswith('>>>>>>>'):active=False;print('AFTER '+ '\n'.join(lines[i+1:i+5]))
+              if kind in ('upstream-only','auto-merged'):
+                  dest=roots[0]/path
+                  if data is None:dest.unlink(missing_ok=True)
+                  else:dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(data)
+          print('RECONCILIATION_REPORT '+json.dumps(report))
+          print('LOCAL_GUIDANCE '+json.dumps(sorted(str(p.relative_to(roots[2])) for p in roots[2].rglob('AGENTS.md') if '.git' not in p.parts)))
+          PY
