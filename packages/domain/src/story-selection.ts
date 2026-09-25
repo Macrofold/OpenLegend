@@ -79,7 +79,7 @@ export function validateStoryPolicy(p: StoryPolicy): void {
     typeof p.enabled !== 'boolean'
   )
     throw new Error('Unknown or invalid story mechanism.');
-  if (!p.fields || Object.keys(p.fields).length > 16) throw new Error('Too many story fields.');
+  if (!p.fields) throw new Error('Missing story fields.');
   keys(p.fields, Object.keys(p.fields));
   for (const [name, f] of Object.entries(p.fields)) {
     if (!/^[a-z][a-z0-9_]{0,63}$/.test(name)) throw new Error('Invalid story field name.');
@@ -102,8 +102,7 @@ export function validateStoryPolicy(p: StoryPolicy): void {
   )
     throw new Error('Invalid introduction field.');
   number(p.introductions.threshold, -1000, 1000);
-  if (!Array.isArray(p.eventRules) || p.eventRules.length > 32)
-    throw new Error('Too many story rules.');
+  if (!Array.isArray(p.eventRules)) throw new Error('Invalid story rules.');
   for (const r of p.eventRules) {
     keys(r, ['type', 'role', 'field', 'minimum', 'fact', 'maximum', 'significance']);
     if (
