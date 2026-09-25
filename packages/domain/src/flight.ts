@@ -13,6 +13,8 @@ import {
 } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition, spatialMap } from './spatial-state.js';
 import { emit } from './events.js';
+import { TIME_EPSILON } from './simulation-time.js';
+import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 
 /** Short-lived landing broad phase, created lazily after voluntary movement.
@@ -103,6 +105,13 @@ export class LandingOccupancy {
 
 /** A small native locomotion family: explicit corridors, not free-flight physics or AI per frame.
  * docs/spatial-world.md#flying-creatures. Gravity is a game-time tuning value, not Earth physics. */
+function holdFlightUntilRetry(world: WorldState, progress: { waitSeconds: number }): void {
+  const period = BASE_TIME_POLICY.blockedFlightRetrySeconds;
+  // Contenders for the same perch share a retry boundary instead of making one
+  // whole-world deadline per bird. This is holding policy, not skipped movement.
+  progress.waitSeconds =
+    (Math.floor((world.simTime + TIME_EPSILON) / period) + 1) * period - world.simTime;
+}
 const FALL_ACCELERATION = 0.04,
   TERMINAL_FALL_SPEED = 3;
 /** Closed-form displacement keeps falling independent of host interval size. */
@@ -183,8 +192,9 @@ export function advanceFlight(
   if (entity.actor.action) return; // No second voluntary position writer while a native action owns the body.
   const route = world.flightRoutes[progress.routeId];
   if (!route) throw new Error('Missing admitted native flight route.');
-  if (progress.waitSeconds > 0) {
-    progress.waitSeconds = Math.max(0, progress.waitSeconds - seconds);
+  if (progress.waitSeconds > TIME_EPSILON) {
+    const remaining = progress.waitSeconds - seconds;
+    progress.waitSeconds = remaining > TIME_EPSILON ? remaining : 0;
     return;
   }
   const waypoint = route.points[progress.next]!;
@@ -206,10 +216,14 @@ export function advanceFlight(
     ) {
       setSpatialPosition(entity, from, null);
       emit(world, events, 'takeoff', `${entity.name} took flight.`, entity);
+    } else if (state.supportSurfaceId !== null) {
+      holdFlightUntilRetry(world, progress);
     }
     return;
   }
-  const fraction = separation <= 1e-8 ? 1 : Math.min(1, (speed * seconds) / separation);
+  // Resolve numerical endpoint residue in the same collision-checked arrival path.
+  const fraction =
+    separation <= speed * seconds + SPATIAL_LIMITS.epsilon ? 1 : (speed * seconds) / separation;
   const next = interpolate(from, to, fraction);
   // Start-boundary takeoff has already cleared the grounded state, but its first
   // sweep still touches the departure surface. Recover only a top-contact witness;
@@ -222,19 +236,28 @@ export function advanceFlight(
   const ignoredSupports = [state.supportSurfaceId, departure, waypoint.landingSurfaceId].filter(
     (id): id is string => !!id,
   );
-  if (!canFlySegment(map, from, next, body, ignoredSupports)) return;
+  if (!canFlySegment(map, from, next, body, ignoredSupports)) {
+    holdFlightUntilRetry(world, progress);
+    return;
+  }
   const landing =
     fraction === 1 && waypoint.landingSurfaceId
       ? resolveSupport(map, to, waypoint.landingSurfaceId)
       : null;
-  if (waypoint.landingSurfaceId && fraction === 1 && (!landing || !canStand(map, landing, body)))
+  if (waypoint.landingSurfaceId && fraction === 1 && (!landing || !canStand(map, landing, body))) {
+    holdFlightUntilRetry(world, progress);
     return;
+  }
   // Reserve the landing footprint against actual current bodies, not a visual sprite rectangle.
   if (
     landing &&
     (landingOccupancy?.() ?? new LandingOccupancy(world)).blocked(entity.id, landing, body)
-  )
+  ) {
+    // A blocked millimetre-away landing must not force microsecond whole-world intervals.
+    // This saved holding deadline is a revisitable base-world policy, not lost game time.
+    holdFlightUntilRetry(world, progress);
     return;
+  }
   const wasGrounded = state.supportSurfaceId !== null;
   setSpatialPosition(entity, next, landing?.surfaceId ?? null);
   if (wasGrounded && !landing)
