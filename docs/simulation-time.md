@@ -4,9 +4,11 @@ This is the canonical clock/integration contract. [Performance](performance.md) 
 
 ## Independent clocks
 
-The bundled world's default rate is 60 game seconds per real second at 1x. This converts elapsed time; it does **not** prescribe 60 simulation transitions per real second. The simulation accepts elapsed game time and divides it only where a relevant mechanical boundary or explicit fidelity bound requires it. Faster clock settings increase the time owed, not a mandatory number of whole-world ticks.
+The bundled world's default rate is 60 game seconds per real second at 1x. This converts elapsed time; it does **not** prescribe 60 simulation transitions per real second. The simulation accepts elapsed game time and divides it only where a relevant mechanical boundary or explicit fidelity bound requires it. Faster clock settings increase the time owed, not a mandatory number of whole-world ticks. At 8x the clock owes 480 game seconds per real second; the number of integration intervals depends on activity, not that number.
 
 Rendering runs independently at the browser/device frame cadence (normally aiming at 60 FPS or the display refresh rate). State delivery can be less frequent. A possible 20 Hz publication policy is not a 20 FPS rendering limit. Camera/input remain responsive between state arrivals; visual interpolation never authorizes movement or reveals an NPC's future plan. Thin walls still require swept collision, not endpoint-only checks. Unknown intermediate support/topology must not be filled in with invented motion through floors.
+
+The [base-world time policy](worlds/base/time.md) owns the current horizon, displacement bounds and coupled-rate fallbacks. Those are revisitable fidelity choices, not requirements for every authored world. A sparse-update implementation must report its actual interval count, elapsed progress and largest blocking slice; changing the clock label or hiding accumulated debt is not a performance improvement.
 
 ## Native interval contract
 
