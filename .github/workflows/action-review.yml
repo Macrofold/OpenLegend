@@ -1,0 +1,88 @@
+name: Reconciled action PostgreSQL review
+on:
+  push:
+    branches: [review/action-main-reconciled]
+permissions:
+  contents: read
+concurrency:
+  group: action-postgres-review
+  cancel-in-progress: true
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: review
+          POSTGRES_PASSWORD: review
+          POSTGRES_DB: action_review_mixed
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U review -d action_review_mixed"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      AI_BUDGET_USD: '0'
+      REVIEW_POSTGRES_URL: postgres://review:review@127.0.0.1:5432/action_review_mixed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Adapt the existing bounded profiler to this disposable PostgreSQL service
+        run: |
+          node --input-type=module <<'JS'
+          import {createRequire} from 'node:module';
+          const require=createRequire(process.cwd()+'/apps/server/package.json');
+          const {Client}=require('pg');
+          const client=new Client({connectionString:process.env.REVIEW_POSTGRES_URL});
+          await client.connect();
+          await client.query('CREATE DATABASE action_review_dense');
+          const version=await client.query('SELECT version() AS version');
+          console.log(version.rows[0].version);
+          await client.end();
+          JS
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path('scripts/performance/profile-server.mjs');s=p.read_text()
+          old="OPEN_LEGEND_DATABASE_URL: '',"
+          if s.count(old)!=1:raise RuntimeError('Profiler configuration changed')
+          s=s.replace(old,"OPEN_LEGEND_DATABASE_URL: process.env.REVIEW_POSTGRES_URL,")
+          s=s.replace('Real server timer, SQLite, SSE','Real server timer, disposable PostgreSQL, SSE')
+          s=s.replace('no browser, PostgreSQL or live model calls','no browser or live model calls')
+          p.with_name('.action-postgres-review.mjs').write_text(s)
+          dense={'seed':73,'people':100,'animals':0,'layout':'crowded','steps':180,'warmup':0,'speed':1,'timeoutSeconds':120,'objects':[{'count':500,'name':'Review gem','properties':['rigid'],'quantity':1,'workSeconds':1}]}
+          Path('/tmp/action-dense.json').write_text(json.dumps(dense))
+          PY
+      - name: Run real timer, HTTP, durable commands and SSE on PostgreSQL
+        run: |
+          node --import tsx scripts/performance/.action-postgres-review.mjs scripts/performance/scenarios/mixed.json /tmp/action-postgres-mixed.json 15 1,3 25
+          REVIEW_POSTGRES_URL=postgres://review:review@127.0.0.1:5432/action_review_dense node --import tsx scripts/performance/.action-postgres-review.mjs /tmp/action-dense.json /tmp/action-postgres-dense.json 15 1 500
+      - name: Record source and bounded measurement scope
+        if: always()
+        shell: python
+        run: |
+          from pathlib import Path
+          import json,os
+          report={'source':os.environ['GITHUB_SHA'],'run':os.environ['GITHUB_RUN_ID'],'scope':'Read-only CI execution of committed production source with the existing profiler adapted only to disposable PostgreSQL. No unit/browser suite, provider calls or user database. Short phases are not capacity qualification.','paidModelCalls':0,'reports':{}}
+          for name in ['mixed','dense']:
+            path=Path('/tmp/action-postgres-'+name+'.json')
+            if path.exists():
+              data=json.loads(path.read_text());report['reports'][name]=data
+          Path('/tmp/action-postgres-review.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps({'source':report['source'],'run':report['run'],'reports':{k:[{'speed':p['speed'],'achievedSpeed':p['achievedSpeed'],'commands':p['client']['commands'],'eventLoop':p['eventLoop'],'storageError':p['storageError']} for p in v['phases']] for k,v in report['reports'].items()}},indent=2))
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: action-postgres-review
+          path: /tmp/action-postgres-*.json
+          retention-days: 1
