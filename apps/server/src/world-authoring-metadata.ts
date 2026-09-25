@@ -1,3 +1,4 @@
+import { attributeBindingSchema } from './world-authoring-bindings.js';
 import { z } from 'zod';
 import {
   DECLARATION_CONTRACT,
@@ -34,6 +35,17 @@ export function describeAuthoringKind(world: WorldState, kind: AuthoringKind) {
         schema: z.toJSONSchema(commandInputSchema),
         notes:
           'An existing native command as the session controlled actor, not a reusable definition. World must be resumed. Current controls, physical requirements and knowledge still apply.',
+      };
+    case 'attribute-bindings':
+      return {
+        ...common,
+        schema: z.toJSONSchema(attributeBindingSchema),
+        notes: [
+          'This is a reviewed world-owner change to one selected body, not an NPC ability or a new definition.',
+          'Use ol_activity to inspect the current body and ol_inspect to read each installed attribute first. Only custom reservoir/category attributes are eligible.',
+          'Each new attribute starts at its declared initial value. Native needs, existing values, senses, controller and active work are preserved. Existing bindings cannot be reset or removed here.',
+          'Added reservoirs use their existing drain/replenishment and concern projections. This does not create a compatible charging source or a new sensor.',
+        ],
       };
     case 'attribute':
       return {

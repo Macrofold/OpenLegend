@@ -8,6 +8,7 @@ export interface WorldAgentReply {
 export type WorldAuthoringKind =
   | 'recipe'
   | 'attribute'
+  | 'attribute-bindings'
   | 'status-effect-policy'
   | 'cognition-policy'
   | 'action';

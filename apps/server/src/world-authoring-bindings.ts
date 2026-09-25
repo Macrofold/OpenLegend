@@ -26,13 +26,16 @@ export const attributeBindingSchema = z
 /** Bind identity, not changing values: ordinary reservoir draining must not stale an addition.
  * docs/invention-composition.md#reviewed-custom-attribute-binding
  */
-export function attributeBindingTarget(world: WorldState, payload: unknown): string {
+export function attributeBindingTarget(world: WorldState, payload: unknown) {
   const parsed = attributeBindingSchema.safeParse(payload);
   const entity =
     parsed.success && Object.hasOwn(world.entities, parsed.data.entityId)
       ? world.entities[parsed.data.entityId]
       : undefined;
-  return fingerprint(entity?.actor ? [entity.id, entity.kind, entity.actor.bornAt] : null);
+  return {
+    entityId: parsed.success ? parsed.data.entityId : '',
+    digest: fingerprint(entity?.actor ? [entity.id, entity.kind, entity.actor.bornAt] : null),
+  };
 }
 
 /** Adds admitted custom attributes at their declared initial values through the existing owner.
@@ -71,4 +74,37 @@ export function bindAuthoringAttributes(
     expectedManifestRevision: world.moduleManifest.revision,
     changes,
   });
+}
+
+/** Resolve the initial state for human review from pinned definitions, not from model prose. */
+export function attributeBindingSummary(world: WorldState, payload: unknown): string {
+  const parsed = attributeBindingSchema.safeParse(payload);
+  if (!parsed.success) return 'Attach admitted custom attributes without changing existing values.';
+  const entity = Object.hasOwn(world.entities, parsed.data.entityId)
+    ? world.entities[parsed.data.entityId]
+    : undefined;
+  const definitions = new Map(world.moduleManifest.definitions.map((d) => [d.id, d]));
+  const additions = parsed.data.attributeIds.map((id) => {
+    const d = definitions.get(id);
+    return d
+      ? `${d.name} = ${d.schema.initial}${d.schema.kind === 'number' ? ` ${d.schema.unit}` : ''}`
+      : `${id} (unavailable)`;
+  });
+  return `Attach to ${entity?.name ?? 'the selected body'}: ${additions.join('; ')}. Existing values, native physiology, senses, controller and work are unchanged. New reservoirs use their admitted drain and recharge rules.`;
+}
+export function attributeBindingImpact(world: WorldState, payload: unknown) {
+  const parsed = attributeBindingSchema.safeParse(payload);
+  const target = attributeBindingTarget(world, payload);
+  const actor = Object.hasOwn(world.entities, target.entityId)
+    ? world.entities[target.entityId]?.actor
+    : undefined;
+  return {
+    token: fingerprint([
+      target,
+      parsed.success
+        ? parsed.data.attributeIds.map((id) => [id, Object.hasOwn(actor?.attributes ?? {}, id)])
+        : [],
+    ]),
+    affected: actor ? 1 : 0,
+  };
 }
