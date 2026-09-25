@@ -5,7 +5,7 @@ import {
 } from './worlds/base/knowledge.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { appraiseEvent } from './social.js';
-import { mutateExperience } from './experience.js';
+import { mutateExperience, type ExperienceMutation } from './experience.js';
 import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';
 import { finishWorld, cloneValue } from './draft.js';
@@ -110,23 +110,62 @@ function eventAudience(
   return audience;
 }
 
-/** Noticing a source is private evidence, not an outward action others can witness.
- * docs/events-perception-and-reactions.md#perception-acquisition-is-normally-private
+/** Acquiring evidence is private, not an observable act by the observer.
+ * Batch only this fixed-position phase through the existing experience owner;
+ * external speech/actions still resolve their actual event-time audiences.
+ * docs/architecture.md#private-perception-and-evidence-batches
  */
 export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
-  return (source: Entity, targetId: string, meaningful: boolean): WorldEvent =>
-    emit(
+  let owner: string | undefined;
+  let pending: ExperienceMutation[] = [];
+  const flush = () => {
+    if (owner && pending.length && mutateExperience(world, owner, pending) === null)
+      throw new Error('Private perception evidence could not be admitted.');
+    pending = [];
+  };
+  const acquire = (
+    source: Entity,
+    targetId: string,
+    meaningful: boolean,
+    detail?: string,
+  ): WorldEvent => {
+    if (owner !== source.id) {
+      flush();
+      owner = source.id;
+    }
+    const subject = observerDescription(world, source.id, targetId);
+    const observed = detail ? `noticed ${subject}: ${detail}.` : `saw ${subject}.`;
+    const event = recordEvent(
       world,
       events,
       'encounter',
-      `${source.name} encountered ${observerDescription(world, source.id, targetId)}.`,
+      `${source.name} ${observed}`,
+      [source.id],
       source,
       targetId,
       meaningful
-        ? { importance: 6, semanticTrigger: true }
-        : { importance: 0, urgency: 0, semanticTrigger: false },
+        ? {
+            importance: 6,
+            semanticTrigger: true,
+            acquisition: true,
+            change: detail ? 'detail' : 'onset',
+          }
+        : {
+            importance: 0,
+            urgency: 0,
+            semanticTrigger: false,
+            acquisition: true,
+            change: detail ? 'detail' : 'onset',
+          },
       'private',
+      pending,
+      `I ${observed}`,
     );
+    // Bound temporary memory independently of the number of visible objects.
+    if (pending.length >= 128) flush();
+    return event;
+  };
+  return Object.assign(acquire, { flush });
 }
 
 function recordEvent(
@@ -139,6 +178,8 @@ function recordEvent(
   targetId: string | undefined,
   data: WorldEvent['data'],
   scope: 'external' | 'private',
+  awarenessBatch?: ExperienceMutation[],
+  privatePerspective?: string,
 ): WorldEvent {
   const boundedMetric = (value: unknown, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value)
@@ -216,18 +257,25 @@ function recordEvent(
             seesEntity(world, observer, recipient)))
           ? intendedId
           : undefined;
-      mutateExperience(world, actorId, {
+      // Native private acquisition already has an exact first-person template. Avoid parsing
+      // its freshly constructed third-person sentence again; all semantic hooks remain shared.
+      // docs/architecture.md#private-perception-and-evidence-batches
+      const perspective =
+        privatePerspective !== undefined && scope === 'private' && actorId === source?.id
+          ? privatePerspective
+          : memoryPerspective(world, actorId, text, type === 'speech', source?.id);
+      const addition: ExperienceMutation = {
         operation: 'add',
         entry: {
           source: 'awareness',
           value: {
             eventId: event.id,
             actorId,
-            text: memoryPerspective(world, actorId, text, type === 'speech', source?.id),
+            text: perspective,
             at: event.at,
             sequence: world.nextId,
             modality:
-              scope === 'private'
+              scope === 'private' && data?.['acquisition'] !== true
                 ? type === 'contact'
                   ? 'felt'
                   : type === 'encounter'
@@ -263,22 +311,28 @@ function recordEvent(
                 ? { targetId }
                 : {}),
             triggerKind:
-              source?.id === actorId
-                ? 'self_event'
-                : type === 'speech'
-                  ? intendedId === actorId
-                    ? 'addressed_speech'
-                    : 'overheard_speech'
-                  : targetId === actorId
-                    ? 'directed_action'
-                    : 'observed_event',
+              data?.['acquisition'] === true
+                ? 'observed_event'
+                : source?.id === actorId
+                  ? 'self_event'
+                  : type === 'speech'
+                    ? intendedId === actorId
+                      ? 'addressed_speech'
+                      : 'overheard_speech'
+                    : targetId === actorId
+                      ? 'directed_action'
+                      : 'observed_event',
             content:
               typeof data?.['text'] === 'string'
                 ? data['text']
-                : memoryPerspective(world, actorId, text, false, source?.id),
+                : type === 'speech'
+                  ? memoryPerspective(world, actorId, text, false, source?.id)
+                  : perspective,
           },
         },
-      });
+      };
+      if (awarenessBatch) awarenessBatch.push(addition);
+      else mutateExperience(world, actorId, addition);
     }
   }
   learnSpeechIntroduction(world, event);
