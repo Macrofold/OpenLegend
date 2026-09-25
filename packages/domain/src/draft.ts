@@ -47,16 +47,47 @@ function sealEvents(world: WorldState): void {
   const entries = isDraft(world.events) ? current(world.events) : world.events;
   if (entries === buffer.values) recordAppend(buffer.before, buffer.values);
 }
-/** Frozen prefix plus owned new values avoids Immer traversing each historical row again.
- * New values must belong to the caller; never freeze a model/client-owned object in place.
- * Plain mutable builders take their existing mutation path. This proves append, not authority.
+type SnapshotBuffer = { before: unknown[]; values: unknown[] };
+const snapshotBuffers = new WeakMap<WorldState, Map<unknown[], SnapshotBuffer>>();
+const ownedSnapshots = new WeakSet<object>();
+/** Only an append owner may mutate these arrays until the next draft boundary. */
+export function isAppendBuffer(entries: object): boolean {
+  return ownedSnapshots.has(entries);
+}
+export function sealAppends(world: WorldState): void {
+  sealEvents(world);
+  const buffers = snapshotBuffers.get(world);
+  if (!buffers) return;
+  snapshotBuffers.delete(world);
+  for (const { before, values } of buffers.values()) {
+    ownedSnapshots.delete(values);
+    Object.freeze(values);
+    recordAppend(before, values);
+  }
+}
+/** Owned additions freeze immediately; retained prefixes copy only once per native turn.
+ * Seal before a fork, edit or publication so no mutable buffer escapes to another world.
+ * Unowned builders and callers without a turn retain the simple snapshot path.
  * docs/hearing-and-speech.md#performance-and-invalidation
  */
-export function appendSnapshot<T>(entries: T[], owned: T[]): T[] | undefined {
+export function appendSnapshot<T>(entries: T[], owned: T[], world?: WorldState): T[] | undefined {
   const before = isDraft(entries) ? current(entries) : entries;
+  let buffers = world && isDraft(world) ? snapshotBuffers.get(world) : undefined;
+  const existing = buffers?.get(before);
+  if (existing) {
+    existing.values.push(...owned.map((value) => freeze(value, true)));
+    return existing.values as T[];
+  }
   if (!Object.isFrozen(before)) return undefined;
-  const after = Object.freeze([...before, ...owned.map((value) => freeze(value, true))]) as T[];
-  recordAppend(before, after);
+  const after = [...before, ...owned.map((value) => freeze(value, true))];
+  if (world && isDraft(world)) {
+    if (!buffers) snapshotBuffers.set(world, (buffers = new Map()));
+    buffers.set(after, { before, values: after });
+    ownedSnapshots.add(after);
+  } else {
+    Object.freeze(after);
+    recordAppend(before, after);
+  }
   return after;
 }
 export function appendedCount(
@@ -81,13 +112,19 @@ export function freezeWorld(world: WorldState): WorldState {
   return freeze(world, true);
 }
 export function draftWorld(world: WorldState): WorldState {
-  sealEvents(world);
+  sealAppends(world);
   return drafts.createDraft(isDraft(world) ? current(world) : world);
 }
 export function finishWorld(world: WorldState): WorldState {
-  sealEvents(world);
+  sealAppends(world);
   if (!isDraft(world)) return world;
   const before = original(world)!.events;
+  const events = isDraft(world.events) ? current(world.events) : world.events;
+  // Event ownership already proves unchanged/append-only histories. Generating patches for
+  // every unrelated need, movement and status field solely to rediscover that proof is waste.
+  // Unknown edits retain the full patch proof. docs/performance.md#simulation-cpu-and-growing-history
+  if (events === before || appendedEventCount(before, events) !== undefined)
+    return drafts.finishDraft(world);
   let appendOnly = true;
   const result = drafts.finishDraft(world, (patches) => {
     // Inspect changed paths, not every historical record (docs/architecture.md#state-and-transitions).
