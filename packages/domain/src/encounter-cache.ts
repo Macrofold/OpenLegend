@@ -85,7 +85,7 @@ export function encounterPhase(previous: WorldState, snapshot: WorldState) {
           (entity, i) =>
             footprints[i]!.observer &&
             sensesFor(snapshot, entity).some(
-              (sense) => sense.implementation === 'contact-proximity-v1',
+              (sense) => sense.implementation === 'body-contact-v1',
             ),
         ),
       };

@@ -10,6 +10,7 @@ export {
   hearsEntity,
   visionRadius,
   contactViews,
+  bodiesTouch,
   DEFAULT_SENSES,
   COARSE_TOUCH,
 } from './perception.js';

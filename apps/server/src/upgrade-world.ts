@@ -1,5 +1,6 @@
 import {
   BASE_ITEM_HANDLING,
+  definitionPin,
   DEFAULT_STATUS_EFFECT_POLICY,
   DEFAULT_COGNITION_POLICY,
   type WorldState,
@@ -9,6 +10,28 @@ import {
  * docs/save-and-load.md#active-development-policy
  */
 export function upgradeWorldState(world: WorldState): void {
+  // Correct the retired detector in place; preserve authored bindings and historical evidence.
+  // docs/spatial-world.md#physical-contact
+  const retired = new Set<string>();
+  for (const [index, sense] of (world.moduleManifest?.senses ?? []).entries()) {
+    if ((sense.implementation as string) !== 'contact-proximity-v1') continue;
+    retired.add(sense.id);
+    world.moduleManifest.senses[index] = {
+      id: sense.id,
+      version: sense.version,
+      implementation: 'body-contact-v1',
+      radius: 0,
+    };
+  }
+  if (retired.size) {
+    world.moduleManifest!.revision++;
+    world.moduleManifest!.sensePins = world.moduleManifest!.senses.map(definitionPin);
+    for (const entity of Object.values(world.entities)) {
+      if (!entity.actor?.contacts) continue;
+      for (const [id, contact] of Object.entries(entity.actor.contacts))
+        if (retired.has(contact.senseId)) delete entity.actor.contacts[id];
+    }
+  }
   // Actor cognition is change-driven; remove the retired pacing field from saved policies.
   if (world.cognitionPolicy)
     delete (world.cognitionPolicy as typeof world.cognitionPolicy & { cooldownSeconds?: number })

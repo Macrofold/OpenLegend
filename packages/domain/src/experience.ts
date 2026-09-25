@@ -34,7 +34,7 @@ export const EXPERIENCE_LIMITS = {
   recallRaw: 512,
   conversationSpeech: 512,
   protectedImportance: 8,
-  backlog: 8192,
+  consolidationPressure: 8192,
   summaryBytes: 1200,
   historyDays: 30,
 } as const;
