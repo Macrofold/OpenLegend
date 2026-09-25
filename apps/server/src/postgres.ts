@@ -62,13 +62,15 @@ export class PostgresDatabase implements SqlDatabase {
       const scope = { active: true };
       return this.transactionContext.run(scope, async () => {
         try {
-          await this.query('BEGIN');
+          await this.execute('BEGIN');
           try {
             const result = await operation();
-            await this.query('COMMIT');
+            scope.active = false;
+            await this.execute('COMMIT');
             return result;
           } catch (error) {
-            await this.query('ROLLBACK').catch(() => {
+            scope.active = false;
+            await this.execute('ROLLBACK').catch(() => {
               this.failed = true;
             });
             throw error;
@@ -80,34 +82,34 @@ export class PostgresDatabase implements SqlDatabase {
       });
     });
   }
-  async query(sql: string, params: unknown[] = []) {
-    const execute = async () => {
-      await this.ready;
-      if (this.failed)
-        throw new Error('PostgreSQL unavailable; restart and reconcile pending writes.');
-      let index = 0;
-      const translated = sql
-        .replace(/\?/g, () => `$${++index}`)
-        .replace(/BEGIN IMMEDIATE/g, 'BEGIN')
-        .replace(/\browid\b/g, 'id')
-        .replace(
-          /json_extract\(payload, '\$\.([A-Za-z.]+)'\)/g,
-          (_, path: string) => `(payload::jsonb #>> '{${path.split('.').join(',')}}')`,
-        );
-      try {
-        const result = await timed('postgres.statement', () =>
-          this.client.query(translated, params),
-        );
-        return { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
-      } catch (error) {
-        const code = (error as { code?: string }).code;
-        // Do not leak SQL parameters or connection credentials in diagnostics.
-        throw new Error(
-          `PostgreSQL operation failed${code ? ` (${code})` : ''}. No automatic retry.`,
-        );
-      }
-    };
-    return this.transactionContext.getStore()?.active ? execute() : this.serial(execute);
+  private async execute(sql: string, params: unknown[] = []) {
+    await this.ready;
+    if (this.failed)
+      throw new Error('PostgreSQL unavailable; restart and reconcile pending writes.');
+    let index = 0;
+    const translated = sql
+      .replace(/\?/g, () => `$${++index}`)
+      .replace(/BEGIN IMMEDIATE/g, 'BEGIN')
+      .replace(/\browid\b/g, 'id')
+      .replace(
+        /json_extract\(payload, '\$\.([A-Za-z.]+)'\)/g,
+        (_, path: string) => `(payload::jsonb #>> '{${path.split('.').join(',')}}')`,
+      );
+    try {
+      const result = await timed('postgres.statement', () => this.client.query(translated, params));
+      return { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      // Do not leak SQL parameters or connection credentials in diagnostics.
+      throw new Error(
+        `PostgreSQL operation failed${code ? ` (${code})` : ''}. No automatic retry.`,
+      );
+    }
+  }
+  query(sql: string, params: unknown[] = []) {
+    return this.transactionContext.getStore()?.active
+      ? this.execute(sql, params)
+      : this.serial(() => this.execute(sql, params));
   }
   async exec(sql: string): Promise<void> {
     await this.query(sql);
