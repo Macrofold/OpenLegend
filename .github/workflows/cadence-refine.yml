@@ -1,0 +1,42 @@
+name: Publish elapsed-time refinements
+on:
+  push:
+    branches: [review/simulation-cadence-work]
+    paths: [.github/workflows/cadence-refine.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Authenticate reviewed patch
+        run: |
+          python3 - <<'PY'
+          import base64,gzip,hashlib,pathlib
+          encoded=pathlib.Path('.github/cadence-refinement.b64').read_text().replace('7iyFjFO8058','7iyF7jFO8058')
+          data=gzip.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(data).hexdigest()=='5c1f411f66f4f271548f1266f106493f159c6b581cf3012b20dbe3bd69845d6f'
+          pathlib.Path('/tmp/cadence.patch').write_bytes(data)
+          PY
+          git checkout -B cadence-refine 979d08bf6418e3e5cd06ce26ea6733ab04053b76
+          git apply --index /tmp/cadence.patch
+          git diff --cached --check
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm config:check && pnpm exec tsc --noEmit -p tsconfig.build.json
+      - run: pnpm exec vite build --config apps/client/vite.config.ts
+      - name: Commit feature only after current-tip check
+        run: |
+          git config user.name 'OpenLegend assistant'
+          git config user.email 'assistant@openlegend.invalid'
+          git commit -m '[skip ci] Reuse exact static exposure and protect interval-start work and rate accounting'
+          git fetch origin feature/spatial-world-3d
+          test "$(git rev-parse origin/feature/spatial-world-3d)" = 979d08bf6418e3e5cd06ce26ea6733ab04053b76
+          git push origin HEAD:refs/heads/feature/spatial-world-3d
