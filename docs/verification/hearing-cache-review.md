@@ -15,10 +15,10 @@ This follows the existing bounded target-cache policy instead of adding another 
 The same script was executed in separate processes against the baseline and reviewed cache code:
 
 | Listeners | Before median ms | Reviewed median ms | Before / reviewed p95 ms |
-| --- | ---: | ---: | ---: |
-| 96 | 0.650 | 0.853 | 1.359 / 1.579 |
-| 300 | 2.210 | 1.140 | 4.191 / 3.067 |
-| 600 | 4.635 | 2.881 | 18.527 / 4.608 |
+| --------- | ---------------: | -----------------: | -----------------------: |
+| 96        |            0.650 |              0.853 |            1.359 / 1.579 |
+| 300       |            2.210 |              1.140 |            4.191 / 3.067 |
+| 600       |            4.635 |              2.881 |           18.527 / 4.608 |
 
 Complete output digests matched for each population. The 300-listener digest was `3b9bf29bca1dc19d9d8a1e969dd98ce5f174a9f178b09584dda3da09791dc28f`; the 600-listener digest was `f8087c9cdea0de86df4ee506a7e5fc17431b382fc42a2afe2c5b285762dcfe0d`. Cold preparation and tail times were noisy; the below-capacity control did not improve. These samples support the identified overflow-thrashing fix, not a universal speedup or capacity guarantee.
 
@@ -30,12 +30,14 @@ The previous disk-backed driver awaited an entire `tick()` catch-up before sched
 
 Fresh seed-73 runs used 344 entities: 10 added people, 20 added animals, 300 objects and the starter population. They included native simulation, actual disk SQLite commits and full public-view serialization, with a zero provider budget. The requested active window was 10 seconds at 8x and eight speech requests per real second. Final native drain and flush are included in wall time.
 
-| Driver | Planned / accepted speech | Wall seconds | Simulated seconds | Effective speed |
-| --- | ---: | ---: | ---: | ---: |
-| Previous serial producer | 80 / 6 | 22.738 | 7302 | 5.352x |
-| Independent producer | 80 / 80 | 23.545 | 7574 | 5.361x |
+| Driver                   | Planned / accepted speech | Wall seconds | Simulated seconds | Effective speed |
+| ------------------------ | ------------------------: | -----------: | ----------------: | --------------: |
+| Previous serial producer |                    80 / 6 |       22.738 |              7302 |          5.352x |
+| Independent producer     |                   80 / 80 |       23.545 |              7574 |          5.361x |
 
 Independent-producer speech commit latency was 7.151 ms median, 10.685 ms p95 and 427.365 ms maximum. Scheduling lateness was 6.122 ms median and 448.402 ms p95, including cold-start delays. Both runs reported no storage error. Public projection was invoked after each completed tick; six projections in these overloaded runs is not a graphical frame-rate measurement. No HTTP/SSE, PlayCanvas, PostgreSQL or live model acceptance is claimed.
+
+A separate same-population, zero-speech run achieved 5.402x (5816 simulated seconds over 17.944 wall seconds), also without a storage error. Because its admitted/drained span differs, this is not a precise percentage-overhead comparison; it does show a native deficit without any new speech.
 
 **The 8x whole-runtime requirement did not pass on this host.** These observations do not erase the earlier successful 60-second result on a different execution instance; they prevent treating that single result as a portable release guarantee. Receiving all planned speech is necessary but not sufficient for 8x qualification.
 
@@ -46,6 +48,14 @@ The existing native stress runner advanced 2400 simulated seconds with the mixed
 Inclusive CPU samples attributed about 2147 ms to status-effect advancement, 1285 ms to encounter processing and 1139 ms to world finalization. Inclusive times overlap; do not sum them or attribute all native cost to acoustics. This supports prioritizing native status interpretation and snapshot/finalization cost through PF/SW alongside hearing, without weakening recipient or evidence rules.
 
 An experimental read-only snapshot before each status-condition evaluation preserved the final digest but increased the run to 25921.81 ms. It was reverted completely, not committed as an optimization. More snapshots and `async` wrappers are not solutions to this CPU bottleneck.
+
+## Unpublished native working-set experiment
+
+A second local prototype acquired an independent entity record once per bounded native slice, kept position immutable, and sealed its owned records before nested drafts and publication. The existing one-second physics and semantic writers remained unchanged. A queued-plan/gather/cancel/speech replay across 1800 simulated seconds and 462 transitions matched the original transition digest `173523c43a68cd5a5669feca99ae0fe3d43e5c0213984d4e1bcacf0a4f82a9fa` and retained an unchanged input. Manual parent/child continuation kept energies independent and rejected mutation through sealed aliases. This is scoped observational evidence, not complete ownership qualification.
+
+The prototype reduced the mixed 2400-second native sample to 4935.94 ms with the existing JSON copier; a structured-clone variant took 5594.73 ms with the same final digest. Its separate ten-second disk run accepted all 80 scheduled utterances and achieved 6.737x, still below the requirement. Larger entity histories/paths, retained-reference callers, indirect status targets and allocation costs require explicit qualification before adopting this broader ownership change.
+
+The connector blocked the atomic runtime checkpoint. The prototype was therefore fully reverted from the working source; neither `nativeEntity` nor entity working buffers were published. The final production build applies only to the committed cache/driver changes. These prototype timings are not branch performance and do not close any implementation or acceptance checkbox.
 
 ## Reproduction and remaining gates
 
