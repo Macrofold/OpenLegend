@@ -1,0 +1,57 @@
+name: Prepare elapsed completion documentation
+on:
+  push:
+    branches: [feature/spatial-world-3d]
+    paths: [.github/workflows/elapsed-docs-prepare.yml]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile
+      - name: Reproduce authenticated documentation edits
+        run: |
+          REVIEW_ROOT="$GITHUB_WORKSPACE" REVIEW_PATHS="$RUNNER_TEMP/elapsed-paths.json" python3 .github/elapsed-docs.py
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          const paths=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/elapsed-paths.json','utf8'));
+          execFileSync('pnpm',['exec','prettier','--write',...paths],{stdio:'inherit'});
+          JS
+      - name: Production and guidance checks without assertion suites
+        run: |
+          pnpm guidance:check
+          pnpm config:check
+          pnpm exec tsc --noEmit -p tsconfig.build.json
+          pnpm exec vite build --config apps/client/vite.config.ts
+      - name: Prepare immutable GitHub objects; do not move any branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs=require('fs');
+            const paths=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/elapsed-paths.json','utf8'));
+            const {owner,repo}=context.repo;
+            const entries=[];
+            for(const p of paths){
+              const {data}=await github.rest.git.createBlob({owner,repo,content:fs.readFileSync(p).toString('base64'),encoding:'base64'});
+              entries.push({path:p,mode:'100644',type:'blob',sha:data.sha});
+            }
+            const {data:parent}=await github.rest.git.getCommit({owner,repo,commit_sha:context.sha});
+            const {data:tree}=await github.rest.git.createTree({owner,repo,base_tree:parent.tree.sha,tree:entries});
+            fs.writeFileSync(process.env.RUNNER_TEMP+'/prepared-elapsed-docs.json',JSON.stringify({parent:context.sha,tree:tree.sha,entries},null,2));
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prepared-elapsed-docs
+          path: ${{ runner.temp }}/prepared-elapsed-docs.json
+          if-no-files-found: warn
+          retention-days: 2
