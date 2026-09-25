@@ -108,8 +108,12 @@ export function nativeInterval(
       if (damage) {
         bound = Math.min(bound, actor.health / damage);
         for (const d of manifest.definitions)
-          if (d.implementation === 'native-health-v1')
+          if (d.implementation === 'native-health-v1') {
+            // Regeneration is clamped before native damage. A net rate alone misses
+            // saturation at full health; retain the coupled-law fallback here too.
+            if ((rates.get(id)?.get(d.id) ?? 0) > 0) bound = Math.min(bound, 1);
             addRate(rates, id, d.id, (-damage * 100) / (actor.body?.maxHealth ?? 100));
+          }
       }
     }
     if (!action || action.type === 'status-effect') continue;
