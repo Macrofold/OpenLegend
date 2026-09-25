@@ -11,17 +11,14 @@ Do not write or run automated tests for this requested pass. Future automated ca
 ### HE01 — Acoustic policy and rich exposure
 
 - [x] Add continuous source/received/background/floor values and the three-threshold policy through existing sense/module admission. Specify intensity transmission semantics, review starter coefficients and source presets, retain ordered geometry and conservative source-specific audience bounds. Remove no-longer-valid fixed-radius assumptions only with their callers migrated.
-- [x] Update current development schema/pins and reject incompatible saves explicitly; no old-save conversion. Preserve native sleep/life/capability rules and separate self-expression evidence.
+- [x] Resolve acoustic policy and sense pins through current world validation, preserving native sleep/life/capability rules and separate self-expression evidence. Development compatibility follows the current [save/load policy](../save-and-load.md#active-development-policy), not a per-feature schema gate. Past utterances are not re-heard or remasked.
 
 ### HE02 — Speech admission and durable listener evidence
 
 - [x] Extend talk/player schemas and native say metadata with volume. Preserve volume through fallback/retry, request digests and model adapters. Record one immutable projected result per listener at event-time commitment; deterministic fragments and recognition/direction travel through existing awareness/history transactions.
 - [x] Migrate all full-text/boolean-hearing consumers coherently: hot and cold history, context, recall, embeddings, Narrator, reaction intake, social appraisal, commitments, teaching, catalogue and conversation eligibility. Never ship partial UI while models or another endpoint still receive full secret text. Retain existing exactly-once event/response behavior and source scopes.
-
 - [x] Preserve unknown roles during actor initialization; remove raw-event context/retry fallbacks. Require intelligible original evidence before interactive decision dispatch. Reject generic committed-speech rewrites and persist awareness importance changes; preserve permitted durable non-speech edits after hot consolidation.
-
 - [x] Share the linguistic speech-pool policy across consolidation and background embeddings; exclude no-word cues from the automatic dialogue window while retaining them as normal evidence. Skip SQL for empty vector source batches.
-
 - [x] Skip completed unchanged immutable NPC inputs before speech materialization/reconciliation; partition attempt fences by actor. Reuse awareness projection and newest linguistic evidence, keep reservation denial actor-local, and retain shared provider-failure stopping.
 - [x] Pack background speech and foreground recall against shared adapter count/UTF-8/JSON limits. Revalidate speech at actual dispatch and serialize bounded background speech and foreground vector/query-cache publication with mutation/forgetting; bypass inherited reentrancy context when entering the publication turn.
 
@@ -29,20 +26,15 @@ Do not write or run automated tests for this requested pass. Future automated ca
 
 - [x] Reuse React overlay and renderer projection; add SpeechCaption, the small reusable progress-ring primitive and presentation lifetime helper. Add composer volume control and reading preferences without changing work-bar/cooldown semantics.
 - [x] Support overhead association, coarse listener-ring placement, neutral fallback, current-authority clipping, paused/hidden behavior, bounded queues, stable deduplication and same-world restore reset. No frame-level acoustics, persistence, RNG or model calls.
-
 - [x] Start reading lifetimes only on fitted visible placement and preserve time while layout-hidden. Add chunk counters, non-repeating full-utterance announcements, bounded pending priority, full-rectangle collision checks, vertical/behind-camera safeguards, smaller-radius fallback and the specified 0.5-metre historical-bearing cutoff. Graphical qualification remains HE05.
-
 - [x] Bound continuously hidden/pending caption residence independently of the reading ring, using the existing presentation clock; pause still freezes both. This prevents permanently occupied display slots without deleting history.
 
 ### HE04 — Comprehensive player World Events
 
 - [x] Add a read-only launcher below Journal and type filters including Speech. Reuse common event projection and durable scoped history, with server filtering before keyset pagination, cold-history coverage, new-entry scroll behavior and revocation/restore invalidation. Keep the normal viewer separate from god editing.
 - [x] Ensure publication notices include eligible events suppressed by the compact Journal feed. Reading/refreshing history never creates a new caption or reaction.
-
 - [x] Index existing perspectives by actor/order and actor/type/order; use matching expressions and deep keyset seeks. Resolve commit evidence once per actor and hash common event text once. Isolate UI scope in the same render, abort stale requests, memoize rows and remove quadratic page deduplication.
-
 - [x] Route Talk/Journal reads and watermark lookup through the same actor-scoped indexed perspective expressions, preserving participant/conversation filtering and existing transcript behavior.
-
 - [x] Fence Talk/Journal HTTP responses after all awaited reads against actor/timeline/history changes and active-conversation replacement, preserving the existing World Events response guard.
 
 ### HE05 — Runtime and performance qualification
@@ -60,17 +52,17 @@ AI_BUDGET_USD=0 node --import tsx scripts/stress-native.ts scripts/performance/s
 - [ ] Qualify real PlayCanvas head/directional anchoring, camera yaw/pitch/projection, floor cutaways, visibility loss, collision/overflow, 1/4/8 captions, settings and SSE reconnect in a graphical browser. Local HTTP browser navigation was blocked by administrator policy and WebGL was unavailable; do not bypass that policy or claim a full game walkthrough from fixed DOM anchors.
 - [ ] Qualify PostgreSQL query plans/late-response and revocation behavior, manual named-save rewind, actual speech/response provider schema compatibility, live naturalness and accessibility under explicit capped execution. Native injected provider non-execution is not live provider evidence.
 - [x] Re-run production compilation and native stress; exercise 100,000 synthetic global events with 2,000 actor perspectives, deep All/Speech pagination, and an isolated before/after SQL writer fan-out. Inspect SQLite index/range plans, unknown-source initialization, guarded edits, durable importance and cold non-speech updates. Re-run offline React layout-hidden lifetime and immediate scope clearing. [Review evidence](../verification.md#hearing-review-hardening) records exact scope and measurements.
-- [ ] Profile sustained/crowded speech, cold versus warm geometry, disk/PostgreSQL persistence and long-session tail latency. Measure the still-linear hot-prefix identity traversal, event listener candidate enumeration and required awareness fan-out before introducing caches, phase-local candidate reuse or a changed mutation interface. Use existing EPR/PF owners rather than another speech scheduler. Dense first-exposure scenarios remain below requested 3× native headroom; no population capacity target is passed.
+- [ ] Profile sustained/crowded speech, cold versus warm geometry, disk/PostgreSQL persistence and long-session tail latency. Measure the still-linear hot-prefix identity traversal, event listener candidate enumeration and required awareness fan-out before introducing caches, phase-local candidate reuse or a changed mutation interface. Use existing EPR/PF owners rather than another speech scheduler.
 - [x] Repeat scoped Talk/Journal pagination on a 100,000-event SQLite fixture, run the actual consolidation/background candidate policy with no-word cues, observe zero empty-batch database calls, exercise stale hidden captions and pause in offline Chromium, and rerun native stress and a bounded speech burst. [Second-review evidence](../verification.md#hearing-second-review) records these measurements without a production-capacity claim.
 - [x] Measure mostly-unchanged NPC indexing, independent budget denial, dispatch cancellation after reservation/diagnostic yields, inherited-context publication overlapping actual forgetting, stale transcript rejection and byte-bounded Unicode/escaped embedding requests. Rerun production build and existing native stress. [Third-review evidence](../verification.md#hearing-third-review) distinguishes actual service/SQLite execution from counting/in-memory provider adapters.
-- [ ] Reconcile concurrent main camera/cognition changes on the feature branch, then rebuild and qualify the combined tree. This review does not overwrite those changes or establish merge readiness.
+- [x] Reconcile the feature onto `fdcbd31fc9e4eb31daaf00d997648aba588c8577`, including its agent guidance, status effects, knowledge and camera/cognition changes. The combined source passes production TypeScript and Vite compilation. This is integration/build evidence, not graphical, provider or scale acceptance.
+- [ ] Qualify 8× simulation (480 native one-second steps per wall second at the base clock ratio) with matched cold/warm native and speech/persistence workloads. Preserve every eligible recipient, committed utterance, event ordering and event-time privacy. Optional indexing, publication and captions may coalesce only under their existing contracts; a budget limit is never inaudibility. Record population, density, speech rate, history size and bottlenecks alongside headroom; do not generalize a single host or pure native result to unlimited capacity.
 
 ## Deferred expansion
 
 Keep room/portal propagation, frequency bands, physical timed speech, actual overlapping acoustic processes, voice recognition, language comprehension, native noise effects and sophisticated collision layout deferred until a concrete consumer justifies them. Add resulting implementation needs to the appropriate EPR/SW/NC/CR/INV owner rather than widening this slice into a general audio engine.
 
 - [ ] Replace the finite UI event-type menu with registry-provided family/filter metadata once event registration exposes an actual runtime catalogue. All perceived event types remain available now; do not create a second event registry only for this filter.
-
 - [ ] Define and implement dedicated committed-speech re-authoring only after [D61](../../archive/05-project/open-decisions.md#d61--re-authoring-committed-speech) is settled. Generic editors currently reject speech text rewrites; guarded deletion/importance updates are not deferred.
 - [ ] Hydrate an explicitly retried chat's original evidence from actor-scoped cold history when its hot awareness has been consolidated, with revocation/generation checks before paid admission. Until then it becomes stale; raw text matching is not a recovery path.
 - [ ] Add an explicit caption-overflow/gap notice backed by authorized event history; bounded display queues currently retain history but do not show a dropped-caption count. Consider a replayable live event cursor only with the common SSE/EPR delivery owner.
