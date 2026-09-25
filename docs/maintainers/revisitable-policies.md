@@ -22,6 +22,16 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 **Decision authority:** Project maintainer, with the save/load design owner. Preserve stored state while a consequential compatibility decision remains unresolved; privacy and external accounting remain protected.
 
+## RP03 — Elapsed-time fidelity and integration limits
+
+**Current policy:** [Base-world time policy](../worlds/base/time.md); the independent clock and interval contract is in [Simulation time](../simulation-time.md). The finite bundled-world horizon, perception displacement and coupled-flow fallback constrain approximation; they are not mandatory ticks derived from clock speed.
+
+**Why revisit:** These deliberately small implementation limits trade bounded work and perception fidelity against general analytic scheduling. They should not become universal laws for future authored worlds or permanent global limits imposed by one fast or short-range observer.
+
+**Review trigger:** A fast actor or tiny sense forces excessive whole-world work; a fleeting exposure is observably missed; a new timed/coupled mechanic lacks a safe interval bound; or profiling shows useful headroom from region-local integration. Consult the [boundary catalogue](simulation-boundaries.md), retain exact occurrence/collision/permission boundaries, and measure the changed approximation rather than silently increasing time steps.
+
+**Decision authority:** The world policy owner for fidelity/balance, with the simulation and perception maintainers for runtime integrity. Unsupported rate interactions retain their conservative fallback until the owning mechanic supplies and qualifies a better bound. No change to these limits may turn a presentation setting into altered actor knowledge.
+
 ## Maintaining this register
 
 Keep stable IDs, a canonical policy link, the reason to revisit, a concrete trigger and decision authority. Add only known revisitable decisions, not every constant or hypothetical concern. When a trigger is relevant, raise it in the task/PR; put resulting work or unresolved choices in their existing owners. An accepted change updates the policy, affected summaries and this entry together; significant decisions go in the [decision history](../documentation-changelog.md). Retire superseded entries with a link to their replacement or recorded decision, not another copy of the contract.
