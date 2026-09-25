@@ -64,6 +64,7 @@ export interface JobRecord extends AiJobView {
       mode: 'enqueue' | 'replace';
       targetId?: string;
       expectedPlan: number;
+      targetEpisodes?: import('@open-legend/domain').ActionTargetEpisodes;
       timelineId: string;
     };
     npcId?: string;

@@ -444,7 +444,12 @@ export async function prepareDecision(
       .flatMap((c) => c.sourceIds ?? [c.id]),
     entityIds: Object.values(entityReferences),
     entityEpisodes: Object.fromEntries(
-      Object.values(entityReferences).flatMap((id) => {
+      [
+        ...new Set([
+          ...Object.values(entityReferences),
+          ...currentObserved.visibleEntities.map((entity) => entity.id),
+        ]),
+      ].flatMap((id) => {
         const episode = currentWorld.perceptionEpisodes?.[actorId]?.[id];
         return episode ? [[id, episode]] : [];
       }),
