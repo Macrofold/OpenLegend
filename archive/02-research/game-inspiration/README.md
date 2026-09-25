@@ -6,6 +6,7 @@
 
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
+- **[Find an interaction](mechanics/interaction-lookup.md):** cross-game navigation by the question you are exploring, from effect delivery and useful delegation to personal history, shared rewards, and creator trust.
 - **[What makes these worlds fun](essays/what-actually-makes-these-worlds-fun.md):** agency, constraints, relationships, legibility, failure, atmosphere, and authored/generated content.
 - **[Virality and discovery](essays/virality-and-discovery.md):** distinct player, creator, reuse, and distribution loops.
 - **[Production and platform pitfalls](essays/production-and-platform-pitfalls.md):** cancellations, unsustainable services, shallow freedom, expectation debt, and technical overreach.
@@ -33,9 +34,9 @@
 
 ## Deeper reading by system
 
-The [granular study index](mechanics/README.md#detailed-system-studies) links eleven extended studies covering fourteen games. They supplement, rather than replace, the game chapters above. Subjects include wand payloads, factory feedback loops, object blueprints, environment-powered magic, transformations, triggered meals, artifact history, social knowledge, seasonal opportunities, useful creature workers, cooperative information, language-driven objective recognition, and knowledge as progression.
+The [granular study index](mechanics/README.md#detailed-system-studies) links nineteen extended studies. They supplement, rather than replace, the game chapters above. Subjects include wand payloads, factory feedback loops, object blueprints, environment-powered magic, transformations, triggered meals, artifact history, social knowledge, seasonal opportunities, useful creature workers, cooperative information, language-driven objective recognition, and knowledge as progression. Additional studies examine injury and rescue, equipment combinations, redstone and auto-crafting, production orders, reusable contraptions and game modes, authored character callbacks, configurable offscreen autonomy, and information-changing spells.
 
-Start with a game chapter for its overall promise, history, reception, and videos. Follow a granular study to understand individual rules and their consequences. Return to the cross-game essays to compare the design tensions. Each study includes its own source annotations and labels worked examples separately from attributed incidents. Outer Wilds' specific discoveries are spoiler-marked.
+Start with a game chapter for its overall promise, history, reception, and videos. Follow a granular study to understand individual rules and their consequences. Use the [interaction lookup](mechanics/interaction-lookup.md) when the starting point is a design question rather than a game name. Return to the cross-game essays to compare the design tensions. Each study includes its own source annotations and labels worked examples separately from attributed incidents. Outer Wilds' specific discoveries are spoiler-marked.
 
 ## Evidence and preservation
 
