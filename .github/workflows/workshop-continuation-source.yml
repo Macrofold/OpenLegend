@@ -19,6 +19,11 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts
+      - uses: actions/checkout@v4
+        with:
+          ref: fdcbd31fc9e4eb31daaf00d997648aba588c8577
+          path: upstream-snapshot
+          persist-credentials: false
       - name: Export sources and dependencies without executing tests
         run: tar --exclude=.git -czf /tmp/workshop-continuation.tar.gz .
       - uses: actions/upload-artifact@v4
