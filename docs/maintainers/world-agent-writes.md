@@ -16,23 +16,32 @@ This subtracker expands [INV-21.6–21.7](inventions-and-world-evolution.md#inv-
 
 Checked items mean the named implementation exists with the bounded recorded manual observations. They do not close [WAC01–WAC02, IRF01–IRF09 and UWA01–UWA10](TODO.md#world-agent-session-continuation--deferred-regression-coverage), live Macrofold qualification, or broader composition acceptance.
 
+## Navigation and custom-value continuation
+
+- [x] **WW12 — Bounded relationship investigation (INV-15/21).** Expose definition-path/reachability witnesses through `ol_trace` using the existing index; honor direction/filter, visited sets, depth/node/page ceilings and explicit frontier. No incomplete mandatory interaction closure may be advertised as passed. Owner inspection uses the same operation, not a renderer-owned graph.
+- [x] **WW13 — World entity discovery (INV-16/21).** Add bounded name/ID/kind/controller discovery through `ol_entities` and the local owner inspector. Pin roster/filter cursors while returning page-current exact references; ordinary movement/drain must not prevent paging. Reuse immutable-snapshot caching and keep live evidence/definition views separate.
+- [x] **WW14 — Exact custom-value interventions (INV-21/EWF).** Expose the existing custom attribute edit owner through a strict `attribute-values` adapter, schema discovery, target/manifest pins, per-value expected revisions, quantity-aware human review and permanent Apply receipts. Preserve native physiology, unselected values and accounting; reject stale/range/duplicate/unbound/native edits. Manual HTTP/MCP/native/restart evidence is in [navigation continuation](../verification/workshop-navigation.md); live agent and broad browser/database qualification remain open.
+- [ ] **WW15 — Rich investigation and graph UI expansion.** Extend source extraction, instance/evidence tracing and full impact jobs only through actual family contracts. Add a graphical canvas/ports after the shared reader proves useful. The current witness list and partial graph do not finish INV-15. Measure changing-roster pressure before introducing a mutation-owned directory index; do not run directory rebuilding each tick.
+
+The existing regression tasks in `TODO.md` remain the owners: **IRF02/UWA03** must cover chains, cycles, reverse paths, root-to-self, empty filtered pages, repeated frontier pages, node/depth/page cutoffs, missing/stale refs and no false negative-path proof. **IRF03/IRF05/IRF06/IRF09** cover new entity filtering, name/controller edits, movement-stable roster cursors, per-page live refs, HTTP/MCP parity, browser unmount/navigation and cold-cache responsiveness. **WAC02/UWA05/UWA07/UWA10** cover revision zero, range/category errors, multiple edits with one invalid entry, drain-then-Apply rejection, explicit revision/review, no reset on replay, current grant revocation, native concern changes and restart. Do not mark these automated cases complete from manual observations or add a duplicate suite.
+
 ## Remaining implementation and qualification
 
 - [ ] **WW07 — Real native harness release gate (INV-21.5).** Configure the exact reachable authenticated MCP endpoint, approved connection and native harness/model. Run an isolated inspect → draft → validate → review → human approval → Apply → restart/cancellation journey. Verify that the model actually sees structured references, result/error meaning and schema guidance. Preserve real usage and outstanding worker exposure under one authorized ceiling. No fixture transcript substitutes for live evidence.
-- [ ] **WW10 — Broader body/law adapters (INV-21.6/EWF).** Implement sense/controller replacement, native-need removal, current-value changes or many-body migration only through the owning qualified transitions and meaningful review. The add-only binding slice is not permission for a generic state patch. Keep active work, resources, evidence and uncertainty coherent; do not change the unresolved owner-authoring exception.
+- [ ] **WW10 — Broader body/law adapters (INV-21.6/EWF).** Implement sense/controller replacement, native-need removal, typed native-body value changes or many-body migration only through the owning qualified transitions and meaningful review. The add-only binding slice is not permission for a generic state patch. Keep active work, resources, evidence and uncertainty coherent; do not change the unresolved owner-authoring exception.
 - [ ] **WW11 — Current-main integration and sustained qualification (INV-21.7/PF).** Reconcile current main against this feature branch, preserving incoming cognition and save behavior, then repeat relevant runtime/static checks. Do not treat historical main checks as a completed rebase. Extend PostgreSQL coverage to full-game restore, concurrent Apply, mature usage histories and query plans; qualify browser review/accessibility and native responsiveness under authoring pressure. Cold/warm native stress remains PF/EPR/SW work, not solved by indexed session reads.
 
 ## Deferred automated coverage routing
 
 The requested automated coverage remains in [maintainer TODO](TODO.md), using existing owners rather than a duplicate suite:
 
-| Existing group | Concrete cases this slice must include |
-| --- | --- |
-| WAC01 | Numeric 2/9/10/100 cursor order, equal keys, idempotent index initialization, active-only recovery with large completed history, SQLite and PostgreSQL. |
+| Existing group        | Concrete cases this slice must include                                                                                                                                                                            |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WAC01                 | Numeric 2/9/10/100 cursor order, equal keys, idempotent index initialization, active-only recovery with large completed history, SQLite and PostgreSQL.                                                           |
 | WAC02 / UWA05 / UWA10 | A world receipt commits, the operational plan write fails, a draft is revised, and identical Apply still returns the original receipt without effects or resets. Revoked world/session authority remains refused. |
-| WAC02 / UWA07 | Remove an input then change its definition; retain an input then change its definition; duplicate body attachment; exact initial values; stale target/manifest and explicit target redesign. |
-| IRF01 / IRF05 | Native/custom body bindings and inherited senses; matching inspect-version data; stale/restored roots; no observer knowledge creation from owner inspection. |
-| IRF04 / IRF06 / UWA04 | Current tool result forwarding, large valid candidate parity, review lifecycle, navigation and cancellation through the actual browser/native harness. |
+| WAC02 / UWA07         | Remove an input then change its definition; retain an input then change its definition; duplicate body attachment; exact initial values; stale target/manifest and explicit target redesign.                      |
+| IRF01 / IRF05         | Native/custom body bindings and inherited senses; matching inspect-version data; stale/restored roots; no observer knowledge creation from owner inspection.                                                      |
+| IRF04 / IRF06 / UWA04 | Current tool result forwarding, large valid candidate parity, review lifecycle, navigation and cancellation through the actual browser/native harness.                                                            |
 
 The transport/funding continuation adds WAF01–WAF03 in `TODO.md`; model catalogue pagination and complete monthly funding summaries remain separate follow-up work rather than a new cache or service in this patch.
 
