@@ -32,6 +32,19 @@ The [source audit SCA31](scaling/current-code-audit.md#sca31) identifies a curre
 
 [SW05/SW06](maintainers/spatial-world.md) and [AG05/action capabilities](maintainers/action-capabilities.md) retain the end-to-end correction: carry typed route outcomes into admission, ongoing actions, plans and UI. A deferred route is not successful arrival, cannot consume materials or deal damage early, and must not erase a longer-term goal merely because a cache or work slice is unavailable. Work limits remain useful; removing all bounds is not the fix.
 
-For growing populations, qualify many simultaneous approach requests, a moved target, changed support/occlusion, exhausted stance attempts and one actor whose route genuinely does not exist. Measure candidate creation, exact stance tests, repeated route requests and longest native transition, not only the final A* call. [PF/SW](maintainers/scaling.md#findings-already-owned-by-existing-work) own these measurements.
+For growing populations, qualify many simultaneous approach requests, a moved target, changed support/occlusion, exhausted stance attempts and one actor whose route genuinely does not exist. Measure candidate creation, exact stance tests, repeated route requests and longest native transition, not only the final A* call. [PF/SW](maintainers/scaling.md#existing-work-remains-in-its-existing-owner) own these measurements.
 
 Future longer-range, area, non-biped or cross-region strikes must declare their actual target/effect reach and dependency/ownership contract through [SC13](maintainers/scaling.md#sc13) and existing INV/EWF/SW owners. The current native strike does not establish scalable crowd collision, a distributed combat solver, or client authority over impacts. No balance or runtime behavior changes are delivered by this section.
+
+### Massive-scale research: staged action work
+
+[Physics/navigation](../archive/02-research/massive-scale/domains/physics-navigation.md), [persistence](../archive/02-research/massive-scale/domains/persistence-consistency.md) and the [benchmark plan](../archive/02-research/massive-scale/benchmark-plan.md) inform these gates. The existing strike and its tests remain owned above; this is not a new combat backlog.
+
+| Stage/consumer | Specific owner work | Exit applied to targeted actions |
+|---|---|---|
+| NOW/G1 current route/admission path | SW05/SW06/AG05, SC15.2/15.3 and SF03/SF04 | Incomplete search remains distinct; local candidate/resource work does not grow with unrelated scenery; exact impact and duplicate receipts remain correct. |
+| G1 process-record migration | [D1-MS03](maintainers/production-data.md#d1-ms03), [D1-MS04](maintainers/production-data.md#d1-ms04), SC14.1 | Remaining work, target/pinned definition and already-consumed inputs survive selective load/restart without repeating a strike. |
+| Before any new area/body family | SC13.1–SC13.4 and the actual INV/SW family | Expanded targets, physical extent and required witnesses have a finite supported work/authority contract, not client-authored damage. |
+| LATER/G3 cross-owner combat | [LT-R06](maintainers/scaling-long-term/regions.md#lt-r06), LT-R07/LT-R09 | Designated interaction authority, time/fairness and transfer faults are proven before a border-crossing attack is offered. |
+
+A local tactical strike does not need a general distributed combat or rollback solver. A future lag-compensation experiment cannot rewind previously disclosed speech, trades or private evidence without a separate explicit contract.

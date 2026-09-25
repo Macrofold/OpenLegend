@@ -36,7 +36,7 @@ That paragraph describes the current transitional storage. The [production targe
 
 Migrate existing non-protected accepted inner-world files into the general knowledge pad without rewriting their contents. Remove that prose from the accepted About me publication and its legacy document projection. Preserve protected identity, subject IDs, unrelated gameplay and accounting. If preserved text exceeds the admitted limit, refuse the conversion with the actor/count and retain stored state for an owner-reviewed rewrite. Do not infer subject associations from filenames or infer acquaintances from global names.
 
-Per-document limits do not impose a count limit. Existing request and save-size admission still applies; bounded hot retrieval and aggregate actor-storage quotas require measured scale work before large long-running worlds. No automatic eviction or invented ten-subject limit is part of this contract.
+Per-document limits do not impose a count limit. Existing request and save-size admission still applies; bounded hot retrieval and any proposed aggregate actor-storage quota require measured scale work and policy approval before large long-running worlds. No automatic eviction or invented ten-subject limit is part of this contract.
 
 ## Scaling qualification and derivative work
 
@@ -47,6 +47,14 @@ Keep DB-side owner/subject/source selection ahead of bounded text hydration unde
 Use reverse evidence dependencies for targeted invalidation when qualified. Do not replace the current conservative clearing policy with an incomplete dependency graph just to reduce cost. Derivative indexes, cached context, interests and exports must remain fenced while physical cleanup is pending. Retained archive bytes do not reauthorize forgotten NPC recall or creator access to human-private notes.
 
 Qualification varies total world documents, one actor's eligible documents, query result size and concurrent updates independently. Include cold reads, unindexed changes, tombstones, a retired subject, an equal-ID/equal-text restored source and a correction during index publication. Report candidate/text preparation, database work, serialization, peak bytes and latency together; the existing local-retrieval goal remains unqualified, not a guarantee established by a row index.
+
+### Massive-scale research: staged delivery
+
+[Memory/retrieval research](../archive/02-research/massive-scale/domains/memory-retrieval.md) and [planetary-memory research](../archive/02-research/massive-scale/later/planetary-memory.md) distinguish total corpus, eligible corpus and derivative maintenance. Apply [the sequence](scaling/sequence-and-gates.md) without postponing current record/query work until a specialized vector system is needed.
+
+**NOW/G0:** SC11.1 establishes source incarnation and SC09.2 exact revision/ID boundaries. **SOON/G1:** [D2-MS02](maintainers/production-data.md#d2-ms02) makes document/accepted-text rows canonical under existing owners; [D2-MS03](maintainers/production-data.md#d2-ms03) performs database-first selection. SC11.2/11.3 protect publication and erasure, SC08 feeds changed-source indexing, and [SF05](maintainers/scaling-feature-readiness.md#sf05) qualifies temporal/behavioral/privacy outcomes. A faster root snapshot or extra projection table does not complete this migration.
+
+**LATER only on measured corpus/maintenance need:** [LT-M02–LT-M08](maintainers/scaling-long-term/memory-storage.md) cover physical partition routing, exact/filtered ANN comparison, reindexing, archival and large-lineage recovery. Those implementations cannot widen recall eligibility, silently discard required notes or replace the general/subject document model. A million small private corpora need not use the same index as one genuinely large eligible corpus.
 
 ## Privacy and correction
 
