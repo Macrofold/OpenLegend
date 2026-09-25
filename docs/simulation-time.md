@@ -1,6 +1,6 @@
 # Simulation time and update cadence
 
-This is the canonical clock/integration contract. [Performance](performance.md) owns measurement and optimization; [PF13](maintainers/performance.md#pf13--elapsed-time-simulation) owns delivery. The [boundary catalogue](maintainers/simulation-boundaries.md) is a running inventory of exact deadlines, conservative limits and still-unknown bounds, not a promise that every scenario is event-driven already.
+This is the canonical clock/integration contract. [Performance](performance.md) owns measurement and optimization; [PF13](maintainers/simulation-time.md#pf13--elapsed-time-simulation) owns delivery. The [boundary catalogue](maintainers/simulation-boundaries.md) is a running inventory of exact deadlines, conservative limits and still-unknown bounds, not a promise that every scenario is event-driven already.
 
 ## Independent clocks
 
@@ -18,11 +18,13 @@ Choose the next interval using the earliest relevant known boundary and a finite
 
 Separate exact arithmetic from sensing fidelity. Straight movement is continuous and swept; spatial perception may be sampled at a documented maximum displacement while exact visibility-crossing certificates remain future work. Do not imply that endpoint sampling proves every fleeting visibility/contact event was detected. New emitters must produce their evidence at the actual occurrence state, not at the next arbitrary host callback.
 
-No unbounded fixed-point loop is allowed. Bound zero-time transitions, computation and queued work, retain unpaid time as debt, and expose technical blocking honestly. A CPU pause is not in-world hunger. Shared input ordering, conserved resources, collision, observer scope, action completion and durable command boundaries remain authoritative. Superseded one-second traces are not a new-world compatibility requirement; accepted semantic changes and numerical limits must be recorded.
+No unbounded fixed-point loop is allowed. Bound zero-time transitions, computation and queued work, retain unadvanced time as debt, and expose technical blocking honestly. A CPU pause is not in-world hunger. Shared input ordering, conserved resources, collision, observer scope, action completion and durable command boundaries remain authoritative. Superseded one-second traces are not a new-world compatibility requirement; accepted semantic changes and numerical limits must be recorded.
 
 ## Host and persistence
 
 The existing host timer is a wake opportunity, not a biological clock. Convert monotonic elapsed real time to owed game time, ask the domain for a bounded prefix, and subtract **actual** advanced time. Publish/yield between bounded prefixes so commands, pause, worker replies and reads can interleave. Do not hide overload by dropping debt, counting attempted calls as progress or weakening command durability. Existing suspension, required-navigation and presence policies remain explicit and separate from computational load.
+
+Memory-consolidation pressure is nonblocking. Retain source memories and bounded optional maintenance/spending; lack of a model key, consolidation delay or a large retained history must not stop walking, consume/reset debt or masquerade as a save failure. Actual storage errors retain their existing admission/pause boundary. This follows the memory owner, not an additional cadence-owned queue.
 
 No new database, per-feature save version or second scheduler/store is introduced. Existing action remainder, flight progress, status episodes and game-time deadlines remain canonical. Any new mechanics needing a durable next-event identity must use their own existing state owner. Recovery rebuilds derived scheduling data and must not redraw random choices merely because a process restarted.
 
@@ -35,3 +37,5 @@ The catalogue records for each candidate: what stays unchanged, how a deadline/b
 ## Sound/speech integration
 
 See [the branch handoff](maintainers/speech-time-integration.md). Speech emission is a committed occurrence and listener-specific acquisition, not a once-per-tick poll. Stored heard fragments never reroll during interpolation or history reads. Caption reading duration belongs to the real-time presentation clock, with its explicit pause/hidden policy, not accelerated game time. Physical speech duration, if later implemented, needs its own start/end boundaries and movement/occlusion semantics.
+
+[Current evidence](verification/simulation-cadence.md) distinguishes executable elapsed integration, sampled native boundaries and actual 8x server observations from still-open regional, graphical and coupled-law qualification.
