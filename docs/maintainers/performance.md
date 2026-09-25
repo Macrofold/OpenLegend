@@ -269,8 +269,8 @@ The earlier scalar-capture timeout investigation is superseded by the completed 
 The execution contract remains [compact transactional persistence](../performance.md#compact-transactional-persistence). These items refine PF01/PF03/PF10; they do not complete population qualification.
 
 - [x] DP01 — Replace per-witness awareness/forgetting searches with commit-local indexes; preserve append/edit/forget/revocation ownership. Separate history projection, prepared writes and SQLite transaction-boundary spans.
-- [ ] DP02 — Bound history row preparation and encoding buffers; shorten the open-transaction CPU path without publishing a partial world or bypassing edit/revocation handling.
-- [ ] DP03 — Measure and remove remaining redundant native acquisition construction, retaining every required identity, observation, ordering and independent mutable-return boundary.
+- [x] DP02 — Bound history row preparation and encoding buffers; shorten the open-transaction CPU path without publishing a partial world or bypassing edit/revocation handling.
+- [x] DP03 — Remove redundant parsing of the native private acquisition template through the shared event owner. Retain independent transition-return copies; further allocation/state representation changes remain measured PF03/PF08 work.
 - [ ] DP04 — Qualify residual blocking and introduce database/CPU isolation only at PF10's measured gate. Do not create a second writer or acknowledge uncommitted actions.
 - [ ] DP05 — Correct measured overload being misclassified as suspension using explicit attribution, without permitting catch-up after real suspension.
 - [ ] DP06 — Record matched native/history/full-server measurements and recovery exercises, including mature history and bounded high-command-count work. Long soaks, PostgreSQL, browser and live cognition remain separate qualification.

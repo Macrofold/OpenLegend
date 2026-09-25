@@ -129,13 +129,13 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       flush();
       owner = source.id;
     }
+    const subject = observerDescription(world, source.id, targetId);
+    const observed = detail ? `noticed ${subject}: ${detail}.` : `saw ${subject}.`;
     const event = recordEvent(
       world,
       events,
       'encounter',
-      detail
-        ? `${source.name} noticed ${observerDescription(world, source.id, targetId)}: ${detail}.`
-        : `${source.name} saw ${observerDescription(world, source.id, targetId)}.`,
+      `${source.name} ${observed}`,
       [source.id],
       source,
       targetId,
@@ -155,6 +155,7 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
           },
       'private',
       pending,
+      `I ${observed}`,
     );
     // Bound temporary memory independently of the number of visible objects.
     if (pending.length >= 128) flush();
@@ -174,6 +175,7 @@ function recordEvent(
   data: WorldEvent['data'],
   scope: 'external' | 'private',
   awarenessBatch?: ExperienceMutation[],
+  privatePerspective?: string,
 ): WorldEvent {
   const boundedMetric = (value: unknown, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value)
@@ -251,7 +253,13 @@ function recordEvent(
             seesEntity(world, observer, recipient)))
           ? intendedId
           : undefined;
-      const perspective = memoryPerspective(world, actorId, text, type === 'speech', source?.id);
+      // Native private acquisition already has an exact first-person template. Avoid parsing
+      // its freshly constructed third-person sentence again; all semantic hooks remain shared.
+      // docs/architecture.md#private-perception-and-evidence-batches
+      const perspective =
+        privatePerspective !== undefined && scope === 'private' && actorId === source?.id
+          ? privatePerspective
+          : memoryPerspective(world, actorId, text, type === 'speech', source?.id);
       const addition: ExperienceMutation = {
         operation: 'add',
         entry: {

@@ -5,6 +5,7 @@ import { validateWorldModules } from '@open-legend/domain';
 import { GameSaves, type RestoreSave } from './game-saves.js';
 import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
+import { prepareHistory } from './history-preparation.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
 import type { IntelligenceCall } from '@open-legend/protocol';
@@ -646,6 +647,23 @@ export class SqliteStore implements GameRepository {
           this.acceptedRevision !== expectedRevision ||
           this.acceptedRows.get(row.key) !== JSON.stringify(row.values),
       );
+    const historyBefore = historyProjection?.before ?? this.acceptedState?.world;
+    const historyAfter = historyProjection?.after ?? state.world;
+    // The world writer owns this immutable candidate. Do not eagerly encode a second full burst;
+    // prepare lookup inputs here, then stream bounded rows within the atomic transaction.
+    const preparedHistory =
+      this.readyHistoryWorlds.has(state.world.id) &&
+      !historyProjection?.restore &&
+      Object.isFrozen(historyAfter) &&
+      (!historyBefore || Object.isFrozen(historyBefore))
+        ? prepareHistory(
+            historyBefore,
+            historyAfter,
+            historyBefore
+              ? provenAppendCount(historyBefore.events, historyAfter.events)
+              : undefined,
+          )
+        : undefined;
     const revision = await timed('persistence.transaction', () =>
       this.db.transaction(async () => {
         const row = await this.db
@@ -716,6 +734,7 @@ export class SqliteStore implements GameRepository {
                   (historyProjection?.after ?? state.world).events,
                 )
               : undefined,
+            preparedHistory,
           ),
         );
         if (!historyReady) await this.putIntegration(historyKey, 1);
