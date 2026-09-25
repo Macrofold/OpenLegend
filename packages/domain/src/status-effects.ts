@@ -328,7 +328,13 @@ export function advanceStatusEffects(
 ): void {
   for (const d of statusDefinitions(world)) {
     const state = entity.statusEffects?.[d.id];
-    if (!state?.active && (!d.enabled || !d.automaticActivation)) continue;
+    // An occupying effect requires an actor by the admission contract. Avoid evaluating
+    // automatic conditions on every inert object, while still reconciling active states.
+    if (
+      !state?.active &&
+      (!d.enabled || !d.automaticActivation || (d.occupiesAction && !entity.actor))
+    )
+      continue;
     let bindings = effectBindings(world, entity, state);
     if (state?.active) {
       const reason =

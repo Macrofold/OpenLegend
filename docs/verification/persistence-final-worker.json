@@ -1,0 +1,44 @@
+{
+  "scope": "Actual disposable SQLite execution, transaction isolation, worker interruption and reopen; ad hoc runtime exercise, not an automated suite.",
+  "paidModelCalls": 0,
+  "checks": [
+    {
+      "name": "unrelated-reader-waits-for-commit",
+      "passed": true
+    },
+    {
+      "name": "reader-observes-complete-commit",
+      "passed": true
+    },
+    {
+      "name": "rollback-removes-partial-writes",
+      "passed": true
+    },
+    {
+      "name": "cached-statement-schema-invalidation",
+      "passed": true
+    },
+    {
+      "name": "main-loop-runs-during-sql",
+      "passed": true,
+      "beats": 152,
+      "elapsedMs": 163.62202299999998
+    },
+    {
+      "name": "worker-exit-rejects-inflight-transaction",
+      "passed": true
+    },
+    {
+      "name": "reopen-retains-only-committed-data",
+      "passed": true
+    },
+    {
+      "name": "closed-connection-rejects-new-work",
+      "passed": true
+    },
+    {
+      "name": "startup-error-is-reported",
+      "passed": true
+    }
+  ]
+}

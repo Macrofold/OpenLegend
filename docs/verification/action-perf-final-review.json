@@ -1,0 +1,34 @@
+{
+  "scope": "Final production build, targeted formatting, native integration/upgrades and static diff review. No unit or browser suite written/run; no live provider calls.",
+  "main": "fc01e19b30060e6c7213b1c5405be13df209297e",
+  "backup": "backup/action-capabilities-before-main-20260924",
+  "rebasedBaseline": "3be6601f862a48fe1facf951943f53c16024cb1f",
+  "inputCommit": "296f1ac0d12865726b1df6afb28bf85aeda20dc8",
+  "run": "35967043420",
+  "build": "passed",
+  "newBrokenDocumentationLinks": 0,
+  "duplicateOwnershipHeadings": 0,
+  "matchingNativeCases": 6,
+  "paidModelCalls": 0,
+  "temporaryRunnerFilesRemoved": [
+    "perf-rebase-work.py",
+    "perf-rebase-exercise.mjs",
+    "perf-density-edit.py",
+    "perf-density.py",
+    "perf-exposure-edit.py",
+    "perf-integrate-edit.py",
+    "perf-integration-exercise.mjs",
+    "perf-server-fix.py",
+    "perf-closeout.py",
+    "perf-upgrade-exercise.mjs",
+    "perf-review-static.py",
+    "perf-final-polish.py"
+  ],
+  "normalWorkflowRestored": true,
+  "remaining": [
+    "Dense legitimate acquisition and synchronous SQLite commit tails",
+    "Current callback-gap absence heuristic under multi-second synchronous work",
+    "Long soaks, PostgreSQL, browser rendering and no-network cognition/maintenance load",
+    "Shared INV/AG invocation and delayed recognition/definition lifetime contracts"
+  ]
+}

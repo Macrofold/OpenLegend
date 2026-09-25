@@ -1,0 +1,18 @@
+{
+  "scope": "Actual native in-place upgrade and validation on constructed old-shape pending requests; no reset, unit/browser suite or live provider calls.",
+  "paidModelCalls": 0,
+  "checks": [
+    {
+      "name": "old-unresolved-intent-preserved-without-replace-authority",
+      "passed": true
+    },
+    {
+      "name": "stored-alternative-retains-its-exact-mode-and-commands",
+      "passed": true
+    },
+    {
+      "name": "malformed-present-state-remains-an-error",
+      "passed": true
+    }
+  ]
+}

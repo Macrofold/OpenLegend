@@ -16,6 +16,11 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   pickup:
     'Approach a visible pile and pick up its portable items. Quantities are checked again on arrival.',
   drop: 'Place the selected quantity of a portable possession on the current support. Stop active work first.',
+  'confirm-attempt':
+    'Accept the exact revised action and its disclosed omissions. Native prerequisites are rechecked before execution.',
+  'withdraw-attempt': 'Decline or withdraw a pending action; ongoing work is unchanged.',
+  follow:
+    'Follow a currently perceived actor, stopping when the target is lost or the activity is interrupted. No attack or stealth is implied.',
   move: 'Walk to the chosen location along a traversable route. This replaces your current work.',
   gather:
     'Approach a resource and collect a small batch into your inventory. Supplies at each source are finite.',

@@ -1,0 +1,13 @@
+{
+  "scope": "No-network closeout runtime exercise with injected outputs; not live model evidence.",
+  "run": "35953271727",
+  "paidModelCalls": 0,
+  "classifications": 2,
+  "generations": 1,
+  "reviewBytes": 899,
+  "containsDecodedCommands": true,
+  "containsDiscardedChoices": false,
+  "verdict": "confirm",
+  "pending": "awaiting-confirmation",
+  "physicalAction": null
+}
