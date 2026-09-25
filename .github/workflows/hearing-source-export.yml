@@ -8,25 +8,12 @@ permissions:
 jobs:
   export:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
     steps:
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Export source archive and frozen dependencies
-        env:
-          SOURCE_SHA: ${{ github.sha }}
-        run: |
-          set -eu
-          mkdir /tmp/hearing-workspace
-          curl --fail --location --retry 2 "https://api.github.com/repos/Macrofold/OpenLegend/tarball/$SOURCE_SHA" -o /tmp/source.tar.gz
-          tar -xzf /tmp/source.tar.gz -C /tmp/hearing-workspace --strip-components=1
-          cd /tmp/hearing-workspace
-          corepack enable
-          pnpm install --frozen-lockfile
-          tar -czf /tmp/hearing-workspace.tar.gz .
+      - name: Export pinned main without repository mutation
+        run: curl --fail --location --retry 2 https://api.github.com/repos/Macrofold/OpenLegend/tarball/3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238 -o /tmp/hearing-main.tar.gz
       - uses: actions/upload-artifact@v4
         with:
-          name: hearing-current-workspace
-          path: /tmp/hearing-workspace.tar.gz
+          name: hearing-main-source
+          path: /tmp/hearing-main.tar.gz
           retention-days: 1
