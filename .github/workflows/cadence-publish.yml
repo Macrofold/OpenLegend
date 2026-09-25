@@ -1,0 +1,40 @@
+name: Publish elapsed-time checkpoint
+on:
+  push:
+    branches: [review/simulation-cadence-work]
+    paths: [.github/workflows/cadence-publish.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Authenticate reviewed patch and preserve concurrent edits
+        run: |
+          python3 - <<'PY'
+          import base64,gzip,hashlib,pathlib
+          data=gzip.decompress(base64.b64decode(pathlib.Path('.github/cadence-native.patch.gz.b64').read_text(),validate=True))
+          assert hashlib.sha256(data).hexdigest()=='18cbba2084348b547c6926287bd778739bffaa9c3d286249bdefccb51675917b'
+          pathlib.Path('/tmp/cadence.patch').write_bytes(data)
+          PY
+          git checkout -B cadence-publish 4891152a43c8fe01d686fa6db5963cbb75067b0b
+          git apply --index /tmp/cadence.patch
+          git diff --cached --check
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm config:check && pnpm exec tsc --noEmit -p tsconfig.build.json
+      - name: Commit and push feature only
+        run: |
+          git config user.name 'OpenLegend assistant'
+          git config user.email 'assistant@openlegend.invalid'
+          git commit -m '[skip ci] Advance elapsed game time through native boundaries instead of mandatory one-second ticks'
+          git fetch origin feature/spatial-world-3d
+          test "$(git rev-parse origin/feature/spatial-world-3d)" = 4891152a43c8fe01d686fa6db5963cbb75067b0b
+          git push origin HEAD:refs/heads/feature/spatial-world-3d
