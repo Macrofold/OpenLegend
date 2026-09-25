@@ -1,7 +1,7 @@
 import type { IncomingMessage } from 'node:http';
 
 const DEFAULT_BODY_BYTES = 16_384;
-const AUTHORING_BODY_BYTES = 128 * 1024;
+export const AUTHORING_BODY_BYTES = 128 * 1024;
 const EDITOR_BODY_BYTES = 1_048_576;
 const BODY_TIMEOUT_MS = 10_000;
 
@@ -14,11 +14,12 @@ export function httpBodyLimit(pathname: string): number {
   return pathname.startsWith('/api/god/editor/') ? EDITOR_BODY_BYTES : DEFAULT_BODY_BYTES;
 }
 
-export async function readHttpJson(
-  request: IncomingMessage,
-  pathname: string,
-): Promise<unknown> {
-  const limit = httpBodyLimit(pathname);
+export function readHttpJson(request: IncomingMessage, pathname: string): Promise<unknown> {
+  return readBoundedJson(request, httpBodyLimit(pathname));
+}
+
+/** Both HTTP adapters use the same byte/decode/deadline boundary before schema validation. */
+export async function readBoundedJson(request: IncomingMessage, limit: number): Promise<unknown> {
   const declared = request.headers['content-length'];
   if (declared !== undefined) {
     const length = Number(declared);
