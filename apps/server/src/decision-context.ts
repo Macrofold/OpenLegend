@@ -1,3 +1,4 @@
+import { NAVIGATION_INSTRUCTIONS } from './navigation-contracts.js';
 import { knowledgePolicyInstructions } from '@open-legend/domain';
 import { generalKnowledgeContext, selectedKnowledgeReferences } from './knowledge-context.js';
 import {
@@ -44,9 +45,11 @@ function socialEntityIds(world: Parameters<typeof activeAppraisals>[0], actorId:
 function fitActionCandidates(
   context: Record<string, unknown>,
   candidates: CandidateAction[],
+  reservedBytes = 0,
 ): CandidateAction[] {
   let remaining =
     100000 -
+    reservedBytes -
     Buffer.byteLength(readableDecisionContext(context, [], true)) -
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   return candidates.filter((candidate, index) => {
@@ -56,7 +59,6 @@ function fitActionCandidates(
     return true;
   });
 }
-import { NAVIGATION_INSTRUCTIONS } from './navigation-contracts.js';
 
 function distinctActions(candidates: CandidateAction[]): CandidateAction[] {
   return [
@@ -122,7 +124,10 @@ export async function prepareDecision(
   if (!observed) throw new Error('Actor unavailable.');
   const awarenessSequence = Math.max(
     0,
-    ...(world.experience?.awareness[actorId] ?? []).map((entry) => entry.sequence),
+    (world.experience?.awareness[actorId] ?? []).reduce(
+      (latest, entry) => Math.max(latest, entry.sequence),
+      0,
+    ),
   );
   const conversation =
     includeCurrentConversation ||
@@ -133,9 +138,8 @@ export async function prepareDecision(
   const automaticIds = conversation;
   const planning = planningCandidates(service, actorId);
   const availableActions = distinctActions([...npcCandidates(service, actorId), ...planning]);
-  const planOffers = [...planning]
+  let planOffers = [...planning]
     .sort((a, b) => a.id.localeCompare(b.id))
-    .slice(0, 16)
     .map((candidate, index) => ({
       ...candidate,
       id: `p${index}`,
@@ -161,11 +165,6 @@ export async function prepareDecision(
         ]
       : []),
   ]);
-  const planActions = Object.fromEntries(
-    planOffers
-      .map((candidate) => [candidate.id, domainCommand(candidate.command!, actorId, jobId)])
-      .concat(intentActions.map((candidate) => [candidate.id, candidate.command])),
-  );
   const candidates = candidateSet(
     world,
     actorId,
@@ -195,7 +194,7 @@ export async function prepareDecision(
         ? world.map.spatial.surfaces.map(({ id, name }) => ({ id, name }))
         : [],
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
-    planOffers: planOffers.map(({ id, description }) => ({ id, description })),
+    planOffers: [],
     references: responseReferences(
       world,
       actorId,
@@ -255,7 +254,7 @@ export async function prepareDecision(
   if (world.innerWorlds?.[actorId]?.reconsiderationRequired)
     requiredContext['reconsideration'] =
       'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
-  const requiredBytes =
+  let requiredBytes =
     Buffer.byteLength(readableDecisionContext(requiredContext, [], false)) +
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   const largestActionOffers = [...availableActions]
@@ -268,6 +267,19 @@ export async function prepareDecision(
   const actionReserveBytes = Math.min(50000, Math.max(0, actionPromptBytes - requiredBytes));
   if (requiredBytes + actionReserveBytes > 100000)
     throw new Error('Complete accepted inner world and required context exceed the input budget.');
+  // Plan vocabulary is optional: retain every option that fits, not an ID-count prefix.
+  // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
+  const planningAvailable = planOffers.length;
+  planOffers = fitActionCandidates(requiredContext, planOffers, actionReserveBytes);
+  requiredContext['planOffers'] = planOffers.map(({ id, description }) => ({ id, description }));
+  requiredBytes =
+    Buffer.byteLength(readableDecisionContext(requiredContext, [], false)) +
+    Buffer.byteLength(RESPONSE_INSTRUCTIONS);
+  const planActions = Object.fromEntries(
+    planOffers
+      .map((candidate) => [candidate.id, domainCommand(candidate.command!, actorId, jobId)])
+      .concat(intentActions.map((candidate) => [candidate.id, candidate.command])),
+  );
   const selection = await recall
     .select(
       world,
@@ -506,6 +518,11 @@ export async function prepareDecision(
       sourceTime: currentWorld.simTime,
       triggerFacts: context['triggerFacts'],
       acceptedRevision: currentWorld.innerWorlds?.[actorId]?.revision,
+      planningOptions: {
+        available: planningAvailable,
+        included: planOffers.length,
+        omittedForInputSize: planningAvailable - planOffers.length,
+      },
       inputBytes: bytes,
       estimatedInputTokens: Math.ceil(bytes / 3),
       sections: Object.fromEntries(
@@ -640,10 +657,10 @@ export function fallbackDecisionActions(
   const candidates = fitActionCandidates(prepared.context, prepared.actionCandidates);
   const actions = {
     ...Object.fromEntries(
-      // Optional relevance failure must preserve explicitly offered intent withdrawal.
+      // Optional relevance failure must preserve explicit intent acceptance and withdrawal.
       // docs/architecture.md#actor-agency-foundation
       Object.entries(prepared.binding.actions).filter(
-        ([id]) => id.startsWith('p') || id.startsWith('w'),
+        ([id]) => id.startsWith('p') || id.startsWith('w') || id.startsWith('c'),
       ),
     ),
     ...Object.fromEntries(
