@@ -4,11 +4,12 @@ import {
   effectBindings,
   readEntityAttribute,
   matchesStatusCondition,
+  type EffectBindings,
   type StatusCondition,
   type StatusRateInterval,
 } from './status-effects.js';
 import { attributeDefinition, readAttribute } from './world-modules.js';
-import type { Entity, WorldState } from './types.js';
+import type { WorldState } from './types.js';
 
 /** Numeric progress guard, not a biological tick. docs/simulation-time.md#native-interval-contract */
 export const TIME_EPSILON = 1e-6;
@@ -38,8 +39,7 @@ interface ConditionTransition {
  * docs/simulation-time.md#native-interval-contract */
 function conditionTransition(
   world: WorldState,
-  entity: Entity,
-  state: Parameters<typeof effectBindings>[2],
+  bindings: EffectBindings,
   condition: StatusCondition,
   rates: AttributeRates,
 ): ConditionTransition {
@@ -50,7 +50,7 @@ function conditionTransition(
       blocking = 0,
       hasBlocking = false;
     for (const child of children) {
-      const transition = conditionTransition(world, entity, state, child, rates);
+      const transition = conditionTransition(world, bindings, child, rates);
       earliest = Math.min(earliest, transition.afterSeconds);
       if (transition.matches !== conjunction) {
         if (transition.afterSeconds === Infinity)
@@ -64,7 +64,6 @@ function conditionTransition(
       afterSeconds: hasBlocking ? blocking : earliest,
     };
   }
-  const bindings = effectBindings(world, entity, state);
   const matches = matchesStatusCondition(world, bindings, condition);
   if ('dailyWindow' in condition) {
     const hour =
@@ -118,10 +117,11 @@ export function statusBoundary(
   rates: AttributeRates,
 ): number {
   let result = Infinity;
+  const definitions = statusDefinitions(world);
   for (const id of entities) {
     const entity = world.entities[id];
     if (!entity) continue;
-    for (const d of statusDefinitions(world)) {
+    for (const d of definitions) {
       const state = entity.statusEffects?.[d.id];
       if (!state?.active) {
         // Only automatic activation can happen without a command. Retired episode bindings
@@ -136,8 +136,7 @@ export function statusBoundary(
           result,
           conditionTransition(
             world,
-            entity,
-            undefined,
+            effectBindings(world, entity),
             {
               all: [
                 d.requires,
@@ -150,6 +149,7 @@ export function statusBoundary(
         );
         continue;
       }
+      const bindings = effectBindings(world, entity, state);
       const conditions = [
         d.requires,
         d.automaticDeactivation,
@@ -159,7 +159,7 @@ export function statusBoundary(
         if (condition)
           result = Math.min(
             result,
-            conditionTransition(world, entity, state, condition, rates).afterSeconds,
+            conditionTransition(world, bindings, condition, rates).afterSeconds,
           );
     }
   }
