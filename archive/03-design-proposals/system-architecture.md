@@ -80,7 +80,7 @@ Illustrative tuning targets, to measure rather than promise:
 | Needs/environment | Scheduled simulated boundaries, with bounded substeps where interactions require them | Integrate elapsed rates and threshold crossings instead of calling every component every frame |
 | Goal reconsideration | Threshold/event plus capped timer | Avoid perpetual replanning |
 | Conversation reasoning | On addressed turns, deadlines, relevant interruptions | Interactive latency budget |
-| Memory consolidation | Every game hour for raw experience older than six game hours | Separate small-model budget, atomic summaries and bounded backlog |
+| Memory consolidation | Every game hour for raw experience older than six game hours | Separate small-model budget, atomic summaries and bounded dispatch; retained experience does not gate native simulation |
 | Inner-world reflection | Safe downtime, significant events or dreams after two continuous sleeping hours | Background level-5 file work; configured energy-based sleep; never block speech or simulation |
 | Asset/mechanic generation | Background job | Never stop the world while building |
 

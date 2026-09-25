@@ -101,7 +101,6 @@ export async function projectView(
   const profile = service.profile;
   const milestones = service.milestones;
   const storageError = service.storageError;
-  const memoryBacklog = service.memoryBacklog;
   const telemetryRevision = service.telemetryRevision;
   const observation = {
     inventory: memo('ownedItems', [world.items], () =>
@@ -875,8 +874,8 @@ export async function projectView(
       done: milestone.done || milestones[milestone.id] === true,
     })),
     persistence: {
-      status: storageError || memoryBacklog ? 'error' : 'saved',
-      message: storageError ?? memoryBacklog ?? 'Saved locally · the world pauses when you leave',
+      status: storageError ? 'error' : 'saved',
+      message: storageError ?? 'Saved locally · the world pauses when you leave',
     },
   };
 }

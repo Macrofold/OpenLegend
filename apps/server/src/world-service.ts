@@ -723,25 +723,19 @@ export class WorldService {
         elapsedRealSeconds = Math.max(0, elapsedRealSeconds - suspendedRealSeconds);
         if (!elapsedRealSeconds) return;
       }
-      if (
+      // Optional memory maintenance must never stop native time or walking.
+      // Retain every source; docs/memory-architecture.md#6-hourly-consolidation-and-six-hour-raw-recall.
+      const memoryBacklog =
         Object.values(this.world.experience?.awareness ?? {}).some(
-          (entries) => entries.length >= EXPERIENCE_LIMITS.backlog,
+          (entries) => entries.length >= EXPERIENCE_LIMITS.consolidationPressure,
         ) ||
         Object.values(this.world.memories).some(
-          (entries) => entries.length >= EXPERIENCE_LIMITS.backlog + 16,
+          (entries) => entries.length >= EXPERIENCE_LIMITS.consolidationPressure + 16,
         )
-      ) {
-        if (!this.memoryBacklog) {
-          this.memoryBacklog =
-            'Experience backlog is full; simulation is waiting for consolidation or operator resolution. No memories were discarded.';
-          this.notify(false);
-        }
-        this.debtSeconds = 0;
-        gaugeMetric('clock.pendingSimSeconds', 0);
-        return;
-      }
-      if (this.memoryBacklog) {
-        this.memoryBacklog = null;
+          ? 'Memory consolidation is behind; simulation continues and all source memories are retained.'
+          : null;
+      if (this.memoryBacklog !== memoryBacklog) {
+        this.memoryBacklog = memoryBacklog;
         this.notify(false);
       }
       const requested = elapsedRealSeconds * this.config.baseRatio * this.speed;
