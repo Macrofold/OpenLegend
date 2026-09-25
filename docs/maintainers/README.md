@@ -28,7 +28,7 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 
 ## Reviewed World Agent writes
 
-[World Agent write detail](world-agent-writes.md) expands INV-21.6–21.7 with the current body-binding slice, storage/recovery review and remaining qualification; INV-21 retains the parent lifecycle and release gates. [Write continuation evidence](../verification/workshop-continuation.md) records actual runtime scope.
+[World Agent write detail](world-agent-writes.md) expands INV-21.6–21.7 with the current body-binding slice, storage/recovery review and remaining qualification; INV-21 retains the parent lifecycle and release gates. [Write continuation evidence](../verification/workshop-continuation.md) and [transport/funding evidence](../verification/workshop-transport-funding.md) record actual runtime scope. WW08/WW09 cover the shared JSON transport and native worker/run allocation; remaining provider/browser/payer qualification stays with the focused tracker.
 
 ## Supporting references
 
