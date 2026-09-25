@@ -1301,7 +1301,12 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
 }
 
 /** Native urgency uses only carried food and currently visible resources; it is not an AI impersonation. */
-function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]): void {
+function nativeSurvival(
+  world: WorldState,
+  actor: Entity,
+  events: WorldEvent[],
+  resources: ReadonlyMap<string, readonly string[]>,
+): void {
   const component = actor.actor!;
   if (
     !hasWildernessNeeds(component) ||
@@ -1332,7 +1337,8 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
   }
   if (component.action && component.fullness > 10 && component.energy > 5) return;
   if (component.fullness < 42) {
-    const resource = Object.values(world.entities)
+    const resource = (resources.get('berries') ?? [])
+      .map((id) => world.entities[id]!)
       .filter(
         (entity) =>
           entity.resource?.definitionId === 'berries' &&
@@ -1413,6 +1419,7 @@ function nativeParticipants(world: WorldState): {
   work: string[];
   ambient: string[];
   status: string[];
+  resources: Map<string, string[]>;
 } {
   const source = isDraft(world.entities) ? current(world.entities) : world.entities;
   const entries = Object.values(source);
@@ -1421,7 +1428,18 @@ function nativeParticipants(world: WorldState): {
     .sort((a, b) => a.id.localeCompare(b.id));
   const status = entries.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id);
   const changingStatus = new Set(status);
+  // Supply identity is static within a native slice. Resolve quantity/visibility live; a
+  // hungry actor must not proxy every unrelated scenery object each simulated second.
+  const resources = new Map<string, string[]>();
+  for (const entity of entries) {
+    const definition = entity.resource?.definitionId;
+    if (!definition) continue;
+    let ids = resources.get(definition);
+    if (!ids) resources.set(definition, (ids = []));
+    ids.push(entity.id);
+  }
   return {
+    resources,
     actors: active.filter((e) => e.actor).map((e) => e.id),
     // A native animal with no physiology, attributes, plan, action or possible effect has
     // no actor work; it still participates in movement, collision and sensory delivery.
@@ -1513,7 +1531,7 @@ function advance(
         if (advanceWildernessNeeds(actor, seconds)) reconcileBody(world, actor, events, 'needs');
         if (component.health === 0) continue;
         if (!capabilityBlocked(world, actor, 'actions') || component.fullness < 10)
-          nativeSurvival(world, actor, events);
+          nativeSurvival(world, actor, events, participants.resources);
       }
       advanceReservoirs(world, actor, seconds, events);
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
