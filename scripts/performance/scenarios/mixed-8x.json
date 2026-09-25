@@ -1,0 +1,12 @@
+{
+  "seed": 73,
+  "people": 10,
+  "animals": 20,
+  "layout": "scattered",
+  "steps": 2400,
+  "warmup": 0,
+  "speed": 8,
+  "execution": "native-slice",
+  "timeoutSeconds": 120,
+  "objects": [{ "count": 300, "name": "Observation object", "properties": ["rigid"] }]
+}
