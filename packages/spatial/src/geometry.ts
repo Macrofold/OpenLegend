@@ -11,6 +11,7 @@ import {
   type SpatialBlocker,
 } from './types.js';
 import { BoundsIndex } from './bounds-index.js';
+import { segmentBoundsQuery } from './segment-bounds.js';
 const EPS = SPATIAL_LIMITS.epsilon;
 const EMPTY_IDS: ReadonlySet<string> = new Set();
 export const distance3D = (a: WorldPoint, b: WorldPoint): number =>
@@ -234,31 +235,6 @@ function surfaceBounds(s: WalkableSurface, topOnly = false): Bounds3 {
     max: { x: s.maxX, y: Math.max(...ys), z: s.maxZ },
   };
 }
-/** Broad-phase slab test deliberately includes boundary contacts; exact halfspaces decide them. */
-function intersectsSegment(
-  bounds: Bounds3,
-  from: WorldPoint,
-  to: WorldPoint,
-  body?: BodyProfile,
-): boolean {
-  let enter = 0,
-    exit = 1;
-  for (const axis of ['x', 'y', 'z'] as const) {
-    const min = bounds.min[axis] - (axis === 'y' ? (body?.height ?? 0) : (body?.radius ?? 0));
-    const max = bounds.max[axis] + (axis === 'y' ? 0 : (body?.radius ?? 0));
-    const delta = to[axis] - from[axis];
-    if (Math.abs(delta) < EPS) {
-      if (from[axis] < min - EPS || from[axis] > max + EPS) return false;
-      continue;
-    }
-    const a = (min - EPS - from[axis]) / delta,
-      b = (max + EPS - from[axis]) / delta;
-    enter = Math.max(enter, Math.min(a, b));
-    exit = Math.min(exit, Math.max(a, b));
-    if (enter > exit) return false;
-  }
-  return true;
-}
 function preparedShapes(map: SpatialMap) {
   const cached = shapeCache.get(map);
   if (cached?.revision === map.spatial.revision) return cached;
@@ -363,19 +339,16 @@ function visitHits(
   visit: (shape: PreparedShape, interval: [number, number]) => boolean,
 ): boolean {
   if (!finitePoint(from) || !finitePoint(to)) throw new Error('Invalid spatial ray.');
-  return preparedShapes(map).shapeIndex.visit(
-    (bounds) => intersectsSegment(bounds, from, to, body),
-    (shape) => {
-      if (
-        ignore.has(shape.id) ||
-        (channel === 'sight' && !shape.sight) ||
-        (channel === 'movement' && !shape.movement)
-      )
-        return false;
-      const interval = clipSegment(from, to, shape.planes, body);
-      return !!interval && visit(shape, interval);
-    },
-  );
+  return preparedShapes(map).shapeIndex.visit(segmentBoundsQuery(from, to, body), (shape) => {
+    if (
+      ignore.has(shape.id) ||
+      (channel === 'sight' && !shape.sight) ||
+      (channel === 'movement' && !shape.movement)
+    )
+      return false;
+    const interval = clipSegment(from, to, shape.planes, body);
+    return !!interval && visit(shape, interval);
+  });
 }
 export function rayHits(
   map: SpatialMap,
@@ -401,9 +374,22 @@ export function rayHits(
 }
 export const clearSegment = (map: SpatialMap, from: WorldPoint, to: WorldPoint): boolean =>
   !visitHits(map, from, to, 'sight', EMPTY_IDS, undefined, () => true);
+/** Broadband energy ratio for the pinned hearing policy, not pressure amplitude.
+ * docs/hearing-and-speech.md#3-geometry-attenuation-and-noise */
 export function soundTransmission(map: SpatialMap, from: WorldPoint, to: WorldPoint): number {
-  // Preserve canonical hit order for numeric stability; only acoustic queries need all crossings.
-  return rayHits(map, from, to, 'sound').reduce((value, hit) => value * hit.transmission, 1);
+  // Attenuation needs no display points or exit fractions. Preserve canonical multiplication
+  // order for non-neutral crossings; an opaque crossing makes every ordering exactly zero.
+  // docs/hearing-and-speech.md#performance-and-invalidation
+  const crossings: Pick<RayHit, 'id' | 'fraction' | 'transmission'>[] = [];
+  const blocked = visitHits(map, from, to, 'sound', EMPTY_IDS, undefined, (shape, interval) => {
+    if (shape.transmission === 0) return true;
+    if (shape.transmission !== 1)
+      crossings.push({ id: shape.id, fraction: interval[0], transmission: shape.transmission });
+    return false;
+  });
+  if (blocked) return 0;
+  crossings.sort((a, b) => a.fraction - b.fraction || a.id.localeCompare(b.id));
+  return crossings.reduce((value, hit) => value * hit.transmission, 1);
 }
 function onlySupportContact(
   map: SpatialMap,
@@ -551,13 +537,10 @@ export function pickSurfaces(
 ): Array<{ point: SurfacePoint; fraction: number }> {
   const hits: Array<{ point: SurfacePoint; fraction: number }> = [];
   const candidates: WalkableSurface[] = [];
-  preparedShapes(map).supportIndex.visit(
-    (bounds) => intersectsSegment(bounds, from, to),
-    ({ surface }) => {
-      candidates.push(surface);
-      return false;
-    },
-  );
+  preparedShapes(map).supportIndex.visit(segmentBoundsQuery(from, to), ({ surface }) => {
+    candidates.push(surface);
+    return false;
+  });
   for (const surface of candidates) {
     if (levelId && surface.levelId !== levelId) continue;
     const dy = to.y - from.y - surface.slopeX * (to.x - from.x) - surface.slopeZ * (to.z - from.z);

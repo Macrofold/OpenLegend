@@ -53,6 +53,7 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
     revision: patch.revision,
     ...(patch.commandEpoch !== undefined ? { commandEpoch: patch.commandEpoch } : {}),
     ...(patch.historyEpoch ? { historyEpoch: patch.historyEpoch } : {}),
+    ...(patch.worldEventsRevision ? { worldEventsRevision: patch.worldEventsRevision } : {}),
     ...(patch.historyRevision ? { historyRevision: patch.historyRevision } : {}),
     ...(Object.hasOwn(patch, 'narrator') ? { narrator: patch.narrator } : {}),
     ...(patch.profile ? { profile: patch.profile } : {}),

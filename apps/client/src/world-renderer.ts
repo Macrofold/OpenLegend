@@ -14,7 +14,16 @@ export interface SceneCallbacks {
  * React and gameplay know only authorized DTOs, intentions, and plain camera state.
  * docs/spatial-world.md#renderer-boundary
  */
+export interface SpeechCaptionOptions {
+  enabled: boolean;
+  paused: boolean;
+  readingScale: number;
+  uiScale: number;
+  reducedMotion: boolean;
+}
 export interface WorldRenderer {
+  setCaptionOptions(options: SpeechCaptionOptions): void;
+  resetTransientCaptions(): void;
   setView(view: GameView): void;
   select(id: string | null): void;
   center(): void;

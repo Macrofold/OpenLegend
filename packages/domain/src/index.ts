@@ -36,6 +36,7 @@ export {
   canRecoverAtCamp,
   executeCommand,
   advanceWorld,
+  advanceNativeBatch,
   observeActor,
   queryMemories,
   remember,
@@ -66,7 +67,7 @@ export * from './cognition-policy.js';
 export * from './commitments.js';
 export * from './response.js';
 
-export { updateWorld, appendedEventCount, freezeWorld } from './draft.js';
+export { updateWorld, appendedEventCount, appendedCount, freezeWorld } from './draft.js';
 
 export * from './living.js';
 
@@ -108,3 +109,8 @@ export { isConversationEvent } from './events.js';
 
 export * from './knowledge.js';
 export * from './worlds/base/knowledge.js';
+export * from './acoustics.js';
+export { speechExposure, soundOrigin, hearingReferenceRadius } from './perception.js';
+export * from './speech.js';
+
+export { memoryPerspective } from './memory-perspective.js';

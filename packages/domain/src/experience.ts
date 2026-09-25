@@ -16,7 +16,14 @@ import { current, isDraft } from 'immer';
 import { changeGoal, type GoalChange } from './agency.js';
 import { initializeIdentity } from './identity.js';
 import { hasMemory } from './living.js';
-import { draftWorld, finishWorld, cloneValue } from './draft.js';
+import {
+  draftWorld,
+  finishWorld,
+  cloneValue,
+  appendSnapshot,
+  isAppendBuffer,
+  sealAppends,
+} from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { memoryPerspective } from './memory-perspective.js';
@@ -33,6 +40,7 @@ export const EXPERIENCE_LIMITS = {
 } as const;
 export interface Awareness {
   entityEpisodes?: Record<string, string>;
+  speech?: import('./speech.js').PerceivedSpeech;
   eventId: string;
   actorId: string;
   text: string;
@@ -135,7 +143,11 @@ function stableExperienceUpdate(previous: ExperienceEntry, next: ExperienceEntry
   if (previous.source !== next.source) return false;
   const editable =
     previous.source === 'awareness'
-      ? new Set(['text', 'content', 'importance'])
+      ? new Set(
+          previous.value.eventType === 'speech' || previous.value.speech
+            ? ['importance']
+            : ['text', 'content', 'importance'],
+        )
       : previous.source === 'memory'
         ? new Set(['summary', 'importance'])
         : new Set(['text', 'importance']);
@@ -162,27 +174,56 @@ function containsEntryId<T extends IdentifiedEntry>(
   field: IdentityField,
 ): boolean {
   if (!entries) return false;
-  if (!isDraft(entries)) return entries.some((entry) => entry[field] === id);
+  const snapshot = isDraft(entries) ? current(entries) : entries;
+  if (Object.isFrozen(snapshot)) {
+    let index = additionIndexes.get(snapshot);
+    if (!index || index.field !== field) {
+      index = {
+        length: snapshot.length,
+        field,
+        ids: new Set(snapshot.map((entry) => entry[field])),
+      };
+      additionIndexes.set(snapshot, index);
+    }
+    return index.ids.has(id);
+  }
+  if (!isDraft(entries) && !isAppendBuffer(entries))
+    return entries.some((entry) => entry[field] === id);
   let index = additionIndexes.get(entries);
   if (!index || index.length !== entries.length || index.field !== field) {
     // Read retained history without creating one Immer proxy per old experience.
-    index = { length: entries.length, field, ids: new Set(current(entries).map((e) => e[field])) };
+    index = { length: entries.length, field, ids: new Set(snapshot.map((e) => e[field])) };
     additionIndexes.set(entries, index);
   }
   return index.ids.has(id);
 }
-function appendEntry<T extends IdentifiedEntry>(
+function appendEntries<T extends IdentifiedEntry>(
+  world: WorldState,
   entries: T[],
-  entry: T,
+  values: T[],
   field: IdentityField,
-): void {
+): T[] {
+  const snapshot = isDraft(entries) ? current(entries) : entries;
+  const appended = appendSnapshot(entries, values, world);
+  if (appended) {
+    const index = additionIndexes.get(snapshot);
+    if (index?.field === field) {
+      // Transfer, never share a mutable membership set with an old snapshot or fork.
+      additionIndexes.delete(snapshot);
+      for (const entry of values) index.ids.add(entry[field]);
+      index.length = appended.length;
+      additionIndexes.set(appended, index);
+    }
+    return appended;
+  }
   const index = additionIndexes.get(entries),
     length = entries.length;
-  entries.push(entry);
+  entries.push(...values);
   if (index?.length === length && index.field === field) {
-    index.ids.add(entry[field]);
+    for (const entry of values) index.ids.add(entry[field]);
     index.length = entries.length;
   } else additionIndexes.delete(entries);
+  return entries;
 }
 function containsExperienceKey(world: WorldState, actorId: string, key: string): boolean {
   const separator = key.indexOf(':'),
@@ -195,27 +236,60 @@ function containsExperienceKey(world: WorldState, actorId: string, key: string):
   return false;
 }
 
-/** The one authoritative path for creator mutation of retained experience. */
+type ExperienceOperation =
+  | ExperienceMutation
+  | ExperienceMutation[]
+  | { operation: 'consolidate'; retiredIds: string[]; summaries: ExperienceSummary[] }
+  | { operation: 'correct'; sourceId: string; correctionEventId: string }
+  | {
+      operation: 'obligation';
+      id: string;
+      expectedRevision: number;
+      obligation: NonNullable<MemoryRecord['obligation']>;
+    };
+
+/** Public/editor additions remain independent copies and share the native admission owner. */
 export function mutateExperience(
   world: WorldState,
   actorId: string,
-  mutation:
-    | ExperienceMutation
-    | ExperienceMutation[]
-    | { operation: 'consolidate'; retiredIds: string[]; summaries: ExperienceSummary[] }
-    | { operation: 'correct'; sourceId: string; correctionEventId: string }
-    | {
-        operation: 'obligation';
-        id: string;
-        expectedRevision: number;
-        obligation: NonNullable<MemoryRecord['obligation']>;
-      },
+  mutation: ExperienceOperation,
 ): string[] | null {
   if (!world.experience) migrateCognition(world);
   if (!hasMemory(world.entities[actorId])) return null;
+  return applyExperienceMutation(world, actorId, mutation, 'copy');
+}
+/** Transfer fresh event-time evidence; this synchronous phase cannot change actor capability.
+ * Resolve membership once instead of creating actor proxies for every audience member.
+ * Duplicate/forgotten/ownership guards still run through the same mutation owner.
+ * Never pass provider/editor-owned objects here. docs/hearing-and-speech.md#performance-and-invalidation
+ */
+export function acquireEventAwareness(world: WorldState, entries: Awareness[]): void {
+  if (!entries.length) return;
+  if (!world.experience) migrateCognition(world);
+  const actors = isDraft(world.entities) ? current(world.entities) : world.entities;
+  for (const entry of entries) {
+    if (!hasMemory(actors[entry.actorId])) continue;
+    applyExperienceMutation(
+      world,
+      entry.actorId,
+      {
+        operation: 'add',
+        entry: { source: 'awareness', value: entry },
+      },
+      'transfer',
+    );
+  }
+}
+function applyExperienceMutation(
+  world: WorldState,
+  actorId: string,
+  mutation: ExperienceOperation,
+  ownership: 'copy' | 'transfer',
+): string[] | null {
   const additionsOnly = Array.isArray(mutation)
     ? mutation.every((change) => change.operation === 'add')
     : mutation.operation === 'add';
+  if (!additionsOnly) sealAppends(world);
   if (!additionsOnly)
     for (const entries of [
       world.experience!.awareness[actorId],
@@ -272,8 +346,14 @@ export function mutateExperience(
       mutation.obligation.evidenceId !== memory.obligation.evidenceId
     )
       return null;
-    memory.obligation = cloneValue(mutation.obligation);
-    memory.resolved = ['fulfilled', 'cancelled'].includes(mutation.obligation.status);
+    const replacement = {
+      ...memory,
+      obligation: cloneValue(mutation.obligation),
+      resolved: ['fulfilled', 'cancelled'].includes(mutation.obligation.status),
+    };
+    world.memories[actorId] = world.memories[actorId]!.map((entry) =>
+      entry === memory ? replacement : entry,
+    );
     const inner = world.innerWorlds?.[actorId];
     if (inner) inner.reconsiderationRequired = true;
     return [memory.id];
@@ -307,7 +387,7 @@ export function mutateExperience(
     }
     const additions = mutations.map((change) => {
       if (change.operation !== 'add') throw new Error('Mixed experience mutation batch.');
-      return cloneValue(change.entry);
+      return ownership === 'transfer' ? change.entry : cloneValue(change.entry);
     });
     const keys = additions.map((entry) =>
       entry.source === 'awareness'
@@ -330,13 +410,30 @@ export function mutateExperience(
       additions.some((entry) => 'actorId' in entry.value && entry.value.actorId !== actorId)
     )
       return null;
+    const awareness: Awareness[] = [],
+      memories: MemoryRecord[] = [],
+      summaries: ExperienceSummary[] = [];
     for (const entry of additions) {
-      if (entry.source === 'awareness')
-        appendEntry((world.experience!.awareness[actorId] ??= []), entry.value, 'eventId');
-      else if (entry.source === 'memory')
-        appendEntry((world.memories[actorId] ??= []), entry.value, 'id');
-      else appendEntry((world.experience!.summaries[actorId] ??= []), entry.value, 'id');
+      if (entry.source === 'awareness') awareness.push(entry.value);
+      else if (entry.source === 'memory') memories.push(entry.value);
+      else summaries.push(entry.value);
     }
+    if (awareness.length)
+      world.experience!.awareness[actorId] = appendEntries(
+        world,
+        world.experience!.awareness[actorId] ?? [],
+        awareness,
+        'eventId',
+      );
+    if (memories.length)
+      world.memories[actorId] = appendEntries(world, world.memories[actorId] ?? [], memories, 'id');
+    if (summaries.length)
+      world.experience!.summaries[actorId] = appendEntries(
+        world,
+        world.experience!.summaries[actorId] ?? [],
+        summaries,
+        'id',
+      );
     return [];
   }
 
@@ -378,6 +475,7 @@ export function mutateExperience(
   )
     return null;
   const updatedSources: string[] = [];
+  const updatedValues = new Map<ExperienceEntry['value'], ExperienceEntry['value']>();
   const rankingSources: string[] = [];
   const deletedSources: string[] = [];
   for (const { change, previous } of resolved) {
@@ -399,11 +497,11 @@ export function mutateExperience(
           : previous.source === 'memory'
             ? previous.value.summary !== (replacement as MemoryRecord).summary
             : previous.value.text !== (replacement as ExperienceSummary).text;
-      Object.assign(previous.value, replacement);
       if (previous.source === 'awareness' && awarenessTextChanged && !awarenessContentChanged)
-        previous.value.content = previous.value.text;
+        (replacement as Awareness).content = (replacement as Awareness).text;
       if (previous.source === 'summary')
-        previous.value.revision = (previous.value.revision ?? 0) + 1;
+        (replacement as ExperienceSummary).revision = (previous.value.revision ?? 0) + 1;
+      updatedValues.set(previous.value, replacement);
       // Ranking edits refresh retrieval without erasing accepted prose or its dependencies.
       // See docs/architecture.md#public-updates-and-owner-editors.
       (proseChanged ? updatedSources : rankingSources).push(sourceId);
@@ -412,6 +510,20 @@ export function mutateExperience(
       if (previous.source === 'memory' && previous.value.eventId)
         deletedSources.push(previous.value.eventId);
     }
+  }
+  // Append ownership freezes source records; replace edited rows rather than mutating
+  // those records in the same turn. Unchanged rows keep identity and order.
+  // docs/hearing-and-speech.md#performance-and-invalidation
+  if (updatedValues.size) {
+    const replace = <T extends ExperienceEntry['value']>(rows: T[]) =>
+      rows.map((entry) => (updatedValues.get(entry) as T | undefined) ?? entry);
+    const state = world.experience!;
+    if (resolved.some(({ previous }) => previous?.source === 'awareness'))
+      state.awareness[actorId] = replace(state.awareness[actorId] ?? []);
+    if (resolved.some(({ previous }) => previous?.source === 'memory'))
+      world.memories[actorId] = replace(world.memories[actorId] ?? []);
+    if (resolved.some(({ previous }) => previous?.source === 'summary'))
+      state.summaries[actorId] = replace(state.summaries[actorId] ?? []);
   }
   const invalidated = new Set<string>(rankingSources);
   if (updatedSources.length)
@@ -439,11 +551,11 @@ export function flattenFiles(files: InnerWorld['files']): string {
     .map((f) => `# ${f.path}\n${f.text}`)
     .join('\n\n');
 }
-/** Additive migration: legacy payloads remain audit data; only proven event copies are deduplicated. */
+/** Historical name retained for callers; only initialize newly capable actors.
+ * Never fill absent roles from raw events: absence can mean an unidentified voice.
+ * docs/hearing-and-speech.md#5-one-occurrence-listener-specific-evidence */
 export function migrateCognition(world: WorldState): void {
   initializeIdentity(world);
-  const initial = !world.experience;
-  if (world.schemaVersion === 1) world.schemaVersion = 2;
   world.experience ??= {
     version: 1,
     awareness: {},
@@ -453,159 +565,44 @@ export function migrateCognition(world: WorldState): void {
   };
   world.innerWorlds ??= {};
   for (const entity of Object.values(world.entities)) {
-    if (!hasMemory(entity) || world.innerWorlds[entity.id]) continue;
+    if (!hasMemory(entity)) continue;
+    world.experience.awareness[entity.id] ??= [];
+    if (world.innerWorlds[entity.id]) continue;
     const mind = ((world.minds ??= {})[entity.id] ??= mindFor(world, entity.id));
     const files = mind.documents.map((doc) => ({
       path: `${doc.id}.md`,
-      text: `${doc.title}\n\n${doc.text}${mind.records
-        .filter((r) => r.documentId === doc.id && r.kind !== 'identity')
-        .map(
-          (r) =>
-            `\nLegacy ${r.kind}${r.subjectId ? ` about ${world.entities[r.subjectId]?.name ?? 'an unidentified person'}` : ''}: ${r.source}, ${r.status}, confidence ${r.confidence}${r.trust !== null ? `, directional trust ${r.trust}` : ''}.`,
-        )
-        .join('')}`,
+      text: `${doc.title}\n\n${doc.text}`,
     }));
-    // Legacy imports preserve over-quota content until an explicit migration reconciles it.
-    const text = [...files]
-      .sort((a, b) => a.path.localeCompare(b.path, 'en'))
-      .map((f) => `# ${f.path}\n${f.text}`)
-      .join('\n\n');
     world.innerWorlds[entity.id] = {
-      text,
+      text: [...files]
+        .sort((a, b) => a.path.localeCompare(b.path, 'en'))
+        .map((file) => `# ${file.path}\n${file.text}`)
+        .join('\n\n'),
       files,
       revision: mind.revision,
-      sourceSnapshot: 'legacy-import',
-      publicationJobId: 'legacy-import',
+      sourceSnapshot: 'actor-initialization',
+      publicationJobId: 'actor-initialization',
       evidenceIds: mind.documents.flatMap((d) => d.evidence.map((e) => e.id)),
     };
-    world.experience.awareness[entity.id] ??= (initial ? world.events : [])
-      .filter((e) => e.audience.includes(entity.id))
-      .map((e) => ({
-        eventId: e.id,
-        actorId: entity.id,
-        text: memoryPerspective(world, entity.id, e.text, e.type === 'speech', e.actorId),
-        at: e.at,
-        sequence: Number(e.id.split('-').at(-1)) || 0,
-        modality: e.type === 'speech' ? 'heard' : 'observed',
-        recognized: true,
-        intelligible: true,
-        entityIds: [e.actorId, e.targetId].filter((id): id is string => !!id),
-        importance: e.importance ?? (e.type === 'speech' ? 7 : 3),
-        urgency:
-          e.urgency ??
-          (['death', 'incapacitated'].includes(e.type) ? 10 : e.type === 'speech' ? 4 : 2),
-        eventType: e.type,
-        ...(e.actorId ? { sourceId: e.actorId } : {}),
-        ...(e.targetId ? { targetId: e.targetId } : {}),
-        triggerKind:
-          e.actorId === entity.id
-            ? 'self_event'
-            : e.type === 'speech'
-              ? e.targetId === entity.id
-                ? 'addressed_speech'
-                : 'overheard_speech'
-              : e.targetId === entity.id
-                ? 'directed_action'
-                : 'observed_event',
-        content: typeof e.data?.['text'] === 'string' ? e.data['text'] : e.text,
-      }));
-  }
-  const events = new Map(world.events.map((event) => [event.id, event]));
-  // Trigger metadata is an additive idempotent migration independent of the older
-  // perspective rewrite version, so already-migrated saves receive it too.
-  for (const entity of Object.values(world.entities)) {
-    if (!hasMemory(entity)) continue;
-    for (const aware of world.experience.awareness[entity.id] ?? []) {
-      const event = events.get(aware.eventId);
-      if (event) {
-        // New captures deliberately omit imperceptible recipients. Do not refill them on load.
-        if (
-          !aware.eventType &&
-          event.targetId &&
-          (aware.entityIds.includes(event.targetId) ||
-            event.targetId === entity.id ||
-            event.actorId === entity.id)
-        )
-          aware.targetId ??= event.targetId;
-        aware.eventType ??= event.type;
-        aware.sourceId ??= event.actorId;
-        if (aware.intelligible)
-          aware.content ??=
-            typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text;
-        aware.triggerKind ??=
-          event.actorId === entity.id
-            ? 'self_event'
-            : event.type === 'speech'
-              ? event.targetId === entity.id
-                ? 'addressed_speech'
-                : 'overheard_speech'
-              : event.targetId === entity.id
-                ? 'directed_action'
-                : 'observed_event';
-      }
-    }
   }
   migrateKnowledge(world);
-  // Perspective rewrites are idempotent and retain original event IDs and acquisition metadata.
-  if (world.experience.perspectiveVersion === 1) return;
-  for (const entity of Object.values(world.entities)) {
-    if (!hasMemory(entity)) continue;
-    for (const aware of world.experience.awareness[entity.id] ?? []) {
-      aware.text = memoryPerspective(
-        world,
-        entity.id,
-        aware.text,
-        aware.modality === 'heard',
-        aware.sourceId,
-      );
-    }
-    for (const memory of world.memories[entity.id] ?? [])
-      memory.summary = memoryPerspective(
-        world,
-        entity.id,
-        memory.summary,
-        memory.eventType === 'speech' || events.get(memory.eventId ?? '')?.type === 'speech',
-        events.get(memory.eventId ?? '')?.actorId,
-      );
-    for (const summary of world.experience.summaries[entity.id] ?? []) {
-      const text = memoryPerspective(world, entity.id, summary.text);
-      if (text !== summary.text) {
-        summary.text = text;
-        summary.revision = (summary.revision ?? 0) + 1;
-      }
-    }
-    const inner = world.innerWorlds[entity.id];
-    if (inner) {
-      let changed = false;
-      for (const file of inner.files) {
-        const text = memoryPerspective(world, entity.id, file.text);
-        if (text !== file.text) {
-          file.text = text;
-          changed = true;
-        }
-      }
-      if (changed) {
-        inner.text = [...inner.files]
-          .sort((a, b) => a.path.localeCompare(b.path, 'en'))
-          .map((file) => `# ${file.path}\n${file.text}`)
-          .join('\n\n');
-        inner.revision++;
-        inner.reconsiderationRequired = true;
-      }
-    }
-    const mind = world.minds?.[entity.id];
-    if (mind) {
-      for (const doc of mind.documents) {
-        const text = memoryPerspective(world, entity.id, doc.text);
-        if (text !== doc.text) {
-          doc.text = text;
-          doc.revision++;
-          mind.revision++;
-        }
-      }
-    }
-  }
-  world.experience.perspectiveVersion = 1;
+}
+/** One projection for recall and derived speech indexing; never consult the raw world event. */
+export function awarenessMemory(entry: Awareness): MemoryRecord {
+  return {
+    id: entry.eventId,
+    eventId: entry.eventId,
+    actorId: entry.actorId,
+    at: entry.at,
+    sequence: entry.sequence,
+    kind: 'episode',
+    source: entry.modality,
+    summary: entry.text,
+    entityIds: entry.entityIds,
+    importance: entry.importance,
+    eventType: entry.eventType,
+    speakerId: entry.sourceId,
+  };
 }
 export function experiences(
   world: WorldState,
@@ -627,20 +624,7 @@ export function experiences(
   );
   const events: MemoryRecord[] = aware
     .filter((a) => !forgotten.has(a.eventId))
-    .map((a) => ({
-      id: a.eventId,
-      eventId: a.eventId,
-      actorId,
-      at: a.at,
-      sequence: a.sequence,
-      kind: 'episode',
-      source: a.modality,
-      summary: a.text,
-      entityIds: a.entityIds,
-      importance: a.importance,
-      eventType: a.eventType,
-      speakerId: a.sourceId,
-    }));
+    .map(awarenessMemory);
   const summaries: MemoryRecord[] = (state?.summaries[actorId] ?? [])
     .filter(
       (s) => !s.sourceIds.some((id) => forgotten.has(id) || !!state?.corrections?.[actorId]?.[id]),

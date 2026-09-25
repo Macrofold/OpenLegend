@@ -1,3 +1,4 @@
+import { WorldEvents } from './ui/world-events';
 import { InventionSettings } from './ui/invention-settings';
 import { GameSavesPanel } from './ui/game-saves';
 import { History, Narrator } from './ui/history';
@@ -61,6 +62,7 @@ type PanelId =
   | 'game'
   | 'nearby'
   | 'journal'
+  | 'events'
   | 'ai'
   | 'intelligence'
   | 'composer'
@@ -74,6 +76,7 @@ const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?:
   game: { title: 'Game', side: 'right' },
   nearby: { title: 'In view', side: 'right' },
   journal: { title: 'Journal', side: 'left' },
+  events: { title: 'World Events', side: 'left' },
   ai: { title: 'AI & allowance', side: 'right' },
   intelligence: { title: 'Intelligence', side: 'right', wide: true },
   composer: { title: 'Conversation', side: 'left', wide: true },
@@ -129,6 +132,21 @@ function App() {
     'open-legend:reduce-motion',
     false,
     (v): v is boolean => typeof v === 'boolean',
+  );
+  const [captionsEnabled, setCaptionsEnabled] = useLocal(
+    'open-legend:captions',
+    true,
+    (v): v is boolean => typeof v === 'boolean',
+  );
+  const [captionsPaused, setCaptionsPaused] = useLocal(
+    'open-legend:captions-paused',
+    false,
+    (v): v is boolean => typeof v === 'boolean',
+  );
+  const [captionReadingScale, setCaptionReadingScale] = useLocal(
+    'open-legend:caption-reading',
+    1,
+    (v): v is number => [1, 1.5, 2, 3].includes(Number(v)),
   );
   const canvas = useRef<HTMLCanvasElement>(null),
     scene = useRef<WorldRenderer | null>(null),
@@ -210,6 +228,7 @@ function App() {
           if (!active || source !== connection) return;
           const reset = JSON.parse((event as MessageEvent<string>).data) as GameView;
           streamView = reset;
+          scene.current?.resetTransientCaptions();
           accept(reset, true);
         } catch {
           notify('A world update could not be read. Reconnecting…');
@@ -240,6 +259,7 @@ function App() {
         const initial = await getState();
         if (!active || attempt !== bootstrapVersion) return;
         streamView = initial;
+        scene.current?.resetTransientCaptions();
         accept(initial, true);
         setConnected(true);
         setError('');
@@ -403,13 +423,20 @@ function App() {
                 : { projection, levelId, rotationLocked, following },
             ),
         });
+      scene.current.setCaptionOptions({
+        enabled: captionsEnabled,
+        paused: captionsPaused,
+        readingScale: captionReadingScale,
+        uiScale: scale,
+        reducedMotion: reduce,
+      });
       scene.current.setView(view);
     } catch (e) {
       scene.current?.destroy();
       scene.current = null;
       setSceneError(`${String(e)}. The In view list still provides interactions.`);
     }
-  }, [view, sceneError]);
+  }, [view, sceneError, captionsEnabled, captionsPaused, captionReadingScale, scale, reduce]);
   useEffect(
     () => () => {
       scene.current?.destroy();
@@ -683,6 +710,13 @@ function App() {
         );
       case 'ai':
         return <AiSettings view={view} />;
+      case 'events':
+        return (
+          <WorldEvents
+            scope={`${view.worldId}:${view.saveTimeline}:${view.player.id}:${view.historyEpoch}`}
+            revision={view.worldEventsRevision}
+          />
+        );
       case 'journal':
         return (
           <>
@@ -752,6 +786,41 @@ function App() {
                 />{' '}
                 Reduce motion
               </label>
+            </Section>
+            <Section title="Speech captions">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={captionsEnabled}
+                  onChange={(e) => setCaptionsEnabled(e.target.checked)}
+                />{' '}
+                Show speech captions
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={captionsPaused}
+                  onChange={(e) => setCaptionsPaused(e.target.checked)}
+                />{' '}
+                Pause caption countdowns
+              </label>
+              <label>
+                Reading time{' '}
+                <select
+                  aria-label="Caption reading time"
+                  value={captionReadingScale}
+                  onChange={(e) => setCaptionReadingScale(Number(e.target.value))}
+                >
+                  {[1, 1.5, 2, 3].map((value) => (
+                    <option key={value} value={value}>
+                      {value}×
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p>
+                These controls do not change hearing or world time. Speech remains in World Events.
+              </p>
             </Section>
             <Section title="Controls">
               <p>
@@ -920,7 +989,7 @@ function App() {
                 aria-label={`${side} panels`}
               >
                 {(side === 'left'
-                  ? (['inventory', 'crafting', 'character', 'journal'] as PanelId[])
+                  ? (['inventory', 'crafting', 'character', 'journal', 'events'] as PanelId[])
                   : ([
                       'agent',
                       'game',
@@ -936,6 +1005,7 @@ function App() {
                         crafting: 'ui.crafting',
                         character: 'ui.character',
                         journal: 'ui.journal',
+                        events: 'ui.journal',
                         agent: 'ui.agent',
                         game: 'ui.settings',
                         nearby: 'ui.inview',

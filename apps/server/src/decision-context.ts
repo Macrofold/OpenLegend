@@ -9,6 +9,7 @@ import {
 import { digest } from './store.js';
 import { contextSections } from './perceived-context.js';
 import { dreamStatus } from '@open-legend/domain';
+import { hasLinguisticSpeech } from './speech-recall.js';
 import { type AttemptBinding, currentGoal } from '@open-legend/domain';
 import { bodyContext, hasWildernessNeeds, supportsManualWork, canSpeak } from '@open-legend/domain';
 import { activeAppraisals } from '@open-legend/domain';
@@ -93,6 +94,7 @@ function currentConversationEvidenceIds(
   if (!conversationId) return [];
   return awareness
     .filter((entry) => {
+      if (!hasLinguisticSpeech(entry)) return false;
       const event = service.worldEvent(entry.eventId);
       return (
         event?.type === 'speech' &&

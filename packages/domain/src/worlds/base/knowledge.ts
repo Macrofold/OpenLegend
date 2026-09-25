@@ -145,6 +145,14 @@ export function observerDescription(
   return `${/^[aeiou]/i.test(noun) ? 'an' : 'a'} ${noun}`;
 }
 
+const introductionWords = new Intl.Segmenter('und', { granularity: 'word' });
+function containsNameWords(text: string, name: string[]): boolean {
+  const words = [...introductionWords.segment(text)].filter((word) => word.isWordLike);
+  return (
+    !!name.length &&
+    words.some((_, start) => name.every((word, i) => words[start + i]?.segment === word))
+  );
+}
 /** A heard self-introduction is a name claim, not a global rename or proof of recognition.
  * docs/worlds/base/knowledge.md#spoken-introductions
  */
@@ -167,9 +175,22 @@ export function learnSpeechIntroduction(world: WorldState, event: WorldEvent): v
   const source = world.entities[event.actorId];
   if (!source?.actor) return;
   event.data!['selfIntroduction'] = proposed.trim();
+  const nameWords = [...introductionWords.segment(proposed.trim())]
+    .filter((word) => word.isWordLike)
+    .map((word) => word.segment);
   for (const observerId of event.audience) {
     const observer = world.entities[observerId];
     if (observerId === source.id || !observer?.actor || !seesEntity(world, observer, source))
+      continue;
+    const evidence = world.experience?.awareness[observerId]?.at(-1);
+    if (
+      evidence?.eventId !== event.id ||
+      !evidence.speech ||
+      evidence.speech.perception !== 'heard' ||
+      !evidence.speech.segments.some(
+        (part) => part.kind === 'heard' && containsNameWords(part.text, nameWords),
+      )
+    )
       continue;
     assignGivenName(
       world,

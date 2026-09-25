@@ -13,11 +13,15 @@ export function upgradeWorldState(world: WorldState): void {
   // Correct the retired detector in place; preserve authored bindings and historical evidence.
   // docs/spatial-world.md#physical-contact
   const retired = new Set<string>();
-  for (const sense of world.moduleManifest?.senses ?? []) {
+  for (const [index, sense] of (world.moduleManifest?.senses ?? []).entries()) {
     if ((sense.implementation as string) !== 'contact-proximity-v1') continue;
     retired.add(sense.id);
-    sense.implementation = 'body-contact-v1';
-    sense.radius = 0;
+    world.moduleManifest.senses[index] = {
+      id: sense.id,
+      version: sense.version,
+      implementation: 'body-contact-v1',
+      radius: 0,
+    };
   }
   if (retired.size) {
     world.moduleManifest!.revision++;

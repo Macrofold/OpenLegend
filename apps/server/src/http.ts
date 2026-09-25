@@ -1,3 +1,4 @@
+import { HistoryCursorError } from './perceived-events.js';
 import { GameSaveError } from './game-saves.js';
 import {
   performanceSnapshot,
@@ -40,6 +41,7 @@ const command = z
   .strict();
 const interaction = z
   .object({
+    volume: z.enum(['whisper', 'normal', 'shout']).default('normal'),
     candidate: z.unknown().optional(),
     requestId: requestIdSchema,
     text: z.string().trim().min(1).max(1000),
@@ -449,6 +451,32 @@ export async function createGameServer(
           });
         if (request.method === 'GET' && url.pathname === '/api/performance')
           return send(response, 200, performanceSnapshot());
+        if (request.method === 'GET' && url.pathname === '/api/world-events') {
+          const options = z
+            .object({
+              type: z
+                .string()
+                .regex(/^[a-z][a-z0-9_.:-]{0,63}$/)
+                .optional(),
+              cursor: z.string().max(2048).optional(),
+              limit: z.coerce.number().int().min(1).max(100).optional(),
+            })
+            .strict()
+            .parse(Object.fromEntries(url.searchParams));
+          if (!store.history)
+            return send(response, 503, { message: 'History repository unavailable.' });
+          const epoch = `${service.timelineId}:${service.historyEpoch}`;
+          const page = await store.history.perceivedEvents(
+            service.world.id,
+            service.profile.id,
+            service.controlledEntityId,
+            epoch,
+            options,
+          );
+          if (epoch !== `${service.timelineId}:${service.historyEpoch}`)
+            throw new HistoryCursorError('History changed while loading. Refresh the event log.');
+          return send(response, 200, page);
+        }
         if (request.method === 'GET' && url.pathname === '/api/history') {
           const options = z
             .object({
@@ -465,6 +493,7 @@ export async function createGameServer(
             .parse(Object.fromEntries(url.searchParams));
           if (!store.history)
             return send(response, 503, { message: 'History repository unavailable.' });
+          const epoch = `${service.timelineId}:${service.historyEpoch}:${service.controlledEntityId}`;
           const scopedId = options.active
             ? service.world.conversations?.active[service.controlledEntityId]
             : options.conversationId;
@@ -487,6 +516,15 @@ export async function createGameServer(
                   .map((item) => item.id),
               )
             : new Map();
+          if (
+            epoch !==
+              `${service.timelineId}:${service.historyEpoch}:${service.controlledEntityId}` ||
+            (options.active &&
+              scopedId !== service.world.conversations?.active[service.controlledEntityId])
+          )
+            throw new HistoryCursorError(
+              'History changed while loading. Refresh the conversation.',
+            );
           const messages = options.speechOnly
             ? page.items.map((item) => {
                 const job = speechJobs.get(item.id);
@@ -495,7 +533,10 @@ export async function createGameServer(
                   id: item.id,
                   kind: item.kind === 'speech' ? 'speech' : 'action',
                   speakerId: item.speakerId,
-                  speaker: service.world.entities[item.speakerId ?? '']?.name ?? 'Someone',
+                  speech: item.speech,
+                  speaker: item.speech
+                    ? (item.speech.speaker?.nameAtTime ?? 'Someone')
+                    : (service.world.entities[item.speakerId ?? '']?.name ?? 'Someone'),
                   text: item.text,
                   time: item.time,
                   ...(job
@@ -1471,6 +1512,7 @@ export async function createGameServer(
                 undefined,
                 undefined,
                 value.candidate,
+                value.volume,
               ),
             );
           }
@@ -1481,15 +1523,19 @@ export async function createGameServer(
         const invalid =
           error instanceof z.ZodError ||
           error instanceof SyntaxError ||
+          error instanceof HistoryCursorError ||
           (error instanceof Error && error.message === 'body-limit');
         if (error instanceof GameSaveError)
           return send(response, 400, { ok: false, code: 'save', message: error.message });
         return send(response, invalid ? 400 : 500, {
           ok: false,
           code: invalid ? 'invalid-input' : 'server',
-          message: invalid
-            ? 'The request does not match the supported bounded input.'
-            : 'The request failed. No automatic retry was submitted.',
+          message:
+            error instanceof HistoryCursorError
+              ? error.message
+              : invalid
+                ? 'The request does not match the supported bounded input.'
+                : 'The request failed. No automatic retry was submitted.',
         });
       } finally {
         if (writing) activeWrites--;

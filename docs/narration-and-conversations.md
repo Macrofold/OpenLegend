@@ -1,5 +1,7 @@
 # Narration, agent responses and conversations
 
+Conversation speech-window eligibility follows the [linguistic speech pool](memory-architecture.md#conversation-speech-pool); that owner distinguishes dialogue turns from ordinary no-word perceptual cues.
+
 ## Spatial evidence
 
 [Spatial queries](../archive/07-technical-architecture/spatial-world-runtime.md) supply current sensory geometry and emission-time XYZ origins. The sensory projection still determines the actual audience; narration cannot infer hidden positions from technical geometry or camera changes. Cutaways, sprite interpolation and model animation are presentation, not new world occurrences or proof of an action’s result.

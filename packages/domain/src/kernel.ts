@@ -9,6 +9,7 @@ import {
 } from './item-handling.js';
 import { strikeDefinition } from './strikes.js';
 import { gatheringYield } from './gathering.js';
+import { isSpeechVolume } from './acoustics.js';
 import { current, isDraft } from 'immer';
 import {
   canWalkSegment,
@@ -41,6 +42,8 @@ import {
   advanceReservoirs,
 } from './world-modules.js';
 import { spatialCandidates, nearbyEntities } from './spatial.js';
+import { objectExposureQuery } from './object-exposure.js';
+import { encounterPhase, nativeBatchSeconds } from './encounter-cache.js';
 import { changeConversation } from './conversations.js';
 import {
   canSpeak,
@@ -49,10 +52,11 @@ import {
   reconcileBody,
   commitBodyEffects,
 } from './living.js';
-import { draftWorld, cloneValue } from './draft.js';
+import { draftWorld, cloneValue, finishWorld, freezeWorld } from './draft.js';
 import { experiences } from './experience.js';
 import {
   advanceStatusEffects,
+  mayAdvanceStatusEffects,
   activateStatusEffect,
   deactivateStatusEffect,
   interruptStatusEffects,
@@ -60,7 +64,15 @@ import {
 } from './status-effects.js';
 import { isRecallableExperience } from './mind.js';
 import { addItem, NATIVE_PREPARATIONS, nextId, nextRandom } from './data.js';
-import { appendMemory, canonicalJson, emit, encounterEmitter, finish, outcome } from './events.js';
+import {
+  appendMemory,
+  canonicalJson,
+  emit,
+  encounterEmitter,
+  finish,
+  settleEvents,
+  outcome,
+} from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import {
   hearsEntity,
@@ -676,15 +688,23 @@ export function executeCommand(
         command.text.length > 1500
       )
         return reject('invalid-speech', 'Speech must contain 1–1500 characters.');
+      const volume = command.volume ?? 'normal';
+      if (!isSpeechVolume(volume))
+        return reject('invalid-volume', 'Choose whisper, normal or shout.');
       const target = command.targetId ? getOwn(world.entities, command.targetId) : undefined;
       const intendedRecipientId = command.targetId ?? command.intendedRecipientId;
       if (intendedRecipientId && !getOwn(world.entities, intendedRecipientId))
         return reject('invalid-recipient', 'The intended recipient no longer exists.');
       if (
         command.targetId &&
-        (!target?.actor?.alive || !hasMemory(target) || !hearsEntity(world, target, actor))
+        (!target?.actor?.alive ||
+          !hasMemory(target) ||
+          capabilityBlocked(world, target, 'perception') ||
+          target.actor.incapacitated)
       )
-        return reject('not-heard', 'The listener is not within hearing range.');
+        return reject('not-heard', 'The intended listener is unavailable.');
+      // Intention is not delivery: a quiet utterance can miss its target and still be overheard.
+      // docs/hearing-and-speech.md#4-speech-volume-and-admission
       emit(
         world,
         events,
@@ -696,9 +716,14 @@ export function executeCommand(
           text: command.text.trim(),
           ...(intendedRecipientId ? { intendedRecipientId } : {}),
           ...(command.selfIntroduction ? { selfIntroduction: command.selfIntroduction } : {}),
+          utteranceId: command.id,
+          volume,
+          acousticPolicyId: world.moduleManifest.acoustics.id,
+          acousticPolicyVersion: world.moduleManifest.acoustics.version,
+          sourceLevelDbSplAt1m: world.moduleManifest.acoustics.sourceLevelDbSplAt1m[volume],
         },
       );
-      result = outcome(true, 'spoken', 'Speech delivered to nearby listeners.');
+      result = outcome(true, 'spoken', 'Spoken.');
       break;
     }
     case 'goal': {
@@ -717,7 +742,13 @@ export function executeCommand(
       if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot teach through speech.');
       const target = getOwn(world.entities, command.targetId);
       const recipe = getOwn(world.recipes, command.recipeId);
-      if (!target?.actor?.alive || !hasMemory(target) || !hearsEntity(world, target, actor))
+      if (
+        !target?.actor?.alive ||
+        !hasMemory(target) ||
+        capabilityBlocked(world, target, 'perception') ||
+        target.actor.incapacitated ||
+        !hearsEntity(world, target, actor)
+      )
         return reject('not-heard', 'Teaching needs a nearby listener.');
       if (!recipe || !world.knowledge[actor.id]?.some((record) => record.recipeId === recipe.id))
         return reject('not-learned', 'You cannot teach a technique you do not know.');
@@ -1270,7 +1301,12 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
 }
 
 /** Native urgency uses only carried food and currently visible resources; it is not an AI impersonation. */
-function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]): void {
+function nativeSurvival(
+  world: WorldState,
+  actor: Entity,
+  events: WorldEvent[],
+  resources: ReadonlyMap<string, readonly string[]>,
+): void {
   const component = actor.actor!;
   if (
     !hasWildernessNeeds(component) ||
@@ -1301,7 +1337,8 @@ function nativeSurvival(world: WorldState, actor: Entity, events: WorldEvent[]):
   }
   if (component.action && component.fullness > 10 && component.energy > 5) return;
   if (component.fullness < 42) {
-    const resource = Object.values(world.entities)
+    const resource = (resources.get('berries') ?? [])
+      .map((id) => world.entities[id]!)
       .filter(
         (entity) =>
           entity.resource?.definitionId === 'berries' &&
@@ -1377,19 +1414,68 @@ function nativeReservoirResponse(world: WorldState, actor: Entity): void {
  * spawning/component mutations must also refresh this roster, never retain revoked draft entities.
  * docs/performance.md#simulation-cpu-and-growing-history
  */
-function nativeParticipants(world: WorldState): { actors: string[]; ambient: string[] } {
+function nativeParticipants(world: WorldState): {
+  actors: string[];
+  work: string[];
+  ambient: string[];
+  status: string[];
+  resources: Map<string, string[]>;
+} {
   const source = isDraft(world.entities) ? current(world.entities) : world.entities;
-  const active = Object.values(source)
+  const entries = Object.values(source);
+  const active = entries
     .filter((e) => e.actor || e.animal || e.heat)
     .sort((a, b) => a.id.localeCompare(b.id));
+  const status = entries.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id);
+  const changingStatus = new Set(status);
+  // Supply identity is static within a native slice. Resolve quantity/visibility live; a
+  // hungry actor must not proxy every unrelated scenery object each simulated second.
+  const resources = new Map<string, string[]>();
+  for (const entity of entries) {
+    const definition = entity.resource?.definitionId;
+    if (!definition) continue;
+    let ids = resources.get(definition);
+    if (!ids) resources.set(definition, (ids = []));
+    ids.push(entity.id);
+  }
   return {
+    resources,
     actors: active.filter((e) => e.actor).map((e) => e.id),
+    // A native animal with no physiology, attributes, plan, action or possible effect has
+    // no actor work; it still participates in movement, collision and sensory delivery.
+    work: active
+      .filter(
+        (e) =>
+          e.actor &&
+          (hasWildernessNeeds(e.actor) ||
+            e.actor.attributes ||
+            e.actor.action ||
+            e.actor.agency.plan ||
+            changingStatus.has(e.id)),
+      )
+      .map((e) => e.id),
     ambient: active.map((e) => e.id),
+    status,
   };
 }
 
 /** Advance bounded one-second native steps. Paused time and absent-player catch-up are never inferred. */
 export function advanceWorld(original: WorldState, elapsedSimSeconds: number): Transition {
+  return advance(original, elapsedSimSeconds, false);
+}
+/** Server execution slice: preserve one-second physics and settle every logical boundary.
+ * Do not wait to fill a batch, merge speech, or delay meaningful native occurrences.
+ * docs/performance.md#native-execution-slices */
+export function advanceNativeBatch(original: WorldState, availableSeconds: number): Transition {
+  if (!Number.isFinite(availableSeconds) || availableSeconds < 1)
+    return advanceWorld(original, availableSeconds);
+  return advance(original, nativeBatchSeconds(original, availableSeconds), true);
+}
+function advance(
+  original: WorldState,
+  elapsedSimSeconds: number,
+  fixedBoundaries: boolean,
+): Transition {
   if (
     !Number.isFinite(elapsedSimSeconds) ||
     elapsedSimSeconds < 0 ||
@@ -1418,15 +1504,26 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
   let world = draftWorld(original);
   const events: WorldEvent[] = [];
   let remaining = elapsedSimSeconds;
+  const observerRestrictions = fixedBoundaries
+    ? participants.actors
+        .filter((id) => hasMemory(original.entities[id]))
+        .map((id) => ({
+          id,
+          blocked: capabilityBlocked(original, original.entities[id], 'perception'),
+        }))
+    : [];
   while (remaining > 0) {
+    const stepNextId = world.nextId;
     const seconds = Math.min(1, remaining);
     remaining -= seconds;
     world.simTime += seconds;
     // Status operations also apply to non-actor entities, in saved entity/definition order.
-    for (const entity of Object.values(world.entities))
-      advanceStatusEffects(world, entity, seconds, events);
+    // Native rates cannot create absent capability/attribute fields. Nested commands refresh
+    // this conservative roster; do not materialize all entities again for every substep.
+    for (const id of participants.status)
+      advanceStatusEffects(world, world.entities[id]!, seconds, events);
     // Stable actor order resolves finite-resource claims; no asynchronous writer mutates a step.
-    for (const actorId of participants.actors) {
+    for (const actorId of participants.work) {
       let actor = world.entities[actorId]!;
       let component = actor.actor!;
       if (!component.alive || component.incapacitated) continue;
@@ -1434,7 +1531,7 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
         if (advanceWildernessNeeds(actor, seconds)) reconcileBody(world, actor, events, 'needs');
         if (component.health === 0) continue;
         if (!capabilityBlocked(world, actor, 'actions') || component.fullness < 10)
-          nativeSurvival(world, actor, events);
+          nativeSurvival(world, actor, events, participants.resources);
       }
       advanceReservoirs(world, actor, seconds, events);
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
@@ -1492,15 +1589,38 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
         }
       }
     }
+    if (fixedBoundaries && remaining > 0) {
+      // End early after an occurrence or logical deadline; the normal finish path publishes it.
+      if (
+        world.nextId !== stepNextId ||
+        observerRestrictions.some(
+          ({ id, blocked }) =>
+            capabilityBlocked(world, world.entities[id], 'perception') !== blocked,
+        )
+      )
+        break;
+      settleEvents(world, []);
+      if (world.nextId !== stepNextId) break;
+      world.sequence++;
+    }
   }
-  updateEncounters(world, original, events, participants.actors);
-  return finish(
+  // Finalize changed physical state once rather than materializing it for sensing and
+  // traversing it again at publication. This neither advances time nor emits/commits an event.
+  // Mutable authoring inputs retain their existing ownership. docs/performance.md#simulation-cpu-and-growing-history
+  const physical = Object.isFrozen(original) ? freezeWorld(finishWorld(world)) : world;
+  const exposure = encounterPhase(original, physical);
+  world = physical === world ? world : draftWorld(physical);
+  if (!exposure.unchanged) updateEncounters(world, original, events, participants.actors);
+  const result = finish(
     world,
     events,
-    outcome(true, 'advanced', `Advanced ${elapsedSimSeconds} simulation seconds.`),
+    outcome(true, 'advanced', `Advanced ${world.simTime - original.simTime} simulation seconds.`),
   );
+  exposure.complete(result.world);
+  return result;
 }
 
+const episodeMembership = new WeakMap<object, { people: string[]; objects: string[] }>();
 /** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
 function updateEncounters(
   world: WorldState,
@@ -1515,7 +1635,8 @@ function updateEncounters(
 
   // Read-only perception captures transforms once after movement, avoiding repeated proxy walks.
   // Snapshot identity, transforms and body height; event mutations still use the authoritative draft.
-  const entities = Object.values(world.entities).map((entity) => ({
+  const snapshot = isDraft(world.entities) ? current(world.entities) : world.entities;
+  const entities = Object.values(snapshot).map((entity) => ({
     entity,
     id: entity.id,
     position: isDraft(entity.position) ? current(entity.position) : entity.position,
@@ -1535,7 +1656,10 @@ function updateEncounters(
     (largest, entity) => Math.max(largest, entity.radius),
     0,
   );
-  const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
+  const objectsFor = objectExposureQuery(
+    world,
+    entities.filter((e) => e.object),
+  );
   for (const actor of entities.filter((e) => e.alive && e.memory)) {
     const radius = visionRadius(world, actor.entity);
     const sees = visionQuery(world, actor.entity);
@@ -1615,7 +1739,7 @@ function updateEncounters(
         Object.keys(contacts).length !== Object.keys(prior).length ||
         Object.entries(contacts).some(([id, c]) => c !== prior[id])
       )
-        actor.entity.actor!.contacts = contacts;
+        world.entities[actor.id]!.actor!.contacts = contacts;
     }
     if (radius === 0) {
       if (
@@ -1626,24 +1750,42 @@ function updateEncounters(
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
-    const previouslySeen = new Set(previous);
-    const seen = nearby(actor.position, radius + 2)
+    let seen = nearby(actor.position, radius + 2)
       .filter((e) => e.id !== actor.id && e.alive && sees(e))
       .map((e) => e.id);
-    const objects = nearbyObjects(actor.position, radius).filter((entity) => sees(entity));
-    const objectIds = objects.map((entity) => entity.id);
+    let objectIds = objectsFor(actor.entity);
+    const previousObjects = original.visibleObjects?.[actor.id];
+    const samePeople = seen.length === previous.length && seen.every((id, i) => id === previous[i]);
+    const sameObjects =
+      !!previousObjects &&
+      (objectIds === previousObjects ||
+        (objectIds.length === previousObjects.length &&
+          objectIds.every((id, i) => id === previousObjects[i])));
+    if (samePeople) seen = previous;
+    if (sameObjects) objectIds = previousObjects!;
     // Persistent exposure episodes do not imply identity recognition across a disappearance.
     // docs/knowledge.md#subject-binding
     const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
-    const exposed = [...seen, ...objectIds];
-    if (
-      exposed.length !== Object.keys(priorEpisodes).length ||
-      exposed.some((id) => !priorEpisodes[id])
-    )
-      (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
-        exposed.map((id) => [id, priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`]),
-      );
-    for (const id of seen.filter((id) => !previouslySeen.has(id))) {
+    const certified = Object.isFrozen(priorEpisodes)
+      ? episodeMembership.get(priorEpisodes)
+      : undefined;
+    if (certified?.people !== seen || certified.objects !== objectIds) {
+      const exposed = [...seen, ...objectIds];
+      if (
+        exposed.length !== Object.keys(priorEpisodes).length ||
+        exposed.some((id) => !priorEpisodes[id])
+      )
+        (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
+          exposed.map((id) => [
+            id,
+            priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`,
+          ]),
+        );
+      else if (Object.isFrozen(priorEpisodes))
+        episodeMembership.set(priorEpisodes, { people: seen, objects: objectIds });
+    }
+    const previouslySeen = samePeople ? null : new Set(previous);
+    for (const id of samePeople ? [] : seen.filter((id) => !previouslySeen!.has(id))) {
       const recent = (world.memories[actor.id] ?? []).some(
         (m) =>
           m.kind === 'episode' &&
@@ -1653,27 +1795,15 @@ function updateEncounters(
       );
       if (!recent) encounter(actor.entity, id, true);
     }
-    if (
-      !original.visiblePeople?.[actor.id] ||
-      seen.length !== previous.length ||
-      seen.some((id, index) => id !== previous[index])
-    )
+    if (!original.visiblePeople?.[actor.id] || !samePeople)
       (world.visiblePeople ??= {})[actor.id] = seen;
-    // Object exposures use the same committed awareness path without a cognition trigger.
-    const priorObjects = new Set(
-      original.visibleObjects?.[actor.id] ??
-        (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
-    );
-    for (const entity of objects)
-      if (!priorObjects.has(entity.id)) encounter(actor.entity, entity.id, false);
-    const previousObjects = original.visibleObjects?.[actor.id];
-    // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).
-    if (
-      !previousObjects ||
-      objectIds.length !== previousObjects.length ||
-      objectIds.some((id, index) => id !== previousObjects[index])
-    )
+    if (!sameObjects) {
+      // Unchanged frozen membership needs neither a set rebuild nor another exposure scan.
+      // Captions/speech still resolve event-time evidence independently of this visual cache.
+      const priorObjects = new Set(previousObjects ?? (hadObjectExposures ? [] : objectIds));
+      for (const id of objectIds) if (!priorObjects.has(id)) encounter(actor.entity, id, false);
       (world.visibleObjects ??= {})[actor.id] = objectIds;
+    }
   }
 }
 
@@ -1780,9 +1910,15 @@ export function observeActor(world: WorldState, actorId: string): ActorObservati
           ...(aware.targetId ? { targetId: aware.targetId } : {}),
           // Actor context is prose-first. Structured event fields stay authoritative in
           // world state; only the event's authored context text crosses this boundary.
-          ...(aware.content !== undefined ? { data: { text: aware.content } } : {}),
+          ...(aware.content !== undefined
+            ? {
+                data: {
+                  text: aware.speech ? aware.text : aware.content,
+                },
+              }
+            : {}),
         }))
-      : world.events.filter((event) => event.audience.includes(actorId)).slice(-24),
+      : [],
   });
 }
 

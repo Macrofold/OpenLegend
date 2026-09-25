@@ -1,3 +1,4 @@
+import { current, isDraft } from 'immer';
 import { statusDefinitions } from './status-capabilities.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { emit, finish, outcome, canonicalJson } from './events.js';
@@ -126,45 +127,78 @@ function compare(
       return typeof a === 'number' && typeof b === 'number' && a >= b;
   }
 }
+type StatusPredicate = (world: WorldState, bindings: EffectBindings) => boolean;
+const predicates = new WeakMap<StatusCondition, StatusPredicate>();
+/** Prepare the trusted condition operators, never generated code or a cached truth value.
+ * Freeze checks include nested data: authoring may supply only shallow-frozen input.
+ * Every invocation reads current bindings/time; an earlier effect can change the next result.
+ * docs/status-effects.md#transitions */
+function prepareCondition(condition: StatusCondition): {
+  matches: StatusPredicate;
+  immutable: boolean;
+} {
+  const cached = predicates.get(condition);
+  if (cached) return { matches: cached, immutable: true };
+  let immutable = Object.isFrozen(condition);
+  let matches: StatusPredicate;
+  if ('all' in condition || 'any' in condition) {
+    const all = 'all' in condition;
+    const conditions = 'all' in condition ? condition.all : condition.any;
+    const children = conditions.map(prepareCondition);
+    immutable &&= Object.isFrozen(conditions) && children.every((c) => c.immutable);
+    const compiled = children.map((c) => c.matches);
+    matches = all
+      ? (world, bindings) => compiled.every((match) => match(world, bindings))
+      : (world, bindings) => compiled.some((match) => match(world, bindings));
+  } else if ('compare' in condition) {
+    const c = condition.compare;
+    immutable &&= Object.isFrozen(c);
+    const { target, attribute, operator, value } = c;
+    matches = (world, bindings) =>
+      compare(readEntityAttribute(world, resolve(target, bindings), attribute), operator, value);
+  } else if ('field' in condition) {
+    const c = condition.field;
+    immutable &&= Object.isFrozen(c);
+    const { target, name, operator, value } = c;
+    const read =
+      name === 'kind'
+        ? (e: Entity) => e.kind
+        : name === 'grounded'
+          ? (e: Entity) => e.spatial.supportSurfaceId !== null
+          : name === 'activeWork'
+            ? (e: Entity) =>
+                !!e.actor?.action || e.spatial.supportSurfaceId === null || !!e.animal?.fleeSeconds
+            : (e: Entity) => e.actor?.[name];
+    matches = (_world, bindings) => {
+      const entity = resolve(target, bindings);
+      return !!entity && compare(read(entity), operator, value);
+    };
+  } else if ('dailyWindow' in condition) {
+    const c = condition.dailyWindow;
+    immutable &&= Object.isFrozen(c);
+    const { start, end } = c;
+    matches = (world) => {
+      const hour = (world.simTime / 3600 + world.statusEffectPolicy.clockOffsetHours) % 24;
+      return start < end ? hour >= start && hour < end : hour >= start || hour < end;
+    };
+  } else {
+    const c = condition.statusActive;
+    immutable &&= Object.isFrozen(c);
+    const { target, definitionId, value } = c;
+    matches = (_world, bindings) => {
+      const entity = resolve(target, bindings);
+      return !!entity && !!entity.statusEffects?.[definitionId]?.active === value;
+    };
+  }
+  if (immutable) predicates.set(condition, matches);
+  return { matches, immutable };
+}
 export function matchesStatusCondition(
   world: WorldState,
   bindings: EffectBindings,
   condition: StatusCondition,
 ): boolean {
-  if ('all' in condition)
-    return condition.all.every((c) => matchesStatusCondition(world, bindings, c));
-  if ('any' in condition)
-    return condition.any.some((c) => matchesStatusCondition(world, bindings, c));
-  if ('compare' in condition) {
-    const c = condition.compare;
-    return compare(
-      readEntityAttribute(world, resolve(c.target, bindings), c.attribute),
-      c.operator,
-      c.value,
-    );
-  }
-  if ('field' in condition) {
-    const c = condition.field,
-      e = resolve(c.target, bindings);
-    if (!e) return false;
-    const value =
-      c.name === 'kind'
-        ? e.kind
-        : c.name === 'grounded'
-          ? e.spatial.supportSurfaceId !== null
-          : c.name === 'activeWork'
-            ? !!e.actor?.action || e.spatial.supportSurfaceId === null || !!e.animal?.fleeSeconds
-            : e.actor?.[c.name];
-    return compare(value, c.operator, c.value);
-  }
-  if ('dailyWindow' in condition) {
-    const c = condition.dailyWindow,
-      hour = (world.simTime / 3600 + world.statusEffectPolicy.clockOffsetHours) % 24;
-    return c.start < c.end ? hour >= c.start && hour < c.end : hour >= c.start || hour < c.end;
-  }
-  const c = condition.statusActive,
-    e = resolve(c.target, bindings);
-  return !!e && !!e.statusEffects?.[c.definitionId]?.active === c.value;
+  return (predicates.get(condition) ?? prepareCondition(condition).matches)(world, bindings);
 }
 export function canActivateStatusEffect(
   world: WorldState,
@@ -319,6 +353,39 @@ function applyRate(
   else if (d.implementation === 'native-fullness-v1')
     setWildernessNeed(entity.actor!, 'fullness', value);
   else setAttribute(world, entity, d, value, events);
+}
+/** A conservative participation check, not a condition evaluator. Native rate operations
+ * cannot add an absent attribute or actor component; every active instance still runs.
+ * Bindings for a new automatic instance all point to its subject. If a new operation can
+ * create these capabilities, extend this broad phase before admitting that operation.
+ * docs/status-effects.md#native-participation
+ */
+const statusEligibility = new WeakMap<
+  Entity,
+  { definitions: StatusEffectDefinition[]; manifest: object; eligible: boolean }
+>();
+export function mayAdvanceStatusEffects(world: WorldState, entity: Entity): boolean {
+  const definitions = statusDefinitions(world),
+    manifest = isDraft(world.moduleManifest) ? current(world.moduleManifest) : world.moduleManifest;
+  const reusable =
+    Object.isFrozen(entity) && Object.isFrozen(definitions) && Object.isFrozen(manifest);
+  const previous = reusable ? statusEligibility.get(entity) : undefined;
+  if (previous?.definitions === definitions && previous.manifest === manifest)
+    return previous.eligible;
+  const eligible = definitions.some(
+    (definition) =>
+      entity.statusEffects?.[definition.id]?.active ||
+      (definition.enabled &&
+        !!definition.automaticActivation &&
+        (!definition.occupiesAction || !!entity.actor) &&
+        definition.whileActive.every(
+          (operation) =>
+            !('changeRate' in operation) ||
+            typeof readEntityAttribute(world, entity, operation.changeRate.attribute) === 'number',
+        )),
+  );
+  if (reusable) statusEligibility.set(entity, { definitions, manifest, eligible });
+  return eligible;
 }
 export function advanceStatusEffects(
   world: WorldState,

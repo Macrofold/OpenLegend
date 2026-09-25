@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { AiReceipt, AiResult, FetchTransport, RequestControl } from './types.js';
+/** Adapter admission limits shared by callers planning bounded batches. */
+export const EMBEDDING_LIMITS = { texts: 33, textBytes: 8000, batchBytes: 64000 } as const;
 export interface EmbeddingRequest extends RequestControl {
   texts: string[];
 }
@@ -40,9 +42,11 @@ export function createEmbeddingClient(config: {
           config.dimensions < 64 ||
           config.dimensions > 3072 ||
           !request.texts.length ||
-          request.texts.length > 33 ||
-          request.texts.some((t) => !t.trim() || Buffer.byteLength(t) > 8000) ||
-          Buffer.byteLength(JSON.stringify(request.texts)) > 64000
+          request.texts.length > EMBEDDING_LIMITS.texts ||
+          request.texts.some(
+            (t) => !t.trim() || Buffer.byteLength(t) > EMBEDDING_LIMITS.textBytes,
+          ) ||
+          Buffer.byteLength(JSON.stringify(request.texts)) > EMBEDDING_LIMITS.batchBytes
         )
           return result('invalid', 'Embedding input exceeds batch limits.');
         const signal = AbortSignal.any([

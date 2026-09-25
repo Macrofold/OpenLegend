@@ -27,6 +27,7 @@ export const operationSchema = z
         text: z.string().trim().min(1).max(1200),
         addresseeEntityId: z.string().min(1).max(120),
         selfIntroduction: z.string().nullable(),
+        volume: z.enum(['whisper', 'normal', 'shout']),
       })
       .strict()
       .nullable(),
