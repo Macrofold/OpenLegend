@@ -34,17 +34,17 @@ The database commit remains on the confirmed-action path. Keep the existing boun
 
 ## Work placement and buffering
 
-| Work | Execution and buffer | What can be combined or deferred |
-| --- | --- | --- |
-| Native command validation and domain effects | Authoritative ordered in-memory transition | Compute only relevant rules; never delegate authorization to the browser or a model |
-| State, command receipts, event/audience history and required invalidations | One short atomic database transaction | Bulk parameterized writes by table; coalesce final component values while retaining meaningful intermediate events and outcomes |
-| Routine native progression | Loaded state, existing bounded dirty interval | Flush by age/bytes and before an explicit durable boundary; no growing unsaved future |
-| Narrator generation, reflection and embeddings | Bounded asynchronous workers scheduled by committed changes and due deadlines | Coalesce compatible pending opportunities, reuse valid caches, preserve paid-attempt identities and privacy |
-| Public positions, actions and HUD | In-memory projection of permitted state, independently scheduled publication | Dirty-section updates; newest compatible visual state, with reliable outcomes preserved |
-| Transcript and editor pages | On-demand indexed reads, scoped cache | Page by cursor; invalidate affected pages on source/membership changes; do not reload for movement |
-| Diagnostic capture | Bounded local pending data and asynchronous persistence | Replace pending snapshots of the same trace with the newest version; persist ordered distinct records in small batches when measured load warrants it |
-| Historical exports and snapshots | Fixed-revision input; asynchronous work outside the gameplay transaction where safe | Stream pages/bytes, limit concurrency; checkpoint publication/truncation stays transactional |
-| CPU-heavy computation | Optimize work first; bounded slices, then a dedicated worker if still needed | Send compact inputs/results or give the worker long-lived ownership; never clone the full world every tick |
+| Work                                                                       | Execution and buffer                                                                | What can be combined or deferred                                                                                                                      |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native command validation and domain effects                               | Authoritative ordered in-memory transition                                          | Compute only relevant rules; never delegate authorization to the browser or a model                                                                   |
+| State, command receipts, event/audience history and required invalidations | One short atomic database transaction                                               | Bulk parameterized writes by table; coalesce final component values while retaining meaningful intermediate events and outcomes                       |
+| Routine native progression                                                 | Loaded state, existing bounded dirty interval                                       | Flush by age/bytes and before an explicit durable boundary; no growing unsaved future                                                                 |
+| Narrator generation, reflection and embeddings                             | Bounded asynchronous workers scheduled by committed changes and due deadlines       | Coalesce compatible pending opportunities, reuse valid caches, preserve paid-attempt identities and privacy                                           |
+| Public positions, actions and HUD                                          | In-memory projection of permitted state, independently scheduled publication        | Dirty-section updates; newest compatible visual state, with reliable outcomes preserved                                                               |
+| Transcript and editor pages                                                | On-demand indexed reads, scoped cache                                               | Page by cursor; invalidate affected pages on source/membership changes; do not reload for movement                                                    |
+| Diagnostic capture                                                         | Bounded local pending data and asynchronous persistence                             | Replace pending snapshots of the same trace with the newest version; persist ordered distinct records in small batches when measured load warrants it |
+| Historical exports and snapshots                                           | Fixed-revision input; asynchronous work outside the gameplay transaction where safe | Stream pages/bytes, limit concurrency; checkpoint publication/truncation stays transactional                                                          |
+| CPU-heavy computation                                                      | Optimize work first; bounded slices, then a dedicated worker if still needed        | Send compact inputs/results or give the worker long-lived ownership; never clone the full world every tick                                            |
 
 Locally buffered authoritative state lives on the server. Browser buffers hold presentation, drafts and unacknowledged intentions only. RAM buffers are not durable. Do not introduce a second local authoritative database or write-ahead log in the immediate fix; that changes failure and recovery semantics under [D58](../archive/05-project/open-decisions.md#d58--durability-and-storage-placement).
 
@@ -148,32 +148,32 @@ Action acceptance and first visible movement are different milestones. The curre
 
 World size, active population, observation density, retained history and concurrent players are independent dimensions. A thousand scattered actors and a thousand people observing the same event are different workloads. A thousand events per game minute also differs from a thousand per real minute at accelerated speed.
 
-| Stage | Intended architecture | Gate before moving further |
-| --- | --- | --- |
-| Tiny world, including long sessions | Existing process, compact atomic writes, triggered jobs, bounded hot-state CPU, cached scoped publication | Small-world budgets pass with optional AI/inspection load and retained history |
-| Roughly 100× entities/activity | Spatial candidate indexes, dirty actors/components, batched durable writes, deadline scheduling, scoped pages and replication | Representative distribution and crowded hotspot both measured; explicit queue and spending capacity |
+| Stage                                  | Intended architecture                                                                                                             | Gate before moving further                                                                                               |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Tiny world, including long sessions    | Existing process, compact atomic writes, triggered jobs, bounded hot-state CPU, cached scoped publication                         | Small-world budgets pass with optional AI/inspection load and retained history                                           |
+| Roughly 100× entities/activity         | Spatial candidate indexes, dirty actors/components, batched durable writes, deadline scheduling, scoped pages and replication     | Representative distribution and crowded hotspot both measured; explicit queue and spending capacity                      |
 | Roughly 1,000× world footprint/history | Hot/cold data separation, sleeping regions where semantics permit, one worker/owner per independent world or region when measured | Worker message volume, migration/recovery and boundary semantics proven; size is not assumed to mean all entities active |
-| Thousands of concurrent actors/players | Fenced ownership and region/interest-based replication following the existing scale design | Real load envelope, transfers, fairness, privacy, recovery and concentrated-crowd limits established |
+| Thousands of concurrent actors/players | Fenced ownership and region/interest-based replication following the existing scale design                                        | Real load envelope, transfers, fairness, privacy, recovery and concentrated-crowd limits established                     |
 
-Do not build sector sharding, Redis/Kafka, binary transport, a generalized actor framework or a worker per creature for the current world. Prefer independent worlds across processes first. Within a world, partition only where interactions can tolerate explicit boundaries. Actual audience delivery may legitimately cost proportional to the audience; no index can make thousands of real recipients free.
+The accepted product priority is a shared world divided into regions, with independent worlds also supported. Follow the [shared-world rollout](../archive/07-technical-architecture/data-delivery-and-scale.md#3-growth-stages-and-triggers): independently queryable records and bounded regional working sets first, then measured region CPU/storage distribution. Do not add Redis/Kafka, a generalized actor framework or one worker per creature without a consuming bottleneck. Multiple logical regions may share one writer/database until ownership and boundary interactions are qualified. Independent-world placement remains useful but does not qualify one crowded shared world. Actual audience delivery may legitimately cost proportional to the audience; no index can make thousands of real recipients free.
 
 Keep CPU-bound work in a worker only when it removes a measured event-loop bottleneck after work reduction. A worker holding an entire world's active state should receive intentions and send permitted deltas, not exchange whole-world snapshots with the main thread every frame. Async PostgreSQL/provider I/O does not need a worker. Optional path/serialization jobs use versioned compact inputs and have their results revalidated by the owner.
 
 ## Design review and tradeoffs
 
-| Challenge | Design response |
-| --- | --- |
-| The earlier diagnosis assumed a remote database | Measure the actual PostgreSQL instance; local configuration is loopback. Statement counts establish amplification, not end-to-end causation |
-| Making everything async still shares CPU and connection queues | Remove work first, bound tasks, then isolate the measured resource; never hold a gameplay transaction over model/network work |
-| Moving history behind the response could expose stale private data or lose evidence | Keep required history/invalidation atomic initially; journal-first projections need their full recovery and privacy contract |
-| Notification-only workers can miss a wakeup | Durable existing jobs, after-commit notification, startup recovery, resume handling and lost-wakeup-safe draining |
-| Bigger save batches improve throughput but worsen a single click | Eliminate SQL amplification first; add command grouping only for measured bursts, without a mandatory idle delay |
-| More connections can merely move contention into PostgreSQL | Cap auxiliary capacity; measure locks and database time as well as application queue time |
-| A one-draft tick or sparse scheduler can change the game | Check intermediate events, sequence/RNG and perception/deadlines, not just final positions; record the accepted elapsed-time/fidelity change |
-| A fast fresh save can conceal an aging-world regression | Grow historical data independently of active actors; record CPU, heap, recovery and query costs, with no silent history deletion |
-| Client prediction can hide a slow backend | Measure local feedback and durable confirmation separately; backend budgets still apply |
-| A fast acknowledgement can still leave the character stationary | Measure first changed position separately and bound due work before reaching for prediction |
-| A 10,000× target can encourage premature infrastructure | Optimize and remeasure one bottleneck at a time; defer larger mechanisms until their gate is met |
+| Challenge                                                                           | Design response                                                                                                                              |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| The earlier diagnosis assumed a remote database                                     | Measure the actual PostgreSQL instance; local configuration is loopback. Statement counts establish amplification, not end-to-end causation  |
+| Making everything async still shares CPU and connection queues                      | Remove work first, bound tasks, then isolate the measured resource; never hold a gameplay transaction over model/network work                |
+| Moving history behind the response could expose stale private data or lose evidence | Keep required history/invalidation atomic initially; journal-first projections need their full recovery and privacy contract                 |
+| Notification-only workers can miss a wakeup                                         | Durable existing jobs, after-commit notification, startup recovery, resume handling and lost-wakeup-safe draining                            |
+| Bigger save batches improve throughput but worsen a single click                    | Eliminate SQL amplification first; add command grouping only for measured bursts, without a mandatory idle delay                             |
+| More connections can merely move contention into PostgreSQL                         | Cap auxiliary capacity; measure locks and database time as well as application queue time                                                    |
+| A one-draft tick or sparse scheduler can change the game                            | Check intermediate events, sequence/RNG and perception/deadlines, not just final positions; record the accepted elapsed-time/fidelity change |
+| A fast fresh save can conceal an aging-world regression                             | Grow historical data independently of active actors; record CPU, heap, recovery and query costs, with no silent history deletion             |
+| Client prediction can hide a slow backend                                           | Measure local feedback and durable confirmation separately; backend budgets still apply                                                      |
+| A fast acknowledgement can still leave the character stationary                     | Measure first changed position separately and bound due work before reaching for prediction                                                  |
+| A 10,000× target can encourage premature infrastructure                             | Optimize and remeasure one bottleneck at a time; defer larger mechanisms until their gate is met                                             |
 
 The immediate sequence preserves authority, durable command acknowledgements and event retention; the separately accepted elapsed-time policy supersedes the accidental fixed-second requirement. Product-sensitive alternatives remain centralized in [D58](../archive/05-project/open-decisions.md#d58--durability-and-storage-placement), [D59](../archive/05-project/open-decisions.md#d59--historical-retention-and-command-retry-horizon), and D03/D09/D22 for overload, supported devices and density. Unresolved research belongs to [R12](../archive/05-project/research-backlog.md), not a claim that this design already supports thousands of active players.
 
@@ -191,13 +191,13 @@ Use the starter scene, the 318-entity sensing workload and the earlier combined 
 
 ### Strict behavior and elastic presentation
 
-| Preserve exactly | May reduce or defer within this contract |
-| --- | --- |
-| Body clearance, intended support/floor, action timing, conservation and ordered consequential effects | Visual particles, decorative grass density, shadow detail/resolution and non-authoritative post-processing |
-| Character-specific sight/hearing and observer-private evidence; immediate revocation | Fewer redundant geometry queries when a conservative proof remains valid; never fewer legitimate recipients |
-| Simulation time, retained admitted debt and ordered native effects | Fewer replacement-only pose publications per real second, with smooth authorized presentation |
-| Existing command durability and forgetting/accounting boundaries | Batched encodings/writes within existing transactions; no enlarged crash-loss window by stealth |
-| Read-through eligibility, meaningful interactions and native survival independent of camera position | Camera-frustum render culling and distance/detail levels that do not affect simulation or knowledge |
+| Preserve exactly                                                                                      | May reduce or defer within this contract                                                                    |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Body clearance, intended support/floor, action timing, conservation and ordered consequential effects | Visual particles, decorative grass density, shadow detail/resolution and non-authoritative post-processing  |
+| Character-specific sight/hearing and observer-private evidence; immediate revocation                  | Fewer redundant geometry queries when a conservative proof remains valid; never fewer legitimate recipients |
+| Simulation time, retained admitted debt and ordered native effects                                    | Fewer replacement-only pose publications per real second, with smooth authorized presentation               |
+| Existing command durability and forgetting/accounting boundaries                                      | Batched encodings/writes within existing transactions; no enlarged crash-loss window by stealth             |
+| Read-through eligibility, meaningful interactions and native survival independent of camera position  | Camera-frustum render culling and distance/detail levels that do not affect simulation or knowledge         |
 
 Do not cap heard speech, drop visibility entries, sleep offscreen actors or shorten sensory range to meet a benchmark. Elapsed integration must honor the accepted mechanical boundaries and explicit sampled-perception policy rather than blindly jumping through intermediate events. The current straight-line acoustic family is intentionally simpler than diffraction/reverberation; a new room-acoustic model is not a prerequisite to optimization.
 

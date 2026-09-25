@@ -37,9 +37,10 @@ function planDefinitions(world: WorldState, actorId: string): string[] {
           return [];
         }),
     ),
-  ].slice(0, 24);
+  ];
 }
-/** A finite derived subscription from candidates actually included by attention. No executable predicates. */
+/** Preserve all actor-permitted interests; truncating here would hide later valid matches.
+ * docs/architecture.md#content-counts-and-request-limits */
 export function compileInterests(
   world: WorldState,
   actorId: string,
@@ -66,9 +67,9 @@ export function compileInterests(
     expiresAt: world.simTime + 7200,
     properties: [
       ...new Set([...definitions].flatMap((id) => world.itemDefinitions[id]?.properties ?? [])),
-    ].slice(0, 16),
-    entityKinds: [...kinds].slice(0, 8),
-    definitions: [...definitions].slice(0, 24),
+    ],
+    entityKinds: [...kinds],
+    definitions: [...definitions],
   };
 }
 export function interestMatches(
@@ -93,17 +94,14 @@ export function interestMatches(
     ...(valid ? subscription.properties : []),
     ...[...definitions].flatMap((id) => world.itemDefinitions[id]?.properties ?? []),
   ]);
-  return visibleIds
-    .filter((id) => {
-      const entity = world.entities[id];
-      const definition = entity?.resource && world.itemDefinitions[entity.resource.definitionId];
-      return (
-        !!entity &&
-        (kinds.includes(entity.kind) ||
-          (!!definition &&
-            (definitions.has(definition.id) ||
-              definition.properties.some((p) => properties.has(p)))))
-      );
-    })
-    .slice(0, 32);
+  return visibleIds.filter((id) => {
+    const entity = world.entities[id];
+    const definition = entity?.resource && world.itemDefinitions[entity.resource.definitionId];
+    return (
+      !!entity &&
+      (kinds.includes(entity.kind) ||
+        (!!definition &&
+          (definitions.has(definition.id) || definition.properties.some((p) => properties.has(p)))))
+    );
+  });
 }

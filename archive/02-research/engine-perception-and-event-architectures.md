@@ -108,7 +108,7 @@ The active repository policy explicitly prohibits new legacy-save migration/back
 | Visibility is computed before individual cooldown checks | `ai-director.ts::considerThought` | A 45-second model cooldown does not eliminate preliminary perception work |
 | `telemetryRevision` participates in actor input comparisons | Same function | Diagnostic/UI activity may cause broad reinspection; this is a candidate for a targeted invalidation test |
 | New significant evidence is selected by rebuilding/filtering retained experiences | Same function | The watermark limits logical consumption, but not necessarily traversal of older records |
-| Interest matching filters the visible list, then caps results at 32 | `interests.ts::interestMatches` | A bounded output list is not proof of bounded candidate scanning |
+| Interest matching filters the visible list and preserves all matches | `interests.ts::interestMatches` | Measure visible-list scanning and actual matching work independently |
 | Survival is a separate native path with its own numerical checks | `kernel.ts::nativeSurvival` and director urgency gates | Threshold ownership and private event production need a common contract; different thresholds can have legitimate distinct meanings |
 
 Evidence for these rows is in [R5]–[R9], [R12], and [R13]. These are structural observations, not measured attribution of wall-clock time.

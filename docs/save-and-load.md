@@ -102,6 +102,8 @@ Give the load operation a durable identity outside the rewindable timeline. Retr
 
 The abandoned future must not remain visible as current world history, actor knowledge, conversation context or accepted workspace content. Retained audit data is separately scoped and cannot feed restored cognition accidentally. Privacy overlays may remove access to older evidence even when the checkpoint contains it.
 
+Independent database records do not change this requirement. Capture and restore unloaded regions, cold memory/evidence, definitions and pending native work with the same coherent cut as active entities. The current timeline/writer fence is installed outside the rewindable payload; old jobs, cursors, vectors and callbacks must validate it even when restored source IDs/revisions happen to match. The [production model](../archive/07-technical-architecture/production-data-model.md#timeline-and-authority-fencing) owns those storage references.
+
 ## External work, privacy and shared authority
 
 Loading never refunds actual spending, erases uncertain paid attempts, reverses a provider call or restores revoked access. Current forgetting/erasure protections remain effective across older saves and their derived projections. The detailed policies belong to memory, billing and operations owners; save retention and export must respect them. Saves containing private minds and history require private access and must exclude credentials.
@@ -111,6 +113,8 @@ Saved work intent and an external execution are different things. Work already c
 An operational recovery onto a fresh host must recover or reconcile the non-rewindable authority as well. If that authority is missing, block affected external dispatch rather than assuming no spending or revocation occurred. Copying an old whole database over a live account is not a gameplay-load implementation.
 
 The unit of rewind is the world or another explicitly defined, dependency-closed authority boundary. A future shared world cannot rewind one player's possessions while leaving the corresponding shared trades intact. Cross-world transfers and irreversible external effects require explicit reconciliation or branch isolation; distributed transactions are not required before those features exist. A new generation distinguishes old commands and callbacks even if in-world identifiers remain stable.
+
+Creator restore/export permission does not grant access to human-private messages or private character notes. Shared-world save tools must preserve these through authorized protected storage or explicitly exclude non-rewindable private-channel data under its chosen policy, without leaking plaintext to the creator. Storage scope and shared rewind rights remain D48/D60 decisions; do not silently omit gameplay-critical private state or claim a complete save when it is missing.
 
 ## Compatibility and retention
 

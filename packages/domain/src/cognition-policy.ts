@@ -44,7 +44,6 @@ export function admitCognitionPolicy(
     ![2, 3, 4].includes(p.maxImmediateLevel) ||
     typeof p.reflection !== 'boolean' ||
     !Array.isArray(p.significantEventTypes) ||
-    p.significantEventTypes.length > 16 ||
     p.significantEventTypes.some((t) => typeof t !== 'string' || !/^[a-z-]{1,64}$/.test(t))
   )
     return reject();

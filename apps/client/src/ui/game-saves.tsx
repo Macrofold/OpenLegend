@@ -75,7 +75,8 @@ export function GameSavesPanel() {
         Save game
       </Button>
       <p className="ol-muted">
-        20 manual slots. Development saves may become incompatible when the game changes.
+        Named saves are stored locally. Development saves may become incompatible when the game
+        changes.
       </p>
       {message && <p role="status">{message}</p>}
       <h3>Saved games</h3>

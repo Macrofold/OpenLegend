@@ -2,9 +2,21 @@
 
 ## 2026-09-25 — Elapsed time is not a tick requirement
 
+Cadence continuation preserves current-main physical contact, removed content-count ceilings and nonblocking memory maintenance alongside the elapsed integrator. History-preserving integration keeps recovery checkpoints rather than silently force-rewriting an active branch. Predicate forecasts and actual automatic activation now share the same fresh bindings; the measured staggered-flight limit remains an explicit regional-scheduling follow-up.
+
 The accepted clock conversion (one real second to one game minute) no longer implies one-game-second integration. The finite native implementation resolves start-state conditions, integrates elapsed rates and existing work, and handles endpoint outcomes before selecting the next bound. Sparse simulation remains independent of browser frame cadence; source memory pressure cannot pause native time. Current status-effect/world ownership and in-place saves are preserved with the new agent guidance.
 
 [Simulation time](simulation-time.md) owns the contract; [base time](worlds/base/time.md) and RP03 own revisitable fidelity choices. [PF13](maintainers/simulation-time.md) owns delivery, the [boundary catalogue](maintainers/simulation-boundaries.md) collects future exact/local bounds, and [sound coordination](maintainers/speech-time-integration.md) prevents reintroducing a fixed-second loop while merging graded speech. Native/application observations are in [evidence](verification/simulation-cadence.md); regional scheduling, exact fleeting exposure and general coupled-flow integration remain future work. This supersedes the previous mandatory 480-ticks-per-second performance premise, not its historical measurements or the existing collision/privacy/durability rules.
+
+## 2026-09-25 — Production data model review
+
+Reviewed the [production records](../archive/07-technical-architecture/production-data-model.md) against gameplay, current storage and accepted engine boundaries. Clarified one canonical owner per record, shared actor capabilities, operational goals/plans/due work, identity-preserving migration, timeline/source fencing and revision-aware recall indexes. [Queries](../archive/07-technical-architecture/data-queries-and-mcp.md) now specify database selection before bounded context preparation, with index gaps and the unmeasured 20 ms local-retrieval target explicit.
+
+The owner selected shared-world regional priority with independent worlds supported, retention of important events/summaries with routine detail allowed to expire, and no creator access to human-private messages/notes. Updated [scale/retention](../archive/07-technical-architecture/data-delivery-and-scale.md), related product/save/knowledge/cognition documents and [D1–D6 delivery slices](maintainers/production-data.md#delivery-slices-and-exit-evidence). [Open decisions](../archive/05-project/open-decisions.md) retain exact crowd/load policy, retention windows, privacy operations, recovery/rewind terms and retrieval deadline/quality choices; no arbitrary numeric capacity was accepted. This is a design/documentation change only, with no storage migration, provider calls, runtime qualification or new test execution.
+
+## 2026-09-24 — Database and simulation responsibility clarification
+
+Clarified the existing [production data model](../archive/07-technical-architecture/production-data-model.md#database-simulation-and-background-responsibilities): independent operational records and database-side queries, in-memory active simulation, atomic record commits and bounded asynchronous AI/embedding work. Whole-world JSON remains a checkpoint/export format in the target; current snapshot/journal storage is still transitional. [D1/D2](maintainers/production-data.md#remaining-d1d2-implementation-and-evidence) now explicitly track missing record/query implementation separately from deferred verification. The [scale design](../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product) distinguishes a million-player ambition from measured concurrency and concentrated interaction workloads. No runtime migration, latency guarantee or capacity qualification is delivered by this documentation update.
 
 ## In-place development updates
 
@@ -183,3 +195,11 @@ Knowledge canvas mechanics now have one engine owner in `docs/knowledge.md`; bun
 ## Spatial main rebase and eight-times budget
 
 Preserved current-main world/status/item/identity/camera and in-place save semantics while replaying the spatial commits. Removed superseded fresh-save instructions from active spatial guidance and reconciled own-observer story eligibility. Added actual-progress profiling, thresholded acoustic rejection, current runtime evidence and PF12's budgeted optimization direction. Existing task IDs/remaining qualification are retained; historical measurements do not certify the rebased runtime.
+
+## Limits audit implementation
+
+Updated current implementation descriptions after removing undocumented small content-count ceilings, the named-save count and the hidden spending clamp. The architecture owns current behavior; cross-cutting deferred verification is in TODO. Original audit entry numbers remain in the external limits reports with completed removals labeled explicitly.
+
+## Physical contact semantics
+
+Replaced the proximity-based touch approximation with body-surface contact. The spatial-world specification owns the physical rule and migration semantics; architecture reflects the optional detector's current behavior. Earlier dense-contact measurements describe the superseded proximity implementation.
