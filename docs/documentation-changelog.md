@@ -1,41 +1,34 @@
 # Documentation changelog
 
-## Coding-agent guidance
+## 2026-09-25 — Production data model review
 
-Added a canonical, progressive-disclosure development instruction system: root/scoped `AGENTS.md`, a thin Claude import, targeted TypeScript/verification/documentation rules and repository-specific skills for design, review, performance, AI, PlayCanvas and rebasing. Added tool-discovery guidance, contributor workflow, PR context and a structural drift checker. Existing gameplay specifications and maintainer ownership remain authoritative; no runtime mechanics changed. Guidance maintenance is tracked in `docs/maintainers/agent-guidance.md`.
+Reviewed the [production records](../archive/07-technical-architecture/production-data-model.md) against gameplay, current storage and accepted engine boundaries. Clarified one canonical owner per record, shared actor capabilities, operational goals/plans/due work, identity-preserving migration, timeline/source fencing and revision-aware recall indexes. [Queries](../archive/07-technical-architecture/data-queries-and-mcp.md) now specify database selection before bounded context preparation, with index gaps and the unmeasured 20 ms local-retrieval target explicit.
 
-## Coding-agent guidance review
+The owner selected shared-world regional priority with independent worlds supported, retention of important events/summaries with routine detail allowed to expire, and no creator access to human-private messages/notes. Updated [scale/retention](../archive/07-technical-architecture/data-delivery-and-scale.md), related product/save/knowledge/cognition documents and [D1–D6 delivery slices](maintainers/production-data.md#delivery-slices-and-exit-evidence). [Open decisions](../archive/05-project/open-decisions.md) retain exact crowd/load policy, retention windows, privacy operations, recovery/rewind terms and retrieval deadline/quality choices; no arbitrary numeric capacity was accepted. This is a design/documentation change only, with no storage migration, provider calls, runtime qualification or new test execution.
 
-Separated native discovery, explicit file reads and semantic task applicability; discovery metadata is not permission to execute an entire workflow. Tightened new-file routing, task-specific verification authorization, deterministic TypeScript ordering and genuinely lease-protected Git rewrites. Replaced line-based skill metadata checks with pinned YAML parsing, Git-aware instruction discovery, safe local-target validation, structural reachability, loader-shadow warnings and complete ancestry/discovery byte reporting. Static checks remain explicitly distinct from native-agent dispatch verification.
+## 2026-09-24 — Database and simulation responsibility clarification
+
+Clarified the existing [production data model](../archive/07-technical-architecture/production-data-model.md#database-simulation-and-background-responsibilities): independent operational records and database-side queries, in-memory active simulation, atomic record commits and bounded asynchronous AI/embedding work. Whole-world JSON remains a checkpoint/export format in the target; current snapshot/journal storage is still transitional. [D1/D2](maintainers/production-data.md#remaining-d1d2-implementation-and-evidence) now explicitly track missing record/query implementation separately from deferred verification. The [scale design](../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product) distinguishes a million-player ambition from measured concurrency and concentrated interaction workloads. No runtime migration, latency guarantee or capacity qualification is delivered by this documentation update.
 
 ## In-place development updates
 Knowledge canvas mechanics now have one engine owner in `docs/knowledge.md`; bundled limits/naming/recognition live in `docs/worlds/base/knowledge.md`. This replaces the proposed naming-heavy YAML state example and the external-beliefs-in-one-inner-world-text direction. The observer-known-name decision is resolved; aggregate storage remains open.
 
-## Knowledge binding and request ordering
+## Limits audit implementation
 
-Kept current server handles out of old unrecognized events, added event-time encounter bindings to awareness, and supplied opaque references for existing remembered notepads without treating them as visible people. Response JSON Schema now expresses one non-null operation kind; no manual truncation of actor knowledge was added. The knowledge guide and actor-agency contract document stored-note edits separately from live identity recognition. Added a read-only small-world script fixture `scripts/fixtures/world-small-3d.json`; it contains no accepted actor knowledge or provider/account configuration.
+Updated current implementation descriptions after removing undocumented small content-count ceilings, the named-save count and the hidden spending clamp. The architecture owns current behavior; cross-cutting deferred verification is in TODO. Original audit entry numbers remain in the external limits reports with completed removals labeled explicitly.
 
-## Spoken self-introductions
+## Physical contact semantics
 
-Added optional `talk.selfIntroduction` metadata to the existing speech response and the bundled name-claim interpreter. Personally heard introductions update only a listener's own currently supported identity binding through the existing naming mutation. This is a finite bridge, not general speech-act extraction or cross-encounter recognition; deferred acceptance remains in the knowledge TODO section.
+Replaced the proximity-based touch approximation with body-surface contact. The spatial-world specification owns the physical rule and migration semantics; architecture reflects the optional detector's current behavior. Earlier dense-contact measurements describe the superseded proximity implementation.
 
-## Snapshot cognition, no global delay
-
-Autonomous cognition now evaluates a selected snapshot of all current evidence after the last considered watermark rather than taking a bounded historical prefix and draining it over successive requests. Main removed per-actor cognition cooldowns, retains unchanged-opportunity suppression and serial fairness, and leaves maintenance/reflection timing separate. The action/perception branch reconciliation preserves that policy instead of reintroducing a paid history-draining loop.
-
-## Unrestricted memory maintenance
-
-Removed memory-pressure/backlog state from world pause and removed stored content-size thresholds from consolidation eligibility. Retention and consolidation run when their semantic boundaries are due, while request-sized chunks preserve provider output limits. Active game simulation, movement and input no longer require memory jobs to clear a backlog. A separate diagnostic storage failure can still pause the world truthfully; evidence limits and pending provider admission remain distinct.
-
-## Body contact and content-count limits
-
-Replaced the retired proximity-touch detector with body contact based on the participants' actual dimensions and physical overlap; saved sense bindings convert in place without resetting worlds or historical evidence. Removed arbitrary collection-count ceilings on declaration registries, attributes, senses, contacts, memory references and manual save slots. Prompt planning options remain request-size bounded rather than limited to an ID-count prefix. Runtime/work, input validation and resource limits remain distinct from content cardinality; existing correctness and scalability gaps stay in the focused trackers.
 
 ## Action invocation and partial-fulfillment implementation
 
 
 Recorded DP01–DP06 scope under the existing PF owner. History preparation and bounded source buffers refine compact atomic persistence; the measured local SQLite worker is a PF10 subset, not a second database or an implemented general simulation worker. Runtime facts, performance evidence and deferred automated coverage remain in Architecture, Verification and Maintainer TODO respectively. The previous synchronous-SQLite wording is superseded for the local adapter; dense CPU/clock and broader qualification remain explicit.
 
-## Action reconciliation and current main
+## 2026-09-25 — Action/main semantic reconciliation
 
-Replayed the action/perception/persistence work onto a new review branch instead of rewriting the shared feature without a lease. Preserved main's agent rules, single-kind response schema, remembered-note references, spoken introductions, evidence-snapshot cognition, unblocked memory-pressure simulation, physical contact and content-count policy. Reconciliation moved episode creation ahead of acquisition evidence and removed the retired interpretation path. Review fixed opaque target decoding before grounding, nonverbal admission under speech-only restrictions, delayed/queued actor-target encounter pins, and maintenance wake acknowledgment. Exact new target pins reuse the existing bundled identity policy rather than claim a general recognition system. Runtime observations and remaining PostgreSQL/scale qualification are recorded in the existing owners.
+Replayed action and performance work against the current agent rules and main's knowledge, contact and memory-pressure contracts without rewriting the original shared feature branch. Delayed actor targets now reuse the knowledge owner's encounter lifetime rather than treating an entity ID as lasting recognition; old unpinned intents are retained but may need a fresh decision. Speech-only restrictions no longer discard unrelated nonverbal decisions. Shared Jev rubrics and the existing work/maintenance owners replace duplicate paths.
+
+Current facts, limited runtime evidence and remaining regression/INV/scale work are kept in [Architecture](architecture.md#reviewed-action-binding-and-approval-boundaries), [Verification](verification.md#action-reconciliation-review), [AC](maintainers/action-capabilities.md#reconciliation-review) and [PF](maintainers/performance.md#reconciliation-performance-follow-up). Production measurement remains PostgreSQL-first; no SQLite-only optimization or feature save reset was added.

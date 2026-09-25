@@ -5,20 +5,20 @@ PF00/PF01/PF02/PF03/PF04/PF05/PF08/PF09 include delivered work below. Remaining 
 This pass stops before multiplayer admission, per-player replication, the unattended-world toggle and verification with 100 agents, 100 players and thousands of animals. The local host's gameplay epoch mechanism is independent of future multiplayer controller admission. Native animals retain full simulation fidelity; dormancy and analytic updates remain gated on semantic equivalence.
 ## PF03 — Native CPU and incremental admission
 
-Memory retention/consolidation must never pause native time or user input. Do not reintroduce stored-memory count/byte pressure, candidate tiers or freeze-until-drained policy while optimizing memory execution. Request/provider envelopes remain bounded; useful chunking must preserve all selected sources and runtime fairness. CR02/CR03 own retention boundaries.
+- [x] Remove repeated attribute-definition proxy traversal and dense sight-cache sequential eviction, with matched snapshot replay digests and measured CPU/elapsed comparisons in [Verification](../verification.md#simulation-and-cognition-audit).
 
 Coordinate module dependencies and aggregate admission with [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); PF retains implementation and qualification.
 
 
 ## PF04 — Optional database isolation
 
-The current owner UI applies lower timeouts to read-only PostgreSQL history transactions; rows are materialized before larger actor-scoped projection. This is partial budget enforcement, not a separate connection or cancellation system.
+- [x] Eliminate redundant monthly billing-history fetch/parse work before considering another connection: share usage reads until accounting writes or month rollover, while leaving reservation authority uncached. Read-only PostgreSQL and local accounting lifecycle observations are recorded in Verification.
 
 Dependencies: PF01/PF02 and measured remaining contention.
 
 ## PF09 — Population work follows relevance
 
-Changed-state correctness includes per-actor interpretation/scheduler state; inspect topology/refinement and invalidation together. Dynamic content counts are not execution budgets. Prefer dirty scopes and bounded request/work streams over hard content-count ceilings, and never silently lose sources/contacts/obligations to meet a performance target.
+- [ ] Qualify the measured dense acquisition and moving-observer costs from the simulation/cognition audit: the 344-entity cold mixed fixture missed 3×, and 164 crowded entities had only 1.31× native headroom at 1×. Extend EPR02/EPR05 change-scoped work before claiming population capacity; retain real evidence and indivisible-step latency reporting.
 
 Coordinate module dependencies and aggregate admission with [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); PF retains implementation and qualification.
 - [ ] Profile affected-actor active-awareness index/edit scans and flat-array copy-on-write under growing history before paged active evidence or a new retained-state representation. Any grouping must retain exact source identities, audience, event-time knowledge and revocation. No lossless paging or asynchronous authoritative history projection is implemented by the bounded SQL-row buffer.
@@ -26,7 +26,10 @@ Coordinate module dependencies and aggregate admission with [EWF08](extensible-w
 
 ## Reconciliation performance follow-up
 
-- [x] Remove redundant maintenance recall materialization for an any-memory check and acknowledge only the inspected ActorWork generation. Keep a single pending-work owner in the director and shared Jev questions; no additional per-tick inference or scheduler was introduced.
-- [ ] Replace global changed-source checks with regional invalidation only after matched profiling; preserve old/new positions, geometry/senses, removal and body capability changes.
-- [ ] Preserve perception reuse across unrelated commands using relevant immutable dependencies rather than adding an unscoped cache. Current exact-snapshot cache is conservative but may redo work.
-- [ ] Qualify full PostgreSQL timer, persistence, HTTP/SSE and explicit no-network cognition/maintenance load under the [primary baseline policy](performance-profiling.md#primary-performance-baseline). Short pinned runtime observations are not a 30-minute soak, browser or dense-world capacity pass.
+Use the [PostgreSQL-first baseline](performance-profiling.md#primary-performance-baseline). This review retains the existing DP/PF optimizations and makes no population-capacity claim.
+
+- [x] Preserve new wakes during asynchronous maintenance reads by acknowledging the captured `ActorWork` generation; use the existing ordered evidence iterator for the any-memory query.
+- [ ] PF09: replace per-observer changed-source scans with scoped old/new-position invalidation only after matched profiling; moving sources must still invalidate stationary observers.
+- [ ] PF03/PF09: preserve reusable perception work across irrelevant command snapshots using exact dependency identity, without reading stale transforms or leaking private state. Do not add a writable second perception owner.
+- [ ] PF03/PF08: measure remaining entity-handle/frame reconstruction, retained-awareness copying and finalization on PostgreSQL-backed workloads before introducing regional indexes or paged evidence.
+- [ ] Qualify maintenance paging fairness and wake preservation, stationary/changed contact geometry and first-acquisition identity across restart and interleaved commands. Keep actual render latency and live model behavior separate from no-provider measurements.
