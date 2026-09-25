@@ -10,56 +10,49 @@ concurrency:
 jobs:
   review:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     env:
       AI_BUDGET_USD: '0'
+      OPEN_LEGEND_DATABASE_URL: ''
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Inspect pinned three-way reconciliation
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Apply reviewed three-way reconciliation in the disposable workspace
+        run: python .github/reconcile-action.py
+      - run: pnpm install --frozen-lockfile
+      - name: Format resolved files and build production source
+        run: |
+          pnpm exec prettier --write README.md apps/server/src/decision-context.ts apps/server/src/game-saves.ts apps/server/src/upgrade-world.ts docs/documentation-changelog.md packages/domain/src/kernel.ts packages/domain/src/perception-frame.ts packages/domain/src/contact-acquisition.ts
+          pnpm run build
+      - name: Describe the exact candidate
+        if: always()
         shell: python
         run: |
-          import urllib.request, tarfile, io, pathlib, subprocess, hashlib, json, re
-          root=pathlib.Path('/tmp/action-reconcile'); root.mkdir()
-          refs={'base':'3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238','main':'03105fed9209c126e4e69e9faeb4687f42d1e74a','action':'fdbd0413cdc75301401a20aad17b9fe534d654c4'}
-          roots={}
-          for name,ref in refs.items():
-            data=urllib.request.urlopen(f'https://codeload.github.com/Macrofold/OpenLegend/tar.gz/{ref}',timeout=60).read()
-            target=root/name;target.mkdir()
-            with tarfile.open(fileobj=io.BytesIO(data),mode='r:gz') as archive: archive.extractall(target,filter='data')
-            roots[name]=next(target.iterdir())
-          def files(folder):return {str(p.relative_to(folder)):p for p in folder.rglob('*') if p.is_file()}
-          maps={k:files(v) for k,v in roots.items()}
-          entries=[]; conflicts=[]; merged=[]
-          for path in sorted(set().union(*[set(m) for m in maps.values()])):
-            raw={k:(m[path].read_bytes() if path in m else None) for k,m in maps.items()}
-            b,m,a=(raw[k] for k in ['base','main','action'])
-            if m==b or m==a:continue
-            if a==b:
-              final=m
-            elif None in [b,m,a]:
-              conflicts.append(path);print('CONFLICT '+path+' add/delete');continue
-            else:
-              result=subprocess.run(['diff3','-m',str(maps['action'][path]),str(maps['base'][path]),str(maps['main'][path])],capture_output=True)
-              final=result.stdout
-              target=root/'merged'/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(final)
-              if result.returncode:
-                conflicts.append(path)
-                for block in re.findall(r'^<<<<<<<.*?^>>>>>>>[^\n]*',final.decode(),flags=re.M|re.S):print('CONFLICT '+path+'\n'+block)
-                continue
-              merged.append(path)
-              delta=subprocess.run(['diff','-u',str(maps['action'][path]),str(target)],capture_output=True)
-              print('CLEAN_MERGE '+path+'\n'+delta.stdout.decode())
-            sha=hashlib.sha1(b'blob '+str(len(final)).encode()+b'\0'+final).hexdigest() if final is not None else None
-            entries.append({'path':path,'sha':sha,'mode':'100644','type':'blob'})
-          manifest={'refs':refs,'overlayOnAction':entries,'merged':merged,'conflicts':conflicts}
-          (root/'manifest.json').write_text(json.dumps(manifest,indent=2))
-          print('RECONCILIATION_MANIFEST '+json.dumps(manifest))
-          with tarfile.open('/tmp/action-reconcile.tgz','w:gz') as archive:archive.add(root,arcname='action-reconcile')
+          from pathlib import Path
+          import hashlib,json,os
+          paths=json.loads(Path('.github/reconciled-paths.json').read_text())
+          entries=[]
+          for path in paths:
+            data=Path(path).read_bytes()
+            entries.append({'path':path,'mode':'100644','type':'blob','sha':hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest(),'bytes':len(data)})
+          Path('/tmp/reconciliation-candidate.json').write_text(json.dumps({'run':os.environ['GITHUB_RUN_ID'],'files':entries},indent=2))
+          print(Path('/tmp/reconciliation-candidate.json').read_text())
+      - name: Retain source and installed dependencies, never checkout credentials
+        if: always()
+        run: |
+          tar --exclude=./.git --exclude=./.data -czf /tmp/action-reviewed-workspace.tgz .
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: action-reconciliation-source
-          path: /tmp/action-reconcile.tgz
+          name: action-reviewed-workspace
+          path: |
+            /tmp/action-reviewed-workspace.tgz
+            /tmp/reconciliation-candidate.json
           compression-level: 0
           retention-days: 1
