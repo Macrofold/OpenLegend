@@ -1,4 +1,4 @@
-import { timed } from './performance.js';
+import { timed, timedSync } from './performance.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { DatabaseSync } from 'node:sqlite';
 import type { SqlDatabase } from './store.js';
@@ -20,13 +20,13 @@ export class SqliteDatabase implements SqlDatabase {
     if (this.context.getStore()) return operation();
     return this.run(() =>
       this.context.run(true, async () => {
-        this.db.exec('BEGIN IMMEDIATE');
+        timedSync('sqlite.begin', () => this.db.exec('BEGIN IMMEDIATE'));
         try {
           const result = await operation();
-          this.db.exec('COMMIT');
+          timedSync('sqlite.commit', () => this.db.exec('COMMIT'));
           return result;
         } catch (error) {
-          this.db.exec('ROLLBACK');
+          timedSync('sqlite.rollback', () => this.db.exec('ROLLBACK'));
           throw error;
         }
       }),

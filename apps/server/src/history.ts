@@ -6,6 +6,7 @@ import {
   type StorySelection,
 } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
+import { timed, timedSync } from './performance.js';
 import type { WorldState, WorldEvent, ConversationTransition } from '@open-legend/domain';
 import type { TranscriptPage, TranscriptItem } from '@open-legend/protocol';
 import type { SqlDatabase } from './store.js';
@@ -122,11 +123,13 @@ export class HistoryRepository {
       }
       const chunk = rows.slice(offset, offset + count);
       offset += count;
-      await this.db
-        .prepare(
-          `INSERT INTO ${table} VALUES ${chunk.map((row) => `(${row.map(() => '?').join(',')})`).join(',')}`,
-        )
-        .run(...chunk.flat());
+      await timed('history.write', () =>
+        this.db
+          .prepare(
+            `INSERT INTO ${table} VALUES ${chunk.map((row) => `(${row.map(() => '?').join(',')})`).join(',')}`,
+          )
+          .run(...chunk.flat()),
+      );
     }
   }
   async initialize() {
@@ -266,6 +269,32 @@ export class HistoryRepository {
       selection: Extract<StorySelection, { kind: 'candidate' }>;
     }[] = [];
     const policy = world.storyPolicy ?? defaultStoryPolicy();
+    // Commit-local indexes preserve first-match semantics without searching a retained array
+    // for every witness. No cache survives correction, rollback or a different world snapshot.
+    // docs/performance.md#compact-transactional-persistence
+    const awarenessIndexes = new Map<string, Map<string, string>>();
+    const forgottenIndexes = new Map<string, Set<string>>();
+    const forgotten = (actorId: string) => {
+      let ids = forgottenIndexes.get(actorId);
+      if (!ids) {
+        ids = new Set(world.experience?.forgotten[actorId] ?? []);
+        forgottenIndexes.set(actorId, ids);
+      }
+      return ids;
+    };
+    const perspectiveText = (actorId: string, event: WorldEvent) => {
+      let index = awarenessIndexes.get(actorId);
+      if (!index) {
+        index = timedSync('history.awarenessIndex', () => {
+          const values = new Map<string, string>();
+          for (const entry of world.experience?.awareness[actorId] ?? [])
+            if (!values.has(entry.eventId)) values.set(entry.eventId, entry.text);
+          return values;
+        });
+        awarenessIndexes.set(actorId, index);
+      }
+      return index.get(event.id) ?? event.text;
+    };
     const eventRows: unknown[][] = [],
       audienceRows: unknown[][] = [],
       perspectiveRows: unknown[][] = [];
@@ -282,10 +311,9 @@ export class HistoryRepository {
       const position = event.order ?? (Number(event.id.split('-').at(-1)) || event.sequence);
       eventRows.push([world.id, event.id, event.conversationId ?? null, position, encoded]);
       for (const actorId of new Set(event.audience)) {
-        if (world.experience?.forgotten[actorId]?.includes(event.id)) continue;
+        if (forgotten(actorId).has(event.id)) continue;
         audienceRows.push([world.id, event.id, actorId]);
-        const awareness = world.experience?.awareness[actorId]?.find((a) => a.eventId === event.id);
-        const text = awareness?.text ?? event.text;
+        const text = perspectiveText(actorId, event);
         const source: StorySource = {
           id: event.id,
           text,
@@ -300,7 +328,7 @@ export class HistoryRepository {
       // Only newly committed evidence can trigger a story; startup never replays history.
       if (previous && !previousIds?.has(event.id))
         for (const principal of this.principals) {
-          if (world.experience?.forgotten[principal.actorId]?.includes(event.id)) continue;
+          if (forgotten(principal.actorId).has(event.id)) continue;
           const source = perspectives.get(principal.actorId);
           if (!source) continue;
           const selection = selectStory(

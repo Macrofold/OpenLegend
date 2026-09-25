@@ -452,3 +452,11 @@ No unit or browser suites were written or run for this work. These are deferred 
 - [ ] RPR06: exercise independent full-server load generation, heartbeat expiry versus genuine overload, request identity/error classification, client crash/timeout, active SSE cleanup, bounded request lanes, cold setup and cumulative metric labels. Qualify long-run debt and the existing suspension heuristic under multi-second synchronous commits without changing offline-time policy silently.
 - [ ] RPR07: qualify delayed pending/queued anonymous-target recognition across loss/reacquisition, world restore and source revocation when the shared reference/definition lifetime contract is reconciled. Canonical entity IDs must not become indefinite recognition permissions.
 - [ ] RPR08: cover partial fulfillment through actual rebased player/NPC response admission (including note/name operations and exact no-AI paths), stored revision acceptance/rejection, changed work/manifest/status, and native output dependencies. Multi-command offered handles and general workflow result ports remain shared-contract work rather than silently selecting only a first step.
+
+## Dense persistence regression coverage
+
+Automated tests are deferred by owner instruction. Runtime/profile observations are not these suites.
+
+- [ ] DP-R01 — Cover indexed perspective first-match/fallback semantics, forgotten audiences, append plus simultaneous prior-awareness edits, corrections, story revocation, empty audiences and new observers. Compare complete durable history, not only row counts.
+- [ ] DP-R02 — Cover rollback/retry and journal/head CAS failures with commit-local prepared state; no rolled-back data or readiness may survive as authority.
+- [ ] DP-R03 — Cover bounded row/byte/parameter chunks, oversize single records, exact SQL order, variable field types and measured attribution capacity.

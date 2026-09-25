@@ -7,7 +7,7 @@ const samples = new Map<
 export function recordDuration(stage: string, milliseconds: number): void {
   let sample = samples.get(stage);
   if (!sample) {
-    if (samples.size >= 32) return;
+    if (samples.size >= 64) return;
     samples.set(stage, (sample = { count: 0, values: [], next: 0, totalMs: 0, maxMs: 0 }));
   }
   sample.count++;

@@ -706,15 +706,17 @@ export class SqliteStore implements GameRepository {
         const historyKey = `history-schema:${state.world.id}`;
         const historyReady =
           this.readyHistoryWorlds.has(state.world.id) || (await this.getIntegration(historyKey));
-        await this.history.project(
-          historyReady ? (historyProjection?.before ?? this.acceptedState?.world) : undefined,
-          historyProjection?.after ?? state.world,
-          historyReady
-            ? provenAppendCount(
-                (historyProjection?.before ?? this.acceptedState?.world)?.events ?? [],
-                (historyProjection?.after ?? state.world).events,
-              )
-            : undefined,
+        await timed('history.project', () =>
+          this.history.project(
+            historyReady ? (historyProjection?.before ?? this.acceptedState?.world) : undefined,
+            historyProjection?.after ?? state.world,
+            historyReady
+              ? provenAppendCount(
+                  (historyProjection?.before ?? this.acceptedState?.world)?.events ?? [],
+                  (historyProjection?.after ?? state.world).events,
+                )
+              : undefined,
+          ),
         );
         if (!historyReady) await this.putIntegration(historyKey, 1);
         const outcomes = new Map<
