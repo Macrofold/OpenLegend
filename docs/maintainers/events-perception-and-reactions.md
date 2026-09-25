@@ -4,7 +4,7 @@
 
 Use [SW04/SW08/SW09](spatial-world.md) for geometry, height-aware senses and camera exposure. Retain EPR scope, hysteresis, observer detail, coalescing and privacy gates here. Current coarse intelligible-only sound is not the full auditory-contact contract; do not broaden its exact-word audience to simulate a muffled unidentified sound.
 
-**Status:** proposed work; no item is complete merely because this tracker exists. Implement when requested. [Design](../events-perception-and-reactions.md) owns the contract; [research](../../archive/02-research/engine-perception-and-event-architectures.md) owns external evidence and the pinned source audit.
+**Status:** a native implementation slice is delivered below; unchecked broader contracts and qualification remain open. Implementation is not population or live-model acceptance. [Design](../events-perception-and-reactions.md) owns the contract; [research](../../archive/02-research/engine-perception-and-event-architectures.md) owns external evidence and the pinned source audit.
 
 This tracker owns the new stimulus/perception/reaction integration. PF retains general performance qualification, CR retains cognition/recall behavior, NC retains conversations/story, and SL retains save/load. Cross-reference their work; do not recreate completed actor, Narrator, history, or save systems.
 
@@ -51,10 +51,10 @@ Run relevant tests as each slice lands. EPR08 save semantics must be considered 
 
 **Dependencies:** none. Coordinate with PF00/PF09.
 
-- [ ] Record the current commit and locate the actual implementations and completed work. Confirm the active no-legacy-support policy; use disposable current-format saves for experiments.
+- [ ] Record the current commit and locate the actual implementations and completed work. Confirm the active identity-preserving in-place upgrade policy; use disposable worlds for experiments.
 - [ ] Trace one directed speech request, one living-actor encounter, one ordinary-object acquisition, one need-protection episode, one reflection wakeup, and one story-selector decision. Separate physical occurrence, evidence, wakeup, model dispatch, and effect admission.
 - [ ] Add bounded counters to existing profiling: full entity traversals, spatial builds, query candidates, exact sense tests, event-audience candidates, actor input scans, retained experiences inspected, accepted/deferred opportunities, and queue age. No per-counter SQL writes.
-- [ ] Record current numerical thresholds and their distinct policy roles. Preserve existing survival, sleep, model gating, cooldown, and urgent-single-refresh behavior unless a later task explicitly changes the documented semantic boundary.
+- [ ] Record current numerical thresholds and their distinct policy roles. Preserve existing survival, sleep, model gating, unchanged-opportunity suppression, and urgent-single-refresh behavior unless a later task explicitly changes the documented semantic boundary.
 - [ ] Record the current save/restore invalidation hooks and authority-generation identity. Find existing startup/cursor recovery rather than inventing another durable queue.
 - [ ] Resolve tracker overlap: PF09 links to EPR02/EPR05/EPR10 for this subsystem; PF02 links to EPR05 for remaining trigger intake. Do not duplicate detailed task bodies or alter existing completed states.
 
@@ -132,13 +132,13 @@ Coordinate EWF05 sense evidence through [EWF](extensible-world-foundation.md); e
 **Dependencies:** EPR03–EPR04; coordinate PF02/PF09 and CR10.
 
 - [ ] Extend the existing `ActorWork`, not a second scheduler. Feed precise accepted changes into actor-specific dirty reasons and due state.
-- [ ] Remove general `telemetryRevision` from cognitive invalidation after replacing any genuinely required dependencies. Opening diagnostics, changing unrelated UI state, or finishing unrelated logging must not rescan everyone's perception.
-- [ ] Avoid recomputing every actor's nearby visibility before checking per-actor eligibility. Cheap dirty/deadline state selects candidates; only sensory changes cause sensory recomputation.
-- [ ] Replace full retained-experience reconstruction for trigger selection with bounded new-awareness/typed-reason consumption. Use existing durable order/cursors; full recall remains available for actual context assembly.
+- [x] Remove general `telemetryRevision` from cognitive invalidation after replacing any genuinely required dependencies. Opening diagnostics, changing unrelated UI state, or finishing unrelated logging must not rescan everyone's perception.
+- [x] Avoid recomputing every actor's nearby visibility before checking per-actor eligibility. Cheap dirty/deadline state selects candidates; only sensory changes cause sensory recomputation.
+- [x] Replace full retained-experience reconstruction for trigger selection with bounded new-awareness/typed-reason consumption. Use existing durable order/cursors; full recall remains available for actual context assembly.
 - [ ] Adapt direct speech, autonomous evidence, private thresholds, exposure changes, and reminders into one intake. Preserve interactive priority and ensure one directed turn does not also create duplicate autonomous admission for the same response.
 - [ ] Preserve fairness, current global concurrency, cancellation, and the explicitly bounded urgent context-refresh policy. Do not introduce automatic provider-failure retries or unlimited supersession loops.
 - [ ] Keep attempted-opportunity and consumed-evidence state distinct. A coalesced or deferred item is not completed evidence.
-- [ ] Make dirty-state acknowledgement generation-aware: a wakeup arriving while processing must remain pending after that run finishes. A stale run cannot clear newer dirty reasons.
+- [x] Make dirty-state acknowledgement generation-aware: a wakeup arriving while processing must remain pending after that run finishes. A stale run cannot clear newer dirty reasons.
 - [ ] Hold paid wakeups until their required input evidence is durably available. Reuse after-commit signaling and startup reconciliation; do not add a new broker.
 
 **Tests:** idle steady world produces no repeated visibility/history scans beyond explicitly due work; unrelated actor changes stay scoped; new autonomous evidence is eligible without an actor cooldown; new wake during completion is not lost; commit-before-notification crash recovers; uncommitted rollback schedules no paid work; explicit speech has one admitted response; no model credentials never block native work.
@@ -244,3 +244,24 @@ Initial attribution can be short. Larger tail-percentile or soak claims require 
 Report the actual commit, completed EPR IDs, touched canonical docs, native/fixture checks, unrun live checks, measured before/after counters and timings, unresolved product policies, and deferred gates. Do not label a proposed system implemented because the documents were added.
 
 The coarse-contact slice adds saved private onset/detail/end episodes, receiver-aware default vision/hearing adapters and `felt`/`internal` awareness modalities through the existing intake path. This is partial EPR01/EPR04 integration, not the generalized episode, reaction-disposition, timer or change-fed scheduling service. [Current scope](../architecture.md#registered-senses-and-coarse-contact) and [native evidence](../verification.md#extensible-attribute-runtime) retain those distinctions; the existing task exit criteria remain open.
+
+## Delivered native slice and remaining integration
+
+- [x] Observer-private visual acquisition through the existing event/experience owner; observed modality, meaningful living contacts and ordinary-object non-trigger policy retained. Real speech/gestures remain separate outward events.
+- [x] Bounded batches of at most 128 new awareness entries and final-phase sealing of newly owned evidence; no raw-state append shortcut or dropped witness history.
+- [x] Reuse native exposure membership when the relevant observer/source/map/sense facts are unchanged; preserve stationary-observer source-motion invalidation, current coarse feature changes, asleep/sightless behavior and same-version baselines.
+- [x] Share immutable inert-source descriptors; use existing current observations for ongoing stimuli instead of duplicating an event every tick.
+- [x] Reuse `ActorWork` with frozen-snapshot deduplication, at most 64 eligible schedule reads per pass, rotating inspected tickets and generation-safe wake acknowledgements. Eligible trigger selection uses ordered unconsumed evidence instead of full recall reconstruction.
+- [x] Goal/learned-technique changes can create an ordinary reconsideration opportunity under existing Jev routing, current eligibility, fairness and budgets. They do not directly buy generation or grant private knowledge.
+- [x] Cooperative native checkpoints preserve full-step atomicity and event-time evidence while allowing host I/O to run. These are not later-game-tick delivery or a second simulation owner.
+- [ ] Complete the general EPR01 typed source/episode interfaces, arbitrary sensory-detail evaluators, owner-private threshold/reminder generalization, source-correction cursors and feature-specific policy. The native finite feature adapter is not those systems.
+- [ ] Replace the remaining lightweight per-mind/per-entity signature pass and conservative global inventory/manifest invalidation only when profiles justify a mutation-fed regional index. General external-event audience discovery still uses the exact existing path, not a speculative reverse graph.
+- [ ] Qualify cold rotation of own-response provenance, fairness under long-running provider work, all-speed long-session/recovery and concurrent editor mutations. The current shared workflow's finite concurrency and protected native survival are unchanged.
+
+Current facts are in [Architecture](../architecture.md#change-driven-exposure-and-reaction-intake); actual runtime/performance evidence is in [Verification](../verification.md#perception-performance-implementation). Deferred automated cases remain in [TODO](TODO.md#perception-performance--deferred-automated-validation). Do not mark the broader EPR00–EPR10 acceptance complete from these native observations.
+
+## Rebased implementation boundary
+
+Private acquisition batching, scalar frame capture, category-local exposure reuse, unchanged-episode reuse and status-aware perception loss are implemented. The existing knowledge owner retains observer labels and continuous recognition; shared descriptors do not grant shared knowledge. Current-evidence coalescing follows main rather than an oldest-history dispatch backlog. These implementations do not complete EPR's richer sense semantics, regional mutation-fed indexes, reminders or full failure/scale matrix.
+
+Measured kernel/server work and residual persistence gates belong to [PF](performance.md#perceptionevidence-and-burst-delivery); automated regression work remains in [TODO](TODO.md#rebased-actionperception-regression-todos). No new scheduler, sensory registry or inference loop was introduced.

@@ -17,6 +17,7 @@ const propertyDescriptions: Record<ItemDefinition['properties'][number], string>
 
 const activities: Record<Action['type'], string | undefined> = {
   pickup: 'picking up items',
+  follow: 'following',
   move: 'moving',
   gather: 'gathering',
   prepare: 'preparing materials',

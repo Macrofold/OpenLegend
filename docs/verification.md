@@ -707,3 +707,139 @@ Manual isolated runtime execution with the actual WorldService, response admissi
 One live direct `gpt-5.6-luna` call answered a name question with “My name is Ada.” and `selfIntroduction: Ada`. The production bound schema and native response admission accepted it; the player’s projected name became Ada. Usage was 4,514 input and 73 output tokens; estimated cost $0.00121595, no uncertain completion or retry. This is one behavioral example, not broad language-quality qualification.
 
 A synthetic speech-fan-out exercise (12 executions per mode/population) measured plain/introduction median 2.47/3.30 ms with 25 additional listeners and 13.79/19.52 ms with 200. The introduction maximum at 200 was 146.23 ms under concurrent workspace load. This isolates native event reception, not end-to-end simulation or provider throughput. The isolated browser walkthrough was unavailable: IPv6 loopback was blocked by the browser and a separate-browser connection timed out. Server projection and persistence were executed directly. Production TypeScript/Vite build, generated-config validation, focused formatting and documentation link checks passed; the existing bundle-size warning remains. No automated tests were authored or run; deferred cases are in TODO. Local evidence: `/tmp/ol-introductions-runtime.log` and `/tmp/ol-introductions-provider.log`.
+
+## Action capability native slice
+
+**Qualified scope:** production TypeScript/client build plus direct native and real loopback-HTTP runtime exercises, with injected semantic outputs and paid execution disabled. [Machine-readable results](verification/action-capability-smoke.json) retain the actual outcomes and scenario parameters from [run 35949420195](https://github.com/Macrofold/OpenLegend/actions/runs/35949420195). The resulting source commit is `cf81000741ae011011a260e4547c5faabfd1323b`; subsequent documentation/CI cleanup does not change those runtime sources.
+
+`pnpm run build` completed, including `tsc --noEmit -p tsconfig.build.json` and the Vite production build. The manual runtime exercise observed: exact coordinate text binding and completed native travel with zero semantic calls; an uncertain omitted-stealth revision retained without physical action; native acceptance starting follow; pending approval retained through a real SQLite/server restart; approval through `/api/command`; follow stopping once the target was actually outside sight; explicit cancellation; and exclusion of the private follow cursor from another actor's observation. The strict provider-schema projection reported no optional object-property omissions.
+
+The player HTTP action request reached its actual durable native-plan admission. A prior exploratory run exposed its missing response-readiness marker; the recorded successful run includes the corrected provider-independent admission. A pending revision's action component remains unaccepted until approval even though the interpretation workflow has completed. This does not claim that a live model chose an appropriate omission.
+
+### Performance exercises
+
+These are measured native advance times on one GitHub-hosted Ubuntu runner using Node v22.23.2. CPU model and full hardware details were not retained. The follower workload used 180 one-second advances; the existing mixed and gem scenarios used their saved speed-3 configuration and no warmup. Do not compare them as equal amounts of simulated work or infer a supported population capacity.
+
+| Workload                                       | Measured advances | Median  | p95     | Maximum   | Total      |
+| ---------------------------------------------- | ----------------- | ------- | ------- | --------- | ---------- |
+| 50 active followers; one moving fixture leader | 180               | 4.69 ms | 7.15 ms | 10.24 ms  | 892.93 ms  |
+| Mixed fixture; 344 total entities              | 180               | 2.35 ms | 3.42 ms | 558.12 ms | 1001.55 ms |
+| 500 added gems; 514 total entities             | 180               | 3.39 ms | 6.23 ms | 77.48 ms  | 751.70 ms  |
+
+All 50 fixture followers remained active at the end. Existing `scripts/stress-native.ts` scenarios completed within their configured limits. The mixed fixture retains a substantial cold spike; this slice does not claim to solve pre-existing encounter/initialization cost or demonstrate hitch-free simulation. There were zero paid model calls during these exercises.
+
+### Not qualified
+
+No unit or browser suites were written or run for this task; requested automated cases are in [TODO](maintainers/TODO.md#action-capability-slice-deferred-automated-coverage). A full test-inclusive typecheck encountered pre-existing fixture/API/provenance/old-goal typing errors; the production build excludes those test files and passed. The new Character panel was built, while its HTTP lifecycle was exercised; visual/browser interaction and accessibility remain unqualified.
+
+Live Jev routing quality, live LLM partial-fulfillment judgment, and a live autonomous actor's decision to accept/decline are not established by the injected outputs. Per-actor future inference, broad cross-constitution capability support, general workflow composition and invention integration remain their existing AC/AG/INV tasks. Paid model usage for this implementation task was $0.
+
+### Explicit target admission follow-up
+
+The final native guard rejects contradictory structured targets before exact-text binding can queue work or create a misleading approval. Production build and a direct native runtime exercise completed in [run 35950355436](https://github.com/Macrofold/OpenLegend/actions/runs/35950355436); the matching target still starts native following. Results are retained under explicitTargetAdmission in the existing [action evidence](verification/action-capability-smoke.json). No unit/browser suite or paid provider was used. This small source follow-up is separate from the earlier measured stress workloads.
+
+## Action capability review
+
+**September 24, 2026 UTC.** Review baseline: `35a448e6a2c55f2b9f62256403c364420cac1ef4`. Qualified source slices are `edf4fe8`, `f5b6821` and `4e2bb53`; the closeout adds a smaller fulfillment-review packet without changing the native executor. Production TypeScript checking and client builds passed in the isolated GitHub runner. Unit/browser suites were neither written nor run, as requested. No live Jev/LLM calls were made and paid model usage was **$0**. Semantic stages below use explicitly injected outputs; these are observed runtime outcomes, not behavioral accuracy or full acceptance claims.
+
+### Actual runtime scope
+
+- [Core exercise](verification/action-review-core.json): exact coordinate movement reached its destination with zero semantic calls; same prose with different target/mode retained separate pending records; a newly queued plan invalidated an old replacement approval before movement started; one operation's binding could not authorize a second operation.
+- [Service and semantic-boundary exercise](verification/action-review-runtime.json): an optimistic generated action with no reported stealth omission was held when the independent classifier could not establish full fulfillment; documented tolerable omissions remained partial; a later simulated optional provider outage retained the earlier grounded move; repeated identical operations retained separate identities with no repeated inference; explicit player retries reached classification again. Real loopback HTTP admission, current public-state/patch projection and SQLite shutdown/restart retained pending approval without exposing its commands.
+- [Final native exercise and matched profiles](verification/action-review-final.json): a lost target could not replace existing running work; enqueued preparation remained admissible before future supplies arrive; an explicit target survived beyond the first 64 entries in a 92-entity observation; native following remained active under the isolated workload below.
+- [Closeout packet exercise](verification/action-review-closeout.json): the compact reviewer packet still contains decoded native behavior and retains the uncertain revision for approval. Packet size and classifier/generator counts are recorded explicitly. This does not measure live providers.
+
+### Matched-host native stress
+
+Both revisions ran on the same Ubuntu GitHub runner, Node v22.23.2, Intel Xeon 6973P-C. The unchanged built-in scenarios each contain 180 measured one-second native advances, zero warm-up and requested speed 3. Baseline is the pre-review commit above. These are single paired measurements, not statistically established speedups. Final entity/event/awareness counts matched across each pair; that is not proof of complete behavioral equivalence.
+
+| Scenario             | Baseline total ms | Reviewed total ms | p95 baseline / reviewed ms | Maximum baseline / reviewed ms |
+| -------------------- | ----------------- | ----------------- | -------------------------- | ------------------------------ |
+| mixed (344 entities) | 1272.80           | 1179.83           | 4.41 / 4.12                | 687.35 / 659.51                |
+| gems (514 entities)  | 848.06            | 847.87            | 5.39 / 5.94                | 92.12 / 89.90                  |
+
+The isolated fifty-follower workload admitted all 50 actors and retained all 50 activities after 180 one-second advances. Median was 3.25 ms, p95 6.19 ms, maximum 18.16 ms, total 687.62 ms. It deliberately disables cognition/memory and uses repeated fixture positions to isolate native controllers; it is not crowd collision, social-memory, browser, persistence or end-to-end population qualification.
+
+**Remaining performance limitation:** the mixed scenario has a large first-exposure encounter/event/awareness spike in both baseline and reviewed revisions. Its reviewed native headroom including that cold work is only 0.85 at requested 3x, below the required 1 even before server/persistence work. `updateEncounters`, event recording and draft finalization appear in the profiles. No claim of sustained population capacity or hitch-free startup is justified. PF/EPR own reducing this cost while preserving audience, event and knowledge semantics. The independent earlier-run raw profile in the service exercise has different timings and is not substituted for this matched comparison.
+
+### Qualification still outstanding
+
+Live Jev/LLM fidelity and threshold calibration; actual NPC acceptance decisions; browser interaction/accessibility and UI-scope races; full crash/permission/replay matrix; PostgreSQL/manual-save variants; general constraints/roles/parameter questions; definition-specific dependency invalidation; and invention/workflow integration remain open in [AC](maintainers/action-capabilities.md#delivered-scope-and-remaining-work), [TODO](maintainers/TODO.md#action-review-regression-todos) and [PF](maintainers/performance.md#action-capability-review-observations). Existing test fixtures need the current schema 11 rather than legacy conversion. Native point movement/follow is implemented, not the entire action repertoire.
+
+Temporary branch-only review runners are removed at closeout and the original CI workflow is restored. No test suite was disabled permanently, and `main` was not changed by this review.
+
+## Perception performance implementation
+
+Production TypeScript/Vite builds and ad hoc native/service exercises were run; no unit or browser suite was written or run and paid model usage was $0. These results do not establish live Jev/LLM quality, PostgreSQL behavior, browser responsiveness or production population capacity.
+
+The [private-acquisition report](verification/perception-private-batching.json) records the intentional audience correction: mixed-scene awareness fell from 31,756 to 3,474 with the same 3,254 event count. The [exposure report](verification/perception-exposure-reuse.json) verifies unchanged visibility reuse, stationary-source feature changes, moved-source invalidation and same-version rebaselining. The [intake report](verification/perception-intake.json) includes 1,001 identical-snapshot refreshes with two actor inspections, preservation of a newer wake and 1,000 one-record lookups over 20,000 retained synthetic records. Synthetic oversized lookup history is not a gameplay backlog-capacity claim.
+
+The [cooperative report](verification/perception-cooperative.json) compares complete native transition bytes with synchronous execution, without changing the frozen input; timer callbacks run during a cold-exposure burst. Its geometry caches were warmed by the synchronous oracle, so it is not an independent cold-host latency measurement. The [service report](verification/perception-service.json) exercises real loopback HTTP, queued native cancellation, full-step publication, SQLite restart and 130-mind ticket pagination. Its timers and fixture data are not a browser suite.
+
+The [final matched-host report](verification/perception-final-performance.json) alternates original `0582e86` and final code in separate processes on one runner, three cold runs per scenario, plus a warm run and a bounded larger scene. Profiler overhead is included. Below are medians across the three run-level summaries, **not pooled latency percentiles**; headroom uses the scenario's requested 3× rate and excludes database, browser and inference costs.
+
+| Scenario | Build  | Total ms, 180 advances | Run p95 ms | Run maximum ms | Native headroom |
+| -------- | ------ | ---------------------: | ---------: | -------------: | --------------: |
+| mixed    | before |                 2041.6 |       6.51 |         1224.3 |            0.49 |
+| mixed    | after  |                 1060.6 |       5.49 |          358.0 |            0.94 |
+| gems     | before |                 1353.0 |       9.07 |          175.7 |            0.74 |
+| gems     | after  |                  661.2 |       4.53 |          143.9 |            1.51 |
+
+Cold maxima, warm throughput, longest cooperative slices and full-stack command latency are separate measures. No promise that every native suboperation fits eight milliseconds is made. Remaining indivisible finalization/path/projection/commit work and larger-world qualification stay in PF/EPR. Private-acquisition audience/evidence differences are intentional; old broadcast-event digest equality is not the correctness oracle.
+
+### Rejected optional capture experiment
+
+An additional attempt to replace `current(world.entities)` with per-entity reads compiled and matched complete transition digests over a 200-step native trace, but the warm gem workload failed its 30-second deadline during measured advances. The change was **not committed to runtime source**. The preceding qualified implementation and its final matched-host report remain the current result; do not claim scalar-only actor capture or extrapolate the short trace into performance safety. The [rejection record](verification/perception-capture-deferred.json) preserves the exact scope. Investigate draft/proxy allocation and warm-path behavior before trying that optimization again.
+
+The full-package warm mixed run did not show a throughput improvement: approximately 2,959 ms before versus 2,989 ms after across 600 measured advances, with run p95 5.77 ms versus 7.43 ms. Cold-burst gains must not be presented as a universal steady-state speedup. The larger 612-entity scene produced 61,135 events and 66,083 awareness records, took approximately 8.21 seconds for 180 advances and had a 4.46-second cold maximum; native headroom at requested 3× was 0.12. This is a measured failing capacity case, not 100-observer qualification.
+
+## Rebased action and perception performance
+
+The feature was rebased onto `fc01e19` with completed work consolidated; the original history is retained at `backup/action-capabilities-before-main-20260924`. [Rebase record](verification/action-perf-rebase.json) records the actual operation and production build. Main's in-place upgrade, generic status effects, observer knowledge/short references, item actions and current-evidence/no-fixed-cooldown semantics are retained. `3be6601` is the rebased pre-optimization baseline, not the pre-main feature tip.
+
+[Final native profiles](verification/action-perf-final-native.json) compare the same fixed-step scenarios on one runner. Cold runs use 180 advances; warm runs use 30 warm-up and 600 measured advances. These are one matched pair per case, not pooled tail qualification, and CPU-profiler overhead is included. Dense has 614 entities and was configured at 1× for this report; mixed/gems use 3× for the reported headroom denominator. Do not compare unnormalized headroom across these cases.
+
+| Workload   | Total before → after | p95 before → after | Maximum before → after | Equal final native digest |
+| ---------- | -------------------: | -----------------: | ---------------------: | ------------------------- |
+| mixed-cold |       1488 → 1030 ms |     9.45 → 5.79 ms |           266 → 184 ms | True                      |
+| mixed-warm |       4398 → 3073 ms |     9.27 → 6.27 ms |             17 → 17 ms | True                      |
+| gems-cold  |         967 → 791 ms |     6.33 → 5.01 ms |            109 → 78 ms | True                      |
+| gems-warm  |       2906 → 2369 ms |     5.78 → 4.55 ms |              11 → 8 ms | True                      |
+| dense-cold |       8922 → 4460 ms |   29.14 → 13.17 ms |         3787 → 2329 ms | True                      |
+| dense-warm |      76703 → 9932 ms |  190.06 → 21.08 ms |           277 → 103 ms | True                      |
+
+[Full-server summary](verification/action-server-summary.json) and its linked raw small/mixed/dense reports measure real timer scheduling, SQLite, SSE and independent-process command/state/presence load. Each speed phase is 15 seconds, with later phases continuing the same world. The small scene sustained requested 1×/3×/8×. Mixed throughput improved but did not sustain 3× or 8×; the dense cold case remains substantially below capacity. No storage error, memory-backlog stop or client exception was reported in the accepted runs. Command-tail changes are not uniformly improvements, and approximately 30 successful commands per phase do not establish p99 or soak behavior.
+
+The first attempted server measurements omitted presence heartbeats and paused correctly after twelve seconds. They were replaced by continuous-presence measurements; no capacity claim uses that paused interval. The accepted dense report also records excluded long-callback time: it does not qualify the suspension detector under heavy synchronous persistence. Nominal wall-time achieved speed, not only admitted clock time, is reported.
+
+[Integration execution](verification/action-perf-integration.json) covers observer-scoped names, status/perception/recognition loss, follow capability loss, identity-preserving raw-source upgrade and frozen-owned-evidence edits. The [pending-intent upgrade exercise](verification/action-perf-pending-upgrade.json) preserves old unresolved requests without granting replacement authority, retains exact saved alternatives and rejects malformed present values. [Final static review](verification/action-perf-static-review.json) and the closeout record separate build/runtime observations from automated acceptance. No unit/browser suite was written or run; automated regression TODOs remain outstanding. Provider cost is zero and live-model judgment quality is not measured.
+
+The [finalization experiment](verification/action-perf-finalization.json) was subsequently reverted: it preserved outcomes but gave no decisive broad benefit and introduced an event-prefix scan. The retained changes are owned-evidence freezing, removal of detached awareness snapshots, live scalar capture, independent object/living reuse and unchanged-acquisition fast paths. [Density](verification/action-perf-density.json) and [exposure](verification/action-perf-exposure.json) show intermediate pairs on their own hosts; their percentages must not be multiplied.
+
+Remaining costs are real: dense source/awareness construction, immutable finalization, JSON/history encoding and synchronous SQLite transaction work, plus per-source/per-mind signatures. PF retains long soaks, PostgreSQL, browser/rendered movement, cognition fixtures, committed-only isolation for off-thread/async work and large-population qualification. Existing private evidence must not be discarded or made public to meet a latency target.
+
+## Dense persistence implementation
+
+**Scope:** production builds, actual native execution, disposable SQLite/PostgreSQL history, worker failure/reopen and bounded real HTTP/SSE/timer workloads. No unit/browser suites were written or run and no paid model API calls were made. The worker does not change the accepted world/save schema, durability policy or underlying database.
+
+### Measured stages
+
+- [Linear history lookup](verification/persistence-linearization.json): matched on one AMD EPYC 9V74 runner, dense required-history projection dropped from 2,008/1,961 ms to 1,078/1,034 ms across two fresh database iterations. Full native-world and three required-history-table hashes matched; edit, forgetting and rollback exercises passed. This is a history-stage result, not a whole-server speedup.
+- [Bounded construction](verification/persistence-bounded-summary.json) ([full record](verification/persistence-bounded.json)): matched on one EPYC 7763 runner, dense first native advance was 3,292 -> 2,662 ms. Bounded history construction was slightly slower in isolation (1,056/973 -> 1,112/1,053 ms). Phase-end main-heap samples were 815 -> 349 MB; this is not a measured peak or a multi-run memory guarantee. Source hashes remained equal.
+- [SQLite isolation](verification/persistence-worker-summary.json) ([full record](verification/persistence-worker.json)): matched 15-second dense cases reduced the longest event-loop delay from 2,684 to 803 ms. Dense command p95 worsened from 302 to 527 ms, maximum from 5,187 to 5,417 ms, and achieved speed from 0.075x to 0.060x. Retaining the worker is an isolation decision, not a dense throughput claim. Isolated history time was essentially unchanged/slightly worse; no source/evidence was dropped.
+
+Do not multiply percentages across these different runs/machines. Each comparison's input commit, hardware, workload, raw values and limitations remain in its report. JavaScript `history.sourceBuild` excludes batch-write wait but can include slow-path edit reads; it is not a pure CPU counter. SQL worker timings separate remote execution from request/queue/wait time.
+
+### Command load and recovery
+
+The 60-second small-world 1x run completed **2,401 successful commands**, p50 7.54 ms / p95 14.42 ms / p99 20.03 ms / maximum 37.02 ms, achieving 0.9998x. The [reviewed 30-second 8x run](verification/persistence-review-summary.json) completed **1,200 successful commands**, p50 9.65 ms / p95 17.86 ms / p99 24.47 ms / maximum 47.33 ms, achieving 7.983x. Both used real native timing, SQLite, SSE and an independent HTTP load process with presence heartbeats, and recorded no client/storage/backlog errors. Neither is browser-rendering, multi-player or live-cognition acceptance; the code intentionally disables providers.
+
+[Worker review](verification/persistence-worker-review.json) covers committed-only external reads, nested transaction use, rollback, prepared-statement schema invalidation, actual worker termination/reopen, bad startup, repeated close, bounded queued admissions, nested-close refusal and detached callbacks losing transaction authority. A million-row recursive SQL calculation allowed the main event loop to continue. This is ad hoc runtime evidence, not the deferred crash/race suite.
+
+[PostgreSQL comparison](verification/persistence-postgres.json) used a disposable loopback PostgreSQL 16.15 service and worker SQLite. Small and dense native inputs produced identical required event/audience/perspective tables after normal writes and after edits/forgetting; rollback preserved prior data. The dense single projection measured 1,127 ms on in-memory SQLite versus 3,742 ms on the Docker PostgreSQL instance. These different storage configurations and tiny sample counts are not a database-product benchmark or full PostgreSQL server acceptance.
+
+### Remaining limits
+
+The [dense warm native run](verification/persistence-review-stress.json) completed 600 advances after 30 warm-up advances with 614 entities and 67,864 awareness records in 13,266 ms (p95 27.46 ms; maximum 130.42 ms), native 1x headroom 0.754. The workload is warm with retained acquisition history, not a long-session soak. Perception-frame work, draft finalization and proxy traversal remain prominent. It does not meet dense capacity.
+
+No excluded callback-gap time was recorded in the measured worker dense case, but the old suspension heuristic is unchanged and not qualified for arbitrary multi-second main-thread stalls. Chunked active evidence, asynchronous authoritative history projection, a simulation worker, read replicas and schema changes were not implemented. Required durable history stays atomic. Longer repeated soaks, full-server PostgreSQL/browser/cognition and broad failure coverage remain open in PF/DP and [deferred regression coverage](maintainers/TODO.md#dense-persistence-regression-coverage).

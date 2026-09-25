@@ -1,11 +1,13 @@
 import {
   controlledEntityId,
-  appendedEventCount,
   defaultStoryPolicy,
   selectStory,
   type StorySelection,
 } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
+import { recordDuration } from './performance.js';
+import { prepareHistory } from './history-preparation.js';
+import { HistoryBatch } from './history-batch.js';
 import type { WorldState, WorldEvent, ConversationTransition } from '@open-legend/domain';
 import type { TranscriptPage, TranscriptItem } from '@open-legend/protocol';
 import type { SqlDatabase } from './store.js';
@@ -102,32 +104,6 @@ export class HistoryRepository {
         "SELECT id FROM history_events WHERE world_id=? AND json_extract(payload, '$.data.responseId')=? LIMIT 1",
       )
       .get(worldId, responseId));
-  }
-  private async insertRows(
-    table: 'history_events' | 'history_audiences' | 'history_perspectives',
-    rows: unknown[][],
-  ) {
-    // Stay below SQLite's portable parameter limit and bound encoded statement payloads.
-    for (let offset = 0; offset < rows.length; ) {
-      let bytes = 0,
-        count = 0,
-        parameters = 0;
-      for (let index = offset; index < rows.length; index++) {
-        const row = rows[index]!;
-        const size = Buffer.byteLength(JSON.stringify(row));
-        if (count && (bytes + size > 262144 || parameters + row.length > 900)) break;
-        bytes += size;
-        parameters += row.length;
-        count++;
-      }
-      const chunk = rows.slice(offset, offset + count);
-      offset += count;
-      await this.db
-        .prepare(
-          `INSERT INTO ${table} VALUES ${chunk.map((row) => `(${row.map(() => '?').join(',')})`).join(',')}`,
-        )
-        .run(...chunk.flat());
-    }
   }
   async initialize() {
     await this.db.exec(`
@@ -226,7 +202,12 @@ export class HistoryRepository {
     await this.db.prepare('DELETE FROM history_events WHERE world_id=? AND id=?').run(worldId, id);
   }
   /** Runs inside the authoritative commit transaction. No paid work and no imagined legacy sources. */
-  async project(previous: WorldState | undefined, world: WorldState, appendCount?: number) {
+  async project(
+    previous: WorldState | undefined,
+    world: WorldState,
+    appendCount?: number,
+    prepared?: ReturnType<typeof prepareHistory>,
+  ) {
     // The current host has one principal; resolve its perspective from the saved binding.
     if (this.bindLocalPrincipal) {
       this.principals = [{ ownerId: 'local-player', actorId: controlledEntityId(world) }];
@@ -243,22 +224,16 @@ export class HistoryRepository {
         await this.saveStory(world.id, job);
       }
     }
-    // Re-prove the prefix here: a caller hint never authorizes overwriting history.
-    const fastAppend =
-      previous &&
-      appendCount !== undefined &&
-      appendedEventCount(previous.events, world.events) === appendCount;
-    let changed: WorldEvent[];
-    if (fastAppend) changed = world.events.slice(previous!.events.length);
-    else {
-      const old = new Map(previous?.events.map((event) => [event.id, event]));
-      const current = new Set(world.events.map((event) => event.id));
-      for (const id of old.keys()) if (!current.has(id)) await this.removeEvent(world.id, id);
-      changed = world.events.filter((event) => old.get(event.id) !== event);
-    }
-    const previousIds = !fastAppend
-      ? new Set(previous?.events.map((event) => event.id))
-      : undefined;
+    // Prepared data is reusable only for its exact frozen snapshots; mutable callers use live preparation.
+    const inputs =
+      prepared?.world === world &&
+      prepared.previous === previous &&
+      Object.isFrozen(world) &&
+      (!previous || Object.isFrozen(previous))
+        ? prepared
+        : prepareHistory(previous, world, appendCount);
+    const { fastAppend, changed, removed, previousIds, forgotten, perspectiveText } = inputs;
+    for (const id of removed) await this.removeEvent(world.id, id);
     const candidates: {
       event: WorldEvent;
       position: number;
@@ -266,9 +241,8 @@ export class HistoryRepository {
       selection: Extract<StorySelection, { kind: 'candidate' }>;
     }[] = [];
     const policy = world.storyPolicy ?? defaultStoryPolicy();
-    const eventRows: unknown[][] = [],
-      audienceRows: unknown[][] = [],
-      perspectiveRows: unknown[][] = [];
+    const batch = new HistoryBatch(this.db);
+    const buildStarted = performance.now();
     for (const event of changed) {
       const encoded = JSON.stringify(event);
       if (!fastAppend) {
@@ -280,12 +254,19 @@ export class HistoryRepository {
       }
       const perspectives = new Map<string, StorySource>();
       const position = event.order ?? (Number(event.id.split('-').at(-1)) || event.sequence);
-      eventRows.push([world.id, event.id, event.conversationId ?? null, position, encoded]);
+      const eventFlush = batch.add('history_events', [
+        world.id,
+        event.id,
+        event.conversationId ?? null,
+        position,
+        encoded,
+      ]);
+      if (eventFlush) await eventFlush;
       for (const actorId of new Set(event.audience)) {
-        if (world.experience?.forgotten[actorId]?.includes(event.id)) continue;
-        audienceRows.push([world.id, event.id, actorId]);
-        const awareness = world.experience?.awareness[actorId]?.find((a) => a.eventId === event.id);
-        const text = awareness?.text ?? event.text;
+        if (forgotten(actorId).has(event.id)) continue;
+        const audienceFlush = batch.add('history_audiences', [world.id, event.id, actorId]);
+        if (audienceFlush) await audienceFlush;
+        const text = perspectiveText(actorId, event);
         const source: StorySource = {
           id: event.id,
           text,
@@ -295,12 +276,18 @@ export class HistoryRepository {
           type: event.type,
         };
         perspectives.set(actorId, source);
-        perspectiveRows.push([world.id, event.id, actorId, JSON.stringify(source)]);
+        const perspectiveFlush = batch.add('history_perspectives', [
+          world.id,
+          event.id,
+          actorId,
+          JSON.stringify(source),
+        ]);
+        if (perspectiveFlush) await perspectiveFlush;
       }
       // Only newly committed evidence can trigger a story; startup never replays history.
       if (previous && !previousIds?.has(event.id))
         for (const principal of this.principals) {
-          if (world.experience?.forgotten[principal.actorId]?.includes(event.id)) continue;
+          if (forgotten(principal.actorId).has(event.id)) continue;
           const source = perspectives.get(principal.actorId);
           if (!source) continue;
           const selection = selectStory(
@@ -318,9 +305,11 @@ export class HistoryRepository {
         }
     }
     // Persist sources before scheduling; selection follows docs/narration-and-conversations.md#replaceable-story-selection.
-    await this.insertRows('history_events', eventRows);
-    await this.insertRows('history_audiences', audienceRows);
-    await this.insertRows('history_perspectives', perspectiveRows);
+    await batch.flush();
+    recordDuration(
+      'history.sourceBuild',
+      Math.max(0, performance.now() - buildStarted - batch.writeMilliseconds),
+    );
     candidates.sort(
       (a, b) =>
         b.selection.significance - a.selection.significance ||

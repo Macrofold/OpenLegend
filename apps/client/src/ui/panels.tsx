@@ -1,5 +1,6 @@
 import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
 import { playerEntity } from '../entity-view';
+import { ActionAttempts } from './action-attempts';
 import { useState } from 'react';
 import { EventTime } from './event-time';
 import { Button as AriaButton } from 'react-aria-components';
@@ -308,6 +309,11 @@ export function Character({
           controls={godControls}
         />
       )}
+      <ActionAttempts
+        key={`${view.worldId}:${view.saveTimeline}:${view.player.id}`}
+        view={view}
+        connected={connected}
+      />
       <Section title="Condition">
         <Condition {...view.player} />
         <Actions actions={view.player.actions} command={command} connected={connected} />

@@ -1,0 +1,11 @@
+{
+  "main": "fdcbd31fc9e4eb31daaf00d997648aba588c8577",
+  "source": "94a7682aee9f100ccb54e073969bb4ed4f9fea49",
+  "scope": "Consolidated semantic replay on a separate main-based branch; original history preserved. Production build and config/guidance checks; no automated suites or live provider calls.",
+  "build": "passed",
+  "config": "passed",
+  "guidance": "passed",
+  "runtimeReview": "ongoing",
+  "paidModelCalls": 0,
+  "run": 36086488696
+}
