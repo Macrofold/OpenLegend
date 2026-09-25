@@ -20,6 +20,8 @@ import { fingerprint } from './relationship-index.js';
 import type { WorldService } from './world-service.js';
 
 export interface WorldAgentTurn {
+  /** In-process cancellation only; never serialized into prompts or durable records. */
+  signal?: AbortSignal;
   sessionId: string;
   contextHandle: string;
   connectionId: string;

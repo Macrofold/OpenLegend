@@ -1117,6 +1117,7 @@ export class MacrofoldBackend implements AiClient {
     try {
       const signal = AbortSignal.any([
         controller.signal,
+        ...(worldAgent?.signal ? [worldAgent.signal] : []),
         AbortSignal.timeout(
           (worldAgent?.timeoutSeconds ?? this.service.config.macrofoldTimeoutSeconds) * 1000,
         ),
