@@ -1,3 +1,4 @@
+import { capabilityBlocked } from './status-capabilities.js';
 import { seesEntity } from './perception.js';
 import { canReachEntity, distance, findApproachPath } from './spatial.js';
 import { supportedPosition } from './spatial-state.js';
@@ -19,6 +20,7 @@ export function updateFollowPath(world: WorldState, actor: Entity, action: Actio
   if (!follow || !target || !seesEntity(world, actor, target))
     return 'the followed target is no longer perceived.';
   if (!target.actor?.alive) return 'the followed actor is no longer alive.';
+  if (capabilityBlocked(world, actor, 'locomotion')) return 'movement is unavailable.';
   if (!supportedPosition(actor)) return 'a supported ground stance is required.';
   const stopDistance =
     follow.distance + (action.stage === 'working' ? FOLLOW_RULES.resumeMargin : 0);

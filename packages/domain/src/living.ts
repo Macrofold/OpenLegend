@@ -110,6 +110,15 @@ export function reconcileBody(
           yields: body.harvestYield.map((y) => ({ ...y })),
         };
     }
+    if (!actor.alive) {
+      // Death ends live sensory continuity, not retained knowledge or historical evidence.
+      // docs/knowledge.md#subject-binding
+      if (actor.contacts && Object.keys(actor.contacts).length) actor.contacts = {};
+      if (world.visiblePeople?.[entity.id]?.length) world.visiblePeople[entity.id] = [];
+      if (world.visibleObjects?.[entity.id]?.length) world.visibleObjects[entity.id] = [];
+      if (Object.keys(world.perceptionEpisodes?.[entity.id] ?? {}).length)
+        world.perceptionEpisodes![entity.id] = {};
+    }
     interruptStatusEffects(world, entity, events, 'body-unavailable');
     emit(
       world,
