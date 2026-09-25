@@ -8,52 +8,28 @@ permissions:
 jobs:
   source:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 7824cf8c6a4e1c6b1777baa1ee2f338735c5d253
-          path: cadence
+          ref: a0a7745d232820c421576885f3d88e352bdb547a
           persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
-          ref: 3c1198bc307bd95f4a1e0ed444aa9d3e1a00d238
-          path: current-main
-          persist-credentials: false
-      - uses: pnpm/action-setup@v4
-        with:
-          package_json_file: cadence/package.json
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: pnpm install --frozen-lockfile
-        working-directory: cadence
-      - name: Export source and pinned dependencies without credentials
+      - name: Export reviewed repository source only
         run: |
           python3 - <<'PY'
-          import os, pathlib, tarfile, zipfile
+          import os, pathlib, zipfile
           root = pathlib.Path.cwd()
-          with zipfile.ZipFile('/tmp/cadence-sources.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
-              for folder in ('cadence', 'current-main'):
-                  for directory, dirs, files in os.walk(root / folder):
-                      dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', '.data')]
-                      for name in files:
-                          if name == '.env' or name.startswith('.env.') and name != '.env.example':
-                              continue
-                          p = pathlib.Path(directory) / name
-                          archive.write(p, p.relative_to(root))
-          with tarfile.open('/tmp/cadence-deps.tar.gz', 'w:gz') as archive:
-              for directory, dirs, _ in os.walk(root / 'cadence'):
-                  if 'node_modules' in dirs:
-                      p = pathlib.Path(directory) / 'node_modules'
-                      archive.add(p, arcname=p.relative_to(root / 'cadence'))
-                      dirs.remove('node_modules')
-                  dirs[:] = [d for d in dirs if d != '.git']
+          with zipfile.ZipFile('/tmp/cadence-reviewed-source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              for directory, dirs, files in os.walk(root):
+                  dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', '.data')]
+                  for name in files:
+                      if name == '.env' or name.startswith('.env.') and name != '.env.example':
+                          continue
+                      p = pathlib.Path(directory) / name
+                      archive.write(p, p.relative_to(root))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: cadence-completion-source
-          path: |
-            /tmp/cadence-sources.zip
-            /tmp/cadence-deps.tar.gz
+          name: cadence-reviewed-source
+          path: /tmp/cadence-reviewed-source.zip
           retention-days: 2
