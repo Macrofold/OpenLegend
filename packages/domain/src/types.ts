@@ -352,7 +352,13 @@ export type Command = Envelope &
         operation: 'activate' | 'deactivate';
       }
     | { type: 'cancel' | 'recover' }
-    | { type: 'say'; text: string; targetId?: string; intendedRecipientId?: string }
+    | {
+        type: 'say';
+        text: string;
+        targetId?: string;
+        intendedRecipientId?: string;
+        selfIntroduction?: string;
+      }
     | { type: 'goal'; text: string }
     | { type: 'withdraw-attempt' | 'confirm-attempt'; attemptId: string }
     | { type: 'teach'; targetId: string; recipeId: string }
