@@ -14,12 +14,13 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm config:check && pnpm run format:check && pnpm run typecheck && pnpm test && pnpm run build",
-    "format": "prettier --write apps packages scripts tests docs README.md CONTRIBUTING.md AGENTS.md package.json tsconfig.json vitest.config.ts playwright.config.ts .prettierrc.json .github/workflows/check.yml pnpm-workspace.yaml",
-    "format:check": "prettier --check apps packages scripts tests docs README.md CONTRIBUTING.md AGENTS.md package.json tsconfig.json vitest.config.ts playwright.config.ts .prettierrc.json .github/workflows/check.yml pnpm-workspace.yaml",
+    "check": "pnpm guidance:check && pnpm config:check && pnpm run format:check && pnpm run typecheck && pnpm test && pnpm run build",
+    "format": "prettier --write apps packages scripts tests docs .agents README.md CONTRIBUTING.md AGENTS.md CLAUDE.md package.json tsconfig.json vitest.config.ts playwright.config.ts .prettierrc.json .github/workflows/check.yml .github/pull_request_template.md pnpm-workspace.yaml",
+    "format:check": "prettier --check apps packages scripts tests docs .agents README.md CONTRIBUTING.md AGENTS.md CLAUDE.md package.json tsconfig.json vitest.config.ts playwright.config.ts .prettierrc.json .github/workflows/check.yml .github/pull_request_template.md pnpm-workspace.yaml",
     "test:browser": "pnpm run build && playwright test",
     "config:generate": "tsx scripts/generate-status-effects.ts",
-    "config:check": "tsx scripts/generate-status-effects.ts --check"
+    "config:check": "tsx scripts/generate-status-effects.ts --check",
+    "guidance:check": "node scripts/check-agent-guidance.mjs"
   },
   "dependencies": {
     "tsx": "4.23.13"
