@@ -346,8 +346,14 @@ function applyExperienceMutation(
       mutation.obligation.evidenceId !== memory.obligation.evidenceId
     )
       return null;
-    memory.obligation = cloneValue(mutation.obligation);
-    memory.resolved = ['fulfilled', 'cancelled'].includes(mutation.obligation.status);
+    const replacement = {
+      ...memory,
+      obligation: cloneValue(mutation.obligation),
+      resolved: ['fulfilled', 'cancelled'].includes(mutation.obligation.status),
+    };
+    world.memories[actorId] = world.memories[actorId]!.map((entry) =>
+      entry === memory ? replacement : entry,
+    );
     const inner = world.innerWorlds?.[actorId];
     if (inner) inner.reconsiderationRequired = true;
     return [memory.id];
@@ -469,6 +475,7 @@ function applyExperienceMutation(
   )
     return null;
   const updatedSources: string[] = [];
+  const updatedValues = new Map<ExperienceEntry['value'], ExperienceEntry['value']>();
   const rankingSources: string[] = [];
   const deletedSources: string[] = [];
   for (const { change, previous } of resolved) {
@@ -490,11 +497,11 @@ function applyExperienceMutation(
           : previous.source === 'memory'
             ? previous.value.summary !== (replacement as MemoryRecord).summary
             : previous.value.text !== (replacement as ExperienceSummary).text;
-      Object.assign(previous.value, replacement);
       if (previous.source === 'awareness' && awarenessTextChanged && !awarenessContentChanged)
-        previous.value.content = previous.value.text;
+        (replacement as Awareness).content = (replacement as Awareness).text;
       if (previous.source === 'summary')
-        previous.value.revision = (previous.value.revision ?? 0) + 1;
+        (replacement as ExperienceSummary).revision = (previous.value.revision ?? 0) + 1;
+      updatedValues.set(previous.value, replacement);
       // Ranking edits refresh retrieval without erasing accepted prose or its dependencies.
       // See docs/architecture.md#public-updates-and-owner-editors.
       (proseChanged ? updatedSources : rankingSources).push(sourceId);
@@ -503,6 +510,20 @@ function applyExperienceMutation(
       if (previous.source === 'memory' && previous.value.eventId)
         deletedSources.push(previous.value.eventId);
     }
+  }
+  // Append ownership freezes source records; replace edited rows rather than mutating
+  // those records in the same turn. Unchanged rows keep identity and order.
+  // docs/hearing-and-speech.md#performance-and-invalidation
+  if (updatedValues.size) {
+    const replace = <T extends ExperienceEntry['value']>(rows: T[]) =>
+      rows.map((entry) => (updatedValues.get(entry) as T | undefined) ?? entry);
+    const state = world.experience!;
+    if (resolved.some(({ previous }) => previous?.source === 'awareness'))
+      state.awareness[actorId] = replace(state.awareness[actorId] ?? []);
+    if (resolved.some(({ previous }) => previous?.source === 'memory'))
+      world.memories[actorId] = replace(world.memories[actorId] ?? []);
+    if (resolved.some(({ previous }) => previous?.source === 'summary'))
+      state.summaries[actorId] = replace(state.summaries[actorId] ?? []);
   }
   const invalidated = new Set<string>(rankingSources);
   if (updatedSources.length)
