@@ -52,7 +52,7 @@ State/storage changes follow [save/load](docs/save-and-load.md#active-developmen
 
 ## Documentation is a maintained source of truth
 
-Keep one canonical owner per concept. Update affected docs and focused trackers with the change; do not duplicate task bodies. Separate implemented scope from verified acceptance; close only satisfied criteria. Do not rewrite accepted behavior merely to excuse an implementation defect. Follow [Documentation](.agents/rules/documentation.md) for reconciliation.
+Keep one canonical owner per concept; never rewrite accepted behavior merely to excuse an implementation defect. Find relevant `docs/maintainers/` items before code or design changes and reconcile their scope, status and remaining work in the same change; cite their paths/IDs in the PR or handoff. Separate implemented scope from verified acceptance; close only satisfied criteria. Record consequential decisions and major documentation/game changes in the [lightweight decision history](docs/documentation-changelog.md), not minor edits. Follow [Documentation](.agents/rules/documentation.md) for reconciliation and logging criteria.
 
 ## Work discipline
 
