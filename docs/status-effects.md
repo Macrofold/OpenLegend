@@ -37,6 +37,12 @@ Host interruption reasons, such as injury, hunger, voluntary cancellation or a n
 
 `onActivate` and `onDeactivate` optionally emit a `stateChanged` event with an explicit target and narration template. Only `{subject.name}`, `{source.name}` and `{actionTarget.name}` substitutions are supported. Committed events use the existing observation audience, experience and conversation boundaries. They are narration, never speech or accepted model responses. Temporary perception restriction does not itself declare a participant physically out of conversation range; ordinary distance/inactivity rules still apply.
 
+## Native participation
+
+The native slice prepares a conservative participant roster through `mayAdvanceStatusEffects`; this is not permission to skip a condition that might become true. Every active instance remains eligible for processing, including one whose definition was disabled and must now deactivate. A potential automatic instance requires an enabled automatic definition, an actor when it occupies actor work, and available numeric rate attributes. Its automatic bindings all refer to its subject. Current rate operations cannot create a missing actor component or attribute, which is why these absence checks are safe.
+
+The roster is refreshed after nested command transitions that may change participants. Any future operation that creates capabilities or attributes must extend this participation contract before using the same pruning. Frozen entity/definition/manifest identities support eligibility reuse; mutable input takes the uncached path. Threshold, clock and other live activation/deactivation conditions still execute at the original native boundary. Predicate preparation and roster pruning do not change saved rates, elapsed-time updates, event ordering or effect mutation ownership.
+
 ## Capabilities and presentation
 
 Command admission checks the relevant restrictions. A subject may explicitly deactivate its own active effect or cancel even while general actions are restricted. Physical interaction with another entity must be authorized by the definition and pass the existing visibility/reach check. The shared server action builder supplies authored labels to player menus and NPC candidates; `actions` declares activation/deactivation labels plus `allowOther` and `activateOther`. An effect can therefore permit waking another actor without permitting forcing that actor into the state.
