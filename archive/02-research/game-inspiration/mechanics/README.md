@@ -8,7 +8,7 @@ The [library index](../README.md) retains the complete comparative research. The
 
 ## Detailed system studies
 
-Each of the nineteen studies connects concrete rules and items to player choices, review disagreements, presentation, and available production evidence. Each has its own annotated sources. This is deeper coverage of selected systems, not a claim to exhaust every mechanic in every game.
+Each of the twenty-five studies connects concrete rules and items to player choices, review disagreements, presentation, and available production evidence. Each has its own annotated sources. This is deeper coverage of selected systems, not a claim to exhaust every mechanic in every game.
 
 | Study | Concrete systems and interactions | Central design tension |
 | --- | --- | --- |
@@ -31,6 +31,12 @@ Each of the nineteen studies connects concrete rules and items to player choices
 | [Hades: builds, callbacks, and return rhythm](hades-builds-character-callbacks-and-return-rhythm.md) | Weapon geometry, boon combinations, offering prerequisites, authored event priorities, hub goals, selectable challenge | Specific continuity and build discovery versus repetitive action and obstructed narrative progress |
 | [The Sims: emotion, homes, and chosen autonomy](the-sims-emotional-tools-shared-homes-and-chosen-autonomy.md) | Multitasking, emotional affordances, meaningful rooms, Neighborhood Stories, rotational play, Gallery reuse | Living independently versus protecting the player's intended people and story |
 | [Baldur's Gate 3: utility magic and consequential choice](baldurs-gate-3-utility-magic-identities-and-consequential-choice.md) | Speak with Dead, disguise, potion delivery, concentration transitions, object uses, companion motives | Systemic alternatives and authored identity versus inconsistent expectations and dominant solutions |
+| [Balatro: scoring operators, risk, and combinations](balatro-scoring-operators-risk-and-readable-combinations.md) | Ordered scoring phases, Photograph / Hanging Chad, Blueprint / Brainstorm, played versus held cards, demo iteration | Discoverable synergy versus brittle combinations and opaque timing |
+| [Slay the Spire: deck ecology and costly synergies](slay-the-spire-deck-ecology-information-and-costly-synergies.md) | Intent / Runic Dome, Corruption / Dead Branch, Snecko Eye / Runic Pyramid, rest versus upgrade, data-informed iteration | Powerful options versus compatibility costs, uncertainty, and startup risk |
+| [Vampire Survivors: automated attacks and cooperative agency](vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) | Targeting through movement, orbit / aura coverage, evolution, Pentagram / Gorgeous Moon, couch versus online cooperation | Useful automation versus passive dominance; shared rewards versus personal choice |
+| [Against the Storm: substitution and settlement pressure](against-the-storm-substitution-pressure-and-renewable-settlement-problems.md) | Blueprint-limited production, alternative ingredients, Resolve, Hostility, woodcutting timing, Rainpunk / Blightrot redesign | Renewed constraints versus lost continuity; chosen risk versus compulsory upkeep |
+| [Core Keeper: resource circuits and inhabited discovery](core-keeper-resource-circuits-food-and-inhabited-discovery.md) | Finite boulders, drills / arms / smelters, blocked outputs, Heart Berry / Glow Tulip meals, authored scenes, Scene Makers | Exploration becoming useful infrastructure versus inventory and maintenance burden |
+| [PEAK: shared burdens, rescue, and spatial tools](peak-shared-burdens-rescue-and-spatial-tools.md) | Stamina capacity, backpacks, Pitons, Rope / Anti-Rope, temporary boosts, proximity communication, bounded production | Cooperative reliance and comic failure versus group dependency and costly loss |
 
 ## Read by the question you are investigating
 
@@ -43,6 +49,9 @@ Each of the nineteen studies connects concrete rules and items to player choices
 | How do home, routine, progression, and discovery reinforce one another? | [Stardew Valley](../games/stardew-valley.md), [Terraria](../games/terraria.md), [Outer Wilds](../games/outer-wilds.md) |
 | How does open input become a coherent playable outcome? | [Scribblenauts](../games/scribblenauts.md), [AI Dungeon](../games/ai-dungeon.md), [Garry's Mod](../games/garry-s-mod.md) |
 | How does a familiar person respond meaningfully to a specific history? | [Hades / Hades II](../games/hades-and-hades-ii.md), [Baldur's Gate 3](../games/baldur-s-gate-3.md), [The Sims](../games/the-sims.md) |
+| When do individually strong components make a poor combination? | [Balatro](../games/balatro.md), [Slay the Spire](../games/slay-the-spire.md) |
+| What remains interesting after routine work or attacks become automatic? | [Vampire Survivors](../games/vampire-survivors.md), [Core Keeper](../games/core-keeper.md), [Against the Storm](../games/against-the-storm.md) |
+| How can limited tools make a repeated group outing meaningfully different? | [PEAK](../games/peak.md), [Among Us / Lethal Company](../games/among-us-and-lethal-company.md) |
 
 The earlier chapters and field guides remain the broader entry points, including the games not yet given a dedicated granular study. A new study supplements its linked chapter rather than superseding it.
 
