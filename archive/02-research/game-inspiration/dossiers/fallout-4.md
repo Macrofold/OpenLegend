@@ -162,6 +162,18 @@ The comparison exposes three independent tensions: build/exploration freedom ver
 | R13 | §10, dependencies, failure modes and alternatives |
 | R14 | This map, source annotations, checkpoint preservation and navigation |
 
+### Mechanics inventory completeness check
+
+This audit closes the assignment's explicit mechanics categories against the substantive sections above.
+
+- **Identity, attributes, progression, jobs/trees:** the editable Sole Survivor, SPECIAL, levels and perk chart are covered in §§1–2. There are no fixed RPG classes; builds emerge from SPECIAL/perk investment, equipment and play choices.
+- **Items, inventory, weapons/armor, crafting/upgrading, powers:** §2 covers weapons, armor/clothing, Power Armor, ammunition, chems, magazines, bobbleheads, terminals and holotapes; §§2–3 cover weapon/armor modification and component scavenging. VATS and perks supply extraordinary capabilities; conventional spellcasting is absent.
+- **Traversal, environment/object interaction, activities/minigames:** Commonwealth exploration, fast travel, vertical/interior spaces, workshop interaction and DLC spaces are covered in §§2–5. Terminals combine information/security interaction and holotapes can include playable diversions. The game does not require a separate minigame subsystem for every side activity.
+- **Combat, stealth, loot/rewards, death/failure/recovery:** §2 covers real-time/VATS combat, ranged/melee/stealth approaches, loot and equipment rewards. §3 covers ordinary save/reload and Survival's materially different saving, needs and recovery constraints.
+- **Economy/trading, story, relationships/romance/reputation, party/companions:** §§1, 3–5 cover caps/vendors, the authored family/faction story, companion affinity/romance and companion commands. Companion approval and faction allegiance are explicitly separate; there is no player-run market or freely assembled tactical party.
+- **NPC/AI/schedules, factions, world map/environment, quests/events:** §4 covers NPC locations, settlement jobs, combat behaviors and scripted routines while rejecting a universal offscreen-life simulation. The Minutemen, Brotherhood, Railroad and Institute, authored quests and Radiant work are covered there and in §3.
+- **Building/settlements/management, multiplayer/social, endgame/return loops:** §3 covers settlement construction, workers, supply lines, resources and management; the native game is single-player (§4). Later purpose can come from faction outcomes, companion quests, settlements, DLC, collections, different builds/difficulties and repeatable Radiant work (§3); all six add-ons are separated in §5.
+
 Suggested study order: inspect one ordinary workshop recipe; follow the same material through scavenging and a crop-based alternative; compare local versus supply-line needs; then examine one companion disagreement and one DLC role conflict. A Survival route study should be separate from ordinary-mode onboarding. These are proposed observations, not experiments performed here. The E3/SPECIAL routes in F25 and the performance/interview embeds in F22–F23 are **unwatched viewing/listening recommendations**. No invented timestamps are supplied.
 
 Access limits: some Carl guide subpages exposed only navigation or timed out, so only the substantive bodies listed below are used. Several legacy Bethesda links redirected to a generic page; the listed readable routes were used instead. Steam's store age gate did not substitute for the accessible Community reviews. No current cross-platform benchmark, mod-compatibility test or source-code audit was performed. Earlier packet and game owners remain untouched.
