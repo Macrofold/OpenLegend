@@ -7,6 +7,7 @@
 - **[Full 130-subject research roster](research-roster.md):** canonical title/edition list for the per-game mechanics/reception expansion.
 - **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable.
 - **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
+- **[G101–G110 dossiers](#g101g110-full-research-dossiers):** the six released standalone Mass Effect games, both Octopath Travelers and both Knights of the Old Republic games; independent edition-aware research, not a combined franchise substitute.
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
 - **[Find an interaction](mechanics/interaction-lookup.md):** cross-game navigation by the question you are exploring, from effect delivery and useful delegation to personal history, shared rewards, and creator trust.
@@ -25,7 +26,7 @@
 
 ### Construction, combinations, discovery, and mastery
 
-[Factorio / Satisfactory](games/factorio-and-satisfactory.md) · [Terraria](games/terraria.md) · [Valheim](games/valheim.md) · [Noita](games/noita.md) · [Caves of Qud](games/caves-of-qud.md) · [Outer Wilds](games/outer-wilds.md) · [Balatro](games/balatro.md) · [Slay the Spire](games/slay-the-spire.md) · [Vampire Survivors](games/vampire-survivors.md) · [Core Keeper](games/core-keeper.md) · [Against the Storm](games/against-the-storm.md).
+[Factorio / Satisfactory](games/factorio-and-satisfactory.md) · [Terraria](games/terraria.md) · [Valheim](games/valheim.md) · [Noita](games/noita.md) · [Caves of Qud](games/caves-of-qud.md) · [Outer Wilds](games/outer-wilds.md) · [Balatro](games/balatro.md) · [Slay the Spire](games/slay-the-spire.md) · [Vampire Survivors](games/vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) · [Core Keeper](games/core-keeper.md) · [Against the Storm](games/against-the-storm.md).
 
 ### Multiplayer, creators, communities, and return loops
 
@@ -34,6 +35,23 @@
 ### Cautionary cases and language-driven creation
 
 [Dreams / Project Spark](games/dreams-and-project-spark.md) · [EverQuest Next](games/everquest-next.md) · [Worlds Adrift](games/worlds-adrift.md) · [Spore](games/spore.md) · [No Man's Sky](games/no-man-s-sky.md) · [Ultima Online ecology](games/ultima-online-s-ecology.md) · [Scribblenauts](games/scribblenauts.md) · [AI Dungeon](games/ai-dungeon.md).
+
+### G101–G110 full research dossiers
+
+These additive dossiers retain the earlier chapters and mechanics studies. Each owns its detailed mechanics, constructed situations, reception, production, commercial definitions and evidence limits. The [progress ledger](research-progress.md) owns completion commits and remaining library-wide gates; this index does not certify the seven-file packet audit. The current continuation stops at G110.
+
+| ID | Dossier | Useful starting question |
+| --- | --- | --- |
+| G101 | [Mass Effect](dossiers/mass-effect.md) | How do character builds, squad roles, investigation and imported choices support a continuing protagonist? |
+| G102 | [Mass Effect 2](dossiers/mass-effect-2.md) | How do recruitment, loyalty, preparation and role assignment converge on a consequential finale? |
+| G103 | [Mass Effect 3](dossiers/mass-effect-3.md) | How do prior choices, war assets, combat and different ending editions interact? |
+| G104 | [Mass Effect: Andromeda](dossiers/mass-effect-andromeda.md) | How do flexible profiles, mobility, research and settlement viability create exploration goals? |
+| G105 | [Mass Effect Galaxy](dossiers/mass-effect-galaxy.md) | What survives when an RPG setting becomes a compact mobile action-and-dialogue game? |
+| G106 | [Mass Effect Infiltrator](dossiers/mass-effect-infiltrator.md) | How do touch combat, scoring, upgrades and a retired cross-game service differ from a full RPG? |
+| G107 | [Octopath Traveler](dossiers/octopath-traveler.md) | How do field identities, jobs, weaknesses and resource timing coexist with an anthology structure? |
+| G108 | [Octopath Traveler II](dossiers/octopath-traveler-ii.md) | How do day/night actions, personal talents and crossed stories change the first game's structure? |
+| G109 | [Knights of the Old Republic](dossiers/star-wars-knights-of-the-old-republic.md) | How do party skills, authored investigations and allegiance make local decisions consequential? |
+| G110 | [Knights of the Old Republic II](dossiers/star-wars-knights-of-the-old-republic-ii.md) | How do influence, training, crafting and split-party objectives connect people to capability? |
 
 ## Deeper reading by system
 
