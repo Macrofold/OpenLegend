@@ -6,9 +6,9 @@ This is research tracking, not an engine-maintainer backlog. Existing chapters a
 
 ## Resume here
 
-**Active: G04 — Roblox.** Intended output: `dossiers/roblox.md`. Read `games/roblox.md`, retaining the distinct Grow a Garden/Steal a Brainrot material for their later independent passes. Research the platform's actual player/creator journey, avatars/items/currencies, creation and publishing, discovery and social entry, hosted behavior and persistent progress, art/interface defaults and variation, production history, monetization/creator economics, moderation/access constraints, and contrasting creator/player reception. Do not treat Roblox as a single genre or transfer platform totals into a particular game's profit. Use primary Creator Hub and company records; any financial PDF analysis requires screenshot verification. Commit substantive incomplete checkpoints at least every five minutes; finish/review/commit this subject before advancing.
+**Active: G05 — Grow a Garden.** Intended output: `dossiers/grow-a-garden.md`. Read its subsection in `games/roblox.md` and preserve the creator-history, offline growth, event, monetization and reception evidence. Complete R01–R14 for this experience independently: planting/harvesting, single- versus multi-harvest crops, weight/mutations/weather, seeds/stock, gear and pets, upgrades/progression/collection, gifting/trading and theft boundaries, events and ordinary sessions, presentation/music, narrative framing, development/ownership, promotion and contrasting firsthand reception. Distinguish dated updates and creator-reported metrics from current status. Do not transfer Roblox-wide features or another game's rules into this case. Commit substantive incomplete checkpoints at least every five minutes; finish/review/commit before advancing.
 
-**Full passes reviewed and committed: 3 / 47.** Each completed dossier contains the R01–R14 coverage map, annotated evidence and per-game preservation review. No count here means every private statistic is available or every future update is covered. Pending means the full pass is unprocessed, not that earlier research is absent.
+**Full passes reviewed and committed: 4 / 47.** Each completed dossier contains the R01–R14 coverage map, annotated evidence and per-game preservation review. No count here means every private statistic is available or every future update is covered. Pending means the full pass is unprocessed, not that earlier research is absent.
 
 ## Completed passes
 
@@ -17,16 +17,16 @@ This is research tracking, not an engine-maintainer backlog. Existing chapters a
 | G01 | [Hades II](dossiers/hades-ii.md) | `5e549c2b88a7182a9ab4bf71dfb508ff9fd12c90` |
 | G02 | [Among Us](dossiers/among-us.md) | `f2e46a95ee587238c640e39d2f1d9cadcb69fcbd` |
 | G03 | [Animal Crossing: New Horizons](dossiers/animal-crossing-new-horizons.md) | `2ddb1736f1c0a3be002d4b0846a1eaf62076ed8d` |
+| G04 | [Roblox](dossiers/roblox.md) | `450e2cda9c993ae87425b0d83cad84b1f4924667` |
 
-The paired Hades and Among Us/Lethal Company chapters remain unchanged; a sequel or counterpart is never implicitly completed. Animal Crossing's formerly lower-depth comparison remains preserved beside its independent full dossier.
+The paired Hades and Among Us/Lethal Company chapters remain unchanged; a sequel or counterpart is never implicitly completed. Animal Crossing's formerly lower-depth comparison remains preserved beside its independent full dossier. Roblox's platform pass does not discharge its individual experiences.
 
 ## Remaining subjects, in order
 
-G04 is in progress. **Every other row below is Pending.** All remain required; earlier selective mechanics coverage is not a completion substitute. Existing chapters are linked from the [library index](README.md), and exact edition/pair boundaries are retained in the notes.
+G05 is in progress. **Every other row below is Pending.** All remain required; earlier selective mechanics coverage is not a completion substitute. Existing chapters are linked from the [library index](README.md), and exact edition/pair boundaries are retained in the notes.
 
 | ID | Subject | Boundary / prior owner |
 | --- | --- | --- |
-| G04 | Roblox | `games/roblox.md`; platform independent from its experiences |
 | G05 | Grow a Garden | Separate from Roblox platform and Steal a Brainrot |
 | G06 | Steal a Brainrot | Separate experience |
 | G07 | Fortnite | Distinguish modes, platform and announced integrations |
@@ -53,7 +53,7 @@ G04 is in progress. **Every other row below is Pending.** All remain required; e
 | G28 | Satisfactory | Separate full pass |
 | G29 | Terraria | Full pass beyond equipment/settlement study |
 | G30 | Stardew Valley | Full pass beyond calendar/gifts study |
-| G31 | Valheim | Separate full pass from Zomboid |
+| G31 | Valheim | Separate from Zomboid; exact build boundaries |
 | G32 | Noita | Full pass beyond wands/materials study |
 | G33 | Caves of Qud | Full pass beyond bodies/cooking/social knowledge |
 | G34 | Outer Wilds | Preserve explicit spoiler boundaries |
@@ -83,6 +83,6 @@ G04 is in progress. **Every other row below is Pending.** All remain required; e
 
 ## Durable checkpoint history
 
-The assignment was committed first in `4dcd82ebd9e7ca357bf25512b9c463ce653a7112`. Incomplete checkpoints remain in history: Hades II `bb7f5b5`, Among Us `aafacb7`, Animal Crossing `f24ff06` and `b67b63a`. Their completion revisions are above. Git history, not a duplicated commit diary, retains every intermediate write.
+The assignment was committed first in `4dcd82ebd9e7ca357bf25512b9c463ce653a7112`. Incomplete checkpoints remain in history: Hades II `bb7f5b5`, Among Us `aafacb7`, Animal Crossing `f24ff06` and `b67b63a`, Roblox `87979dd`. Their completion revisions are above. Git history, not a duplicated commit diary, retains every intermediate write.
 
 On restart, inspect the current remote head and fetch the active subject's latest dossier before writing. Its header must identify incomplete sections until the full pass is reviewed and committed. Preserve another writer's changes and use current blob SHAs. Update this ledger when advancing, not several games afterward. No background execution or future delivery is implied by the queue.
