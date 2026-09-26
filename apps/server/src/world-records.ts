@@ -373,16 +373,25 @@ export class WorldRecords {
           : table === 'mind_awareness'
             ? `(at>=? OR position IN (SELECT position FROM mind_awareness recent WHERE recent.world_id=t.world_id AND recent.actor_id=t.actor_id ORDER BY position DESC LIMIT 24))`
             : '1=0';
+      // Migration must precede eviction. Keep only legacy records whose source event
+      // is still available to the existing domain migration; the partial index avoids
+      // parsing every cold payload at each boot. Migration commits before release.
+      const migrateAwareness = partial && table === 'mind_awareness';
+      const legacy = migrateAwareness
+        ? ` UNION SELECT id,parent_id,slot,position,payload FROM mind_awareness
+          WHERE world_id=? AND ${this.legacyAwarenessPredicate} AND source_id IN
+          (SELECT ${this.db.dialect === 'postgres' ? "payload::jsonb ->> 'id'" : "json_extract(payload, '$.id')"} FROM world_hot_events WHERE world_id=?)`
+        : '';
       const rows = await this.db
         .prepare(
           table === 'world_hot_events'
             ? `SELECT t.id,t.parent_id,t.slot,t.position,h.payload FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${eventId} WHERE t.world_id=? ORDER BY t.parent_id,t.position`
-            : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${partial ? ` AND ${predicate}` : ''}${partial && table === 'mind_awareness' ? ` UNION SELECT id,parent_id,slot,position,payload FROM mind_awareness WHERE world_id=? AND ${this.legacyAwarenessPredicate} AND source_id IN (SELECT ${this.db.dialect === 'postgres' ? "payload::jsonb ->> 'id'" : "json_extract(payload, '$.id')"} FROM world_hot_events WHERE world_id=?)` : ''} ORDER BY parent_id,position`,
+            : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${partial ? ` AND ${predicate}` : ''}${legacy} ORDER BY parent_id,position`,
         )
         .all(
           head.worldId,
           ...(partial && table !== 'mind_summaries' ? [cutoff] : []),
-          ...(partial && table === 'mind_awareness' ? [head.worldId, head.worldId] : []),
+          ...(migrateAwareness ? [head.worldId, head.worldId] : []),
         );
       const parents = new Map<string, JsonRecord[]>();
       for (const row of rows) {

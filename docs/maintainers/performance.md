@@ -185,7 +185,7 @@ Exit: better burst throughput within single-command latency budgets, finite pend
 Dependencies: PF00/PF03 and applicable production-data D1/D2 recovery contracts; D59's accepted 24-hour command policy and its epoch boundary before any receipt expiry.
 
 - [x] Separate unreferenced global events and new epoch-bound gameplay outcomes from per-step state. Retain active memory, obligation/knowledge sources and complete cold history; jobs remain in their existing durable tables.
-- [x] Keep inactive memory/awareness/summaries out of ordinary recovery and simulation snapshots; preserve SQL recall, owner editing, consolidation and complete saves. Compare 1,000 versus 100,000 cold sources with the same active world.
+- [x] Keep inactive memory/awareness/summaries out of ordinary recovery and simulation snapshots; preserve SQL recall, owner editing, consolidation and complete saves. Compare 1,000 versus 100,000 cold sources with the same active world. Consumer review also covers delayed triggers, additive legacy metadata, actor-scoped inspection and reflection across residency expiry; see [native evidence](../verification.md#history-consumer-review).
 - [x] Reduce repeated encounter membership scans, perspective preparation and detached-record finalization; matched dense fixture outcomes remain identical.
 - [x] Exercise process death immediately before/after commit, competing SQLite revisions, duplicate actions, PostgreSQL writer fencing/read isolation and interrupted/incomplete migration with disposable native drills.
 
