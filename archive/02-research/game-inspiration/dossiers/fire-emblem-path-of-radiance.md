@@ -789,17 +789,17 @@ No video or footage was represented as watched in this pass. No source-preview m
 
 <a id="pr01"></a>**PR01 — [Fire Emblem: Path of Radiance comes to Nintendo Classics!](https://www.nintendo.com/us/whatsnew/fire-emblem-path-of-radiance-comes-to-nintendo-classics/).** Nintendo, January 2026. Primary current distribution/premise reference; not evidence that wrapper features are original mechanics.
 
-<a id="pr02"></a>**PR02 — [Fire Emblem: Path of Radiance profile / review](https://www.nintendolife.com/reviews/gamecube/fire-emblem-path-of-radiance).** Nintendo Life, 2026. Current rerelease/release-date context and retrospective; full reception synthesis pending.
+<a id="pr02"></a>**PR02 — [Fire Emblem: Path of Radiance profile / review](https://www.nintendolife.com/reviews/gamecube/fire-emblem-path-of-radiance).** Nintendo Life, 2026. Current rerelease/release-date context and full retrospective used in the five-review comparison.
 
 <a id="pr03"></a>**PR03 — [Fire Emblem: Path of Radiance Review](https://www.gamespot.com/reviews/fire-emblem-path-of-radiance-review/1900-6135942/).** Greg Kasavin, GameSpot, October 17, 2005. Full contemporary review read; mechanics, story, BEXP, laguz, permadeath, visual/audio and objective evidence.
 
 <a id="pr04"></a>**PR04 — [Path of Radiance gameplay/difficulty reference](https://fireemblem.fandom.com/wiki/Fire_Emblem:_Path_of_Radiance).** Fire Emblem Wiki community reference. Used for regional-difficulty/version boundary; community mechanics source, not first-party intent.
 
-<a id="pr05"></a>**PR05 — [Path of Radiance FAQ](https://serenesforest.net/path-of-radiance/faq/).** Serenes Forest community mechanics reference. Used for progression/repeat-play and system boundaries; final source audit pending.
+<a id="pr05"></a>**PR05 — [Path of Radiance FAQ](https://serenesforest.net/path-of-radiance/general/faq/).** Serenes Forest community mechanics reference. Used for progression/repeat-play, skill/support limits and regional/system boundaries.
 
 <a id="pr06"></a>**PR06 — [Calculations](https://serenesforest.net/path-of-radiance/miscellaneous/calculations/).** Serenes Forest. Community formula reference for weapon triangle/attack-speed interactions.
 
-<a id="pr07"></a>**PR07 — [Forge](https://serenesforest.net/path-of-radiance/miscellaneous/forge/).** Serenes Forest. Community mechanics reference for bounded weapon customization.
+<a id="pr07"></a>**PR07 — [Forge](https://serenesforest.net/path-of-radiance/miscellaneous/forging/).** Serenes Forest. Community mechanics reference for bounded weapon customization.
 
 <a id="pr08"></a>**PR08 — [Fire Emblem: Path of Radiance Staff Interview (N.O.M. 82 – May 2005)](https://kantopia.wordpress.com/2020/04/20/fire-emblem-path-of-radiance-staff-interview-n-o-m-82-may-2005/).** Kantopia translation of Nintendo Online Magazine No. 82. Contemporary developer statements through a fan translation; used with that translation limitation explicit.
 
@@ -817,15 +817,15 @@ No video or footage was represented as watched in this pass. No source-preview m
 
 <a id="pr15"></a>**PR15 — [Chapter/objective reference](https://serenesforest.net/path-of-radiance/scripts/game-script/).** Serenes Forest. Community preservation/reference route for chapter context; dossier does not treat script text as a substitute for review evidence.
 
-<a id="pr16"></a>**PR16 — [Fire Emblem: Path of Radiance review](https://www.gamesradar.com/fire-emblem-path-of-radiance-review/).** GamesRadar+, contemporary review archive. Full reception synthesis pending.
+<a id="pr16"></a>**PR16 — [Fire Emblem: Path of Radiance review](https://www.gamesradar.com/fire-emblem-path-of-radiance-review/).** GamesRadar+, contemporary review archive. Full contemporary archived review read for reception synthesis.
 
-<a id="pr17"></a>**PR17 — [Fire Emblem: Path of Radiance review](https://www.nintendoworldreport.com/review/4431/fire-emblem-path-of-radiance-gamecube).** Karl Castaneda, Nintendo World Report, October 29, 2005. Full contemporary review read; final five-review comparison pending.
+<a id="pr17"></a>**PR17 — [Fire Emblem: Path of Radiance review](https://www.nintendoworldreport.com/review/4431/fire-emblem-path-of-radiance-gamecube).** Karl Castaneda, Nintendo World Report, October 29, 2005. Full contemporary review read and included in the five-review comparison.
 
 <a id="pr18"></a>**PR18 — [Trial Maps / postgame](https://serenesforest.net/path-of-radiance/miscellaneous/trial-maps/).** Serenes Forest. Community reference for post-completion Trial Map unlocks.
 
 
 
-<a id="pr19"></a>**PR19 — [Making of Fire Emblem: Path of Radiance](https://serenesforest.net/general/designers-notes/path-of-radiance/).** Serenes Forest preservation/translation route to development materials from *Making of Fire Emblem*. Used only for documented development concepts; cut concepts are not described as shipped features.
+<a id="pr19"></a>**PR19 — [Making of Fire Emblem: Path of Radiance](https://serenesforest.net/2016/04/20/making-of-path-of-radiance/).** Serenes Forest preservation/translation route to development materials from *Making of Fire Emblem*. Used only for documented development concepts; cut concepts are not described as shipped features.
 
 <a id="pr20"></a>**PR20 — [Fire Emblem: Path of Radiance Interview](https://www.nintendoworldreport.com/interview/2266/fire-emblem-path-of-radiance-interview).** Nintendo World Report, 2005. Interview with Nintendo of America Treehouse localization staff Rich Amtower and Tim O'Leary; used for localization workflow and regional difficulty changes.
 
