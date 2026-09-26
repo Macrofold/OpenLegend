@@ -323,7 +323,7 @@ To resume, read the current canonical owners and R11/R19, pin the then-current c
 
 ## 10. Source register
 
-All vendor pages below were consulted for the 2026-09-26 evaluation or its archival verification. Links are primary sources. The research paper and vendor benchmark measure their own workloads; neither is an OpenLegend acceptance result. The vendor benchmark site reported 94.6% LongMemEval in the original brief; preserve that as a dated vendor-reported result, not a reproducible guarantee or a claim that the original paper used the same experiment. [Benchmark site][hs-benchmarks], [paper][hs-paper]
+All vendor pages below were consulted for the 2026-09-26 evaluation or its archival verification. Links are primary sources. The official benchmark site displayed **94.6% on LongMemEvalS** when checked on the research date. This is a dated vendor-reported result, not an independently reproduced OpenLegend result or a claim that the original paper used the same experiment. [Benchmark site][hs-benchmarks], [paper][hs-paper]
 
 ### Upstream evidence
 
@@ -353,7 +353,7 @@ All vendor pages below were consulted for the 2026-09-26 evaluation or its archi
 [hs-services]: https://hindsight.vectorize.io/developer/services
 [hs-node]: https://hindsight.vectorize.io/sdks/hindsight-all-npm
 [hs-extensions]: https://hindsight.vectorize.io/developer/extensions
-[hs-defense]: https://hindsight.vectorize.io/security/memory-defense
+[hs-defense]: https://hindsight.vectorize.io/developer/memory-defense
 [hs-performance]: https://hindsight.vectorize.io/developer/performance
 [hs-billing]: https://docs.hindsight.vectorize.io/billing/
 [hs-license]: https://github.com/vectorize-io/hindsight/blob/ccfe85b4851957ac2adf88b4a9ddf9668b2882f1/LICENSE

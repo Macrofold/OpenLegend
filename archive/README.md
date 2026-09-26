@@ -12,6 +12,8 @@ For active task documents and their owning specifications, use the [master TODO 
 
 ## Start here
 
+The [Hindsight memory evaluation](02-research/hindsight-memory-evaluation.md) compares the external framework with OpenLegend's actor-scoped memory, knowledge and recovery contracts. It recommends evaluating optional retrieval rather than replacing the canonical mind; source snapshots, tradeoffs, dependency/fork strategy and an unrun R11/R19 benchmark proposal are preserved as research, not an adoption decision.
+
 The [agency research](02-research/agency-cognition-and-planning.md) supports [optional decisions and persistent pursuit](../docs/agent-agency.md), with [runtime semantics](07-technical-architecture/agent-agency-runtime.md) and [AG delivery tasks](../docs/maintainers/agent-agency.md). These extend memory and the event framework without claiming runtime implementation.
 
 The [engine perception and event research](02-research/engine-perception-and-event-architectures.md) supports the proposed [stimulus/reaction contract](../docs/events-perception-and-reactions.md); implementation work is indexed in the [maintainer work index](../docs/maintainers/README.md).
