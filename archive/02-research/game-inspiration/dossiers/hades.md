@@ -1,6 +1,6 @@
 # Hades I — builds, obligations, and productive returns
 
-**G22 · Expanded research checkpoint · September 26, 2026.** Original Hades, not Hades II. The substantive pass below is written; final coverage, navigation and source checks remain before the ledger is advanced. Research inspiration, not an accepted OpenLegend specification. No gameplay, performance measurement, source-code inspection or full video viewing was performed.
+**G22 · Completed research pass · September 26, 2026.** Original Hades, not Hades II. Research inspiration, not an accepted OpenLegend specification. No gameplay, performance measurement, source-code inspection or full video viewing was performed. The coverage and evidence limits are recorded in §11.
 
 [Original chapter and field guide](../games/hades-and-hades-ii.md) · [Preserved granular study](../mechanics/hades-builds-character-callbacks-and-return-rhythm.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
 
@@ -31,6 +31,16 @@ The recurring sequence is **choose a loadout → enter chambers → read enemies
 | Fish or pursue a collection goal | An unlocked side activity and the prophecy list create narrower objectives inside or between attempts. They do not turn the game into a general crafting simulation. [S17][S18] |
 
 The route's authored identity matters despite recombination: Tartarus, Asphodel, Elysium and the Temple of Styx have different presentation and encounter rhythms. Armor changes whether enemies can be interrupted; priority targets and scarce healing make indiscriminate button-mashing unreliable. Reviews disagree about the late areas: some enjoy their escalation, while others find repeated Elysium battles or Styx's poison-heavy tunnels wearisome. [S2][S3][S4]
+
+### Optional encounters alter the bargain
+
+A **Trial of the Gods** offers two divine rewards but makes Zagreus first choose which god to accept. The rejected god complicates the ensuing fight; surviving it earns the other reward. This is a local challenge, not a permanent faction-allegiance lock. Some Tartarus encounters instead ask the player to survive a timed onslaught rather than clear a finite ordinary wave. Skull-marked doors warn of harder encounters, and the blue/gold reward framing distinguishes persistent resources from current-run improvements. [S33]
+
+**Chaos** offers a different temporal exchange: entry normally costs health, and an accepted curse imposes a temporary constraint before becoming a benefit. The player must survive the period in which the purchase has made the run worse. [S31]
+
+**Erebus** is an optional no-hit challenge, unlocked through Contractor work and restricted by sufficient Heat. A single hit replaces its enhanced reward with a token healing item. A good damage build is not necessarily a good choice for this condition; control and safety can be more valuable. The room is optional, not a mandatory punishment for poor performance elsewhere. [S32]
+
+The recurring guardians include the Furies, the Hydra, Theseus with Asterius, and Hades. Their return also sustains character continuity rather than introducing an unrelated cast each attempt. [S31]
 
 A practical limitation follows: random ordering does not guarantee fresh decisions. Repeatedly meeting the same tactical problem can become repetitive even when the exact damage numbers or chamber sequence change.
 
@@ -88,7 +98,9 @@ The **Pact of Punishment** introduces selectable pressures and further reward go
 
 ## 5. People, relationships, story, and place
 
-**Spoiler boundary:** this section mentions relationship outcomes and the structure after an initial escape, but does not retell the entire ending.
+**Spoiler boundary:** this section reveals the main family arc, post-escape premise and some relationship outcomes.
+
+Zagreus discovers that Nyx is his foster mother and seeks his biological mother, Persephone. Reaching her does not free him from the Underworld: he cannot remain on the surface indefinitely. Further successful escapes continue their conversations; the main resolution brings her home after ten escapes. Later attempts become sanctioned security tests, and the epilogue uses relationships with Olympus to arrange a family reconciliation. The same traversal can therefore mean defiance, reunion or an ongoing duty at different points in the story. [S31]
 
 Hades supplies an authored household rather than autonomous general-purpose NPC society. Hades's authority, Nyx's support, Achilles's mentorship, Hypnos's comments, Skelly's training presence and the Olympians' differing interests help give encounters a stable identity. The prior study retains specific examples of Dionysus noticing nectar and Ares noticing weapons; not every person should notice every event. [S4][S5][S21]
 
@@ -212,18 +224,18 @@ These are research hypotheses, not newly accepted engine requirements.
 
 The original chapter and its embedded field guide were read and remain unchanged. The granular study was read and remains unchanged. Preserved material includes the spear throw/reposition/recall situation, failed escape followed by a meaningful return, boon-altered weapons, selective Dionysus/Ares callbacks, historical Merciful End challenge-run discussion, prerequisite/description fixes, dialogue-priority corrections and contrasting Quarter To Three testimony. Hades II's ending disputes and commercial figures remain in the sequel's scope; they are not relabeled as original-Hades evidence.
 
-The [packet reading map](../references/packet-provenance.md) remains the provenance owner. This pass supplements those preserved owners; it does not claim a fresh byte-level or line-by-line audit of all seven original packets. The earlier wiki-access limitation is retained as historical evidence. This pass also encountered blocked Fandom/wiki.gg pages and unavailable TrueAchievements walkthroughs; those bodies are not cited as read.
+The [packet reading map](../references/packet-provenance.md) remains the provenance owner. This pass supplements those preserved owners; it does not claim a fresh byte-level or line-by-line audit of all seven original packets. Earlier unsuccessful wiki retrieval remains historical evidence. Most detailed Fandom/wiki.gg pages and the attempted TrueAchievements walkthroughs did not load in this pass; the accessible indexed Chambers and Encounters text is identified separately as S33 rather than implying the other pages were read.
 
 | Requirement | Coverage in this dossier and preserved owners |
 | --- | --- |
 | R01 | §1: original-game identity, solo scope, edition and retired-service boundaries. |
-| R02 | §2: action/interaction vocabulary, gates, costs, feedback and encounters. |
+| R02 | §2: action/interaction vocabulary, gates, costs, feedback, guardians and optional encounters. |
 | R03 | §3–5: six weapon families, aspects, boons, talents, keepsakes, companions and constraints. |
 | R04 | §4: temporary/permanent resources, progression phases and difficulty. |
 | R05 | §6: seven concrete situations with prerequisites, consequences and limitations. |
 | R06 | §5: authored NPCs, bonds, specific help, romance boundaries and no native multiplayer. |
 | R07 | §7 and review evidence: presentation, voice, music, readability and historical performance limits. |
-| R08 | §1 and §5: premise, post-escape structure, side stories, places and spoiler warning. |
+| R08 | §1 and §5: premise, post-escape family arc, side stories, places and spoiler warning. |
 | R09 | §8: creator rationale, Early Access, update cadence and post-launch corrections. |
 | R10 | §8: storefront/platform rollout and clearly labeled marketing inference. |
 | R11 | §8: dated units sold, premium model and unknown financials. |
@@ -233,7 +245,7 @@ The [packet reading map](../references/packet-provenance.md) remains the provena
 
 **Viewing route:** the preserved [Hades v1.0 Gameplay Showcase](https://www.youtube.com/watch?v=YZZFlcE0fWE) is a useful launch-era route for inspecting movement, impact, reward choices and character encounters. Its identity and placement are retained from the field guide; no complete playback, transcript analysis or scene timestamps are claimed here. The official game page also links launch material. [S30]
 
-**Remaining before completion:** inspect the final source/coverage map and new Markdown links, verify that this commit changes only the dossier, then record the completion commit and advance the progress ledger to G23. This checkpoint is not yet counted as a completed game.
+**Review record:** the expanded dossier diff, source-reference definitions and requirement map were inspected. Relative links point to the previously read chapter, mechanics study, requirements, progress and provenance owners; those owners were not rewritten. This pass's commits modify only this dossier before the separate ledger advance. This is a documentation review, not an executed gameplay or automated test. Packet-wide reconciliation and the remaining roster remain separate gates.
 
 ## Annotated sources
 
@@ -268,6 +280,9 @@ All web sources were accessed September 26, 2026 unless identified as a preserve
 - **S28 — Kris Graft / Greg Kasavin, Game Developer**, January 28, 2021. Published podcast interview excerpts; full recording not listened to. [S28]
 - **S29 — ActuGaming, Hades atteint le million de ventes**, September 21, 2020. Contemporary secondary report reproducing Supergiant's September 20 sales statement. Original tweet retrieval failed; no independent financial audit. [S29]
 - **S30 — Supergiant Games, Hades product page.** Primary product framing and links to promotional footage/storefronts; pull quotes are not additional independently read reviews. [S30]
+- **S31 — Kevin Ghouchandra, Stories in Play, Hades**, November 24, 2022. Firsthand research entry declaring its Switch version; story and Chaos sections inspected, not a verified engine-technology source. [S31]
+- **S32 — GamesRadar+, Hades Erebus chambers guide**, 2020-era guide. Optional challenge, entry conditions and failure reward; no current optimum-build inference. [S32]
+- **S33 — Community Hades Wiki, Chambers and Encounters.** Substantive indexed text was accessible despite other wiki retrieval failures; encounter/reward structure only, not a newly audited complete wiki. [S33]
 
 [S1]: https://www.supergiantgames.com/blog/hades-faq/
 [S2]: https://www.destructoid.com/reviews/review-hades/
@@ -299,3 +314,6 @@ All web sources were accessed September 26, 2026 unless identified as a preserve
 [S28]: https://www.gamedeveloper.com/design/roguelikes-and-narrative-design-with-i-hades-i-creative-director-greg-kasavin
 [S29]: https://www.actugaming.net/hades-million-de-ventes-version-complete-359696/
 [S30]: https://www.supergiantgames.com/games/hades/
+[S31]: https://storiesinplay.com/2022/11/24/hades/
+[S32]: https://www.gamesradar.com/hades-erebus-chambers/
+[S33]: https://hades.fandom.com/wiki/Chambers_and_Encounters
