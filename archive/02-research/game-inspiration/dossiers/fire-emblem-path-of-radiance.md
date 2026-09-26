@@ -236,6 +236,12 @@ The 2005 staff interview is unusually revealing about 3D map production. The tea
 That is a direct OpenLegend lesson:
 > a simulated world can be rich and physical without making important state hard to perceive.
 
+### A map-specific stealth exception
+
+Chapter 10, **Prisoner Release**, supports an optional undetected escape. The Bonus Experience table explicitly rewards leaving the chapter undetected, while community testing documents detection around ending a turn inside designated guards' threat ranges or attacking those guards. Rescue/mounted movement can be composed with this rule to move exposed units back out before Enemy Phase. [PR09](#pr09) [PR30](#pr30)
+
+This is important scope discipline: Path of Radiance has a **chapter-specific stealth/detection challenge**, not a reusable campaign-wide stealth skill/perception subsystem.
+
 ## 11. Recruitment, death, and irreversible opportunity
 
 Many units join automatically, while others require:
@@ -757,7 +763,7 @@ Small cyclic accuracy/evasion modifiers can create bookkeeping without meaningfu
 
 Covered: identity/classes; statistics/growth; leveling/promotion; weapon ranks; skills/capacity; weapons/items/durability/forging; offensive magic and staves; grid movement/terrain; Shove/Rescue/Take/Drop/Canto; map interactions/objectives; combat; loot/rewards/BEXP; death/permadeath/reset; gold/shop economy; authored story; supports/Base conversations; roster/party/deployment; enemy and partner AI; factions/nations; chapter maps/weather; recruitment/events; repeat/postgame Trial Maps and GBA-link extras.
 
-**Absent or not major native systems:** free-roaming traversal, stealth system, settlement/base construction, arbitrary crafting recipes, romance simulation, open-world quest log, player-run economy, native competitive/co-op multiplayer, live-service endgame. Laguz transformation and magical weapons/staves cover supernatural combat without a freeform spell-learning system.
+**Absent or not major native systems:** free-roaming traversal, a general stealth subsystem beyond the Chapter 10 detection challenge, settlement/base construction, arbitrary crafting recipes, romance simulation, open-world quest log, player-run economy, native competitive/co-op multiplayer, live-service endgame. Laguz transformation and magical weapons/staves cover supernatural combat without a freeform spell-learning system.
 
 ### Preservation check
 
@@ -847,3 +853,5 @@ No video or footage was represented as watched in this pass. No source-preview m
 
 <a id="pr29"></a>**PR29 — [Did Path of Radiance and Radiant Dawn hold up well?](https://www.reddit.com/r/fireemblem/comments/122zcor/).** r/fireemblem discussion, March 26, 2023. Multiple-player qualitative evidence that game-speed/enemy-phase length remains a recurring friction point; not used to estimate prevalence.
 
+
+<a id="pr30"></a>**PR30 — [How do I stealth Chapter 10 without getting caught?](https://gamefaqs.gamespot.com/gamecube/920189-fire-emblem-path-of-radiance/answers/561498-how-do-i-stealth-chapter-10-without-getting-caught).** GameFAQs community Q&A. Used narrowly for the observed Chapter 10 detection rule; PR09 independently establishes the undetected-clear BEXP reward. Community mechanics evidence, not developer intent.
