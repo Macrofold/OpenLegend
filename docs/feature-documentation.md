@@ -11,7 +11,7 @@ Its technical design describes semantic owners and callers, contracts/data flow,
 Each new or substantially changed feature spec, technical design or persistent feature document includes a **Maintained records** section linking:
 
 - **Implementation:** the focused `docs/maintainers/` task/progress tracker (stable work IDs, dependencies, completion criteria and unsatisfied acceptance).
-- **Limits and constraints:** its owning `docs/limits/<feature>.md`, under the [limits tracking system](limits/README.md). Record numerical and behavioral choices, rationale, restrictiveness, evidence/current status, and removed/no-limit decisions. Reuse an existing inventory for shared mechanisms; do not create competing per-project copies.
+- **Limits and constraints:** its owning `docs/limits/<feature>.md`, under the [limits tracking system](limits/README.md). Record numerical and behavioral choices, rationale, restrictiveness, evidence/current status, and removed/no-limit decisions. Include absent bounds on growing queries, pre-selection loops, hydration, queues and retained collections, even when final output is limited; record reachable growth and consequences under the tracking rules. Reuse an existing inventory for shared mechanisms; do not create competing per-project copies.
 - **Related contract/design:** the counterpart design or persistent semantic owner when needed to distinguish project scope from current behavior.
 
 If a newly assessed feature has no discretionary limits, say so explicitly in its limits inventory, with the reason and applicable shared limits links. Do not invent a cap just to fill a template. Existing documents can adopt this structure when touched; this migration links every feature represented by the supplied inventories.

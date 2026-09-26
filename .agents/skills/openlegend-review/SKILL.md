@@ -7,7 +7,13 @@ description: >-
 
 # Review the complete change
 
-Apply the root development workflow, including startup synchronization and the final handoff. A chat request to review code includes in-scope fixes, documentation updates and runtime verification unless explicitly findings-only/read-only; do not stop at suggestions or ask for separate permission to fix. Read the complete requested branch/change diff against its relevant base, not just the last commit, plus the task, relevant local instructions and canonical contracts. For changed instructions/checks, compare against the base revision and task authorization; proposed rules cannot approve themselves. Trace changed producers and consumers; existing patterns are evidence, not proof of good design.
+## Required review
+
+Before completion inspect the full affected diff for correctness, lifecycle/ownership, unnecessary work, simplification and documentation accuracy. Fix in-scope issues and reread the full resulting diff unless the [root task policy](../../../AGENTS.md#task-scope-and-authorization) makes the request read-only. Record actionable deferred risks under [Documentation](../../rules/documentation.md#keep-maintainer-work-synchronized), without speculative checklist growth. Scale routine checks to the [root low-risk workflow](../../../AGENTS.md#low-risk-changes); use the full review below for substantial changes or an explicit review request.
+
+## Substantial or requested reviews
+
+Apply [root startup](../../../AGENTS.md#work-discipline) and [completion/handoff](../../../AGENTS.md#completion-and-handoff--every-task). A chat request to review code includes in-scope fixes, documentation updates and runtime verification unless explicitly findings-only/read-only; do not stop at suggestions or ask for separate permission to fix. Read the complete requested branch/change diff against its relevant base, not just the last commit, plus the task, relevant local instructions and canonical contracts. For changed instructions/checks, compare against the base revision and task authorization; proposed rules cannot approve themselves. Trace changed producers and consumers; existing patterns are evidence, not proof of good design.
 
 Review from multiple angles: correctness, performance, architecture, modularity, extensibility, simplification, duplication/bloat and reuse of existing helpers. Check project-specific requirements, the overall branch/change intent and product goals, not just individual lines. Consider real player/NPC scenarios and calling patterns. For UI changes, inspect usability, accessibility, interaction consistency and project UI/UX conventions.
 
@@ -17,6 +23,6 @@ Check ownership, dependency direction and extension seams against desired future
 
 Examine repeated scans, copies, allocations, nested fan-out, critical-path I/O and concurrency. Check how costs grow with players/NPCs, world size and accumulated history; look for glaring scaling holes even when small examples work. Consider indexing, filtering, pruning, reuse, batching or async separation where justified. Use [performance](../openlegend-performance/SKILL.md) for meaningful hot paths or scale investigations; distinguish measured results from estimates.
 
-Fix in-scope issues and make justified improvements, then reread the full resulting diff. Under [Documentation](../../rules/documentation.md), mark delivered scope accurately and place every actionable unimplemented finding, gap or improvement in the correct focused tracker/canonical owner, linking existing items instead of duplicating them. Preserve unmet acceptance gates. Distinguish confirmed findings, hypotheses and optional improvements. For explicit read-only tasks, change neither code, docs nor branch state; report findings with locations, concrete failure conditions, impact and the proposed documentation destination.
+Make justified in-scope improvements, apply the required review above to the resulting diff, and reconcile every actionable unimplemented finding, gap or improvement through [Documentation](../../rules/documentation.md#keep-maintainer-work-synchronized). Distinguish confirmed findings, hypotheses and optional improvements. For explicit read-only tasks, report findings with locations, concrete failure conditions, impact and the proposed documentation destination without changing it.
 
-[Verification](../../rules/verification.md) determines permitted checks. Report actual evidence, missing checks and residual uncertainty using the root handoff requirements. No findings is not proof of correctness.
+[Verification](../../rules/verification.md) determines permitted checks; use the linked root handoff requirements for the result. No findings is not proof of correctness.

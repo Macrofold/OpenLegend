@@ -569,3 +569,15 @@ A short diagnostic description of what triggered cognition is cut to 120 charact
 [Implementation starting point](../../apps/server/src/ai-director.ts).
 
 Original recommendation: **Keep**.
+
+## CG01
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Liberal.**
+
+**World-context candidates are built before final context limits.** candidateSet traverses observed visible entities, ground items, direct inventory and known recipes to build descriptions/hashes before subsequent attention/model-byte selection. There is no separate total pre-formatting candidate count/byte cap here; perception, knowledge and custody filter membership. Unlimited recipe/content admission is not automatically bounded candidate work.
+
+**Exposure / consequence:** Crowds and ordinary growing inventories increase decision preparation; thousands of individually created items/recipes are lower-probability extremes. A model request limit protects provider input, not all prior formatting CPU/RAM.
+
+**Reason / tradeoff:** Avoid hiding valid actions/content by identifier order. Query relevant candidates or incrementally pack descriptions while retaining required facts and explicit omission diagnostics.
+
+**Evidence:** Distinguish ordinary dense-neighbor growth from deliberately creating 10,000 objects. [Implementation](../../apps/server/src/recall.ts) (`candidateSet; select`). [Revisit C17](../maintainers/limits-audit.md#c17).

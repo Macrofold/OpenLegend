@@ -509,3 +509,99 @@ Consolidation commits one bounded batch at a time. A day is processed through re
 Knowledge-note pages: **40 default / 100 maximum**.
 
 **Reason / tradeoff:** Bound each private-note page without limiting total notes.
+
+## MH01
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Liberal.**
+
+**Exact vector search has no corpus-size work cap.** No fixed maximum on eligible indexed vectors considered for one actor/model/generation. The application requests 300 optional results; repository selection accepts 1–1,000. SQL orders by exact cosine distance over the scoped vector corpus before applying LIMIT. The scope index is not an approximate nearest-neighbor index.
+
+**Exposure / consequence:** Every semantic recall after sufficient history accumulates; conversations and witnessed events grow sources without extreme item creation. Optional retrieval gets slower or times out; it is not a direct world-stop mechanism. PostgreSQL uses a separate read lane and a 5-second statement timeout, which does not include queued wait or cap cumulative multi-query work.
+
+**Reason / tradeoff:** Preserve complete eligible recall and avoid unqualified approximate-search omissions. Retain this policy while measuring mature corpora; improve/index search with recall-quality evidence rather than silently dropping old memories.
+
+**Evidence:** Existing synthetic PostgreSQL top-100 evidence: about 100,000 sources cost 139 ms median / 319 ms p95 for vector selection and 180 / 498 ms for full local retrieval. These are [prior component measurements](../verification.md#data-foundation-runtime), not fresh measurements of the current top-300 caller. [Implementation](../../apps/server/src/memory-repository.ts) (`readSelection; initialize`). [Revisit C17](../maintainers/limits-audit.md#c17).
+
+## MH02
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Liberal.**
+
+**Coverage diagnostics count the whole scoped corpus.** No scanned-row cap in count/readCoverage: COUNT(\*) covers all eligible sources and matching vectors. It returns two scalar counts, not memory bodies. AttentionService.candidates asks for coverage before selection on each recall; a one-row result does not bound database work.
+
+**Exposure / consequence:** Repeated decisions in a mature world repeatedly count growing indexes. Cost can add to recall latency; this pass does not establish that counting dominates vector scoring.
+
+**Reason / tradeoff:** Accurate coverage explains indexed/missing evidence. Prefer maintained revision-scoped counts or cheaper threshold checks if measured; retain truthful diagnostics.
+
+**Evidence:** No new timing measurement; distinguish index scans from payload hydration. [Implementation](../../apps/server/src/memory-repository.ts) (`count; readCoverage; apps/server/src/recall.ts candidates`). [Revisit C17](../maintainers/limits-audit.md#c17).
+
+## MH03
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+
+**Lexical recall scores all eligible text before LIMIT.** No candidate-work cap for selectContext(query != null). SQL joins eligible actor sources to their payloads, extracts text, counts query-word matches and sorts before returning at most 300. The null-query recent-history branch uses ordered selection instead.
+
+**Exposure / consequence:** Ordinary invention/world-assistant context reads on a mature actor can scan growing text. PostgreSQL can delay other read-lane work; synchronous SQLite query execution can stall native timers despite a logically separate read connection.
+
+**Reason / tradeoff:** Keep all eligible history discoverable. Use an indexed lexical search and bounded preparation with explicit coverage, not a fixed newest-record prefilter that loses relevant older evidence.
+
+**Evidence:** Source inspection establishes the query shape, not its latency under a natural workload. [Implementation](../../apps/server/src/memory-repository.ts) (`selectContext`). [Revisit C17](../maintainers/limits-audit.md#c17).
+
+## MH04
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+
+**Required and conversation evidence is hydrated without a total count cap.** MemoryRepository.context loads every eligible speech ID in the active/relevant conversation. readRequired loads all required sources, correction-linked sources and supplied source/event aliases, then hydrates and constructs candidates. ID chunks (350) and hydration batches (800) bound statements, not the combined result. The separate 300-optional-result limit does not bound this path. commitments also loads all eligible commitments for explicit private inspection.
+
+**Exposure / consequence:** Long dialogue and accumulated protected/corrected evidence can increase memory and CPU on each decision. Later request-byte checks can refuse required context only after preparation; those checks do not bound this earlier work. Creator commitment inspection is less frequent than ordinary conversation recall.
+
+**Reason / tradeoff:** Never silently omit required evidence or conversation continuity. Introduce scoped dependency reads, incremental conversation context and explicit overflow handling before hydration; qualify semantic coverage.
+
+**Evidence:** Callers: decision-context.ts preparation, recall.ts candidates, world-service.ts inspectMemoryContext. [Implementation](../../apps/server/src/memory-repository.ts) (`context; readRequired; hydrate; commitments`). [Revisit C17](../maintainers/limits-audit.md#c17).
+
+## MH05
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+
+**The hot-memory window has no fixed count or byte ceiling.** Residency keeps six simulated hours of raw memory/awareness, unresolved commitments and at least 24 awareness entries per actor. There is no additional fixed count/byte cap on that working set. compactHistory skips unchanged/unexpired collections using cached expiry, but expiry filtering and some encounter preparation iterate resident arrays.
+
+**Exposure / consequence:** Witnessing dense encounters or sustained speech grows recent evidence quickly. Startup, expiry/commit work and encounter preparation can stall native simulation even with cold history excluded. Six game hours is only six real minutes at the current 1× rate; density matters as much as world age.
+
+**Reason / tradeoff:** Keep current evidence accessible while avoiding whole-lifetime hydration. Bound resident processing using consumed indexes/incremental expiry and explicitly designed residency; preserve durable evidence and required outcomes.
+
+**Evidence:** Prior cold-history runs demonstrate cold-source eviction, not a count bound or dense active-window capacity. [Implementation](../../apps/server/src/history-residency.ts) (`compactHistory; world-records.ts load; kernel.ts updateEncounters`). [Revisit C18](../maintainers/limits-audit.md#c18).
+
+## MH06
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+
+**Canonical history and derived artifacts have no aggregate retention quota.** No general total-row/byte quota or expiry policy for canonical retained source history, retired source versions, revision-keyed vector cache and attempt provenance. Recall eligibility/forgetting controls access; it does not imply physical deletion. Indexing takes bounded pending batches, while queue/cache/history storage can keep growing.
+
+**Exposure / consequence:** Normal observation, speech, source edits and embedding work accumulate disk use. Eventually backup size, I/O and disk exhaustion matter; a failed durable commit pauses simulation. That is a long-running capacity risk, not evidence that ordinary short play already exhausts disk.
+
+**Reason / tradeoff:** Preserve evidence, correction provenance and paid-artifact reuse until an explicit retention policy exists. Add growth monitoring and policy-owned archival/eviction before destructive pruning; protect important history and uncertain paid execution.
+
+**Evidence:** Production-data D2 owns retention semantics; a storage quota must not silently erase meaningful events. [Implementation](../../apps/server/src/memory-repository.ts) (`project; pending; memory_vector_cache and memory_index_attempts`). [Revisit C20](../maintainers/limits-audit.md#c20).
+
+## MH07
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+
+**Explicit owner edits can materialize complete history.** No source-count/byte cap when WorldRecords.withHistory is called without sourceIds. It loads full source and terminal appraisal/contribution histories for selected actors, or the world when actorIds is absent. savePersonEditor, saveWorldEventsEditor and correctMemory use the full-dependency owner path. Bounded consolidation supplies sourceIds and is a different path.
+
+**Exposure / consequence:** A normal creator edit or correction on a mature world can occupy the mutation lane and consume substantial RAM. Large editor request limits do not bound pre-existing dependencies loaded for one small edit.
+
+**Reason / tradeoff:** Corrections must reach all dependent evidence. Replace full materialization with indexed dependency closures and resumable preparation plus atomic publication; never skip affected history just to fit a page.
+
+**Evidence:** Rare explicit owner operations, not every tick or the bounded consolidation path. [Implementation](../../apps/server/src/world-records.ts) (`withHistory; readHistory; world-service.ts withActorHistory`). [Revisit C21](../maintainers/limits-audit.md#c21).
+
+## KG01
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+
+**Private-note candidates enumerate all actor documents.** subjectKnowledgeCandidates walks all documents in world.actorKnowledge[actorId], formats nonempty subject notes and creates candidate text before later relevance selection. Individual note lengths are bounded, but document count and total candidate-construction bytes have no bound here. The note collection is resident.
+
+**Exposure / consequence:** Learning about many people or creator-authored notes increases per-decision preparation. It usually grows more slowly than automatic memory/awareness; 10,000 subject notes is an extreme fixture, not a forecast for a normal session.
+
+**Reason / tradeoff:** Keep all known subjects available. Select scoped relevant documents before formatting; keep exact involved-subject lookup and per-document controls.
+
+**Evidence:** Existing 10,000-pad fixture measured candidate projection at 77 ms median / 106 ms p95; [prior fixture evidence](../verification.md#editable-knowledge-and-observer-names), not a new run or natural-growth estimate. [Implementation](../../apps/server/src/knowledge-context.ts) (`subjectKnowledgeCandidates`). [Revisit C07](../maintainers/limits-audit.md#c07).

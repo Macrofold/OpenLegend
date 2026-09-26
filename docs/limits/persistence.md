@@ -68,15 +68,13 @@ Original recommendation: **Keep**.
 
 ## LA175
 
-**Historical — needs recheck · Restrictiveness: Safe.**
+**Current — source inspected at `af1eb02` · Restrictiveness: Safe.**
 
-PostgreSQL connection attempts and statements time out after 5 seconds; SQLite waits up to 3 seconds for a busy database.
+PostgreSQL connection/read statements have a 5-second timeout; write transactions set a 30-second statement timeout. SQLite busy-lock waiting is up to 3 seconds. These are not end-to-end queue deadlines, scan-count caps or SQLite CPU-query interruption.
 
-**Reason / tradeoff:** Choose database deadlines appropriate to the operation and report a genuine storage failure explicitly.
+**Reason / tradeoff:** Bound external storage stalls while permitting larger atomic extraction/restore writes; report genuine storage failure. The original audit’s blanket 5-second statement claim is superseded.
 
-[Implementation starting point](../../apps/server/src/http.ts).
-
-Original recommendation: **Review**.
+[Implementation](../../apps/server/src/postgres.ts); [queue exposure](native-work.md#nw11).
 
 ## LA176
 
@@ -313,3 +311,15 @@ Autosave status is displayed in the creator’s Game panel and refreshed through
 Legacy feeling migration only supports the known fear/discomfort format and decay rate. Equipment migration only rebinds understood weapon references; unsupported references block migration. Unknown legacy item definitions do not automatically gain packing compatibility. [Feeling migration](../../packages/domain/src/appraisal-migration.ts), [object migration](../../packages/domain/src/object-migration.ts)
 
 **Reason / tradeoff:** Only understood legacy semantics can be converted without guessing or losing references.
+
+## SV17
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Liberal.**
+
+**Save catalog pages still scan the full directory.** SaveFiles.list iterates every save directory and reads metadata/file size before selecting a page. With limit set, retained result metadata is bounded to at most 101; directory visits and filesystem calls are not. Without limit, it retains all matching metadata. Three rolling autosaves do not bound indefinitely retained manual saves.
+
+**Exposure / consequence:** Catalog reads/rotation/backup get slower as manual-save counts grow. Reaching thousands of manual checkpoints requires sustained explicit saving; it is less imminent than automatic memory growth. This is separate from the 10,000-package operational backup refusal.
+
+**Reason / tradeoff:** Filesystem enumeration avoids another writable catalog for the first implementation. Keep the present policy until measured save counts warrant an indexed/paged catalog; do not prioritize a hypothetical 10,001st save over routine gameplay.
+
+**Evidence:** No new catalog timing run; page size is a result-memory bound, not an I/O-work bound. [Implementation](../../apps/server/src/save-files.ts) (`list`). [Revisit R02](../maintainers/limits-audit.md#r02).

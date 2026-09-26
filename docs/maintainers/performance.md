@@ -274,3 +274,9 @@ Treat this as an attribution target, not a result of multiplying microbenchmark 
 - [ ] Follow up on [generic status-effect stress evidence](../verification.md#generic-status-effects): immutable rule traversal removed the measured status-runtime bottleneck, but dense native scenes remain below full cold 3× capacity. Attribute remaining costs before adding applicability indexes, queues or dormancy.
 
 - [ ] Profile remaining full Intelligence history latency after the parent/time index and compact projection; current live reads still take about 870ms median under simulation. Follow-off root peeks are inexpensive. Measure remaining query/projection work before introducing caches or coordination; see [runtime evidence](../verification.md#intelligence-panel-readability-and-runtime-verification).
+
+## Limits growth review inputs
+
+The [limits growth-path review](../limits/README.md#growth-path-review-coverage) records source-inspected missing work bounds at `af1eb02`; it is not new benchmark evidence. [C18](limits-audit.md#c18) feeds PF03/PF09 and EPR02/EPR05 dense native work and hot evidence; [C17](limits-audit.md#c17) feeds PF08/CR exact/lexical recall, repeated coverage counts and unbounded mandatory/conversation preparation; [C19](limits-audit.md#c19) feeds PF01/PF07 queue admission. Read the inventory’s actual upstream protections before introducing another limit.
+
+PF08’s mature-world and explicit-owner-edit qualification includes [MH06/MH07](../limits/memory.md#mh06), and existing CR private-note work includes [KG01](../limits/memory.md#kg01). Separate automatic memory growth from extreme authored collections. Serialized/read lanes and output LIMIT clauses are not evidence of bounded queued or pre-selection work. Existing acceptance remains open; no extra duplicate task checklist is introduced here.

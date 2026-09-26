@@ -179,3 +179,27 @@ Dependency authority-scope string: **512 characters maximum**.
 **Reason / tradeoff:** Bound serialized request/record fields and validation work; exact length is a chosen envelope, not a population limit.
 
 [Implementation starting point](../../packages/protocol/src/index.ts).
+
+## NW10
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+
+**Dense physical and witness work lacks a per-phase slice bound.** All current physical entities live in one world process. updateEncounters builds spatial candidates from participating roots and traverses real nearby actors/objects; emitEvent processes each actual audience member. Spatial radius/index filters reduce sparse work but do not cap the number inside a dense region. No per-phase wall-time preemption exists. Native work meters bound charged effects/output and other declared work; they do not make every loop a bounded-time slice.
+
+**Exposure / consequence:** Crowds, animals, placed objects and many real witnesses can cause long indivisible native steps during ordinary supported interactions. If required native work exceeds its admitted envelope, WorldService pauses publication/the world; do not describe this as a harmless warning.
+
+**Reason / tradeoff:** Preserve real witnesses and deterministic outcomes. Use change-fed perception, measured admission/backpressure and resumable phases where semantics permit. Never silently trim the audience to meet a target.
+
+**Evidence:** PF09 already records slow dense fixtures; this source review does not establish the exact population at which a work ceiling is hit. [Implementation](../../packages/domain/src/kernel.ts) (`updateEncounters; events.ts emitEvent; world-service.ts acceptRoutine/persist`). [Revisit C18](../maintainers/limits-audit.md#c18).
+
+## NW11
+
+**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+
+**Serialized mutation and SQL lanes have no queue-depth admission cap.** WorldService.mutate and PostgreSQL/SQLite transaction lanes chain pending promises without a maximum queued count/bytes/age at those owners. One execution at a time bounds concurrency, not backlog. The HTTP activeWrites counter is used for restore exclusion, not general queue admission. Stream/connection caps and normal client behavior constrain some producers but are not a server-wide work-queue limit.
+
+**Exposure / consequence:** Concurrent commands or inspection during slow native/SQL work can accumulate waiting operations, latency and memory. A PostgreSQL statement timeout starts during execution and does not cap time spent waiting for its lane.
+
+**Reason / tradeoff:** Preserve ordered atomic mutations. Add measurable per-owner queue admission/backpressure and explicit overload responses; coalesce only operations whose semantics permit replacement.
+
+**Evidence:** Code-level risk, not a measured saturation threshold. PF01/PF07 own queue attribution and admission design. [Implementation](../../apps/server/src/world-service.ts) (`mutate; postgres.ts serial/readTransaction; sqlite-database.ts run/readTransaction`). [Revisit C19](../maintainers/limits-audit.md#c19).

@@ -1,5 +1,17 @@
 # Documentation changelog
 
+## 2026-09-26 — Risk-based planning and explicit reconciliation targets
+
+Updated [root planning](../AGENTS.md#plan-before-implementation) to choose durable plans by risk/complexity rather than a mandatory 200-line threshold: straightforward mechanical work may use conversation plans, while even small consequential work can require a project document. The [rebase workflow](../.agents/skills/openlegend-rebase/SKILL.md) now selects an explicit task base, then the current PR target (including stacked parents), then the intended remote's verified default; tracking upstreams are not merge targets. It retains conflict stops and dirty/shared-history protections and makes detached-worktree handling explicit.
+
+Consolidated general authorization/completion in root, reconciliation in Rebase, review behavior in Review and tracker maintenance in Documentation, with references from the system guide, design skill and contributor guide. Required scope, verification/CI, read-only boundaries, spending, privacy and state-preservation safeguards remain. This supersedes the earlier line-count planning rule and unconditional-main startup policy; [CG05/CG08](maintainers/agent-guidance.md) distinguish delivered instructions from pending native-agent compliance evidence.
+
+## 2026-09-26 — Rank limits by reachable gameplay and growth impact
+
+Reordered [Remove / Change / Expand](maintainers/limits-audit.md) using near-term permitted actions, automatic growth, frequency and consequences. Dense native work, growing recall preparation and ordinary shared/inventory workflows precede extreme save catalogs. The 10,000-save cap remains low priority; reservation receipt exhaustion is gated on a future real consumer because no non-test creator caller was found in the inspected baseline. Required-work pause is distinguished from optional refusal. Shared world-container defaults remain a proposed access design, not a runtime permission change.
+
+Added twelve source-inspected [growth-path entries](limits/README.md#growth-path-review-coverage), including exact vector/lexical scans, required conversation hydration, active evidence, retained storage, note/candidate construction, mutation/SQL queues, owner edits and full save-catalog traversal. Record actual upstream controls and absent bounds separately from output/page limits. Updated feature-document requirements and PF/CR/D2 references. Prior measurements remain explicitly prior evidence; this documentation-only inspection adds no runtime qualification or retention policy.
+
 ## 2026-09-26 — Feature-owned limits inventory and revisit backlog
 
 Split the existing temporary/repository 238-entry limits audit into [feature inventories](openlegend-limits-decisions.md), preserving stable audit IDs, restrictive classifications, original reasons/recommendations and removal records. Merged the foundation and save/recovery implementation reports with explicit [deduplication and exclusions](limits/import-coverage.md); known superseded values are updated while unverified old findings remain historical. Pure identity/arithmetic and human-private authorization obligations are not presented as tunable capacity constraints.
@@ -87,7 +99,7 @@ The existing 168 fixture/API typecheck errors are resolved. Native crash, concur
 
 ## 2026-09-25 — Short-change workflow and concise responses
 
-[Root guidance](../AGENTS.md#short-changes) now lets short, low-risk tasks skip separate design documents, minor-fix changelog entries, unrelated test suites and redundant review rounds. Focused diff review, affected-behavior verification, consequential decision records, explicit requests and required gates remain; size alone does not establish low risk. Response guidance requires concise, plain, accurate and complete language, with shorthand only where clarity survives. [CG05/CG08](maintainers/agent-guidance.md) track the revised instructions and pending compliance evidence.
+[Root guidance](../AGENTS.md#low-risk-changes) now lets short, low-risk tasks skip separate design documents, minor-fix changelog entries, unrelated test suites and redundant review rounds. Focused diff review, affected-behavior verification, consequential decision records, explicit requests and required gates remain; size alone does not establish low risk. Response guidance requires concise, plain, accurate and complete language, with shorthand only where clarity survives. [CG05/CG08](maintainers/agent-guidance.md) track the revised instructions and pending compliance evidence.
 
 ## 2026-09-25 — Small-change planning exception
 

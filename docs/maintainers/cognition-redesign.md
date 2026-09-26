@@ -459,3 +459,7 @@ Canonical contracts: [Knowledge](../knowledge.md), [base-world policy](../worlds
 - [ ] Add aggregate actor storage admission and bounded cold-document retrieval when measured long-running population/history requires them; the initial implementation retains document maps in active world state.
 
 Deferred automated coverage is in [TODO](TODO.md#knowledge-documents--deferred-automated-validation). Implementation checkboxes do not establish live model quality or full scale acceptance.
+
+## Limits growth review inputs
+
+[MH01–MH04](../limits/memory.md#mh01) and [CG01](../limits/cognition.md#cg01) trace full-corpus scoring/counting, complete conversation/required hydration and candidate construction before final model limits. [KG01](../limits/memory.md#kg01) retains the existing whole-note preparation gap. [C17/C07](limits-audit.md#c17) rank these under ordinary accumulated play; PF08 owns runtime qualification and CR owns permitted context/semantic coverage. Consolidation’s 128-source/512-KiB preparation remains a separate bounded path. Do not infer a hard scan bound from 300 optional results or discard required sources to obtain one.

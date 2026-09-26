@@ -234,6 +234,8 @@ Completed reservation receipts remain in memory and count against retained-memor
 
 **Reason / tradeoff:** Retain idempotency evidence; receipts lack a cold-retention path, so completed work can consume new-work capacity.
 
+**Reachability check (`af1eb02`):** `reserveResource` is exported but this pass found no non-test gameplay caller in `apps/` or `packages/`. No terminal receipt expiry/count limit exists at this owner; receipts continue to count toward retained-byte admission. Treat growing reservation receipts as a consumer-integration risk, not a demonstrated outcome of ordinary crafting today. [R01](../maintainers/limits-audit.md#r01) must be revisited before enabling a recurring reservation consumer.
+
 ## ST10
 
 **Reported · Restrictiveness: Very safe.**

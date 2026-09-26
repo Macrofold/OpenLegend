@@ -8,7 +8,14 @@ Root instructions hold universal constraints and top-level routing. `.agents/rul
 
 Markdown links resolve from the containing document; shell commands run from the repository root unless stated otherwise. A skill read by itself still needs root and applicable path guidance.
 
-The task determines whether to explain, design, review or implement; loading a skill never authorizes another mode. Explicit task instructions can change workflow, not grant someone else's credentials or bypass platform constraints. Nested guidance refines its scope. Do not fork policy into editor-specific copies.
+Follow [root task authorization](../AGENTS.md#task-scope-and-authorization) for task mode and permissions. Nested guidance refines its scope; do not fork policy into editor-specific copies.
+
+Use these canonical owners rather than restating their workflows:
+
+- [Root](../AGENTS.md): planning, general task policy, startup trigger, completion and handoff.
+- [Rebase](skills/openlegend-rebase/SKILL.md): base selection, refresh/reconciliation, worktree/history protections and conflict stops.
+- [Review](skills/openlegend-review/SKILL.md): routine/full review behavior, fixes and finding reports.
+- [Documentation](rules/documentation.md): tracker maintenance, current contracts, acceptance state and decision history.
 
 ## Compatibility
 
