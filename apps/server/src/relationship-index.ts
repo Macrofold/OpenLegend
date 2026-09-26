@@ -46,12 +46,17 @@ export class RelationshipIndex {
     for (const node of nodes) {
       const key = refKey(node.ref);
       if (this.nodes.has(key)) throw new GraphReadError('invalid', 'Duplicate graph node.');
-      this.nodes.set(key, node);
+      Object.freeze(node.ref);
+      this.nodes.set(key, Object.freeze(node));
     }
     const ids = new Set<string>();
     for (const edge of edges) {
       if (ids.has(edge.id)) throw new GraphReadError('invalid', 'Duplicate graph edge.');
       ids.add(edge.id);
+      Object.freeze(edge.source);
+      Object.freeze(edge.target);
+      Object.freeze(edge.sourceRecord);
+      Object.freeze(edge);
       const source = refKey(edge.source),
         target = refKey(edge.target);
       if (!this.nodes.has(source) || !this.nodes.has(target))
@@ -67,7 +72,7 @@ export class RelationshipIndex {
       list.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     this.snapshot = fingerprint([
       scope,
-      nodes.map((n) => n.ref),
+      nodes.map((n) => [n.ref, n.label, n.layer, n.availability ?? null]),
       edges.map((e) => e.id),
       limitations,
     ]);

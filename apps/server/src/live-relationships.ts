@@ -1,4 +1,4 @@
-import type { WorldState } from '@open-legend/domain';
+import type { Entity, WorldState } from '@open-legend/domain';
 import type {
   RelationshipEdge,
   RelationshipKind,
@@ -7,6 +7,20 @@ import type {
 } from '@open-legend/protocol';
 import { fingerprint, GraphReadError, refKey, RelationshipIndex } from './relationship-index.js';
 import type { DefinitionProjection } from './world-graph.js';
+
+/** Exact inspectable entity projection; private cognition has separate owner-only readers. */
+export const inspectableEntity = (e: Entity) => ({
+  id: e.id,
+  name: e.name,
+  kind: e.kind,
+  position: e.position,
+  spatial: e.spatial,
+  resource: e.resource,
+  heat: e.heat,
+  remains: e.remains,
+  actionId: e.actor?.action?.id,
+  equippedItemId: e.actor?.equippedItemId,
+});
 
 /** Live arrangements are projected from their owners, not inferred from labels or pictures.
  * docs/repertoire-foundation.md#3-definition-live-arrangement-and-evidence-views
@@ -52,16 +66,7 @@ export function projectLiveSubject(
   const entity = (id: string) => {
     const e = Object.hasOwn(world.entities, id) ? world.entities[id] : undefined;
     if (!e) throw new GraphReadError('unavailable', 'Entity is unavailable.');
-    return add('entity', id, e.name, {
-      id,
-      name: e.name,
-      kind: e.kind,
-      position: e.position,
-      spatial: e.spatial,
-      resource: e.resource,
-      heat: e.heat,
-      remains: e.remains,
-    });
+    return add('entity', id, e.name, inspectableEntity(e));
   };
   const item = (id: string) => {
     const i = Object.hasOwn(world.items, id) ? world.items[id] : undefined;
@@ -111,7 +116,7 @@ export function projectLiveSubject(
       link(root, item(e.actor.equippedItemId), 'uses', 'equipped');
   }
   const index = new RelationshipIndex(
-    JSON.stringify([world.id, generation, world.sequence, world.simTime]),
+    JSON.stringify([world.id, generation]),
     [...nodes.values()],
     [...edges.values()],
     [
