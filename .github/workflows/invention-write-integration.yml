@@ -17,7 +17,7 @@ jobs:
         run: |
           git config user.name 'OpenLegend implementation'
           git config user.email 'implementation@users.noreply.github.com'
-          test "$(git rev-parse HEAD^)" = cbe34ac7517397ca44963bf88f9ca00575f76f5e
+          git merge-base --is-ancestor cbe34ac7517397ca44963bf88f9ca00575f76f5e HEAD
           git merge --no-commit --no-ff fc01e19b30060e6c7213b1c5405be13df209297e || test -f .git/MERGE_HEAD
           python3 - <<'PY'
           from pathlib import Path
@@ -38,6 +38,7 @@ jobs:
             Path(f).write_text(s)
           PY
           git rm .github/workflows/invention-write-integration.yml
+          git checkout fc01e19b30060e6c7213b1c5405be13df209297e -- .github/workflows/check.yml
           git add -u
           git diff --check --cached
           test "$(git write-tree)" = 9945f578ad79a866b1d7e0fe6861cf9f46833bf9

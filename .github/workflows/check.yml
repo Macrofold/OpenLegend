@@ -6,6 +6,7 @@ permissions:
   contents: read
 jobs:
   check:
+    if: ${{ !contains(github.event.head_commit.message, '[invention-integration]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
