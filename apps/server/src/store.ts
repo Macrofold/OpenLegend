@@ -2,6 +2,7 @@ import { MemoryRepository } from './memory-repository.js';
 import { WorldRecords } from './world-records.js';
 import { isDeepStrictEqual } from 'node:util';
 import { randomUUID } from 'node:crypto';
+import { WorldAgentStore } from './world-agent-store.js';
 import { KnowledgeStore } from './knowledge-store.js';
 import { upgradeWorldState } from './upgrade-world.js';
 import { validateWorldModules } from '@open-legend/domain';
@@ -540,6 +541,7 @@ export class SqliteStore implements GameRepository {
     await new KnowledgeStore(this.db).initialize();
     await this.records.initialize();
     await this.memories.initialize();
+    await new WorldAgentStore(this.db).initialize();
     await this.history.initialize();
     await this.saves.initialize();
     await this.commands.initialize();
