@@ -5,6 +5,12 @@ import { entityLabel } from './entity-references.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import { NATIVE_STRIKES } from '@open-legend/domain';
 import { inventionMaterials } from './invention-context.js';
+import { observerDescription } from '@open-legend/domain';
+import { dropItemReason } from '@open-legend/domain';
+import { pickupActions } from './item-actions.js';
+import { entityLabel } from './entity-references.js';
+import { statusEffectActions } from './status-effect-actions.js';
+import { NATIVE_STRIKES } from '@open-legend/domain';
 import {
   canReachEntity,
   findApproachPath,

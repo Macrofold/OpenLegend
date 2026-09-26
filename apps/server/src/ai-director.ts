@@ -8,6 +8,9 @@ import { resolveResponseEntities, resolveEntityMarkers } from './entity-referenc
 import { capabilityBlocked } from '@open-legend/domain';
 import { prepareInventionWorkshop } from './invention-workshop.js';
 import { inventionAttemptBudget } from './invention-context.js';
+import { observerDescription } from '@open-legend/domain';
+import { resolveResponseEntities, resolveEntityMarkers } from './entity-references.js';
+import { capabilityBlocked } from '@open-legend/domain';
 import { searchInventions } from './invention-search.js';
 import type { InventionContinuation } from '@open-legend/protocol';
 import {

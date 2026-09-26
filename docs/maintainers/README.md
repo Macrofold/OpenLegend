@@ -29,6 +29,8 @@ This page is the master navigation index for active implementation work.
 
 Begin with [Invention foundation](../invention-foundation.md) for coordination and canonical ownership. Supporting specifications are [World constitution](../world-constitution.md), [Validation and compositional evidence](../invention-validation.md), [Runtime art pipeline](../invention-art-pipeline.md), and [Budgets and runtime cost](../invention-budgets.md). Their detailed tasks remain in the single INV tracker, including INV-9–INV-14; this index does not duplicate task bodies or status.
 
+- [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
+
 ## Supporting references
 
 - [Policies to revisit](revisitable-policies.md) — accepted but changeable decisions, canonical owners and review triggers; not an implementation backlog.
