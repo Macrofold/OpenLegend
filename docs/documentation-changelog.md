@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## 2026-09-26 — Complete design package for foundation priorities 1–5
+
+Added five separate feature specifications and technical designs under [the foundation delivery map](projects/foundations-1-5.md): shared contributions/resources, multiplayer authority, persistent objects/containment, dependency invalidation/aggregate work and persistent appraisal/directional social continuity. Each design records inspected native/data/related-branch boundaries, typed operations, lifecycle, privacy, in-place migration, bounded work, concrete consumers, failure cases and qualification requirements.
+
+Added SC01–SC08, PO01–PO09 and DI01–DI08 as focused child trackers of existing EWF/INV/DF/BW work, and decomposed MP01/MP04 and ACT07/ACT08 in their current trackers. All 46 implementation/qualification slices remain open; prior task states and historical branch coverage are preserved. The [remaining-foundations index](maintainers/remaining-foundational-work.md) and [maintainer index](maintainers/README.md) link the complete package. Proposed engineering choices are explicit; no new universal emotion taxonomy, social-state authority, inventory service, scheduler or distributed prerequisite was introduced.
+
+This is documentation-only work from main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`. No runtime code, storage, permissions, active implementation branches or main were changed by the design commits; no provider execution, build, automated suite or runtime qualification was performed. The package preserves current migration/privacy policies and requires DF02/SL00 integration and actual native/database/client/hosted evidence during implementation.
+
 ## 2026-09-25 — Foundation decisions and branch-aware remaining work
 
 Recorded accepted [special invention permission](../archive/03-design-proposals/invention-governance-and-ownership.md#special-player-invention-permission), [risk-accepted law changes](../archive/07-technical-architecture/declarations-and-evolution.md#accepted-live-change-and-risk-policy), scheduled maintenance, [main-world logout/death/ghost policy](worlds/base/lifecycle-and-protection.md), persistent cause-linked emotions and foreground/background sensory policy. These are accepted targets, not runtime delivery. Gameplay risk can be explicitly accepted without granting unsupported execution or bypassing integrity; buildings remain unprotected pending a later policy.
@@ -68,7 +76,7 @@ Preserved the concurrent third-pass lazy graph, closed-region proofs, native ros
 
 ## Third spatial scaling pass
 
-Replaced eager exact graph baking/weak-component labels with lazy checked edges, connector-aware A\* and bounded exhausted-search proofs; documented finite native participant reuse and isolated observation copying. Updated implemented SW/PF entries and remaining latency gates. Removed the obsolete PF task to implement experience-ID indexing (already delivered); its regression requirements remain SR08. Added SR11/SR12 and extended SR05 instead of duplicating privacy checks. Prior automated evidence remains historical; this round records builds/manual runtime only.
+Replaced eager exact graph baking/weak-component labels with lazy checked edges, connector-aware A* and bounded exhausted-search proofs; documented finite native participant reuse and isolated observation copying. Updated implemented SW/PF subsets without closing the remaining preparation, private-acquisition or population gates. Added SR11/SR12 and extended SR05 instead of duplicating privacy checks. Prior automated evidence remains historical; this round records builds/manual runtime only.
 
 ## Second spatial scaling pass
 
@@ -80,7 +88,7 @@ Added the SW delivery ledger separating implemented native subsets from broader 
 
 ## Spatial-world integration and first native provider
 
-Added spatial behavior/runtime/tracker/research owners and retained the original pinned source review as historical research. Reconciled sensory, agency, art, camera, save, storage and engine/world ownership without resetting existing task IDs. Replaced the flat-world target with XYZ/support-aware simulation and mixed representation. The initial implementation chooses bounded native surface A\*/convex queries over unqualified multi-library WASM integration; researched alternatives and broader target gates remain explicit. Current behavior and actual validation are recorded in Architecture/Verification, not inferred from documentation integration.
+Added spatial behavior/runtime/tracker/research owners and retained the original pinned source review as historical research. Reconciled sensory, agency, art, camera, save, storage and engine/world ownership without resetting existing task IDs. Replaced the flat-world target with XYZ/support-aware simulation and mixed representation. The initial implementation chooses bounded native surface A*/convex queries over unqualified multi-library WASM integration; researched alternatives and broader target gates remain explicit. Current behavior and actual validation are recorded in Architecture/Verification, not inferred from documentation integration.
 
 ## 2026-09-22 — Shared invention and plan-output slice
 
