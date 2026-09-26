@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-26 — Import standalone worldbuilding research
+
+Squashed the 42 commits from `docs/worldbuilding-research-library` into `main`: [28 world dossiers, six comparative essays and supporting navigation/evidence records](../archive/02-research/worldbuilding/README.md). The library remains independent research, not accepted game mechanics or an implementation plan. [Integration verification](../archive/02-research/worldbuilding/research-progress.md#main-branch-integration) records the refreshed source/base, conflict-free integration and local documentation checks; original source-access limitations remain explicit.
+
 ## 2026-09-26 — Gameplay availability and social follow-through
 
 Added a [current exposure summary](../archive/05-project/implementation-status.md#gameplay-availability) separating native support, automatic use, player/creator controls and evidence. Reconciled stale actor migration, single-player narration and future relationship-editing wording without closing unsatisfied acceptance. The new [mechanics repertoire](repertoires/mechanics.md) extends selected action concept keys as ideas, not a competing backlog or installed-feature list.

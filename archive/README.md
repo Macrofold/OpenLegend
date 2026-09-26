@@ -1,5 +1,9 @@
 # Open Legend — research and planning archive
 
+## Standalone worldbuilding research
+
+The [worldbuilding research library](02-research/worldbuilding/README.md) contains 28 world dossiers, six comparative essays, and a cross-world matrix covering fictional history, societies, characters, language, religion, power, ordinary life, and audience experience. It is independent literary and cultural research, not a product proposal or implementation specification. See its [source audit](02-research/worldbuilding/source-audit.md) for evidence and access limits.
+
 ## Spatial-world research and delivery
 
 [3D-world research](02-research/three-dimensional-worlds-and-navigation.md) and the [historical code review](02-research/spatial-world-repository-review.md) support the [spatial behavior owner](../docs/spatial-world.md), [runtime contract](07-technical-architecture/spatial-world-runtime.md) and [SW tracker](../docs/maintainers/spatial-world.md). Current delivered limits belong to [Architecture](../docs/architecture.md#spatial-world-foundation), not the original research snapshot.
