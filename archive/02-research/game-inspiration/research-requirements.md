@@ -2,11 +2,13 @@
 
 **Owner:** the game-inspiration library. **Requested by:** Mike, September 25, 2026. **Repository/branch:** `Macrofold/OpenLegend`, `docs/game-inspiration-library`.
 
-This is the durable statement of the research assignment. Read it with [research progress](research-progress.md) before resuming. It is a reference-research worklist, not an engine-maintainer backlog or permission to change OpenLegend gameplay, architecture, code, spending, or access.
+This is the durable statement of the research assignment. Read it with [research progress](research-progress.md) and the [complete subject roster](research-roster.md) before resuming. It is a reference-research worklist, not an engine-maintainer backlog or permission to change OpenLegend gameplay, architecture, code, spending, or access.
 
 ## The assignment, without the earlier narrowing
 
 Preserve all prior research beginning with Mike's message **“Can you help me draw from popular games success”**, including the supplied seven-file packet, and complete a full missing-research pass for **every game and platform discussed as a case**. Earlier work organized 47 named subjects into 38 chapters and added 25 selective mechanics studies. Those counts do not establish completion. A combined chapter does not discharge separate research for each constituent game. A study of Hades I does not discharge Hades II; a study of Lethal Company does not discharge Among Us; an ecology anecdote does not discharge Ultima Online.
+
+**Scope addition, September 25, 2026:** Mike subsequently requested **“continue. Add Runescape too if not already there”**. The assignment now contains **49 individually tracked subjects**: the original G01–G47 plus **G48 RuneScape (modern / RuneScape 3)** and **G49 Old School RuneScape**. Both new subjects require independent full R01–R14 passes, not one superficial franchise comparison. Explain shared origins but verify each game's own skills, quests, combat, item and crafting chains, economy, travel, social systems, progression and loss modes, presentation, production, distribution, governance and reception. Distinguish historical RuneScape Classic context and any spin-offs, private servers or announced features from the two studied games. Do not renumber or remove the original cases. The original packet's 47-subject count remains historical; the roster and progress ledger own the expanded scope and actual completion state.
 
 The intended result is a large, detailed, navigable reference brain for gameplay inspiration: what players actually do, how the parts interact, what people valued or resisted, how the products were made and reached people, and what can be learned. It is not primarily an engineering architecture survey. Do not replace concrete game research with generic OpenLegend recommendations.
 
@@ -62,6 +64,7 @@ Art/media is linked as reference, not copied into game assets. Paraphrase source
 - `games/` retains the original case chapters and prior field-guide material.
 - `mechanics/` owns existing granular interaction studies and their source annotations.
 - `dossiers/` holds the full per-subject completion passes. A dossier links and builds on prior owners; it does not silently replace them or duplicate entire old chapters.
+- `research-roster.md` owns the stable subject inventory, output filenames and game/edition boundaries, including explicit additions to the original packet's scope.
 - `research-progress.md` is the canonical state of this assignment: subject order, status, committed output, exact remaining work, and packet-wide audit state.
 - This file owns the complete assignment and definition of done. Do not duplicate its requirement bodies in every tracker row.
 - The library README, dossier index and interaction lookup provide navigation. Do not create competing full copies of the evidence or an engine-maintainer task list.
