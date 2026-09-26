@@ -1,6 +1,6 @@
 # Feelings and social continuity: limits and constraints
 
-[Feature contract](../projects/appraisal-social-continuity-feature-spec.md) · [Implementation work](../maintainers/agent-agency.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
+[Feature contract](../projects/appraisal-social-continuity-feature-spec.md) · [Implementation work](../maintainers/actor-model.md#advanced-emotional-state-foundation) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
 Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
 
@@ -20,13 +20,13 @@ Original finding and recommendation superseded by the merged implementation; the
 
 ## LA081
 
-**Historical — needs recheck · Restrictiveness: Medium.**
+**Current — source-inspected 2026-09-26 · Restrictiveness: Medium.**
 
-Emotional reactions tracked by game rules, such as fear of someone who caused harm, lose 0.25 intensity per game hour.
+The bundled fear/discomfort definitions decay by 0.25 intensity per game hour. This is an explicit world policy, not a default lifetime for every feeling; other installed policies can persist or follow conditions.
 
 **Reason / tradeoff:** Review this fading rate as a behavior rule rather than removing it as an unnecessary processing limit.
 
-[Implementation starting point](../../packages/domain/src/agency.ts).
+[Implementation starting point](../../packages/domain/src/worlds/base/appraisals.ts). [Current social rules](../worlds/base/social.md#feelings).
 
 Original recommendation: **Review**.
 
@@ -156,7 +156,7 @@ Reframing cannot change the target or reset lifetime; for decaying feelings it c
 
 Creator UI authoring supports **qualitative NPC feelings only**, with create/resolve operations and known subjects.
 
-**Reason / tradeoff:** Expose a narrow trusted authoring surface; numeric/reframe/process editing is not yet delivered.
+**Reason / tradeoff:** Expose a narrow trusted authoring surface; numeric/reframe/process editing is not yet delivered. [ACT09](../maintainers/actor-model.md#act09--internal-feeling-process-authoring) scopes a possible process-authoring journey and its required lifecycle decisions; it does not authorize implementation or promise a general editor.
 
 ## FL17
 

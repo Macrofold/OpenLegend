@@ -221,14 +221,6 @@ export class HistoryRepository {
       .prepare('DELETE FROM history_perspectives WHERE world_id=? AND event_id=?')
       .run(worldId, id);
     await this.db
-      .prepare(
-        'DELETE FROM story_narrations WHERE world_id=? AND id IN (SELECT narration_id FROM story_event_sources WHERE world_id=? AND event_id=?)',
-      )
-      .run(worldId, worldId, id);
-    await this.db
-      .prepare('DELETE FROM story_event_sources WHERE world_id=? AND event_id=?')
-      .run(worldId, id);
-    await this.db
       .prepare('DELETE FROM history_audiences WHERE world_id=? AND event_id=?')
       .run(worldId, id);
     await this.db.prepare('DELETE FROM history_events WHERE world_id=? AND id=?').run(worldId, id);

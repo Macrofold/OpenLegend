@@ -2,6 +2,7 @@
 
 This page is the master navigation index for active implementation work.
 
+- [Gameplay availability](../../archive/05-project/implementation-status.md#gameplay-availability) — current native/NPC support, player and creator surfaces, and linked next steps.
 - [Remaining foundational work](remaining-foundational-work.md) — ranked gaps, branch coverage and accepted-decision delivery map.
 - [Priorities 1–5 implementation and design package](../projects/foundations-1-5.md) — five paired feature/technical specifications, source baseline, cross-project sequence and links to 46 completed implementation/qualification slices, measured limits and branch migration seams.
 - [Multiplayer authority and operations](multiplayer.md) — control, private projections, special player permissions, maintenance and absence integration.
@@ -41,6 +42,9 @@ This page is the master navigation index for active implementation work.
 - [Extensibility roadmap](../extensibility-roadmap.md)
 - [Extensible-world worked examples](../extensible-world-examples.md)
 - [Action and interaction repertoire](../repertoires/actions.md) — stable example IDs and related-mechanic references; idea catalogue, not implementation status
+
+- [Mechanics repertoire](../repertoires/mechanics.md) — related concepts, reusable mechanisms and authored-world choices; ideas, not another backlog.
+- [Social playable slices](base-world.md#social-playable-slices) — proposed family and promise UI; [ACT09](actor-model.md#act09--internal-feeling-process-authoring) covers conditional process authoring. Documentation only; runtime implementation is not authorized by these entries.
 
 - [Product baseline](../../archive/01-requirements/product-baseline.md)
 - [Product roadmap](../../archive/05-project/roadmap.md)

@@ -17,7 +17,7 @@ There are **384 seed examples in 32 domains**. Rows are original OpenLegend desi
 
 These are **resolution routes, not implementation status, permission levels, or G0–G3 replacements**. F/U/C generally use G0 action/plan semantics. D is classified by INV into its actual generation level. A reusable personal plan does not automatically become a world-definition change. Likewise, storing an accepted activity across saves is not invention.
 
-The related-mechanics column uses stable **concept keys**, such as `M:combustion`, alongside object/participant nouns. Keys are cross-reference placeholders, not registered runtime family IDs, schemas, or existing files. They can later link to separate mechanics, objects, needs, traits, media and world-constitution repertoires. Do not create broken links to repositories that do not exist yet.
+The related-mechanics column uses stable **concept keys**, such as `M:combustion`, alongside object/participant nouns. Keys are design cross-references, not registered runtime family IDs or schemas. The [mechanics repertoire](mechanics.md) now expands selected keys; unlisted keys remain placeholders. Objects, needs, traits, media and world-constitution companions can follow when concrete content warrants them. Do not create links to files that do not exist yet.
 
 **Entry defaults:** maturity = idea; implementation evidence = none asserted here; priority = unassigned; applicable worlds = those satisfying the listed dependencies. The F rows are the selected reusable foundation; U/C rows are ordinary-use candidates, not a mandate to hard-code them all into the kernel. Refine priority and delivery in the owning tracker, not with hundreds of competing checkboxes here.
 

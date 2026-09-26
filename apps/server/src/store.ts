@@ -25,7 +25,7 @@ import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
-import type { IntelligenceCall } from '@open-legend/protocol';
+import type { GameView, IntelligenceCall } from '@open-legend/protocol';
 import { SqliteDatabase } from './sqlite-database.js';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -367,19 +367,7 @@ export interface GameRepository extends WorldStore {
   ): Promise<boolean>;
   settle(id: string, receipt: AiReceipt): Promise<void>;
   recoverInterruptedWork(): Promise<void>;
-  usage(
-    ceilingUsd: number,
-    actorId?: string,
-  ): Promise<{
-    budget: { limitUsd: number; spentUsd: number; reservedUsd: number; estimated: boolean };
-    usage: {
-      jevCalls: number;
-      llmCalls: number;
-      inputTokens: number;
-      outputTokens: number;
-      lastLatencyMs: number;
-    };
-  }>;
+  usage(ceilingUsd: number, actorId?: string): Promise<Pick<GameView['ai'], 'budget' | 'usage'>>;
 }
 
 /**

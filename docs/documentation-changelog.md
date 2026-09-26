@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-26 — Gameplay availability and social follow-through
+
+Added a [current exposure summary](../archive/05-project/implementation-status.md#gameplay-availability) separating native support, automatic use, player/creator controls and evidence. Reconciled stale actor migration, single-player narration and future relationship-editing wording without closing unsatisfied acceptance. The new [mechanics repertoire](repertoires/mechanics.md) extends selected action concept keys as ideas, not a competing backlog or installed-feature list.
+
+[Bundled social rules](worlds/base/social.md) now own the current feeling, family and promise specializations, with explicit limits and engine/world seams. [BW16/BW17](maintainers/base-world.md#social-playable-slices) and [ACT09](maintainers/actor-model.md#act09--internal-feeling-process-authoring) record proposed playable journeys, dependencies, exits and [deferred coverage](maintainers/TODO.md#social-playable-slices--future-validation). [D63–D65](../archive/05-project/open-decisions.md#social-exposure-decisions) retain unresolved correction/disclosure, amendment and process-retirement choices. This is documentation-only work: no runtime implementation approval, new mechanics or fresh gameplay qualification.
+
 ## 2026-09-26 — Save/recovery limits and guarantee corrections
 
 Reconciled the additional save/recovery handoff against source: [pre-load capture dependency, retention order, compatibility, snapshot lifetime and operational file recovery](limits/persistence.md#sb13), plus [benchmark-only bounds](limits/observability.md#sv18). Extended existing entries instead of duplicating catalog-scan, retention and status limits. Corrected worker placement and the distinction between file integrity, actual restoration and filesystem quotas in the save contract and operational runbook. [SL08/SL09 follow-ups](maintainers/save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up), D1/D2 file reconciliation and limits candidates C22–C24 retain unimplemented work. Documentation/source review only; no runtime behavior or acceptance claim changed.

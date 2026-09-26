@@ -431,3 +431,11 @@ Automated suites were neither added nor run at the owner's request. Manual execu
 ## Limits inventory and audit follow-up
 
 The original 238 entries and merged implementation reports now live in [feature inventories](../openlegend-limits-decisions.md). [Limits to revisit](limits-audit.md) owns ranked Remove / Change / Expand candidates and LA01–LA04 audit gates. The explicitly requested inventory migration is complete; the full runtime audit still depends on production-data acceptance. Recheck historical entries against their current consumers before acting.
+
+## Social playable slices — future validation
+
+These are deferred automated coverage plans for unimplemented UI slices, not missing checks for the documentation-only consolidation or evidence of acceptance. Native/manual journeys and completion remain in the focused tasks. Do not author/run suites without the applicable task authorization.
+
+- [ ] [BW16 family authoring](base-world.md#bw16--family-authoring-and-inspection): direction and symmetric duplicates, parent cycles, immutable ID conflicts, agreed correction behavior, stale authority, scoped projection and roundtrip recovery.
+- [ ] [BW17 promises](base-world.md#bw17--readable-promises-and-commitment-management): parser boundaries, capacity refusal, evidence/actor mismatch, revision races, deadlines, agreed amendment permissions, privacy and save/restart.
+- [ ] [ACT09 process authoring](actor-model.md#act09--internal-feeling-process-authoring): recurrence/expiry and condition transitions, agreed process retirement, stale pins/authority, source erasure, capacity and restart. No automatic enrollment or extra paid calls.

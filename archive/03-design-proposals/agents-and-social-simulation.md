@@ -77,12 +77,12 @@ Actor decision composition and operational goals/plans belong to [Agent agency](
 
 ## Social continuity
 
-Accepted character design, September 20, 2026 (future implementation): relationships have two forms.
+Accepted character design: relationships have two forms. Directional note editing is delivered through ACT08; objective family UI remains future work in [BW16](../../docs/maintainers/base-world.md#bw16--family-authoring-and-inspection). The [current world contract](../../docs/worlds/base/social.md) separates these surfaces.
 
 - **Structured relationships** record defined, unchanging facts such as blood relations. A change in someone's feelings does not change their kinship.
 - **Unstructured relationships** map another person to free text, such as “friend,” “good friend,” or “lover.” Each person owns their own description and may change it freely at any point according to how they perceive the other person. These assessments come from memories, with no relationship points, score thresholds or required progression. They are directional: Ada's description of Bo need not match Bo's description of Ada.
 
-Subjective descriptions belong to the accepted inner world; any query projection derives from that revision. The freedom to revise one's assessment is not restricted to god mode. It does not rewrite the other person's assessment or objective relationship facts. Keep group membership and outstanding obligations separate from personal liking; changing a description does not erase a promise. Exact editing and publication mechanics remain to be designed.
+Subjective descriptions belong to the actor's accepted subject knowledge document; query projections derive from that exact revision. [Knowledge](../../docs/knowledge.md) and [ACT08](../../docs/maintainers/actor-model.md#advanced-emotional-state-foundation) own the delivered editing/publication path. The freedom to revise one's assessment is not restricted to god mode. It does not rewrite the other person's assessment or objective relationship facts. Keep group membership and outstanding obligations separate from personal liking; changing a description does not erase a promise.
 
 Conversation lifecycle and merge semantics are defined only in [Narration, agent responses and conversations](../../docs/narration-and-conversations.md).
 

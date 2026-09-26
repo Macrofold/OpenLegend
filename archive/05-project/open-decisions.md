@@ -126,3 +126,13 @@ Shared-world regional priority and first/growth populations are now selected in 
 ## D62 — Recall latency and search quality
 
 Resolved: the owner withdrew the arbitrary 20 ms target and delegates high-level redesign and final performance choices to engineering. The [retrieval contract](../07-technical-architecture/data-queries-and-mcp.md#relevance-retrieval-without-whole-history-preparation) now requires end-to-end workload, relevance, resource and privacy evidence; exact/approximate/hybrid routing and measured budgets are engineering choices. Earlier candidate-count/latency estimates are not accepted limits or evidence. No additional product approval is required merely to change the retrieval architecture within those semantics.
+
+## Social exposure decisions
+
+These choices gate the proposed [playable social slices](../../docs/maintainers/base-world.md#social-playable-slices), not the already delivered ACT07/ACT08 foundation. Recording them neither changes current behavior nor authorizes runtime work. Current rules are in [base-world social behavior](../../docs/worlds/base/social.md).
+
+| ID / status | Choice needed | Current behavior to preserve pending decision | Owner / decision point |
+| --- | --- | --- | --- |
+| D63 / open | How may a creator correct an accidentally authored family fact, and which ordinary observers may see objective family relations? | Creation is immutable through the current API; no client family panel. Personal notes neither establish nor expose authoritative kinship. | BW16, before correction/disclosure design is approved. A minimal creator-only creation/inspection proposal can be designed without assuming player omniscience. |
+| D64 / open | Which promise amendments/cancellations should the player UI offer, and when does an obligation become a negotiated agreement requiring another party's assent? | Narrow English/gather recognition and actor-scoped revisioned amendments; no general contract understanding or reciprocal consent. | BW17, before exposing broader management or changing recognition/completion semantics. Readable own-obligation status can be designed independently. |
+| D65 / open | Does stopping/replacing an internal feeling process resolve its active feeling, leave it to its existing lifetime, or use a per-policy rule? | Process configuration is immutable under its ID; no dedicated unenrollment API. | ACT09, before a process-authoring UI is approved; preserve cause identity and avoid implicit re-enrollment. |

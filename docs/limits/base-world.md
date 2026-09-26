@@ -22,6 +22,8 @@ New default feeling policies include persistent grief, condition-sustained restl
 
 **Reason / tradeoff:** Authored emotional pacing examples, not universal engine laws.
 
+Definitions are installed, not universally enrolled. Only compatibility damage reactions run by default; actor processes and other causes require admission. See [current social behavior](../worlds/base/social.md#feelings) and [FL16](feelings.md#fl16) for the narrower authoring UI.
+
 ## BW03
 
 **Reported · Restrictiveness: Medium.**
@@ -29,3 +31,19 @@ New default feeling policies include persistent grief, condition-sustained restl
 The bundled return fallback is **`(11, 0, 13)` on terrain**. [Policy](../../packages/domain/src/worlds/base/participation.ts)
 
 **Reason / tradeoff:** Authored safe return site for the bundled map; other worlds supply their own.
+
+## BW04
+
+**Current — source-inspected 2026-09-26 · Restrictiveness: Very safe.**
+
+Native promise admission recognizes committed self-attributed English speech beginning `I promise to` with content. Only the exact gathering form resolving one item definition obtains an automatic completion binding. Admission stops at **16 unresolved commitment records per actor**. Revisioned amendments exist through the actor API, but there is no dedicated management UI.
+
+**Reason / tradeoff:** A small native speech/evidence slice bounds retained obligations without assuming general language comprehension or agreed contracts. The parser and count cap currently live in [commitments.ts](../../packages/domain/src/commitments.ts), not an authored configuration. [BW17](../maintainers/base-world.md#bw17--readable-promises-and-commitment-management) must expose supported/refused cases honestly and review the policy seam before expansion. No cap removal or new promise semantics are approved here.
+
+## BW05
+
+**Current — source-inspected 2026-09-26 · Restrictiveness: Very safe.**
+
+Native objective relations support only **parent and sibling**. The creator API records immutable facts; there is no correction/deletion operation or client family panel. General relation vocabulary and a player-facing disclosure policy are not implemented by this primitive. The creator operation can grow the stored fact collection; its duplicate/parent-cycle validation scans those facts and declares no local total-fact cap. The rating above describes the restricted vocabulary, not a qualified growth envelope. BW16 must assess reachable graph size and bounded projection/validation work before expanding use.
+
+**Reason / tradeoff:** Preserve a small objective-fact slice independently of personal opinions; its fixed vocabulary/topology are v1 world specializations, not universal engine rules. Source: [social.ts](../../packages/domain/src/social.ts). [BW16](../maintainers/base-world.md#bw16--family-authoring-and-inspection) owns proposed UI and boundary review; correction/disclosure require a decision first.

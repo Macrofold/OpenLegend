@@ -9,6 +9,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Body, senses and survival](survival.md)
 - [Combat](combat.md)
 - [Knowledge and observer identity](knowledge.md)
+- [Relationships, feelings and promises](social.md)
 
 ## Code boundary
 
