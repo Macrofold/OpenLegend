@@ -1,55 +1,22 @@
-import {
-  MEMORY_HISTORY_TABLES,
-  MEMORY_CACHE_TABLES,
-} from '../apps/server/src/memory-repository.js';
-import { HISTORY_TABLES } from '../apps/server/src/history.js';
-import { COMMAND_TABLES } from '../apps/server/src/command-receipts.js';
-import { writeFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
 import { readConfig } from '../apps/server/src/config.js';
-import { SqliteStore, digest } from '../apps/server/src/store.js';
+import { SqliteDatabase } from '../apps/server/src/sqlite-database.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
+import { writeOperationalBackup } from '../apps/server/src/operational-backup.js';
 const destination = process.argv[2];
-if (!destination) throw new Error('Usage: backup-world.ts BACKUP_JSON. Stop the server first.');
+if (!destination)
+  throw new Error(
+    'Usage: backup-world.ts NEW_BACKUP_DIRECTORY. Stop the server first; existing destinations are never replaced.',
+  );
 const config = readConfig();
-const store = new SqliteStore(
-  config.databasePath,
-  config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
-);
+const db = config.databaseUrl
+  ? new PostgresDatabase(config.databaseUrl, true)
+  : new SqliteDatabase(config.databasePath, true);
 try {
-  await store.ready;
-  await store.load();
-  await store.db.transaction(async () => {
-    const tables = Object.fromEntries(
-      await Promise.all(
-        [
-          'world',
-          'jobs',
-          'attempts',
-          'intelligence_calls',
-          'meta',
-          'player_profiles',
-          'game_saves',
-          ...COMMAND_TABLES,
-          ...MEMORY_HISTORY_TABLES,
-          'memory_index_attempts',
-          ...MEMORY_CACHE_TABLES,
-          ...['attempt_scopes', ...HISTORY_TABLES],
-        ].map(
-          async (name) => [name, await store.db.prepare(`SELECT * FROM ${name}`).all()] as const,
-        ),
-      ),
-    );
-    const latest = await store.load();
-    if (latest)
-      tables['world'] = [
-        { id: 1, revision: latest.revision, payload: JSON.stringify(latest.state) },
-      ];
-    writeFileSync(destination, JSON.stringify({ version: 1, digest: digest(tables), tables }), {
-      flag: 'wx',
-      mode: 0o600,
-    });
-  });
-  console.log('Consistent world, spending, integration and forgetting backup written.');
+  await writeOperationalBackup(db, dirname(config.databasePath), resolve(destination));
+  console.log(
+    'Atomic backup published: gameplay, external accounting/privacy, and retained save files. Source opened read-only.',
+  );
 } finally {
-  await store.close();
+  await db.close();
 }

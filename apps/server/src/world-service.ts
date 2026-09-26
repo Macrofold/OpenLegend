@@ -20,6 +20,7 @@ import {
   type BindingRequest,
 } from './authority.js';
 import { compactHistory } from './history-residency.js';
+import { consolidationBatch, type ConsolidationBatch } from './memory-consolidation.js';
 import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/domain';
 import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { declareOwnership, custodian, type OwnershipRequest } from '@open-legend/domain';
@@ -826,11 +827,12 @@ export class WorldService {
   async withActorHistory<T>(
     actorIds: string[] | undefined,
     operation: () => Promise<T>,
+    sourceIds?: string[],
   ): Promise<T> {
     return this.mutate(async () => {
       await this.flush();
       if (this.store.hydrateHistory)
-        this.saved = await this.store.hydrateHistory(this.saved, actorIds);
+        this.saved = await this.store.hydrateHistory(this.saved, actorIds, sourceIds);
       freezeWorld(this.saved.world);
       try {
         return await operation();
@@ -957,15 +959,83 @@ export class WorldService {
         : this.world;
     });
   }
+  async maintenanceBatch(
+    actorId: string,
+    mode: ConsolidationBatch['mode'],
+    review?: {
+      day: number;
+      throughRevision?: number;
+      after?: { at: number; sequence: number; id: string };
+    },
+  ): Promise<ConsolidationBatch | null> {
+    await this.flush();
+    const world = this.world,
+      generation = this.generation;
+    const head = await this.store.records?.head();
+    const batch =
+      this.store.memories && head
+        ? await this.store.memories.maintenanceBatch(
+            { worldId: world.id, actorId, generation: head.generation },
+            world.simTime,
+            mode,
+            review,
+          )
+        : consolidationBatch(world, actorId, mode, review?.day);
+    return generation === this.generation ? batch : null;
+  }
   async createSave(label: string, id: string, scope = this.localScope): Promise<void> {
-    return this.mutate(async () => {
+    return this.captureSave(label, id, 'manual', scope);
+  }
+  /** Host-owned whole-world recovery. No player request can choose this entry point.
+   * docs/save-and-load.md#compatibility-and-retention */
+  async createAutosave(): Promise<void> {
+    return this.authorityContext.run(undefined, () =>
+      this.captureSave('Autosave', randomUUID(), 'auto'),
+    );
+  }
+  private async captureSave(
+    label: string,
+    id: string,
+    kind: 'manual' | 'auto',
+    scope?: RequestScope,
+  ): Promise<void> {
+    let completion: Promise<void> | undefined;
+    const capture = async () => {
       await this.flush();
-      if (!this.mayManageSaves(scope))
-        throw new Error('World creator or host operator access required.');
+      if (scope) this.assertScope(scope, 'save');
       if (this.storageError || !this.store.saves)
         throw new Error(this.storageError ?? 'Saves unavailable.');
-      await this.store.saves.create(this.saved, label, id);
+      let captured!: () => void;
+      const ready = new Promise<void>((resolve) => {
+        captured = resolve;
+      });
+      completion = this.store.saves.create(this.saved, label, id, {
+        captured,
+        expectedRevision: this.persistedRevision,
+        kind,
+      });
+      // The read snapshot has pinned the committed cut. File output no longer owns
+      // the gameplay mutation queue; later commits cannot change this candidate.
+      await timed('save.captureBarrier', () => Promise.race([ready, completion!]));
+    };
+    if (scope) await this.authorized(scope, 'save', false, capture);
+    else await this.mutate(capture);
+    await completion;
+  }
+
+  async deleteSave(id: string, scope = this.localScope): Promise<void> {
+    let completion: Promise<void> | undefined;
+    await this.authorized(scope, 'save', false, async () => {
+      await this.ready;
+      if (!this.mayManageSaves(scope) || !this.store.saves)
+        throw new Error('World creator or host operator access required.');
+      // Order deletion after already admitted capture, including its flush/barrier.
+      // Waiting for file output happens outside the gameplay mutation queue.
+      completion = this.store.saves.delete(this.world.id, id);
+      // Attach a handler now; the caller observes the original failure below.
+      void completion.catch(() => undefined);
     });
+    await completion;
   }
 
   async restoreSave(
@@ -974,25 +1044,22 @@ export class WorldService {
     payload: SavePayload,
     scope = this.localScope,
   ): Promise<void> {
-    return this.mutate(async () => {
+    await this.mutate(async () => {
+      await this.ready;
+      this.assertScope(scope, 'save');
+      const prior = (await this.store.getIntegration(`load-request:${requestId}`)) as
+        | { saveId: string }
+        | undefined;
+      if (prior) {
+        if (prior.saveId !== id) throw new Error('Load request identity conflicts.');
+        return;
+      }
       await this.flush();
+      await this.store.saves?.drain();
       if (!this.mayManageSaves(scope))
         throw new Error('World creator or host operator access required.');
       const restored = structuredClone(payload.state);
-      for (const [actorId, accountId] of await this.store.authority!.actorOwners(this.world.id)) {
-        const actor = restored.world.entities[actorId]?.actor;
-        if (actor) actor.controller = 'player';
-        restored.world.authorship.playerAccountIds[actorId] = accountId;
-      }
-      for (const grant of await this.store.authority!.worldGrants(this.world.id)) {
-        const actor = restored.world.entities[grant.actorId]?.actor;
-        if (!actor)
-          throw new Error(
-            'The save lacks a currently bound human character; authority cannot be restored from historical state.',
-          );
-        actor.controller = 'player';
-        restored.world.authorship.playerAccountIds[grant.actorId] = grant.accountId;
-      }
+      await this.store.authority!.restoreBindings(restored.world);
       // Candidate loading applies the current in-place migrations before timeline installation.
       const ledger = (await this.store.getIntegration(`forget-ledger:${this.world.id}`)) as
         | Record<string, string[]>
@@ -1043,6 +1110,7 @@ export class WorldService {
       this.memoryBacklog = null;
       this.notify();
     });
+    await this.store.saves?.retainRecovery(this.world.id);
   }
 
   async changeEmbodiment(scope: RequestScope, request: ControlRequest): Promise<ApiResult> {

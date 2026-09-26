@@ -601,6 +601,7 @@ export async function projectView(
     schemaVersion: 2,
     access: {
       scope: scopeKey(scope),
+      canManageSaves: service.mayManageSaves(scope),
       accountId: scope.accountId,
       actorId: scope.actorId,
       controlGeneration: scope.controlGeneration,

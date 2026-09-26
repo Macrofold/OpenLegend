@@ -1,5 +1,15 @@
 # Documentation changelog
 
+## 2026-09-26 — Bounded maintenance, streamed checkpoints and recovery
+
+Implemented indexed chronological maintenance prefixes with revision/generation validation and bounded source publication. Daily progress uses a fixed source revision and durable cursor; all model partitions of each selected batch remain atomic, protected barriers and speech continuity are retained, and failed unchanged work does not automatically retry. No evidence-expiry or semantic grouping policy was added.
+
+Checkpoint capture now pins a database revision and streams canonical records in one bounded worker, with explicit record/package/count/time budgets replacing the single new-save 64 MiB ceiling. Private synchronized publication, five-minute/three-point autosaves and two verified pre-load recovery packages preserve prior checkpoints through interruption. Operational backup/import/restore includes complete external authority and referenced files. Large PostgreSQL qualification exposed statement-sized rebuild/recovery transfers; paging preserves atomicity while bounding individual statements. Follow-up review enforces source byte admission before hydration, restores durability on ambiguous publication retries and shares capture and operational dependency catalogs across their consumers.
+
+Reconciliation with integrated foundations preserves scoped manual save operations and gives the host a separate internal autosave entry point. Ordinary players see no save controls; rolling checkpoints belong to the shared world. Operational recovery includes current account/control records and reapplies human bindings on existing-world restore. The exact preceding checkpoint layout converts through the existing migration without accepting missing current owner tables.
+
+[Plan](projects/history-save-recovery.md), [save contract](save-and-load.md), [memory contract](memory-architecture.md#6-hourly-consolidation-and-six-hour-raw-recall), [retention/runbook](../archive/07-technical-architecture/data-delivery-and-scale.md#local-operational-recovery-procedure) and [evidence](verification.md#bounded-history-checkpoints-and-recovery) reconcile SL/PF/D1–D2 delivery and remaining gates. In-flight spatial, invention, action and speech use cases inform the extension path; priorities 1–5 designs and their authority remain unchanged. No automated suites or paid calls were run.
+
 ## 2026-09-26 — Foundation priorities 1–5 approved for implementation
 
 The developer authorized the complete [implementation plan](projects/foundations-1-5.md#approved-implementation-plan)

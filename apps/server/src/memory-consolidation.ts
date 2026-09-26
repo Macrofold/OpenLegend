@@ -1,4 +1,5 @@
 import { gameTime } from './recall.js';
+import type { MemoryScope } from './memory-repository.js';
 import {
   experiences,
   EXPERIENCE_LIMITS,
@@ -11,6 +12,13 @@ export interface ConsolidationBatch {
   sources: MemoryRecord[];
   protected: MemoryRecord[];
   routine: MemoryRecord[];
+  selection?: {
+    scope: MemoryScope;
+    revisions: { id: string; revision: string }[];
+    throughRevision: number;
+    after: { at: number; sequence: number; id: string };
+    complete: boolean;
+  };
 }
 /** Pure batch policy; grouping is replaceable without changing source retirement rules. */
 export function consolidationBatch(

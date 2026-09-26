@@ -9,6 +9,7 @@ import {
 } from './authority.js';
 import { OpenIdAuthentication, browserLoginToken } from './authentication.js';
 import { GameSaveError } from './game-saves.js';
+import { Autosaves } from './autosaves.js';
 import {
   performanceSnapshot,
   timed,
@@ -301,6 +302,7 @@ export async function createGameServer(
       config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
     );
   const service = new WorldService(store, config, options.now);
+  const autosaves = new Autosaves(service);
   await service.ready;
   let director = new AiDirector(service, options.aiClient, options.now);
   let loadingSave = false;
@@ -932,11 +934,32 @@ export async function createGameServer(
           });
         const dispatch = async () => {
           switch (url.pathname) {
-            case '/api/saves/list':
+            case '/api/saves/list': {
+              const page = z
+                .object({
+                  before: z
+                    .object({ createdAt: z.string().datetime(), id: requestIdSchema })
+                    .strict()
+                    .optional(),
+                })
+                .strict()
+                .parse(body);
+              const candidates = await store.saves.list(service.world.id, {
+                limit: 101,
+                before: page.before,
+              });
+              const saves = candidates.slice(0, 100);
+              autosaves.observeCatalog(saves);
               return send(response, 200, {
                 ok: true,
-                saves: await store.saves.list(service.world.id),
+                saves,
+                autosaves: autosaves.status,
+                next:
+                  candidates.length > 100
+                    ? { id: saves.at(-1)!.id, createdAt: saves.at(-1)!.createdAt }
+                    : undefined,
               });
+            }
             case '/api/saves/create': {
               const value = z
                 .object({ id: z.string().uuid(), label: z.string().trim().min(1).max(80) })
@@ -947,7 +970,7 @@ export async function createGameServer(
             }
             case '/api/saves/delete': {
               const value = z.object({ id: requestIdSchema }).strict().parse(body);
-              await store.saves.delete(service.world.id, value.id);
+              await service.deleteSave(value.id, scope);
               return send(response, 200, { ok: true, message: 'Save deleted.' });
             }
             case '/api/saves/load': {
@@ -976,12 +999,6 @@ export async function createGameServer(
                   ok: false,
                   message: 'Another request is finishing. Try loading again shortly.',
                 });
-              const payload = await store.saves.read(service.world.id, value.id);
-              if (activeWrites > 1)
-                return send(response, 409, {
-                  ok: false,
-                  message: 'Another request is finishing. Try loading again shortly.',
-                });
               loadingSave = true;
               let drained = false;
               try {
@@ -991,6 +1008,8 @@ export async function createGameServer(
                 director.macrofold.stop();
                 await director.close();
                 drained = true;
+                // Large reconstruction runs only after explicit pause and background drain.
+                const payload = await store.saves.read(service.world.id, value.id);
                 await service.authorized(scope, 'save', false, () =>
                   service.restoreSave(value.id, value.requestId, payload, scope),
                 );
@@ -1939,9 +1958,13 @@ export async function createGameServer(
               });
           }
         };
-        // Save loading drains background work outside the mutation lane, then rechecks scope at installation.
+        // Save I/O runs outside the mutation lane; service entry points fence mutations.
+        // Read-only catalog access is checked above and again by send after its filesystem work.
         return [
+          '/api/saves/list',
           '/api/saves/load',
+          '/api/saves/create',
+          '/api/saves/delete',
           '/api/world-agent/messages',
           '/api/chat',
           '/api/chat/retry',
@@ -2046,6 +2069,7 @@ export async function createGameServer(
           suspendedSeconds = 0;
           activeTick = (async () => {
             await timed('tick.wall', () => service.tick(elapsed, excluded));
+            autosaves.advance(Math.max(0, elapsed - excluded));
             // Background admission must not hold the native clock (docs/performance.md#triggered-background-work).
             if (!thinking)
               thinking = director
@@ -2085,6 +2109,7 @@ export async function createGameServer(
       director.macrofold.stop();
       await activeTick;
       await thinking;
+      await autosaves.close();
       await director.close();
       await service.flush();
       await projectionQueue;

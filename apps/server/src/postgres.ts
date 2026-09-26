@@ -6,6 +6,9 @@ import type { SqlDatabase } from './store.js';
 /** Independent bounded read and write lanes; a large recall cannot occupy the writer. */
 export class PostgresDatabase implements SqlDatabase {
   readonly dialect = 'postgres';
+  get checkpointSource() {
+    return { kind: 'postgres' as const, url: this.connectionString };
+  }
   private client: pg.Client;
   private ready: Promise<void>;
   private reader: pg.Client;
@@ -20,7 +23,10 @@ export class PostgresDatabase implements SqlDatabase {
     rolledBack: (() => void)[];
   }>();
   private failed = false;
-  constructor(connectionString: string) {
+  constructor(
+    private readonly connectionString: string,
+    private readonly readOnly = false,
+  ) {
     this.client = new pg.Client({
       connectionString,
       connectionTimeoutMillis: 5000,
@@ -44,6 +50,12 @@ export class PostgresDatabase implements SqlDatabase {
   }
   private async connect() {
     await this.client.connect();
+    if (this.readOnly) {
+      await this.client.query(
+        'SET search_path TO open_legend; SET default_transaction_read_only=on',
+      );
+      return;
+    }
     const lock = await this.client.query('SELECT pg_try_advisory_lock(187114, 1) AS acquired');
     if (!lock.rows[0].acquired) throw new Error('Another Open Legend writer owns this database.');
     await this.client.query(

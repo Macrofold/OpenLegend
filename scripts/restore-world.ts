@@ -1,13 +1,17 @@
-import {
-  MEMORY_HISTORY_TABLES,
-  MEMORY_CACHE_TABLES,
-} from '../apps/server/src/memory-repository.js';
+import { MEMORY_HISTORY_TABLES } from '../apps/server/src/memory-repository.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { randomUUID } from 'node:crypto';
-import { COMMAND_TABLES, type CommandEpoch } from '../apps/server/src/command-receipts.js';
+import type { CommandEpoch } from '../apps/server/src/command-receipts.js';
 import { retainHotEvents } from '../apps/server/src/hot-events.js';
 import type { WorldEvent } from '@open-legend/domain';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
+import { dirname } from 'node:path';
+import {
+  readOperationalBackup,
+  restoreBackupSlots,
+  type OperationalBackup,
+  BACKUP_TABLES,
+} from '../apps/server/src/operational-backup.js';
 import { readConfig } from '../apps/server/src/config.js';
 import { SqliteStore, digest, type SavedWorld } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
@@ -16,27 +20,39 @@ import { upgradeWorldState } from '../apps/server/src/upgrade-world.js';
 const file = process.argv[2];
 if (!file)
   throw new Error(
-    'Usage: restore-world.ts BACKUP_JSON. Stop the server first. This restores world state while preserving current paid attempts and forgetting records.',
+    'Usage: restore-world.ts BACKUP_DIRECTORY_OR_LEGACY_JSON. Stop the server first. This restores world state while preserving current paid attempts and forgetting records.',
   );
-const backup = JSON.parse(readFileSync(file, 'utf8')) as {
-  version: number;
-  digest: string;
-  tables: Record<string, Record<string, unknown>[]> & { world: { payload: string }[] };
-};
-if (
-  backup.version !== 1 ||
-  digest(backup.tables) !== backup.digest ||
-  backup.tables.world.length !== 1
-)
-  throw new Error('Invalid backup envelope or checksum.');
+let legacyBackup: OperationalBackup | undefined;
+if (!statSync(file).isDirectory()) {
+  if (statSync(file).size > 64 * 1024 * 1024)
+    throw new Error('Legacy backup exceeds 64 MiB. Use a streamed backup directory.');
+  const legacy = JSON.parse(readFileSync(file, 'utf8')) as {
+    version: number;
+    digest: string;
+    tables: Record<string, Record<string, unknown>[]>;
+  };
+  if (
+    legacy.version !== 1 ||
+    digest(legacy.tables) !== legacy.digest ||
+    legacy.tables['world']?.length !== 1 ||
+    !['jobs', 'attempts', 'meta'].every((table) => Array.isArray(legacy.tables[table]))
+  )
+    throw new Error('Invalid or incomplete legacy backup.');
+  legacyBackup = {
+    state: JSON.parse(String(legacy.tables['world'][0]!['payload'])) as SavedWorld,
+    tables: legacy.tables,
+  };
+}
 const config = readConfig();
 const store = new SqliteStore(
   config.databasePath,
   config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
 );
 try {
+  await store.ready;
+  const backup = legacyBackup ?? (await readOperationalBackup(file, store.db));
   let current = await store.load();
-  const state = JSON.parse(backup.tables.world[0]!.payload) as SavedWorld;
+  const state = backup.state;
   upgradeWorldState(state.world);
   const fenceCommands = async () => {
     const key = `command-epoch:${state.world.id}`;
@@ -58,32 +74,28 @@ try {
   if (current && state.world.id !== current.state.world.id)
     throw new Error('World identity mismatch.');
   if (!current) {
-    const tables = [
-      'jobs',
-      'attempts',
-      'intelligence_calls',
-      'player_profiles',
-      'game_saves',
-      ...COMMAND_TABLES,
-      ...MEMORY_HISTORY_TABLES,
-      'memory_index_attempts',
-      ...MEMORY_CACHE_TABLES,
-      ...['attempt_scopes', ...HISTORY_TABLES],
-    ];
+    const tables = BACKUP_TABLES.filter((table) => table !== 'meta');
     for (const table of tables)
       if (
         Number((await store.db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get())?.['count'])
       )
         throw new Error('Target is not empty; full restore refused.');
+    if (await store.db.prepare("SELECT key FROM meta WHERE key<>'schema' LIMIT 1").get())
+      throw new Error('Target has existing operational metadata; full restore refused.');
+    await restoreBackupSlots(backup, dirname(config.databasePath));
     await store.db.transaction(async () => {
       for (const table of [...tables, 'meta']) {
         for (const row of backup.tables[table] ?? []) {
           const columns = Object.keys(row);
           if (!columns.length || columns.some((key) => !/^[a-z_]+$/.test(key)))
             throw new Error('Invalid backup columns.');
+          if (table === 'meta' && row['key'] === 'schema') {
+            if (String(row['value']) !== '1') throw new Error('Unsupported backup schema.');
+            continue;
+          }
           await store.db
             .prepare(
-              `INSERT INTO ${table} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')}) ON CONFLICT DO NOTHING`,
+              `INSERT INTO ${table} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`,
             )
             .run(...Object.values(row));
         }
@@ -105,14 +117,15 @@ try {
       'Full backup restored into an empty target; identities, jobs and accounting retained.',
     );
   } else {
+    await restoreBackupSlots(backup, dirname(config.databasePath));
     migrateActors(state.world);
     migrateCognition(state.world);
+    await store.authority.restoreBindings(state.world);
     const ledger = (await store.getIntegration(`forget-ledger:${state.world.id}`)) as
       | Record<string, string[]>
       | undefined;
     for (const [actorId, ids] of Object.entries(ledger ?? {}))
       for (const id of ids) state.world = forgetExperience(state.world, actorId, id).world;
-    await store.putIntegration(`pre-restore:${current.revision}`, current);
     state.manuallyPaused = true;
     state.world.paused = true;
     const before = {

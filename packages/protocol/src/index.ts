@@ -215,6 +215,7 @@ export interface GameView {
     actorId: string;
     controlGeneration: number;
     controlling: boolean;
+    canManageSaves: boolean;
     mode: 'local' | 'oidc';
   };
   inventionPolicy: { revision: number; playerLocked: boolean; agentLocked: boolean };
@@ -561,6 +562,13 @@ export interface GameSaveSummary {
   createdAt: string;
   simTime: number;
   compatible: boolean;
+  kind?: 'manual' | 'auto' | 'recovery';
+}
+export interface AutosaveStatus {
+  saving: boolean;
+  lastCompletedAt?: string;
+  error?: string;
+  unavailableSaves: number;
 }
 
 /** Bounded attribute presentation projected by the server. */

@@ -1,4 +1,5 @@
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, stat } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
@@ -151,9 +152,11 @@ try {
   } catch {
     staleWrite = 'rejected';
   }
-  const checkpoint = await measure('checkpointCapture', () =>
-    store.db.transaction(() => store.saves.capture(state)),
+  const checkpointId = randomUUID();
+  await measure('checkpointPublication', () =>
+    store.saves.create(state, 'Data stress', checkpointId, { expectedRevision: revision }),
   );
+  const checkpointBytes = (await stat(join(directory, 'saves', checkpointId, 'world.jsonl'))).size;
   const rows = await store.db.prepare('SELECT COUNT(*) AS count FROM mind_memories').get();
   const summary = Object.fromEntries(
     Object.entries(durations).map(([name, values]) => {
@@ -182,7 +185,7 @@ try {
     rounds,
     counts,
     canonicalRows: Number(rows?.['count']),
-    checkpointBytes: Buffer.byteLength(JSON.stringify(checkpoint)),
+    checkpointBytes,
     recoveredExactly,
     staleWrite,
     dimensions: url ? model.dimensions : undefined,

@@ -61,7 +61,7 @@ The default replaceable story selector, namespaced actor/object fields, owner ed
 
 ## Manual gameplay saves
 
-The right-side Game menu below World agent lists local manual saves from `.data/saves/`, with complete current-world/history capture, transactional restore and a database-backed pre-load recovery slot. Restore preserves external spending and current forgetting, restarts provider context and opens paused. Only the current development format is supported. See [Architecture](../../docs/architecture.md#manual-gameplay-saves), [scoped native evidence](../../docs/verification.md#manual-saveload-runtime), and [SL00–SL10](../../docs/maintainers/save-and-load.md) for remaining acceptance; autosaves and portability are not implemented.
+The Game menu lists manual and three rolling autosave points. Bounded record streams capture complete cold history in an owned worker; durable pre-load packages switch pointers atomically with installation. Restore preserves current spending/forgetting, fences discarded work and opens paused. Operational backup directories include external ledgers and retained slots. [Recovery/stress evidence](../../docs/verification.md#bounded-history-checkpoints-and-recovery) covers local SQLite/PostgreSQL; [SL/PF/D1–D2](../../docs/maintainers/save-and-load.md) retain CI, future-owner and hosted/population acceptance.
 
 Single-output plan receipts now support native craft→equip continuation across restart without inference. The strict decision envelope can reference earlier step outputs for equip/eat. Current details belong to [Architecture](../../docs/architecture.md#actor-agency-foundation); manual and saved-live-response evidence belongs to [Verification](../../docs/verification.md#shared-inventions-and-plan-outputs).
 

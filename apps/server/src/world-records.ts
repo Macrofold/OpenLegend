@@ -1,3 +1,4 @@
+import { tableRows } from './record-pages.js';
 import { hotEventDependencies } from './hot-events.js';
 import {
   HISTORY_TABLES,
@@ -575,17 +576,24 @@ export class WorldRecords {
           WHERE world_id=? AND ${this.legacyAwarenessPredicate} AND source_id IN
           (SELECT ${this.db.dialect === 'postgres' ? "payload::jsonb ->> 'id'" : "json_extract(payload, '$.id')"} FROM world_hot_events WHERE world_id=?)`
         : '';
-      const rows = await this.db
-        .prepare(
-          table === 'world_hot_events'
-            ? `SELECT t.id,t.parent_id,t.slot,t.position,h.payload FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${eventId} WHERE t.world_id=? ORDER BY t.parent_id,t.position`
-            : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ` AND ${predicate}` : ''}${legacy} ORDER BY parent_id,position`,
-        )
-        .all(
-          head.worldId,
-          ...(partial && table !== 'mind_summaries' ? [cutoff] : []),
-          ...(migrateAwareness ? [head.worldId, head.worldId] : []),
-        );
+      let rows: JsonRecord[] = [];
+      if (!partial && !objectPredicate && table !== 'world_hot_events') {
+        // Full recovery remains explicit, but each database transfer stays bounded.
+        // Large PostgreSQL histories must not become one timeout-sized result.
+        for await (const row of tableRows(this.db, table, head.worldId)) rows.push(row);
+      } else {
+        rows = await this.db
+          .prepare(
+            table === 'world_hot_events'
+              ? `SELECT t.id,t.parent_id,t.slot,t.position,h.payload FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${eventId} WHERE t.world_id=? ORDER BY t.parent_id,t.position`
+              : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ` AND ${predicate}` : ''}${legacy} ORDER BY parent_id,position`,
+          )
+          .all(
+            head.worldId,
+            ...(partial && table !== 'mind_summaries' ? [cutoff] : []),
+            ...(migrateAwareness ? [head.worldId, head.worldId] : []),
+          );
+      }
       const parents = new Map<string, JsonRecord[]>();
       for (const row of rows) {
         if (typeof row['payload'] !== 'string')
@@ -595,6 +603,8 @@ export class WorldRecords {
         siblings.push(row);
         parents.set(parent, siblings);
       }
+      for (const siblings of parents.values())
+        siblings.sort((a, b) => Number(a['position']) - Number(b['position']));
       groups.set(table, parents);
     }
     const nextPositions = new Map<string, number>();
@@ -607,76 +617,13 @@ export class WorldRecords {
           .all(head.worldId))
           nextPositions.set(`${table}:${row['parent_id']}`, Number(row['next']));
       }
-    let consumed = 0;
-    const assemble = (node: RecordNode, row: JsonRecord): Value => {
-      consumed++;
-      const value: Value = JSON.parse(String(row['payload']));
-      for (const [field, child] of Object.entries(node.children ?? {})) {
-        const placeholder = field === '$' ? value : own(value, field);
-        const children = groups.get(child.node.table)?.get(String(row['id'])) ?? [];
-        if (placeholder === undefined || placeholder === null) {
-          if (children.length) throw new Error('Orphaned gameplay records; recovery refused.');
-          continue;
-        }
-        if (child.mode === 'one') {
-          if (children.length !== 1)
-            throw new Error(`Missing ${child.node.table} record; recovery refused.`);
-          put(value, field, assemble(child.node, children[0]!));
-        } else {
-          const target = field === '$' ? value : child.mode === 'list' ? [] : {};
-          for (const entry of children)
-            put(
-              target,
-              HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events'
-                ? String((target as unknown[]).length)
-                : String(entry['slot']),
-              assemble(child.node, entry),
-            );
-          if (HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events') {
-            const entries = target as unknown[];
-            historyPositions.set(entries, {
-              complete: !active,
-              positions: new Map(
-                entries.map((entry, i) => [historyKey(entry), Number(children[i]!['position'])]),
-              ),
-              next: active
-                ? (nextPositions.get(`${child.node.table}:${row['id']}`) ?? 0)
-                : children.length
-                  ? Number(children.at(-1)!['position']) + 1
-                  : 0,
-            });
-          }
-          if (HISTORY_MAP_TABLES.has(child.node.table))
-            historyMapPositions.set(target as object, {
-              positions: new Map(
-                children.map((entry) => [String(entry['slot']), Number(entry['position'])]),
-              ),
-              next: active
-                ? (nextPositions.get(`${child.node.table}:${row['id']}`) ?? 0)
-                : children.length
-                  ? Number(children.at(-1)!['position']) + 1
-                  : 0,
-            });
-          if (field !== '$') put(value, field, target);
-        }
-      }
-      return value;
-    };
-    const roots = groups.get(this.readSchema.table)?.get('') ?? [];
-    if (roots.length !== 1) throw new Error('Missing world control record; recovery refused.');
-    const state = assemble(this.readSchema, roots[0]!) as SavedWorld;
-    if (active) {
-      for (const records of Object.values(state.world.appraisals ?? {}))
-        markPartialAppraisals(records);
-      for (const entity of Object.values(state.world.entities))
-        if (entity.statusEffects) markPartialContributions(entity.statusEffects);
-    }
-    const total = [...groups.values()].reduce(
-      (sum, parents) => sum + [...parents.values()].reduce((count, rows) => count + rows.length, 0),
-      0,
+    const state = assembleWorldRecords(
+      groups,
+      head.worldId,
+      active,
+      nextPositions,
+      this.readSchema,
     );
-    if (consumed !== total || state.world.id !== head.worldId)
-      throw new Error('Gameplay record coverage mismatch; recovery refused.');
     if (active) {
       const missing = await this.db
         .prepare(
@@ -728,60 +675,75 @@ export class WorldRecords {
       );
   }
   /** Explicit dependency materialization for maintenance/edit/save, never a tick read. */
-  async withHistory(state: SavedWorld, actorIds?: string[]): Promise<SavedWorld> {
+  async withHistory(
+    state: SavedWorld,
+    actorIds?: string[],
+    sourceIds?: string[],
+  ): Promise<SavedWorld> {
     return this.db.readTransaction
-      ? this.db.readTransaction(() => this.readHistory(state, actorIds))
-      : this.db.transaction(() => this.readHistory(state, actorIds));
+      ? this.db.readTransaction(() => this.readHistory(state, actorIds, sourceIds))
+      : this.db.transaction(() => this.readHistory(state, actorIds, sourceIds));
   }
-  private async readHistory(state: SavedWorld, actorIds?: string[]): Promise<SavedWorld> {
-    // Unscoped materialization is the save/restore boundary; actor maintenance does
-    // not need unrelated physical history. Never infer completeness from a hot map.
-    if (!actorIds) state = await this.withObjectHistory(state);
-    const entities = { ...state.world.entities };
-    for (const actorId of actorIds ?? Object.keys(entities)) {
-      const entity = entities[actorId];
-      if (!entity || completeContributionHistory(entity.statusEffects)) continue;
-      const rows = await this.db
-        .prepare(
-          'SELECT slot,position,payload FROM sim_status_effects WHERE world_id=? AND parent_id=? ORDER BY position,id',
-        )
-        .all(state.world.id, recordId(['world', 'entities', actorId]));
-      entities[actorId] = {
-        ...entity,
-        statusEffects: Object.fromEntries(
-          rows.map((row) => [String(row['slot']), JSON.parse(String(row['payload']))]),
-        ),
-      };
-      historyMapPositions.set(entities[actorId]!.statusEffects!, {
-        positions: new Map(rows.map((row) => [String(row['slot']), Number(row['position'])])),
-        next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
-      });
-    }
-    const appraisals = { ...state.world.appraisals };
-    for (const actorId of actorIds ?? Object.keys(appraisals)) {
-      const rows = await this.db
-        .prepare(
-          'SELECT slot,position,payload FROM mind_appraisals WHERE world_id=? AND parent_id=? ORDER BY position,id',
-        )
-        .all(state.world.id, recordId(['world', 'appraisals', actorId]));
-      if (rows.length || Object.hasOwn(appraisals, actorId)) {
-        appraisals[actorId] = Object.fromEntries(
-          rows.map((row) => {
-            const value = JSON.parse(String(row['payload'])) as Appraisal;
-            return [value.id, value];
-          }),
-        );
-        historyMapPositions.set(appraisals[actorId]!, {
+  private async readHistory(
+    state: SavedWorld,
+    actorIds?: string[],
+    sourceIds?: string[],
+  ): Promise<SavedWorld> {
+    if (sourceIds && (!sourceIds.length || sourceIds.length > 128 || actorIds?.length !== 1))
+      throw new Error('Invalid bounded history scope.');
+    // Consolidation changes only its selected evidence. Current appraisal/contribution
+    // state stays resident; terminal records are needed for full owner edits, not grouping.
+    let world = state.world;
+    if (!sourceIds) {
+      // Unscoped materialization is the save/restore boundary; actor maintenance does
+      // not need unrelated physical history. Never infer completeness from a hot map.
+      if (!actorIds) state = await this.withObjectHistory(state);
+      const entities = { ...state.world.entities };
+      for (const actorId of actorIds ?? Object.keys(entities)) {
+        const entity = entities[actorId];
+        if (!entity || completeContributionHistory(entity.statusEffects)) continue;
+        const rows = await this.db
+          .prepare(
+            'SELECT slot,position,payload FROM sim_status_effects WHERE world_id=? AND parent_id=? ORDER BY position,id',
+          )
+          .all(state.world.id, recordId(['world', 'entities', actorId]));
+        entities[actorId] = {
+          ...entity,
+          statusEffects: Object.fromEntries(
+            rows.map((row) => [String(row['slot']), JSON.parse(String(row['payload']))]),
+          ),
+        };
+        historyMapPositions.set(entities[actorId]!.statusEffects!, {
           positions: new Map(rows.map((row) => [String(row['slot']), Number(row['position'])])),
           next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
         });
       }
+      const appraisals = { ...state.world.appraisals };
+      for (const actorId of actorIds ?? Object.keys(appraisals)) {
+        const rows = await this.db
+          .prepare(
+            'SELECT slot,position,payload FROM mind_appraisals WHERE world_id=? AND parent_id=? ORDER BY position,id',
+          )
+          .all(state.world.id, recordId(['world', 'appraisals', actorId]));
+        if (rows.length || Object.hasOwn(appraisals, actorId)) {
+          appraisals[actorId] = Object.fromEntries(
+            rows.map((row) => {
+              const value = JSON.parse(String(row['payload'])) as Appraisal;
+              return [value.id, value];
+            }),
+          );
+          historyMapPositions.set(appraisals[actorId]!, {
+            positions: new Map(rows.map((row) => [String(row['slot']), Number(row['position'])])),
+            next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
+          });
+        }
+      }
+      world = {
+        ...state.world,
+        entities,
+        ...(state.world.appraisals || Object.keys(appraisals).length ? { appraisals } : {}),
+      };
     }
-    const world = {
-      ...state.world,
-      entities,
-      ...(state.world.appraisals || Object.keys(appraisals).length ? { appraisals } : {}),
-    };
     if (!world.experience) return { ...state, world };
     const memories = { ...world.memories },
       awareness = { ...world.experience.awareness },
@@ -795,17 +757,51 @@ export class WorldRecords {
       for (const actorId of ids) {
         const rows = await this.db
           .prepare(
-            `SELECT payload,position FROM ${table} WHERE world_id=? AND actor_id=? ORDER BY position`,
+            `SELECT payload,position FROM ${table} WHERE world_id=? AND actor_id=?${sourceIds ? ` AND source_id IN (${sourceIds.map(() => '?').join(',')})${table === 'mind_memories' ? ` UNION SELECT payload,position FROM ${table} WHERE world_id=? AND actor_id=? AND event_id IN (${sourceIds.map(() => '?').join(',')})` : ''}` : ''} ORDER BY position${sourceIds ? ' LIMIT 513' : ''}`,
           )
-          .all(world.id, actorId);
+          .all(
+            world.id,
+            actorId,
+            ...(sourceIds ?? []),
+            ...(sourceIds && table === 'mind_memories' ? [world.id, actorId, ...sourceIds] : []),
+          );
+        if (sourceIds && rows.length > 512)
+          throw new Error(
+            'Maintenance source aliases exceed the bounded publication allowance; originals retained.',
+          );
         if (!rows.length && !Object.hasOwn(target, actorId)) continue;
-        target[actorId] = rows.map((row) => JSON.parse(String(row['payload'])));
+        const old = target[actorId] ?? [];
+        const placement = historyPositions.get(old);
+        const loaded = rows.map((row) => JSON.parse(String(row['payload'])));
+        const selected = new Set(loaded.map(historyKey));
+        target[actorId] = sourceIds
+          ? [...old.filter((entry) => !selected.has(historyKey(entry))), ...loaded]
+          : loaded;
+        const next = sourceIds
+          ? Number(
+              (
+                await this.db
+                  .prepare(
+                    `SELECT MAX(position) AS position FROM ${table} WHERE world_id=? AND actor_id=?`,
+                  )
+                  .get(world.id, actorId)
+              )?.['position'] ?? -1,
+            ) + 1
+          : rows.length
+            ? Number(rows.at(-1)!['position']) + 1
+            : 0;
         historyPositions.set(target[actorId]!, {
-          complete: true,
-          positions: new Map(
-            target[actorId]!.map((entry, i) => [historyKey(entry), Number(rows[i]!['position'])]),
-          ),
-          next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
+          complete: !sourceIds,
+          positions: new Map([
+            ...(sourceIds
+              ? old.map(
+                  (entry, i) =>
+                    [historyKey(entry), placement?.positions.get(historyKey(entry)) ?? i] as const,
+                )
+              : []),
+            ...loaded.map((entry, i) => [historyKey(entry), Number(rows[i]!['position'])] as const),
+          ]),
+          next,
         });
       }
     }
@@ -955,4 +951,91 @@ export class WorldRecords {
         }
       : undefined;
   }
+}
+
+/** Reuse the canonical codec for database recovery and streamed checkpoints. */
+export function assembleWorldRecords(
+  groups: Map<string, Map<string, JsonRecord[]>>,
+  worldId: string,
+  active = false,
+  nextPositions = new Map<string, number>(),
+  schema = WORLD_RECORD_SCHEMA,
+): SavedWorld {
+  let consumed = 0;
+  const assemble = (node: RecordNode, row: JsonRecord): Value => {
+    consumed++;
+    const value: Value = JSON.parse(String(row['payload']));
+    for (const [field, child] of Object.entries(node.children ?? {})) {
+      const placeholder = field === '$' ? value : own(value, field);
+      const children = groups.get(child.node.table)?.get(String(row['id'])) ?? [];
+      if (placeholder === undefined || placeholder === null) {
+        if (children.length) throw new Error('Orphaned gameplay records; recovery refused.');
+        continue;
+      }
+      if (child.mode === 'one') {
+        if (children.length !== 1)
+          throw new Error(`Missing ${child.node.table} record; recovery refused.`);
+        put(value, field, assemble(child.node, children[0]!));
+      } else {
+        const target = field === '$' ? value : child.mode === 'list' ? [] : {};
+        const slots = new Set<string>();
+        for (const entry of children) {
+          const slot = String(entry[child.mode === 'list' ? 'position' : 'slot']);
+          if (slots.has(slot))
+            throw new Error('Duplicate gameplay record placement; recovery refused.');
+          slots.add(slot);
+          put(
+            target,
+            HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events'
+              ? String((target as unknown[]).length)
+              : String(entry['slot']),
+            assemble(child.node, entry),
+          );
+        }
+        if (HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events') {
+          const entries = target as unknown[];
+          historyPositions.set(entries, {
+            complete: !active,
+            positions: new Map(
+              entries.map((entry, i) => [historyKey(entry), Number(children[i]!['position'])]),
+            ),
+            next: active
+              ? (nextPositions.get(`${child.node.table}:${row['id']}`) ?? 0)
+              : children.length
+                ? Number(children.at(-1)!['position']) + 1
+                : 0,
+          });
+        }
+        if (HISTORY_MAP_TABLES.has(child.node.table))
+          historyMapPositions.set(target as object, {
+            positions: new Map(
+              children.map((entry) => [String(entry['slot']), Number(entry['position'])]),
+            ),
+            next: active
+              ? (nextPositions.get(`${child.node.table}:${row['id']}`) ?? 0)
+              : children.length
+                ? Number(children.at(-1)!['position']) + 1
+                : 0,
+          });
+        if (field !== '$') put(value, field, target);
+      }
+    }
+    return value;
+  };
+  const roots = groups.get(schema.table)?.get('') ?? [];
+  if (roots.length !== 1) throw new Error('Missing world control record; recovery refused.');
+  const state = assemble(schema, roots[0]!) as SavedWorld;
+  if (active) {
+    for (const records of Object.values(state.world.appraisals ?? {}))
+      markPartialAppraisals(records);
+    for (const entity of Object.values(state.world.entities))
+      if (entity.statusEffects) markPartialContributions(entity.statusEffects);
+  }
+  const total = [...groups.values()].reduce(
+    (sum, parents) => sum + [...parents.values()].reduce((count, rows) => count + rows.length, 0),
+    0,
+  );
+  if (consumed !== total || state.world.id !== worldId)
+    throw new Error('Gameplay record coverage mismatch; recovery refused.');
+  return state;
 }

@@ -1,4 +1,8 @@
+import { tableRows } from './record-pages.js';
 import { insertRows } from './sql-rows.js';
+import type { ConsolidationBatch } from './memory-consolidation.js';
+export const MAINTENANCE_SOURCES = 128;
+export const MAINTENANCE_BYTES = 512 * 1024;
 import { createHash } from 'node:crypto';
 import type {
   Awareness,
@@ -83,7 +87,7 @@ export class MemoryRepository {
         world_id TEXT NOT NULL REFERENCES world_head(world_id), actor_id TEXT NOT NULL,
         id TEXT NOT NULL, source_kind TEXT NOT NULL, record_id TEXT NOT NULL, revision TEXT NOT NULL,
         event_id TEXT, memory_kind TEXT, acquisition TEXT, event_type TEXT,
-        at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0,
+        at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
         PRIMARY KEY(world_id,actor_id,id,source_kind));
       CREATE INDEX IF NOT EXISTS recall_actor_rank ON recall_sources(world_id,actor_id,eligible,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_actor_recent ON recall_sources(world_id,actor_id,eligible,at DESC,id);
@@ -120,6 +124,47 @@ export class MemoryRepository {
         model TEXT NOT NULL,dimensions BIGINT NOT NULL,embedding TEXT NOT NULL,
         PRIMARY KEY(world_id,actor_id,source_id,source_revision,model,dimensions));
     `);
+    await this.db.transaction(async () => {
+      const columns =
+        this.db.dialect === 'postgres'
+          ? await this.db
+              .prepare(
+                "SELECT column_name AS name FROM information_schema.columns WHERE table_schema='open_legend' AND table_name='recall_sources'",
+              )
+              .all()
+          : await this.db.prepare('PRAGMA table_info(recall_sources)').all();
+      if (!columns.some((row) => row['name'] === 'sequence')) {
+        await this.db.exec(
+          'ALTER TABLE recall_sources ADD COLUMN sequence BIGINT NOT NULL DEFAULT 0',
+        );
+        let batch: Record<string, unknown>[] = [];
+        const backfill = async () => {
+          for (const [kind, table] of Object.entries(sourceTables)) {
+            const keys = batch
+              .filter((row) => row['source_kind'] === kind)
+              .map((row) => ['world_id', 'actor_id', 'id', 'source_kind'].map((key) => row[key]));
+            if (!keys.length) continue;
+            await this.db
+              .prepare(
+                `UPDATE recall_sources SET sequence=COALESCE((SELECT sequence FROM ${table} t WHERE t.world_id=recall_sources.world_id AND t.id=recall_sources.record_id),0)
+              WHERE (world_id,actor_id,id,source_kind) IN (VALUES ${keys.map(() => '(?,?,?,?)').join(',')})`,
+              )
+              .run(...keys.flat());
+          }
+          batch = [];
+        };
+        // Additive migration is atomic, with bounded transfers/statements even
+        // for an existing lifetime backlog. Its source records remain untouched.
+        for await (const row of tableRows(this.db, 'recall_sources')) {
+          batch.push(row);
+          if (batch.length === 64) await backfill();
+        }
+        if (batch.length) await backfill();
+      }
+      await this.db
+        .exec(`CREATE INDEX IF NOT EXISTS recall_maintenance ON recall_sources(world_id,actor_id,eligible,at,sequence,id);
+        CREATE INDEX IF NOT EXISTS recall_maintenance_speech ON recall_sources(world_id,actor_id,eligible,event_type,at DESC,sequence DESC,id DESC)`);
+    });
     if (this.db.dialect === 'postgres')
       await this.db.exec(`
       CREATE TABLE IF NOT EXISTS memory_vectors (
@@ -230,6 +275,7 @@ export class MemoryRepository {
           value['importance'],
           value['kind'] === 'commitment' && !value['resolved'] ? 1 : 0,
           0,
+          value['sequence'] ?? 0,
         ]);
         touch(actorId, id);
         if (kind === 'summary')
@@ -264,9 +310,22 @@ export class MemoryRepository {
         for (const id of ids) small.push([actorId, id]);
         continue;
       }
-      await this.db
-        .prepare(
-          `WITH
+      // Restore/extraction can replace a large actor history. Keep each SQL
+      // statement bounded inside the one atomic transaction instead of timing out
+      // a world-sized UPDATE; no intermediate eligibility becomes visible.
+      let afterId: string | undefined;
+      for (;;) {
+        const page = await this.db
+          .prepare(
+            `SELECT id FROM recall_sources WHERE world_id=? AND actor_id=?${afterId === undefined ? '' : ' AND id>?'} ORDER BY id LIMIT 1000`,
+          )
+          .all(worldId, actorId, ...(afterId === undefined ? [] : [afterId]));
+        if (!page.length) break;
+        const firstId = String(page[0]!['id']),
+          lastId = String(page.at(-1)!['id']);
+        await this.db
+          .prepare(
+            `WITH
           forgotten AS MATERIALIZED (SELECT source_id FROM mind_forgotten WHERE world_id=? AND actor_id=?),
           corrected AS MATERIALIZED (SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=?),
           aware AS MATERIALIZED (SELECT id FROM recall_sources WHERE world_id=? AND actor_id=? AND source_kind='awareness'),
@@ -277,20 +336,25 @@ export class MemoryRepository {
             AND (r.source_kind<>'memory' OR ((r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
               AND (r.memory_kind<>'episode' OR r.event_id IS NULL OR r.event_id NOT IN (SELECT id FROM aware))))
             AND (r.source_kind<>'summary' OR r.id NOT IN (SELECT summary_id FROM invalid_summaries))
-            THEN 1 ELSE 0 END WHERE r.world_id=? AND r.actor_id=?`,
-        )
-        .run(
-          worldId,
-          actorId,
-          worldId,
-          actorId,
-          worldId,
-          actorId,
-          worldId,
-          actorId,
-          worldId,
-          actorId,
-        );
+            THEN 1 ELSE 0 END WHERE r.world_id=? AND r.actor_id=? AND r.id>=? AND r.id<=?`,
+          )
+          .run(
+            worldId,
+            actorId,
+            worldId,
+            actorId,
+            worldId,
+            actorId,
+            worldId,
+            actorId,
+            worldId,
+            actorId,
+            firstId,
+            lastId,
+          );
+        afterId = lastId;
+        if (page.length < 1000) break;
+      }
 
       if (this.db.dialect === 'postgres')
         await this.db
@@ -594,6 +658,126 @@ export class MemoryRepository {
           ));
       }
       return { hasMemories, rawDue, pressure };
+    });
+  }
+  /** A bounded chronological prefix, never a truncated claim about the whole backlog.
+   * Daily cursors exclude summaries written by earlier partitions of this review.
+   * docs/memory-architecture.md#6-hourly-consolidation-and-six-hour-raw-recall
+   */
+  async maintenanceBatch(
+    scope: MemoryScope,
+    simTime: number,
+    mode: ConsolidationBatch['mode'],
+    review?: {
+      day: number;
+      throughRevision?: number;
+      after?: { at: number; sequence: number; id: string };
+    },
+  ): Promise<ConsolidationBatch | null> {
+    return this.snapshot(async () => {
+      const head = await this.db
+        .prepare('SELECT revision,generation FROM world_head WHERE id=1')
+        .get();
+      if (head?.['generation'] !== scope.generation) return null;
+      const throughRevision = review?.throughRevision ?? Number(head['revision']);
+      const from = mode === 'daily' ? (review?.day ?? -1) * 86400 : -Number.MAX_VALUE;
+      const to = mode === 'daily' ? from + 86400 : simTime - EXPERIENCE_LIMITS.rawHours * 3600;
+      const after = review?.after ?? { at: -Number.MAX_VALUE, sequence: 0, id: '' };
+      const payloadBytes =
+        this.db.dialect === 'postgres' ? 'octet_length(payload)' : 'length(CAST(payload AS BLOB))';
+      const rows = await this.db
+        .prepare(
+          `SELECT r.*, CASE r.source_kind ${Object.entries(sourceTables)
+            .map(
+              ([kind, table]) =>
+                `WHEN '${kind}' THEN (SELECT ${payloadBytes} FROM ${table} t WHERE t.world_id=r.world_id AND t.id=r.record_id)`,
+            )
+            .join(' ')} END AS payload_bytes FROM recall_sources r
+        WHERE ${this.eligible} AND r.at>=? AND r.at${mode === 'daily' ? '<' : '<='}?
+        AND (r.at,r.sequence,r.id) > (?,?,?)
+        AND (r.source_kind='awareness' OR r.memory_kind='episode'${mode === 'daily' ? " OR r.source_kind='summary'" : ''})
+        AND r.id NOT IN (SELECT id FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND event_type='speech' ORDER BY at DESC,sequence DESC,id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech})
+        ${
+          mode === 'daily'
+            ? `AND EXISTS (SELECT 1 FROM ${'mind_memories'} m WHERE r.source_kind='memory' AND m.world_id=r.world_id AND m.id=r.record_id AND m.revision<=?
+          UNION ALL SELECT 1 FROM mind_awareness a WHERE r.source_kind='awareness' AND a.world_id=r.world_id AND a.id=r.record_id AND a.revision<=?
+          UNION ALL SELECT 1 FROM mind_summaries s WHERE r.source_kind='summary' AND s.world_id=r.world_id AND s.id=r.record_id AND s.revision<=?)`
+            : ''
+        }
+        ORDER BY r.at,r.sequence,r.id LIMIT ?`,
+        )
+        .all(
+          ...this.params(scope),
+          from,
+          to,
+          after.at,
+          after.sequence,
+          after.id,
+          scope.worldId,
+          scope.actorId,
+          ...(mode === 'daily' ? [throughRevision, throughRevision, throughRevision] : []),
+          MAINTENANCE_SOURCES + 1,
+        );
+      // Count encoded source bytes in SQL before any text crosses into JS. The
+      // output allowance alone would still hydrate 129 potentially large bodies.
+      const bounded: typeof rows = [];
+      let sourceBytes = 0;
+      for (const row of rows) {
+        if (bounded.length === MAINTENANCE_SOURCES) break;
+        const size = Number(row['payload_bytes']);
+        if (!Number.isSafeInteger(size) || size <= 0)
+          throw new Error('Maintenance source is missing; evidence retained.');
+        if (sourceBytes + size > MAINTENANCE_BYTES) {
+          if (!bounded.length)
+            throw new Error(
+              'One maintenance source exceeds the preparation allowance; evidence retained.',
+            );
+          break;
+        }
+        bounded.push(row);
+        sourceBytes += size;
+      }
+      const hydrated = await this.hydrate(bounded);
+      const byId = new Map(hydrated.map((entry) => [entry.memory.id, entry]));
+      const ordered = bounded
+        .map((row) => byId.get(String(row['id'])))
+        .filter((entry): entry is RetrievedMemory => !!entry);
+      const selected: RetrievedMemory[] = [];
+      let bytes = 0;
+      const first = ordered[0]?.memory;
+      if (!first) return null;
+      const end = Math.min(first.at + 21600, (Math.floor(first.at / 86400) + 1) * 86400);
+      for (const entry of ordered) {
+        if (
+          mode === 'hourly' &&
+          (entry.memory.at > end ||
+            Math.floor(entry.memory.at / 86400) !== Math.floor(first.at / 86400))
+        )
+          break;
+        const size = Buffer.byteLength(JSON.stringify(entry.memory));
+        if (size > MAINTENANCE_BYTES)
+          throw new Error(
+            'One maintenance source exceeds the preparation allowance; evidence retained.',
+          );
+        if (selected.length === MAINTENANCE_SOURCES || bytes + size > MAINTENANCE_BYTES) break;
+        bytes += size;
+        selected.push(entry);
+      }
+      const sources = selected.map((entry) => entry.memory);
+      const last = sources.at(-1)!;
+      return {
+        mode,
+        sources,
+        protected: sources.filter((s) => s.importance >= EXPERIENCE_LIMITS.protectedImportance),
+        routine: sources.filter((s) => s.importance < EXPERIENCE_LIMITS.protectedImportance),
+        selection: {
+          scope,
+          throughRevision,
+          after: { at: last.at, sequence: last.sequence ?? 0, id: last.id },
+          complete: rows.length === selected.length,
+          revisions: selected.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+        },
+      };
     });
   }
   /** Database selection keeps cold sources available to legacy invention context and HUD. */

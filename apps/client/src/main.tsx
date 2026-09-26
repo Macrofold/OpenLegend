@@ -771,7 +771,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
           />
         ) : null;
       case 'game':
-        return <GameSavesPanel />;
+        return view.access?.canManageSaves ? <GameSavesPanel /> : null;
       case 'help':
         return (
           <>
@@ -1025,7 +1025,7 @@ function App({ resetApplication }: { resetApplication: () => void }) {
                   ? (['inventory', 'crafting', 'character', 'journal'] as PanelId[])
                   : ([
                       'agent',
-                      'game',
+                      ...(view.access?.canManageSaves ? ['game' as PanelId] : []),
                       'nearby',
                       ...(view.godMode ? ['intelligence' as PanelId] : []),
                     ] as PanelId[])

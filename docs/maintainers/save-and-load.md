@@ -14,14 +14,22 @@ Coordinate module dependency capture and load validation with [EWF07](extensible
 
 - [x] SL00–SL03 foundations: a repository-owned current-format package captures `SavedWorld` plus durable history, retired source versions and optional annotations; manual slots publish atomically in the local save folder after transactional capture. Capture reuses the current canonical record owner.
 - [x] SL04–SL05 foundations: loading drains background workers, preserves external accounting/privacy authority, replaces history atomically with the world, rotates command/context generations and retains a pre-load slot. Restored pending narration is cancelled; world-agent sessions restart fresh.
-- [x] SL07 basic UI: Game below World agent offers named save, list, confirm-load and confirm-delete; successful load reopens paused. Named saves have no fixed count ceiling; one pre-load slot and 64 MiB per payload remain.
+- [x] SL07 basic UI: Game below World agent offers named save, list, confirm-load and confirm-delete; successful load reopens paused. Named saves have no fixed count ceiling; public catalog pages are bounded. Streamed packages use explicit record/work limits and a 256 MiB total allowance, with durable pre-load files.
 - [x] Build and isolated native browser walkthrough: save, advance, restore earlier clock/meters and observe paused state. See [runtime evidence](../verification.md#manual-saveload-runtime).
 
-The detailed phase criteria below remain open where not fully established. Automated checks are deferred by instruction to [save/load validation TODO](TODO.md#manual-saveload-deferred-validation); Native SQLite/PostgreSQL import, backup/restore, transactional rollback and one actual process-death drill are now recorded in [foundation evidence](../verification.md#data-foundation-runtime). Full crash-boundary and live-provider qualification remain open. SL08 and SL10 are not implemented.
+The detailed phase criteria below remain open where not fully established. Automated checks are deferred by instruction to [save/load validation TODO](TODO.md#manual-saveload-deferred-validation); Native SQLite/PostgreSQL import, backup/restore, transactional rollback and one actual process-death drill are now recorded in [foundation evidence](../verification.md#data-foundation-runtime). [Local crash/restore and large-save qualification](../verification.md#bounded-history-checkpoints-and-recovery) now covers SQLite/PostgreSQL application-process boundaries. SL08 is implemented; live-provider, future-owner, hosted and SL10 qualification remain separate.
+
+## September 26 bounded capture and recovery delivery
+
+SL02/SL03/SL08 and the supported local SL09 slice are implemented and exercised. [Evidence](../verification.md#bounded-history-checkpoints-and-recovery) records complete saves above 64 MiB, one bounded worker, snapshot barriers, rolling retention, actual SIGKILL boundaries, failed/ambiguous storage paths, source/generation races, continuation and operational backup/import. The Game panel and public catalog use 100-entry pages without limiting retained manual slots. Directory discovery still scales with slot count; saved bodies are never loaded by catalog reads.
+
+Rebased integration preserves manual save grants and server-owned whole-world autosaves. Ordinary players have no save controls and their list/create/delete/load requests are denied. [Integration evidence](../verification.md#checkpoint-integration-with-foundations) covers creator-absent autosaves, current binding preservation, exact authority backup/import, preceding-layout conversion and both-adapter stress on the integrated foundation.
+
+Acceptance is scoped to the current local mechanisms and named native workloads. The 256 MiB ceiling itself, every future process/plan family, naturally aged long sessions, hosted storage/power loss, live providers, CI suites and first-release population SLOs are not qualified. Existing SL00/SL01/SL04/SL05/SL07 checklists retain broader owner-integration/release evidence; this delivery does not silently close them. [Extension guidance](../extending.md#persistence-and-migrations) and DF02 define the branch migration path.
 
 ## Delivery boundaries and sequence
 
-Build the initial personal-world manual save/load flow through SL00–SL05 and SL07, with SL06 limited to current-format rejection under the active development policy; SL09 owns broader qualification. Start with a simple complete snapshot and an explicit pause during capture/load if necessary. SL08 adds rolling autosaves; SL10 is conditional future work. The initial version need not wait for normalized storage, all future objects, multiplayer or cloud infrastructure.
+Build the initial personal-world manual save/load flow through SL00–SL05 and SL07, with SL06 limited to current-format rejection under the active development policy; SL09 owns broader qualification. Bounded full-record streams now release capture after its revision barrier; explicit loads pause for reconstruction/install. SL08 provides rolling autosaves; SL10 remains conditional future work. The initial version need not wait for normalized storage, all future objects, multiplayer or cloud infrastructure.
 
 [Production-data D0–D6](production-data.md) continue to own storage contracts, operational recovery and rollout. [PF00–PF11](performance.md) own runtime optimization and scale qualification. Reuse their evidence and prerequisites where applicable without copying their tasks or marking their phases complete. Gameplay-specific delivery is tracked here; the existing operational backup/import rehearsal remains with its current tracker.
 
@@ -49,9 +57,9 @@ Exit: valid fixture packages can be inspected independently of the running world
 
 Dependencies: SL00–SL01.
 
-- [ ] Capture a committed transition boundary through the existing authority, incorporating preceding native progress and its required durable side effects.
-- [ ] Capture all participating stores and retained dependencies at that logical cut. Cover cold state as well as active state without requiring everything to live in one object or database table.
-- [ ] Separate stable capture from serialization/output; bound simultaneous captures and retained memory. Classify pending external work without waiting indefinitely for it.
+- [x] Capture a committed transition boundary through the existing authority, incorporating preceding native progress and its required durable side effects.
+- [x] Capture all participating stores and retained dependencies at that logical cut. Cover cold state as well as active state without requiring everything to live in one object or database table.
+- [x] Separate stable capture from serialization/output; bound simultaneous captures and retained memory. Classify pending external work without waiting indefinitely for it.
 
 Exit: controlled concurrent transitions cannot produce a mixed-revision save; subsequent live mutations cannot alter a captured candidate. Record capture duration and memory use.
 
@@ -59,9 +67,9 @@ Exit: controlled concurrent transitions cannot produce a mixed-revision save; su
 
 Dependencies: SL01–SL02.
 
-- [ ] Add durable publication and bounded catalog operations for creating, listing, inspecting and explicitly deleting retained saves. Represent pending, complete and failed outcomes accurately.
-- [ ] Publish candidates atomically, preserve the prior valid save on failure, and order concurrent slot updates so late completion cannot overwrite newer intent accidentally.
-- [ ] Retain required dependencies for each complete save; release them safely on deletion while respecting other saves and privacy policy.
+- [x] Add durable publication and bounded catalog operations for creating, listing, inspecting and explicitly deleting retained saves. Represent pending, complete and failed outcomes accurately.
+- [x] Publish candidates atomically, preserve the prior valid save on failure, and order concurrent slot updates so late completion cannot overwrite newer intent accidentally. Ambiguous publication retries re-establish directory durability; [follow-up drills](../verification.md#follow-up-checkpoint-review) cover sync failure, incomplete metadata and catalog controls.
+- [x] Retain required dependencies for each complete save; release them safely on deletion while respecting other saves and privacy policy.
 
 Exit: process interruption, storage exhaustion and concurrent completion leave only complete recoverable catalog entries; restart discovers published saves and safely handles abandoned candidates.
 
@@ -107,9 +115,9 @@ Exit: a player can retain and restore the currently supported personal world wit
 
 Dependencies: SL03–SL07; selected cadence/retention policy in D60 and relevant historical-retention policy in D59.
 
-- [ ] Schedule bounded autosaves through the same capture/publication path, with clear behavior during pause, slow storage, concurrent manual saves and shutdown.
-- [ ] Rotate only complete saves, protect manual saves and required dependencies, and apply privacy deletion through the existing authoritative policy.
-- [ ] Expose retained restore points and failure/coverage information without implying arbitrary ten-minute rewind.
+- [x] Schedule bounded server-owned whole-world autosaves through the same capture/publication path, with clear behavior during pause, slow storage, concurrent manual saves and shutdown.
+- [x] Rotate only complete saves, protect manual saves and required dependencies, and apply privacy deletion through the existing authoritative policy.
+- [x] Expose retained restore points and failure/coverage information without implying arbitrary ten-minute rewind.
 
 Exit: prolonged play remains within the selected storage/work budget; interrupted rotation preserves a usable checkpoint, and every advertised point restores successfully.
 
@@ -121,10 +129,10 @@ Coordinate new stimulus-state continuation with proposed [EPR08](events-percepti
 
 Dependencies: SL02–SL07 for the manual release; extend coverage when SL08 or SL10 ships. Develop focused checks alongside each capability.
 
-- [ ] Build a reusable semantic continuation harness that compares uninterrupted native execution with save/load/resume under identical inputs. Let each subsystem supply representative cases as it evolves.
-- [ ] Exercise the canonical design's failure boundaries across supported adapters, including cross-store dependencies, interrupted publication/installation, current-format rejection, external authority and stale clients. Reuse existing tests where they establish the same evidence.
-- [ ] Measure capture pause, peak memory, save latency and restored playability on named workloads with growing active state and cold history. Set initial budgets with the performance tracker and address measured failures before adding incremental formats or worker infrastructure.
-- [ ] Record verified scope, limitations and recovery instructions in Architecture and Verification; update extension guidance to make future state additions extend the coverage.
+- [x] Provide the reusable native checkpoint benchmark with a semantic continuation comparison under identical inputs; no automated suite was added. Let each subsystem supply representative cases as it evolves.
+- [x] Exercise the canonical design's failure boundaries across supported adapters, including cross-store dependencies, interrupted publication/installation, current-format rejection, external authority and stale clients. Current evidence is native/no-cost, with suites deferred explicitly; future subsystem and hosted boundaries remain their owners' gates.
+- [x] Measure capture pause, peak memory, save latency and restored playability on named workloads with growing active state and cold history. Set initial budgets with the performance tracker and address measured failures before adding incremental formats or worker infrastructure.
+- [x] Record verified scope, limitations and recovery instructions in Architecture and Verification; update extension guidance to make future state additions extend the coverage.
 
 Exit: published, reproducible no-cost correctness evidence and measured performance for the supported initial scope. Fixture success does not establish live model quality, cloud recovery or untested future-state coverage.
 
@@ -133,7 +141,7 @@ Exit: published, reproducible no-cost correctness evidence and measured performa
 Dependencies: qualified personal-world flow, relevant D60 choices and production-data rollout gates. Not an initial-release prerequisite.
 
 - [ ] When portable export/import is selected, package required dependencies and validate target authority reconciliation, privacy and compatibility before installation.
-- [ ] For cloud/shared worlds, enforce the selected world-creator and authorized OpenLegend-system-admin save/load roles; deny ordinary participants and keep private-content inspection separate. Implement participant synchronization, branch/conflict policy and cross-world-effect boundaries without treating unresolved later features as foundation blockers.
+- [ ] Extend the implemented scoped save grants and participant denial to cloud deployment, preserving the separation from private-content inspection. Qualify participant synchronization, branch/conflict policy and cross-world-effect boundaries without treating unresolved later features as foundation blockers.
 - [ ] When measurements justify incremental storage or distributed capture, preserve the same logical save contract and qualify bounded recovery with the relevant performance/production tasks.
 
 Exit: each enabled extension has scoped failure and recovery evidence; unsupported modes remain explicitly unavailable rather than inheriting personal-world guarantees.

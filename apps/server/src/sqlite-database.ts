@@ -5,14 +5,18 @@ import type { SqlDatabase } from './store.js';
 /** SQLite remains local-only; async transaction ownership matches the PostgreSQL port. */
 export class SqliteDatabase implements SqlDatabase {
   private db: DatabaseSync;
+  private reader?: DatabaseSync;
+  private readTail: Promise<unknown> = Promise.resolve();
   private tail: Promise<unknown> = Promise.resolve();
   private context = new AsyncLocalStorage<{
     active: boolean;
     committed: (() => void)[];
     rolledBack: (() => void)[];
+    connection?: DatabaseSync;
+    readOnly?: boolean;
   }>();
   constructor(
-    path: string,
+    private readonly path: string,
     private readonly readOnly = false,
   ) {
     this.db = new DatabaseSync(path, { readOnly });
@@ -22,6 +26,12 @@ export class SqliteDatabase implements SqlDatabase {
     const next = this.tail.then(operation);
     this.tail = next.catch(() => undefined);
     return next;
+  }
+  private get connection() {
+    const scope = this.context.getStore();
+    // Async callbacks can outlive their originating snapshot. Once it closes,
+    // they must rejoin the writer lane instead of reusing that read connection.
+    return scope?.active ? (scope.connection ?? this.db) : this.db;
   }
   afterCommit(callback: () => void) {
     const scope = this.context.getStore();
@@ -33,7 +43,11 @@ export class SqliteDatabase implements SqlDatabase {
     if (scope?.active) scope.rolledBack.push(callback);
   }
   transaction<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.context.getStore()?.active) return operation();
+    if (this.context.getStore()?.active) {
+      if (this.context.getStore()?.readOnly)
+        throw new Error('A read snapshot cannot admit writes.');
+      return operation();
+    }
     return this.run(() => {
       const scope = {
         active: true,
@@ -61,21 +75,53 @@ export class SqliteDatabase implements SqlDatabase {
       });
     });
   }
+  readTransaction<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.context.getStore()?.active) return operation();
+    // An in-memory adapter has no second connection; persistent worlds use WAL readers.
+    if (this.path === ':memory:') return this.transaction(operation);
+    const next = this.readTail.then(async () => {
+      const connection = (this.reader ??= new DatabaseSync(this.path, { readOnly: true }));
+      const scope = { active: true, connection, readOnly: true, committed: [], rolledBack: [] };
+      return this.context.run(scope, async () => {
+        connection.exec('BEGIN');
+        try {
+          const result = await operation();
+          connection.exec('COMMIT');
+          return result;
+        } catch (error) {
+          connection.exec('ROLLBACK');
+          throw error;
+        } finally {
+          scope.active = false;
+        }
+      });
+    });
+    this.readTail = next.catch(() => undefined);
+    return next;
+  }
   exec(sql: string) {
-    return this.run(() => this.db.exec(sql));
+    return this.run(() => this.connection.exec(sql));
   }
   prepare(sql: string) {
     return {
       get: (...params: any[]) =>
-        this.run(() => timed('sqlite.statement', async () => this.db.prepare(sql).get(...params))),
+        this.run(() =>
+          timed('sqlite.statement', async () => this.connection.prepare(sql).get(...params)),
+        ),
       all: (...params: any[]) =>
-        this.run(() => timed('sqlite.statement', async () => this.db.prepare(sql).all(...params))),
+        this.run(() =>
+          timed('sqlite.statement', async () => this.connection.prepare(sql).all(...params)),
+        ),
       run: (...params: any[]) =>
-        this.run(() => timed('sqlite.statement', async () => this.db.prepare(sql).run(...params))),
+        this.run(() =>
+          timed('sqlite.statement', async () => this.connection.prepare(sql).run(...params)),
+        ),
     };
   }
   async close() {
     await this.tail;
+    await this.readTail;
+    this.reader?.close();
     this.db.close();
   }
 }

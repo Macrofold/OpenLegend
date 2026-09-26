@@ -53,6 +53,7 @@ function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: s
 }
 export interface SqlDatabase {
   dialect?: 'postgres';
+  checkpointSource?: import('./checkpoint-worker-client.js').CheckpointSource;
   transaction<T>(operation: () => Promise<T>): Promise<T>;
   readTransaction?<T>(operation: () => Promise<T>): Promise<T>;
   afterCommit?(callback: () => void): void;
@@ -319,7 +320,11 @@ export interface WorldStore {
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
   releaseHistory?(state: SavedWorld): SavedWorld;
-  hydrateHistory?(state: SavedWorld, actorIds?: string[]): Promise<SavedWorld>;
+  hydrateHistory?(
+    state: SavedWorld,
+    actorIds?: string[],
+    sourceIds?: string[],
+  ): Promise<SavedWorld>;
   history?: HistoryRepository;
   saves?: GameSaves;
   commands?: CommandReceipts;
@@ -527,7 +532,11 @@ export class SqliteStore implements GameRepository {
     this.records = new WorldRecords(this.db);
     this.memories = new MemoryRepository(this.db);
     this.history = new HistoryRepository(this.db);
-    this.saves = new GameSaves(this.db, join(dirname(path), 'saves'));
+    this.saves = new GameSaves(
+      this.db,
+      join(dirname(path), 'saves'),
+      !database && path !== ':memory:' ? { kind: 'sqlite', path } : database?.checkpointSource,
+    );
     this.commands = new CommandReceipts(this.db);
     this.authority = new AuthorityRepository(this.db);
     this.ready = this.initialize(!!database);
@@ -616,9 +625,13 @@ export class SqliteStore implements GameRepository {
     this.acceptedState = released;
     return released;
   }
-  async hydrateHistory(state: SavedWorld, actorIds?: string[]): Promise<SavedWorld> {
+  async hydrateHistory(
+    state: SavedWorld,
+    actorIds?: string[],
+    sourceIds?: string[],
+  ): Promise<SavedWorld> {
     if (state !== this.acceptedState) throw new Error('Flush before materializing history.');
-    const full = await this.records.withHistory(state, actorIds);
+    const full = await this.records.withHistory(state, actorIds, sourceIds);
     this.acceptedState = full;
     return full;
   }
@@ -1299,6 +1312,10 @@ export class SqliteStore implements GameRepository {
 
   async close(): Promise<void> {
     await this.ready.catch(() => undefined);
-    await this.db.close();
+    try {
+      await this.saves.close();
+    } finally {
+      await this.db.close();
+    }
   }
 }

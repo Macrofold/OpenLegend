@@ -232,10 +232,10 @@ The earlier audit's “Arbitrary” assessment meant that the exact number had n
 
 #### Saved history and storage
 
-| Audit entry number | Current limit                                                                                              | Level         | Recommended change and reason                                                                                                             |
-| ------------------ | ---------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 7                  | Retrieval of verbatim speech uses the latest 512 speech experiences available to the character.            | **Safe**      | Allow searches of older retained speech while keeping recent messages from the current conversation directly available.                   |
-| 176                | **Former limit, now removed:** A world can have 20 named saves, and one encoded save cannot exceed 64 MiB. | **Completed** | Removed the twenty-named-save ceiling and its UI text. The 64 MiB per-save limit, save identity checks and pre-load recovery slot remain. |
+| Audit entry number | Current limit                                                                                              | Level         | Recommended change and reason                                                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 7                  | Retrieval of verbatim speech uses the latest 512 speech experiences available to the character.            | **Safe**      | Allow searches of older retained speech while keeping recent messages from the current conversation directly available.                  |
+| 176                | **Former limit, now removed:** A world can have 20 named saves, and one encoded save cannot exceed 64 MiB. | **Completed** | Removed the slot ceiling. Streamed saves use record/work bounds and a 256 MiB package limit; legacy JSON keeps 64 MiB. Recovery remains. |
 
 #### Network requests and failure handling
 

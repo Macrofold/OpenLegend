@@ -1,7 +1,20 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { isSafeRecordId } from '@open-legend/domain';
+import { isSafeRecordId, type WorldState } from '@open-legend/domain';
 import type { SqlDatabase } from './store.js';
+
+// Dependency order for operational recovery; these records never enter gameplay checkpoints.
+export const AUTHORITY_TABLES = [
+  'auth_accounts',
+  'auth_sessions',
+  'auth_grants',
+  'auth_controls',
+  'auth_exits',
+  'auth_control_receipts',
+  'auth_actor_owners',
+  'auth_binding_receipts',
+  'auth_access_audit',
+];
 
 export const capabilitySchema = z.enum(['play', 'create', 'inspect', 'save', 'manage-access']);
 export type Capability = z.infer<typeof capabilitySchema>;
@@ -460,6 +473,24 @@ export class AuthorityRepository {
       await this.db
         .prepare('INSERT INTO auth_actor_owners VALUES (?,?,?)')
         .run(worldId, actorId, accountId);
+  }
+  /** Reapply current human ownership to a candidate before either gameplay or
+   * operational installation; historical gameplay cannot restore revoked bindings. */
+  async restoreBindings(world: WorldState): Promise<void> {
+    for (const [actorId, accountId] of await this.actorOwners(world.id)) {
+      const actor = world.entities[actorId]?.actor;
+      if (actor) actor.controller = 'player';
+      world.authorship.playerAccountIds[actorId] = accountId;
+    }
+    for (const grant of await this.worldGrants(world.id)) {
+      const actor = world.entities[grant.actorId]?.actor;
+      if (!actor)
+        throw new Error(
+          'The save lacks a currently bound human character; authority cannot be restored from historical state.',
+        );
+      actor.controller = 'player';
+      world.authorship.playerAccountIds[grant.actorId] = grant.accountId;
+    }
   }
   async actorOwners(worldId: string): Promise<Map<string, string>> {
     const rows = await this.db

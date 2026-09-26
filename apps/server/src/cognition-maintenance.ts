@@ -5,7 +5,6 @@ import { nativeNeedBelow } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { ActorWork } from './actor-work.js';
 import {
-  consolidationBatch,
   CONSOLIDATION_INSTRUCTIONS,
   type ConsolidationBatch,
   consolidationRequests,
@@ -217,13 +216,25 @@ export class CognitionMaintenance {
             'Safe idle time to reconsider remembered experience',
           );
 
-        // Dream maintenance reviews the previous completed day in one mini-model call.
+        // Dream maintenance reviews a completed day in bounded, resumable partitions.
         // It is separate from intentional idle reflection and never marks memories reflected.
         const reviewKey = `memory-review:${world.id}:${entity.id}`;
-        const reviewDay = day - 1;
-        const review = (await this.service.store.getIntegration(reviewKey)) as
-          | { day: number; completed?: boolean }
+        const savedReview = (await this.service.store.getIntegration(reviewKey)) as
+          | {
+              day: number;
+              completed?: boolean;
+              throughRevision?: number;
+              after?: { at: number; sequence: number; id: string };
+              failed?: boolean;
+              timeline?: string;
+            }
           | undefined;
+        const review =
+          savedReview?.timeline && savedReview.timeline !== this.service.timelineId
+            ? undefined
+            : savedReview;
+        const reviewDay =
+          review?.completed === false && review.failed === false ? review.day : day - 1;
         const queued = (await this.service.store.getIntegration(this.key(entity.id))) as
           | ReflectionRequest
           | undefined;
@@ -237,42 +248,57 @@ export class CognitionMaintenance {
           previousKind === 'consolidation' &&
           this.service.config.macrofoldKey &&
           this.service.store.persistence === 'postgres';
-        if (dreamReady && reviewDay >= 0 && review?.day !== reviewDay && !prioritizeReflection) {
-          const batch = consolidationBatch(
-            await this.service.historySnapshot(entity.id),
-            entity.id,
-            'daily',
-            reviewDay,
-          );
-          // Attempt each completed day at most once. Provider failure preserves every source.
-          await this.service.store.putIntegration(reviewKey, { day: reviewDay });
+        if (
+          dreamReady &&
+          reviewDay >= 0 &&
+          (review?.day !== reviewDay || (review.completed === false && review.failed === false)) &&
+          !prioritizeReflection
+        ) {
+          const progress = review?.day === reviewDay ? review : { day: reviewDay };
+          const batch = await this.service.maintenanceBatch(entity.id, 'daily', progress);
+          // A crash or failed partition cannot authorize automatic paid retry.
+          await this.service.store.putIntegration(reviewKey, {
+            ...progress,
+            timeline: this.service.timelineId,
+            completed: !batch,
+            failed: !!batch,
+          });
           if (batch) {
             await this.start(entity.id, 'consolidation', async (controller) => {
               const accepted = await this.consolidate(entity.id, batch, controller);
               if (accepted)
                 await this.service.store.putIntegration(reviewKey, {
                   day: reviewDay,
-                  completed: true,
+                  timeline: this.service.timelineId,
+                  failed: false,
+                  completed: batch.selection?.complete ?? true,
+                  throughRevision: batch.selection?.throughRevision,
+                  after: batch.selection?.after,
                 });
             });
             return;
           }
         }
         const cleanupKey = `cleanup:${world.id}:${entity.id}`;
-        const previous = (await this.service.store.getIntegration(cleanupKey)) as
-          | { hour: number; sourceDigest: string }
+        const savedCleanup = (await this.service.store.getIntegration(cleanupKey)) as
+          | { hour: number; sourceDigest: string; timeline?: string }
           | undefined;
+        const previous =
+          savedCleanup?.timeline && savedCleanup.timeline !== this.service.timelineId
+            ? undefined
+            : savedCleanup;
         const hour = Math.floor(world.simTime / 3600);
         const cleanupDue =
           !prioritizeReflection &&
           (previous?.hour !== hour || history.pressure || !!this.service.memoryBacklog);
         const batch =
           cleanupDue && history.rawDue
-            ? consolidationBatch(await this.service.historySnapshot(entity.id), entity.id, 'hourly')
+            ? await this.service.maintenanceBatch(entity.id, 'hourly')
             : null;
         if (batch && previous?.sourceDigest !== digest(batch.sources)) {
           await this.service.store.putIntegration(cleanupKey, {
             hour,
+            timeline: this.service.timelineId,
             sourceDigest: digest(batch.sources),
           });
           await this.start(entity.id, 'consolidation', (controller) =>
@@ -519,13 +545,25 @@ export class CognitionMaintenance {
         });
         if (controller.signal.aborted || this.service.paused)
           throw new Error('Consolidation canceled before publication.');
-        const accepted = await this.service.withActorHistory([actorId], () => {
-          if (controller.signal.aborted || this.service.paused)
-            throw new Error('Consolidation canceled before publication.');
-          return this.service.transition((world) =>
-            acceptConsolidation(world, actorId, job.id, batch.sources, groups),
-          );
-        });
+        const accepted = await this.service.withActorHistory(
+          [actorId],
+          async () => {
+            if (controller.signal.aborted || this.service.paused)
+              throw new Error('Consolidation canceled before publication.');
+            if (
+              batch.selection &&
+              !(await this.service.store.memories?.current(
+                batch.selection.scope,
+                batch.selection.revisions,
+              ))
+            )
+              throw new Error('Consolidation sources or timeline changed before publication.');
+            return this.service.transition((world) =>
+              acceptConsolidation(world, actorId, job.id, batch.sources, groups),
+            );
+          },
+          batch.selection ? batch.sources.map((source) => source.id) : undefined,
+        );
         if (!accepted.ok) throw new Error(accepted.message);
         committed = true;
         await this.log.record(`${job.id}:publication`, 'Summary publication', {}, accepted);
