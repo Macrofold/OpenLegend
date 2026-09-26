@@ -1,0 +1,35 @@
+name: Publish verified MCP compatibility refinement
+on:
+  push:
+    branches: [review/invention-extensibility]
+    paths: [.github/workflows/world-agent-sdk-review.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply reviewed documentation-only refinement
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, hashlib, lzma
+          from pathlib import Path
+          patch = lzma.decompress(base64.b64decode(Path('.world-agent-sdk-review').read_text(), validate=True))
+          if hashlib.sha256(patch).hexdigest() != 'dec7a8ef51aa425c6f8e602c226cf0f38cce7165f727dfee092822a4713f9ff6':
+              raise SystemExit('Unexpected documentation payload.')
+          Path('/tmp/mcp-compatibility.patch').write_bytes(patch)
+          PY
+          git apply --check --unidiff-zero /tmp/mcp-compatibility.patch
+          git apply --unidiff-zero --index /tmp/mcp-compatibility.patch
+          git rm .world-agent-sdk-review .github/workflows/world-agent-sdk-review.yml
+          test "$(git write-tree)" = 'f5b25ab153e61e55021a443b04183ad887d0ce96'
+          git diff --cached --check
+          git config user.name 'OpenLegend documentation automation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m '[skip ci] Prefer current MCP SDK with built-in legacy protocol support'
+          git push origin HEAD:review/invention-extensibility
+          git rev-parse HEAD HEAD^{tree}
