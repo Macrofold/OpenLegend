@@ -6,7 +6,7 @@ Read [requirements / R01–R14](research-requirements.md) and the [canonical 130
 
 **Branch:** `docs/game-inspiration-games-101-120`, created September 26, 2026 from `docs/game-inspiration-library-expansion` at `57bcd96f75f4561baff10ea57e28210dd908ebd5`. Mike assigned **G101–G120**, sequentially, with a commit after each game and substantive checkpoints at least every five minutes. Other range branches are outside this assignment.
 
-**Completed: 5 / 20. Active: G106 — Mass Effect: Infiltrator.** Research the retired IronMonkey mobile game independently: touch cover/aiming, the later manual-aim option, equipment/credits, style/time/health scoring, Randall/Inali, the bonus campaign and the original Mass Effect 3 readiness/war-asset tie-in. Distinguish iOS, Android, Windows Phone and BlackBerry releases and retirement. Finish five written reviews, direct-player alternatives, R01–R14 and evidence/link review before advancing to G107. No Steam release should be invented for either mobile game.
+**Completed: 6 / 20. Active: G107 — Octopath Traveler.** Research the original independently of Octopath Traveler II and Champions of the Continent. Cover eight personal stories, party composition, Break/Boost, jobs/support skills, talents, noble/rogue Path Actions, equipment/economy, optional endgame and HD-2D production. Finish five substantive written reviews, helpful Steam evidence or genuine access limits, R01–R14 and the evidence/link review before advancing to G108. Do not import the sequel's day/night or latent-power systems.
 
 Inherited G01–G20 completion claims and the former G21 assignment are **not re-audited here**. G21–G100 and G121–G130 remain outside scope. All original completion SHAs, earlier resume instructions and scope history remain available in the [immutable parent ledger](https://github.com/Macrofold/OpenLegend/blob/57bcd96f75f4561baff10ea57e28210dd908ebd5/archive/02-research/game-inspiration/research-progress.md). Last inherited completion: Minecraft, `4f6b715814dd932af34806517539cfe55ed1a6a0`; original library baseline: `feab691827a7cd62b6146f31eef20ee12e1a4770`.
 
@@ -21,8 +21,8 @@ Completion requires substantive R01–R14 coverage, evidence/access review, pres
 | G103 | [Mass Effect 3](dossiers/mass-effect-3.md) | Complete; Steam ranking inaccessible, alternatives documented | `0f81487fbe596aca236a8e659ab37f29944f2917` |
 | G104 | [Mass Effect: Andromeda](dossiers/mass-effect-andromeda.md) | Complete; helpful Steam reviews inspected | `c91909799db6bd74ffa659d54f1172f7c90b3cc6` |
 | G105 | [Mass Effect Galaxy](dossiers/mass-effect-galaxy.md) | Complete; retired non-Steam title, player alternatives documented | `f3084ded4b6aae951fb180dfaf676932be84ec1c` |
-| G106 | `dossiers/mass-effect-infiltrator.md` | In progress | — |
-| G107 | `dossiers/octopath-traveler.md` | Pending | — |
+| G106 | [Mass Effect: Infiltrator](dossiers/mass-effect-infiltrator.md) | Complete; retired non-Steam title, player alternatives documented | `dc971b9f2fa7944937ffe512acb2e828d31b79c0` |
+| G107 | `dossiers/octopath-traveler.md` | In progress | — |
 | G108 | `dossiers/octopath-traveler-ii.md` | Pending | — |
 | G109 | `dossiers/star-wars-knights-of-the-old-republic.md` | Pending | — |
 | G110 | `dossiers/star-wars-knights-of-the-old-republic-ii.md` | Pending | — |
@@ -48,6 +48,8 @@ Completion requires substantive R01–R14 coverage, evidence/access review, pres
 **G104:** six interactions, five reviews across five outlets, annotated sources and requirement map. Profiles/Favorites, research/development, local viability/AVP, political and rescue consequences, optional multiplayer, patch boundaries and the limited shipped procedural director covered. Helpful English Steam review bodies/names/dates/counts inspected; separate endpoint failed. Primary SEC category-growth evidence is explicitly not title revenue. Checkpoint `76eba6e52ba7860f1c47c8279ab3ca3118bd3ecb`.
 
 **G105:** five constructed interactions, five independent written reviews, dated player alternatives and 23 annotated source groups. Retired iOS identity, fixed character, mission-linked powers, recovery/save behavior, authored investigation and limited sequel reward distinguished from absent full-RPG systems. Two German main reviews were read through substantive indexed text; exact access limits are retained. Developer interviews separate original goals from the subsequent tactile-play lesson. Historical prices are not sales or present availability.
+
+**G106:** five constructed interactions, five authored reviews, 24 source groups and requirement map. Touch/manual-aim versions, original/Android timing, compact gear progression, score/replay loop, moral closure, fixed bonus-character toolkit and retired-service boundaries separated. Intel readiness and completion/mastery war assets are distinct. Primary developer/update accounts and named player alternatives inspected. Checkpoint `00b2712b98bdd59c8d533f118024ff0a9524bdc1`.
 
 ## Preservation and integration gates
 
