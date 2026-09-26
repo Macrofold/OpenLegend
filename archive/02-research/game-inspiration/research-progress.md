@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Active: G129 — Oxygen Not Included.** Intended output: `dossiers/oxygen-not-included.md`. Complete R01–R14: current base-game versus Spaced Out and later paid/free content boundaries; Duplicant traits/needs/stress/morale/skills/priorities, gases/liquids/heat/germs/resource loops, power/pipes/ventilation/automation, research/industry/agriculture/critters/space progression, colony failure and recovery, presentation/production/commercial context, five substantive written reviews and current Steam helpful/player evidence. Preserve prior owners and keep packet-wide audit separate.
+**Active: G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl.** Intended output: `dossiers/stalker-2-heart-of-chornobyl.md`. Complete R01–R14: current September 2026 version/patch and platform/content boundaries; first-person survival-combat, artifacts/anomalies/radiation/hunger/inventory/gear economy, open-world exploration and quests/factions, AI/A-Life 2.0 claims versus verified shipped/current behavior, progression/failure and emergent encounters, presentation/production/war-disruption/distribution/commercial context, five substantive written reviews and current Steam helpful/player evidence. Preserve prior owners, date all A-Life claims, and keep packet-wide audit separate.
 
-**This branch's authorized range: G121–G130 inclusive; 8 / 10 completed.** G121–G128 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
+**This branch's authorized range: G121–G130 inclusive; 9 / 10 completed.** G121–G129 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
 
 | Subject | State | Canonical output / completion commit | Exact remaining work |
 | --- | --- | --- | --- |
