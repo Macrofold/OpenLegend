@@ -10,18 +10,6 @@ type Inspection = {
   relationships: RelationshipPage & { subject?: { kind: 'entity' | 'item'; id: string } };
 };
 const key = (ref: RelationshipRef) => JSON.stringify([ref.kind, ref.id, ref.version]);
-const readable = new Set([
-  'recipe',
-  'item-definition',
-  'attribute',
-  'sense',
-  'host',
-  'family',
-  'entity',
-  'item',
-  'memory-record',
-]);
-
 /** Owner-only relationship list uses the same service as MCP; it does not edit graph edges.
  * docs/invention-graph.md#graph-reader-implementation
  */
@@ -225,7 +213,7 @@ export function WorldInspection({ actorId }: { actorId: string }) {
                     · {edge.assertion}
                     {edge.quantity !== undefined ? ` · quantity ${edge.quantity}` : ''}
                   </span>
-                  {node && !node.availability && readable.has(target.kind) && (
+                  {node?.canInspect && !node.availability && (
                     <Button
                       size="sm"
                       variant="quiet"

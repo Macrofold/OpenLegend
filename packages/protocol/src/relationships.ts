@@ -9,6 +9,8 @@ export interface RelationshipNode {
   label: string;
   layer: 'definition' | 'live' | 'evidence';
   availability?: 'reference-only';
+  /** Discovery hint from the source reader, never an authorization grant. */
+  canInspect?: boolean;
 }
 export const RELATIONSHIP_KINDS = [
   'requires',
