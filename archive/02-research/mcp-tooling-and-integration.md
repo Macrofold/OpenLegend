@@ -6,7 +6,7 @@ Research checked September 23, 2026. These are primary-source findings and a pro
 
 Use the official TypeScript SDK, the existing Node HTTP server and schema/service boundaries. Macrofold supplies the native agent harness and approved remote connection. OpenLegend supplies one authenticated tool adapter over its own application services. This avoids adopting another language/runtime, duplicating access policy, or generating a permissive server from every administrative REST endpoint.
 
-The first pair should be compatible with the inspected Macrofold client, not selected solely by the newest package name. After negotiation and transport are proven, update the official adapter in a separately scoped change rather than maintaining hand-written protocol compatibility indefinitely.
+Prefer the current official SDK server with its built-in compatibility mode for the inspected Macrofold client. Pin and qualify the exact pair and negotiated protocol; SDK major versions need not match. Do not maintain application-written protocol compatibility.
 
 ## Framework comparison
 
@@ -23,11 +23,11 @@ No vendor adoption/market-share claims or latency figures are used to select the
 
 ## Protocol compatibility finding
 
-The official [SDK repository](https://github.com/modelcontextprotocol/typescript-sdk) identifies v2 as stable with the **2026-07-28** specification and says v1 continues security/bug support for at least six months after v2's release. The [specification changes](https://modelcontextprotocol.io/specification/2026-07-28/changelog) remove the initialize handshake and protocol HTTP session IDs, add per-request negotiation/discovery and change several optional capabilities. It is not safe to mix v1 lifecycle examples with v2 packages.
+The official [SDK repository](https://github.com/modelcontextprotocol/typescript-sdk) identifies v2 as stable with the **2026-07-28** specification and says v1 continues security/bug support for at least six months after v2's release. The [specification changes](https://modelcontextprotocol.io/specification/2026-07-28/changelog) remove the initialize handshake and protocol HTTP session IDs, add per-request negotiation/discovery and change several optional capabilities. SDK version and wire revision are distinct; use the documented v2 entrypoints rather than mixing old imports or lifecycle examples into new packages.
 
 Macrofold at `19865a2f45885e228deb6b7ea443e33982257d21` declares `@modelcontextprotocol/sdk: ^1.27.0` in [package.json](https://github.com/Macrofold/Macrofold/blob/19865a2f45885e228deb6b7ea443e33982257d21/package.json). Its [MCP sample](https://github.com/Macrofold/Macrofold/blob/19865a2f45885e228deb6b7ea443e33982257d21/examples/integrations/mcp.ts) uses bearer authentication and a v1 stateless Streamable HTTP transport. This is source compatibility evidence, not a successful deployed connector call.
 
-Select an audited exact-pinned patched v1 release for the first matching connector unless Macrofold is deliberately upgraded first. Target 2025-11-25 negotiation, verify the actual lockfile/client support, and track v2 upgrade qualification. The [v1 transport specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports) and [v1 source](https://github.com/modelcontextprotocol/typescript-sdk/tree/v1.x) are the relevant implementation references for that first path.
+The official [v2 protocol migration guide](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/migration/support-2026-07-28.md#server-over-http-createmcphandler) states that `createMcpHandler` serves 2026-07-28 and, by default, stateless 2025-era traffic through one factory/endpoint. Therefore prefer exact-pinned audited v2 server/Node packages, initially qualify 2025-11-25 against Macrofold's existing v1 client, and opt into the modern wire profile only after client qualification. A temporary patched v1 server is a fallback for an observed blocker, not a requirement inferred from the client dependency. The [2025-11-25 transport specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports) governs the first negotiated profile; application job handles avoid dependence on era-specific optional tasks.
 
 ## Security and tool-shape references
 

@@ -50,6 +50,8 @@ Clarified the existing [production data model](../archive/07-technical-architect
 
 Corrected the policy: small migrations are allowed and preferred; maintaining legacy game versions is not required. Removed automatic fresh-world recovery and its per-feature save-format gate. The preceding startup recovery did reset the development gameplay world while retaining accounting; that behavior is superseded, not an acceptance requirement. Current behavior is owned by Save/load and Architecture.
 
+- The MCP stack selection distinguishes SDK major versions from protocol revisions: prefer the official v2 server with its documented 2025-era compatibility handler for the inspected Macrofold client. No custom dual protocol or forced client upgrade is required; actual interoperability remains unqualified.
+
 ## 2026-09-23 — Unified World Agent and end-to-end authoring
 
 - Accepted one unified action-capable conversation with consequential approval and a $5 explicitly funded session including images, without a compulsory art allocation. The World Agent has authorized world-level inspection; NPC knowledge remains a separate caller boundary.
