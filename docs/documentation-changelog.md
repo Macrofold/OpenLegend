@@ -280,3 +280,7 @@ Imported the full 238-entry limits decision report from its temporary working ar
 ## Reviewed MCP write foundation
 
 Added native kind-backed operational draft/review sessions, a thin writable MCP transport and a server-selected Macrofold native owner execution profile. The initial read-only bootstrap remains the disabled-by-default transport configuration, not the product destination. Permanent world receipts, not model text, certify Apply; the existing ledger owns session exposure. Updated current status, manual evidence and deferred MW regression coverage without marking live harness or unimplemented art/physics complete.
+
+## Unified conversation delivery
+
+Connected the native owner session/turn/review APIs to the World Agent panel, replacing tool-less Discuss as its privileged conversation path. Retained the finite native recipe shortcut and read-only earlier local transcripts. Updated implementation status and exact approval/recovery guidance; wider physical/social/art capabilities remain independently tracked. Added MW06/MW07 rather than claiming manual native observations replace automated or browser/live qualification.

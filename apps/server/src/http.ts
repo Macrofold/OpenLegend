@@ -4,6 +4,9 @@ import { WorldAuthoringService } from './world-authoring.js';
 import {
   sessionRequest,
   sessionTurnsRequest,
+  sessionStatusRequest,
+  sessionListRequest,
+  AuthoringRequestError,
   sessionTurnRequest,
   sessionOpenRequest,
   sessionDecisionRequest,
@@ -1462,14 +1465,28 @@ export async function createGameServer(
             const data = await authoring.open(value.sessionId, value.worldId, value.budgetUsd);
             return send(response, 200, { ok: true, ...data });
           }
+          case '/api/world-agent/session/list': {
+            const value = sessionListRequest.parse(body);
+            if (value.worldId !== service.world.id)
+              return send(response, 409, { ok: false, message: 'World mismatch.' });
+            return send(response, 200, { ok: true, data: await authoring.sessions(value.before) });
+          }
           case '/api/world-agent/session/status': {
-            const value = sessionRequest.parse(body);
+            const value = sessionStatusRequest.parse(body);
+            if (!config.godMode)
+              return send(response, 403, {
+                ok: false,
+                message: 'World-owner authoring is unavailable.',
+              });
             if (value.worldId !== service.world.id)
               return send(response, 409, { ok: false, message: 'World mismatch.' });
             const exists = await authoring.records.session(value.sessionId);
             return send(response, 200, {
               ok: true,
-              data: exists ? await authoring.view(value.sessionId) : null,
+              data: exists
+                ? await authoring.view(value.sessionId, value.afterDraft, value.afterPlan)
+                : null,
+              availability: authoring.availability(),
               enabled:
                 !!config.mcpRead?.allowWrites &&
                 config.godMode &&
@@ -1686,6 +1703,12 @@ export async function createGameServer(
           error instanceof z.ZodError ||
           error instanceof SyntaxError ||
           (error instanceof Error && error.message === 'body-limit');
+        if (error instanceof AuthoringRequestError)
+          return send(response, 409, {
+            ok: false,
+            code: 'authoring-request',
+            message: error.message,
+          });
         if (error instanceof GameSaveError)
           return send(response, 400, { ok: false, code: 'save', message: error.message });
         return send(response, invalid ? 400 : 500, {

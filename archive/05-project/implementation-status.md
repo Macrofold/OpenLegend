@@ -98,3 +98,7 @@ Memory-consolidation pressure no longer blocks native simulation or queued walki
 Small content-count ceilings have been removed from recipe/module/policy admission, planning menus, interest matching, touch contacts, memory references and named saves; actual validation and request/spending limits remain. Current behavior is owned by [Architecture](../../docs/architecture.md#content-counts-and-request-limits), with manual capacity and stress evidence in [Verification](../../docs/verification.md#content-limit-removal-runtime).
 
 Optional contact sensing now checks physical body surfaces and height overlap instead of a proximity radius. Existing detector definitions upgrade in place and clear obsolete active contacts. This includes contact with a campfire's current body volume, without adding heat damage or general map-surface sensing.
+
+### Unified owner World Agent
+
+The native Macrofold execution adapter and writable MCP service now have an owner conversation UI with explicit $5 session admission, durable/paged turn history, same-request reconciliation, exact cancellation, schema-aware candidate review and human approval/Apply. Eighteen tools cover source inspection and the five current native authoring kinds. A local HTTP/MCP category-definition journey exercised real native admission/replay/restart with zero provider spending. Live Macrofold/browser/PostgreSQL and broader simulation/art composition remain unqualified or unimplemented as specified in INV-21 and the existing owners.

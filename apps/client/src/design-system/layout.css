@@ -2088,3 +2088,21 @@ body,
 .ol-diagnostic-detail-tools {
   flex-wrap: wrap;
 }
+
+/* World Agent drafts use ordinary panels; no generated markup enters a review. */
+.ol-agent-reviews {
+  max-height: 240px;
+  overflow: auto;
+}
+.ol-agent-reviews article {
+  padding: 8px 0;
+}
+.ol-agent-json {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow: auto;
+}
+.ol-agent-tools select {
+  max-width: 260px;
+}

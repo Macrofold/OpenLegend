@@ -113,3 +113,22 @@ export const sessionTurnsRequest = sessionRequest
   })
   .strict();
 export const sessionTurnRequest = sessionRequest.extend({ requestId: id }).strict();
+
+export const sessionStatusRequest = sessionRequest
+  .extend({
+    afterDraft: id.optional(),
+    afterPlan: id.optional(),
+  })
+  .strict();
+export const sessionListRequest = z
+  .object({
+    worldId: id,
+    before: z
+      .object({ createdAt: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER), id })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
+/** Expected owner-facing request failure; infrastructure exceptions stay private. */
+export class AuthoringRequestError extends Error {}
