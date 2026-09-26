@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-25 — Shared Macrofold Worker caller cutover
+
+Replaced Worktree-bound Sandbox execution with an explicitly owner-selected shared Worker. Operator selection rather than automatic creation keeps administrative lifecycle permissions and open-ended allocation costs outside actor/conversation code; the removed finite Sandbox allowance is not reinterpreted as an hourly ceiling. Existing Worktree/Session mappings and old financial records remain intact. Added demand-first native submission, target checks, durable conversation closure and Run-scoped cancellation, while preserving direct inference. [Provider setup](ai-providers.md#shared-worker-setup-and-cutover), [architecture](architecture.md#macrofold-worker-ownership) and [MW01–MW04](maintainers/macrofold-worker-api.md) replace the prior per-Worktree ownership direction. [Verification](verification.md#macrofold-worker-api-cutover) separates local runtime/build evidence from remaining live cutover and baseline CI gaps.
+
 ## 2026-09-25 — Foundation decisions and branch-aware remaining work
 
 Recorded accepted [special invention permission](../archive/03-design-proposals/invention-governance-and-ownership.md#special-player-invention-permission), [risk-accepted law changes](../archive/07-technical-architecture/declarations-and-evolution.md#accepted-live-change-and-risk-policy), scheduled maintenance, [main-world logout/death/ghost policy](worlds/base/lifecycle-and-protection.md), persistent cause-linked emotions and foreground/background sensory policy. These are accepted targets, not runtime delivery. Gameplay risk can be explicitly accepted without granting unsupported execution or bypassing integrity; buildings remain unprotected pending a later policy.

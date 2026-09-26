@@ -14,6 +14,31 @@ The server routes level 2 to mini/low, levels 3/4 to complex/low or high, and cl
 
 Reported BYOK provider costs are distinct from zero platform model charges. Complete harness usage rows supply token/cost receipts when available; missing or ambiguous billing retains the admitted reserve and can be reconciled later. The grouped god debugger links actual provider input/output to trigger, recall, route and committed outcome. Live synthetic examples and limitations remain in [TODO](maintainers/TODO.md).
 
+## Shared Worker setup and cutover
+
+Native full cognition, reflection and creator conversations require `MACROFOLD_WORKER_ID`, selected by the application/world compute owner. The caller sends that same top-level `worker_id` with each native Run; actor Worktrees and Sessions remain independent. OpenLegend does not create, discover, resume, pause, replace or destroy Workers. A missing setting disables only native execution, not `/v1/inferences`.
+
+```dotenv
+MACROFOLD_WORKER_ID=<existing-authorized-worker-uuid>
+MACROFOLD_RUN_MAX_USD=0.25
+```
+
+Create or select the Worker in Macrofold using a separate owner/admin credential. Inspect `/v1/worker-offerings`, the accepted offering/rates and effective limits before enabling traffic. Configure the trust boundary, isolation, capacity, idle policy, credit and compute-rate ceiling deliberately. Preserve `isolate_runs: true` unless the owner explicitly authorizes mutually trusted sharing; sharing a Worker does not itself require disabling isolation. Use a zero baseline for demand-driven sleep, or an explicitly funded baseline for sustained traffic. See the upstream [Worker guide](https://github.com/Macrofold/Macrofold/blob/feat/worker-economics-autoscaling/docs/features/execution/workers.md) for fields and lifecycle rules.
+
+The runtime key needs `workers:use` for the selected Worker plus its existing Run, Workspace, Session and file permissions. Worker authorization does not grant file/tool authority. The caller does not need `workers:write` or `workers:read`: it neither manages compute nor gates submission on a Worker read. The separate operator needs `workers:read` to inspect and administrative `workers:write` to manage the Worker. Worker-ID restrictions and Workspace restrictions remain independent.
+
+**Worker compute is a separate owner-managed expense.** `AI_BUDGET_USD` continues to admit per-agent calls and conservatively retain unpriced reservations; `MACROFOLD_RUN_MAX_USD` caps a Run, not shared capacity. Neither setting caps the Worker's idle/allocation spend. The removed `MACROFOLD_COMPUTE_MAX_USD` was a finite per-Sandbox allowance, not an hourly Worker ceiling; it is not read or converted. Set Worker limits and account credit controls in Macrofold and inspect compute usage by `worker_id`; do not count shared allocation costs once per actor or refund old holds as zero.
+
+Submit a Run directly to an enabled sleeping Worker, then observe the accepted Run's status/result and queue deadline. Reading a Worker does not wake it. The existing `queue_if_busy: false` prevents same-Worktree follow-ups; it does **not** disable Worker-capacity queuing. Independent Worktrees may share capacity concurrently. Full cognition/reflection use fresh Sessions, whereas creator conversation turns keep their existing Session.
+
+Closing a creator conversation aborts its local wait, durably fences that conversation and cancels only its known Run. A late acceptance with a returned Run ID is cancelled; an admission whose response is lost remains blocked for reconciliation of the original request rather than paid replay. Another actor's Run, the shared Worker and published Worktree/Session state are not destroyed. Server shutdown also performs no Worker lifecycle operation. A manual pause, expiration or destruction needs an explicit owner action; there is no replacement Worker or automatic-execution fallback.
+
+For the server/caller cutover, stop old native admissions and drain old Sandbox allocations **before** removing their API. Reconcile uncertain launches and financial obligations, and preserve the database's operational records as well as verified files and Sessions. Deploy the matching Macrofold Worker contract and this caller together, then set the approved Worker ID. Do not reset worlds, reinterpret saved Sandbox IDs as Worker IDs, clear billing history or run the removed `macrofold-resume-setup.ts` script against the new API. Existing actor provisioning keys and timeline-scoped conversation mappings are unchanged; old Sandbox metadata remains historical and is ignored by native routing.
+
+Changing `MACROFOLD_WORKER_ID` is an explicit operator reconfiguration, not automatic recovery. Drain/reconcile outstanding work before restarting with another target; saved verified Sessions can continue on an authorized compatible Worker. Lost/ambiguous Run requests are still fenced by their original journal/fingerprint, including the originally requested target. The current server supplies one trusted configuration per world; unrelated worlds/customers must not inherit a shared target or relaxed isolation accidentally.
+
+Implementation and remaining live-deployment gates: [MW01–MW04](maintainers/macrofold-worker-api.md). Local HTTP and build evidence: [Worker API cutover](verification.md#macrofold-worker-api-cutover).
+
 ## Configuration and interface
 
 Construct the client in trusted server code. Read keys from the server environment or a server secret store; never pass them through game requests, browser configuration, saved world state, telemetry, or receipts. Omitting a provider or supplying an empty key returns `unavailable` without dispatching. Configured endpoints require HTTPS; redirects are rejected. Endpoint configuration is privileged, since it determines where credentials and context go.

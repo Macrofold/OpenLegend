@@ -87,7 +87,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     macrofoldModel: env['MACROFOLD_MODEL'] ?? DEFAULT_MACROFOLD_MODEL,
     macrofoldHarness: env['MACROFOLD_HARNESS'] ?? 'opencode',
     macrofoldRunUsd: numberSetting(env, 'MACROFOLD_RUN_MAX_USD', 0.25, 0.000001, 10),
-    macrofoldComputeUsd: numberSetting(env, 'MACROFOLD_COMPUTE_MAX_USD', 0, 0, 100),
+    // Selected by the application/world compute owner; never allocated by an actor lane.
+    macrofoldWorkerId: env['MACROFOLD_WORKER_ID']?.trim() ?? '',
     macrofoldTimeoutSeconds: numberSetting(env, 'MACROFOLD_TIMEOUT_SECONDS', 300, 5, 300),
     jevKey: env['TYPESAFE_API_KEY'] ?? env['JEV_API_KEY'] ?? '',
     llmKey: env['OPENAI_API_KEY'] ?? '',

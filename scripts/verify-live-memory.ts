@@ -2,7 +2,8 @@ import { dreamPolicy } from '../packages/domain/src/index.js';
 /** Explicit paid acceptance, never run by test/check or on startup.
  * node --env-file=.env --import tsx scripts/verify-live-memory.ts
  * Uses an isolated real simulation and separate saved database. Four mini-model
- * harness jobs, one warm sandbox allocation; all requests have durable IDs/caps.
+ * harness jobs on an explicitly selected Worker; all requests have durable IDs/caps.
+ * Worker compute is separately funded/limited by its owner and is never destroyed here.
  */
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
@@ -18,8 +19,8 @@ import {
 } from '../apps/server/src/cognition.js';
 import { commitCognition, mindFor } from '@open-legend/domain';
 const config = { ...readConfig(), databasePath: resolve('.data/live-memory-acceptance.sqlite') };
-if (!config.macrofoldKey || config.budgetUsd <= 0 || config.macrofoldComputeUsd <= 0)
-  throw new Error('Explicit backend credentials and caps required.');
+if (!config.macrofoldKey || config.budgetUsd <= 0 || !config.macrofoldWorkerId)
+  throw new Error('Explicit backend credentials, Run caps and MACROFOLD_WORKER_ID required.');
 let store = new SqliteStore(config.databasePath);
 let service = new WorldService(store, config);
 await service.ready;
@@ -41,7 +42,7 @@ const speech = await service.say(
 );
 if (!speech.ok) throw new Error(speech.message);
 const sessions: string[] = [];
-const sandboxes: string[] = [];
+const worktrees: string[] = [];
 async function deliberate(
   backend: MacrofoldBackend,
   service: WorldService,
@@ -79,14 +80,19 @@ async function deliberate(
     commitCognition(world, prepared.binding, proposal),
   );
   if (!committed.ok) throw new Error(committed.message);
+  const prefix = `macrofold:${digest(config.macrofoldUrl)}:${service.world.id}:${service.timelineId}:`;
   const lane = (await service.store.getIntegration(
-    `macrofold:${digest(config.macrofoldUrl)}:${service.world.id}:lane:ada`,
-  )) as { session?: string; sandbox?: string };
-  if (!lane.session || !lane.sandbox) throw new Error('Missing execution identities.');
+    `${prefix}lane:${service.defaultResidentEntityId}`,
+  )) as { session?: string; worktree?: string } | undefined;
+  const completed = (await service.store.getIntegration(
+    `${prefix}result:${result.receipt.providerRequestId}`,
+  )) as { status?: { worker_id?: string } } | undefined;
+  if (!lane?.session || !lane.worktree || completed?.status?.worker_id !== config.macrofoldWorkerId)
+    throw new Error('Missing or unexpected execution identities.');
   sessions.push(lane.session);
-  sandboxes.push(lane.sandbox);
-  if (new Set(sessions).size !== sessions.length || new Set(sandboxes).size !== 1)
-    throw new Error('Fresh conversation / warm compute acceptance failed.');
+  worktrees.push(lane.worktree);
+  if (new Set(sessions).size !== sessions.length || new Set(worktrees).size !== 1)
+    throw new Error('Fresh Session / retained Worktree acceptance failed.');
   return mindFor(service.world, service.defaultResidentEntityId);
 }
 try {
@@ -154,7 +160,8 @@ try {
   console.log(
     JSON.stringify({
       sessions,
-      sandboxId: sandboxes[0],
+      workerId: config.macrofoldWorkerId,
+      worktreeId: worktrees[0],
       reflectionAt: dreamed.lastReflectionAt,
       dreamEpisode: dreamed.lastDreamEpisode,
     }),

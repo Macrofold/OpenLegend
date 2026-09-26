@@ -7,6 +7,8 @@ This page is the master navigation index for active implementation work.
 
 ## Focused work
 
+[Macrofold Worker API cutover (MW01–MW04)](macrofold-worker-api.md) tracks the shared-compute caller migration, cancellation/state preservation and coordinated deployment gates.
+
 | Area                                                                   | Tracker                                                             | Design owner                                                                                                                                                                                                                                                   |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Maintenance / cross-cutting deferred validation                        | [TODO](TODO.md)                                                     | Relevant canonical specifications                                                                                                                                                                                                                              |
