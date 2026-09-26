@@ -5,9 +5,10 @@ Read this ledger with the [canonical roster](research-roster.md) and [full per-g
 ## Resume state
 
 - **Branch scope:** canonical **G40–G60** on `docs/game-inspiration-games-40-60`; do not create a replacement branch.
-- **Last completed numbered game:** **G54 — Dragon Age: The Veilguard**, committed at `b91dcc222807b0c5f506179d52fe1993f968f3fa`.
-- **Active work:** required **Dragon Age series/smaller-game comparison**, target `dossiers/dragon-age-series.md`. Mainline synthesis and primary Journeys, Legends/Remix, Last Court, Heroes and Keep sources have been inspected; write and review the supplement next. Current fan adaptations must be distinguished from the retired original services.
-- **Next numbered game:** **G55 — Pillars of Eternity II: Deadfire**, followed by G56–G60 in the table below.
+- **Last completed numbered game:** **G54 — Dragon Age: The Veilguard**, `b91dcc222807b0c5f506179d52fe1993f968f3fa`.
+- **Required Dragon Age family supplement:** [completed](dossiers/dragon-age-series.md), `1eaf76df27c6af52ecafb35f077eae986f0708e9`. Includes Journeys, Legends/Remix, The Last Court, Heroes, Keep and current preservation boundaries.
+- **Active game:** **G55 — Pillars of Eternity II: Deadfire**. Target `dossiers/pillars-of-eternity-ii-deadfire.md`; no existing file at that dossier or same-named original-chapter path. Complete R01–R14, distinguishing launch, 2019 turn-based/5.0 and DLC, later ports, and unrelated 2026 updates to Pillars I.
+- **Next games:** G56–G60 in the table below, one at a time.
 - **Completion rule:** independently researched, written, reviewed against R01–R14, and committed. A source checkpoint is not complete.
 - **Commit rule:** commit after each game or at least every five minutes; checkpoint substantive unfinished work honestly.
 - **Evidence date:** September 26, 2026; America/New_York.
@@ -37,7 +38,7 @@ The corrected continuation sequence is **Inquisition → The Veilguard → Deadf
 | G52 | Dragon Age II | Committed | [Dossier](dossiers/dragon-age-ii.md) · `345c773` |
 | G53 | Dragon Age: Inquisition | Committed | [Dossier](dossiers/dragon-age-inquisition.md) · `66c0a61`; [historical access checkpoint](references/dragon-age-inquisition-completion-evidence.md) |
 | G54 | Dragon Age: The Veilguard | Committed | [Dossier](dossiers/dragon-age-the-veilguard.md) · `b91dcc2`; checkpoint `d56815c` incorporated |
-| G55 | Pillars of Eternity II: Deadfire | Not started | Target: `dossiers/pillars-of-eternity-ii-deadfire.md` |
+| G55 | Pillars of Eternity II: Deadfire | In progress | Target: `dossiers/pillars-of-eternity-ii-deadfire.md` |
 | G56 | Divinity: Original Sin | Not started | Target: `dossiers/divinity-original-sin.md` |
 | G57 | Divinity: Original Sin II | Not started | Target: `dossiers/divinity-original-sin-ii.md` |
 | G58 | Pathfinder: Kingmaker | Not started | Target: `dossiers/pathfinder-kingmaker.md` |
@@ -46,7 +47,7 @@ The corrected continuation sequence is **Inquisition → The Veilguard → Deadf
 
 ## Next action and evidence guardrails
 
-Finish the Dragon Age family supplement, then begin G55. G53 includes eighteen worked mechanics, ten interaction cases, three expansion analyses, five preserved independent review assessments, direct player alternatives and eight labeled video routes. G54 includes twelve mechanic analyses, nine causal cases, five newly read independent reviews, direct contrasting player testimony, primary development/support records and six viewing routes. Both document failed Steam helpful-review access instead of claiming an inspected ranked sample.
+Complete G55's inventory, concrete interactions, factions/companions, production, commerce, five independent reviews, direct player evidence, DLC/mode boundaries and annotated study routes. G53 includes eighteen worked mechanics, ten cases and three expansion analyses. G54 includes twelve mechanic analyses and nine causal cases. Both have five independent written-review assessments and document failed Steam helpful-review access instead of claiming an inspected ranked sample. The Dragon Age family supplement is now complete and separate from those individual passes.
 
 Treat retrieved snippets, inaccessible pages and metadata-only videos honestly. Separate original releases, later editions, DLC and current availability. Separate critic reviews from direct player testimony, and qualitative samples from representative statistics. Do not claim gameplay, watched footage, a local checkout, runtime tests or a repository-wide link check that did not occur. Keep all existing dossiers, chapters, mechanics and packet provenance. Completion of this branch's range is not completion of the whole 130-subject roster or the separate packet-wide reconciliation.
 
