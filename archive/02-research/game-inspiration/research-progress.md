@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Active: G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl.** Intended output: `dossiers/stalker-2-heart-of-chornobyl.md`. Complete R01–R14: current September 2026 version/patch and platform/content boundaries; first-person survival-combat, artifacts/anomalies/radiation/hunger/inventory/gear economy, open-world exploration and quests/factions, AI/A-Life 2.0 claims versus verified shipped/current behavior, progression/failure and emergent encounters, presentation/production/war-disruption/distribution/commercial context, five substantive written reviews and current Steam helpful/player evidence. Preserve prior owners, date all A-Life claims, and keep packet-wide audit separate.
+**Range complete: G121–G130.** All ten authorized subjects have complete R01–R14 dossiers and per-game completion commits on this branch. No per-game subject remains active here. The next repository-wide work is the separately tracked P01–P05 packet audit/reconciliation; this branch does not claim those global gates are complete.
 
-**This branch's authorized range: G121–G130 inclusive; 9 / 10 completed.** G121–G129 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
+**This branch's authorized range: G121–G130 inclusive; 10 / 10 completed.** G121–G130 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
 
 | Subject | State | Canonical output / completion commit | Exact remaining work |
 | --- | --- | --- | --- |
@@ -17,9 +17,9 @@
 | G125 — XCOM 2 | Complete | [Dossier](dossiers/xcom-2.md); `42d9279bde9647ed2ab027efe5c90896a187af39` | Base/WotC/DLC/mod boundaries, eight tactical-strategic cases, bonds/fatigue/roster attachment, five independent base-game reviews plus WotC/Steam evidence; Steam multiplayer retirement dated. |
 | G126 — Crusader Kings III | Complete | [Dossier](dossiers/crusader-kings-iii.md); `f1b04b87520f56527a09e367d219e5b2e2b35345` | Current PC/console/expansion boundaries, eight dynastic/political cases, trait/stress/relationship/succession/faction systems, five launch reviews plus current Steam; Paradox 3m/4m base-game milestones separated from DLC. |
 | G127 — Dragon's Dogma 2 | Complete | [Dossier](dossiers/dragons-dogma-2.md); `b36d70cb9b794fc003a1863c468048637dd37ddc` | Current base/update/future Dark Arisen boundaries, eight worked cases, Pawn asynchronous knowledge/inclinations/Dragonsplague, six reviews and current Steam evidence; DD2 4.20m separated from 14m series sales. |
-| G128 — Ultima VII: The Black Gate | In progress | `dossiers/ultima-vii-the-black-gate.md` | Full pass; distinguish Forge of Virtue, Serpent Isle and Exult. |
-| G129 — Oxygen Not Included | Pending | `dossiers/oxygen-not-included.md` | Full pass; separate base game, Spaced Out! and content packs. |
-| G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | `dossiers/stalker-2-heart-of-chornobyl.md` | Full pass; verify A-Life claims and dated patch behavior rather than repeating launch promises. |
+| G128 — Ultima VII: The Black Gate | Complete | [Dossier](dossiers/ultima-vii-the-black-gate.md); `edc5dc31082b8f5af7d67f8bc0683cdaa39c04fc` | Black Gate/Forge/Serpent Isle/Silver Seed/SNES/Exult boundaries, eight worked object/schedule cases, five contemporary/retrospective critical accounts plus GOG/MobyGames player evidence; no lifetime sales invented. |
+| G129 — Oxygen Not Included | Complete | [Dossier](dossiers/oxygen-not-included.md); `714ab6cbff9036294504ba8651258279d9e5ee0c` | Base/Spaced Out/Frosty/Bionic/Prehistoric/Neutronium/Aquatic boundaries, eight causal engineering cases, five written reviews plus current Steam evidence; no unsupported lifetime sales claimed. |
+| G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl | Complete | [Dossier](dossiers/stalker-2-heart-of-chornobyl.md); `12ca0a145cdf4357a498124c9f4744c6175779e6` | Launch/current 2.0/2.0.6 and Cost of Hope boundaries; versioned A-Life evidence, eight worked cases, five independent launch reviews and September 2026 Steam samples; one-million sales and six-million players kept distinct. |
 
 ## Inherited base-branch resume snapshot — not this branch's active assignment
 
