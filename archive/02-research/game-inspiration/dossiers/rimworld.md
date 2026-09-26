@@ -806,7 +806,7 @@ Recommended order for understanding RimWorld without needing dozens of hours:
 **RW44 — Tynan Sylvester / GDC, [RimWorld: Contrarian, Ridiculous, and Impossible Game Design Methods](https://www.gdcvault.com/play/1024232/-RimWorld-Contrarian-Ridiculous-and), 2017.** Public abstract only. Used for story-generator framing and selective/contrarian design; full talk not represented as watched.
 
 <a id="rw45"></a>
-**RW45 — [Tynan Sylvester interview on RimWorld design/success](https://www.rockpapershotgun.com/how-rimworlds-code-defines-strict-gender-roles), historical interview context.** Used only for attributed creator interpretation about design-space/product-market fit where available; historical surrounding controversy is not converted into a current mechanics claim. Where this route is inaccessible or incomplete, RW31/RW44 carry the substantive design critique instead.
+**RW45 — Quin Callahan, [Interview: Tynan Sylvester Talks Ludeon Studios' RimWorld](https://culturedvultures.com/tynan-sylvester-rimworld/), Cultured Vultures, October 3, 2018.** Substantive interview body read. Used for Sylvester's attributed explanation that RimWorld reached an underexplored design space, his preference for small-scale individual stories over empire growth, influences, deliberate lore omission and the importance he assigns to mod support. These are creator interpretations, not independent causal measurements.
 
 <a id="rw46"></a>
 **RW46 — [RimWorld coming to GOG](https://ludeon.com/blog/2020/02/rimworld-coming-to-gog/), Ludeon, February 26, 2020.** Primary storefront-expansion evidence; GOG release announced for March 3, 2020.
