@@ -2,6 +2,24 @@
 
 This file records current reproducible evidence and acceptance gaps. Fixture evidence does not establish live model quality, provider cost, hosted security, capacity or balance.
 
+## Macrofold Worker review reconciliation
+
+September 26, 2026: combined the reviews on top of `5468f89`, already based on main `c70f4c1`. The caller now checks its original cancellation signal after the last admission-journal await, immediately before HTTP dispatch. A local cancellation is journaled as rejected, releases the lane and marks the receipt undispatched; an already-sent admission retains its independent bounded timeout so its returned Run ID can be cancelled. Confirmed never-started queue failures also release the lane without weakening started/uncertain persistence fencing.
+
+The disposable loopback scenario `/tmp/ol-worker-reconcile.mts` paused the real repository at both the blocked-lane save and Run-operation journal save, closed the conversation, and observed zero native HTTP admissions, a rejected operation and an unblocked lane. Closing while an HTTP acceptance was pending instead retained the returned ID and issued exactly one cancellation. The combined run also repeated the queue failure/restart, lost-response, continued Session and inference-only scenarios below: 18 native admission requests, no Worker-management calls, no live providers or real charges. The synthetic conversation allowance remained local to the simulator.
+
+Full typecheck, production build, generated configuration and guidance checks passed. The previously failing CI formatting in `scripts/check-agent-guidance.mjs` was corrected without changing its behavior. No automated suites were manually run; normal CI and live Worker qualification remain [MW04 gates](maintainers/macrofold-worker-api.md#mw04--remaining-deployment-and-qualification-gates). Existing build and advisory guidance-size warnings remain.
+
+## Macrofold Worker API review
+
+September 26, 2026: reviewed the complete Worker branch and rebased an isolated copy onto OpenLegend `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`, preserving both sides of additive documentation conflicts. Rechecked upstream Macrofold `68ebce827d96e0f427aaa43315e5a81762cc62c4`, including queued failure in `packages/core/src/engine.ts` and Run admission/status/cancellation in `packages/core/src/runs.ts`.
+
+A temporary manual script (`/tmp/ol-worker-review.mts`) invoked the real backend, WorldService, provisioner and in-memory SQLite repository through a loopback HTTP simulator on Node 24.13.0. Before the fix, queue expiry and Worker destruction/expiry before execution all left the actor blocked on its next explicit request. After the fix, each admitted fresh work, as did queued cancellation; a started Run with unverified persistence remained blocked. Reconstructing the backend and seeding the old blocked-lane state also recovered correctly. No automatic prompt retry was added.
+
+The final local exercise made 17 native admission requests and also checked confirmed paused-Worker rejection, no replay after a lost admission response, persistent conversation continuation, durable conversation closure, separate actor Worktrees on one selected Worker, missing Worker rejection before network I/O, and direct inference with no Worker configured. Worker management requests and live provider calls were zero. All data and credentials were synthetic; the conversation accounting exercise used only a simulated local allowance. This is caller behavior evidence, not live billing, concurrency capacity or model quality.
+
+Full `pnpm typecheck` and `pnpm build` passed with pinned dependencies. Existing PlayCanvas browser-externalization and large-chunk warnings remain. The pre-existing cognition fixture was adapted to Worker IDs/Worktree response identity without new test cases; no automated suites were run. The live setup guide now reflects separate owner-managed compute costs. [MW01–MW04](maintainers/macrofold-worker-api.md) retains normal CI and live deployment/recovery qualification; the 168 type errors described in the original cutover evidence below were resolved on main before this review.
+
 ## Macrofold Worker API cutover
 
 The caller was checked against Macrofold `feat/worker-economics-autoscaling` at `31c8136def29930d1bca238a4e79c14f0dc6d0ba`: Worker policy/authorization and the actual native Run admission/response implementation, not only SDK names. A final upstream recheck at `68ebce827d96e0f427aaa43315e5a81762cc62c4` changed only a temporary workflow; the inspected API implementation was unchanged. OpenLegend started from `main` `fba16a249d38328db5c2386d4be8ce5b0abbd5e7` with no conflicts. Delivery and remaining gates are tracked in [MW01–MW04](maintainers/macrofold-worker-api.md).

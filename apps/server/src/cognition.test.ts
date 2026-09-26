@@ -186,7 +186,7 @@ describe('fixture: cognition vertical slice', () => {
       }).success,
     ).toBe(false);
   });
-  it('fresh full harness sessions reuse a single actor workspace on the selected Worker and inject current instructions', async () => {
+  it('fresh full harness sessions reuse an actor worktree on the selected Worker and inject current instructions', async () => {
     const s = await service();
     const requests: Array<{ path: string; body: Record<string, unknown>; key: string | null }> = [];
     let run = 0;
@@ -276,9 +276,14 @@ describe('fixture: cognition vertical slice', () => {
     const native = requests.filter((r) => r.path === '/v1/runs');
     expect(native).toHaveLength(2);
     expect(
-      native.every((r) => r.body.session_id === undefined && r.body.worker_id === 'fixture-worker'),
+      native.every(
+        (r) =>
+          r.body.session_id === undefined &&
+          r.body.worker_id === 'fixture-worker' &&
+          r.body.worktree_id === 'fixture-worktree',
+      ),
     ).toBe(true);
-    expect(requests.filter((r) => r.path.startsWith('/v1/sandboxes'))).toHaveLength(0);
+    expect(requests.filter((r) => /^\/v1\/(workers|sandboxes)/.test(r.path))).toHaveLength(0);
     expect(requests.filter((r) => r.path === '/v1/workspaces')).toHaveLength(1);
     expect(native[0]!.key).not.toBe(native[1]!.key);
   });

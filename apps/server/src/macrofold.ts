@@ -59,20 +59,23 @@ function admissionRejected(error: unknown, path: string): error is MacrofoldHttp
   );
 }
 
-/** A queued cancellation has no changed context to publish. Never apply this to
- * a started Run or infer persistence from a missing receipt. */
+/** A cancelled or failed queued Run has no changed context to publish (including
+ * queue expiry). Started Runs still require verified persistence. */
 function nativePersistenceSettled(status: Record<string, unknown>, persistence: unknown): boolean {
   return (
     persistence === 'verified' ||
     (persistence === 'not_required' &&
-      status['status'] === 'cancelled' &&
-      status['execution_outcome'] === 'cancelled' &&
+      ((status['status'] === 'cancelled' && status['execution_outcome'] === 'cancelled') ||
+        (status['status'] === 'failed' && status['execution_outcome'] === 'failure')) &&
       status['started_at'] == null)
   );
 }
 
 /** Confirmed terminal failure is distinct from missing billing or an unknown completion. */
 class MacrofoldExecutionError extends Error {}
+
+/** The caller cancelled before any HTTP admission; no remote Run can exist. */
+class MacrofoldAdmissionCancelled extends Error {}
 
 /** Backend-owned remote identities and spending. Native agents never receive world tools.
  * The application/world operator selects shared compute; actor lanes own only context.
@@ -146,6 +149,7 @@ export class MacrofoldBackend implements AiClient {
     path: string,
     body: unknown,
     signal?: AbortSignal,
+    admissionSignal?: AbortSignal,
   ): Promise<Record<string, unknown>> {
     const fingerprint = digest({ path, body });
     const previous = await this.load<{
@@ -166,6 +170,12 @@ export class MacrofoldBackend implements AiClient {
     signal?.throwIfAborted();
     const attempt = previous ? (previous.attempt ?? 0) + 1 : 0;
     await this.save(`operation:${name}`, { fingerprint, attempt });
+    // Check after the last journal await, immediately before HTTP dispatch. Once
+    // sent, keep observing acceptance so closure can cancel the returned Run ID.
+    if (admissionSignal?.aborted) {
+      await this.save(`operation:${name}`, { fingerprint, attempt, rejected: true });
+      throw new MacrofoldAdmissionCancelled('Macrofold request cancelled before dispatch.');
+    }
     try {
       const result = object(
         await this.api.request(
@@ -440,6 +450,7 @@ export class MacrofoldBackend implements AiClient {
         // Closure/shutdown must not discard an in-flight acceptance: a lost Run ID
         // could not be cancelled. The checks below cancel a late-accepted Run.
         AbortSignal.timeout(config.macrofoldTimeoutSeconds * 1000),
+        signal,
       );
       lane.run = string(accepted['run_id']);
       receipt.providerRequestId = lane.run;
@@ -487,7 +498,10 @@ export class MacrofoldBackend implements AiClient {
       signal.throwIfAborted();
       return string(result['output_text']);
     } catch (error) {
-      if (!lane.run && admissionRejected(error, '/v1/runs')) {
+      if (
+        !lane.run &&
+        (error instanceof MacrofoldAdmissionCancelled || admissionRejected(error, '/v1/runs'))
+      ) {
         lane.blocked = false;
         receipt.dispatched = false;
         receipt.completionUncertain = false;
