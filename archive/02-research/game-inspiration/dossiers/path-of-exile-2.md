@@ -1,14 +1,33 @@
 # Path of Exile 2 — full research dossier
 
-**G11 · Full pass completed September 25, 2026.** Major systems and R01–R14 are addressed below. This is the sequel, not a relabeling of the [original game's dossier](path-of-exile.md). [Preserved comparison](../games/path-of-exile-path-of-exile-2-and-diablo-iv.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Early-access changes, future promises and historical criticism are distinguished. No personal gameplay, complete-video viewing or private code audit is claimed.
+**G11 · Full pass completed September 26, 2026.** Major systems and R01–R14 are addressed below. The September 26 breadth review adds classes, passive-tree decisions, ordinary equipment development and socket permanence to the earlier September 25 research. This is the sequel, not a relabeling of the [original game's dossier](path-of-exile.md). [Preserved comparison](../games/path-of-exile-path-of-exile-2-and-diablo-iv.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Early-access changes, future promises and historical criticism are distinguished. No personal gameplay, complete-video viewing or private code audit is claimed.
 
 ## 1. An unfinished release has a current game and a future promise
 
-The reproduced developer FAQ identifies **Forbidden Rites / 0.5.5** as the September 4, 2026 event league. Joining creates a character in a fresh economy; Runes of Aldur continues separately. **Duelist and 1.0 are planned for December 11**, not already delivered on this research date. [Q01](#q01)
+The reproduced developer FAQ identifies **Forbidden Rites / 0.5.5** as the September 4, 2026 event league. Joining creates a character in a fresh economy; Runes of Aldur continues separately. **Duelist and 1.0 are planned for December 11**, not already delivered on this research date. [Q01](#q01) The publisher's current Steam page independently advertises that December free-to-play release. Its broad twelve-class and six-act feature list must not be mistaken for the complete currently playable Early Access inventory. [Q30](#q30)
 
 The player explores hostile areas, fights, chooses equipment and skills, improves a character and then pursues an endgame build. The campaign begins with an Exile escaping execution amid corruption spreading through Wraeclast. Alessandro Fillari's launch-era review distinguishes satisfying build construction from encounters whose abrupt difficulty interrupts that progress. [Q09](#q09)
 
 **Interpretation:** the immediate promise is purposeful action, while a longer project gives acquired objects meaning. A new league does not erase every old character. Likewise, a public database containing an unreleased class or area is not proof players can use it. Research the available activity and label the future promise separately.
+
+### Classes establish an entry point, not an exclusive list of usable actions
+
+The initial six classes were **Warrior, Sorceress, Witch, Ranger, Mercenary and Monk**. **Huntress** arrived with 0.2 and **Druid** with 0.4, establishing eight released class identities in this research's Early Access scope. The introductory weapon associations below describe recognizable starting fantasies, not a prohibition against a different compatible build. [Q27](#q27) [Q28](#q28) [Q29](#q29)
+
+| Class | Recognizable activity and equipment vocabulary |
+| --- | --- |
+| Warrior | Mace attacks and slams; the fissure/aftershock example below makes positioning part of the combination. |
+| Sorceress | Elemental spellcasting rather than a fixed weapon-combo curriculum. |
+| Witch | Occult spells and summoned assistance; not simply the Sorceress with a different portrait. |
+| Ranger | Bow-based ranged engagement. |
+| Mercenary | Crossbow-based attacks; the equipment supports a different handling vocabulary from bows. |
+| Monk | Quarterstaff and unarmed-oriented martial play. |
+| Huntress | Spears and bucklers, introduced together in the same content update. |
+| Druid | Primal magic and talisman-enabled animal forms; transformation changes the attack, not just appearance. |
+
+The shared skill system permits combinations beyond those introductions. **Ascendancies**, however, provide class-specific specializations rather than another universally available skill gem. The Huntress patch also added **Lich** for Witch and **Tactician** for Mercenary; the Druid patch introduced **Oracle** and **Shaman**. These are examples of distinct specialization routes, not an exhaustive assertion that all advertised future Ascendancies have shipped. [Q28](#q28) [Q29](#q29) [Q30](#q30)
+
+**Worked choice:** someone likes a particular attack but also wants an Ascendancy's distinctive support. The question is not only which class is pictured holding that weapon. They must consider equipment and skill eligibility, reachable passive support and the specialization that cannot simply be equipped as a gem. A familiar archetype helps onboarding without eliminating the longer construction problem.
 
 ## 2. Combat emphasizes commitment and combinations
 
@@ -38,6 +57,22 @@ Two sets can carry different items, dedicated passive allocations and amounts of
 
 In a September 2025 thread, **Chillyjam** reported a Spirit skill not functioning. **nil0tan** described resolving a similar issue by correcting its weapon-set assignment, and the original poster acknowledged the help. This is a reported diagnosis, not proof every Spirit problem has that cause. [Q05](#q05)
 
+### The passive tree is a route through competing opportunities
+
+Levels and designated quest rewards grant passive points. The interconnected tree has different starting regions, smaller bonuses, travel/attribute nodes, larger notables, keystones and jewel sockets. Reaching a distant cluster therefore consumes a route as well as the desired destination. Attribute travel nodes can be reassigned, with a gold cost distinguished from fully refunding the passive. Ascendancy points are a separate allocation system. [Q31](#q31)
+
+**Worked decision:** spend the next points on immediately reachable survival or travel toward a capability that makes a future build possible. The latter can be a good plan while making the present character weaker than another allocation would. Having a large tree does not make every next point equally useful; the player's intended sequence matters.
+
+Exceptions are themselves capabilities. The Druid **Oracle's The Unseen Path** exposes exclusive passives, while the **Pathfinder's Path Seeker** can open a further starting location associated with Warrior or Sorceress. A rule that normally requires a connected route can therefore become material for a specialization. Neither exception makes every disconnected node freely available to every character. [Q31](#q31) [Q29](#q29)
+
+### A keystone can move the problem rather than simply increase a number
+
+**Mind over Matter** routes damage to mana before life and reduces mana recovery. [Q32](#q32) **Constructed interaction:** a caster gains another use for a large mana pool, but a sequence of hits can compete with the mana needed to cast. Investing in maximum mana without attending to replenishment and incoming pressure may leave both offense and protection constrained. This is a rules-based illustration, not a tested optimal build or an assertion of invulnerability.
+
+**Giant's Blood** permits specified two-handed weapon types in one hand, while raising martial-weapon attribute requirements and reducing the inherent life benefit from Strength. Its inspected text uses a **triple** requirement, not the older double-requirement descriptions encountered in search. [Q33](#q33)
+
+**Constructed interaction:** a player plans a large mace plus another off-hand capability. The keystone changes what can be equipped, but the supporting attributes and life tradeoff become part of the cost. An impressive weapon drop can remain unusable until the rest of the character supports it. A tooltip naming swords does not independently establish that the planned sword class or every sword base is already released.
+
 ## 4. Recovery can be automatic without being unplanned
 
 **Charms** trigger under specified conditions and consume charges. A **Thawing Charm** responds to freezing; other charms address different threats. Limited slots require choosing protection rather than preparing every response. [Q06](#q06)
@@ -57,6 +92,24 @@ The sequel's **Chaos Orb** removes one modifier and adds another to a rare item,
 **Omen of Whittling** changes which property is removed: the modifier with the lowest item-level requirement, not necessarily the lowest displayed tier or the one the player values least. The Omen is consumed when used. [Q12](#q12)
 
 **Interpretation:** narrowing randomness is useful only if the selection rule matches the player's intention. A technically correct operation can damage a valued item when the interface encourages a different interpretation. Importing the original game's semantics by name would compound that problem.
+
+### Ordinary equipment development precedes exotic crafting
+
+An item's **base type** supplies properties such as weapon damage, defensive values or flask recovery and often its eligibility requirements. A **Wrapped Quarterstaff** and a **Long Quarterstaff** are different bases within the same broad family. A more attractive set of modifiers does not eliminate those underlying requirements. [Q33](#q33)
+
+An **Orb of Transmutation** turns a normal item into a magic item with a modifier; **Orb of Augmentation** adds a modifier to an eligible magic item; **Regal Orb** advances magic to rare while adding a modifier; **Exalted Orb** adds another random modifier to an eligible rare. **Divine Orb** instead changes numerical values on existing modifiers, while **Vaal Orb** makes an unpredictable corruption change. These operations are not interchangeable rerolls. [Q34](#q34)
+
+**Constructed sequence:** find a usable base, develop it gradually, inspect the new properties and decide whether another currency expenditure is justified. A disappointing added property can make stopping sensible even before all possible slots are filled. Keeping the old working item reduces the cost of experimentation. This explains why a low-rarity object can be useful preparation rather than merely inferior loot.
+
+These consumed tools also circulate through trade. The resulting decision is between performing an operation and retaining exchange value; neither a market price nor a favorable crafting outcome is guaranteed by the item's name. The ordinary gold account and tradeable crafting objects should not be collapsed into a single currency balance.
+
+### Equipment sockets and skill-support sockets have different commitments
+
+**Augments** occupy eligible equipment sockets. Their effect depends on the target: for example, **Desert Rune** adds fire-oriented offense on a weapon but fire resistance on armour. Runes, Soul Cores, Idols and Abyssal Eyes are distinct families within this equipment-modification vocabulary. An **Artificer's Orb** adds an Augment socket to supported equipment; the current item entry includes wands and staves, while an older glossary on the same database page omits them. [Q35](#q35)
+
+Ordinary Augments can be replaced, though normal removal is restricted. Explicit **Socket-bound** Augments instead permanently occupy the socket and cannot be removed, replaced or extracted. [Q35](#q35) [Q36](#q36)
+
+**Constructed choice:** use a rune to address a defensive gap now or retain the socket for another intended use. With a Socket-bound item, the decision is more consequential because later replacement is not an available repair. Moving a support gem in the Skills panel is not evidence that an equipment investment has the same reversibility. A readable interface must distinguish those commitments before the player acts.
 
 ## 6. Campaign, specialization and trials create different destinations
 
@@ -82,7 +135,7 @@ Forbidden Rites adds boss clusters whose defeated bosses appear again in later R
 
 ## 8. Group play, trade and loss have explicit boundaries
 
-The console design provides shared-screen couch co-op, cross-play and cross-progression. Both players can use their respective side of the inventory interface rather than wait for a single full-screen menu. The initial announcement's planned content counts are not the current shipped inventory. [Q18](#q18)
+The console design provides shared-screen couch co-op, cross-play and cross-progression. Both players can use their respective side of the inventory interface rather than wait for a single full-screen menu. The initial announcement's planned content counts are not the current shipped inventory. [Q18](#q18) Online cooperation supports up to six players; that is distinct from the two-person shared-screen arrangement. [Q30](#q30)
 
 **Interpretation:** simultaneous access to the same game is not sufficient cooperation. A second player needs a workable interface during ordinary preparation, not only during combat. These companions are other humans; controllable or persistent minions do not establish an independent social AI system.
 
@@ -142,15 +195,15 @@ The strongest transferable patterns are **a skill as a composable object**, **a 
 
 For OpenLegend, expose which stage failed: missing resource, incompatible support, invalid target, unsuitable active set or a technical defect. Let an invented capability alter a real approach. Do not import periodic economic resets, extreme punishment or enormous loot breadth without testing whether they serve the intended persistent-world experience.
 
-**Coverage:** R01 §§1/6; R02 §§2–8; R03 §§3–5; R04 §§4/6–8; R05 the distinct worked situations throughout; R06 §§3/7–8; R07 §9; R08 §§1/6/9; R09 §10; R10–R11 §10 and retained chapter metrics; R12 §11; R13 here; R14 here and the annotations below.
+**Coverage:** R01 §§1/6, including the explicit class/release boundary; R02 §§2–8, including passive routes and ordinary crafting; R03 §§3–5, including equipment bases, modification families and socket permanence; R04 §§3–8; R05 the distinct worked situations throughout; R06 §§3/7–8; R07 §9 and the control/preview interfaces; R08 §§1/6/9; R09 §10 and the class/content update sequence; R10–R11 §10 and retained chapter metrics; R12 §11; R13 here; R14 here and the annotations below.
 
-**Preservation:** the full existing three-game chapter and its supplied-master section were compared. Original Wilson history, PoE2 paid-entry/Steam figures, Dawn of the Hunt reaction, mastery and reset cautions remain unchanged. PoE1 and Diablo IV are not counted as completed by this sequel study. Original source, review, metric and viewing registers remain intact; the packet-wide audit is still separate and pending.
+**Preservation:** the full existing three-game chapter and its supplied-master section were compared. Original Wilson history, PoE2 paid-entry/Steam figures, Dawn of the Hunt reaction, mastery and reset cautions remain unchanged. PoE1 and Diablo IV are not counted as completed by this sequel study. Original source, review, metric and viewing registers remain intact; the packet-wide audit is still separate and pending. The September 26 extension preserves the earlier dossier's examples, accounts and source annotations rather than replacing them with a current build guide.
 
-**Viewing routes:** the official Third Edict soundtrack post links a playlist and individual performances. The console deep-dive accompanies the documented shared-screen design. These are verified written-source routes, not footage claimed watched in full. No personal gameplay, full-video analysis, proprietary code inspection or representative sentiment survey was performed. Indexed database text can include unused/historical entries; those are not counted as shipped features merely because they appear in search.
+**Viewing routes:** the official Third Edict soundtrack post links a playlist and individual performances. The console deep-dive accompanies the documented shared-screen design. These are verified written-source routes, not footage claimed watched in full. No personal gameplay, full-video analysis, proprietary code inspection or representative sentiment survey was performed. Indexed database text can include unused/historical entries; those are not counted as shipped features merely because they appear in search. The class check rejected guides conflating future classes or the original game's Scion with the released sequel roster. Exact database counts and optimization claims are not part of the completion claim.
 
 ## Annotated sources
 
-<a id="q01"></a>**Q01 — [Forbidden Rites FAQ archive](https://steampeaks.com/news/686389356312658547), August 31, 2026; [GGG news mirror](https://www.pathofexilenews.com/).** Reproduced developer text, not an independent current-player census. December 1.0 date remains a plan.
+<a id="q01"></a>**Q01 — [Forbidden Rites FAQ archive](https://steampeaks.com/news/686389356312658547), August 31, 2026; [GGG news mirror](https://www.pathofexilenews.com/).** Reproduced developer text, not an independent current-player census. December 1.0 date remains a plan; Q30 independently corroborates the dated release announcement.
 
 <a id="q02"></a>**Q02 — [Support Gems](https://poe2db.tw/Support_Gems).** Indexed game text. Current category/nesting rules distinguished from stale bullets and unused entries.
 
@@ -201,3 +254,23 @@ For OpenLegend, expose which stage failed: missing resource, incompatible suppor
 <a id="q25"></a>**Q25 — [Third Edict launch instructions](https://www.pathofexile.com/forum/view-thread/3829091), August 28, 2025.** Primary release, preload and promotion. Expired rewards are not current offers.
 
 <a id="q26"></a>**Q26 — [Sunder Infernalist player build](https://de.pathofexile.com/forum/view-thread/3672723), roxigar24, December 30, 2024, updated January 9, 2025.** Direct reported advantages and limitations. Old numbers and affordability claims are not current recommendations.
+
+<a id="q27"></a>**Q27 — [Early Access class overview](https://poe2db.tw/Early_Access).** Community record of the original six identities and weapon associations. The page's unreleased/unknown section is historical and superseded by Q28–Q29, not adopted as current content.
+
+<a id="q28"></a>**Q28 — [Official 0.2 patch](https://www.pathofexile.com/forum/view-thread/3740562/filter-account-type/staff), April 2025.** Primary introduction of Huntress, spears/bucklers and named Ascendancies. Selected release facts, not every historical balance value as current.
+
+<a id="q29"></a>**Q29 — [Official 0.4 patch](https://www.pathofexile.com/forum/view-thread/3883495/filter-account-type/staff), December 2025.** Primary Druid/talisman and Oracle/Shaman introduction, with passive-route changes. Developer performance estimates are not reproduced as independently measured results.
+
+<a id="q30"></a>**Q30 — [GGG's Steam product description](https://store.steampowered.com/app/2694490/Path_of_Exile_2/), inspected September 26, 2026.** Primary six-person online cooperation and December 11 free-release announcement. The broad twelve-class/six-act copy describes the product ambition, not an independently verified complete Early Access inventory; regional prices and live review totals are not used.
+
+<a id="q31"></a>**Q31 — [Passive Skill Tree](https://www.poe2wiki.net/wiki/Passive_Tree).** Substantive indexed community-maintained mechanics on points, travel, Ascendancies and exceptions; direct page retrieval was blocked. Exact total-point counts and optimization advice are not adopted as universal.
+
+<a id="q32"></a>**Q32 — [Mind over Matter](https://poe2db.tw/Mind_over_Matter).** Retrieved game-text effect and recovery cost. The example is constructed, not a played build or complete defense calculation.
+
+<a id="q33"></a>**Q33 — [Attributes and equipment definitions](https://poe2db.tw/Attributes).** Retrieved base-type, eligibility and Giant's Blood text. Current wording is distinguished from incompatible older guide values; names in a tooltip do not establish all named content is obtainable.
+
+<a id="q34"></a>**Q34 — [Currency game text](https://poe2db.tw/Currency) and [crafting overview](https://poe2db.tw/Crafting).** Retrieved ordinary upgrade/change operators. Current item text takes precedence where the community summary is narrower; no market rates, optimal sequence or assured outcome is claimed.
+
+<a id="q35"></a>**Q35 — [Augments](https://poe2db.tw/Augment).** Retrieved item text and family definitions. Ordinary replacement, equipment-dependent effects and the current Artificer's Orb entry are distinguished from an older glossary; unused database items are not promoted to released mechanics.
+
+<a id="q36"></a>**Q36 — [Socket-bound Augments](https://poe2db.tw/Socket-bound_Augments).** Retrieved specific permanence rule, also exposed in Q35's glossary. This is an exception, not a claim that all socketed items are irreversible.
