@@ -2,52 +2,82 @@
 
 **Research checkpoint, September 26, 2026 — incomplete.** Original BioWare game, not KOTOR II, The Old Republic MMO or a remake. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Remaining before completion: full independently checked mechanics and item inventory, companion/quest examples, production accounts, dated commercial evidence, further source diversity, direct-player alternatives to inaccessible Steam rankings, constructed interactions, R01–R14 map and link/preservation review. Five authored review bodies have been read across two editorial sites; they span original and port versions, not five independent launch outlets. Further original criticism is still being sought.
+Remaining: finish the mechanics/item inventory, companion and quest examples, production history and dated commercial evidence; write constructed interactions, R01–R14 map and final link/preservation review. Seven substantive review bodies across four editorial sites are now read. The previously inaccessible Steam request has an important resolution: the default Community reviews page loads a **Most Helpful (Week), English** sample. Do not retain a blanket claim that helpful Steam material was unavailable.
 
-## Identity and first evidence boundary
+## Identity and scope
 
-BioWare developed the original, with LucasArts publishing and Aspyr handling later ports. The Steam Windows listing gives November 19, 2003. Its promise is to inhabit a customizable hero or villain thousands of years before the films, travel aboard the Ebon Hawk, recruit companions and shape authored situations through combat and dialogue. The store describes nine recruitable companions and explicitly lists single-player. It is not a shared online galaxy or an unrestricted life simulator. [S01](#s01)
+BioWare developed the original, with LucasArts publishing and Aspyr handling later ports. Steam dates the Windows release November 19, 2003. The player inhabits a customizable hero or villain thousands of years before the films, travels aboard the Ebon Hawk, recruits companions and shapes authored situations through combat and dialogue. The storefront describes nine recruitable companions and single-player play. This is not an online galaxy or unrestricted life simulator. [S01](#s01)
 
-The official Windows manual is accessible as a 37-page PDF containing two printed pages per spread. The character-creation and equipment spreads were visually inspected, and the manual provides an authoritative route for controls and baseline rules. Exact claims will be cross-checked before the full pass; in particular, the presence of a d20 ruleset does not make every terminal interaction an ordinary random skill roll. [S02](#s02)
+The official Windows manual was read for character creation, skills, action queues, party scripts, recovery and equipment. Screenshots of PDF pages 11, 12, 16 and 23 were inspected; the PDF contains two printed pages per spread. Its general d20 explanation must be interpreted alongside each subsystem, not imposed blindly on every interaction. [S02](#s02)
 
-## Five written reviews inspected so far
+## Verified rule distinctions
 
-**John McCarroll, RPGFan, July 25, 2003, Xbox.** McCarroll praises cinematic environments, companion individuality, voice work and a controller adaptation that makes a PC-style RPG approachable. He notes repeated face models, unskippable travel scenes and the unavoidable transition into a Force-using protagonist. His description of five moral response categories is a reviewer’s generalization, not a claim that every conversation has exactly five options. [S03](#s03)
+The manual separates **Computer Use**, which reduces computer-spike expenditure, from ordinary chance checks. **Repair** similarly reduces parts needed for disabled droids. **Persuade** belongs only to the player-created protagonist, while other specialists can contribute through party control. **Stealth** uses a field generator and skill investment, puts the character in Solo mode and ends on combat. These are distinct access and cost models, not one universal “higher skill means higher success chance” rule. [S02](#s02)
 
-**Brian Cavner, RPGFan, November 26, 2003, Windows.** Cavner values the ability to choose companions for their remarks and personalities rather than only statistics. He favors cinematic combat and voice performances but objects to minigames, the restrictive camera and an inventory that becomes laborious to search. His conclusion that an all-Jedi party makes other equipment largely unnecessary is a playstyle judgment, not a verified universally optimal build. [S04](#s04)
+Combat can be paused to queue actions or command another party member. The available companion scripts include **Default Attack**, **Grenadier** and **Jedi Support**; the manual explicitly describes occasional medpac use and conditional grenade use. A reviewer's experience of companions failing to help does not establish that such behavior is absent from the rules. At zero vitality a character is incapacitated; the entire group being incapacitated causes a reload, not permanent deletion of the save. Force points recover outside combat. [S02](#s02)
 
-**Dave Yeager, RPGFan, June 24, 2013, iOS.** This is explicitly an iPad-port review. Yeager praises enlarged dialogue targets and a conveniently placed pause button: small interface changes protect meaningful decisions against accidental touches. He reports moving buttons during action queuing, dark environments without the expected brightness control, and difficult touch controls for racing and turret sequences. These are dated observations, not a claim that every later mobile build has identical defects. [S05](#s05)
+The six attributes are Strength, Dexterity, Constitution, Intelligence, Wisdom and Charisma. They connect differently to melee/ranged competence, resilience, skills, persuasive dialogue and Force effectiveness. The Scoundrel's relatively stronger skills and Sneak Attack progression distinguish it from simply a low-health Soldier. Further class and equipment checks remain pending. [S12](#s12)
 
-**Audra Bowling, RPGFan, December 11, 2021, Switch.** A first-time player rather than a returning fan, Bowling finds the story and companions engaging despite dated models and repeated alien speech. She values party customization but criticizes the large combat overlay, some confusing numbers, occasional quest glitches and subtitle presentation. Her dislike of automatic battle pauses is a preference and is not evidence that the original’s pause settings cannot be changed. [S06](#s06)
+## Seven substantive written reviews
 
-**Michael Eckenfels, Armchair Dragoons, republished June 26, 2025, historical Windows review.** The article explicitly rescues older criticism; its references to patch 1.02 and a merely rumored sequel show why the publication date must not be mistaken for a new 2025 version test. Eckenfels values emotional involvement and cinematic presentation, while describing an immersion-breaking tutorial, an isolated collision trap, delayed companion responses and puzzle interruptions. Exact original publication date is not established by the republished page. Claims about what AI companions never do will be checked against script settings rather than generalized from his party. [S07](#s07)
+**John McCarroll, RPGFan, July 25, 2003, Xbox.** Praises cinematic places, distinct companions, voice work and console adaptation. Criticizes reused faces, unskippable travel and the unavoidable Force-user transition. His description of five moral response categories is not a rule that every conversation offers exactly five choices. [S03](#s03)
 
-**Interpretation:** readable decisions and atmospheric performance reinforce one another, but presentation can also obstruct agency. The same combat pause can be welcome thinking time to one player and an interruption to another. A giant pause target helps a touch interface; a giant battle overlay can obscure a handheld screen. These are platform-specific tradeoffs, not one timeless usability verdict.
+**Brian Cavner, RPGFan, November 26, 2003, Windows.** Values companions for their personalities as well as statistics, and enjoys cinematic combat and performances. Minigames, restrictive camera and inventory searching frustrate him. His all-Jedi preference is a playstyle judgment, not an established universally optimal party. [S04](#s04)
 
-## Actual access notes
+**Dave Yeager, RPGFan, June 24, 2013, iOS.** Praises large dialogue targets and accessible pause controls because they reduce accidental decisions. Reports moving action buttons, dark environments and difficult racing/turret touch controls. These are dated iPad-port observations, not all-build defects. [S05](#s05)
 
-The English top-rated Steam Community review URL and Steam appreviews JSON endpoint both failed. Two storefront URL variants loaded product text but not the individual helpful-review bodies. No helpful-ranked Steam sample is claimed. Direct player alternatives remain a completion task. Several guessed review routes failed and are not counted as read; search results and score tables are not substituted for review bodies.
+**Audra Bowling, RPGFan, December 11, 2021, Switch.** A first-time player, she enjoys the plot and companions despite dated models and repetitive alien speech. A large combat overlay, opaque numbers, subtitle presentation and occasional quest glitches are drawbacks. Disliking pauses does not mean their settings cannot be changed. [S06](#s06)
 
-Wikipedia was used as a navigation aid to locate historical citations; some outbound-link calls failed. Its unsourced mechanics paragraphs are not sufficient authority for the final mechanics inventory. StrategyWiki returned a 403. Seek accessible primary/manual and other specialist evidence rather than claiming those pages were read.
+**Michael Eckenfels, Armchair Dragoons, republished June 26, 2025, historical Windows review.** Values emotional investment and cinematic presentation, but reports an immersion-breaking tutorial, an isolated collision trap, delayed companion responses and puzzle interruptions. Its patch 1.02 discussion and still-rumored sequel identify it as historical criticism; the original publication date remains unresolved. [S07](#s07)
+
+**Eli Hodapp, TouchArcade, June 3, 2013, iPad.** Praises the successful transfer of a substantial RPG and workable performance, while finding default touch sensitivity excessive and virtual controls imperfect. He treats the port as preservation of the original rather than newly authored story content. His device-specific observations are not benchmark results from this research. [S08](#s08)
+
+**Applebrown, GameBanshee, historical Windows review.** Praises world variety, journal guidance, customization and voice acting, but wants subtler dark-side choices, a quick weapon-switch command and less repetitive combat selection. Reports occasional stutter and lengthy movie transitions. The page's September 8, 2003 metadata conflicts with the released-PC content and retrospective wording; its exact publication date is unresolved, not silently corrected. All four main-review pages were read through the all-pages route. [S09](#s09)
+
+**Interpretation:** personality can make a mechanically nonoptimal companion desirable. Readable controls protect roleplay choices, while cinematic presentation can obscure the rule that caused an outcome. Different input devices expose different friction in the same game.
+
+## Primary developer testimony
+
+In a July 5, 2003 interview, BioWare's **Teresa Cotesta** describes PC and Xbox development proceeding in parallel, with platform-specific visuals and mouse/keyboard versus controller interfaces. She frames customization, evolving identity and alternative quest resolutions as the RPG's core, despite its real-time appearance. The sortable journal is explicitly intended to let players resume interrupted quests without losing their place. These are documented pre-release intentions, not independent measurements of usability. [S10](#s10)
+
+Cotesta also distinguishes three minigames: ship-turret defense, swoop racing and the Pazaak card game. Xbox Live downloadable content was planned. Exact pre-release Force-power counts and the interview's broad moral-causality claims are not adopted as a complete inventory of shipped rules. [S10](#s10)
+
+## Actual helpful Steam evidence and access limits
+
+The top-rated query URL and appreviews JSON endpoint failed. However, the default Community reviews page subsequently loaded **Most Helpful (Week), English** with individual bodies, dates, names and helpful counts. The inspected capture is dated September 26, 2026; the displayed September dates omit their year, and present hours are not assumed to equal hours at publication. This is a small changing qualitative sample, not the all-time most-helpful ranking. [S11](#s11)
+
+**Dudedafool** (September 19, one helpful vote) describes returning nearly annually. **Epp** (September 19, one helpful vote, not recommended) understands that auto-pause exists but still finds combat opaque and companion control frustrating. **G-43** (September 25, no helpful votes yet) values the world, reading and meaningful statistics. **Snakeman** (September 19, no helpful votes yet) reports crashes/visual defects without enough machine details to diagnose them. These support distinct replay, preference, onboarding and compatibility questions—not an assertion that all criticism is ignorance. [S11](#s11)
+
+Wikipedia served as navigation to historical citations, but some outbound calls failed. StrategyWiki returned 403. Unavailable pages and unreturned images are not counted as read. Several failed guessed review routes are not substituted with score snippets. Container network access also failed while attempting link discovery; no claim is made that it retrieved additional evidence.
 
 ## Sources inspected
 
-All access dates: September 26, 2026. No video or personal gameplay session has been represented as observed.
+Access date for all: September 26, 2026. No video or personal gameplay is represented as observed.
 
-<a id="s01"></a> **S01 — [Steam original-game storefront](https://store.steampowered.com/app/32370/STAR_WARS__Knights_of_the_Old_Republic/).** Primary credits, Windows release and mode. Dynamic prices/review totals are not frozen as commercial history.
+<a id="s01"></a> **S01 — [Steam storefront](https://store.steampowered.com/app/32370/STAR_WARS__Knights_of_the_Old_Republic/).** Primary credits, Windows date and mode. Dynamic prices/ratings are not commercial history.
 
-<a id="s02"></a> **S02 — [Official Windows manual](https://store.steampowered.com/manual/32370).** Primary PDF; selected text and screenshots of PDF pages 11 and 23, corresponding to printed pages 20–21 and 44–45, inspected. Complete relevant-rule review remains pending.
+<a id="s02"></a> **S02 — [Official Windows manual](https://store.steampowered.com/manual/32370).** Primary PDF; relevant rules text plus four specified screenshots inspected. Exact shipped behavior is not inferred from every generalization or apparent manual error.
 
-<a id="s03"></a> **S03 — [RPGFan Xbox review](https://www.rpgfan.com/review/star-wars-knights-of-the-old-republic-3/).** John McCarroll, July 25, 2003. Full main review read; not the similarly numbered sequel.
+<a id="s03"></a> **S03 — [RPGFan Xbox review](https://www.rpgfan.com/review/star-wars-knights-of-the-old-republic-3/).** John McCarroll, July 25, 2003; main body read.
 
-<a id="s04"></a> **S04 — [RPGFan Windows review](https://www.rpgfan.com/review/star-wars-knights-of-the-old-republic/).** Brian Cavner, November 26, 2003. Full main review read.
+<a id="s04"></a> **S04 — [RPGFan Windows review](https://www.rpgfan.com/review/star-wars-knights-of-the-old-republic/).** Brian Cavner, November 26, 2003; main body read.
 
-<a id="s05"></a> **S05 — [RPGFan iOS review](https://www.rpgfan.com/review/star-wars-knights-of-the-old-republic-2/).** Dave Yeager, June 24, 2013. Full main review read; article URL suffix “2” is not KOTOR II.
+<a id="s05"></a> **S05 — [RPGFan iOS review](https://www.rpgfan.com/review/star-wars-knights-of-the-old-republic-2/).** Dave Yeager, June 24, 2013; main body read. URL suffix is not the sequel.
 
-<a id="s06"></a> **S06 — [RPGFan Switch review](https://www.rpgfan.com/review/star-wars-knights-of-the-old-republic-5/).** Audra Bowling, December 11, 2021. Full main review read; later patch status not inferred.
+<a id="s06"></a> **S06 — [RPGFan Switch review](https://www.rpgfan.com/review/star-wars-knights-of-the-old-republic-5/).** Audra Bowling, December 11, 2021; main body read.
 
-<a id="s07"></a> **S07 — [Armchair Dragoons historical review](https://armchairdragoons.com/classic-kotor/).** Michael Eckenfels; republished June 26, 2025, page also displays an October 9, 2025 update. Main review read; original publication date unresolved, not a new 2025 playthrough.
+<a id="s07"></a> **S07 — [Armchair Dragoons historical review](https://armchairdragoons.com/classic-kotor/).** Michael Eckenfels; republished June 26, 2025, page also shows October 9 update. Original review date unresolved.
+
+<a id="s08"></a> **S08 — [TouchArcade iPad review](https://toucharcade.com/2013/06/03/star-wars-knights-of-the-old-republic-for-ipad-review-a-must-play-star-wars-rpg/).** Eli Hodapp, June 3, 2013; full main review read. Embedded video not watched.
+
+<a id="s09"></a> **S09 — [GameBanshee PC review, all pages](https://www.gamebanshee.com/reviews/29294-star-wars-knights-of-the-old-republic-pc-review/all-pages.html).** Applebrown; full main text read. Conflicting metadata retained; review claims of unprecedented voice coverage or universal quest branching are not treated as proven industry facts.
+
+<a id="s10"></a> **S10 — [Teresa Cotesta interview, all pages](https://www.gamebanshee.com/interviews/28316-star-wars-knights-of-the-old-republic-interview/all-pages.html).** BuckGB, July 5, 2003. Primary developer answers, read; pre-release context retained.
+
+<a id="s11"></a> **S11 — [Steam Community reviews](https://steamcommunity.com/app/32370/reviews/).** Default surface displayed Most Helpful (Week), English. Selected positive/negative bodies, names and displayed helpful counts read. A later successful route supersedes the earlier blanket access limitation without erasing the failed attempts.
+
+<a id="s12"></a> **S12 — [Attributes](https://www.gamebanshee.com/starwarskotor/attributes.php) and [Scoundrel](https://www.gamebanshee.com/starwarskotor/classes/scoundrel.php).** Specialist reference text/tables read. Other class pages were fetched but their detailed tables still require inspection before they count as reviewed.
 
 ## Preservation checkpoint
 
-The inherited `games/` and `mechanics/` inventories contain no dedicated original-KOTOR owner. This is an additive G109 dossier and does not replace old chapters, examples, packet references or viewing recommendations. Global packet reconciliation remains separately pending; this checkpoint does not certify completion.
+The inherited `games/` and `mechanics/` inventories contain no dedicated original-KOTOR owner. This additive dossier replaces no old chapters, examples, packet references or viewing recommendations. Global packet reconciliation remains separately pending; this checkpoint is not completion.
