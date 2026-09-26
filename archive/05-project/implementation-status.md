@@ -1,5 +1,9 @@
 # Implementation status
 
+## Macrofold Worker API caller
+
+Native calls now target the application/world owner’s configured Worker, with distinct actor Worktrees and Sessions, demand-first submission, identity checks and Run-only conversation cancellation. Direct inference remains independent. Per-Sandbox allocation/recovery is removed without rewriting existing context or financial records. Worker compute limits and lifecycle are operator-managed, separate from OpenLegend’s per-agent Run budget. [Architecture](../../docs/architecture.md#macrofold-worker-ownership) and [setup/cutover](../../docs/ai-providers.md#shared-worker-setup-and-cutover) describe current behavior; [MW01–MW04](../../docs/maintainers/macrofold-worker-api.md) retains live deployment and automated-fixture gates. [Local evidence](../../docs/verification.md#macrofold-worker-api-cutover) is not production-provider qualification.
+
 ## Spatial-world foundation
 
 The bounded schema-9 implementation adds XYZ/support identity, the elevated starter lookout, layered native A*, 3D geometry/reach/senses, tactical orbit/pitch/levels/projection with a compact visible camera toolbar and optional player following, camera-facing sprites mixed with simple meshes, and one saved native flight family. Details and limits are in [Architecture](../../docs/architecture.md#spatial-world-foundation); current checks are in [Verification](../../docs/verification.md#spatial-world-runtime). [SW01–SW16](../../docs/maintainers/spatial-world.md) preserves the larger target and its incomplete acceptance. Recast/Rapier qualification, generic spatial invention, dynamic crowds, complete muffled-audio evidence, viewport leases and broad model/asset production are not claimed.

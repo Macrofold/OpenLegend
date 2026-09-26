@@ -1,4 +1,3 @@
-import { interactiveAllowance } from './cognition-budget.js';
 import { ActorWorkspaceFiles } from './workspace.js';
 import { COGNITION_PERMISSIONS } from './macrofold-provisioning.js';
 import type { IntelligenceLog } from './intelligence-log.js';
@@ -31,7 +30,6 @@ import { digest } from './store.js';
 
 type Lane = {
   worktree?: string;
-  sandbox?: string;
   session?: string;
   run?: string;
   blocked?: boolean;
@@ -44,15 +42,46 @@ const permissions = {
   tools: { include: [] },
 };
 const terminal = new Set(['succeeded', 'failed', 'cancelled', 'timed_out']);
+// These exact native admission conflicts are rejected before a Run is created.
+// Do not classify arbitrary 409/5xx or idempotency conflicts as safe to retry.
+const nativeAdmissionConflicts = new Set([
+  'worker_paused',
+  'worker_destroyed',
+  'worker_expired',
+  'worker_lifetime',
+  'worktree_busy',
+]);
+function admissionRejected(error: unknown, path: string): error is MacrofoldHttpError {
+  return (
+    error instanceof MacrofoldHttpError &&
+    (error.admissionRejected ||
+      (path === '/v1/runs' && error.status === 409 && nativeAdmissionConflicts.has(error.code)))
+  );
+}
 
-/** Verified terminal failure is distinct from missing billing or an unknown completion. */
+/** A cancelled or failed queued Run has no changed context to publish (including
+ * queue expiry). Started Runs still require verified persistence. */
+function nativePersistenceSettled(status: Record<string, unknown>, persistence: unknown): boolean {
+  return (
+    persistence === 'verified' ||
+    (persistence === 'not_required' &&
+      ((status['status'] === 'cancelled' && status['execution_outcome'] === 'cancelled') ||
+        (status['status'] === 'failed' && status['execution_outcome'] === 'failure')) &&
+      status['started_at'] == null)
+  );
+}
+
+/** Confirmed terminal failure is distinct from missing billing or an unknown completion. */
 class MacrofoldExecutionError extends Error {}
 
+/** The caller cancelled before any HTTP admission; no remote Run can exist. */
+class MacrofoldAdmissionCancelled extends Error {}
+
 /** Backend-owned remote identities and spending. Native agents never receive world tools.
- * Macrofold allocates workspace context; owned worktrees retain their compute across timelines.
+ * The application/world operator selects shared compute; actor lanes own only context.
  * Conversations retain sessions, while bounded typed calls use fresh history.
- * Mutations are journaled before dispatch. Ambiguous runs stay blocked; worker creation
- * can recover through its original idempotency key without admitting another worker.
+ * Mutations are journaled before dispatch. Ambiguous runs stay blocked. Worker
+ * provisioning, spending and lifecycle are separate operator responsibilities.
  */
 export class MacrofoldBackend implements AiClient {
   private api: MacrofoldTransport;
@@ -61,7 +90,7 @@ export class MacrofoldBackend implements AiClient {
   readonly provisioner: MacrofoldProvisioner;
   private busy = new Set<string>();
   private messagesInFlight = new Set<string>();
-  private sandboxCreations = new Map<string, Promise<string>>();
+  private cancellations = new Map<string, Promise<void>>();
   private controllers = new Map<string, AbortController>();
   constructor(
     private service: WorldService,
@@ -120,6 +149,7 @@ export class MacrofoldBackend implements AiClient {
     path: string,
     body: unknown,
     signal?: AbortSignal,
+    admissionSignal?: AbortSignal,
   ): Promise<Record<string, unknown>> {
     const fingerprint = digest({ path, body });
     const previous = await this.load<{
@@ -140,6 +170,12 @@ export class MacrofoldBackend implements AiClient {
     signal?.throwIfAborted();
     const attempt = previous ? (previous.attempt ?? 0) + 1 : 0;
     await this.save(`operation:${name}`, { fingerprint, attempt });
+    // Check after the last journal await, immediately before HTTP dispatch. Once
+    // sent, keep observing acceptance so closure can cancel the returned Run ID.
+    if (admissionSignal?.aborted) {
+      await this.save(`operation:${name}`, { fingerprint, attempt, rejected: true });
+      throw new MacrofoldAdmissionCancelled('Macrofold request cancelled before dispatch.');
+    }
     try {
       const result = object(
         await this.api.request(
@@ -152,7 +188,7 @@ export class MacrofoldBackend implements AiClient {
       await this.save(`operation:${name}`, { fingerprint, attempt, response: result });
       return result;
     } catch (error) {
-      if (error instanceof MacrofoldHttpError && error.admissionRejected)
+      if (admissionRejected(error, path))
         await this.save(`operation:${name}`, {
           fingerprint,
           attempt,
@@ -161,45 +197,6 @@ export class MacrofoldBackend implements AiClient {
           code: error.code,
         });
       throw error;
-    }
-  }
-  private async waitSandbox(id: string, signal: AbortSignal): Promise<void> {
-    let resumed = false;
-    for (;;) {
-      signal.throwIfAborted();
-      const sandbox = object(
-        await this.api.request(
-          `/v1/sandboxes/${encodeURIComponent(id)}`,
-          undefined,
-          undefined,
-          signal,
-        ),
-      );
-      if (sandbox['status'] === 'ready') {
-        if (sandbox['active_run_id']) throw new Error('This Macrofold sandbox is busy.');
-        return;
-      }
-      if (
-        sandbox['status'] === 'paused' &&
-        sandbox['rate_micro_usd_per_minute'] === '0' &&
-        !resumed
-      ) {
-        // Recover the same zero-rate worker, not a new allocation. Hosted renewal
-        // needs separate spending admission. docs/architecture.md#macrofold-worker-ownership
-        await this.api.request(
-          `/v1/sandboxes/${encodeURIComponent(id)}/resume`,
-          {},
-          digest({ sandbox: id, pausedAt: string(sandbox['updated_at']), operation: 'resume' }),
-          signal,
-        );
-        resumed = true;
-        continue;
-      }
-      if (sandbox['status'] !== 'creating')
-        throw new Error(
-          `Macrofold sandbox ${id} is ${String(sandbox['status'])}; paid renewal or replacement requires explicit lifecycle recovery.`,
-        );
-      await delay(500, undefined, { signal });
     }
   }
   private async waitRun(
@@ -254,8 +251,18 @@ export class MacrofoldBackend implements AiClient {
       await delay(500, undefined, { signal });
     }
   }
-  private async cancel(run: string): Promise<void> {
-    await this.mutation(`cancel:${run}`, `/v1/runs/${encodeURIComponent(run)}/cancel`, {});
+  private cancel(run: string): Promise<void> {
+    const pending = this.cancellations.get(run);
+    if (pending) return pending;
+    const cancellation = this.mutation(
+      `cancel:${run}`,
+      `/v1/runs/${encodeURIComponent(run)}/cancel`,
+      {},
+    )
+      .then(() => {})
+      .finally(() => this.cancellations.delete(run));
+    this.cancellations.set(run, cancellation);
+    return cancellation;
   }
   /** Read billing facts once after completion; diagnostics must never rerun a
    * provider call. BYOK provider charges and platform charges are separate. */
@@ -312,92 +319,22 @@ export class MacrofoldBackend implements AiClient {
       // Missing reporting permission or delayed usage leaves the reserve intact.
     }
   }
-  private workerKey(worktreeId: string): string {
-    // Compute ownership is operational state, not conversation history or rewindable game state.
-    // docs/architecture.md#macrofold-worker-ownership
-    return `macrofold-worker:${digest(this.service.config.macrofoldUrl)}:${this.service.world.id}:${worktreeId}`;
-  }
-  private async reserveCompute(
-    name: string,
-    worktreeId: string,
-    allocationUsd: number,
-    background = false,
-  ): Promise<void> {
-    const config = this.service.config;
-    const id = `${this.workerKey(worktreeId)}:compute`;
-    if (await this.service.store.getIntegration(id)) return;
-    if (!allocationUsd)
+  private nativeWorkerId(): string {
+    const id = this.service.config.macrofoldWorkerId;
+    if (!id)
       throw new Error(
-        'Set MACROFOLD_COMPUTE_MAX_USD to a nonzero compute allocation before starting a warm worker.',
+        'Configure MACROFOLD_WORKER_ID with the application/world owner’s Worker before native execution. Direct inference does not need a Worker.',
       );
-    if (
-      !(await this.service.store.reserve(
-        id,
-        'macrofold',
-        allocationUsd,
-        Math.max(0, config.budgetUsd - (background ? interactiveAllowance(config) : 0)),
-        name.startsWith('reflection-v2:') ? name.slice('reflection-v2:'.length) : 'world-agent',
-        'compute-allocation',
-      ))
-    )
-      throw new Error('AI spending cap cannot cover the compute allocation.');
-    // Reserve the full allocation conservatively, including idle time. Never
-    // auto-renew compute credit or refund before authoritative reconciliation.
-    const receipt = this.receipt(id, 'macrofold', 'long-running-compute', {});
-    receipt.dispatched = true;
-    receipt.completionUncertain = true;
-    await this.service.store.settle(id, receipt);
-    await this.service.store.putIntegration(id, true);
+    return id;
   }
-  private async ensureSandbox(
-    worktreeId: string,
-    name: string,
-    background: boolean,
-    signal: AbortSignal,
-    recordedSandbox?: string,
-  ): Promise<string> {
-    const pending = this.sandboxCreations.get(worktreeId);
-    if (pending) return pending;
-    const creation = (async () => {
-      const key = this.workerKey(worktreeId);
-      const previous = (await this.service.store.getIntegration(key)) as
-        | { body: Record<string, unknown>; sandbox?: string }
-        | undefined;
-      if (previous?.sandbox) return previous.sandbox;
-      const body = previous?.body ?? {
-        worktree_id: worktreeId,
-        long_running: true,
-        max_cost_micro_usd: String(Math.ceil(this.service.config.macrofoldComputeUsd * 1e6)),
-      };
-      if (!previous && recordedSandbox) {
-        // This exact ID was already saved by this application lane; no container discovery.
-        await this.service.store.putIntegration(key, { body, sandbox: recordedSandbox });
-        return recordedSandbox;
-      }
-      // Retain both key and exact body on transport failure. An explicit later call can
-      // recover the same creation; never retry a model run or allocate a replacement here.
-      await this.service.store.putIntegration(key, { body });
-      await this.reserveCompute(
-        name,
-        worktreeId,
-        Number(body['max_cost_micro_usd']) / 1e6,
-        background,
-      );
-      signal.throwIfAborted();
-      const response = object(await this.api.request('/v1/sandboxes', body, digest(key), signal));
-      const sandbox = string(response['id']);
-      await this.service.store.putIntegration(key, { body, sandbox });
-      if (response['rate_micro_usd_per_minute'] === '0') {
-        const computeId = `${key}:compute`;
-        const receipt = this.receipt(computeId, 'macrofold', 'long-running-compute', {});
-        receipt.dispatched = true;
-        receipt.estimatedCostUsd = 0;
-        await this.service.store.settle(computeId, receipt);
-      }
-      return sandbox;
-    })().finally(() => this.sandboxCreations.delete(worktreeId));
-    this.sandboxCreations.set(worktreeId, creation);
-    return creation;
+  private async assertLaneOpen(name: string, lane: Lane): Promise<void> {
+    // Separate tombstone cannot be overwritten by a late admission/completion save.
+    // Retain old lane.closed records as well; neither form is a compute lifecycle action.
+    if (
+      lane.closed ||
+      (name.startsWith('conversation:') && (await this.load<boolean>(`closed:${name}`)))
+    )
+      throw new Error('This conversation has ended. Start a new tab.');
   }
   private async native(
     name: string,
@@ -410,13 +347,13 @@ export class MacrofoldBackend implements AiClient {
   ): Promise<string> {
     if (this.busy.has(name)) throw new Error('This agent already has work in progress.');
     this.busy.add(name);
-    const lane = (await this.load<Lane>(`lane:${name}`)) ?? {};
-    const save = async () => {
-      if ((await this.load<Lane>(`lane:${name}`))?.closed) lane.closed = true;
-      await this.save(`lane:${name}`, lane);
-    };
+    let lane: Lane = {};
+    // Closure has its own record; lane writes need no read/merge race or extra lookup.
+    const save = () => this.save(`lane:${name}`, lane);
     try {
-      if (lane.closed) throw new Error('This conversation has ended. Start a new tab.');
+      lane = (await this.load<Lane>(`lane:${name}`)) ?? {};
+      await this.assertLaneOpen(name, lane);
+      const workerId = this.nativeWorkerId();
       if (lane.blocked && lane.run) {
         const previous = object(
           await this.api.request(
@@ -426,9 +363,10 @@ export class MacrofoldBackend implements AiClient {
             signal,
           ),
         );
+        if (previous['id'] !== lane.run) throw new Error('Macrofold run identity mismatch.');
         if (
           terminal.has(String(previous['status'])) &&
-          previous['persistence_status'] === 'verified'
+          nativePersistenceSettled(previous, previous['persistence_status'])
         ) {
           lane.blocked = false;
           delete lane.run;
@@ -464,8 +402,6 @@ export class MacrofoldBackend implements AiClient {
             `Configured Macrofold model/harness is not enabled for ${config.macrofoldBillingMode} billing.`,
           );
       }
-      if (!config.macrofoldComputeUsd)
-        throw new Error('Set MACROFOLD_COMPUTE_MAX_USD before starting warm compute.');
       if (!lane.worktree) {
         const resource = await this.provisioner.ensure(
           reflection ? name.slice('reflection-v2:'.length) : name,
@@ -474,18 +410,9 @@ export class MacrofoldBackend implements AiClient {
         lane.worktree = resource.worktreeId;
         await save();
       }
-      const sandbox = await this.ensureSandbox(
-        lane.worktree,
-        name,
-        reflection,
-        signal,
-        lane.sandbox,
-      );
-      if (lane.sandbox !== sandbox) {
-        lane.sandbox = sandbox;
-        await save();
-      }
-      await this.waitSandbox(lane.sandbox, signal);
+      // Submit demand before observing readiness: a zero-baseline Worker stays
+      // asleep until a Run is accepted. The owner alone may resume/pause/destroy it.
+      await this.assertLaneOpen(name, lane);
       signal.throwIfAborted();
       // A crash between admission and saving IDs cannot admit a second run.
       lane.blocked = true;
@@ -509,8 +436,9 @@ export class MacrofoldBackend implements AiClient {
                 permissions: reflection ? COGNITION_PERMISSIONS : permissions,
                 connection_grants: [],
               }),
-          sandbox_id: lane.sandbox,
+          worker_id: workerId,
           prompt,
+          // Worker capacity still queues; only same-Worktree follow-ups are refused.
           queue_if_busy: false,
           scheduling_class: reflection ? 'background' : 'interactive',
           queue_timeout_seconds: config.macrofoldTimeoutSeconds,
@@ -519,14 +447,24 @@ export class MacrofoldBackend implements AiClient {
             max_cost_micro_usd: String(Math.ceil(config.macrofoldRunUsd * 1e6)),
           },
         },
+        // Closure/shutdown must not discard an in-flight acceptance: a lost Run ID
+        // could not be cancelled. The checks below cancel a late-accepted Run.
+        AbortSignal.timeout(config.macrofoldTimeoutSeconds * 1000),
         signal,
       );
       lane.run = string(accepted['run_id']);
-      lane.session = string(accepted['session_id']);
-      if (accepted['sandbox_id'] !== lane.sandbox)
-        throw new Error('Macrofold returned an unexpected compute identity.');
       receipt.providerRequestId = lane.run;
+      // Keep a known Run cancellable even if the rest of the response is invalid.
       await save();
+      if (accepted['worker_id'] !== workerId || accepted['worktree_id'] !== lane.worktree)
+        throw new Error('Macrofold returned an unexpected execution target.');
+      const session = string(accepted['session_id']);
+      if (continuingSession && session !== continuingSession)
+        throw new Error('Macrofold returned an unexpected conversation identity.');
+      lane.session = session;
+      await save();
+      await this.assertLaneOpen(name, lane);
+      signal.throwIfAborted();
       const { status, result } = await this.waitRun(
         lane.run,
         object(accepted['urls']),
@@ -541,9 +479,9 @@ export class MacrofoldBackend implements AiClient {
       )
         receipt.estimatedCostUsd = Number(status['cost_micro_usd']) / 1e6;
       await this.captureRunUsage(receipt, signal);
-      if (result['persistence_status'] !== 'verified')
+      if (!nativePersistenceSettled(status, result['persistence_status']))
         throw new Error(
-          'Macrofold persistence was not verified; this worker is blocked to protect conversation continuity.',
+          'Macrofold persistence was not verified; this actor lane is blocked to protect conversation continuity.',
         );
       lane.blocked = false;
       delete lane.run;
@@ -556,9 +494,14 @@ export class MacrofoldBackend implements AiClient {
           `Macrofold execution ended with ${String(result['execution_outcome'])}${failure}. Inspect run ${receipt.providerRequestId} in Macrofold before retrying.`,
         );
       }
+      await this.assertLaneOpen(name, lane);
+      signal.throwIfAborted();
       return string(result['output_text']);
     } catch (error) {
-      if (!lane.run && error instanceof MacrofoldHttpError && error.admissionRejected) {
+      if (
+        !lane.run &&
+        (error instanceof MacrofoldAdmissionCancelled || admissionRejected(error, '/v1/runs'))
+      ) {
         lane.blocked = false;
         receipt.dispatched = false;
         receipt.completionUncertain = false;
@@ -601,6 +544,7 @@ export class MacrofoldBackend implements AiClient {
       AbortSignal.timeout(this.service.config.macrofoldTimeoutSeconds * 1000),
     ]);
     try {
+      this.nativeWorkerId();
       const workspace = await this.provisioner.ensure(
         actorId,
         this.service.world.entities[actorId]?.name ?? actorId,
@@ -1221,15 +1165,10 @@ export class MacrofoldBackend implements AiClient {
   async closeConversation(id: string): Promise<void> {
     const name = `conversation:${id}`;
     this.controllers.get(name)?.abort();
-    const lane = (await this.load<Lane>(`lane:${name}`)) ?? {};
-    lane.closed = true;
-    await this.save(`lane:${name}`, lane);
-    if (lane.run) await this.cancel(lane.run);
-    if (lane.sandbox)
-      await this.mutation(
-        `destroy:${lane.sandbox}`,
-        `/v1/sandboxes/${encodeURIComponent(lane.sandbox)}/destroy`,
-        {},
-      );
+    await this.save(`closed:${name}`, true);
+    const lane = await this.load<Lane>(`lane:${name}`);
+    if (lane?.run) await this.cancel(lane.run);
+    // The shared Worker and durable Worktree/Session are not owned by this tab.
+    // An uncertain admission remains fenced until its original request is reconciled.
   }
 }
