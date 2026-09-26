@@ -1,3 +1,5 @@
+import { WorldToolService, worldReadRequest } from './world-tools.js';
+import { createWorldMcp } from './world-mcp.js';
 import { executeInventionTool, inventionToolInput } from './invention-tools.js';
 import { GameSaveError } from './game-saves.js';
 import {
@@ -295,6 +297,11 @@ export async function createGameServer(
   await service.ready;
   let director = new AiDirector(service, options.aiClient, options.now);
   let loadingSave = false;
+  const worldTools = new WorldToolService(service);
+  const mcp = createWorldMcp(worldTools, config.mcpRead, () => ({
+    worldId: service.world.id,
+    loading: loadingSave,
+  }));
   let activeWrites = 0;
   const session = randomBytes(32).toString('hex');
   type StreamState = {
@@ -404,6 +411,8 @@ export async function createGameServer(
     response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('Referrer-Policy', 'same-origin');
     response.setHeader('X-Frame-Options', 'DENY');
+    if (request.url === '/mcp' || request.url?.startsWith('/mcp?'))
+      return mcp.handle(request, response);
     const address = server.address();
     const port = address && typeof address !== 'string' ? address.port : config.port;
     const allowedHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
@@ -694,6 +703,7 @@ export async function createGameServer(
               const paused = await service.control({ paused: true });
               if (!paused.ok) throw new GameSaveError(paused.message);
               director.macrofold.stop();
+              await mcp.close();
               await director.close();
               drained = true;
               await service.restoreSave(value.id, value.requestId, payload);
@@ -1408,6 +1418,22 @@ export async function createGameServer(
                 : {}),
             });
           }
+          case '/api/world-agent/inspect': {
+            if (!config.godMode)
+              return send(response, 403, {
+                ok: false,
+                message: 'World-owner inspection is disabled.',
+              });
+            const value = worldReadRequest.parse(body);
+            return send(
+              response,
+              200,
+              worldTools.execute(value.name, value.arguments, {
+                worldId: service.world.id,
+                principal: 'local-owner',
+              }),
+            );
+          }
           case '/api/world-agent/tools': {
             const value = z
               .object({ worldId: requestIdSchema, tool: inventionToolInput })
@@ -1633,6 +1659,7 @@ export async function createGameServer(
       if (publishTimer) clearTimeout(publishTimer);
       unsubscribe();
       director.macrofold.stop();
+      await mcp.close();
       await activeTick;
       await thinking;
       await director.close();
