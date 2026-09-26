@@ -86,6 +86,28 @@ Use the concrete example to find a study, then read its limitations and countere
 | Can a small update undermine accumulated player knowledge? | Timing changes; boon eligibility and interaction fixes | [Minecraft](minecraft-signals-authorship-and-meaningful-objects.md) / [Hades](hades-builds-character-callbacks-and-return-rhythm.md) |
 | When is failure amusing rather than alienating? | Short-run horror losses versus persistent-world investment | [Lethal Company](lethal-company-tools-partial-information-and-cooperation.md) / [Valheim / Project Zomboid](valheim-zomboid-preparation-risk-and-home.md) |
 
+## Additional combinations, pressure, and group coordination
+
+| Question | Named reference or interaction | Read |
+| --- | --- | --- |
+| When does rearranging the same parts change the result? | Ordered scoring phases; Photograph and Hanging Chad | [Balatro](balatro-scoring-operators-risk-and-readable-combinations.md) |
+| What exactly does a copy operation copy? | Blueprint's adjacent target versus Brainstorm's leftmost target | [Balatro](balatro-scoring-operators-risk-and-readable-combinations.md) |
+| Can two strong objects obstruct one another? | Snecko Eye and Runic Pyramid; retained expensive cards and draw capacity | [Slay the Spire](slay-the-spire-deck-ecology-information-and-costly-synergies.md) |
+| Can consuming a resource generate a new opportunity? | Corruption and Dead Branch; exhaustion versus random replacement | [Slay the Spire](slay-the-spire-deck-ecology-information-and-costly-synergies.md) |
+| Can withholding information be a deliberate price for power? | Runic Dome and enemy intent | [Slay the Spire](slay-the-spire-deck-ecology-information-and-costly-synergies.md) |
+| What decisions remain when attacks are automatic? | Knife facing, Magic Wand targeting, orbit and aura coverage | [Vampire Survivors](vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) |
+| Can an upgrade remove a specific liability rather than add damage? | Pentagram versus Gorgeous Moon and pickup preservation | [Vampire Survivors](vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) |
+| Can finite recipes adapt to different local resources? | Flour and Biscuit input alternatives; blueprint availability | [Against the Storm](against-the-storm-substitution-pressure-and-renewable-settlement-problems.md) |
+| When is maintenance a chosen tradeoff rather than an unavoidable tax? | Rainpunk and the documented Blightrot redesign | [Against the Storm](against-the-storm-substitution-pressure-and-renewable-settlement-problems.md) |
+| Can pausing useful work improve the settlement's prospects? | Woodcutters, Hostility, and Storm-season pressure | [Against the Storm](against-the-storm-substitution-pressure-and-renewable-settlement-problems.md) |
+| Has automation finished at the source or at the useful destination? | Drills, Robot Arms, smelters, chests, and blocked outputs | [Core Keeper](core-keeper-resource-circuits-food-and-inhabited-discovery.md) |
+| Can ingredients carry understandable properties into a new object? | Heart Berry and Glow Tulip cooking | [Core Keeper](core-keeper-resource-circuits-food-and-inhabited-discovery.md) |
+| Can a small spatial tool introduce a new route or resting state? | Pitons, Rope, and Anti-Rope | [PEAK](peak-shared-burdens-rescue-and-spatial-tools.md) |
+| Can a useful object help the group while burdening its carrier? | Backpack access, Weight, and climbing capacity | [PEAK](peak-shared-burdens-rescue-and-spatial-tools.md) |
+| Does changing multiplayer access change the actual activity? | Shared-screen versus independent roaming; group resource choices | [Vampire Survivors](vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) / [PEAK](peak-shared-burdens-rescue-and-spatial-tools.md) |
+| What makes a limited creative contribution reach ordinary players? | Scene Makers submissions, selection, and distribution | [Core Keeper](core-keeper-resource-circuits-food-and-inhabited-discovery.md) |
+| Can a demo teach the real reward through repeated bounded play? | Content-limited versus round-capped demos | [Balatro](balatro-scoring-operators-risk-and-readable-combinations.md) |
+
 ## Keep the comparison honest
 
 The same word can conceal different promises: a story can be authored, generated, mechanically recorded, or interpreted by a player. A reusable object can preserve its image, its relationships, its behavior, or its surrounding scenario. A helper can execute a job, choose a purpose, or become someone the player cares about. Identify which property matters before borrowing a pattern.
