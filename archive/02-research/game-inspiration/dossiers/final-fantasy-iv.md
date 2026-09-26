@@ -476,7 +476,7 @@ No prior FFIV-specific file or packet passage was found in:
 
 So this dossier is additive. It does not supersede an earlier FFIV chapter.
 
-**Still required before completion:** review/reception synthesis, Steam positive/negative sample, commercial milestones, chronology check, final requirement table and source/link audit.
+**Completion check:** the reception minimum, Steam sampling, commercial-context limits, edition chronology, R01–R14 map, source anchors and preservation boundary are all addressed below. No FFIV-specific prior owner was displaced.
 
 ## 18. Comprehensive mechanics inventory
 
