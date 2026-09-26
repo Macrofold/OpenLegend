@@ -1,0 +1,64 @@
+name: Integrate reviewed invention write base
+on:
+  push:
+    branches: [feature/invention-repertoire-foundation]
+    paths: [.github/workflows/invention-write-integration.yml]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply exactly reviewed upstream merge
+        run: |
+          git config user.name 'OpenLegend implementation'
+          git config user.email 'implementation@users.noreply.github.com'
+          test "$(git rev-parse HEAD^)" = cbe34ac7517397ca44963bf88f9ca00575f76f5e
+          git merge --no-commit --no-ff fc01e19b30060e6c7213b1c5405be13df209297e || test -f .git/MERGE_HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess
+          files=subprocess.check_output(['git','diff','--name-only','--diff-filter=U'],text=True).splitlines()
+          expected={'apps/server/src/ai-director.ts','apps/server/src/context.ts','apps/server/src/jev-questions.ts','docs/architecture.md','docs/documentation-changelog.md','docs/maintainers/README.md','docs/maintainers/extensible-world-foundation.md','pnpm-lock.yaml'}
+          assert set(files)==expected, files
+          pattern=r'<<<<<<< HEAD\n(.*?)=======\n(.*?)>>>>>>> fc01e19b30060e6c7213b1c5405be13df209297e\n'
+          for f in files:
+            s=Path(f).read_text()
+            if f=='docs/maintainers/README.md':
+              s=re.sub(pattern,lambda m:m[1]+'\n- [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.\n',s,flags=re.S)
+            elif f=='apps/server/src/jev-questions.ts':
+              s=re.sub(pattern,lambda m:m[2],s,flags=re.S)
+            else:
+              s=re.sub(pattern,lambda m:m[1]+m[2],s,flags=re.S)
+            assert '<<<<<<< HEAD' not in s, f
+            Path(f).write_text(s)
+          PY
+          git rm .github/workflows/invention-write-integration.yml
+          git add -u
+          git diff --check --cached
+          test "$(git write-tree)" = 9945f578ad79a866b1d7e0fe6861cf9f46833bf9
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm exec tsc --noEmit -p tsconfig.build.json
+      - run: pnpm exec vite build --config apps/client/vite.config.ts
+      - name: Commit and export reviewed source, without tests or provider calls
+        run: |
+          git commit -m '[skip ci] Integrate current base-world and cognition owners before MCP writes'
+          git push origin HEAD:refs/heads/feature/invention-repertoire-foundation
+          git bundle create /tmp/invention-write-base.bundle --all
+          tar -czf /tmp/invention-write-dependencies.tar.gz node_modules apps/*/node_modules packages/*/node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: invention-write-base
+          path: |
+            /tmp/invention-write-base.bundle
+            /tmp/invention-write-dependencies.tar.gz
+          retention-days: 1
