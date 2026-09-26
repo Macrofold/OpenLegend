@@ -209,12 +209,13 @@ export class AuthorityRepository {
     identity: VerifiedIdentity,
     now: number,
     duration: number,
+    capacity = 4096,
   ): Promise<{ token: string; session: LoginSession }> {
     return this.db.transaction(async () => {
       const accountId = await this.account(identity);
       await this.db.prepare('DELETE FROM auth_sessions WHERE expires_at<=?').run(now);
       const count = await this.db.prepare('SELECT COUNT(*) AS count FROM auth_sessions').get();
-      if (Number(count?.['count']) >= 4096)
+      if (Number(count?.['count']) >= capacity)
         throw new Error('Authentication session capacity reached.');
       const token = randomBytes(32).toString('hex');
       const session: LoginSession = {

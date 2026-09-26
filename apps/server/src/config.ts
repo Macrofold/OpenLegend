@@ -85,7 +85,18 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     .parse(JSON.parse(env['OPEN_LEGEND_ACCOUNT_BINDINGS'] ?? '[]'));
   if (mode === 'oidc' && bindings.some((binding) => binding.issuer !== issuer))
     throw new Error('Account bindings must use the configured issuer.');
+  const players = z
+    .number()
+    .int()
+    .parse(numberSetting(env, 'OPEN_LEGEND_PLAYER_CAPACITY', 100, 1, 10000));
   return {
+    capacity: {
+      players,
+      connections: players * 3,
+      presence: players * 6,
+      sessions: Math.max(4096, players * 16),
+      requests: players * 4,
+    },
     authentication: {
       mode,
       origin,

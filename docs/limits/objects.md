@@ -80,27 +80,27 @@ The split command creates the result **in the same container**. Explicit merge t
 
 ## OB11
 
-**Reported · Restrictiveness: Very safe.**
+**Changed · Restrictiveness: Safe.**
 
-Transfer/split/merge and equip/unequip require **all current actor work to stop**, even when that work is unrelated.
+Transfer/split/merge/drop no longer require all work to stop. Moves reject active action dependencies and reserved descendants. Equip/unequip still require a free actor.
 
-**Reason / tradeoff:** Conservative busy-state gate avoids action dependencies; unrelated work could eventually coexist.
+**Reason / tradeoff:** Unrelated rearrangement should not interrupt work; equipment substitution has separate live-action semantics. [Contract](../worlds/base/items.md).
 
 ## OB12
 
-**Reported · Restrictiveness: Very safe.**
+**Changed · Restrictiveness: Safe.**
 
-Ordinary container operations work only within **your character’s possessions**. No direct giving, shared-container access or opening someone else’s bag.
+Visible reachable world containers/piles are shared by default. Explicit actor lists restrict access through ancestors; carried bags require custody or a grant on the outer carried bag. Direct giving permits deposit into reachable living actors, without inspection. Creator editing is limited to world containers and the creator's own carried bags. Access lists allow 100 actors; absence means shared and an empty list denies everyone.
 
-**Reason / tradeoff:** Custody-scoped operations avoid inventing access grants; sharing/trade need explicit authorization paths.
+**Reason / tradeoff:** Enable ordinary sharing while keeping physical access separate from title and human-private data. A bounded explicit grant list supports the release population; roles/locks/trade consent need authored consumers. The former custody-only/no-giving rule is removed. [Contract](../worlds/base/items.md).
 
 ## OB13
 
-**Reported · Restrictiveness: Very safe.**
+**Removed · Restrictiveness: Safe.**
 
-Existing eating, crafting, ammunition and tool selection use **direct inventory**, not recursive bag contents. Items must be unpacked.
+Ingredient, food, ammunition and tool discovery includes accessible nested possessions. No direct-inventory-only restriction remains for those consumers.
 
-**Reason / tradeoff:** Existing consumers resolve immediate possessions; recursive selection has not been integrated.
+**Reason / tradeoff:** Packing useful items should not make them unusable. Indexed child traversal respects access restrictions and existing nesting/capacity rules. Equipping extracts the tool through the authoritative move owner. [Contract](../worlds/base/items.md).
 
 ## OB14
 
@@ -162,7 +162,7 @@ Inventory merge UI offers targets from the **current page only**.
 
 **Reported · Restrictiveness: Safe.**
 
-Compact game snapshot: **60 direct inventory entries**.
+Compact game snapshot: **60 accessible possession entries**, including nested items.
 
 **Reason / tradeoff:** Keep routine snapshots compact; paginated inventory is the full-detail path.
 

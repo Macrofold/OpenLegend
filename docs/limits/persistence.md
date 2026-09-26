@@ -124,7 +124,7 @@ Original recommendation: **Keep**.
 
 **Reported · Restrictiveness: Safe.**
 
-**Autosave retention:** 3 complete checkpoints. Normally about ten minutes between the oldest and newest retained points.
+**Autosave retention:** 3 integrity-checked checkpoints selected for retention. Normally about ten minutes between the oldest and newest retained points. This is not a hard count/byte limit on files: replacement publishes first, cleanup can fail, and damaged slots omitted from listing or protected recovery files can remain. Rotation checks byte/record counts and checksums, not successful world restoration ([SB08](#sb08)).
 
 **Reason / tradeoff:** Bound automatic disk use; three points offer only a short recovery window.
 
@@ -132,7 +132,7 @@ Original recommendation: **Keep**.
 
 **Reported · Restrictiveness: Safe.**
 
-**Before-load recovery:** 2 recovery packages. Extra protection around restoration. Only the latest appears as “Before last load” in the UI.
+**Before-load recovery:** 2 integrity-checked recovery packages are the rotation target; the current protected recovery pointer can retain an additional file. Only the current pointer appears as “Before last load” in the UI. File verification does not prove restoration, and failed cleanup can leave more packages ([SV02](#sv02)).
 
 **Reason / tradeoff:** Keep rollback protection across repeated loads without retaining every pre-load world forever.
 
@@ -180,7 +180,7 @@ Original recommendation: **Keep**.
 
 **Reported · Restrictiveness: Safe.**
 
-**Save-list pagination:** 100 entries per response, using 101 to detect another page. Retained manual-save count remains unlimited.
+**Save-list pagination:** 100 entries per response, using 101 to detect another page. Retained manual-save count remains unlimited. This bounds response/result memory, not filesystem scanning; [SV17](#sv17) owns the full-directory scan limitation.
 
 **Reason / tradeoff:** Bound each catalog response while preserving access to older pages.
 
@@ -268,7 +268,7 @@ Loading pauses before reading and validating the large package. Reconstruction u
 
 **Reported · Restrictiveness: Safe.**
 
-Listing saves avoids full checksum verification. It checks metadata and file size; full checksums run during load and retention. Same-size corruption can therefore remain visible in the list until examined.
+Listing saves checks metadata and file size, so same-size corruption can remain listed. Retention verification checks checksums and byte/record framing/counts; it does **not** decode/migrate the full world or validate all restore invariants. A retained integrity-checked file is not a proven restorable world. Load performs the deeper reconstruction and validation. [Implementation](../../apps/server/src/save-files.ts) (`verify`), source inspected 2026-09-26.
 
 **Reason / tradeoff:** Keep ordinary catalog browsing fast; integrity verification is deferred to use/retention.
 
@@ -300,7 +300,7 @@ The save worker starts with the server and is not automatically restarted after 
 
 **Reported · Restrictiveness: Safe.**
 
-Autosave status is displayed in the creator’s Game panel and refreshed through catalog requests. It is not a continuously updating global notification.
+Autosave status is displayed in the creator’s Game panel and refreshed through catalog requests. It is not a continuously updating global notification. The last error is held only in process memory and is lost on restart; catalog requests can rediscover damaged slots and the latest saved completion time, but cannot recover the previous failure message. [Implementation](../../apps/server/src/autosaves.ts), source inspected 2026-09-26.
 
 **Reason / tradeoff:** Keep operational feedback in the existing creator surface; no global status delivery was added.
 
@@ -323,3 +323,63 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 **Reason / tradeoff:** Filesystem enumeration avoids another writable catalog for the first implementation. Keep the present policy until measured save counts warrant an indexed/paged catalog; do not prioritize a hypothetical 10,001st save over routine gameplay.
 
 **Evidence:** No new catalog timing run; page size is a result-memory bound, not an I/O-work bound. [Implementation](../../apps/server/src/save-files.ts) (`list`). [Revisit R02](../maintainers/limits-audit.md#r02).
+
+## SB13
+
+**Current — source inspected 2026-09-26 · Restrictiveness: Very safe.**
+
+**Loading depends on a new complete recovery save.** Gameplay installation creates a full “Before last load” checkpoint before switching the world. Exhausted disk space, capture limits or capture failure can therefore prevent loading a healthy older checkpoint. There is no supported bypass of this prerequisite.
+
+**Reason / tradeoff:** Preserve the current world before a rewind; the same safeguard can obstruct recovery from a world that can no longer be saved. A future escape path needs a recoverable current state, not silent deletion.
+
+[Implementation](../../apps/server/src/game-saves.ts).
+
+## SB14
+
+**Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
+
+**Retention uses wall-clock order.** Catalog pagination and rotation sort descending by server-created timestamp, then UUID. A backwards clock adjustment can rank a newly captured save behind an older capture; UUID tie-breaking is deterministic but not chronological. There is no monotonic capture-order key.
+
+**Reason / tradeoff:** Timestamp ordering keeps the first catalog simple, but newest-by-clock is not necessarily newest-by-capture. Display timestamps and retention order should be distinct if clock changes must be tolerated.
+
+[Implementation](../../apps/server/src/save-files.ts).
+
+## SB15
+
+**Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
+
+**Only two streamed table layouts are recognized.** The stream reader explicitly accepts the current table layout and one exact preceding pre-foundation layout. Future owner/table changes need explicit conversion/compatibility handling. Arbitrary missing current tables are rejected; legacy whole-JSON saves have a separate reader.
+
+**Reason / tradeoff:** Convert understood development saves without guessing missing state. Rejecting incomplete current packages is correctness; the supported historical window is a chosen compatibility boundary.
+
+[Implementation](../../apps/server/src/checkpoint.ts).
+
+## SB16
+
+**Current — source inspected 2026-09-26 · Restrictiveness: Too liberal.**
+
+**Capture snapshot lifetime includes file publication.** The capture read transaction remains open while records are streamed, synchronized and published. Slow output can prolong SQLite WAL retention or PostgreSQL row-version retention despite bounded page/worker memory. The two-minute scan budget is checked between records; it does not guarantee a deadline for final filesystem writes/sync/rename or a stalled operation.
+
+**Reason / tradeoff:** Preserve one consistent cut without copying the world into RAM; database version retention trades against output speed. The gameplay barrier ending is not the read snapshot ending. This is source-based risk analysis, not a measured storage-growth result.
+
+[Implementation](../../apps/server/src/checkpoint.ts).
+
+## SB17
+
+**Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
+
+**Operational backup includes every retained save and requires canonical storage.** The backup command copies every retained slot selected from the world’s catalog; it offers no selective-save scope. A damaged slot/catalog blocks the operation. The source must already have a canonical world head: backup opens read-only and does not migrate legacy storage. Preserve the original legacy data before running a supported migration separately.
+
+**Reason / tradeoff:** Provide a complete recovery set and avoid mutating the source during backup. This costs space proportional to retained slots and requires a separate migration step; partial/selective backup is not current behavior.
+
+[Implementation](../../apps/server/src/operational-backup.ts).
+
+## SB18
+
+**Current — source inspected 2026-09-26 · Restrictiveness: Too liberal.**
+
+**Failed operational restore can leave copied save files.** Both fresh-target and existing-world operational restore copy retained slots before their database installation. Failure afterward can leave those files in the target; no rollback cleanup removes them. Database rollback alone does not return the entire data directory to its former state.
+
+**Reason / tradeoff:** Immutable copied files avoid overwriting a different slot, but filesystem publication is outside the database transaction. Cleanup/reconciliation ownership is missing; inspect isolated failed targets rather than treating leftover files as proof of a completed restore.
+
+[Implementation](../../scripts/restore-world.ts).

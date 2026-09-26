@@ -29,6 +29,8 @@ export interface ItemLot {
   revision: number;
 }
 export interface ContainerState {
+  /** Absent means shared physical access; carried custody still applies. */
+  access?: { actors: string[] };
   definitionPin: DefinitionPin;
   subtreeRevision: number;
   /** Derived from admitted whole packing load; bound to subtreeRevision, never an editable balance. */
@@ -786,7 +788,7 @@ export function equipLot(
   if (
     !actor ||
     !lot ||
-    parentOf(entity) !== actorId ||
+    custodian(world, id) !== actorId ||
     (mode === 'live' && (actor.action || itemHasReservations(world, id)))
   )
     throw new Error('Choose a free tool in this inventory.');
@@ -801,6 +803,7 @@ export function equipLot(
   const definition = world.itemDefinitions[lot.definitionPin.id];
   if (!definition?.launcher && !definition?.gatheringTool)
     throw new Error('This item has no equipment capability.');
+  if (parentOf(entity) !== actorId) moveLot(world, id, actorId, lot.quantity, cause, false);
   const previous = actor.equippedItemId ? world.entities[actor.equippedItemId] : undefined;
   if (previous?.placement?.mode === 'attached')
     previous.placement = {
@@ -929,13 +932,11 @@ export function validateObjects(world: WorldState): void {
       throw new Error('Invalid lot identity, quantity or exact definition.');
     if (entity.container) {
       if (
-        !hasRecordFields(entity.container, [
-          'definitionPin',
-          'subtreeRevision',
-          'load',
-          'loadRevision',
-          'height',
-        ]) ||
+        !hasRecordFields(
+          entity.container,
+          ['definitionPin', 'subtreeRevision', 'load', 'loadRevision', 'height'],
+          ['access'],
+        ) ||
         !Number.isSafeInteger(entity.container.subtreeRevision) ||
         entity.container.subtreeRevision < 0 ||
         !Number.isSafeInteger(entity.container.height) ||
@@ -944,6 +945,16 @@ export function validateObjects(world: WorldState): void {
         entity.container.load < 0
       )
         throw new Error('Invalid container summary.');
+      if (
+        entity.container.access &&
+        (!hasRecordFields(entity.container.access, ['actors']) ||
+          !Array.isArray(entity.container.access.actors) ||
+          entity.container.access.actors.length > 100 ||
+          entity.container.access.actors.some(
+            (id) => !isSafeRecordId(id) || !world.entities[id]?.actor,
+          ))
+      )
+        throw new Error('Invalid container access.');
       if (
         !definition.container ||
         lot.individuality !== 'individual' ||

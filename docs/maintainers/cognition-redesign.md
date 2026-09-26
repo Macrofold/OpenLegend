@@ -463,3 +463,7 @@ Deferred automated coverage is in [TODO](TODO.md#knowledge-documents--deferred-a
 ## Limits growth review inputs
 
 [MH01–MH04](../limits/memory.md#mh01) and [CG01](../limits/cognition.md#cg01) trace full-corpus scoring/counting, complete conversation/required hydration and candidate construction before final model limits. [KG01](../limits/memory.md#kg01) retains the existing whole-note preparation gap. [C17/C07](limits-audit.md#c17) rank these under ordinary accumulated play; PF08 owns runtime qualification and CR owns permitted context/semantic coverage. Consolidation’s 128-source/512-KiB preparation remains a separate bounded path. Do not infer a hard scan bound from 300 optional results or discard required sources to obtain one.
+
+## Immediate retrieval preparation follow-through
+
+[MH02–MH04](../limits/memory.md#mh02) now record revision-scoped caches, indexed optional token-prefix selection and 8,192-source/4 MiB pre-hydration admission. Oversized required context refuses explicitly; retained sources and maintenance continuation survive. Exact vector recall remains unchanged. [Verification](../verification.md#immediate-gameplay-limits) covers synthetic growth and source invalidation on both adapters; [C17](limits-audit.md#c17)/PF08 retain uncached corpus work and observation preparation, while existing CR quality gates retain live semantic recall/consolidation qualification.

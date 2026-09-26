@@ -41,7 +41,7 @@ PF00's short attribution milestone unblocks the immediate fixes. Its larger perc
 
 Dependencies require the relevant interface or measurement, not final certification of an entire stage. If PF03 attributes remaining CPU cost to cold history, bring PF08 forward; do not require the CPU budget to pass before removing its measured cause.
 
-PF05's immediate publication change comes before larger CPU/isolation work because the debounce adds avoidable latency even when the server is otherwise fast. Its movement-cadence experiment still depends on PF03. Stable task IDs identify scope; the Order column controls initial execution priority.
+PF05 keeps prompt committed publication, with the measured 100-viewer workload now justifying a 50 ms coalescing window to avoid redundant projection. Its movement-cadence experiment still depends on PF03. Stable task IDs identify scope; the Order column controls initial execution priority.
 
 | Order | Task                                          | Expected benefit                                                          | Effort / gate                                             |
 | ----- | --------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------- |
@@ -166,7 +166,7 @@ Exit: optional load stays within its latency budget, with ownership/revocation t
 
 Dependencies: PF00; PF02 supplies scoped background notifications.
 
-- [x] Publish explicit action/control outcomes and affected in-memory view fields promptly after commit, coalesced per event-loop turn. Keep routine publication independently scheduled and preserve SSE baseline/replay/privacy rules.
+- [x] Publish explicit action/control outcomes and affected in-memory view fields promptly after commit, coalesced over 50 ms with cooperative slices between viewers (the measured 100-viewer burst justified this window). Keep routine publication independently scheduled and preserve SSE baseline/replay/privacy rules.
 - [x] Compare 50 ms native/replication cadence with the 250 ms baseline on cloned small-world saves; adopt 50 ms for improved first-position delivery while preserving fixed-step/RNG order, pause/speed semantics, one-second saves and independent background scheduling.
 - [ ] Qualify cadence under browser rendering, long runs and CPU/query budgets; short runtime samples do not establish tail-latency acceptance.
 - [x] Remove narrator/history/usage reads from the position/action publication dependency chain. Cache optional sections with scoped revisions and publish their changes independently through compatible patches. Prevent stale asynchronous results from overwriting newer sections.
@@ -277,6 +277,12 @@ Treat this as an attribution target, not a result of multiplying microbenchmark 
 
 ## Limits growth review inputs
 
-The [limits growth-path review](../limits/README.md#growth-path-review-coverage) records source-inspected missing work bounds at `af1eb02`; it is not new benchmark evidence. [C18](limits-audit.md#c18) feeds PF03/PF09 and EPR02/EPR05 dense native work and hot evidence; [C17](limits-audit.md#c17) feeds PF08/CR exact/lexical recall, repeated coverage counts and unbounded mandatory/conversation preparation; [C19](limits-audit.md#c19) feeds PF01/PF07 queue admission. Read the inventory’s actual upstream protections before introducing another limit.
+The [limits growth-path review](../limits/README.md#growth-path-review-coverage) records source-inspected missing work bounds at `af1eb02`; it is not new benchmark evidence. [C18](limits-audit.md#c18) feeds PF03/PF09 and EPR02/EPR05 dense native work and hot evidence; [C17](limits-audit.md#c17) feeds PF08/CR exact/lexical recall, repeated coverage counts and unbounded mandatory/conversation preparation; completed C19 is recorded under [NW11](../limits/native-work.md#nw11) and PF01/PF07 queue admission. Read the inventory’s actual upstream protections before introducing another limit.
 
 PF08’s mature-world and explicit-owner-edit qualification includes [MH06/MH07](../limits/memory.md#mh06), and existing CR private-note work includes [KG01](../limits/memory.md#kg01). Separate automatic memory growth from extreme authored collections. Serialized/read lanes and output LIMIT clauses are not evidence of bounded queued or pre-selection work. Existing acceptance remains open; no extra duplicate task checklist is introduced here.
+
+## Immediate gameplay limits follow-through
+
+The [approved implementation](../projects/immediate-gameplay-limits.md) delivers queue depth/age admission (C19), coordinated capacity, coalesced fair view publication, change-fed encounter reuse, private native checkpoints, resident awareness eviction, pre-hydration memory admission and indexed optional lexical selection. [Evidence](../verification.md#immediate-gameplay-limits) records unchanged mixed outcomes, the valid dense workload, 100 synthetic player connections/commands and both database adapters. Completed C19 stays in [NW11](../limits/native-work.md#nw11), not a duplicate todo.
+
+PF03/PF09/EPR02/EPR05 still own real first-exposure fan-out and long individual finalization. PF08 still owns personal-memory array growth, cold count/vector/broad-text cost, observation construction before context admission and natural aging. PF04/PF05/PF11/D5 still own the approximately 11.5-second final 100-player speech burst and sustained full-release acceptance. These measured residuals remain open; 3× and the full 100/100/100/1000 workload are not claimed. The 50 ms publication coalescing window deliberately trades a small idle delay for far fewer redundant projections under contention; it supersedes the earlier unconditional zero-delay preference in PF05.

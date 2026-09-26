@@ -2,6 +2,7 @@ import { tableRows } from './record-pages.js';
 import { hotEventDependencies } from './hot-events.js';
 import {
   HISTORY_TABLES,
+  HOT_AWARENESS_ROWS,
   historyPositions,
   historyKey,
   materializedObjectHistory,
@@ -564,20 +565,35 @@ export class WorldRecords {
       const predicate =
         table === 'mind_memories'
           ? `(at>=? OR (kind='commitment' AND COALESCE(CAST(${json('resolved')} AS TEXT),'false') IN ('false','0')))`
-          : table === 'mind_awareness'
-            ? `(at>=? OR position IN (SELECT position FROM mind_awareness recent WHERE recent.world_id=t.world_id AND recent.actor_id=t.actor_id ORDER BY position DESC LIMIT 24))`
-            : '1=0';
+          : '1=0';
       // Migration must precede eviction. Keep only legacy records whose source event
       // is still available to the existing domain migration; the partial index avoids
       // parsing every cold payload at each boot. Migration commits before release.
       const migrateAwareness = partial && table === 'mind_awareness';
-      const legacy = migrateAwareness
-        ? ` UNION SELECT id,parent_id,slot,position,payload FROM mind_awareness
-          WHERE world_id=? AND ${this.legacyAwarenessPredicate} AND source_id IN
-          (SELECT ${this.db.dialect === 'postgres' ? "payload::jsonb ->> 'id'" : "json_extract(payload, '$.id')"} FROM world_hot_events WHERE world_id=?)`
-        : '';
       let rows: JsonRecord[] = [];
-      if (!partial && !objectPredicate && table !== 'world_hot_events') {
+      if (migrateAwareness) {
+        // Seek one indexed tail per actor. A correlated LIMIT for each historical row
+        // repeats the same tail lookup throughout the entire retained corpus.
+        for (const actor of await this.db
+          .prepare('SELECT DISTINCT actor_id FROM mind_awareness WHERE world_id=?')
+          .all(head.worldId))
+          rows.push(
+            ...(await this.db
+              .prepare(
+                `SELECT id,parent_id,slot,position,payload FROM mind_awareness
+            WHERE world_id=? AND actor_id=? ORDER BY position DESC LIMIT ${HOT_AWARENESS_ROWS}`,
+              )
+              .all(head.worldId, actor['actor_id'])),
+          );
+        const legacy = await this.db
+          .prepare(
+            `SELECT id,parent_id,slot,position,payload FROM mind_awareness
+          WHERE world_id=? AND ${this.legacyAwarenessPredicate} AND source_id IN
+          (SELECT ${this.db.dialect === 'postgres' ? "payload::jsonb ->> 'id'" : "json_extract(payload, '$.id')"} FROM world_hot_events WHERE world_id=?)`,
+          )
+          .all(head.worldId, head.worldId);
+        rows = [...new Map([...rows, ...legacy].map((row) => [row['id'], row])).values()];
+      } else if (!partial && !objectPredicate && table !== 'world_hot_events') {
         // Full recovery remains explicit, but each database transfer stays bounded.
         // Large PostgreSQL histories must not become one timeout-sized result.
         for await (const row of tableRows(this.db, table, head.worldId)) rows.push(row);
@@ -586,13 +602,9 @@ export class WorldRecords {
           .prepare(
             table === 'world_hot_events'
               ? `SELECT t.id,t.parent_id,t.slot,t.position,h.payload FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${eventId} WHERE t.world_id=? ORDER BY t.parent_id,t.position`
-              : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ` AND ${predicate}` : ''}${legacy} ORDER BY parent_id,position`,
+              : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ` AND ${predicate}` : ''} ORDER BY parent_id,position`,
           )
-          .all(
-            head.worldId,
-            ...(partial && table !== 'mind_summaries' ? [cutoff] : []),
-            ...(migrateAwareness ? [head.worldId, head.worldId] : []),
-          );
+          .all(head.worldId, ...(partial && table === 'mind_memories' ? [cutoff] : []));
       }
       const parents = new Map<string, JsonRecord[]>();
       for (const row of rows) {

@@ -136,6 +136,17 @@ Dependencies: SL02–SL07 for the manual release; extend coverage when SL08 or S
 
 Exit: published, reproducible no-cost correctness evidence and measured performance for the supported initial scope. Fixture success does not establish live model quality, cloud recovery or untested future-state coverage.
 
+### Recovery qualifications identified by the save-limit follow-up
+
+These are source-confirmed gaps/choices, not newly passed runtime checks. Existing local SL09 evidence remains valid for its named scenarios.
+
+- [ ] **SL09-A — Recovery when capture is unavailable.** Exercise healthy-checkpoint load with full disk and an oversized current world; verify failure leaves current authority intact. Design an explicit recovery path that preserves the current world independently before allowing restoration; do not silently skip the pre-load safeguard. Include [SB13](../limits/persistence.md#sb13) in operator failure guidance.
+- [ ] **SL09-B — Retention correctness and honest guarantees.** Exercise clock rollback/timestamp ties, cleanup failure, catalog-excluded damaged files and protected recovery slots. Select capture order independently of wall-clock display time. Distinguish file-integrity checks from actual decode/migrate/restore evidence; include a checksum-valid but semantically invalid package. Track real directory bytes as well as catalog counts; do not claim a hard three/two-file quota.
+- [ ] **SL09-C — Slow-output snapshot pressure.** Measure retained WAL/row versions and database/command latency during slow writes, sync and publication on both adapters, including failure/cleanup. Add bounded cancellation or decouple snapshot retention only if the observed pressure warrants it, preserving one consistent cut. [SB16](../limits/persistence.md#sb16).
+- [ ] **SL08-A — Restart-visible failure status.** Preserve or durably report the latest checkpoint failure for operators, with explicit reset/acknowledgment; confirm restart does not falsely imply recent protection. Keep catalog health distinct from historical autosave errors. [SB12](../limits/persistence.md#sb12).
+
+The current/preceding-layout boundary ([SB15](../limits/persistence.md#sb15)) remains intentional; future owner integration must extend SL01/DF02 compatibility evidence rather than accept arbitrary missing tables. [SV18](../limits/observability.md#sv18) records the stress tool’s envelope; it is not a capacity gate. Operational restore file cleanup belongs to [D1/D2](production-data.md#remaining-d1d2-implementation-and-evidence).
+
 ## SL10 — Conditional portability and shared-world expansion
 
 Dependencies: qualified personal-world flow, relevant D60 choices and production-data rollout gates. Not an initial-release prerequisite.

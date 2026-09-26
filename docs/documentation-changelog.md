@@ -1,5 +1,15 @@
 # Documentation changelog
 
+## 2026-09-26 — Save/recovery limits and guarantee corrections
+
+Reconciled the additional save/recovery handoff against source: [pre-load capture dependency, retention order, compatibility, snapshot lifetime and operational file recovery](limits/persistence.md#sb13), plus [benchmark-only bounds](limits/observability.md#sv18). Extended existing entries instead of duplicating catalog-scan, retention and status limits. Corrected worker placement and the distinction between file integrity, actual restoration and filesystem quotas in the save contract and operational runbook. [SL08/SL09 follow-ups](maintainers/save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up), D1/D2 file reconciliation and limits candidates C22–C24 retain unimplemented work. Documentation/source review only; no runtime behavior or acceptance claim changed.
+
+## 2026-09-26 — Immediate gameplay limits implementation
+
+Implemented the approved C18/C17/E01/E04/R03/C19 slice: shared physical containers with explicit durable access, giving and nested item use; dependency-aware inventory moves; coordinated release admission and bounded pending work; fair/coalesced projection; unchanged-exposure reuse and private native checkpoints; SQL-backed awareness residency, preparation admission and indexed optional lexical search. The [plan](projects/immediate-gameplay-limits.md), [behavior](worlds/base/items.md#shared-containers-and-active-work), [performance contract](performance.md#bounded-admission) and [memory contract](memory-architecture.md#retrieval-preparation-admission) own details.
+
+Recorded new row/byte/queue limits and reasons in the feature inventories. Native output admission rises from 16 MB to 64 MB, charged as actual UTF-8, because valid first exposure in the release scene otherwise refused complete witness output. Exact semantic recall remains exact; optional legacy lexical search changes from substring counting to token-prefix indexing. The [verification evidence](verification.md#immediate-gameplay-limits) separates improvements from remaining dense first-exposure, personal-memory growth, cold-query and sustained 100-player costs. Removed completed R03/E04/C19 recommendations; C18/C17/E01 retain concrete residual acceptance.
+
 ## 2026-09-26 — Risk-based planning and explicit reconciliation targets
 
 Updated [root planning](../AGENTS.md#plan-before-implementation) to choose durable plans by risk/complexity rather than a mandatory 200-line threshold: straightforward mechanical work may use conversation plans, while even small consequential work can require a project document. The [rebase workflow](../.agents/skills/openlegend-rebase/SKILL.md) now selects an explicit task base, then the current PR target (including stacked parents), then the intended remote's verified default; tracking upstreams are not merge targets. It retains conflict stops and dirty/shared-history protections and makes detached-worktree handling explicit.

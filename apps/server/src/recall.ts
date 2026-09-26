@@ -1,3 +1,4 @@
+import { MemoryPreparationError, RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
 import { worldPosition } from '@open-legend/domain';
 import type { RetrievedMemory, MemoryScope } from './memory-repository.js';
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
@@ -136,6 +137,22 @@ export function candidateSet(
   conversationIds: string[] = [],
   retained?: RetrievedMemory[],
 ): AttentionCandidate[] {
+  // Reject oversized preparation explicitly before formatting thousands of optional
+  // bodies; this never narrows SQL recall eligibility or deletes retained sources.
+  const documents = world.actorKnowledge?.[actorId] ?? {};
+  if (
+    observed.visibleEntities.length +
+      observed.inventory.length +
+      observed.knownRecipes.length +
+      Object.keys(documents).length >
+    RETRIEVAL_ROWS
+  )
+    throw new MemoryPreparationError();
+  let preparedBytes = 0;
+  for (const doc of Object.values(documents)) {
+    preparedBytes += Buffer.byteLength(doc.text);
+    if (preparedBytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
+  }
   const requiredIdSet = new Set(requiredIds);
   const automaticIdSet = new Set(automaticIds);
   const conversationIdSet = new Set(conversationIds);

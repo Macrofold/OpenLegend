@@ -534,11 +534,13 @@ Knowledge-note pages: **40 default / 100 maximum**.
 
 **Evidence:** No new timing measurement; distinguish index scans from payload hydration. [Implementation](../../apps/server/src/memory-repository.ts) (`count; readCoverage; apps/server/src/recall.ts candidates`). [Revisit C17](../maintainers/limits-audit.md#c17).
 
+**Implemented mitigation:** Coverage results now use bounded revision/generation/model/vector-aware caching; source or eligibility changes invalidate it. Misses still perform exact counts.
+
 ## MH03
 
-**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+**Changed · Restrictiveness: Liberal.**
 
-**Lexical recall scores all eligible text before LIMIT.** No candidate-work cap for selectContext(query != null). SQL joins eligible actor sources to their payloads, extracts text, counts query-word matches and sorts before returning at most 300. The null-query recent-history branch uses ordered selection instead.
+**Indexed lexical recall has no total match-work cap.** selectContext(query != null) uses a derived text projection with SQLite FTS5 or PostgreSQL stored tsvector/GIN. Unique query tokens match word prefixes with OR semantics; native text rank replaces historical arbitrary substring-count scoring. Protected required records precede matches, then importance/recent fallback fills the optional limit (maximum 300). The null-query branch remains recent-history selection. Exact vector recall is separate and unchanged.
 
 **Exposure / consequence:** Ordinary invention/world-assistant context reads on a mature actor can scan growing text. PostgreSQL can delay other read-lane work; synchronous SQLite query execution can stall native timers despite a logically separate read connection.
 
@@ -546,29 +548,23 @@ Knowledge-note pages: **40 default / 100 maximum**.
 
 **Evidence:** Source inspection establishes the query shape, not its latency under a natural workload. [Implementation](../../apps/server/src/memory-repository.ts) (`selectContext`). [Revisit C17](../maintainers/limits-audit.md#c17).
 
+**Implemented mitigation:** Inverted indexes avoid parsing every JSON source on each miss; an indexed required/importance fallback avoids an extra full sort. Repeated identical selections use a 64-entry revision-scoped cache. Broad matches still rank substantial postings, with no approximate/corpus cutoff. Hydration has MH04 admission checks. The derived projection/index adds disk/write cost and rebuilds atomically from canonical sources. [Measured evidence](../verification.md#immediate-gameplay-limits).
+
 ## MH04
 
-**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+**Changed · Restrictiveness: Safe.**
 
-**Required and conversation evidence is hydrated without a total count cap.** MemoryRepository.context loads every eligible speech ID in the active/relevant conversation. readRequired loads all required sources, correction-linked sources and supplied source/event aliases, then hydrates and constructs candidates. ID chunks (350) and hydration batches (800) bound statements, not the combined result. The separate 300-optional-result limit does not bound this path. commitments also loads all eligible commitments for explicit private inspection.
+Conversation/required/correction preparation allows 8,192 unique sources and 4 MiB of serialized bodies. Selection detects overflow before hydration in one scoped SQL snapshot. No partial required set is returned. Existing paged history provides access beyond one preparation.
 
-**Exposure / consequence:** Long dialogue and accumulated protected/corrected evidence can increase memory and CPU on each decision. Later request-byte checks can refuse required context only after preparation; those checks do not bound this earlier work. Creator commitment inspection is less frequent than ordinary conversation recall.
-
-**Reason / tradeoff:** Never silently omit required evidence or conversation continuity. Introduce scoped dependency reads, incremental conversation context and explicit overflow handling before hydration; qualify semantic coverage.
-
-**Evidence:** Callers: decision-context.ts preparation, recall.ts candidates, world-service.ts inspectMemoryContext. [Implementation](../../apps/server/src/memory-repository.ts) (`context; readRequired; hydrate; commitments`). [Revisit C17](../maintainers/limits-audit.md#c17).
+**Reason / tradeoff:** Keep ordinary decisions from materializing arbitrary history while preserving all durable evidence. A very long required conversation may explicitly refuse a full-context decision; semantic conversation condensation remains separate. Optional top-result limits do not bound exact search. [Owner](../memory-architecture.md#retrieval-preparation-admission).
 
 ## MH05
 
-**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+**Changed · Restrictiveness: Safe for awareness; Too liberal for remaining personal-memory growth.**
 
-**The hot-memory window has no fixed count or byte ceiling.** Residency keeps six simulated hours of raw memory/awareness, unresolved commitments and at least 24 awareness entries per actor. There is no additional fixed count/byte cap on that working set. compactHistory skips unchanged/unexpired collections using cached expiry, but expiry filtering and some encounter preparation iterate resident arrays.
+Resident awareness: latest 256 records/actor, targeting 1 MiB while always preserving the latest 24 observation records. Startup selects the row-bounded tail; post-commit eviction applies bytes. Every evicted source remains eligible in SQL. Personal memory records still use the six-hour window plus protected commitments. Expiry compaction may lag eligibility by one game minute to amortize copying.
 
-**Exposure / consequence:** Witnessing dense encounters or sustained speech grows recent evidence quickly. Startup, expiry/commit work and encounter preparation can stall native simulation even with cold history excluded. Six game hours is only six real minutes at the current 1× rate; density matters as much as world age.
-
-**Reason / tradeoff:** Keep current evidence accessible while avoiding whole-lifetime hydration. Bound resident processing using consumed indexes/incremental expiry and explicitly designed residency; preserve durable evidence and required outcomes.
-
-**Evidence:** Prior cold-history runs demonstrate cold-source eviction, not a count bound or dense active-window capacity. [Implementation](../../apps/server/src/history-residency.ts) (`compactHistory; world-records.ts load; kernel.ts updateEncounters`). [Revisit C18](../maintainers/limits-audit.md#c18).
+**Reason / tradeoff:** Automatic observation growth should not pin six hours of bodies and event dependencies. Native continuity retains its 24-record tail; explicit old-source reads use SQL. Required native personal records are not silently removed to achieve a global byte claim. Individual admitted transitions still retain complete output until commit. [Owner](../performance.md#inactive-history-residency); [C18](../maintainers/limits-audit.md#c18).
 
 ## MH06
 
@@ -605,3 +601,5 @@ Knowledge-note pages: **40 default / 100 maximum**.
 **Reason / tradeoff:** Keep all known subjects available. Select scoped relevant documents before formatting; keep exact involved-subject lookup and per-document controls.
 
 **Evidence:** Existing 10,000-pad fixture measured candidate projection at 77 ms median / 106 ms p95; [prior fixture evidence](../verification.md#editable-knowledge-and-observer-names), not a new run or natural-growth estimate. [Implementation](../../apps/server/src/knowledge-context.ts) (`subjectKnowledgeCandidates`). [Revisit C07](../maintainers/limits-audit.md#c07).
+
+**Implemented mitigation:** Current candidate preparation checks a combined 8,192 current-world/note items and 4 MiB of note text before formatting. The document collection is still resident; overflow is explicit, not silent note deletion.

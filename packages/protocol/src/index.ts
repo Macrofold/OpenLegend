@@ -649,9 +649,17 @@ export interface ObjectHistoryPage {
 }
 
 export interface ContainerPage {
+  destinations?: Array<{ id: string; name: string; revision: number; depositOnly: boolean }>;
   ok: boolean;
   message?: string;
-  container: { id: string; name: string; revision: number; load?: number; capacity?: number };
+  container: {
+    id: string;
+    name: string;
+    revision: number;
+    load?: number;
+    capacity?: number;
+    restricted?: boolean;
+  };
   breadcrumbs: Array<{ id: string; name: string; revision: number }>;
   items: InventoryItemView[];
   next?: string;

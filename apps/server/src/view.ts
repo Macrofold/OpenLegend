@@ -46,7 +46,8 @@ function scopedCache(service: WorldService, scope: RequestScope): ViewCache {
   const key = scopeKey(scope);
   let cache = scopes.get(key);
   if (!cache) {
-    while (scopes.size >= 32) scopes.delete(scopes.keys().next().value!);
+    while (scopes.size >= service.config.capacity.connections)
+      scopes.delete(scopes.keys().next().value!);
     scopes.set(key, (cache = { scope, values: new Map(), sections: new Map() }));
   }
   return cache;

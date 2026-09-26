@@ -41,6 +41,24 @@ metadata. Unknown load cannot be assumed zero. Exact legacy native-definition bi
 preserve old definition bytes; unsupported old custom definitions require admitted metadata
 before packing. Nonempty containers cannot be retired without a separate content disposition.
 
+## Shared containers and active work
+
+Reachable, visible world containers and piles are shared by default. An admitted container
+access list can restrict which actors may open/use it; absence means unrestricted physical
+access, while an empty list denies it. Restrictions apply through the containment chain.
+Carried bags remain private to their custodian unless the outer carried bag explicitly grants
+access. Giving deposits into a reachable living recipient's inventory without reading it.
+Declared ownership remains separate from these permissions and from human-private notes.
+Creator controls can set/clear restrictions on world containers and their own carried bags;
+ordinary actors cannot grant themselves access. This is a physical-access foundation, not a
+lock-picking, trade-consent or contested-ownership mechanic.
+
+Ingredient, food, ammunition and tool discovery includes accessible nested possessions.
+Equipping a nested tool moves it into the actor's equipment location through the same object
+owner. Transfer, split, merge and drop may coexist with unrelated work; operations touching
+active action dependencies or reservations, including descendants of a moved bag, reject.
+Equipment changes retain their separate active-work restriction.
+
 Inventory supports scoped direct-child pages, search, breadcrumbs, split/merge and explicit
 container movement. A page must restart when contents, custody or current access changes.
 Declared ownership can be corrected through the authorized creator control without moving
@@ -51,6 +69,8 @@ contents and load totals do not become public through the bag's appearance in a 
 Inventories, pile positions/contents, item properties, handling policy and pending pickup work are saved together. Existing development worlds acquire missing item-handling defaults and explicit portability in place; unrelated state and identity survive. Existing configured values are not overwritten. See the [active development policy](../../save-and-load.md#active-development-policy).
 
 Physical mass/volume, scattering, contested ownership/theft rules and additional pickup/drop restrictions require concrete mechanics. Freeform-language parameter binding belongs to the action foundation; it must call this same native transfer boundary rather than implement a second transfer path. Delivery dependencies and remaining work live only in the [tracker](../../maintainers/base-world.md).
+
+The inventory panel refreshes when the player moves or its own inventory/context changes; use **Refresh** for newly nearby destinations or changes in a shared container. Every action rechecks current access and revisions. Constant background motion does not repeatedly clear an open inventory page.
 
 ## Maintained records
 

@@ -445,3 +445,11 @@ Person-editor deletion now uses the authoritative forgetting transition in the s
 
 - Implementation: [Feature tasks](maintainers/cognition-redesign.md).
 - Limits and constraints: [Memory, knowledge and consolidation inventory](limits/memory.md).
+
+### Retrieval preparation admission
+
+Exact retained-history eligibility has no newest-record prefilter. Required/correction/conversation source preparation is limited to 8,192 unique rows and 4 MiB of serialized source bodies, checked in the same SQL snapshot before hydration. Oversize input returns an explicit preparation error; it never supplies an incomplete required set or deletes evidence. Existing paged history remains available. Optional selection still has its separate top-result bound; exact vector and lexical database work can grow with the eligible corpus.
+
+Coverage counts cache by actor/source, generation, model and vector publication; global eligibility changes invalidate them. Identical lexical selections have a bounded revision-scoped cache, with current source bodies revalidated on hydration. Current-world/note candidate formatting checks 8,192 input items and 4 MiB of note text before formatting. These preparation allowances are operational protection, not a semantic-memory classifier or a new retention policy. [MH01–MH05/KG01](limits/memory.md#mh01) record remaining tradeoffs.
+
+Optional legacy invention/HUD text selection now uses an inverted database index over a rebuildable `recall_sources.search_text` projection: SQLite FTS5 and PostgreSQL stored `search_vector` with GIN. Query words use OR token-prefix matching; native lexical rank replaces arbitrary substring-count scoring. Required records precede optional matches; indexed importance/recent fallback fills remaining slots. This is not semantic classification and does not change exact vector ranking or the separate complete required-evidence admission. All selections still enforce actor/world/generation/eligibility. Indexes follow atomic source changes, forgetting and rebuilds; canonical bodies remain the source of truth. Broad terms can still match a whole corpus; [MH03](limits/memory.md#mh03) retains that tradeoff.

@@ -141,3 +141,7 @@ The approved [feature specification](../projects/multiplayer-authority-feature-s
 - [x] Record combined MP01.6/BW13 evidence, remaining BW14/D07 and D5 gates and deferred regression work without weakening CI or authoring/running automated suites under the default workflow.
 
 **Dependencies:** MP04.1–MP04.3. **Exit:** deterministic native outcomes, truthful visible lifecycle and bounded operations are evidenced; unresolved combat/property choices stay with their existing owners.
+
+## Release admission follow-through
+
+The [immediate limits implementation](../projects/immediate-gameplay-limits.md) coordinates release admission and projection cache capacity from `OPEN_LEGEND_PLAYER_CAPACITY` (default 100), retaining per-scope authority and slow-client handling. [Verification](../verification.md#immediate-gameplay-limits) includes 100 separate synthetic accounts with actual SSE/control/commands; session setup bypassed OIDC. MP01 authority remains required. PF11/D5 and [E01](limits-audit.md#e01) remain open for sustained mixed gameplay, hosted operation and 10,000-player growth; the 100-player burst latency is not acceptable release evidence.

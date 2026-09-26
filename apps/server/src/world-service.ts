@@ -1,3 +1,6 @@
+import { advanceWorldSlices } from '@open-legend/domain';
+import { setContainerAccess, type ContainerAccessRequest } from '@open-legend/domain';
+import { WorkLane, OverloadError } from './work-lane.js';
 import {
   authorAppraisal,
   changeAppraisal,
@@ -70,7 +73,6 @@ import {
   EXPERIENCE_LIMITS,
   mindFor,
   executeCommand,
-  advanceWorld,
   admitDeclaration,
   experienceEntry,
   experienceEntries,
@@ -319,13 +321,11 @@ export class WorldService {
   releaseHostWork(): void {
     this.hostWork.close();
   }
-  private mutationTail: Promise<unknown> = Promise.resolve();
+  private readonly mutationLane = new WorkLane('mutation');
   private mutationContext = new AsyncLocalStorage<{ active: boolean }>();
   private async mutate<T>(operation: () => Promise<T>): Promise<T> {
     if (this.mutationContext.getStore()?.active) return await operation();
-    const queuedAt = performance.now();
-    const next = this.mutationTail.then(() => {
-      recordDuration('mutation.wait', performance.now() - queuedAt);
+    return this.mutationLane.run(() => {
       const scope = { active: true };
       return this.mutationContext.run(scope, async () => {
         try {
@@ -335,8 +335,6 @@ export class WorldService {
         }
       });
     });
-    this.mutationTail = next.catch(() => undefined);
-    return next;
   }
   private debtSeconds = 0;
   storageError: string | null = null;
@@ -468,6 +466,7 @@ export class WorldService {
         identity,
         this.now(),
         config.authentication.sessionMs,
+        config.capacity.sessions,
       );
       this.localSessionToken = login.token;
       this.localRequestScope = await this.requestScope(login.session, 'local-internal');
@@ -570,7 +569,8 @@ export class WorldService {
 
       if (connected) {
         this.assertScope(scope);
-        if (this.connections.size >= 32) throw new Error('Connection capacity reached.');
+        if (this.connections.size >= this.config.capacity.connections)
+          throw new Error('Connection capacity reached.');
         this.connections.set(connectionId, scope);
         this.connectionPreferences.set(
           scope.accountId,
@@ -721,11 +721,10 @@ export class WorldService {
         const hot = retainHotEvents(compactHistory(historyWorld, this.saved.world));
         saved = {
           ...saved,
-          world: {
-            ...historyWorld,
-            events: hot.events,
-            archivedEventCount: hot.archivedEventCount,
-          },
+          world: updateWorld(historyWorld, (draft) => {
+            draft.events = hot.events;
+            draft.archivedEventCount = hot.archivedEventCount;
+          }),
         };
       }
       this.persistedRevision = await timed('world.commit', () =>
@@ -774,7 +773,7 @@ export class WorldService {
         this.notify(false);
         return false;
       }
-      if (error instanceof AuthorityError) throw error;
+      if (error instanceof AuthorityError || error instanceof OverloadError) throw error;
       this.storageError =
         'The save could not be committed. Simulation is paused; restart after resolving storage access.';
       this.notify(false);
@@ -1337,7 +1336,10 @@ export class WorldService {
       if (sequence !== undefined) {
         const previous = this.presenceOrders.get(clientId);
         if (previous !== undefined && sequence <= previous.sequence) return;
-        if (!this.presenceOrders.has(clientId) && this.presenceOrders.size >= 128)
+        if (
+          !this.presenceOrders.has(clientId) &&
+          this.presenceOrders.size >= this.config.capacity.presence
+        )
           throw new Error('Presence capacity reached. Reconnect before continuing.');
         this.presenceOrders.set(clientId, { sequence, at: this.now() });
       }
@@ -1462,6 +1464,8 @@ export class WorldService {
         if (!elapsedRealSeconds) return;
       }
       // Optional memory maintenance must never stop native time or walking.
+      // This warning measures resident pressure only; maintenanceStatus separately checks
+      // canonical SQL backlog, including awareness evicted from the working set.
       // Retain every source; docs/memory-architecture.md#6-hourly-consolidation-and-six-hour-raw-recall.
       const memoryBacklog =
         Object.values(this.world.experience?.awareness ?? {}).some(
@@ -1493,7 +1497,17 @@ export class WorldService {
       // A single transition remains atomic even if it exceeds this time budget.
       for (; completedSteps < steps; ) {
         const stepStarted = performance.now();
-        const advanced = advanceWorld(world, 1);
+        const slices = advanceWorldSlices(world, 1);
+        let sliceStarted = performance.now(),
+          result = slices.next();
+        while (!result.done) {
+          if (performance.now() - sliceStarted >= 8) {
+            await new Promise<void>((resolve) => setImmediate(resolve));
+            sliceStarted = performance.now();
+          }
+          result = slices.next();
+        }
+        const advanced = result.value;
         if (!advanced.outcome.ok) {
           this.storageError = `Required native work stopped before advancing time: ${advanced.outcome.message} Restart after reconciling the admitted workload.`;
           this.notify(false);
@@ -1856,6 +1870,20 @@ export class WorldService {
       return createGodItem(world, request);
     });
   }
+  async containerAccess(request: ContainerAccessRequest, scope: RequestScope): Promise<ApiResult> {
+    return this.godTransition((world) => {
+      this.assertScope(scope, 'create');
+      const root = world.entities[request.itemId] ? custodian(world, request.itemId) : undefined;
+      if (!root || (world.entities[root]?.actor && root !== scope.actorId))
+        return {
+          world,
+          events: [],
+          outcome: { ok: false, code: 'unavailable', message: 'This container is unavailable.' },
+        };
+      return setContainerAccess(world, request);
+    });
+  }
+
   async declareOwnership(request: OwnershipRequest, scope: RequestScope): Promise<ApiResult> {
     return this.godTransition((world) => {
       this.assertScope(scope, 'create');

@@ -94,3 +94,12 @@ Accepted defaults: quantity-one individual containers/equipped units, explicit m
 
 - Implementation: [Feature tasks](../maintainers/persistent-objects.md).
 - Limits and constraints: [Objects, inventory and equipment inventory](../limits/objects.md).
+
+## Shared-container follow-through
+
+The immediate gameplay-limits implementation extends the delivered foundation with shared
+reachable world containers, explicit actor access lists, giving without recipient inspection,
+recursive own ingredient/tool discovery and dependency-aware inventory moves. The current
+contract is [Items](../worlds/base/items.md); [PO10](../maintainers/persistent-objects.md#po10--shared-access-and-dependency-aware-handling)
+records its delivered scope and verification. Existing identity, capacity, exact
+pins, reservations, privacy and atomic publication rules still apply.

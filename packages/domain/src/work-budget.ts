@@ -31,7 +31,9 @@ export const WORK_LIMITS = Object.freeze({
     candidates: 2_000_000,
     tests: 4_000_000,
     inputBytes: 64_000_000,
-    outputBytes: 16_000_000,
+    // First exposure at the release crowd size legitimately emits tens of thousands
+    // of private acquisitions. Sliced execution preserves them within one publication.
+    outputBytes: 64_000_000,
     effects: 100_000,
     claims: 100_000,
     subscriptions: 100_000,
@@ -562,4 +564,38 @@ export function chargeWork(demand: WorkDemand): void {
     }
   for (let meter: WorkMeter | undefined = activeMeter; meter; meter = meter.parent)
     for (const key of keys) meter.used[key] += demand[key]!;
+}
+
+/** A deterministic transition may yield private progress without publishing state.
+ * Each resume restores the SAME meter; yielding never replenishes its allowance. */
+export function meteredIterator<T>(
+  limit: WorkDemand,
+  iterator: Generator<void, T>,
+): Generator<void, T> {
+  const meter: WorkMeter = {
+    limit: workVector(limit),
+    used: workVector(),
+    parent: activeMeter,
+    depth: (activeMeter?.depth ?? 0) + 1,
+  };
+  requireWork(meter.limit, WORK_LIMITS.group);
+  if (meter.depth > WORK_LIMITS.group.depth) throw new WorkBudgetError('work-contract', 'depth');
+  const resume = (operation: () => IteratorResult<void, T>) => {
+    const previous = activeMeter;
+    if (previous !== meter.parent) throw new Error('Native work resumed under a different owner.');
+    activeMeter = meter;
+    try {
+      return operation();
+    } finally {
+      activeMeter = previous;
+    }
+  };
+  return {
+    next: () => resume(() => iterator.next()),
+    return: (value) => resume(() => iterator.return(value)),
+    throw: (error) => resume(() => iterator.throw(error)),
+    [Symbol.iterator]() {
+      return this;
+    },
+  };
 }

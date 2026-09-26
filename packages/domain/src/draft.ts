@@ -1,3 +1,4 @@
+import { captureExposureCache } from './encounter-cache.js';
 import { captureAppraisalIndex } from './appraisal-index.js';
 import { captureWorkAllocations } from './work-budget.js';
 import { captureAppraisalResidency } from './appraisal-residency.js';
@@ -86,6 +87,7 @@ export function finishWorld(world: WorldState): WorldState {
   if (!isDraft(world)) return world;
   for (const value of admittedRecords.get(world) ?? []) freeze(value, true);
   admittedRecords.delete(world);
+  const publishExposure = captureExposureCache(world);
   const publishObjects = captureObjectIndex(world);
   const publishAppraisals = captureAppraisalIndex(world);
   const publishAllocations = captureWorkAllocations(world);
@@ -148,6 +150,7 @@ export function finishWorld(world: WorldState): WorldState {
   publishContributionSources(result, entityIds);
   publishContributionResidency(result, entityIds);
   publishObjects(result, entityIds);
+  publishExposure(result);
   publishAppraisals(result);
   publishAllocations(result);
   publishAppraisalResidency(result);

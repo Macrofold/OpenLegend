@@ -141,3 +141,11 @@ and automated CI are separate gates; the measured flat-map copy cost is retained
 - [x] Measure bounded child lookup, ancestor work, root movement, index rebuild, history residency, save/capture size and contention under PF's mixed workload. Record current behavior in Architecture, actual evidence in Verification and unresolved regression/hosted gates here; retain CI and default no-suite instructions.
 
 **Dependencies:** PO01–PO08. **Exit:** the real tool/bag/stack loops and meaningful failures are evidenced; this does not close arbitrary construction, D6 cross-region transfer or first-release scale qualification.
+
+## PO10 — Shared access and dependency-aware handling
+
+- [x] Reachable world containers/piles are shared by default; explicit durable actor grants restrict access, including ancestor restrictions. Carried contents remain private unless a carried bag grants access. Giving deposits into a reachable recipient without exposing possessions.
+- [x] Use accessible nested possessions for ingredients, eating and equipment. Allow unrelated transfers/splits/merges/drops during work; reject moves that affect reservations or the actor/custodian's active references, including descendants.
+- [x] Integrate container navigation, giving and creator restriction controls with current scope/revisions; exercise HTTP on both adapters and the actual inventory browser.
+
+The [base-world contract](../worlds/base/items.md#shared-containers-and-active-work) and [OB11–OB13](../limits/objects.md#ob11) own behavior/limits. [Verification](../verification.md#immediate-gameplay-limits) records evidence. Arbitrary locks/keys, granular deposit-versus-withdraw grants and consent mechanics are future authored extensions, not implemented promises.

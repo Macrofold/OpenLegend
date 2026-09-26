@@ -23,19 +23,11 @@ This file owns audit lifecycle and candidate ranking. Linked focused trackers ow
 
 Consider the permitted action path, automatic growth rate, hot-path frequency, protections before expensive work, scope of harm, recoverability and actual evidence. Do not assign precise probabilities without measurements. A world-wide pause is more serious than a refused optional request; a rapidly growing memory corpus deserves earlier attention than 10,000 manually created bows. A page/result limit, serialized lane or timeout is not automatically an input-work, backlog or resident-memory bound. Do not fix unbounded work by silently dropping protected information.
 
-**Start across categories:** C18 (dense native work), C17 (growing recall/preparation), E01 (ninth stream), E04 (bags/sharing), R03 (unrelated work interruption), C19 (overload queues). This is an engineering investigation order, not a claim that every risk has a measured failure threshold. Existing feature dependencies still apply. R02 moves to the bottom; R01 is deferred until a real reservation consumer exists.
+**Remaining immediate priorities:** C18 (dense native work), C17 (growing recall/preparation), E01 (sustained release qualification). E04, R03 and C19 are implemented and removed from this todo; their permanent inventories retain behavior and reasons. See [delivered scope and evidence](../verification.md#immediate-gameplay-limits). This is an engineering investigation order, not a claim that every risk has a measured failure threshold. Existing feature dependencies still apply. R02 moves to the bottom; R01 is deferred until a real reservation consumer exists.
 
-Source review baseline: `af1eb02`. Prior PF/verification measurements are labeled as prior evidence; no new runtime stress or latency measurements were run for this documentation change. [Inspected work and protections](../limits/README.md#growth-path-review-coverage) defines coverage and its limits.
+Original source-review baseline: `af1eb02`. The subsequent [implementation](../projects/immediate-gameplay-limits.md) adds runtime evidence; broader LA01–LA04 acceptance remains open. [Inspected work and protections](../limits/README.md#growth-path-review-coverage) defines coverage and its limits.
 
 ## Remove
-
-### R03
-
-**P1. Soon: moving an unrelated possession while doing other work.** Routine action is refused or work must stop unnecessarily.
-
-Remove the stop-all-work requirement for inventory changes that do not touch the current action’s dependencies.
-
-Moving an unrelated item should not interrupt useful work. Keep reservation/reference checks. [OB11](../limits/objects.md#ob11) · [Work](persistent-objects.md)
 
 ### R04
 
@@ -69,7 +61,7 @@ Manual save count is unlimited, but reaching this refusal requires extreme susta
 
 Bound dense native phases and the active evidence working set while preserving every required outcome.
 
-Prioritize change-fed perception, incremental expiry and measured resumable work. A six-hour window is not a byte cap, and the 8 ms yield between steps cannot preempt a long step. Budget exhaustion must not silently lose witnesses or effects. [Inventory](../limits/native-work.md#nw10) · [Work: PF03/PF09 / EPR02/EPR05](performance.md) [Active evidence window](../limits/memory.md#mh05).
+Delivered: unchanged-exposure reuse, incremental expiry, a bounded resident awareness tail, and private native checkpoints between actors/exposures. Remaining: genuine first-exposure fan-out, indivisible finalization, growing personal-memory arrays and sustained release qualification. A six-hour personal-memory window is not a byte cap, and checkpoints cannot preempt an individual operation. Budget exhaustion must not silently lose witnesses or effects. [Inventory](../limits/native-work.md#nw10) · [Work: PF03/PF09 / EPR02/EPR05](performance.md) [Active evidence window](../limits/memory.md#mh05).
 
 ### C17
 
@@ -77,15 +69,7 @@ Prioritize change-fed perception, incremental expiry and measured resumable work
 
 Bound work before memory/context materialization; qualify exact/lexical retrieval as corpora grow.
 
-Optimize repeated counts and database selection, limit preparation work with explicit continuation/overflow, and preserve required evidence. The top-300 result bound does not bound search or required-source hydration. Approximate ranking needs recall-quality evidence; no arbitrary memory deletion. [Inventory](../limits/memory.md#mh01) · [Work: PF08 / CR](performance.md) [Required/conversation hydration](../limits/memory.md#mh04), [lexical search](../limits/memory.md#mh03), [coverage counts](../limits/memory.md#mh02), [world-context formatting](../limits/cognition.md#cg01).
-
-### C19
-
-**P1. Conditional soon: concurrent ordinary requests during a slow step/query.** Queue growth can make all players wait; source risk, saturation threshold not yet measured.
-
-Add queue-depth/age admission and backpressure around serialized world and database lanes.
-
-Keep one atomic writer and current permissions. Reject or defer explicitly under overload; do not let unlimited pending promises turn a burst into prolonged world unresponsiveness. [Inventory](../limits/native-work.md#nw11) · [Work: PF01/PF07](performance.md)
+Delivered: revision-scoped coverage/selection caches, native indexed token-prefix search and pre-hydration source/byte admission with explicit overflow. Remaining: uncached exact vector/count work, broad text-match ranking, current-world observation construction and natural-history/provider-quality qualification. Preserve required evidence and existing maintenance continuation. The top-300 result bound does not bound search or required-source hydration. Approximate ranking needs recall-quality evidence; no arbitrary memory deletion. [Inventory](../limits/memory.md#mh01) · [Work: PF08 / CR](performance.md) [Required/conversation hydration](../limits/memory.md#mh04), [lexical search](../limits/memory.md#mh03), [coverage counts](../limits/memory.md#mh02), [world-context formatting](../limits/cognition.md#cg01).
 
 ### C06
 
@@ -117,7 +101,7 @@ A small correction should not need every historical body in RAM. Keep complete p
 
 Make save size/count/time/worker bounds deployment policy; split oversized owner records and qualify restore memory before choosing higher values.
 
-The 256 MiB package and 1 MiB record ceilings can block saves; increasing them alone risks full-memory restore. No defensible universal replacement number yet. [SV04](../limits/persistence.md#sv04), [SV05](../limits/persistence.md#sv05), [SV06](../limits/persistence.md#sv06), [SV07](../limits/persistence.md#sv07), [SV08](../limits/persistence.md#sv08), [SB06](../limits/persistence.md#sb06) · [Work](save-and-load.md)
+The 256 MiB package and 1 MiB record ceilings can block saves; increasing them alone risks full-memory restore. Loading also requires a new complete pre-load save, so a full disk or oversized current world can block a healthy older checkpoint. Qualify an explicit preserved-current-state recovery path under SL09-A ([SB13](../limits/persistence.md#sb13)). No defensible universal replacement number yet. [SV04](../limits/persistence.md#sv04), [SV05](../limits/persistence.md#sv05), [SV06](../limits/persistence.md#sv06), [SV07](../limits/persistence.md#sv07), [SV08](../limits/persistence.md#sv08), [SB06](../limits/persistence.md#sb06) · [Work](save-and-load.md)
 
 ### C20
 
@@ -141,7 +125,7 @@ Saving otherwise stays unavailable until a server restart. [SB11](../limits/pers
 
 Expose autosave enable/cadence/retention settings, initially retaining 5 minutes and 3 points as defaults; admit one pending manual save ahead of the next automatic capture.
 
-Operators need disk/recovery control; manual intent should not routinely fail behind an autosave. Qualify shutdown/failure behavior. [SV01](../limits/persistence.md#sv01), [SV02](../limits/persistence.md#sv02), [SB01](../limits/persistence.md#sb01), [SB02](../limits/persistence.md#sb02), [SB03](../limits/persistence.md#sb03), [LA167](../limits/persistence.md#la167) · [Work](save-and-load.md)
+Operators need disk/recovery control; manual intent should not routinely fail behind an autosave. Qualify shutdown/failure behavior and make errors survive restart (SL08-A). Retention counts are not hard disk quotas and file-integrity checks are not restore qualification. [SV01](../limits/persistence.md#sv01), [SV02](../limits/persistence.md#sv02), [SB01](../limits/persistence.md#sb01), [SB02](../limits/persistence.md#sb02), [SB03](../limits/persistence.md#sb03), [LA167](../limits/persistence.md#la167) · [Work](save-and-load.md)
 
 ### C12
 
@@ -199,6 +183,24 @@ Apply supported authored gates to contained/equipped continuous effects and sour
 
 Carried objects cannot participate in existing continuous processing; source lifetime needs explicit semantics. [ST13](../limits/state-effects.md#st13), [ST14](../limits/state-effects.md#st14) · [Work](state-contributions.md)
 
+### C22
+
+**P2. Failure recovery: operational restore fails after copying slots.** Database rollback can leave newly copied save files behind.
+
+Reconcile only the attempt’s newly installed files after failure, preserving pre-existing/referenced slots and safe retry evidence. [SB18](../limits/persistence.md#sb18) · [Work: D1/D2 file reconciliation](production-data.md#remaining-d1d2-implementation-and-evidence).
+
+### C23
+
+**P2. Conditional: slow checkpoint output prolongs a database snapshot.** Worker/page bounds do not bound retained WAL/row versions or final filesystem stalls.
+
+Measure snapshot-held storage growth and command latency; add a bounded cancellation/recovery policy or separate publication from the snapshot if measurements justify it. Do not sacrifice a consistent cut. [SB16](../limits/persistence.md#sb16) · [Work: SL09-C](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
+
+### C24
+
+**P2. Conditional: the server clock moves backward or timestamps tie.** New captures can be ranked behind old ones during retention.
+
+Use a durable capture-order key for retention/cursors and wall-clock time for display; preserve immutable save IDs and verify clock-change behavior. [SB14](../limits/persistence.md#sb14) · [Work: SL09-B](save-and-load.md#recovery-qualifications-identified-by-the-save-limit-follow-up).
+
 ### C03
 
 **P2. Failure recovery: an old retained checkpoint is damaged.** Strict full backup is refused despite a healthy current world; uncommon trigger, important recovery impact.
@@ -235,19 +237,11 @@ A hard-coded universal strike ban prevents other coherent worlds; no request her
 
 ### E01
 
-**P1. Soon: the ninth browser stream, before the agreed 100-player release.** Additional players are refused even when their gameplay itself would be valid.
+**P1. Before release: sustained 100-player mixed gameplay.** Admission now permits the release population, but a 100-player command burst still has excessive latency.
 
 Qualify at least 100 simultaneous player streams/control connections for first release; configure HTTP/service/presence/session limits together, then qualify 10,000-player growth separately.
 
-Current 8 streams and 32 connections contradict the accepted 100-player target. 4,096 stored sessions also obstruct growth. Counts alone do not establish capacity. [LA164](../limits/multiplayer.md#la164), [AU07](../limits/multiplayer.md#au07), [AU08](../limits/multiplayer.md#au08), [AU04](../limits/multiplayer.md#au04) · [Work](multiplayer.md)
-
-### E04
-
-**P1. Soon: putting useful ingredients/tools in bags or trying to give/share items.** Ordinary supported inventory workflows are unavailable, regardless of world size.
-
-Support ordinary reachable world containers as shared by default, with explicit authored locks/access restrictions; treat carried bags through possession and supported giving/access rules. Add recursive ingredient/tool discovery.
-
-Separate content visibility, removal permission and declared ownership; no change grants access to another human’s private notes. These are proposed container rules, not current implementation. [OB12](../limits/objects.md#ob12), [OB13](../limits/objects.md#ob13), [QU04](../limits/objects.md#qu04), [QU07](../limits/objects.md#qu07) · [Work](persistent-objects.md)
+Delivered: coordinated capacity defaults for 100 players with 300 connections, 600 presence entries, 400 active API requests and at least 4,096 sessions. One hundred distinct synthetic accounts connected, controlled characters and committed simultaneous speech, with a roughly 11.5-second burst tail. This is not sustained mixed gameplay or hosted/OIDC qualification. Counts alone do not establish capacity. [LA164](../limits/multiplayer.md#la164), [AU07](../limits/multiplayer.md#au07), [AU08](../limits/multiplayer.md#au08), [AU04](../limits/multiplayer.md#au04) · [Work](multiplayer.md)
 
 ### E03
 

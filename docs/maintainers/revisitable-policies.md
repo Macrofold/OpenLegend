@@ -24,7 +24,7 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 ## RP03 — Selective history and initial overload handling
 
-**Current policies:** [Retention decision ledger](../../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger) and [regional admission](../../archive/07-technical-architecture/data-delivery-and-scale.md#shared-world-regions-and-active-state). Engineering has authority to select and document performance/retention choices, with meaningful experience and game-level privacy preserved.
+**Current policies:** [Retention decision ledger](../../archive/07-technical-architecture/data-delivery-and-scale.md#retention-decision-ledger) and [regional admission](../../archive/07-technical-architecture/data-delivery-and-scale.md#shared-world-regions-and-active-state). Engineering has authority to select and document performance/retention choices, with meaningful experience and game-level privacy preserved. The [immediate implementation](../projects/immediate-gameplay-limits.md) selects bounded awareness residency and queued-work admission without deleting canonical evidence.
 
 **Why revisit:** New gameplay can make previously routine detail meaningful, and measured crowded-world behavior can justify a different scheduling or admission design.
 
@@ -34,7 +34,7 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 ## RP04 — Exact recall and reusable derived artifacts
 
-**Current policy:** [Implemented retrieval](../memory-architecture.md#implemented-retrieval-and-storage) uses exact actor-scoped cosine ranking and retains revision-keyed vector artifacts outside gameplay rewind. Only current eligible sources can enter search; cache/history presence cannot bypass forgetting.
+**Current policy:** [Implemented retrieval](../memory-architecture.md#implemented-retrieval-and-storage) uses exact actor-scoped cosine ranking and retains revision-keyed vector artifacts outside gameplay rewind. Only current eligible sources can enter search; cache/history presence cannot bypass forgetting. The [preparation/index policy](../memory-architecture.md#retrieval-preparation-admission) adds snapshot-fenced caches and indexed optional token-prefix search; exact semantic recall is unchanged.
 
 **Why revisit:** Exact ranking avoids an unmeasured recall-quality tradeoff, but measured 100,000-source searches are slower than smaller corpora. Retaining reusable vectors prevents duplicate purchases after source correction/restore at additional storage cost.
 
@@ -44,7 +44,7 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 ## RP05 — Prototype account and native-work operating envelopes
 
-**Current policy:** [Account setup](../../README.md#configure-authenticated-shared-play) and [aggregate native work](../architecture.md#typed-state-claims-and-aggregate-work) use configurable eight-hour sessions, fifteen-second real-time exit grace, one active embodiment per account/world, and versioned finite process-wide native-work ceilings. These are operational v1 choices, not universal world laws or hosted capacity promises.
+**Current policy:** [Account setup](../../README.md#configure-authenticated-shared-play) and [aggregate native work](../architecture.md#typed-state-claims-and-aggregate-work) use configurable eight-hour sessions, fifteen-second real-time exit grace, one active embodiment per account/world, and versioned finite process-wide native-work ceilings. These are operational v1 choices, not universal world laws or hosted capacity promises. [Measured release admission](../performance.md#bounded-admission) now coordinates 100-player defaults and admits 64 MB of native event output without trimming witnesses; PF11/D5 performance acceptance remains open.
 
 **Why revisit:** Multiple simultaneous embodiments, deployment security needs, new supported recurring families or measured shared-world load may need different envelopes. The final mixed profile has an explicit [PF03/09 CPU gap](performance.md#foundations-15-measurements-and-remaining-cost).
 

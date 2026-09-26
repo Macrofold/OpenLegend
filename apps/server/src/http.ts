@@ -1,3 +1,4 @@
+import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
 import { continuityView } from './continuity-view.js';
 import {
@@ -262,14 +263,20 @@ const godWorldEvent = z
   })
   .strict();
 
-async function jsonBody(request: IncomingMessage): Promise<unknown> {
+async function jsonBody(
+  request: IncomingMessage,
+  retain: (bytes: number) => void,
+): Promise<unknown> {
   let bytes = 0;
   const chunks: Buffer[] = [];
   const limit = request.url?.startsWith('/api/god/editor/') ? 1_048_576 : 16_384;
-  for await (const chunk of request) {
+  // Preserve the response socket when admission rejects a body mid-stream; Node
+  // drains the unread request after the explicit HTTP error has been sent.
+  for await (const chunk of request.iterator({ destroyOnReturn: false })) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string);
     bytes += buffer.length;
     if (bytes > limit) throw new Error('body-limit');
+    retain(buffer.length);
     chunks.push(buffer);
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
@@ -307,6 +314,8 @@ export async function createGameServer(
   let director = new AiDirector(service, options.aiClient, options.now);
   let loadingSave = false;
   let activeWrites = 0;
+  let activeRequests = 0;
+  let retainedBodyBytes = 0;
   const now = options.now ?? Date.now;
   const authentication =
     config.authentication.mode === 'oidc'
@@ -331,7 +340,7 @@ export async function createGameServer(
   const channels = new Map<string, Channel>();
   const streams = new Map<ServerResponse, StreamState>();
   let pendingStreams = 0;
-  let projectionQueue: Promise<unknown> = Promise.resolve();
+  const projectionLane = new WorkLane('projection', config.capacity.requests);
   const invalidateStream = (stream: ServerResponse) => {
     // No private payload accompanies revocation. A blocked connection is disconnected;
     // data already handed to the transport cannot be recalled.
@@ -339,14 +348,15 @@ export async function createGameServer(
     else stream.end('event: access-changed\ndata: {}\n\n');
   };
   const currentView = (scope: RequestScope): Promise<GameView> => {
-    const pending = projectionQueue.then(async () => {
+    const pending = projectionLane.run(async () => {
       service.assertScope(scope);
       for (const [key, channel] of channels)
         if (!service.currentScope(channel.scope)) channels.delete(key);
       const key = scopeKey(scope);
       let channel = channels.get(key);
       if (!channel) {
-        while (channels.size >= 32) channels.delete(channels.keys().next().value!);
+        while (channels.size >= config.capacity.connections)
+          channels.delete(channels.keys().next().value!);
         channels.set(key, (channel = { scope, patches: new Map(), bytes: 0 }));
       }
       if (channel.view?.revision === service.version) return channel.view;
@@ -373,7 +383,7 @@ export async function createGameServer(
       channel.view = next;
       return next;
     });
-    projectionQueue = pending.catch(() => undefined);
+
     return pending;
   };
   const pump = (stream: ServerResponse) => {
@@ -399,6 +409,7 @@ export async function createGameServer(
   };
   let publishTimer: ReturnType<typeof setTimeout> | undefined;
   let publishing = false;
+  let publicationDone = Promise.resolve();
   let publishQueued = false;
   let disposed = false;
   const publish = () => {
@@ -411,9 +422,21 @@ export async function createGameServer(
     publishTimer = setTimeout(async () => {
       publishTimer = undefined;
       publishing = true;
+      let completePublication!: () => void;
+      publicationDone = new Promise<void>((resolve) => {
+        completePublication = resolve;
+      });
       try {
         if (!streams.size) return;
+        let sliceStarted = performance.now();
         for (const [stream, state] of streams) {
+          if (disposed) break;
+          // Coalesce revisions and let command/socket I/O run between projection slices.
+          // A hundred viewers must not monopolize the event loop in one microtask chain.
+          if (performance.now() - sliceStarted >= 8) {
+            await new Promise<void>((resolve) => setImmediate(resolve));
+            sliceStarted = performance.now();
+          }
           if (!service.currentScope(state.scope)) {
             invalidateStream(stream);
             continue;
@@ -427,6 +450,10 @@ export async function createGameServer(
             await currentView(state.scope);
             pump(stream);
           } catch (error) {
+            if (error instanceof OverloadError) {
+              publishQueued = true;
+              continue;
+            }
             // Revocation can race an awaited projection. It invalidates this audience,
             // not shared storage or other players' simulation.
             if (!(error instanceof AuthorityError)) throw error;
@@ -440,12 +467,13 @@ export async function createGameServer(
         streams.clear();
       } finally {
         publishing = false;
+        completePublication();
         if (publishQueued) {
           publishQueued = false;
           publish();
         }
       }
-    }, 0);
+    }, 50);
   };
   const unsubscribe = service.subscribe(publish);
   const vite = options.production
@@ -517,6 +545,7 @@ export async function createGameServer(
                 identity,
                 now(),
                 config.authentication.sessionMs,
+                config.capacity.sessions,
               );
               if (previous) {
                 try {
@@ -554,6 +583,7 @@ export async function createGameServer(
           message: 'A saved world is loading. Please wait.',
         });
       const writing = request.method === 'POST';
+      let requestBytes = 0;
 
       const origin = request.headers.origin;
       if (request.headers['sec-fetch-site'] === 'cross-site' || (origin && origin !== ownOrigin))
@@ -562,6 +592,15 @@ export async function createGameServer(
           code: 'origin',
           message: 'Use the game in its own browser tab.',
         });
+      if (activeRequests >= config.capacity.requests) {
+        response.setHeader('Retry-After', '1');
+        return send(response, 503, {
+          ok: false,
+          code: 'busy',
+          message: new OverloadError().message,
+        });
+      }
+      activeRequests++;
       if (writing) activeWrites++;
       try {
         let token = readCookie(request, 'ol_session');
@@ -596,7 +635,13 @@ export async function createGameServer(
             return send(response, 415, { ok: false, message: 'Use a JSON request.' });
           z.object({})
             .strict()
-            .parse(await jsonBody(request));
+            .parse(
+              await jsonBody(request, (bytes) => {
+                if (retainedBodyBytes + bytes > 16 * 1024 * 1024) throw new OverloadError();
+                retainedBodyBytes += bytes;
+                requestBytes += bytes;
+              }),
+            );
           await service.authenticationMutation(() =>
             store.authority.revokeSession(login.id, now()),
           );
@@ -719,7 +764,7 @@ export async function createGameServer(
           });
         }
         if (request.method === 'GET' && url.pathname === '/api/events') {
-          if (streams.size + pendingStreams >= 8)
+          if (streams.size + pendingStreams >= config.capacity.connections)
             return send(response, 429, {
               ok: false,
               code: 'connections',
@@ -732,24 +777,34 @@ export async function createGameServer(
           const release = async () => {
             if (!connected || released || disposed) return;
             released = true;
-            await service.setConnection(transportId, false, scope);
+            try {
+              await service.setConnection(transportId, false, scope);
+            } catch (error) {
+              released = false;
+              if (!(error instanceof OverloadError)) throw error;
+              // An expired cleanup must not leak a presence/connection slot. At most
+              // one retry per admitted transport; this never replays gameplay.
+              const retry = setTimeout(() => void release().catch(logCleanupFailure), 1000);
+              retry.unref();
+            }
+          };
+          const logCleanupFailure = (error: unknown) => {
+            console.error(
+              'Game connection cleanup failed:',
+              error instanceof Error ? error.message : 'unknown error',
+            );
           };
           response.once('close', () => {
             closed = true;
             clearTimeout(streams.get(response)?.timeout);
             streams.delete(response);
-            void release().catch((error: unknown) => {
-              console.error(
-                'Game connection cleanup failed:',
-                error instanceof Error ? error.message : 'unknown error',
-              );
-            });
+            void release().catch(logCleanupFailure);
           });
           // Keep admission reserved across the initial asynchronous private projection.
           pendingStreams++;
           try {
-            connected = true;
             await service.setConnection(transportId, true, scope);
+            connected = true;
             if (closed) {
               await release();
               return;
@@ -813,7 +868,11 @@ export async function createGameServer(
             code: 'content-type',
             message: 'Use a JSON request.',
           });
-        const body = await jsonBody(request);
+        const body = await jsonBody(request, (bytes) => {
+          if (retainedBodyBytes + bytes > 16 * 1024 * 1024) throw new OverloadError();
+          retainedBodyBytes += bytes;
+          requestBytes += bytes;
+        });
         const submittedScope =
           request.headers['x-ol-scope'] ??
           (url.pathname === '/api/presence' ? url.searchParams.get('scope') : undefined);
@@ -1228,6 +1287,18 @@ export async function createGameServer(
                 .strict()
                 .parse(body);
               return send(response, 200, await service.createItem(value, scope));
+            }
+            case '/api/god/container-access': {
+              const value = z
+                .object({
+                  id: requestIdSchema,
+                  itemId: requestIdSchema,
+                  expectedRevision: sequence,
+                  actors: z.array(requestIdSchema).max(100).nullable(),
+                })
+                .strict()
+                .parse(body);
+              return send(response, 200, await service.containerAccess(value, scope));
             }
             case '/api/god/ownership': {
               const value = z
@@ -1973,6 +2044,10 @@ export async function createGameServer(
           ? await dispatch()
           : await service.authorized(scope, required, controlling, dispatch);
       } catch (error) {
+        if (error instanceof OverloadError) {
+          response.setHeader('Retry-After', '1');
+          return send(response, 503, { ok: false, code: 'busy', message: error.message });
+        }
         if (error instanceof AuthorityError) {
           responseScope = undefined;
           return send(response, error.code === 'session' ? 401 : 403, {
@@ -1997,6 +2072,8 @@ export async function createGameServer(
         });
       } finally {
         if (writing) activeWrites--;
+        activeRequests--;
+        retainedBodyBytes -= requestBytes;
       }
     }
     if (vite) {
@@ -2074,7 +2151,8 @@ export async function createGameServer(
             if (!thinking)
               thinking = director
                 .considerThought()
-                .catch(() => {
+                .catch((error: unknown) => {
+                  if (error instanceof OverloadError) return;
                   service.storageError =
                     'Background admission failed; simulation paused. Restart and reconcile storage.';
                   service.notify();
@@ -2083,7 +2161,8 @@ export async function createGameServer(
                   thinking = undefined;
                 });
           })()
-            .catch(() => {
+            .catch((error: unknown) => {
+              if (error instanceof OverloadError) return;
               service.storageError =
                 'Background persistence failed; simulation paused. Restart and reconcile storage.';
               service.notify();
@@ -2111,8 +2190,9 @@ export async function createGameServer(
       await thinking;
       await autosaves.close();
       await director.close();
+      await publicationDone;
       await service.flush();
-      await projectionQueue;
+      await projectionLane.idle();
       for (const [stream, state] of streams) {
         clearTimeout(state.timeout);
         stream.end();

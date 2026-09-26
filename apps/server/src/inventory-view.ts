@@ -1,5 +1,9 @@
 import {
   NATIVE_PREPARATIONS,
+  canAccessContainer,
+  accessiblePossession,
+  inventoryWorkReason,
+  worldRootEntities,
   dropItemReason,
   hasWildernessNeeds,
   observerDescription,
@@ -84,11 +88,7 @@ export function containerPage(
   const world = service.world,
     containerId = request.containerId ?? scope.actorId;
   const entity = world.entities[containerId];
-  if (
-    !entity ||
-    !(entity.actor || entity.container) ||
-    custodian(world, containerId) !== scope.actorId
-  )
+  if (!entity || !canAccessContainer(world, scope.actorId, containerId))
     throw new Error('This container is unavailable.');
   const revision = entity.inventoryRevision ?? 0,
     rootRevision = world.entities[scope.actorId]!.inventoryRevision ?? 0;
@@ -149,6 +149,7 @@ export function containerPage(
       id: containerId,
       name: entity.name,
       revision,
+      ...(entity.container ? { restricted: !!entity.container.access } : {}),
       ...(entity.container
         ? {
             load: entity.container.load,
@@ -158,10 +159,22 @@ export function containerPage(
     },
     breadcrumbs: objectAncestors(world, containerId)
       .reverse()
+      .filter((parent) => canAccessContainer(world, scope.actorId, parent.id))
       .map((parent) => ({
         id: parent.id,
         name: parent.name,
         revision: parent.inventoryRevision ?? 0,
+      })),
+    destinations: worldRootEntities(world)
+      .filter(
+        (target) =>
+          target.id !== scope.actorId && canAccessContainer(world, scope.actorId, target.id, true),
+      )
+      .map((target) => ({
+        id: target.id,
+        name: observerDescription(world, scope.actorId, target.id),
+        revision: target.inventoryRevision ?? 0,
+        depositOnly: !!target.actor,
       })),
     items,
     ...(next ? { next } : {}),
@@ -218,19 +231,27 @@ export function inventoryItemView(
 
   const definition = world.itemDefinitions[item.definitionId]!;
   const actions: ActionOption[] = [];
-  if (definition.portable === true && item.ownerId === player.id) {
+  const workReason = inventoryWorkReason(world, player.id, item.id);
+  if (definition.portable === true && accessiblePossession(world, player.id, item.id)) {
     const command = { type: 'drop' as const, itemId: item.id, quantity: item.quantity };
     const reason = dropItemReason(world, player, item.id, item.quantity);
     actions.push(action(`drop-${item.id}`, 'Drop', command, !reason, reason ?? undefined));
   }
-  if ((definition.launcher || definition.gatheringTool) && item.ownerId === player.id)
+  if (
+    (definition.launcher || definition.gatheringTool) &&
+    accessiblePossession(world, player.id, item.id)
+  )
     actions.push(action(`equip-${item.id}`, 'Equip', { type: 'equip', itemId: item.id }));
-  if (item.ownerId === player.id && definition.nutrition && hasWildernessNeeds(actor))
+  if (
+    accessiblePossession(world, player.id, item.id) &&
+    definition.nutrition &&
+    hasWildernessNeeds(actor)
+  )
     actions.push(action(`eat-${item.id}`, 'Eat one', { type: 'eat', itemId: item.id }));
-  if (item.ownerId === player.id && item.definitionId === 'raw_meat')
+  if (accessiblePossession(world, player.id, item.id) && item.definitionId === 'raw_meat')
     actions.push(action(`cook-${item.id}`, 'Cook one', { type: 'cook', itemId: item.id }));
   for (const [key, recipe] of Object.entries(NATIVE_PREPARATIONS))
-    if (item.ownerId === player.id && recipe.input === item.definitionId)
+    if (accessiblePossession(world, player.id, item.id) && recipe.input === item.definitionId)
       actions.push(
         action(
           `prepare-${key}`,
@@ -254,8 +275,8 @@ export function inventoryItemView(
           placementRevision: item.placementRevision!,
           targetRevision: world.entities[item.ownerId]!.inventoryRevision ?? 0,
         },
-        !actor.action,
-        'Finish current work first.',
+        !workReason,
+        workReason ?? undefined,
       ),
     );
   if (actor.equippedItemId === item.id)
@@ -279,7 +300,7 @@ export function inventoryItemView(
     revision: item.revision ?? 0,
     placementRevision: item.placementRevision ?? 0,
     individual: item.individuality === 'individual',
-    ...(item.container
+    ...(item.container && canAccessContainer(world, scope.actorId, item.id)
       ? {
           container: {
             load: item.container.load,

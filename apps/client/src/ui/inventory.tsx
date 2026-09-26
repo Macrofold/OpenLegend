@@ -102,7 +102,7 @@ export function Inventory({
     view.player.participation,
     !!view.player.action,
     view.player.statusEffects,
-    view.player.action ? null : view.player.position,
+    view.player.position,
     view.player.supportSurfaceId,
     view.map.spatial.revision,
     view.recipes.map((recipe) => recipe.id),
@@ -155,7 +155,7 @@ export function Inventory({
   const mergeTarget = mergeTargets.find((other) => other.id === mergeTargetId) ?? mergeTargets[0];
   const validQuantity =
     !!item && Number.isSafeInteger(quantity) && quantity > 0 && quantity <= item.quantity;
-  const canAct = connected && view.player.canUseInventory && !view.player.action;
+  const canAct = connected && view.player.canUseInventory;
   const navigate = (id: string) => {
     setLocation({ id });
     setSelected(null);
@@ -218,6 +218,39 @@ export function Inventory({
         scope={view.access?.scope ?? view.saveTimeline ?? ''}
         revision={view.player.inventoryRevision}
       />
+      <div className="ol-actions" aria-label="Nearby containers and recipients">
+        <Button size="sm" onPress={() => navigate(view.player.id)}>
+          My possessions
+        </Button>
+        {page?.destinations?.map((target) =>
+          target.depositOnly ? (
+            moving && (
+              <Button
+                key={target.id}
+                size="sm"
+                disabled={!canAct}
+                onPress={() =>
+                  dispatch(
+                    arrange(
+                      'transfer-item',
+                      moving.item,
+                      target.id,
+                      target.revision,
+                      moving.quantity,
+                    ),
+                  )
+                }
+              >
+                Give to {target.name}
+              </Button>
+            )
+          ) : (
+            <Button key={target.id} size="sm" onPress={() => navigate(target.id)}>
+              Open {target.name}
+            </Button>
+          ),
+        )}
+      </div>
       <nav aria-label="Container path" className="ol-actions">
         {(page?.breadcrumbs ?? [{ id: view.player.id, name: 'Possessions' }]).map((entry) => (
           <Button key={entry.id} size="sm" variant="quiet" onPress={() => navigate(entry.id)}>
@@ -225,6 +258,29 @@ export function Inventory({
           </Button>
         ))}
       </nav>
+      {view.godMode && page?.container.capacity !== undefined && (
+        <Button
+          size="sm"
+          disabled={saving || !connected}
+          onPress={() => {
+            setSaving(true);
+            void post('/api/god/container-access', {
+              id: crypto.randomUUID(),
+              itemId: page.container.id,
+              expectedRevision: page.container.revision,
+              actors: page.container.restricted ? null : [view.player.id],
+            })
+              .then((response) => {
+                setMessage(response.message ?? 'Access updated.');
+                setRefresh((value) => value + 1);
+              })
+              .catch((cause) => setMessage(String(cause)))
+              .finally(() => setSaving(false));
+          }}
+        >
+          {page.container.restricted ? 'Make shared' : 'Restrict to my character'}
+        </Button>
+      )}
       {page?.container.capacity !== undefined && (
         <p>
           Packing load: {page.container.load} / {page.container.capacity}

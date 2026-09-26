@@ -1,6 +1,17 @@
 import { tableRows } from './record-pages.js';
 import { insertRows } from './sql-rows.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
+// Preparation allowance, not a retained-history or searchable-corpus limit.
+export const RETRIEVAL_ROWS = 8192;
+export const RETRIEVAL_BYTES = 4 * 1024 * 1024;
+export class MemoryPreparationError extends Error {
+  override readonly name = 'MemoryPreparationError';
+  constructor() {
+    super(
+      'Required memory context exceeds preparation capacity. Use paged history or consolidate the conversation before another full-context decision; no evidence was discarded.',
+    );
+  }
+}
 export const MAINTENANCE_SOURCES = 128;
 export const MAINTENANCE_BYTES = 512 * 1024;
 import { createHash } from 'node:crypto';
@@ -22,6 +33,25 @@ const sourceTables = {
 } as const;
 export type MemoryChanges = Map<string, Set<string> | null>;
 type SourceKind = keyof typeof sourceTables;
+// Payload/text bodies must not leak into metadata selection before byte admission.
+const sourceColumnNames = [
+  'world_id',
+  'actor_id',
+  'id',
+  'source_kind',
+  'record_id',
+  'revision',
+  'event_id',
+  'memory_kind',
+  'acquisition',
+  'event_type',
+  'at',
+  'importance',
+  'required',
+  'eligible',
+  'sequence',
+];
+const sourceColumns = sourceColumnNames.map((name) => `r.${name}`).join(',');
 const sourceRevision = (payload: string) => createHash('sha256').update(payload).digest('hex');
 export const MEMORY_HISTORY_TABLES = ['mind_source_versions', 'mind_source_annotations'] as const;
 // Paid derived artifacts follow operational backup, not gameplay rewind. SQLite
@@ -53,6 +83,16 @@ export interface MemoryModel {
  */
 export class MemoryRepository {
   publicationRevision = 0;
+  private coverageCache = new Map<
+    string,
+    {
+      revision: number;
+      vectorRevision: number;
+      value: { eligible: number; indexed: number; missing: number };
+    }
+  >();
+  private vectorRevision = 0;
+  private textSelection = new Map<string, { revision: number; rows: Record<string, unknown>[] }>();
   private actorRevisions = new Map<string, number>();
   actorRevision(actorId: string): number {
     return this.actorRevisions.get(actorId) ?? 0;
@@ -69,7 +109,15 @@ export class MemoryRepository {
       if (table.startsWith('mind_')) for (const row of rows) mark(row.id);
     for (const [table, ids] of changes.deletes)
       if (table.startsWith('mind_')) for (const id of ids) mark(id);
-    if (restored) this.actorRevisions.clear();
+    if (changes.writes.has('experience_state') || changes.deletes.has('experience_state')) {
+      this.coverageCache.clear();
+      this.vectorRevision++;
+    }
+    if (restored) {
+      this.actorRevisions.clear();
+      this.coverageCache.clear();
+      this.textSelection.clear();
+    }
     if (
       restored ||
       actors.size ||
@@ -90,6 +138,8 @@ export class MemoryRepository {
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
         PRIMARY KEY(world_id,actor_id,id,source_kind));
       CREATE INDEX IF NOT EXISTS recall_actor_rank ON recall_sources(world_id,actor_id,eligible,importance DESC,at DESC,id);
+      CREATE INDEX IF NOT EXISTS recall_source_validation ON recall_sources(world_id,actor_id,eligible,id);
+      CREATE INDEX IF NOT EXISTS recall_context_rank ON recall_sources(world_id,actor_id,eligible,required DESC,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_actor_recent ON recall_sources(world_id,actor_id,eligible,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_commitments ON recall_sources(world_id,actor_id,at,id) WHERE source_kind='memory' AND memory_kind='commitment' AND eligible=1;
       CREATE INDEX IF NOT EXISTS recall_actor_event ON recall_sources(world_id,actor_id,event_id);
@@ -160,6 +210,75 @@ export class MemoryRepository {
           if (batch.length === 64) await backfill();
         }
         if (batch.length) await backfill();
+      }
+      if (!columns.some((row) => row['name'] === 'search_text')) {
+        await this.db.exec(
+          "ALTER TABLE recall_sources ADD COLUMN search_text TEXT NOT NULL DEFAULT ''",
+        );
+        // Rebuild only the derived search projection. Bounded migration statements
+        // preserve canonical source bodies and stay inside one atomic migration.
+        let batch: Record<string, unknown>[] = [];
+        const backfill = async () => {
+          for (const [kind, table] of Object.entries(sourceTables)) {
+            const field = kind === 'memory' ? 'summary' : 'text';
+            const value =
+              this.db.dialect === 'postgres'
+                ? `t.payload::jsonb ->> '${field}'`
+                : `json_extract(t.payload,'$.${field}')`;
+            const scopes = new Map<string, Record<string, unknown>[]>();
+            for (const row of batch.filter((row) => row['source_kind'] === kind)) {
+              const key = JSON.stringify([row['world_id'], row['actor_id']]);
+              const group = scopes.get(key) ?? [];
+              group.push(row);
+              scopes.set(key, group);
+            }
+            for (const group of scopes.values())
+              await this.db
+                .prepare(
+                  `UPDATE recall_sources SET search_text=COALESCE(
+              (SELECT ${value} FROM ${table} t WHERE t.world_id=recall_sources.world_id AND t.id=recall_sources.record_id),'')
+              WHERE world_id=? AND actor_id=? AND source_kind=? AND id IN (${group.map(() => '?').join(',')})`,
+                )
+                .run(
+                  group[0]!['world_id'],
+                  group[0]!['actor_id'],
+                  kind,
+                  ...group.map((row) => row['id']),
+                );
+          }
+          batch = [];
+        };
+        for await (const row of tableRows(this.db, 'recall_sources')) {
+          batch.push(row);
+          if (batch.length === 64) await backfill();
+        }
+        if (batch.length) await backfill();
+      }
+      if (this.db.dialect === 'postgres') {
+        if (!columns.some((row) => row['name'] === 'search_vector'))
+          await this.db.exec(
+            "ALTER TABLE recall_sources ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (to_tsvector('simple',search_text)) STORED",
+          );
+        await this.db.exec(
+          'CREATE INDEX IF NOT EXISTS recall_text_vector ON recall_sources USING GIN(search_vector)',
+        );
+      } else {
+        const existing = await this.db
+          .prepare("SELECT name FROM sqlite_master WHERE name='recall_text_search'")
+          .get();
+        await this.db
+          .exec(`CREATE VIRTUAL TABLE IF NOT EXISTS recall_text_search USING fts5(search_text,actor_id,world_id,content='recall_sources',content_rowid='rowid');
+          CREATE TRIGGER IF NOT EXISTS recall_text_insert AFTER INSERT ON recall_sources BEGIN
+            INSERT INTO recall_text_search(rowid,search_text,actor_id,world_id) VALUES(new.rowid,new.search_text,new.actor_id,new.world_id); END;
+          CREATE TRIGGER IF NOT EXISTS recall_text_delete AFTER DELETE ON recall_sources BEGIN
+            INSERT INTO recall_text_search(recall_text_search,rowid,search_text,actor_id,world_id) VALUES('delete',old.rowid,old.search_text,old.actor_id,old.world_id); END;
+          CREATE TRIGGER IF NOT EXISTS recall_text_update AFTER UPDATE OF search_text ON recall_sources WHEN old.search_text<>new.search_text BEGIN
+            INSERT INTO recall_text_search(recall_text_search,rowid,search_text,actor_id,world_id) VALUES('delete',old.rowid,old.search_text,old.actor_id,old.world_id);
+            INSERT INTO recall_text_search(rowid,search_text,actor_id,world_id) VALUES(new.rowid,new.search_text,new.actor_id,new.world_id); END;`);
+        if (!existing)
+          await this.db.exec(
+            "INSERT INTO recall_text_search(recall_text_search) VALUES('rebuild')",
+          );
       }
       await this.db
         .exec(`CREATE INDEX IF NOT EXISTS recall_maintenance ON recall_sources(world_id,actor_id,eligible,at,sequence,id);
@@ -276,13 +395,18 @@ export class MemoryRepository {
           value['kind'] === 'commitment' && !value['resolved'] ? 1 : 0,
           0,
           value['sequence'] ?? 0,
+          value[kind === 'memory' ? 'summary' : 'text'] ?? '',
         ]);
         touch(actorId, id);
         if (kind === 'summary')
           for (const sourceId of value['sourceIds'] as string[])
             links.push([worldId, actorId, id, sourceId]);
       }
-      await insertRows(this.db, 'recall_sources', sourceRows);
+      await insertRows(
+        this.db,
+        `recall_sources(${[...sourceColumnNames, 'search_text'].join(',')})`,
+        sourceRows,
+      );
       await insertRows(this.db, 'mind_summary_sources', links, 'ON CONFLICT DO NOTHING');
     }
     for (const table of ['mind_forgotten', 'mind_corrections']) {
@@ -492,10 +616,11 @@ export class MemoryRepository {
         JOIN mind_awareness a ON a.world_id=e.world_id AND a.source_id=e.id
         JOIN recall_sources r ON r.world_id=a.world_id AND r.actor_id=a.actor_id AND r.id=a.source_id AND r.source_kind='awareness'
         WHERE ${this.eligible} AND e.conversation_id=? AND ${this.db.dialect === 'postgres' ? "(e.payload::jsonb->>'type')" : "json_extract(e.payload,'$.type')"}='speech'
-        ORDER BY a.sequence`,
+        ORDER BY a.sequence LIMIT ${RETRIEVAL_ROWS + 1}`,
               )
               .all(...this.params(scope), conversation)
           : [];
+      if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
       const required = new Set(requiredIds);
       return {
         sequence: Number(watermark?.['sequence'] ?? 0),
@@ -626,7 +751,7 @@ export class MemoryRepository {
       this.hydrate(
         await this.db
           .prepare(
-            `SELECT r.* FROM recall_sources r WHERE ${this.eligible} AND r.source_kind='memory' AND r.memory_kind='commitment' ORDER BY r.at,r.id`,
+            `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND r.source_kind='memory' AND r.memory_kind='commitment' ORDER BY r.at,r.id LIMIT ${RETRIEVAL_ROWS + 1}`,
           )
           .all(...this.params(scope)),
       ),
@@ -687,7 +812,7 @@ export class MemoryRepository {
         this.db.dialect === 'postgres' ? 'octet_length(payload)' : 'length(CAST(payload AS BLOB))';
       const rows = await this.db
         .prepare(
-          `SELECT r.*, CASE r.source_kind ${Object.entries(sourceTables)
+          `SELECT ${sourceColumns}, CASE r.source_kind ${Object.entries(sourceTables)
             .map(
               ([kind, table]) =>
                 `WHEN '${kind}' THEN (SELECT ${payloadBytes} FROM ${table} t WHERE t.world_id=r.world_id AND t.id=r.record_id)`,
@@ -793,40 +918,102 @@ export class MemoryRepository {
         return this.hydrate(
           await this.db
             .prepare(
-              `SELECT r.* FROM recall_sources r WHERE ${this.eligible} ORDER BY r.at DESC,r.id LIMIT ?`,
+              `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} ORDER BY r.at DESC,r.id LIMIT ?`,
             )
             .all(...this.params(scope), limit),
         );
-      const field = (alias: string, name: string) =>
-        this.db.dialect === 'postgres'
-          ? `${alias}.payload::jsonb ->> '${name}'`
-          : `json_extract(${alias}.payload, '$.${name}')`;
-      const words =
-        this.db.dialect === 'postgres'
-          ? 'SELECT value FROM jsonb_array_elements_text(?::jsonb)'
-          : 'SELECT value FROM json_each(?)';
-      const text = `LOWER(COALESCE(${field('m', 'summary')},${field('a', 'text')},${field('s', 'text')},''))`;
-      const contains =
-        this.db.dialect === 'postgres' ? `strpos(${text},w.value)>0` : `instr(${text},w.value)>0`;
-      const rows = await this.db
+      const cacheKey = JSON.stringify([scope, query, limit]);
+      const cached = this.textSelection.get(cacheKey);
+      const revision = this.publicationRevision;
+      // Bind cached metadata to this database snapshot before hydrating. Publication
+      // can race entry into a read transaction; a JS revision check alone is insufficient.
+      if (
+        cached?.revision === revision &&
+        (await this.current(
+          scope,
+          cached.rows.map((row) => ({ id: String(row['id']), revision: String(row['revision']) })),
+        )) &&
+        revision === this.publicationRevision
+      )
+        return this.hydrate(cached.rows);
+      // Token-prefix search uses the database's inverted index. Substring matching
+      // required reparsing every retained JSON body; docs/memory-architecture.md#retrieval-preparation-admission.
+      const terms = [...new Set(query.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [])];
+      let matched: Record<string, unknown>[] = [];
+      if (terms.length) {
+        if (this.db.dialect === 'postgres') {
+          const expression = terms.map((term) => `'${term}':*`).join(' | ');
+          matched = await this.db
+            .prepare(
+              `SELECT ${sourceColumns},
+            ts_rank(r.search_vector,to_tsquery('simple',?)) AS score
+            FROM recall_sources r WHERE ${this.eligible}
+            AND r.search_vector @@ to_tsquery('simple',?)
+            ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?`,
+            )
+            .all(expression, ...this.params(scope), expression, limit);
+        } else {
+          const phrase = (value: string) => '"' + value.replaceAll('"', '""') + '"';
+          const expression = `world_id:${phrase(scope.worldId)} AND actor_id:${phrase(scope.actorId)} AND search_text:(${terms.map((term) => `"${term}"*`).join(' OR ')})`;
+          // Ordering by the native rank alone lets FTS stream its ranked matches;
+          // adding required/recency sorting forces all hits through a temporary sort.
+          // Required sources are selected separately below, with no newest-only prefilter.
+          matched = await this.db
+            .prepare(
+              `SELECT ${sourceColumns}, -rank AS score
+            FROM recall_text_search CROSS JOIN recall_sources r ON r.rowid=recall_text_search.rowid
+            WHERE ${this.eligible} AND recall_text_search MATCH ?
+            ORDER BY rank LIMIT ?`,
+            )
+            .all(...this.params(scope), expression, limit);
+        }
+      }
+      const fallback = await this.db
         .prepare(
-          `SELECT r.* FROM recall_sources r
-        LEFT JOIN mind_memories m ON r.source_kind='memory' AND m.world_id=r.world_id AND m.id=r.record_id
-        LEFT JOIN mind_awareness a ON r.source_kind='awareness' AND a.world_id=r.world_id AND a.id=r.record_id
-        LEFT JOIN mind_summaries s ON r.source_kind='summary' AND s.world_id=r.world_id AND s.id=r.record_id
-        WHERE ${this.eligible}
-        ORDER BY (r.importance + CASE WHEN r.required=1 THEN 20 ELSE 0 END +
-          5*(SELECT COUNT(*) FROM (${words}) w WHERE ${contains})) DESC,r.at DESC,r.id LIMIT ?`,
+          `SELECT ${sourceColumns} FROM recall_sources r
+        WHERE ${this.eligible} ORDER BY r.required DESC,r.importance DESC,r.at DESC,r.id LIMIT ?`,
         )
-        .all(
-          ...this.params(scope),
-          JSON.stringify(query.toLowerCase().split(/\W+/).filter(Boolean)),
-          limit,
-        );
+        .all(...this.params(scope), limit);
+      const matchIds = new Set(matched.map((row) => `${row['source_kind']}:${row['id']}`));
+      const candidates = [
+        ...matched,
+        ...fallback.filter((row) => !matchIds.has(`${row['source_kind']}:${row['id']}`)),
+      ];
+      const rows = [
+        ...new Map(
+          [
+            ...candidates.filter((row) => Number(row['required']) === 1),
+            ...candidates.filter((row) => Number(row['required']) !== 1),
+          ].map((row) => [`${row['source_kind']}:${row['id']}`, row]),
+        ).values(),
+      ].slice(0, limit);
+      if (revision === this.publicationRevision) {
+        if (this.textSelection.size >= 64)
+          this.textSelection.delete(this.textSelection.keys().next().value!);
+        this.textSelection.set(cacheKey, { revision, rows });
+      }
       return this.hydrate(rows);
     });
   }
   private async hydrate(rows: Record<string, unknown>[]): Promise<RetrievedMemory[]> {
+    if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    // Check serialized source bytes in SQL before bringing bodies into the host. One
+    // read snapshot binds the check and hydration to the same versions.
+    let bytes = 0;
+    for (const kind of Object.keys(sourceTables) as SourceKind[]) {
+      const selected = rows.filter((row) => row['source_kind'] === kind);
+      for (let offset = 0; offset < selected.length; offset += 350) {
+        const batch = selected.slice(offset, offset + 350);
+        const size = await this.db
+          .prepare(
+            `SELECT SUM(${this.db.dialect === 'postgres' ? 'octet_length(payload)' : 'length(CAST(payload AS BLOB))'}) AS bytes
+          FROM ${sourceTables[kind]} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
+          )
+          .get(batch[0]!['world_id'], ...batch.map((row) => row['record_id']));
+        bytes += Number(size?.['bytes'] ?? 0);
+        if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
+      }
+    }
     const result: RetrievedMemory[] = [];
     for (const kind of Object.keys(sourceTables) as SourceKind[]) {
       const selected = rows.filter((row) => row['source_kind'] === kind);
@@ -907,7 +1094,24 @@ export class MemoryRepository {
     });
   }
   async coverage(scope: MemoryScope, model: MemoryModel) {
-    return this.snapshot(() => this.readCoverage(scope, model));
+    return this.snapshot(async () => {
+      const key = JSON.stringify([scope, model]);
+      const revision = this.actorRevision(scope.actorId),
+        vectorRevision = this.vectorRevision;
+      const cached = this.coverageCache.get(key);
+      if (cached?.revision === revision && cached.vectorRevision === vectorRevision)
+        return cached.value;
+      const value = await this.readCoverage(scope, model);
+      if (
+        revision === this.actorRevision(scope.actorId) &&
+        vectorRevision === this.vectorRevision
+      ) {
+        if (this.coverageCache.size >= 512)
+          this.coverageCache.delete(this.coverageCache.keys().next().value!);
+        this.coverageCache.set(key, { revision, vectorRevision, value });
+      }
+      return value;
+    });
   }
   private async readCoverage(scope: MemoryScope, model: MemoryModel) {
     const eligible = await this.count(scope);
@@ -934,13 +1138,14 @@ export class MemoryRepository {
   async evidence(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
     return this.snapshot(async () => {
       const unique = [...new Set(ids)];
+      if (unique.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
       const rows: Record<string, unknown>[] = [];
       for (let offset = 0; offset < unique.length; offset += 500) {
         const batch = unique.slice(offset, offset + 500);
         rows.push(
           ...(await this.db
             .prepare(
-              `SELECT r.* FROM recall_sources r WHERE ${this.eligible} AND r.source_kind='awareness' AND r.id IN (${batch.map(() => '?').join(',')})`,
+              `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND r.source_kind='awareness' AND r.id IN (${batch.map(() => '?').join(',')})`,
             )
             .all(...this.params(scope), ...batch)),
         );
@@ -958,7 +1163,7 @@ export class MemoryRepository {
       this.hydrate(
         await this.db
           .prepare(
-            `SELECT r.* FROM recall_sources r WHERE ${this.eligible} AND r.id IN (${unique.map(() => '?').join(',')}) ORDER BY r.id`,
+            `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND r.id IN (${unique.map(() => '?').join(',')}) ORDER BY r.id`,
           )
           .all(...this.params(scope), ...unique),
       ),
@@ -969,11 +1174,12 @@ export class MemoryRepository {
   }
   private async readRequired(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
     const unique = [...new Set(ids)];
+    if (unique.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     const rows = await this.db
       .prepare(
-        `SELECT r.* FROM recall_sources r WHERE ${this.eligible} AND r.required=1
-      UNION ALL SELECT r.* FROM recall_sources r WHERE ${this.eligible} AND r.id IN
-      (SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=? UNION SELECT correction_id FROM mind_corrections WHERE world_id=? AND actor_id=?)`,
+        `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND r.required=1
+      UNION SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND r.id IN
+      (SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=? UNION SELECT correction_id FROM mind_corrections WHERE world_id=? AND actor_id=?) LIMIT ${RETRIEVAL_ROWS + 1}`,
       )
       .all(
         ...this.params(scope),
@@ -983,22 +1189,22 @@ export class MemoryRepository {
         scope.worldId,
         scope.actorId,
       );
+    if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    const selected = new Map(rows.map((row) => [`${row['source_kind']}:${row['id']}`, row]));
     for (let offset = 0; offset < unique.length; offset += 350) {
       const batch = unique.slice(offset, offset + 350),
         params = batch.map(() => '?').join(',');
-      rows.push(
-        ...(await this.db
-          .prepare(
-            `SELECT r.* FROM recall_sources r WHERE ${this.eligible} AND r.id IN (${params})
-        UNION ALL SELECT r.* FROM recall_sources r WHERE ${this.eligible} AND r.event_id IN (${params})`,
-          )
-          .all(...this.params(scope), ...batch, ...this.params(scope), ...batch)),
-      );
+      const matches = await this.db
+        .prepare(
+          `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND (r.id IN (${params}) OR r.event_id IN (${params})) LIMIT ${RETRIEVAL_ROWS + 1}`,
+        )
+        .all(...this.params(scope), ...batch, ...batch);
+      for (const row of matches) selected.set(`${row['source_kind']}:${row['id']}`, row);
+      if (selected.size > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     }
-    return this.hydrate([
-      ...new Map(rows.map((row) => [`${row['source_kind']}:${row['id']}`, row])).values(),
-    ]);
+    return this.hydrate([...selected.values()]);
   }
+
   async select(
     scope: MemoryScope,
     limit: number,
@@ -1015,7 +1221,7 @@ export class MemoryRepository {
       throw new Error('Invalid memory selection size.');
     const fallback = await this.db
       .prepare(
-        `SELECT r.* FROM recall_sources r WHERE ${this.eligible} ORDER BY r.importance DESC,r.at DESC,r.id LIMIT ?`,
+        `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} ORDER BY r.importance DESC,r.at DESC,r.id LIMIT ?`,
       )
       .all(...this.params(scope), limit);
     if (!semantic || this.db.dialect !== 'postgres') return this.hydrate(fallback);
@@ -1027,7 +1233,7 @@ export class MemoryRepository {
           FROM memory_vectors WHERE world_id=? AND actor_id=? AND generation=? AND model=? AND dimensions=?
             AND (SELECT generation FROM world_head WHERE id=1)=?
           ORDER BY embedding OPERATOR(public.<=>) ?::public.vector,source_id LIMIT ?)
-        SELECT r.*,m.score FROM matches m JOIN recall_sources r ON r.id=m.source_id AND r.revision=m.source_revision
+        SELECT ${sourceColumns},m.score FROM matches m JOIN recall_sources r ON r.id=m.source_id AND r.revision=m.source_revision
         WHERE ${this.eligible} ORDER BY m.score DESC,r.id`,
       )
       .all(
@@ -1076,7 +1282,7 @@ export class MemoryRepository {
       .prepare(
         `WITH pending AS MATERIALIZED (SELECT * FROM memory_index_queue
       WHERE world_id=? AND actor_id=? AND model=? AND dimensions=? ORDER BY importance DESC,at DESC,source_id LIMIT ?)
-      SELECT r.* FROM pending q JOIN recall_sources r
+      SELECT ${sourceColumns} FROM pending q JOIN recall_sources r
       ON r.world_id=q.world_id AND r.actor_id=q.actor_id AND r.id=q.source_id AND r.revision=q.source_revision
       WHERE r.eligible=1 AND (SELECT generation FROM world_head WHERE id=1)=?
       ORDER BY q.importance DESC,q.at DESC,q.source_id`,
@@ -1139,6 +1345,8 @@ export class MemoryRepository {
     return this.db.transaction(() => this.publishVectors(scope, model, values));
   }
   private async publishVectors(scope: MemoryScope, model: MemoryModel, values: MemoryVector[]) {
+    this.vectorRevision++;
+    this.db.afterCommit?.(() => this.vectorRevision++);
     for (const value of values) this.validateVector(model, value.vector);
     await this.db
       .prepare(
@@ -1188,6 +1396,8 @@ export class MemoryRepository {
    * the new generation, and dispatched/uncertain attempts stay outside gameplay rewind. */
   async reuseVectors(worldId: string, changed?: MemoryChanges) {
     if (this.db.dialect !== 'postgres') return;
+    this.vectorRevision++;
+    this.db.afterCommit?.(() => this.vectorRevision++);
     const pairs = changed
       ? [...changed].flatMap(([actor, ids]) => [...(ids ?? [])].map((id) => [actor, id]))
       : [];

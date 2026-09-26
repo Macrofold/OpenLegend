@@ -113,3 +113,13 @@ Server event-loop delay is sampled at 20-millisecond resolution, with monitoring
 [Implementation starting point](../../apps/server/src/intelligence-log.ts).
 
 Original recommendation: **Keep**.
+
+## SV18
+
+**Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
+
+**Checkpoint stress-tool envelope:** default 100,000 sources and three rounds; accepted source range 128–200,000 and round range 1–10. Out-of-range arguments are refused. These are benchmark-tool bounds, not supported world capacity or evidence that all allowed sizes passed.
+
+**Reason / tradeoff:** Keep a disposable local run finite and practical; exact values are engineering choices. Change the tooling envelope only for a named qualification workload, preserving zero-provider spending and explicit report output. No expansion task is justified solely by the existence of these bounds.
+
+[Implementation](../../scripts/stress-checkpoints.ts).

@@ -581,3 +581,5 @@ Original recommendation: **Keep**.
 **Reason / tradeoff:** Avoid hiding valid actions/content by identifier order. Query relevant candidates or incrementally pack descriptions while retaining required facts and explicit omission diagnostics.
 
 **Evidence:** Distinguish ordinary dense-neighbor growth from deliberately creating 10,000 objects. [Implementation](../../apps/server/src/recall.ts) (`candidateSet; select`). [Revisit C17](../maintainers/limits-audit.md#c17).
+
+**Implemented mitigation:** Candidate formatting rejects more than 8,192 combined visible/inventory/recipe/note items or more than 4 MiB of note text before constructing their strings. Observation and resident-world preparation still precede this guard. [Preparation owner](../memory-architecture.md#retrieval-preparation-admission).

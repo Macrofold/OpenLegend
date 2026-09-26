@@ -13,6 +13,11 @@ import {
  * docs/performance.md#inactive-history-residency
  */
 export const HISTORY_TABLES = new Set(['mind_memories', 'mind_awareness', 'mind_summaries']);
+// Awareness consumers needing more than the presentation tail use SQL source IDs.
+// This is placement, not eligibility: important incidents remain fully recallable.
+export const HOT_AWARENESS_ROWS = 256;
+const HOT_AWARENESS_BYTES = 1024 * 1024;
+const recordBytes = new WeakMap<object, number>();
 type Positions = { complete?: boolean; positions: Map<string, number>; next: number };
 export const historyPositions = new WeakMap<unknown[], Positions>();
 export const HISTORY_MAP_TABLES = new Set(['mind_appraisals', 'sim_status_effects']);
@@ -98,7 +103,25 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
     prior: T[] | undefined,
     at: (entry: T, index: number, length: number) => number,
     tail = 0,
+    maximum = Infinity,
   ): T[] => {
+    let startIndex = Math.max(0, entries.length - maximum);
+    if (Number.isFinite(maximum)) {
+      let bytes = 0;
+      for (let i = entries.length - 1; i >= startIndex; i--) {
+        const record = entries[i] as object;
+        let size = recordBytes.get(record);
+        if (size === undefined) {
+          size = Buffer.byteLength(JSON.stringify(record));
+          recordBytes.set(record, size);
+        }
+        bytes += size;
+        if (bytes > HOT_AWARENESS_BYTES && i < entries.length - tail) {
+          startIndex = i + 1;
+          break;
+        }
+      }
+    }
     let earliest = expiry.get(entries);
     if (earliest === undefined) {
       const appended = prior ? appendedRecordCount(prior, entries) : undefined;
@@ -110,26 +133,24 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
         earliest = Math.min(earliest, at(entries[i]!, i, entries.length));
       expiry.set(entries, earliest);
     }
-    if (earliest >= cutoff) return entries;
-    const keep = (entry: T, index: number) => at(entry, index, entries.length) >= cutoff;
-    const retained = entries.filter(keep);
-    if (retained.length === entries.length) return entries;
+    // Residency can lag semantic expiry by one game minute. Amortize array compaction
+    // across commits rather than copying a six-hour window for each expired second.
+    if (startIndex === 0 && earliest + 60 >= cutoff) return entries;
+    const retained: T[] = [];
     const old = historyPositions.get(entries);
-    const positions = new Map<string, number>();
-    for (let i = 0; i < entries.length; i++) {
-      const key = historyKey(entries[i]);
-      positions.set(key, old?.positions.get(key) ?? i);
+    const selected = new Map<string, number>();
+    let nextExpiry = Infinity;
+    for (let i = startIndex; i < entries.length; i++) {
+      const entry = entries[i]!,
+        expires = at(entry, i, entries.length);
+      if (expires < cutoff) continue;
+      retained.push(entry);
+      nextExpiry = Math.min(nextExpiry, expires);
+      const key = historyKey(entry);
+      selected.set(key, old?.positions.get(key) ?? i);
     }
-    const selected = new Map(
-      retained.map((entry) => [historyKey(entry), positions.get(historyKey(entry))!]),
-    );
-    expiry.set(
-      retained,
-      retained.reduce(
-        (old, entry, index) => Math.min(old, at(entry, index, retained.length)),
-        Infinity,
-      ),
-    );
+    if (retained.length === entries.length) return entries;
+    expiry.set(retained, nextExpiry);
     historyPositions.set(retained, { positions: selected, next: old?.next ?? entries.length });
     return retained;
   };
@@ -149,6 +170,7 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
       previous?.experience?.awareness[actorId],
       (entry, index, length) => (index >= length - 24 ? Infinity : entry.at),
       24,
+      HOT_AWARENESS_ROWS,
     );
     changed ||= awareness[actorId] !== entries;
   }
@@ -157,10 +179,12 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
     changed ||= summaries[actorId] !== entries;
   }
   return changed
-    ? {
-        ...world,
-        memories,
-        ...(world.experience ? { experience: { ...world.experience, awareness, summaries } } : {}),
-      }
+    ? updateWorld(world, (draft) => {
+        draft.memories = memories;
+        if (draft.experience) {
+          draft.experience.awareness = awareness;
+          draft.experience.summaries = summaries;
+        }
+      })
     : world;
 }

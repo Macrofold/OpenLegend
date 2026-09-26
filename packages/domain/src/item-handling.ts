@@ -1,4 +1,13 @@
-import { itemsForOwner, itemFor, moveLot, validateObjects, declareObjectOwner } from './objects.js';
+import { accessiblePossession, inventoryWorkReason } from './object-access.js';
+import {
+  itemsForOwner,
+  itemFor,
+  moveLot,
+  validateObjects,
+  declareObjectOwner,
+  itemAvailabilityChanged,
+} from './objects.js';
+import { recordSemanticChange } from './dependencies.js';
 import { WorkBudgetError } from './work-budget.js';
 export { itemsForOwner } from './objects.js';
 import { worldPlacement } from './spatial-state.js';
@@ -142,7 +151,7 @@ export function dropItemReason(
   if (
     !canHandleItems(world, actor) ||
     !item ||
-    item.ownerId !== actor.id ||
+    !accessiblePossession(world, actor.id, item.id) ||
     world.itemDefinitions[item.definitionId]?.portable !== true
   )
     return 'Choose a portable item in this inventory.';
@@ -163,7 +172,8 @@ export function dropItemReason(
     !canStand(spatialMap(world), { ...worldPosition(actor), surfaceId }, BODY_PROFILES.object)
   )
     return 'Dropping requires space for a pile on a supported surface.';
-  if (actor.actor.action) return 'Stop current work before dropping items.';
+  const workReason = inventoryWorkReason(world, actor.id, itemId);
+  if (workReason) return workReason;
   return null;
 }
 export function dropItems(
@@ -341,4 +351,55 @@ export function validateItemHandling(world: WorldState): void {
   )
     throw new Error('Invalid generated-item packing policy.');
   validateObjects(world);
+}
+
+export interface ContainerAccessRequest {
+  id: string;
+  itemId: string;
+  expectedRevision: number;
+  actors: string[] | null;
+}
+export function setContainerAccess(
+  original: WorldState,
+  request: ContainerAccessRequest,
+): Transition {
+  const reject = (message: string): Transition => ({
+    world: original,
+    events: [],
+    outcome: outcome(false, 'container-access', message),
+  });
+  if (
+    !isSafeRecordId(request.id) ||
+    !isSafeRecordId(request.itemId) ||
+    !Number.isSafeInteger(request.expectedRevision) ||
+    request.expectedRevision < 0 ||
+    (request.actors !== null &&
+      (!Array.isArray(request.actors) ||
+        request.actors.length > 100 ||
+        request.actors.some((id) => !isSafeRecordId(id) || !original.entities[id]?.actor)))
+  )
+    return reject('Invalid container access.');
+  const digest = canonicalJson(request),
+    prior = getOwn(original.commandReceipts, request.id);
+  if (prior)
+    return prior.digest === digest
+      ? { world: original, events: [], outcome: prior.outcome }
+      : reject('Request identity was already used.');
+  const entity = original.entities[request.itemId];
+  if (!entity?.container || (entity.inventoryRevision ?? 0) !== request.expectedRevision)
+    return reject('Container changed. Refresh before editing.');
+  const world = draftWorld(original),
+    container = world.entities[request.itemId]!;
+  if (request.actors === null) delete container.container!.access;
+  else container.container!.access = { actors: [...new Set(request.actors)] };
+  container.inventoryRevision = request.expectedRevision + 1;
+  itemAvailabilityChanged(world, request.itemId);
+  recordSemanticChange(world, {
+    kind: 'membership',
+    family: 'direct-contents',
+    scopeId: request.itemId,
+  });
+  const result = outcome(true, 'container-access', 'Container access updated.');
+  world.commandReceipts[request.id] = { digest, outcome: result };
+  return finish(world, [], result);
 }

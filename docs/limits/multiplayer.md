@@ -20,15 +20,11 @@ Original recommendation: **Review**.
 
 ## LA164
 
-**Current — checked · Restrictiveness: Very safe.**
+**Changed · Restrictiveness: Safe.**
 
-The HTTP server permits 8 simultaneous live-update streams; the service separately permits 32 connections (AU07). These are not 100-player capacity.
+Default player capacity is 100; HTTP streams, service connections and scoped projection caches allow 300. `OPEN_LEGEND_PLAYER_CAPACITY` (1–10,000) scales these together at three connections/cache scopes per player.
 
-**Reason / tradeoff:** Conservative connection/fan-out containment; the smaller HTTP ceiling is the effective shared-play blocker.
-
-[Implementation starting point](../../apps/server/src/http.ts).
-
-Original finding and recommendation superseded by the merged implementation; the ID remains stable.
+**Reason / tradeoff:** First-release players need reconnect/tab headroom without cache thrashing. Admission is not a hosted-capacity or simulation-speed promise. [Evidence](../verification.md#immediate-gameplay-limits).
 
 ## LA165
 
@@ -180,11 +176,11 @@ Authentication network timeout: **10 seconds**.
 
 ## AU04
 
-**Reported · Restrictiveness: Safe.**
+**Changed · Restrictiveness: Safe.**
 
-Stored login sessions: **4,096**.
+Stored sessions: max(4,096, sixteen times configured player capacity); expired sessions are removed before admission.
 
-**Reason / tradeoff:** Bound retained authentication sessions; may block growth well before 10,000 concurrent players.
+**Reason / tradeoff:** Preserve existing default headroom and scale sessions with admitted population. Count is an operational bound, not a login-rate promise. [Configuration](../../apps/server/src/config.ts).
 
 ## AU05
 
@@ -204,19 +200,19 @@ Departure grace: **15 seconds default**, configurable **1–60 seconds**.
 
 ## AU07
 
-**Reported · Restrictiveness: Very safe.**
+**Changed · Restrictiveness: Safe.**
 
-Service connections: **32**.
+Service connection and projection-cache scopes: three times configured player capacity, default 300, matching HTTP stream admission.
 
-**Reason / tradeoff:** Conservative service fan-out admission; cannot support the accepted 100-player workload as set.
+**Reason / tradeoff:** Avoid accepting a stream that the authority layer cannot hold, or cyclically evicting active players' view caches. [LA164](#la164).
 
 ## AU08
 
-**Reported · Restrictiveness: Safe.**
+**Changed · Restrictiveness: Safe.**
 
-Presence-order tracking entries: **128**.
+Presence-order entries: six times configured player capacity, default 600.
 
-**Reason / tradeoff:** Bound connection-order bookkeeping; coordinate with any increase in concurrent connections.
+**Reason / tradeoff:** Retain reconnect/late-heartbeat ordering for the supported connections without an unlimited map. [Configuration](../../apps/server/src/config.ts).
 
 ## PB13
 

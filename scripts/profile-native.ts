@@ -39,7 +39,12 @@ const freezeStarted = performance.now();
 if (!mutable) freezeWorld(world);
 const initialFreezeMs = performance.now() - freezeStarted;
 const step = () => {
-  world = advanceWorld(world, 1).world;
+  const transition = advanceWorld(world, 1);
+  if (!transition.outcome.ok || transition.world.simTime !== world.simTime + 1)
+    throw new Error(
+      `Native workload did not advance: ${transition.outcome.code}: ${transition.outcome.message}`,
+    );
+  world = transition.world;
   if (!mutable) freezeWorld(world);
 };
 const setupMs = performance.now() - setupAt;

@@ -1,3 +1,4 @@
+import { WorkLane } from './work-lane.js';
 import { timed } from './performance.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { DatabaseSync } from 'node:sqlite';
@@ -6,8 +7,8 @@ import type { SqlDatabase } from './store.js';
 export class SqliteDatabase implements SqlDatabase {
   private db: DatabaseSync;
   private reader?: DatabaseSync;
-  private readTail: Promise<unknown> = Promise.resolve();
-  private tail: Promise<unknown> = Promise.resolve();
+  private readonly readLane = new WorkLane('sqlite.read', 512);
+  private readonly writeLane = new WorkLane('sqlite', 512);
   private context = new AsyncLocalStorage<{
     active: boolean;
     committed: (() => void)[];
@@ -23,9 +24,7 @@ export class SqliteDatabase implements SqlDatabase {
   }
   private run<T>(operation: () => T | Promise<T>): Promise<T> {
     if (this.context.getStore()?.active) return Promise.resolve().then(operation);
-    const next = this.tail.then(operation);
-    this.tail = next.catch(() => undefined);
-    return next;
+    return this.writeLane.run(operation);
   }
   private get connection() {
     const scope = this.context.getStore();
@@ -79,7 +78,7 @@ export class SqliteDatabase implements SqlDatabase {
     if (this.context.getStore()?.active) return operation();
     // An in-memory adapter has no second connection; persistent worlds use WAL readers.
     if (this.path === ':memory:') return this.transaction(operation);
-    const next = this.readTail.then(async () => {
+    return this.readLane.run(async () => {
       const connection = (this.reader ??= new DatabaseSync(this.path, { readOnly: true }));
       const scope = { active: true, connection, readOnly: true, committed: [], rolledBack: [] };
       return this.context.run(scope, async () => {
@@ -96,8 +95,6 @@ export class SqliteDatabase implements SqlDatabase {
         }
       });
     });
-    this.readTail = next.catch(() => undefined);
-    return next;
   }
   exec(sql: string) {
     return this.run(() => this.connection.exec(sql));
@@ -119,8 +116,7 @@ export class SqliteDatabase implements SqlDatabase {
     };
   }
   async close() {
-    await this.tail;
-    await this.readTail;
+    await Promise.all([this.writeLane.idle(), this.readLane.idle()]);
     this.reader?.close();
     this.db.close();
   }

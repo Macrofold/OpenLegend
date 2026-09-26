@@ -134,7 +134,7 @@ Change tracking retains **4,096 distinct scopes** before falling back to broader
 
 **Reported · Restrictiveness: Medium.**
 
-Per-call/group native work
+Per-call/group native work. Output admission changed from 16,000,000 to 64,000,000 actual UTF-8 bytes: the valid dense first exposure otherwise refused complete witness output. Other counters are unchanged.
 
 **Reason / tradeoff:** Versioned conservative admission bounds; no claim that these values establish supported population. Overruns refuse admission or pause required work.
 
@@ -145,7 +145,7 @@ Per-call/group native work
 | Candidate visits   |  2,000,000 |
 | Predicate checks   |  4,000,000 |
 | Input bytes        | 64,000,000 |
-| Output bytes       | 16,000,000 |
+| Output bytes       | 64,000,000 |
 | Effects            |    100,000 |
 | Resource claims    |    100,000 |
 | Subscriptions      |    100,000 |
@@ -182,24 +182,16 @@ Dependency authority-scope string: **512 characters maximum**.
 
 ## NW10
 
-**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+**Changed · Restrictiveness: Too liberal for the full release-speed gate.**
 
-**Dense physical and witness work lacks a per-phase slice bound.** All current physical entities live in one world process. updateEncounters builds spatial candidates from participating roots and traverses real nearby actors/objects; emitEvent processes each actual audience member. Spatial radius/index filters reduce sparse work but do not cap the number inside a dense region. No per-phase wall-time preemption exists. Native work meters bound charged effects/output and other declared work; they do not make every loop a bounded-time slice.
+Exposure membership reuses correctly invalidated derived inputs. Native actor/ambient/exposure phases yield private progress; the server yields to I/O after roughly 8 ms between checkpoints while retaining the same writer and work meter. Individual operations and finalization remain indivisible. Group output is 64 MB measured as UTF-8; the prior 16 MB allowance rejected the release-sized first crowd exposure.
 
-**Exposure / consequence:** Crowds, animals, placed objects and many real witnesses can cause long indivisible native steps during ordinary supported interactions. If required native work exceeds its admitted envelope, WorldService pauses publication/the world; do not describe this as a harmless warning.
-
-**Reason / tradeoff:** Preserve real witnesses and deterministic outcomes. Use change-fed perception, measured admission/backpressure and resumable phases where semantics permit. Never silently trim the audience to meet a target.
-
-**Evidence:** PF09 already records slow dense fixtures; this source review does not establish the exact population at which a work ceiling is hit. [Implementation](../../packages/domain/src/kernel.ts) (`updateEncounters; events.ts emitEvent; world-service.ts acceptRoutine/persist`). [Revisit C18](../maintainers/limits-audit.md#c18).
+**Reason / tradeoff:** Preserve witnesses, order and atomic publication. No audience truncation or meter replenishment. A valid 100-person/50-animal/500-added-object first exposure emitted 65,903 events; later steps improved but the first step remains expensive. All physical state still resides in one process. [Evidence](../verification.md#immediate-gameplay-limits); [remaining C18](../maintainers/limits-audit.md#c18).
 
 ## NW11
 
-**Current — source inspected at `af1eb02` · Restrictiveness: Too liberal.**
+**Changed · Restrictiveness: Safe.**
 
-**Serialized mutation and SQL lanes have no queue-depth admission cap.** WorldService.mutate and PostgreSQL/SQLite transaction lanes chain pending promises without a maximum queued count/bytes/age at those owners. One execution at a time bounds concurrency, not backlog. The HTTP activeWrites counter is used for restore exclusion, not general queue admission. Stream/connection caps and normal client behavior constrain some producers but are not a server-wide work-queue limit.
+Pending world mutations: 256; pending operations per SQL read/write lane: 512; pending age: five seconds. Executing work is never cancelled. HTTP simultaneous handlers and projection queue depth: four times player capacity (default 400). Aggregate retained request bodies: 16 MiB, plus existing per-request limits. Publication coalesces for 50 ms and yields between viewers after roughly 8 ms. Overloaded disconnect cleanup retries after one second, bounded by admitted transports. Rejection is explicit `busy`/503 with Retry-After.
 
-**Exposure / consequence:** Concurrent commands or inspection during slow native/SQL work can accumulate waiting operations, latency and memory. A PostgreSQL statement timeout starts during execution and does not cap time spent waiting for its lane.
-
-**Reason / tradeoff:** Preserve ordered atomic mutations. Add measurable per-owner queue admission/backpressure and explicit overload responses; coalesce only operations whose semantics permit replacement.
-
-**Evidence:** Code-level risk, not a measured saturation threshold. PF01/PF07 own queue attribution and admission design. [Implementation](../../apps/server/src/world-service.ts) (`mutate; postgres.ts serial/readTransaction; sqlite-database.ts run/readTransaction`). [Revisit C19](../maintainers/limits-audit.md#c19).
+**Reason / tradeoff:** Bound queued closures and body memory while preserving atomic writes and durable receipts. Age/depth are overload protection, not an execution deadline. Optional publication retries may refresh later; uncertain mutations are not automatically replayed. [Owner](../performance.md#bounded-admission).

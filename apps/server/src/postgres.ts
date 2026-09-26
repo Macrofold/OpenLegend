@@ -1,3 +1,4 @@
+import { WorkLane } from './work-lane.js';
 import { timed, recordDuration } from './performance.js';
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -13,8 +14,8 @@ export class PostgresDatabase implements SqlDatabase {
   private ready: Promise<void>;
   private reader: pg.Client;
   private readReady?: Promise<void>;
-  private readTail: Promise<unknown> = Promise.resolve();
-  private tail: Promise<unknown> = Promise.resolve();
+  private readonly readLane = new WorkLane('postgres.read', 512);
+  private readonly writeLane = new WorkLane('postgres', 512);
   private transactionContext = new AsyncLocalStorage<{
     active: boolean;
     client: pg.Client;
@@ -63,14 +64,9 @@ export class PostgresDatabase implements SqlDatabase {
     );
   }
   private serial<T>(operation: () => Promise<T>): Promise<T> {
-    const queuedAt = performance.now();
-    const next = this.tail.then(() => {
-      recordDuration('postgres.wait', performance.now() - queuedAt);
-      return operation();
-    });
-    this.tail = next.catch(() => undefined);
-    return next;
+    return this.writeLane.run(operation);
   }
+
   afterCommit(callback: () => void) {
     const scope = this.transactionContext.getStore();
     if (scope?.active) scope.committed.push(callback);
@@ -91,7 +87,7 @@ export class PostgresDatabase implements SqlDatabase {
   readTransaction<T>(operation: () => Promise<T>): Promise<T> {
     if (this.transactionContext.getStore()?.active) return operation();
     const queuedAt = performance.now();
-    const next = this.readTail.then(async () => {
+    return this.readLane.run(async () => {
       recordDuration('postgres.readWait', performance.now() - queuedAt);
       this.readReady ??= this.ready.then(async () => {
         await this.reader.connect();
@@ -100,8 +96,6 @@ export class PostgresDatabase implements SqlDatabase {
       await this.readReady;
       return this.inTransaction(this.reader, true, operation);
     });
-    this.readTail = next.catch(() => undefined);
-    return next;
   }
   private inTransaction<T>(
     client: pg.Client,
@@ -180,7 +174,7 @@ export class PostgresDatabase implements SqlDatabase {
     };
   }
   async close(): Promise<void> {
-    await Promise.all([this.tail, this.readTail]);
+    await Promise.all([this.writeLane.idle(), this.readLane.idle()]);
     await this.ready.catch(() => undefined);
     this.failed = true;
     await this.client.end();

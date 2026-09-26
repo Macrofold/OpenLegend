@@ -1,7 +1,15 @@
+import { exposureChanges } from './encounter-cache.js';
+import {
+  canAccessContainer,
+  accessiblePossession,
+  possessionItems,
+  inventoryWorkReason,
+} from './object-access.js';
 import { advanceAppraisals } from './appraisals.js';
 import { advanceCapabilityContributions } from './state-contributions.js';
 import {
   WorkBudgetError,
+  meteredIterator,
   WORK_LIMITS,
   withWorkMeter,
   chargeWork,
@@ -141,7 +149,7 @@ export const SIMULATION_RULES = {
 } as const;
 
 export function inventoryFor(world: WorldState, actorId: string): ItemInstance[] {
-  return itemsForOwner(world, actorId).filter((item) => item.quantity > 0);
+  return [...possessionItems(world, actorId)];
 }
 export function quantityOf(world: WorldState, actorId: string, definitionId: string): number {
   return inventoryFor(world, actorId)
@@ -173,7 +181,7 @@ function itemClaims(
 }
 function takeItem(world: WorldState, actorId: string, itemId: string): ItemInstance | null {
   const item = itemFor(world, itemId);
-  if (!item || item.ownerId !== actorId || item.quantity < 1) return null;
+  if (!item || !accessiblePossession(world, actorId, item.id) || item.quantity < 1) return null;
   const taken = { ...item, quantity: 1 };
   const definition = world.itemDefinitions[item.definitionId];
   if (
@@ -537,11 +545,27 @@ function executeCommandNative(
       // grants neither physical access nor another human's private contents.
       const item = itemFor(world, command.itemId),
         destination = getOwn(world.entities, command.targetId);
-      if (!canHandleItems(world, actor) || component.action || !item || !destination)
-        return reject('unavailable', 'Stop current work and choose an accessible possession.');
+      if (!canHandleItems(world, actor) || !item || !destination)
+        return reject('unavailable', 'Choose an accessible item and destination.');
       try {
-        if (custodian(world, item.id) !== actor.id || custodian(world, destination.id) !== actor.id)
+        if (
+          !canAccessContainer(world, actor.id, item.ownerId) ||
+          !canAccessContainer(
+            world,
+            actor.id,
+            command.type === 'merge-item'
+              ? (itemFor(world, destination.id)?.ownerId ?? '')
+              : destination.id,
+            command.type === 'transfer-item',
+          )
+        )
           return reject('unavailable', 'Choose an accessible possession and destination.');
+        const blocked =
+          inventoryWorkReason(world, actor.id, item.id) ??
+          (command.type === 'merge-item'
+            ? inventoryWorkReason(world, actor.id, destination.id)
+            : null);
+        if (blocked) return reject('in-use', blocked);
         const targetRevision =
           command.type === 'merge-item'
             ? destination.item?.revision
@@ -686,7 +710,7 @@ function executeCommandNative(
       const item = itemFor(world, command.itemId);
       if (
         !item ||
-        item.ownerId !== actor.id ||
+        !accessiblePossession(world, actor.id, item.id) ||
         !(
           world.itemDefinitions[item.definitionId]?.launcher ||
           world.itemDefinitions[item.definitionId]?.gatheringTool
@@ -727,7 +751,7 @@ function executeCommandNative(
       const weaponItemId = command.weaponItemId ?? component.equippedItemId ?? '';
       const item = itemFor(world, weaponItemId);
       const launcher = item && world.itemDefinitions[item.definitionId]?.launcher;
-      if (!item || item.ownerId !== actor.id || !launcher)
+      if (!item || !accessiblePossession(world, actor.id, item.id) || !launcher)
         return reject('no-weapon', 'Equip a suitable ranged tool first.');
       const ammo = ammoFor(world, actor.id, launcher.ammunitionKind, command.ammoItemId);
       if (!ammo)
@@ -753,7 +777,11 @@ function executeCommandNative(
     case 'cook': {
       const item = itemFor(world, command.itemId);
       const heat = getOwn(world.entities, command.heatId);
-      if (!item || item.ownerId !== actor.id || item.definitionId !== 'raw_meat')
+      if (
+        !item ||
+        !accessiblePossession(world, actor.id, item.id) ||
+        item.definitionId !== 'raw_meat'
+      )
         return reject('not-cookable', 'Choose raw meat in this actor’s inventory.');
       if (!heat?.heat?.lit || !visible(world, actor, heat))
         return reject('no-heat', 'A visible lit campfire is needed.');
@@ -767,7 +795,7 @@ function executeCommandNative(
         return reject('not-applicable', 'This body does not consume food.');
       const item = itemFor(world, command.itemId);
       const definition = item && world.itemDefinitions[item.definitionId];
-      if (!item || item.ownerId !== actor.id || !definition?.nutrition)
+      if (!item || !accessiblePossession(world, actor.id, item.id) || !definition?.nutrition)
         return reject(
           'not-edible',
           definition?.id === 'raw_meat'
@@ -1193,7 +1221,7 @@ function completeAction(
       if (
         !(target?.animal && target.actor?.alive) ||
         !weapon ||
-        weapon.ownerId !== actor.id ||
+        !accessiblePossession(world, actor.id, weapon.id) ||
         !launcher
       ) {
         failAction(world, actor, events, 'the animal or ranged tool is no longer available.');
@@ -1679,9 +1707,22 @@ function nativeParticipants(world: WorldState): { actors: string[]; ambient: str
 
 /** Advance bounded one-second native steps. Paused time and absent-player catch-up are never inferred. */
 export function advanceWorld(original: WorldState, elapsedSimSeconds: number): Transition {
+  const steps = advanceWorldSlices(original, elapsedSimSeconds);
+  let result = steps.next();
+  while (!result.done) result = steps.next();
+  return result.value;
+}
+/** Yields private progress only. The server holds its writer until the final transition. */
+export function* advanceWorldSlices(
+  original: WorldState,
+  elapsedSimSeconds: number,
+): Generator<void, Transition> {
   const nested = inWorkGroup();
   try {
-    return withWorkMeter(WORK_LIMITS.group, () => advanceWorldNative(original, elapsedSimSeconds));
+    return yield* meteredIterator(
+      WORK_LIMITS.group,
+      advanceWorldNative(original, elapsedSimSeconds),
+    );
   } catch (error) {
     if (!(error instanceof WorkBudgetError || error instanceof ResourceReservationError) || nested)
       throw error;
@@ -1689,7 +1730,10 @@ export function advanceWorld(original: WorldState, elapsedSimSeconds: number): T
   }
 }
 
-function advanceWorldNative(original: WorldState, elapsedSimSeconds: number): Transition {
+function* advanceWorldNative(
+  original: WorldState,
+  elapsedSimSeconds: number,
+): Generator<void, Transition> {
   if (
     !Number.isFinite(elapsedSimSeconds) ||
     elapsedSimSeconds < 0 ||
@@ -1730,6 +1774,7 @@ function advanceWorldNative(original: WorldState, elapsedSimSeconds: number): Tr
       else advanceCapabilityContributions(world, entity, events);
     // Stable actor order resolves finite-resource claims; no asynchronous writer mutates a step.
     for (const actorId of participants.actors) {
+      yield;
       let actor = world.entities[actorId]!;
       let component = actor.actor!;
       if (!component.alive || component.incapacitated) continue;
@@ -1781,6 +1826,7 @@ function advanceWorldNative(original: WorldState, elapsedSimSeconds: number): Tr
     let occupancy: LandingOccupancy | undefined;
     const landingOccupancy = () => (occupancy ??= new LandingOccupancy(world));
     for (const id of participants.ambient) {
+      yield;
       const entity = world.entities[id]!;
       if (!capabilityBlocked(world, entity, 'locomotion')) {
         advanceFlight(world, entity, seconds, events, landingOccupancy);
@@ -1796,7 +1842,7 @@ function advanceWorldNative(original: WorldState, elapsedSimSeconds: number): Tr
       }
     }
   }
-  updateEncounters(world, original, events, participants.actors);
+  yield* updateEncounters(world, original, events, participants.actors);
   return finish(
     world,
     events,
@@ -1805,12 +1851,12 @@ function advanceWorldNative(original: WorldState, elapsedSimSeconds: number): Tr
 }
 
 /** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
-function updateEncounters(
+function* updateEncounters(
   world: WorldState,
   original: WorldState,
   events: WorldEvent[],
   actorIds: readonly string[],
-): void {
+): Generator<void> {
   if (!actorIds.some((id) => world.entities[id]?.actor?.alive && hasMemory(world.entities[id])))
     return;
   const hadObjectExposures = original.visibleObjects !== undefined;
@@ -1844,13 +1890,27 @@ function updateEncounters(
     (largest, entity) => Math.max(largest, entity.radius),
     0,
   );
+  const changedExposure = exposureChanges(world, original, spatialMap(world), entities);
   const nearbyObjects = spatialCandidates(entities.filter((e) => e.object));
   for (const actor of entities.filter((e) => e.alive && e.memory)) {
+    yield;
     const radius = visionRadius(world, actor.entity);
     const sees = visionQuery(world, actor.entity);
     const touch = sensesFor(world, actor.entity).find(
       (s) => s.implementation === 'body-contact-v1',
     );
+    const touchRadius =
+      Math.max(actor.radius + maximumBodyRadius, actor.height, maximumBodyHeight) +
+      SPATIAL_LIMITS.epsilon;
+    const movingContacts = Object.values(actor.entity.actor!.contacts ?? {}).some(
+      (contact) => contact.detail === 'moving',
+    );
+    const signature = `${radius}:${bodyProfile(actor.entity).eyeHeight}:${touch?.id ?? ''}:${touchRadius}:${movingContacts}`;
+    if (
+      !changedExposure(actor, Math.max(radius + 2, touch ? touchRadius : 0), signature) &&
+      !movingContacts
+    )
+      continue;
     if (touch) {
       nearbyAll ??= spatialCandidates(entities);
       const prior = actor.entity.actor!.contacts ?? {};
@@ -1968,7 +2028,10 @@ function updateEncounters(
           )
           .flatMap((m) => m.entityIds),
       );
-      for (const id of newlySeen) if (!recent.has(id)) encounter(actor.entity, id, true);
+      for (const id of newlySeen) {
+        if (!recent.has(id)) encounter(actor.entity, id, true);
+        yield;
+      }
     }
     if (
       !original.visiblePeople?.[actor.id] ||
@@ -1981,8 +2044,10 @@ function updateEncounters(
       original.visibleObjects?.[actor.id] ??
         (hadObjectExposures ? [] : objects.map((entity) => entity.id)),
     );
-    for (const entity of objects)
+    for (const entity of objects) {
       if (!priorObjects.has(entity.id)) encounter(actor.entity, entity.id, false);
+      yield;
+    }
     const previousObjects = original.visibleObjects?.[actor.id];
     // Retain identity when membership is unchanged (docs/performance.md#simulation-cpu-and-growing-history).
     if (
@@ -2069,6 +2134,8 @@ export function observeActor(
       delete copy.attributes;
       delete copy.mechanismFields;
       delete copy.declaredOwner;
+      // Seeing a bag does not disclose its private contents or packing load.
+      delete copy.container;
       delete copy.inventoryRevision;
       if (copy.actor) {
         // Sparse state is owner-private; explicit permitted projections carry public values.

@@ -116,6 +116,8 @@ function eventAudience(
   return audience;
 }
 
+const eventEncoder = new TextEncoder();
+
 /** Noticing a source is private evidence, not an outward action others can witness.
  * docs/events-perception-and-reactions.md#perception-acquisition-is-normally-private
  */
@@ -194,7 +196,7 @@ function recordEvent(
     importancePolicy: 'native-v1',
     importanceReason: data?.['significant'] ? 'significant' : type,
   };
-  chargeWork({ effects: 1, outputBytes: JSON.stringify(event).length * 3 });
+  chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
   trackDetachedRecord(world, event);
   if (source && conversationId && world.conversations?.records[conversationId])
     world.conversations.records[conversationId]!.lastActivityAt = world.simTime;

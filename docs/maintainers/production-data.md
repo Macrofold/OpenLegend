@@ -28,6 +28,8 @@ D0's current consuming identity/time/privacy/revision contract is recorded in [A
 
 ### Remaining D1/D2 implementation and evidence
 
+- [ ] **D1/D2 operational restore file reconciliation.** Track which retained slots were newly copied by an attempted restore and reconcile them after installation failure, without deleting pre-existing slots or files referenced by a successful/concurrent operation. Exercise both fresh and existing targets with failure after file copy and before/during database install. Prove database state, slot ownership and safe retry behavior; preserve source backups. [SB18](../limits/persistence.md#sb18) records the current lack of rollback cleanup; the [runbook](../../archive/07-technical-architecture/data-delivery-and-scale.md#local-operational-recovery-procedure) now distinguishes database and filesystem recovery.
+
 - [x] Persist supported entities/components, placement, inventory, definitions, operational agency and processes independently through existing owners. Atomically extract legacy development worlds in place and retain one writable authority.
 - [x] Persist awareness, memories, commitments, summaries, knowledge, conversations and eligibility independently; coordinate source changes, forgetting/correction, provenance and vector invalidation. Required evidence bypasses optional top N.
 - [x] Supply source-version preservation, current summary/source links and revision-checked namespaced annotation backing. No new semantic classifier, grouping/dream algorithm or content-specific expiry rule.

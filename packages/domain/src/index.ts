@@ -158,3 +158,7 @@ export { BASE_APPRAISAL_POLICY } from './worlds/base/appraisals.js';
 export { MAX_CONTAINMENT_DEPTH, ITEM_COUNT_PIN } from './objects.js';
 export type { ObjectLineage, ObjectRetirement } from './objects.js';
 export * from './contribution-residency.js';
+
+export * from './object-access.js';
+
+export { advanceWorldSlices } from './kernel.js';
