@@ -309,6 +309,7 @@ export interface GameRepository extends WorldStore {
     worldId: string,
     actorId: string,
     before?: { createdAt: number; id: string },
+    selection?: { timelineId: string; limit?: number },
   ): Promise<JobRecord[]>;
   reserve(
     id: string,
@@ -491,6 +492,8 @@ export class SqliteStore implements GameRepository {
         id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, created_at INTEGER NOT NULL
       );
       CREATE INDEX IF NOT EXISTS jobs_inventor ON jobs (json_extract(payload, '$.request.invention.worldId'), json_extract(payload, '$.request.invention.actorId'), created_at, id);
+      CREATE INDEX IF NOT EXISTS jobs_inventor_timeline ON jobs (json_extract(payload, '$.request.invention.worldId'), json_extract(payload, '$.request.invention.actorId'), json_extract(payload, '$.request.invention.timelineId'), created_at, id);
+      CREATE INDEX IF NOT EXISTS jobs_unfinished ON jobs(id) WHERE json_extract(payload, '$.status') IN ('queued','judging','generating');
       CREATE INDEX IF NOT EXISTS jobs_speech_event ON jobs (json_extract(payload, '$.playerSpeechEventId')) WHERE json_extract(payload, '$.kind') = 'chat';
       CREATE TABLE IF NOT EXISTS attempts (
         id TEXT PRIMARY KEY, provider TEXT NOT NULL, status TEXT NOT NULL,
@@ -934,14 +937,30 @@ export class SqliteStore implements GameRepository {
     worldId: string,
     actorId: string,
     before = { createdAt: Number.MAX_SAFE_INTEGER, id: '\uffff' },
+    selection?: { timelineId: string; limit?: number },
   ): Promise<JobRecord[]> {
     await this.ready;
+    const limit = selection?.limit ?? 50;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 50)
+      throw new Error('Invention history limit must be between 1 and 50.');
+    // Filter before paging: abandoned timelines must not hide current actor feedback.
+    // docs/architecture.md#bounded-invention-history-and-recovery
+    const timeline = selection
+      ? " AND json_extract(payload, '$.request.invention.timelineId') = ?"
+      : '';
     return (
       await this.db
         .prepare(
-          "SELECT payload FROM jobs WHERE json_extract(payload, '$.request.invention.worldId') = ? AND json_extract(payload, '$.request.invention.actorId') = ? AND (created_at < ? OR (created_at = ? AND id < ?)) ORDER BY created_at DESC, id DESC LIMIT 50",
+          `SELECT payload FROM jobs WHERE json_extract(payload, '$.request.invention.worldId') = ? AND json_extract(payload, '$.request.invention.actorId') = ?${timeline} AND (created_at, id) < (?, ?) ORDER BY created_at DESC, id DESC LIMIT ?`,
         )
-        .all(worldId, actorId, before.createdAt, before.createdAt, before.id)
+        .all(
+          worldId,
+          actorId,
+          ...(selection ? [selection.timelineId] : []),
+          before.createdAt,
+          before.id,
+          limit,
+        )
     ).map((row) => JSON.parse(String(row['payload'])) as JobRecord);
   }
 
@@ -1080,31 +1099,41 @@ export class SqliteStore implements GameRepository {
       "UPDATE attempts SET status='uncertain', spent=reserved WHERE status='reserved'",
     );
     this.usageCache = undefined;
-    for (const row of await this.db.prepare('SELECT payload FROM jobs').all()) {
-      const job = JSON.parse(String(row['payload'])) as JobRecord;
-      if (['queued', 'judging', 'generating'].includes(job.status)) {
-        const uncertain =
-          job.invention &&
-          (await this.db
-            .prepare(
-              "SELECT id FROM attempts WHERE status='uncertain' AND (id IN (?, ?) OR substr(id, 1, ?) = ?) LIMIT 1",
-            )
-            .get(
-              `${job.id}:route`,
-              `${job.id}:generate`,
-              `${job.id}:invention-search:`.length,
-              `${job.id}:invention-search:`,
-            ));
-        await this.putJob({
-          ...job,
-          status: 'stale',
-          ...(job.invention
-            ? { invention: { ...job.invention, code: uncertain ? 'uncertain' : 'interrupted' } }
-            : {}),
-          message: uncertain
-            ? 'Interrupted with uncertain provider completion; spending remains reserved and no request was replayed.'
-            : 'Interrupted by restart; no paid request or world effect was repeated.',
-        });
+    // The partial index contains only unfinished work; retained history never enters memory.
+    // docs/architecture.md#bounded-invention-history-and-recovery
+    for (;;) {
+      const rows = await this.db
+        .prepare(
+          "SELECT payload FROM jobs WHERE json_extract(payload, '$.status') IN ('queued','judging','generating') ORDER BY id LIMIT 50",
+        )
+        .all();
+      if (!rows.length) break;
+      for (const row of rows) {
+        const job = JSON.parse(String(row['payload'])) as JobRecord;
+        if (['queued', 'judging', 'generating'].includes(job.status)) {
+          const uncertain =
+            job.invention &&
+            (await this.db
+              .prepare(
+                "SELECT id FROM attempts WHERE status='uncertain' AND (id IN (?, ?) OR substr(id, 1, ?) = ?) LIMIT 1",
+              )
+              .get(
+                `${job.id}:route`,
+                `${job.id}:generate`,
+                `${job.id}:invention-search:`.length,
+                `${job.id}:invention-search:`,
+              ));
+          await this.putJob({
+            ...job,
+            status: 'stale',
+            ...(job.invention
+              ? { invention: { ...job.invention, code: uncertain ? 'uncertain' : 'interrupted' } }
+              : {}),
+            message: uncertain
+              ? 'Interrupted with uncertain provider completion; spending remains reserved and no request was replayed.'
+              : 'Interrupted by restart; no paid request or world effect was repeated.',
+          });
+        }
       }
     }
   }

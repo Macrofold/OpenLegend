@@ -18,12 +18,16 @@ This page is the master navigation index for active implementation work.
 | Agent agency and persistent pursuit                                    | [Agent agency](agent-agency.md)                                     | [Behavior](../agent-agency.md) and [runtime contract](../../archive/07-technical-architecture/agent-agency-runtime.md)                                                                                                                                         |
 | Parameterized action grounding and native activities (AG05 subtracker) | [Action capabilities](action-capabilities.md)                       | [Capability contract](../action-capabilities.md); INV/AG/SW/EPR retain their existing ownership                                                                                                                                                                |
 | Narration and conversations                                            | [Narration and conversations](narration-and-conversations.md)       | [Narration, agent responses and conversations](../narration-and-conversations.md)                                                                                                                                                                              |
-| Inventions, declarations, conjuring and world evolution                | [Inventions and world evolution](inventions-and-world-evolution.md) | [Declarations and evolution](../../archive/07-technical-architecture/declarations-and-evolution.md)                                                                                                                                                            |
+| Inventions, declarations, conjuring and world evolution                | [Inventions and world evolution](inventions-and-world-evolution.md) | [Invention foundation and ownership map](../invention-foundation.md) and [Declarations and evolution](../../archive/07-technical-architecture/declarations-and-evolution.md)                                                                                                                                                            |
 | Production data, persistence and scale                                 | [Production data](production-data.md)                               | [Production data model](../../archive/07-technical-architecture/production-data-model.md), [queries](../../archive/07-technical-architecture/data-queries-and-mcp.md) and [delivery/scale](../../archive/07-technical-architecture/data-delivery-and-scale.md) |
 
 - [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
 
 - [Agent-guidance delivery](agent-guidance.md) — development instructions, tooling and cross-agent verification; [system guide](../../.agents/README.md).
+
+## Invention foundation packet
+
+Begin with [Invention foundation](../invention-foundation.md) for coordination and canonical ownership. Supporting specifications are [World constitution](../world-constitution.md), [Validation and compositional evidence](../invention-validation.md), [Runtime art pipeline](../invention-art-pipeline.md), and [Budgets and runtime cost](../invention-budgets.md). Their detailed tasks remain in the single INV tracker, including INV-9–INV-14; this index does not duplicate task bodies or status.
 
 ## Supporting references
 
@@ -39,7 +43,7 @@ This page is the master navigation index for active implementation work.
 - [Verification](../verification.md)
 - [Implementation status](../../archive/05-project/implementation-status.md)
 - [World-agent Macrofold handoff](../macrofold-world-agent-handoff.md)
-- [Runtime-art design owner](../../archive/03-design-proposals/procedural-art-and-animation.md)
+- [Hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)
 - [Documentation changelog](../documentation-changelog.md)
 
 This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in verification, open choices in open decisions, and history in the documentation changelog.

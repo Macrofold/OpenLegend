@@ -99,6 +99,9 @@ See the [base-world mechanics](docs/worlds/base/README.md) for authored rules an
 
 ## Explore the project
 
+The [invention foundation](docs/invention-foundation.md) is the accepted target for coordinated revisions, validation, world constitution, staged art and budgets. [Current architecture](docs/architecture.md#shared-invention-workflow) distinguishes the supported implementation from future features.
+
+
 The [Narrator and conversation design](docs/narration-and-conversations.md) now includes readable actor context, explicit direct-address/overhearing triggers and optional talk/act/think reactions. Supported expressions have no mechanical effects; private thoughts stay private. Its broader [NC01–NC13 tasks](docs/maintainers/narration-and-conversations.md), cover durable group membership and private Narrator prose; broader acceptance remains open and automatic action/effect invention is deferred.
 
 The [agent agency design](docs/agent-agency.md) adds optional repeated decisions, persistent goals and short native plans, and actor-led invention through existing mechanical admission. Its [runtime contract](archive/07-technical-architecture/agent-agency-runtime.md) integrates with the newer [event/reaction intake](docs/events-perception-and-reactions.md); [AG01–AG12](docs/maintainers/agent-agency.md) are uncompleted implementation and acceptance work.

@@ -1527,10 +1527,13 @@ export class AiDirector {
       };
     candidate = normalizeInventionProposal(candidate);
     const candidateDigest = digest(candidate);
-    const prior = (await this.service.store.inventionJobs(this.service.world.id, actorId)).find(
+    const prior = (
+      await this.service.store.inventionJobs(this.service.world.id, actorId, undefined, {
+        timelineId: this.service.timelineId,
+      })
+    ).find(
       (job) =>
-        job.request.invention?.timelineId === this.service.timelineId &&
-        job.request.invention.candidate !== undefined &&
+        job.request.invention?.candidate !== undefined &&
         digest(job.request.invention.candidate) === candidateDigest,
     );
     if (prior)

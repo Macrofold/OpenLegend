@@ -201,6 +201,8 @@ Exit: same active tiny world at increasing cold-history sizes meets per-step bud
 
 - [ ] Qualify the measured dense acquisition and moving-observer costs from the simulation/cognition audit: the 344-entity cold mixed fixture missed 3×, and 164 crowded entities had only 1.31× native headroom at 1×. Extend EPR02/EPR05 change-scoped work before claiming population capacity; retain real evidence and indivisible-step latency reporting.
 
+The [invention performance review](../verification.md#native-capacity-boundary) reproduced dense first-exposure/event fan-out and missed 3× native capacity on the current spatial baseline. This is evidence for the existing dense-burst/relevance work below, not a new completed optimization. Preserve actual witnesses, physical effects and native RNG/order; do not meet a benchmark by silently dropping exposures. SR07 in [TODO](TODO.md#spatial-review-regression-todos) retains the integrated regression requirement.
+
 Coordinate module dependencies and aggregate admission with [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); PF retains implementation and qualification.
 
 Proposed [EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-full-world-sensory-scans) owns the specific object/audience scan integration; [EPR10](events-perception-and-reactions.md#epr10--conditional-incremental-spatialdeadline-infrastructure) owns its conditional incremental-index work. PF retains broader population qualification.
