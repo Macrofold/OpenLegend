@@ -6,7 +6,7 @@ Read [requirements / R01–R14](research-requirements.md) and the [canonical 130
 
 **Branch:** `docs/game-inspiration-games-101-120`, created September 26, 2026 from `docs/game-inspiration-library-expansion` at `57bcd96f75f4561baff10ea57e28210dd908ebd5`. Mike originally assigned **G101–G120**, sequentially, with a commit after each game and substantive checkpoints at least every five minutes. **Latest instruction, September 26: continue, but stop after G110.** The existing branch is retained; do not recreate it or advance into G111–G120 in this continuation. Other range branches are outside this assignment.
 
-**Completed: 7 / 10 in the revised G101–G110 scope. Active: G108 — Octopath Traveler II.** Independently research Solistia, the eight new travelers, day/night Path Actions, latent powers, jobs/licenses, EX skills, revised talents, ship travel, Crossed Paths and endgame. Separate the 2023 original release, 2024 Extra Battles and later ports. Finish five substantive written reviews, helpful Steam evidence or genuine access limits, R01–R14 and the evidence/link review before advancing to G109. G107 is committed and reviewed; no sequel mechanics were imported into it.
+**Completed: 8 / 10 in the revised G101–G110 scope. Active: G109 — Star Wars: Knights of the Old Republic.** Research the original BioWare game independently of its sequel, later remake projects and restoration mods. Cover real-time-with-pause/d20 combat, character classes and skills, companions, alignment and authored consequences, objects/upgrades/consumables, Ebon Hawk/planet progression, side activities, production and edition-specific reception. Finish five substantive written reviews, helpful Steam evidence or genuine access limits, R01–R14 and evidence/link review before advancing to G110. G107 and G108 are committed; finish only G109 and G110, then scoped navigation/changelog/review integration and stop.
 
 Inherited G01–G20 completion claims and the former G21 assignment are **not re-audited here**. G21–G100 and G111–G130 remain outside the revised scope. All original completion SHAs, earlier resume instructions and scope history remain available in the [immutable parent ledger](https://github.com/Macrofold/OpenLegend/blob/57bcd96f75f4561baff10ea57e28210dd908ebd5/archive/02-research/game-inspiration/research-progress.md). Last inherited completion: Minecraft, `4f6b715814dd932af34806517539cfe55ed1a6a0`; original library baseline: `feab691827a7cd62b6146f31eef20ee12e1a4770`.
 
@@ -23,8 +23,8 @@ Completion requires substantive R01–R14 coverage, evidence/access review, pres
 | G105 | [Mass Effect Galaxy](dossiers/mass-effect-galaxy.md) | Complete; retired non-Steam title, player alternatives documented | `f3084ded4b6aae951fb180dfaf676932be84ec1c` |
 | G106 | [Mass Effect: Infiltrator](dossiers/mass-effect-infiltrator.md) | Complete; retired non-Steam title, player alternatives documented | `dc971b9f2fa7944937ffe512acb2e828d31b79c0` |
 | G107 | [Octopath Traveler](dossiers/octopath-traveler.md) | Complete; helpful Steam endpoints failed, contrasting direct players documented | `ed5af9057e22b591d7c87c007f280dc12e5d82b3` |
-| G108 | `dossiers/octopath-traveler-ii.md` | In progress | — |
-| G109 | `dossiers/star-wars-knights-of-the-old-republic.md` | Pending | — |
+| G108 | [Octopath Traveler II](dossiers/octopath-traveler-ii.md) | Complete; helpful Steam endpoints failed, direct players documented | `348042f3d82425859f40281c75c3b6095fdebc98` |
+| G109 | `dossiers/star-wars-knights-of-the-old-republic.md` | In progress | — |
 | G110 | `dossiers/star-wars-knights-of-the-old-republic-ii.md` | Pending; stop after completing this subject | — |
 | G111 | `dossiers/the-legend-of-zelda-tears-of-the-kingdom.md` | Outside revised continuation scope | — |
 | G112 | `dossiers/fallout-new-vegas.md` | Outside revised continuation scope | — |
@@ -52,6 +52,8 @@ Completion requires substantive R01–R14 coverage, evidence/access review, pres
 **G106:** five constructed interactions, five authored reviews, 24 source groups and requirement map. Touch/manual-aim versions, original/Android timing, compact gear progression, score/replay loop, moral closure, fixed bonus-character toolkit and retired-service boundaries separated. Intel readiness and completion/mastery war assets are distinct. Primary developer/update accounts and named player alternatives inspected. Checkpoint `00b2712b98bdd59c8d533f118024ff0a9524bdc1`.
 
 **G107:** six constructed interactions, five written reviews across five outlets and 35 annotated source groups. Combat versus field identity, ordinary/advanced jobs, Concoct, town reputation, NPC/monster helpers, gear, recovery, anthology structure and optional two-party endgame covered. Original versus sequel and regional Switch 2 timing kept distinct. Helpful Steam endpoints failed; named Steam discussion and Reddit players supply contrasting qualitative alternatives. Review byline/date discrepancies and a port-report typo are disclosed. Checkpoint `aef36b86b56ecaf044b9bb2e848d3a431f5add62`; completion is the table SHA.
+
+**G108:** six constructed interactions, five full reviews and 31 annotated source groups. Eight primary character profiles independently establish sixteen field verbs and personal talents. Jobs/licenses, advanced-job acquisition, Concoct/inventions, consumables, ship commerce, paired stories and separate finale/optional challenge covered. 2023 release, 2024 Extra Battles and 2026 regional ports distinguished. Actual helpful Steam access failures and contrasting player reports documented; weak guide claims and metadata errors excluded rather than propagated. Checkpoint `5021e7f8dfad5c1c3d62b7dfacf06d5255c5795e`; completion is the table SHA.
 
 ## Preservation and integration gates
 
