@@ -4,9 +4,9 @@
 
 ## Resume here — this branch
 
-**G40–G48 have committed complete-pass dossiers. Active: G49 — Old School RuneScape. Continue sequentially through G60 on this existing branch.** G48's dossier was already committed at `adf1c935e5ead837fb4fe2a3fe1c9558e26a667c`, but the previous ledger still said G48 was next. Its full text, reception qualifications, requirement map and source tail were read during recovery; its inherited research is not represented as freshly reverified external evidence.
+**G40–G49 have committed complete-pass dossiers. Active: G50 — RuneScape: Dragonwilds. Continue sequentially through G60 on this existing branch.** G49 completion `b8147eb598fb6cee22c7aef13b483c1875e83c31` follows substantive checkpoint `21a71648ed7dc8c5ed2a44d20ef786481617b059`. It includes the 24-skill/Sailing boundary, full mechanics inventory, seven worked examples, five independent written assessments (four reviews plus a labelled retrospective), contrasting helpful Steam reviews, R01–R14 and source-access/preservation checks. Indexed wiki sections and mirrored official news are explicitly labelled.
 
-**G49 intended output:** `dossiers/old-school-runescape.md`. Independently research the current OSRS service, including skills and current Sailing boundary; classless builds; quest/area unlocks; crafting and item chains; combat/prayer/magic; travel; banking/trading/Grand Exchange; death/PvP/Ironman modes; homes; social/group play; polls; production, presentation, distribution and dated participation. Read five substantive written reviews from multiple independent sources and contrasting accessible helpful Steam reviews. Provide worked situations, R01–R14 mapping, source access/version limits and preservation check. No prior full OSRS chapter is identified in the roster. Do not import RS3's abilities, Necromancy, housing rebuild or Treasure Hunter into OSRS.
+**G50 intended output:** `dossiers/runescape-dragonwilds.md`. Independently research the survival-crafting game, starting by verifying the September 2026 full-release/platform boundary against its 2025 Early Access sources. Cover gathering/materials, action combat/magic, skills, crafting/building, survival/time/death, biome/boss gates, NPC/story, co-op/persistence, presentation, production/distribution, dated commercial evidence, five written reviews and positive/negative helpful Steam testimony. Keep plans, EA mechanics and released 1.0 features distinct. No prior full chapter identified by the roster.
 
 | Subject | Committed dossier / completion reference |
 | --- | --- |
@@ -19,8 +19,9 @@
 | G46 Core Keeper | `02e4a2e67249961a0695f94babbcebe4d815448f` |
 | G47 PEAK | `7712d8f270b8154997c7ba4397963f44529a7232` |
 | G48 RuneScape | [Dossier](dossiers/runescape.md), `adf1c935e5ead837fb4fe2a3fe1c9558e26a667c` |
+| G49 Old School RuneScape | [Dossier](dossiers/old-school-runescape.md), `b8147eb598fb6cee22c7aef13b483c1875e83c31` |
 
-G47 is current through Gloom/Citadel, Landfall's final-major-update boundary, with full climbing/stamina/items/rescue/daily-map/social loops, five reviews, Steam positive/negative evidence, >10M-copy commercial context and R01–R14/preservation checks. G48 separates the modern game's 2026 releases from previews and records the limitation of its professional-review corpus. This branch remains intentionally scoped to G40–G60; the inherited G21 state below is the source branch's parallel-work baseline and does not imply G21–G39 completion here. Do not overwrite another branch's actual progress by treating this inherited baseline as global current status.
+G47 is current through Gloom/Citadel, Landfall's final-major-update boundary, with full climbing/stamina/items/rescue/daily-map/social loops, five reviews, Steam positive/negative evidence, >10M-copy commercial context and R01–R14/preservation checks. G48 separates the modern game's 2026 releases from previews and records the limitation of its professional-review corpus. G48's previously committed dossier was reconciled with its stale ledger at `e0ec4a29adef9aa82f8ebaa93eeab895d241f0f0`; its inherited external research was not represented as freshly reverified. This branch remains intentionally scoped to G40–G60; the inherited G21 state below is the source branch's parallel-work baseline and does not imply G21–G39 completion here. Do not overwrite another branch's actual progress by treating this inherited baseline as global current status.
 
 ## Inherited source-branch baseline — historical, not this branch's active task
 
