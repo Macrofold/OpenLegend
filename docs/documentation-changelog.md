@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-25 — Data foundation recovery and recall review
+
+Moved complete forgetting-ledger enforcement into the shared restore commit so operational backup restoration cannot revive forgotten transcript access. Legacy PostgreSQL import now verifies the columns actually present in the source while retaining additive destination defaults. Grouped recall validates every contributing source after attention instead of only its representative ID. These correct existing privacy, migration and source-freshness contracts; they introduce no new retention or semantic policy. [Native reproductions and reruns](verification.md#data-foundation-review), [D1/D2](maintainers/production-data.md#remaining-d1d2-implementation-and-evidence) and [CR](maintainers/cognition-redesign.md#cognition-persistence-and-consolidation-follow-up) distinguish fixes from deferred automated coverage and unchanged capacity limits.
+
 ## 2026-09-25 — Task-based development and approval workflow
 
 Updated [agent routing](../AGENTS.md) and its existing skills instead of adding parallel instruction bodies. Development now refreshes main/rebases off-main before edits and stops all work for any uncertain conflict resolution. Code reviews include in-scope fixes unless explicitly read-only, consider product intent, UX, scale and future capabilities, and reconcile delivered/deferred work. Every task handoff states major decisions/assumptions and ends with open decisions/questions and suggested next steps, including “None” when appropriate.

@@ -462,9 +462,12 @@ export class RecallService {
   ): Promise<void> {
     const binding = this.sourceBindings.get(candidates);
     if (!binding || !this.service.store.memories) return;
-    const sources = selected.flatMap((candidate) => {
-      const revision = binding.sources.get(candidate.id);
-      return revision ? [{ id: candidate.id, revision }] : [];
+    // A grouped candidate can display its newest member's text while keeping the
+    // first member's ID. Every contributing source must still match after attention.
+    const ids = new Set(selected.flatMap((candidate) => candidate.sourceIds ?? [candidate.id]));
+    const sources = [...ids].flatMap((id) => {
+      const revision = binding.sources.get(id);
+      return revision ? [{ id, revision }] : [];
     });
     if (!(await this.service.store.memories.current(binding.scope, sources)))
       throw new Error('Selected memory changed during attention; discard this decision.');

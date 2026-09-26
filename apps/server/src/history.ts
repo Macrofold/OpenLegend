@@ -232,7 +232,12 @@ export class HistoryRepository {
     await this.db.prepare('DELETE FROM history_events WHERE world_id=? AND id=?').run(worldId, id);
   }
   /** Runs inside the authoritative commit transaction. No paid work and no imagined legacy sources. */
-  async project(previous: WorldState | undefined, world: WorldState, appendCount?: number) {
+  async project(
+    previous: WorldState | undefined,
+    world: WorldState,
+    appendCount?: number,
+    reapplyForgetting = false,
+  ) {
     // The current host has one principal; resolve its perspective from the saved binding.
     if (this.bindLocalPrincipal) {
       this.principals = [{ ownerId: 'local-player', actorId: controlledEntityId(world) }];
@@ -364,8 +369,11 @@ export class HistoryRepository {
       }
     }
     for (const [actorId, ids] of Object.entries(world.experience?.forgotten ?? {})) {
-      if (ids === previous?.experience?.forgotten[actorId]) continue;
-      const old = new Set(previous?.experience?.forgotten[actorId]);
+      // Installing a save also replaces historical permissions. Even an unchanged
+      // present-day ledger must revoke access restored by that older snapshot.
+      // docs/save-and-load.md#external-work-privacy-and-shared-authority
+      if (!reapplyForgetting && ids === previous?.experience?.forgotten[actorId]) continue;
+      const old = new Set(reapplyForgetting ? [] : previous?.experience?.forgotten[actorId]);
       for (const id of ids)
         if (!old.has(id)) {
           await this.db

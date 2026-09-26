@@ -571,8 +571,6 @@ export class WorldService {
       );
       restored.world.archivedEventCount = 0;
       const baseline = structuredClone(restored.world);
-      // Force current privacy overlays through history projection, even if captured earlier.
-      if (baseline.experience) baseline.experience.forgotten = {};
       for (const [actorId, ids] of Object.entries(ledger ?? {}))
         for (const sourceId of ids)
           restored.world = forgetExperience(restored.world, actorId, sourceId).world;

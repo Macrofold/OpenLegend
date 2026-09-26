@@ -122,11 +122,12 @@ try {
       }
       // Check every copied column before migrations/projection deliberately change
       // any rows. PostgreSQL returns bigint as text; compare its exact decimal value.
+      // Older source tables may lack additive columns whose target defaults are
+      // valid migrations (for example pause_when_hidden). Verify the source columns.
+      const sourceColumns = Object.keys(data[table]?.[0] ?? {}).sort();
       const fingerprint = (row: Record<string, unknown>) =>
         JSON.stringify(
-          Object.keys(row)
-            .sort()
-            .map((key) => [key, row[key] === null ? null : String(row[key])]),
+          sourceColumns.map((key) => [key, row[key] === null ? null : String(row[key])]),
         );
       const expected = (data[table] ?? []).map(fingerprint).sort();
       const copied = (await target.db.prepare(`SELECT * FROM ${table}`).all())

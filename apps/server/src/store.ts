@@ -743,6 +743,7 @@ export class SqliteStore implements GameRepository {
                 (historyProjection?.after ?? state.world).events,
               )
             : undefined,
+          !!historyProjection?.restore,
         );
         if (!historyReady) await this.putIntegration(historyKey, 1);
         const outcomes = new Map<
