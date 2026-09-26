@@ -16,6 +16,7 @@ const payload = z
 export const authoringKind = z.enum([
   'recipe',
   'attribute',
+  'attribute-bindings',
   'status-effect-policy',
   'cognition-policy',
   'action',

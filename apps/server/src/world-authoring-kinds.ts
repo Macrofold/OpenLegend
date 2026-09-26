@@ -1,4 +1,10 @@
 import {
+  attributeBindingTarget,
+  attributeBindingSummary,
+  attributeBindingImpact,
+  bindAuthoringAttributes,
+} from './world-authoring-bindings.js';
+import {
   admitAttributeDeclaration,
   admitCognitionPolicy,
   admitDeclaration,
@@ -30,6 +36,7 @@ export interface AuthoringDraft {
   base: {
     manifest?: string;
     actionRules?: string;
+    attributeTarget?: ReturnType<typeof attributeBindingTarget>;
     policy?: string;
     materials?: Record<string, string>;
     recipe?: { recipeId: string; version: number; digest: string };
@@ -56,7 +63,15 @@ export function draftBase(
   baseRecipeId?: string,
 ): AuthoringDraft['base'] {
   // Revision updates keep the original base. An obsolete base requires an explicit new draft.
-  if (inherited && kind !== 'recipe') return inherited;
+  if (inherited && kind !== 'recipe') {
+    if (kind === 'attribute-bindings') {
+      const target = attributeBindingTarget(world, payload);
+      // Explicitly changing the target makes a new reviewed revision; it is not a silent rebase.
+      if (target.entityId !== inherited.attributeTarget?.entityId)
+        return { ...inherited, attributeTarget: target };
+    }
+    return inherited;
+  }
   if (kind === 'recipe') {
     const p = object(payload),
       inputs = Array.isArray(p.inputs) ? p.inputs : [];
@@ -91,6 +106,9 @@ export function draftBase(
     };
   }
   return {
+    ...(kind === 'attribute-bindings'
+      ? { attributeTarget: attributeBindingTarget(world, payload) }
+      : {}),
     ...(kind === 'action' ? { actionRules: actionRules(world) } : {}),
     manifest: fingerprint(world.moduleManifest),
     ...(kind === 'status-effect-policy' ? { policy: fingerprint(world.statusEffectPolicy) } : {}),
@@ -109,6 +127,12 @@ function actionRules(world: WorldState) {
   ]);
 }
 export function currentDraftBase(world: WorldState, d: AuthoringDraft): boolean {
+  if (
+    d.kind === 'attribute-bindings' &&
+    fingerprint(d.base.attributeTarget ?? null) !==
+      fingerprint(attributeBindingTarget(world, d.payload))
+  )
+    return false;
   if (d.base.actionRules && d.base.actionRules !== actionRules(world)) return false;
   if (d.base.manifest && d.base.manifest !== fingerprint(world.moduleManifest)) return false;
   if (d.kind === 'status-effect-policy' && d.base.policy !== fingerprint(world.statusEffectPolicy))
@@ -157,6 +181,7 @@ export function authoringTransition(
       return reject(world, 'invalid-action', 'Use an installed native command and its schema.');
     return service.reviewedCommandTransition(world, receiptId, parsed.data, d.actorId);
   }
+  if (d.kind === 'attribute-bindings') return bindAuthoringAttributes(world, d.payload, receiptId);
   const permission = inventionPermission(world, {
     origin: 'player',
     policyRevision: d.policyRevision,
@@ -274,11 +299,14 @@ export function validateAuthoring(service: WorldService, d: AuthoringDraft) {
             ? 'Replace this supported policy; changed active effect instances are ended under the old rules.'
             : d.kind === 'attribute'
               ? 'Create/remove an unused custom attribute, or make only revisions permitted by the existing native adapter. No automatic attachment to actors.'
-              : 'Change the existing cognition policy; controller and real spending limits remain authoritative.',
+              : d.kind === 'attribute-bindings'
+                ? attributeBindingSummary(world, d.payload)
+                : 'Change the existing cognition policy; controller and real spending limits remain authoritative.',
   };
 }
 /** Approval covers affected effect episodes, not merely an earlier object count. Clock drift is irrelevant. */
 export function authoringImpact(world: WorldState, d: AuthoringDraft) {
+  if (d.kind === 'attribute-bindings') return attributeBindingImpact(world, d.payload);
   if (d.kind !== 'status-effect-policy') return { token: 'none', affected: 0 };
   const proposed = object(d.payload).definitions;
   const definitions = new Map(
