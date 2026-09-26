@@ -1,5 +1,9 @@
 # Maintainer TODO — cross-cutting work
 
+## Existing automated suite compatibility
+
+- [ ] Restore passing normal CI against current runtime contracts without weakening assertions. [Worker reconciliation CI](../verification.md#macrofold-worker-review-reconciliation) exposed 107 failing tests across 17 files after the inherited formatting blocker was removed. Triage fixed `player`/`ada` IDs against current actor identities, direct mutation of frozen worlds against native transition ownership, and stale admission/save/usage expectations. The changed cognition fixture fails during context construction before exercising Worker routing. Its transport assertions remain required by [MW04](macrofold-worker-api.md#mw04--remaining-deployment-and-qualification-gates). Compare failures with main before assigning all failures to fixture drift; close only on an actual passing CI run.
+
 ## Macrofold worker reuse — deferred validation
 
 The Worktree-bound Sandbox caller is superseded by [MW01–MW04](macrofold-worker-api.md). That tracker owns Worker routing, shared-compute cancellation, unchanged durable context/accounting, pending live qualification and fixture adaptation. Do not restore the obsolete per-Sandbox creation/resume expectations.
