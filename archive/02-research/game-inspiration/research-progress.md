@@ -1,27 +1,58 @@
 # Full research progress and resume ledger
 
-**Read first:** [complete assignment / R01–R14](research-requirements.md) and [130-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; branch `docs/game-inspiration-library-expansion` (from `docs/game-inspiration-library`); original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`. Research-only tracking, not an implementation backlog.
+Read [requirements / R01–R14](research-requirements.md) and the [canonical 130-subject roster](research-roster.md). This is research-only tracking, not an engine implementation backlog.
 
-## Resume here
+## Branch scope and resume point
 
-**Active: G21 — RimWorld.** Intended output: `dossiers/rimworld.md`. Read `games/rimworld.md` and `mechanics/rimworld-work-dependencies-personality-and-story.md`; preserve the storyteller/colonist-history evidence and do not describe its storyteller as an LLM. Research current base game and expansion boundaries across R01–R14: scenario/colonist creation, traits/passions/skills, needs/moods/ideoligions/genes, work priorities and bills, resources/items/crafting, building/power/temperature/agriculture, health/body parts/disease/injury, combat/cover/weapons/armor, wildlife/taming, relationships/social memory, factions/reputation/trade/quests, caravans/world map, prisoner/recruitment/slavery where applicable, storytellers/difficulty/events, death/corpses/resurrection, Royalty/Ideology/Biotech/Anomaly/Odyssey systems, mods versus vanilla, production, five written reviews and top/helpful Steam positive/negative evidence. Finish, review and commit before G22 Hades I.
+**Branch:** `docs/game-inspiration-games-101-120`, created September 26, 2026 from `docs/game-inspiration-library-expansion` at `57bcd96f75f4561baff10ea57e28210dd908ebd5`. Mike explicitly assigned **G101–G120**, one game at a time, with a commit after every game and substantive checkpoints at least every five minutes. Do not modify the parallel range branches or claim their work is present here.
 
-**Completed: G01–G20, 20 / 130. Active: G21. Pending: G22–G130.** RuneScape and Old School RuneScape remain independent pending full passes G48/G49. G50–G57 retain Dragonwilds, four separate mainline Dragon Age games, Deadfire, and Original Sin I/II. G58–G110 are the broader requested mechanics-library additions/franchise splits; G111–G130 are curated OpenLegend-relevant additions. Every pending dossier now also has the explicit five-written-review minimum and Steam top/helpful-review sampling when applicable. Adding scope is not completed research.
+**Active: G101 — Mass Effect. Completed in this range: 0 / 20.** Next action: research and write `dossiers/mass-effect.md`; distinguish the 2007 game, PC port, DLC and Legendary Edition; cover R01–R14, five independent written reviews, accessible helpful Steam player evidence, concrete interactions and the Shepard/squad/choice-import boundary. Finish, review, commit and record its commit before proceeding to G102.
 
-**Latest completion:** Minecraft, `4f6b715814dd932af34806517539cfe55ed1a6a0` (full vanilla mechanics/reception dossier; Java/Bedrock and extension boundaries explicit; prior redstone study preserved). Prior completion: Ultima Online, `f354c2cea10726b62c49159fae263d919dacf2d6` (full historical/current virtual-world dossier; production shards separated from New Legacy; 2026 Season 2 remains future; ecology case preserved). Prior completion: EverQuest Next, `f83fdab8f79e100dc3834d3ec4f885814712d264` (full documented-design/cancellation dossier; five previews/analyses used instead of impossible shipped reviews; Landmark and Storybricks boundaries explicit). Prior completion: No Man's Sky, `a5abbad73532eb252783034dbcb0fced65554b49` (full launch-to-Cosmos 7.0 mechanics/reception dossier; permanent systems separated from Expeditions/community events; current positive and negative Steam evidence retained). Prior completion: Spore, `29228032e32bf202b42c06eb4e6875cf8439f80c` (full mechanics/reception dossier; five-stage continuity, creator systems, Galactic Adventures, current Sporepedia and Steam evidence, and creator-depth-versus-game-depth tension documented). Prior completion: Worlds Adrift, `759e3e07c5803d268d5845e162620cdaf29cce32` (full mechanics/reception dossier; original MMO is separated from Lost Skies; shutdown and preservation constraints retained). Prior completion: Project Spark, `245e3f5cfea615ed87648670d5ae51618de88dc0` (full mechanics/reception dossier; no Steam release; launch monetization, 2015 all-free transition and 2016 service shutdown are separated). Prior completion: Dreams, `e2d1934a0ce2a8bb6c9a112c005a4f978058e1d2` (full mechanics/reception dossier; no Steam release, so Steam-review sampling is explicitly not applicable; live-support sunset is distinguished from shutdown). Prior latest completion: Diablo IV, `3f7ad2372d47338dcbcf210a6c711d272912cad3` (full dossier `bcd2e6bc3c4e19508d4e35d8cf71c7880585ecc7`, followed by a verified graphics-account timing correction). Its final sections and source-anchor tail were reread; the preserved comparison remains unchanged. Prior completions: Path of Exile 2 `e8849b61c560b054f6a29929f295cce537bf48da`, Path of Exile `f71027bfc991d08b5efe6b3f8812a134148ab836`, Hades II `5e549c2`, Among Us `f2e46a9`, Animal Crossing `2ddb173`, Roblox `450e2cd`, Grow a Garden `9ffda9d`, Steal a Brainrot `2193298`, Fortnite `d91728a`, League `2a6c6e0`, Dota `3d37a62`. Earlier detailed ledgers retain full identifiers. Existing selective studies never count automatically as full passes.
+The inherited baseline contains completed dossiers G01–G20 and an active G21 RimWorld assignment. Those inherited completion claims are **not newly re-audited here**. G21–G100 and G121–G130 are outside this branch's assignment; their progress on other branches must be reconciled during integration. The original parent ledger, including all earlier completion SHAs, detailed resume instructions and historical scope changes, is preserved [at the branch base](https://github.com/Macrofold/OpenLegend/blob/57bcd96f75f4561baff10ea57e28210dd908ebd5/archive/02-research/game-inspiration/research-progress.md). Its latest inherited completion was Minecraft, `4f6b715814dd932af34806517539cfe55ed1a6a0`. Original library baseline: `feab691827a7cd62b6146f31eef20ee12e1a4770`.
 
-## Final integration gates — pending
+## G101–G120 completion records
 
-| Gate | Work still required |
+A row is complete only after substantive R01–R14 coverage, evidence/access review, preservation/link review and a successful connector commit. Evidence legitimately unavailable after investigation must be stated in the dossier, not fabricated or counted as read.
+
+| ID | Subject / canonical output | Status | Dossier completion commit |
+| --- | --- | --- | --- |
+| G101 | `dossiers/mass-effect.md` | In progress | — |
+| G102 | `dossiers/mass-effect-2.md` | Pending | — |
+| G103 | `dossiers/mass-effect-3.md` | Pending | — |
+| G104 | `dossiers/mass-effect-andromeda.md` | Pending | — |
+| G105 | `dossiers/mass-effect-galaxy.md` | Pending | — |
+| G106 | `dossiers/mass-effect-infiltrator.md` | Pending | — |
+| G107 | `dossiers/octopath-traveler.md` | Pending | — |
+| G108 | `dossiers/octopath-traveler-ii.md` | Pending | — |
+| G109 | `dossiers/star-wars-knights-of-the-old-republic.md` | Pending | — |
+| G110 | `dossiers/star-wars-knights-of-the-old-republic-ii.md` | Pending | — |
+| G111 | `dossiers/the-legend-of-zelda-tears-of-the-kingdom.md` | Pending | — |
+| G112 | `dossiers/fallout-new-vegas.md` | Pending | — |
+| G113 | `dossiers/the-elder-scrolls-iii-morrowind.md` | Pending | — |
+| G114 | `dossiers/kingdom-come-deliverance-ii.md` | Pending | — |
+| G115 | `dossiers/mount-and-blade-ii-bannerlord.md` | Pending | — |
+| G116 | `dossiers/middle-earth-shadow-of-war.md` | Pending | — |
+| G117 | `dossiers/deus-ex-2000.md` | Pending | — |
+| G118 | `dossiers/prey-2017.md` | Pending | — |
+| G119 | `dossiers/dishonored-2.md` | Pending | — |
+| G120 | `dossiers/starsector.md` | Pending | — |
+
+## Preservation and navigation evidence
+
+At the base commit, the complete `games/`, `mechanics/` and `dossiers/` directory inventories were inspected. None contains an existing G101–G120 full chapter or dossier; these are September 26 roster additions, not replacements for one of the original 38 chapters. Existing chapters, selective mechanics studies, essays, references and their factual/review/video material remain owned by their existing files. Incidental cross-game mentions are not promoted into completed independent research. The original seven-file packet and conversation-wide reconciliation remain a separate global gate; this range must not claim that audit passed.
+
+Navigation for new dossiers will be added without removing existing library or interaction-lookup routes. Each dossier must state its edition/access limitations, requirement map, source annotations, spoiler boundary and preservation relationship. Rules-based illustrative situations must not be described as observed playtests.
+
+## Final integration gates
+
+| Gate | State / required work |
 | --- | --- |
-| P01 — Seven-file packet preservation | Compare all original passages, examples, reviews, source annotations, economic dates and viewing recommendations with repository owners. [Provenance](references/packet-provenance.md) identifies inputs but is not a completeness audit. |
-| P02 — Earlier conversation coverage | Recover accessible original scope; distinguish supplied material from unavailable conversation-only details. |
-| P03 — Full roster review | Verify all 130 passes and version/combined-chapter boundaries against R01–R14, including the explicit mechanics inventory, five-review minimum, Steam evidence where applicable, Dragon Age expansion/smaller-game coverage, and franchise boundaries. |
-| P04 — Navigation and links | Connect full dossiers through library/chapter routes; validate internal links and source anchors while preserving old routes. |
-| P05 — Evidence/diff review | Check actual changes, dates, source-access limits and unsupported claims. No unseen footage represented as watched. |
+| P01 — Seven-file packet preservation | Global gate pending. Compare all original passages, examples, reviews, sources, economic dates and viewing recommendations with repository owners; [provenance](references/packet-provenance.md) is not a completeness audit. |
+| P02 — Earlier conversation coverage | Global gate pending. Recover accessible original scope and distinguish supplied material from unavailable conversation-only detail. |
+| P03 — Full roster review | Global gate pending. Verify all 130 passes, edition/franchise boundaries, expansions, five-review minimum and Steam evidence where applicable. This branch can verify only its 20 assigned additions. |
+| P04 — Navigation and links | Range gate pending; global integration pending. Connect these dossiers through the existing library and interaction lookup, preserving old links. |
+| P05 — Evidence and diff review | Range gate pending; global integration pending. Review actual changed files, dates, attribution, access limits and source anchors. No unseen footage represented as watched. |
 
 ## Recovery rules
 
-Use connector commits on this branch; commit substantive checkpoints at least every five minutes. Incomplete files must name remaining work. Finish/review/commit one subject, then immediately advance this ledger. Read the current remote head and blob before editing; preserve concurrent changes. Mike explicitly reiterated on September 26 that work must continue until the entire assignment is complete; do not turn these recovery checkpoints into an arbitrary stopping point. No background execution or future delivery is implied.
-
-Full instructions: `research-requirements.md` (initial `4dcd82ebd9e7ca357bf25512b9c463ce653a7112`, RuneScape amendment `096bee4b681f8a6c960681ba9a21b960c902fda8`, September 26 expansion `e86ed921994e0fe03cc4141e3a73443f4295da1d`). Roster additions: `7d016f12cf38d1dc9b049982943c5cc84c446e12` and `7d08c16ae881344cbbe7af80e37371f3d027d9d6`. Completion ranges refer to that stable inventory and do not narrow the assignment. Git history retains detailed earlier ledgers and substantive checkpoints. File counts and elapsed work never substitute for research completion.
+Use GitHub connector commits. Re-read the branch head and current shared-file blob before writes; preserve another writer's changes. Research only the active subject; commit a finished dossier before advancing. A checkpoint is not completion and must name exact remaining work. No background execution or future delivery is implied. Requirement and roster files remain canonical and unchanged; no new product requirements or runtime implementation are authorized by this research.
