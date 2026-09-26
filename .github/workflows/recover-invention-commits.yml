@@ -1,0 +1,42 @@
+name: Recover invention commit objects
+on:
+  push:
+    branches: [feature/invention-repertoire-foundation]
+    paths: [.github/workflows/recover-invention-commits.yml]
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Collect existing repository objects without executing code or tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import os,json,base64,urllib.request,concurrent.futures,pathlib
+          ids='''2ca698f0fddfa0c6854f8d43de2d9bb8e45fc5e0 a2059db30569a7ef5b7d932f35fb82c4b73aa4a5 3c64bdb89f505cd587cc44bfcd10a3b78a22dc5a bfb09c93c33abcf646e2f395619081f81090ea4d ee1371b202d545c7124330087bee9f755934dd71 f69be39506e514f0bda7f293641897695ade21f9 9b15cbbdc9d56229b02876f86a0988e8ee336b6d 5c3031f3a3d1f9a1229276f9fe0462ed1dc68487 dd3edb9a39bb9304ca6b3560ddb52146adb77c6b 739d82ddc42bc59241ea819d814a44cfd4f44c98 bd5078320f6631535f89e9f5f4539b10fad051fe 8f11a27c4ed4435dee6d22d539076432a15f71c1 5f918c2c55c0d9499bfb4f8df5043b82621e681d e34783c9d6fe4ebdab01bbb5f80865073598641f 794c48e94c1c0e5b579fc3fdc75c6cdb31cd7d0e bbb1ea7df3167e3e28cc6f1788d25dc07bd3f304 834f7e5c2541e260a8556fb2ede2d5e561fef4b3 a6d542f8f52536326215bcb9f6f863b44a274e65 f5863f1bb02e5cd8c902d8abe573a94d4e252815 30437c62d2457f470c7ef9a9b0f9844fdd6465d0 ee63fb82c10b6c78ede5d7be1fe72e2e23e7e93c da53e698a6890f0970d686764d5c11671d5e9820 1b11c977f7c17e43f4897c7a8102f83967fdc8e9 064c6184de10cd48b921dd542f4809cf0e2d052a e402d4e413c421d27d45d336e686aad435b9645e 415d388742ad8e6a4a0331ca901626dce2f52a79 d27391863e62df412252219810920c4887cd66c7 1b2a47617968157704502ed47928245ba707dd39 0f8816359b1085491105e45581b89affaff4d765 21e3c61d56ef0e675ca551c55fe8ae9afeb35f48 edb41dac7a1a6bbf0c3ab9473aeff85999e2a166 5d2bd8efe543b659e81567500af18e16efcb619f 8c6c1e2f45e8f7c3eb94c28edce417868945ff22 b3828ab18248ad3eca4ed794bad567e21e638ecd a77e30791a8fe30879ac60486b26f62e177b15a2 aff174f1f3aaf6c055817533fe3c668eb5ce8410 a8fd6932b2ee8bd59fe54826fbc7b853edaf76d7 1850565c42e042750dee9251c512fa385d70dd9b aadbb4789aa27f5a53c4fb1ba80a81cb860133ed ad7c9f58a751ed07ebf2f7205d80385775be9166 9e7351b24c7569ae4674bd51acb6b3ecae59f5a8 cd136f4aef4a8ec6f0f0c5895144f3b593617541 7e3e1fae33c71d308902cecec9d392384dd34066 b77d4703fc18da62f1df8718c76723f797c8f701 08f82da530757c072fecba1758d2504afb84de20 e6a6955767da5d594b05b8825fb090edfc7fdc0f f717ccc3ab874e3015d4551accd2d4067d4b727c 2ea2b342bdd05e44eb5e9502ca8516c5645e271e d1de8121268a4cbdfed91852ecb3f792819d98b6 320bd5a2cfa0715557558914396f9c42aa741905 f62ec656c572b4a61e46374feee8ea558ac71139 7de2246ee7bc9776792245916189f0738e815474 12c1fe243f823909e36c8c47ad2caae3ec9d1f1e be6fbd3fb53538c139f368c402b5fa9ba69d3141 ab839a096ee691b1d74919982f64b751129df757 85e3191285205c51e528477c44c2748ec3fd4475 f9d20bda5a6c717cef3476d87af90c30573c37b9'''.split()
+          root=pathlib.Path('/tmp/recovered-objects');root.mkdir()
+          def fetch(pair):
+            n,sha=pair
+            request=urllib.request.Request('https://api.github.com/repos/Macrofold/OpenLegend/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+            with urllib.request.urlopen(request,timeout=30) as r: value=json.load(r)
+            data=base64.b64decode(value['content']);(root/f'{n:03}-{sha}').write_bytes(data)
+            return {'n':n,'sha':sha,'bytes':len(data)}
+          with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool: manifest=list(pool.map(fetch,enumerate(ids)))
+          (root/'manifest.json').write_text(json.dumps(manifest,indent=2))
+          print(json.dumps(manifest))
+          PY
+          git bundle create /tmp/recovery-history.bundle --all
+      - uses: actions/upload-artifact@v4
+        with:
+          name: recovered-invention-objects
+          path: |
+            /tmp/recovered-objects
+            /tmp/recovery-history.bundle
+          retention-days: 1
