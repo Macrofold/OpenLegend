@@ -254,7 +254,7 @@ Research capture: **September 26, 2026**. “Indexed” denotes substantive text
 
 <a id="s17"></a>**S17.** Mass Effect Wiki, [Mass Effect 3: Extended Cut](https://masseffect.fandom.com/wiki/Mass_Effect_3%3A_Extended_Cut). Indexed added-scene and edition passages inspected; not used as evidence of universal reception.
 
-<a id="s18"></a>**S18.** Mass Effect Wiki, [Powers (Mass Effect 3)](https://masseffect.fandom.com/wiki/Powers_%28Mass_Effect_3%29). Indexed six-rank and branching rules inspected; ability existence does not imply every character possesses it.
+<a id="s18"></a>**S18.** Mass Effect Wiki, [Powers (Mass Effect 3)](https://masseffect.fandom.com/wiki/Powers_%28Mass_Effect_3%29). Substantial indexed six-rank, import, point-allocation and squad passages inspected; ability existence does not imply every character possesses it.
 
 <a id="s19"></a>**S19.** PlayStationTrophies, [Mass Effect 3 Legendary Edition trophy guide](https://www.playstationtrophies.org/game/mass-effect-legendary-edition-me3/print-guide/). Indexed power and Reaper-attention descriptions inspected; a guide, not an official engine specification.
 
@@ -284,6 +284,6 @@ Research capture: **September 26, 2026**. “Indexed” denotes substantive text
 
 <a id="s32"></a>**S32.** BioWare, [Resurgence Pack](https://blog.bioware.com/2012/04/06/mass-effect-3-resurgence-pack/), April 6, 2012. Primary indexed free-map and unlock descriptions inspected.
 
-<a id="s33"></a>**S33.** [Mass Effect 3 Special Edition manual — multiplayer](https://manualzz.com/doc/o/jf7zf/electronic-arts-mass-effect-3-special-edition-video-game-...-multiplayer). Publisher-authored instructions transcribed as HTML; indexed store, supply and progression passages inspected. This is historical mode documentation, not verification of current payment or server operation.
+<a id="s33"></a>**S33.** [Special Edition manual — multiplayer](https://manualzz.com/doc/o/jf7zf/electronic-arts-mass-effect-3-special-edition-video-game-...-multiplayer), publisher-authored HTML transcription, supplies and earned-credit store rules; GamesBeat, [What does $100 buy you in Mass Effect 3 multiplayer?](https://gamesbeat.com/what-does-100-buy-you-in-mass-effect-3-multiplayer/), March 6, 2012, displayed update June 18, 2025. The manual's relevant text and the report's first-page experiment/method were inspected. The GamesBeat report, not the Wii U manual, documents paid Veteran/Spectre packs in the original Microsoft Points economy. Its one purchase sample is not a probability estimate or evidence of present payment availability.
 
 <a id="s34"></a>**S34.** [Mass Effect 3 user reviews](https://www.metacritic.com/game/mass-effect-3/user-reviews/), Metacritic. Relevant dated player statements inspected, including joshjmilli, slugnutt and Dom007. Qualitative alternatives after failed Steam top-rated and review-endpoint retrieval; not a representative or verified-purchase sample.
