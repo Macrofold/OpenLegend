@@ -1,5 +1,9 @@
 # Verification
 
+## Authoring continuation review
+
+Manual native execution against an isolated SQLite world exercised cognition-policy draft/validation/human approval/Apply, identical Apply replay, and rejection of an action draft after its pinned policy changed. A synthetic admitted turn retained its original text and sequence, lost write authority on cancellation, and returned a cancelled terminal record. A second synthetic in-flight turn became uncertain through startup recovery without redispatch. The attempts table remained empty; no provider request or paid call was made. These are application/service observations, not live Macrofold or browser qualification. Production TypeScript compilation passed. Automated regression work is WAC01–WAC02 in maintainer TODO.
+
 ## Repertoire foundation runtime observations
 
 This pass integrates main `196cfd258654df40b96e70b0ac95e26d38b1eca3` with the retained invention branch and implements [source-backed relationship inspection and read-only MCP](architecture.md#repertoire-relationship-and-mcp-foundation). It adds no native simulation effects or saved-world schema. The [aggregate record](verification/repertoire-foundation.json) identifies the runtime checkpoint, environment and workload inputs. New automated cases are IRF01–IRF09 in [maintainer TODO](maintainers/TODO.md#repertoire-foundation-deferred-regression-coverage).

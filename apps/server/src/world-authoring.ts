@@ -1,7 +1,12 @@
 import { WORLD_READ_TOOLS } from './world-tools.js';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import type { ApiResult } from '@open-legend/protocol';
-import { WorldAgentStore, type AgentSession } from './world-agent-store.js';
+import type {
+  ApiResult,
+  WorldAgentReply,
+  WorldAgentSessionView,
+  WorldAgentTurnCursor,
+} from '@open-legend/protocol';
+import { WorldAgentStore, type AgentSession, type AgentTurnRecord } from './world-agent-store.js';
 import { WORLD_AUTHORING_TOOLS, type WorldAuthoringToolName } from './world-authoring-contracts.js';
 import {
   decodeAuthoringPayload,
@@ -23,12 +28,7 @@ export interface WorldAgentTurn {
   runUsd: number;
   timeoutSeconds: number;
 }
-export interface AgentReply {
-  ok: boolean;
-  code: string;
-  message: string;
-  jobId?: string;
-}
+export type AgentReply = WorldAgentReply;
 export interface ChangePlan {
   id: string;
   draftId: string;
@@ -171,7 +171,7 @@ export class WorldAuthoringService {
       await this.records.saveSession(s);
     });
   }
-  async view(id: string, afterDraft = '', afterPlan = '') {
+  private async ownedSession(id: string) {
     const s = await this.records.session(id);
     if (
       !s ||
@@ -180,6 +180,45 @@ export class WorldAuthoringService {
       s.worldId !== this.service.world.id
     )
       throw new Error('Session unavailable.');
+    return s;
+  }
+  async turns(id: string, before?: WorldAgentTurnCursor) {
+    await this.ownedSession(id);
+    return this.records.turns(id, before);
+  }
+  async turn(id: string, requestId: string) {
+    await this.ownedSession(id);
+    const turn = await this.records.get<AgentTurnRecord>(id, 'turn', requestId);
+    return turn
+      ? {
+          id: requestId,
+          sequence: turn.sequence ?? 0,
+          text: turn.text ?? null,
+          createdAt: turn.createdAt ?? null,
+          cancelRequested: !!turn.cancelRequested,
+          response: turn.response ?? null,
+        }
+      : null;
+  }
+  async cancelTurn(id: string, requestId: string) {
+    return this.serial(id, () =>
+      this.records.db.transaction(async () => {
+        const s = await this.ownedSession(id);
+        const turn = await this.records.get<AgentTurnRecord>(id, 'turn', requestId);
+        if (!turn) throw new Error('Turn unavailable.');
+        if (turn.response || s.activeTurn !== requestId) return false;
+        turn.cancelRequested = true;
+        // Fence subsequent MCP writes before signalling the remote worker. A committed
+        // effect stays committed; cancelling is never a refund or rollback.
+        s.contextHash = contextHash(randomBytes(32).toString('hex'));
+        await this.records.put(id, 'turn', requestId, turn);
+        await this.records.saveSession(s);
+        return true;
+      }),
+    );
+  }
+  async view(id: string, afterDraft = '', afterPlan = ''): Promise<WorldAgentSessionView> {
+    const s = await this.ownedSession(id);
     const [drafts, plans, exposure] = await Promise.all([
       this.records.list<AuthoringDraft>(id, 'draft', afterDraft, 21),
       this.records.list<ChangePlan>(id, 'plan', afterPlan, 21),
@@ -217,27 +256,25 @@ export class WorldAuthoringService {
         )
         .all(this.service.world.id);
       if (!rows.length) break;
-      for (const row of rows) {
-        const s = JSON.parse(String(row['payload'])) as AgentSession;
-        const turn = await this.records.get<{ fingerprint: string; response?: AgentReply }>(
-          s.id,
-          'turn',
-          s.activeTurn!,
-        );
-        if (turn && !turn.response)
-          await this.records.put(s.id, 'turn', s.activeTurn!, {
-            ...turn,
-            response: {
-              ok: false,
-              code: 'uncertain',
-              message:
-                'Server restarted during this turn. Inspect saved drafts and the original remote run; it was not redispatched.',
-            },
-          });
-        delete s.activeTurn;
-        s.contextHash = contextHash(randomBytes(32).toString('hex'));
-        await this.records.saveSession(s);
-      }
+      for (const row of rows)
+        await this.records.db.transaction(async () => {
+          const s = JSON.parse(String(row['payload'])) as AgentSession;
+          const turn = await this.records.get<AgentTurnRecord>(s.id, 'turn', s.activeTurn!);
+          if (turn && !turn.response)
+            await this.records.put(s.id, 'turn', s.activeTurn!, {
+              ...turn,
+              response: {
+                ok: false,
+                code: 'uncertain',
+                jobId: s.activeTurn,
+                message:
+                  'Server restarted during this turn. Inspect saved drafts and the original remote run; it was not redispatched.',
+              },
+            });
+          delete s.activeTurn;
+          s.contextHash = contextHash(randomBytes(32).toString('hex'));
+          await this.records.saveSession(s);
+        });
     }
   }
   async beginTurn(sessionId: string, requestId: string, text: string) {
@@ -247,18 +284,14 @@ export class WorldAuthoringService {
         const s = await this.requireSession(sessionId),
           config = this.service.config;
         const hash = fingerprint({ text, sessionId });
-        const prior = await this.records.get<{ fingerprint: string; response?: AgentReply }>(
-          sessionId,
-          'turn',
-          requestId,
-        );
+        const prior = await this.records.get<AgentTurnRecord>(sessionId, 'turn', requestId);
         if (prior) {
           if (prior.fingerprint !== hash)
             throw new Error('Message identity conflicts with prior text.');
           return {
             response: prior.response ?? {
-              ok: false,
-              code: 'uncertain',
+              ok: s.activeTurn === requestId,
+              code: s.activeTurn === requestId ? 'running' : 'uncertain',
               message: 'This message is running or uncertain. No duplicate run was dispatched.',
               jobId: requestId,
             },
@@ -279,12 +312,27 @@ export class WorldAuthoringService {
           );
         if ((await this.records.count(sessionId, 'turn')) >= 256)
           throw new Error('Session retained-turn limit reached.');
+        const exposure = await this.records.exposure(sessionBudgetId(s));
+        const remaining = Math.max(
+          0,
+          this.budget(s).limitUsd - exposure.spentUsd - exposure.reservedUsd,
+        );
+        if (remaining < 0.000001)
+          throw new Error(
+            'Session allowance is exhausted; saved drafts and approved Apply remain available.',
+          );
         const contextHandle = randomBytes(32).toString('base64url');
         s.contextHash = contextHash(contextHandle);
         s.activeTurn = requestId;
+        s.turnSequence = (s.turnSequence ?? 0) + 1;
         // Commit both identity and handle before any external dispatch.
         await this.records.db.transaction(async () => {
-          await this.records.put(sessionId, 'turn', requestId, { fingerprint: hash });
+          await this.records.put(sessionId, 'turn', requestId, {
+            fingerprint: hash,
+            text,
+            sequence: s.turnSequence,
+            createdAt: Date.now(),
+          });
           await this.records.saveSession(s);
         });
         return {
@@ -294,7 +342,7 @@ export class WorldAuthoringService {
             connectionId: config.macrofoldWorldConnectionId,
             toolNames: [...Object.keys(WORLD_READ_TOOLS), ...Object.keys(WORLD_AUTHORING_TOOLS)],
             budget: this.budget(s),
-            runUsd: Math.min(config.macrofoldWorldRunUsd, this.budget(s).limitUsd),
+            runUsd: Math.min(config.macrofoldWorldRunUsd, remaining),
             timeoutSeconds: config.macrofoldWorldTimeoutSeconds,
           },
         };
@@ -304,8 +352,11 @@ export class WorldAuthoringService {
   async finishTurn(sessionId: string, requestId: string, response: AgentReply) {
     return this.serial(sessionId, async () => {
       const s = await this.records.session(sessionId);
-      const record = await this.records.get<{ fingerprint: string }>(sessionId, 'turn', requestId);
+      const record = await this.records.get<AgentTurnRecord>(sessionId, 'turn', requestId);
       if (!s || !record) throw new Error('Missing admitted turn record.');
+      if (record.response) return;
+      if (record.cancelRequested && !response.ok && response.code !== 'uncertain')
+        response = { ...response, code: 'cancelled' };
       await this.records.db.transaction(async () => {
         await this.records.put(sessionId, 'turn', requestId, { ...record, response });
         if (s.activeTurn === requestId) {
@@ -348,6 +399,16 @@ export class WorldAuthoringService {
         return plan;
       if (plan.status !== 'pending')
         throw new Error('This decision is final; prepare a new plan for another review.');
+      if (decision === 'approve') {
+        const validation = validateAuthoring(this.service, draft);
+        if (
+          !validation.ok ||
+          authoringImpact(this.service.world, draft).token !== plan.impact.token
+        )
+          throw new Error(
+            'The reviewed change is no longer ready. Validate and prepare a new review.',
+          );
+      }
       plan.status = decision === 'approve' ? 'approved' : 'rejected';
       await this.records.put(sessionId, 'plan', plan.id, plan);
       return plan;
