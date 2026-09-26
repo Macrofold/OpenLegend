@@ -1,107 +1,131 @@
 # World-agent invention tools
 
-**Status: accepted target contract, with a finite native workshop slice implemented.** This document owns the application tool boundary and how it grows across invention kinds. [Architecture](architecture.md#invention-workshop-tools) owns exact executable scope/configuration; [Verification](verification.md#invention-extensibility-review) owns evidence. The [world-agent experience](../archive/03-design-proposals/world-agent-and-workshop.md), [invention foundation](invention-foundation.md), [validation](invention-validation.md), and [module runtime](../archive/07-technical-architecture/world-module-runtime.md) keep their existing ownership. Delivery belongs in [INV](maintainers/inventions-and-world-evolution.md), not a second agent-tools backlog.
+**Status: accepted target application contract.** The existing finite native workshop is a delivered subset described in [Architecture](architecture.md#invention-workshop-tools); this document defines the shared service that both the UI and [MCP transport](world-agent-mcp.md) must use. [World Agent runtime](world-agent-runtime.md) owns unified conversation/session execution, [composition](invention-composition.md) owns kind integration, and the existing INV tracker owns delivery.
 
 ## 1. The boundary
 
-The world agent is a natural-language authoring and inspection surface, not another world authority. It can discover permitted capabilities, inspect their actual definitions, propose a complete draft, obtain native findings, and explain what changed. A separately admitted operation activates an eligible candidate. Model text, tool choice, a preview, and an actual committed mechanic are different facts.
+There is one OpenLegend application tool service, not one service per harness. It routes typed operations to existing definition, draft, graph, validation, asset, job, budget and native-action owners. It may consist of several ordinary modules in `apps/server`; logical separation is not a microservice requirement. MCP and local HTTP are thin adapters. No tool implements a second world writer, permission system, wallet or mutable graph registry.
 
-A server-mediated tool loop is sufficient. A remote MCP server, persistent sandbox, unrestricted shell, database tool, or new orchestration framework is not a prerequisite. A future Macrofold/MCP binding must call the same application functions with equivalent grants, bounds, idempotency, and receipts; transport cannot increase authority.
+The World Agent is an out-of-world assistant. It has the full **authorized world-level** inspection scope needed to investigate mechanics, dependencies, effects, materials, history, affected instances and relevant NPC state. Do not bind that scope to the current character's knowledge, sight, health or proximity. Drafting can continue while the character is dead or the world is paused when the caller's administrative scope permits it; ordinary embodied actions retain their own prerequisites.
 
-Keep ordinary Invent short. A complete supplied candidate needs neither search nor another authoring model; a known compatible recipe remains a native action choice. A workshop is an optional investigation/review path, not a compulsory committee of models before every craft.
+An embodied NPC may reuse selected application operations under a separate actor profile. That profile is not the World Agent's default. It cannot inherit creator transcripts, world-wide evidence, credentials, or administrative capabilities. World-wide inspection never includes unrelated worlds or ungranted real-user/private-account data.
 
 ## 2. Read, prepare, and apply are separate powers
 
-| Operation class                  | Authority and result                                                                                                                                                                                    |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Discover supported interfaces    | Read a bounded catalogue under current scope. A listed native consumer is not permission to install arbitrary new code.                                                                                 |
-| Inspect a definition             | Read a permitted immutable version, its supported behavior, direct dependencies, and limitations. No private source conversations or other minds by default.                                            |
-| Inspect installed systems        | Read the systems relevant to the explicitly bound audience. Creator-wide inspection needs a separately granted audience, not a model-provided actor ID.                                                 |
-| Prepare or revise                | Produce a new candidate associated with the request/base version. Do not mutate an installed definition or an existing physical instance.                                                               |
-| Validate                         | Run the owning native validator and scoped input checks without world effects. Findings describe what was checked, not a proof of arbitrary physical plausibility.                                      |
-| Apply a reviewed candidate       | Resolve saved candidate bytes/digest and originating authority from storage; recheck current installation requirements and use the existing admission path. Never accept a model assertion of approval. |
-| Execute/craft/modify an instance | A separate ordinary action or specifically authorized creator command with fresh target/resource checks.                                                                                                |
+Inspection, draft modification, validation, optional paid work, activation, instance action, freeze administration and budget administration are distinct privileges. The authority service resolves them from current world grants, the initiating human/actor and the admitted session—not from tool arguments or a fictional title.
 
-These are logical powers, not a requirement for seven generic services. Keep exact current tool names and response shapes narrow; future definition kinds may have different payload schemas while sharing identity, authority, and finding conventions.
+A World Agent can inspect more than it may change. Ordinary invention still preserves player/agent origin, locks, knowledge/discovery rules where applicable, and explicit creator authority for shared laws. A creator installation need not impersonate a living inventor actor or automatically teach one. Extend the existing admission contract with a server-bound creation mode; do not bypass it with direct writes.
+
+When world-level evidence is not authorized for the human recipient, use a privileged deterministic validator or separately scoped private review and return only permitted findings. Do not expose restricted text to the conversational model and rely solely on a prompt to hide it. For the initial single-owner world, the owner and World Agent can share the granted world-administrative view; multi-user disclosure remains explicit.
 
 ## 3. Initial tools and scope
 
-The first contract supports `catalogue`, `materials`, `recipes`, `inspect_recipe`, `inspect_modules`, and `validate`. Each tool has strict bounded arguments; unused fields must be null or zero. The application supplies world, actor, current timeline, and permissions. No tool argument can select a god audience, replace the payer, execute SQL, load an implementation, or elevate a fictional capability into security access.
+Existing `catalogue`, `materials`, `recipes`, `inspect_recipe`, `inspect_modules` and `validate` operations remain the narrow implemented adapter. Their actor-bound behavior is a current limitation, not the target World Agent permission model. Keep their implementation evidence in Architecture; the following catalogue is the target service surface, enabled one real adapter at a time.
 
-`catalogue` describes the finite native recipe vocabulary and required candidate shape. `materials` and `recipes` are paged, actor-scoped reads. A material's availability as design knowledge does not promise that it is currently in inventory. `inspect_recipe` supplies an immutable base pin and concrete parameters for a known technique. `inspect_modules` explains the actor's own bound attribute/sense definitions, without exposing unrelated actors or granting module-edit authority. `validate` checks references against the actor's materials before privileged native validation can disclose details about unknown ingredients.
+Use semantic verbs and a bounded set of tools—not a tool per invented object. Fields shown below are an intended v1 contract; generate strict schemas from the actual service schemas during implementation. All calls carry a server-issued `contextHandle`; writes also carry an `operationId` and appropriate expected revision. Neither value grants broader authority than its verified binding.
 
-Exact listing is not semantic equivalence search. The existing freeform Invent search retains its own explicit reuse/modification/new choice. A workshop can inspect and compare known candidates without silently copying a hidden invention or claiming complete vector retrieval. Paged reads identify scope/revision changes; old results are not guaranteed current at Apply.
+| Tool                  | Essential input                                            | Result and effect boundary                                                                                                                                                                     |
+| --------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ol_context`          | Context handle                                             | World/session purpose, authorized capabilities, current constitution references, selection, budget status, available definition kinds and limitations. No whole-world dump.                    |
+| `ol_find`             | Query, kinds, filters, cursor                              | Authorized lexical/semantic candidates with exact refs and match basis. Distinguish unavailable search; paid embedding work requires session admission.                                        |
+| `ol_inspect`          | Exact ref, sections, cursor                                | Complete reachable artifact semantics: schema, ports, parameters, reads/effects, resources, lifecycle, observations, presentation, provenance and evidence. Large sections page independently. |
+| `ol_graph`            | Root ref, relations, direction, snapshot/cursor            | Typed neighborhoods/paths from the common graph, with scope/completeness/provenance. Never claims complete interaction validation.                                                             |
+| `ol_impact`           | Candidate ref, scope, cursor/job                           | Mandatory dependency/change analysis with coverage, affected consumers and unresolved requirements. Large work returns a durable job.                                                          |
+| `ol_instances`        | Definition/install ref, typed filters, cursor              | Authorized current instance/process summaries and revision; exact sensitive records require their own access check.                                                                            |
+| `ol_history`          | Refs, event kinds, time range, cursor                      | Relevant committed outcomes, conditions and source links; separate hypothetical evidence and private interpretations.                                                                          |
+| `ol_draft_create`     | Project ref, intent, optional base ref, kind               | New candidate revision under existing session/project authority. Does not create a new budget automatically.                                                                                   |
+| `ol_draft_read`       | Candidate ref, sections                                    | Selected revision, retained alternatives, pinned constraints, unresolved choices and validation references.                                                                                    |
+| `ol_draft_update`     | Candidate ref, expected revision, kind-specific changes    | New immutable submitted revision or editable draft update under its owner; no arbitrary world patch.                                                                                           |
+| `ol_compare`          | Two exact refs, sections                                   | Typed and plain-language diff, material changes and affected scope; not an activation plan by itself.                                                                                          |
+| `ol_validate`         | Candidate ref, requested depth                             | Native checks plus admitted semantic/scenario work; report shows actual coverage and approval readiness.                                                                                       |
+| `ol_scenarios`        | Candidate ref, registered scenario IDs/parameters          | Isolated provider-disabled execution by default; seeds, counterexamples and resource limits. No arbitrary executable test code.                                                                |
+| `ol_preview`          | Candidate/plan ref, view                                   | Readable mechanics, affected scope and visual preview references, clearly marked hypothetical.                                                                                                 |
+| `ol_change_prepare`   | Candidate ref, target install/scope, intended operation    | Immutable change plan covering dependencies, migration, consequences, required grants and review. No live change.                                                                              |
+| `ol_approval_request` | Change-plan/art ref, question                              | Creates a review card under existing authority, never marks it approved. Identical requests reuse the same card.                                                                               |
+| `ol_change_apply`     | Exact plan ref, expected installation revision             | Checks stored approval or existing low-impact authorization, current scope and generation; commits once through existing activation.                                                           |
+| `ol_action`           | Controlled-actor or creator-action handle, typed arguments | Schedules an explicitly permitted native action; receipt distinguishes accepted, running, blocked and completed. No actor-ID authority injection.                                              |
+| `ol_art_request`      | Candidate/visual ref, purpose, approved references         | Admits compatible rough/refinement/redesign work within the same session allowance; returns a job and existing fallback.                                                                       |
+| `ol_art_inspect`      | Asset/job/requirement ref                                  | Technical/visual findings, actual preview references, compatibility, rights and readiness.                                                                                                     |
+| `ol_art_select`       | Exact candidate/asset refs, expected binding revision      | Selects or proposes a compatible binding through the art owner; required human review cannot be fabricated.                                                                                    |
+| `ol_job_get`          | Job ref, progress cursor                                   | Durable job/result/receipt, completeness and suggested revisit time. Polling does not dispatch work.                                                                                           |
+| `ol_job_cancel`       | Job ref, operation ID                                      | Requests cancellation and revokes publication where authorized; shared consumers and uncertain cost remain accounted.                                                                          |
+| `ol_budget`           | Session handle                                             | Used, reserved, uncertain and available amounts by purpose, plus higher-level constraints. Read only; no agent increase-limit tool.                                                            |
 
-Native discovery metadata belongs beside the current family implementation. It must say whether it is a descriptive consumer summary or an enforced runtime contract. Descriptive `reads`, `effects`, and native-consumer labels are not sufficient to claim a complete dependency graph, registered host ABI, or compositional verification. Do not use them as a security allowlist until the owning runtime actually enforces those interfaces.
+Read catalogues should not expose nonexistent mutation tools. A discovery entry can say unsupported and name its missing host capability. Resource inspection and graph traversal never execute source code. Optional future source inspection is separately granted and bounded; gameplay definitions generally have no scripts.
 
 ## 4. One optional bounded investigation
 
-A workshop request can begin from ordinary language or a complete supplied proposal. The supplied route uses shared validation and a durable checkpoint without generation. The language route uses a bounded sequence of strict proposal/tool envelopes. Each turn either requests permitted reads/validation or returns a final candidate/explanation. Results from actual tools feed the next turn; the agent is not asked to hallucinate unseen definitions.
+Unified conversation can perform deep investigation without forcing it on a simple request. Deterministic reuse or a complete supplied candidate stays on the short path. A capable Macrofold harness chooses successive tools, explains important tradeoffs, revises candidates and asks consequential questions. The old structured-inference loop remains a clearly labeled transitional execution adapter, not the target full harness.
 
-The application owns limits on rounds, tool count, input bytes, output bytes, tokens, and spending. It checks limits before subsequent paid work. Do not commission a Jev call merely to conclude that an explicitly selected workshop requires generative work. Jev remains useful for separately qualified focused semantic questions; mandatory native checks cannot be suppressed by a confidence score.
-
-A candidate modification must identify an inspected or explicitly selected base. Retain the exact base version and reject silent substitution of another inherited base. Report a plain-English summary of actual mechanics and changed sections, while allowing inspection of complete proposal JSON. Proposed changes to material, function, or meaningful appearance must remain traceable to the request; generation-quality qualification is separate from successful transport/native validation.
-
-An invalid final candidate and its findings remain a saved draft for an explicit revision. A malformed tool envelope or transport failure stops the attempt rather than starting an unbounded paid repair loop. A deliberate subsequent refinement inherits the episode allocation and originating authority. Waiting for the player consumes no resident model run.
+Use actual tool results and exact refs. A model can request another page, inspect an interface, review a failed scenario, or retain an alternative. A final assistant message can be ordinary prose; it does not need to hide a whole candidate in a strict final-response envelope. Durable draft tools and receipts carry state. A `done` statement without an installation receipt is not installation.
 
 ## 5. Explicit Apply and revision continuity
 
-The review UI shows draft readiness separately from installed status. Apply sends the retained candidate digest and parent request identity, not replacement candidate bytes. The server reads the stored ready candidate and original scope, checks the expected content, current knowledge/base version, policy, actor state and capacity, then invokes the same native invention service used by ordinary Invent and NPC proposals.
+The UI may render approval cards inline in one conversation. There is no required switch from Discuss into a different tool-enabled mode. Low-impact changes already covered by explicit invention intent and policy may activate automatically. Shared-law replacement, destructive instance edits, freeze changes, conjuring and expanded scope require the relevant approval.
 
-Repeated delivery reuses the existing receipt. Competing follow-ups use the existing single-child claim, not last-write-wins. A changed proposal needs another draft/review; stale or restored-away requests cannot become fresh permission. A denied Apply while paused leaves the draft available for an explicit resumed attempt. The authoring-round limit does not prohibit a zero-call Apply of an already-ready funded result.
+An approval record binds principal, world/generation, exact plan/candidate digest, base versions, scope, consequences and funding authorization. The human approval mutation is **not** exposed as an agent tool. The agent may request or read an approval, then apply the exact approved plan. A conversational claim that the user said yes is not an approval receipt. New material consequences require a new plan and review.
 
-Changing a blueprint creates a separate derived recipe. Existing objects keep their construction semantics. General replacement of a world law, a state owner, active effects, or a population's physiology needs [INV-5 activation](maintainers/inventions-and-world-evolution.md#inv-5--versioned-workshop-activation-and-existing-state-migration), not the recipe Apply operation.
+Apply uses stored bytes and the existing domain mutation. Repeated operation IDs with identical fingerprints return the original receipt; different bodies conflict. Parent/revision checks prevent concurrent edits from spending or publishing twice. Returning to an older draft does not restore old authority, reset charges, or override a newer selected revision.
 
-Artwork remains an independent staged output under the [art contract](invention-art-pipeline.md). A workshop checkbox is not a claim that generated visuals, appearance pins, rig changes, or visual approval are implemented. A mechanically validated recipe does not certify that a requested novel appearance is producible.
+<a id="6-cognition-and-world-semantics"></a>
 
-## 6. Cognition and world semantics
+## 6. Shared request and result model
 
-Shared material projection, family schemas, native validation, and summaries should be consumed by player authoring, workshop tools, NPC supplied-method admission, and search. They must not diverge into an agent-only list of powers or a player-only definition format.
+The trusted context resolves the authenticated connection/principal, world and generation, audience, originating actor where applicable, session/project, payer, maximum grants, deadline and request correlation. Tools cannot accept authoritative replacements for those fields. A selected entity ref is an object to inspect, not a grant to control it.
 
-The existing actor loop can submit its own complete method and receive private rejection or learning feedback without a second model rewriting it. It does not inherit player workshop tools, a human Apply dialog, or creator-wide observations. A later actor investigation loop must use the same scoped tool functions through AG08/CH01, retain origin under explicit player delegation, and return to the normal cognition scheduler when waiting. Native survival and action execution never depend on the workshop responding.
+Use strict input schemas with bounded strings/arrays, explicit enums for protocol discriminants, and registered IDs for world-defined kinds. Reject irrelevant fields. Definition payload schemas come from their actual kind adapters. Validate output too: malformed results must not bypass recipient scope or silently become plausible text.
 
-A system can expose a concern, an observation, a supported action, or a learned method to cognition through its owning interfaces. It must not add its fictional name to every prompt/scheduler branch. Likewise, “forbidden” means conflict with the active world's premise and supported contract, not an engine-wide ban on magic or resource creation. A world can permit an explicit supported source; a name or JSON field cannot create the missing source implementation.
+Common result shape, independent of MCP version:
+
+```json
+{
+  "status": "ok",
+  "summary": "The candidate uses the current rain-exposure interface.",
+  "data": {},
+  "refs": [{ "kind": "definition", "id": "shelter:cover", "version": 2, "digest": "..." }],
+  "snapshot": { "worldId": "w1", "generation": "g4", "manifestRevision": 12 },
+  "coverage": { "scope": "requested_sections", "status": "complete" },
+  "nextCursor": null,
+  "findings": [],
+  "job": null,
+  "receipt": null
+}
+```
+
+`status` distinguishes success, pending, needs input/approval, blocked, stale, unsupported and failed. Findings use stable codes, severity, evidence refs, affected requirement and a permitted next action. A genuine invocation/protocol error differs from a valid validation result containing failures. Coverage is specific to the requested evidence; it is not a global safety score.
+
+A large result returns a compact summary and pageable refs, not an unannounced truncation. `ol_inspect` can reach all authorized sections. Tool output may include safe asset handles; image bytes and signed URLs are provided only by the asset owner and are never the sole durable copy.
 
 ## 7. Growing beyond recipes without a second interpreter
 
-General composition is a real missing capability, not something tool descriptions can supply. Extend one existing subsystem at a time through [the shared runtime contract](../archive/07-technical-architecture/world-module-runtime.md):
+[Composition](invention-composition.md) defines kind adapters for discovery, editing, compilation, impact, preview, activation and cognitive projection. Extend attributes/senses through their real owners, then a compositional family, then passive systems and shared-law migration. The common conversation, MCP transport and budget identity should not change for every kind.
 
-| Extension seam          | Required owner behavior                                                                                                                                                                                                             |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Discovery               | An existing host/family registration exposes its actual schema, supported operations, constraints, scope and disclosure metadata. Do not duplicate the manifest in an agent registry.                                               |
-| Definition inspection   | A kind-specific adapter resolves the permitted exact artifact and dependencies. Use service-specific payloads under common identity, not a universal arbitrary-effects object.                                                      |
-| Draft compilation       | Bind exposed ports and validate structural/resource semantics using the owning family. Preserve requested meaning and report unsupported required host operations.                                                                  |
-| Dependency/impact query | Derive read/effect/resource/query-membership consequences from enforced contracts; include reverse consumers and live-state dependencies. Incomplete closure is a blocker or bounded deferred result, not “verified” top-K matches. |
-| Native preview          | Dispatch to independent family scenarios and generic invariants. An invented validation policy cannot exempt itself from current host/constitution obligations.                                                                     |
-| Activation              | Reuse existing declaration/module installation, expected revisions, state-owner coordination and migration; do not create a tool-specific writer.                                                                                   |
-| Cognitive projection    | Expose bounded concerns, permitted observations and action affordances through EPR/AG/CR owners, keeping private validation evidence out of lived experience.                                                                       |
-
-A finite attribute/sense editing slice may precede general process composition, but it needs explicit creator scope, a typed diff and the applicable current locks. The current owner-authoring exception remains unresolved; a tool must not assume that god mode bypasses the player invention lock or payer permission.
-
-Do not simply remove the current native-input restriction to allow recursive crafting. A generated output's inherited property words are not proof of structural capacity or a supported input role. Positive consumer contracts must establish required properties, identities, resource accounting, dependencies, limits and failure behavior first. Reuse exact existing definitions where compatible; do not copy a subsystem to change one exposed port.
-
-Similarly, do not replace one closed recipe switch with a universal script evaluator. Keep reviewed native code and explicit current limitations until a concrete consumer justifies the next reusable seam. G2 remains separately qualified and G3 remains engineering work.
+[Graph](invention-graph.md) owns the relationship representation; [validation](invention-validation.md) owns which relationships require checks. Descriptive `reads`/`effects` metadata is not enough to assert an enforced graph. Keep extraction coverage explicit until the host contracts supply the required evidence.
 
 ## 8. Player comprehension and truthful progress
 
-Offer a short explanation of what can be built, meaningful questions rather than schema chores, the actual candidate's materials/cost/work/effects, whether it is new or derived, what was checked, and which requested parts remain unsupported. Label current limits in the tool result and UI. Do not require a player to write JSON for ordinary supported authoring.
+Lead with what the player is trying to accomplish. Explain what was reused, important costs/materials, changed behavior, limitations, and the next meaningful decision. Offer Details and Graph drill-down rather than require schemas or terminology. Separate preparing, validated, awaiting approval, installed, and crafted. Native summaries take precedence over model claims.
 
-Quick Invent and review-before-install may share a panel while retaining explicit intent. General Discuss can remain a separate capability until its transport/session is safely wired to the same tools. Do not tell players that ordinary chat can inspect or mutate their world if only the workshop path is equipped to do so. Later UI unification must preserve mode, approval, candidate identity and receipts rather than implicitly converting quoted discussion into installation authority.
-
-A successful preview is not guaranteed later installation: current world capacity, knowledge, permissions, state and base references are rechecked. A successful installation is not successful crafting. Tool-generated or model prose cannot outrank those native results.
+Questions are for conflicting requirements, meaningful design tradeoffs, changed rights/cost/scope, and irreversible consequences. Ordinary field names, pagination and routine codec choices are implementation details. Progress reflects real job states, not invented percentage estimates. Show the shared $5 allowance and purpose breakdown without a compulsory separate image budget.
 
 ## 9. Cost and performance constraints
 
-Use the existing attempt ledger for bounded workshop-root reservations, settlement and uncertainty; a root allocation is another limit over the same charges, not another wallet. Preserve membership through operational backup and empty-host restore. Real accounting and cancellation history remain outside gameplay rewind. An already-accounted NPC decision is not charged again merely because it supplied a method.
+Use the existing ledger and the [session contract](world-agent-runtime.md). A read-only native query does not start a model job. Potentially paid search, validation and art require admission even when they do not change game state. The same invocation is counted once across session/project/purpose dimensions.
 
-The complete hierarchy of payer/world/account/episode/runtime ceilings remains [invention-budget work](invention-budgets.md). A first per-root cap must not be advertised as full cross-world funding enforcement or proof of actual provider maximum charges.
-
-Keep read tools demand-driven and bounded; do not poll the complete registry every simulation tick. Reuse one material projection instead of building full cognition context solely to retrieve ingredients. Model turns, tool execution and native validation must not hold the world mutation lane; only durable transitions and final admission enter the existing serialized boundary.
-
-Measure both the new path and unchanged native simulation. Fast tool validation does not establish acceptable event/awareness fan-out or population-scale tick performance. Observed failures belong to the relevant PF/EPR/SW owners, not a claim that a new workshop has solved world scaling.
+Perform queries and heavy preparation outside the world writer. Use immutable revisions and short fresh checks for final mutation. Do not poll every registry each tick or serialize whole artifact trees into every model turn. Pagination and bounded jobs provide full reachability without unbounded requests. Essential physical effects and privacy checks are not optional cost optimizations.
 
 ## 10. Delivery boundary
 
-Implement and qualify the current finite read/preview/Apply path before giving a world agent wider mutation powers. Preserve ordinary zero-call supplied methods and current native behavior. Extend supported definition kinds only through their actual validators/activation owners, with provider quality, browser usability, failure recovery, privacy, and performance evidence recorded separately.
+The real harness must demonstrate tool discovery, meaningful multi-turn investigation, exact draft/approval/apply, and coherent restart/cancellation under the actual Macrofold deployment before calling this integration live-ready. Inspector success and an injected model response are distinct evidence. The [scenario packet](invention-scenarios.md) and [MCP research](../archive/02-research/mcp-tooling-and-integration.md) guide the rollout.
 
-The focused INV tracker records delivered subsets and missing owner tools/composition/cognition integration. Deferred automated regression cases belong in [maintainer TODO](maintainers/TODO.md#invention-extensibility-review-regression-todos). This design does not select a new engine, enable arbitrary scripts, promise unimplemented art, or create a parallel authority model.
+The service can first register only implemented kinds while reporting the rest as unsupported. Do not ship empty generic interfaces and mark general mechanics authoring complete. The current owner-authoring exception remains unresolved; until decided, existing player-lock and god-only new-stat policies continue to apply.
+
+## 11. Minimal implementation shape
+
+Keep the registry in the application layer as a small typed table: operation name, input/output validators, description/annotations, required grants, cost category, handler and supported kind adapters. The dispatcher constructs `ToolContext` from authenticated principal, world/generation, recipient, funding session and cancellation; the caller cannot construct that authority from JSON. Handlers return a typed value, finding, job or receipt. MCP merely serializes it and the UI renders it.
+
+Use the existing repository for drafts/jobs/receipts and a replaceable graph reader for index queries. Kind adapters call existing domain owners. Separate `read`, `prepare` and `commit`: a read must not mutate, a prepared change has no live effects, and commit receives the reviewed exact plan plus fresh state. Do not create an inheritance framework, arbitrary plugin loader or universal effects object. Add one registration where a real new operation is needed.
+
+Catalogue descriptions explain when to use an operation and its non-effects. For example `ol_validate` returns native findings or a retained analysis job; it does not install a definition, consume fictional ingredients, teach an NPC, or approve itself. `ol_action` is an explicit native-action intention scoped to an authorized controller and current target; it is not a general world-state patch.
+
+MCP request IDs, native action IDs and external provider attempt IDs remain distinct. Propagate correlation for inspection, but only the owning durable receipt determines whether an effect was committed. Log bounded summaries and exact refs rather than every private payload.

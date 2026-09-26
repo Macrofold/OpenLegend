@@ -1,5 +1,7 @@
 # Declarations, reusable mechanisms, and world evolution
 
+The [composition workflow](../../docs/invention-composition.md) specifies kind adapters, typed specialization, review and live-law transition steps beneath this admission owner. The [graph](../../docs/invention-graph.md) supplies provenance-aware dependency and reverse-impact navigation; the [unified agent](../../docs/world-agent-runtime.md) invokes these through the [tool service](../../docs/invention-workshop-tools.md). No tool or graph projection creates an alternate installer.
+
 ## Spatial family boundary
 
 [Finite spatial families](spatial-world-runtime.md) provide bounded geometry, body/anchor and locomotion contracts. INV continues to own mechanical authoring/installation; the spatial mutation boundary owns placement consistency and invalidation. A PNG, imported mesh, arbitrary JSON field or navigation edge never grants support, anatomy or a new host operation. New spatial authoring depends only on the relevant SW13/native families, not the complete 3D roadmap; G0–G3 authority is unchanged.

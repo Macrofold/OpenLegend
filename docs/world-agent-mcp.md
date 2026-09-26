@@ -1,0 +1,140 @@
+# OpenLegend MCP and Macrofold harness integration
+
+**Status: accepted target design; MCP endpoint and native World Agent harness integration are not implemented by this specification.** This document owns transport, authentication/context binding, connector provisioning, wire behavior and interoperability qualification. The [shared tool service](invention-workshop-tools.md) owns operations and the [World Agent runtime](world-agent-runtime.md) owns conversation/funding. Research and protocol-version evidence are retained in [MCP tooling](../archive/02-research/mcp-tooling-and-integration.md). Delivery is INV-16/18; no parallel tool registry or mutation system is permitted.
+
+## 1. Architecture and selected stack
+
+```text
+Unified OpenLegend conversation and approval UI
+  -> application session/authority/budget coordinator
+  -> Macrofold native agent harness
+  -> Macrofold approved remote-MCP connector/broker
+  -> authenticated OpenLegend /mcp adapter
+  -> shared application tool dispatcher
+  -> definition/draft/graph/validation/art/job/native-action owners
+  -> existing authoritative domain and repository commit
+```
+
+Use the official TypeScript MCP SDK with a thin Node HTTP adapter and the existing Zod/schema infrastructure. OpenLegend already uses Node HTTP, TypeScript, server-owned services and strict schemas; no Express, Hono, Python service, API gateway or agent framework is required just to expose them. The MCP adapter owns protocol conversion and request lifecycle only.
+
+**Compatibility first:** the inspected Macrofold revision uses `@modelcontextprotocol/sdk` v1 (`^1.27.0`) and its integration sample uses the v1 Streamable HTTP server/transport. The official current SDK is v2, aligned to protocol 2026-07-28, whose handshake/session behavior differs. The first OpenLegend connector must use an audited, exact-pinned patched SDK v1 release and a mutually supported protocol revision, initially targeting 2025-11-25. Verify the actual installed Macrofold client negotiation before enablement. Do not handwrite dual protocol support or label v1 as the newest SDK.
+
+Plan a separately qualified v2 client/server upgrade before the selected v1 support window becomes a release risk. The application tool schemas, funding-session IDs, graph identities and operation receipts must not depend on protocol sessions, so that upgrade is transport-local. If Macrofold is upgraded before implementation, prefer the supported v2 pair instead; record the exact tested matrix. Package tags alone do not prove interoperability.
+
+## 2. HTTP surface and lifecycle
+
+Expose one explicit MCP route, initially `/mcp`, with HTTPS at the deployment boundary. Keep browser gameplay/admin routes and cookies separate. Authenticate before dispatch, reject invalid Host/Origin, enforce request body/read/decode deadlines and size limits, and reject unsupported methods through SDK-compatible responses. For server-to-server requests with no Origin, authenticate normally; a missing browser Origin is not itself a credential.
+
+For the first v1 profile, prefer stateless Streamable HTTP with JSON responses for short tools. SDK initialization/negotiation still applies; disabling `Mcp-Session-Id` is not skipping initialization. A fresh request-scoped server/transport or an equally isolated SDK pattern must not retain one principal's closures for another. Long operations return durable OpenLegend job handles rather than holding an HTTP stream open for minutes.
+
+Do not add legacy HTTP+SSE transport, resource subscriptions, sampling, roots, MCP Apps or experimental tasks as prerequisites. Notifications can improve UX later, but clients must be able to recover state through job/status tools. Browser SSE gameplay transport is a different subsystem. Network disconnect does not undo a committed action or prove a paid job was canceled.
+
+## 3. Authentication and world-level authority
+
+Initial trusted-product integration uses a dedicated high-entropy opaque bearer credential for the OpenLegend MCP connection. Store only its hash/identity and scoped grant in OpenLegend, and the actual secret in Macrofold's encrypted connection store. Give it one world/deployment audience, an authorized service principal, expiry/rotation/revocation and a maximum tool ceiling. Never put it in model prompts, ordinary tool arguments, URLs, game saves or public logs.
+
+This is an explicitly configured service integration, not a claim to implement interoperable OAuth discovery. Hosted multi-user installation later uses the SDK's OAuth resource-server facilities and an existing qualified authorization server. Required controls include exact resource/audience validation, current grant checks, PKCE/issuer/client binding where applicable, protected-resource metadata and refresh/revocation handling. Do not build a new identity provider or forward Macrofold's own platform token to OpenLegend as proof of authority.
+
+A world connection is not enough to identify the current funding session or selected project. The OpenLegend application issues a random opaque `contextHandle` bound to that connection principal, world/generation, authenticated initiating account, audience, funding session, allowed operations and expiry. The harness receives it as a scoped tool-context selector. Every tool verifies both the bearer principal and this retained binding; a user-supplied world/actor/session ID cannot substitute for it. Do not expose a tool that mints broader handles, lists other session handles or increases grants.
+
+Treat context handles as sensitive scoped capabilities: avoid retaining them in public traces, do not put them into invention metadata, invalidate them on cancellation/restoration/scope change, and make them useless without the intended connection identity. The initial integration does not assume Macrofold injects a trusted run ID or arbitrary custom header; its inspected broker explicitly does not provide a custom-header escape hatch. Trusted run correlation can be added only through a separately verified broker contract, not model-authored metadata.
+
+Recheck current grants and generation at each tool call and immediately before consequential commit. Expiry stops new calls; it does not erase durable receipts. Authentication, exact candidate approval, spending authority and fictional capabilities remain separate. World-owner permissions cannot increase another payer's cap.
+
+## 4. Macrofold connector installation
+
+Use Macrofold's existing connection creation/authentication, Tools approval, Access rules and run-selection APIs through their current documented schemas. Do not create a second connector manager inside OpenLegend. The setup sequence is:
+
+1. Deploy and health-check only the authenticated MCP surface; choose the exact protocol/SDK profile.
+2. Create the remote MCP connection with the dedicated OpenLegend credential. Discover tools without invoking paid work.
+3. Approve the implemented tool names and bind access to a dedicated workspace/preset or pair. New definitions are data, not newly approved MCP tools.
+4. Configure the World Agent run to select that connection explicitly and deny unrelated shell/files/connectors unless required and authorized.
+5. From the authenticated OpenLegend UI, create the durable funding session, context binding and initial goal. Journal the remote mapping before starting the run.
+6. Exercise a native harness discovery/read/validate/draft/approval/apply loop on an isolated world, including denial and cancellation cases, before enabling live mutation.
+
+Macrofold's inspected remote destination policy is public-HTTPS-only with DNS/private-address checks. A hosted agent cannot reach a developer's loopback server merely because a URL is configured. Use a narrowly exposed authenticated staging endpoint or an explicitly supported operator connection arrangement. Do not disable SSRF checks globally, tunnel all owner endpoints, or make the game publicly multiplayer as a shortcut.
+
+A dedicated connection may be reused across authorized sessions; context bindings isolate session purpose and budget. Reusing a connector or warm worker must not reuse another conversation's model history. If current connection grants change, Macrofold and OpenLegend both enforce reductions; newly added tools need an appropriately renewed run/session configuration.
+
+## 5. Tool registration and schema rules
+
+Register a bounded, stable set of semantic tools from the shared dispatcher. The target catalogue is in [the tool service](invention-workshop-tools.md#3-initial-tools-and-scope). Only implemented operations appear as invocable; unsupported definition kinds remain honest discovery metadata. Use a deterministic tool order, concise descriptions, explicit units/defaults/limits, and examples in resources or setup instructions rather than enormous schemas.
+
+Generate `inputSchema` and, where supported end to end, `outputSchema` from the same authoritative service validators. The adapter cannot weaken validation by coercing unknown keys or strings into IDs. Keep source schema references local and bounded; user-authored schemas do not receive unrestricted regular expressions, recursive expansion or remote `$ref` fetching.
+
+Annotations such as read-only, destructive and idempotent are client hints, never security decisions. A native read can be read-only; a search that starts paid embedding work or a validation operation that creates a durable job is not operationally side-effect-free merely because it leaves gameplay unchanged. Declare its cost/job behavior in the description. Idempotency depends on application operation identity, not an annotation.
+
+Return `structuredContent` where the negotiated client path preserves it, plus a compact text serialization sufficient for clients that only forward text. Do not duplicate huge data in both representations or omit completeness in the fallback. The integration gate must verify Macrofold's actual forwarding behavior, not assume SDK support means the model sees the fields.
+
+## 6. Wire examples and failure meaning
+
+These are tool argument/result examples, not a complete HTTP protocol transcript or currently installed route contract:
+
+```json
+{
+  "name": "ol_change_prepare",
+  "arguments": {
+    "contextHandle": "opaque-context",
+    "operationId": "prepare-17",
+    "candidateRef": { "kind": "candidate", "id": "draft-9", "version": 3, "digest": "..." },
+    "scope": { "kind": "world_law", "installationId": "rain-system" }
+  }
+}
+```
+
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Review required: changes the rain response of 12 currently affected roof sections. No change applied."
+    }
+  ],
+  "structuredContent": {
+    "status": "needs_approval",
+    "summary": "Changes rain response; existing wetness is preserved.",
+    "data": { "planId": "plan-17", "reviewId": "review-17" },
+    "refs": [{ "kind": "candidate", "id": "draft-9", "version": 3, "digest": "..." }],
+    "coverage": { "scope": "affected_current_sections", "status": "complete" },
+    "nextCursor": null,
+    "findings": [],
+    "job": null,
+    "receipt": null
+  },
+  "isError": false
+}
+```
+
+Invalid invocation/protocol shapes use the SDK's protocol errors. A tool invocation that fails uses a sanitized tool error. A successfully executed validator can return a normal result containing invalid-candidate findings; that is not a transport failure and does not justify blind retry. Denied or unavailable foreign IDs should not disclose whether a private artifact exists.
+
+Return stable domain codes such as stale candidate, unsupported host capability, incomplete analysis, approval required, budget exhausted, or uncertain external completion. Include a concrete safe next action. Do not return stack traces, raw provider bodies, SQL, secrets or private internal context in an error message.
+
+## 7. Long-running work and idempotency
+
+Graph impact, scenario execution and art jobs return job refs promptly after durable admission. Their progress/cancel/result operations use current authorization and never dispatch new work. The session coordinator may wait outside a paid harness and resume it when a result or human decision arrives. An optional future MCP Tasks binding is an adapter over those jobs, not another job store.
+
+Every mutating/cost-incurring operation has an application operation ID bound to the original principal, scope, generation and canonical body fingerprint. Store the result or pending outcome atomically with its relevant mutation/dispatch record. Duplicate IDs with identical bodies reuse the result; changed bodies conflict. JSON-RPC IDs, transport session IDs and provider run IDs are not substitutes.
+
+On timeout, the client checks the original operation/job before a new attempt. A read may be retried safely with current scope; unknown paid or physical execution is reconciled rather than replayed. Cancellation prevents new publication and requests provider cancellation where supported, but cannot promise a refund or undo a completed physical action. Shared jobs detach a consumer without invalidating other authorized consumers.
+
+## 8. Resources, prompts and rich UI
+
+Tools are the first interoperable surface. Optional resources can expose immutable definitions, graph/report pages and project summaries under an `openlegend://` URI scheme. Resource reads have exactly the same scope and current revocation checks. They are not filesystem paths or arbitrary URL fetches. Required information remains accessible through tools if the chosen harness/broker does not support resource reading.
+
+An optional authoring prompt can teach the agent how to inspect before modifying, preserve chosen constraints, distinguish draft from installation and cite evidence. It grants no authority. Sampling/roots are unnecessary because Macrofold owns model execution and OpenLegend owns authoritative files/data. Interactive graph and approval UI belongs in the existing React app first; MCP Apps is optional future projection, not a second place to grant approval independently.
+
+## 9. Security and operational controls
+
+Treat player text, descriptions, reference images, tool data and model output as untrusted content. Only server-authored tool descriptors and grants control behavior. Limit tool set, bytes, recursion, jobs and concurrency independently of the $5 allowance. No tool accepts arbitrary SQL, shell commands, import paths, callback URLs or unrestricted filesystem access.
+
+Use allowlisted asset ingestion through the artifact owner; verify file type/size/dimensions and block private-network or credential-forwarding fetches. Native actor cognition never receives MCP connection secrets. Trace request/job/candidate IDs and cost status with bounded retention; raw private payloads require separate authorized diagnostics. Reauthorization must occur when reading retained results too.
+
+Start in the existing server process and repository. Reuse the serialized world commit boundary for mutations, not for provider waits. Add an independent worker/process only when a measured heavy task needs isolation. The transport should not require sticky sessions for correctness. Remote deployment introduces authentication and hosting work; current loopback protection alone is not a production security model.
+
+## 10. Qualification and upgrade contract
+
+Pin exact SDK, protocol, Macrofold revision/deployment, harness/model configuration and tested capabilities. Qualify bearer or OAuth mode actually chosen, tool discovery, output forwarding, error handling, paging, opaque context binding, no-cross-session access, job recovery, approval and ledger accounting. Test reduced grants by starting fresh model context where necessary.
+
+Use the official MCP Inspector for protocol inspection and optional MCPJam for model/tool UX evaluation; keep both local against disposable data unless sharing is authorized. Neither substitutes for the actual Macrofold harness journey. Tests are planned in the maintainer TODO; this design task does not run paid agents or claim live interoperability.
+
+MCP version changes remain behind the thin adapter. Keep OpenLegend funding sessions, operation receipts and jobs independent of `initialize`, `Mcp-Session-Id`, transport cancellation and protocol task IDs. A new protocol release must not turn an old operation into a new physical or paid action.

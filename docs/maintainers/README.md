@@ -32,6 +32,11 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 ## Supporting references
 
 - [Policies to revisit](revisitable-policies.md) — accepted but changeable decisions, canonical owners and review triggers; not an implementation backlog.
+
+- [Unified World Agent](../world-agent-runtime.md) and [MCP integration](../world-agent-mcp.md)
+- [Relationship graph](../invention-graph.md), [composition](../invention-composition.md), and [target scenarios](../invention-scenarios.md)
+- [Encounter scaling](../encounter-scaling.md) and [MCP tooling research](../../archive/02-research/mcp-tooling-and-integration.md)
+
 - [World-agent invention tool contract](../invention-workshop-tools.md) — scoped read/preview/Apply and extension seams
 
 - [Extensibility roadmap](../extensibility-roadmap.md)

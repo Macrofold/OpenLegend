@@ -1,5 +1,7 @@
 # Implementation status
 
+The [unified agent/MCP/graph/composition packet](../../docs/invention-scenarios.md) is accepted target design, not a delivered general authoring engine. Current scope remains the finite workshop/tool and world-module subsets below. The workshop-root configuration default is $5; native Macrofold tool integration, broad world-level tool scopes, general relationship graphs, unified conversation and image-inclusive session enforcement remain pending in INV-15–INV-19.
+
 ## Spatial-world foundation
 
 The bounded schema-9 implementation adds XYZ/support identity, the elevated starter lookout, layered native A*, 3D geometry/reach/senses, tactical orbit/pitch/levels/projection with a compact visible camera toolbar and optional player following, camera-facing sprites mixed with simple meshes, and one saved native flight family. Details and limits are in [Architecture](../../docs/architecture.md#spatial-world-foundation); current checks are in [Verification](../../docs/verification.md#spatial-world-runtime). [SW01–SW16](../../docs/maintainers/spatial-world.md) preserves the larger target and its incomplete acceptance. Recast/Rapier qualification, generic spatial invention, dynamic crowds, complete muffled-audio evidence, viewport leases and broad model/asset production are not claimed.

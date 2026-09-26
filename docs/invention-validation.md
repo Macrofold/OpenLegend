@@ -1,5 +1,7 @@
 # Invention validation and compositional evidence
 
+The [relationship graph](invention-graph.md) owns typed relationship representation, source provenance, scope/coverage and navigable projections. This document still owns mandatory validation obligations and evidence interpretation. [Composition](invention-composition.md) connects those checks to kind-specific compilation and live activation; neither graph metadata nor a model-generated edge grants execution authority.
+
 **Status: accepted target design.** This document owns validation planning, relevant-interaction discovery, evidence reuse, and allocation of deterministic, Jev, LLM, and human work. It implements the acceptance responsibilities of [Declarations and evolution](../archive/07-technical-architecture/declarations-and-evolution.md), not a competing admission registry or authority. [Invention foundation](invention-foundation.md) owns revision coordination; [world constitution](world-constitution.md) owns governing policy; detailed implementation and acceptance work belongs in [INV](maintainers/inventions-and-world-evolution.md).
 
 The [tool contract](invention-workshop-tools.md) exposes scoped findings through the existing application boundary. A finite native dry-run is not the complete compositional validation planner; current scope belongs in Architecture.
