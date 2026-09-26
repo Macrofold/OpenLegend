@@ -1,63 +1,64 @@
-# Full research progress and resume ledger
+# Game-inspiration research progress
 
-**Read first:** [complete assignment / R01–R14](research-requirements.md) and [130-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; **existing working branch `docs/game-inspiration-games-40-60`**. Research-only tracking, not an implementation backlog. Do not create a replacement branch.
+This is the small resume ledger for the game-research program. Read it with the [canonical roster](research-roster.md) and [full per-game requirements](research-requirements.md). The roster owns IDs and filenames; this ledger owns state, not a competing game list.
 
-## Resume here
+## Resume state
 
-**G40–G52 have committed research passes. Active: G53 — Dragon Age: Inquisition. Continue sequentially through G60 on this branch.**
+- **Current branch scope:** finish canonical **G40 through G60** on `docs/game-inspiration-games-40-60`; do not create a replacement branch.
+- **Last fully completed game:** **G52 — Dragon Age II**.
+- **Active / next unfinished game:** **G53 — Dragon Age: Inquisition**. Continue its existing dossier and [completion evidence](references/dragon-age-inquisition-completion-evidence.md); expansion/access checkpoint committed at `a71a73e`.
+- **Additional family work:** the required Dragon Age series/smaller-game comparison remains pending after G54. It does not replace any individual dossier.
+- **Completion rule:** independently researched, written, reviewed against R01–R14, and committed. A source checkpoint is not complete.
+- **Commit rule:** commit after each game or at least every five minutes; checkpoint substantive unfinished work honestly.
+- **Evidence date:** September 26, 2026; America/New_York.
 
-G52 completion `d87164e0a8db269c15274a5d9e8a3c5a80ab86bd` covers classes/abilities, tactics/combos, crafting, voice/personality, friendship/rivalry, story and imports, Legacy, Mark of the Assassin, The Exiled Prince and Emporium, five independent reviews and seven examples. **Steam sampling gap:** one directly read helpful-voted positive account; all-time rank and a separately negative direct Steam review could not be verified because the app surfaces remained gated. The dossier explicitly records this rather than substituting professional criticism or another game's reviews.
+### Numbering correction — September 26, 2026
 
-**G53 intended output:** `dossiers/dragon-age-inquisition.md`. Research creation/race/class and Keep import, abilities/specializations, party control and tactics, equipment/crafting/masterworks, exploration/mounts/camps/rifts, Power/Influence/perks/War Table/advisors, Skyhold/judgments, companions/approval/romance, narrative/factions and consequences. Substantively cover Jaws of Hakkon, The Descent and Trespasser; separate multiplayer progression and monetization from the campaign. Include five independent written reviews, contrasting helpful Steam evidence where accessible, dated commercial definitions, worked interactions and R01–R14/access/preservation checks.
+The previous ledger incorrectly assigned G40–G50 and G55–G60 using another ordering. The canonical roster actually has **130 subjects**. Its G40–G47 dossiers already exist and explicitly identify their correct IDs and completed-pass status; their headers were inspected at branch baseline `2e1c136c0caa08f2529cdc0069d2571a342e0c26bc`. That is a preservation/state check, not a fresh factual re-audit of their entire research. Existing Spore, No Man's Sky, Dreams, Project Spark, Worlds Adrift, EverQuest Next, Ultima Online and Among Us research remains untouched; its former placement in this ledger did not change its canonical IDs.
 
-**Required Dragon Age supplement, pending through G54:** compare all four mainline games' protagonist, party control, relationships, consequence/import model, story, production and audiences. Also cover **Journeys, Legends/Remix, The Last Court, Heroes of Dragon Age and Keep**, with actual gameplay, distribution, continuity and service boundaries. Keep is continuity infrastructure, not a full campaign. G51–G52 alone do not complete this obligation.
+The corrected remaining sequence is **Inquisition → The Veilguard → Deadfire → Original Sin → Original Sin II → Kingmaker → Wrath of the Righteous → The Blazing Blade**. Do not substitute Pillars I, Disco Elysium, Crusader Kings III, Skyrim or The Witcher 3 for these numbered subjects. The superseded ledger can be inspected at the baseline commit; [fork history](references/games-40-60-fork-baseline.md) remains preserved.
 
-## Completed on this branch
+## Canonical games 40–60
 
-| Subject | Completion reference |
-| --- | --- |
-| G40 AI Dungeon | `85e4c8af6845383686f7e0361106e84a7ca2e104` |
-| G41 Palworld | `263185836970ca91f24074c306e947e02c305ee9` |
-| G42 Balatro | `56e2e1df7ae3683793ca660165f6834f3d6136ee` |
-| G43 Slay the Spire | `4a0486b2ec16f7cdfd665b54924cde056da229f4` |
-| G44 Vampire Survivors | `77cdf55177e22ad1fd4586ef4ba1dac041971bfc` |
-| G45 Against the Storm | `5f4358e3afbbcd2e727a980209cc92363623cef7` |
-| G46 Core Keeper | `02e4a2e67249961a0695f94babbcebe4d815448f` |
-| G47 PEAK | `7712d8f270b8154997c7ba4397963f44529a7232` |
-| G48 RuneScape | [Dossier](dossiers/runescape.md), `adf1c935e5ead837fb4fe2a3fe1c9558e26a667c` |
-| G49 Old School RuneScape | [Dossier](dossiers/old-school-runescape.md), `b8147eb598fb6cee22c7aef13b483c1875e83c31` |
-| G50 RuneScape: Dragonwilds | [Dossier](dossiers/runescape-dragonwilds.md), `3ab134516b01f43b09f139f166ef6200c7d5b143` |
-| G51 Dragon Age: Origins | [Dossier](dossiers/dragon-age-origins.md), `7770159c63f83569a161cea5d47e9b6782f5eb94` |
-| G52 Dragon Age II | [Dossier](dossiers/dragon-age-ii.md), `d87164e0a8db269c15274a5d9e8a3c5a80ab86bd` |
+| ID | Game | State | Durable output / commit evidence |
+| --- | --- | --- | --- |
+| G40 | AI Dungeon | Existing completed dossier | [Dossier](dossiers/ai-dungeon.md) · present at `2e1c136` |
+| G41 | Palworld | Existing completed dossier | [Dossier](dossiers/palworld.md) · present at `2e1c136` |
+| G42 | Balatro | Existing completed dossier | [Dossier](dossiers/balatro.md) · present at `2e1c136` |
+| G43 | Slay the Spire | Existing completed dossier | [Dossier](dossiers/slay-the-spire.md) · present at `2e1c136` |
+| G44 | Vampire Survivors | Existing completed dossier | [Dossier](dossiers/vampire-survivors.md) · present at `2e1c136` |
+| G45 | Against the Storm | Existing completed dossier | [Dossier](dossiers/against-the-storm.md) · present at `2e1c136` |
+| G46 | Core Keeper | Existing completed dossier | [Dossier](dossiers/core-keeper.md) · present at `2e1c136` |
+| G47 | PEAK | Existing completed dossier | [Dossier](dossiers/peak.md) · present at `2e1c136` |
+| G48 | RuneScape (modern / RuneScape 3) | Existing completed dossier | [Dossier](dossiers/runescape.md) · `684145c` |
+| G49 | Old School RuneScape | Existing completed dossier | [Dossier](dossiers/old-school-runescape.md) · `1a5ac92` |
+| G50 | RuneScape: Dragonwilds | Existing completed dossier | [Dossier](dossiers/runescape-dragonwilds.md) · `43ab792` |
+| G51 | Dragon Age: Origins | Committed | [Dossier](dossiers/dragon-age-origins.md) · `5e333da` |
+| G52 | Dragon Age II | Committed | [Dossier](dossiers/dragon-age-ii.md) · `345c773` |
+| G53 | Dragon Age: Inquisition | In progress | [Dossier](dossiers/dragon-age-inquisition.md) · original checkpoint `2e1c136`; new evidence `a71a73e` |
+| G54 | Dragon Age: The Veilguard | Not started | Target: `dossiers/dragon-age-the-veilguard.md` |
+| G55 | Pillars of Eternity II: Deadfire | Not started | Target: `dossiers/pillars-of-eternity-ii-deadfire.md` |
+| G56 | Divinity: Original Sin | Not started | Target: `dossiers/divinity-original-sin.md` |
+| G57 | Divinity: Original Sin II | Not started | Target: `dossiers/divinity-original-sin-ii.md` |
+| G58 | Pathfinder: Kingmaker | Not started | Target: `dossiers/pathfinder-kingmaker.md` |
+| G59 | Pathfinder: Wrath of the Righteous | Not started | Target: `dossiers/pathfinder-wrath-of-the-righteous.md` |
+| G60 | Fire Emblem: The Blazing Blade | Not started | Target: `dossiers/fire-emblem-the-blazing-blade.md` |
 
-## Completion qualifications and recovery provenance
+## Next action and evidence guardrails
 
-**G51:** Origins, Awakening and major DLC, seven situations and five independent base reviews plus expansion reception. Helpful positive Steam sample verified; negative accounts came from a broader cached stream and are not called top-ranked. PC/console rules and current compatibility testimony are separated.
+Finish G53's inventory, interactions, presentation, production, commerce, player evidence, viewing route and R01–R14 mapping while preserving its five inherited review bodies and Jaws/Descent assessments. Then commit and advance one game at a time in canonical order. Complete the Dragon Age family/smaller-game supplement after G54.
 
-**G50:** checkpoint `6bc9ec9c73aa535407a4df6298e0d3d9faf9780a`; September 15, 2026 release versus Early Access, standard four-player versus six-player dedicated sessions, future Prayer/Luminance versus shipped features. Seven situations, five assessments (four reviews plus impressions), contrasting helpful Steam accounts.
+Treat retrieved snippets, inaccessible pages and metadata-only videos honestly. Separate original releases, later editions, DLC and current availability. Separate critic reviews from direct player testimony, and qualitative samples from representative statistics. Do not claim gameplay, watched footage, a local checkout, runtime tests or a repository-wide link check that did not occur. Keep all existing dossiers, chapters, mechanics and packet provenance. Completion of this branch's range is not completion of the whole 130-subject roster or the separate packet-wide reconciliation.
 
-**G49:** checkpoint `21a71648ed7dc8c5ed2a44d20ef786481617b059`; 24-skill/Sailing boundary, seven examples, five assessments (four reviews plus retrospective), Steam contrast and indexed-wiki/mirror limitations.
+<details>
+<summary>Earlier committed research history (preserved by title; superseded numbering removed from live state)</summary>
 
-**G47:** current through Gloom/Citadel and Landfall's final-major-update boundary; climbing/stamina/items/rescue/daily-map/social loops, five reviews, Steam contrast and reported >10M-copy context.
+The earlier fork audit's 19 complete, 7 partial and 34 not-started counts are historical, not current completion totals. Its details remain in [the fork baseline](references/games-40-60-fork-baseline.md).
 
-**G48:** modern-game 2026 releases separated from previews; review-corpus limitations recorded. Existing dossier reconciled with stale ledger at `e0ec4a29adef9aa82f8ebaa93eeab895d241f0f0`; inherited external research was not called freshly reverified.
+Spore (`cbbbefa`) covers five stages, creation/sharing, 19 worked systems, 12 combinations, player reception and study routes. No Man's Sky (`c56b5d0`) distinguishes launch from recovery with 22 mechanics and 12 combinations. Dreams (`512b544`), Project Spark (`de4c1ee`), Worlds Adrift (`d3c9cbd`) and EverQuest Next (`6d0c5cd`) retain their individual source, closure and portability boundaries; these are not blanket platform-success endorsements.
 
-**Inherited history is preserved:** [fork baseline and reconciliation](references/games-40-60-fork-baseline.md) retains the G21 plan at the fork, G01–G20 identifiers, packet-preservation notes and instruction provenance. Source branch `docs/game-inspiration-library` integrated the expansion at `57bcd96`; original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`. These are not current global progress or evidence about today's G21–G39 status. The reference corrects the accidental duplicated No Man's Sky sentence from ledger commit `8080c0c65356600d71817216fb929aa92543e600` using the intact earlier paragraph.
+Ultima Online (`d3e2e0a`) includes its virtual ecology and failure under player pressure. RuneScape (`684145c`) and Old School RuneScape (`1a5ac92`) are independent studies with separate economies, rules and development histories. Dragonwilds (`43ab792`) keeps its Early Access boundary explicit. Among Us (`0930511`) includes 17 mechanics, 12 interactions, 18 reception patterns, 10 videos and an explicit meeting/autonomy compromise.
 
-## Global final integration gates — still pending
+Origins (`5e333da`) includes 18 worked mechanics, 12 interactions and 16 reception patterns, distinguishing authored magic/quests from generic agency. Dragon Age II (`345c773`) includes 18 worked mechanics, 12 interactions, 18 reception patterns, 10 videos and a dated Steam sample. Their full source-game observations, researcher interpretations and proposed OpenLegend adaptations remain in their dossiers.
 
-| Gate | Work required |
-| --- | --- |
-| P01 — Seven-file packet preservation | Compare original passages, examples, reviews, annotations, economic dates and viewing recommendations with repository owners. [Provenance](references/packet-provenance.md) is not a completeness audit. |
-| P02 — Earlier conversation coverage | Recover accessible scope; distinguish supplied material from unavailable conversation-only details. |
-| P03 — Full roster review | Verify all 130 passes and boundaries against R01–R14, including mechanics, five-review minimum, Steam evidence, Dragon Age expansions/smaller games and franchise splits. |
-| P04 — Navigation and links | Connect dossiers through library/chapter routes; validate links/anchors while preserving old routes. |
-| P05 — Evidence/diff review | Check actual changes, dates, access limits and unsupported claims. No unseen footage represented as watched. |
-
-Finishing G40–G60 does not certify these global gates or the other 109 subjects.
-
-## Recovery rules
-
-Use connector commits on this branch. Commit substantive checkpoints after each game or at least every five minutes. Incomplete files must name remaining work. Finish/review/commit one subject and immediately advance this ledger. Read the current remote blob before replacing it; preserve concurrent changes. Mike explicitly reiterated on September 26 that work must continue until the entire requested range is complete; do not turn checkpoints into an arbitrary stopping point. No background execution or future delivery is implied.
-
-The [full requirements](research-requirements.md) remain authoritative. File counts, elapsed work and checklists are not substitutes for research completion. Git history and the fork reference preserve earlier ledgers and instruction identifiers.
+</details>
