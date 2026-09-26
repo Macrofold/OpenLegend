@@ -6,14 +6,14 @@
 
 **Branch:** `docs/game-inspiration-games-111-120`, created from `docs/game-inspiration-library` at `da827cd90d862a1f994b540f5e3956b606ea4a82`, September 26, 2026. Mike authorized all games 111–120, one completed game at a time, with connector commits after each game and substantive checkpoints at least every five minutes.
 
-**Completed in this range: 2 / 10. Active: G113 — The Elder Scrolls III: Morrowind.** Complete the creation/attributes/skills/leveling, combat, magic/spellmaking/enchanting/alchemy, equipment/travel, faction/quest/NPC/economy inventory; concrete situations; presentation, production, distribution and commercial context; five independent written reviews and helpful Steam evidence; Tribunal/Bloodmoon and engine/mod boundaries; source/preservation/diff review. Do not import Oblivion or Skyrim rules.
+**Completed in this range: 3 / 10. Active: G114 — Kingdom Come: Deliverance II.** Complete R01–R14, including Henry's skills and reputation, directional combat, equipment/appearance and maintenance, alchemy/forging, crime and NPC routines, survival/saves/travel, narrative and relationships, all three delivered story expansions, five independent written reviews, Steam helpful player accounts, primary production/commercial context and source/preservation/diff review. Keep original-game mechanics and launch-versus-later updates distinct.
 
 | Subject | State | Dossier / completion evidence |
 | --- | --- | --- |
 | G111 — Tears of the Kingdom | Complete | [Dossier](dossiers/the-legend-of-zelda-tears-of-the-kingdom.md); `3ec701da1b89fe2d6f262b20e3234012e1dd7ba6`, clarification `f244f25deb3a8e29363e84609a4f4a3071cc14a3`. Eight worked situations, five complete reviews plus essay, primary interviews, named non-Steam player accounts. Switch/Switch 2 and source limits explicit. Compare from `ec3c284` showed only the new dossier changed. |
 | G112 — Fallout: New Vegas | Complete | [Dossier](dossiers/fallout-new-vegas.md); `d958e1fe70b3c621ce6886ba474580ccb612ddd7`. Eight situations, five independent full reviews plus additional criticism; primary creator accounts, four substantive story-DLC comparisons, helpful-week Steam accounts and separately identified PCR regional negative review. Shipment/retail metrics, unsimulated blockade and source simplifications explicitly qualified. Compare from `7ef518e` showed only this dossier changed. |
-| G113 — Morrowind | In progress | `dossiers/the-elder-scrolls-iii-morrowind.md` |
-| G114 — Kingdom Come: Deliverance II | Pending | `dossiers/kingdom-come-deliverance-ii.md` |
+| G113 — Morrowind | Complete | [Dossier](dossiers/the-elder-scrolls-iii-morrowind.md); `5a515a1d5a9e53a466cccab2dad7f1995031fe05`. Full skill/action/creation inventory, eight cases, institutions and specific romance, Tribunal/Bloodmoon, five independent reviews and contrasting helpful-week Steam bodies. Primary manual/developer accounts; OpenMW/editor boundaries and guide inaccuracies qualified. Compare from `5e9be573` showed only this dossier changed. |
+| G114 — Kingdom Come: Deliverance II | In progress | `dossiers/kingdom-come-deliverance-ii.md` |
 | G115 — Mount & Blade II: Bannerlord | Pending | `dossiers/mount-and-blade-ii-bannerlord.md` |
 | G116 — Middle-earth: Shadow of War | Pending | `dossiers/middle-earth-shadow-of-war.md` |
 | G117 — Deus Ex (2000) | Pending | `dossiers/deus-ex-2000.md` |
