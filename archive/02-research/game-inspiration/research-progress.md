@@ -5,8 +5,8 @@ This is the small resume ledger for the game-research program. Read it with the 
 ## Resume state
 
 - **Current branch scope:** finish canonical **G40 through G60** on `docs/game-inspiration-games-40-60`; do not create a replacement branch.
-- **Last fully completed game:** **G52 — Dragon Age II**.
-- **Active / next unfinished game:** **G53 — Dragon Age: Inquisition**. Continue its existing dossier and [completion evidence](references/dragon-age-inquisition-completion-evidence.md); expansion/access checkpoint committed at `a71a73e`.
+- **Last fully completed game:** **G53 — Dragon Age: Inquisition**, committed at `66c0a611330c18871f2a1ee99a30ed83a97d0cf9`.
+- **Active / next unfinished game:** **G54 — Dragon Age: The Veilguard**. Research the actual action/companion/choice systems, production pivots, five independent written reviews, direct player evidence and current edition/support boundaries. Target: `dossiers/dragon-age-the-veilguard.md`.
 - **Additional family work:** the required Dragon Age series/smaller-game comparison remains pending after G54. It does not replace any individual dossier.
 - **Completion rule:** independently researched, written, reviewed against R01–R14, and committed. A source checkpoint is not complete.
 - **Commit rule:** commit after each game or at least every five minutes; checkpoint substantive unfinished work honestly.
@@ -16,7 +16,7 @@ This is the small resume ledger for the game-research program. Read it with the 
 
 The previous ledger incorrectly assigned G40–G50 and G55–G60 using another ordering. The canonical roster actually has **130 subjects**. Its G40–G47 dossiers already exist and explicitly identify their correct IDs and completed-pass status; their headers were inspected at branch baseline `2e1c136c0caa08f2529cdc0069d2571a342e0c26bc`. That is a preservation/state check, not a fresh factual re-audit of their entire research. Existing Spore, No Man's Sky, Dreams, Project Spark, Worlds Adrift, EverQuest Next, Ultima Online and Among Us research remains untouched; its former placement in this ledger did not change its canonical IDs.
 
-The corrected remaining sequence is **Inquisition → The Veilguard → Deadfire → Original Sin → Original Sin II → Kingmaker → Wrath of the Righteous → The Blazing Blade**. Do not substitute Pillars I, Disco Elysium, Crusader Kings III, Skyrim or The Witcher 3 for these numbered subjects. The superseded ledger can be inspected at the baseline commit; [fork history](references/games-40-60-fork-baseline.md) remains preserved.
+The corrected continuation sequence is **Inquisition → The Veilguard → Deadfire → Original Sin → Original Sin II → Kingmaker → Wrath of the Righteous → The Blazing Blade**. Do not substitute Pillars I, Disco Elysium, Crusader Kings III, Skyrim or The Witcher 3 for these numbered subjects. The superseded ledger can be inspected at the baseline commit; [fork history](references/games-40-60-fork-baseline.md) remains preserved.
 
 ## Canonical games 40–60
 
@@ -35,8 +35,8 @@ The corrected remaining sequence is **Inquisition → The Veilguard → Deadfire
 | G50 | RuneScape: Dragonwilds | Existing completed dossier | [Dossier](dossiers/runescape-dragonwilds.md) · `43ab792` |
 | G51 | Dragon Age: Origins | Committed | [Dossier](dossiers/dragon-age-origins.md) · `5e333da` |
 | G52 | Dragon Age II | Committed | [Dossier](dossiers/dragon-age-ii.md) · `345c773` |
-| G53 | Dragon Age: Inquisition | In progress | [Dossier](dossiers/dragon-age-inquisition.md) · original checkpoint `2e1c136`; new evidence `a71a73e` |
-| G54 | Dragon Age: The Veilguard | Not started | Target: `dossiers/dragon-age-the-veilguard.md` |
+| G53 | Dragon Age: Inquisition | Committed | [Dossier](dossiers/dragon-age-inquisition.md) · `66c0a61`; [historical access checkpoint](references/dragon-age-inquisition-completion-evidence.md) |
+| G54 | Dragon Age: The Veilguard | In progress | Target: `dossiers/dragon-age-the-veilguard.md`; full R01–R14 pass next |
 | G55 | Pillars of Eternity II: Deadfire | Not started | Target: `dossiers/pillars-of-eternity-ii-deadfire.md` |
 | G56 | Divinity: Original Sin | Not started | Target: `dossiers/divinity-original-sin.md` |
 | G57 | Divinity: Original Sin II | Not started | Target: `dossiers/divinity-original-sin-ii.md` |
@@ -46,7 +46,7 @@ The corrected remaining sequence is **Inquisition → The Veilguard → Deadfire
 
 ## Next action and evidence guardrails
 
-Finish G53's inventory, interactions, presentation, production, commerce, player evidence, viewing route and R01–R14 mapping while preserving its five inherited review bodies and Jaws/Descent assessments. Then commit and advance one game at a time in canonical order. Complete the Dragon Age family/smaller-game supplement after G54.
+Complete G54's independent action-RPG dossier, then the required Dragon Age family/smaller-game supplement. Advance through the remaining canonical games one at a time, committing each finished game before starting another. G53 now contains eighteen worked mechanics, ten interaction cases, three expansion analyses, five preserved independent review assessments, direct player alternatives and eight honestly labeled video routes. Its failed Steam helpful-review access is recorded rather than hidden.
 
 Treat retrieved snippets, inaccessible pages and metadata-only videos honestly. Separate original releases, later editions, DLC and current availability. Separate critic reviews from direct player testimony, and qualitative samples from representative statistics. Do not claim gameplay, watched footage, a local checkout, runtime tests or a repository-wide link check that did not occur. Keep all existing dossiers, chapters, mechanics and packet provenance. Completion of this branch's range is not completion of the whole 130-subject roster or the separate packet-wide reconciliation.
 
