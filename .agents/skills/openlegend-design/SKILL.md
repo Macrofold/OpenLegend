@@ -1,13 +1,13 @@
 ---
 name: openlegend-design
 description: >-
-  Create paired feature specs and technical designs, translate approval into tracked implementation,
+  Create paired feature specs and technical designs, execute a project plan after chat approval,
   or design changed engine/world contracts; not routine fixes.
 ---
 
 # Design from playable behavior
 
-Start with player/NPC scenarios: trigger, knowledge, interaction, outcome and meaningful failure, or equivalent non-game examples. Consult relevant [repertoires](../../../docs/repertoires/actions.md) for context and expansion possibilities, not automatic requirements. Separate the ambitious target from feasible, incremental end-to-end stages. Skip planning ceremony for an already clear local change.
+Start with player/NPC scenarios: trigger, available knowledge, interaction, visible outcome and meaningful failure, or equivalent non-game examples. Consult relevant [repertoires](../../../docs/repertoires/actions.md) for context and expansion possibilities, not automatic requirements. Separate the ambitious target from feasible, incremental end-to-end stages. Skip planning ceremony for an already clear local change.
 
 ## Feature-spec or technical-design requests
 
@@ -27,8 +27,10 @@ Challenge claimed composability with a genuinely different scenario. Localize ne
 
 ## Approval to implementation
 
-Design-only work stops at the paired deliverables, feasible stages and open choices. Once the developer approves the pair, commence implementation unless they explicitly withhold it. Before coding, follow [Documentation](../../rules/documentation.md#project-approval-and-current-truth): create/update detailed `docs/maintainers/` work items referencing both project files, preserve IDs/dependencies/exit criteria and promote accepted behavior/decisions into persistent docs without claiming targets are implemented.
+The trigger is the developer's **chat instruction approving the discussed project plan for work**. Interpret the conversation, not a magic phrase: “approved,” “looks good” or “yes” accepting the plan, or “go ahead” / “start work” / “implement” / “do it” referring to it are sufficient. No formal approval artifact, repeated spec filenames or second confirmation is required. Honor scope, requested revisions and “do not implement yet” qualifiers. Reading an old approval/status, quoting these examples or editing this workflow is not a new go-ahead.
 
-Honor any specified items, batch or time range. Without one (for example, “start work,” “implement” or “do it”), select a reasonable first batch estimated at 45 minutes of continuous agent coding; continue related in-scope work until the one-hour window is exhausted or all related work is complete. Do not idle to fill time or expand scope. Conflict stops, genuine blockers, permissions, budgets and platform limits still apply; report actual progress and any early stop honestly.
+Spec/design creation alone stops at the paired deliverables, feasible stages and open choices. After chat approval, apply the root development startup before edits; follow [Documentation](../../rules/documentation.md#project-approval-and-current-truth) to link detailed maintainer work to both project files and integrate accepted decisions, then **commence implementation in the same working session**. Do not stop after planning/tracker updates or ask whether to begin. “Continue” resumes the next unfinished authorized work from current docs/trackers, not a new design/approval cycle.
 
-Apply the root development workflow before coding. Complete the agreed slice and user/agent surfaces; resolve reversible choices and record blockers, continuing independent work only when the conflict-stop rule permits. [Verification](../../rules/verification.md) owns evidence; implementation and unverified acceptance remain distinct.
+Honor specified items, batch or time range. Otherwise choose the first coherent batch estimated at 45 minutes of continuous agent coding; keep doing related approved work until the one-hour window is exhausted or all related work is complete. A progress report or one small completed item is not a stopping point. Do not idle to fill time or expand scope. Conflict stops, genuine blockers, permissions, budgets and platform limits still apply; report actual progress and any early stop honestly.
+
+Complete the agreed slice and user/agent surfaces; resolve reversible choices and record blockers, continuing independent work only when the conflict-stop rule permits. [Verification](../../rules/verification.md) owns evidence; preserve existing work IDs/dependencies/exit criteria and distinguish implementation from unverified acceptance.

@@ -5,6 +5,7 @@ Give each substantive concept one canonical owner. Local reminders may summarize
 - **Project-specific proposals, scope and context:** Paired feature spec/technical design in `docs/projects/`, for creation requests, follow [Design](../skills/openlegend-design/SKILL.md)
 - **Current cross-project behavior and accepted contracts:** Relevant persistent specification; bundled-world mechanics under `docs/worlds/base/`
 - **Tasks, dependencies, blockers, exit criteria:** Focused `docs/maintainers/` tracker; its README is navigation only
+- **Miscellaneous/cross-cutting gaps with no focused tracker:** `docs/maintainers/TODO.md`
 - **Implemented behavior:** `docs/architecture.md` and subsystem snapshot in `archive/05-project/implementation-status.md`
 - **Actual gameplay/runtime verification evidence:** `docs/verification.md`; guidance/tooling evidence stays in its commit/PR or handoff, linked from its focused tracker
 - **Unresolved decisions / active research questions:** `archive/05-project/open-decisions.md` / `research-backlog.md`
@@ -20,7 +21,7 @@ For accepted policies expected to change, maintain [Policies to revisit](../../d
 
 ## Project approval and current truth
 
-On approval, link detailed maintainer work to both project files and integrate relevant accepted behavior/decisions into their persistent cross-project owners before implementation. Mark approved-but-unimplemented capabilities as targets, not current runtime behavior; update those owners and task states as each slice ships. Project docs retain project-specific scope, context and history, referencing canonical contracts rather than becoming competing current specifications.
+When the developer approves the discussed project plan for work **in chat**, follow the [chat-approval workflow](../skills/openlegend-design/SKILL.md#approval-to-implementation): create/update detailed maintainer work referencing both project files and integrate relevant accepted behavior/decisions into their persistent cross-project owners before coding, then implement. This is not a GitHub PR approval or a document-status change. Mark approved-but-unimplemented capabilities as targets, not current runtime behavior; update those owners and task states as each slice ships. Project docs retain project-specific scope, context and history, referencing canonical contracts rather than becoming competing current specifications.
 
 Main documentation must describe current behavior/contracts and clearly labeled remaining targets. Keep superseded narratives in project-specific docs or the changelog, not interleaved with current guidance. Historical material already retained in archives is not a current contract merely because it exists; do not reorganize unrelated archives for a local project.
 
