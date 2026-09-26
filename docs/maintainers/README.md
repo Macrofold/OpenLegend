@@ -32,6 +32,8 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 ## Supporting references
 
 - [Policies to revisit](revisitable-policies.md) — accepted but changeable decisions, canonical owners and review triggers; not an implementation backlog.
+- [World-agent invention tool contract](../invention-workshop-tools.md) — scoped read/preview/Apply and extension seams
+
 - [Extensibility roadmap](../extensibility-roadmap.md)
 - [Extensible-world worked examples](../extensible-world-examples.md)
 - [Action and interaction repertoire](../repertoires/actions.md) — stable example IDs and related-mechanic references; idea catalogue, not implementation status

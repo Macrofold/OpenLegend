@@ -11,6 +11,8 @@ import { writeFileSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 import {
   SqliteStore,
+  ACCOUNTING_TABLES,
+  BACKUP_FORMAT,
   digest,
   applyWorldChanges,
   type SavedWorld,
@@ -28,12 +30,11 @@ if (!source || !destination || !process.env['OPEN_LEGEND_DATABASE_URL'])
 const sqlite = new SqliteDatabase(resolve(source), true);
 const auxiliary = [
   'jobs',
-  'attempts',
+  ...ACCOUNTING_TABLES,
   'intelligence_calls',
   'meta',
   'player_profiles',
   'game_saves',
-  'attempt_scopes',
   ...HISTORY_TABLES,
   ...COMMAND_TABLES,
   ...MEMORY_HISTORY_TABLES,
@@ -83,7 +84,7 @@ try {
   });
   writeFileSync(
     resolve(destination),
-    JSON.stringify({ version: 1, digest: digest(data), tables: data }),
+    JSON.stringify({ version: BACKUP_FORMAT, digest: digest(data), tables: data }),
     { flag: 'wx', mode: 0o600 },
   );
 } finally {

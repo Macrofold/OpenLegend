@@ -2,6 +2,8 @@
 
 **Status: accepted target design.** This document owns validation planning, relevant-interaction discovery, evidence reuse, and allocation of deterministic, Jev, LLM, and human work. It implements the acceptance responsibilities of [Declarations and evolution](../archive/07-technical-architecture/declarations-and-evolution.md), not a competing admission registry or authority. [Invention foundation](invention-foundation.md) owns revision coordination; [world constitution](world-constitution.md) owns governing policy; detailed implementation and acceptance work belongs in [INV](maintainers/inventions-and-world-evolution.md).
 
+The [tool contract](invention-workshop-tools.md) exposes scoped findings through the existing application boundary. A finite native dry-run is not the complete compositional validation planner; current scope belongs in Architecture.
+
 ## 1. Objective and limits
 
 Make familiar inventions cheap to verify by reusing established contracts and evidence, while spending intelligence on actual novelty, missing meaning, and consequential interactions. Verification must improve as the library grows rather than require a full-world model review for every object.

@@ -1,7 +1,7 @@
 import { createEmbeddingClient } from '@open-legend/ai';
-import { inventionFamily } from '@open-legend/domain';
+import { inventionFamily, describeInvention } from '@open-legend/domain';
 import type { InventionSearch, SimilarInvention } from '@open-legend/protocol';
-import { digest } from './store.js';
+import { digest, type AttemptBudget } from './store.js';
 import type { WorldService } from './world-service.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 
@@ -17,6 +17,7 @@ export async function searchInventions(
   signal: AbortSignal,
   current: () => void,
   ready: () => Promise<void>,
+  budget?: AttemptBudget,
 ): Promise<InventionSearch> {
   const { world, config, store } = service;
   const recipes = (world.knowledge[actorId] ?? [])
@@ -82,6 +83,8 @@ export async function searchInventions(
           config.embeddingReserveUsd,
           config.budgetUsd,
           'world-agent',
+          undefined,
+          budget,
         ))
       )
         return unavailable(
@@ -147,11 +150,7 @@ export async function searchInventions(
                 `${input.quantity} ${world.itemDefinitions[input.definitionId]!.name} (${input.role})`,
             )
             .join(', '),
-          behavior: recipe.output.launcher
-            ? `${inventionFamily(recipe)} launcher; ${recipe.output.launcher.ammunitionKind} ammunition; range ${recipe.output.launcher.range}; ${recipe.workSeconds} game seconds to craft`
-            : recipe.output.gatheringTool
-              ? `Carried gathering tool; up to ${recipe.output.gatheringTool.quantity} ${world.itemDefinitions[recipe.output.gatheringTool.resourceId]!.name} per batch, limited by remaining supply; ${recipe.workSeconds} game seconds to craft`
-              : `Arrow ammunition; damage bonus ${recipe.output.ammunition!.damageBonus}; ${recipe.workSeconds} game seconds to craft`,
+          behavior: describeInvention(recipe),
           score: match.score,
         };
       }),

@@ -15,6 +15,7 @@ import { Actions } from './panels';
 const active = (request: InventionRequestView) =>
   ['queued', 'judging', 'generating'].includes(request.status);
 type Draft = {
+  mode?: 'workshop';
   candidateJson?: string;
   text: string;
   requestId: string;
@@ -56,12 +57,13 @@ export function Inventions({
         ['text', 'requestId', 'conversationId', 'seedId'].every(
           (key) => typeof fields[key] === 'string',
         ) &&
+        (fields['mode'] === undefined || fields['mode'] === 'workshop') &&
         (fields['candidateJson'] === undefined || typeof fields['candidateJson'] === 'string') &&
         (fields['continuation'] === undefined ||
           (!!fields['continuation'] &&
             typeof fields['continuation'] === 'object' &&
             typeof (fields['continuation'] as InventionContinuation).parentId === 'string' &&
-            ['clarify', 'revise', 'search', 'new', 'modify', 'reuse'].includes(
+            ['clarify', 'revise', 'search', 'new', 'modify', 'reuse', 'apply'].includes(
               (fields['continuation'] as InventionContinuation).action,
             )))
       );
@@ -79,6 +81,8 @@ export function Inventions({
   const sending = useRef(false),
     paged = useRef(false);
   const [refresh, setRefresh] = useState(0);
+  const [catalogue, setCatalogue] =
+    useState<Array<{ id: string; description: string; limitation: string }>>();
   const [choiceId, setChoiceId] = useState<string>();
   const dismissed = useRef(new Set<string>());
   const composer = useRef<HTMLTextAreaElement>(null);
@@ -135,7 +139,7 @@ export function Inventions({
         conversationId: submission.conversationId,
         continuation: submission.continuation,
         worldId,
-        mode: 'invent',
+        mode: submission.mode ?? 'invent',
         text: submission.text.trim(),
         ...(submission.candidateJson?.trim()
           ? { candidate: JSON.parse(submission.candidateJson) }
@@ -168,13 +172,19 @@ export function Inventions({
     recipeId?: string,
   ) {
     if (sending.current) return;
-    const continuation = { parentId: request.id, action, ...(recipeId ? { recipeId } : {}) };
+    const continuation = {
+      parentId: request.id,
+      action,
+      ...(recipeId ? { recipeId } : {}),
+      ...(action === 'apply' ? { candidateDigest: request.candidateDigest } : {}),
+    };
     const prior = formRef.current;
     const same = JSON.stringify(prior.continuation) === JSON.stringify(continuation);
     const draft: Draft = {
       ...prior,
-      candidateJson: same ? prior.candidateJson : undefined,
-      text: same && prior.text ? prior.text : request.intent,
+      mode: action === 'apply' ? undefined : request.mode,
+      candidateJson: action === 'apply' ? undefined : same ? prior.candidateJson : undefined,
+      text: action === 'apply' ? request.intent : same && prior.text ? prior.text : request.intent,
       requestId: same ? prior.requestId : crypto.randomUUID(),
       conversationId: request.conversationId!,
       continuation,
@@ -182,7 +192,7 @@ export function Inventions({
     setForm(draft);
     dismissed.current.add(request.id);
     setChoiceId(undefined);
-    if (['reuse', 'new', 'search'].includes(action)) void submit(draft);
+    if (['reuse', 'new', 'search', 'apply'].includes(action)) void submit(draft);
     else {
       composer.current?.focus();
       composer.current?.scrollIntoView({ block: 'nearest' });
@@ -211,6 +221,57 @@ export function Inventions({
         Describe one physical sling, bow, arrow or gathering tool and its materials. Inventing makes
         a technique available; crafting still consumes materials and time.
       </p>
+      <label>
+        <input
+          type="checkbox"
+          checked={form.mode === 'workshop'}
+          disabled={pending || form.continuation?.action === 'apply'}
+          onChange={(event) =>
+            setForm({
+              ...formRef.current,
+              mode: event.target.checked ? 'workshop' : undefined,
+              requestId: crypto.randomUUID(),
+            })
+          }
+        />
+        Review in workshop before installing
+      </label>
+      <p className="ol-caption">
+        Workshop can inspect known recipes and supported systems, explain limitations and prepare a
+        saved draft. Apply is a separate action; existing objects never change automatically.
+      </p>
+      <Button
+        size="sm"
+        variant="quiet"
+        onPress={async () => {
+          try {
+            const response = await post<{
+              ok: boolean;
+              message?: string;
+              result: { families: Array<{ id: string; description: string; limitation: string }> };
+            }>('/api/world-agent/tools', {
+              worldId,
+              tool: { operation: 'catalogue', recipeId: null, candidateJson: null, offset: 0 },
+            });
+            if (!response.ok) throw new Error(response.message);
+            setCatalogue(response.result.families);
+          } catch (error) {
+            setError(String(error));
+          }
+        }}
+      >
+        What can I build?
+      </Button>
+      {catalogue && (
+        <div>
+          <p>Currently supported native families:</p>
+          {catalogue.map((family) => (
+            <p key={family.id}>
+              <strong>{family.id}</strong>: {family.description} {family.limitation}
+            </p>
+          ))}
+        </div>
+      )}
       {form.continuation && (
         <p>
           Follow-up:{' '}
@@ -260,7 +321,11 @@ export function Inventions({
         />
       </details>
       <Button onPress={() => void submit()} isDisabled={pending || !form.text.trim()}>
-        {form.continuation ? 'Send follow-up' : 'Request invention'}
+        {form.continuation
+          ? 'Send follow-up'
+          : form.mode === 'workshop'
+            ? 'Prepare workshop draft'
+            : 'Request invention'}
       </Button>
       {form.continuation && (
         <Button
@@ -301,6 +366,24 @@ export function Inventions({
               </p>
             )}
             <p>{request.message}</p>
+            {request.validation && (
+              <details>
+                <summary>Native checks and supported effects</summary>
+                <p>{request.validation.summary}</p>
+                {request.validation.errors.map((error, index) => (
+                  <p key={index}>{error}</p>
+                ))}
+                <p>
+                  Definition dependencies:{' '}
+                  {request.validation.dependencies
+                    .map((entry) => `${entry.id} v${entry.version} (${entry.role})`)
+                    .join(' · ') || 'None resolved.'}
+                </p>
+                {request.validation.limits.map((limit, index) => (
+                  <p key={index}>{limit}</p>
+                ))}
+              </details>
+            )}
             {request.recipeId && (
               <p>
                 {request.installed
@@ -334,6 +417,11 @@ export function Inventions({
               request.currentTimeline &&
               request.conversationId && (
                 <>
+                  {request.code === 'draft-ready' && request.candidateDigest && (
+                    <Button size="sm" isDisabled={pending} onPress={() => follow(request, 'apply')}>
+                      Apply saved proposal
+                    </Button>
+                  )}
                   {request.search && (
                     <Button size="sm" isDisabled={pending} onPress={() => setChoiceId(request.id)}>
                       Review choices

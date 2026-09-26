@@ -24,6 +24,14 @@ import {
 import type { AiReceipt } from '@open-legend/ai';
 import type { AiJobView, PlayerProfile, PlayerPreferencePatch } from '@open-legend/protocol';
 
+export const ACCOUNTING_TABLES = ['attempts', 'attempt_scopes', 'attempt_budgets'] as const;
+export const BACKUP_FORMAT = 2;
+
+export interface AttemptBudget {
+  id: string;
+  limitUsd: number;
+}
+
 export interface SqlDatabase {
   dialect?: 'postgres';
   transaction<T>(operation: () => Promise<T>): Promise<T>;
@@ -72,6 +80,8 @@ export interface JobRecord extends AiJobView {
     text: string;
     npcId?: string;
     invention?: {
+      mode?: 'workshop';
+      episodeBudgetUsd?: number;
       candidate?: unknown;
       actorId: string;
       worldId: string;
@@ -90,11 +100,12 @@ export interface JobRecord extends AiJobView {
     };
   };
   invention?: {
+    validation?: import('@open-legend/protocol').InventionValidationView;
     code: string;
     search?: import('@open-legend/protocol').InventionSearch;
     continuedBy?: string;
     candidateDigest?: string;
-    candidate?: import('@open-legend/domain').DeclarationDraft;
+    candidate?: unknown;
     recipeId?: string;
   };
   result?: unknown;
@@ -318,6 +329,7 @@ export interface GameRepository extends WorldStore {
     ceilingUsd: number,
     actorId?: string,
     reuse?: 'compute-allocation',
+    budget?: AttemptBudget,
   ): Promise<boolean>;
   settle(id: string, receipt: AiReceipt): Promise<void>;
   recoverInterruptedWork(): Promise<void>;
@@ -502,6 +514,8 @@ export class SqliteStore implements GameRepository {
       );
       CREATE INDEX IF NOT EXISTS attempts_created ON attempts(created_at,id);
       CREATE TABLE IF NOT EXISTS attempt_scopes (attempt_id TEXT PRIMARY KEY, actor_id TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS attempt_budgets (attempt_id TEXT PRIMARY KEY, budget_id TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS attempt_budget_scope ON attempt_budgets(budget_id, attempt_id);
       CREATE INDEX IF NOT EXISTS attempt_actor ON attempt_scopes(actor_id,attempt_id);
       CREATE TABLE IF NOT EXISTS intelligence_calls (id TEXT PRIMARY KEY, started_at TEXT NOT NULL, payload TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS intelligence_calls_time ON intelligence_calls(started_at DESC, id DESC);
@@ -999,6 +1013,7 @@ export class SqliteStore implements GameRepository {
     ceilingUsd: number,
     actorId = 'world-agent',
     reuse?: 'compute-allocation',
+    budget?: AttemptBudget,
   ): Promise<boolean> {
     await this.ready;
 
@@ -1036,6 +1051,23 @@ export class SqliteStore implements GameRepository {
         )
         .get(start, actorId);
       const amount = micro(amountUsd);
+      // This is an additional cap over the same attempt ledger, not another wallet.
+      // docs/architecture.md#invention-workshop-tools
+      if (budget) {
+        if (
+          !budget.id ||
+          budget.id.length > 500 ||
+          !Number.isFinite(budget.limitUsd) ||
+          budget.limitUsd < 0
+        )
+          throw new Error('Invalid episode spending scope.');
+        const exposure = await this.db
+          .prepare(
+            "SELECT COALESCE(SUM(a.spent + CASE WHEN a.status = 'reserved' THEN a.reserved ELSE 0 END), 0) AS total FROM attempt_budgets b JOIN attempts a ON a.id=b.attempt_id WHERE b.budget_id=?",
+          )
+          .get(budget.id);
+        if (Number(exposure?.['total'] ?? 0) + amount > micro(budget.limitUsd)) return false;
+      }
       if (Number(row?.['total'] ?? 0) + amount > micro(Math.min(50, ceilingUsd))) {
         return false;
       }
@@ -1045,6 +1077,8 @@ export class SqliteStore implements GameRepository {
         )
         .run(id, provider, amount, Date.now());
       await this.db.prepare('INSERT INTO attempt_scopes VALUES (?,?)').run(id, actorId);
+      if (budget)
+        await this.db.prepare('INSERT INTO attempt_budgets VALUES (?,?)').run(id, budget.id);
       return true;
     });
     if (accepted) this.usageCache = undefined;
@@ -1115,13 +1149,15 @@ export class SqliteStore implements GameRepository {
             job.invention &&
             (await this.db
               .prepare(
-                "SELECT id FROM attempts WHERE status='uncertain' AND (id IN (?, ?) OR substr(id, 1, ?) = ?) LIMIT 1",
+                "SELECT id FROM attempts WHERE status='uncertain' AND (id IN (?, ?) OR substr(id, 1, ?) = ? OR substr(id, 1, ?) = ?) LIMIT 1",
               )
               .get(
                 `${job.id}:route`,
                 `${job.id}:generate`,
                 `${job.id}:invention-search:`.length,
                 `${job.id}:invention-search:`,
+                `${job.id}:workshop:`.length,
+                `${job.id}:workshop:`,
               ));
           await this.putJob({
             ...job,

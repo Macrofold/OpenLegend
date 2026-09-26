@@ -3,6 +3,52 @@
 This file records current reproducible evidence and acceptance gaps. Fixture evidence does not establish live model quality, provider cost, hosted security, capacity or balance.
 
 
+
+## Invention extensibility review
+
+Reviewed `24f970566f5ed400fd25e197dd3aa624fa0accc9`, which retains main `7bba4866819e5623fc4e42d6f8d82f96ca25877d` plus the preceding invention/performance work. The review implements the finite [world-agent workshop tools](architecture.md#invention-workshop-tools), not the full invention foundation. [Raw bounded observations](verification/invention-extensibility-review.json) retain workloads and limits.
+
+### Method
+
+Manual isolated execution on September 23, 2026 used Linux x64, Node 22.16.0, local SQLite, five visible CPUs reporting Intel Xeon Platinum 8370C at 2.80 GHz, and disposable worlds. Production TypeScript compilation and Vite client build passed. The existing approximately 2.625 MB uncompressed main client chunk warning remains. No unit/test suites, browser automation, real PostgreSQL queries or live model requests were run. Actual provider spending was **$0**. All ledger amounts below are explicitly synthetic, not API charges. Transient exercise scripts and CPU profiles remain outside version control.
+
+### Actual application and transport observations
+
+A real `createGameServer` instance served authenticated local HTTP requests with its automatic timer disabled for controlled native stepping. The new tool endpoint returned the four current native families and only the controlled actor's bound system metadata; an unknown recipe returned the same scoped-unavailable response. A complete supplied sling entered workshop while paused, completed `draft-ready`, and changed neither recipe count nor inventory. Submission acknowledgement was 32.70 ms in this single sample; this is not total live generation latency.
+
+Identical preview replay returned the saved result. Apply with a wrong digest was rejected; Apply while paused was rejected without consuming the parent. After explicit Resume, Apply admitted the stored recipe. Identical Apply replay returned the completed job. A separate native craft command plus actual `WorldService.tick` progression produced the item by simulation time 72. Clean close/reopen preserved the recipe, ready draft and admission result. No spending attempt was created by the supplied preview/Apply/craft path.
+
+An invalid supplied draft using an unknown ingredient was retained with a native finding rather than silently rewritten. The feedback did not disclose properties of the missing/private definition. This is one negative example, not broad adversarial/privacy acceptance.
+
+A second manual loop injected HTTP responses through the real `createAiClient` request encoder, strict-schema validation and response decoder. It exercised three actual director turns: inspect a learned recipe and own modules, validate a proposed variant, then retain the final ready draft. Input context sizes were 7,112 / 10,224 / 11,478 bytes. Native validation/checkpoint stored the inspected base, final digest and report; Apply admitted the derived recipe without another model call and left the original recipe/objects unchanged. Distinct `:workshop:1` through `:workshop:3` attempts and root memberships were retained. Their synthetic cost receipts are not live billing or model-quality evidence. This encoder exercise exposed an undefined optional context field missed by initial direct-result injection; omitting that field fixed the real adapter path before the final repeated run.
+
+Nine linked supplied previews reached authoring depth 8 under zero configured funding. The ready candidate still applied through a separate native continuation; no new model attempt was created. This qualifies the limited no-extra-authoring-round Apply case, not every possible continuation race.
+
+### Cost and recovery observations
+
+Two concurrent synthetic $0.30 reservations against one $0.50 root cap returned one acceptance and one rejection. An uncertain receipt retained $0.30 exposure; after closing/reopening the database, an additional $0.25 reservation was refused. Existing monthly actor limits remain separate constraints over the same attempt facts. No real provider was invoked.
+
+The actual `backup-world.ts` and `restore-world.ts` scripts successfully exported current operational format 2 and restored into an empty target, preserving all three synthetic attempt rows and all three root-budget membership rows. Gameplay schema was unchanged. PostgreSQL, corrupt/partial backup, in-flight restore and lowered-limit concurrency remain deferred automated/manual qualification.
+
+### Bounded tool workloads and native stress
+
+A repeated native dry-validation exercise on the small two-recipe world ran 300 invocations: median 0.953 ms, sampled p95 1.622 ms, maximum 6.379 ms. A 3,000-call catalogue workload took 18.73 ms and retained an identical world digest. These are in-process small-world measurements, not HTTP throughput, live-provider latency or large-world capacity. Material reads still depend on the actual observation cost; no new per-tick cache or scanner was introduced.
+
+The existing native stress runner used its committed gems/mixed scenarios with 180 steps and no warmup:
+
+| Scenario | Measured native loop | Largest step | Headroom at requested 3x |
+| --- | --- | --- | --- |
+| 500 ground objects, 514 entities, original domain baseline | 4347.45 ms | 1760.21 ms | 0.230 |
+| Same ground-object scenario, review | 4248.23 ms | 1774.04 ms | 0.235 |
+| 10 added people, 20 animals, 300 resources; 344 entities | 20193.16 ms | 18648.81 ms | 0.050 |
+
+The complete ground-object runs have the same final-world digest. A separate mixed baseline attempt was interrupted by a local command deadline while writing output and supplies no comparative throughput evidence. The completed mixed review retains 3,254 events and 31,756 awareness entries, with first-exposure/experience work dominating. Both completed workloads fail the requested 3x throughput; below 1 is insufficient headroom. This is the existing PF09/EPR/SW problem, not resolved by workshop tools. Different hardware/load from earlier observations prevents attributing cross-review timing changes to a regression or speedup. No witnesses/events, physical semantics or simulation time were dropped to improve a score.
+
+### Remaining qualification
+
+Live natural-language quality, Macrofold inference execution, full browser/accessibility flow, broader cancellation/concurrency/save fencing, PostgreSQL budget queries and large observation/material workloads remain unqualified. Generic definition composition, host-enforced dependency summaries, owner-wide mechanics tools, generated art and full payer/runtime budgets remain feature gaps under INV/EWF. [IER01–IER07](maintainers/TODO.md#invention-extensibility-review-regression-todos) are the requested deferred automated regression cases. Existing IPR/SR/AG cases remain valid; no suite was marked complete by these manual observations.
+
+
 ## Invention performance review
 
 Reviewed main `7bba4866819e5623fc4e42d6f8d82f96ca25877d` alongside the documentation-only foundation `69897a356c959677cfbf7fe1785f2b9db0271b43`. The latter implemented no runtime features. This review changes five server files only; domain/spatial rules are unchanged. [Current behavior and residual limits](architecture.md#bounded-invention-history-and-recovery) distinguish these fixes from the future foundation.

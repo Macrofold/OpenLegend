@@ -6,6 +6,8 @@ import {
 } from '@open-legend/domain';
 import { resolveResponseEntities, resolveEntityMarkers } from './entity-references.js';
 import { capabilityBlocked } from '@open-legend/domain';
+import { prepareInventionWorkshop } from './invention-workshop.js';
+import { inventionAttemptBudget } from './invention-context.js';
 import { searchInventions } from './invention-search.js';
 import type { InventionContinuation } from '@open-legend/protocol';
 import {
@@ -223,6 +225,7 @@ export class AiDirector {
     conversationId?: string,
     continuation?: InventionContinuation,
     candidate?: unknown,
+    mode?: 'workshop',
   ): Promise<ApiResult> {
     // Independent inference does not wait for remote reflection cancellation/cleanup.
     this.maintenance.cancel();
@@ -239,6 +242,9 @@ export class AiDirector {
       conversationId,
       continuation,
       candidate,
+      undefined,
+      undefined,
+      mode,
     );
   }
 
@@ -265,8 +271,15 @@ export class AiDirector {
     candidate?: unknown,
     initiatingActor?: string,
     initiatingPolicyRevision?: number,
+    mode?: 'workshop',
   ): Promise<ApiResult> {
     return this.admission(async () => {
+      if (mode && (kind !== 'invention' || initiatingActor))
+        return {
+          ok: false,
+          code: 'invalid',
+          message: 'Workshop mode is a player authoring surface.',
+        };
       candidate = normalizeInventionProposal(candidate);
       const inventorId = initiatingActor ?? this.service.controlledEntityId;
       if (
@@ -337,6 +350,7 @@ export class AiDirector {
         ...(retryOf ? { retryOf } : {}),
         ...(continuation ? { continuation } : {}),
         ...(candidate !== undefined ? { candidate } : {}),
+        ...(mode ? { mode } : {}),
       });
       const previous = await this.service.store.getJob(id);
       if (previous)
@@ -381,7 +395,8 @@ export class AiDirector {
             message: 'This request already has a follow-up. Refresh saved results.',
             jobId: parent.invention.continuedBy,
           };
-        if (scope.depth >= 8)
+        // Applying an already-funded ready draft adds no authoring turn or provider call.
+        if (scope.depth >= 8 && continuation.action !== 'apply')
           return {
             ok: false,
             code: 'continuation-limit',
@@ -390,6 +405,26 @@ export class AiDirector {
           };
         const permission = inventionPermission(this.service.world, scope.authority);
         if (!permission.ok) return permission;
+        if (continuation.action === 'apply') {
+          if (
+            mode ||
+            candidate !== undefined ||
+            parent.invention.code !== 'draft-ready' ||
+            !parent.invention.candidate ||
+            !continuation.candidateDigest ||
+            continuation.candidateDigest !== parent.invention.candidateDigest ||
+            text !== parent.request.text
+          )
+            return {
+              ok: false,
+              code: 'invalid',
+              message: 'Apply the exact saved ready proposal, or revise it first.',
+            };
+          // The approved bytes and original authority come from storage, never the browser/model.
+          // docs/architecture.md#invention-workshop-tools
+          candidate = parent.invention.candidate;
+        } else if (continuation.candidateDigest)
+          return { ok: false, code: 'invalid', message: 'Only Apply accepts a candidate digest.' };
         if (['reuse', 'modify'].includes(continuation.action)) {
           const match = parent.invention.search?.matches.find(
             (entry) => entry.recipeId === continuation.recipeId,
@@ -437,6 +472,14 @@ export class AiDirector {
         kind === 'invention'
           ? {
               rootId: parent?.request.invention?.rootId ?? id,
+              ...(mode ? { mode } : {}),
+              ...(parent?.request.invention?.episodeBudgetUsd !== undefined || mode
+                ? {
+                    episodeBudgetUsd:
+                      parent?.request.invention?.episodeBudgetUsd ??
+                      this.service.config.inventionWorkshopUsd,
+                  }
+                : {}),
               ...(candidate !== undefined ? { candidate } : {}),
               depth: parent ? parent.request.invention!.depth + 1 : 0,
               ...(continuation ? { continuation } : {}),
@@ -494,7 +537,7 @@ export class AiDirector {
         // A terminal workflow cannot commit late effects. Uncertain billing stays
         // reserved, but must not block a new, explicitly requested attempt.
       }
-      if (this.service.paused)
+      if (this.service.paused && mode !== 'workshop')
         return {
           ok: false,
           code: 'paused',
@@ -509,7 +552,7 @@ export class AiDirector {
         continuation?.action !== 'reuse' &&
         invention?.candidate === undefined &&
         !this.service.config.macrofoldKey &&
-        (!this.service.config.jevKey || !this.service.config.llmKey)
+        ((!this.service.config.jevKey && mode !== 'workshop') || !this.service.config.llmKey)
       )
         return {
           ok: false,
@@ -882,7 +925,8 @@ export class AiDirector {
     suffix: string,
     dispatch: (requestId: string) => Promise<AiResult<T>>,
   ): Promise<T> {
-    if (this.service.paused) await this.awaitResume(run);
+    if (this.service.paused && run.job.request.invention?.mode !== 'workshop')
+      await this.awaitResume(run);
     this.current(run);
     const id = `${run.job.id}:${suffix}`;
     const config = this.service.config;
@@ -914,6 +958,8 @@ export class AiDirector {
         run.job.kind === 'invention'
           ? 'world-agent'
           : (run.job.request.npcId ?? this.service.defaultResidentEntityId),
+        undefined,
+        inventionAttemptBudget(this.service, run.job.request.invention),
       ))
     )
       throw new StopJob(
@@ -944,7 +990,12 @@ export class AiDirector {
         ...run.job.invention,
         code: result.receipt.completionUncertain ? 'uncertain' : result.outcome,
       };
-    if (result.outcome === 'value' && this.service.paused) await this.awaitResume(run, true);
+    if (
+      result.outcome === 'value' &&
+      this.service.paused &&
+      run.job.request.invention?.mode !== 'workshop'
+    )
+      await this.awaitResume(run, true);
     if (run.cancelReason) throw new StopJob('cancelled', run.cancelReason);
     // Surface actual provider failures even when an explicit request is paused.
     if (result.outcome === 'value' || !this.service.paused || run.job.kind === 'thought')
@@ -1558,7 +1609,8 @@ export class AiDirector {
   }
 
   private async invent(run: Running): Promise<void> {
-    await inventSupportedTechnique(this.service, run.job.id, run.job.request, {
+    let generation = 0;
+    const port: import('./invention-service.js').InventionExecution = {
       current: () => this.current(run),
       source: this.executionSource,
       model: () => run.generatedBy ?? this.service.config.llmModel,
@@ -1566,7 +1618,14 @@ export class AiDirector {
         this.call(run, 'jev', 'route', (id) =>
           this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
         ),
-      generate: (request) => this.generate(run, request),
+      generate: (request) =>
+        this.generate(
+          run,
+          request,
+          run.job.request.invention?.mode === 'workshop' ? `workshop:${++generation}` : 'generate',
+        ),
+      tool: (name, input, output) =>
+        this.log.record(`${run.job.id}:tool:${name}`, 'Invention tool', input, output),
       search: () =>
         searchInventions(
           this.service,
@@ -1580,10 +1639,13 @@ export class AiDirector {
             if (this.service.paused) await this.awaitResume(run);
             this.current(run);
           },
+          inventionAttemptBudget(this.service, run.job.request.invention),
         ),
-      checkpoint: async (candidate) => {
+      checkpoint: async (candidate, options) => {
+        if (options?.base) run.job.request.invention!.base = options.base;
         run.job.invention = {
           ...run.job.invention,
+          ...(options?.validation ? { validation: options.validation } : {}),
           code: 'candidate',
           candidate,
           candidateDigest: digest(candidate),
@@ -1594,7 +1656,13 @@ export class AiDirector {
         run.job.invention = { ...run.job.invention, ...result };
         await this.update(run, status, message, result);
       },
-    });
+    };
+    if (
+      run.job.request.invention?.mode === 'workshop' &&
+      run.job.request.invention.continuation?.action !== 'reuse'
+    )
+      await prepareInventionWorkshop(this.service, run.job.request, port);
+    else await inventSupportedTechnique(this.service, run.job.id, run.job.request, port);
   }
 
   /** Meaningful changes are coalesced; native steps never purchase inference. */

@@ -1,3 +1,4 @@
+import { executeInventionTool, inventionToolInput } from './invention-tools.js';
 import { GameSaveError } from './game-saves.js';
 import {
   performanceSnapshot,
@@ -49,12 +50,16 @@ const interaction = z
 const worldAgentMessage = z
   .object({
     candidate: z.unknown().optional(),
-    mode: z.enum(['discuss', 'invent']),
+    mode: z.enum(['discuss', 'invent', 'workshop']),
     continuation: z
       .object({
         parentId: requestIdSchema,
-        action: z.enum(['clarify', 'revise', 'search', 'new', 'modify', 'reuse']),
+        action: z.enum(['clarify', 'revise', 'search', 'new', 'modify', 'reuse', 'apply']),
         recipeId: requestIdSchema.optional(),
+        candidateDigest: z
+          .string()
+          .regex(/^[a-f0-9]{64}$/)
+          .optional(),
       })
       .strict()
       .optional(),
@@ -1363,6 +1368,9 @@ export async function createGameServer(
                 code: job.invention?.code ?? job.status,
                 message: job.message,
                 candidate: job.invention?.candidate ?? scope.candidate,
+                mode: scope.mode,
+                candidateDigest: job.invention?.candidateDigest,
+                validation: job.invention?.validation,
                 parentId: scope.continuation?.parentId,
                 rootId: scope.rootId,
                 continuedBy: job.invention?.continuedBy,
@@ -1400,6 +1408,18 @@ export async function createGameServer(
                 : {}),
             });
           }
+          case '/api/world-agent/tools': {
+            const value = z
+              .object({ worldId: requestIdSchema, tool: inventionToolInput })
+              .strict()
+              .parse(body);
+            if (value.worldId !== service.world.id)
+              return send(response, 409, { ok: false, message: 'World mismatch.' });
+            return send(response, 200, {
+              ok: true,
+              result: executeInventionTool(service, service.controlledEntityId, value.tool),
+            });
+          }
           case '/api/world-agent/messages': {
             const value = worldAgentMessage.parse(body);
             if (value.worldId !== service.world.id)
@@ -1413,14 +1433,14 @@ export async function createGameServer(
                 ok: false,
                 message: 'Only Invent supports invention follow-ups.',
               });
-            if (value.mode === 'invent' && value.retryOf)
+            if (value.mode !== 'discuss' && value.retryOf)
               return send(response, 400, {
                 ok: false,
                 message:
                   'Submit a new explicit invention request; failed work is never replayed automatically.',
               });
             const result =
-              value.mode === 'invent'
+              value.mode !== 'discuss'
                 ? await director.submitInteractive(
                     'invention',
                     value.requestId,
@@ -1429,6 +1449,7 @@ export async function createGameServer(
                     value.conversationId,
                     value.continuation,
                     value.candidate,
+                    value.mode === 'workshop' ? 'workshop' : undefined,
                   )
                 : await director.macrofold.message(value);
             return send(response, result.ok ? 200 : 409, result);

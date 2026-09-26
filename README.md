@@ -63,6 +63,8 @@ World saves use a transactional change journal with periodic snapshots. Explicit
 
 Invent also supports bounded gathering tools: a compatible carried tool improves the yield from an existing finite resource. Complete recipe JSON can be supplied in the expandable proposal field for native validation without paid generation. See [the invention workflow](docs/architecture.md#shared-invention-workflow) for current limits.
 
+For a reviewable draft, select **World agent → Invent → Review in workshop before installing**. The workshop can inspect known recipes and your bound systems, use native validation tools, and prepare a saved proposal; **Apply saved proposal** is separate and does not craft or change existing objects. **What can I build?** reads the supported catalogue without AI. `INVENTION_WORKSHOP_MAX_USD` bounds linked workshop generation (default $1) under the normal spending cap; supplied previews and Apply need no model. General Discuss does not have these tools. See [scope and limits](docs/architecture.md#invention-workshop-tools).
+
 ## Try the extensible attribute demo
 
 The optional native `reservoir-demo` preset replaces the player/resident's food and fatigue with charge and a categorical disposition. Open **In view → Charged capacitor → Recharge**. Ada can replenish autonomously from the same finite supply. This demonstrates attribute interfaces; it is not live-model acceptance or an electrical simulation.

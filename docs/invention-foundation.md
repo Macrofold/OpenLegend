@@ -35,6 +35,8 @@ Read this packet together with the existing subsystem owners. Links below are co
 | [Save/load](save-and-load.md), [production data](../archive/07-technical-architecture/production-data-model.md), and [billing](../archive/07-technical-architecture/billing-and-usage-reporting.md) | Restoration, durable authority, retention, exact accounting, reporting, and invention entitlements.                                                             |
 | [INV tracker](maintainers/inventions-and-world-evolution.md)                                                                                                                                        | All invention implementation tasks and acceptance gates. Other trackers retain their existing subsystem work.                                                   |
 
+The [world-agent tool contract](invention-workshop-tools.md) defines application tool grants, read/preview/Apply separation and the extension seam beyond finite recipes; it is not another admission owner.
+
 The visual direction and [hybrid art methods](../archive/03-design-proposals/procedural-art-and-animation.md) still own style, rigs, procedural composition, and pixel-density decisions. This packet does not select a new renderer or promise particular image-provider latency.
 
 ## 3. Mechanic agnosticism without a second kernel

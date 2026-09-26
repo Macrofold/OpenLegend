@@ -49,6 +49,12 @@ Clarified the existing [production data model](../archive/07-technical-architect
 ## In-place development updates
 
 Corrected the policy: small migrations are allowed and preferred; maintaining legacy game versions is not required. Removed automatic fresh-world recovery and its per-feature save-format gate. The preceding startup recovery did reset the development gameplay world while retaining accounting; that behavior is superseded, not an acceptance requirement. Current behavior is owned by Save/load and Architecture.
+## 2026-09-23 — Invention extensibility and workshop tools
+
+- Added the application tool contract and recorded the finite review-before-install recipe workshop, shared cognition/material validation, descriptive family discovery, current-world-relative premise routing and distinct preview/Apply semantics. General Discuss, privileged creator tools, compositional law validation and generated art remain separately scoped.
+- Recorded root-budget membership on the existing attempt ledger and current operational backup format 2; no gameplay save schema change or legacy reader was added.
+- Marked delivered INV subsets without completing broader parent tasks, added IER regression TODOs, and recorded separate HTTP/native/typed-transport/backup/stress evidence. No automated test suite or paid API was executed.
+
 
 ## 2026-09-23 — Invention performance and foundation review
 
