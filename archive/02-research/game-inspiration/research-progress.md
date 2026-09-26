@@ -6,7 +6,7 @@ Read [requirements / R01–R14](research-requirements.md) and the [canonical 130
 
 **Branch:** `docs/game-inspiration-games-101-120`, created September 26, 2026 from `docs/game-inspiration-library-expansion` at `57bcd96f75f4561baff10ea57e28210dd908ebd5`. Mike explicitly assigned **G101–G120**, one game at a time, with a commit after every game and substantive checkpoints at least every five minutes. Do not modify parallel range branches or claim their work is present here.
 
-**Active: G103 — Mass Effect 3. Completed in this range: 2 / 20.** Next action: research and write `dossiers/mass-effect-3.md`; distinguish original launch, Extended Cut, substantial DLC, multiplayer/Galaxy at War, Wii U and Legendary Edition. Cover combat/builds, squad/relationships, imported decisions, war assets and endings across R01–R14; read five substantive written reviews and inspect accessible helpful Steam evidence or document genuine access limits and direct-player alternatives. Review and commit before advancing to G104.
+**Active: G104 — Mass Effect: Andromeda. Completed in this range: 3 / 20.** Next action: research and write `dossiers/mass-effect-andromeda.md`; distinguish the 2017 launch, later patches and ended single-player support from announced or imagined follow-up content. Cover profiles, mobility, crafting, viability/outposts, exploration, squad/relationships, multiplayer and production/reception across R01–R14. Read five substantive written reviews and inspect accessible helpful Steam evidence or document genuine access limits and direct-player alternatives. Review and commit before advancing to G105.
 
 The inherited baseline contains completed dossiers G01–G20 and an active G21 RimWorld assignment. Those inherited completion claims are **not newly re-audited here**. G21–G100 and G121–G130 are outside this branch's assignment; progress on other branches must be reconciled during integration. The original parent ledger, including all earlier completion SHAs, detailed resume instructions and scope changes, is preserved [at the branch base](https://github.com/Macrofold/OpenLegend/blob/57bcd96f75f4561baff10ea57e28210dd908ebd5/archive/02-research/game-inspiration/research-progress.md). Its latest inherited completion was Minecraft, `4f6b715814dd932af34806517539cfe55ed1a6a0`. Original library baseline: `feab691827a7cd62b6146f31eef20ee12e1a4770`.
 
@@ -18,8 +18,8 @@ A row is complete only after substantive R01–R14 coverage, evidence/access rev
 | --- | --- | --- | --- |
 | G101 | [Mass Effect](dossiers/mass-effect.md) | Complete; ranked Steam reviews inaccessible, alternatives documented | `f88cbf88dd4b99e0c2804859db147d9d6f9daffb` |
 | G102 | [Mass Effect 2](dossiers/mass-effect-2.md) | Complete; ranked Steam reviews inaccessible, alternatives documented | `244f4d82dd4440b7494886690ead1035c095221c` |
-| G103 | `dossiers/mass-effect-3.md` | In progress | — |
-| G104 | `dossiers/mass-effect-andromeda.md` | Pending | — |
+| G103 | [Mass Effect 3](dossiers/mass-effect-3.md) | Complete; ranked Steam reviews inaccessible, alternatives documented | `0f81487fbe596aca236a8e659ab37f29944f2917` |
+| G104 | `dossiers/mass-effect-andromeda.md` | In progress | — |
 | G105 | `dossiers/mass-effect-galaxy.md` | Pending | — |
 | G106 | `dossiers/mass-effect-infiltrator.md` | Pending | — |
 | G107 | `dossiers/octopath-traveler.md` | Pending | — |
@@ -42,6 +42,8 @@ A row is complete only after substantive R01–R14 coverage, evidence/access rev
 **G101:** independent dossier, six constructed interactions, five authored reviews across three outlets, 31 annotated source groups and requirement map. Separates original/Windows/PS3/Legendary rules, DLC packaging, unshipped promises, replay/import and dated sales. Ranked Steam surfaces failed; attributed discussion and other player testimony are alternatives, not a claimed helpful-review sample. Checkpoint `234706d41a2daf53714ac37b5bc4a8af3f327c73`; completion `f88cbf88dd4b99e0c2804859db147d9d6f9daffb`.
 
 **G102:** independent dossier, six constructed interactions, five authored reviews across five outlets, 35 source groups and requirement map. Separates commitment, qualification and defensive group capacity; covers research/economy, mission-state timing, imports, substantial DLC and edition differences. Original/newer-SKU Steam review attempts failed; indexed, dated direct-player alternatives are explicitly not a ranked sample. Checkpoint `7290a2773fab682a5687b5789836fa63f87cf01d`; completion `244f4d82dd4440b7494886690ead1035c095221c`.
+
+**G103:** independent dossier, six constructed interactions, five authored launch reviews across five outlets, substantial DLC/port criticism, 34 annotated source groups and requirement map. Separates original/Extended Cut/Wii U/Legendary rules, assets versus readiness, narrative deaths versus recovery, multiplayer supplies/unlocks and historical paid packs. Steam ranking/endpoint attempts failed; contrasting dated player testimony is explicitly an alternative. Checkpoint `bbcd5e23f6593e61abbfddb5f3657f2bfb32ee8d`; full pass `d95cdb0ec7988d3132183b28eb1b676dbf3c398c`; final source audit `0f81487fbe596aca236a8e659ab37f29944f2917`.
 
 ## Preservation and navigation evidence
 
