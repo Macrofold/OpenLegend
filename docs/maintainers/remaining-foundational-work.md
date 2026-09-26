@@ -14,6 +14,20 @@ The branch assessment below is a pushed-code snapshot, not a claim that nobody i
 | 4        | Dependency invalidation and aggregate work containment: interactions must remain correct and bounded as authored rules multiply.                          | [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment): query membership, old/new spatial scopes, nested fan-out, recurring descendants and feedback limits; SW/EPR retain native query/scheduling owners. Inspection graph traversal is partial support, not full invalidation/activation budgeting.                                                                                 |
 | 5        | Persistent appraisal and social continuity contracts: establish authority before advanced emotional cognition consumes them.                              | [ACT07/ACT08](actor-model.md#advanced-emotional-state-foundation): event/internal/memory/personality causes, optional persistence, one accepted state/projection owner, directional relationship descriptions versus objective facts. Invention graph relationships do not replace character-owned social state.                                                                                                                      |
 
+## Priorities 1–5 design package
+
+The September 26 [design delivery map](../projects/foundations-1-5.md) provides five separate feature/technical pairs, current-source findings, cross-project sequencing and explicit proposed decisions. Drafting is complete; implementation and qualification remain open in the existing owners and their linked child trackers. This documentation branch is not a merged implementation or a replacement for the historical branch audit below.
+
+| Priority | Feature specification | Technical design | Detailed implementation/qualification work |
+| --- | --- | --- | --- |
+| 1 | [Shared state and contributions](../projects/shared-state-contributions-feature-spec.md) | [Claims, phases and lifecycle](../projects/shared-state-contributions-tech-design.md) | [SC01–SC08](state-contributions.md), EWF02–03 / INV-6.3 child |
+| 2 | [Multiplayer authority](../projects/multiplayer-authority-feature-spec.md) | [Principals, control and scoped projections](../projects/multiplayer-authority-tech-design.md) | [MP01.1–MP01.6 / MP04.1–MP04.4](multiplayer.md#priority-2-implementation-slices) |
+| 3 | [Persistent objects and containment](../projects/persistent-objects-feature-spec.md) | [Identity, placement and transactions](../projects/persistent-objects-tech-design.md) | [PO01–PO09](persistent-objects.md), DF01/BW07 child |
+| 4 | [Dependency and aggregate-work behavior](../projects/dependency-invalidation-feature-spec.md) | [Membership, generations and budgets](../projects/dependency-invalidation-tech-design.md) | [DI01–DI08](dependency-invalidation.md), EWF08 child; SW/EPR/PF retain native owners |
+| 5 | [Appraisal and social continuity](../projects/appraisal-social-continuity-feature-spec.md) | [Causes, accepted publication and privacy](../projects/appraisal-social-continuity-tech-design.md) | [ACT07.1–ACT07.7 / ACT08.1–ACT08.4](actor-model.md#priority-5-implementation-slices) |
+
+All 46 delivery slices include dependencies and concrete exit boundaries; no checkbox was closed by writing the designs. Scope each child ID to its linked tracker. Every durable owner joins SL00 while introduced; current in-place data upgrades, human-private scope and non-rewindable authority/accounting apply across all five.
+
 ## Existing branch work: continue and complete, in priority order
 
 | Priority | Foundation                                                 | Existing coverage and remaining gap                                                                                                                                                                                  | Owning work                                                                                                                                                                                                                   |
