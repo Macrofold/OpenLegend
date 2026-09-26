@@ -1,4 +1,4 @@
-name: Scoped invention production-data rebase
+name: Scoped invention production-data source preparation
 on:
   push:
     branches: [feature/invention-repertoire-foundation]
@@ -11,7 +11,7 @@ concurrency:
   group: invention-production-rebase
   cancel-in-progress: false
 jobs:
-  replay:
+  prepare:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -19,27 +19,11 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
-      - name: Publish only reviewed trees and leased branch references
+      - name: Prepare only hash-verified immutable source blobs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python - <<'PY'
-          import json, runpy, urllib.error, urllib.request
-          original = urllib.request.urlopen
-          def request(*args, **kwargs):
-              try:
-                  return original(*args, **kwargs)
-              except urllib.error.HTTPError as error:
-                  try:
-                      message = json.loads(error.read(8192)).get('message', '')
-                      print('GitHub response:', str(message)[:2000], flush=True)
-                  except (ValueError, UnicodeError):
-                      print('GitHub returned a non-JSON rejection.', flush=True)
-                  raise
-          urllib.request.urlopen = request
-          runpy.run_path('.integration/replay.py', run_name='__main__')
-          PY
-      - name: Retain exact publication progress for recovery
+        run: python .integration/prepare-blobs.py
+      - name: Retain exact source preparation progress
         if: always()
         uses: actions/upload-artifact@v4
         with:
