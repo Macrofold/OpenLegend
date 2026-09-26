@@ -1,3 +1,5 @@
+import { activelyParticipates } from './participation-state.js';
+import { recordSemanticChange } from './dependencies.js';
 import { canStand, type SpatialLayout } from '@open-legend/spatial';
 import {
   bodyProfile,
@@ -25,10 +27,16 @@ export function replaceSpatialLayout(
   const world = draftWorld(input);
   world.map = { ...world.map, spatial: cloneValue(layout) };
   world.map.spatial.revision = expectedRevision + 1;
+  recordSemanticChange(world, {
+    kind: 'geometry',
+    before: expectedRevision,
+    after: world.map.spatial.revision,
+  });
   try {
     validateSpatialWorld(world);
     const map = spatialMap(world);
     for (const entity of Object.values(world.entities)) {
+      if (!activelyParticipates(entity)) continue;
       const p = supportedPosition(entity);
       if (p && !canStand(map, p, bodyProfile(entity)))
         return reject('This change would remove support or obstruct an occupant.');

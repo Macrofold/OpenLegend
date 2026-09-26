@@ -1,3 +1,6 @@
+import { worldRootEntities } from './entity-index.js';
+import { activelyParticipates } from './participation-state.js';
+import { worldPosition, worldSupport } from './spatial-state.js';
 import {
   canFlySegment,
   canStand,
@@ -25,7 +28,7 @@ export class LandingOccupancy {
     { position: WorldPoint; radius: number; height: number; keys: string[] }
   >();
   constructor(world: WorldState) {
-    for (const entity of Object.values(world.entities)) this.update(entity);
+    for (const entity of worldRootEntities(world)) this.update(entity);
   }
   private keys(position: WorldPoint, radius: number, height: number): string[] {
     const keys: string[] = [];
@@ -45,8 +48,8 @@ export class LandingOccupancy {
   }
   update(entity: Entity): void {
     const old = this.bodies.get(entity.id);
-    if (!old && !entity.actor?.alive) return;
-    const p = entity.position;
+    if (!old && (!entity.actor?.alive || !activelyParticipates(entity))) return;
+    const p = worldPosition(entity);
     const body = bodyProfile(entity);
     if (
       old &&
@@ -66,7 +69,7 @@ export class LandingOccupancy {
       }
       this.bodies.delete(entity.id);
     }
-    if (!entity.actor?.alive) return;
+    if (!entity.actor?.alive || !activelyParticipates(entity)) return;
     const keys = this.keys(p, body.radius, body.height);
     this.bodies.set(entity.id, {
       position: { ...p },
@@ -114,9 +117,9 @@ export function advanceFlight(
   const map = spatialMap(world),
     body = bodyProfile(entity);
   if (
-    state.supportSurfaceId === null &&
+    worldSupport(entity) === null &&
     state.flight &&
-    (!entity.actor?.alive || entity.actor.incapacitated)
+    (!entity.actor?.alive || !activelyParticipates(entity) || entity.actor.incapacitated)
   ) {
     delete state.flight;
     state.fallVelocity = 0;
@@ -124,23 +127,32 @@ export function advanceFlight(
   }
   if (state.fallVelocity !== undefined) {
     const velocity = Math.max(-3, state.fallVelocity - 0.04 * seconds);
-    const destination = { ...entity.position, y: entity.position.y + velocity * seconds };
-    const support = supportBelow(map, entity.position);
+    const destination = {
+      ...worldPosition(entity),
+      y: worldPosition(entity).y + velocity * seconds,
+    };
+    const support = supportBelow(map, worldPosition(entity));
     if (support && destination.y <= support.y) {
-      setSpatialPosition(entity, support, support.surfaceId);
+      setSpatialPosition(world, entity, support, support.surfaceId);
       delete state.fallVelocity;
       emit(world, events, 'landed', `${entity.name} came to rest on the surface below.`, entity);
     } else {
       // The finite starter's ground always bounds its corridors. A missing support remains
       // a technical unsupported state; do not delete a body or fabricate a landing.
       if (destination.y < -16) throw new Error('Falling actor left the supported spatial world.');
-      setSpatialPosition(entity, destination, null);
+      setSpatialPosition(world, entity, destination, null);
       state.fallVelocity = velocity;
     }
     return;
   }
   const progress = state.flight;
-  if (!progress || !entity.actor?.alive || entity.actor.incapacitated) return;
+  if (
+    !progress ||
+    !entity.actor?.alive ||
+    !activelyParticipates(entity) ||
+    entity.actor.incapacitated
+  )
+    return;
   if (entity.actor.action) return; // No second voluntary position writer while a native action owns the body.
   const route = world.flightRoutes[progress.routeId];
   if (!route) throw new Error('Missing admitted native flight route.');
@@ -149,7 +161,7 @@ export function advanceFlight(
     return;
   }
   const waypoint = route.points[progress.next]!;
-  const from = entity.position,
+  const from = worldPosition(entity),
     to = waypoint.position;
   const separation = distance3D(from, to);
   const vertical = Math.abs(to.y - from.y);
@@ -159,7 +171,7 @@ export function advanceFlight(
       : route.speed;
   const fraction = separation <= 1e-8 ? 1 : Math.min(1, (speed * seconds) / separation);
   const next = interpolate(from, to, fraction);
-  const ignoredSupports = [state.supportSurfaceId, waypoint.landingSurfaceId].filter(
+  const ignoredSupports = [worldSupport(entity), waypoint.landingSurfaceId].filter(
     (id): id is string => !!id,
   );
   if (!canFlySegment(map, from, next, body, ignoredSupports)) return;
@@ -175,8 +187,8 @@ export function advanceFlight(
     (landingOccupancy?.() ?? new LandingOccupancy(world)).blocked(entity.id, landing, body)
   )
     return;
-  const wasGrounded = state.supportSurfaceId !== null;
-  setSpatialPosition(entity, next, landing?.surfaceId ?? null);
+  const wasGrounded = worldSupport(entity) !== null;
+  setSpatialPosition(world, entity, next, landing?.surfaceId ?? null);
   if (wasGrounded && !landing)
     emit(world, events, 'takeoff', `${entity.name} took flight.`, entity);
   if (fraction === 1) {

@@ -1,3 +1,4 @@
+import { worldPosition } from '@open-legend/domain';
 import { entityLabel } from './entity-references.js';
 import type { Action, Entity, ItemDefinition, ItemInstance, WorldState } from '@open-legend/domain';
 import type { AttentionCandidate } from './recall.js';
@@ -66,9 +67,9 @@ export function perceivedEntityText(
 
 /** Relative geometry is observed location, not proof of a traversable route. */
 export function relativeLocation(observer: Entity, target: Entity): string {
-  const dx = target.position.x - observer.position.x;
-  const dz = target.position.z - observer.position.z;
-  const dy = target.position.y - observer.position.y;
+  const dx = worldPosition(target).x - worldPosition(observer).x;
+  const dz = worldPosition(target).z - worldPosition(observer).z;
+  const dy = worldPosition(target).y - worldPosition(observer).y;
   const horizontal = Math.hypot(dx, dz);
   const directions = [
     'ahead of me',

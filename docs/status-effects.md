@@ -23,7 +23,41 @@ An instance belongs to an **entity**, not an actor component. `$subject` is that
 
 Attribute IDs resolve through the existing world-module registry. Actors retain their existing attribute/native-value owners. Non-actors may carry sparse registered reservoir/category state on `entity.attributes`; native body attributes cannot be installed on objects. Missing attributes or unresolved targets are inapplicable, including for inequality; missing is never zero. Rate targets must be available at activation and while active. Current writable rate adapters support energy, fullness and generic reservoirs. Health changes remain with the body-effect owner; this runtime does not bypass injury, death or body revision semantics.
 
-This is a finite v1 family, not an arbitrary effect language. Extend the operation owner when a concrete mechanic needs another trusted operation; do not add parallel values or interpret new fields implicitly. Broad authoring of object attributes, arbitrary target selection, persistent area effects, stacking, priorities and generalized resource transfers are not implemented.
+This is a finite v1 family, not an arbitrary effect language. Extend the operation owner when a concrete mechanic needs another trusted operation; do not add parallel values or interpret new fields implicitly. Broad authoring of object attributes, arbitrary target selection, persistent area effects, arbitrary stacking priorities and generalized resource conversion are not implemented.
+
+### Independent capability contributions
+
+A non-occupying definition containing only capability restrictions may opt into
+`contribution: { disclosure, lifetime }`. Disclosure is `owner` or `public`; lifetime
+is `explicit-removal`, `source-sustained`, or `fixed` with positive `seconds`.
+Automatic activation is unsupported for this branch. Existing native statuses retain
+their singleton and ordered-rate behavior.
+
+Each contribution uses its episode as its saved instance key and retains its source,
+target, exact definition digest, revision and lifetime. Ordinary status commands bind
+the source to their admitted actor. Their deactivate action removes that source's
+contribution, leaving other sources active. Explicit domain attach/refresh/end ports
+retain request receipts; refresh cannot resurrect an ended episode or change its
+lifetime family. Ending a contribution never restores an old body snapshot.
+
+Capability queries read all active contributions plus the native status. Owner
+projections show repeated sources as a count; public projections omit owner-only
+definitions and never include source bindings. Fixed deadlines use simulation time.
+Source-sustained instances stop applying immediately when their source disappears, dies,
+retires or belongs to an inactive containment root; the native phase finalizes the state.
+Whole-object movement preserves source identity; live incoming source references prevent
+split/merge from silently changing it. Existing native
+requirements and interruption rules also apply. Definition replacement/removal is
+rejected while retained contributions need the old exact definition; unsupported
+live migration is not silently performed.
+
+After commit, terminal independent instances leave the hot world but remain in
+`sim_status_effects`. Native singleton cooldown records remain resident. Active reload,
+full save capture and explicit policy maintenance use the same canonical records, with
+durable ordering across partial maps. Caller-supplied new identities require complete
+history; an exact retained command receipt still replays without resurrection. Native
+commands allocate fresh monotonic episode IDs. Policy maintenance materializes history
+before validating exact pins, including ended contributions.
 
 ## Transitions
 
@@ -45,8 +79,13 @@ Public projections contain only permitted active labels and presentation data. I
 
 ## Admission and persistence
 
-The creator-only `POST /api/god/status-effects` accepts `{}` to inspect the registry, or `{policy, expectedRevision}` to replace it. Admission validates every operator, field, attribute and definition reference before committing. It rejects stale revisions and unknown fields. Changed/removed definitions deactivate their existing instances under the old definition before replacement; unchanged definitions retain their episodes. The world agent/settings editor are future consumers of this same boundary.
+The creator-only `POST /api/god/status-effects` accepts `{}` to inspect the registry, or `{policy, expectedRevision}` to replace it. Admission validates every operator, field, attribute and definition reference before committing. It rejects stale revisions and unknown fields. Changed/removed native singleton definitions deactivate their existing instances under the old definition before replacement; unchanged definitions retain their episodes. Retained independent contributions instead require their exact old definition and reject unsupported replacement/removal. The world agent/settings editor are future consumers of this same boundary.
 
-Validation rejects more than 128 definitions, 32 operations per definition, or a condition with more than 128 nodes/depth 12. These are explicit execution-complexity safeguards on authored programs, not truncation of entity lists. Runtime work is proportional to entities, admitted definitions and active operations; spatial indexing or compiled applicability plans require measured need.
+Validation bounds each definition to 32 operations and each condition to 128 nodes/depth 12.
+Combined installation and invocation admission use versioned work vectors and current
+actor/module/world/host limits, rather than an arbitrary definition-count cap. Required
+native query/effect work is charged without truncating audiences or silently skipping
+effects. Runtime work follows physical roots and active operations; terminal independent
+history is queried only through explicit maintenance/capture paths.
 
 Policy, instances, elapsed time and bindings serialize with the world. Current-state validation checks definition/instance/action integrity and attribute ownership. Startup and manual-save loading convert a missing registry to the authored default in place under the [active development policy](save-and-load.md#active-development-policy). Existing rest actions retain their IDs and dream elapsed time as current effect instances; obsolete rest/debt and sleep-policy fields are removed. Saved energy, world identity, gameplay history and accounting are retained. Existing registries are not overwritten. The runtime uses only the current model, with no per-feature save version. Pauses and ordinary save/load do not replay wall-clock time.

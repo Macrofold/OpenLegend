@@ -11,11 +11,19 @@ import type { CommandInput } from '@open-legend/protocol';
 /** Common explanations also cover families with no eligible target. Prose is
  * presentation data; command previews and the kernel still own every prerequisite. */
 export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> = {
+  say: 'Speak to nearby listeners. Only people who hear the words receive the speech.',
   conversation:
     'Join or leave a nearby conversation. Membership never grants earlier unheard speech.',
   pickup:
     'Approach a visible pile and pick up its portable items. Quantities are checked again on arrival.',
   drop: 'Place the selected quantity of a portable possession on the current support. Stop active work first.',
+  'transfer-item':
+    'Move free units between accessible containers. Bags retain their identity and contents. Capacity and nesting are checked together.',
+  'split-item':
+    'Separate free units into a new lot in the same container. Reserved units stay in their original lot.',
+  'merge-item':
+    'Combine equivalent free lots in the same container. Individual objects and reserved lots remain separate.',
+  unequip: 'Release the selected equipment into your inventory after current work has finished.',
   move: 'Walk to the chosen location along a traversable route. This replaces your current work.',
   gather:
     'Approach a resource and collect a small batch into your inventory. Supplies at each source are finite.',
@@ -23,7 +31,7 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   craft:
     'Make an item using a technique you know. Materials are consumed when work begins and are not refunded if you stop.',
   equip:
-    'Ready a ranged tool from your inventory for hunting. It needs compatible ammunition before you can fire.',
+    'Select one individual tool from your inventory. A ranged tool needs compatible ammunition before you can fire.',
   strike:
     'Approach the target and perform one strike. Damage requires a living target in range with a clear line of effect at impact.',
   hunt: 'Approach a living animal and attempt one shot with your equipped ranged tool. Each attempt consumes ammunition and can miss. A killed animal leaves harvestable remains.',
@@ -81,9 +89,11 @@ export function describeCommand(command: CommandInput, observation: ActorObserva
       if (!recipe) return common;
       return `${recipe.description}\n\nMakes ${recipe.output.name}. Requires: ${recipe.inputs.map((input) => `${input.quantity} ${name(input.definitionId).toLowerCase()}`).join(', ')}. Materials are consumed when work begins and are not refunded if you stop.`;
     case 'equip':
-      return itemDefinition
+      return itemDefinition?.launcher
         ? `${itemDefinition.description}\n\nReady ${itemDefinition.name} for hunting. It uses ${itemDefinition.launcher!.ammunitionKind} ammunition.`
-        : common;
+        : itemDefinition
+          ? `${itemDefinition.description}\n\n${common}`
+          : common;
     case 'hunt': {
       const equipped = observation.inventory.find(
         (entry) => entry.id === observation.actor.actor?.equippedItemId,

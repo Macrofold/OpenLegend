@@ -1,7 +1,29 @@
+import {
+  authorAppraisal,
+  changeAppraisal,
+  appraisalDefinition,
+  appraisalCreationIdentity,
+  type Outcome,
+} from '@open-legend/domain';
+import { knowledgeDocument, canRememberSubject } from '@open-legend/domain';
+import { HostWork } from './host-work.js';
+import { WorkBudgetError } from '@open-legend/domain';
+import { changeParticipation } from '@open-legend/domain';
+import {
+  AuthorityError,
+  type RequestScope,
+  type Capability,
+  type LoginSession,
+  type AuthorityFence,
+  type ControlRequest,
+  type ExitAttempt,
+  type BindingRequest,
+} from './authority.js';
 import { compactHistory } from './history-residency.js';
 import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/domain';
 import { createGodItem, type GodItemRequest } from '@open-legend/domain';
-import { inventoryFor, projectStatusEffects } from '@open-legend/domain';
+import { declareOwnership, custodian, type OwnershipRequest } from '@open-legend/domain';
+import { inventoryTotals, projectStatusEffects } from '@open-legend/domain';
 import { changeInventionPolicy } from '@open-legend/domain';
 import { goalTexts } from '@open-legend/domain';
 import {
@@ -87,8 +109,13 @@ export const commandInputSchema = z
   .object({
     type: z.enum([
       'conversation',
+      'say',
       'pickup',
       'drop',
+      'transfer-item',
+      'split-item',
+      'merge-item',
+      'unequip',
       'move',
       'gather',
       'prepare',
@@ -106,6 +133,7 @@ export const commandInputSchema = z
       'teach',
     ]),
     conversationId: id.optional(),
+    text: z.string().trim().min(1).max(1500).optional(),
     generation: z.number().int().nonnegative().optional(),
     operation: z.enum(['join', 'leave']).optional(),
     effectOperation: z.enum(['activate', 'deactivate']).optional(),
@@ -124,43 +152,43 @@ export const commandInputSchema = z
       })
       .strict()
       .optional(),
+    expectedRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+    placementRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+    targetRevision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
     quantity: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
     preparation: z.enum(['fiber', 'cord']).optional(),
   })
   .strict();
 export const requestIdSchema = id;
 
-function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
-  const flags = { ...saved.milestones };
+function actorMilestones(
+  saved: SavedWorld,
+  events: WorldEvent[],
+  actorId: string,
+): Record<string, boolean> {
+  const flags = { ...saved.actorMilestones?.[actorId] };
   if (
     !flags['talk'] &&
     events.some(
       (event) =>
-        event.type === 'speech' &&
-        event.actorId !== controlledEntityId(saved.world) &&
-        event.audience.includes(controlledEntityId(saved.world)),
+        event.type === 'speech' && event.actorId !== actorId && event.audience.includes(actorId),
     )
   )
     flags['talk'] = true;
   if (
     !flags['hunt'] &&
-    events.some(
-      (event) => event.type === 'harvested' && event.actorId === controlledEntityId(saved.world),
-    )
+    events.some((event) => event.type === 'harvested' && event.actorId === actorId)
   )
     flags['hunt'] = true;
   if (
     !flags['eat'] &&
     events.some(
-      (event) =>
-        event.type === 'ate' &&
-        event.actorId === controlledEntityId(saved.world) &&
-        /meat/i.test(event.text),
+      (event) => event.type === 'ate' && event.actorId === actorId && /meat/i.test(event.text),
     )
   )
     flags['eat'] = true;
   if (!flags['invent'] || !flags['bow']) {
-    const known = (saved.world.knowledge[controlledEntityId(saved.world)] ?? []).map(
+    const known = (saved.world.knowledge[actorId] ?? []).map(
       (record) => saved.world.recipes[record.recipeId],
     );
     if (!flags['invent'] && known.some((recipe) => recipe?.output.launcher?.mechanism === 'swing'))
@@ -172,12 +200,20 @@ function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
     )
       flags['bow'] = true;
   }
-  if (
-    !flags['craft'] &&
-    saved.world.entities[controlledEntityId(saved.world)]?.actor?.equippedItemId
-  )
+  if (!flags['craft'] && saved.world.entities[actorId]?.actor?.equippedItemId)
     flags['craft'] = true;
-  return { ...saved, milestones: flags };
+  return flags;
+}
+
+function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
+  const byActor = { ...saved.actorMilestones };
+  if (saved.milestones) byActor[controlledEntityId(saved.world)] ??= saved.milestones;
+  const source = { ...saved, actorMilestones: byActor };
+  for (const entity of Object.values(saved.world.entities))
+    if (entity.actor?.controller === 'player')
+      byActor[entity.id] = actorMilestones(source, events, entity.id);
+  const { milestones: _legacy, ...current } = saved;
+  return { ...current, actorMilestones: byActor };
 }
 
 /** Application coordination only: pure rules live in domain; all I/O is through a store. */
@@ -208,19 +244,95 @@ export class WorldService {
   private unpersisted = false;
   private readonly listeners = new Set<() => void>();
   private readonly presence = new Map<string, number>();
-  private readonly presenceOrders = new Map<string, number>();
-  private readonly connections = new Set<string>();
+  private readonly presenceOrders = new Map<string, { sequence: number; at: number }>();
+  private readonly connections = new Map<string, RequestScope>();
+  private readonly connectionPreferences = new Map<string, boolean>();
+  private exits = new Map<string, ExitAttempt>();
+  private humanActorIds: readonly string[] = [];
   private pauseWhenHidden = true;
   private currentProfile!: PlayerProfile;
+  private localRequestScope?: RequestScope;
+  localSessionToken = '';
+  private authorityContext = new AsyncLocalStorage<Omit<AuthorityFence, 'now'> | undefined>();
+  /** Only the explicit single-principal composition root may use legacy callers. */
+  get localScope(): RequestScope {
+    if (this.config.authentication.mode !== 'local' || !this.localRequestScope)
+      throw new AuthorityError('forbidden');
+    return { ...this.localRequestScope, timelineId: this.timelineId };
+  }
+  currentScope(scope: RequestScope, capability: Capability = 'play', controlling = false): boolean {
+    return (
+      scope.worldId === this.world.id &&
+      scope.timelineId === this.timelineId &&
+      !!this.store.authority?.current(scope, capability, controlling, this.now())
+    );
+  }
+  refreshScope(scope: RequestScope): RequestScope {
+    this.assertScope(scope);
+    return this.store.authority!.refresh(scope, this.now());
+  }
+  assertScope(scope: RequestScope, capability: Capability = 'play', controlling = false): void {
+    if (!this.currentScope(scope, capability, controlling))
+      throw new AuthorityError(controlling ? 'control-changed' : 'stale-scope');
+  }
+  async authenticationMutation<T>(operation: () => Promise<T>): Promise<T> {
+    return this.mutate(operation);
+  }
+  async requestScope(session: LoginSession, connectionId: string): Promise<RequestScope> {
+    if (!this.store.authority) throw new AuthorityError('session');
+    return this.store.authority.scope(session, this.world.id, this.timelineId, connectionId);
+  }
+  /** Scope is explicit at entry; this context only carries the SQL publication fence,
+   * never the actor/profile selected by an operation. Nested work retains its origin. */
+  async authorized<T>(
+    scope: RequestScope,
+    capability: Capability,
+    controlling: boolean,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    return this.mutate(async () => {
+      this.assertScope(scope, capability, controlling);
+      return this.authorityContext.run({ scope, capability, controlling }, async () => {
+        await this.store.authority!.assertFence({
+          scope,
+          capability,
+          controlling,
+          now: this.now,
+        });
+        return operation();
+      });
+    });
+  }
+  async profileFor(scope: RequestScope): Promise<PlayerProfile> {
+    this.assertScope(scope);
+    const profile = await this.store.getProfile(scope.accountId);
+    this.assertScope(scope);
+    return profile;
+  }
+  milestonesFor(actorId: string): Readonly<Record<string, boolean>> {
+    return this.saved.actorMilestones?.[actorId] ?? {};
+  }
+
   readonly ready: Promise<void>;
+  private readonly hostWork = new HostWork(this);
+  releaseHostWork(): void {
+    this.hostWork.close();
+  }
   private mutationTail: Promise<unknown> = Promise.resolve();
-  private mutationContext = new AsyncLocalStorage<boolean>();
+  private mutationContext = new AsyncLocalStorage<{ active: boolean }>();
   private async mutate<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.mutationContext.getStore()) return await operation();
+    if (this.mutationContext.getStore()?.active) return await operation();
     const queuedAt = performance.now();
     const next = this.mutationTail.then(() => {
       recordDuration('mutation.wait', performance.now() - queuedAt);
-      return this.mutationContext.run(true, operation);
+      const scope = { active: true };
+      return this.mutationContext.run(scope, async () => {
+        try {
+          return await operation();
+        } finally {
+          scope.active = false;
+        }
+      });
     });
     this.mutationTail = next.catch(() => undefined);
     return next;
@@ -244,10 +356,10 @@ export class WorldService {
     this.currentProfile = await store.getProfile('local-player');
     const existing = await store.load(true);
     if (existing) validateWorldModules(existing.state.world);
-    this.pauseWhenHidden = this.profile.preferences.pauseWhenHidden;
+    this.pauseWhenHidden = this.currentProfile.preferences.pauseWhenHidden;
     const creationAccounts = {
-      creatorAccountIds: [this.profile.id],
-      playerAccountId: this.profile.id,
+      creatorAccountIds: [this.currentProfile.id],
+      playerAccountId: this.currentProfile.id,
     };
     this.saved = existing?.state ?? {
       world:
@@ -259,6 +371,38 @@ export class WorldService {
       speed: 1,
       manuallyPaused: false,
     };
+    if (!store.authority) throw new Error('Current authority repository is required.');
+    const bindings =
+      config.authentication.mode === 'local'
+        ? [
+            {
+              issuer: 'https://local.openlegend.invalid',
+              subject: 'local-player',
+              accountId: 'local-player',
+              actorId: controlledEntityId(this.saved.world),
+              capabilities: [
+                'play',
+                'save',
+                ...(config.godMode ? (['create', 'inspect', 'manage-access'] as const) : []),
+              ] as Capability[],
+            },
+          ]
+        : config.authentication.bindings;
+    const existingGrants = await store.authority.worldGrants(this.saved.world.id);
+    const actorBindings = new Map(existingGrants.map((grant) => [grant.actorId, grant.accountId]));
+    for (const binding of bindings)
+      if (!existingGrants.some((grant) => grant.accountId === binding.accountId))
+        actorBindings.set(binding.actorId, binding.accountId);
+    const actorOwners = new Map([
+      ...Object.entries(this.saved.world.authorship.playerAccountIds),
+      ...(await store.authority.actorOwners(this.saved.world.id)),
+      ...actorBindings,
+    ]);
+    // Validate identities before either world or grant publication. SQL provisions the entire
+    // configured set inside the same startup transaction as the canonical world records.
+    for (const actorId of actorBindings.keys())
+      if (!this.saved.world.entities[actorId]?.actor)
+        throw new Error('Configured actor binding does not exist in this world.');
     this.persistedRevision = existing?.revision ?? 0;
     this.persistedEvents = this.saved.world.events;
     this.viewRevision = this.persistedRevision;
@@ -277,6 +421,12 @@ export class WorldService {
           conversationInactivitySeconds: config.conversationInactivitySeconds,
           notableThreshold: 8,
         };
+        for (const [actorId, accountId] of actorOwners) {
+          const actor = world.entities[actorId]?.actor;
+          if (!actor) continue;
+          actor.controller = 'player';
+          world.authorship.playerAccountIds[actorId] = accountId;
+        }
         world.paused = true;
       }),
     };
@@ -284,13 +434,20 @@ export class WorldService {
     // Startup migrations may replace historical branches, so use the ordinary diff once.
     const startupHistory = this.saved.world;
     if (store.history) this.saved = { ...this.saved, world: retainHotEvents(startupHistory) };
-    this.persistedRevision = await store.commit(
-      this.persistedRevision,
-      this.saved,
-      undefined,
-      undefined,
-      { after: startupHistory },
-    );
+    const startupAllocation = this.hostWork.reserve(this.saved.world);
+    try {
+      this.persistedRevision = await store.commit(
+        this.persistedRevision,
+        this.saved,
+        undefined,
+        undefined,
+        { after: startupHistory, authorityBindings: bindings, authorityOwners: actorOwners },
+      );
+      startupAllocation.commit();
+    } catch (error) {
+      startupAllocation.rollback();
+      throw error;
+    }
     if (store.releaseHistory) this.saved = store.releaseHistory(this.saved);
     freezeWorld(this.saved.world);
     this.persistedEvents = this.saved.world.events;
@@ -303,12 +460,36 @@ export class WorldService {
       ((await store.getIntegration(`world-timeline:${this.world.id}`)) as string) ||
       this.timelineId;
     await store.putIntegration(`world-timeline:${this.world.id}`, this.timelineId);
+    if (!store.authority) throw new Error('Current authority repository is required.');
+    if (config.authentication.mode === 'local') {
+      const identity = { issuer: 'https://local.openlegend.invalid', subject: 'local-player' };
+      const login = await store.authority.login(
+        identity,
+        this.now(),
+        config.authentication.sessionMs,
+      );
+      this.localSessionToken = login.token;
+      this.localRequestScope = await this.requestScope(login.session, 'local-internal');
+    }
+    this.humanActorIds = Object.values(this.world.entities)
+      .filter((entity) => entity.actor?.controller === 'player')
+      .map((entity) => entity.id);
+    store.authority.subscribe(() => this.notify(false));
     this.viewRevision = this.persistedRevision;
     this.lastRoutinePersistAt = this.now();
     await store.recoverInterruptedWork();
+    this.exits = new Map(
+      (await store.authority.exitAttempts(this.world.id)).map((attempt) => [
+        attempt.actorId,
+        attempt,
+      ]),
+    );
+    // Restart has no verified live transports. Existing deadlines are retained, never extended.
+    if (config.authentication.mode === 'oidc') await this.reconcileParticipation();
   }
 
   get controlledEntityId(): string {
+    if (this.config.authentication.mode !== 'local') throw new AuthorityError('forbidden');
     return controlledEntityId(this.world);
   }
   get defaultResidentEntityId(): string {
@@ -321,19 +502,27 @@ export class WorldService {
   worldEvent(eventId: string): WorldEvent | undefined {
     return this.worldEventsById.get(eventId);
   }
-  // The current host has one local player. A future account adapter supplies this
-  // principal; neither preferences nor action queries accept a client-selected actor.
+  // Compatibility for the explicit loopback single-principal composition root.
   get profile(): PlayerProfile {
+    if (this.config.authentication.mode !== 'local') throw new AuthorityError('forbidden');
     return this.currentProfile;
   }
-  async setPreferences(preferences: PlayerPreferencePatch): Promise<PlayerProfile> {
+  async setPreferences(
+    preferences: PlayerPreferencePatch,
+    scope = this.localScope,
+  ): Promise<PlayerProfile> {
     return this.mutate(async () => {
       await this.ready;
-
-      const profile = await this.store.setPreferences('local-player', preferences);
-      this.currentProfile = profile;
-      const pausePolicyChanged = this.pauseWhenHidden !== profile.preferences.pauseWhenHidden;
-      this.pauseWhenHidden = profile.preferences.pauseWhenHidden;
+      this.assertScope(scope);
+      const priorPauseWhenHidden =
+        this.connectionPreferences.get(scope.accountId) ?? this.pauseWhenHidden;
+      const profile = await this.store.setPreferences(scope.accountId, preferences);
+      this.assertScope(scope);
+      if (this.config.authentication.mode === 'local') this.currentProfile = profile;
+      const pausePolicyChanged = priorPauseWhenHidden !== profile.preferences.pauseWhenHidden;
+      if (this.config.authentication.mode === 'local')
+        this.pauseWhenHidden = profile.preferences.pauseWhenHidden;
+      this.connectionPreferences.set(scope.accountId, profile.preferences.pauseWhenHidden);
       if (pausePolicyChanged) await this.syncPause();
       else this.notify(false);
       return profile;
@@ -346,27 +535,68 @@ export class WorldService {
     return this.saved.speed;
   }
   get milestones(): Readonly<Record<string, boolean>> {
-    return this.saved.milestones ?? {};
+    return this.milestonesFor(this.controlledEntityId);
   }
   get paused(): boolean {
     return this.saved.manuallyPaused || this.absent || this.storageError !== null;
   }
   private get absent(): boolean {
+    if (this.config.authentication.mode === 'oidc') {
+      this.present; // Expire operational heartbeat timestamps before testing foreground pause.
+      for (const scope of this.connections.values()) {
+        if (!this.currentScope(scope)) continue;
+        const fresh = this.refreshScope(scope);
+        if (
+          this.currentScope(fresh, 'play', true) &&
+          (!this.connectionPreferences.get(scope.accountId) ||
+            this.presence.has(this.presenceKey(scope)))
+        )
+          return false;
+      }
+      return true;
+    }
     // An open stream survives background heartbeat throttling. With the setting
     // off, this is connected background play, not offline catch-up after closing.
     return !this.present && (this.pauseWhenHidden || this.connections.size === 0);
   }
-  async setConnection(connectionId: string, connected: boolean): Promise<void> {
+  async setConnection(
+    connectionId: string,
+    connected: boolean,
+    scope = this.localScope,
+  ): Promise<void> {
     return this.mutate(async () => {
       await this.ready;
 
-      if (connected) this.connections.add(connectionId);
-      else this.connections.delete(connectionId);
+      if (connected) {
+        this.assertScope(scope);
+        if (this.connections.size >= 32) throw new Error('Connection capacity reached.');
+        this.connections.set(connectionId, scope);
+        this.connectionPreferences.set(
+          scope.accountId,
+          (await this.profileFor(scope)).preferences.pauseWhenHidden,
+        );
+      } else {
+        const previous = this.connections.get(connectionId);
+        this.connections.delete(connectionId);
+        if (
+          previous &&
+          ![...this.connections.values()].some(
+            (item) => this.presenceKey(item) === this.presenceKey(previous),
+          )
+        ) {
+          this.presence.delete(this.presenceKey(previous));
+          this.presenceOrders.delete(this.presenceKey(previous));
+          if (![...this.connections.values()].some((item) => item.accountId === previous.accountId))
+            this.connectionPreferences.delete(previous.accountId);
+        }
+      }
       await this.reconcileDisconnectedConversation();
+      if (this.config.authentication.mode === 'oidc') await this.reconcileParticipation();
       if (this.world.paused !== this.paused) await this.syncPause();
     });
   }
   private async reconcileDisconnectedConversation(): Promise<void> {
+    if (this.config.authentication.mode !== 'local') return;
     if (this.present || this.connections.size > 0) this.disconnectedAt = null;
     else this.disconnectedAt ??= this.now();
     if (
@@ -382,7 +612,18 @@ export class WorldService {
   }
   get present(): boolean {
     const cutoff = this.now() - 12_000;
-    for (const [key, timestamp] of this.presence) if (timestamp < cutoff) this.presence.delete(key);
+    for (const [key, timestamp] of this.presence)
+      if (timestamp < cutoff) {
+        this.presence.delete(key);
+        if (![...this.connections.values()].some((scope) => this.presenceKey(scope) === key))
+          this.presenceOrders.delete(key);
+      }
+    for (const [key, entry] of this.presenceOrders)
+      if (
+        entry.at < cutoff &&
+        ![...this.connections.values()].some((scope) => this.presenceKey(scope) === key)
+      )
+        this.presenceOrders.delete(key);
     return this.presence.size > 0;
   }
   get pauseReason(): 'manual' | 'away' | 'storage' | null {
@@ -416,9 +657,7 @@ export class WorldService {
     after: WorldEvent[],
     count: number | undefined,
   ) {
-    const actorId = this.controlledEntityId;
     const relevant = (event: WorldEvent) =>
-      event.audience.includes(actorId) &&
       !(
         event.type === 'action-started' &&
         (event.data?.['actionType'] === 'move' || event.text.endsWith(' started move.'))
@@ -450,9 +689,17 @@ export class WorldService {
     historyBefore?: WorldState,
     receipt?: GameplayReceipt,
     restore?: RestoreSave,
+    authorityChanges?: {
+      bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
+      controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
+      participationChange?: { actorId: string; attempt: ExitAttempt | null };
+    },
   ): Promise<boolean> {
     if (this.storageError) return false;
+    let allocation: ReturnType<HostWork['reserve']> | undefined;
     try {
+      freezeWorld(saved.world);
+      allocation = this.hostWork.reserve(saved.world);
       if (eventMode === 'unchanged' && saved.world.events !== this.saved.world.events)
         throw new Error(
           'A transition declared unchanged events but replaced the event collection.',
@@ -486,21 +733,23 @@ export class WorldService {
           after: historyWorld,
           receipt,
           restore,
+          ...authorityChanges,
+          ...(this.authorityContext.getStore()
+            ? { authority: { ...this.authorityContext.getStore()!, now: this.now } }
+            : {}),
         }),
       );
+      allocation.commit();
       this.updateHistoryRevision(
         historyBefore?.events ?? this.persistedEvents,
         historyWorld.events,
         historyBefore ? undefined : appendEventCount,
       );
-      if (
-        this.saved.world.experience?.forgotten[this.controlledEntityId] !==
-        saved.world.experience?.forgotten[this.controlledEntityId]
-      ) {
+      if (this.saved.world.experience?.forgotten !== saved.world.experience?.forgotten) {
         this.transcriptRevision++;
         this.transcriptEpoch++;
       }
-      if (invalidatedMemoryIds?.[this.controlledEntityId]?.length) {
+      if (invalidatedMemoryIds && Object.values(invalidatedMemoryIds).some((ids) => ids.length)) {
         this.transcriptRevision++;
         this.transcriptEpoch++;
       }
@@ -517,7 +766,14 @@ export class WorldService {
       this.lastRoutinePersistAt = this.now();
       this.notify(false);
       return true;
-    } catch {
+    } catch (error) {
+      allocation?.rollback();
+      if (error instanceof WorkBudgetError) {
+        this.storageError = `${error.message} Required native work is paused before publication.`;
+        this.notify(false);
+        return false;
+      }
+      if (error instanceof AuthorityError) throw error;
       this.storageError =
         'The save could not be committed. Simulation is paused; restart after resolving storage access.';
       this.notify(false);
@@ -525,24 +781,37 @@ export class WorldService {
     }
   }
 
-  private acceptRoutine(saved: SavedWorld): void {
-    const appended = appendedEventCount(this.saved.world.events, saved.world.events);
-    if (appended === undefined)
-      this.worldEventsById = new Map(saved.world.events.map((event) => [event.id, event]));
-    else
-      for (const event of saved.world.events.slice(this.worldEventsById.size))
-        this.worldEventsById.set(event.id, event);
-    this.saved = updateMilestones(
-      saved,
-      appended === undefined
-        ? saved.world.events
-        : appended
-          ? saved.world.events.slice(-appended)
-          : [],
-    );
-    freezeWorld(this.saved.world);
-    this.unpersisted = true;
-    this.notify(false);
+  private acceptRoutine(saved: SavedWorld): boolean {
+    let allocation: ReturnType<HostWork['reserve']> | undefined;
+    try {
+      allocation = this.hostWork.reserve(saved.world);
+      const appended = appendedEventCount(this.saved.world.events, saved.world.events);
+      const next = updateMilestones(
+        saved,
+        appended === undefined
+          ? saved.world.events
+          : appended
+            ? saved.world.events.slice(-appended)
+            : [],
+      );
+      freezeWorld(next.world);
+      if (appended === undefined)
+        this.worldEventsById = new Map(next.world.events.map((event) => [event.id, event]));
+      else
+        for (const event of next.world.events.slice(this.worldEventsById.size))
+          this.worldEventsById.set(event.id, event);
+      this.saved = next;
+      allocation.commit();
+      this.unpersisted = true;
+      this.notify(false);
+      return true;
+    } catch (error) {
+      allocation?.rollback();
+      if (!(error instanceof WorkBudgetError)) throw error;
+      this.storageError = `${error.message} Required native work is paused before publication.`;
+      this.notify(false);
+      return false;
+    }
   }
 
   async flush(): Promise<void> {
@@ -622,8 +891,8 @@ export class WorldService {
       throw new Error('Trigger evidence changed during retrieval.');
     return selected.flatMap((entry) => (entry.awareness ? [entry.awareness] : []));
   }
-  async inspectMemoryContext(actorId: string) {
-    if (!this.config.godMode || !this.mayInspectPrivate(actorId))
+  async inspectMemoryContext(actorId: string, scope = this.localScope) {
+    if (!this.config.godMode || !this.mayInspectPrivate(actorId, scope))
       throw new Error('Private mind inspection is unavailable.');
     await this.flush();
     const world = this.world,
@@ -648,7 +917,7 @@ export class WorldService {
     if (
       !current ||
       generation !== this.generation ||
-      !this.mayInspectPrivate(actorId) ||
+      !this.mayInspectPrivate(actorId, scope) ||
       sourceRevision !== this.store.memories?.actorRevision(actorId)
     )
       throw new Error('Private mind changed during inspection.');
@@ -688,10 +957,10 @@ export class WorldService {
         : this.world;
     });
   }
-  async createSave(label: string, id: string): Promise<void> {
+  async createSave(label: string, id: string, scope = this.localScope): Promise<void> {
     return this.mutate(async () => {
       await this.flush();
-      if (!this.mayManageSaves())
+      if (!this.mayManageSaves(scope))
         throw new Error('World creator or host operator access required.');
       if (this.storageError || !this.store.saves)
         throw new Error(this.storageError ?? 'Saves unavailable.');
@@ -699,12 +968,31 @@ export class WorldService {
     });
   }
 
-  async restoreSave(id: string, requestId: string, payload: SavePayload): Promise<void> {
+  async restoreSave(
+    id: string,
+    requestId: string,
+    payload: SavePayload,
+    scope = this.localScope,
+  ): Promise<void> {
     return this.mutate(async () => {
       await this.flush();
-      if (!this.mayManageSaves())
+      if (!this.mayManageSaves(scope))
         throw new Error('World creator or host operator access required.');
       const restored = structuredClone(payload.state);
+      for (const [actorId, accountId] of await this.store.authority!.actorOwners(this.world.id)) {
+        const actor = restored.world.entities[actorId]?.actor;
+        if (actor) actor.controller = 'player';
+        restored.world.authorship.playerAccountIds[actorId] = accountId;
+      }
+      for (const grant of await this.store.authority!.worldGrants(this.world.id)) {
+        const actor = restored.world.entities[grant.actorId]?.actor;
+        if (!actor)
+          throw new Error(
+            'The save lacks a currently bound human character; authority cannot be restored from historical state.',
+          );
+        actor.controller = 'player';
+        restored.world.authorship.playerAccountIds[grant.actorId] = grant.accountId;
+      }
       // Candidate loading applies the current in-place migrations before timeline installation.
       const ledger = (await this.store.getIntegration(`forget-ledger:${this.world.id}`)) as
         | Record<string, string[]>
@@ -743,20 +1031,247 @@ export class WorldService {
       this.epoch = epoch;
       this.timelineId = timeline;
       this.generation = randomUUID();
+      this.humanActorIds = Object.values(this.world.entities)
+        .filter((entity) => entity.actor?.controller === 'player')
+        .map((entity) => entity.id);
+      this.connections.clear();
+      this.presence.clear();
+      this.presenceOrders.clear();
+      if (this.config.authentication.mode === 'oidc')
+        await this.authorityContext.run(undefined, () => this.reconcileParticipation());
       this.debtSeconds = 0;
       this.memoryBacklog = null;
       this.notify();
     });
   }
 
-  async setPresence(clientId: string, visible: boolean, sequence?: number): Promise<void> {
+  async changeEmbodiment(scope: RequestScope, request: ControlRequest): Promise<ApiResult> {
+    return this.authorized(scope, 'play', false, async () => {
+      if (await this.store.authority!.controlReceipt(scope, request))
+        return {
+          ok: true,
+          code: 'replayed',
+          message: 'Control request already committed. Refresh to see current control.',
+        };
+      const actor = this.world.entities[scope.actorId]?.actor;
+      if (!actor || actor.controller !== 'player') throw new AuthorityError('forbidden');
+      const attempt =
+        request.operation === 'release'
+          ? (this.exits.get(scope.actorId) ?? {
+              worldId: this.world.id,
+              actorId: scope.actorId,
+              id: randomUUID(),
+              deadline: this.now() + this.config.exitGraceMs,
+            })
+          : null;
+      const result = changeParticipation(
+        this.world,
+        scope.actorId,
+        actor.participation?.revision ?? 0,
+        attempt ? { type: 'begin-exit', attemptId: attempt.id } : { type: 'return' },
+      );
+      if (!result.outcome.ok) return result.outcome;
+      if (
+        !(await this.commit(
+          { ...this.saved, world: result.world },
+          undefined,
+          'append',
+          undefined,
+          undefined,
+          undefined,
+          {
+            controlChange: { scope, request, now: this.now },
+            participationChange: { actorId: scope.actorId, attempt },
+          },
+        ))
+      )
+        return { ok: false, code: 'storage', message: this.storageError! };
+      if (attempt) this.exits.set(scope.actorId, attempt);
+      else this.exits.delete(scope.actorId);
+      return {
+        ...result.outcome,
+        message:
+          request.operation === 'release'
+            ? 'Control released; departure is pending.'
+            : 'This window now controls your character.',
+      };
+    });
+  }
+  async rebindAccount(scope: RequestScope, request: BindingRequest): Promise<ApiResult> {
+    return this.authorized(scope, 'manage-access', false, async () => {
+      if (await this.store.authority!.bindingReceipt(scope, request))
+        return { ok: true, code: 'replayed', message: 'Character binding already committed.' };
+      const grant = await this.store.authority!.grant(this.world.id, request.accountId);
+      const entity = this.world.entities[request.actorId];
+      const owner =
+        (await this.store.authority!.actorOwners(this.world.id)).get(request.actorId) ??
+        this.world.authorship.playerAccountIds[request.actorId];
+      if (
+        !grant ||
+        grant.revision !== request.expectedRevision ||
+        grant.actorId === request.actorId
+      )
+        throw new AuthorityError('conflict');
+      if (!entity?.actor || entity.retirement || (owner && owner !== request.accountId))
+        throw new AuthorityError('forbidden');
+      let world = updateWorld(this.world, (draft) => {
+        draft.entities[request.actorId]!.actor!.controller = 'player';
+        draft.authorship.playerAccountIds[request.actorId] = request.accountId;
+      });
+      // Both embodiments settle through the existing departure owner. Native progress and
+      // inventory stay with the actor; explicit control acquisition is required afterward.
+      for (const actorId of [grant.actorId, request.actorId]) {
+        const actor = world.entities[actorId]?.actor;
+        if (!actor) throw new AuthorityError('forbidden');
+        if (actor.participation?.phase === 'inactive') continue;
+        const attemptId = actor.participation?.exitAttemptId ?? randomUUID();
+        if (actor.participation?.phase !== 'exiting') {
+          const exit = changeParticipation(world, actorId, actor.participation?.revision ?? 0, {
+            type: 'begin-exit',
+            attemptId,
+          });
+          if (!exit.outcome.ok) return exit.outcome;
+          world = exit.world;
+        }
+        const departure = changeParticipation(
+          world,
+          actorId,
+          world.entities[actorId]!.actor!.participation!.revision,
+          { type: 'depart', attemptId },
+        );
+        if (!departure.outcome.ok) return departure.outcome;
+        world = departure.world;
+      }
+      if (
+        !(await this.commit(
+          { ...this.saved, world },
+          undefined,
+          'append',
+          undefined,
+          undefined,
+          undefined,
+          { bindingChange: { scope, request, now: this.now } },
+        ))
+      )
+        return { ok: false, code: 'storage', message: this.storageError! };
+      this.exits.delete(grant.actorId);
+      this.exits.delete(request.actorId);
+      this.humanActorIds = Object.values(this.world.entities)
+        .filter((entity) => entity.actor?.controller === 'player')
+        .map((entity) => entity.id);
+      return {
+        ok: true,
+        code: 'bound',
+        message: 'Character binding changed. Choose Control here to enter the character.',
+      };
+    });
+  }
+  private async reconcileParticipation(): Promise<void> {
+    const participating = new Set<string>();
+    for (const scope of this.connections.values()) {
+      if (this.currentScope(scope) && this.currentScope(this.refreshScope(scope), 'play', true))
+        participating.add(scope.actorId);
+    }
+    for (const actorId of this.humanActorIds) {
+      const entity = this.world.entities[actorId];
+      if (!entity?.actor) continue;
+      let actor = this.world.entities[entity.id]!.actor!;
+      if (participating.has(entity.id)) {
+        if (actor.participation?.phase === 'exiting' || actor.participation?.phase === 'inactive') {
+          const result = changeParticipation(this.world, entity.id, actor.participation.revision, {
+            type: 'return',
+          });
+          if (
+            result.outcome.ok &&
+            (await this.commit(
+              { ...this.saved, world: result.world },
+              undefined,
+              'append',
+              undefined,
+              undefined,
+              undefined,
+              { participationChange: { actorId: entity.id, attempt: null } },
+            ))
+          )
+            this.exits.delete(entity.id);
+        }
+        continue;
+      }
+      if (actor.participation?.phase === 'inactive') continue;
+      let attempt = this.exits.get(entity.id);
+      if (!attempt)
+        attempt = {
+          worldId: this.world.id,
+          actorId: entity.id,
+          id: randomUUID(),
+          deadline: this.now() + this.config.exitGraceMs,
+        };
+      if (
+        actor.participation?.phase !== 'exiting' ||
+        actor.participation.exitAttemptId !== attempt.id
+      ) {
+        // A restored gameplay phase adopts the current operational attempt and original deadline.
+        const baseline = updateWorld(this.world, (draft) => {
+          const state = draft.entities[entity.id]!.actor!.participation;
+          if (state?.phase === 'exiting') {
+            state.phase = 'active';
+            delete state.exitAttemptId;
+          }
+        });
+        const result = changeParticipation(
+          baseline,
+          entity.id,
+          actor.participation?.revision ?? 0,
+          { type: 'begin-exit', attemptId: attempt.id },
+        );
+        if (
+          !result.outcome.ok ||
+          !(await this.commit(
+            { ...this.saved, world: result.world },
+            undefined,
+            'append',
+            undefined,
+            undefined,
+            undefined,
+            { participationChange: { actorId: entity.id, attempt } },
+          ))
+        )
+          continue;
+        this.exits.set(entity.id, attempt);
+        actor = this.world.entities[entity.id]!.actor!;
+      }
+      if (this.now() >= attempt.deadline) {
+        const result = changeParticipation(this.world, entity.id, actor.participation!.revision, {
+          type: 'depart',
+          attemptId: attempt.id,
+        });
+        if (result.outcome.ok)
+          await this.commit({ ...this.saved, world: result.world }, undefined, 'append');
+      }
+    }
+  }
+  private presenceKey(scope: RequestScope) {
+    return `${scope.accountId}:${scope.sessionId}:${scope.connectionId}`;
+  }
+  async setPresence(
+    clientId: string,
+    visible: boolean,
+    sequence?: number,
+    scope = this.localScope,
+  ): Promise<void> {
     return this.mutate(async () => {
       await this.ready;
 
+      this.assertScope(scope);
+      if (clientId !== scope.connectionId && this.config.authentication.mode !== 'local')
+        throw new AuthorityError('forbidden');
+      clientId = this.presenceKey(scope);
       if (sequence !== undefined) {
         const previous = this.presenceOrders.get(clientId);
-        if (previous !== undefined && sequence <= previous) return;
-        this.presenceOrders.set(clientId, sequence);
+        if (previous !== undefined && sequence <= previous.sequence) return;
+        if (!this.presenceOrders.has(clientId) && this.presenceOrders.size >= 128)
+          throw new Error('Presence capacity reached. Reconnect before continuing.');
+        this.presenceOrders.set(clientId, { sequence, at: this.now() });
       }
       const wasPaused = this.paused;
       // Observe an expired heartbeat before renewing it. Otherwise a reconnect ahead
@@ -768,12 +1283,15 @@ export class WorldService {
     });
   }
 
-  async control(input: {
-    paused?: boolean;
-    speed?: number;
-    clientId?: string;
-    presenceSequence?: number;
-  }): Promise<ApiResult> {
+  async control(
+    input: {
+      paused?: boolean;
+      speed?: number;
+      clientId?: string;
+      presenceSequence?: number;
+    },
+    scope = this.localScope,
+  ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
 
@@ -782,7 +1300,8 @@ export class WorldService {
       if (input.paused === false) {
         // Clicking Resume is itself evidence that the player has returned. Do not
         // wait for the browser's next (possibly throttled) five-second heartbeat.
-        if (input.clientId) await this.setPresence(input.clientId, true, input.presenceSequence);
+        if (input.clientId)
+          await this.setPresence(input.clientId, true, input.presenceSequence, scope);
         if (this.absent)
           return {
             ok: false,
@@ -861,6 +1380,7 @@ export class WorldService {
       await this.refreshCommandEpoch();
 
       await this.reconcileDisconnectedConversation();
+      if (this.config.authentication.mode === 'oidc') await this.reconcileParticipation();
       if (this.world.paused !== this.paused) await this.syncPause();
       if (this.paused || elapsedRealSeconds < 0) return;
       // The host distinguishes missing callbacks from callbacks during a busy batch.
@@ -905,7 +1425,13 @@ export class WorldService {
       // A single transition remains atomic even if it exceeds this time budget.
       for (; completedSteps < steps; ) {
         const stepStarted = performance.now();
-        world = freezeWorld(advanceWorld(world, 1).world);
+        const advanced = advanceWorld(world, 1);
+        if (!advanced.outcome.ok) {
+          this.storageError = `Required native work stopped before advancing time: ${advanced.outcome.message} Restart after reconciling the admitted workload.`;
+          this.notify(false);
+          return;
+        }
+        world = freezeWorld(advanced.world);
         const stepMs = performance.now() - stepStarted;
         nativeMs += stepMs;
         recordDuration('native.step', stepMs);
@@ -918,8 +1444,7 @@ export class WorldService {
       if (this.now() - this.lastRoutinePersistAt >= 1000) {
         if (await this.commit(saved, undefined, 'append')) this.debtSeconds -= completedSteps;
       } else {
-        this.acceptRoutine(saved);
-        this.debtSeconds -= completedSteps;
+        if (this.acceptRoutine(saved)) this.debtSeconds -= completedSteps;
       }
       countMetric('clock.advancedSimSeconds', this.world.simTime - beforeSimTime);
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
@@ -931,6 +1456,7 @@ export class WorldService {
     operation: 'join' | 'leave',
     conversationId: string,
     generation: number,
+    scope = this.localScope,
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
@@ -938,8 +1464,8 @@ export class WorldService {
         return { ok: false, code: 'paused', message: 'Resume before joining.' };
       const result = changeConversation(
         this.world,
-        requestId,
-        this.controlledEntityId,
+        `${scope.accountId}:${requestId}`,
+        scope.actorId,
         operation,
         conversationId,
         generation,
@@ -954,6 +1480,7 @@ export class WorldService {
     operation: (world: WorldState) => Transition,
     gameplay?: Omit<GameplayReceipt, 'result'>,
     responseJobId?: string,
+    validateSources?: (world: WorldState) => Promise<boolean>,
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
@@ -970,6 +1497,12 @@ export class WorldService {
               'This response identity is retired or was never admitted; no effects were applied.',
           };
       }
+      if (validateSources && !(await validateSources(this.world)))
+        return {
+          ok: false,
+          code: 'stale-publication',
+          message: 'Publication sources or authority changed.',
+        };
       if (this.paused)
         return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
       const result = operation(this.world);
@@ -989,7 +1522,7 @@ export class WorldService {
         ))
       )
         return { ok: false, code: 'storage', message: this.storageError! };
-      return { ok: result.outcome.ok, code: result.outcome.code, message: result.outcome.message };
+      return { ...result.outcome };
     });
   }
 
@@ -1027,7 +1560,127 @@ export class WorldService {
     });
   }
 
-  async godKnowledge(
+  async authorCharacterAppraisal(
+    request: import('@open-legend/protocol').AuthoredAppraisalRequest,
+    scope: RequestScope,
+  ): Promise<ApiResult> {
+    return this.mutate(async () => {
+      await this.ready;
+      this.assertScope(scope, 'create');
+      const actor = this.world.entities[request.actorId];
+      if (
+        !this.config.godMode ||
+        actor?.actor?.controller !== 'npc' ||
+        !this.mayInspectPrivate(request.actorId, scope)
+      )
+        throw new AuthorityError('forbidden');
+      if (request.worldId !== this.world.id || request.generation !== this.generation)
+        throw new AuthorityError('stale-scope');
+      if (!this.store.commands || !this.store.records)
+        return {
+          ok: false,
+          code: 'unavailable',
+          message: 'Durable appraisal authoring is unavailable.',
+        };
+      await this.refreshCommandEpoch();
+      const id = `authored:${digest([scope.accountId, request.epoch, request.id])}`;
+      const fingerprint = digest({ scope, request });
+      const prior = await this.store.commands.get(this.world.id, id);
+      if (prior)
+        return prior.fingerprint === fingerprint && this.now() < prior.expiresAt
+          ? prior.result
+          : {
+              ok: false,
+              code: 'appraisal-conflict',
+              message: 'This authored operation changed or expired.',
+            };
+      if (request.epoch !== this.commandEpoch)
+        return { ok: false, code: 'expired', message: 'Reload before authoring a new feeling.' };
+      const change = request.change;
+      const definition =
+        change.kind === 'create' && appraisalDefinition(this.world, change.definitionPin);
+      if (
+        change.kind === 'create' &&
+        (!definition ||
+          definition.value.kind !== 'qualitative' ||
+          (change.targetId !== null &&
+            !canRememberSubject(this.world, request.actorId, change.targetId)))
+      )
+        return {
+          ok: false,
+          code: 'appraisal-rejected',
+          message: 'Choose a supported feeling and known subject.',
+        };
+      const createIds =
+        change.kind === 'create' && definition
+          ? [
+              appraisalCreationIdentity(
+                request.actorId,
+                change.definitionPin,
+                change.targetId,
+                id,
+                definition.stacking,
+              ).id,
+            ]
+          : [];
+      const bindings = {
+        sources: [],
+        subjects: change.kind === 'create' && change.targetId ? [change.targetId] : [],
+        authorizationReceipt: id,
+        completeCreates: createIds,
+        priorOutcomes: await this.store.records.appraisalOutcomes(
+          this.world.id,
+          request.actorId,
+          createIds,
+        ),
+      };
+      const events: WorldEvent[] = [];
+      let result: Outcome = {
+        ok: false,
+        code: 'appraisal-rejected',
+        message: 'Appraisal unavailable.',
+      };
+      const candidate = updateWorld(this.world, (draft) => {
+        result =
+          change.kind === 'create'
+            ? authorAppraisal(
+                draft,
+                request.actorId,
+                change.definitionPin,
+                change.targetId,
+                { kind: 'qualitative' },
+                {
+                  kind: 'authored',
+                  actorId: request.actorId,
+                  authorizationReceipt: id,
+                  sourceVersion: fingerprint,
+                  sourceRefs: [],
+                },
+                bindings,
+                events,
+              )
+            : changeAppraisal(draft, request.actorId, change, id, bindings, events);
+        if (result.ok && events.length) draft.sequence++;
+      });
+      // The durable operation receipt and private evidence share the world commit.
+      const committed = await this.commit(
+        { ...this.saved, world: result.ok ? candidate : this.world },
+        undefined,
+        'append',
+        undefined,
+        {
+          id,
+          fingerprint,
+          epoch: this.epoch.generation,
+          expiresAt: this.now() + COMMAND_RETRY_MS,
+          result,
+        },
+      );
+      return committed ? result : { ok: false, code: 'storage', message: this.storageError! };
+    });
+  }
+
+  async editCharacterKnowledge(
     value: import('@open-legend/domain').KnowledgeEdit & {
       worldId: string;
       generation: string;
@@ -1035,12 +1688,18 @@ export class WorldService {
       givenName?: string;
       nameRevision?: number;
     },
+    scope = this.localScope,
+    mode: 'creator' | 'owner' = 'creator',
   ): Promise<ApiResult> {
-    if (!this.config.godMode)
+    if (mode === 'creator' && !this.config.godMode)
       return { ok: false, code: 'forbidden', message: 'God access required.' };
 
     return this.godTransition((world) => {
-      if (!this.mayInspectPrivate(value.actorId))
+      if (
+        !this.mayInspectPrivate(value.actorId, scope) ||
+        (mode === 'owner' &&
+          (value.actorId !== scope.actorId || !this.currentScope(scope, 'play', true)))
+      )
         return {
           world,
           events: [],
@@ -1066,7 +1725,13 @@ export class WorldService {
         message: 'Knowledge edit rejected.',
       };
       const candidate = updateWorld(world, (draft) => {
-        const permitted = value.subjectId ? [value.subjectId] : [];
+        const permitted =
+          value.subjectId &&
+          (mode === 'creator' ||
+            canRememberSubject(draft, value.actorId, value.subjectId) ||
+            knowledgeDocument(draft, value.actorId, value.subjectId))
+            ? [value.subjectId]
+            : [];
         if (value.givenName !== undefined && value.subjectId) {
           const named = assignGivenName(
             draft,
@@ -1077,7 +1742,7 @@ export class WorldService {
               expectedRevision: value.nameRevision ?? 0,
             },
             permitted,
-            true,
+            mode === 'creator',
           );
           if (!named.ok) {
             edited = named;
@@ -1086,7 +1751,7 @@ export class WorldService {
         }
         edited = editKnowledge(draft, value.actorId, value, permitted);
         if (edited.ok && value.subjectId)
-          rememberSubject(draft, value.actorId, value.subjectId, true);
+          rememberSubject(draft, value.actorId, value.subjectId, mode === 'creator');
       });
       return { world: edited.ok ? candidate : world, events: [], outcome: edited };
     });
@@ -1104,8 +1769,36 @@ export class WorldService {
     return this.godTransition((world) => applyBodyEffects(world, id, effects, expected));
   }
 
-  async createItem(request: GodItemRequest): Promise<ApiResult> {
-    return this.godTransition((world) => createGodItem(world, request));
+  async createItem(request: GodItemRequest, scope = this.localScope): Promise<ApiResult> {
+    return this.godTransition((world) => {
+      this.assertScope(scope, 'create');
+      if ('actorId' in request.destination) {
+        const account = world.authorship.playerAccountIds[request.destination.actorId];
+        if (this.config.authentication.mode !== 'local' && account && account !== scope.accountId)
+          return {
+            world,
+            events: [],
+            outcome: {
+              ok: false,
+              code: 'unavailable',
+              message: 'That destination is unavailable.',
+            },
+          };
+      }
+      return createGodItem(world, request);
+    });
+  }
+  async declareOwnership(request: OwnershipRequest, scope: RequestScope): Promise<ApiResult> {
+    return this.godTransition((world) => {
+      this.assertScope(scope, 'create');
+      if (custodian(world, request.itemId) !== scope.actorId)
+        return {
+          world,
+          events: [],
+          outcome: { ok: false, code: 'unavailable', message: 'Choose an accessible possession.' },
+        };
+      return declareOwnership(world, request);
+    });
   }
 
   async spawn(draft: GodSpawnDraft): Promise<ApiResult> {
@@ -1116,6 +1809,7 @@ export class WorldService {
     expectedGeneration: string,
     expectedRevision: number,
     settings: { playerLocked: boolean; agentLocked: boolean },
+    scope = this.localScope,
   ): Promise<ApiResult> {
     if (!this.config.godMode)
       return { ok: false, code: 'forbidden', message: 'God access required.' };
@@ -1133,7 +1827,7 @@ export class WorldService {
         world,
         expectedRevision,
         settings,
-        this.profile.id,
+        scope.accountId,
         'Owner changed invention settings.',
       );
     });
@@ -1179,10 +1873,11 @@ export class WorldService {
         : editActorAttributes(world, request),
     );
   }
-  async attributeEditor(actorId: string) {
+  async attributeEditor(actorId: string, scope = this.localScope) {
     await this.ready;
     if (!this.config.godMode)
       return { ok: false, code: 'forbidden', message: 'God access required.' };
+    if (!this.mayInspectPrivate(actorId, scope)) throw new AuthorityError('forbidden');
     const entity = this.world.entities[actorId];
     if (!entity?.actor) return { ok: false, code: 'actor', message: 'Choose an actor.' };
     return {
@@ -1193,22 +1888,56 @@ export class WorldService {
     };
   }
 
+  diagnosticAccess(scope: RequestScope) {
+    this.assertScope(scope, 'inspect');
+    return {
+      accountId: scope.accountId,
+      actorIds: Object.keys(this.world.entities).filter((id) => this.mayInspectPrivate(id, scope)),
+      allowUnscoped: this.config.authentication.mode === 'local',
+    };
+  }
+  async mayInspectCall(id: string, scope: RequestScope): Promise<boolean> {
+    this.assertScope(scope, 'inspect');
+    const call = await this.store.intelligenceCall(id);
+    const root = call?.parentId ? await this.store.intelligenceCall(call.parentId) : call;
+    if (!root || !this.currentScope(scope, 'inspect')) return false;
+    return root.ownerAccountId
+      ? root.ownerAccountId === scope.accountId
+      : root.actorId
+        ? this.mayInspectPrivate(root.actorId, scope)
+        : this.config.authentication.mode === 'local';
+  }
+  private mayInspectEvent(event: WorldEvent, scope: RequestScope): boolean {
+    return (
+      this.currentScope(scope, 'inspect') &&
+      (this.config.authentication.mode === 'local' || event.audience.includes(scope.actorId))
+    );
+  }
   /** The local principal owns the controlled actor. Creator capabilities do not
    * grant another human's private mind; hosted principals must bind their own actor. */
-  mayInspectPrivate(actorId: string): boolean {
+  mayInspectPrivate(actorId: string, scope = this.localScope): boolean {
+    if (!this.currentScope(scope)) return false;
     const actor = this.world.entities[actorId]?.actor;
-    return !!actor && (actor.controller !== 'player' || actorId === this.controlledEntityId);
+    return (
+      !!actor &&
+      (actorId === scope.actorId ||
+        (actor.controller !== 'player' && this.currentScope(scope, 'inspect')))
+    );
   }
 
   /** Current local principal/host capability. Hosted staff authentication belongs
    * to D5; a client-provided role never grants this capability. */
-  mayManageSaves(): boolean {
-    return this.config.godMode || this.world.authorship.creatorAccountIds.includes(this.profile.id);
+  mayManageSaves(scope = this.localScope): boolean {
+    return this.currentScope(scope, 'save');
   }
 
-  async personEditor(actorId: string, before?: string): Promise<GodPersonEditorView | ApiResult> {
+  async personEditor(
+    actorId: string,
+    before?: string,
+    scope = this.localScope,
+  ): Promise<GodPersonEditorView | ApiResult> {
     await this.ready;
-    if (!this.mayInspectPrivate(actorId))
+    if (!this.mayInspectPrivate(actorId, scope))
       return {
         ok: false as const,
         code: 'forbidden',
@@ -1227,7 +1956,7 @@ export class WorldService {
             before,
           )
         : undefined;
-    if (generation !== this.generation || !this.mayInspectPrivate(actorId))
+    if (generation !== this.generation || !this.mayInspectPrivate(actorId, scope))
       return {
         ok: false as const,
         code: 'stale',
@@ -1256,10 +1985,7 @@ export class WorldService {
         .map((item) => ({ id: item.id, name: item.name }))
         .sort((a, b) => a.name.localeCompare(b.name)),
       person: {
-        inventory: inventoryFor(this.world, actorId).map(({ definitionId, quantity }) => ({
-          definitionId,
-          quantity,
-        })),
+        inventory: inventoryTotals(this.world, actorId),
         name: entity.name,
         description:
           entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
@@ -1276,9 +2002,9 @@ export class WorldService {
     };
   }
 
-  async personMemoryJson(actorId: string, entryId: string) {
+  async personMemoryJson(actorId: string, entryId: string, scope = this.localScope) {
     await this.ready;
-    if (!this.mayInspectPrivate(actorId))
+    if (!this.mayInspectPrivate(actorId, scope))
       return {
         ok: false as const,
         code: 'forbidden',
@@ -1294,7 +2020,7 @@ export class WorldService {
             entryId,
           )
         : experienceEntry(this.world, actorId, entryId);
-    if (generation !== this.generation || !this.mayInspectPrivate(actorId))
+    if (generation !== this.generation || !this.mayInspectPrivate(actorId, scope))
       return {
         ok: false as const,
         code: 'stale',
@@ -1314,10 +2040,11 @@ export class WorldService {
       expectedHash: string;
       replacement: GodMemoryEdit | null;
     }>,
+    scope = this.localScope,
   ): Promise<ApiResult & { revision?: number }> {
     return this.withActorHistory([actorId], async () => {
       await this.ready;
-      if (!this.mayInspectPrivate(actorId))
+      if (!this.mayInspectPrivate(actorId, scope))
         return {
           ok: false as const,
           code: 'forbidden',
@@ -1327,10 +2054,7 @@ export class WorldService {
       if (!entity?.actor || !hasMemory(entity))
         return { ok: false, code: 'actor', message: 'Choose a person.' };
       const currentPerson: GodPersonEditorDraft = {
-        inventory: inventoryFor(this.world, actorId).map(({ definitionId, quantity }) => ({
-          definitionId,
-          quantity,
-        })),
+        inventory: inventoryTotals(this.world, actorId),
         name: entity.name,
         description:
           entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
@@ -1393,14 +2117,24 @@ export class WorldService {
     });
   }
 
-  async worldEventsEditor(before?: number): Promise<GodWorldEventsEditorView> {
+  async worldEventsEditor(
+    before?: number,
+    scope = this.localScope,
+  ): Promise<GodWorldEventsEditorView> {
     await this.ready;
-    const page = await this.store.history?.eventPage(this.world.id, before);
+    const page = await this.store.history?.eventPage(
+      this.world.id,
+      before,
+      this.config.authentication.mode === 'local' ? undefined : scope.actorId,
+    );
     return {
       before: page?.before,
       ok: true,
       revision: this.viewRevision,
-      events: (page?.events ?? this.world.events.slice(-100)).map((event) => ({
+      events: (
+        page?.events ??
+        this.world.events.filter((event) => this.mayInspectEvent(event, scope)).slice(-100)
+      ).map((event) => ({
         id: event.id,
         type: event.type,
         text: event.text,
@@ -1448,16 +2182,17 @@ export class WorldService {
     });
   }
 
-  async worldEventJson(id: string) {
+  async worldEventJson(id: string, scope = this.localScope) {
     await this.ready;
     const event = this.worldEvent(id) ?? (await this.store.history?.event(this.world.id, id));
-    return event
+    return event && this.mayInspectEvent(event, scope)
       ? { ok: true as const, hash: digest(event), json: JSON.stringify(event, null, 2) }
       : { ok: false as const, code: 'event', message: 'That world event no longer exists.' };
   }
 
   async saveWorldEventsEditor(
     changes: Array<{ id: string; expectedHash: string; replacement: WorldEvent | null }>,
+    scope = this.localScope,
   ): Promise<ApiResult & { revision?: number }> {
     return this.withActorHistory(undefined, async () => {
       await this.ready;
@@ -1478,7 +2213,7 @@ export class WorldService {
       const eventsById = new Map(original.events.map((event) => [event.id, event]));
       for (const change of changes) {
         const event = eventsById.get(change.id);
-        if (!event || digest(event) !== change.expectedHash)
+        if (!event || !this.mayInspectEvent(event, scope) || digest(event) !== change.expectedHash)
           return {
             ok: false,
             code: 'stale',
@@ -1506,10 +2241,12 @@ export class WorldService {
     input: CommandInput,
     actorId?: string,
     epoch?: string,
+    scope?: RequestScope,
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
-      const actor = actorId ?? this.controlledEntityId;
+      if (scope) this.assertScope(scope, 'play', true);
+      const actor = scope?.actorId ?? actorId ?? this.controlledEntityId;
       if (commandId.startsWith('gameplay:'))
         return {
           ok: false,
@@ -1517,11 +2254,12 @@ export class WorldService {
           message: 'Command IDs cannot use the reserved gameplay namespace.',
         };
       // Legacy callers retain their old identity rules; new clients bind retries to their issued epoch.
+      if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
       if (epoch === undefined || !this.store.commands)
         return await this.evaluateCommand(commandId, input, actor, false);
       await this.refreshCommandEpoch();
-      const id = `gameplay:${epoch}:${digest(commandId)}`;
-      const fingerprint = digest({ actor, input });
+      const id = `gameplay:${scope?.accountId ?? 'local-player'}:${epoch}:${digest(commandId)}`;
+      const fingerprint = digest({ actor, input, ...(scope ? { scope } : {}) });
       const prior = await this.store.commands.get(this.world.id, id);
       if (prior) {
         if (this.now() >= prior.expiresAt)
@@ -1564,6 +2302,16 @@ export class WorldService {
     const envelope = { id: commandId, actorId };
     let command: Command;
     switch (input.type) {
+      case 'say':
+        if (!input.text?.trim())
+          return { ok: false, code: 'speech', message: 'Enter something to say.' };
+        command = {
+          ...envelope,
+          type: 'say',
+          text: input.text,
+          ...(input.targetId ? { targetId: input.targetId } : {}),
+        };
+        break;
       case 'conversation':
         if (!input.conversationId || input.generation === undefined || !input.operation)
           return { ok: false, code: 'conversation', message: 'Choose a current conversation.' };
@@ -1602,6 +2350,48 @@ export class WorldService {
           type: 'pickup',
           targetId: input.targetId,
           ...(input.itemId ? { itemId: input.itemId } : {}),
+        };
+        break;
+      case 'transfer-item':
+      case 'split-item':
+      case 'merge-item':
+        if (
+          !input.itemId ||
+          !input.targetId ||
+          input.quantity === undefined ||
+          input.expectedRevision === undefined ||
+          input.placementRevision === undefined ||
+          input.targetRevision === undefined
+        )
+          return {
+            ok: false,
+            code: 'item',
+            message: 'Choose current item, quantity and destination references.',
+          };
+        command = {
+          ...envelope,
+          type: input.type,
+          itemId: input.itemId,
+          quantity: input.quantity,
+          targetId: input.targetId,
+          expectedRevision: input.expectedRevision,
+          placementRevision: input.placementRevision,
+          targetRevision: input.targetRevision,
+        };
+        break;
+      case 'unequip':
+        if (
+          !input.itemId ||
+          input.expectedRevision === undefined ||
+          input.placementRevision === undefined
+        )
+          return { ok: false, code: 'item', message: 'Choose current equipment.' };
+        command = {
+          ...envelope,
+          type: 'unequip',
+          itemId: input.itemId,
+          expectedRevision: input.expectedRevision,
+          placementRevision: input.placementRevision,
         };
         break;
       case 'drop':
@@ -1713,10 +2503,11 @@ export class WorldService {
     actorId: string,
     sourceId: string,
     correctionEventId: string,
+    scope = this.localScope,
   ): Promise<ApiResult> {
     return this.withActorHistory([actorId], async () => {
       await this.ready;
-      if (!this.mayInspectPrivate(actorId))
+      if (!this.mayInspectPrivate(actorId, scope))
         return {
           ok: false as const,
           code: 'forbidden',
@@ -1747,10 +2538,14 @@ export class WorldService {
     });
   }
 
-  async forgetMemory(actorId: string, sourceId: string): Promise<ApiResult> {
+  async forgetMemory(
+    actorId: string,
+    sourceId: string,
+    scope = this.localScope,
+  ): Promise<ApiResult> {
     return this.withActorHistory([actorId], async () => {
       await this.ready;
-      if (!this.mayInspectPrivate(actorId))
+      if (!this.mayInspectPrivate(actorId, scope))
         return {
           ok: false as const,
           code: 'forbidden',

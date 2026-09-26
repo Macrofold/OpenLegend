@@ -1,3 +1,8 @@
+import { validateStatusInstallation } from './native-work.js';
+import { itemsForOwner, setItemQuantity } from './objects.js';
+import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
+import { worldPosition, worldSupport } from './spatial-state.js';
+import { readState, stateAddress, writeState } from './state-owners.js';
 import { personTraits, spawnedEntity } from './worlds/base/spawn.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { BODY_PROFILES, canStand } from '@open-legend/spatial';
@@ -7,7 +12,6 @@ import { getOwn, isSafeRecordId } from './records.js';
 import {
   attributeDefinition,
   validateAttributeValue,
-  setAttribute,
   initializeAttributes,
   HOST_IMPLEMENTATIONS,
 } from './world-modules.js';
@@ -15,6 +19,8 @@ import { hasWildernessNeeds, setWildernessNeed } from './worlds/base/needs.js';
 import { canSpeak, hasMemory, reconcileBody } from './living.js';
 import { draftWorld } from './draft.js';
 import { addItem, TRAIT_BANK } from './data.js';
+import { setBodyHealth } from './body-state.js';
+import { itemHasReservations } from './resource-claims.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
 import { mindFor } from './mind.js';
 import {
@@ -65,8 +71,8 @@ export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Tr
   )
     return reject(original, 'blocked', 'Choose an unobstructed walkable surface.');
   if (
-    Object.values(original.entities).some(
-      (entity) => distance(entity.position, draft.position) < 0.5,
+    worldRootEntities(original).some(
+      (entity) => distance(worldPosition(entity), draft.position) < 0.5,
     )
   )
     return reject(original, 'occupied', 'Choose blank space away from another object.');
@@ -90,6 +96,16 @@ export function spawnWorldEntity(original: WorldState, draft: GodSpawnDraft): Tr
   const entity = spawnedEntity(world, draft);
   if (!entity) return reject(original, 'invalid-object', 'That object could not be added.');
   world.entities[entity.id] = entity;
+  rootMembershipChanged(world, entity.id);
+  try {
+    validateStatusInstallation(world, world.statusEffectPolicy);
+  } catch (error) {
+    return reject(
+      original,
+      'work-unavailable',
+      error instanceof Error ? error.message : 'Native work capacity is unavailable.',
+    );
+  }
   if (hasMemory(entity)) {
     world.memories[entity.id] = [];
     world.knowledge[entity.id] = [];
@@ -133,10 +149,10 @@ export function reviveActor(
     return reject(original, 'stale', 'The body changed.');
   if (current.actor.alive) return reject(original, 'alive', `${current.name} is already alive.`);
   if (
-    !current.spatial.supportSurfaceId ||
+    !worldSupport(current) ||
     !canStand(
       spatialMap(original),
-      { ...current.position, surfaceId: current.spatial.supportSurfaceId },
+      { ...worldPosition(current), surfaceId: worldSupport(current)! },
       BODY_PROFILES[current.spatial.bodyProfileId],
     )
   )
@@ -150,8 +166,7 @@ export function reviveActor(
   const actor = entity.actor!;
   actor.alive = true;
   actor.incapacitated = false;
-  actor.health = actor.body!.maxHealth;
-  actor.energy = 100;
+  setBodyHealth(actor, actor.body!.maxHealth);
   if (hasWildernessNeeds(actor)) {
     setWildernessNeed(actor, 'fullness', 100);
     setWildernessNeed(actor, 'energy', 100);
@@ -241,11 +256,16 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   )
     return reject(original, 'invalid-memory', 'A memory may only be changed once per save.');
   const inventory = draft.person.inventory;
-  const owned = Object.values(original.items).filter((item) => item.ownerId === draft.actorId);
-  const ownedQuantities = new Map(owned.map((item) => [item.definitionId, item.quantity]));
+  const owned = itemsForOwner(original, draft.actorId);
+  const ownedQuantities = new Map<string, number>();
+  for (const item of owned)
+    ownedQuantities.set(
+      item.definitionId,
+      (ownedQuantities.get(item.definitionId) ?? 0) + item.quantity,
+    );
   const inventoryChanged =
     inventory !== undefined &&
-    (inventory.filter((item) => item.quantity > 0).length !== owned.length ||
+    (inventory.filter((item) => item.quantity > 0).length !== ownedQuantities.size ||
       inventory.some((item) => (ownedQuantities.get(item.definitionId) ?? 0) !== item.quantity));
   if (
     inventory &&
@@ -265,6 +285,25 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
   // Active work can hold item references; stop it before replacing its inventory.
   if (inventoryChanged && current.actor.action)
     return reject(original, 'inventory-busy', 'Stop current work before editing inventory.');
+  if (inventoryChanged && inventory) {
+    const desired = new Map(inventory.map((item) => [item.definitionId, item.quantity]));
+    for (const [definitionId, total] of ownedQuantities) {
+      if ((desired.get(definitionId) ?? 0) === total) continue;
+      const lots = owned.filter((item) => item.definitionId === definitionId);
+      if (
+        lots.length !== 1 ||
+        lots.some(
+          (item) =>
+            item.individuality === 'individual' || original.entities[item.id]?.declaredOwner,
+        )
+      )
+        return reject(
+          original,
+          'individual-inventory',
+          'Use the possession controls for individual, separately owned or split objects. Their identities cannot be replaced by a type total.',
+        );
+    }
+  }
   const currentExperience = experienceEntries(original, draft.actorId);
   for (const change of draft.memoryChanges) {
     const current = currentExperience.get(change.entryId);
@@ -323,21 +362,32 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     }
   }
   if (statsChanged) {
-    entity.actor!.health = draft.person.stats.health;
+    setBodyHealth(entity.actor!, draft.person.stats.health);
     if (hasWildernessNeeds(entity.actor!)) {
       setWildernessNeed(entity.actor!, 'fullness', draft.person.stats.fullness!);
       setWildernessNeed(entity.actor!, 'energy', draft.person.stats.energy!);
     }
   }
   if (inventoryChanged && inventory) {
+    if (owned.some((item) => itemHasReservations(world, item.id)))
+      return reject(
+        original,
+        'reserved-inventory',
+        'Finish or cancel the work holding this inventory before editing it.',
+      );
     const quantities = new Map(inventory.map((item) => [item.definitionId, item.quantity]));
+    for (const [definitionId, total] of ownedQuantities)
+      if (quantities.get(definitionId) === total) quantities.delete(definitionId);
     for (const item of owned) {
+      if (
+        (inventory.find((entry) => entry.definitionId === item.definitionId)?.quantity ?? 0) ===
+        ownedQuantities.get(item.definitionId)
+      )
+        continue;
       const quantity = quantities.get(item.definitionId) ?? 0;
-      if (quantity > 0) world.items[item.id]!.quantity = quantity;
-      else {
-        if (entity.actor!.equippedItemId === item.id) entity.actor!.equippedItemId = null;
-        delete world.items[item.id];
-      }
+      if (quantity > 0) {
+        setItemQuantity(world, item.id, quantity, 'creator-inventory-edit');
+      } else setItemQuantity(world, item.id, 0, 'creator-inventory-edit');
       quantities.delete(item.definitionId);
     }
     for (const [definitionId, quantity] of quantities)
@@ -656,13 +706,21 @@ export function editActorAttributes(
       initializeAttributes(world.entities[request.actorId]!.actor!, [
         attributeDefinition(world, change.attributeId)!,
       ]);
-    setAttribute(
+    const address = stateAddress(request.actorId, attributeDefinition(world, change.attributeId)!);
+    const state = readState(world, address, 'owner');
+    if (state.status !== 'known') throw new Error('Admitted attribute is missing.');
+    const result = writeState(
       world,
-      world.entities[request.actorId]!,
-      attributeDefinition(world, change.attributeId)!,
-      change.value,
+      address,
+      state.revision,
+      { kind: 'replace', value: change.value },
       events,
+      request.id,
     );
+    if (result.status === 'reserved')
+      return reject(original, 'resource-reserved', 'Release the reserved stock before editing it.');
+    if (result.status !== 'applied' && result.status !== 'unchanged')
+      return reject(original, 'conflict', 'Attribute changed or is not applicable.');
   }
   const result = outcome(true, 'attributes-edited', 'Applicable attributes updated.');
   world.commandReceipts[request.id] = { digest, outcome: result };

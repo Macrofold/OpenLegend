@@ -1,3 +1,6 @@
+import { chargeWork } from './work-budget.js';
+import { worldPosition } from './spatial-state.js';
+import { activelyParticipates } from './participation-state.js';
 import { DEFAULT_SENSES, PERCEPTION_RULES } from './worlds/base/senses.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import {
@@ -38,16 +41,19 @@ export const COARSE_TOUCH: SenseDefinition = {
 /** Body profiles are upright cylinders; contact uses their surfaces, never a sense radius.
  * docs/spatial-world.md#physical-contact */
 export function bodiesTouch(first: Entity, second: Entity): boolean {
-  if (first.id === second.id) return false;
+  chargeWork({ tests: 1 });
+  if (first.id === second.id || !activelyParticipates(first) || !activelyParticipates(second))
+    return false;
   const a = bodyProfile(first),
-    b = bodyProfile(second);
+    b = bodyProfile(second),
+    from = worldPosition(first),
+    to = worldPosition(second);
   const tolerance = SPATIAL_LIMITS.epsilon;
   const reach = a.radius + b.radius + tolerance;
   return (
-    (first.position.x - second.position.x) ** 2 + (first.position.z - second.position.z) ** 2 <=
-      reach ** 2 &&
-    first.position.y <= second.position.y + b.height + tolerance &&
-    second.position.y <= first.position.y + a.height + tolerance
+    (from.x - to.x) ** 2 + (from.z - to.z) ** 2 <= reach ** 2 &&
+    from.y <= to.y + b.height + tolerance &&
+    to.y <= from.y + a.height + tolerance
   );
 }
 export interface ContactEpisode {
@@ -125,9 +131,11 @@ const visibility = new WeakMap<WorldState['map'], Map<string, ObserverSight>>();
  * Radius and both body anchors participate in reuse; future senses must add their own dependencies.
  */
 export function visionQuery(world: WorldState, observer: Entity): (source: SightTarget) => boolean {
-  if (capabilityBlocked(world, observer, 'perception')) return () => false;
+  if (!activelyParticipates(observer) || capabilityBlocked(world, observer, 'perception'))
+    return () => false;
   const radius = visionRadius(world, observer);
-  const from = isDraft(observer.position) ? current(observer.position) : observer.position;
+  const position = worldPosition(observer);
+  const from = isDraft(position) ? current(position) : position;
   const eyeHeight = bodyProfile(observer).eyeHeight;
   const eye = { x: from.x, y: from.y + eyeHeight, z: from.z };
   const observerId = observer.id;
@@ -146,6 +154,7 @@ export function visionQuery(world: WorldState, observer: Entity): (source: Sight
     cached = entry.targets;
   }
   return (source) => {
+    chargeWork({ tests: 1 });
     const p = source.position;
     if (radius <= 0 || distance(from, p) > radius) return false;
     if (source.id === observerId) return true;
@@ -166,12 +175,14 @@ export function visionQuery(world: WorldState, observer: Entity): (source: Sight
   };
 }
 export function seesEntity(world: WorldState, observer: Entity, source: Entity): boolean {
+  if (!activelyParticipates(source)) return false;
+  const position = worldPosition(source);
   return visionQuery(
     world,
     observer,
   )({
     id: source.id,
-    position: isDraft(source.position) ? current(source.position) : source.position,
+    position: isDraft(position) ? current(position) : position,
     height: bodyProfile(source).height,
   });
 }
@@ -182,13 +193,20 @@ export function hearsEntity(world: WorldState, observer: Entity, source: Entity)
 }
 /** Conversation membership uses physical range, not temporary receiver availability. */
 export function withinHearingRange(world: WorldState, observer: Entity, source: Entity): boolean {
+  chargeWork({ tests: 1 });
+  if (!activelyParticipates(observer) || !activelyParticipates(source)) return false;
   const radius = resolveSenses(world, observer).hearing;
   if (radius <= 0) return false;
+  const listenerPosition = worldPosition(observer),
+    sourcePosition = worldPosition(source);
   const listener = {
-    ...observer.position,
-    y: observer.position.y + bodyProfile(observer).earHeight,
+    ...listenerPosition,
+    y: listenerPosition.y + bodyProfile(observer).earHeight,
   };
-  const origin = { ...source.position, y: source.position.y + bodyProfile(source).earHeight };
+  const origin = {
+    ...sourcePosition,
+    y: sourcePosition.y + bodyProfile(source).earHeight,
+  };
   const separation = distance3D(listener, origin);
   if (separation > radius) return false;
   const transmission = soundTransmission(spatialMap(world), listener, origin);

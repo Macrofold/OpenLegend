@@ -1,6 +1,17 @@
+import { validateStatusInstallation } from './native-work.js';
 import { isSafeRecordId } from './records.js';
+import { canonicalJson, contentLabel } from './events.js';
+import {
+  validContributionLifetime,
+  capabilityContributionDefinition,
+} from './state-contributions.js';
 import { attributeDefinition, validateAttributeValue } from './world-modules.js';
-import type { StatusEffectPolicy, StatusCondition, EntityReference } from './status-effects.js';
+import type {
+  StatusEffectPolicy,
+  StatusEffectDefinition,
+  StatusCondition,
+  EntityReference,
+} from './status-effects.js';
 import type { WorldState } from './types.js';
 const refs: EntityReference[] = ['$subject', '$source', '$actionTarget'];
 function fail(message: string): never {
@@ -104,8 +115,7 @@ export function validateStatusEffectPolicy(
   object(value, ['revision', 'clockOffsetHours', 'definitions']);
   if (!Number.isSafeInteger(value.revision) || value.revision < 1) fail('revision.');
   number(value.clockOffsetHours, 0, 23.999999);
-  if (!Array.isArray(value.definitions) || value.definitions.length > 128)
-    fail('definition budget exceeded.');
+  if (!Array.isArray(value.definitions)) fail('definition budget exceeded.');
   const ids = new Set<string>();
   for (const d of value.definitions) {
     if (!d || !isSafeRecordId(d.id) || ids.has(d.id)) fail('invalid or duplicate ID.');
@@ -134,6 +144,7 @@ export function validateStatusEffectPolicy(
         'onActivate',
         'onDeactivate',
         'actions',
+        'contribution',
       ],
     );
     if (
@@ -143,6 +154,18 @@ export function validateStatusEffectPolicy(
       typeof d.occupiesAction !== 'boolean'
     )
       fail('definition type or target.');
+    if (d.contribution) {
+      object(d.contribution, ['disclosure', 'lifetime'], ['seconds']);
+      if (
+        !capabilityContributionDefinition(d as unknown as StatusEffectDefinition) ||
+        !['public', 'owner'].includes(d.contribution.disclosure) ||
+        !['explicit-removal', 'source-sustained', 'fixed'].includes(d.contribution.lifetime) ||
+        (d.contribution.lifetime === 'fixed'
+          ? !Number.isFinite(d.contribution.seconds) || d.contribution.seconds <= 0
+          : d.contribution.seconds !== undefined)
+      )
+        fail('unsupported contribution family or lifetime.');
+    }
     text(d.label);
     number(d.reactivationDelaySeconds, 0, 86400);
     if (!Array.isArray(d.interruptOn) || d.interruptOn.length > 32) fail('interrupt reasons.');
@@ -208,6 +231,7 @@ export function validateStatusEffectPolicy(
           fail('event template.');
       }
   }
+  validateStatusInstallation(world, value as unknown as StatusEffectPolicy);
 }
 export function validateStatusEffects(world: WorldState): void {
   validateStatusEffectPolicy(world, world.statusEffectPolicy);
@@ -221,16 +245,33 @@ export function validateStatusEffects(world: WorldState): void {
       if (!Number.isSafeInteger(state.revision) || state.revision < 0) fail('attribute revision.');
     }
     for (const [id, state] of Object.entries(entity.statusEffects ?? {})) {
-      const d = world.statusEffectPolicy.definitions.find((d) => d.id === id);
+      const d = world.statusEffectPolicy.definitions.find(
+        (d) => d.id === (state.contribution?.definitionId ?? id),
+      );
       if (!d) fail('unknown saved definition.');
-      object(state, [
-        'active',
-        'episode',
-        'elapsedSeconds',
-        'automaticAfter',
-        'sourceId',
-        'actionTargetId',
-      ]);
+      if (state.active && !entity.actor && entity.placement?.mode !== 'world')
+        fail('contained processing requires an admitted continuation.');
+      object(
+        state,
+        ['active', 'episode', 'elapsedSeconds', 'automaticAfter', 'sourceId', 'actionTargetId'],
+        ['contribution'],
+      );
+      if (state.contribution) {
+        const contribution = state.contribution;
+        object(contribution, ['definitionId', 'definitionDigest', 'revision', 'lifetime']);
+        if (
+          !entity.actor ||
+          !capabilityContributionDefinition(d) ||
+          !d.contribution ||
+          contribution.lifetime.kind !== d.contribution.lifetime ||
+          id !== state.episode ||
+          !Number.isSafeInteger(contribution.revision) ||
+          contribution.revision < 1 ||
+          contribution.definitionDigest !== contentLabel(canonicalJson(d)) ||
+          !validContributionLifetime(contribution.lifetime, 0)
+        )
+          fail('invalid contribution.');
+      }
       if (
         typeof state.active !== 'boolean' ||
         !isSafeRecordId(state.episode) ||

@@ -1,4 +1,18 @@
-import { compactHistory } from './history-residency.js';
+import {
+  AuthorityRepository,
+  type AuthorityFence,
+  type AccountBinding,
+  type RequestScope,
+  type ControlRequest,
+  type ExitAttempt,
+  type BindingRequest,
+} from './authority.js';
+import {
+  compactHistory,
+  compactObjectHistory,
+  compactAppraisalHistory,
+  compactContributionHistory,
+} from './history-residency.js';
 import { MemoryRepository } from './memory-repository.js';
 import { WorldRecords } from './world-records.js';
 import { isDeepStrictEqual } from 'node:util';
@@ -25,6 +39,18 @@ import {
 import type { AiReceipt } from '@open-legend/ai';
 import type { AiJobView, PlayerProfile, PlayerPreferencePatch } from '@open-legend/protocol';
 
+export interface DiagnosticAccess {
+  accountId: string;
+  actorIds: string[];
+  allowUnscoped: boolean;
+}
+function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: string[] } {
+  const ids = access.actorIds;
+  return {
+    sql: `(json_extract(payload, '$.ownerAccountId')=? OR (json_extract(payload, '$.ownerAccountId') IS NULL AND (${ids.length ? `json_extract(payload, '$.actorId') IN (${ids.map(() => '?').join(',')})` : '1=0'}${access.allowUnscoped ? " OR json_extract(payload, '$.actorId') IS NULL" : ''})))`,
+    params: [access.accountId, ...ids],
+  };
+}
 export interface SqlDatabase {
   dialect?: 'postgres';
   transaction<T>(operation: () => Promise<T>): Promise<T>;
@@ -45,6 +71,7 @@ export interface SavedWorld {
   speed: number;
   manuallyPaused: boolean;
   milestones?: Record<string, boolean>;
+  actorMilestones?: Record<string, Record<string, boolean>>;
 }
 
 export type WorldChange =
@@ -61,6 +88,7 @@ export interface WorldChanges {
   operations: WorldChange[];
 }
 export interface JobRecord extends AiJobView {
+  authority?: RequestScope;
   diagnosticTrigger?: string;
   diagnosticTriggerType?: string;
   retryOf?: string;
@@ -277,6 +305,12 @@ export interface WorldStore {
       after: WorldState;
       receipt?: GameplayReceipt;
       restore?: RestoreSave;
+      authority?: AuthorityFence;
+      authorityBindings?: readonly AccountBinding[];
+      authorityOwners?: ReadonlyMap<string, string>;
+      bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
+      controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
+      participationChange?: { actorId: string; attempt: ExitAttempt | null };
     },
   ): Promise<number>;
   close(): Promise<void>;
@@ -289,14 +323,19 @@ export interface GameRepository extends WorldStore {
   history?: HistoryRepository;
   saves?: GameSaves;
   commands?: CommandReceipts;
+  authority?: AuthorityRepository;
   vectors?: VectorStore;
   records?: WorldRecords;
   memories?: MemoryRepository;
   readonly persistence?: 'postgres' | 'sqlite';
   putIntelligenceCall(call: IntelligenceCall): Promise<void>;
-  intelligenceCalls(offset: number): Promise<IntelligenceCall[]>;
+  intelligenceCalls(offset: number, access?: DiagnosticAccess): Promise<IntelligenceCall[]>;
   intelligenceCall(id: string): Promise<IntelligenceCall | undefined>;
-  diagnosticRoots(offset: number, filters: Record<string, string>): Promise<IntelligenceCall[]>;
+  diagnosticRoots(
+    offset: number,
+    filters: Record<string, string>,
+    access?: DiagnosticAccess,
+  ): Promise<IntelligenceCall[]>;
   diagnosticStages(parentIds: string[], details?: boolean): Promise<IntelligenceCall[]>;
   getIntegration(key: string): Promise<unknown>;
   putIntegration(key: string, value: unknown): Promise<void>;
@@ -323,7 +362,10 @@ export interface GameRepository extends WorldStore {
   ): Promise<boolean>;
   settle(id: string, receipt: AiReceipt): Promise<void>;
   recoverInterruptedWork(): Promise<void>;
-  usage(ceilingUsd: number): Promise<{
+  usage(
+    ceilingUsd: number,
+    actorId?: string,
+  ): Promise<{
     budget: { limitUsd: number; spentUsd: number; reservedUsd: number; estimated: boolean };
     usage: {
       jevCalls: number;
@@ -341,6 +383,7 @@ export interface GameRepository extends WorldStore {
  */
 export class SqliteStore implements GameRepository {
   readonly commands: CommandReceipts;
+  readonly authority: AuthorityRepository;
   readonly db: SqlDatabase;
   readonly records: WorldRecords;
   readonly memories: MemoryRepository;
@@ -374,26 +417,37 @@ export class SqliteStore implements GameRepository {
         'DELETE FROM intelligence_calls WHERE id IN (SELECT id FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 1000000 OFFSET 1000)',
       );
   }
-  async intelligenceCalls(offset: number): Promise<IntelligenceCall[]> {
+  async intelligenceCalls(offset: number, access?: DiagnosticAccess): Promise<IntelligenceCall[]> {
     await this.ready;
-
-    return (
-      await this.db
-        .prepare(
-          'SELECT payload FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 25 OFFSET ?',
-        )
-        .all(offset)
-    ).map((row) => JSON.parse(String(row['payload'])) as IntelligenceCall);
+    const permitted = access ? diagnosticPredicate(access) : undefined;
+    const roots = permitted
+      ? `SELECT id FROM intelligence_calls WHERE json_extract(payload, '$.parentId') IS NULL AND ${permitted.sql}`
+      : '';
+    const filter = permitted
+      ? ` WHERE id IN (${roots}) OR json_extract(payload, '$.parentId') IN (${roots})`
+      : '';
+    const rows = await this.db
+      .prepare(
+        `SELECT payload FROM intelligence_calls${filter} ORDER BY started_at DESC,id DESC LIMIT 25 OFFSET ?`,
+      )
+      .all(...(permitted ? [...permitted.params, ...permitted.params] : []), offset);
+    return rows.map((row) => JSON.parse(String(row['payload'])) as IntelligenceCall);
   }
 
   async diagnosticRoots(
     offset: number,
     filters: Record<string, string>,
+    access?: DiagnosticAccess,
   ): Promise<IntelligenceCall[]> {
     await this.ready;
 
     const clauses = ["json_extract(payload, '$.parentId') IS NULL"];
     const params: unknown[] = [];
+    if (access) {
+      const permitted = diagnosticPredicate(access);
+      clauses.push(permitted.sql);
+      params.push(...permitted.params);
+    }
     const fields: Record<string, string> = {
       actor: 'actorName',
       route: 'route',
@@ -475,6 +529,7 @@ export class SqliteStore implements GameRepository {
     this.history = new HistoryRepository(this.db);
     this.saves = new GameSaves(this.db, join(dirname(path), 'saves'));
     this.commands = new CommandReceipts(this.db);
+    this.authority = new AuthorityRepository(this.db);
     this.ready = this.initialize(!!database);
   }
 
@@ -530,6 +585,7 @@ export class SqliteStore implements GameRepository {
     await this.history.initialize();
     await this.saves.initialize();
     await this.commands.initialize();
+    await this.authority.initialize();
     const version = await this.db.prepare('SELECT value FROM meta WHERE key = ?').get('schema');
     if (version && version['value'] !== '1')
       throw new Error('Unsupported save schema. Keep this save and use a compatible version.');
@@ -551,7 +607,12 @@ export class SqliteStore implements GameRepository {
   releaseHistory(state: SavedWorld): SavedWorld {
     if (state !== this.acceptedState)
       throw new Error('Only committed history may leave the working set.');
-    const released = { ...state, world: compactHistory(state.world) };
+    const released = {
+      ...state,
+      world: compactContributionHistory(
+        compactAppraisalHistory(compactObjectHistory(compactHistory(state.world))),
+      ),
+    };
     this.acceptedState = released;
     return released;
   }
@@ -675,6 +736,12 @@ export class SqliteStore implements GameRepository {
       after: WorldState;
       receipt?: GameplayReceipt;
       restore?: RestoreSave;
+      authority?: AuthorityFence;
+      authorityBindings?: readonly AccountBinding[];
+      authorityOwners?: ReadonlyMap<string, string>;
+      bindingChange?: { scope: RequestScope; request: BindingRequest; now: () => number };
+      controlChange?: { scope: RequestScope; request: ControlRequest; now: () => number };
+      participationChange?: { actorId: string; attempt: ExitAttempt | null };
     },
   ): Promise<number> {
     await this.ready;
@@ -700,6 +767,24 @@ export class SqliteStore implements GameRepository {
     let publicationDeferred = false;
     const revision = await timed('persistence.transaction', () =>
       this.db.transaction(async () => {
+        for (const binding of historyProjection?.authorityBindings ?? [])
+          await this.authority.provision(state.world.id, binding);
+        for (const [actorId, accountId] of historyProjection?.authorityOwners ?? [])
+          await this.authority.retainActorOwner(state.world.id, actorId, accountId);
+        if (historyProjection?.authority)
+          await this.authority.assertFence(historyProjection.authority);
+        if (historyProjection?.bindingChange) {
+          const { scope, request, now } = historyProjection.bindingChange;
+          await this.authority.rebind(scope, request, now);
+        }
+        if (historyProjection?.controlChange) {
+          const { scope, request, now } = historyProjection.controlChange;
+          await this.authority.changeControl(scope, request, now);
+        }
+        if (historyProjection?.participationChange) {
+          const { actorId, attempt } = historyProjection.participationChange;
+          await this.authority.saveExit(state.world.id, actorId, attempt);
+        }
         const revision = await this.records.advance(
           state.world.id,
           expectedRevision,
@@ -811,6 +896,15 @@ export class SqliteStore implements GameRepository {
           !historyProjection?.restore,
         );
         await this.records.write(state.world.id, revision, changes);
+        if (Object.values(this.acceptedState?.world.appraisals ?? {}).some(Array.isArray))
+          await this.putIntegration(`appraisal-identity-conversion:${state.world.id}`, {
+            sourceRevision: expectedRevision,
+            revision,
+            sourceChecksum: digest(this.acceptedState!.world.appraisals),
+            resultChecksum: digest(state.world.appraisals),
+            coverage:
+              'Only retained legacy appraisals; strongest-16 losses cannot be reconstructed.',
+          });
         if (this.records.needsHotPrune) await this.records.pruneActiveEvents(state);
         await this.memories.reconcile(state.world.id, memoryChanges);
         if (historyProjection?.restore || !this.acceptedState)
@@ -1134,7 +1228,8 @@ export class SqliteStore implements GameRepository {
     value: ReturnType<SqliteStore['readUsage']>;
   };
 
-  async usage(ceilingUsd: number) {
+  async usage(ceilingUsd: number, actorId?: string) {
+    if (actorId) return this.readUsage(ceilingUsd, actorId);
     const period = new Date().toISOString().slice(0, 7);
     let cached = this.usageCache;
     if (!cached || cached.period !== period || cached.ceiling !== ceilingUsd) {
@@ -1151,14 +1246,18 @@ export class SqliteStore implements GameRepository {
     }
   }
 
-  private async readUsage(ceilingUsd: number) {
+  private async readUsage(ceilingUsd: number, actorId?: string) {
     await this.ready;
 
     const rows = await this.db
       .prepare(
-        "SELECT a.provider,a.status,a.reserved,a.spent,a.receipt,COALESCE(s.actor_id,'legacy') AS actor_id FROM attempts a LEFT JOIN attempt_scopes s ON s.attempt_id=a.id WHERE a.created_at>=?",
+        "SELECT a.provider,a.status,a.reserved,a.spent,a.receipt,COALESCE(s.actor_id,'legacy') AS actor_id FROM attempts a LEFT JOIN attempt_scopes s ON s.attempt_id=a.id WHERE a.created_at>=?" +
+          (actorId ? ' AND s.actor_id=?' : ''),
       )
-      .all(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1));
+      .all(
+        Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1),
+        ...(actorId ? [actorId] : []),
+      );
     const accounts: Record<string, { spentUsd: number; reservedUsd: number }> = {};
     let spent = 0,
       reserved = 0,

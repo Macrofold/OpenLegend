@@ -1,70 +1,15 @@
 import type { WorldState, WorldEvent, Transition } from './types.js';
 import { draftWorld } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
-import { hasMemory } from './living.js';
 
-export interface Appraisal {
-  key: string;
-  causeId: string;
-  targetId: string;
-  feeling: 'fear' | 'discomfort';
-  intensity: number;
-  at: number;
-  decayPerHour: number;
-}
+export { activeAppraisals } from './appraisals.js';
+export { appraiseEvent } from './worlds/base/appraisals.js';
+export type { Appraisal } from './appraisals.js';
 export interface Kinship {
   id: string;
   firstId: string;
   secondId: string;
   kind: 'parent' | 'sibling';
-}
-/** Sparse native appraisals of personally experienced consequences, not relationship scores. */
-export function appraiseEvent(world: WorldState, event: WorldEvent): void {
-  if (
-    !event.targetId ||
-    !event.audience.includes(event.targetId) ||
-    !hasMemory(world.entities[event.targetId])
-  )
-    return;
-  const damage =
-    event.type === 'shot' || event.type === 'struck'
-      ? event.data?.['damage']
-      : event.type === 'body-effect'
-        ? -Number(event.data?.['healthDelta'] ?? 0)
-        : 0;
-  if (typeof damage !== 'number' || damage <= 0) return;
-  const actorId = event.targetId;
-  const feeling = event.type === 'shot' || event.type === 'struck' ? 'fear' : 'discomfort';
-  const targetId = event.actorId ?? actorId;
-  const key = `${feeling}:${targetId}`;
-  const current = activeAppraisals(world, actorId).filter((value) => value.key !== key);
-  current.push({
-    key,
-    causeId: event.id,
-    targetId,
-    feeling,
-    intensity: Math.min(1, damage / (world.entities[actorId]!.actor!.body?.maxHealth ?? 100)),
-    at: world.simTime,
-    decayPerHour: 0.25,
-  });
-  (world.appraisals ??= {})[actorId] = current
-    .sort((a, b) => b.intensity - a.intensity || a.key.localeCompare(b.key))
-    .slice(0, 16);
-}
-export function activeAppraisals(world: WorldState, actorId: string): Appraisal[] {
-  const forgotten = new Set(world.experience?.forgotten[actorId]);
-  const corrected = world.experience?.corrections?.[actorId] ?? {};
-  return (world.appraisals?.[actorId] ?? [])
-    .filter((value) => !forgotten.has(value.causeId) && !corrected[value.causeId])
-    .map((value) => ({
-      ...value,
-      intensity: Math.max(
-        0,
-        value.intensity - ((world.simTime - value.at) / 3600) * value.decayPerHour,
-      ),
-      at: world.simTime,
-    }))
-    .filter((value) => value.intensity > 0);
 }
 /** Creator-authored immutable objective fact; accepted inner-world opinions cannot edit it. */
 export function establishKinship(input: WorldState, fact: Kinship): Transition {

@@ -1,3 +1,4 @@
+import { allItems, itemFor } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGameServer } from './http.js';
 import { readConfig } from './config.js';
@@ -254,13 +255,13 @@ describe('local HTTP boundary', () => {
     const { post, game } = await start();
     await post('/api/presence', { clientId: 'test-client', visible: true });
     expect(game.service.paused).toBe(false);
-    const food = Object.values(game.service.world.items).find(
+    const food = allItems(game.service.world).find(
       (item) => item.ownerId === 'player' && item.definitionId === 'berries',
     )!;
     const body = { commandId: 'eat-once', command: { type: 'eat', itemId: food.id } };
     expect((await (await post('/api/command', body)).json()).ok).toBe(true);
     await post('/api/command', body);
-    expect(game.service.world.items[food.id]?.quantity).toBe(food.quantity - 1);
+    expect(itemFor(game.service.world, food.id)?.quantity).toBe(food.quantity - 1);
     expect((await game.service.store.usage(0)).usage.llmCalls).toBe(0);
     await post('/api/control', { paused: true, speed: 3 });
     const time = game.service.world.simTime;

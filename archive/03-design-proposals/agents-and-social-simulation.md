@@ -114,7 +114,14 @@ The [cognition extension checklist](../../docs/maintainers/cognition-redesign.md
 
 ## Accepted appraisal continuity
 
-Accepted target, September 25, 2026; ACT07 owns implementation. Personality is extensible authored character information with structured traits where actual mechanics need them. Emotions are sparse, cause-linked appraisals that influence attention, expression, dialogue and choices without inherently forcing one behavior or taking control from a human player. Authored worlds may choose different taxonomies and models.
+The approved [P5 implementation](../../docs/projects/appraisal-social-continuity-tech-design.md)
+extends the existing native appraisal owner with stable identity, policy-defined lifetime
+and permitted multi-cause provenance. Directional relationship prose remains the actor's
+subject knowledge document; About me, objective kinship and obligations keep their own
+owners. ACT07/ACT08 child slices record the delivered foundation and evidence; broader
+emotional cognition remains separate.
+
+Accepted policy, September 25, 2026; ACT07 records foundation implementation. Personality is extensible authored character information with structured traits where actual mechanics need them. Emotions are sparse, cause-linked appraisals that influence attention, expression, dialogue and choices without inherently forcing one behavior or taking control from a human player. Authored worlds may choose different taxonomies and models.
 
 An emotion need not be short-lived or automatically decay. Grief can persist; a memory, enduring circumstance, personality or disposition can sustain or regenerate emotion without a new external event. Support apparently spontaneous emotion through explicit internal causes/provenance, using saved randomness where relevant, rather than fabricated external evidence. Reflection and later experience may sustain, revise or resolve an appraisal; personality is an input, not another duplicate emotional-state owner. Avoid reapplying the same cause every tick or demanding paid reasoning for continuous persistence.
 

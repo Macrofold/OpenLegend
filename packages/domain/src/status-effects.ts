@@ -1,6 +1,19 @@
-import { statusDefinitions } from './status-capabilities.js';
+import { admitStatusWork, chargeStatusWork } from './native-work.js';
+import { releaseWork } from './work-budget.js';
+import { recordSemanticChange } from './dependencies.js';
+import { chargeWork } from './work-budget.js';
+import { worldSupport } from './spatial-state.js';
+import { activelyParticipates } from './participation-state.js';
+import {
+  statusDefinitions,
+  activeContributionId,
+  isStatusDefinitionActive,
+  invalidateContributionIndex,
+} from './status-capabilities.js';
+import { advanceCapabilityContributions } from './state-contributions.js';
+import { completeContributionHistory } from './contribution-residency.js';
 import { draftWorld, cloneValue } from './draft.js';
-import { emit, finish, outcome, canonicalJson } from './events.js';
+import { emit, finish, outcome, canonicalJson, contentLabel } from './events.js';
 import { finishPlanAction } from './agency.js';
 import { nextId } from './data.js';
 import { attributeDefinition, readAttribute, setAttribute } from './world-modules.js';
@@ -58,6 +71,12 @@ export interface StatusEffectDefinition {
   onActivate?: { emit: { target: EntityReference; type: 'stateChanged'; narration: string } };
   onDeactivate?: { emit: { target: EntityReference; type: 'stateChanged'; narration: string } };
   actions?: { activate: string; deactivate: string; allowOther: boolean; activateOther: boolean };
+  contribution?: {
+    disclosure: 'owner' | 'public';
+  } & (
+    | { lifetime: 'explicit-removal' | 'source-sustained' }
+    | { lifetime: 'fixed'; seconds: number }
+  );
 }
 export interface StatusEffectPolicy {
   revision: number;
@@ -65,6 +84,13 @@ export interface StatusEffectPolicy {
   definitions: StatusEffectDefinition[];
 }
 export interface StatusEffectInstance {
+  /** Independent capability contributions share this store with native statuses. */
+  contribution?: {
+    definitionId: string;
+    definitionDigest: string;
+    revision: number;
+    lifetime: import('./state-contributions.js').ContributionLifetime;
+  };
   active: boolean;
   episode: string;
   elapsedSeconds: number;
@@ -131,6 +157,7 @@ export function matchesStatusCondition(
   bindings: EffectBindings,
   condition: StatusCondition,
 ): boolean {
+  chargeWork({ tests: 1 });
   if ('all' in condition)
     return condition.all.every((c) => matchesStatusCondition(world, bindings, c));
   if ('any' in condition)
@@ -151,9 +178,9 @@ export function matchesStatusCondition(
       c.name === 'kind'
         ? e.kind
         : c.name === 'grounded'
-          ? e.spatial.supportSurfaceId !== null
+          ? worldSupport(e) !== null
           : c.name === 'activeWork'
-            ? !!e.actor?.action || e.spatial.supportSurfaceId === null || !!e.animal?.fleeSeconds
+            ? !!e.actor?.action || worldSupport(e) === null || !!e.animal?.fleeSeconds
             : e.actor?.[c.name];
     return compare(value, c.operator, c.value);
   }
@@ -164,13 +191,17 @@ export function matchesStatusCondition(
   }
   const c = condition.statusActive,
     e = resolve(c.target, bindings);
-  return !!e && !!e.statusEffects?.[c.definitionId]?.active === c.value;
+  return !!e && isStatusDefinitionActive(e, c.definitionId, world) === c.value;
 }
 export function canActivateStatusEffect(
   world: WorldState,
   bindings: EffectBindings,
   definition: StatusEffectDefinition,
 ): boolean {
+  if (definition.contribution && !bindings.subject.actor) return false;
+  // The current rate family advances exposed objects. Contained processing needs
+  // its own admitted continuation; accepting it here would silently omit its work.
+  if (!activelyParticipates(bindings.subject)) return false;
   const occupying = bindings.subject.actor?.action;
   if (
     definition.occupiesAction &&
@@ -182,7 +213,13 @@ export function canActivateStatusEffect(
     return false;
   return (
     definition.enabled &&
-    !bindings.subject.statusEffects?.[definition.id]?.active &&
+    !(definition.contribution
+      ? activeContributionId(
+          bindings.subject,
+          definition.id,
+          bindings.source?.id ?? bindings.subject.id,
+        )
+      : bindings.subject.statusEffects?.[definition.id]?.active) &&
     (!definition.occupiesAction || !!bindings.subject.actor) &&
     matchesStatusCondition(world, bindings, definition.requires) &&
     (!definition.activationCondition ||
@@ -198,7 +235,7 @@ export function canActivateStatusEffect(
     )
   );
 }
-function transitionEvent(
+export function statusTransitionEvent(
   world: WorldState,
   definition: StatusEffectDefinition,
   bindings: EffectBindings,
@@ -245,14 +282,33 @@ export function activateStatusEffect(
       );
   }
   const episode = nextId(world, 'effect');
-  (entity.statusEffects ??= {})[definition.id] = {
+  admitStatusWork(world, entity, definition, episode);
+  recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'contribution' });
+  (entity.statusEffects ??= {})[definition.contribution ? episode : definition.id] = {
     active: true,
     episode,
     elapsedSeconds: 0,
     automaticAfter: 0,
     sourceId: bindings.source?.id ?? entity.id,
     actionTargetId: bindings.actionTarget?.id ?? entity.id,
+    ...(definition.contribution
+      ? {
+          contribution: {
+            definitionId: definition.id,
+            definitionDigest: contentLabel(canonicalJson(definition)),
+            revision: 1,
+            lifetime:
+              definition.contribution.lifetime === 'fixed'
+                ? {
+                    kind: 'fixed' as const,
+                    expiresAt: world.simTime + definition.contribution.seconds,
+                  }
+                : { kind: definition.contribution.lifetime },
+          },
+        }
+      : {}),
   };
+  if (definition.contribution) invalidateContributionIndex(entity, world);
   if (definition.occupiesAction && actor) {
     actor.action = {
       id: episode,
@@ -266,7 +322,7 @@ export function activateStatusEffect(
     };
     actor.planGeneration++;
   }
-  transitionEvent(world, definition, bindings, events, true, reason);
+  statusTransitionEvent(world, definition, bindings, events, true, reason);
   return true;
 }
 export function deactivateStatusEffect(
@@ -275,10 +331,17 @@ export function deactivateStatusEffect(
   definition: StatusEffectDefinition,
   events: WorldEvent[],
   reason: string,
+  sourceId?: string,
 ): void {
-  const state = entity.statusEffects?.[definition.id];
+  const key = definition.contribution
+    ? activeContributionId(entity, definition.id, sourceId ?? entity.id)
+    : definition.id;
+  const state = key ? entity.statusEffects?.[key] : undefined;
   if (!state?.active) return;
+  releaseWork(world, state.episode);
+  recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'contribution' });
   state.active = false;
+  if (state.contribution) state.contribution.revision++;
   state.automaticAfter = world.simTime + definition.reactivationDelaySeconds;
   const actor = entity.actor;
   if (actor?.action?.id === state.episode) {
@@ -291,7 +354,14 @@ export function deactivateStatusEffect(
     actor.action = null;
     actor.planGeneration++;
   }
-  transitionEvent(world, definition, effectBindings(world, entity, state), events, false, reason);
+  statusTransitionEvent(
+    world,
+    definition,
+    effectBindings(world, entity, state),
+    events,
+    false,
+    reason,
+  );
 }
 export function interruptStatusEffects(
   world: WorldState,
@@ -299,6 +369,18 @@ export function interruptStatusEffects(
   events: WorldEvent[],
   reason: string,
 ): void {
+  for (const state of Object.values(entity.statusEffects ?? {})) {
+    if (!state.active || !state.contribution) continue;
+    const definition = statusDefinitions(world).find(
+      (d) => d.id === state.contribution!.definitionId,
+    );
+    if (reason === 'body-unavailable' || definition?.interruptOn.includes(reason)) {
+      releaseWork(world, state.episode);
+      recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'contribution' });
+      state.active = false;
+      state.contribution.revision++;
+    }
+  }
   for (const d of statusDefinitions(world))
     if (d.interruptOn.includes(reason) || reason === 'body-unavailable')
       deactivateStatusEffect(world, entity, d, events, reason);
@@ -326,6 +408,7 @@ export function advanceStatusEffects(
   seconds: number,
   events: WorldEvent[],
 ): void {
+  advanceCapabilityContributions(world, entity, events);
   for (const d of statusDefinitions(world)) {
     const state = entity.statusEffects?.[d.id];
     if (!state?.active && (!d.enabled || !d.automaticActivation)) continue;
@@ -372,6 +455,8 @@ export function advanceStatusEffects(
       deactivateStatusEffect(world, entity, d, events, 'target-unavailable');
       continue;
     }
+    chargeStatusWork(world, entity, d, state);
+    chargeWork({ effects: d.whileActive.length });
     state.elapsedSeconds += seconds;
     for (const op of d.whileActive)
       if ('changeRate' in op && (!op.when || matchesStatusCondition(world, bindings, op.when))) {
@@ -426,6 +511,39 @@ export function admitStatusEffectPolicy(
       canonicalJson(proposed.definitions.find((d) => d.id === old.id) ?? null),
   );
   const retained = new Set(proposed.definitions.map((d) => d.id));
+  // Ending a contribution does not erase its exact historical definition pin.
+  const changedIds = new Set(changed.map((d) => d.id));
+  if (
+    changed.length &&
+    Object.values(input.entities).some(
+      (entity) => !completeContributionHistory(entity.statusEffects),
+    )
+  )
+    return {
+      world: input,
+      events: [],
+      outcome: outcome(
+        false,
+        'history-unavailable',
+        'Materialize contribution history before replacing definitions.',
+      ),
+    };
+  if (
+    Object.values(input.entities).some((entity) =>
+      Object.values(entity.statusEffects ?? {}).some(
+        (state) => state.contribution && changedIds.has(state.contribution.definitionId),
+      ),
+    )
+  )
+    return {
+      world: input,
+      events: [],
+      outcome: outcome(
+        false,
+        'pinned-contribution',
+        'Retained contributions require their exact definition.',
+      ),
+    };
   for (const entity of Object.values(world.entities))
     for (const old of changed) {
       deactivateStatusEffect(world, entity, old, events, 'policy-changed');
@@ -440,4 +558,6 @@ export {
   capabilityBlocked,
   activeStatusEffects,
   projectStatusEffects,
+  activeContributionId,
+  isStatusDefinitionActive,
 } from './status-capabilities.js';

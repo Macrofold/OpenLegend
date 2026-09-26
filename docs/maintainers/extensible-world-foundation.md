@@ -79,8 +79,8 @@ The first slice is bounded to numeric/category attributes and native physiology 
 
 - [x] Implement the minimum schema-validated state definitions needed by the first reservoir and a nonnumeric counterexample. Include semantic type, units/scale where applicable, bounds, applicability, initialization, ownership, and disclosure.
 - [x] Support sparse namespaced state for genuinely new attributes. Keep existing hot fields behind explicit typed providers until cut over; do not permanently dual-write fields and a generic map.
-- [ ] Route mutations to the registered owner, preserving expected revisions, actual contribution provenance, deterministic aggregation, and existing transaction semantics. Arbitrary JSON paths or unbounded `effects` maps are not mutation APIs.
-- [ ] Resolve missing/unknown/not-applicable/default cases under the existing declaration contract. Do not silently materialize zero-valued state on every entity.
+- [x] Route mutations to the registered owner, preserving expected revisions, actual contribution provenance, deterministic aggregation, and existing transaction semantics. Arbitrary JSON paths or unbounded `effects` maps are not mutation APIs.
+- [x] Resolve missing/unknown/not-applicable/default cases under the existing declaration contract. Do not silently materialize zero-valued state on every entity.
 - [x] Expose meaningful change metadata suitable for EPR's existing scope/threshold interfaces. Do not implement a separate threshold detector, event store, or reminder scheduler here.
 - [x] Validate that new state cannot overwrite protected actor identity, current privacy/accounting records, or another module's values by reusing a display name.
 
@@ -98,7 +98,7 @@ The first slice is bounded to numeric/category attributes and native physiology 
 - [ ] Define a concern projection and supported response references for that need. Reuse native action eligibility; do not infer execution from an English description or automatically create goals.
 - [x] Add one reviewed fixture module for charge or lunar reserve with an actual supported replenishment action. Use the selected same interfaces; do not add a new `if charge` branch to generic controller, protocol, or meter logic.
 - [x] Use EX01 as the first end-to-end example, and keep broader anatomy or psychology out of this extraction.
-- [ ] Prove a non-human actor can omit the human need without receiving fake hunger, sleep, or verbal mind state. Keep ordinary native animals inexpensive and cognition opt-in.
+- [x] Prove a non-human actor can omit the human need without receiving fake hunger, sleep, or verbal mind state. Keep ordinary native animals inexpensive and cognition opt-in.
 - [ ] When the first body policy is exposed, isolate death/collapse/revival choices from runtime permission/identity rules. Preserve the current accepted full god-revival behavior; do not reopen it as an unresolved decision.
 
 **Tests:** matched current wilderness traces; optional need absent; second need changes through native action; concurrent effects/resources reconcile; no automatic paid decision for every decrement; body effects remain native and cannot be authored by unvalidated prose.
@@ -177,13 +177,13 @@ Delivered native agency scope and remaining AG/INV boundaries are recorded in [A
 
 **Dependencies:** EWF01–EWF06 as applicable; EPR/PF retain actual scheduler and profiling implementations.
 
-- [ ] Expose meaningful state/query membership dependencies for registered modules. Include old/new spatial regions and scope/manifest changes; observing only returned entities is insufficient.
-- [ ] Include construct expansion depth, combined selector fan-out, recurring effect descendants, and per-invocation versus shared state in budget review. Nested individually small artifacts cannot evade world-level bounds.
-- [ ] Validate finite work and fan-out per definition, and aggregate installed/subscribed work against world/host bounds. Reject infinite zero-time rescheduling and duplicate owners before activation.
-- [ ] Distinguish required native effects/evidence from optional wakeups, model work, and presentation. Optional failures cannot silently erase required state or become in-world explanations.
-- [ ] Preserve the declared native phase order and RNG behavior. Name intentional changes and prove their consequences; a new registry cannot reorder rules arbitrarily.
-- [ ] Integrate profiling with PF's existing metrics. Do not build another telemetry database, generic broker, or unbounded per-object queue.
-- [ ] Apply the host failure policy to invalid module output. Native reviewed implementations are not claimed to be safely preemptible untrusted scripts; G2 remains conditional.
+- [x] Expose meaningful state/query membership dependencies for registered modules. Include old/new spatial regions and scope/manifest changes; observing only returned entities is insufficient.
+- [x] Include construct expansion depth, combined selector fan-out, recurring effect descendants, and per-invocation versus shared state in budget review. Nested individually small artifacts cannot evade world-level bounds.
+- [x] Validate finite work and fan-out per definition, and aggregate installed/subscribed work against world/host bounds. Reject infinite zero-time rescheduling and duplicate owners before activation.
+- [x] Distinguish required native effects/evidence from optional wakeups, model work, and presentation. Optional failures cannot silently erase required state or become in-world explanations.
+- [x] Preserve the declared native phase order and RNG behavior. Name intentional changes and prove their consequences; a new registry cannot reorder rules arbitrarily.
+- [x] Integrate profiling with PF's existing metrics. Do not build another telemetry database, generic broker, or unbounded per-object queue.
+- [x] Apply the host failure policy to invalid module output. Native reviewed implementations are not claimed to be safely preemptible untrusted scripts; G2 remains conditional.
 
 **Tests:** unrelated UI telemetry does not invalidate module computations; new query member is detected; many small modules cannot bypass aggregate limits; feedback loop is bounded/rejected; invalid optional output leaves world effects intact; changed snapshot/manifest invalidates only relevant projections without widening permissions.
 
@@ -260,6 +260,6 @@ For each delivered slice report: task IDs and exact changed files; behavior pres
 
 ## Remaining-foundation audit handoff
 
-The [foundation index](remaining-foundational-work.md) prioritizes existing owners rather than creating a second EWF plan. The invention branch delivers finite attributes/adapters/inspection but does not close EWF01–03, EWF07 or EWF08. Before more independent mechanics, complete EWF02's single-owner deterministic contribution path with INV-6.3, competing resource claims, units/provenance and contribution removal that preserves unrelated changes. Prove two unlike consumers and a real default-world consumer; do not infer completion from a custom meter alone.
+[SC01–SC08](state-contributions.md) and [DI01–DI08](dependency-invalidation.md) deliver EWF02's selected typed owners and EWF08's finite native dependency/work contracts. They preserve sequential wilderness outcomes, use named start-state resource phases, independently remove capability sources, retain empty-query membership, fence captured generations, and bound aggregate/recurring execution. [Verification](../verification.md#foundation-priorities-15--implementation-evidence) records complete native outcomes, both SQL adapters, real browser/network and mixed stress; operational limits are not hosted capacity.
 
-EWF08 must cover query-membership changes (including newly relevant entities), old/new affected neighborhoods, cumulative nested fan-out, recurring descendants and zero-time feedback. Coordinate real invalidation with SW/EPR instead of adding a second graph or scheduler. Risk acceptance under INV-5.6 cannot waive these runtime integrity bounds. EWF07 supplies exact lifecycle/dependency bindings to SL00 and the shared activation owner. These acceptance refinements retain the existing unchecked tasks and are not implementation claims.
+EWF01's general registration, the remaining EWF03 physiology/body-policy extraction, EWF07's general live-definition migration and INV-5.6 remain open. Current exact-pin dependencies reject unsupported retirement; that is not a general transition planner. The spatial/invention/action/hearing branches must migrate through the [recorded foundation seams](../projects/foundations-1-5.md#branch-and-repertoire-migration-map). EPR/SW/PF retain their actual query, reaction, scheduling and load work; no second graph or scheduler was added.

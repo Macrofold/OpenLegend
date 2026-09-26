@@ -1,3 +1,9 @@
+import {
+  invalidateAppraisals,
+  changeAppraisal,
+  type AppraisalChange,
+  type AppraisalBindings,
+} from './appraisals.js';
 import { migrateKnowledge } from './knowledge-migration.js';
 import {
   editKnowledge,
@@ -20,7 +26,7 @@ import { draftWorld, finishWorld, cloneValue, trackDetachedRecord } from './draf
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { memoryPerspective } from './memory-perspective.js';
-import type { ExperienceEntry, MemoryRecord, Transition, WorldState } from './types.js';
+import type { ExperienceEntry, MemoryRecord, Transition, WorldState, WorldEvent } from './types.js';
 
 export const EXPERIENCE_LIMITS = {
   rawHours: 6,
@@ -85,6 +91,7 @@ export interface InnerWorld {
   files: { path: string; text: string }[];
   sourceSnapshot: string;
   publicationJobId: string;
+  publicationBody?: string;
   evidenceIds: string[];
   reconsiderationRequired?: boolean;
 }
@@ -859,6 +866,7 @@ export function invalidateExperience(
   // Privacy invalidation must also reach accepted canvases and observer identity associations.
   // docs/knowledge.md#privacy-and-correction
   advanceKnowledgeRevision(world, actorId);
+  invalidateAppraisals(world, actorId);
   if (world.actorKnowledge?.[actorId]) {
     for (const document of Object.values(world.actorKnowledge[actorId]!)) {
       document.text = '';
@@ -884,6 +892,7 @@ export function invalidateExperience(
     inner.text = flattenFiles(inner.files);
     inner.revision++;
     inner.evidenceIds = [];
+    delete inner.publicationBody;
     inner.reconsiderationRequired = true;
     mind.revision = inner.revision;
   }
@@ -907,6 +916,8 @@ export function publishInnerWorld(
   permittedSubjects: string[] = [],
   expectedEncounters?: Record<string, string>,
   knowledgeReferences: Record<string, string> = {},
+  appraisalChanges: AppraisalChange[] = [],
+  appraisalBindings: AppraisalBindings = { sources: [], subjects: [], reflection: true },
 ): Transition {
   const reject = (message: string) => ({
     world: input,
@@ -915,16 +926,33 @@ export function publishInnerWorld(
   });
   const prior = input.innerWorlds?.[actorId];
   const actor = input.entities[actorId]?.actor;
+  const publicationBody = canonicalJson({
+    actorId,
+    expectedRevision,
+    snapshot,
+    files,
+    thoughts,
+    evidenceIds,
+    dreamEpisode,
+    goalChanges,
+    knowledgeChanges,
+    nameChanges,
+    appraisalChanges,
+  });
   if (prior?.publicationJobId === jobId)
-    return {
-      world: input,
-      events: [],
-      outcome: outcome(true, 'duplicate', 'Snapshot already published.'),
-    };
+    return prior.publicationBody === publicationBody
+      ? {
+          world: input,
+          events: [],
+          outcome: outcome(true, 'duplicate', 'Snapshot already published.'),
+        }
+      : reject('The publication identity was already used or its source was erased.');
   if (
     !prior ||
     prior.revision !== expectedRevision ||
     !actor?.alive ||
+    !hasMemory(input.entities[actorId]) ||
+    actor.capabilities?.innerWorld === false ||
     actor.incapacitated ||
     input.paused
   )
@@ -956,6 +984,19 @@ export function publishInnerWorld(
   const forgotten = new Set(input.experience?.forgotten[actorId] ?? []);
   if (evidenceIds.some((id) => forgotten.has(id))) return reject('Evidence was forgotten.');
   const world = draftWorld(input);
+  const appraisalEvents: WorldEvent[] = [];
+  if (appraisalChanges.length > 8) return reject('Too many appraisal changes.');
+  for (const [index, change] of appraisalChanges.entries()) {
+    const result = changeAppraisal(
+      world,
+      actorId,
+      change,
+      `${jobId}:appraisal:${index}`,
+      appraisalBindings,
+      appraisalEvents,
+    );
+    if (!result.ok) return reject(result.message);
+  }
   if (knowledgeChanges.length > 16 || nameChanges.length > 16)
     return reject('Too many knowledge changes.');
   if (
@@ -1017,6 +1058,7 @@ export function publishInnerWorld(
     revision: prior.revision + 1,
     sourceSnapshot: snapshot,
     publicationJobId: jobId,
+    publicationBody,
     evidenceIds,
   };
   mind.revision++;
@@ -1049,7 +1091,7 @@ export function publishInnerWorld(
   (world.minds ??= {})[actorId] = mind;
   return finish(
     world,
-    [],
+    appraisalEvents,
     outcome(true, 'snapshot-published', 'Inner world published atomically.'),
   );
 }

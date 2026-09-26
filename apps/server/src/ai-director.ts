@@ -1,3 +1,6 @@
+import { spatialQuery } from '@open-legend/domain';
+import { worldPosition } from '@open-legend/domain';
+import type { RequestScope } from './authority.js';
 import {
   observerDescription,
   canSpeak,
@@ -23,7 +26,7 @@ import { nativeNeedBelow } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
-import { nearbyEntities, seesEntity, visionRadius } from '@open-legend/domain';
+import { seesEntity, visionRadius } from '@open-legend/domain';
 import { decisionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
 import { retrieveActions } from './action-retrieval.js';
 import { interestMatches, type InterestSubscription } from './interests.js';
@@ -177,6 +180,11 @@ export class AiDirector {
     );
     this.unsubscribe = service.subscribe(() => {
       const run = this.running;
+      if (run?.job.authority && !service.currentScope(run.job.authority, 'play', true)) {
+        run.cancelReason = 'Control or access changed.';
+        run.controller.abort();
+        return;
+      }
       if (run?.job.kind === 'invention' && run.job.request.invention) {
         const permission = inventionPermission(service.world, run.job.request.invention.authority);
         if (!permission.ok) {
@@ -223,6 +231,7 @@ export class AiDirector {
     conversationId?: string,
     continuation?: InventionContinuation,
     candidate?: unknown,
+    authority = this.service.localScope,
   ): Promise<ApiResult> {
     // Independent inference does not wait for remote reflection cancellation/cleanup.
     this.maintenance.cancel();
@@ -239,12 +248,20 @@ export class AiDirector {
       conversationId,
       continuation,
       candidate,
+      undefined,
+      undefined,
+      authority,
     );
   }
 
-  async cancel(jobId: string): Promise<ApiResult> {
+  async cancel(jobId: string, authority?: RequestScope): Promise<ApiResult> {
+    if (authority) this.service.assertScope(authority);
     const run = this.running;
-    if (!run || run.job.id !== jobId)
+    if (
+      !run ||
+      run.job.id !== jobId ||
+      (authority && run.job.authority?.accountId !== authority.accountId)
+    )
       return { ok: false, code: 'not-running', message: 'That request is no longer running.' };
     if (!run.controller.signal.aborted) {
       run.cancelReason = 'Request cancelled.';
@@ -265,10 +282,17 @@ export class AiDirector {
     candidate?: unknown,
     initiatingActor?: string,
     initiatingPolicyRevision?: number,
+    authority?: RequestScope,
   ): Promise<ApiResult> {
-    return this.admission(async () => {
+    authority ??= initiatingActor ? undefined : this.service.localScope;
+    const admit = async () => {
+      if (authority) {
+        id = `human:${digest({ account: authority.accountId, world: authority.worldId, id })}`;
+        // Parent and retry IDs are opaque IDs already returned by the server.
+      }
       candidate = normalizeInventionProposal(candidate);
-      const inventorId = initiatingActor ?? this.service.controlledEntityId;
+      if (authority) this.service.assertScope(authority, 'play', true);
+      const inventorId = initiatingActor ?? authority!.actorId;
       if (
         initiatingActor &&
         (kind !== 'invention' ||
@@ -311,11 +335,7 @@ export class AiDirector {
             this.service.world.id,
             original.playerSpeechEventId,
           ));
-        if (
-          !speech ||
-          speech.actorId !== this.service.controlledEntityId ||
-          speech.targetId !== original.request.npcId
-        )
+        if (!speech || speech.actorId !== inventorId || speech.targetId !== original.request.npcId)
           return {
             ok: false,
             code: 'retry-unavailable',
@@ -333,6 +353,7 @@ export class AiDirector {
         targetId,
         worldId: this.service.world.id,
         actorId: inventorId,
+        authority,
         conversationId,
         ...(retryOf ? { retryOf } : {}),
         ...(continuation ? { continuation } : {}),
@@ -539,16 +560,12 @@ export class AiDirector {
             message: `${target.name} cannot respond right now. Retry when they are awake and able to respond.`,
           };
         if (!original) {
-          const spoken = await this.service.say(
-            `${id}:player`,
-            this.service.controlledEntityId,
-            text,
-            targetId,
-          );
+          const spoken = await this.service.say(`${id}:player`, inventorId, text, targetId);
           if (!spoken.ok) return spoken;
         }
       }
       const job: JobRecord = {
+        authority,
         id,
         kind,
         ...(invention ? { invention: { code: 'queued' } } : {}),
@@ -576,7 +593,10 @@ export class AiDirector {
         };
       await this.begin(job);
       return { ok: true, code: 'queued', message: job.message, jobId: id };
-    });
+    };
+    return this.admission(() =>
+      authority ? this.service.authorized(authority, 'play', true, admit) : admit(),
+    );
   }
 
   private async update(
@@ -648,12 +668,15 @@ export class AiDirector {
               ? 'This request was cancelled when the game paused.'
               : 'This request was cancelled before completion.'),
       );
+    if (run.job.authority && !this.service.currentScope(run.job.authority, 'play', true))
+      throw new StopJob('stale', 'Control or access changed; no new effects were applied.');
     if (run.job.kind === 'invention') {
       const scope = run.job.request.invention!;
       if (
         scope.worldId !== this.service.world.id ||
         scope.timelineId !== this.service.timelineId ||
-        (scope.authority.origin === 'player' && scope.actorId !== this.service.controlledEntityId)
+        (scope.authority.origin === 'player' &&
+          (!run.job.authority || !this.service.currentScope(run.job.authority, 'play', true)))
       )
         throw new StopJob(
           'stale',
@@ -706,7 +729,7 @@ export class AiDirector {
           .find(
             (event) =>
               event.type === 'speech' &&
-              event.actorId === this.service.controlledEntityId &&
+              event.actorId === (job.authority?.actorId ?? this.service.localScope.actorId) &&
               event.targetId === (job.request.npcId ?? this.service.defaultResidentEntityId) &&
               event.data?.['text'] === job.request.text.trim() &&
               event.audience.includes(job.request.npcId ?? this.service.defaultResidentEntityId),
@@ -718,6 +741,7 @@ export class AiDirector {
     await this.log.save({
       id: job.id,
       kind: 'Semantic trigger',
+      ownerAccountId: job.authority?.accountId,
       worldId: this.service.world.id,
       actorId:
         job.kind === 'invention'
@@ -1471,11 +1495,15 @@ export class AiDirector {
         undefined,
         run.job.id,
       );
-    let result = await commit();
+    const authorizedCommit = () =>
+      run.job.authority
+        ? this.service.authorized(run.job.authority, 'play', true, commit)
+        : commit();
+    let result = await authorizedCommit();
     while (!result.ok && result.code === 'paused') {
       await this.awaitResume(run, true);
       if (await retryForUrgentAwareness()) return;
-      result = await commit();
+      result = await authorizedCommit();
     }
     const receipt = this.service.world.responseReceipts?.[run.job.id];
     await this.log.record(
@@ -1616,41 +1644,50 @@ export class AiDirector {
       const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
       const visible = new Map<string, string[]>();
       timedSync('cognition.thoughtRefresh', () =>
-        this.thoughtWork.refresh(world, (id) => {
-          const entity = world.entities[id]!,
-            actor = entity.actor!;
-          const ids = nearbyEntities(world, entity.position, visionRadius(world, entity))
-            .filter((other) => other.id !== id && seesEntity(world, entity, other))
-            .map((other) => other.id);
-          visible.set(id, ids);
-          return [
-            actor.controller,
-            actor.incapacitated,
-            currentGoal(actor),
-            actor.agency.plan?.revision,
-            nativeProtectionReason(world, id),
-            nativeNeedBelow(actor, 'fullness', 20),
-            nativeNeedBelow(actor, 'energy', 15),
-            nativeNeedBelow(actor, 'energy', 10),
-            capabilityBlocked(world, entity, 'actions'),
-            projectAttributes(world, entity, 'owner')
-              .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
-              .map((v) => v.id)
-              .join('|'),
-            ids.join('\0'),
-            world.memories[id],
-            world.experience?.awareness[id],
-            world.experience?.summaries[id],
-            world.innerWorlds?.[id],
-            world.cognitionPolicy,
-            this.service.telemetryRevision,
-          ];
-        }),
+        this.thoughtWork.refresh(
+          world,
+          (id) => {
+            const entity = world.entities[id]!,
+              actor = entity.actor!;
+            const query = spatialQuery(world, worldPosition(entity), visionRadius(world, entity));
+            if (query.status !== 'complete') return [query.status];
+            const ids = query.values
+              .filter((other) => other.id !== id && seesEntity(world, entity, other))
+              .map((other) => other.id);
+            visible.set(id, ids);
+            return [
+              actor.controller,
+              actor.incapacitated,
+              currentGoal(actor),
+              actor.agency.plan?.revision,
+              nativeProtectionReason(world, id),
+              nativeNeedBelow(actor, 'fullness', 20),
+              nativeNeedBelow(actor, 'energy', 15),
+              nativeNeedBelow(actor, 'energy', 10),
+              capabilityBlocked(world, entity, 'actions'),
+              projectAttributes(world, entity, 'owner')
+                .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
+                .map((v) => v.id)
+                .join('|'),
+              ids.join('\0'),
+              world.memories[id],
+              world.experience?.awareness[id],
+              world.experience?.summaries[id],
+              world.innerWorlds?.[id],
+              world.cognitionPolicy,
+              this.service.telemetryRevision,
+            ];
+          },
+          this.service.generation,
+        ),
       );
       const actors = this.thoughtWork
         .ready(this.now(), world.simTime)
         .map((id) => world.entities[id]!)
-        .filter((entity) => entity.actor?.controller === 'npc');
+        .filter((entity) => entity.actor?.controller === 'npc' && visible.has(entity.id));
+      const generations = new Map(
+        actors.map((entity) => [entity.id, this.thoughtWork.capture(world, entity.id)]),
+      );
       const scheduled = new Map(
         await Promise.all(
           actors.map(
@@ -1705,12 +1742,18 @@ export class AiDirector {
         const subscription = (await this.service.store.getIntegration(
           `interests:${world.id}:${entity.id}`,
         )) as InterestSubscription | undefined;
-        this.thoughtWork.inspected(
-          entity.id,
-          subscription && subscription.expiresAt > world.simTime
-            ? subscription.expiresAt
-            : Infinity,
-        );
+        if (
+          !this.thoughtWork.inspected(
+            entity.id,
+            subscription && subscription.expiresAt > world.simTime
+              ? subscription.expiresAt
+              : Infinity,
+            generations.get(entity.id),
+            this.service.world,
+            this.service.generation,
+          )
+        )
+          continue;
         const matches = interestMatches(
           world,
           entity.id,

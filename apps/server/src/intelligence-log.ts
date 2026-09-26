@@ -139,7 +139,14 @@ export class IntelligenceLog {
     metadata: Partial<
       Pick<
         IntelligenceCall,
-        'id' | 'worldId' | 'actorId' | 'actorName' | 'trigger' | 'triggerType' | 'route'
+        | 'id'
+        | 'worldId'
+        | 'actorId'
+        | 'actorName'
+        | 'trigger'
+        | 'triggerType'
+        | 'route'
+        | 'ownerAccountId'
       >
     > = {},
   ): Promise<T> {

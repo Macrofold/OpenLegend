@@ -279,6 +279,9 @@ export function admitDeclaration(
     const definition = {
       id: outputDefinitionId,
       portable: world.itemHandling.defaultPortable,
+      ...(world.itemHandling.generatedPackingLoad !== undefined
+        ? { packingLoad: world.itemHandling.generatedPackingLoad }
+        : {}),
       version: 1,
       name: draft.output.name,
       description: draft.output.description,

@@ -1,20 +1,24 @@
-import { characterCount } from '@open-legend/domain';
-import { activeStatusEffects } from '@open-legend/domain';
+import { continuityView } from './continuity-view.js';
+import { projectStatusEffects } from '@open-legend/domain';
 import { mindFor, wordCount } from '@open-legend/domain';
 import type { GodMindView } from '@open-legend/protocol';
 import type { WorldService } from './world-service.js';
 /** Local host owner capability is configured by the operator, never by request JSON. */
-export async function inspectGodMind(service: WorldService, actorId: string): Promise<GodMindView> {
+export async function inspectGodMind(
+  service: WorldService,
+  actorId: string,
+  scope = service.localScope,
+): Promise<GodMindView> {
   if (!service.config.godMode) throw new Error('God inspection is disabled by the host.');
   let entity = service.world.entities[actorId];
   if (!entity?.actor) throw new Error('Character not found.');
-  if (!service.mayInspectPrivate(actorId))
+  if (!service.mayInspectPrivate(actorId, scope))
     throw new Error('Human-private character content is unavailable to this principal.');
-  const history = await service.inspectMemoryContext(actorId);
+  const history = await service.inspectMemoryContext(actorId, scope);
   entity = service.world.entities[actorId];
   if (
     !entity?.actor ||
-    !service.mayInspectPrivate(actorId) ||
+    !service.mayInspectPrivate(actorId, scope) ||
     history.generation !== service.generation ||
     history.sourceRevision !== service.store.memories?.actorRevision(actorId)
   )
@@ -25,21 +29,14 @@ export async function inspectGodMind(service: WorldService, actorId: string): Pr
     knowledgeLimits: service.world.knowledgePolicy?.maxCharacters,
     worldId: service.world.id,
     generation: service.generation,
-    notepads: Object.values(service.world.actorKnowledge?.[actorId] ?? {}).map((doc) => ({
-      subjectId: doc.subjectId,
-      text: doc.text,
-      revision: doc.revision,
-      characters: characterCount(doc.text),
-      maxCharacters:
-        service.world.knowledgePolicy!.maxCharacters[
-          doc.subjectId === null ? 'general' : 'subject'
-        ],
-      label: doc.subjectId
-        ? service.world.observerIdentities?.[actorId]?.[doc.subjectId]?.givenName ||
-          'Subject knowledge'
-        : 'General knowledge',
-    })),
-    identities: service.world.observerIdentities?.[actorId] ?? {},
+    ...(() => {
+      const projection = continuityView(service, actorId, scope);
+      return {
+        notepads: projection.notepads,
+        identities: projection.identities,
+        continuity: projection.continuity,
+      };
+    })(),
     name: entity.name,
     revision: service.world.innerWorlds?.[actorId]?.revision ?? mind.revision,
     corrections: service.world.experience?.corrections?.[actorId],
@@ -61,10 +58,10 @@ export async function inspectGodMind(service: WorldService, actorId: string): Pr
       source: k.source,
       learnedAt: k.learnedAt,
     })),
-    statusEffects: activeStatusEffects(service.world, entity).map((d) => ({
+    statusEffects: projectStatusEffects(service.world, entity, 'owner').map((d) => ({
       id: d.id,
       label: d.label,
-      elapsedSeconds: entity.statusEffects![d.id]!.elapsedSeconds,
+      elapsedSeconds: entity.statusEffects?.[d.id]?.elapsedSeconds ?? 0,
     })),
 
     documents: mind.documents,

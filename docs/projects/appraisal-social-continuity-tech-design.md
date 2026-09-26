@@ -1,18 +1,20 @@
 # Persistent appraisal and character-owned social continuity — technical design
 
-**Status:** proposed implementation design. [Feature specification](appraisal-social-continuity-feature-spec.md) owns behavior; [ACT07/ACT08 delivery slices](../maintainers/actor-model.md#priority-5-implementation-slices) own implementation and evidence. CR owns accepted mind/knowledge publication, EPR owns intake, P1 provides typed owner conventions and P4 bounded dependencies. This project does not replace any of those authorities.
+**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](appraisal-social-continuity-feature-spec.md) owns behavior; [ACT07/ACT08 delivery slices](../maintainers/actor-model.md#priority-5-implementation-slices) own implementation and evidence. CR owns accepted mind/knowledge publication, EPR owns intake, P1 provides typed owner conventions and P4 bounded dependencies. This project does not replace any of those authorities.
+
+The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
 ## 1. Source audit and discrepancies to reconcile
 
 Inspected main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`:
 
-| Current implementation | Consequence for this design |
-| --- | --- |
-| [social.ts](../../packages/domain/src/social.ts): `appraiseEvent`, `activeAppraisals`, `establishKinship` | Reuse this appraisal/kinship boundary. Current appraisals are damage-derived fear/discomfort, keyed by feeling/target, fixed linear decay and strongest-16 retention. General continuity is not implemented. |
-| [world-record-schema.ts](../../apps/server/src/world-record-schema.ts): `mind_appraisals` keyed by `id` | Current Appraisal has no `id`; the record encoder falls back to list position. Introduce real stable identities and migrate references; do not add a duplicate appraisal table. |
-| [knowledge.ts](../../packages/domain/src/knowledge.ts): `editKnowledge` | Subject notes already own full-text replacement, expected revision, character limits, tombstones and current evidence checks. Reuse them for directional relationship text. |
-| [CognitionMaintenance](../../apps/server/src/cognition-maintenance.ts): `reflect` | Reflection already resolves supplied references and passes knowledge/name/goal edits through `publishInnerWorld`. Add optional typed appraisal changes at this publication boundary rather than another harness. |
-| [mind.ts](../../packages/domain/src/mind.ts): old document/facet types | Typed facets such as relationship/appraisal are not permission to revive a second writable relationship/feeling authority. Preserve required legacy provenance while routing current meaning to the accepted owners. |
+| Current implementation                                                                                    | Consequence for this design                                                                                                                                                                                          |
+| --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [social.ts](../../packages/domain/src/social.ts): `appraiseEvent`, `activeAppraisals`, `establishKinship` | Reuse this appraisal/kinship boundary. Current appraisals are damage-derived fear/discomfort, keyed by feeling/target, fixed linear decay and strongest-16 retention. General continuity is not implemented.         |
+| [world-record-schema.ts](../../apps/server/src/world-record-schema.ts): `mind_appraisals` keyed by `id`   | Current Appraisal has no `id`; the record encoder falls back to list position. Introduce real stable identities and migrate references; do not add a duplicate appraisal table.                                      |
+| [knowledge.ts](../../packages/domain/src/knowledge.ts): `editKnowledge`                                   | Subject notes already own full-text replacement, expected revision, character limits, tombstones and current evidence checks. Reuse them for directional relationship text.                                          |
+| [CognitionMaintenance](../../apps/server/src/cognition-maintenance.ts): `reflect`                         | Reflection already resolves supplied references and passes knowledge/name/goal edits through `publishInnerWorld`. Add optional typed appraisal changes at this publication boundary rather than another harness.     |
+| [mind.ts](../../packages/domain/src/mind.ts): old document/facet types                                    | Typed facets such as relationship/appraisal are not permission to revive a second writable relationship/feeling authority. Preserve required legacy provenance while routing current meaning to the accepted owners. |
 
 The [memory architecture](../memory-architecture.md) now explicitly places assessments of other people in actor-owned subject knowledge; About me is self-understanding. Older domain README/social comments about inner-world relationship ownership must be reconciled during implementation. Current save policy permits checked in-place upgrades despite older rejection-only wording. Neither discrepancy warrants resetting character history.
 

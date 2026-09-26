@@ -1,3 +1,4 @@
+import { releaseInvocationResources } from './resource-claims.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { finitePoint } from '@open-legend/spatial';
 import { cloneValue } from './draft.js';
@@ -237,6 +238,7 @@ export function replaceGoals(
 }
 
 export function arrangePlan(
+  world: WorldState,
   actor: ActorComponent,
   id: string,
   commands: PlannedCommand[],
@@ -297,12 +299,13 @@ export function arrangePlan(
     current.revision++;
   } else {
     if (current) {
-      cancelPlan(actor);
+      cancelPlan(world, actor);
       agency.history.push(...current.steps.map(cloneValue));
       agency.history = agency.history.slice(-AGENCY_LIMITS.history);
     }
     // Explicit replacement follows native cancellation: spent inputs are never refunded.
     if (mode === 'replace' && actor.action) {
+      releaseInvocationResources(world, actor.action.id);
       actor.action = null;
       actor.planGeneration++;
     }
@@ -324,12 +327,13 @@ export function arrangePlan(
     planId: agency.plan!.id,
   };
 }
-export function cancelPlan(actor: ActorComponent): void {
+export function cancelPlan(world: WorldState, actor: ActorComponent): void {
   const plan = actor.agency.plan;
   if (!plan || plan.status === 'completed' || plan.status === 'cancelled') return;
   for (const step of plan.steps)
     if (step.status === 'queued' || step.status === 'running') {
-      if (step.actionId === actor.action?.id) {
+      if (actor.action && step.actionId === actor.action.id) {
+        releaseInvocationResources(world, actor.action.id);
         actor.action = null;
         actor.planGeneration++;
       }
@@ -346,6 +350,7 @@ export function finishPlanAction(
   actionId: string,
   result: Outcome,
 ): void {
+  releaseInvocationResources(world, actionId);
   const actor = world.entities[actorId]!.actor!;
   const plan = actor.agency.plan;
   const step = plan?.steps.find(

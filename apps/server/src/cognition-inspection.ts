@@ -1,6 +1,6 @@
 import type { WorldState } from '@open-legend/domain';
 import type { IntelligenceCall } from '@open-legend/protocol';
-import type { GameRepository } from './store.js';
+import type { DiagnosticAccess, GameRepository } from './store.js';
 
 function record(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -180,7 +180,12 @@ export interface TraceFilter {
   from?: string;
   to?: string;
 }
-export async function traceHistory(store: GameRepository, filter: TraceFilter, world?: WorldState) {
+export async function traceHistory(
+  store: GameRepository,
+  filter: TraceFilter,
+  world?: WorldState,
+  access?: DiagnosticAccess,
+) {
   const { offset, ...filters } = filter;
   const roots = await store.diagnosticRoots(
     offset,
@@ -189,6 +194,7 @@ export async function traceHistory(store: GameRepository, filter: TraceFilter, w
         (entry): entry is [string, string] => typeof entry[1] === 'string',
       ),
     ),
+    access,
   );
   const all = await store.diagnosticStages(roots.slice(0, 25).map((c) => c.id));
   const children = new Map<string, IntelligenceCall[]>();

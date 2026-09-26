@@ -1,3 +1,5 @@
+import { createItemLot, itemFor, retireItem, setSpatialPosition, worldSupport } from './index.js';
+import { worldPosition } from './spatial-state.js';
 import { describe, expect, it } from 'vitest';
 import {
   admitDeclaration,
@@ -167,7 +169,7 @@ describe('authoritative pure world', () => {
     expect(isWalkable(world, { y: 0, x: -0.2, z: 12 })).toBe(false);
     world = command(world, { type: 'move', destination });
     world = advanceWorld(world, 240).world;
-    expect(world.entities.player!.position).toEqual(destination);
+    expect(worldPosition(world.entities.player!)).toEqual(destination);
     expect(world.entities.player!.actor!.action).toBeNull();
   });
   it('resumes in-progress native work exactly after a JSON restore', () => {
@@ -315,12 +317,7 @@ describe('bounded invented mechanisms', () => {
         targetId: 'hare-1',
       }).outcome.code,
     ).toBe('no-ammunition');
-    world.items['fixture-bone'] = {
-      id: 'fixture-bone',
-      ownerId: 'player',
-      definitionId: 'bone',
-      quantity: 2,
-    };
+    createItemLot(world, 'player', 'bone', 2, 'fixture-bone');
     ({ world, recipeId } = addRecipe(world, arrow(), 'arrow'));
     world = command(world, { type: 'craft', recipeId });
     world = advanceWorld(world, 72).world;
@@ -337,7 +334,7 @@ describe('bounded invented mechanisms', () => {
     world.rngState = 12345;
     const weapon =
       world.itemDefinitions[
-        world.items[world.entities.player!.actor!.equippedItemId!]!.definitionId
+        itemFor(world, world.entities.player!.actor!.equippedItemId!)!.definitionId
       ]!;
     weapon.launcher!.accuracy = 0.6;
     world = command(world, { type: 'hunt', targetId: 'hare-1' });
@@ -353,9 +350,19 @@ describe('bounded invented mechanisms', () => {
     let world = makeSling();
     world = command(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 24).world;
-    const position = world.entities['hare-1']!.position;
-    world.entities.player!.position = { ...position };
-    world.entities.ada!.position = { ...position };
+    const position = worldPosition(world.entities['hare-1']!);
+    setSpatialPosition(
+      world,
+      world.entities.player!,
+      { ...position },
+      worldSupport(world.entities.player!),
+    );
+    setSpatialPosition(
+      world,
+      world.entities.ada!,
+      { ...position },
+      worldSupport(world.entities.ada!),
+    );
     world = command(world, { type: 'harvest', targetId: 'hare-1' });
     world = command(world, { type: 'harvest', targetId: 'hare-1' }, 'ada');
     world = advanceWorld(world, 90).world;
@@ -408,9 +415,19 @@ describe('bounded invented mechanisms', () => {
 describe('perception, survival and continuity', () => {
   it('preserves event-time listeners and private memories independently of later positions', () => {
     let world = createWorld();
-    world.entities.ada!.position = { y: 0, x: 26, z: 22 };
+    setSpatialPosition(
+      world,
+      world.entities.ada!,
+      { y: 0, x: 26, z: 22 },
+      worldSupport(world.entities.ada!),
+    );
     world = command(world, { type: 'say', text: 'The secret is moonflower.' });
-    world.entities.ada!.position = { y: 0, x: 12, z: 13 };
+    setSpatialPosition(
+      world,
+      world.entities.ada!,
+      { y: 0, x: 12, z: 13 },
+      worldSupport(world.entities.ada!),
+    );
     expect(
       queryMemories(world, 'ada').some((record) => record.summary.includes('moonflower')),
     ).toBe(false);
@@ -442,7 +459,7 @@ describe('perception, survival and continuity', () => {
     let world = createWorld();
     world.entities.ada!.actor!.fullness = 20;
     for (const item of inventoryFor(world, 'ada'))
-      if (item.definitionId === 'berries') delete world.items[item.id];
+      if (item.definitionId === 'berries') retireItem(world, item.id, 'fixture');
     world = advanceWorld(world, 300).world;
     expect(world.entities.ada!.actor!.alive).toBe(true);
     expect(world.entities.ada!.actor!.fullness).toBeGreaterThan(38);
@@ -452,7 +469,7 @@ describe('perception, survival and continuity', () => {
   });
   it('allows NPC death while preserving separate player recovery and history', () => {
     let world = createWorld();
-    for (const item of inventoryFor(world, 'ada')) delete world.items[item.id];
+    for (const item of inventoryFor(world, 'ada')) retireItem(world, item.id, 'fixture');
     for (const entity of Object.values(world.entities))
       if (entity.resource) entity.resource.quantity = 0;
     for (const actor of [world.entities.player!, world.entities.ada!]) {

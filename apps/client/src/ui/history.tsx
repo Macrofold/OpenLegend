@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { TranscriptPage, TranscriptItem } from '@open-legend/protocol';
 import { Button } from '../design-system/components';
-import { post } from '../api';
+import { getScoped, post } from '../api';
 import { EventTime } from './event-time';
 
 type HistoryPage = TranscriptPage & {
@@ -57,9 +57,7 @@ export function History({
       else query.set('active', 'true');
     }
     try {
-      const response = await fetch(`/api/history?${query}`);
-      if (!response.ok) throw new Error('History could not be loaded.');
-      const next = (await response.json()) as HistoryPage;
+      const next = await getScoped<HistoryPage>(`/api/history?${query}`);
       if (!mounted.current || generation !== request.current) return;
       const scrolling = section.current?.closest<HTMLElement>('.ol-panel-body');
       if (older && scrolling)

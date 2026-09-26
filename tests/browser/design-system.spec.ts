@@ -1,3 +1,4 @@
+import { worldPosition } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../../apps/server/src/config.js';
@@ -57,10 +58,10 @@ test('React design system preserves native play, readable inspection, drafts and
     await page.getByRole('button', { name: 'Resume world', exact: true }).click();
     await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
     await expect(page.locator('#contextTitle')).toHaveText('River reeds');
-    const position = { ...game.service.world.entities.player!.position };
+    const position = { ...worldPosition(game.service.world.entities.player!) };
     await page.locator('#world').click({ position: { x: 900, y: 700 } });
     expect(game.service.world.entities.player!.actor!.action).toBeNull();
-    expect(game.service.world.entities.player!.position).toEqual(position);
+    expect(worldPosition(game.service.world.entities.player!)).toEqual(position);
     await page.locator('#world').click({ button: 'right', position: { x: 480, y: 398 } });
     await page.getByRole('searchbox', { name: 'Find an action' }).fill('make a woven sling');
     await page.getByRole('searchbox', { name: 'Find an action' }).press('Enter');

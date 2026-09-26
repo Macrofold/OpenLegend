@@ -1,3 +1,4 @@
+import { worldPosition } from './spatial-state.js';
 import { describe, expect, it } from 'vitest';
 import { createWorld, quantityOf, reviveActor, spawnWorldEntity } from './index.js';
 
@@ -69,7 +70,7 @@ describe('god world editing (native fixtures)', () => {
     expect(
       spawnWorldEntity(world, {
         type: 'river-stones',
-        position: { ...world.entities.player!.position, surfaceId: 'terrain' },
+        position: { ...worldPosition(world.entities.player!), surfaceId: 'terrain' },
       }).outcome.code,
     ).toBe('occupied');
     expect(JSON.stringify(world)).toBe(JSON.stringify(createWorld(33)));

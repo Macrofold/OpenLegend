@@ -1,3 +1,5 @@
+import { recordSemanticChange } from './dependencies.js';
+import { activelyParticipates } from './participation-state.js';
 import {
   BODY_PROFILES,
   canFlySegment,
@@ -24,7 +26,6 @@ export interface FlightProgress {
 export interface EntitySpatial {
   bodyProfileId: BodyProfileId;
   heading: number;
-  supportSurfaceId: string | null;
   /** A native flight routine is saved work; it never grants a capability from sprite artwork. */
   flight?: FlightProgress;
   fallVelocity?: number;
@@ -35,11 +36,41 @@ export interface FlightRoute {
   climbSpeed: number;
   points: Array<{ position: WorldPoint; landingSurfaceId?: string; waitSeconds: number }>;
 }
-export function groundedSpatial(
-  bodyProfileId: BodyProfileId = 'person',
-  supportSurfaceId = 'terrain',
-): EntitySpatial {
-  return { bodyProfileId, supportSurfaceId, heading: 0 };
+export type Placement =
+  | { mode: 'world'; position: WorldPoint; supportSurfaceId: string | null; revision: number }
+  | { mode: 'contained'; parentEntityId: string; revision: number }
+  | { mode: 'attached'; parentEntityId: string; portId: 'equipment'; revision: number };
+export function worldPlacement(
+  point: WorldPoint,
+  supportSurfaceId: string | null = 'terrain',
+): Placement {
+  return {
+    mode: 'world',
+    position: { x: point.x, y: point.y, z: point.z },
+    supportSurfaceId,
+    revision: 0,
+  };
+}
+export function groundedSpatial(bodyProfileId: BodyProfileId = 'person'): EntitySpatial {
+  return { bodyProfileId, heading: 0 };
+}
+export function hasWorldPlacement(entity: Entity | undefined): boolean {
+  return !!entity && !entity.retirement && entity.placement?.mode === 'world';
+}
+/** Native spatial consumers admit exposed roots before reading geometry. Containment
+ * resolution is a separate bounded read; contained objects never acquire fake XYZ state. */
+export function worldPosition(entity: Entity): WorldPoint;
+export function worldPosition(entity: Entity | undefined): WorldPoint | undefined;
+export function worldPosition(entity: Entity | undefined): WorldPoint | undefined {
+  if (!entity) return undefined;
+  const placement = entity.placement;
+  if (placement?.mode !== 'world')
+    throw new Error('This object has no independent world position.');
+  return placement.position;
+}
+export function worldSupport(entity: Entity | undefined): string | null {
+  const placement = entity?.placement;
+  return placement?.mode === 'world' ? placement.supportSurfaceId : null;
 }
 export function bodyProfile(entity: Entity) {
   const profile = BODY_PROFILES[entity.spatial.bodyProfileId];
@@ -54,23 +85,41 @@ export function bodyProfile(entity: Entity) {
     : profile;
 }
 export function supportedPosition(entity: Entity): SurfacePoint | null {
-  const surfaceId = entity.spatial.supportSurfaceId;
-  return surfaceId === null ? null : { ...entity.position, surfaceId };
+  const surfaceId = worldSupport(entity);
+  return surfaceId === null ? null : { ...worldPosition(entity), surfaceId };
 }
 /** All positional writers use this assignment boundary after their native geometry checks.
  * Appearance and animation never write it. docs/spatial-world.md#what-a-location-means
  */
 export function setSpatialPosition(
+  world: WorldState,
   entity: Entity,
   point: WorldPoint,
   supportSurfaceId: string | null,
 ): void {
   if (!finitePoint(point)) throw new Error('Invalid authoritative position.');
-  const dx = point.x - entity.position.x,
-    dz = point.z - entity.position.z;
+  const dx = point.x - worldPosition(entity).x,
+    dz = point.z - worldPosition(entity).z;
   if (Math.hypot(dx, dz) > 1e-8) entity.spatial.heading = Math.atan2(dx, dz);
-  entity.position = { x: point.x, y: point.y, z: point.z };
-  entity.spatial.supportSurfaceId = supportSurfaceId;
+  const placement = entity.placement;
+  if (placement?.mode !== 'world' || !Number.isSafeInteger(placement.revision + 1))
+    throw new Error('Invalid spatial placement revision.');
+  if (
+    point.x === placement.position.x &&
+    point.y === placement.position.y &&
+    point.z === placement.position.z &&
+    supportSurfaceId === placement.supportSurfaceId
+  )
+    return;
+  recordSemanticChange(world, {
+    kind: 'spatial',
+    entityId: entity.id,
+    before: placement.position,
+    after: point,
+  });
+  placement.position = { x: point.x, y: point.y, z: point.z };
+  placement.supportSurfaceId = supportSurfaceId;
+  placement.revision++;
 }
 /** Unchanged Immer map branches reuse derived geometry/navigation caches. A modified candidate
  * receives its own snapshot; querying an original map would ignore uncommitted geometry edits. */
@@ -138,13 +187,21 @@ export function validateSpatialWorld(world: WorldState): void {
     }
   }
   for (const entity of Object.values(world.entities)) {
+    if (
+      entity.retirement ||
+      entity.placement?.mode === 'contained' ||
+      entity.placement?.mode === 'attached'
+    )
+      continue;
     const s = entity.spatial;
     if (
-      !finitePoint(entity.position) ||
+      !finitePoint(worldPosition(entity)) ||
       !s ||
       !Object.hasOwn(BODY_PROFILES, s.bodyProfileId) ||
       !Number.isFinite(s.heading) ||
-      (s.supportSurfaceId !== null && !resolveSupport(map, entity.position, s.supportSurfaceId))
+      (activelyParticipates(entity) &&
+        worldSupport(entity) !== null &&
+        !resolveSupport(map, worldPosition(entity), worldSupport(entity)!))
     )
       throw new Error(
         `Invalid spatial state for ${entity.id}. A current 3D-format world is required.`,
@@ -154,11 +211,11 @@ export function validateSpatialWorld(world: WorldState): void {
       (!Number.isFinite(s.fallVelocity) ||
         s.fallVelocity > 0 ||
         s.fallVelocity < -100 ||
-        s.supportSurfaceId !== null ||
+        worldSupport(entity) !== null ||
         !!s.flight)
     )
       throw new Error('Invalid falling state.');
-    if (s.supportSurfaceId === null && !s.flight && s.fallVelocity === undefined)
+    if (worldSupport(entity) === null && !s.flight && s.fallVelocity === undefined)
       throw new Error('Unsupported airborne state.');
     if (s.flight) {
       const route = Object.hasOwn(world.flightRoutes, s.flight.routeId)

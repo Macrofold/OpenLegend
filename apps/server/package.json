@@ -8,9 +8,10 @@
     "@open-legend/ai": "workspace:*",
     "@open-legend/domain": "workspace:*",
     "@open-legend/protocol": "workspace:*",
+    "@open-legend/spatial": "workspace:*",
+    "openid-client": "6.8.8",
     "pg": "8.16.3",
-    "zod": "4.6.5",
-    "@open-legend/spatial": "workspace:*"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/pg": "8.15.5"

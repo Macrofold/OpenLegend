@@ -1,3 +1,5 @@
+import { setSpatialPosition, worldSupport } from '@open-legend/domain';
+import { worldPosition } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -79,7 +81,7 @@ describe('world presence, time and durable commands', () => {
       (
         await service.command('fixture-move', {
           type: 'move',
-          position: { ...service.world.entities.player!.position, surfaceId: 'terrain' },
+          position: { ...worldPosition(service.world.entities.player!), surfaceId: 'terrain' },
         })
       ).ok,
     ).toBe(true);
@@ -364,9 +366,19 @@ describe('public projection and a playable native loop', () => {
       entityIds: [],
       importance: 10,
     });
-    service.world.entities.ada!.position = { y: 0, x: 26, z: 22 };
+    setSpatialPosition(
+      service.world,
+      service.world.entities.ada!,
+      { y: 0, x: 26, z: 22 },
+      worldSupport(service.world.entities.ada!),
+    );
     expect((await service.say('unheard', 'ada', 'secret-unheard-speech')).ok).toBe(true);
-    service.world.entities.ada!.position = { y: 0, x: 12, z: 13 };
+    setSpatialPosition(
+      service.world,
+      service.world.entities.ada!,
+      { y: 0, x: 12, z: 13 },
+      worldSupport(service.world.entities.ada!),
+    );
     await store.putJob({
       id: 'private-job',
       kind: 'thought',
@@ -402,7 +414,7 @@ describe('public projection and a playable native loop', () => {
     await activate(service);
     await service.command('already-there', {
       type: 'move',
-      position: { ...service.world.entities.player!.position, surfaceId: 'terrain' },
+      position: { ...worldPosition(service.world.entities.player!), surfaceId: 'terrain' },
     });
     const action = (await projectView(service)).player.action;
     expect(action === null || Number.isFinite(action.progress)).toBe(true);

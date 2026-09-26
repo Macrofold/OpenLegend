@@ -1,6 +1,8 @@
 # Persistent objects, custody, ownership and containment — technical design
 
-**Status:** proposed, not runtime-delivered. [Feature specification](persistent-objects-feature-spec.md) owns behavior. [PO01–PO09](../maintainers/persistent-objects.md) refines DF01/BW07; P1 owns claims, P2 current authority, P4 dependency invalidation, and SL00 consistent capture.
+**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](persistent-objects-feature-spec.md) owns behavior. [PO01–PO09](../maintainers/persistent-objects.md) refines DF01/BW07; P1 owns claims, P2 current authority, P4 dependency invalidation, and SL00 consistent capture.
+
+The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
 ## 1. Concrete baseline and migration consequence
 
@@ -47,16 +49,16 @@ Active items keep positive safe-integer quantity. Retirement removes availabilit
 
 Extend current record ownership as follows; exact migration version is selected after DF02 reconciliation, not hard-coded against a moving branch:
 
-| Existing/new logical record | Required change and access path |
-| --- | --- |
-| `sim_entities` | Preserve domain identity; distinguish active versus retired physical identity. Validate and uniquely index `(world_id, entity_id)` before semantic references use it. |
-| `sim_items` | Reparent the active lot component to its entity; retain definition/unit pins, checked quantity and individual/homogeneous state. Retire the top-level independently writable `world.items` representation. |
-| `sim_placements` | One row per active physical entity; tagged world/contained/attached fields with row-local exclusivity checks; indexes on parent/slot and attachment parent/port. |
-| `sim_entity_geometry` | Shape/body data only; no independently writable duplicate support/location. |
-| Consumed container records | Pinned policy and inventory/subtree revisions; a transactionally maintained load summary is derived, never independently editable. |
-| Consumed ownership-interest records | Initially only explicit declared ownership required by this consumer; world-entity holder, kind, source/receipt and revision. No inferred account-title or speculative financial ownership tables. |
-| Lineage/retirement records | Source/successor identities, operation kind, quantity/unit and commit/receipt; indexed source and destination lookup. Preserve historical identity without actionable redirection. |
-| Reservations/transfers | Reuse P1's resource owner and records; do not introduce inventory-specific balances or reservations. |
+| Existing/new logical record         | Required change and access path                                                                                                                                                                            |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sim_entities`                      | Preserve domain identity; distinguish active versus retired physical identity. Validate and uniquely index `(world_id, entity_id)` before semantic references use it.                                      |
+| `sim_items`                         | Reparent the active lot component to its entity; retain definition/unit pins, checked quantity and individual/homogeneous state. Retire the top-level independently writable `world.items` representation. |
+| `sim_placements`                    | One row per active physical entity; tagged world/contained/attached fields with row-local exclusivity checks; indexes on parent/slot and attachment parent/port.                                           |
+| `sim_entity_geometry`               | Shape/body data only; no independently writable duplicate support/location.                                                                                                                                |
+| Consumed container records          | Pinned policy and inventory/subtree revisions; a transactionally maintained load summary is derived, never independently editable.                                                                         |
+| Consumed ownership-interest records | Initially only explicit declared ownership required by this consumer; world-entity holder, kind, source/receipt and revision. No inferred account-title or speculative financial ownership tables.         |
+| Lineage/retirement records          | Source/successor identities, operation kind, quantity/unit and commit/receipt; indexed source and destination lookup. Preserve historical identity without actionable redirection.                         |
+| Reservations/transfers              | Reuse P1's resource owner and records; do not introduce inventory-specific balances or reservations.                                                                                                       |
 
 Storage structural `parent_id` is distinct from semantic `parentEntityId`. Physical containment references use world-local identity and restrictive deletion semantics. SQL checks enforce within-row placement alternatives and scalar bounds; acyclicity, capacity and coupled transfer require the same transactional domain validator. Current `CREATE TABLE IF NOT EXISTS` generation alone does not migrate existing FKs, columns or indexes.
 

@@ -7,6 +7,8 @@ export interface RecordNode {
   children?: Record<string, RecordCollection>;
   columns?: Record<string, { sql: string; value: (value: JsonRecord, path: string[]) => unknown }>;
   indexes?: string[][];
+  uniqueIndexes?: string[][];
+  constraints?: string[];
 }
 export type JsonRecord = Record<string, unknown>;
 export interface RecordCollection {
@@ -48,6 +50,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       // Keep even small authored records out of the frequently written world header.
       knowledgePolicy: one('config_knowledge'),
       itemHandling: one('config_item_handling'),
+      participationPolicy: one('config_participation'),
       statusEffectPolicy: one('config_status_effects'),
       authorship: one('world_authorship', {
         creatorAccountIds: list('world_creators'),
@@ -68,7 +71,11 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         }),
       }),
       entities: map('sim_entities', {
-        position: one('sim_placements'),
+        placement: one('sim_placements'),
+        item: one('sim_items'),
+        container: one('sim_containers'),
+        declaredOwner: one('sim_declared_owners'),
+        retirement: one('sim_object_retirements'),
         spatial: one('sim_entity_geometry'),
         actor: one('sim_actors', {
           action: one('sim_processes'),
@@ -90,7 +97,10 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         attributes: map('sim_attributes'),
         mechanismFields: map('sim_mechanism_fields'),
       }),
-      items: map('sim_items'),
+      objectState: one('sim_object_state'),
+      objectLineage: map('sim_object_lineage'),
+      resourceReservations: map('sim_resource_reservations'),
+      workState: one('sim_work_state', { invocations: map('sim_work_invocations') }),
       itemDefinitions: map('definition_items'),
       recipes: map('definition_recipes'),
       flightRoutes: map('sim_flight_routes'),
@@ -108,7 +118,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       perceptionEpisodes: actorMaps('mind_exposure'),
       visibleObjects: actorLists('mind_visible_objects'),
       visiblePeople: actorLists('mind_visible_people'),
-      appraisals: actorLists('mind_appraisals', 'id'),
+      appraisals: actorMaps('mind_appraisals'),
+      appraisalProcesses: map('mind_appraisal_processes'),
       kinships: map('sim_kinships'),
       conversations: one('conversation_state', {
         records: map('conversations', { intervals: list('conversation_membership', 'id') }),
@@ -129,6 +140,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       declarationReceipts: map('declaration_receipts'),
     }),
     milestones: map('world_milestones'),
+    actorMilestones: map('actor_milestones'),
   },
 };
 
@@ -150,14 +162,17 @@ columns(
   { entity_id: textColumn('id'), kind: textColumn('kind'), name: textColumn('name') },
   [['kind', 'entity_id'], ['entity_id']],
 );
+const physicalId = { sql: 'TEXT NOT NULL', value: (_value: JsonRecord, path: string[]) => path[2] };
 columns(
   'sim_items',
   {
-    item_id: textColumn('id'),
-    owner_id: textColumn('ownerId'),
-    definition_id: textColumn('definitionId'),
+    item_id: physicalId,
+    definition_id: {
+      sql: 'TEXT NOT NULL',
+      value: (value) => (value['definitionPin'] as JsonRecord)['id'],
+    },
     quantity: {
-      sql: 'BIGINT NOT NULL CHECK (quantity > 0 AND quantity=CAST(quantity AS BIGINT))',
+      sql: 'BIGINT NOT NULL CHECK (quantity > 0 AND quantity <= 9007199254740991)',
       value: (value) => {
         if (!Number.isSafeInteger(value['quantity']) || Number(value['quantity']) <= 0)
           throw new Error('Inventory quantities must be positive safe integers.');
@@ -165,14 +180,49 @@ columns(
       },
     },
   },
+  [['definition_id', 'item_id']],
+);
+columns(
+  'sim_placements',
+  {
+    entity_id: physicalId,
+    placement_mode: {
+      ...textColumn('mode'),
+      sql: "TEXT NOT NULL CHECK (placement_mode IN ('world','contained','attached'))",
+    },
+    physical_parent_id: textColumn('parentEntityId'),
+    port_id: textColumn('portId'),
+    support_id: textColumn('supportSurfaceId'),
+    x: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) => (value['position'] as JsonRecord | undefined)?.['x'] ?? null,
+    },
+    y: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) => (value['position'] as JsonRecord | undefined)?.['y'] ?? null,
+    },
+    z: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) => (value['position'] as JsonRecord | undefined)?.['z'] ?? null,
+    },
+  },
   [
-    ['owner_id', 'item_id'],
-    ['definition_id', 'item_id'],
+    ['physical_parent_id', 'entity_id'],
+    ['x', 'z'],
   ],
 );
-columns('sim_placements', { x: numberColumn('x'), y: numberColumn('y'), z: numberColumn('z') }, [
-  ['x', 'z'],
-]);
+RECORD_NODES.get('sim_entities')!.uniqueIndexes = [['entity_id']];
+RECORD_NODES.get('sim_items')!.uniqueIndexes = [['item_id']];
+RECORD_NODES.get('sim_placements')!.uniqueIndexes = [['entity_id']];
+RECORD_NODES.get('sim_placements')!.constraints = [
+  'FOREIGN KEY(world_id,physical_parent_id) REFERENCES sim_entities(world_id,entity_id) ON DELETE RESTRICT',
+  "CHECK ((placement_mode='world' AND physical_parent_id IS NULL AND port_id IS NULL AND x IS NOT NULL AND y IS NOT NULL AND z IS NOT NULL) OR (placement_mode='contained' AND physical_parent_id IS NOT NULL AND port_id IS NULL AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL) OR (placement_mode='attached' AND physical_parent_id IS NOT NULL AND port_id='equipment' AND x IS NULL AND y IS NULL AND z IS NULL AND support_id IS NULL))",
+];
+columns(
+  'sim_object_lineage',
+  { source_id: textColumn('sourceId'), target_id: textColumn('targetId') },
+  [['source_id'], ['target_id']],
+);
 const actorColumn = {
   sql: 'TEXT NOT NULL',
   value: (_value: JsonRecord, path: string[]) => (path[1] === 'experience' ? path[3] : path[2]),
@@ -219,3 +269,26 @@ columns(
 );
 
 export const WORLD_RECORD_TABLES = ['world_head', ...RECORD_NODES.keys()] as const;
+
+/** Only the checked one-time record conversion reads the retired topology. */
+export function legacyObjectRecordSchema(): RecordNode {
+  const clone = (node: RecordNode): RecordNode => ({
+    ...node,
+    children:
+      node.children &&
+      Object.fromEntries(
+        Object.entries(node.children).map(([key, value]) => [
+          key,
+          { ...value, node: clone(value.node) },
+        ]),
+      ),
+  });
+  const schema = clone(WORLD_RECORD_SCHEMA),
+    world = schema.children!['world']!.node.children!,
+    entities = world['entities']!.node.children!;
+  entities['position'] = entities['placement']!;
+  delete entities['placement'];
+  world['items'] = { mode: 'map', node: { table: 'sim_items' } };
+  delete entities['item'];
+  return schema;
+}

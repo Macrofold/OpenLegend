@@ -1,3 +1,4 @@
+import { allItems, setSpatialPosition, worldSupport } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import type {
   AiClient,
@@ -212,9 +213,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     expect(h.service.world.knowledge['player']).toHaveLength(1);
     expect(h.service.world.knowledge['ada']).toHaveLength(0);
     expect(
-      Object.values(h.service.world.items).some(
-        (item) => item.definitionId === recipe?.outputDefinitionId,
-      ),
+      allItems(h.service.world).some((item) => item.definitionId === recipe?.outputDefinitionId),
     ).toBe(false);
     expect(
       (
@@ -457,11 +456,11 @@ describe('AI director with explicit fixtures, no live calls', () => {
         return wait.promise;
       },
     });
-    const berries = Object.values(h.service.world.items).find(
+    const berries = allItems(h.service.world).find(
       (item) => item.ownerId === 'ada' && item.definitionId === 'berries',
     )!;
     await h.change((world) => {
-      world.items[berries.id]!.quantity = 1;
+      world.entities[berries.id]!.item!.quantity = 1;
     });
     h.director.considerThought();
     await started.promise;
@@ -471,7 +470,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     const before = structuredClone(h.service.world);
     wait.resolve(judgment(h.calls.judges.at(-1)!, 'level2'));
     await h.director.idle();
-    expect(h.service.world.items).toEqual(before.items);
+    expect(allItems(h.service.world)).toEqual(allItems(before));
     expect(h.service.world.entities['ada']!.actor!.fullness).toBe(
       before.entities['ada']!.actor!.fullness,
     );
@@ -492,7 +491,12 @@ describe('AI director with explicit fixtures, no live calls', () => {
     await h.director.submit('chat', 'far-reply', 'Hello Ada.');
     await started.promise;
     await h.change((world) => {
-      world.entities['player']!.position = { y: 0, x: 26, z: 22 };
+      setSpatialPosition(
+        world,
+        world.entities['player']!,
+        { y: 0, x: 26, z: 22 },
+        worldSupport(world.entities['player']!),
+      );
     });
     wait.resolve(value(h.calls.generations[0]!.requestId, 'openai', speechFixture('Hello there.')));
     await h.director.idle();
@@ -516,12 +520,12 @@ describe('AI director with explicit fixtures, no live calls', () => {
       if (fault === 'hidden-material')
         draft.inputs.push({ definitionId: 'bone', quantity: 1, role: 'point' });
       const h = await harness({ generate: (request) => value(request.requestId, 'openai', draft) });
-      const beforeItems = structuredClone(h.service.world.items);
+      const beforeItems = structuredClone(allItems(h.service.world));
       await h.director.submit('invention', `invalid-${fault}`, 'A physical sling.');
       await h.director.idle();
       expect((await h.store.getJob(`invalid-${fault}`))?.status).toBe('failed');
       expect(h.service.world.recipes).toEqual({});
-      expect(h.service.world.items).toEqual(beforeItems);
+      expect(allItems(h.service.world)).toEqual(beforeItems);
       expect(h.service.world.knowledge['player']).toEqual([]);
     },
   );

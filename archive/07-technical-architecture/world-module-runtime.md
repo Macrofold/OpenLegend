@@ -186,9 +186,17 @@ Threshold episode/detection/notification behavior stays in EPR04. The attribute 
 
 ## 5. Effects, ownership, and deterministic composition
 
+The approved [P1 implementation](../../docs/projects/shared-state-contributions-tech-design.md)
+delivers typed stock operations, atomic claims with explicitly partial transfer families,
+and independently removable active capabilities through existing owners. These remain
+finite native implementations with SC02–SC08 evidence. Native extraction preserves sequential order;
+ending an active contribution never reverses committed stock history.
+
 Use the existing centralized semantic mutation principle. A module proposes typed effects or contributions to an owning native service; it never obtains a generic `set(path, value)` API into the whole world. Private `WorldChanges` operations remain a persistence implementation detail, not a mod API.
 
 Required validation covers target identity, capabilities, current policy and definition versions, applicable writer, source/resource claims, units/bounds, and the relevant expected revision. Multiple independently valid proposals still compete for finite resources.
+
+Every resource writer, including creator edits and native rates, preserves stock backing active holds. A coupled claim settles its own consumed hold in the same atomic draft before publishing the debit. An unsupported mandatory debit refuses the complete transition without advancing time or publishing a prefix; it does not silently spend another process's reservation.
 
 Owner rules define combination semantics explicitly: addition, multiplication, priority, saturation, exclusive replacement, or a supported dependency phase. Clamp-after-sum versus clamp-per-effect can differ and must not be changed accidentally. Coupled debit and credit commit under the same transfer identity.
 
@@ -333,6 +341,12 @@ Source provenance may be retained server-side without being fully disclosed to t
 Advanced nonverbal controllers may use a different internal representation. Standard AG supplies one operational contract, not a requirement that every mechanism use verbal thoughts. All controllers still emit supported proposals or native commands through authoritative admission; no shared mind gets an ambient database handle.
 
 ## 9. Change dependencies and work budgets
+
+The approved [P4 implementation](../../docs/projects/dependency-invalidation-tech-design.md)
+uses mandatory query-membership dependencies and captured-generation acknowledgment.
+Root invocation budgets include descendants and explicitly bounded recurrence; incomplete
+queries cannot establish absence. DI01–DI08 own delivery and qualification. Existing
+EPR/SW scheduling, geometry and evidence semantics remain authoritative.
 
 A module's scheduling adapter declares relevant change keys and deadline kinds. EPR consumes them through its single actor intake; PF owns general budget and concurrency qualification.
 

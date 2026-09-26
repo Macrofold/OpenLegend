@@ -1,3 +1,4 @@
+import { createItemLot } from './index.js';
 import { describe, expect, it } from 'vitest';
 import {
   admitDeclaration,
@@ -76,12 +77,7 @@ describe('untrusted dictionary identifiers', () => {
 
   it.each(inheritedIds)('rejects command references to %s and returns safe scoped reads', (id) => {
     const world = createWorld();
-    world.items['fixture-raw'] = {
-      id: 'fixture-raw',
-      definitionId: 'raw_meat',
-      quantity: 1,
-      ownerId: 'player',
-    };
+    createItemLot(world, 'player', 'raw_meat', 1, 'fixture-raw');
     const payloads: Record<string, unknown>[] = [
       { type: 'gather', targetId: id },
       { type: 'harvest', targetId: id },

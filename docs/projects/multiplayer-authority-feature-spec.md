@@ -1,6 +1,8 @@
 # Multiplayer principal, control and private projections — feature specification
 
-**Status:** proposed implementation, not a hosted-multiplayer readiness claim. Priority 2. [Technical design](multiplayer-authority-tech-design.md) owns the implementation; [MP01/MP04 and their delivery slices](../maintainers/multiplayer.md#priority-2-implementation-slices) own work. [Foundation package](foundations-1-5.md) defines common scope.
+**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 2. [Technical design](multiplayer-authority-tech-design.md) owns the implementation; [MP01/MP04 and their delivery slices](../maintainers/multiplayer.md#priority-2-implementation-slices) own work. [Foundation package](foundations-1-5.md) defines common scope.
+
+The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
 ## 1. Outcome and inherited policy
 
@@ -52,16 +54,16 @@ An authorized save/load operation restores gameplay, not historical account acce
 
 ## 3. Permissions and information surfaces
 
-| Surface | Required experience |
-| --- | --- |
-| World/character selection | Shows only authorized choices; no public enumeration of private worlds or unassigned actors. |
-| Command and action preview | Bound to current controlled actor and scoped targets; preview is not a reservation or later permission. |
-| Character view and inventory | Current account/actor scope; another account cannot select a more privileged actor via query/body fields. |
-| NPC inspection | Existing explicit creator permissions may apply; that does not extend to another human's private mind. |
-| Human notes, memories and messages | Owner/participant permission, including derived summaries, counts, search hits and exports. |
-| World-agent/invention work | Uses the initiating principal's explicit scope; full invention permission remains MP02, not automatic creator status. |
-| Saves and operations | Separate administrative capability; no blanket human-private inspection right. |
-| Reconnect and streaming | Fresh authorization and timeline/control scope; mismatched cursors require a scoped reset. |
+| Surface                            | Required experience                                                                                                   |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| World/character selection          | Shows only authorized choices; no public enumeration of private worlds or unassigned actors.                          |
+| Command and action preview         | Bound to current controlled actor and scoped targets; preview is not a reservation or later permission.               |
+| Character view and inventory       | Current account/actor scope; another account cannot select a more privileged actor via query/body fields.             |
+| NPC inspection                     | Existing explicit creator permissions may apply; that does not extend to another human's private mind.                |
+| Human notes, memories and messages | Owner/participant permission, including derived summaries, counts, search hits and exports.                           |
+| World-agent/invention work         | Uses the initiating principal's explicit scope; full invention permission remains MP02, not automatic creator status. |
+| Saves and operations               | Separate administrative capability; no blanket human-private inspection right.                                        |
+| Reconnect and streaming            | Fresh authorization and timeline/control scope; mismatched cursors require a scoped reset.                            |
 
 Errors should be actionable without revealing whether an unauthorized resource exists. Distinguish “control moved,” “sign in again,” “world access changed,” “world restored,” “state changed” and “service unavailable” where the requesting account is entitled to that distinction.
 
@@ -93,4 +95,4 @@ Document command/projection latency, per-connection queue age, payload size and 
 
 ## 7. Questions and decisions
 
-**No blocking product question is required to complete this design.** Proposed defaults are explicit control takeover, one active embodiment per account/world, external OIDC authentication with server-owned sessions, cooperative admission and the accepted fade/inactive lifecycle. The identity provider/production domain and numerical exit/heartbeat/session durations are deployment/tuning inputs, not reasons to leave authority semantics undesigned. Actual values must be configured and recorded before the corresponding live deployment.
+**No blocking product question is required to complete this design.** Accepted defaults are explicit control takeover, one active embodiment per account/world, external OIDC authentication with server-owned sessions, cooperative admission and the accepted fade/inactive lifecycle. The identity provider/production domain and numerical exit/heartbeat/session durations are deployment/tuning inputs, not reasons to leave authority semantics undesigned. Actual values must be configured and recorded before the corresponding live deployment.

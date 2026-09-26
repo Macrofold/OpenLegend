@@ -1,3 +1,5 @@
+import { setSpatialPosition, worldSupport } from '@open-legend/domain';
+import { worldPosition } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../../apps/server/src/config.js';
@@ -16,7 +18,7 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
   const marker = structuredClone(game.service.world.entities.reeds!);
   marker.id = 'vision-fixture';
   marker.name = 'Vision fixture';
-  marker.position = { y: 0, x: 2, z: 2 };
+  setSpatialPosition(game.service.world, marker, { y: 0, x: 2, z: 2 }, worldSupport(marker));
   game.service.world.entities[marker.id] = marker;
   await new Promise<void>((resolve, reject) => {
     game.server.once('error', reject);
@@ -35,7 +37,7 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
     await expect(blur).toHaveCSS('backdrop-filter', 'blur(14px)');
     await expect(blur).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(blur).toHaveCSS('pointer-events', 'none');
-    const original = { ...game.service.world.entities.player!.position };
+    const original = { ...worldPosition(game.service.world.entities.player!) };
     const field = await blur.evaluate((element) => {
       const style = getComputedStyle(element);
       return Object.fromEntries(
@@ -63,7 +65,12 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
     const relocate = async (position: { y: number; x: number; z: number }) =>
       await game.service.transition((previous) => {
         const world = structuredClone(previous);
-        world.entities.player!.position = position;
+        setSpatialPosition(
+          world,
+          world.entities.player!,
+          position,
+          worldSupport(world.entities.player!),
+        );
         world.sequence++;
         return {
           world,

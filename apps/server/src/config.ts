@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { accountBindingSchema } from './authority.js';
 import { DEFAULT_MACROFOLD_MODEL } from './macrofold-model.js';
 import { resolve } from 'node:path';
 
@@ -43,7 +45,57 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   const worldPreset = env['OPEN_LEGEND_WORLD_PRESET'] ?? 'wilderness';
   if (!['wilderness', 'reservoir-demo', 'touch-demo'].includes(worldPreset))
     throw new Error('Unsupported OPEN_LEGEND_WORLD_PRESET.');
+  const mode = z.enum(['local', 'oidc']).parse(env['OPEN_LEGEND_AUTH_MODE'] ?? 'local');
+  const host = env['OPEN_LEGEND_HOST'] ?? '127.0.0.1';
+  const loopback = (name: string) => ['localhost', '127.0.0.1', '[::1]', '::1'].includes(name);
+  if (mode === 'local' && !loopback(host))
+    throw new Error('Local authentication requires a loopback bind address.');
+  const origin = env['OPEN_LEGEND_PUBLIC_ORIGIN'] ?? '';
+  const issuer = env['OPEN_LEGEND_OIDC_ISSUER'] ?? '';
+  const clientId = env['OPEN_LEGEND_OIDC_CLIENT_ID'] ?? '';
+  const insecureLoopback = env['OPEN_LEGEND_OIDC_LOOPBACK_HTTP'] === 'true';
+  if (mode === 'oidc') {
+    const publicUrl = new URL(origin),
+      provider = new URL(issuer);
+    if (
+      publicUrl.origin !== origin ||
+      publicUrl.username ||
+      publicUrl.password ||
+      provider.username ||
+      provider.password ||
+      provider.hash ||
+      provider.search ||
+      !clientId
+    )
+      throw new Error('OIDC requires an exact public origin, issuer and client ID.');
+    if (
+      insecureLoopback
+        ? !['http:', 'https:'].includes(publicUrl.protocol) ||
+          !['http:', 'https:'].includes(provider.protocol) ||
+          !loopback(publicUrl.hostname) ||
+          !loopback(provider.hostname) ||
+          !loopback(host)
+        : publicUrl.protocol !== 'https:' || provider.protocol !== 'https:'
+    )
+      throw new Error('OIDC requires HTTPS; explicit development HTTP is loopback-only.');
+  }
+  const bindings = z
+    .array(accountBindingSchema)
+    .max(256)
+    .parse(JSON.parse(env['OPEN_LEGEND_ACCOUNT_BINDINGS'] ?? '[]'));
+  if (mode === 'oidc' && bindings.some((binding) => binding.issuer !== issuer))
+    throw new Error('Account bindings must use the configured issuer.');
   return {
+    authentication: {
+      mode,
+      origin,
+      issuer,
+      clientId,
+      clientSecret: env['OPEN_LEGEND_OIDC_CLIENT_SECRET'] ?? '',
+      insecureLoopback,
+      bindings,
+      sessionMs: numberSetting(env, 'OPEN_LEGEND_SESSION_HOURS', 8, 0.1, 24) * 3_600_000,
+    },
     worldPreset,
     databaseUrl: env['OPEN_LEGEND_DATABASE_URL'] ?? '',
     embeddingKey: env['OPENAI_EMBEDDING_API_KEY'] ?? env['OPENAI_API_KEY'] ?? '',
@@ -56,12 +108,13 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     macrofoldMiniModel: env['MACROFOLD_MINI_MODEL'] ?? 'openai/gpt-5-mini',
     macrofoldComplexModel: env['MACROFOLD_COMPLEX_MODEL'] ?? 'openai/gpt-5',
     macrofoldSummaryModel: env['MACROFOLD_SUMMARY_MODEL'] ?? 'openai/gpt-5-nano',
-    host: '127.0.0.1',
+    host,
     godMode: env['OPEN_LEGEND_GOD_MODE'] === 'true',
     port: numberSetting(env, 'PORT', 3210, 1024, 65535),
     databasePath: resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data', 'world.sqlite'),
     seed: numberSetting(env, 'WORLD_SEED', 1086, 1, 0x7fffffff),
     baseRatio: 60,
+    exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,
     budgetUsd: numberSetting(env, 'AI_BUDGET_USD', 50, 0, 100),
     conversationInactivitySeconds: numberSetting(
       env,

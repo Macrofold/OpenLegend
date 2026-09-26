@@ -29,9 +29,9 @@ Build the initial personal-world manual save/load flow through SL00–SL05 and S
 
 Dependencies: none; use the existing authoritative transition and repository boundaries.
 
-- [ ] Define a small coordination interface for capture, dependency enumeration, candidate validation/restoration and derived-state rebuilding. Keep payload interpretation with the owning subsystem; a single implementation is sufficient initially.
-- [ ] Map current state owners to the design's save-scope categories and identify gaps in complete capture, including state outside the hot world object. Keep evolving details with those owners, not in this tracker.
-- [ ] Document how a new subsystem joins the save/load path and adds meaningful round-trip coverage. Do not introduce a universal object hierarchy, automatic reflection serializer or speculative plugin registry.
+- [x] Define a small coordination interface for capture, dependency enumeration, candidate validation/restoration and derived-state rebuilding. Keep payload interpretation with the owning subsystem; a single implementation is sufficient initially.
+- [x] Map current state owners to the design's save-scope categories and identify gaps in complete capture, including state outside the hot world object. Keep evolving details with those owners, not in this tracker.
+- [x] Document how a new subsystem joins the save/load path and adds meaningful round-trip coverage. Do not introduce a universal object hierarchy, automatic reflection serializer or speculative plugin registry.
 
 Exit: an integration path demonstrated with the current persistence boundary and an additive fixture change, without freezing domain schemas or requiring framework edits for every new field.
 
@@ -140,4 +140,4 @@ Exit: each enabled extension has scoped failure and recovery evidence; unsupport
 
 ## Foundation integration acceptance
 
-SL00's owner inventory must explicitly classify each subsystem's rewindable authority, non-rewindable grants/revocations/accounting/maintenance controls, derived indexes and invalidated asynchronous work. Include inactive humans, retained/summoned ghosts when supported, contribution/definition pins and approval/activation receipts. Reuse current generation and receipt boundaries; no new subsystem-specific restore patch outside its declared owner. Coordinate DF02 and INV-5.6 and prove continuation after save/load with a changed grant and pending job. The [branch audit](remaining-foundational-work.md#branch-coverage-snapshot) records partial save work; it does not close SL00 or SL09.
+SL00's [current owner inventory](../save-and-load.md#current-subsystem-integration) classifies the implemented foundation state, non-rewindable grants/revocations/accounting, derived indexes and invalidated asynchronous work. Future maintenance and ghost owners must join it when implemented. Include inactive humans, retained/summoned ghosts when supported, contribution/definition pins and approval/activation receipts. Reuse current generation and receipt boundaries; no new subsystem-specific restore patch outside its declared owner. Coordinate DF02 and INV-5.6 and prove continuation after save/load with a changed grant and pending job. The foundation integrations and both-adapter capture/restore evidence close the current SL00 integration boundary; broader SL09 and future branch integration remain open.

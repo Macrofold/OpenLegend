@@ -1,6 +1,8 @@
 # Dependency invalidation and aggregate work containment — technical design
 
-**Status:** proposed implementation, not a completed performance change. [Feature specification](dependency-invalidation-feature-spec.md) owns behavior; [DI01–DI08](../maintainers/dependency-invalidation.md) decomposes EWF08. EPR05 remains the ActorWork/reaction owner, SW owns spatial queries and PF owns measurement. [Foundation package](foundations-1-5.md) records shared dependencies.
+**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](dependency-invalidation-feature-spec.md) owns behavior; [DI01–DI08](../maintainers/dependency-invalidation.md) decomposes EWF08. EPR05 remains the ActorWork/reaction owner, SW owns spatial queries and PF owns measurement. [Foundation package](foundations-1-5.md) records shared dependencies.
+
+The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
 ## 1. Baseline and architectural decision
 
@@ -21,8 +23,12 @@ type Dependency =
   | { kind: 'value'; owner: string; key: string; revision: number }
   | { kind: 'existence'; scope: string; entityId: string; revision: number }
   | {
-      kind: 'membership'; queryFamily: string; predicateVersion: string;
-      scopeKey: string; parametersDigest: string; membershipRevision: number;
+      kind: 'membership';
+      queryFamily: string;
+      predicateVersion: string;
+      scopeKey: string;
+      parametersDigest: string;
+      membershipRevision: number;
     }
   | { kind: 'geometry'; spaceKey: string; footprintKey: string; revision: number }
   | { kind: 'authority'; scopeKey: string; revision: number }
@@ -114,12 +120,12 @@ Persist gameplay invocation progress, root lineage, interval phase and outstandi
 
 Classify work at its semantic owner:
 
-| Class | Exhaustion/failure handling |
-| --- | --- |
-| Atomic native action/effect group | Reserve its complete required work before acceptance. Reject before effects when admission fails; never commit an arbitrary prefix. |
+| Class                                              | Exhaustion/failure handling                                                                                                                                                                                                          |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Atomic native action/effect group                  | Reserve its complete required work before acceptance. Reject before effects when admission fails; never commit an arbitrary prefix.                                                                                                  |
 | Required already-owed native continuation/evidence | Preserve its due state and use an existing proven bounded continuation contract, or stop at the safe owner/world boundary before advancing past the unprocessed consequence. Never silently omit damage, recipients or elapsed work. |
-| Optional cognition/presentation/report | Use the existing bounded queue, current priority and honest deferred/unavailable result; no automatic paid retry or invented in-world explanation. |
-| Diagnostics | Bound/drop diagnostic detail under its retention policy without changing canonical gameplay or private disclosure. |
+| Optional cognition/presentation/report             | Use the existing bounded queue, current priority and honest deferred/unavailable result; no automatic paid retry or invented in-world explanation.                                                                                   |
+| Diagnostics                                        | Bound/drop diagnostic detail under its retention policy without changing canonical gameplay or private disclosure.                                                                                                                   |
 
 An admitted native implementation exceeding its declared mandatory envelope is a contract violation, not permission to truncate output. Discard the uncommitted candidate, retain the prior authoritative state and report/quarantine the narrow supported scope under the existing failure policy. Already committed effects remain history. If a required world phase cannot safely continue, use the current paused/error boundary and require explicit recovery; do not label skipped simulation time successful.
 

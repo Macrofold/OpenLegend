@@ -1,3 +1,12 @@
+import { captureAppraisalIndex } from './appraisal-index.js';
+import { captureWorkAllocations } from './work-budget.js';
+import { captureAppraisalResidency } from './appraisal-residency.js';
+import { captureObjectIndex } from './objects.js';
+import { captureSemanticChanges } from './dependencies.js';
+import { captureRootIndex } from './entity-index.js';
+import { captureReservationIndex } from './resource-claims.js';
+import { captureContributionSources } from './status-capabilities.js';
+import { captureContributionResidency } from './contribution-residency.js';
 import { Immer, current, isDraft, original, enablePatches, freeze } from 'immer';
 import type { WorldEvent, WorldState } from './types.js';
 
@@ -10,6 +19,33 @@ const eventLineages = new WeakMap<WorldEvent[], EventLineage>();
 type RecordLineage = { tip: unknown[] };
 const recordLineages = new WeakMap<unknown[], RecordLineage>();
 const admittedRecords = new WeakMap<WorldState, object[]>();
+const changedEntities = new WeakMap<WorldState, ReadonlySet<string>>();
+const entitySuccessors = new WeakMap<
+  WorldState['entities'],
+  { next: WeakRef<WorldState['entities']>; changed: ReadonlySet<string> }
+>();
+/** Exact immutable write lineage, bounded to one routine persistence window. Forks,
+ * mutable builders, collected links and long gaps deliberately use the complete diff. */
+export function entityChangesBetween(
+  before: WorldState['entities'],
+  after: WorldState['entities'],
+): ReadonlySet<string> | undefined {
+  if (!Object.isFrozen(before) || !Object.isFrozen(after)) return;
+  const changed = new Set<string>();
+  let cursor = before;
+  for (let steps = 0; cursor !== after && steps < 1024; steps++) {
+    const link = entitySuccessors.get(cursor),
+      next = link?.next.deref();
+    if (!link || !next) return;
+    for (const id of link.changed) changed.add(id);
+    cursor = next;
+  }
+  return cursor === after ? changed : undefined;
+}
+/** Exact write set from the most recent transition; no retained base-world reference. */
+export function changedEntityIds(world: WorldState): ReadonlySet<string> | undefined {
+  return changedEntities.get(world);
+}
 /** Newly copied event/experience values are sealed only when the transition has finished
  * all mutations. Sealing earlier could freeze data still owned by a caller.
  */
@@ -50,12 +86,30 @@ export function finishWorld(world: WorldState): WorldState {
   if (!isDraft(world)) return world;
   for (const value of admittedRecords.get(world) ?? []) freeze(value, true);
   admittedRecords.delete(world);
+  const publishObjects = captureObjectIndex(world);
+  const publishAppraisals = captureAppraisalIndex(world);
+  const publishAllocations = captureWorkAllocations(world);
+  const publishAppraisalResidency = captureAppraisalResidency(world);
+  const publishChanges = captureSemanticChanges(world);
+  const publishRoots = captureRootIndex(world);
+  const publishReservations = captureReservationIndex(world);
+  const publishContributionSources = captureContributionSources(world);
+  const publishContributionResidency = captureContributionResidency(world);
   const base = original(world)!;
   const before = base.events;
   let appendOnly = true;
   const arrays = new Map<unknown[], { path: (string | number)[]; appendOnly: boolean }>();
+  const entityIds = new Set<string>();
   const result = drafts.finishDraft(world, (patches) => {
-    for (const { op, path } of patches) {
+    for (const { op, path, value: patchValue } of patches) {
+      if (path[0] === 'entities') {
+        if (typeof path[1] === 'string') entityIds.add(path[1]);
+        else {
+          for (const id of Object.keys(base.entities)) entityIds.add(id);
+          if (patchValue && typeof patchValue === 'object')
+            for (const id of Object.keys(patchValue)) entityIds.add(id);
+        }
+      }
       let value: unknown = base;
       for (let depth = 0; depth < path.length; depth++) {
         if (Array.isArray(value)) {
@@ -85,6 +139,18 @@ export function finishWorld(world: WorldState): WorldState {
           path[1] >= before.length),
     );
   });
+  changedEntities.set(result, entityIds);
+  if (base.entities !== result.entities && Object.isFrozen(base.entities))
+    entitySuccessors.set(base.entities, { next: new WeakRef(result.entities), changed: entityIds });
+  publishChanges(result, result !== base);
+  publishRoots(result, entityIds);
+  publishReservations(result);
+  publishContributionSources(result, entityIds);
+  publishContributionResidency(result, entityIds);
+  publishObjects(result, entityIds);
+  publishAppraisals(result);
+  publishAllocations(result);
+  publishAppraisalResidency(result);
   for (const [previous, change] of arrays) {
     if (!change.appendOnly) continue;
     let next: unknown = result;

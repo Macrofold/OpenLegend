@@ -1,3 +1,4 @@
+import { itemFor } from '@open-legend/domain';
 import { currentGoal, NATIVE_PREPARATIONS } from '@open-legend/domain';
 import type { WorldState } from '@open-legend/domain';
 import { digest } from './store.js';
@@ -50,7 +51,7 @@ export function compileInterests(
   const kinds = new Set<string>();
   for (const c of selected) {
     if (c.kind === 'possession') {
-      const item = world.items[c.id.slice(5)];
+      const item = itemFor(world, c.id.slice(5));
       if (item) definitions.add(item.definitionId);
     }
     if (c.kind === 'entity') {

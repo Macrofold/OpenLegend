@@ -1,3 +1,4 @@
+import { worldPosition } from '@open-legend/domain';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -134,8 +135,14 @@ try {
         .filter((target) => target.resource)
         .sort(
           (a, b) =>
-            Math.hypot(a.position.x - entity.position.x, a.position.z - entity.position.z) -
-            Math.hypot(b.position.x - entity.position.x, b.position.z - entity.position.z),
+            Math.hypot(
+              worldPosition(a).x - worldPosition(entity).x,
+              worldPosition(a).z - worldPosition(entity).z,
+            ) -
+            Math.hypot(
+              worldPosition(b).x - worldPosition(entity).x,
+              worldPosition(b).z - worldPosition(entity).z,
+            ),
         )[0]?.id,
     ]),
   );

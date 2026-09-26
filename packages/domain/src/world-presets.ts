@@ -1,3 +1,4 @@
+import { worldPlacement } from './spatial-state.js';
 import type { WorldCreationAccounts } from './invention-attribution.js';
 import { seedAgency } from './agency.js';
 import { DEFAULT_SENSES, COARSE_TOUCH } from './perception.js';
@@ -65,11 +66,11 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
     actor.agency = seedAgency(['Stay charged and explore the clearing.']);
   }
   world.entities['charge-bank'] = {
-    spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
+    spatial: { bodyProfileId: 'object', heading: 0 },
     id: 'charge-bank',
     name: 'Charged capacitor',
     kind: 'resource',
-    position: { y: 0, x: 12, z: 13 },
+    placement: worldPlacement({ y: 0, x: 12, z: 13 }, 'terrain'),
     replenisher: { attributeId: 'clockwork:charge', remaining: 2400 },
   };
   validateWorldModules(world);

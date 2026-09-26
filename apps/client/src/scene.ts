@@ -41,6 +41,7 @@ import {
 } from './art';
 
 interface RenderedEntity {
+  departedAt?: number;
   observed: boolean;
   card: boolean;
   images: ImageData[];
@@ -65,6 +66,7 @@ export class WildernessScene implements WorldRenderer {
   private camera!: pc.Entity;
   private landscape!: pc.Entity;
   private actors = new Map<string, RenderedEntity>();
+  private knownEvents = new Set<string>();
   private textures: pc.Texture[] = [];
   private materials: pc.StandardMaterial[] = [];
   private cameraSettings = initialCamera();
@@ -202,10 +204,11 @@ export class WildernessScene implements WorldRenderer {
   setView(view: GameView): void {
     this.view = view;
     const key = `${view.worldId}:${view.map.seed}:${view.map.width}:${view.map.height}:${view.map.spatial.revision}`;
-    const worldKey = `${view.worldId}:${view.saveTimeline}`;
+    const worldKey = `${view.worldId}:${view.saveTimeline}:${view.access?.scope}`;
     if (this.worldKey !== worldKey) {
       for (const entry of this.actors.values()) this.releaseEntity(entry);
       this.actors.clear();
+      this.knownEvents.clear();
       this.selected = null;
       this.initialized = false;
       this.worldKey = worldKey;
@@ -228,20 +231,34 @@ export class WildernessScene implements WorldRenderer {
     }
     const entities = [
       ...view.entities.filter((entity) => entity.id !== view.player.id),
-      playerEntity(view),
+      ...(view.player.participation === 'inactive' ? [] : [playerEntity(view)]),
     ];
     const visible = new Set(entities.map((entity) => entity.id));
+    const departed = new Set(
+      view.events
+        .filter((event) => event.type === 'departed' && !this.knownEvents.has(event.id))
+        .map((event) => event.actorId),
+    );
+    this.knownEvents = new Set(view.events.map((event) => event.id));
     for (const [id, entry] of this.actors)
       if (!visible.has(entry.view.id)) {
         // Loose piles have no renderer ghost: occlusion and collection both hide the heap.
         // docs/worlds/base/items.md#ground-piles
-        if (entry.view.kind === 'item-pile') {
+        if (
+          entry.view.kind === 'item-pile' ||
+          (entry.view.id === view.player.id && view.player.participation === 'inactive') ||
+          (departed.has(id) && document.documentElement.dataset.reduceMotion === 'true')
+        ) {
           this.releaseEntity(entry);
           this.actors.delete(id);
           continue;
         }
         // Absence can mean occlusion, not disappearance. Retain only the last authorized image;
         // an unobserved ghost has no interaction or current-state knowledge.
+        if (departed.has(id)) {
+          entry.departedAt = this.elapsed;
+          entry.shadow.enabled = false;
+        }
         entry.observed = false;
         entry.root.setPosition(entry.view.position.x, entry.view.position.y, entry.view.position.z);
       }
@@ -280,6 +297,7 @@ export class WildernessScene implements WorldRenderer {
       }
       entry.view = entity;
       entry.observed = true;
+      delete entry.departedAt;
     }
     // A bounded, session-only visual memory; never a second source of live facts.
     const remembered = [...this.actors].filter(([, entry]) => !entry.observed);
@@ -372,7 +390,14 @@ export class WildernessScene implements WorldRenderer {
         support.levelId === level.id ||
         entry.view.id === this.view!.player.id;
       for (const mesh of entry.sprite.render?.meshInstances ?? [])
-        mesh.setParameter('material_opacity', entry.observed ? 1 : 0.28);
+        mesh.setParameter(
+          'material_opacity',
+          entry.departedAt !== undefined
+            ? Math.max(0, 1 - (this.elapsed - entry.departedAt) / 0.4)
+            : entry.observed
+              ? 1
+              : 0.28,
+        );
     }
     this.canvas.dataset.projection = this.cameraSettings.projection;
     this.canvas.dataset.floor = level?.id ?? 'all';
@@ -952,7 +977,17 @@ export class WildernessScene implements WorldRenderer {
   }
   private update(dt: number): void {
     this.elapsed += Math.min(dt, 0.1);
-    for (const entry of this.actors.values()) {
+    for (const [id, entry] of this.actors) {
+      if (entry.departedAt !== undefined) {
+        const opacity = Math.max(0, 1 - (this.elapsed - entry.departedAt) / 0.4);
+        if (opacity === 0) {
+          this.releaseEntity(entry);
+          this.actors.delete(id);
+          continue;
+        }
+        for (const mesh of entry.sprite.render?.meshInstances ?? [])
+          mesh.setParameter('material_opacity', opacity);
+      }
       if (!entry.observed) continue;
       const position = entry.root.getPosition().clone();
       const dx = entry.view.position.x - position.x;

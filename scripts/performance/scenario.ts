@@ -1,3 +1,5 @@
+import { worldPlacement } from '@open-legend/domain';
+import { worldPosition } from '@open-legend/domain';
 import {
   createWorld,
   freezeWorld,
@@ -115,7 +117,7 @@ export function parseScenario(value: unknown): Scenario {
 export function populateScenario(input: WorldState | undefined, scenario: Scenario): WorldState {
   let world = input ?? createWorld(scenario.seed);
   world.paused = false;
-  const anchor = Object.values(world.entities).find((e) => e.kind === 'player')?.position ?? {
+  const anchor = worldPosition(Object.values(world.entities).find((e) => e.kind === 'player')) ?? {
     y: 0,
     x: 0,
     z: 0,
@@ -188,8 +190,8 @@ export function populateScenario(input: WorldState | undefined, scenario: Scenar
         id,
         name: group.definition.name,
         kind: 'resource',
-        spatial: { bodyProfileId: 'object', supportSurfaceId: 'terrain', heading: 0 },
-        position: { ...position },
+        spatial: { bodyProfileId: 'object', heading: 0 },
+        placement: worldPlacement({ ...position }, 'terrain'),
         resource: {
           definitionId: group.definition.id,
           quantity: group.quantity,

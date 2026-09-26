@@ -1,12 +1,15 @@
+import { canUseInventory, inventoryItemView } from './inventory-view.js';
+import { itemFor, itemsForOwner } from '@open-legend/domain';
+import { worldPosition, worldSupport } from '@open-legend/domain';
+import { scopeKey, type RequestScope } from './authority.js';
 import { observerDescription } from '@open-legend/domain';
-import { dropItemReason, capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
+import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import { isConversationEvent } from '@open-legend/domain';
 import { NATIVE_STRIKES, supportsManualWork } from '@open-legend/domain';
 import { actionAnimation } from './action-animation.js';
 import { knownRecipeAttribution } from '@open-legend/domain';
-import { hasWildernessNeeds } from '@open-legend/domain';
 import { projectAttributes, attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
 import type {
@@ -17,7 +20,6 @@ import type {
   InventoryItemView,
 } from '@open-legend/protocol';
 import {
-  NATIVE_PREPARATIONS,
   hearsEntity,
   seesEntity,
   visionRadius,
@@ -31,48 +33,58 @@ import {
 import { describeEntity } from './entity-description.js';
 import type { WorldService } from './world-service.js';
 
-const projections = new WeakMap<WorldService, Map<string, { deps: unknown[]; value: unknown }>>();
-function memoizer(service: WorldService) {
-  let cache = projections.get(service);
-  if (!cache) projections.set(service, (cache = new Map()));
+interface ViewCache {
+  scope: RequestScope;
+  values: Map<string, { deps: unknown[]; value: unknown }>;
+  sections: Map<string, { token: unknown; value?: unknown }>;
+}
+const projections = new WeakMap<WorldService, Map<string, ViewCache>>();
+function scopedCache(service: WorldService, scope: RequestScope): ViewCache {
+  let scopes = projections.get(service);
+  if (!scopes) projections.set(service, (scopes = new Map()));
+  for (const [key, cache] of scopes) if (!service.currentScope(cache.scope)) scopes.delete(key);
+  const key = scopeKey(scope);
+  let cache = scopes.get(key);
+  if (!cache) {
+    while (scopes.size >= 32) scopes.delete(scopes.keys().next().value!);
+    scopes.set(key, (cache = { scope, values: new Map(), sections: new Map() }));
+  }
+  return cache;
+}
+function memoizer(cache: ViewCache) {
   return <T>(key: string, deps: unknown[], build: () => T): T => {
-    deps = [service.controlledEntityId, ...deps];
-    const old = cache!.get(key);
+    const old = cache.values.get(key);
     if (old && old.deps.length === deps.length && deps.every((dep, i) => dep === old.deps[i]))
       return old.value as T;
     const value = build();
-    cache!.set(key, { deps, value });
+    cache.values.set(key, { deps, value });
     if (value instanceof Promise)
       void value.catch(() => {
-        if (cache!.get(key)?.value === value) cache!.delete(key);
+        if (cache.values.get(key)?.value === value) cache.values.delete(key);
       });
     return value;
   };
 }
-
-const optionalSections = new WeakMap<
-  WorldService,
-  Map<string, { token: unknown; value?: unknown }>
->();
-/** Refresh optional sections independently; changed scope immediately hides stale private data. */
-function optional<T>(service: WorldService, key: string, token: Promise<T>, fallback: T): T {
-  let sections = optionalSections.get(service);
-  if (!sections) optionalSections.set(service, (sections = new Map()));
-  const old = sections.get(key);
+/** An async result may populate only its original still-permitted private section. */
+function optional<T>(
+  service: WorldService,
+  cache: ViewCache,
+  key: string,
+  token: Promise<T>,
+  fallback: T,
+): T {
+  const old = cache.sections.get(key);
   if (old?.token === token) return (old.value as T | undefined) ?? fallback;
-  const entry: { token: unknown; value?: unknown } = {
-    token,
-    ...(key === 'usage' && old ? { value: old.value } : {}),
-  };
-  sections.set(key, entry);
+  const entry: { token: unknown; value?: unknown } = { token };
+  cache.sections.set(key, entry);
   void token
     .then((value) => {
-      if (sections.get(key) !== entry) return;
+      if (cache.sections.get(key) !== entry || !service.currentScope(cache.scope)) return;
       entry.value = value;
       service.notify(false);
     })
     .catch(() => {});
-  return (entry.value as T | undefined) ?? fallback;
+  return fallback;
 }
 
 function isJournalEvent(event: { type: string; text: string; data?: Record<string, unknown> }) {
@@ -87,23 +99,26 @@ function isJournalEvent(event: { type: string; text: string; data?: Record<strin
 export async function projectView(
   service: WorldService,
   executionSource: 'live-model' | 'test-fixture' = 'live-model',
+  scope: RequestScope = service.localScope,
 ): Promise<GameView> {
+  service.assertScope(scope);
+  const profile = await service.profileFor(scope);
+  const cache = scopedCache(service, scope);
   const world = service.world;
   const revision = service.version;
-  const memo = memoizer(service);
-  for (const key of projections.get(service)!.keys())
+  const memo = memoizer(cache);
+  for (const key of cache.values.keys())
     if (key.startsWith('entity:') && !Object.hasOwn(world.entities, key.slice(7)))
-      projections.get(service)!.delete(key);
+      cache.values.delete(key);
   const paused = service.paused;
   const pauseReason = service.pauseReason;
   const speed = service.speed;
-  const profile = service.profile;
-  const milestones = service.milestones;
+  const milestones = service.milestonesFor(scope.actorId);
   const storageError = service.storageError;
   const telemetryRevision = service.telemetryRevision;
   const observation = {
-    inventory: memo('ownedItems', [world.items], () =>
-      inventoryFor(world, service.controlledEntityId),
+    inventory: memo('ownedItems', [world.entities[scope.actorId]?.inventoryRevision], () =>
+      inventoryFor(world, scope.actorId),
     ),
     visibleEntities: memo(
       'visibleEntities',
@@ -111,46 +126,56 @@ export async function projectView(
       () =>
         nearbyEntities(
           world,
-          world.entities[service.controlledEntityId]!.position,
-          visionRadius(world, world.entities[service.controlledEntityId]!),
+          worldPosition(world.entities[scope.actorId]!),
+          visionRadius(world, world.entities[scope.actorId]!),
         ).filter(
           (entity) =>
-            entity.id !== service.controlledEntityId &&
-            seesEntity(world, world.entities[service.controlledEntityId]!, entity),
+            entity.id !== scope.actorId &&
+            seesEntity(world, world.entities[scope.actorId]!, entity),
         ),
     ),
-    knownRecipes: memo(
-      'knownRecipes',
-      [world.knowledge[service.controlledEntityId], world.recipes],
-      () =>
-        (world.knowledge[service.controlledEntityId] ?? [])
-          .map((record) => world.recipes[record.recipeId])
-          .filter((recipe) => !!recipe),
+    knownRecipes: memo('knownRecipes', [world.knowledge[scope.actorId], world.recipes], () =>
+      (world.knowledge[scope.actorId] ?? [])
+        .map((record) => world.recipes[record.recipeId])
+        .filter((recipe) => !!recipe),
     ),
   };
-  const pileContents = memo('pileContents', [world.items, world.itemDefinitions], () => {
-    const byOwner = new Map<string, NonNullable<EntityView['contents']>>();
-    for (const item of Object.values(world.items)) {
-      const definition = world.itemDefinitions[item.definitionId]!;
-      const contents = byOwner.get(item.ownerId) ?? [];
-      contents.push({
-        id: item.id,
-        definitionId: item.definitionId,
-        name: definition.name,
-        quantity: item.quantity,
-        portable: definition.portable === true,
-      });
-      byOwner.set(item.ownerId, contents);
-    }
-    return byOwner;
-  });
-  const player = world.entities[service.controlledEntityId]!;
+  const pileContents = memo(
+    'pileContents',
+    [observation.visibleEntities, world.objectState, world.itemDefinitions],
+    () => {
+      const byOwner = new Map<string, NonNullable<EntityView['contents']>>();
+      for (const pile of observation.visibleEntities.filter(
+        (entity) => entity.kind === 'item-pile',
+      )) {
+        for (const item of itemsForOwner(world, pile.id)) {
+          const definition = world.itemDefinitions[item.definitionId]!;
+          const contents = byOwner.get(item.ownerId) ?? [];
+          contents.push({
+            id: item.id,
+            definitionId: item.definitionId,
+            name: definition.name,
+            quantity: item.quantity,
+            portable: definition.portable === true,
+          });
+          byOwner.set(item.ownerId, contents);
+        }
+      }
+      return byOwner;
+    },
+  );
+  const player = world.entities[scope.actorId]!;
   const actor = player.actor!;
   const quantity = (definitionId: string) =>
     observation.inventory
       .filter((item) => item.definitionId === definitionId)
       .reduce((sum, item) => sum + item.quantity, 0);
-  const active = !paused && actor.alive && !actor.incapacitated;
+  const active =
+    actor.participation?.phase !== 'inactive' &&
+    !paused &&
+    actor.alive &&
+    !actor.incapacitated &&
+    service.currentScope(scope, 'play', true);
   const action = (
     id: string,
     label: string,
@@ -170,7 +195,7 @@ export async function projectView(
         ? { reason }
         : {}),
   });
-  const equipment = world.items[actor.equippedItemId ?? ''];
+  const equipment = itemFor(world, actor.equippedItemId ?? '');
   const launcher = equipment && world.itemDefinitions[equipment.definitionId]?.launcher;
   const ammunition =
     launcher &&
@@ -182,71 +207,30 @@ export async function projectView(
     'inventory',
     [
       observation.inventory,
+      world.resourceReservations,
       world.itemDefinitions,
       actor.equippedItemId,
       actor.action,
       world.itemHandling,
       player.spatial,
+      player.placement,
       player.statusEffects,
       world.statusEffectPolicy,
       actor.capabilities?.needs,
       active,
       paused,
     ],
-    () =>
-      observation.inventory.map((item) => {
-        const definition = world.itemDefinitions[item.definitionId]!;
-        const actions: ActionOption[] = [];
-        if (definition.portable === true) {
-          const command = { type: 'drop' as const, itemId: item.id, quantity: item.quantity };
-          const reason = dropItemReason(world, player, item.id, item.quantity);
-          actions.push(action(`drop-${item.id}`, 'Drop', command, !reason, reason ?? undefined));
-        }
-        if (definition.launcher)
-          actions.push(action(`equip-${item.id}`, 'Equip', { type: 'equip', itemId: item.id }));
-        if (definition.nutrition && hasWildernessNeeds(actor))
-          actions.push(action(`eat-${item.id}`, 'Eat one', { type: 'eat', itemId: item.id }));
-        if (item.definitionId === 'raw_meat')
-          actions.push(action(`cook-${item.id}`, 'Cook one', { type: 'cook', itemId: item.id }));
-        for (const [key, recipe] of Object.entries(NATIVE_PREPARATIONS))
-          if (recipe.input === item.definitionId)
-            actions.push(
-              action(
-                `prepare-${key}`,
-                key === 'fiber' ? 'Clean fibers' : 'Twist cord',
-                { type: 'prepare', preparation: key as 'fiber' | 'cord' },
-                item.quantity >= recipe.inputQuantity,
-                `Requires ${recipe.inputQuantity}.`,
-              ),
-            );
-        return {
-          id: item.id,
-          definitionId: item.definitionId,
-          name: definition.name,
-          quantity: item.quantity,
-          category: definition.launcher
-            ? 'equipment'
-            : definition.ammunition
-              ? 'ammunition'
-              : definition.properties.includes('food')
-                ? 'food'
-                : 'material',
-          description: definition.description,
-          equipped: actor.equippedItemId === item.id,
-          tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],
-          actions,
-        };
-      }),
+    () => observation.inventory.slice(0, 60).map((item) => inventoryItemView(service, scope, item)),
   );
   const entities: EntityView[] = observation.visibleEntities
-    .filter((entity) => entity.id !== service.controlledEntityId)
+    .filter((entity) => entity.id !== scope.actorId)
     .map((entity) =>
       memo<EntityView>(
         `entity:${entity.id}`,
         [
           entity,
-          world.observerIdentities?.[service.controlledEntityId]?.[entity.id],
-          world.perceptionEpisodes?.[service.controlledEntityId]?.[entity.id],
+          world.observerIdentities?.[scope.actorId]?.[entity.id],
+          world.perceptionEpisodes?.[scope.actorId]?.[entity.id],
           entity.kind === 'item-pile' ? pileContents.get(entity.id) : undefined,
           world.itemDefinitions,
           active,
@@ -254,8 +238,9 @@ export async function projectView(
           launcher,
           ammunition,
           observation.knownRecipes,
-          player.position,
+          worldPosition(player),
           player.spatial,
+          player.placement,
           world.itemHandling,
           player.statusEffects,
           world.map,
@@ -264,10 +249,10 @@ export async function projectView(
           world.statusEffectPolicy,
         ],
         () => {
-          const displayName = observerDescription(world, service.controlledEntityId, entity.id);
+          const displayName = observerDescription(world, scope.actorId, entity.id);
           const actions: ActionOption[] = [];
           for (const option of pickupActions(world, player, entity, (command) =>
-            service.previewCommand(command),
+            service.previewCommand(command, scope.actorId),
           )) {
             const preview = option.availability;
             actions.push(
@@ -275,7 +260,7 @@ export async function projectView(
             );
           }
           for (const option of statusEffectActions(world, player, entity)) {
-            const preview = service.previewCommand(option.command);
+            const preview = service.previewCommand(option.command, scope.actorId);
             actions.push(
               action(option.id, option.label, option.command, preview.ok, preview.message),
             );
@@ -320,7 +305,7 @@ export async function projectView(
                 targetId: entity.id,
                 attributeId: definition.id,
               };
-              const preview = service.previewCommand(command);
+              const preview = service.previewCommand(command, scope.actorId);
               actions.push(
                 action(
                   `replenish-${entity.id}`,
@@ -393,8 +378,8 @@ export async function projectView(
             ...(entity.actor?.traits ? { traits: entity.actor.traits.map((t) => ({ ...t })) } : {}),
             kind,
             subtype: entity.actor?.species ?? entity.resource?.definitionId ?? entity.kind,
-            position: entity.position,
-            supportSurfaceId: entity.spatial.supportSurfaceId,
+            position: worldPosition(entity),
+            supportSurfaceId: worldSupport(entity),
             heading: entity.spatial.heading,
             appearance: entity.appearance ?? 'sprite',
             radius: entity.kind === 'campfire' ? 0.5 : 0.35,
@@ -402,6 +387,7 @@ export async function projectView(
               ? {
                   speechCapable,
                   canTalk: !talkUnavailableReason,
+                  talkRequiresAi: entity.actor.controller === 'npc',
                   ...(talkUnavailableReason ? { talkUnavailableReason } : {}),
                 }
               : {}),
@@ -468,19 +454,33 @@ export async function projectView(
     );
   const events = memo(
     'visibleEvents',
-    [world.events, world.experience?.awareness[service.controlledEntityId]],
+    [world.events, world.experience?.awareness[scope.actorId]],
     () => {
-      const awareness = world.experience?.awareness[service.controlledEntityId];
+      const awareness = world.experience?.awareness[scope.actorId];
       const visible = awareness
         ? awareness
             .slice(-512)
             .reverse()
-            .map((entry) => service.worldEvent(entry.eventId))
+            .map((entry) => {
+              const event = service.worldEvent(entry.eventId);
+              // An audience join permits this actor's evidence, not the raw global prose.
+              return (
+                event && {
+                  ...event,
+                  text: entry.text,
+                  ...(event.type === 'speech'
+                    ? {
+                        data: {
+                          ...event.data,
+                          text: (entry.intelligible ? entry.content : undefined) ?? entry.text,
+                        },
+                      }
+                    : {}),
+                }
+              );
+            })
             .filter((event) => event !== undefined)
-        : world.events
-            .slice(-512)
-            .reverse()
-            .filter((event) => event.audience.includes(service.controlledEntityId));
+        : [];
       const bounded: WorldEvent[] = [];
       let journal = 0;
       let conversation = 0;
@@ -495,8 +495,14 @@ export async function projectView(
   );
   const usage = optional(
     service,
+    cache,
     'usage',
-    memo('usage', [telemetryRevision], () => service.store.usage(service.config.budgetUsd)),
+    memo('usage', [telemetryRevision], () =>
+      service.store.usage(
+        service.config.budgetUsd,
+        service.currentScope(scope, 'inspect') ? undefined : scope.actorId,
+      ),
+    ),
     {
       budget: { limitUsd: service.config.budgetUsd, spentUsd: 0, reservedUsd: 0, estimated: true },
       usage: { jevCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0, lastLatencyMs: 0 },
@@ -504,11 +510,14 @@ export async function projectView(
   );
   const jobs = optional(
     service,
+    cache,
     'jobs',
     memo('jobs', [telemetryRevision], async () =>
-      (await service.store.recentJobs()).filter(
-        (job) =>
-          !job.request.invention || job.request.invention.actorId === service.controlledEntityId,
+      (await service.store.recentJobs()).filter((job) =>
+        job.authority
+          ? job.authority.accountId === scope.accountId && job.authority.actorId === scope.actorId
+          : service.config.authentication.mode === 'local' &&
+            (!job.request.invention || job.request.invention.actorId === scope.actorId),
       ),
     ),
     [],
@@ -521,7 +530,7 @@ export async function projectView(
     queueLatencyMs,
     totalLatencyMs,
   }));
-  const conversationId = world.conversations?.active[service.controlledEntityId];
+  const conversationId = world.conversations?.active[scope.actorId];
   const conversationEntries = events
     .filter((event) => !conversationId || event.conversationId === conversationId)
     .filter((event) => isConversationEvent(event))
@@ -530,11 +539,12 @@ export async function projectView(
   // See docs/architecture.md#performance-critical-path.
   const replies = optional(
     service,
+    cache,
     'speechJobs',
     memo('speechJobs', [service.historyEpoch, telemetryRevision, ...conversationEntries], () =>
       service.store.getSpeechJobs(
         conversationEntries
-          .filter((event) => event.actorId === service.controlledEntityId)
+          .filter((event) => event.actorId === scope.actorId)
           .map((event) => event.id),
       ),
     ),
@@ -556,7 +566,7 @@ export async function projectView(
         : 'unconfigured';
   const playerActions = [
     ...statusEffectActions(world, player, player).map((option) => {
-      const preview = service.previewCommand(option.command);
+      const preview = service.previewCommand(option.command, scope.actorId);
       return action(option.id, option.label, option.command, preview.ok, preview.message);
     }),
     action('cancel', 'Stop current work', { type: 'cancel' }, !!actor.action, 'No work to stop.'),
@@ -589,16 +599,25 @@ export async function projectView(
   };
   return {
     schemaVersion: 2,
+    access: {
+      scope: scopeKey(scope),
+      accountId: scope.accountId,
+      actorId: scope.actorId,
+      controlGeneration: scope.controlGeneration,
+      controlling: service.currentScope(scope, 'play', true),
+      mode: service.config.authentication.mode,
+    },
     historyRevision: service.historyRevision,
     historyEpoch: service.historyEpoch,
     narrator: optional(
       service,
+      cache,
       'narrator',
       memo(
         'narrator',
         [service.historyRevision, telemetryRevision],
         () =>
-          service.store.history?.latestNarration(world.id, service.profile.id) ??
+          service.store.history?.latestNarration(world.id, scope.accountId) ??
           Promise.resolve(null),
       ),
       null,
@@ -607,13 +626,13 @@ export async function projectView(
     worldId: world.id,
     saveTimeline: service.timelineId,
     commandEpoch: service.commandEpoch,
-    godMode: service.config.godMode,
+    godMode: service.config.godMode && service.currentScope(scope, 'create'),
     inventionPolicy: {
       revision: world.inventionPolicy.revision,
       playerLocked: world.inventionPolicy.playerLocked,
       agentLocked: world.inventionPolicy.agentLocked,
     },
-    ...(service.config.godMode
+    ...(service.config.godMode && service.currentScope(scope, 'create')
       ? {
           godTools: {
             traits: TRAIT_BANK.map((trait) => ({ ...trait })),
@@ -651,10 +670,11 @@ export async function projectView(
       pauseReason: pauseReason,
     },
     player: {
+      participation: actor.participation?.phase ?? 'active',
       id: player.id,
       name: player.name,
-      position: player.position,
-      supportSurfaceId: player.spatial.supportSurfaceId,
+      position: worldPosition(player),
+      supportSurfaceId: worldSupport(player),
       heading: player.spatial.heading,
       attributes: projectAttributes(world, player, 'owner'),
       health: actor.health,
@@ -662,7 +682,7 @@ export async function projectView(
       hunger: actor.fullness === undefined ? undefined : 100 - actor.fullness,
       energy: actor.energy,
       alive: actor.alive,
-      statusEffects: projectStatusEffects(world, player),
+      statusEffects: projectStatusEffects(world, player, 'owner'),
       action: actor.action
         ? {
             id: actor.action.id,
@@ -700,12 +720,13 @@ export async function projectView(
       traits: actor.traits?.map((t) => ({ ...t })),
       memories: optional(
         service,
+        cache,
         'memories',
         memo(
           'memories',
           [
             service.timelineId,
-            service.controlledEntityId,
+            scope.actorId,
             service.historyRevision,
             world.memories[player.id],
             world.experience?.summaries[player.id],
@@ -721,6 +742,8 @@ export async function projectView(
       ),
       history: `Your life in this clearing began on Day 1. You have lived here for ${Math.floor(world.simTime / 86400)} full days.`,
       inventory,
+      inventoryRevision: player.inventoryRevision ?? 0,
+      canUseInventory: canUseInventory(service, scope),
       actions: playerActions,
     },
     entities,
@@ -814,7 +837,7 @@ export async function projectView(
           : {}),
         speakerId: event.actorId!,
         speaker: event.actorId
-          ? observerDescription(world, service.controlledEntityId, event.actorId)
+          ? observerDescription(world, scope.actorId, event.actorId)
           : 'Someone',
         text: String(event.data?.['text'] ?? event.text),
         time: event.at,
@@ -838,9 +861,7 @@ export async function projectView(
       {
         id: 'talk',
         label: 'Talk with Ada',
-        done: events.some(
-          (event) => event.type === 'speech' && event.actorId !== service.controlledEntityId,
-        ),
+        done: events.some((event) => event.type === 'speech' && event.actorId !== scope.actorId),
       },
       {
         id: 'invent',
@@ -853,18 +874,14 @@ export async function projectView(
       {
         id: 'hunt',
         label: 'Hunt and harvest',
-        done: events.some(
-          (event) => event.type === 'harvested' && event.actorId === service.controlledEntityId,
-        ),
+        done: events.some((event) => event.type === 'harvested' && event.actorId === scope.actorId),
       },
       {
         id: 'eat',
         label: 'Cook and eat a meal',
         done: events.some(
           (event) =>
-            event.type === 'ate' &&
-            event.actorId === service.controlledEntityId &&
-            /meat/i.test(event.text),
+            event.type === 'ate' && event.actorId === scope.actorId && /meat/i.test(event.text),
         ),
       },
       {
@@ -908,6 +925,8 @@ function changedFields<T extends object>(previous: T, next: T): Partial<T> | und
 /** Public transport delta only. Authoritative/private state never enters this comparison. */
 export function projectPatch(previous: GameView, next: GameView): GamePatch | null {
   if (
+    previous.access?.scope !== next.access?.scope ||
+    previous.access?.controlling !== next.access?.controlling ||
     previous.worldId !== next.worldId ||
     previous.saveTimeline !== next.saveTimeline ||
     previous.schemaVersion !== next.schemaVersion ||
@@ -932,6 +951,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
   const ai = changedFields(previous.ai, next.ai);
   return {
     schemaVersion: 2,
+    scope: next.access?.scope,
     ...(previous.commandEpoch !== next.commandEpoch ? { commandEpoch: next.commandEpoch } : {}),
     baseRevision: previous.revision,
     revision: next.revision,

@@ -7,8 +7,13 @@ export type { SurfacePoint, SpatialLayout };
 export interface CommandInput {
   type:
     | 'conversation'
+    | 'say'
     | 'pickup'
     | 'drop'
+    | 'transfer-item'
+    | 'split-item'
+    | 'merge-item'
+    | 'unequip'
     | 'move'
     | 'gather'
     | 'prepare'
@@ -25,6 +30,7 @@ export interface CommandInput {
     | 'recover'
     | 'teach';
   conversationId?: string;
+  text?: string;
   generation?: number;
   operation?: 'join' | 'leave';
   effectOperation?: 'activate' | 'deactivate';
@@ -36,6 +42,9 @@ export interface CommandInput {
   ammunitionId?: string;
   position?: SurfacePoint;
   quantity?: number;
+  expectedRevision?: number;
+  placementRevision?: number;
+  targetRevision?: number;
   preparation?: 'fiber' | 'cord';
 }
 
@@ -67,6 +76,9 @@ export interface CatalogueAction {
 
 export interface ActionContext {
   targetId?: string;
+  itemId?: string;
+  destinationId?: string;
+  quantity?: number;
   position?: SurfacePoint;
 }
 
@@ -124,6 +136,7 @@ export interface EntityView {
   description?: string;
   traits?: Array<{ id: string; name: string; description: string }>;
   canTalk?: boolean;
+  talkRequiresAi?: boolean;
   talkUnavailableReason?: string;
   speechCapable?: boolean;
   health?: number;
@@ -134,6 +147,11 @@ export interface EntityView {
 }
 
 export interface InventoryItemView {
+  revision: number;
+  placementRevision: number;
+  individual?: boolean;
+  container?: { load: number; capacity: number; revision: number };
+  declaredOwner?: { name: string; revision: number };
   id: string;
   definitionId: string;
   name: string;
@@ -191,6 +209,14 @@ export interface AiJobView {
 }
 
 export interface GameView {
+  access?: {
+    scope: string;
+    accountId: string;
+    actorId: string;
+    controlGeneration: number;
+    controlling: boolean;
+    mode: 'local' | 'oidc';
+  };
   inventionPolicy: { revision: number; playerLocked: boolean; agentLocked: boolean };
   saveTimeline?: string;
   commandEpoch?: string;
@@ -227,6 +253,7 @@ export interface GameView {
     pauseReason: 'manual' | 'away' | 'storage' | null;
   };
   player: {
+    participation?: 'active' | 'exiting' | 'inactive';
     statusEffects?: StatusEffectView[];
     id: string;
     name: string;
@@ -254,6 +281,8 @@ export interface GameView {
     memories?: Array<{ id: string; text: string; time: number }>;
     history?: string;
     inventory: InventoryItemView[];
+    inventoryRevision: number;
+    canUseInventory: boolean;
     actions: ActionOption[];
   };
   entities: EntityView[];
@@ -288,6 +317,7 @@ export interface GameView {
 }
 
 export interface GamePatch {
+  scope?: string;
   commandEpoch?: string;
   historyRevision?: string;
   historyEpoch?: string;
@@ -312,6 +342,10 @@ export interface ApiResult {
   code: string;
   message: string;
   jobId?: string;
+  itemId?: string;
+  recipeId?: string;
+  goalId?: string;
+  planId?: string;
 }
 
 export interface GodPersonFields {
@@ -369,8 +403,41 @@ export interface GodWorldEventsEditorView {
   events: GodWorldEventEditorEntry[];
 }
 
-/** Private inspection DTO: returned only by the separately authorized god endpoint. */
+/** A creator can author supported fictional NPC feelings; this grants no human mind access. */
+export interface AuthoredAppraisalRequest {
+  id: string;
+  worldId: string;
+  generation: string;
+  epoch: string;
+  actorId: string;
+  change:
+    | {
+        kind: 'create';
+        definitionPin: { id: string; version: number; digest: string };
+        targetId: string | null;
+      }
+    | { kind: 'resolve'; id: string; expectedRevision: number };
+}
+
+/** Private continuity DTO: owner access or separately authorized NPC inspection. */
 export interface GodMindView {
+  continuity?: {
+    authoring?: {
+      epoch: string;
+      policies: { label: string; pin: { id: string; version: number; digest: string } }[];
+    };
+    cursor: string | null;
+    subjects: { id: string; label: string }[];
+    appraisals: {
+      id: string;
+      revision: number;
+      label: string;
+      subject: string | null;
+      value: number | null;
+      lifetime: string;
+      coverage: string;
+    }[];
+  };
   knowledgeLimits?: { general: number; subject: number };
   worldId?: string;
   generation?: string;
@@ -427,6 +494,7 @@ export interface GodMindView {
 
 /** Owner-only debugging payload; never included in GameView or public event streams. */
 export interface IntelligenceCall {
+  ownerAccountId?: string;
   parentId?: string;
   worldId?: string;
   actorId?: string;
@@ -555,4 +623,28 @@ export interface InventionHistory {
   message?: string;
   requests: InventionRequestView[];
   next?: { createdAt: number; id: string };
+}
+
+export interface ObjectHistoryPage {
+  ok: boolean;
+  message?: string;
+  entries: {
+    id: string;
+    at: number;
+    type: 'split' | 'merge' | 'consume';
+    quantity: number;
+    name: string;
+    sourceId: string;
+    targetId?: string;
+  }[];
+  next?: string;
+}
+
+export interface ContainerPage {
+  ok: boolean;
+  message?: string;
+  container: { id: string; name: string; revision: number; load?: number; capacity?: number };
+  breadcrumbs: Array<{ id: string; name: string; revision: number }>;
+  items: InventoryItemView[];
+  next?: string;
 }

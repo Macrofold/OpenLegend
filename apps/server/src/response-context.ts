@@ -1,3 +1,4 @@
+import { worldPosition } from '@open-legend/domain';
 import { knowledgeDocument, characterCount, recognizesSubject } from '@open-legend/domain';
 import {
   awarenessBindsSubject,
@@ -226,7 +227,7 @@ export function responseReferences(
         ? { species: recognizedIds.has(id) ? (entity.actor.species ?? 'unknown') : 'unknown' }
         : {}),
       ...(id === actorId ? { relation: 'myself' } : {}),
-      ...(visible.has(id) ? { position: entity.position } : {}),
+      ...(visible.has(id) ? { position: worldPosition(entity) } : {}),
       ...(recognizesSubject(world, actorId, id) || !world.observerIdentities?.[actorId]?.[id]
         ? {
             noteRevision: knowledgeDocument(world, actorId, id)?.revision ?? 0,

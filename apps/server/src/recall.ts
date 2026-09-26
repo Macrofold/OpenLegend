@@ -1,3 +1,4 @@
+import { worldPosition } from '@open-legend/domain';
 import type { RetrievedMemory, MemoryScope } from './memory-repository.js';
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
 import { recognizesSubject, observerGivenName, observerDescription } from '@open-legend/domain';
@@ -285,12 +286,12 @@ export function candidateSet(
   const nearest = [...observed.visibleEntities].sort(
     (a, b) =>
       Math.hypot(
-        a.position.x - observed.actor.position.x,
-        a.position.z - observed.actor.position.z,
+        worldPosition(a).x - worldPosition(observed.actor).x,
+        worldPosition(a).z - worldPosition(observed.actor).z,
       ) -
         Math.hypot(
-          b.position.x - observed.actor.position.x,
-          b.position.z - observed.actor.position.z,
+          worldPosition(b).x - worldPosition(observed.actor).x,
+          worldPosition(b).z - worldPosition(observed.actor).z,
         ) || a.id.localeCompare(b.id),
   );
   const hardIds = new Set([

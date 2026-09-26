@@ -1,9 +1,9 @@
 import {
-  controlledEntityId,
   appendedEventCount,
   appendedRecordCount,
   defaultStoryPolicy,
   selectStory,
+  memoryPerspective,
   type StorySelection,
 } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
@@ -37,6 +37,8 @@ export interface StorySource {
   time: number;
   order: number;
   type: string;
+  /** Optional permitted utterance; absence is not permission to join raw event text. */
+  content?: string;
 }
 export interface StoryJob {
   id: string;
@@ -238,9 +240,11 @@ export class HistoryRepository {
     appendCount?: number,
     reapplyForgetting = false,
   ) {
-    // The current host has one principal; resolve its perspective from the saved binding.
+    // Stored history perspectives follow explicit account attribution. Current access is checked separately at the request boundary.
     if (this.bindLocalPrincipal) {
-      this.principals = [{ ownerId: 'local-player', actorId: controlledEntityId(world) }];
+      this.principals = Object.entries(world.authorship.playerAccountIds).map(
+        ([actorId, ownerId]) => ({ actorId, ownerId }),
+      );
     }
     if (previous && previous.storyPolicyRevision !== world.storyPolicyRevision) {
       for (const row of await this.db
@@ -309,14 +313,18 @@ export class HistoryRepository {
         if (world.experience?.forgotten[actorId]?.includes(event.id)) continue;
         audienceRows.push([world.id, event.id, actorId]);
         const awareness = perspective(actorId, event.id);
-        const text = awareness?.text ?? event.text;
+        const text =
+          awareness?.text ??
+          memoryPerspective(world, actorId, event.text, event.type === 'speech', event.actorId);
+        const content = awareness?.intelligible ? awareness.content : undefined;
         const source: StorySource = {
           id: event.id,
           text,
-          revision: revisionOf(encoded + text),
+          revision: revisionOf(encoded + JSON.stringify([text, content])),
           time: event.at,
           order: position,
           type: event.type,
+          ...(content !== undefined ? { content } : {}),
         };
         perspectives.set(actorId, source);
         perspectiveRows.push([world.id, event.id, actorId, JSON.stringify(source)]);
@@ -396,7 +404,13 @@ export class HistoryRepository {
         const old = new Map(previous.experience?.awareness[actorId]?.map((a) => [a.eventId, a]));
         for (const entry of entries) {
           const prior = old.get(entry.eventId);
-          if (!prior || (prior.text === entry.text && prior.content === entry.content)) continue;
+          if (
+            !prior ||
+            (prior.text === entry.text &&
+              prior.content === entry.content &&
+              prior.intelligible === entry.intelligible)
+          )
+            continue;
           const row = await this.db
             .prepare(
               'SELECT payload FROM history_perspectives WHERE world_id=? AND event_id=? AND actor_id=?',
@@ -405,6 +419,8 @@ export class HistoryRepository {
           if (!row) continue;
           const source = JSON.parse(String(row['payload'])) as StorySource;
           source.text = entry.text;
+          if (entry.intelligible && entry.content !== undefined) source.content = entry.content;
+          else delete source.content;
           source.revision = revisionOf(JSON.stringify(entry));
           await this.db
             .prepare(
@@ -827,12 +843,12 @@ export class HistoryRepository {
       .prepare('INSERT INTO story_transition_sources VALUES (?,?,?,?) ON CONFLICT DO NOTHING')
       .run(worldId, id, ownerId, record.id);
   }
-  async eventPage(worldId: string, before = Number.MAX_SAFE_INTEGER) {
+  async eventPage(worldId: string, before = Number.MAX_SAFE_INTEGER, actorId?: string) {
     const rows = await this.db
       .prepare(
-        'SELECT payload,position FROM history_events WHERE world_id=? AND position<? ORDER BY position DESC,id DESC LIMIT 101',
+        `SELECT payload,position FROM history_events WHERE world_id=? AND position<?${actorId ? ' AND id IN (SELECT event_id FROM history_audiences WHERE world_id=? AND actor_id=?)' : ''} ORDER BY position DESC,id DESC LIMIT 101`,
       )
-      .all(worldId, before);
+      .all(worldId, before, ...(actorId ? [worldId, actorId] : []));
     const page = rows.slice(0, 100);
     return {
       events: page.map((row) => JSON.parse(String(row['payload'])) as WorldEvent),
@@ -937,15 +953,16 @@ export class HistoryRepository {
             .all(worldId, ownerId, boundary, ...args, limit + 1);
     const items: TranscriptItem[] = events.map((row) => {
       const event = JSON.parse(String(row['payload'])) as WorldEvent;
+      const perspective = row['perspective']
+        ? (JSON.parse(String(row['perspective'])) as StorySource)
+        : undefined;
       return {
         id: event.id,
         kind: event.type === 'speech' ? 'speech' : 'event',
         text:
-          (options.speechOnly || options.participantId) && typeof event.data?.['text'] === 'string'
-            ? event.data['text']
-            : row['perspective']
-              ? (JSON.parse(String(row['perspective'])) as StorySource).text
-              : event.text,
+          (options.speechOnly || options.participantId) && perspective?.content !== undefined
+            ? perspective.content
+            : (perspective?.text ?? 'This historical event has no retained perspective.'),
         time: event.at,
         order: Number(row['position']),
         conversationId: event.conversationId,

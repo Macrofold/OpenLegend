@@ -5,20 +5,46 @@ import type { ApiResult, GamePatch, GameView } from '@open-legend/protocol';
 const tabClientId = crypto.randomUUID();
 let presenceSequence = 0;
 let worldGeneration = '';
-
-export function setWorldPaused(paused: boolean): Promise<ApiResult> {
-  return post('/api/control', {
-    paused,
-    ...(!paused ? { clientId: tabClientId, presenceSequence: ++presenceSequence } : {}),
-  });
-}
-
-export async function getState(): Promise<GameView> {
-  const response = await fetch('/api/state', { credentials: 'same-origin', cache: 'no-store' });
-  if (!response.ok) throw new Error(`The world could not be loaded (${response.status}).`);
-  const view = (await response.json()) as GameView;
-  worldGeneration = view.historyEpoch?.split(':')[0] ?? '';
+let viewScope = '';
+let accessGeneration = 0;
+export class AccessError extends Error {}
+export function clearAccess(): void {
+  accessGeneration++;
+  worldGeneration = '';
+  viewScope = '';
   try {
+    for (const key of Object.keys(localStorage))
+      if (
+        key.startsWith('open-legend:world-agent:') ||
+        key.startsWith('open-legend:invention-draft:')
+      )
+        localStorage.removeItem(key);
+    sessionStorage.removeItem('open-legend:composer-draft:v2');
+    localStorage.removeItem('open-legend:private-owner');
+  } catch {
+    /* Browser storage is optional. */
+  }
+}
+export function acceptAccess(view: GameView): void {
+  const generation = view.historyEpoch?.split(':')[0] ?? '';
+  const scope = view.access?.scope ?? '';
+  if (generation === worldGeneration && scope === viewScope) return;
+  accessGeneration++;
+  worldGeneration = generation;
+  viewScope = scope;
+  try {
+    const owner = `${view.worldId}:${view.access?.accountId ?? 'local-player'}:${view.access?.actorId ?? view.player.id}`;
+    const priorOwner = localStorage.getItem('open-legend:private-owner');
+    if (priorOwner !== owner) {
+      for (const key of Object.keys(localStorage))
+        if (
+          key.startsWith('open-legend:world-agent:') ||
+          key.startsWith('open-legend:invention-draft:')
+        )
+          localStorage.removeItem(key);
+      sessionStorage.removeItem('open-legend:composer-draft:v2');
+      localStorage.setItem('open-legend:private-owner', owner);
+    }
     const key = `open-legend:save-timeline:${view.worldId}`;
     const previous = sessionStorage.getItem(key);
     if (previous && previous !== view.saveTimeline) {
@@ -30,10 +56,55 @@ export async function getState(): Promise<GameView> {
   } catch {
     /* Browser storage is optional. */
   }
+}
+export function eventsUrl(view: GameView): string {
+  return `/api/events?client=${tabClientId}&scope=${view.access?.scope ?? ''}&revision=${view.revision}`;
+}
+
+export function setWorldPaused(paused: boolean): Promise<ApiResult> {
+  return post('/api/control', {
+    paused,
+    ...(!paused ? { clientId: tabClientId, presenceSequence: ++presenceSequence } : {}),
+  });
+}
+
+export async function getState(): Promise<GameView> {
+  const response = await fetch('/api/state', {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: { 'X-OL-Client': tabClientId },
+  });
+  if (response.status === 401 || response.status === 403)
+    throw new AccessError(
+      response.status === 401
+        ? 'Sign in to enter your world.'
+        : 'This account does not currently have access to this world.',
+    );
+  if (!response.ok) throw new Error(`The world could not be loaded (${response.status}).`);
+  const view = (await response.json()) as GameView;
   return view;
 }
+/** Private reads carry this tab's audience and discard responses from a prior scope. */
+export async function getScoped<T>(path: string): Promise<T> {
+  const scope = viewScope;
+  const generation = accessGeneration;
+  const response = await fetch(path, {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: { 'X-OL-Client': tabClientId, 'X-OL-Scope': scope },
+  });
+  if (!response.ok) throw new Error(`The requested history is unavailable (${response.status}).`);
+  const result = (await response.json()) as T;
+  if (generation !== accessGeneration)
+    throw new Error('Your access or world changed. Reload this history.');
+  return result;
+}
 export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
-  if (patch.baseRevision !== current.revision || patch.revision <= current.revision)
+  if (
+    patch.scope !== current.access?.scope ||
+    patch.baseRevision !== current.revision ||
+    patch.revision <= current.revision
+  )
     throw new Error('Game update revision mismatch.');
   let entities = current.entities;
   if (patch.entities) {
@@ -71,10 +142,16 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
   path: string,
   body: unknown,
 ): Promise<T> {
+  const generation = accessGeneration;
   const response = await fetch(path, {
     method: 'POST',
     credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', 'X-OL-Generation': worldGeneration },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-OL-Generation': worldGeneration,
+      'X-OL-Client': tabClientId,
+      'X-OL-Scope': viewScope,
+    },
     body: JSON.stringify(body),
   });
   let result: T;
@@ -83,6 +160,8 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
   } catch {
     throw new Error(`The server returned an unreadable response (${response.status}).`);
   }
+  if (generation !== accessGeneration)
+    throw new Error('Your access or world changed. Reload before continuing.');
   if (!response.ok && !result.message)
     throw new Error(`The request was not accepted (${response.status}).`);
   return result;
@@ -95,7 +174,7 @@ export function startPresence(): () => void {
     const body = { clientId: tabClientId, visible, sequence: ++presenceSequence };
     if (beacon) {
       const queued = navigator.sendBeacon(
-        '/api/presence',
+        `/api/presence?client=${tabClientId}&scope=${viewScope}`,
         new Blob([JSON.stringify(body)], { type: 'application/json' }),
       );
       if (queued) return;
@@ -103,7 +182,11 @@ export function startPresence(): () => void {
     void fetch('/api/presence', {
       method: 'POST',
       credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-OL-Client': tabClientId,
+        'X-OL-Scope': viewScope,
+      },
       body: JSON.stringify(body),
       keepalive: true,
     }).catch(() => undefined);

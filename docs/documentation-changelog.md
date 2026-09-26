@@ -1,10 +1,53 @@
 # Documentation changelog
 
+## 2026-09-26 — Foundation priorities 1–5 approved for implementation
+
+The developer authorized the complete [implementation plan](projects/foundations-1-5.md#approved-implementation-plan)
+with performance/stress qualification and migration seams for current spatial, invention,
+action and speech work. The foundation designs take precedence over prior branch assumptions.
+Accepted targets retain existing semantic owners, in-place identity-preserving conversion,
+current privacy/accounting outside rewind and all 46 child acceptance slices. No runtime
+delivery or completed qualification is inferred from approval; focused trackers retain
+unsatisfied gates.
+
+## 2026-09-26 — Foundation priorities 1–5 implemented
+
+Delivered typed state/resource claims and independent contributions, verified OIDC account/control
+scopes and protected absence, entity-backed lots/equipment/nested bags, dependency generations
+and aggregate native-work accounting, and persistent cause-linked appraisals with directional
+social continuity. Each uses its existing semantic, publication and canonical-record owner.
+Supported worlds migrate in place with identity and quantities preserved; cold contribution,
+appraisal and object history remains complete for capture and maintenance. Source-bound state
+retains exact policy pins. Current human-private ownership, grants and external accounting stay
+outside gameplay rewind, including account rebinding and source erasure after older saves.
+
+The finite native families provide concrete extension seams without adding another inventory,
+scheduler, emotion store or invention runtime. Reflection remains a coupled publication;
+reframing cannot restart an original decay curve. Unknown dependency coverage stays conservative,
+and required work refuses before publication rather than silently dropping outcomes. Inspected
+spatial/invention/action/speech branches have explicit migration contracts, not assumed integration.
+
+Follow-up source review repaired owner-level reservation protection, exact contribution retry
+after expiry, propagation of enclosing work-budget failures through item eligibility, and
+control-aware action menus. Incremental hold settlement reuses the existing reservation index
+and removes repeated metadata rebuilding. The repairs retain existing owners and accepted contracts;
+[review evidence](verification.md#foundation-follow-up-review) records native, both-adapter
+reload, browser and matched stress checks without implying a full-suite or capacity pass.
+
+[SC](maintainers/state-contributions.md), [MP01/MP04](maintainers/multiplayer.md),
+[PO](maintainers/persistent-objects.md), [DI](maintainers/dependency-invalidation.md) and
+[ACT07/ACT08](maintainers/actor-model.md#priority-5-implementation-slices) record all 46 completed
+slices. [Verification](verification.md#foundation-priorities-15--implementation-evidence) records
+both SQL adapters, genuine OIDC/browser journeys, rollback/lost-response/privacy failures and
+native/SQL/transport stress. Matched native CPU rose about 24%; both versions miss the requested
+3× rate. [PF](maintainers/performance.md#foundations-15-measurements-and-remaining-cost) retains
+that cost and wider-load work; these results do not establish hosted capacity or live model quality.
+
 ## 2026-09-26 — Complete design package for foundation priorities 1–5, Browser engine rationale and future client replacement
 
 Added five separate feature specifications and technical designs under [the foundation delivery map](projects/foundations-1-5.md): shared contributions/resources, multiplayer authority, persistent objects/containment, dependency invalidation/aggregate work and persistent appraisal/directional social continuity. Each design records inspected native/data/related-branch boundaries, typed operations, lifecycle, privacy, in-place migration, bounded work, concrete consumers, failure cases and qualification requirements.
 
-Added SC01–SC08, PO01–PO09 and DI01–DI08 as focused child trackers of existing EWF/INV/DF/BW work, and decomposed MP01/MP04 and ACT07/ACT08 in their current trackers. All 46 implementation/qualification slices remain open; prior task states and historical branch coverage are preserved. The [remaining-foundations index](maintainers/remaining-foundational-work.md) and [maintainer index](maintainers/README.md) link the complete package. Proposed engineering choices are explicit; no new universal emotion taxonomy, social-state authority, inventory service, scheduler or distributed prerequisite was introduced.
+Added SC01–SC08, PO01–PO09 and DI01–DI08 as focused child trackers of existing EWF/INV/DF/BW work, and decomposed MP01/MP04 and ACT07/ACT08 in their current trackers. At design delivery, all 46 implementation/qualification slices remained open; prior task states and historical branch coverage are preserved. The [remaining-foundations index](maintainers/remaining-foundational-work.md) and [maintainer index](maintainers/README.md) link the complete package. Proposed engineering choices are explicit; no new universal emotion taxonomy, social-state authority, inventory service, scheduler or distributed prerequisite was introduced.
 
 The design began at main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` and reconciles the subsequent main `f015b2a9712ff87589dc04e72046c4e483dcab67` into the documentation branch, preserving its shared Worker and cold-history consumer changes unchanged. Both sets of maintainer navigation and changelog entries are retained. Relative to that integrated main, this delivery changes documentation only: no runtime implementation, storage, permissions or live provider operations. Main and other active branches were not modified. No build, automated suite or runtime qualification was performed by the design task; DF02/SL00 integration and actual native/database/client/hosted evidence remain implementation requirements.
 

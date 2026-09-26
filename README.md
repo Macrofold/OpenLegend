@@ -4,7 +4,7 @@
 
 The current world supports real elevation and stacked surfaces with generated sprites and simple 3D scenery. The timber lookout in the northeast has a ramp, a passage underneath and a gatherable crate; a small native bird flies between heights and perches on the deck. The bottom-right camera toolbar provides orbit, pitch, projection, floor focus and a checked follow-player toggle beside recenter. Drag pans; Shift-drag orbits/tilts; wheel zooms. With the canvas focused, arrows rotate/tilt, Page Up/Down selects a level, P switches projection and Home recenters. Rotation can be locked. Selecting a lower level cuts away upper presentation, not its physical geometry.
 
-Development worlds must satisfy the current [save contract](docs/save-and-load.md#active-development-policy), including the [status-effect registry](docs/status-effects.md). Startup upgrades a world missing the status-effect registry in place, preserving its identity, progress and accounting. Malformed current state and journal integrity failures remain explicit errors. The native simulation needs no AI key; set `AI_BUDGET_USD=0` for native-only work.
+Development worlds must satisfy the current [save contract](docs/save-and-load.md#active-development-policy), including the [status-effect registry](docs/status-effects.md). Startup performs supported in-place upgrades, including entity-backed possessions, tagged placement, status work and appraisal records, preserving identity, quantities, progress and accounting. Malformed current state and journal integrity failures remain explicit errors. The native simulation needs no AI key; set `AI_BUDGET_USD=0` for native-only work.
 
 See [spatial-world behavior](docs/spatial-world.md), [technical provider](archive/07-technical-architecture/spatial-world-runtime.md), [SW delivery tasks](docs/maintainers/spatial-world.md), and [verification](docs/verification.md#spatial-world-runtime). This is not a free rigid-body sandbox or a completed generic 3D-asset authoring platform.
 
@@ -12,9 +12,9 @@ A shared simulation of people, memory, survival, and worlds whose mechanics can 
 
 **Create a world by playing it. Share what you discover.**
 
-The first implementation is a **local, single-player wilderness prototype** with an autonomous resident, native survival, durable saves, and a PlayCanvas scene. Live Jev and LLM adapters support conversation, resident reconsideration and the invention of usable recipes. Those live routes require your server-side keys and a spending allowance; without them, native survival works and AI features explicitly report unavailable.
+The implementation supports **local play and authenticated shared-world play** with native survival, durable saves, autonomous residents and a PlayCanvas scene. Live Jev and LLM adapters support conversation, resident reconsideration and the invention of usable recipes. Those live routes require your server-side keys and a spending allowance; without them, native survival works and AI features explicitly report unavailable.
 
-The broader shared-world platform, arbitrary invented physics, hosted worlds, marketplace, memberships and creator fund remain future work. Automated fixture tests are not evidence of live model quality. See [verification status](docs/verification.md).
+Hosted operations and scale qualification, regional replication, arbitrary invented physics, marketplace, memberships and creator fund remain future work. Automated fixture tests are not evidence of live model quality. See [verification status](docs/verification.md).
 
 ![The React interface over original procedural artwork, in an isolated native fixture](docs/images/wilderness.png)
 
@@ -38,11 +38,11 @@ If another app uses that port, run `PORT=3211 pnpm run dev` and open **http://12
 
 Follow the [step-by-step live AI setup guide](docs/live-ai-setup.md) for key creation, local configuration and the first real conversation.
 
-Open Talk through a nearby person or quick suggestion. Until AI is configured, its composer stays editable and **Set up AI** explains what is missing. Enter opens setup without sending a request. Unsent drafts survive a reload within the same browser tab.
+Open Talk through a nearby person or quick suggestion. Speech between human-controlled characters works without AI. For NPC replies, until AI is configured, the composer stays editable and **Set up AI** explains what is missing. Enter opens setup without sending a request. Unsent drafts survive a reload within the same browser tab.
 
 Click the ground to walk; click a thing to **Look closer**, or right-click / Control-click for its actions. Object menus stay scoped to that object, self menus contain personal work, and empty-ground menus offer walking. **Show Unavailable Actions** reveals blocked options and saves that preference. Hover or keyboard-focus an action for a one-second explanation with actual material/time facts. Search retains **Search actions or invent something…**: unmatched Enter opens an editable invention draft, and only **Send** dispatches it.
 
-With `OPEN_LEGEND_GOD_MODE=true`, right-click a dead actor to **Revive**, or right-click blank walkable ground and choose **Add something**. The creation pullouts group known Items, Actors and Environment. Choose an item and quantity to place it on the ground. Player Inventory also offers **God mode · Add item**. Portable ground items can be picked up individually or with **Pick Up All**; inventory details support dropping a chosen quantity. Creating a person accepts a name, personality, backstory, described trait tags and initial goals. Leaving traits empty assigns the usual three saved random traits. God mode also offers **Grant cognition and speech** for an ordinary animal. Revival fully restores the body even after harvesting; harvested inventory is preserved. These owner-only mutations work while paused and are labeled **God mode**.
+With `OPEN_LEGEND_GOD_MODE=true`, right-click a dead actor to **Revive**, or right-click blank walkable ground and choose **Add something**. The creation pullouts group known Items, Actors and Environment. Choose an item and quantity to place it on the ground. Player Inventory also offers **God mode · Add item**. Portable ground items can be picked up individually or with **Pick Up All**; inventory details support dropping a chosen quantity, exact split/merge, individual equipment and moving possessions through nested finite bags. Contents are searchable and paginated. God mode can record a declared owner separately from custody; this grants no access or movement rights. Creating a person accepts a name, personality, backstory, described trait tags and initial goals. Leaving traits empty assigns the usual three saved random traits. God mode also offers **Grant cognition and speech** for an ordinary animal. Revival fully restores the body even after harvesting; harvested inventory is preserved. These owner-only mutations work while paused and are labeled **God mode**.
 
 Drag with the primary, right or middle mouse button to pan. A stationary right-click opens actions on release. Scroll to zoom or use the camera buttons to zoom/recenter and the visible icons for rotation, tilt and projection. Follow keeps the player centered; dragging or choosing a floor stops following. Hover or focus the information icon for shortcuts. Dismissing a menu by clicking the world never walks.
 
@@ -59,11 +59,33 @@ pnpm run build
 pnpm start
 ```
 
-This server binds to loopback. It is not a public multiplayer deployment.
+Local authentication binds only to loopback. Shared play uses the explicit OIDC configuration below; hosted operational/security and capacity qualification remain open.
 
-World saves use a transactional change journal with periodic snapshots. Explicit actions save immediately; routine simulation flushes once per real second and on clean shutdown. The browser bootstraps once and receives typed SSE updates. God-mode Person/World Events editors support atomic delta saves, discard, and independent draggable windows; see [current architecture and limits](docs/architecture.md#public-updates-and-owner-editors).
+Current worlds use independent canonical SQL records with atomic revision fencing and coupled receipts/history. Supported legacy snapshots and journals are extracted in place. Explicit actions save immediately; routine simulation flushes once per real second and on clean shutdown. The browser bootstraps once and receives typed SSE updates. God-mode Person/World Events editors support atomic delta saves, discard, and independent draggable windows; see [current architecture and limits](docs/architecture.md#public-updates-and-owner-editors).
 
 Invent also supports bounded gathering tools: a compatible carried tool improves the yield from an existing finite resource. Complete recipe JSON can be supplied in the expandable proposal field for native validation without paid generation. See [the invention workflow](docs/architecture.md#shared-invention-workflow) for current limits.
+
+## Configure authenticated shared play
+
+Set `OPEN_LEGEND_AUTH_MODE=oidc`, an exact `OPEN_LEGEND_PUBLIC_ORIGIN` (for example `https://world.example.org`), `OPEN_LEGEND_OIDC_ISSUER` and `OPEN_LEGEND_OIDC_CLIENT_ID`. Register that client with authorization-code flow, PKCE S256 and redirect URI `<public-origin>/auth/callback`. Set `OPEN_LEGEND_OIDC_CLIENT_SECRET` only if the registered client requires one. HTTPS is required for both origin and issuer. `OPEN_LEGEND_HOST` controls the bind address; a reverse proxy must preserve the configured public Host/origin. The separate `OPEN_LEGEND_OIDC_LOOPBACK_HTTP=true` option permits disposable local identity-provider development only when all addresses remain loopback.
+
+The operator supplies `OPEN_LEGEND_ACCOUNT_BINDINGS` as a JSON array of exact verified issuer/subject mappings. For example, replace the issuer/subject placeholders with values from your provider:
+
+```json
+[
+  {
+    "issuer": "https://identity.example.org/realms/openlegend",
+    "subject": "provider-user-subject",
+    "accountId": "local-player",
+    "actorId": "entity-0001",
+    "capabilities": ["play", "create", "inspect", "save", "manage-access"]
+  }
+]
+```
+
+Use existing actor/account IDs for an existing world; the default new world's first two people are `entity-0001` and `entity-0002`. Bind a second verified subject to a different account and actor with `play` for an ordinary player. Email, display names and first login never grant access. Bootstrap mappings apply once: changing this environment variable does not undo a later grant revocation or rebind. Current administrators use the revisioned `/api/access` and `/api/access/binding` operations described by the [authority design](docs/projects/multiplayer-authority-tech-design.md); game restore does not rewind their audit or historical human privacy ownership. Creator tools also require the host's `OPEN_LEGEND_GOD_MODE=true`; inspection never grants access to another human's private character.
+
+Sign in from the entry screen. One tab controls each account's current character; a follower uses **Control here** to take over explicitly. **Settings and help → Sign out** revokes the server session. Sessions default to eight hours (`OPEN_LEGEND_SESSION_HOURS`, 0.1–24); after the last controlling connection leaves, exit defaults to fifteen real seconds (`OPEN_LEGEND_EXIT_GRACE_SECONDS`, 1–60), including while simulation time is paused. Return reuses the same character and possessions and validates its placement. Shared automatic pause considers each controlling account's hidden-tab preference. See [current authority and participation](docs/architecture.md#account-authority-and-participation) and [qualified native/browser evidence](docs/verification.md#foundation-priorities-15--implementation-evidence).
 
 ## Try the extensible attribute demo
 
@@ -75,7 +97,7 @@ Use a separate new data directory and disable paid work:
 OPEN_LEGEND_DATA_DIR=/tmp/openlegend-reservoir-demo OPEN_LEGEND_WORLD_PRESET=reservoir-demo AI_BUDGET_USD=0 PORT=3218 node --import tsx apps/server/src/main.ts
 ```
 
-Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Schema 9 rejects older development saves without modifying them; select a fresh directory for either preset. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
+Open **http://127.0.0.1:3218**. Pause, save through **Game**, advance, then load to inspect same-version restoration. The preset is used only for creation. Supported older worlds upgrade in place; malformed or unsupported historical shapes fail without resetting them. Use a separate directory when creating a different world. [Implementation and limits](docs/architecture.md#extensible-attribute-foundation).
 
 For the coarse touch-only resident, use a separate data directory and `OPEN_LEGEND_WORLD_PRESET=touch-demo`. The player retains sight; the resident receives only unidentified contacts and short direct probe choices. God inspection is administrative evidence, not the resident's knowledge. See the [implemented limits](docs/architecture.md#registered-senses-and-coarse-contact).
 

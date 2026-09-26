@@ -1,5 +1,9 @@
 import {
+  upgradeObjects,
+  upgradeAppraisals,
+  initializeNativeWork,
   BASE_ITEM_HANDLING,
+  BASE_PARTICIPATION_POLICY,
   definitionPin,
   DEFAULT_STATUS_EFFECT_POLICY,
   DEFAULT_COGNITION_POLICY,
@@ -36,7 +40,25 @@ export function upgradeWorldState(world: WorldState): void {
     world.itemHandling = structuredClone(BASE_ITEM_HANDLING);
     for (const definition of Object.values(world.itemDefinitions)) definition.portable ??= true;
   }
-  if (Object.hasOwn(world, 'statusEffectPolicy')) return;
+  for (const entity of Object.values(world.entities)) {
+    const action = entity.actor?.action;
+    if (action?.type !== 'replenish' || action.resourceDefinition) continue;
+    const definition = world.moduleManifest.definitions.find(
+      (value) => value.id === action.attributeId,
+    );
+    if (!definition?.reservoir || definition.version !== action.definitionVersion)
+      throw new Error(
+        'Cannot bind the saved replenishment definition without changing its meaning.',
+      );
+    action.resourceDefinition = definitionPin(definition);
+  }
+  upgradeObjects(world);
+  upgradeAppraisals(world);
+  world.participationPolicy ??= structuredClone(BASE_PARTICIPATION_POLICY);
+  if (Object.hasOwn(world, 'statusEffectPolicy')) {
+    initializeNativeWork(world);
+    return;
+  }
   world.statusEffectPolicy = structuredClone(DEFAULT_STATUS_EFFECT_POLICY);
   delete (world as WorldState & { sleepPolicy?: unknown }).sleepPolicy;
   if (world.cognitionPolicy && !Object.hasOwn(world.cognitionPolicy, 'dream'))
@@ -64,4 +86,5 @@ export function upgradeWorldState(world: WorldState): void {
     }
     delete actor.rest;
   }
+  initializeNativeWork(world);
 }

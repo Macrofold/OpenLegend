@@ -1,3 +1,9 @@
+import { validateAppraisalPolicy, validateAppraisals, type AppraisalPolicy } from './appraisals.js';
+import { BASE_APPRAISAL_POLICY } from './worlds/base/appraisals.js';
+import { recordSemanticChange } from './dependencies.js';
+import { validateNativeWork } from './native-work.js';
+import { validateWorkState } from './work-budget.js';
+import { validateParticipation } from './participation.js';
 import { isDraft, original } from 'immer';
 import { validateObserverIdentities } from './worlds/base/knowledge.js';
 import { validateKnowledge } from './knowledge.js';
@@ -12,9 +18,10 @@ import { validateItemHandling } from './item-handling.js';
 import { validateGatheringTools } from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
 import { validateAgency } from './agency.js';
+import { assertReservedStock, validateResourceReservations } from './resource-claims.js';
 import { DEFAULT_SENSES, SENSE_IMPLEMENTATIONS, type SenseDefinition } from './perception.js';
 import { hasWildernessNeeds } from './worlds/base/needs.js';
-import type { ActorComponent, Entity, WorldState, WorldEvent } from './types.js';
+import type { ActorComponent, Entity, ItemDefinition, WorldState, WorldEvent } from './types.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
 
 export type AttributeValue = number | string;
@@ -52,6 +59,7 @@ export interface DefinitionPin {
   digest: string;
 }
 export interface WorldModuleManifest {
+  appraisals?: AppraisalPolicy;
   revision: number;
   interface: 'world-modules-v1';
   physiology: 'wilderness-v1';
@@ -111,18 +119,26 @@ export const HOST_IMPLEMENTATIONS = Object.freeze({
     storage: 'attributes',
   },
 } as const);
-export function definitionPin(definition: AttributeDefinition | SenseDefinition): DefinitionPin {
-  return {
+const definitionPins = new WeakMap<object, DefinitionPin>();
+export function definitionPin(
+  definition: AttributeDefinition | SenseDefinition | ItemDefinition,
+): DefinitionPin {
+  const cached = definitionPins.get(definition);
+  if (cached) return cached;
+  const pin = {
     id: definition.id,
     version: definition.version,
     digest: contentLabel(canonicalJson(definition)),
   };
+  if (!isDraft(definition) && Object.isFrozen(definition)) definitionPins.set(definition, pin);
+  return pin;
 }
 export function createModuleManifest(
   definitions = DEFAULT_ATTRIBUTES,
   senses = DEFAULT_SENSES,
 ): WorldModuleManifest {
   const manifest: WorldModuleManifest = {
+    appraisals: structuredClone(BASE_APPRAISAL_POLICY),
     revision: 1,
     interface: 'world-modules-v1',
     physiology: 'wilderness-v1',
@@ -163,7 +179,9 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     'senses',
     'defaultSenses',
     'sensePins',
+    'appraisals',
   ]);
+  validateAppraisalPolicy(manifest.appraisals);
   if (
     manifest.interface !== 'world-modules-v1' ||
     manifest.physiology !== 'wilderness-v1' ||
@@ -359,11 +377,25 @@ export function setAttribute(
   const prior = (entity.actor?.attributes ?? entity.attributes)?.[d.id];
   if (!prior) throw new Error('Attribute is not applicable to this entity.');
   if (prior.value === value) return false;
+  if (
+    world.resourceReservations &&
+    d.reservoir &&
+    d.schema.kind === 'number' &&
+    typeof value === 'number'
+  )
+    assertReservedStock(
+      world,
+      { kind: 'attribute', entityId: entity.id, definition: definitionPin(d) },
+      value,
+      d.schema.min,
+    );
+  if (!Number.isSafeInteger(prior.revision + 1)) throw new Error('Attribute revision exhausted.');
   const wasConcerned =
     prior.concernActive ??
     (d.concern && typeof prior.value === 'number' ? prior.value < d.concern.below : false);
   prior.value = value;
   prior.revision++;
+  recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'attribute' });
   if (d.concern && d.schema.kind === 'number' && typeof value === 'number') {
     // A small dead band prevents drain/transfer in one step from creating repeated novelty.
     const recovery = Math.min(d.schema.max, d.concern.below + (d.schema.max - d.schema.min) * 0.05);
@@ -432,7 +464,12 @@ export function projectAttributes(
           (d.reservoir
             ? !!entity.actor!.attributes?.[d.id]?.concernActive
             : Math.round(value) <= (max ?? 100) * 0.2),
-        revision: entity.actor!.attributes?.[d.id]?.revision ?? entity.actor!.body?.revision ?? 0,
+        revision:
+          d.implementation === 'native-fullness-v1'
+            ? (entity.actor!.fullnessRevision ?? 0)
+            : d.implementation === 'native-energy-v1'
+              ? (entity.actor!.energyRevision ?? 0)
+              : (entity.actor!.attributes?.[d.id]?.revision ?? entity.actor!.body?.revision ?? 0),
         ...(d.schema.kind === 'number' ? { min: d.schema.min, max, unit: d.schema.unit } : {}),
         ...(audience === 'owner' &&
         (entity.actor!.attributes?.[d.id]?.concernActive ??
@@ -485,12 +522,17 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  validateWorkState(world);
+  validateAppraisals(world);
+  validateResourceReservations(world);
+  validateParticipation(world);
   validateKnowledge(world);
   validateObserverIdentities(world);
   // Disposable development saves use current-state validation, not per-feature version gates.
   // docs/save-and-load.md#active-development-policy
   if (!world.moduleManifest) throw new Error('World module manifest is missing.');
   validateStatusEffects(world);
+  validateNativeWork(world);
   validateSpatialWorld(world);
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
@@ -510,6 +552,17 @@ export function validateWorldModules(world: WorldState): void {
   validateAgency(world);
   validateModuleManifest(world.moduleManifest);
   for (const e of Object.values(world.entities)) {
+    if (
+      e.resource &&
+      (!Number.isSafeInteger(e.resource.quantity) ||
+        e.resource.quantity < 0 ||
+        (e.resource.revision !== undefined &&
+          (!Number.isSafeInteger(e.resource.revision) || e.resource.revision < 0)))
+    )
+      throw new Error('Invalid gathering stock or revision.');
+    for (const revision of [e.actor?.fullnessRevision, e.actor?.energyRevision])
+      if (revision !== undefined && (!Number.isSafeInteger(revision) || revision < 0))
+        throw new Error('Invalid native need revision.');
     if (e.actor)
       for (const definition of world.moduleManifest.definitions) {
         const value = readAttribute(e.actor, definition);
@@ -552,12 +605,14 @@ export function validateWorldModules(world: WorldState): void {
         throw new Error('Invalid attribute revision.');
     }
     if (e.replenisher) {
-      object(e.replenisher, ['attributeId', 'remaining']);
+      object(e.replenisher, ['attributeId', 'remaining', 'revision']);
       if (
         !attributeDefinition(world, e.replenisher.attributeId)?.reservoir ||
         !finite(e.replenisher.remaining) ||
         e.replenisher.remaining < 0 ||
-        e.replenisher.remaining > 1e9
+        e.replenisher.remaining > 1e9 ||
+        (e.replenisher.revision !== undefined &&
+          (!Number.isSafeInteger(e.replenisher.revision) || e.replenisher.revision < 0))
       )
         throw new Error('Invalid replenishment source.');
     }
@@ -571,7 +626,11 @@ export function validateWorldModules(world: WorldState): void {
       e.actor?.action?.type === 'replenish' &&
       (!attributeDefinition(world, e.actor.action.attributeId ?? '')?.reservoir ||
         attributeDefinition(world, e.actor.action.attributeId ?? '')?.version !==
-          e.actor.action.definitionVersion)
+          e.actor.action.definitionVersion ||
+        canonicalJson(e.actor.action.resourceDefinition) !==
+          canonicalJson(
+            definitionPin(attributeDefinition(world, e.actor.action.attributeId ?? '')!),
+          ))
     )
       throw new Error('Missing active action definition.');
   }

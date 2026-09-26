@@ -1,6 +1,8 @@
 # Shared state, effect contributions and resource claims — feature specification
 
-**Status:** proposed implementation scope; no runtime changes are delivered by this document. Priority 1 in [remaining foundational work](../maintainers/remaining-foundational-work.md). [Technical design](shared-state-contributions-tech-design.md) owns mechanisms; [SC01–SC08](../maintainers/state-contributions.md) decomposes existing EWF02–03 and INV-6.3 work. [Package scope and research baseline](foundations-1-5.md) applies.
+**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 1 in [remaining foundational work](../maintainers/remaining-foundational-work.md). [Technical design](shared-state-contributions-tech-design.md) owns mechanisms; [SC01–SC08](../maintainers/state-contributions.md) decomposes existing EWF02–03 and INV-6.3 work. [Package scope and research baseline](foundations-1-5.md) applies.
+
+The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
 ## 1. Outcome
 
@@ -52,12 +54,12 @@ An editor, native step and admitted extension submit supported operations to tha
 
 The user-visible distinction is explicit:
 
-| Form | Meaning when its source ends |
-| --- | --- |
-| Committed change or transfer | The change already happened; source removal does not undo it. |
+| Form                                    | Meaning when its source ends                                                                                       |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Committed change or transfer            | The change already happened; source removal does not undo it.                                                      |
 | Active modifier/capability contribution | Remove only this source's remaining contribution and recompute from current base state and remaining contributors. |
-| Ongoing process | Stop future work according to its interruption policy; retain completed work and receipts. |
-| Unspent reservation | Release the reservation through its owner; do not add the amount to stock a second time. |
+| Ongoing process                         | Stop future work according to its interruption policy; retain completed work and receipts.                         |
+| Unspent reservation                     | Release the reservation through its owner; do not add the amount to stock a second time.                           |
 
 Stacking, refresh and replacement are declared family policies. Repeating the same invocation cannot create a second contribution. A new invocation cannot remove another source merely by choosing its display name or stacking key.
 

@@ -1,10 +1,21 @@
+import { setSpatialPosition, worldSupport } from './index.js';
 import { expect, it } from 'vitest';
 import { canSee, createWorld, executeCommand, observeActor } from './index.js';
 
 it('sees distant objects across prototype obstacles without extending speech exposure', () => {
   const world = createWorld();
-  world.entities.player!.position = { y: 0, x: 1, z: 2 };
-  world.entities.ada!.position = { y: 0, x: 22, z: 2 };
+  setSpatialPosition(
+    world,
+    world.entities.player!,
+    { y: 0, x: 1, z: 2 },
+    worldSupport(world.entities.player!),
+  );
+  setSpatialPosition(
+    world,
+    world.entities.ada!,
+    { y: 0, x: 22, z: 2 },
+    worldSupport(world.entities.ada!),
+  );
   world.map.tiles[2]!.fill('grass');
   world.map.tiles[2]![10] = 'rock';
   expect(observeActor(world, 'player')!.visibleEntities.some((entity) => entity.id === 'ada')).toBe(
@@ -31,8 +42,18 @@ it('keeps an authoritative outer sight boundary even though the renderer can rem
   expect(canSee({ y: 0, x: 0, z: 0 }, { y: 0, x: 28, z: 0 })).toBe(true);
   expect(canSee({ y: 0, x: 0, z: 0 }, { y: 0, x: 28.01, z: 0 })).toBe(false);
   const world = createWorld();
-  world.entities.player!.position = { y: 0, x: 1, z: 1 };
-  world.entities.ada!.position = { y: 0, x: 27, z: 23 };
+  setSpatialPosition(
+    world,
+    world.entities.player!,
+    { y: 0, x: 1, z: 1 },
+    worldSupport(world.entities.player!),
+  );
+  setSpatialPosition(
+    world,
+    world.entities.ada!,
+    { y: 0, x: 27, z: 23 },
+    worldSupport(world.entities.ada!),
+  );
   expect(observeActor(world, 'player')!.visibleEntities.some((entity) => entity.id === 'ada')).toBe(
     false,
   );

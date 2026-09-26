@@ -42,6 +42,16 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 **Decision authority:** Implementing engineer under the owner's performance-design delegation, with quality/cost evidence and the existing privacy/spending boundaries.
 
+## RP05 — Prototype account and native-work operating envelopes
+
+**Current policy:** [Account setup](../../README.md#configure-authenticated-shared-play) and [aggregate native work](../architecture.md#typed-state-claims-and-aggregate-work) use configurable eight-hour sessions, fifteen-second real-time exit grace, one active embodiment per account/world, and versioned finite process-wide native-work ceilings. These are operational v1 choices, not universal world laws or hosted capacity promises.
+
+**Why revisit:** Multiple simultaneous embodiments, deployment security needs, new supported recurring families or measured shared-world load may need different envelopes. The final mixed profile has an explicit [PF03/09 CPU gap](performance.md#foundations-15-measurements-and-remaining-cost).
+
+**Review trigger:** Before hosted release, adding multi-embodiment control, changing native cadence/sample frequency or admitting a family beyond the current cost vector/interval policy. Preserve current grants/privacy, saved work progress and required native outcomes when changing an envelope.
+
+**Decision authority:** Project maintainer for embodiment/product policy; operator for supported session/grace settings; implementing engineer for measured native bounds within accepted semantics. Bounds never authorize truncating owed effects or creating spending allowances.
+
 ## Maintaining this register
 
 Keep stable IDs, a canonical policy link, the reason to revisit, a concrete trigger and decision authority. Add only known revisitable decisions, not every constant or hypothetical concern. When a trigger is relevant, raise it in the task/PR; put resulting work or unresolved choices in their existing owners. An accepted change updates the policy, affected summaries and this entry together; significant decisions go in the [decision history](../documentation-changelog.md). Retire superseded entries with a link to their replacement or recorded decision, not another copy of the contract.

@@ -67,13 +67,18 @@ export function Composer({
     }
   }, [seed]);
   useEffect(() => saveDraft(draft), [draft]);
-  const reason = aiSetupReason(view.ai),
-    npc = npcId ? view.entities.find((e) => e.id === npcId) : view.entities.find((e) => e.canTalk);
-  const job = view.ai.jobs.find(
-    (j) =>
-      j.kind === (draft.mode === 'chat' ? 'chat' : 'invention') &&
-      ['queued', 'judging', 'generating'].includes(j.status),
-  );
+  const npc = npcId
+    ? view.entities.find((e) => e.id === npcId)
+    : view.entities.find((e) => e.canTalk);
+  const nativeSpeech = draft.mode === 'chat' && npc?.talkRequiresAi === false;
+  const reason = nativeSpeech ? null : aiSetupReason(view.ai);
+  const job =
+    !nativeSpeech &&
+    view.ai.jobs.find(
+      (j) =>
+        j.kind === (draft.mode === 'chat' ? 'chat' : 'invention') &&
+        ['queued', 'judging', 'generating'].includes(j.status),
+    );
   const actorBlocked =
     draft.mode !== 'chat'
       ? view.inventionPolicy.playerLocked
@@ -86,13 +91,15 @@ export function Composer({
         : (npc.talkUnavailableReason ?? null);
   const blocked = !connected
     ? 'Reconnect to the world.'
-    : view.clock.paused
-      ? 'Resume the world before sending a message.'
-      : actorBlocked
-        ? actorBlocked
-        : !view.player.alive
-          ? 'Recover at camp to continue.'
-          : null;
+    : view.access?.controlling === false || view.player.participation === 'inactive'
+      ? 'Take control of your character to speak.'
+      : view.clock.paused
+        ? 'Resume the world before sending a message.'
+        : actorBlocked
+          ? actorBlocked
+          : !view.player.alive
+            ? 'Recover at camp to continue.'
+            : null;
   const history = useChatHistory(view, npcId ?? npc?.id, visible && draft.mode === 'chat');
   const messages: ConversationItem[] = history.messages.map((message) => ({
     id: message.id,
@@ -129,11 +136,17 @@ export function Composer({
     const sent = draft;
     setSending(true);
     try {
-      const result = await post(sent.mode === 'chat' ? '/api/chat' : '/api/invent', {
-        requestId: crypto.randomUUID(),
-        text: sent.text.trim(),
-        ...(sent.mode === 'chat' ? { npcId: npc?.id } : {}),
-      });
+      const result = nativeSpeech
+        ? await post('/api/command', {
+            commandId: crypto.randomUUID(),
+            commandEpoch: view.commandEpoch,
+            command: { type: 'say', text: sent.text.trim(), targetId: npc!.id },
+          })
+        : await post(sent.mode === 'chat' ? '/api/chat' : '/api/invent', {
+            requestId: crypto.randomUUID(),
+            text: sent.text.trim(),
+            ...(sent.mode === 'chat' ? { npcId: npc?.id } : {}),
+          });
       if (result.ok)
         setDraft((current) =>
           current.text === sent.text && current.mode === sent.mode

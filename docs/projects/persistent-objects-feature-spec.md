@@ -1,6 +1,8 @@
 # Persistent objects, custody, ownership and containment — feature specification
 
-**Status:** proposed implementation scope, not delivered behavior. Priority 3. [Technical design](persistent-objects-tech-design.md) defines storage and algorithms; [PO01–PO09](../maintainers/persistent-objects.md) decomposes DF01/BW07 and coordinates INV-6/SL00. [Foundation package](foundations-1-5.md) applies.
+**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 3. [Technical design](persistent-objects-tech-design.md) defines storage and algorithms; [PO01–PO09](../maintainers/persistent-objects.md) decomposes DF01/BW07 and coordinates INV-6/SL00. [Foundation package](foundations-1-5.md) applies.
+
+The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
 ## 1. Outcome
 
@@ -84,6 +86,6 @@ Quantity totals and admitted sources/sinks reconcile at each committed step. Eve
 
 ## 7. Decisions and questions
 
-Proposed defaults: quantity-one individual containers/equipped units, explicit merge equivalence rather than definition-only merging, no automatic actionable aliasing after retirement, authored packing-load capacity for the first bag, no new actor encumbrance, and declared ownership separate from custody. Update the base-world item contract alongside implementation of its intentional equipped-unit refinement.
+Accepted defaults: quantity-one individual containers/equipped units, explicit merge equivalence rather than definition-only merging, no automatic actionable aliasing after retirement, authored packing-load capacity for the first bag, no new actor encumbrance, and declared ownership separate from custody. Update the base-world item contract alongside implementation of its intentional equipped-unit refinement.
 
 **Blocking product questions: none for this foundation.** New theft/trade/destruction policies and physical weight balancing are not silently decided here. A real migration collision or unsupported disposition must be resolved before conversion/retirement, with the original state preserved.

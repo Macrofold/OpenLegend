@@ -8,7 +8,11 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Focusable, Tooltip, TooltipTrigger } from 'react-aria-components';
-import type { GodMindView, IntelligenceCall } from '@open-legend/protocol';
+import type {
+  AuthoredAppraisalRequest,
+  GodMindView,
+  IntelligenceCall,
+} from '@open-legend/protocol';
 import { post } from '../api';
 import { EventTime } from './event-time';
 import { Button, Icon, IconButton, Section, Tag } from '../design-system/components';
@@ -58,7 +62,9 @@ function InlineJson({ title, value }: { title: string; value: unknown }) {
 function KnowledgeEditor({
   mind,
   onSaved,
+  owned = false,
 }: {
+  owned?: boolean;
   mind: GodMindView;
   onSaved: (mind: GodMindView) => void;
 }) {
@@ -80,23 +86,27 @@ function KnowledgeEditor({
   return (
     <Section title="Knowledge notepads">
       <label>
-        Subject ID (blank for general knowledge)
-        <input
+        Person or general knowledge
+        <select
+          aria-label="Person or general knowledge"
           disabled={saving}
           value={subject}
           onChange={(event) => setSubject(event.target.value)}
-          list="knowledge-subjects"
-        />
-      </label>
-      <datalist id="knowledge-subjects">
-        {mind.notepads
-          ?.filter((doc) => doc.subjectId)
-          .map((doc) => (
-            <option key={doc.subjectId} value={doc.subjectId!}>
-              {doc.label}
+        >
+          <option value="">General knowledge</option>
+          {(
+            mind.continuity?.subjects ??
+            mind.notepads?.flatMap((doc) =>
+              doc.subjectId ? [{ id: doc.subjectId, label: doc.label }] : [],
+            ) ??
+            []
+          ).map((entry) => (
+            <option key={entry.id} value={entry.id}>
+              {entry.label}
             </option>
           ))}
-      </datalist>
+        </select>
+      </label>
       {subject && (
         <label>
           Given name known by this observer
@@ -117,7 +127,7 @@ function KnowledgeEditor({
         {characters > limit
           ? 'Rewrite or shorten before saving.'
           : subject
-            ? 'Saving a subject pad authors an acquaintance for this observer.'
+            ? 'This is your understanding of this person; it does not change their view of you.'
             : 'Record current understanding; rewrite when space is needed.'}
       </p>
       <Button
@@ -125,17 +135,20 @@ function KnowledgeEditor({
         onPress={() => {
           setSaving(true);
           setMessage('');
-          void post<{ ok: boolean; message?: string; mind?: GodMindView }>('/api/god/knowledge', {
-            actorId: mind.actorId,
-            worldId: mind.worldId,
-            generation: mind.generation,
-            subjectId: subject || null,
-            expectedRevision: document?.revision ?? 0,
-            text,
-            ...(subject && name.trim() && name !== identity?.givenName
-              ? { givenName: name, nameRevision: identity?.revision ?? 0 }
-              : {}),
-          })
+          void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
+            owned ? '/api/knowledge' : '/api/god/knowledge',
+            {
+              actorId: mind.actorId,
+              worldId: mind.worldId,
+              generation: mind.generation,
+              subjectId: subject || null,
+              expectedRevision: document?.revision ?? 0,
+              text,
+              ...(subject && name.trim() && name !== identity?.givenName
+                ? { givenName: name, nameRevision: identity?.revision ?? 0 }
+                : {}),
+            },
+          )
             .then((result) => {
               setMessage(result.message ?? '');
               if (result.ok && result.mind) onSaved(result.mind);
@@ -151,12 +164,97 @@ function KnowledgeEditor({
   );
 }
 
-export function Mind({ actorId }: { actorId: string }) {
+function AuthoredFeeling({
+  mind,
+  busy,
+  send,
+}: {
+  mind: GodMindView;
+  busy: boolean;
+  send: (change: AuthoredAppraisalRequest['change']) => void;
+}) {
+  const [policyId, setPolicyId] = useState(''),
+    [subject, setSubject] = useState('');
+  const policies = mind.continuity?.authoring?.policies ?? [];
+  const policy = policies.find((value) => value.pin.id === policyId) ?? policies[0];
+  if (!policy) return null;
+  return (
+    <div>
+      <p className="ol-caption">
+        Author a fictional feeling for this character. This does not add an experienced event.
+      </p>
+      <label>
+        Feeling
+        <select value={policy.pin.id} onChange={(event) => setPolicyId(event.target.value)}>
+          {policies.map((value) => (
+            <option key={value.pin.id} value={value.pin.id}>
+              {value.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        About
+        <select value={subject} onChange={(event) => setSubject(event.target.value)}>
+          <option value="">No particular person</option>
+          {mind.continuity?.subjects.map((value) => (
+            <option key={value.id} value={value.id}>
+              {value.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Button
+        disabled={busy}
+        onPress={() =>
+          send({ kind: 'create', definitionPin: policy.pin, targetId: subject || null })
+        }
+      >
+        Author feeling
+      </Button>
+    </div>
+  );
+}
+
+export function Mind({ actorId, owned = false }: { actorId: string; owned?: boolean }) {
   const [mind, setMind] = useState<GodMindView | null>(null),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [authoring, setAuthoring] = useState(false);
+  const pending = useRef<{ body: string; request: AuthoredAppraisalRequest } | null>(null);
+  const author = (change: AuthoredAppraisalRequest['change']) => {
+    const epoch = mind?.continuity?.authoring?.epoch;
+    if (!mind?.worldId || !mind.generation || !epoch || authoring) return;
+    const body = JSON.stringify([mind.worldId, mind.generation, actorId, epoch, change]);
+    const request =
+      pending.current?.body === body
+        ? pending.current.request
+        : {
+            id: crypto.randomUUID(),
+            worldId: mind.worldId,
+            generation: mind.generation,
+            actorId,
+            epoch,
+            change,
+          };
+    pending.current = { body, request };
+    setAuthoring(true);
+    void post<{ ok: boolean; message?: string; mind?: GodMindView }>('/api/god/appraisal', request)
+      .then((result) => {
+        setError(result.ok ? '' : (result.message ?? 'Unable to author feeling.'));
+        if (result.ok && result.mind) {
+          pending.current = null;
+          setMind(result.mind);
+        }
+      })
+      .catch((error) => setError(String(error)))
+      .finally(() => setAuthoring(false));
+  };
   useEffect(() => {
     let active = true;
-    void post<{ ok: boolean; message?: string; mind?: GodMindView }>('/api/god/mind', { actorId })
+    void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
+      owned ? '/api/mind' : '/api/god/mind',
+      { actorId },
+    )
       .then((result) => {
         if (active) {
           setMind(result.ok ? (result.mind ?? null) : null);
@@ -169,13 +267,13 @@ export function Mind({ actorId }: { actorId: string }) {
     return () => {
       active = false;
     };
-  }, [actorId]);
+  }, [actorId, owned]);
   return (
     <div>
       {error && <p role="alert">{error}</p>}
       {mind ? (
         <>
-          <Tag>Private god inspection</Tag>
+          <Tag>{owned ? 'Private to your character' : 'Private god inspection'}</Tag>
           <Section title="About me">
             <p className="ol-prose">{mind.acceptedText}</p>
           </Section>
@@ -185,7 +283,79 @@ export function Mind({ actorId }: { actorId: string }) {
               <p className="ol-prose">{document.text}</p>
             </details>
           ))}
-          <KnowledgeEditor key={mind.actorId} mind={mind} onSaved={setMind} />
+          <Section title="Feelings">
+            {mind.continuity?.appraisals.length ? (
+              mind.continuity.appraisals.map((feeling) => (
+                <div key={feeling.id}>
+                  <p>
+                    {feeling.label}
+                    {feeling.subject ? ` · ${feeling.subject}` : ''}
+                    {feeling.value !== null ? ` · ${Number(feeling.value.toFixed(3))}` : ''}
+                  </p>
+                  <p className="ol-caption">
+                    {feeling.lifetime === 'persistent'
+                      ? 'Persists until resolved'
+                      : feeling.lifetime.replaceAll('-', ' ')}{' '}
+                    · {feeling.coverage}
+                  </p>
+                  {mind.continuity?.authoring && (
+                    <Button
+                      disabled={authoring}
+                      onPress={() =>
+                        author({
+                          kind: 'resolve',
+                          id: feeling.id,
+                          expectedRevision: feeling.revision,
+                        })
+                      }
+                    >
+                      Resolve {feeling.label}
+                    </Button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="ol-meta">No current feelings on this page.</p>
+            )}
+          </Section>
+          {mind.continuity?.authoring && (
+            <AuthoredFeeling key={mind.actorId} mind={mind} busy={authoring} send={author} />
+          )}
+          <Section title="My understanding of people">
+            {mind.notepads
+              ?.filter((doc) => doc.subjectId && doc.text)
+              .map((doc) => (
+                <details key={doc.subjectId}>
+                  <summary>{doc.label}</summary>
+                  <p className="ol-prose">{doc.text}</p>
+                  <p className="ol-caption">Edit this same text in Knowledge notepads below.</p>
+                </details>
+              ))}
+          </Section>
+          <KnowledgeEditor
+            key={`${mind.actorId}:${mind.continuity?.cursor ?? 'last'}`}
+            mind={mind}
+            onSaved={setMind}
+            owned={owned}
+          />
+          {mind.continuity?.cursor && (
+            <Button
+              onPress={() => {
+                const cursor = mind.continuity!.cursor!;
+                void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
+                  owned ? '/api/mind' : '/api/god/mind',
+                  { actorId, cursor },
+                )
+                  .then((result) => {
+                    if (result.ok && result.mind) setMind(result.mind);
+                    else setError(result.message ?? 'Unable to load page.');
+                  })
+                  .catch((error) => setError(String(error)));
+              }}
+            >
+              More feelings and people
+            </Button>
+          )}
           <InlineJson
             title="Memories, experiences and commitments"
             value={{

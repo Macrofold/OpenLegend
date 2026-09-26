@@ -11,7 +11,17 @@ import type {
   GameView,
   PlayerProfile,
 } from '@open-legend/protocol';
-import { applyGamePatch, getState, post, setWorldPaused, startPresence } from './api';
+import {
+  AccessError,
+  clearAccess,
+  acceptAccess,
+  eventsUrl,
+  applyGamePatch,
+  getState,
+  post,
+  setWorldPaused,
+  startPresence,
+} from './api';
 import { aiSetupReason } from './ai-readiness';
 import { playerEntity } from './entity-view';
 import { createWorldRenderer } from './scene';
@@ -83,7 +93,7 @@ const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?:
 type GodEditorWindow =
   | { id: string; type: 'person'; actorId: string }
   | { id: string; type: 'world-events' };
-function App() {
+function App({ resetApplication }: { resetApplication: () => void }) {
   const [view, setView] = useState<GameView | null>(null),
     [connected, setConnected] = useState(false),
     [error, setError] = useState(''),
@@ -131,6 +141,8 @@ function App() {
     (v): v is boolean => typeof v === 'boolean',
   );
   const canvas = useRef<HTMLCanvasElement>(null),
+    hud = useRef<HTMLDivElement>(null),
+    survival = useRef<HTMLElement>(null),
     scene = useRef<WorldRenderer | null>(null),
     latest = useRef(view),
     currentPicker = useRef(picker),
@@ -156,27 +168,27 @@ function App() {
     document.documentElement.dataset.reduceMotion = String(reduce);
   }, [theme, reduce]);
   const accept = useCallback(
-    (next: GameView, reset = false) =>
-      setView((previous) => {
-        if (previous?.saveTimeline && next.saveTimeline !== previous.saveTimeline) {
-          // A restored timeline must not reuse abandoned browser conversations or drafts.
-          try {
-            localStorage.removeItem(`open-legend:world-agent:${next.worldId}`);
-            sessionStorage.removeItem('open-legend:composer-draft:v2');
-          } catch {
-            /* Browser storage is optional. */
-          }
-          window.location.reload();
-          return previous;
-        }
-        if (!reset && previous?.worldId === next.worldId) {
-          if (next.revision < previous.revision) return previous;
-          if (next.profile.revision < previous.profile.revision)
-            next = { ...next, profile: previous.profile };
-        }
+    (next: GameView, reset = false) => {
+      const previous = latest.current;
+      if (
+        previous &&
+        (previous.access?.scope !== next.access?.scope ||
+          previous.saveTimeline !== next.saveTimeline)
+      ) {
+        // Remount all private panels and queued intentions; retain this tab's transport identity.
+        clearAccess();
+        resetApplication();
+        return;
+      }
+      if (!reset && previous?.worldId === next.worldId && next.revision < previous.revision) return;
+      acceptAccess(next);
+      setView((current) => {
+        if (!reset && current?.worldId === next.worldId && next.revision < current.revision)
+          return current;
         return next;
-      }),
-    [],
+      });
+    },
+    [resetApplication],
   );
   useEffect(() => {
     let streamView: GameView | undefined;
@@ -197,7 +209,7 @@ function App() {
       if (!active || !current) return;
       clearTimeout(timer);
       source?.close();
-      const connection = new EventSource(`/api/events?revision=${current.revision}`);
+      const connection = new EventSource(eventsUrl(current));
       source = connection;
       source.onopen = () => {
         if (active && source === connection) {
@@ -205,6 +217,11 @@ function App() {
           setConnected(true);
         }
       };
+      source.addEventListener('access-changed', () => {
+        if (!active || source !== connection) return;
+        clearAccess();
+        resetApplication();
+      });
       source.addEventListener('reset', (event) => {
         try {
           if (!active || source !== connection) return;
@@ -248,6 +265,17 @@ function App() {
       } catch (e) {
         if (active && attempt === bootstrapVersion) {
           setConnected(false);
+          if (e instanceof AccessError) {
+            clearAccess();
+            if (latest.current) {
+              resetApplication();
+              return;
+            }
+            setView(null);
+            streamView = undefined;
+            stop?.();
+            stop = undefined;
+          }
           setError(String(e));
           schedule(6000);
         }
@@ -280,6 +308,19 @@ function App() {
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
   }, []);
+  const hasView = view !== null;
+  useEffect(() => {
+    if (!hasView || !survival.current || !hud.current) return;
+    const root = hud.current;
+    // Applicable attributes and session controls vary the card height. Dock below
+    // its measured border box; CSS owns the responsive presentation scale.
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry)
+        root.style.setProperty('--status-height', `${entry.borderBoxSize[0]!.blockSize}px`);
+    });
+    observer.observe(survival.current);
+    return () => observer.disconnect();
+  }, [hasView]);
   function fit(panels: PanelId[]) {
     const available = width / scale;
     if (available < 720) return panels;
@@ -621,7 +662,16 @@ function App() {
       case 'crafting':
         return <Crafting {...props} invent={() => invent()} />;
       case 'character':
-        return <Character {...props} godControls={characterGodControls(playerEntity(view))} />;
+        return (
+          <Character
+            {...props}
+            godControls={characterGodControls(playerEntity(view))}
+            openMind={() => {
+              setMindId(view.player.id);
+              show('mind');
+            }}
+          />
+        );
       case 'nearby':
         return entity ? (
           <EntityDetail
@@ -713,14 +763,32 @@ function App() {
           <p>God inspection is disabled.</p>
         );
       case 'mind':
-        return view.godMode && mindId ? (
-          <Mind key={`${view.worldId}:${mindId}`} actorId={mindId} />
+        return mindId && (view.godMode || mindId === view.player.id) ? (
+          <Mind
+            key={`${view.worldId}:${mindId}`}
+            actorId={mindId}
+            owned={mindId === view.player.id}
+          />
         ) : null;
       case 'game':
         return <GameSavesPanel />;
       case 'help':
         return (
           <>
+            {view.access?.mode === 'oidc' && (
+              <Button
+                onPress={() =>
+                  void post('/api/session/logout', {})
+                    .then((result) => {
+                      if (result.ok) window.location.reload();
+                      else notify(result.message ?? 'Sign out failed.');
+                    })
+                    .catch((error: unknown) => notify(String(error)))
+                }
+              >
+                Sign out
+              </Button>
+            )}
             <InventionSettings view={view} />
             <Section title="Appearance">
               <label>
@@ -808,6 +876,7 @@ function App() {
     <>
       <canvas id="world" ref={canvas} tabIndex={0} aria-label="Wilderness world" />
       <div
+        ref={hud}
         className="ol-root ol-hud"
         data-theme={theme}
         data-reduce-motion={reduce}
@@ -820,16 +889,43 @@ function App() {
           <div id="loading" className="ol-loading ol-card">
             <h1 className="ol-heading">OPEN LEGEND</h1>
             <p>{error || 'Entering the clearing…'}</p>
-            {error && <Button onPress={() => retry.current()}>Retry connection</Button>}
+            {error && (
+              <>
+                <Button onPress={() => retry.current()}>Retry connection</Button>
+                <a href="/auth/login">Sign in</a>
+              </>
+            )}
           </div>
         ) : (
           <>
             <h1 className="ol-wordmark t-wordmark">OPEN LEGEND</h1>
-            <section className="ol-card ol-survival" aria-label="Your condition">
+            <section ref={survival} className="ol-card ol-survival" aria-label="Your condition">
               <div className="ol-survival-top">
                 <span id="saveStatus" className="ol-caption" title={view.persistence.message}>
                   {view.persistence.status === 'saved' ? 'Saved' : 'Save error'}
                 </span>
+                {view.access && !view.access.controlling && (
+                  <Button
+                    size="sm"
+                    variant="quiet"
+                    className="ol-session-control"
+                    aria-description="This window is viewing your character. Take control to act here."
+                    onPress={() =>
+                      void post('/api/embodiment', {
+                        id: crypto.randomUUID(),
+                        expectedGeneration: view.access!.controlGeneration,
+                        operation: 'replace',
+                      })
+                        .then((result) => {
+                          if (!result.ok) notify(result.message ?? 'Control could not be changed.');
+                          else retry.current();
+                        })
+                        .catch((error: unknown) => notify(String(error)))
+                    }
+                  >
+                    Control here
+                  </Button>
+                )}
               </div>
               <div className="ol-survival-name">
                 <h3 className="ol-heading">{view.player.name}</h3>
@@ -837,7 +933,13 @@ function App() {
               </div>
               <Condition {...view.player} />
               <p className="ol-caption ol-player-state">
-                {!view.player.alive ? 'Life has ended' : 'In the wild'}
+                {view.player.participation === 'inactive'
+                  ? 'Away from the world'
+                  : view.player.participation === 'exiting'
+                    ? 'Preparing to leave'
+                    : !view.player.alive
+                      ? 'Life has ended'
+                      : 'In the wild'}
               </p>
             </section>
             <div className="ol-clock-position">
@@ -1136,4 +1238,9 @@ function App() {
     </>
   );
 }
-createRoot(document.getElementById('app')!).render(<App />);
+function ApplicationScope() {
+  const [generation, setGeneration] = useState(0);
+  const resetApplication = useCallback(() => setGeneration((value) => value + 1), []);
+  return <App key={generation} resetApplication={resetApplication} />;
+}
+createRoot(document.getElementById('app')!).render(<ApplicationScope />);

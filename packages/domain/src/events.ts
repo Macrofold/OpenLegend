@@ -1,3 +1,6 @@
+import { chargeWork } from './work-budget.js';
+import { worldRootEntities } from './entity-index.js';
+import { worldPosition } from './spatial-state.js';
 import { trackDetachedRecord } from './draft.js';
 import {
   observerDescription,
@@ -98,7 +101,7 @@ function eventAudience(
   const audience =
     scope === 'private' || !source
       ? []
-      : (candidates ?? Object.values(world.entities))
+      : (candidates ?? worldRootEntities(world))
           .filter(
             (entity) =>
               hasMemory(entity) &&
@@ -171,7 +174,7 @@ function recordEvent(
         ? world.conversations?.active[source.id]
         : undefined;
   const event: WorldEvent = {
-    ...(source ? { origin: { ...source.position } } : {}),
+    ...(source ? { origin: { ...worldPosition(source) } } : {}),
     scope,
     ...(conversationId ? { conversationId } : {}),
     id: nextId(world, 'event'),
@@ -191,6 +194,7 @@ function recordEvent(
     importancePolicy: 'native-v1',
     importanceReason: data?.['significant'] ? 'significant' : type,
   };
+  chargeWork({ effects: 1, outputBytes: JSON.stringify(event).length * 3 });
   trackDetachedRecord(world, event);
   if (source && conversationId && world.conversations?.records[conversationId])
     world.conversations.records[conversationId]!.lastActivityAt = world.simTime;

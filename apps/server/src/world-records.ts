@@ -1,9 +1,25 @@
 import { hotEventDependencies } from './hot-events.js';
-import { HISTORY_TABLES, historyPositions, historyKey } from './history-residency.js';
-import { randomUUID } from 'node:crypto';
+import {
+  HISTORY_TABLES,
+  historyPositions,
+  historyKey,
+  materializedObjectHistory,
+  HISTORY_MAP_TABLES,
+  historyMapPositions,
+} from './history-residency.js';
+import { randomUUID, createHash } from 'node:crypto';
+import { upgradeWorldState } from './upgrade-world.js';
 import {
   EXPERIENCE_LIMITS,
+  updateWorld,
+  validateWorldModules,
   appendedRecordCount,
+  entityChangesBetween,
+  completeAppraisalHistory,
+  markPartialAppraisals,
+  completeContributionHistory,
+  markPartialContributions,
+  type Appraisal,
   type Entity,
   type ItemInstance,
 } from '@open-legend/domain';
@@ -11,6 +27,7 @@ import type { SavedWorld, SqlDatabase } from './store.js';
 import {
   RECORD_NODES,
   WORLD_RECORD_SCHEMA,
+  legacyObjectRecordSchema,
   type JsonRecord,
   type RecordNode,
 } from './world-record-schema.js';
@@ -37,6 +54,7 @@ const own = (value: Value, key: string): Value =>
 const recordId = (path: string[]) => JSON.stringify(path);
 const members = (value: Value): [string, Value][] =>
   value && typeof value === 'object' ? Object.entries(value) : [];
+const entityPositions = new WeakMap<object, ReadonlyMap<string, number>>();
 function body(node: RecordNode, value: Value): Value {
   if (!value || typeof value !== 'object') return value;
   // Durable history owns event content. The active feed persists only membership.
@@ -66,6 +84,16 @@ function put(object: Value, key: string, value: Value) {
 export class WorldRecords {
   constructor(readonly db: SqlDatabase) {}
   needsHotPrune = false;
+  private readSchema = WORLD_RECORD_SCHEMA;
+  private currentContributionsPredicate(alias = ''): string {
+    const json = (field: string) =>
+      this.db.dialect === 'postgres'
+        ? `${alias}payload::jsonb ->> '${field}'`
+        : `json_extract(${alias}payload, '$.${field}')`;
+    // Only explicit terminal independent instances leave the current working set;
+    // singleton cooldowns remain present. Complete capture validates cold rows too.
+    return `(${json('contribution')} IS NULL OR ${json('active')} IS NULL OR CAST(${json('active')} AS TEXT) NOT IN ('false','0'))`;
+  }
   private get legacyAwarenessPredicate(): string {
     const field = (name: string) =>
       this.db.dialect === 'postgres'
@@ -78,7 +106,18 @@ export class WorldRecords {
       id BIGINT PRIMARY KEY CHECK (id=1), world_id TEXT NOT NULL UNIQUE,
       revision BIGINT NOT NULL CHECK (revision>=0), generation TEXT NOT NULL
     )`);
+    const columns =
+      this.db.dialect === 'postgres'
+        ? await this.db
+            .prepare(
+              "SELECT column_name AS name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='sim_placements'",
+            )
+            .all()
+        : await this.db.prepare('PRAGMA table_info(sim_placements)').all();
+    const legacyObjects =
+      columns.length > 0 && !columns.some((column) => column['name'] === 'placement_mode');
     const create = (node: RecordNode, parent?: RecordNode): string => {
+      const rebuilding = legacyObjects && ['sim_items', 'sim_placements'].includes(node.table);
       const extra = Object.entries(node.columns ?? {})
         .map(([name, column]) => `,${name} ${column.sql}`)
         .join('');
@@ -88,16 +127,95 @@ export class WorldRecords {
       return `CREATE TABLE IF NOT EXISTS ${node.table} (
         world_id TEXT NOT NULL REFERENCES world_head(world_id), id TEXT NOT NULL,
         parent_id TEXT NOT NULL, slot TEXT NOT NULL, position BIGINT NOT NULL,
-        revision BIGINT NOT NULL, payload TEXT NOT NULL${extra}, PRIMARY KEY(world_id,id)${foreign}
+        revision BIGINT NOT NULL, payload TEXT NOT NULL${extra}, PRIMARY KEY(world_id,id)${foreign}${node.constraints?.length ? ',' + node.constraints.join(',') : ''}
       ); CREATE INDEX IF NOT EXISTS ${node.table}_parent ON ${node.table}(world_id,parent_id,position);
-      ${(node.indexes ?? []).map((columns, index) => `CREATE INDEX IF NOT EXISTS ${node.table}_query${index} ON ${node.table}(world_id,${columns.join(',')});`).join('\n')}
+      ${(rebuilding ? [] : (node.uniqueIndexes ?? [])).map((columns, index) => `CREATE UNIQUE INDEX IF NOT EXISTS ${node.table}_identity${index} ON ${node.table}(world_id,${columns.join(',')});`).join('\n')}
+      ${(rebuilding ? [] : (node.indexes ?? [])).map((columns, index) => `CREATE INDEX IF NOT EXISTS ${node.table}_query${index} ON ${node.table}(world_id,${columns.join(',')});`).join('\n')}
       ${Object.values(node.children ?? {})
         .map((child) => create(child.node, node))
         .join('\n')}`;
     };
     await this.db.exec(create(WORLD_RECORD_SCHEMA));
+    const lineageCustodian =
+      this.db.dialect === 'postgres'
+        ? "(payload::jsonb ->> 'custodianId')"
+        : "json_extract(payload, '$.custodianId')";
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
+      ON sim_object_lineage(world_id,(${lineageCustodian}),slot)`);
+    if (legacyObjects) {
+      // Read and validate before replacing either physical table. A failure rolls back
+      // the whole schema/data cutover; no stale inventory representation is left writable.
+      this.readSchema = legacyObjectRecordSchema();
+      try {
+        await this.db.transaction(async () => {
+          const previous = await this.load(false);
+          const state = previous && {
+            ...previous.state,
+            world: updateWorld(previous.state.world, upgradeWorldState),
+          };
+          if (state) validateWorldModules(state.world);
+          await this.db.exec('DROP TABLE sim_items; DROP TABLE sim_placements;');
+          // Recreate only the two changed ownership boundaries. Existing actor/entity
+          // rows and unrelated history/authority/accounting remain in their tables.
+          const entity = RECORD_NODES.get('sim_entities')!;
+          for (const name of ['item', 'placement']) {
+            const child = entity.children![name]!.node;
+            await this.db.exec(create(child, entity));
+            for (const [index, cols] of (child.uniqueIndexes ?? []).entries())
+              await this.db.exec(
+                `CREATE UNIQUE INDEX IF NOT EXISTS ${child.table}_identity${index} ON ${child.table}(world_id,${cols.join(',')})`,
+              );
+            for (const [index, cols] of (child.indexes ?? []).entries())
+              await this.db.exec(
+                `CREATE INDEX IF NOT EXISTS ${child.table}_query${index} ON ${child.table}(world_id,${cols.join(',')})`,
+              );
+          }
+          if (previous && state) {
+            const revision = await this.advance(state.world.id, previous.revision);
+            // This full physical cutover also upgrades positional appraisal rows.
+            // Remove those old identities inside the same rollback boundary before
+            // inserting their stable replacements; no second writable store remains.
+            if (Object.values(previous.state.world.appraisals ?? {}).some(Array.isArray))
+              await this.db
+                .prepare('DELETE FROM mind_appraisals WHERE world_id=?')
+                .run(state.world.id);
+            const changes = this.prepare(undefined, state);
+            for (const rows of changes.writes.values()) for (const row of rows) row.create = false;
+            await this.write(state.world.id, revision, changes);
+            const checksum = (value: unknown) =>
+              createHash('sha256').update(JSON.stringify(value)).digest('hex');
+            await this.db
+              .prepare(
+                'INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+              )
+              .run(
+                `integration:object-placement-conversion:${state.world.id}`,
+                JSON.stringify({
+                  sourceRevision: previous.revision,
+                  revision,
+                  sourceChecksum: checksum(previous.state),
+                  resultChecksum: checksum(state),
+                  entities: Object.keys(state.world.entities).length,
+                }),
+              );
+          }
+        });
+      } finally {
+        this.readSchema = WORLD_RECORD_SCHEMA;
+      }
+    }
     await this.db.exec(
       `CREATE INDEX IF NOT EXISTS mind_awareness_legacy_trigger ON mind_awareness(world_id,source_id) WHERE ${this.legacyAwarenessPredicate}`,
+    );
+    const appraisalState =
+      this.db.dialect === 'postgres'
+        ? "payload::jsonb ->> 'state'"
+        : "json_extract(payload, '$.state')";
+    await this.db.exec(
+      `CREATE INDEX IF NOT EXISTS mind_appraisals_current ON mind_appraisals(world_id,parent_id,position) WHERE ${appraisalState}='active' OR ${appraisalState} IS NULL`,
+    );
+    await this.db.exec(
+      `CREATE INDEX IF NOT EXISTS sim_status_effects_current ON sim_status_effects(world_id,parent_id,position) WHERE ${this.currentContributionsPredicate()}`,
     );
   }
   async head() {
@@ -237,12 +355,64 @@ export class WorldRecords {
           for (const [entryId, entry] of prior)
             visit(child.node, entry.entry, undefined, [...childPath, entryId], id, '', entry.index);
         } else {
+          if (child.node.table === 'sim_entities' && previous && current && !this.needsHotPrune) {
+            const positions = entityPositions.get(previous as object);
+            const touched =
+              positions &&
+              entityChangesBetween(
+                previous as SavedWorld['world']['entities'],
+                current as SavedWorld['world']['entities'],
+              );
+            // A membership change can shift canonical iteration order; retain the full
+            // ordered diff for insert/delete. Value-only changes preserve every ordinal.
+            if (
+              touched &&
+              [...touched].every(
+                (key) => own(previous, key) !== undefined && own(current, key) !== undefined,
+              )
+            ) {
+              for (const key of touched)
+                visit(
+                  child.node,
+                  own(previous, key),
+                  own(current, key),
+                  [...childPath, key],
+                  id,
+                  key,
+                  positions!.get(key)!,
+                );
+              entityPositions.set(current as object, positions!);
+              continue;
+            }
+          }
           const oldEntries = new Map(
             members(previous).map(([key, entry], index) => [key, { entry, index }]),
           );
           let index = 0;
+          const mapHistory = HISTORY_MAP_TABLES.has(child.node.table);
+          const priorPlacement =
+            previous && mapHistory ? historyMapPositions.get(previous as object) : undefined;
+          const currentPlacement =
+            current && mapHistory ? historyMapPositions.get(current as object) : undefined;
+          const nextPlacement = mapHistory
+            ? {
+                positions: new Map<string, number>(),
+                next: Math.max(
+                  priorPlacement?.next ?? oldEntries.size,
+                  currentPlacement?.next ?? 0,
+                ),
+              }
+            : undefined;
+          const positions =
+            child.node.table === 'sim_entities' ? new Map<string, number>() : undefined;
           for (const [key, entry] of members(current)) {
+            positions?.set(key, index);
             const prior = oldEntries.get(key);
+            const oldPosition = priorPlacement?.positions.get(key) ?? prior?.index;
+            const position = nextPlacement
+              ? (oldPosition ?? currentPlacement?.positions.get(key) ?? nextPlacement.next++)
+              : index;
+            nextPlacement?.positions.set(key, position);
             visit(
               child.node,
               prior?.entry,
@@ -250,13 +420,23 @@ export class WorldRecords {
               [...childPath, key],
               id,
               key,
-              index++,
-              prior?.index,
+              position,
+              oldPosition,
             );
+            index++;
             oldEntries.delete(key);
           }
-          for (const [key, prior] of oldEntries)
-            visit(child.node, prior.entry, undefined, [...childPath, key], id, key, prior.index);
+          if (
+            (child.node.table !== 'mind_appraisals' ||
+              completeAppraisalHistory(current as Record<string, Appraisal> | undefined)) &&
+            (child.node.table !== 'sim_status_effects' ||
+              completeContributionHistory(current as Entity['statusEffects']))
+          )
+            for (const [key, prior] of oldEntries)
+              visit(child.node, prior.entry, undefined, [...childPath, key], id, key, prior.index);
+          if (positions && current && Object.isFrozen(current))
+            entityPositions.set(current as object, positions);
+          if (nextPlacement && current) historyMapPositions.set(current as object, nextPlacement);
         }
       }
     };
@@ -264,15 +444,6 @@ export class WorldRecords {
     return changes;
   }
   async write(worldId: string, revision: number, changes: RecordChanges) {
-    for (const [table, ids] of changes.deletes)
-      for (let offset = 0; offset < ids.length; offset += 800) {
-        const batch = ids.slice(offset, offset + 800);
-        await this.db
-          .prepare(
-            `DELETE FROM ${table} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
-          )
-          .run(worldId, ...batch);
-      }
     // Schema preorder guarantees parents exist before children, including brand-new actors.
     for (const [table, node] of RECORD_NODES) {
       const rows = changes.writes.get(table);
@@ -323,6 +494,17 @@ export class WorldRecords {
           .run(...batch.flat());
       }
     }
+    // Move physical children before deleting their old parent. Semantic containment
+    // is restrictive; structural cascade ownership must never destroy those objects.
+    for (const [table, ids] of changes.deletes)
+      for (let offset = 0; offset < ids.length; offset += 800) {
+        const batch = ids.slice(offset, offset + 800);
+        await this.db
+          .prepare(
+            `DELETE FROM ${table} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
+          )
+          .run(worldId, ...batch);
+      }
   }
   async load(active = false): Promise<{ revision: number; state: SavedWorld } | null> {
     return this.db.readTransaction
@@ -363,6 +545,17 @@ export class WorldRecords {
           ? "(t.payload::jsonb ->> 'id')"
           : "json_extract(t.payload, '$.id')";
       const partial = active && HISTORY_TABLES.has(table);
+      const objectPredicate = !active
+        ? ''
+        : table === 'sim_status_effects'
+          ? ` AND ${this.currentContributionsPredicate('t.')}`
+          : table === 'mind_appraisals'
+            ? ` AND (${this.db.dialect === 'postgres' ? "t.payload::jsonb ->> 'state'" : "json_extract(t.payload, '$.state')"}='active' OR ${this.db.dialect === 'postgres' ? "t.payload::jsonb ->> 'state'" : "json_extract(t.payload, '$.state')"} IS NULL)`
+            : ['sim_object_lineage', 'sim_object_retirements'].includes(table)
+              ? ' AND 1=0'
+              : ['sim_entities', 'sim_entity_geometry', 'sim_declared_owners'].includes(table)
+                ? ` AND NOT EXISTS (SELECT 1 FROM sim_object_retirements retired WHERE retired.world_id=t.world_id AND retired.parent_id=t.${table === 'sim_entities' ? 'id' : 'parent_id'})`
+                : '';
       const json = (field: string) =>
         this.db.dialect === 'postgres'
           ? `payload::jsonb ->> '${field}'`
@@ -386,7 +579,7 @@ export class WorldRecords {
         .prepare(
           table === 'world_hot_events'
             ? `SELECT t.id,t.parent_id,t.slot,t.position,h.payload FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${eventId} WHERE t.world_id=? ORDER BY t.parent_id,t.position`
-            : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${partial ? ` AND ${predicate}` : ''}${legacy} ORDER BY parent_id,position`,
+            : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ` AND ${predicate}` : ''}${legacy} ORDER BY parent_id,position`,
         )
         .all(
           head.worldId,
@@ -406,7 +599,7 @@ export class WorldRecords {
     }
     const nextPositions = new Map<string, number>();
     if (active)
-      for (const table of HISTORY_TABLES) {
+      for (const table of [...HISTORY_TABLES, ...HISTORY_MAP_TABLES]) {
         for (const row of await this.db
           .prepare(
             `SELECT parent_id,MAX(position)+1 AS next FROM ${table} WHERE world_id=? GROUP BY parent_id`,
@@ -453,14 +646,31 @@ export class WorldRecords {
                   : 0,
             });
           }
+          if (HISTORY_MAP_TABLES.has(child.node.table))
+            historyMapPositions.set(target as object, {
+              positions: new Map(
+                children.map((entry) => [String(entry['slot']), Number(entry['position'])]),
+              ),
+              next: active
+                ? (nextPositions.get(`${child.node.table}:${row['id']}`) ?? 0)
+                : children.length
+                  ? Number(children.at(-1)!['position']) + 1
+                  : 0,
+            });
           if (field !== '$') put(value, field, target);
         }
       }
       return value;
     };
-    const roots = groups.get(WORLD_RECORD_SCHEMA.table)?.get('') ?? [];
+    const roots = groups.get(this.readSchema.table)?.get('') ?? [];
     if (roots.length !== 1) throw new Error('Missing world control record; recovery refused.');
-    const state = assemble(WORLD_RECORD_SCHEMA, roots[0]!) as SavedWorld;
+    const state = assemble(this.readSchema, roots[0]!) as SavedWorld;
+    if (active) {
+      for (const records of Object.values(state.world.appraisals ?? {}))
+        markPartialAppraisals(records);
+      for (const entity of Object.values(state.world.entities))
+        if (entity.statusEffects) markPartialContributions(entity.statusEffects);
+    }
     const total = [...groups.values()].reduce(
       (sum, parents) => sum + [...parents.values()].reduce((count, rows) => count + rows.length, 0),
       0,
@@ -524,8 +734,55 @@ export class WorldRecords {
       : this.db.transaction(() => this.readHistory(state, actorIds));
   }
   private async readHistory(state: SavedWorld, actorIds?: string[]): Promise<SavedWorld> {
-    const world = state.world;
-    if (!world.experience) return state;
+    // Unscoped materialization is the save/restore boundary; actor maintenance does
+    // not need unrelated physical history. Never infer completeness from a hot map.
+    if (!actorIds) state = await this.withObjectHistory(state);
+    const entities = { ...state.world.entities };
+    for (const actorId of actorIds ?? Object.keys(entities)) {
+      const entity = entities[actorId];
+      if (!entity || completeContributionHistory(entity.statusEffects)) continue;
+      const rows = await this.db
+        .prepare(
+          'SELECT slot,position,payload FROM sim_status_effects WHERE world_id=? AND parent_id=? ORDER BY position,id',
+        )
+        .all(state.world.id, recordId(['world', 'entities', actorId]));
+      entities[actorId] = {
+        ...entity,
+        statusEffects: Object.fromEntries(
+          rows.map((row) => [String(row['slot']), JSON.parse(String(row['payload']))]),
+        ),
+      };
+      historyMapPositions.set(entities[actorId]!.statusEffects!, {
+        positions: new Map(rows.map((row) => [String(row['slot']), Number(row['position'])])),
+        next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
+      });
+    }
+    const appraisals = { ...state.world.appraisals };
+    for (const actorId of actorIds ?? Object.keys(appraisals)) {
+      const rows = await this.db
+        .prepare(
+          'SELECT slot,position,payload FROM mind_appraisals WHERE world_id=? AND parent_id=? ORDER BY position,id',
+        )
+        .all(state.world.id, recordId(['world', 'appraisals', actorId]));
+      if (rows.length || Object.hasOwn(appraisals, actorId)) {
+        appraisals[actorId] = Object.fromEntries(
+          rows.map((row) => {
+            const value = JSON.parse(String(row['payload'])) as Appraisal;
+            return [value.id, value];
+          }),
+        );
+        historyMapPositions.set(appraisals[actorId]!, {
+          positions: new Map(rows.map((row) => [String(row['slot']), Number(row['position'])])),
+          next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
+        });
+      }
+    }
+    const world = {
+      ...state.world,
+      entities,
+      ...(state.world.appraisals || Object.keys(appraisals).length ? { appraisals } : {}),
+    };
+    if (!world.experience) return { ...state, world };
     const memories = { ...world.memories },
       awareness = { ...world.experience.awareness },
       summaries = { ...world.experience.summaries };
@@ -557,6 +814,101 @@ export class WorldRecords {
       world: { ...world, memories, experience: { ...world.experience, awareness, summaries } },
     };
   }
+  /** Canonical terminal outcomes for exactly the proposed create identities. The
+   * principal/source/timeline fence is checked by WorldService's publication lane. */
+  async appraisalOutcomes(
+    worldId: string,
+    actorId: string,
+    ids: readonly string[],
+  ): Promise<Record<string, Appraisal>> {
+    if (ids.length > 8) throw new Error('Too many appraisal outcome bindings.');
+    if (!ids.length) return {};
+    const rows = await this.db
+      .prepare(
+        `SELECT payload FROM mind_appraisals WHERE world_id=? AND parent_id=? AND id IN (${ids.map(() => '?').join(',')})`,
+      )
+      .all(
+        worldId,
+        recordId(['world', 'appraisals', actorId]),
+        ...ids.map((id) => recordId(['world', 'appraisals', actorId, id])),
+      );
+    return Object.fromEntries(
+      rows.map((row) => {
+        const value = JSON.parse(String(row['payload'])) as Appraisal;
+        return [value.id, value];
+      }),
+    );
+  }
+  private async withObjectHistory(state: SavedWorld): Promise<SavedWorld> {
+    materializedObjectHistory(state.world);
+    const entities = { ...state.world.entities },
+      objectLineage = { ...state.world.objectLineage };
+    const rows = await this.db
+      .prepare(
+        `SELECT e.payload AS entity,r.payload AS retirement,g.payload AS spatial,o.payload AS declared_owner
+      FROM sim_object_retirements r JOIN sim_entities e ON e.world_id=r.world_id AND e.id=r.parent_id
+      JOIN sim_entity_geometry g ON g.world_id=e.world_id AND g.parent_id=e.id
+      LEFT JOIN sim_declared_owners o ON o.world_id=e.world_id AND o.parent_id=e.id WHERE r.world_id=?`,
+      )
+      .all(state.world.id);
+    for (const row of rows) {
+      const entity = JSON.parse(String(row['entity'])) as Entity;
+      if (entities[entity.id]) continue;
+      entity.retirement = JSON.parse(String(row['retirement']));
+      entity.spatial = JSON.parse(String(row['spatial']));
+      if (row['declared_owner']) entity.declaredOwner = JSON.parse(String(row['declared_owner']));
+      entities[entity.id] = entity;
+    }
+    for (const row of await this.db
+      .prepare('SELECT slot,payload FROM sim_object_lineage WHERE world_id=?')
+      .all(state.world.id)) {
+      const id = String(row['slot']);
+      if (!Object.hasOwn(objectLineage, id)) objectLineage[id] = JSON.parse(String(row['payload']));
+    }
+    return {
+      ...state,
+      world: {
+        ...state.world,
+        entities,
+        ...(Object.keys(objectLineage).length || state.world.objectLineage
+          ? { objectLineage }
+          : {}),
+      },
+    };
+  }
+  /** Cold historical identities stay outside the live simulation set. Current request
+   * authority is checked by the service; this query requires occurrence-time custody. */
+  async objectHistory(worldId: string, actorId: string, after = '', objectId?: string) {
+    const custodian =
+      this.db.dialect === 'postgres'
+        ? "(l.payload::jsonb ->> 'custodianId')"
+        : "json_extract(l.payload, '$.custodianId')";
+    const rows = await this.db
+      .prepare(
+        `SELECT l.payload, e.payload AS entity
+      FROM sim_object_lineage l JOIN sim_entities e ON e.world_id=l.world_id AND e.entity_id=l.source_id
+      WHERE l.world_id=? AND ${custodian}=? AND l.slot>?
+      ${objectId ? 'AND (l.source_id=? OR l.target_id=?)' : ''}
+      ORDER BY l.slot LIMIT 41`,
+      )
+      .all(worldId, actorId, after, ...(objectId ? [objectId, objectId] : []));
+    const entries = rows.slice(0, 40).map((row) => {
+      const record = JSON.parse(
+        String(row['payload']),
+      ) as import('@open-legend/domain').ObjectLineage;
+      const entity = JSON.parse(String(row['entity'])) as Entity;
+      return {
+        id: record.id,
+        at: record.at,
+        type: record.type,
+        quantity: record.quantity,
+        name: entity.name,
+        sourceId: record.sourceId,
+        targetId: record.targetId,
+      };
+    });
+    return { entries, after: rows.length > 40 ? entries.at(-1)!.id : undefined };
+  }
   async inventory(
     worldId: string,
     ownerId: string,
@@ -567,10 +919,26 @@ export class WorldRecords {
       throw new Error('Invalid inventory page size.');
     const rows = await this.db
       .prepare(
-        'SELECT payload FROM sim_items WHERE world_id=? AND owner_id=? AND item_id>? ORDER BY item_id LIMIT ?',
+        'SELECT i.payload,i.item_id,p.payload AS placement FROM sim_items i JOIN sim_placements p ON p.world_id=i.world_id AND p.entity_id=i.item_id WHERE i.world_id=? AND p.physical_parent_id=? AND i.item_id>? ORDER BY i.item_id LIMIT ?',
       )
       .all(worldId, ownerId, afterId, limit);
-    return rows.map((row) => JSON.parse(String(row['payload'])) as ItemInstance);
+    return rows.map((row) => {
+      const lot = JSON.parse(
+        String(row['payload']),
+      ) as import('@open-legend/domain').Entity['item'];
+      const placement = JSON.parse(
+        String(row['placement']),
+      ) as import('@open-legend/domain').Entity['placement'];
+      return {
+        id: String(row['item_id']),
+        ownerId,
+        definitionId: lot!.definitionPin.id,
+        quantity: lot!.quantity,
+        revision: lot!.revision,
+        individuality: lot!.individuality,
+        placementRevision: placement!.revision,
+      };
+    });
   }
   async entitySummary(
     worldId: string,

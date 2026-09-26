@@ -1,4 +1,5 @@
 import type { Outcome, WorldState } from './types.js';
+import { recordSemanticChange } from './dependencies.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { outcome } from './events.js';
 
@@ -18,13 +19,41 @@ export interface KnowledgePolicy {
 }
 export type ActorKnowledge = Record<string, KnowledgeDocument>;
 export function advanceKnowledgeRevision(world: WorldState, actorId: string): void {
+  if (!Number.isSafeInteger((world.knowledgeRevisions?.[actorId] ?? 0) + 1))
+    throw new Error('Knowledge revision exhausted.');
   (world.knowledgeRevisions ??= {})[actorId] = (world.knowledgeRevisions?.[actorId] ?? 0) + 1;
+  recordSemanticChange(world, { kind: 'knowledge', actorId });
 }
 export const characterCount = (text: string): number => Array.from(text).length;
 export const knowledgeKey = (subjectId: string | null): string =>
   subjectId === null ? 'general' : `subject:${subjectId}`;
 export function knowledgeDocument(world: WorldState, actorId: string, subjectId: string | null) {
   return getOwn(world.actorKnowledge?.[actorId] ?? {}, knowledgeKey(subjectId));
+}
+const orderedDocuments = new WeakMap<ActorKnowledge, readonly string[]>();
+/** Directional social text is this exact document revision, never a second writable
+ * relationship record. Only a cold index build visits all of an actor's documents. */
+export function knowledgePage(world: WorldState, actorId: string, after = '', limit = 40) {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+    throw new Error('Invalid knowledge page size.');
+  const documents = world.actorKnowledge?.[actorId] ?? {};
+  let keys = Object.isFrozen(documents) ? orderedDocuments.get(documents) : undefined;
+  if (!keys) {
+    keys = Object.keys(documents).sort();
+    if (Object.isFrozen(documents)) orderedDocuments.set(documents, keys);
+  }
+  let low = 0,
+    high = keys.length;
+  while (low < high) {
+    const mid = (low + high) >>> 1;
+    if (keys[mid]! <= after) low = mid + 1;
+    else high = mid;
+  }
+  const page = keys.slice(low, low + limit);
+  return {
+    values: page.map((key) => documents[key]!),
+    next: low + limit < keys.length ? page.at(-1)! : null,
+  };
 }
 
 /** The caller supplies a permitted subject binding; prose never grants world capabilities.

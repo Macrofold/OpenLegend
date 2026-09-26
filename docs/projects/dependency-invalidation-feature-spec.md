@@ -1,6 +1,8 @@
 # Dependency invalidation and aggregate work containment — feature specification
 
-**Status:** proposed implementation scope. Priority 4. [Technical design](dependency-invalidation-tech-design.md) owns algorithms; [DI01–DI08](../maintainers/dependency-invalidation.md) decomposes EWF08 while EPR/PF/SW retain their actual scheduler/query work. See [foundation package](foundations-1-5.md).
+**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 4. [Technical design](dependency-invalidation-tech-design.md) owns algorithms; [DI01–DI08](../maintainers/dependency-invalidation.md) decomposes EWF08 while EPR/PF/SW retain their actual scheduler/query work. See [foundation package](foundations-1-5.md).
+
+The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
 ## 1. Outcome
 

@@ -1,3 +1,5 @@
+import { setSpatialPosition, worldSupport } from './index.js';
+import { worldPosition } from './spatial-state.js';
 import { describe, it, expect } from 'vitest';
 import {
   createWorld,
@@ -16,7 +18,12 @@ import { appendMemory } from './events.js';
 function encounter() {
   let world = createWorld(42);
   world.paused = false;
-  world.entities.player!.position = { ...world.entities.ada!.position };
+  setSpatialPosition(
+    world,
+    world.entities.player!,
+    { ...worldPosition(world.entities.ada!) },
+    worldSupport(world.entities.player!),
+  );
   world = executeCommand(world, {
     id: 'encounter',
     actorId: 'player',
@@ -211,9 +218,19 @@ describe('fixture: bounded authored minds', () => {
   it('records person encounters natively without repeated per-step records', () => {
     let world = createWorld(4);
     world.paused = false;
-    world.entities.player!.position = { y: 0, x: 100, z: 100 };
+    setSpatialPosition(
+      world,
+      world.entities.player!,
+      { y: 0, x: 100, z: 100 },
+      worldSupport(world.entities.player!),
+    );
     world = advanceWorld(world, 1).world;
-    world.entities.player!.position = { ...world.entities.ada!.position };
+    setSpatialPosition(
+      world,
+      world.entities.player!,
+      { ...worldPosition(world.entities.ada!) },
+      worldSupport(world.entities.player!),
+    );
     world = advanceWorld(world, 1).world;
     const initial = (world.memories.ada ?? []).filter((m) => m.summary.startsWith('I saw ')).length;
     expect(initial).toBeGreaterThan(0);

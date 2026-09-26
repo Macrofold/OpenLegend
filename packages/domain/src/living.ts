@@ -1,4 +1,8 @@
+import { recordSemanticChange } from './dependencies.js';
+import { worldSupport } from './spatial-state.js';
+import { activelyParticipates } from './participation-state.js';
 import { livingBody, nativeActor } from './worlds/base/bodies.js';
+import { setBodyHealth } from './body-state.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { finishPlanAction } from './agency.js';
 import type { Entity, WorldEvent, WorldState, Transition } from './types.js';
@@ -81,7 +85,8 @@ export function reconcileBody(
   const actor = entity.actor!;
   const body = actor.body!;
   body.revision++;
-  actor.health = Math.max(0, Math.min(body.maxHealth, actor.health));
+  recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'body' });
+  setBodyHealth(actor, Math.max(0, Math.min(body.maxHealth, actor.health)));
   if (actor.health === 0 && actor.alive && !actor.incapacitated) {
     if (actor.action)
       finishPlanAction(
@@ -91,7 +96,7 @@ export function reconcileBody(
         outcome(false, 'actor-unavailable', 'The body can no longer continue this work.'),
       );
     actor.action = null;
-    if (entity.spatial.supportSurfaceId === null) {
+    if (worldSupport(entity) === null) {
       delete entity.spatial.flight;
       entity.spatial.fallVelocity = 0;
     }
@@ -159,6 +164,7 @@ export function applyBodyEffects(
         Math.abs(e.amount) > 100 ||
         (e.kind !== 'health' && e.amount < 0) ||
         !input.entities[e.targetId]?.actor?.alive ||
+        !activelyParticipates(input.entities[e.targetId]) ||
         input.entities[e.targetId]?.actor?.body?.revision !== expected[e.targetId],
     )
   )
@@ -187,6 +193,7 @@ export function commitBodyEffects(
   cause: string,
   events: WorldEvent[],
 ): void {
+  if (!activelyParticipates(entity)) return;
   const actor = entity.actor!;
   const body = actor.body!;
   const totals = { health: 0, injury: 0, healing: 0, wetness: 0, burning: 0 };
@@ -206,7 +213,10 @@ export function commitBodyEffects(
     0,
     Math.min(100, previous.burning + totals.burning - totals.wetness),
   );
-  actor.health += totals.health + totals.healing - totals.injury - totals.burning;
+  setBodyHealth(
+    actor,
+    actor.health + totals.health + totals.healing - totals.injury - totals.burning,
+  );
   reconcileBody(world, entity, events, cause);
   if (actor.health < before) interruptStatusEffects(world, entity, events, 'injury');
   emit(world, events, 'body-effect', `${entity.name}'s body changed.`, entity, entity.id, {

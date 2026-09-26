@@ -1,3 +1,5 @@
+import { worldPosition } from './spatial-state.js';
+import { activelyParticipates } from './participation-state.js';
 import { editKnowledge, knowledgeDocument, type KnowledgeEdit } from './knowledge.js';
 import {
   assignGivenName,
@@ -251,6 +253,7 @@ export function commitActorResponse(
       outcome: outcome(false, 'paused', 'The response is waiting for the world to resume.'),
     };
   if (!actor?.actor) return unavailable('The person is no longer available.');
+  if (!activelyParticipates(actor)) return unavailable('The person is not participating.');
   if (!actor.actor.alive) return unavailable(`${actor.name} is dead and cannot respond.`);
   if (actor.actor.incapacitated)
     return unavailable(`${actor.name} is incapacitated and cannot respond.`);
@@ -405,6 +408,7 @@ export function commitActorResponse(
         command('act', { ...selected, actorId, id: `${id}:${localId}` });
       else if (selected)
         components[localId] = arrangePlan(
+          world,
           world.entities[actorId]!.actor!,
           `${id}:${localId}`,
           [{ ...selected, actorId, id: `${id}:${localId}` }],
@@ -431,9 +435,12 @@ export function commitActorResponse(
       const reachable =
         act.verb !== 'slap' ||
         (!!target &&
+          !invalidTarget &&
+          activelyParticipates(target) &&
           target.id !== actorId &&
-          distance(source.position, target.position) <= SIMULATION_RULES.interactionRadius &&
-          hasLineOfSight(world, source.position, target.position));
+          distance(worldPosition(source), worldPosition(target)) <=
+            SIMULATION_RULES.interactionRadius &&
+          hasLineOfSight(world, worldPosition(source), worldPosition(target)));
       if (
         !supportsManualWork(source) ||
         !act.verb ||
@@ -441,8 +448,8 @@ export function commitActorResponse(
         invalidTarget ||
         !reachable ||
         (target &&
-          (!hasLineOfSight(world, source.position, target.position) ||
-            !seesEntity(world, source, target) ||
+          (!seesEntity(world, source, target) ||
+            !hasLineOfSight(world, worldPosition(source), worldPosition(target)) ||
             (target.actor && !target.actor.alive)))
       )
         components[localId] = outcome(
@@ -493,6 +500,7 @@ export function commitActorResponse(
           command('act', { ...selected[0]!, actorId, id: `${id}:${localId}` });
         else
           components[localId] = arrangePlan(
+            world,
             component,
             `${id}:${localId}`,
             selected.map((command, index) => ({
@@ -582,7 +590,7 @@ export function commitActorResponse(
             'Cancellation requires the current plan revision and no new steps or goal.',
           );
         else {
-          cancelPlan(component);
+          cancelPlan(world, component);
           components[localId] = outcome(
             true,
             'cancelled',
@@ -591,6 +599,7 @@ export function commitActorResponse(
         }
       } else
         components[localId] = arrangePlan(
+          world,
           component,
           `${id}:${localId}`,
           op.plan.steps.map(

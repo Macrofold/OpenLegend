@@ -764,6 +764,22 @@ export class MemoryRepository {
       return this.hydrate(rows);
     });
   }
+  /** Exact, bounded sources already selected into one appraisal/reflection context.
+   * No required-history union or whole actor hydration is needed for this binding. */
+  async appraisalSources(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
+    const unique = [...new Set(ids)];
+    if (unique.length > 48) throw new Error('Too many appraisal source bindings.');
+    if (!unique.length) return [];
+    return this.snapshot(async () =>
+      this.hydrate(
+        await this.db
+          .prepare(
+            `SELECT r.* FROM recall_sources r WHERE ${this.eligible} AND r.id IN (${unique.map(() => '?').join(',')}) ORDER BY r.id`,
+          )
+          .all(...this.params(scope), ...unique),
+      ),
+    );
+  }
   async required(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
     return this.snapshot(() => this.readRequired(scope, ids));
   }

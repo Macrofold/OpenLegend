@@ -1,3 +1,4 @@
+import { worldPosition, worldSupport } from '@open-legend/domain';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -53,7 +54,11 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
     expect((await (await post('/api/command', envelope)).json()).ok).toBe(true);
     expect(game.service.world.entities[view.player.id]!.actor!.action!.id).toBe(first);
     await game.service.transition((world) => advanceWorld(world, 280));
-    expect(game.service.world.entities[view.player.id]!.position).toEqual({ x: 24, y: 3, z: 6 });
+    expect(worldPosition(game.service.world.entities[view.player.id]!)).toEqual({
+      x: 24,
+      y: 3,
+      z: 6,
+    });
     const incorrect = await (
       await post('/api/command', {
         ...envelope,
@@ -62,9 +67,7 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
       })
     ).json();
     expect(incorrect.ok).toBe(false);
-    expect(game.service.world.entities[view.player.id]!.spatial.supportSurfaceId).toBe(
-      'lookout-deck',
-    );
+    expect(worldSupport(game.service.world.entities[view.player.id]!)).toBe('lookout-deck');
   } finally {
     await game.close();
   }
@@ -87,10 +90,10 @@ it('restores a saved elevated route and native flight through SQLite and manual 
       type: 'move',
       position: { x: 20, y: 3, z: 5.5, surfaceId: 'lookout-deck' },
     });
-    for (let n = 0; n < 250 && game.service.world.entities[actorId]!.position.y < 0.1; n++)
+    for (let n = 0; n < 250 && worldPosition(game.service.world.entities[actorId]!).y < 0.1; n++)
       await game.service.transition((world) => advanceWorld(world, 1));
     const snapshot = structuredClone(game.service.world.entities[actorId]);
-    expect(snapshot!.spatial.supportSurfaceId).toBe('lookout-ramp');
+    expect(worldSupport(snapshot!)).toBe('lookout-ramp');
     const id = randomUUID();
     await game.service.createSave('On the ramp', id);
     const stored = await game.service.store.saves!.read(game.service.world.id, id);
@@ -106,7 +109,7 @@ it('restores a saved elevated route and native flight through SQLite and manual 
     expect(game.service.world.entities[actorId]).toEqual(snapshot);
     await game.service.control({ paused: false, clientId: 'save-fixture' });
     await game.service.transition((world) => advanceWorld(world, 150));
-    expect(game.service.world.entities[actorId]!.position.y).toBe(3);
+    expect(worldPosition(game.service.world.entities[actorId]!).y).toBe(3);
     const epoch = game.service.generation;
     await game.service.restoreSave(
       id,

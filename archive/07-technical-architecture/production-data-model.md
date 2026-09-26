@@ -494,7 +494,15 @@ Current task state and D0–D6 exit gates live only in the [Production data impl
 
 ## Accepted foundation contract additions
 
-These are target records/semantics, not additional implemented tables. Special player permissions follow [invention governance](../03-design-proposals/invention-governance-and-ownership.md#special-player-invention-permission). Operational grants/revocations and maintenance schedules do not rewind with a gameplay save. MP01–MP03 own their first real consumers.
+The [priorities 1–5 implementation plan](../../docs/projects/foundations-1-5.md#approved-implementation-plan)
+was authorized September 26, 2026. Its entity-backed lots, single tagged placement,
+source-aware appraisals, contribution/claim records and non-rewindable account/control
+records now use the existing canonical record catalogue. Supported records convert
+atomically in place, preserving identity and unrelated state, and join SL00 complete
+capture/recovery. [Verification](../../docs/verification.md#foundation-priorities-15--implementation-evidence) records both-adapter evidence. Record-tree ownership is never physical
+containment: deleting a container cannot cascade through its independent contents.
+
+The additional special-permission, maintenance and ghost workflows below remain targets. Special player permissions follow [invention governance](../03-design-proposals/invention-governance-and-ownership.md#special-player-invention-permission). Operational grants/revocations and maintenance schedules do not rewind with a gameplay save. MP01–MP03 own their first real consumers.
 
 Lifecycle records must preserve one identity across active, exiting, inactive, dead, retained-ghost, summoned and revived states as those supported transitions arrive. A retained ghost is not an always-loaded simulation body. Do not allocate parallel inventories or minds to a second ghost identity. World-authored human protection and NPC continuity live in the [base-world lifecycle owner](../../docs/worlds/base/lifecycle-and-protection.md); BW13–BW15/MP04 supply acceptance.
 

@@ -1,3 +1,13 @@
+import {
+  allItems,
+  createItemLot,
+  itemFor,
+  retireItem,
+  setItemQuantity,
+  setSpatialPosition,
+  worldSupport,
+} from '@open-legend/domain';
+import { worldPlacement } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   advanceWorld,
@@ -35,20 +45,20 @@ function addItem(
   quantity: number,
   ownerId = 'ada',
 ): string {
-  const existing = Object.values(service.world.items).find(
+  const existing = allItems(service.world).find(
     (item) => item.definitionId === definitionId && item.ownerId === ownerId,
   );
   if (existing) {
-    existing.quantity += quantity;
+    setItemQuantity(service.world, existing.id, existing.quantity + quantity, 'fixture');
     return existing.id;
   }
   const id = `fixture:${ownerId}:${definitionId}`;
-  service.world.items[id] = { id, definitionId, quantity, ownerId };
+  createItemLot(service.world, ownerId, definitionId, quantity, id);
   return id;
 }
 function removeItem(service: WorldService, definitionId: string): void {
   for (const item of inventoryFor(service.world, 'ada'))
-    if (item.definitionId === definitionId) delete service.world.items[item.id];
+    if (item.definitionId === definitionId) retireItem(service.world, item.id, 'fixture');
 }
 function addTool(service: WorldService, mechanism: 'swing' | 'flex'): string {
   const id = `fixture-${mechanism}`;
@@ -279,9 +289,19 @@ describe('actor-scoped native decision candidates', () => {
     service.world.entities.ada!.actor!.equippedItemId = toolId;
     const hunt = select(service, 'hunt', (action) => action.command?.targetId === 'hare-1');
     expect(hunt.command?.itemId).toBe(toolId);
-    expect(service.world.items[hunt.command!.ammunitionId!]!.ownerId).toBe('ada');
-    service.world.entities['hare-2']!.position = { y: 0, x: 27, z: 23 };
-    service.world.entities.ada!.position = { y: 0, x: 1, z: 1 }; // Beyond the broader 28-unit sight field.
+    expect(itemFor(service.world, hunt.command!.ammunitionId!)!.ownerId).toBe('ada');
+    setSpatialPosition(
+      service.world,
+      service.world.entities['hare-2']!,
+      { y: 0, x: 27, z: 23 },
+      worldSupport(service.world.entities['hare-2']!),
+    );
+    setSpatialPosition(
+      service.world,
+      service.world.entities.ada!,
+      { y: 0, x: 1, z: 1 },
+      worldSupport(service.world.entities.ada!),
+    ); // Beyond the broader 28-unit sight field.
     expect(npcCandidates(service).some((action) => action.command?.targetId === 'hare-2')).toBe(
       false,
     );
@@ -298,10 +318,10 @@ describe('actor-scoped native decision candidates', () => {
     const service = await setup();
     service.world.entities['test-remains'] = {
       id: 'test-remains',
-      spatial: { bodyProfileId: 'object', heading: 0, supportSurfaceId: 'terrain' },
+      spatial: { bodyProfileId: 'object', heading: 0 },
       name: 'Hare remains',
       kind: 'remains',
-      position: { y: 0, x: 14, z: 12 },
+      placement: worldPlacement({ y: 0, x: 14, z: 12 }, 'terrain'),
       remains: {
         sourceId: 'test-remains',
         harvested: false,
@@ -336,18 +356,28 @@ describe('actor-scoped native decision candidates', () => {
     service.world.entities.campfire!.heat!.fuelSeconds = 1;
     expect(npcCandidates(service).some((action) => action.command?.type === 'cook')).toBe(false);
     service.world.entities.campfire!.heat!.fuelSeconds = 10000;
-    service.world.entities.campfire!.position = { y: 0, x: 27, z: 23 };
-    service.world.entities.ada!.position = { y: 0, x: 1, z: 1 };
+    setSpatialPosition(
+      service.world,
+      service.world.entities.campfire!,
+      { y: 0, x: 27, z: 23 },
+      worldSupport(service.world.entities.campfire!),
+    );
+    setSpatialPosition(
+      service.world,
+      service.world.entities.ada!,
+      { y: 0, x: 1, z: 1 },
+      worldSupport(service.world.entities.ada!),
+    );
     expect(npcCandidates(service).some((action) => action.command?.type === 'cook')).toBe(false);
   });
   it('does not offer unreachable visible resources or actions for paused/dead actors', async () => {
     const service = await setup();
     service.world.entities['isolated-berries'] = {
       id: 'isolated-berries',
-      spatial: { bodyProfileId: 'object', heading: 0, supportSurfaceId: 'terrain' },
+      spatial: { bodyProfileId: 'object', heading: 0 },
       kind: 'resource',
       name: 'Island berries',
-      position: { y: 0, x: 18, z: 13 },
+      placement: worldPlacement({ y: 0, x: 18, z: 13 }, 'terrain'),
       resource: { definitionId: 'berries', quantity: 2, workSeconds: 30 },
     };
     for (const [x, z] of [

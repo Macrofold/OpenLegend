@@ -1,3 +1,4 @@
+import { activelyParticipates } from './participation-state.js';
 import { withinHearingRange } from './perception.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import type { WorldState, Transition } from './types.js';
@@ -190,6 +191,7 @@ export function changeConversation(
     (operation === 'join' &&
       !!(entity?.actor?.incapacitated || capabilityBlocked(input, entity, 'speech'))) ||
     !entity?.actor?.alive ||
+    !activelyParticipates(entity) ||
     !canSpeak(entity) ||
     !conversation ||
     conversation.generation !== generation ||

@@ -1,3 +1,4 @@
+import { worldPosition } from '@open-legend/domain';
 import { strikeDefinition, type Entity, type WorldState } from '@open-legend/domain';
 import type { ActionAnimation } from '@open-legend/protocol';
 
@@ -9,8 +10,8 @@ export function actionAnimation(world: WorldState, entity: Entity): ActionAnimat
   const definition = strikeDefinition(action.definitionId);
   const target = world.entities[action.targetId ?? ''];
   if (!definition || !target) return null;
-  const x = target.position.x - entity.position.x,
-    z = target.position.z - entity.position.z;
+  const x = worldPosition(target).x - worldPosition(entity).x,
+    z = worldPosition(target).z - worldPosition(entity).z;
   const length = Math.hypot(x, z) || 1;
   return {
     id: action.id,

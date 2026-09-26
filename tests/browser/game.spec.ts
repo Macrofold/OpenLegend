@@ -1,3 +1,5 @@
+import { allItems } from '@open-legend/domain';
+import { worldPosition } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../../apps/server/src/config.js';
@@ -115,7 +117,7 @@ test('native wilderness is visible, playable, saved and honestly reports absent 
     ).toBe(true);
     await expect
       .poll(() => {
-        const position = game.service.world.entities['ada']!.position;
+        const position = worldPosition(game.service.world.entities['ada']!);
         return Math.hypot(position.x - 19, position.z - 13);
       })
       .toBeLessThan(0.1);
@@ -133,11 +135,11 @@ test('native wilderness is visible, playable, saved and honestly reports absent 
     await expect(page.getByRole('button', { name: 'Pause world', exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: 'Hide Conversation panel' }).click();
-    const initialPosition = { ...game.service.world.entities['player']!.position };
+    const initialPosition = { ...worldPosition(game.service.world.entities['player']!) };
     await page.locator('#world').click({ position: { x: 800, y: 580 } });
     await expect
       .poll(() => {
-        const current = game.service.world.entities['player']!.position;
+        const current = worldPosition(game.service.world.entities['player']!);
         return Math.hypot(current.x - initialPosition.x, current.z - initialPosition.z);
       })
       .toBeGreaterThan(0.25);
@@ -167,7 +169,7 @@ test('native wilderness is visible, playable, saved and honestly reports absent 
     await expect
       .poll(
         () =>
-          Object.values(game.service.world.items).some(
+          allItems(game.service.world).some(
             (item) => item.ownerId === 'player' && item.definitionId === 'raw_fiber',
           ),
         { timeout: 10_000 },

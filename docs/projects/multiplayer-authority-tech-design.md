@@ -1,6 +1,8 @@
 # Multiplayer principal, control and private projections — technical design
 
-**Status:** proposed implementation contract. [Feature specification](multiplayer-authority-feature-spec.md) defines the experience. [MP01/MP04 delivery slices](../maintainers/multiplayer.md#priority-2-implementation-slices) contain executable work; MP02/MP03, BW13/BW14, SL and D5/D6 retain their separate scope.
+**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](multiplayer-authority-feature-spec.md) defines the experience. [MP01/MP04 delivery slices](../maintainers/multiplayer.md#priority-2-implementation-slices) contain executable work; MP02/MP03, BW13/BW14, SL and D5/D6 retain their separate scope.
+
+The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
 ## 1. Baseline and implementation boundary
 
@@ -12,16 +14,16 @@ The accepted [authority boundary](../../archive/07-technical-architecture/data-d
 
 ## 2. Identity and records
 
-| Identity / record | Meaning and ownership |
-| --- | --- |
-| Account | Stable application identity mapped uniquely to a trusted issuer/subject; not an actor name or email address. |
-| Authentication session | Server-owned login state, token hash, account, validity/revocation revision and expiry; outside gameplay rewind. |
-| Connection | One live HTTP/SSE/browser transport instance associated with an authenticated session; no independent game rights. |
-| World membership/grant | Current scoped permissions, issuer and monotonic revision, held outside gameplay rewind. |
-| Actor binding | Which account may request control of which world-local actor; not automatically granted to every member or creator. |
-| Control lease | Current controlling connection/session, account/actor, generation and status; replace atomically, never restore an old generation. |
-| Participation state | Actor's active/exiting/inactive lifecycle and saved return anchor, owned by the world; distinct from authentication and viewport visibility. |
-| Operation/command identity | World, principal, epoch, request ID and canonical body digest with result/commit references; independent of a transport connection. |
+| Identity / record          | Meaning and ownership                                                                                                                        |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Account                    | Stable application identity mapped uniquely to a trusted issuer/subject; not an actor name or email address.                                 |
+| Authentication session     | Server-owned login state, token hash, account, validity/revocation revision and expiry; outside gameplay rewind.                             |
+| Connection                 | One live HTTP/SSE/browser transport instance associated with an authenticated session; no independent game rights.                           |
+| World membership/grant     | Current scoped permissions, issuer and monotonic revision, held outside gameplay rewind.                                                     |
+| Actor binding              | Which account may request control of which world-local actor; not automatically granted to every member or creator.                          |
+| Control lease              | Current controlling connection/session, account/actor, generation and status; replace atomically, never restore an old generation.           |
+| Participation state        | Actor's active/exiting/inactive lifecycle and saved return anchor, owned by the world; distinct from authentication and viewport visibility. |
+| Operation/command identity | World, principal, epoch, request ID and canonical body digest with result/commit references; independent of a transport connection.          |
 
 Use the production model's existing account/control conventions and consumed repositories. Add only the records needed by this slice. Session secrets, current grants and control counters must be excluded from gameplay checkpoint replacement even if their physical table is colocated with simulation records. Current controller authority is not historical character content.
 
@@ -59,14 +61,14 @@ The server constructs this object. A client may send its expected actor/timeline
 
 Proposed route semantics, adapted into the existing HTTP router rather than a second API service:
 
-| Operation | Admission contract |
-| --- | --- |
-| Session/profile/world list | Authenticated account; return only authorized profile and memberships. |
-| Acquire/replace/release control | Membership + actor binding + expected control generation + request identity; replacement is explicit. |
-| Gameplay command/cancel | Current controlling connection, actor, timeline and grants; native mechanical validation still follows. |
-| World snapshot/stream/history | Current permitted audience, knowledge/disclosure state and scoped cursor; control is not required for an authorized follower view. |
-| Actor knowledge/edit/creator tools | Operation-specific current grant and owner/participant restrictions; no elevation from an actor ID. |
-| Receipt lookup | Same principal/scope authorization as the stored result; never a public request-ID oracle. |
+| Operation                          | Admission contract                                                                                                                 |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Session/profile/world list         | Authenticated account; return only authorized profile and memberships.                                                             |
+| Acquire/replace/release control    | Membership + actor binding + expected control generation + request identity; replacement is explicit.                              |
+| Gameplay command/cancel            | Current controlling connection, actor, timeline and grants; native mechanical validation still follows.                            |
+| World snapshot/stream/history      | Current permitted audience, knowledge/disclosure state and scoped cursor; control is not required for an authorized follower view. |
+| Actor knowledge/edit/creator tools | Operation-specific current grant and owner/participant restrictions; no elevation from an actor ID.                                |
+| Receipt lookup                     | Same principal/scope authorization as the stored result; never a public request-ID oracle.                                         |
 
 Admission sequence: authenticate and bound input → resolve current scope → validate expected timeline/control → enter the existing mutation queue → recheck current session/grants/binding → inspect duplicate receipt → perform native proposal/claims → verify current authority and affected revisions in the transaction → commit state/required evidence/receipt → produce scoped response.
 

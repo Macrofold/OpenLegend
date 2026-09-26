@@ -1,3 +1,5 @@
+import { worldPosition } from '@open-legend/domain';
+import { itemFor, directChildIds } from '@open-legend/domain';
 import { observerDescription } from '@open-legend/domain';
 import { dropItemReason } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
@@ -124,7 +126,7 @@ export function buildContext(
       id: entity.id,
       name: excerpt(entity.name, 40),
       kind: entity.actor ? (entity.actor.species ?? 'human') : entity.kind,
-      position: entity.position,
+      position: worldPosition(entity),
       ...(entity.resource ? { resource: entity.resource } : {}),
       ...(entity.animal
         ? { animal: { alive: entity.actor!.alive, fleeing: entity.animal.fleeSeconds > 0 } }
@@ -134,11 +136,24 @@ export function buildContext(
         : {}),
     })),
     // Ownership is implicit in this actor-scoped list; IDs and quantities are exact.
-    inventory: observed.inventory.map(({ id, definitionId, quantity }) => ({
-      id,
-      definitionId,
-      quantity,
-    })),
+    inventory: observed.inventory.map(
+      ({ id, definitionId, quantity, revision, placementRevision, individuality, container }) => ({
+        id,
+        definitionId,
+        quantity,
+        revision,
+        placementRevision,
+        individuality,
+        ...(container
+          ? {
+              container: {
+                load: container.load,
+                capacity: service.world.itemDefinitions[definitionId]!.container!.capacity,
+              },
+            }
+          : {}),
+      }),
+    ),
     materials,
     knownRecipes: rankedRecipes.map(({ recipe }) => ({
       id: recipe.id,
@@ -293,6 +308,33 @@ export function npcCandidates(
       command: null,
     },
   ];
+  // Bound optional suggestions; complete contents remain available through the scoped
+  // inventory page/catalogue. Do not fabricate all descendant targets or an N² bag menu.
+  let containerSuggestions = 0;
+  for (const bag of inventory) {
+    if (!bag.container || containerSuggestions >= 24) continue;
+    for (const id of directChildIds(service.world, bag.id)) {
+      if (containerSuggestions >= 24) break;
+      containerSuggestions++;
+      const item = itemFor(service.world, id);
+      if (!item) continue;
+      const command: CommandInput = {
+        type: 'transfer-item',
+        itemId: item.id,
+        quantity: item.quantity,
+        targetId: actorId,
+        expectedRevision: item.revision,
+        placementRevision: item.placementRevision,
+        targetRevision: observed.actor.inventoryRevision ?? 0,
+      };
+      if (service.previewCommand(command, actorId).ok)
+        actions.push({
+          id: `unpack-${item.id}`,
+          description: `Take ${item.quantity} ${service.world.itemDefinitions[item.definitionId]!.name} out of ${service.world.entities[bag.id]!.name}.`,
+          command,
+        });
+    }
+  }
   const activeId = service.world.conversations?.active[actorId];
   if (activeId) {
     const active = service.world.conversations!.records[activeId]!;
@@ -360,8 +402,8 @@ export function npcCandidates(
             sameSurfacePoint(
               service.world,
               observed.actor,
-              observed.actor.position.x + dx,
-              observed.actor.position.z + dz,
+              worldPosition(observed.actor).x + dx,
+              worldPosition(observed.actor).z + dz,
             ) ?? undefined,
         },
       });
@@ -474,7 +516,7 @@ export function npcCandidates(
         command: { type: 'harvest', targetId: entity.id },
       });
     if (entity.heat?.lit) {
-      let previous = observed.actor.position;
+      let previous = worldPosition(observed.actor);
       let length = 0;
       for (const point of path) {
         length += Math.hypot(point.x - previous.x, point.y - previous.y, point.z - previous.z);

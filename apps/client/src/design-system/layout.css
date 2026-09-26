@@ -47,6 +47,9 @@ body,
   );
 }
 .ol-hud {
+  --status-height: 180px;
+  --status-scale: 1;
+  --status-bottom: calc(var(--hud-inset) + 48px + var(--status-height) * var(--status-scale));
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -123,6 +126,13 @@ body,
   color: var(--c);
   --ol-icon: var(--icon-sm) !important;
 }
+.ol-survival-top .ol-session-control {
+  height: 24px;
+  min-height: 0;
+  padding: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
 .ol-player-state {
   margin: 0 !important;
 }
@@ -189,6 +199,7 @@ body,
 }
 .ol-rail-left {
   left: var(--hud-inset);
+  top: max(var(--dock-top), calc(var(--status-bottom) + var(--space-3)));
 }
 .ol-rail-right {
   right: var(--hud-inset);
@@ -202,6 +213,7 @@ body,
 }
 .ol-dock-left {
   left: calc(var(--hud-inset) + var(--launcher) + var(--space-4));
+  top: max(var(--dock-top), calc(var(--status-bottom) + var(--space-3)));
 }
 .ol-dock-right {
   right: calc(var(--hud-inset) + var(--launcher) + var(--space-4));
@@ -1063,14 +1075,15 @@ body,
 
 .ol-hud[data-narrow='true'] {
   --hud-inset: var(--space-3);
-  --dock-top: 230px;
+  --status-scale: 0.72;
+  --dock-top: max(230px, calc(var(--status-bottom) + var(--space-3) + 56px + var(--space-3)));
 }
 .ol-hud[data-narrow='true'] .ol-survival {
   transform: scale(0.72);
   transform-origin: top left;
 }
 .ol-hud[data-narrow='true'] .ol-clock-position {
-  top: 155px;
+  top: calc(var(--status-bottom) + var(--space-3));
   left: var(--space-3);
   right: var(--space-3);
 }
@@ -1245,7 +1258,8 @@ body,
   flex: none;
 }
 .ol-hud[data-tight='true'] {
-  --dock-top: 280px;
+  --status-scale: 0.6;
+  --dock-top: max(280px, calc(var(--status-bottom) + var(--space-3) + 88px + var(--space-3)));
 }
 .ol-hud[data-tight='true'] .ol-timebar {
   display: grid;
@@ -1264,7 +1278,7 @@ body,
   max-width: 100px;
 }
 .ol-hud[data-tight='true'] .ol-rail {
-  top: 250px;
+  top: var(--dock-top);
   flex-direction: row;
   gap: var(--space-1);
 }

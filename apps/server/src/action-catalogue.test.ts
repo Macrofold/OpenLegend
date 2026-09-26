@@ -1,3 +1,4 @@
+import { createItemLot } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -86,12 +87,7 @@ it('scopes object menus to their target, including relevant missing prerequisite
     reason: 'Carry raw meat to cook.',
   });
   const meat = 'fixture-meat';
-  service.world.items[meat] = {
-    id: meat,
-    ownerId: 'player',
-    definitionId: 'raw_meat',
-    quantity: 1,
-  };
+  createItemLot(service.world, 'player', 'raw_meat', 1, meat);
   expect(fire().map((action) => action.id)).toEqual(['move', `cook-${meat}-campfire`]);
   service.world.entities.campfire!.heat!.lit = false;
   expect(fire().find((action) => action.id.startsWith('cook-'))?.enabled).toBe(false);

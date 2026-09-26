@@ -1,3 +1,5 @@
+import { setSpatialPosition, worldSupport } from '@open-legend/domain';
+import { worldPosition } from '@open-legend/domain';
 import { describe, expect, it } from 'vitest';
 import { createWorld, executeCommand, type WorldState } from '@open-legend/domain';
 import { statusEffectActions } from './status-effect-actions.js';
@@ -8,7 +10,12 @@ function sleepingTarget() {
   world.paused = false;
   const source = Object.values(world.entities).find((e) => e.actor?.controller === 'player')!;
   const target = Object.values(world.entities).find((e) => e.actor?.controller === 'npc')!;
-  target.position = { ...source.position, x: source.position.x + 0.5 };
+  setSpatialPosition(
+    world,
+    target,
+    { ...worldPosition(source), x: worldPosition(source).x + 0.5 },
+    worldSupport(target),
+  );
   target.spatial = structuredClone(source.spatial);
   target.actor!.energy = 40;
   const definition = world.statusEffectPolicy.definitions.find((d) => d.actions)!;
@@ -49,7 +56,7 @@ describe('authored status actions', () => {
   it('rejects distant interaction without waking the target', () => {
     const { world, target, definition, wake } = sleepingTarget();
     const distant = structuredClone(world);
-    distant.entities[target.id]!.position.x += 100;
+    worldPosition(distant.entities[target.id]!).x += 100;
     expect(wake(distant).outcome.ok).toBe(false);
     expect(distant.entities[target.id]!.statusEffects?.[definition.id]?.active).toBe(true);
   });

@@ -3,16 +3,14 @@ import { playerEntity } from '../entity-view';
 import { useState } from 'react';
 import { EventTime } from './event-time';
 import { Button as AriaButton } from 'react-aria-components';
-import type { ActionOption, EntityView, GameView, InventoryItemView } from '@open-legend/protocol';
+import type { ActionOption, EntityView, GameView } from '@open-legend/protocol';
 import {
   Button,
   Condition,
   EmptyState,
-  EntityRow,
   Explanation,
   Section,
   Tag,
-  symbol,
 } from '../design-system/components';
 export function Actions({
   actions,
@@ -53,123 +51,7 @@ export function Traits({ traits }: { traits: EntityView['traits'] }) {
     </div>
   );
 }
-export function Inventory({
-  addItem,
-  view,
-  command,
-  connected,
-}: {
-  view: GameView;
-  addItem(): void;
-  command(a: ActionOption): void;
-  connected: boolean;
-}) {
-  const [dropQuantity, setDropQuantity] = useState(1);
-  const [query, setQuery] = useState(''),
-    [selected, setSelected] = useState<string | null>(null);
-  const item = view.player.inventory.find((i) => i.id === selected);
-  const validDropQuantity =
-    Number.isSafeInteger(dropQuantity) &&
-    dropQuantity > 0 &&
-    !!item &&
-    dropQuantity <= item.quantity;
-  const row = (i: InventoryItemView) => (
-    <EntityRow
-      key={i.id}
-      name={i.name}
-      meta={i.equipped ? 'Equipped' : i.category}
-      count={i.quantity}
-      icon={symbol(i.definitionId)}
-      onPress={() => {
-        setSelected(i.id);
-        setDropQuantity(i.quantity);
-      }}
-    />
-  );
-  return (
-    <>
-      {view.godMode && (
-        <Button size="sm" variant="quiet" icon="ui.plus" onPress={addItem} disabled={!connected}>
-          God mode · Add item
-        </Button>
-      )}
-      <input
-        type="search"
-        aria-label="Search inventory"
-        placeholder="Search possessions…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      {item ? (
-        <>
-          <Button size="sm" variant="quiet" icon="ui.back" onPress={() => setSelected(null)}>
-            All possessions
-          </Button>
-          <h3 className="ol-heading">
-            {item.name} × {item.quantity}
-          </h3>
-          <p>{item.description}</p>
-          <div className="ol-traits">
-            {item.tags.map((t) => (
-              <Tag key={t}>{t}</Tag>
-            ))}
-          </div>
-          {item.actions.some((action) => action.command.type === 'drop') && (
-            <label className="ol-drop-quantity">
-              Drop quantity{' '}
-              <input
-                type="number"
-                min={1}
-                max={item.quantity}
-                step={1}
-                value={dropQuantity}
-                onChange={(event) => setDropQuantity(Number(event.target.value))}
-              />
-            </label>
-          )}
-          <Actions
-            actions={item.actions.map((action) =>
-              action.command.type === 'drop'
-                ? {
-                    ...action,
-                    enabled: action.enabled && validDropQuantity,
-                    reason:
-                      action.reason ??
-                      (!validDropQuantity
-                        ? `Enter a whole quantity from 1 to ${item.quantity}.`
-                        : undefined),
-                    command: { ...action.command, quantity: dropQuantity },
-                  }
-                : action,
-            )}
-            command={command}
-            connected={connected}
-          />
-        </>
-      ) : (
-        <>
-          {(['material', 'food', 'equipment', 'ammunition'] as const).map((category) => {
-            const items = view.player.inventory.filter(
-              (i) => i.category === category && i.name.toLowerCase().includes(query.toLowerCase()),
-            );
-            return items.length ? (
-              <Section key={category} title={category} count={items.length}>
-                {items.map(row)}
-              </Section>
-            ) : null;
-          })}
-          {!view.player.inventory.some((i) =>
-            i.name.toLowerCase().includes(query.toLowerCase()),
-          ) && (
-            <EmptyState title="Nothing here yet.">
-              Gather resources in the clearing to fill your pack.
-            </EmptyState>
-          )}
-        </>
-      )}
-    </>
-  );
-}
+export { Inventory } from './inventory';
 export function Crafting({
   view,
   command,
@@ -290,6 +172,7 @@ export function EntityDetail({
 }
 export function Character({
   godControls,
+  openMind,
   view,
   command,
   connected,
@@ -298,6 +181,7 @@ export function Character({
   command(a: ActionOption): void;
   connected: boolean;
   godControls?: GodCharacterControls;
+  openMind?: () => void;
 }) {
   return (
     <>
@@ -308,8 +192,12 @@ export function Character({
           controls={godControls}
         />
       )}
+      {openMind && <Button onPress={openMind}>My thoughts and relationships</Button>}
       <Section title="Condition">
         <Condition {...view.player} />
+        {view.player.statusEffects?.map((effect) => (
+          <Tag key={effect.id}>{effect.label}</Tag>
+        ))}
         <Actions actions={view.player.actions} command={command} connected={connected} />
       </Section>
       <Section title="Traits">

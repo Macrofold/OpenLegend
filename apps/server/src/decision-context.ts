@@ -34,7 +34,9 @@ import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
 function socialEntityIds(world: Parameters<typeof activeAppraisals>[0], actorId: string): string[] {
   return [
     ...new Set([
-      ...activeAppraisals(world, actorId).map((entry) => entry.targetId),
+      ...activeAppraisals(world, actorId).flatMap((entry) =>
+        entry.targetId ? [entry.targetId] : [],
+      ),
       ...Object.values(world.kinships ?? {})
         .filter((entry) => [entry.firstId, entry.secondId].includes(actorId))
         .flatMap((entry) => [entry.firstId, entry.secondId]),
@@ -224,7 +226,7 @@ export async function prepareDecision(
     feelings: activeAppraisals(world, actorId)
       .map(
         (value) =>
-          `I feel ${value.feeling} concerning ${world.entities[value.targetId] ? entityLabel(world, world.entities[value.targetId]!, actorId) : 'an unknown cause'}.`,
+          `I feel ${value.feeling} concerning ${value.targetId && world.entities[value.targetId] ? entityLabel(world, world.entities[value.targetId]!, actorId) : 'an unknown cause'}.`,
       )
       .join(' '),
     kinship: Object.values(world.kinships ?? {})
@@ -394,7 +396,7 @@ export async function prepareDecision(
     feelings: activeAppraisals(currentWorld, actorId)
       .map(
         (value) =>
-          `I feel ${value.feeling} concerning ${currentWorld.entities[value.targetId] ? entityLabel(currentWorld, currentWorld.entities[value.targetId]!, actorId) : 'an unknown cause'}.`,
+          `I feel ${value.feeling} concerning ${value.targetId && currentWorld.entities[value.targetId] ? entityLabel(currentWorld, currentWorld.entities[value.targetId]!, actorId) : 'an unknown cause'}.`,
       )
       .join(' '),
     kinship: Object.values(currentWorld.kinships ?? {})

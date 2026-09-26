@@ -1,3 +1,4 @@
+import { worldPosition, worldSupport } from './spatial-state.js';
 import { describe, expect, it } from 'vitest';
 import {
   PLAYER_ID,
@@ -37,8 +38,8 @@ describe('native spatial-world integration without providers', () => {
     });
     expect(t.outcome.ok).toBe(true);
     world = advance(t.world, 280);
-    expect(world.entities[PLAYER_ID]!.position).toEqual({ x: 20, y: 3, z: 5.5 });
-    expect(world.entities[PLAYER_ID]!.spatial.supportSurfaceId).toBe('lookout-deck');
+    expect(worldPosition(world.entities[PLAYER_ID]!)).toEqual({ x: 20, y: 3, z: 5.5 });
+    expect(worldSupport(world.entities[PLAYER_ID]!)).toBe('lookout-deck');
     expect(world.entities[PLAYER_ID]!.actor!.action).toBeNull();
     const before = quantityOf(world, PLAYER_ID, 'wood');
     t = executeCommand(world, {
@@ -58,15 +59,15 @@ describe('native spatial-world integration without providers', () => {
     });
     expect(t.outcome.ok).toBe(true);
     world = advance(t.world, 350);
-    expect(world.entities[PLAYER_ID]!.position).toEqual({ x: 20, y: 0, z: 5.5 });
+    expect(worldPosition(world.entities[PLAYER_ID]!)).toEqual({ x: 20, y: 0, z: 5.5 });
     validateSpatialWorld(world);
   });
   it('enforces floor and airborne reach and protects private speech through slabs', () => {
     const world = active(),
       a = world.entities[PLAYER_ID]!,
       b = world.entities[NPC_ID]!;
-    setSpatialPosition(a, { x: 20, y: 0, z: 5.5 }, 'terrain');
-    setSpatialPosition(b, { x: 20, y: 3, z: 5.5 }, 'lookout-deck');
+    setSpatialPosition(world, a, { x: 20, y: 0, z: 5.5 }, 'terrain');
+    setSpatialPosition(world, b, { x: 20, y: 3, z: 5.5 }, 'lookout-deck');
     expect(canReachEntity(world, a, b, 1.6)).toBe(false);
     expect(seesEntity(world, a, b)).toBe(false);
     expect(hearsEntity(world, a, b)).toBe(false);
@@ -77,9 +78,11 @@ describe('native spatial-world integration without providers', () => {
       text: 'Private words above the floor',
     });
     expect(speech.events.find((event) => event.type === 'speech')?.audience).not.toContain(a.id);
-    expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(b.position);
+    expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(
+      worldPosition(b),
+    );
     const bird = world.entities['bird-1']!;
-    setSpatialPosition(bird, { x: 20, y: 6, z: 5.5 }, null);
+    setSpatialPosition(world, bird, { x: 20, y: 6, z: 5.5 }, null);
     expect(canReachEntity(world, a, bird, 1.6)).toBe(false);
   });
   it('rejects wrong-floor commands, missing coordinates and stale geometry without effects', () => {
@@ -114,11 +117,14 @@ describe('native spatial-world integration without providers', () => {
     for (
       let i = 0;
       i < 250 &&
-      !(world.entities[PLAYER_ID]!.position.y > 0.1 && world.entities[PLAYER_ID]!.position.y < 2.9);
+      !(
+        worldPosition(world.entities[PLAYER_ID]!).y > 0.1 &&
+        worldPosition(world.entities[PLAYER_ID]!).y < 2.9
+      );
       i++
     )
       world = advance(world, 1);
-    expect(world.entities[PLAYER_ID]!.spatial.supportSurfaceId).toBe('lookout-ramp');
+    expect(worldSupport(world.entities[PLAYER_ID]!)).toBe('lookout-ramp');
     const restored = JSON.parse(JSON.stringify(world)) as WorldState;
     validateWorldModules(restored);
     expect(advance(restored, 120)).toEqual(advance(world, 120));
@@ -127,8 +133,8 @@ describe('native spatial-world integration without providers', () => {
     let world = active();
     const ids = Object.keys(world.entities);
     world = advance(world, 240);
-    expect(world.entities['bird-1']!.position.y).toBeGreaterThan(3);
-    expect(world.entities['bird-1']!.spatial.supportSurfaceId).toBeNull();
+    expect(worldPosition(world.entities['bird-1']!).y).toBeGreaterThan(3);
+    expect(worldSupport(world.entities['bird-1']!)).toBeNull();
     const restored = JSON.parse(JSON.stringify(world)) as WorldState;
     expect(advance(world, 20)).toEqual(advance(restored, 20));
     const trip = advanceWorld(world, 650);
@@ -151,7 +157,7 @@ describe('native spatial-world integration without providers', () => {
     );
     expect(bird.actor!.alive).toBe(false);
     world = advance(world, 80);
-    expect(world.entities['bird-1']!.spatial.supportSurfaceId).not.toBeNull();
+    expect(worldSupport(world.entities['bird-1']!)).not.toBeNull();
     expect(world.entities['bird-1']!.spatial.flight).toBeUndefined();
     expect(world.entities['bird-1']!.spatial.fallVelocity).toBeUndefined();
     expect(Object.values(world.entities).filter((e) => e.id === 'bird-1')).toHaveLength(1);
@@ -161,13 +167,13 @@ describe('native spatial-world integration without providers', () => {
     const z = world.map.tiles.findIndex((row) => row.includes('rock'));
     const x = world.map.tiles[z]!.indexOf('rock');
     const bird = world.entities['bird-1']!;
-    setSpatialPosition(bird, { x, y: 6, z }, null);
+    setSpatialPosition(world, bird, { x, y: 6, z }, null);
     delete bird.spatial.flight;
     bird.spatial.fallVelocity = 0;
     bird.actor!.alive = false;
     world = advance(world, 80);
-    expect(world.entities['bird-1']!.position.y).toBe(2);
-    expect(world.entities['bird-1']!.spatial.supportSurfaceId).toBe(`terrain-rock:${x}:${z}`);
+    expect(worldPosition(world.entities['bird-1']!).y).toBe(2);
+    expect(worldSupport(world.entities['bird-1']!)).toBe(`terrain-rock:${x}:${z}`);
     validateSpatialWorld(JSON.parse(JSON.stringify(world)) as WorldState);
   });
   it('rejects a saved route whose waypoint silently changes floor', () => {

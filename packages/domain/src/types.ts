@@ -30,6 +30,8 @@ export interface ItemDefinition {
   /** Consumed by the installed item-handling mechanic; absent means not portable. */
   portable?: boolean;
   gatheringTool?: { resourceId: string; quantity: number };
+  packingLoad?: number;
+  container?: { capacity: number; maximumDepth: number };
   id: string;
   version: number;
   name: string;
@@ -41,7 +43,12 @@ export interface ItemDefinition {
   ammunition?: Ammunition;
   recipeId?: string;
 }
+/** Read-only custody projection; ItemLot and Placement are the mutation owners. */
 export interface ItemInstance {
+  individuality?: 'homogeneous' | 'individual';
+  placementRevision?: number;
+  container?: import('./objects.js').ContainerState;
+  revision?: number;
   id: string;
   definitionId: string;
   quantity: number;
@@ -111,6 +118,7 @@ export interface Action {
   attributeId?: string;
   definitionId?: string;
   definitionVersion?: number;
+  resourceDefinition?: import('./world-modules.js').DefinitionPin;
   transferred?: number;
   recipeId?: string;
   preparation?: NativePreparation;
@@ -128,6 +136,7 @@ export interface CharacterTrait {
 }
 
 export interface ActorComponent {
+  participation?: import('./participation-state.js').ParticipationState;
   senses?: string[];
   /** Receiver-private provenance, never part of a contact projection. */
   contacts?: Record<string, import('./perception.js').ContactEpisode>;
@@ -153,6 +162,9 @@ export interface ActorComponent {
   health: number;
   fullness?: number;
   energy?: number;
+  /** Native need revisions belong to their values, independently of body damage. */
+  fullnessRevision?: number;
+  energyRevision?: number;
   alive: boolean;
   incapacitated: boolean;
   bornAt: number;
@@ -172,6 +184,7 @@ export interface AnimalComponent {
   wanderSeconds: number;
 }
 export interface ResourceComponent {
+  revision?: number;
   definitionId: string;
   quantity: number;
   workSeconds: number;
@@ -192,13 +205,18 @@ export interface Entity {
   mechanismFields?: Record<string, Record<string, number>>;
   id: string;
   name: string;
-  kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains' | 'item-pile';
-  position: Position;
+  kind: 'player' | 'npc' | 'animal' | 'resource' | 'campfire' | 'remains' | 'item-pile' | 'item';
+  inventoryRevision?: number;
+  placement?: import('./spatial-state.js').Placement;
+  item?: import('./objects.js').ItemLot;
+  container?: import('./objects.js').ContainerState;
+  declaredOwner?: import('./objects.js').DeclaredOwner;
+  retirement?: import('./objects.js').ObjectRetirement;
   /** Appearance is never a source of body dimensions or movement capability. */
   appearance?: 'sprite' | 'crate-mesh';
   spatial: import('./spatial-state.js').EntitySpatial;
   actor?: ActorComponent;
-  replenisher?: { attributeId: string; remaining: number };
+  replenisher?: { attributeId: string; remaining: number; revision?: number };
   animal?: AnimalComponent;
   resource?: ResourceComponent;
   remains?: RemainsComponent;
@@ -260,6 +278,9 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  workState?: import('./work-budget.js').WorkState;
+  participationPolicy?: { safeReturnAnchor?: import('@open-legend/spatial').SurfacePoint };
+  resourceReservations?: Record<string, import('./resource-claims.js').ResourceReservation>;
   knowledgeRevisions?: Record<string, number>;
   knowledgePolicy?: import('./knowledge.js').KnowledgePolicy;
   actorKnowledge?: Record<string, import('./knowledge.js').ActorKnowledge>;
@@ -276,7 +297,8 @@ export interface WorldState {
   storyPolicy?: import('./story-selection.js').StoryPolicy;
   storyPolicyRevision?: number;
   socialPolicy?: { conversationInactivitySeconds: number; notableThreshold: number };
-  appraisals?: Record<string, import('./social.js').Appraisal[]>;
+  appraisals?: Record<string, Record<string, import('./appraisals.js').Appraisal>>;
+  appraisalProcesses?: Record<string, import('./appraisals.js').AppraisalProcess>;
   kinships?: Record<string, import('./social.js').Kinship>;
   conversations?: import('./conversations.js').ConversationState;
   responseReceipts?: Record<string, import('./response.js').ResponseReceipt>;
@@ -295,7 +317,8 @@ export interface WorldState {
   map: WorldMap;
   flightRoutes: Record<string, import('./spatial-state.js').FlightRoute>;
   entities: Record<string, Entity>;
-  items: Record<string, ItemInstance>;
+  objectState: { revision: number };
+  objectLineage?: Record<string, import('./objects.js').ObjectLineage>;
   itemDefinitions: Record<string, ItemDefinition>;
   recipes: Record<string, RecipeDefinition>;
   memories: Record<string, MemoryRecord[]>;
@@ -331,6 +354,16 @@ export type Command = Envelope &
       }
     | { type: 'pickup'; targetId: string; itemId?: string }
     | { type: 'drop'; itemId: string; quantity: number }
+    | {
+        type: 'transfer-item' | 'split-item' | 'merge-item';
+        itemId: string;
+        quantity: number;
+        targetId: string;
+        expectedRevision: number;
+        placementRevision: number;
+        targetRevision: number;
+      }
+    | { type: 'unequip'; itemId: string; expectedRevision: number; placementRevision: number }
     | { type: 'move'; destination: SurfacePoint }
     | { type: 'gather' | 'harvest'; targetId: string }
     | { type: 'prepare'; preparation: NativePreparation }

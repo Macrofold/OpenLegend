@@ -1,6 +1,8 @@
 # Shared state, effect contributions and resource claims — technical design
 
-**Status:** proposed, implementation not started by this design task. [Feature specification](shared-state-contributions-feature-spec.md) owns behavior; [SC01–SC08](../maintainers/state-contributions.md) owns detailed work and evidence. Parent ownership remains EWF02–03, INV-6.3, EWF07/SL00 and production data. Read [the five-project map](foundations-1-5.md) for the pinned baseline and cross-project order.
+**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](shared-state-contributions-feature-spec.md) owns behavior; [SC01–SC08](../maintainers/state-contributions.md) owns detailed work and evidence. Parent ownership remains EWF02–03, INV-6.3, EWF07/SL00 and production data. Read [the five-project map](foundations-1-5.md) for the pinned baseline and cross-project order.
+
+The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
 ## 1. Research findings and boundaries
 
@@ -12,16 +14,16 @@ Architectural classification: identity/fencing/valid references/accounting are p
 
 ## 2. Semantic owners and proposed code seams
 
-| Responsibility | Owner / implementation location |
-| --- | --- |
-| Resolve installed definition and state provider | Extend `packages/domain/src/world-modules.ts`; a small proposed `state-owners.ts` contains typed provider interfaces. |
-| Pure claim planning and contribution resolution | Proposed domain `resource-claims.ts` and `state-contributions.ts`, invoked inside the existing draft boundary. |
-| Wilderness rates/body transitions | Existing `worlds/base/needs.ts`, living/body and native kernel adapters; no wilderness imports in generic claim code. |
-| Active capability contributions | Existing status-effect/capability owner; adapt its active instances rather than allocate a second status store. |
-| Admission, current principal and atomic publication | Existing `WorldService` mutation queue and `GameRepository` transaction. |
-| Canonical persistence | Existing entity/component/process codecs and SQLite/PostgreSQL adapters; additions owned by D1/DF02. |
-| Change delivery and deadlines | Existing domain change metadata and EPR/PF scheduling; Priority 4 extends dependency bookkeeping. |
-| Views, actor context, action discovery | `projectAttributes`, server `view.ts`, decision context and existing catalogue/family adapters. |
+| Responsibility                                      | Owner / implementation location                                                                                       |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Resolve installed definition and state provider     | Extend `packages/domain/src/world-modules.ts`; a small proposed `state-owners.ts` contains typed provider interfaces. |
+| Pure claim planning and contribution resolution     | Proposed domain `resource-claims.ts` and `state-contributions.ts`, invoked inside the existing draft boundary.        |
+| Wilderness rates/body transitions                   | Existing `worlds/base/needs.ts`, living/body and native kernel adapters; no wilderness imports in generic claim code. |
+| Active capability contributions                     | Existing status-effect/capability owner; adapt its active instances rather than allocate a second status store.       |
+| Admission, current principal and atomic publication | Existing `WorldService` mutation queue and `GameRepository` transaction.                                              |
+| Canonical persistence                               | Existing entity/component/process codecs and SQLite/PostgreSQL adapters; additions owned by D1/DF02.                  |
+| Change delivery and deadlines                       | Existing domain change metadata and EPR/PF scheduling; Priority 4 extends dependency bookkeeping.                     |
+| Views, actor context, action discovery              | `projectAttributes`, server `view.ts`, decision context and existing catalogue/family adapters.                       |
 
 Estimated implementation envelope is roughly 1,500–3,500 production logic lines plus consumed migrations, spread across these existing seams and a few focused modules. This is a planning estimate, not permission to construct an unused framework. SC01 replaces the estimate with actual affected callers before coding.
 

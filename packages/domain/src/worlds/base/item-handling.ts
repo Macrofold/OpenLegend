@@ -5,6 +5,7 @@ import type { ItemHandlingPolicy } from '../../item-handling.js';
 export const BASE_ITEM_HANDLING: ItemHandlingPolicy = {
   enabled: true,
   defaultPortable: true,
+  generatedPackingLoad: 1,
   reach: 1.6,
   pickupSeconds: 1,
   actorBodyProfiles: ['person'],

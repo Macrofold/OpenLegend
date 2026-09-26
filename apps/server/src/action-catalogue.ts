@@ -1,3 +1,7 @@
+import { worldSupport, worldPosition } from '@open-legend/domain';
+import { itemFor, custodian } from '@open-legend/domain';
+import { inventoryItemView } from './inventory-view.js';
+import type { RequestScope } from './authority.js';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import { NATIVE_STRIKES } from '@open-legend/domain';
@@ -19,15 +23,65 @@ import { ACTION_DESCRIPTIONS, describeCommand, commandFacts } from './action-des
  * Queried only while browsing, not on every simulation tick. Previewing uses the
  * same rules as execution; its disposable effects/receipts never enter the save.
  */
-export function actionCatalogue(service: WorldService, context: ActionContext): ActionCatalogue {
-  const observation = service.observe(service.controlledEntityId, { includeMemories: false })!;
+export function actionCatalogue(
+  service: WorldService,
+  context: ActionContext,
+  scope: RequestScope = service.localScope,
+): ActionCatalogue {
+  service.assertScope(scope);
+  const controlling = service.currentScope(scope, 'play', true);
+  const controlUnavailable = { ok: false, message: 'Take control of your character to act here.' };
+  if (context.itemId) {
+    const item = itemFor(service.world, context.itemId);
+    if (!item || custodian(service.world, item.id) !== scope.actorId)
+      throw new Error('This possession is unavailable.');
+    const projected = inventoryItemView(service, scope, item),
+      options = [...projected.actions];
+    if (context.destinationId) {
+      const destination = service.world.entities[context.destinationId];
+      if (!destination || custodian(service.world, destination.id) !== scope.actorId)
+        throw new Error('This destination is unavailable.');
+      const command: CommandInput = {
+        type: 'transfer-item',
+        itemId: item.id,
+        targetId: destination.id,
+        quantity: context.quantity ?? item.quantity,
+        expectedRevision: item.revision,
+        placementRevision: item.placementRevision,
+        targetRevision: destination.inventoryRevision ?? 0,
+      };
+      const result = controlling
+        ? service.previewCommand(command, scope.actorId)
+        : controlUnavailable;
+      options.push({
+        id: `transfer-${item.id}-${destination.id}`,
+        label: `Move to ${destination.name}`,
+        command,
+        enabled: result.ok,
+        ...(!result.ok ? { reason: result.message } : {}),
+      });
+    }
+    return {
+      revision: service.version,
+      actions: options.map((option) => ({
+        id: option.id,
+        label: option.label,
+        category: 'Possessions',
+        description: ACTION_DESCRIPTIONS[option.command.type],
+        facts: [],
+        keywords: [projected.name],
+        enabled: option.enabled,
+        ...(option.reason ? { reason: option.reason } : {}),
+        intent: { kind: 'command', command: option.command },
+      })),
+    };
+  }
+  const observation = service.observe(scope.actorId, { includeMemories: false })!;
   const world = service.world;
-  const targets = observation.visibleEntities.filter(
-    (entity) => entity.id !== service.controlledEntityId,
-  );
+  const targets = observation.visibleEntities.filter((entity) => entity.id !== scope.actorId);
   const selected =
-    context.targetId === service.controlledEntityId
-      ? world.entities[service.controlledEntityId]
+    context.targetId === scope.actorId
+      ? world.entities[scope.actorId]
       : targets.find((entity) => entity.id === context.targetId);
   if (context.targetId && !selected) throw new Error('That target is no longer in view.');
   const actions: CatalogueAction[] = [];
@@ -43,13 +97,11 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
     // Ground exposes destination movement only. Personal work belongs to self;
     // resource and social actions belong to the specifically selected target.
     if (!selected && command.type !== 'move') return;
-    if (
-      selected &&
-      targetId !== selected.id &&
-      !(selected.id === service.controlledEntityId && !targetId)
-    )
+    if (selected && targetId !== selected.id && !(selected.id === scope.actorId && !targetId))
       return;
-    const result = provided?.availability ?? service.previewCommand(command);
+    const result = controlling
+      ? (provided?.availability ?? service.previewCommand(command, scope.actorId))
+      : controlUnavailable;
     actions.push({
       id,
       label,
@@ -81,10 +133,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
       'craft',
     ].includes(family);
     if (!selected) return;
-    if (
-      targetId !== selected.id &&
-      !(selected.id === service.controlledEntityId && !targetId && personalFamily)
-    )
+    if (targetId !== selected.id && !(selected.id === scope.actorId && !targetId && personalFamily))
       return;
     actions.push({
       id,
@@ -99,8 +148,8 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
     });
   };
   const position = selected
-    ? selected.spatial.supportSurfaceId
-      ? { ...selected.position, surfaceId: selected.spatial.supportSurfaceId }
+    ? worldSupport(selected)
+      ? { ...worldPosition(selected), surfaceId: worldSupport(selected)! }
       : undefined
     : context.position;
   if (position)
@@ -114,13 +163,9 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
     );
   else missing('move', 'Walk', 'Movement', 'Right-click a destination in the world.');
   if (selected)
-    for (const option of statusEffectActions(
-      world,
-      world.entities[service.controlledEntityId]!,
-      selected,
-    ))
+    for (const option of statusEffectActions(world, world.entities[scope.actorId]!, selected))
       add(option.id, option.label, 'States', option.command, [], selected.id);
-  if (world.entities[service.controlledEntityId]!.actor!.action)
+  if (world.entities[scope.actorId]!.actor!.action)
     add('cancel', 'Stop current work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
   else missing('cancel', 'Stop current work', 'Movement', 'No work to stop.');
   add('recover', 'Recover at camp', 'Survival', { type: 'recover' }, ['revive', 'recovery']);
@@ -136,7 +181,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
 
   for (const target of selected ? [selected] : []) {
     for (const option of pickupActions(world, observation.actor, target, (command) =>
-      service.previewCommand(command),
+      service.previewCommand(command, scope.actorId),
     ))
       add(
         option.id,
@@ -147,7 +192,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
         target.id,
         { availability: option.availability, description: option.description },
       );
-    if (target.actor && target.id !== service.controlledEntityId)
+    if (target.actor && target.id !== scope.actorId)
       for (const definition of Object.values(NATIVE_STRIKES))
         add(
           `${definition.id}-${target.id}`,
@@ -200,7 +245,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
         ['butcher', 'meat', 'remains'],
         target.id,
       );
-    if (canSpeak(target) && target.actor?.alive && target.actor.controller === 'npc') {
+    if (canSpeak(target) && target.actor?.alive) {
       // Opening a composer is read-only, including while paused or AI is unconfigured.
       actions.push({
         id: `talk-${target.id}`,
@@ -212,7 +257,7 @@ export function actionCatalogue(service: WorldService, context: ActionContext): 
         enabled: true,
         intent: { kind: 'compose', mode: 'chat', npcId: target.id },
       });
-      for (const recipe of observation.knownRecipes)
+      for (const recipe of target.actor.controller === 'npc' ? observation.knownRecipes : [])
         add(
           `teach-${target.id}-${recipe.id}`,
           `Teach ${target.name}: ${recipe.name}`,

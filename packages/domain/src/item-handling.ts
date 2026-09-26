@@ -1,4 +1,9 @@
-import { isDraft } from 'immer';
+import { itemsForOwner, itemFor, moveLot, validateObjects, declareObjectOwner } from './objects.js';
+import { WorkBudgetError } from './work-budget.js';
+export { itemsForOwner } from './objects.js';
+import { worldPlacement } from './spatial-state.js';
+import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
+import { worldSupport, worldPosition } from './spatial-state.js';
 import {
   BODY_PROFILES,
   canStand,
@@ -6,7 +11,8 @@ import {
   type BodyProfileId,
 } from '@open-legend/spatial';
 import { addItem, nextId } from './data.js';
-import { draftWorld } from './draft.js';
+import { availableResource, itemDefinitionPin, itemHasReservations } from './resource-claims.js';
+import { draftWorld, finishWorld, changedEntityIds } from './draft.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { capabilityBlocked } from './status-capabilities.js';
@@ -14,6 +20,8 @@ import { groundedSpatial, spatialMap } from './spatial-state.js';
 import type { Entity, ItemInstance, Transition, WorldEvent, WorldState } from './types.js';
 
 export interface ItemHandlingPolicy {
+  generatedPackingLoad?: number;
+  packingLoads?: Array<{ definition: import('./world-modules.js').DefinitionPin; load: number }>;
   enabled: boolean;
   defaultPortable: boolean;
   reach: number;
@@ -26,30 +34,6 @@ export function canHandleItems(world: WorldState, actor: Entity): boolean {
     world.itemHandling.actorBodyProfiles.includes(actor.spatial.bodyProfileId)
   );
 }
-const custodyIndexes = new WeakMap<
-  WorldState['items'],
-  ReadonlyMap<string, readonly ItemInstance[]>
->();
-/** Index only immutable snapshots. Drafts and mutable builders must observe every transfer.
- * docs/architecture.md#bundled-world-and-item-custody
- */
-export function itemsForOwner(world: WorldState, ownerId: string): readonly ItemInstance[] {
-  const items = world.items;
-  if (isDraft(items) || !Object.isFrozen(items))
-    return Object.values(items).filter((item) => item.ownerId === ownerId);
-  let index = custodyIndexes.get(items);
-  if (!index) {
-    const byOwner = new Map<string, ItemInstance[]>();
-    for (const item of Object.values(items)) {
-      const owned = byOwner.get(item.ownerId);
-      if (owned) owned.push(item);
-      else byOwner.set(item.ownerId, [item]);
-    }
-    index = byOwner;
-    custodyIndexes.set(items, index);
-  }
-  return index.get(ownerId) ?? [];
-}
 export function portableItems(world: WorldState, ownerId: string): ItemInstance[] {
   return itemsForOwner(world, ownerId).filter(
     (item) => world.itemDefinitions[item.definitionId]?.portable === true,
@@ -58,45 +42,53 @@ export function portableItems(world: WorldState, ownerId: string): ItemInstance[
 function pileAt(world: WorldState, position: SurfacePoint): Entity {
   // Merge only coincident positions on the same support: nearby floors never share custody.
   // docs/worlds/base/items.md#ground-piles
-  const existing = Object.values(world.entities).find(
+  const existing = worldRootEntities(world).find(
     (e) =>
       e.kind === 'item-pile' &&
-      e.spatial.supportSurfaceId === position.surfaceId &&
-      Math.hypot(e.position.x - position.x, e.position.y - position.y, e.position.z - position.z) <
-        0.01,
+      worldSupport(e) === position.surfaceId &&
+      Math.hypot(
+        worldPosition(e).x - position.x,
+        worldPosition(e).y - position.y,
+        worldPosition(e).z - position.z,
+      ) < 0.01,
   );
   if (existing) return existing;
   const id = nextId(world, 'pile');
-  return (world.entities[id] = {
+  const pile: Entity = {
     id,
     name: 'Items on the ground',
     kind: 'item-pile',
-    position: { x: position.x, y: position.y, z: position.z },
-    spatial: groundedSpatial('object', position.surfaceId),
-  });
+    placement: worldPlacement({ x: position.x, y: position.y, z: position.z }, position.surfaceId),
+    spatial: groundedSpatial('object'),
+  };
+  world.entities[id] = pile;
+  rootMembershipChanged(world, id);
+  return pile;
 }
-/** Quantity and custody mutate together; callers supply an already admitted domain draft. */
-function transfer(
-  world: WorldState,
-  item: ItemInstance,
-  destination: string,
-  quantity: number,
-  match: ItemInstance | undefined,
-): void {
-  if (match && !Number.isSafeInteger(match.quantity + quantity))
-    throw new Error('Item quantity exceeds the safe integer range.');
-  if (world.entities[item.ownerId]?.actor?.equippedItemId === item.id && quantity === item.quantity)
-    world.entities[item.ownerId]!.actor!.equippedItemId = null;
-  if (!match && quantity === item.quantity) item.ownerId = destination;
-  else {
-    if (match) match.quantity += quantity;
-    else {
-      const id = nextId(world, 'item');
-      world.items[id] = { id, ownerId: destination, definitionId: item.definitionId, quantity };
-    }
-    item.quantity -= quantity;
-    if (item.quantity === 0) delete world.items[item.id];
+/** Compound physical work is planned in an isolated draft before its changed fields are
+ * installed. Existing actor/action references stay attached to the caller's draft. */
+function atomicObjects<T>(world: WorldState, operation: (candidate: WorldState) => T): T {
+  const candidate = draftWorld(world),
+    result = operation(candidate),
+    committed = finishWorld(candidate);
+  for (const id of changedEntityIds(committed) ?? []) {
+    const entity = committed.entities[id];
+    const current = world.entities[id];
+    const wasRoot = current?.placement?.mode === 'world' && !current.retirement;
+    const isRoot = entity?.placement?.mode === 'world' && !entity.retirement;
+    if (!entity) delete world.entities[id];
+    else if (current?.actor && entity.actor) {
+      if (current.inventoryRevision !== entity.inventoryRevision)
+        current.inventoryRevision = entity.inventoryRevision;
+      if (current.actor.equippedItemId !== entity.actor.equippedItemId)
+        current.actor.equippedItemId = entity.actor.equippedItemId;
+    } else if (current !== entity) world.entities[id] = entity;
+    if (wasRoot !== isRoot) rootMembershipChanged(world, id);
   }
+  world.objectState = committed.objectState;
+  world.objectLineage = committed.objectLineage;
+  world.nextId = committed.nextId;
+  return result;
 }
 export function pickUpItems(
   world: WorldState,
@@ -110,29 +102,24 @@ export function pickUpItems(
     return 'The pile or item-handling capability is unavailable.';
   const items = portableItems(world, pileId).filter((i) => !itemId || i.id === itemId);
   if (!items.length) return 'Those portable items are no longer in the pile.';
-  const heldByDefinition = new Map(
-    Object.values(world.items)
-      .filter((i) => i.ownerId === actor.id)
-      .map((i) => [i.definitionId, i]),
-  );
-  const totals = new Map([...heldByDefinition].map(([id, item]) => [id, item.quantity]));
-  // Check the whole selection before transferring any of it (including Pick Up All).
-  for (const item of items) {
-    const total = (totals.get(item.definitionId) ?? 0) + item.quantity;
-    totals.set(item.definitionId, total);
-    if (!Number.isSafeInteger(total))
-      return 'The inventory quantity would exceed the supported range.';
-  }
+  if (items.some((item) => itemHasReservations(world, item.id)))
+    return 'Some selected items are committed to ongoing work.';
   const description = items
     .map((i) => `${i.quantity} ${world.itemDefinitions[i.definitionId]!.name}`)
     .join(', ');
-  for (const item of items) {
-    const held = heldByDefinition.get(item.definitionId);
-    transfer(world, item, actor.id, item.quantity, held);
-    if (!held) heldByDefinition.set(item.definitionId, item);
+  try {
+    atomicObjects(world, (candidate) => {
+      for (const item of items) moveLot(candidate, item.id, actor.id, item.quantity, 'pickup');
+    });
+  } catch (error) {
+    if (error instanceof WorkBudgetError) throw error;
+    return error instanceof Error ? error.message : 'Items are unavailable.';
   }
   emit(world, events, 'items-picked-up', `${actor.name} picked up ${description}.`, actor, pile.id);
-  if (!Object.values(world.items).some((i) => i.ownerId === pileId)) delete world.entities[pileId];
+  if (!itemsForOwner(world, pileId).length) {
+    delete world.entities[pileId];
+    rootMembershipChanged(world, pileId);
+  }
   return null;
 }
 /** Shared read-only eligibility keeps inventory menus cheap without simulating a transfer.
@@ -151,7 +138,7 @@ export function dropItemReason(
     capabilityBlocked(world, actor, 'actions')
   )
     return 'This actor cannot act in its current state.';
-  const item = getOwn(world.items, itemId);
+  const item = itemFor(world, itemId);
   if (
     !canHandleItems(world, actor) ||
     !item ||
@@ -161,10 +148,19 @@ export function dropItemReason(
     return 'Choose a portable item in this inventory.';
   if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > item.quantity)
     return 'Choose an available whole quantity.';
-  const surfaceId = actor.spatial.supportSurfaceId;
+  if (
+    quantity >
+    (availableResource(world, {
+      kind: 'item',
+      itemId,
+      definition: itemDefinitionPin(world.itemDefinitions[item.definitionId]!),
+    }) ?? 0)
+  )
+    return 'That quantity is committed to ongoing work.';
+  const surfaceId = worldSupport(actor);
   if (
     !surfaceId ||
-    !canStand(spatialMap(world), { ...actor.position, surfaceId }, BODY_PROFILES.object)
+    !canStand(spatialMap(world), { ...worldPosition(actor), surfaceId }, BODY_PROFILES.object)
   )
     return 'Dropping requires space for a pile on a supported surface.';
   if (actor.actor.action) return 'Stop current work before dropping items.';
@@ -179,15 +175,15 @@ export function dropItems(
 ): string | null {
   const reason = dropItemReason(world, actor, itemId, quantity);
   if (reason) return reason;
-  const item = world.items[itemId]!;
-  const surfaceId = actor.spatial.supportSurfaceId!;
-  const pile = pileAt(world, { ...actor.position, surfaceId });
-  const held = Object.values(world.items).find(
-    (i) => i.ownerId === pile.id && i.definitionId === item.definitionId,
-  );
-  if (held && !Number.isSafeInteger(held.quantity + quantity))
-    return 'The pile quantity would exceed the supported range.';
-  transfer(world, item, pile.id, quantity, held);
+  const item = itemFor(world, itemId)!;
+  const surfaceId = worldSupport(actor)!;
+  const pile = pileAt(world, { ...worldPosition(actor), surfaceId });
+  try {
+    atomicObjects(world, (candidate) => moveLot(candidate, item.id, pile.id, quantity, 'drop'));
+  } catch (error) {
+    if (error instanceof WorkBudgetError) throw error;
+    return error instanceof Error ? error.message : 'Item transfer unavailable.';
+  }
   emit(
     world,
     events,
@@ -203,6 +199,54 @@ export interface GodItemRequest {
   definitionId: string;
   quantity: number;
   destination: { actorId: string } | { position: SurfacePoint };
+}
+export interface OwnershipRequest {
+  id: string;
+  itemId: string;
+  expectedRevision: number;
+  holderId: string | null;
+  disclosure: 'custodian' | 'public';
+}
+export function declareOwnership(original: WorldState, request: OwnershipRequest): Transition {
+  const reject = (message: string): Transition => ({
+    world: original,
+    events: [],
+    outcome: outcome(false, 'ownership', message),
+  });
+  if (
+    !isSafeRecordId(request.id) ||
+    !isSafeRecordId(request.itemId) ||
+    !Number.isSafeInteger(request.expectedRevision) ||
+    request.expectedRevision < 0
+  )
+    return reject('Invalid ownership declaration.');
+  const digest = canonicalJson(request),
+    prior = getOwn(original.commandReceipts, request.id);
+  if (prior)
+    return prior.digest === digest
+      ? { world: original, events: [], outcome: prior.outcome }
+      : reject('Request identity was already used.');
+  const world = draftWorld(original);
+  try {
+    declareObjectOwner(
+      world,
+      request.itemId,
+      request.expectedRevision,
+      request.holderId,
+      request.disclosure,
+      request.id,
+    );
+  } catch (error) {
+    if (error instanceof WorkBudgetError) throw error;
+    return reject(error instanceof Error ? error.message : 'Ownership unavailable.');
+  }
+  const result = outcome(
+    true,
+    'ownership-declared',
+    'Declared ownership updated; physical custody is unchanged.',
+  );
+  world.commandReceipts[request.id] = { digest, outcome: result };
+  return finish(world, [], result);
 }
 export function createGodItem(original: WorldState, request: GodItemRequest): Transition {
   const reject = (message: string): Transition => ({
@@ -235,12 +279,13 @@ export function createGodItem(original: WorldState, request: GodItemRequest): Tr
     'actorId' in destination
       ? world.entities[destination.actorId]!
       : pileAt(world, destination.position);
-  const held = Object.values(world.items).find(
-    (i) => i.ownerId === owner.id && i.definitionId === request.definitionId,
-  );
-  if (held && !Number.isSafeInteger(held.quantity + request.quantity))
-    return reject('The quantity would exceed the supported range.');
-  const itemId = addItem(world, owner.id, request.definitionId, request.quantity);
+  let itemId: string;
+  try {
+    itemId = addItem(world, owner.id, request.definitionId, request.quantity);
+  } catch (error) {
+    if (error instanceof WorkBudgetError) throw error;
+    return reject(error instanceof Error ? error.message : 'Item creation unavailable.');
+  }
   const events: WorldEvent[] = [];
   const message = `God mode added ${request.quantity} ${world.itemDefinitions[request.definitionId]!.name} to ${owner.name}.`;
   emit(world, events, 'god-item-created', message, owner);
@@ -264,18 +309,36 @@ export function validateItemHandling(world: WorldState): void {
     policy.actorBodyProfiles.some((id) => !Object.hasOwn(BODY_PROFILES, id))
   )
     throw new Error('Invalid item-handling policy.');
-  for (const definition of Object.values(world.itemDefinitions))
+  for (const definition of Object.values(world.itemDefinitions)) {
     if (definition.portable !== undefined && typeof definition.portable !== 'boolean')
       throw new Error('Invalid portable item property.');
-  for (const item of Object.values(world.items))
     if (
-      !getOwn(world.itemDefinitions, item.definitionId) ||
-      !Number.isSafeInteger(item.quantity) ||
-      item.quantity < 1 ||
-      !(
-        getOwn(world.entities, item.ownerId)?.actor ||
-        getOwn(world.entities, item.ownerId)?.kind === 'item-pile'
-      )
+      definition.packingLoad !== undefined &&
+      (!Number.isSafeInteger(definition.packingLoad) || definition.packingLoad < 0)
     )
-      throw new Error('Invalid item custody or quantity.');
+      throw new Error('Invalid authored packing load.');
+    if (
+      definition.container &&
+      (!Number.isSafeInteger(definition.container.capacity) ||
+        definition.container.capacity < 1 ||
+        !Number.isSafeInteger(definition.container.maximumDepth) ||
+        definition.container.maximumDepth < 1 ||
+        definition.container.maximumDepth > 16 ||
+        definition.packingLoad === undefined)
+    )
+      throw new Error('Invalid finite container capability.');
+  }
+  for (const binding of policy.packingLoads ?? [])
+    if (
+      !Number.isSafeInteger(binding.load) ||
+      binding.load < 0 ||
+      !world.itemDefinitions[binding.definition.id]
+    )
+      throw new Error('Invalid legacy packing-load binding.');
+  if (
+    policy.generatedPackingLoad !== undefined &&
+    (!Number.isSafeInteger(policy.generatedPackingLoad) || policy.generatedPackingLoad < 0)
+  )
+    throw new Error('Invalid generated-item packing policy.');
+  validateObjects(world);
 }

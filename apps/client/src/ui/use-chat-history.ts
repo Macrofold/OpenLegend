@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChatMessage, GameView } from '@open-legend/protocol';
+import { getScoped } from '../api';
 
 type ChatPage = { messages: ChatMessage[]; before?: number; watermark: number };
 
@@ -37,9 +38,7 @@ export function useChatHistory(
       query.set('watermark', String(prior.watermark));
     }
     try {
-      const response = await fetch(`/api/history?${query}`);
-      if (!response.ok) throw new Error('Conversation could not be loaded.');
-      const next = (await response.json()) as ChatPage;
+      const next = await getScoped<ChatPage>(`/api/history?${query}`);
       if (generation !== request.current) return;
       setError('');
       // Tell the thread when this opening's asynchronous history has actually arrived.

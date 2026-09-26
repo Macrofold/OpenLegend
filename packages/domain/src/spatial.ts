@@ -1,3 +1,7 @@
+import { chargeWork } from './work-budget.js';
+import { worldPosition, worldSupport } from './spatial-state.js';
+import { activelyParticipates } from './participation-state.js';
+import { worldRootEntities } from './entity-index.js';
 import { isDraft } from 'immer';
 import {
   BODY_PROFILES,
@@ -32,14 +36,17 @@ export function isWalkable(
 export function hasLineOfSight(world: WorldState, from: Position, to: Position): boolean {
   return clearSegment(spatialMap(world), from, to);
 }
-export function interactionAnchor(entity: Entity, position: Position = entity.position): Position {
+export function interactionAnchor(
+  entity: Entity,
+  position: Position = worldPosition(entity),
+): Position {
   return { x: position.x, y: position.y + bodyProfile(entity).interactionHeight, z: position.z };
 }
 export function hasLineOfEffect(
   world: WorldState,
   actor: Entity,
   target: Entity,
-  origin: Position = actor.position,
+  origin: Position = worldPosition(actor),
 ): boolean {
   return clearSegment(
     spatialMap(world),
@@ -52,7 +59,7 @@ export function canReachEntity(
   actor: Entity,
   target: Entity,
   reach: number,
-  origin: Position = actor.position,
+  origin: Position = worldPosition(actor),
 ): boolean {
   return (
     distance3D(interactionAnchor(actor, origin), interactionAnchor(target)) <= reach &&
@@ -99,17 +106,25 @@ export function findApproachPath(
   const goal = interactionAnchor(target);
   const footY = goal.y - profile.interactionHeight;
   for (const surface of surfacesInBounds(map, {
-    min: { x: target.position.x - radius, y: footY - reach, z: target.position.z - radius },
-    max: { x: target.position.x + radius, y: footY + reach, z: target.position.z + radius },
+    min: {
+      x: worldPosition(target).x - radius,
+      y: footY - reach,
+      z: worldPosition(target).z - radius,
+    },
+    max: {
+      x: worldPosition(target).x + radius,
+      y: footY + reach,
+      z: worldPosition(target).z + radius,
+    },
   })) {
     for (
-      let z = Math.max(Math.ceil(surface.minZ), Math.ceil(target.position.z - radius));
-      z <= Math.min(Math.floor(surface.maxZ), Math.floor(target.position.z + radius));
+      let z = Math.max(Math.ceil(surface.minZ), Math.ceil(worldPosition(target).z - radius));
+      z <= Math.min(Math.floor(surface.maxZ), Math.floor(worldPosition(target).z + radius));
       z++
     ) {
       for (
-        let x = Math.max(Math.ceil(surface.minX), Math.ceil(target.position.x - radius));
-        x <= Math.min(Math.floor(surface.maxX), Math.floor(target.position.x + radius));
+        let x = Math.max(Math.ceil(surface.minX), Math.ceil(worldPosition(target).x - radius));
+        x <= Math.min(Math.floor(surface.maxX), Math.floor(worldPosition(target).x + radius));
         x++
       ) {
         const p = { x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id };
@@ -145,7 +160,7 @@ export function sameSurfacePoint(
   z: number,
 ): SurfacePoint | null {
   const map = spatialMap(world),
-    surface = surfaceById(map, actor.spatial.supportSurfaceId ?? '');
+    surface = surfaceById(map, worldSupport(actor) ?? '');
   if (!surface || !surfaceContains(surface, { x, z })) return null;
   return { x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id };
 }
@@ -177,20 +192,31 @@ export function spatialCandidates<T extends { position: Position }>(entities: T[
           let z = Math.floor((position.z - radius) / cellSize);
           z <= Math.floor((position.z + radius) / cellSize);
           z++
-        )
-          found.push(...(cells.get(`${x},${y},${z}`) ?? []));
+        ) {
+          const cell = cells.get(`${x},${y},${z}`) ?? [];
+          chargeWork({ tests: 1, candidates: cell.length });
+          found.push(...cell);
+        }
     return found.sort((a, b) => a.order - b.order).map(({ entity }) => entity);
   };
 }
 const entityIndexes = new WeakMap<
   WorldState['entities'],
-  ReturnType<typeof spatialCandidates<Entity>>
+  ReturnType<typeof spatialCandidates<{ entity: Entity; position: Position }>>
 >();
 export function nearbyEntities(world: WorldState, position: Position, radius: number): Entity[] {
-  let index = isDraft(world.entities) ? undefined : entityIndexes.get(world.entities);
+  let index =
+    !isDraft(world.entities) && Object.isFrozen(world.entities)
+      ? entityIndexes.get(world.entities)
+      : undefined;
   if (!index) {
-    index = spatialCandidates(Object.values(world.entities));
-    if (!isDraft(world.entities)) entityIndexes.set(world.entities, index);
+    index = spatialCandidates(
+      worldRootEntities(world)
+        .filter(activelyParticipates)
+        .map((entity) => ({ entity, position: worldPosition(entity) })),
+    );
+    if (!isDraft(world.entities) && Object.isFrozen(world.entities))
+      entityIndexes.set(world.entities, index);
   }
-  return index(position, radius);
+  return index(position, radius).map(({ entity }) => entity);
 }

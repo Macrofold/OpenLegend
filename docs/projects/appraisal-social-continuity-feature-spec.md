@@ -1,6 +1,8 @@
 # Persistent appraisal and character-owned social continuity — feature specification
 
-**Status:** proposed implementation scope. Priority 5. [Technical design](appraisal-social-continuity-tech-design.md) defines mechanisms; [ACT07/ACT08 delivery slices](../maintainers/actor-model.md#priority-5-implementation-slices) own work. CR, EPR04, EWF and SL retain their existing responsibilities. [Foundation package](foundations-1-5.md) applies.
+**Status:** approved and implemented for this project’s scope; [verification](../verification.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Priority 5. [Technical design](appraisal-social-continuity-tech-design.md) defines mechanisms; [ACT07/ACT08 delivery slices](../maintainers/actor-model.md#priority-5-implementation-slices) own work. CR, EPR04, EWF and SL retain their existing responsibilities. [Foundation package](foundations-1-5.md) applies.
+
+The source audit and staged sequence below retain the design baseline. Current behavior is in the linked canonical owners; focused trackers record completed delivery and separate parent work.
 
 ## 1. Intended experience
 

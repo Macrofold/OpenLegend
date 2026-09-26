@@ -1,3 +1,4 @@
+import { worldPlacement } from '../../spatial-state.js';
 import { groundedSpatial } from '../../spatial-state.js';
 import { nativeActor } from './bodies.js';
 import { nextId } from '../../data.js';
@@ -21,7 +22,10 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
   const id = nextId(world, draft.type === 'person' ? 'person' : draft.type);
   const base = {
     id,
-    position: { x: draft.position.x, y: draft.position.y, z: draft.position.z },
+    placement: worldPlacement(
+      { x: draft.position.x, y: draft.position.y, z: draft.position.z },
+      draft.position.surfaceId,
+    ),
     spatial: groundedSpatial(
       draft.type === 'person'
         ? 'person'
@@ -30,7 +34,6 @@ export function spawnedEntity(world: WorldState, draft: GodSpawnDraft): Entity |
           : draft.type === 'deer'
             ? 'deer'
             : 'object',
-      draft.position.surfaceId,
     ),
   };
   switch (draft.type) {

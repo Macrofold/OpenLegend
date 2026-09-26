@@ -1,3 +1,4 @@
+import { worldPosition } from '@open-legend/domain';
 import { test, expect } from '@playwright/test';
 import { advanceWorld } from '../../packages/domain/src/index.js';
 import { createGameServer } from '../../apps/server/src/http.js';
@@ -50,7 +51,7 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
       .toBe('move');
     await game.service.transition((world) => advanceWorld(world, 280));
     await expect
-      .poll(() => game.service.world.entities[game.service.controlledEntityId]!.position.y)
+      .poll(() => worldPosition(game.service.world.entities[game.service.controlledEntityId]!).y)
       .toBeCloseTo(3);
     await page.getByRole('button', { name: 'Pause world', exact: true }).click();
     await page.getByRole('button', { name: 'Recenter camera', exact: true }).click();
@@ -73,7 +74,7 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     await page.getByLabel('Camera options', { exact: true }).click();
     await page.screenshot({ path: info.outputPath('spatial-lookout-perspective.png') });
     const before = JSON.stringify(
-      game.service.world.entities[game.service.controlledEntityId]!.position,
+      worldPosition(game.service.world.entities[game.service.controlledEntityId]!),
     );
     await page.keyboard.down('Shift');
     await page.mouse.move(rect.x + rect.width * 0.5, rect.y + rect.height * 0.5);
@@ -85,7 +86,7 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     await page.keyboard.up('Shift');
     expect(commands).toHaveLength(1);
     expect(
-      JSON.stringify(game.service.world.entities[game.service.controlledEntityId]!.position),
+      JSON.stringify(worldPosition(game.service.world.entities[game.service.controlledEntityId]!)),
     ).toBe(before);
     await page.reload();
     await expect(canvas).toHaveAttribute('data-ready', 'true');

@@ -4,6 +4,21 @@
 
 The record/query migration and measurements are in [D1/D2](production-data.md#remaining-d1d2-implementation-and-evidence) and [Verification](../verification.md#data-foundation-runtime). Independent PostgreSQL read/write lanes, batched witness eligibility updates, indexed required evidence and skipping discarded memory observation work are implemented. Inactive memory/awareness/summary residency and scoped cold-source consumers are implemented. Dense preparation/copy work is reduced with unchanged native outcomes. PF08/PF09 remain open: initial perception still creates large actor/evidence fan-out and Immer copies growing recent arrays. [Current hardening measurements](../verification.md#data-runtime-hardening) separate cold-history growth from dense-scene cost. The 100/100/100/1000 and half-size scene runs recovered correctly but did not meet interactive capacity. Keep the 64 MiB checkpoint guard and serialization cost visible in SL/PF; do not close D5 from a scoped SQL benchmark.
 
+## Foundations 1–5 measurements and remaining cost
+
+Follow-up reservation-owner review measured 2,048 native held-item consumptions at a
+1,649 ms median versus 3,148 ms at review start (about 48% less wall time, 45% less CPU),
+with identical world digests. Draft-owned updates reuse the existing reservation index;
+exact fractional summation, occupancy and forks remain verified. The
+[review evidence](../verification.md#foundation-follow-up-review) records the matched scope.
+This does not close the mixed-workload regression or hosted-capacity gates below.
+
+SC/MP/PO/DI/ACT now supply the native owners, real account isolation, bounded streams and process-wide work admission. [Final foundation evidence](../verification.md#foundation-priorities-15--implementation-evidence) separates native CPU, both-adapter commits/pages, cold residency and actual browser/TCP behavior. Operational work ceilings are not qualified hosted capacities.
+
+- [ ] **PF03/09 foundation regression:** the final matched seed-73 workload (10 added people, 20 added animals, 300 scattered roots, 180 steps, three repetitions per revision) uses about 24% more median process CPU than `ce7ef555`. Baseline/current CPU is 1,777/2,196 ms; both miss requested 3× before SQL/browser work. Profile Immer proxy/finalization and encounter costs, compare complete outcomes/RNG/audiences, and qualify any improvement on the same input. Do not relax required work or claim the 3× rate.
+- [ ] **PF08/09 wide resident state:** direct-child pages and root membership are indexed, reservation admission avoids repeated metadata reconstruction, and terminal contributions/appraisals/objects are cold after commit. The flat resident entity map still adds copying cost to root movement. Preserve the five-row write set and exact cold/fork equivalence while measuring alternatives before changing authoritative representation.
+- [ ] **PF04/11 shared load:** actual slow-reader timeout and 40-connection churn passed, and 10,000-lot/12-level SQLite/PostgreSQL journeys report payload/commit tails. These short scenarios do not establish steady heap, 100 independent active humans, mixed live retrieval, WAN or hosted security/operations. Qualify the existing D5 workload before release.
+
 ## Spatial measurements
 
 Cross-link [SW06/SW14](spatial-world.md) for spatial readiness and measurements rather than adding another worker framework here. Retain the implemented static bounds index; qualify larger actor/geometry workloads before adding navmesh workers, tiled rebuilding or a crowd solver. Current graph/shape caches and camera-only updates must retain zero provider cost.
@@ -14,7 +29,7 @@ This is the sole tracker for runtime performance optimization. [Runtime performa
 
 PF00/PF01/PF02/PF03/PF04/PF05/PF08/PF09 now include delivered work below. Remaining measurement, failure coverage and legacy compatibility work stay unchecked. Additional PF04 connection isolation and PF06/PF07/PF10 remain conditional without evidence justifying their extra mechanisms. PF11 is explicitly deferred.
 
-This pass stops before multiplayer admission, per-player replication, the unattended-world toggle and verification with 100 agents, 100 players and thousands of animals. The local host's gameplay epoch mechanism is independent of future multiplayer controller admission. Native animals retain full simulation fidelity; dormancy and analytic updates remain gated on semantic equivalence.
+Foundations 1–5 add principal/controller admission, scoped per-player streams and shared connection-based automatic pause. Regional replication, the unattended-world toggle and verification with 100 agents, 100 players and thousands of animals remain open. Gameplay epochs remain separate from control generations. Native animals retain full simulation fidelity; dormancy and analytic updates remain gated on semantic equivalence.
 
 ## Order and stop rule
 

@@ -1,3 +1,4 @@
+import { bindReflectionAppraisals } from './appraisal-context.js';
 import { resolveResponseEntities } from './entity-references.js';
 import { dreamStatus, dreamPolicy } from '@open-legend/domain';
 import { nativeNeedBelow } from '@open-legend/domain';
@@ -114,28 +115,35 @@ export class CognitionMaintenance {
     try {
       const current = this.service.world;
       timedSync('cognition.maintenanceRefresh', () =>
-        this.work.refresh(current, (id) => {
-          const actor = current.entities[id]!.actor!;
-          return [
-            actor.controller,
-            actor.incapacitated,
-            actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
-            !nativeNeedBelow(actor, 'fullness', 30),
-            actor.action?.type,
-            dreamStatus(current, current.entities[id])?.episode,
-            current.memories[id],
-            current.experience?.awareness[id],
-            current.experience?.summaries[id],
-            current.minds?.[id],
-            current.innerWorlds?.[id],
-            current.cognitionPolicy,
-            this.service.memoryBacklog,
-          ];
-        }),
+        this.work.refresh(
+          current,
+          (id) => {
+            const actor = current.entities[id]!.actor!;
+            return [
+              actor.controller,
+              actor.incapacitated,
+              actor.health >= 0.4 * (actor.body?.maxHealth ?? 100),
+              !nativeNeedBelow(actor, 'fullness', 30),
+              actor.action?.type,
+              dreamStatus(current, current.entities[id])?.episode,
+              current.memories[id],
+              current.experience?.awareness[id],
+              current.experience?.summaries[id],
+              current.minds?.[id],
+              current.innerWorlds?.[id],
+              current.cognitionPolicy,
+              this.service.memoryBacklog,
+            ];
+          },
+          this.service.generation,
+        ),
       );
       const actors = this.work
         .ready(this.now(), current.simTime)
         .map((id) => current.entities[id]!);
+      const generations = new Map(
+        actors.map((entity) => [entity.id, this.work.capture(current, entity.id)]),
+      );
       const times = new Map(
         await Promise.all(actors.map(async (e) => [e.id, await this.last(e.id)] as const)),
       );
@@ -176,10 +184,16 @@ export class CognitionMaintenance {
             (entry) => entry.at + EXPERIENCE_LIMITS.rawHours * 3600,
           ),
         ].filter((at) => at > world.simTime);
-        this.work.inspected(
-          entity.id,
-          future.reduce((earliest, at) => Math.min(earliest, at), Infinity),
-        );
+        if (
+          !this.work.inspected(
+            entity.id,
+            future.reduce((earliest, at) => Math.min(earliest, at), Infinity),
+            generations.get(entity.id),
+            this.service.world,
+            this.service.generation,
+          )
+        )
+          continue;
         const dreamReady =
           safe &&
           !!dreamStatus(world, world.entities[entity.id]) &&
@@ -522,6 +536,7 @@ export class CognitionMaintenance {
   private async reflect(queued: ReflectionRequest, controller: AbortController) {
     return await this.job(queued.actorId, queued.reason, queued.origin, async (job) => {
       const { actorId } = queued;
+      const generation = this.service.generation;
       const snapshot = this.service.world.innerWorlds![actorId]!;
       // Only live obligations constrain publication. Resolved history may leave RAM
       // during reflection without changing any obligation or retained evidence.
@@ -551,6 +566,17 @@ export class CognitionMaintenance {
         controller.signal,
         Math.max(0, this.service.config.budgetUsd - interactiveAllowance(this.service.config)),
       );
+      controller.signal.throwIfAborted();
+      if (generation !== this.service.generation)
+        throw new Error('Timeline changed during reflection preparation.');
+      const appraisals = await bindReflectionAppraisals(
+        this.service,
+        actorId,
+        job.id,
+        prepared.binding.evidenceIds,
+        { ...prepared.entityReferences, ...prepared.binding.knowledgeReferences },
+      );
+      prepared.context['feelings'] = appraisals.context;
       await this.log.record(
         `${job.id}:context`,
         'Reflection context',
@@ -562,11 +588,17 @@ export class CognitionMaintenance {
         actorScope: actorId,
         execution: 'full',
         task: 'background_reflection',
-        instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. Follow the supplied knowledge policy and character limits. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Do not echo identity file contents.`,
+        instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. Follow the supplied knowledge policy and character limits. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Use appraisalChanges only for supported private interpretations, usually empty. Copy supplied feeling handles/revisions, policy and cause handles, and subject tokens. For create, appraisal and expectedRevision are null; select policy, source and an optional subject. For reframe, select appraisal, expectedRevision and source; policy and subject are null. For resolve, only appraisal and expectedRevision are non-null. Qualitative values are null. Never claim a typed change in prose unless proposing it atomically. Do not echo identity file contents.`,
         context: prepared.context,
         schema: z.toJSONSchema(reflectionSchema, { target: 'draft-7' }),
         signal: controller.signal,
       };
+      if (
+        Buffer.byteLength(JSON.stringify(request.context)) +
+          Buffer.byteLength(request.instructions) >
+        100000
+      )
+        throw new Error('Complete reflection context exceeds its admitted input budget.');
       const value = await this.paid(request.requestId, 'openai', () =>
         this.log.run(
           'Reflection harness',
@@ -574,7 +606,8 @@ export class CognitionMaintenance {
           async () => await this.macrofold.reflect(request, snapshot.files),
         ),
       );
-      reflectionSchema.parse({
+      const parsedReflection = reflectionSchema.parse({
+        appraisalChanges: value.appraisalChanges ?? [],
         thoughts: value.thoughts,
         goalChanges: value.goalChanges,
         knowledgeChanges: value.knowledgeChanges,
@@ -613,33 +646,45 @@ export class CognitionMaintenance {
         files: value.files,
         thoughts: value.thoughts,
       });
-      const accepted = await this.service.transition((world) => {
-        if (
-          obligations !==
-          digest(
-            (world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment' && !m.resolved),
+      controller.signal.throwIfAborted();
+      const appraisalChanges = appraisals.resolve(parsedReflection.appraisalChanges);
+      const accepted = await this.service.transition(
+        (world) => {
+          controller.signal.throwIfAborted();
+          if (generation !== this.service.generation)
+            throw new Error('Timeline changed during reflection.');
+          if (
+            obligations !==
+            digest(
+              (world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment' && !m.resolved),
+            )
           )
-        )
-          throw new Error('Obligations changed during reflection.');
-        return publishInnerWorld(
-          world,
-          actorId,
-          snapshot.revision,
-          job.id,
-          value.revision,
-          value.files,
-          value.thoughts,
-          prepared.binding.evidenceIds,
-          null,
-          0,
-          value.goalChanges,
-          edits.operations.flatMap((op) => (op.note ? [op.note] : [])),
-          edits.operations.flatMap((op) => (op.name ? [op.name] : [])),
-          prepared.binding.entityIds,
-          prepared.binding.entityEpisodes,
-          prepared.binding.knowledgeReferences,
-        );
-      });
+            throw new Error('Obligations changed during reflection.');
+          return publishInnerWorld(
+            world,
+            actorId,
+            snapshot.revision,
+            job.id,
+            value.revision,
+            value.files,
+            value.thoughts,
+            prepared.binding.evidenceIds,
+            null,
+            0,
+            value.goalChanges,
+            edits.operations.flatMap((op) => (op.note ? [op.note] : [])),
+            edits.operations.flatMap((op) => (op.name ? [op.name] : [])),
+            prepared.binding.entityIds,
+            prepared.binding.entityEpisodes,
+            prepared.binding.knowledgeReferences,
+            appraisalChanges,
+            appraisals.bindings,
+          );
+        },
+        undefined,
+        undefined,
+        appraisals.current,
+      );
       if (!accepted.ok) throw new Error(accepted.message);
       await this.log.record(
         `${job.id}:publication`,

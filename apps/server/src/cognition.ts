@@ -93,6 +93,13 @@ export const thoughtOnlySchema = z
 export function domainCommand(input: CommandInput, actorId: string, id: string): Command {
   const base = { actorId, id };
   switch (input.type) {
+    case 'say':
+      return {
+        ...base,
+        type: 'say',
+        text: input.text!,
+        ...(input.targetId ? { targetId: input.targetId } : {}),
+      };
     case 'conversation':
       return {
         ...base,
@@ -110,6 +117,19 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
       };
     case 'drop':
       return { ...base, type: 'drop', itemId: input.itemId!, quantity: input.quantity! };
+    case 'transfer-item':
+    case 'split-item':
+    case 'merge-item':
+      return {
+        ...base,
+        type: input.type,
+        itemId: input.itemId!,
+        targetId: input.targetId!,
+        quantity: input.quantity!,
+        expectedRevision: input.expectedRevision!,
+        placementRevision: input.placementRevision!,
+        targetRevision: input.targetRevision!,
+      };
     case 'move':
       return { ...base, type: 'move', destination: input.position! };
     case 'gather':
@@ -118,6 +138,14 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     case 'cancel':
     case 'recover':
       return { ...base, type: input.type };
+    case 'unequip':
+      return {
+        ...base,
+        type: input.type,
+        itemId: input.itemId!,
+        expectedRevision: input.expectedRevision!,
+        placementRevision: input.placementRevision!,
+      };
     case 'replenish':
       return {
         ...base,
