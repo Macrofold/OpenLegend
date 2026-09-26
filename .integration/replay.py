@@ -1,14 +1,15 @@
-"""Temporary, repository-scoped history publisher; never invokes Git or updates main.
+"""Temporary scoped replay: GitHub objects/atomic ref leases, no Git commands.
 
-Input is reviewed source edits, not executable code. All object bytes and tree results
-are checked against their expected Git hashes. Ref changes use GraphQL beforeOid.
-Remove this helper when the reviewed rebased history replaces the staging checkout.
+The manifest contains data-only, reviewed conflict edits and expected tree hashes.
+Ordinary changes use the same diff3 merge exercised locally. No main ref is writable.
 """
 import base64
 import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -28,7 +29,7 @@ assert os.environ["GITHUB_REPOSITORY"] == REPO
 assert os.environ["GITHUB_REF"] == FEATURE
 assert PLAN["main"] == MAIN and PLAN["source"] == SOURCE
 assert PLAN["stage"] == STAGE
-assert 0 < len(PLAN["commits"]) <= 110
+assert 0 < len(PLAN["commits"]) <= 105
 assert isinstance(PLAN["publishFeature"], bool)
 if PLAN["publishFeature"]:
     assert len(PLAN["commits"]) == 105
@@ -37,8 +38,14 @@ if PLAN["publishFeature"]:
 last_write = 0.0
 writes = 0
 cache = {}
-blobs = PLAN["blobs"]
+metadata = {}
+trees = {}
+generated = set()
 published = dict(PLAN.get("published", {}))
+replayed = {}
+source_ids = {entry["original"] for entry in PLAN["commits"]}
+excluded = set(PLAN["excludedParents"])
+assert not source_ids & excluded
 result = {"main": MAIN, "source": SOURCE, "expectedFeature": EXPECTED,
           "published": published, "stage": STAGE, "completed": False}
 
@@ -96,34 +103,117 @@ def git_hash(kind, data):
     return hashlib.sha1(f"{kind} {len(data)}\0".encode() + data).hexdigest()
 
 
-def content(sha, depth=0):
-    if depth > 120:
-        raise RuntimeError("Source edit dependency depth exceeded.")
-    if sha in cache:
-        return cache[sha]
-    if sha in blobs:
-        change = blobs[sha]
-        data = content(change["base"], depth + 1)
-        lines = data.decode("utf-8").splitlines(keepends=True)
-        previous_end = 0
-        for edit in change["edits"]:
-            start, end = edit["start"], edit["start"] + edit["remove"]
-            if not (previous_end <= start <= end <= len(lines)):
-                raise RuntimeError("Invalid or overlapping reviewed source edits.")
-            previous_end = end
-        for edit in reversed(change["edits"]):
-            start = edit["start"]
-            lines[start:start + edit["remove"]] = edit["text"].splitlines(keepends=True)
-        data = "".join(lines).encode()
-    else:
+def remember(data):
+    sha = git_hash("blob", data)
+    cache[sha] = data
+    generated.add(sha)
+    return sha
+
+
+def content(sha):
+    if sha not in cache:
         value = api(f"/repos/{REPO}/git/blobs/{sha}")
         if value["encoding"] != "base64":
             raise RuntimeError("Unexpected source encoding.")
         data = base64.b64decode(value["content"])
-    if git_hash("blob", data) != sha:
-        raise RuntimeError("Reviewed source content hash mismatch.")
-    cache[sha] = data
-    return data
+        if git_hash("blob", data) != sha:
+            raise RuntimeError("Source content hash mismatch.")
+        cache[sha] = data
+    return cache[sha]
+
+
+def commit(sha):
+    if sha not in metadata:
+        metadata[sha] = api(f"/repos/{REPO}/git/commits/{sha}")
+    return metadata[sha]
+
+
+def files(sha):
+    tree = commit(sha)["tree"]["sha"]
+    if tree not in trees:
+        value = api(f"/repos/{REPO}/git/trees/{tree}?recursive=1")
+        if value.get("truncated"):
+            raise RuntimeError("Incomplete source tree; replay refused.")
+        entries = {}
+        for entry in value["tree"]:
+            if entry["type"] == "tree":
+                continue
+            path = entry["path"]
+            if (entry["type"] != "blob" or path.startswith("/") or
+                    ".git" in Path(path).parts or ".." in Path(path).parts):
+                raise RuntimeError("Unsupported or unsafe source entry.")
+            entries[path] = {"mode": entry["mode"], "sha": entry["sha"]}
+        trees[tree] = entries
+    return trees[tree]
+
+
+def resolved(change):
+    lines = content(change["base"]).decode("utf-8").splitlines(keepends=True)
+    previous_end = 0
+    for edit in change["edits"]:
+        start, end = edit["start"], edit["start"] + edit["remove"]
+        if not (previous_end <= start <= end <= len(lines)):
+            raise RuntimeError("Invalid reviewed source edits.")
+        previous_end = end
+    for edit in reversed(change["edits"]):
+        start = edit["start"]
+        lines[start:start + edit["remove"]] = edit["text"].splitlines(keepends=True)
+    sha = remember("".join(lines).encode())
+    if sha != change["sha"]:
+        raise RuntimeError("Conflict resolution differs from reviewed source.")
+    return sha
+
+
+def replay(entry, main_files):
+    parents = entry["parents"]
+    old = files(parents[0])
+    after = files(entry["original"])
+    target = dict(replayed.get(parents[0], main_files))
+    starting = dict(target)
+    merged_main = [files(parent) for parent in parents[1:] if parent in excluded]
+    resolutions = PLAN["resolutions"].get(entry["original"], {})
+    for path in sorted(old.keys() | after.keys()):
+        base, theirs = old.get(path), after.get(path)
+        if base == theirs:
+            continue
+        # Current main already supersedes an unchanged imported main ancestor.
+        if any(theirs == ancestor.get(path) for ancestor in merged_main):
+            continue
+        ours = target.get(path)
+        if ours == theirs:
+            continue
+        if ours == base:
+            if theirs:
+                target[path] = theirs
+            else:
+                target.pop(path, None)
+            continue
+        resolution = resolutions.get(path)
+        if not ours or not theirs:
+            if not resolution:
+                raise RuntimeError(f"Unreviewed delete/modify conflict: {path}")
+            target[path] = {"mode": (theirs or ours)["mode"], "sha": resolved(resolution)}
+            continue
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = []
+            for name, source in zip(("rebased", "old-parent", "original"), (ours, base, theirs)):
+                file = Path(temporary) / name
+                file.write_bytes(content(source["sha"]) if source else b"")
+                paths.append(str(file))
+            merged = subprocess.run(
+                ["diff3", "-m", "-E", "-L", "rebased", "-L", "old-parent", "-L", "original", *paths],
+                capture_output=True, check=False, timeout=60,
+            )
+        if merged.returncode not in (0, 1):
+            raise RuntimeError(f"Source merge failed: {path}")
+        sha = remember(merged.stdout)
+        if resolution:
+            sha = resolved(resolution)
+        elif merged.returncode:
+            raise RuntimeError(f"Unreviewed source conflict: {path}")
+        target[path] = {"mode": theirs["mode"], "sha": sha}
+    replayed[entry["original"]] = target
+    return starting, target
 
 
 try:
@@ -132,40 +222,42 @@ try:
     stage_before = PLAN.get("stageBefore", ZERO)
     if ref(STAGE) != stage_before:
         raise RuntimeError("The checkpoint branch moved; publication refused.")
-    main_tree = api(f"/repos/{REPO}/git/commits/{MAIN}")["tree"]["sha"]
+    main_tree = commit(MAIN)["tree"]["sha"]
+    main_files = files(MAIN)
     for index, entry in enumerate(PLAN["commits"]):
-        original = api(f"/repos/{REPO}/git/commits/{entry['original']}")
-        if original["tree"]["sha"] != entry["originalTree"]:
-            raise RuntimeError("Original source tree mismatch.")
-        parents = [published[p]["commit"] if p in published else MAIN
-                   for p in entry["parents"]]
-        parents = list(dict.fromkeys(parents))
+        original = commit(entry["original"])
+        if (original["tree"]["sha"] != entry["originalTree"] or
+                [parent["sha"] for parent in original["parents"]] != entry["parents"]):
+            raise RuntimeError("Original source tree or parents mismatch.")
+        if any(parent not in published and parent not in excluded for parent in entry["parents"]):
+            raise RuntimeError("A source parent has not been replayed.")
+        parents = list(dict.fromkeys(published[p]["commit"] if p in published else MAIN
+                                   for p in entry["parents"]))
         if not parents:
             raise RuntimeError("A replayed commit needs its recorded parent.")
         parent_tree = published[entry["parents"][0]]["tree"] if entry["parents"][0] in published else main_tree
+        starting, target = replay(entry, main_files)
         prior = published.get(entry["original"])
         if prior:
-            existing = api(f"/repos/{REPO}/git/commits/{prior['commit']}")
-            if (existing["tree"]["sha"] != entry["tree"] or
+            existing = commit(prior["commit"])
+            if (prior["tree"] != entry["tree"] or existing["tree"]["sha"] != entry["tree"] or
                     [p["sha"] for p in existing["parents"]] != parents):
-                raise RuntimeError("Existing replay checkpoint does not match the reviewed plan.")
+                raise RuntimeError("Existing replay checkpoint differs from the reviewed plan.")
         else:
             tree_entries = []
-            for change in entry["changes"]:
-                path = change["path"]
-                if path.startswith("/") or ".git" in Path(path).parts or ".." in Path(path).parts:
-                    raise RuntimeError("Unsafe source path.")
-                item = {"path": path, "mode": change["mode"], "type": "blob"}
-                sha = change["sha"]
-                if sha in blobs:
+            for path in sorted(starting.keys() | target.keys()):
+                before, after = starting.get(path), target.get(path)
+                if before == after:
+                    continue
+                item = {"path": path, "mode": (after or before)["mode"], "type": "blob"}
+                sha = after["sha"] if after else None
+                if sha in generated:
                     item["content"] = content(sha).decode("utf-8")
                 else:
                     item["sha"] = sha
                 tree_entries.append(item)
-            if tree_entries:
-                tree = api(f"/repos/{REPO}/git/trees", {"base_tree": parent_tree, "tree": tree_entries})["sha"]
-            else:
-                tree = parent_tree
+            tree = (api(f"/repos/{REPO}/git/trees", {"base_tree": parent_tree, "tree": tree_entries})["sha"]
+                    if tree_entries else parent_tree)
             if tree != entry["tree"]:
                 raise RuntimeError("Rebased tree differs from the reviewed tree.")
             message = original["message"].rstrip()
@@ -183,7 +275,6 @@ try:
         head = published[entry["original"]]["commit"]
         if index == len(PLAN["commits"]) - 1:
             move(STAGE, stage_before, head)
-            stage_before = head
         print(f"Prepared {index + 1}/{len(PLAN['commits'])}: {entry['original'][:8]} -> {head[:8]}", flush=True)
         result["lastPrepared"] = head
         (ROOT / "replay-result.json").write_text(json.dumps(result, indent=2))
