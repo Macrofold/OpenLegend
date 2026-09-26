@@ -4,7 +4,7 @@ Status: researched evidence supporting the **accepted PlayCanvas/custom-simulati
 
 ## 1. Accepted starting direction
 
-**Accepted:** use PlayCanvas for browser presentation with an independent custom simulation and generative-rule interface. This supersedes the initial Babylon.js recommendation. Favor beautiful detailed pixel sprites/textures in a 3D landscape, grounded proportions and modern atmospheric lighting. The proposed first workflow is standalone TypeScript with a fixed elevated camera plus pan/zoom; editor use and camera freedom remain open. Prove one compelling wilderness scene early, before broad asset production. [Visual direction and review criteria](../03-design-proposals/visual-direction.md)
+**Accepted:** use PlayCanvas for browser presentation with an independent custom simulation and generative-rule interface. This supersedes the initial Babylon.js recommendation. Favor beautiful detailed pixel sprites/textures in a 3D landscape, grounded proportions and modern atmospheric lighting. The current workflow is standalone TypeScript. Orbit, pitch, pan, zoom, selectable projection and optional sprite-friendly locks are accepted; hosted-editor adoption and production asset workflow remain open. See the [spatial contract](../../docs/spatial-world.md) for camera behavior. Prove one compelling wilderness scene early, before broad asset production. [Visual direction and review criteria](../03-design-proposals/visual-direction.md)
 
 “2.5D” here means a genuine spatial model with positions, heights, obstacle shapes, and facing directions, presented with limited camera movement and simplified assets. It does not mean that fire, hearing, construction, or injuries must be fake in the simulation. A sprite can represent an actor whose server-side body has many injured parts; a tree billboard can represent combustible material, fuel, moisture, and ownership.
 
@@ -26,6 +26,33 @@ These are suitability judgments for Open Legend, not general rankings or benchma
 Epic describes its streaming servers as reference implementations, says a complete scaling solution is outside the provided scope, and notes that the old matchmaker was deprecated in UE 5.5. Its hosting guide also covers TURN and GPU/encoding considerations. Therefore, “Unreal can run in a browser” does not imply a cheap, ready-made massive multiplayer web deployment. [Epic hosting and networking guide](https://dev.epicgames.com/documentation/en-us/unreal-engine/hosting-and-networking-guide-for-pixel-streaming-in-unreal-engine)
 
 **Current evaluation rule:** start with PlayCanvas and test the required look, workflow and browser performance. Compare a fallback only when a concrete blocker warrants it. No research here establishes a performance winner, and the accepted choice is not a claim that other engines constrain generative mechanics.
+
+### Distribution and engine tradeoffs
+
+Retain the accepted browser/PlayCanvas direction. Desktop packaging and consoles are options to evaluate later, not committed releases or reasons to replace the renderer now. An advanced rendering engine does not by itself improve the authoritative invention, memory, persistence or multiplayer systems.
+
+Browser access can shorten the path from seeing a shared story to joining a friend: follow a link, load the game and enter the world. This is a product hypothesis, not measured acquisition or retention evidence. Download size, startup time, account friction and the first useful interaction still matter. Evaluate those alongside visual quality.
+
+Typing suits expressive invention, conversation and creator work on PC. It should not make routine movement, selecting actions or reusing an invention require repeated prose. A console version would need a satisfying controller-first play loop, readable TV interface and practical text-entry alternatives. Voice could help, but should not be assumed necessary or sufficient. Keep creator tools and ordinary play distinguishable; a platform need not offer identical authoring ergonomics to support meaningful play.
+
+| Route | Benefit for OpenLegend | Main cost or uncertainty |
+|---|---|---|
+| PlayCanvas in a browser | Direct browser rendering on the player's device; fits the existing TypeScript client and link-based access | Prove visual quality, browser/device coverage and repeatable asset production; bespoke tooling can become expensive |
+| Desktop package of the web client | Potential reuse of the renderer and UI with an installed distribution experience | Packaging, updates, store/account integration and device qualification remain work; packaging alone does not improve graphics or grant console support |
+| Native Unreal client | Strong candidate when richer rendering, animation, environment-authoring tools or concrete console requirements dominate | Rebuild substantial presentation and interaction code; qualify the same server authority and knowledge restrictions; engine adoption does not supply OpenLegend's gameplay |
+| Unreal Pixel Streaming | Browser access to a remotely rendered Unreal client | GPU rendering, encoding and video bandwidth add recurring costs beside simulation/AI; network conditions affect image quality and response time |
+
+Unreal's standard supported browser route is Pixel Streaming, not a native browser export equivalent to PlayCanvas. Epic moved HTML5 support to a community extension; community/third-party browser ports exist and need separate feature, maintenance and deployment qualification. Do not base the release plan on an assumed UE5 web-export button. [Epic HTML5 support announcement](https://www.unrealengine.com/en-US/blog/unreal-engine-4-23-released), [community UE4 browser port](https://github.com/SpeculativeCoder/UnrealEngine-HTML5-ES3), [current Pixel Streaming overview](https://dev.epicgames.com/documentation/unreal-engine/overview-of-pixel-streaming-in-unreal-engine).
+
+Console delivery is a separate product and platform project, whichever engine is chosen. Budget for controller interaction, account/identity integration, suspend/resume and reconnect, platform requirements and certification. A console browser or a desktop web wrapper is not proof that the game can ship as a supported console title. Recheck platform and engine support when a specific console release is proposed.
+
+### When to reconsider PlayCanvas
+
+Use the existing [visual proof](../03-design-proposals/visual-direction.md#first-visual-proof-after-implementation-authorization), R01/R02 and D09 to evaluate one representative polished scene before broad asset production. Include intended camera motion, animated characters, equipment, effects, interaction and representative visible density. Measure both player experience and the effort to author and revise content; an attractive still image is insufficient. Scene qualification does not establish backend population capacity.
+
+Revisit when required visual quality cannot be reached within agreed device budgets, production repeatedly needs costly custom tools, or a concrete console/native release has requirements the current client cannot reasonably satisfy. Compare a small equivalent slice in a candidate engine only after identifying that blocker. Include migration labor, asset conversion, ongoing staffing/tool costs, startup friction and hosting costs. An impressive engine demonstration alone is not a project-specific reason to switch.
+
+The project owner decides distribution commitments and an engine change using that evidence. Minimum devices and budgets remain D09; visual tuning and workflow remain D02. No second client, console release or engine migration is authorized by this research. The [client replacement path](../../docs/spatial-world.md#client-replacement-path) distinguishes what can be retained from what needs rebuilding.
 
 ### PlayCanvas licensing, maintenance and production evidence
 

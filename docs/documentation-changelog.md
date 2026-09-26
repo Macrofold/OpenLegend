@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-26 — Browser engine rationale and future client replacement
+
+Expanded [engine research](../archive/02-research/engines-art-and-audio.md#distribution-and-engine-tradeoffs) with browser access, typing/controller tradeoffs, native versus streamed delivery and concrete reconsideration triggers. Documented the [client replacement path](spatial-world.md#client-replacement-path): retain hosted authority and adapt public contracts, while rebuilding presentation and qualifying privacy/lifecycle behavior. SW10 remains incomplete; no migration, console release or offline runtime is delivered or authorized. Reconciled stale camera-choice wording with the accepted spatial direction.
+
 ## 2026-09-25 — Shared Macrofold Worker caller cutover
 
 Replaced Worktree-bound Sandbox execution with an explicitly owner-selected shared Worker. Operator selection rather than automatic creation keeps administrative lifecycle permissions and open-ended allocation costs outside actor/conversation code; the removed finite Sandbox allowance is not reinterpreted as an hourly ceiling. Existing Worktree/Session mappings and old financial records remain intact. Added demand-first native submission, target checks, durable conversation closure and Run-scoped cancellation, while preserving direct inference. [Provider setup](ai-providers.md#shared-worker-setup-and-cutover), [architecture](architecture.md#macrofold-worker-ownership) and [MW01–MW04](maintainers/macrofold-worker-api.md) replace the prior per-Worktree ownership direction. [Verification](verification.md#macrofold-worker-api-cutover) separates local runtime/build evidence from remaining live cutover and baseline CI gaps.
