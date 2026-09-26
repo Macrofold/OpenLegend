@@ -1,6 +1,6 @@
 # Invention relationship graph
 
-**Status: accepted target design; not a claim of an implemented general graph.** This document owns the typed relationship projection, traversal/completeness contract, impact-index maintenance, and graph visualization boundary. [Validation](invention-validation.md) owns acceptance planning, [world-module runtime](../archive/07-technical-architecture/world-module-runtime.md) owns executable interfaces, and [declarations](../archive/07-technical-architecture/declarations-and-evolution.md) owns installation. Delivery is under INV-15 in the [invention tracker](maintainers/inventions-and-world-evolution.md). Current direct recipe references and module pins remain documented in [Architecture](architecture.md).
+**Status: accepted target design with a bounded source-reader implementation.** The [current reader](#graph-reader-implementation) is not a complete interaction or mandatory-validation graph. This document owns the typed relationship projection, traversal/completeness contract, impact-index maintenance, and graph visualization boundary. [Validation](invention-validation.md) owns acceptance planning, [world-module runtime](../archive/07-technical-architecture/world-module-runtime.md) owns executable interfaces, and [declarations](../archive/07-technical-architecture/declarations-and-evolution.md) owns installation. Delivery is under INV-15 in the [invention tracker](maintainers/inventions-and-world-evolution.md). Current direct recipe references and module pins remain documented in [Architecture](architecture.md).
 
 ## 1. Purpose and authority
 
@@ -105,3 +105,11 @@ Expanding a node queries the same service the agent uses. An agent cites node/ed
 First expose existing recipe/material/base/module pins with honest extraction coverage. Next add enforced port/effect/resource summaries for one real composition, reverse impact checks, and a focused visualization. Then add world-authored obligations and shared-law change analysis. Live-instance overlays, extensive history, and cross-world comparison follow actual consumers.
 
 A graph can initially be useful before it is sufficient to certify arbitrary composition. Tooling must report that distinction. The scenario packet's shelter, charge-creature, and invented-combustion journeys are the generality proofs; no special case for the word `combustibility` may be the reason the common graph works.
+
+## Repertoire integration
+
+[Definition/live/evidence views and identifiable multi-party relations](repertoire-foundation.md#3-definition-live-arrangement-and-evidence-views) refine the overlay contract. Attachments, support, custody, shared work and evidence remain owned by their real subsystems. No graph-edge mutation installs behavior.
+
+## Graph reader implementation
+
+The [implemented architecture](architecture.md#repertoire-relationship-and-mcp-foundation) records source coverage, adjacency/cursor behavior, caps, cache boundaries, owner UI and read-only MCP integration. Current readers expose exact native definitions and selected live/evidence neighborhoods; `complete` means complete for that named projection, while `impact` remains `not-evaluated`. No topology editor, arbitrary edge-write authority or general closure validator is delivered. [INV-15](maintainers/inventions-and-world-evolution.md#inv-15--navigable-relationship-graph-and-visual-inspection) retains the remaining graph/visual/evidence qualification, and [INV-20](maintainers/inventions-and-world-evolution.md#inv-20--repertoire-integration-and-cross-domain-composition) adds real cross-domain source consumers.

@@ -1,3 +1,4 @@
+import { readMcpConfig } from './mcp-config.js';
 import { DEFAULT_MACROFOLD_MODEL } from './macrofold-model.js';
 import { resolve } from 'node:path';
 
@@ -45,6 +46,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     throw new Error('Unsupported OPEN_LEGEND_WORLD_PRESET.');
   return {
     worldPreset,
+    mcpRead: readMcpConfig(env),
     databaseUrl: env['OPEN_LEGEND_DATABASE_URL'] ?? '',
     embeddingKey: env['OPENAI_EMBEDDING_API_KEY'] ?? env['OPENAI_API_KEY'] ?? '',
     embeddingModel: env['EMBEDDING_MODEL'] ?? 'text-embedding-3-small',

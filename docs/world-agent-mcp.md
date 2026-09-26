@@ -1,6 +1,6 @@
 # OpenLegend MCP and Macrofold harness integration
 
-**Status: accepted target design; MCP endpoint and native World Agent harness integration are not implemented by this specification.** This document owns transport, authentication/context binding, connector provisioning, wire behavior and interoperability qualification. The [shared tool service](invention-workshop-tools.md) owns operations and the [World Agent runtime](world-agent-runtime.md) owns conversation/funding. Research and protocol-version evidence are retained in [MCP tooling](../archive/02-research/mcp-tooling-and-integration.md). Delivery is INV-16/18; no parallel tool registry or mutation system is permitted.
+**Status: accepted target design with a disabled-by-default read-only MCP endpoint implemented.** Native World Agent harness/session/mutation integration remains pending. The [bootstrap](#implemented-read-only-bootstrap) is narrower than the full surface below. This document owns transport, authentication/context binding, connector provisioning, wire behavior and interoperability qualification. The [shared tool service](invention-workshop-tools.md) owns operations and the [World Agent runtime](world-agent-runtime.md) owns conversation/funding. Research and protocol-version evidence are retained in [MCP tooling](../archive/02-research/mcp-tooling-and-integration.md). Delivery is INV-16/18; no parallel tool registry or mutation system is permitted.
 
 ## 1. Architecture and selected stack
 
@@ -138,3 +138,23 @@ Pin exact SDK, protocol, Macrofold revision/deployment, harness/model configurat
 Use the official MCP Inspector for protocol inspection and optional MCPJam for model/tool UX evaluation; keep both local against disposable data unless sharing is authorized. Neither substitutes for the actual Macrofold harness journey. Tests are planned in the maintainer TODO; this design task does not run paid agents or claim live interoperability.
 
 MCP version changes remain behind the thin adapter. Keep OpenLegend funding sessions, operation receipts and jobs independent of `initialize`, `Mcp-Session-Id`, transport cancellation and protocol task IDs. A new protocol release must not turn an old operation into a new physical or paid action.
+
+## Implemented read-only bootstrap
+
+The current server exposes eight world-level read/preview tools through exact-pinned `@modelcontextprotocol/server@2.0.0` and `@modelcontextprotocol/node@2.0.0`. See [Architecture](architecture.md#repertoire-relationship-and-mcp-foundation) for actual operation coverage, input/output bounds and current limitations. This intentionally has no `contextHandle`, paid session creation, mutation, `approve`, or native-harness provisioning tool. The full context/approval contract above must be implemented before adding those powers; a read credential is not a shortcut to them.
+
+### Local setup and connector deployment
+
+Leave all four configuration values blank to disable `/mcp`. To enable a dedicated world reader:
+
+1. Generate a cryptographically random secret with at least 32 bytes of entropy using an operator credential manager. Store the bearer secret in Macrofold's encrypted remote-connection credential field, never in a prompt, URL, game save or committed configuration. Compute its SHA-256 over the exact UTF-8 secret; put only the lowercase hexadecimal hash in `OPEN_LEGEND_MCP_TOKEN_SHA256`.
+2. Set `OPEN_LEGEND_MCP_WORLD_ID` to the exact current world ID, `OPEN_LEGEND_MCP_EXPIRES_AT` to an ISO timestamp with timezone, and `OPEN_LEGEND_MCP_HOSTS` to a comma-separated explicit host/port allowlist. No wildcards, full URLs or audience chosen by model input. Partial/invalid configuration fails startup. Read-only inspection requires no inference credential and no nonzero AI allowance.
+3. For local protocol inspection use the actual allowed loopback host/port. Hosted Macrofold requires a supported reachable HTTPS endpoint. Configure an operator reverse proxy exposing **only `/mcp`**, forwarding the exact configured public Host and authenticating with the dedicated bearer. Do not proxy all local `/api/state`, owner/session or gameplay routes, disable network protections, or reinterpret browser cookies as connector credentials. The Node game remains a local personal-world server on all other routes.
+4. Register the remote endpoint in Macrofold, discover tools, approve only these implemented names and grant the dedicated workspace/preset access. A read-only connection is usable for inspection; it is not the unified action-capable agent release. Actual connector creation and native-harness forwarding still need separate deployment qualification.
+5. Rotate/revoke by replacing/removing the configured hash and restarting the host; expiry and exact current world are checked on every request/tool call. This v1 configuration is one operator-managed world reader, not a dynamic multi-tenant credential store. A save load invalidates old source cursors; this read-only grant can inspect the current restored state of the same configured world. It does not resurrect any old mutation, context or spending authority.
+
+Only server-to-server POST requests without an Origin are accepted. The SDK owns initialization and version negotiation. The local 2025-11-25 compatibility exercise returned working discovery/calls; some SDK compatibility responses used short SSE frames, which the client must support. The implementation does not handwrite streaming parsers or require persistent protocol sessions. Modern-profile and real Macrofold end-to-end compatibility are not established by this local observation.
+
+### Growth boundary
+
+Reuse the same application descriptors, source readers and typed projections as local owner inspection. Add implemented capabilities under their actual application owners; do not register the entire target catalogue as stub tools. Before writes, implement the retained connection/session context, per-operation grants, exact revision/receipt and human-approval paths. Before multi-user reads, implement recipient disclosure and revocation rather than letting one broad service credential expose another user's data. Read-only hints are not enforcement: the current registered handlers themselves contain no mutation or paid dispatch.

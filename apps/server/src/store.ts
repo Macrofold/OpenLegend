@@ -14,7 +14,8 @@ import type { IntelligenceCall } from '@open-legend/protocol';
 import { SqliteDatabase } from './sqlite-database.js';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { createHash } from 'node:crypto';
+import { digest } from './content-digest.js';
+export { digest } from './content-digest.js';
 import {
   appendedEventCount as provenAppendCount,
   appendedRecordCount,
@@ -116,8 +117,6 @@ export interface JobRecord extends AiJobView {
 }
 
 const micro = (usd: number): number => Math.ceil(usd * 1_000_000);
-export const digest = (value: unknown): string =>
-  createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
 function samePrimitive(left: unknown, right: unknown): boolean {
   return left === right || (Number.isNaN(left) && Number.isNaN(right));

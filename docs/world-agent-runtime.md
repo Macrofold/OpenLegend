@@ -1,6 +1,6 @@
 # Unified World Agent runtime
 
-**Status: accepted target design.** This document owns unified conversation, session funding, execution-adapter behavior, context continuity and approval orchestration. The [tool service](invention-workshop-tools.md), [MCP binding](world-agent-mcp.md), [graph](invention-graph.md) and [composition](invention-composition.md) own their respective contracts. Current implementation remains in [Architecture](architecture.md), not inferred from this specification. Delivery is INV-16/18 with existing subsystem owners.
+**Status: accepted target design.** This document owns unified conversation, session funding, execution-adapter behavior, context continuity and approval orchestration. The [tool service](invention-workshop-tools.md), [MCP binding](world-agent-mcp.md), [graph](invention-graph.md) and [composition](invention-composition.md) own their respective contracts. Current implementation remains in [Architecture](architecture.md), including the [read-only graph/MCP bootstrap](architecture.md#repertoire-relationship-and-mcp-foundation); it is not a connected native-harness or funded mutation session. Delivery is INV-16/18 with existing subsystem owners.
 
 ## 1. Product decisions
 

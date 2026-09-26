@@ -1,6 +1,6 @@
 # Implementation status
 
-The [unified agent/MCP/graph/composition packet](../../docs/invention-scenarios.md) is accepted target design, not a delivered general authoring engine. Current scope remains the finite workshop/tool and world-module subsets below. The workshop-root configuration default is $5; native Macrofold tool integration, broad world-level tool scopes, general relationship graphs, unified conversation and image-inclusive session enforcement remain pending in INV-15–INV-19.
+The [unified agent/MCP/graph/composition packet](../../docs/invention-scenarios.md) is accepted target design, not a delivered general authoring engine. Current scope includes the finite workshop/world-module subsets and the [source-backed relationship/read-only MCP foundation](../../docs/architecture.md#repertoire-relationship-and-mcp-foundation). Authorized world-level read/preview, a paged definition/live/evidence projection and owner relationship list are implemented. The workshop-root configuration default is $5; native Macrofold tool integration, complete interaction closure, session/mutation grants, unified conversation and image-inclusive session enforcement remain pending in INV-15–INV-20.
 
 ## Spatial-world foundation
 

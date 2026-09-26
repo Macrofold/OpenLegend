@@ -18,6 +18,10 @@ The [shared tool service](invention-workshop-tools.md) owns operations; UI and M
 
 The [runtime funding contract](world-agent-runtime.md#8-shared-5-allowance-and-external-runs) establishes $5 per explicitly funded session including image generation, with no fixed art split. [Budgets](invention-budgets.md) owns accounting and uncertainty; [MCP](world-agent-mcp.md#7-long-running-work-and-idempotency) owns transport-independent operation receipts. No reconnect/refinement resets exposure. Durable history and scoped diagnostics remain distinct.
 
+## Available bootstrap
+
+The [implemented read-only MCP endpoint](world-agent-mcp.md#implemented-read-only-bootstrap) can expose current definitions, relationships, native activity and retained evidence under an explicit world-owner grant. It uses the same source readers as local owner inspection. Configure the dedicated remote connector and qualify actual Macrofold forwarding before calling this a connected World Agent. Session/approval/mutation integration remains pending; no paid context handle is inferred from the read credential.
+
 ## Handoff acceptance
 
 Use the [MCP qualification sequence](world-agent-mcp.md#10-qualification-and-upgrade-contract), [runtime evidence gate](world-agent-runtime.md#11-release-evidence), and [target scenarios](invention-scenarios.md). The actual native Macrofold harness must discover/call tools, retain drafts, request approval, apply once, and recover safely before live readiness is claimed. Current finite app-executed inference is not that evidence. Tasks and deferred automated scenarios remain in INV and the maintainer TODO.
