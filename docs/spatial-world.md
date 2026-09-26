@@ -157,3 +157,8 @@ Entity contact means their physical body surfaces meet or their occupied volumes
 The optional body-contact detector uses this relation and existing barrier checks to produce private contact episodes for actors granted that sense. Its radius field is zero and grants no remote perception. Broad candidate lookup derives its search extent from physical body sizes, then checks exact contact. It does not grant sight, identity, deliberate examination or damage. Ordinary movement and collision checks do not depend on contact sensing. The current campfire uses the existing generic object body profile; detailed flame shapes, temperature exposure, burns and contact with map surfaces are separate mechanics.
 
 Existing saved proximity-detector definitions upgrade in place to body contact with their authored bindings preserved. Obsolete active proximity contacts are cleared and actual contacts are reacquired; historical experiences remain historical evidence rather than current contact state. No world reset or replacement sense is introduced.
+
+## Maintained records
+
+- Implementation: [Feature tasks](maintainers/spatial-world.md).
+- Limits and constraints: [Space, movement and perception inventory](limits/spatial.md).

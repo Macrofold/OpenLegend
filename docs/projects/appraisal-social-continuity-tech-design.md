@@ -161,3 +161,8 @@ Compare saved IDs/source pins/intensity/time before and after migration, and ver
 Rejected: mandatory decay, universal emotional axes, event-only causes, strongest-N deletion of meaningful persistent state, inference from arbitrary trait prose, hidden paid appraisal loops, a second social graph store, mandatory relationship labels, interpreting free prose as native effect authority and retrospective recreation of lost/forgotten evidence.
 
 Proposed choices are one extended current appraisal owner with stable source-aware identity, policy-defined lifetime/scale, actor-owned subject notes, current accepted publication and conservative privacy invalidation. There is no unresolved product decision blocking these foundations. Additional world vocabularies, clinical claims, compulsion and social/economic laws are not implied by this design.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/agent-agency.md).
+- Limits and constraints: [Feelings and social continuity inventory](../limits/feelings.md).

@@ -674,3 +674,8 @@ The layer does not implement new fluid physics, smell, deformable bodies, struct
 It also cannot guarantee semantic correctness for all natural language, physically plausible arbitrary inventions, globally optimal plans, perfect knowledge, guaranteed persuasion, unlimited population scale or zero-cost indefinite work. Exact domain implementations and acceptance evidence remain necessary.
 
 The stable design commitment is narrower and stronger: **one scoped, typed route from an actor's chosen meaning to existing authoritative capabilities; composable ongoing activity; truthful consequences; and an explicit boundary when a new world definition or host ability is actually needed.**
+
+## Maintained records
+
+- Implementation: [Action capability tasks](maintainers/action-capabilities.md); [invention integration](maintainers/inventions-and-world-evolution.md).
+- Limits and constraints: [Action selection](limits/cognition.md); [invention and generated content](limits/inventions.md).

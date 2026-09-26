@@ -89,3 +89,8 @@ effects. Runtime work follows physical roots and active operations; terminal ind
 history is queried only through explicit maintenance/capture paths.
 
 Policy, instances, elapsed time and bindings serialize with the world. Current-state validation checks definition/instance/action integrity and attribute ownership. Startup and manual-save loading convert a missing registry to the authored default in place under the [active development policy](save-and-load.md#active-development-policy). Existing rest actions retain their IDs and dream elapsed time as current effect instances; obsolete rest/debt and sleep-policy fields are removed. Saved energy, world identity, gameplay history and accounting are retained. Existing registries are not overwritten. The runtime uses only the current model, with no per-feature save version. Pauses and ordinary save/load do not replay wall-clock time.
+
+## Maintained records
+
+- Implementation: [Feature tasks](maintainers/state-contributions.md).
+- Limits and constraints: [Shared state, resources and effects inventory](limits/state-effects.md).

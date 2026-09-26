@@ -41,3 +41,8 @@ Per-document limits do not impose a count limit. Existing request and save-size 
 ## Privacy and correction
 
 Fictional NPC pads and observer identities are private to their owner and authorized god inspection/editing. They never enter the public actor DTO. The production [human-private boundary](../archive/07-technical-architecture/data-queries-and-mcp.md#human-private-content-boundary) excludes human-private messages and private character notes from creator powers; they require their own participant/owner permissions and cannot be exposed through an NPC projection. This is a target for human-player storage, not a claim that such channels are already implemented. Restore generation and document revisions fence owner edits. Forgetting/correction must invalidate accepted knowledge and derived interests as well as memory. The current conservative invalidation clears knowledge text alongside the existing accepted-mind reset; forgetting also clears observer identity associations. More selective dependency invalidation requires evidence before replacing this safe boundary.
+
+## Maintained records
+
+- Implementation: [Feature tasks](maintainers/cognition-redesign.md).
+- Limits and constraints: [Memory, knowledge and consolidation inventory](limits/memory.md).

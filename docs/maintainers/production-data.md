@@ -63,7 +63,7 @@ For qualification, report end-to-end p50/p95/p99/max and timeout rate, hardware/
 
 ## Deferred dependent work
 
-The [limits audit](limits-audit.md#status-and-required-dependency) is blocked until the current data foundation is complete under this tracker's implementation and verification gates. Its remaining review and changes follow foundation completion; they are not parallel prerequisites. The audit must then be refreshed against the new implementation before any old recommendation is acted upon.
+The full [limits runtime audit](limits-audit.md#status-and-required-dependency) retains this tracker’s implementation/verification completion dependency; it is not a parallel prerequisite. The developer separately authorized inventory migration and assessment of the merged implementations: [feature inventories](../openlegend-limits-decisions.md) now distinguish reported/current bounds from historical findings. Routine inventory synchronization is not blocked on scale qualification. Recheck each old recommendation against current consumers before implementation; this documentation work does not complete this tracker’s gates.
 
 ## Foundation integration gaps
 

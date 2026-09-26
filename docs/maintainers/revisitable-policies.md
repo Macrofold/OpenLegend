@@ -52,6 +52,10 @@ This register tracks accepted decisions likely to change, not unresolved choices
 
 **Decision authority:** Project maintainer for embodiment/product policy; operator for supported session/grace settings; implementing engineer for measured native bounds within accepted semantics. Bounds never authorize truncating owed effects or creating spending allowances.
 
+## Limits inventory and concrete work
+
+[Feature limits](../openlegend-limits-decisions.md) record individual numerical and behavioral constraints. [Remove / Change / Expand](limits-audit.md) ranks concrete candidates, including RP03–RP05 history, retrieval, account and work envelopes. This register continues to own accepted-policy authority and review triggers; it is not a second limit/task list.
+
 ## Maintaining this register
 
 Keep stable IDs, a canonical policy link, the reason to revisit, a concrete trigger and decision authority. Add only known revisitable decisions, not every constant or hypothetical concern. When a trigger is relevant, raise it in the task/PR; put resulting work or unresolved choices in their existing owners. An accepted change updates the policy, affected summaries and this entry together; significant decisions go in the [decision history](../documentation-changelog.md). Retire superseded entries with a link to their replacement or recorded decision, not another copy of the contract.

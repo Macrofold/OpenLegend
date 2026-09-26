@@ -89,3 +89,8 @@ Quantity totals and admitted sources/sinks reconcile at each committed step. Eve
 Accepted defaults: quantity-one individual containers/equipped units, explicit merge equivalence rather than definition-only merging, no automatic actionable aliasing after retirement, authored packing-load capacity for the first bag, no new actor encumbrance, and declared ownership separate from custody. Update the base-world item contract alongside implementation of its intentional equipped-unit refinement.
 
 **Blocking product questions: none for this foundation.** New theft/trade/destruction policies and physical weight balancing are not silently decided here. A real migration collision or unsupported disposition must be resolved before conversion/retirement, with the original state preserved.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/persistent-objects.md).
+- Limits and constraints: [Objects, inventory and equipment inventory](../limits/objects.md).

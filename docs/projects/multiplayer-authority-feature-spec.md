@@ -96,3 +96,8 @@ Document command/projection latency, per-connection queue age, payload size and 
 ## 7. Questions and decisions
 
 **No blocking product question is required to complete this design.** Accepted defaults are explicit control takeover, one active embodiment per account/world, external OIDC authentication with server-owned sessions, cooperative admission and the accepted fade/inactive lifecycle. The identity provider/production domain and numerical exit/heartbeat/session durations are deployment/tuning inputs, not reasons to leave authority semantics undesigned. Actual values must be configured and recorded before the corresponding live deployment.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/multiplayer.md).
+- Limits and constraints: [Accounts, participation and transport inventory](../limits/multiplayer.md).

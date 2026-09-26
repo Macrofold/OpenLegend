@@ -162,3 +162,8 @@ Rejected: tracking only returned entities; clearing dirty state unconditionally;
 The design instead uses typed membership-aware contracts, conservative coverage until proved precise, atomic revision-bound subscription replacement, root-lineage aggregate accounting and existing semantic owners. No product blocker remains. Actual operational ceilings require PF/host evidence and must never silently redefine game outcomes.
 
 Primary research reference, consulted September 26, 2026: [Adapton](https://adapton.org/) describes named, demand-driven incremental dependencies and reuse. It informs the distinction between stable computation identity and changing input dependencies; this design does not adopt its runtime, require a new language, or transfer its performance claims to OpenLegend. Repository-specific evidence, authority, phase and persistence rules remain controlling.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/dependency-invalidation.md).
+- Limits and constraints: [Native work and invalidation inventory](../limits/native-work.md).

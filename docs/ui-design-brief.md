@@ -93,3 +93,8 @@ Clearly distinguish existing functionality from future concepts such as richer c
 - [Game-icons.net and attribution](https://game-icons.net/faq.html)
 - [Fontsource](https://fontsource.org/docs/getting-started/install)
 - [Base UI alternative](https://base-ui.com/react/overview/about)
+
+## Maintained records
+
+- Implementation: [Feature tasks](maintainers/TODO.md).
+- Limits and constraints: [Authoring and presentation inventory](limits/interface.md).

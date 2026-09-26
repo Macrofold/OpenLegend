@@ -148,3 +148,8 @@ Rejected: independent subsystem setters (lost updates); inverse snapshots (erase
 Proposed choices: finite typed owner services, sequential extraction followed by explicit named batch phases, all-or-nothing default with declared partial fulfillment, active-contribution detach, consumed canonical records and native scheduling. No blocking product decision remains for this foundation; new loss/precision or lifecycle choices discovered on real data must be raised before applying them.
 
 External mechanism checks, consulted September 26, 2026: PostgreSQL [explicit locking](https://www.postgresql.org/docs/18/explicit-locking.html) supports short transactional row locking and consistent lock order; [constraints](https://www.postgresql.org/docs/18/ddl-constraints.html) distinguish row-local checks from cross-row invariants. These support the transaction approach, not a claim that SQL alone implements resource semantics or that OpenLegend's broader release gates have passed.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/state-contributions.md).
+- Limits and constraints: [Shared state, resources and effects inventory](../limits/state-effects.md).

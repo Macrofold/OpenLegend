@@ -198,3 +198,8 @@ Keep CPU-bound work in a worker only when it removes a measured event-loop bottl
 | A 10,000× target can encourage premature infrastructure                             | Optimize and remeasure one bottleneck at a time; defer larger mechanisms until their gate is met                                            |
 
 The immediate sequence needs no new product decision: it preserves authority, durable command acknowledgements, event retention and gameplay timing. Product-sensitive alternatives are centralized in [D58](../archive/05-project/open-decisions.md#d58--durability-and-storage-placement), [D59](../archive/05-project/open-decisions.md#d59--historical-retention-and-command-retry-horizon), and the existing D03/D09/D22 choices for overload, supported devices and density. Unresolved research belongs to [R12](../archive/05-project/research-backlog.md), not a claim that this design already supports thousands of active players.
+
+## Maintained records
+
+- Implementation: [Feature tasks](maintainers/performance-profiling.md).
+- Limits and constraints: [Diagnostics and inspection inventory](limits/observability.md).

@@ -507,3 +507,8 @@ The additional special-permission, maintenance and ghost workflows below remain 
 Lifecycle records must preserve one identity across active, exiting, inactive, dead, retained-ghost, summoned and revived states as those supported transitions arrive. A retained ghost is not an always-loaded simulation body. Do not allocate parallel inventories or minds to a second ghost identity. World-authored human protection and NPC continuity live in the [base-world lifecycle owner](../../docs/worlds/base/lifecycle-and-protection.md); BW13–BW15/MP04 supply acceptance.
 
 Definition/install records must retain pinned retired dependencies for extant items and processes, and exact impact-plan/coverage/approval/receipt references for [risk-accepted law changes](declarations-and-evolution.md#accepted-live-change-and-risk-policy). Retiring a resource from crafting does not garbage-collect its existing products. ACT07 owns [persistent appraisal](../03-design-proposals/agents-and-social-simulation.md#accepted-appraisal-continuity) consumers; no fixed emotion expiry is required.
+
+## Maintained records
+
+- Implementation: [Production data](../../docs/maintainers/production-data.md); [checkpoint delivery](../../docs/maintainers/save-and-load.md).
+- Limits and constraints: [Persistence, checkpoints and recovery inventory](../../docs/limits/persistence.md).

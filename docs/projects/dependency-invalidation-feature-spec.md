@@ -91,3 +91,8 @@ The [accepted workload](../../archive/07-technical-architecture/data-delivery-an
 Proposed defaults are explicit dependency types; mandatory membership scopes; version-bound acknowledgment; conservative invalidation before precision; bounded family-specific query providers; root-lineage charging across descendants; finite recurring rate/burst/live-state admission; and safe refusal rather than silent loss of mandatory work.
 
 **Blocking product questions: none.** Numeric operating envelopes come from the established PF/host qualification process. Choosing an upper bound is not permission to truncate recipients, erase state, infer absence or change the world's meaning.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/dependency-invalidation.md).
+- Limits and constraints: [Native work and invalidation inventory](../limits/native-work.md).

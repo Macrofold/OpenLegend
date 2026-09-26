@@ -113,3 +113,8 @@ Measure actual record cardinality, changed-owner work, context size, wake count,
 Proposed defaults are no implicit decay for newly authored persistent appraisals; exact policy-defined decay for existing native fear/discomfort; one stable cause-aware appraisal owner; typed optional reflection changes; directional free-text subject notes; and conservative privacy invalidation until selective retention is proven safe.
 
 **Blocking product questions: none for the foundation.** World-specific vocabulary, balance and additional mental-effect mechanics remain authoring/feature choices. This design does not require selecting one universal emotion taxonomy before useful continuity can ship.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/agent-agency.md).
+- Limits and constraints: [Feelings and social continuity inventory](../limits/feelings.md).

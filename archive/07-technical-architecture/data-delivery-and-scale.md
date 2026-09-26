@@ -229,3 +229,8 @@ MP01/MP04 record completed local implementation/evidence; hosted readiness remai
 The first authority/lifecycle boundary is implemented; [MP01–MP04](../../docs/maintainers/multiplayer.md) own delivery before public multiplayer or dependent persistent consequences. Bind each request to its authenticated account, controlled actor, current control generation, world/timeline and explicit scoped grants. Recheck at mutation; a stale connection, restored timeline or revoked grant cannot authorize a later result. Each connection receives its own permitted projection; creator/invention powers do not disclose human-private content. Start with two independent humans and one writer, not distributed leases for their own sake.
 
 Prove concurrent last-resource claims, different character knowledge, control handoff/reconnect, departure/return and durable recovery through ordinary clients. The [base-world protection contract](../../docs/worlds/base/lifecycle-and-protection.md), [special invention grant](../03-design-proposals/invention-governance-and-ownership.md#special-player-invention-permission) and [maintenance pause](../03-design-proposals/time-and-simulation-speed.md#creator-maintenance-pause) supply selected policies. Physical regional sharding and cross-border guarantees remain later D6 work; this first proof must not claim the growth workload has passed.
+
+## Maintained records
+
+- Implementation: [Production data](../../docs/maintainers/production-data.md); [checkpoint delivery](../../docs/maintainers/save-and-load.md).
+- Limits and constraints: [Persistence, checkpoints and recovery inventory](../../docs/limits/persistence.md).

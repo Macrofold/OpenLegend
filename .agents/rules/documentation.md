@@ -4,6 +4,8 @@ Give each substantive concept one canonical owner. Local reminders may summarize
 
 - **Project-specific proposals, scope and context:** Paired feature spec/technical design in `docs/projects/`, for creation requests, follow [Design](../skills/openlegend-design/SKILL.md)
 - **Current cross-project behavior and accepted contracts:** Relevant persistent specification; bundled-world mechanics under `docs/worlds/base/`
+- **Feature document structure:** For new or substantively changed feature specs/designs and persistent feature docs, follow [Feature documentation](../../docs/feature-documentation.md); include links to implementation work and the owning limits inventory.
+- **Non-correctness limits and constraints:** For introduced, changed, removed or explicitly unlimited numerical/behavioral policies, follow [Limits tracking](../../docs/limits/README.md) and update the feature inventory in the same change. Retain rationale, restrictiveness and removal history; assess [Remove / Change / Expand](../../docs/maintainers/limits-audit.md) without turning every default into a task.
 - **Tasks, dependencies, blockers, exit criteria:** Focused `docs/maintainers/` tracker; its README is navigation only
 - **Miscellaneous/cross-cutting gaps with no focused tracker:** `docs/maintainers/TODO.md`
 - **Implemented behavior:** `docs/architecture.md` and subsystem snapshot in `archive/05-project/implementation-status.md`

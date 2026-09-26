@@ -171,3 +171,8 @@ These are save/load acceptance principles, not completed tests or an implementat
 ### Reusable index artifacts
 
 Operational backups also preserve revision-keyed vector cache records, including during a PostgreSQL-to-SQLite portable restore and later PostgreSQL import. The cache is outside gameplay rewind and outside ordinary recall. Only an eligible exact current source can republish a cached vector under the current generation; late old-generation results remain fenced. This is a derived-data reuse policy, not a new memory-retention or privacy policy.
+
+## Maintained records
+
+- Implementation: [Feature tasks](maintainers/save-and-load.md).
+- Limits and constraints: [Persistence, checkpoints and recovery inventory](limits/persistence.md).

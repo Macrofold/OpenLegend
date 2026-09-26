@@ -234,3 +234,8 @@ Top-screen delivery uses an indexed owner-scoped projection of completed eligibl
 Speech intent and delivery are separate. A committed utterance retains its intended recipient in event metadata even when native admission falls back to speaking aloud because the recipient cannot receive directed speech. The event audience records actual memory-capable listeners; an absent intended recipient is never added to that audience or enrolled in a conversation. The existing target field continues to represent admitted directed engagement. Invalid/deleted recipients remain explicit failures rather than invented identities.
 
 Actor awareness captures intended-recipient identity only for the speaker, the recipient when hearing it, or an observer who can see both participants at event time. Other listeners receive the utterance with unknown recipient identity. These event-time facts persist; loading a save must not infer hidden recipients from current positions or refill deliberately absent attribution. Earlier events missing speech intent cannot be reconstructed reliably and remain unknown. Cognition presentation follows the [memory context specification](memory-architecture.md#named-and-generic-memory-subjects).
+
+## Maintained records
+
+- Implementation: [Feature tasks](maintainers/narration-and-conversations.md).
+- Limits and constraints: [Narration and conversations inventory](limits/narration.md).

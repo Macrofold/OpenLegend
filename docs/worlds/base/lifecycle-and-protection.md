@@ -25,3 +25,8 @@ Reviving a beloved NPC is possible but difficult through ordinary gameplay. Exis
 The main world must make killing consequential: these characters have histories and may matter to other players. Before a human intentionally commits a lethal action against a character, require clear confirmation, for example: “Are you sure you want to kill [character name]? They will remain dead until someone revives them, which is difficult.” Show meaningful permitted context about the loss. A friend count is a possible presentation, not authority to reveal private directional relationships or invent a relationship score.
 
 A distinct final death-blow action and default incapacitation/fainting are candidate implementations; choose the exact combat mechanism before delivery. Confirmation must bind to the current target/action and cannot authorize unrelated later killing. Track indirect hazards, queued attacks, NPC combat and permission changes explicitly so a modal is not mistaken for a complete lethal-action rule. Ordinary environmental consequences and risky creator law changes retain their own approved policies.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../../maintainers/base-world.md).
+- Limits and constraints: [Bundled-world defaults inventory](../../limits/base-world.md).

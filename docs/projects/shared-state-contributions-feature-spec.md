@@ -104,3 +104,8 @@ Required scenarios include two replenishing actors, empty source, full receiver,
 Proposed engineering defaults are explicit in the technical design: deterministic admission order within named phases; atomic claims unless the family declares partial fulfillment; no snapshot rollback for effect removal; new conserved quantities use declared quanta; current native numeric behavior is preserved during extraction. These implement existing direction without choosing new world balance.
 
 **Blocking product questions: none identified for this scope.** A genuinely lossy populated-state conversion, unsupported lifecycle transition or new world law discovered during implementation must be surfaced before applying it. This document does not authorize that loss or new mechanic.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/state-contributions.md).
+- Limits and constraints: [Shared state, resources and effects inventory](../limits/state-effects.md).

@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-26 — Feature-owned limits inventory and revisit backlog
+
+Split the existing temporary/repository 238-entry limits audit into [feature inventories](openlegend-limits-decisions.md), preserving stable audit IDs, restrictive classifications, original reasons/recommendations and removal records. Merged the foundation and save/recovery implementation reports with explicit [deduplication and exclusions](limits/import-coverage.md); known superseded values are updated while unverified old findings remain historical. Pure identity/arithmetic and human-private authorization obligations are not presented as tunable capacity constraints.
+
+[Tracking rules](limits/README.md) and [feature-document structure](feature-documentation.md) require same-change inventory updates for numerical, behavioral, removed and explicitly unlimited choices. The design/documentation guidance routes to these owners. The old [limits-audit page](maintainers/limits-audit.md) now owns ranked Remove / Change / Expand candidates and preserves LA01–LA04 gates; focused trackers still own delivery/acceptance. This explicitly authorized documentation migration does not change runtime settings or complete outstanding foundation scale qualification.
+
 ## 2026-09-26 — Bounded maintenance, streamed checkpoints and recovery
 
 Implemented indexed chronological maintenance prefixes with revision/generation validation and bounded source publication. Daily progress uses a fixed source revision and durable cursor; all model partitions of each selected batch remain atomic, protected barriers and speech continuity are retained, and failed unchanged work does not automatically retry. No evidence-expiry or semantic grouping policy was added.

@@ -80,3 +80,8 @@ Reconciliation and verification are complete:
 - Extended the shared operational catalog with all nine account/control tables. Gameplay and existing-world operational restore share current human-binding reconciliation; full operational recovery preserves external authority independently of gameplay rewind.
 - Native API/retention, both-adapter backup/import, newer-binding restore, old-layout conversion and incomplete-layout rejection passed. Production browser inspection showed the creator recovery panel and no ordinary-player save control. Both adapters passed two 10,000-source captures and exact native continuation; [measurements and limits](../verification.md#checkpoint-integration-with-foundations) record the new base and runtime separately from prior evidence.
 - Reviewed the complete branch change and the reconciled integration twice; no unresolved actionable findings remain. Typecheck, production build, changed-file formatting, whitespace and 709 local links across 17 Markdown files passed. The existing remaining-foundations table formatting exception remains. No automated suites, live provider calls or dependency changes were introduced by this branch.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/save-and-load.md).
+- Limits and constraints: [Persistence, checkpoints and recovery inventory](../limits/persistence.md).

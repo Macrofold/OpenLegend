@@ -440,3 +440,8 @@ Inactive source bodies remain queryable in SQL rather than in each simulation sn
 The current god-mode Person editor lists raw personal memories, awareness of shared events, and consolidated summaries. A consolidated summary is derived text with `sourceIds` pointing to its evidence; it is not an independent world event. The World Events tab projects the same actor awareness subset, while the separate global editor changes shared event records. Deleting actor awareness does not remove the global event for other observers.
 
 Person-editor deletion now uses the authoritative forgetting transition in the same atomic character save: it records forgotten evidence, removes dependent summaries transitively, invalidates derived mind text and marks workspace reconsideration, then clears derived vector/interest caches. Unresolved commitments cannot be deleted. Recall still filters against the authoritative ledger if cache invalidation fails. Raw JSON edits use bounded schema/hash validation and permit only prose and importance changes; identifiers, ownership, evidence links and mechanical fields must remain unchanged. Batched mutations validate before applying changes. Importance-only edits refresh retrieval metadata without deleting dependent summaries or accepted mind prose; prose changes still invalidate their dependents. Person memory pages cache actor-local ordering and hash only the selected page. Deferred regression coverage remains in the [validation queue](maintainers/TODO.md#deferred-regression-coverage--persistence-and-owner-editors).
+
+## Maintained records
+
+- Implementation: [Feature tasks](maintainers/cognition-redesign.md).
+- Limits and constraints: [Memory, knowledge and consolidation inventory](limits/memory.md).

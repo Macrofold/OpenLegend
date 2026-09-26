@@ -267,3 +267,8 @@ Accepted target, September 25, 2026; INV-5 owns delivery. This distinguishes an 
 **Fire threshold example:** identify objects newly eligible to ignite under current exposure, ideally listing or aggregating houses and other affected objects with drill-down. Distinguish deterministically predicted immediate ignition from possible later spread and unknown interactions. Accepting the risk allows the houses to burn under the new law; do not silently keep the old threshold to protect them. While maintenance-paused, commit the new law and any explicitly approved instantaneous migration effects, but time-driven fire progression resumes only with world time.
 
 A failed preparation/commit keeps the old installation; a successful risky transition records the exact plan, warnings, approval, manifests and receipt. Replay returns the receipt instead of repeating migration. Restoration and reversion use the existing save/forward-change contracts. Creators may use [scheduled maintenance](../03-design-proposals/time-and-simulation-speed.md#creator-maintenance-pause) to inspect and change a world before resuming.
+
+## Maintained records
+
+- Implementation: [Invention and evolution tasks](../../docs/maintainers/inventions-and-world-evolution.md).
+- Limits and constraints: [Invention and generated content inventory](../../docs/limits/inventions.md).

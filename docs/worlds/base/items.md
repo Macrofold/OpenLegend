@@ -51,3 +51,8 @@ contents and load totals do not become public through the bag's appearance in a 
 Inventories, pile positions/contents, item properties, handling policy and pending pickup work are saved together. Existing development worlds acquire missing item-handling defaults and explicit portability in place; unrelated state and identity survive. Existing configured values are not overwritten. See the [active development policy](../../save-and-load.md#active-development-policy).
 
 Physical mass/volume, scattering, contested ownership/theft rules and additional pickup/drop restrictions require concrete mechanics. Freeform-language parameter binding belongs to the action foundation; it must call this same native transfer boundary rather than implement a second transfer path. Delivery dependencies and remaining work live only in the [tracker](../../maintainers/base-world.md).
+
+## Maintained records
+
+- Implementation: [Feature tasks](../../maintainers/base-world.md).
+- Limits and constraints: [Bundled-world defaults inventory](../../limits/base-world.md).

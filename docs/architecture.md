@@ -468,3 +468,8 @@ Memory creation preserves every supplied permitted reference to the beings and o
 Planning vocabulary uses the existing complete model-input allowance instead of a sixteen-option cutoff. Planning diagnostics report available, included and size-omitted counts. Nearby conversation actions have no separate four-conversation cutoff; they still pass through normal action retrieval and native conversation admission. The existing action retrieval count, request-size limits and optional-context selection rules remain. Duplicate memory-query quota metadata and unused reasoning-level input/display entries are absent; actual memory queries and immediate output-token limits remain enforced by their owners.
 
 AI allowance configuration honors its existing accepted range of $0–$100 per agent without a second hidden $50 clamp; the default remains $50. Actual paid work still requires authorized funding and reservation. Named-save behavior is described in [Manual gameplay saves](#manual-gameplay-saves). Validation and request sizes remain finite even where stored content has no small count ceiling.
+
+## Maintained records
+
+- Implementation: [Subsystem work index](maintainers/README.md).
+- Limits and constraints: [All feature inventories](openlegend-limits-decisions.md).

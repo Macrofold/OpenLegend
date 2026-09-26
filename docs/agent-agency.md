@@ -168,3 +168,8 @@ The first useful system needs optional decisions, private persistent intentions,
 Do not make that release wait for a universal utility model, full belief logic, learned reinforcement policies, a new distributed event broker, arbitrary generated code, universal skill simulation or detailed neural modules. Ordinary animals may remain inexpensive native actors. Cognition-enabled animals use their granted capabilities and embodiment rather than acquiring human anatomy or speech by implication.
 
 The [research archive](../archive/02-research/agency-cognition-and-planning.md) explains the inspirations and their limits. Its psychological analogies are not claims that the implementation reproduces human or animal consciousness.
+
+## Maintained records
+
+- Implementation: [Agency tasks](maintainers/agent-agency.md); [cognition tasks](maintainers/cognition-redesign.md).
+- Limits and constraints: [Cognition and action selection inventory](limits/cognition.md).

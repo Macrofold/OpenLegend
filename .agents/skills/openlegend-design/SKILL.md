@@ -13,7 +13,7 @@ Start with player/NPC scenarios: trigger, available knowledge, interaction, visi
 
 A request to create either deliverable produces both, as distinct cross-linked files with the same project prefix: `docs/projects/<project>-feature-spec.md` and `docs/projects/<project>-tech-design.md`. Update an existing pair rather than create duplicates.
 
-The feature spec details behavior, user/agent journeys, target scenarios, scope/non-goals, edge/failure cases, acceptance criteria and staged capabilities. The technical design details architecture, semantic owners, contracts/data flow, persistence/migration, performance, security/privacy, extension seams, implementation stages, verification and tradeoffs/open decisions. Keep behavior distinct from mechanism and proposals from implemented behavior.
+Follow [Feature documentation](../../../docs/feature-documentation.md) for required content and the Maintained records section linking the focused implementation tracker and feature limits/constraints inventory. Keep behavior distinct from mechanism and proposals from implemented behavior; record numerical and behavioral restrictions with reasons, restrictiveness and removed/no-limit decisions under the linked tracking rules.
 
 ## Architecture and extension boundaries
 

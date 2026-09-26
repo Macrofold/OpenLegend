@@ -428,6 +428,6 @@ Automated suites were neither added nor run at the owner's request. Manual execu
 - [x] Replace proximity-as-touch with physical body contact, preserving barrier checks and upgrading saved detector definitions/active episodes in place.
 - [ ] Add regression coverage for campfire edge/overlap/top contact, separated heights, numerical tolerance and spatial-cell boundaries; verify nearby non-contact objects produce no felt events, stable contacts do not repeat, and saved upgrades preserve identity and unrelated evidence. Add separate acceptance for future non-cylindrical body geometry and physical contact with map surfaces.
 
-## Limits audit follow-up — blocked
+## Limits inventory and audit follow-up
 
-The full 238-entry inventory and LA01–LA04 follow-up work are maintained in the [limits audit](limits-audit.md#status-and-required-dependency). **Do not begin remaining audit work until the current data foundation is complete.** Recheck all findings against that implementation before acting; the ongoing foundation work will likely replace many of the mechanisms and limits described in the original audit.
+The original 238 entries and merged implementation reports now live in [feature inventories](../openlegend-limits-decisions.md). [Limits to revisit](limits-audit.md) owns ranked Remove / Change / Expand candidates and LA01–LA04 audit gates. The explicitly requested inventory migration is complete; the full runtime audit still depends on production-data acceptance. Recheck historical entries against their current consumers before acting.

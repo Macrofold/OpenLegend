@@ -141,3 +141,8 @@ Rejected alternatives: mutable global current player; one WorldService/world cop
 Proposed defaults are standards-based external identity with server sessions, explicit control replacement, current-grant checks at admission/commit/egress, audience-keyed caches and a single bounded participation lifecycle. Provider choice and numeric durations are configuration. PvP lethal/indirect-hazard and property rules remain BW14/D07; no unresolved choice blocks the cooperative foundation.
 
 Primary mechanism references consulted September 26, 2026: [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html) for issuer/subject authentication and token validation; [RFC 9700](https://www.rfc-editor.org/rfc/rfc9700.html) for authorization-flow security; OWASP [authorization](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html), [session management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) and [CSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html) for request/session boundaries. OpenLegend's game permissions and lifecycle remain repository-owned policy, not conclusions supplied by those standards.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/multiplayer.md).
+- Limits and constraints: [Accounts, participation and transport inventory](../limits/multiplayer.md).

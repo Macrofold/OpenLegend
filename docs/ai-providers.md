@@ -140,3 +140,8 @@ The server must reserve a conservative upper bound before dispatch and retain th
 Run `pnpm exec vitest run packages/ai/src/client.test.ts`. Injected HTTP fixtures cover both request shapes; Choice/Score/Noul; nullable generated schemas; refused, incomplete, malformed, and oversized responses; missing configuration; invalid schema references; cost estimation; transport failures; deadline and cancellation behavior; stalled bodies; canonical digests; and no automatic retry. No live or paid calls were made during implementation. Passing fixtures verifies protocol handling, not vendor availability, real model quality, observed latency, or calibrated routing accuracy.
 
 The configured Macrofold inference transport also limits output to 16,384 tokens. Jev output allowance scales with question count up to that transport ceiling. A route may impose stricter context admission than Jev's published limits; report rejection and use the permitted context fallback, without automatic paid retry. Definitive admission rejections, including HTTP 413, are undispatched provider work rather than uncertain execution.
+
+## Maintained records
+
+- Implementation: [Feature tasks](maintainers/macrofold-worker-api.md).
+- Limits and constraints: [AI execution and spending inventory](limits/ai-execution.md).

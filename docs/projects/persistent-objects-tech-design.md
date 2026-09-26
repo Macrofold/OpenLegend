@@ -148,3 +148,8 @@ Rejected: keeping independent inventory arrays; copying XYZ into every carried d
 Proposed design uses entity-backed lots, one tagged placement, exact merge compatibility, explicit lifecycle/lineage, bounded ancestor updates and current transactions. No blocking product choice remains; new legal/property/destruction semantics require separate world decisions.
 
 Consulted September 26, 2026: PostgreSQL [constraints](https://www.postgresql.org/docs/18/ddl-constraints.html) explains why a row CHECK is not a cross-row graph invariant; [locking](https://www.postgresql.org/docs/18/explicit-locking.html) informs stable short transaction ordering; SQLite [foreign keys](https://www.sqlite.org/foreignkeys.html) supplies adapter-specific enforcement/migration considerations. Those mechanisms support, rather than replace, native containment and capacity validation.
+
+## Maintained records
+
+- Implementation: [Feature tasks](../maintainers/persistent-objects.md).
+- Limits and constraints: [Objects, inventory and equipment inventory](../limits/objects.md).
