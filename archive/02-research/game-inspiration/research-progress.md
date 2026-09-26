@@ -6,13 +6,13 @@
 
 **Branch:** `docs/game-inspiration-games-111-120`, created from `docs/game-inspiration-library` at `da827cd90d862a1f994b540f5e3956b606ea4a82`, September 26, 2026. Mike authorized all games 111–120, one completed game at a time, with connector commits after each game and substantive checkpoints at least every five minutes.
 
-**Completed in this range: 1 / 10. Active: G112 — Fallout: New Vegas.** Complete its full mechanics/character/quest/faction/companion/economy inventory, concrete situations, presentation/production/distribution/commercial research, five independently authored written reviews, Steam helpful positive/negative evidence, DLC/version boundaries and source/preservation review. Do not substitute Fallout 3 or Fallout 4 systems, mods, or aggregate score blurbs.
+**Completed in this range: 2 / 10. Active: G113 — The Elder Scrolls III: Morrowind.** Complete the creation/attributes/skills/leveling, combat, magic/spellmaking/enchanting/alchemy, equipment/travel, faction/quest/NPC/economy inventory; concrete situations; presentation, production, distribution and commercial context; five independent written reviews and helpful Steam evidence; Tribunal/Bloodmoon and engine/mod boundaries; source/preservation/diff review. Do not import Oblivion or Skyrim rules.
 
 | Subject | State | Dossier / completion evidence |
 | --- | --- | --- |
 | G111 — Tears of the Kingdom | Complete | [Dossier](dossiers/the-legend-of-zelda-tears-of-the-kingdom.md); `3ec701da1b89fe2d6f262b20e3234012e1dd7ba6`, clarification `f244f25deb3a8e29363e84609a4f4a3071cc14a3`. Eight worked situations, five complete reviews plus essay, primary interviews, named non-Steam player accounts. Switch/Switch 2 and source limits explicit. Compare from `ec3c284` showed only the new dossier changed. |
-| G112 — Fallout: New Vegas | In progress | `dossiers/fallout-new-vegas.md` |
-| G113 — Morrowind | Pending | `dossiers/the-elder-scrolls-iii-morrowind.md` |
+| G112 — Fallout: New Vegas | Complete | [Dossier](dossiers/fallout-new-vegas.md); `d958e1fe70b3c621ce6886ba474580ccb612ddd7`. Eight situations, five independent full reviews plus additional criticism; primary creator accounts, four substantive story-DLC comparisons, helpful-week Steam accounts and separately identified PCR regional negative review. Shipment/retail metrics, unsimulated blockade and source simplifications explicitly qualified. Compare from `7ef518e` showed only this dossier changed. |
+| G113 — Morrowind | In progress | `dossiers/the-elder-scrolls-iii-morrowind.md` |
 | G114 — Kingdom Come: Deliverance II | Pending | `dossiers/kingdom-come-deliverance-ii.md` |
 | G115 — Mount & Blade II: Bannerlord | Pending | `dossiers/mount-and-blade-ii-bannerlord.md` |
 | G116 — Middle-earth: Shadow of War | Pending | `dossiers/middle-earth-shadow-of-war.md` |
@@ -23,9 +23,9 @@
 
 ## Preserved inherited history
 
-The **[frozen base-branch ledger](research-progress-base-2026-09-26.md)** is a byte-identical copy of the inherited `research-progress.md` blob `0b9d170bc5486d59eb8a8ce49250273f84398270`. It retains every G01–G30 completion hash, evidence qualification, reconciliation account, G31 resume instruction, earlier scope decision and recovery reference. Its statements about active G31 and pending G32–G130 describe the base snapshot only. **This file is the sole current progress owner for this branch.** Do not edit the frozen snapshot or treat it as a second current tracker.
+The **[frozen base-branch ledger](research-progress-base-2026-09-26.md)** is a byte-identical copy of inherited `research-progress.md` blob `0b9d170bc5486d59eb8a8ce49250273f84398270`. It retains every G01–G30 completion hash, evidence qualification, reconciliation account, G31 resume instruction, earlier scope decision and recovery reference. Its active G31 and pending G32–G130 describe the base snapshot only. **This file is the sole current progress owner for this branch.** Do not edit the frozen snapshot or treat it as a second current tracker.
 
-At branch creation, the inherited snapshot recorded G01–G30 complete and G31 Valheim in progress. This range's work does not certify any parallel branch's later progress. The canonical 130-title roster and complete requirements are unchanged. G111–G120 are curated additions: no dedicated earlier chapter/dossier/mechanics owner was found in the inspected base roster, library navigation and dossier tree. Earlier incidental references and original packet owners remain untouched.
+At branch creation, the inherited snapshot recorded G01–G30 complete and G31 Valheim in progress. This work does not certify parallel branches' later progress. The canonical roster and requirements are unchanged. G111–G120 are curated additions: no dedicated earlier chapter/dossier/mechanics owner was found in the inspected base roster, navigation and dossier tree. Earlier incidental references and original packet owners remain untouched.
 
 ## Integration gates — still pending
 
@@ -39,6 +39,6 @@ At branch creation, the inherited snapshot recorded G01–G30 complete and G31 V
 
 ## Recovery discipline
 
-Read the current remote head and relevant file blob before editing; preserve concurrent work. Commit each reviewed completed dossier before advancing this ledger. A checkpoint must identify its exact remaining work and cannot count as completion. Keep substantive drafts and source annotations in the relevant dossier, not a second bibliography here. Continue through G120; do not use checkpoints as an arbitrary stopping point. No background execution or future delivery is implied.
+Read the current remote head and relevant blob before editing; preserve concurrent work. Commit each reviewed completed dossier before advancing this ledger. A checkpoint must identify exact remaining work and cannot count as completion. Keep substantive drafts and source annotations in the dossier, not a second bibliography here. Continue through G120; checkpoints are not an arbitrary stopping point. No background execution or future delivery is implied.
 
 Full inherited assignment/reconciliation history and original instruction-commit references remain in the frozen snapshot. File counts, copied headings and elapsed work never substitute for research completion.
