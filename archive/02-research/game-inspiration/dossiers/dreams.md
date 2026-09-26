@@ -1,6 +1,6 @@
 # Dreams — full research dossier
 
-**G13 · In progress, September 26, 2026.** Substantive checkpoint. Remaining: finished play and Art's Dream/other originals, fuller animation/audio and object behavior, release permissions and collaboration, discovery/progression, production/support/commercial history, contrasting reception, and R01–R14/preservation review. [Preserved paired chapter](../games/dreams-and-project-spark.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Project Spark is a separate pass. No personal gameplay, complete-video viewing or proprietary-code audit is claimed.
+**G13 · In progress, September 26, 2026.** Substantive checkpoint. Remaining: finished play and Art's Dream/other originals, fuller audio and object behavior, discovery/progression breadth, production/commercial history, contrasting reception, and R01–R14/preservation review. Animation, version permissions and the changing support/discovery contract are now covered below. [Preserved paired chapter](../games/dreams-and-project-spark.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Project Spark is a separate pass. No personal gameplay, complete-video viewing or proprietary-code audit is claimed.
 
 ## 1. A component, a scene and a discoverable game are different objects
 
@@ -38,14 +38,74 @@ The same tutorial shows that repeatedly stamping expensive enemies can exhaust t
 
 **Constructed choice:** accept an improved shared object or retain the version around which the scene was designed. Automatically taking a new version is a convenience, not proof that it preserves the scene's intended timing or appearance. A creator needs to see which properties changed and test the actual result.
 
+## 5. Animation can be performed, edited or baked
+
+The June 21, 2023 **Action Recorder** update added Keyframe, Possession and Physics recording modes alongside recorded actions. Its **Animation Canvas** supports retiming, splitting, blending and individual tracks. Physics Mode records existing simulated or logic-driven motion for later playback; it does not turn every recorded movement into a new physical rule. [DR06](#dr06)
+
+**Constructed comparison:** animate a character's greeting as a reusable recorded performance, but leave a falling obstacle responsive to the player's actual collision. Baking the latter can save work when the desired result is a fixed cinematic; it can remove the variation that made an interactive obstacle interesting. The author must choose which behavior is supposed to remain contingent.
+
+Media Molecule explicitly connected the redesign with reducing repeated editor switching and expensive animation setups. **Interpretation:** a feature may be powerful yet tedious to express. Improving authoring can preserve the meaningful choice—what movement to create—while removing bookkeeping. The published performance claims are developer descriptions, not measurements made for this research. [DR06](#dr06)
+
+## 6. Collaboration grants specific rights, not universal ownership
+
+**PRIVATE** saves, **PLAYABLE** releases and **PUBLIC** releases are different states. Public permits remixing; playable permits experiencing the work without granting its editable contents. A remix becomes a new creation with original attribution. A collaborator can edit/use permitted versions but cannot simply release the owner's creation. Rights over an already obtained stamp persist even after deletion or removal as collaborator. [DR07](#dr07)
+
+**Constructed situation:** a musician contributes a private component to a collaborator's scene. That invitation is not blanket permission to distribute its editable internals. The author must resolve the particular dependency's permissions before choosing a broader release. Conversely, removing future collaboration access cannot be assumed to erase all earlier legitimate use.
+
+**Interpretation:** reuse needs an explicit relationship among identity, version and permission. Credit, discoverability, edit access and continuing use are separate promises. A platform that conflates them can make creative cooperation feel unsafe even when the editor itself is pleasant.
+
+A creation's **Lead Version** is its latest public/playable release; **Latest Online Version** can instead be a private work-in-progress. An audience can therefore keep encountering a released experience while collaborators develop something newer. [DR08](#dr08)
+
+**Constructed choice:** save an experimental version without replacing the published build. That supports iteration without making every unfinished edit someone else's next play session. It does not establish that all future component changes remain compatible or that hidden content can be published without its owner's rights.
+
+## 7. Ending live development was not ending access
+
+The April 11, 2023 announcement ended regular live support after September 1 while retaining play, creation and sharing. Media Molecule said it had not identified a sustainable path for continued expansion. It also ruled out planned online multiplayer, native PS5/PSVR2 and 3D-printing additions. Exporting a runnable creation remained different from recording music/video through PlayStation sharing. [DR09](#dr09)
+
+**Interpretation:** a locally cooperative game and an online sharing community do not prove online gameplay multiplayer shipped. Similarly, retaining the software is a narrower promise than continuing every event, editorial service or feature roadmap. No inspected evidence establishes that adding one absent feature would have reversed the support decision.
+
+The September 13 follow-up confirms the Animation update, **Tren** and restored Audio Importer as completed final releases. It also points to changed content-usage terms for art, music and imagery outside Dreams; that is not an announcement of general standalone game export. [DR10](#dr10)
+
+### The discovery service changed again in 2024
+
+Media Molecule's March 20, 2024 account describes the departure of the curation team and the end of live DreamSurfing/DreamShaping curation in mid-April. Its replacement approach combines tags and the **Recommender** with retained curated collections; promised Impsider editorial coverage was reduced. [DR11](#dr11)
+
+**Interpretation:** keeping a catalogue reachable is not identical to maintaining a staffed discovery program. Automatically rotating recommendations might help a new creation reach players, but the announcement does not measure that outcome. A creator ecosystem needs a route from publication to relevant attention, not merely another successful upload.
+
+A February 26, 2025 **v2.65** patch updated backend software. This qualifies a literal claim that absolutely no maintenance happened after 2023 without implying resumed feature development. [DR12](#dr12)
+
+## 8. Preservation and progression also have resource limits
+
+The May 22, 2023 migration introduced online limits including **5GB**, **256 creations** and **512 versions per creation**, with pre-migration creations excluded from those new limits. It removed Prize Bubble asset rewards and unlocked existing Media Molecule prizes for everyone. Older instructions to earn those assets by popping particular bubbles are historical. [DR13](#dr13)
+
+**Constructed consequence:** a creator can reuse an unlocked asset without replaying a former reward gate, but still has to budget a growing project's stored versions. More freely available ingredients do not eliminate storage or editing constraints. The limits on published data are also separate from a scene's runtime thermometers.
+
+The migration narrowed some history/search features to recent activity, and **Homespaces** became local rather than visitable. [DR13](#dr13) [DR09](#dr09) **Interpretation:** a surviving object does not imply every previous route to finding or visiting it survives. Research must describe what users can do now, while retaining the earlier social design as history.
+
 ## Checkpoint sources
 
 <a id="dr01"></a>**DR01 — [Creation types](https://docs.indreams.me/en/create/resources/videos/tools-and-tips/understand-creation-types).** Primary written distinction among Elements, Scenes, Dreams and Collections. Embedded video not watched in full; no claim that every upload is a finished game.
 
 <a id="dr02"></a>**DR02 — [Authoring modes](https://docs.indreams.me/en/create/resources/edit-mode-guide/assembly/modes).** Primary form/presentation/sound/Test Mode description. Qualitative controls, not an exhaustive undocumented renderer or physics specification.
 
-<a id="dr03"></a>**DR03 — [Glossary](https://docs.indreams.me/en/create/resources/glossary).** Primary Imp, possession, grouping and signal definitions. The page's older Homespace visiting claim is not adopted; current release/support notes must qualify obsolete entries.
+<a id="dr03"></a>**DR03 — [Glossary](https://docs.indreams.me/en/create/resources/glossary).** Primary Imp, possession, grouping and signal definitions. The page's older Homespace visiting claim is not adopted; current release/support notes qualify obsolete entries.
 
 <a id="dr04"></a>**DR04 — [Ancient Dangers Play & Edit 3](https://docs.indreams.me/en/create/resources/mm-creator-content/templates/ancient-dangers/help/play-n-edit-walkthrough-3).** Full primary written lesson inspected: lift grouping, explicit gate/trap logic and shared emission reference. Examples are rules-based analysis, not an independently played tutorial. No copied step-by-step walkthrough or invented performance measurement.
 
-<a id="dr05"></a>**DR05 — [Update Mode](https://docs.indreams.me/en/create/releasing/using-update-mode).** Primary version/override controls and tree example. Its permission advice must be read with the dedicated current release rules; no guarantee of semantic compatibility after every automatic update.
+<a id="dr05"></a>**DR05 — [Update Mode](https://docs.indreams.me/en/create/releasing/using-update-mode).** Primary version/override controls and tree example. Read permission advice with dedicated release rules; no guarantee of semantic compatibility after every automatic update.
+
+<a id="dr06"></a>**DR06 — [Animation update v2.58](https://docs.indreams.me/en/whats-happening/updates/release-notes/dreams/v258), June 21, 2023.** Primary recorded/keyframed/possessed/physics animation, authoring friction and developer optimization rationale. No independently measured speedup or watched full demonstration.
+
+<a id="dr07"></a>**DR07 — [Understanding Permissions](https://docs.indreams.me/en/create/releasing/understanding-permissions), inspected September 26, 2026.** Substantive primary owner/collaborator/version rights and persistence of stamp permission. The example is constructed; no real user's access changed.
+
+<a id="dr08"></a>**DR08 — [Saving and Releasing](https://docs.indreams.me/en/create/releasing/saving-and-releasing).** Primary lead/latest and private/public/playable distinction. No claim of unrestricted external licensing or universal compatibility.
+
+<a id="dr09"></a>**DR09 — [Support and server announcement](https://docs.indreams.me/en-US/whats-happening/news/dreams-support-update), April 11, 2023, updated with migration timing.** Full primary support rationale/retained access and explicitly undelivered features. Later curation and maintenance changes are separately sourced; no one-feature causal theory of commercial failure.
+
+<a id="dr10"></a>**DR10 — [End-of-roadmap clarification](https://docs.indreams.me/en/whats-happening/news/dreams-live-support), September 13, 2023.** Primary completed releases and continued availability. Content-use announcement is not a legal opinion or standalone-game export capability.
+
+<a id="dr11"></a>**DR11 — [Community and curation update](https://docs.indreams.me/en/whats-happening/news/curation2024), March 20, 2024.** Primary staff/curation transition, tag/recommender approach and changed editorial promise. Not measured recommendation efficacy or a total shutdown.
+
+<a id="dr12"></a>**DR12 — [v2.65 backend update](https://docs.indreams.me/en/whats-happening/updates/release-notes/dreams/v265), February 26, 2025.** Primary limited maintenance entry, not a resumed product roadmap.
+
+<a id="dr13"></a>**DR13 — [Server migration v2.57](https://docs.indreams.me/en/whats-happening/updates/release-notes/dreams/v257), May 22, 2023.** Primary delivered storage, discovery and reward changes. Legacy assets excluded from new limits; removed reward gates are not taught as current. Runtime thermometers are a separate budget.
