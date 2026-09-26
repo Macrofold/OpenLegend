@@ -1,0 +1,33 @@
+name: Temporary Macrofold migration workspace
+on:
+  push:
+    branches: [feat/macrofold-worker-api]
+    paths: [.github/workflows/macrofold-migration-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Package clean source for offline inspection
+        run: tar --exclude=./.git -czf "$RUNNER_TEMP/openlegend-source.tar.gz" .
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned dependencies without lifecycle execution
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Package pinned tools for offline checks
+        run: tar -czf "$RUNNER_TEMP/openlegend-dependencies.tar.gz" node_modules apps/*/node_modules packages/*/node_modules
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: macrofold-migration-workspace
+          path: |
+            ${{ runner.temp }}/openlegend-source.tar.gz
+            ${{ runner.temp }}/openlegend-dependencies.tar.gz
+          retention-days: 1
