@@ -1425,14 +1425,15 @@ export async function createGameServer(
                 message: 'World-owner inspection is disabled.',
               });
             const value = worldReadRequest.parse(body);
-            return send(
-              response,
-              200,
-              worldTools.execute(value.name, value.arguments, {
-                worldId: service.world.id,
-                principal: 'local-owner',
-              }),
-            );
+            const result = worldTools.execute(value.name, value.arguments, {
+              worldId: service.world.id,
+              principal: 'local-owner',
+            });
+            return send(response, 200, {
+              ok: result.status === 'ok',
+              result,
+              message: result.message,
+            });
           }
           case '/api/world-agent/tools': {
             const value = z

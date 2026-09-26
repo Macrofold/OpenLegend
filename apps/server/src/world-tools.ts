@@ -1,5 +1,11 @@
+import { memoryRef, projectMemoryRecord } from './evidence-relationships.js';
 import { z } from 'zod';
-import { DECLARATION_CONTRACT, validateDeclaration, type WorldState } from '@open-legend/domain';
+import {
+  DECLARATION_CONTRACT,
+  projectAttributes,
+  validateDeclaration,
+  type WorldState,
+} from '@open-legend/domain';
 import { RELATIONSHIP_KINDS, type RelationshipRef } from '@open-legend/protocol';
 import { declarationSchema } from './ai-schemas.js';
 import { normalizeInventionProposal } from './invention-service.js';
@@ -10,9 +16,11 @@ import type { WorldService } from './world-service.js';
 
 const id = z.string().min(1).max(200);
 const version = z.string().min(1).max(100);
-const ref = z.object({ kind: id, id, version }).strict();
+const ref = z.object({ kind: id, id: z.string().min(1).max(500), version }).strict();
 const subject = z.object({ kind: z.enum(['entity', 'item']), id }).strict();
-const select = z.object({ kind: id, id, version: version.optional() }).strict();
+const select = z
+  .object({ kind: id, id: z.string().min(1).max(500), version: version.optional() })
+  .strict();
 const paging = {
   cursor: z.string().min(1).max(512).optional(),
   limit: z.number().int().min(1).max(50).default(20),
@@ -60,6 +68,11 @@ export const WORLD_READ_TOOLS = {
     description:
       'Page current items by optional definition or inventory owner, with snapshot-bound continuation. Inventory owner is not a general legal title or custody system.',
     schema: z.object({ definitionId: id.optional(), ownerId: id.optional(), ...paging }).strict(),
+  },
+  ol_evidence: {
+    description:
+      'Page retained private memory/commitment records of an actor under explicit world-owner inspection. These are claims/evidence, not mutual agreements, universal truth or a complete event archive.',
+    schema: z.object({ actorId: id, ...paging }).strict(),
   },
   ol_activity: {
     description:
@@ -185,6 +198,7 @@ export class WorldToolService {
             name,
             description: tool.description,
           })),
+          definitionKinds: ['recipe', 'item-definition', 'attribute', 'sense', 'host', 'family'],
           recipeContract: DECLARATION_CONTRACT,
           recipeSchema: declarationSchema,
           limitations: [
@@ -194,6 +208,16 @@ export class WorldToolService {
         };
       case 'ol_find': {
         const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_find.schema>;
+        if (
+          input.kinds?.some(
+            (kind) =>
+              !['recipe', 'item-definition', 'attribute', 'sense', 'host', 'family'].includes(kind),
+          )
+        )
+          throw new GraphReadError(
+            'unavailable',
+            'A requested definition kind has no implemented reader.',
+          );
         const projection = this.graph.read(world, generation),
           query = input.query.toLowerCase();
         const binding = fingerprint([
@@ -229,6 +253,16 @@ export class WorldToolService {
       case 'ol_inspect': {
         const input = raw as z.infer<typeof select>;
         const definitions = this.graph.read(world, generation);
+        if (input.kind === 'memory-record') {
+          const record = projectMemoryRecord(world, generation, input.id);
+          if (input.version && input.version !== record.node.ref.version)
+            throw new GraphReadError('stale', 'Memory record changed.');
+          return {
+            node: record.node,
+            data: record.data,
+            relationships: record.index.neighborhood({ root: record.node.ref, direction: 'out' }),
+          };
+        }
         if (input.kind === 'entity' || input.kind === 'item') {
           const projection = projectLiveSubject(
             world,
@@ -277,6 +311,8 @@ export class WorldToolService {
       case 'ol_graph': {
         const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_graph.schema>;
         const definitions = this.graph.read(world, generation);
+        if (input.root.kind === 'memory-record')
+          return projectMemoryRecord(world, generation, input.root.id).index.neighborhood(input);
         const source =
           input.subject ??
           (input.root.kind === 'entity' || input.root.kind === 'item'
@@ -334,6 +370,29 @@ export class WorldToolService {
             'Current native item instances only; not all entities, joint arrangements or legal ownership.',
         };
       }
+      case 'ol_evidence': {
+        const input = raw as z.infer<typeof WORLD_READ_TOOLS.ol_evidence.schema>;
+        if (!Object.hasOwn(world.entities, input.actorId) || !world.entities[input.actorId]?.actor)
+          throw new GraphReadError('unavailable', 'Actor is unavailable.');
+        const records = world.memories[input.actorId] ?? [];
+        if (records.length > 1000)
+          throw new GraphReadError('capacity', 'Retained evidence needs an indexed reader.');
+        const binding = fingerprint([world.id, generation, input.actorId, records]);
+        const offset = pageOffset(input.cursor, binding, records.length);
+        const page = records.slice(offset, offset + Math.min(input.limit, 10));
+        return {
+          records: page.map((record) => ({
+            ref: memoryRef(input.actorId, record),
+            summary: record.summary,
+            kind: record.kind,
+            source: record.source,
+            obligation: record.obligation,
+          })),
+          nextCursor: nextPage(binding, offset + page.length, records.length),
+          coverage:
+            'Retained actor memory only. Use each exact ref to inspect record and evidence relationships.',
+        };
+      }
       case 'ol_activity': {
         const { actorId } = raw as { actorId: string };
         const entity = Object.hasOwn(world.entities, actorId) ? world.entities[actorId] : undefined;
@@ -343,6 +402,9 @@ export class WorldToolService {
           actorId,
           action: entity.actor.action ? { ...action, pathLength: path.length } : null,
           agency: entity.actor.agency,
+          attributes: projectAttributes(world, entity, 'owner'),
+          senses: entity.actor.senses ?? world.moduleManifest.defaultSenses,
+          controller: entity.actor.controller,
           actorState: { alive: entity.actor.alive, incapacitated: entity.actor.incapacitated },
           coverage:
             'Current native action, goals and plan; no new wait/repeat/joint-activity executor is implied. Private actor state is owner-inspection evidence, not an NPC observation.',

@@ -1,4 +1,5 @@
-import { createHash } from 'node:crypto';
+import { digest as fingerprint } from './content-digest.js';
+export { digest as fingerprint } from './content-digest.js';
 import type {
   RelationshipRef,
   RelationshipNode,
@@ -10,8 +11,6 @@ import type {
 export const GRAPH_LIMITS = { nodes: 50000, edges: 200000, page: 100, examined: 1024 } as const;
 export const refKey = (ref: RelationshipRef): string =>
   JSON.stringify([ref.kind, ref.id, ref.version]);
-export const fingerprint = (value: unknown): string =>
-  createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export class GraphReadError extends Error {
   constructor(
     readonly code: 'stale' | 'unavailable' | 'invalid' | 'capacity',

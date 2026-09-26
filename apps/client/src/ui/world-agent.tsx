@@ -1,3 +1,4 @@
+import { WorldInspection } from './world-inspection';
 import type { ActionOption, RecipeView } from '@open-legend/protocol';
 import { Inventions } from './inventions';
 import { useEffect, useRef, useState } from 'react';
@@ -38,6 +39,9 @@ const valid = (v: unknown): v is Conversation[] =>
   );
 export function WorldAgent({
   worldId,
+  actorId,
+  godMode,
+  saveTimeline,
   inventionSeed,
   invent,
   visible,
@@ -46,6 +50,9 @@ export function WorldAgent({
   connected,
 }: {
   worldId: string;
+  actorId: string;
+  godMode?: boolean;
+  saveTimeline?: string;
   inventionSeed: { id: string; text: string } | null;
   invent(text: string): void;
   visible: boolean;
@@ -54,6 +61,7 @@ export function WorldAgent({
   connected: boolean;
 }) {
   const [authoring, setAuthoring] = useState(false);
+  const [inspecting, setInspecting] = useState(false);
   useEffect(() => {
     if (inventionSeed) setAuthoring(true);
   }, [inventionSeed]);
@@ -221,6 +229,14 @@ export function WorldAgent({
   }));
   return (
     <div className="ol-agent">
+      {godMode && (
+        <Button size="sm" variant="quiet" onPress={() => setInspecting((value) => !value)}>
+          {inspecting ? 'Close world inspection' : 'Inspect world relationships'}
+        </Button>
+      )}
+      {godMode && inspecting && (
+        <WorldInspection key={`${worldId}:${saveTimeline}`} actorId={actorId} />
+      )}
       <div className="ol-agent-tools">
         <Button
           size="sm"
