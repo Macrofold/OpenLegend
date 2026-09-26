@@ -11,3 +11,5 @@
 **For OpenLegend.** Automate the tasks the player has already meaningfully delegated, while preserving intervention points around purpose, scarce resources, risk and social consequences. Let an NPC carry out a known plan without another model call for every action. Evaluate the result by the quality of decisions freed up—not by the percentage of activity performed autonomously.
 
 **Growth lesson.** Low entry cost and an immediately communicable loop can help experimentation and sharing. That does not imply every cheap, small-scope game becomes a hit. The important product test is whether a newcomer can experience the distinctive reward almost immediately, without studying a large system first.
+
+**Detailed system study:** [Automated attacks, evolution, and cooperative agency](../mechanics/vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) examines movement-driven targeting, orbit/aura coverage, evolution prerequisites, Pentagram and Gorgeous Moon, and the different resource and movement rules of couch and online cooperation. It adds dated developer accounts of engine migration and distribution without replacing the earlier research above.
