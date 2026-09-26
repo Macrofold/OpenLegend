@@ -1,16 +1,37 @@
 # Full research progress and resume ledger
 
-**Read first:** [complete assignment / R01–R14](research-requirements.md) and [130-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; working branch `docs/game-inspiration-library`, integrating `docs/game-inspiration-library-expansion` at `57bcd96`; original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`. Research-only tracking, not an implementation backlog.
+**Read first:** [complete assignment / R01–R14](research-requirements.md) and [130-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; working branch **`docs/game-inspiration-games-121-end`**, created from **`docs/game-inspiration-library`** at Mike's explicit request on September 26, 2026. Research-only tracking, not an implementation backlog. The inherited base-branch history is preserved below; its G26 continuation is not this branch's assignment.
 
 ## Resume here
 
-**Active: G26 — Baldur's Gate 3.** Intended output: `dossiers/baldurs-gate-3.md`. Read `games/baldur-s-gate-3.md` and `mechanics/baldurs-gate-3-utility-magic-identities-and-consequential-choice.md`. Complete R01–R14: character creation, classes/subclasses, abilities, action economy, magic and conditions, utility interactions, items/crafting/trade, party and companion identity, branching quests, exploration, rest/progression/failure, cooperative play/modding, audiovisual/UI/accessibility, development/marketing/commercial context and five substantive reviews plus Steam helpful positive/negative sampling. Preserve earlier Speak with Dead, disguise, potion, concentration and companion examples. Finish, review and commit before G27 Factorio.
+**Active: G121 — Battle Brothers.** Intended output: `dossiers/battle-brothers.md`. Complete the full R01–R14 pass: mercenary identity/backgrounds, combat and equipment, injuries/death, contracts and travel, company economy, origins and expansion boundaries, crises, presentation, development/distribution, five substantive written reviews, and accessible helpful Steam player accounts. No pre-existing dedicated chapter, mechanics study, or dossier for G121–G130 occurs in the inherited library tree; this range is the September 26 curated roster addition. Preserve all prior owners unchanged and distinguish per-game preservation from the still-pending packet-wide audit.
 
-**Completed: G01–G25, 25 / 130. Active: G26. Pending: G27–G130.** Mike confirmed `docs/game-inspiration-library` after the originally named `docs/game-inspiration-games` ref could not be resolved. The current authorized continuation is **G26–G40 inclusive**, on this existing branch: Baldur's Gate 3, Factorio, Satisfactory, Terraria, Stardew Valley, Valheim, Noita, Caves of Qud, Outer Wilds, Garry's Mod, Kenshi, Project Zomboid, Lethal Company, Scribblenauts, and AI Dungeon. This supersedes the earlier execution boundary of G39, not the 130-subject assignment. No replacement branch is to be created. The existing G26 checkpoint is incomplete; three previously read review bodies are preserved there, and the remaining full-pass coverage is being researched.
+**This branch's authorized range: G121–G130 inclusive; 0 / 10 completed.** Finish, verify and commit each subject before advancing. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
 
-RuneScape and Old School RuneScape remain independent pending full passes G48/G49. G50–G57 retain Dragonwilds, four separate mainline Dragon Age games, Deadfire, and Original Sin I/II. G58–G110 are the broader requested mechanics-library additions/franchise splits; G111–G130 are curated OpenLegend-relevant additions. Every pending dossier has the explicit five-written-review minimum and Steam top/helpful-review sampling when applicable. Adding scope is not completed research.
+| Subject | State | Canonical output / completion commit | Exact remaining work |
+| --- | --- | --- | --- |
+| G121 — Battle Brothers | In progress | `dossiers/battle-brothers.md` | Full R01–R14 research, writing, evidence/link review and commit. |
+| G122 — Cataclysm: Dark Days Ahead | Pending | `dossiers/cataclysm-dark-days-ahead.md` | Full pass; distinguish stable/experimental and paid Steam/free distribution. |
+| G123 — Rain World | Pending | `dossiers/rain-world.md` | Full pass; separate original, Downpour and The Watcher. |
+| G124 — Persona 5 Royal | Pending | `dossiers/persona-5-royal.md` | Full pass; distinguish Royal from original Persona 5 and spin-offs. |
+| G125 — XCOM 2 | Pending | `dossiers/xcom-2.md` | Full pass; separate base game, War of the Chosen, DLC and mods. |
+| G126 — Crusader Kings III | Pending | `dossiers/crusader-kings-iii.md` | Full pass; version/expansion boundaries and character simulation. |
+| G127 — Dragon's Dogma 2 | Pending | `dossiers/dragons-dogma-2.md` | Full pass; Pawn sharing is not conventional multiplayer. |
+| G128 — Ultima VII: The Black Gate | Pending | `dossiers/ultima-vii-the-black-gate.md` | Full pass; distinguish Forge of Virtue, Serpent Isle and Exult. |
+| G129 — Oxygen Not Included | Pending | `dossiers/oxygen-not-included.md` | Full pass; separate base game, Spaced Out! and content packs. |
+| G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | `dossiers/stalker-2-heart-of-chornobyl.md` | Full pass; verify A-Life claims and dated patch behavior rather than repeating launch promises. |
 
-## Current continuation — G22 through G40
+## Inherited base-branch resume snapshot — not this branch's active assignment
+
+The following history was inherited from `docs/game-inspiration-library`, integrating `docs/game-inspiration-library-expansion` at `57bcd96`; original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`. Its continuation instructions and counts describe that branch at the fork, not fresh verification of all earlier passes.
+
+**Inherited active: G26 — Baldur's Gate 3.** Intended output: `dossiers/baldurs-gate-3.md`. Read `games/baldur-s-gate-3.md` and `mechanics/baldurs-gate-3-utility-magic-identities-and-consequential-choice.md`. Complete R01–R14: character creation, classes/subclasses, abilities, action economy, magic and conditions, utility interactions, items/crafting/trade, party and companion identity, branching quests, exploration, rest/progression/failure, cooperative play/modding, audiovisual/UI/accessibility, development/marketing/commercial context and five substantive reviews plus Steam helpful positive/negative sampling. Preserve earlier Speak with Dead, disguise, potion, concentration and companion examples. Finish, review and commit before G27 Factorio.
+
+**Inherited completed: G01–G25, 25 / 130. Inherited active: G26. Inherited pending: G27–G130.** Mike confirmed `docs/game-inspiration-library` after the originally named `docs/game-inspiration-games` ref could not be resolved. That branch's authorized continuation is **G26–G40 inclusive**: Baldur's Gate 3, Factorio, Satisfactory, Terraria, Stardew Valley, Valheim, Noita, Caves of Qud, Outer Wilds, Garry's Mod, Kenshi, Project Zomboid, Lethal Company, Scribblenauts, and AI Dungeon. This supersedes the earlier execution boundary of G39, not the 130-subject assignment. The existing G26 checkpoint is incomplete; three previously read review bodies are preserved there, and the remaining full-pass coverage is being researched on that separate continuation.
+
+RuneScape and Old School RuneScape remain independent pending full passes G48/G49 in the inherited snapshot. G50–G57 retain Dragonwilds, four separate mainline Dragon Age games, Deadfire, and Original Sin I/II. G58–G110 are the broader requested mechanics-library additions/franchise splits; G111–G130 are curated OpenLegend-relevant additions. Every pending dossier has the explicit five-written-review minimum and Steam top/helpful-review sampling when applicable. Adding scope is not completed research.
+
+## Current continuation — G22 through G40 (inherited history)
 
 | Completed subject | Dossier and completion commit | Evidence / preservation boundary |
 | --- | --- | --- |
