@@ -1,5 +1,19 @@
 # Documentation changelog
 
+## 2026-09-25 — Short-change workflow and concise responses
+
+[Root guidance](../AGENTS.md#short-changes) now lets short, low-risk tasks skip separate design documents, minor-fix changelog entries, unrelated test suites and redundant review rounds. Focused diff review, affected-behavior verification, consequential decision records, explicit requests and required gates remain; size alone does not establish low risk. Response guidance requires concise, plain, accurate and complete language, with shorthand only where clarity survives. [CG05/CG08](maintainers/agent-guidance.md) track the revised instructions and pending compliance evidence.
+
+## 2026-09-25 — Small-change planning exception
+
+[Root guidance](../AGENTS.md#plan-before-implementation) now starts development with an estimate of affected lines of logic, excluding tests. Below 200 lines, a brief conversation plan replaces the mandatory project document; at 200 or more, `docs/projects/` documentation remains required. Scope growth triggers reassessment. Major questions, completion criteria, required verification and updates to existing specifications/trackers still apply. This supersedes the universal written-project-plan requirement below; [CG05/CG08](maintainers/agent-guidance.md) reflect the revised rule.
+
+## 2026-09-25 — Plan-first development and explicit completion
+
+[Root guidance](../AGENTS.md) now requires a written plan for the entire agreed implementation under `docs/projects/` as the first development step, with major developer decisions resolved before implementation. Done means all agreed implementation, integration, documentation, review fixes and required verification are complete, including required unit/integration tests and manual end-to-end testing. Existing authorization suffices when no major questions remain; the default against unsolicited automated tests is unchanged.
+
+[Design](../.agents/skills/openlegend-design/SKILL.md) no longer permits skipping the written plan for small changes or stopping at a default one-hour window. Explicit user scope/time limits and mandatory blockers still apply; incomplete work must be reported honestly. This supersedes those defaults in the earlier workflow entry. [CG08 and CG05](maintainers/agent-guidance.md) track delivered instructions and unverified native-agent compliance separately.
+
 ## 2026-09-25 — Data foundation recovery and recall review
 
 Moved complete forgetting-ledger enforcement into the shared restore commit so operational backup restoration cannot revive forgotten transcript access. Legacy PostgreSQL import now verifies the columns actually present in the source while retaining additive destination defaults. Grouped recall validates every contributing source after attention instead of only its representative ID. These correct existing privacy, migration and source-freshness contracts; they introduce no new retention or semantic policy. [Native reproductions and reruns](verification.md#data-foundation-review), [D1/D2](maintainers/production-data.md#remaining-d1d2-implementation-and-evidence) and [CR](maintainers/cognition-redesign.md#cognition-persistence-and-consolidation-follow-up) distinguish fixes from deferred automated coverage and unchanged capacity limits.

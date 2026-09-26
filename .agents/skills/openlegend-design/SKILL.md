@@ -7,7 +7,7 @@ description: >-
 
 # Design from playable behavior
 
-Start with player/NPC scenarios: trigger, available knowledge, interaction, visible outcome and meaningful failure, or equivalent non-game examples. Consult relevant [repertoires](../../../docs/repertoires/actions.md) for context and expansion possibilities, not automatic requirements. Separate the ambitious target from feasible, incremental end-to-end stages. Skip planning ceremony for an already clear local change.
+Start with player/NPC scenarios: trigger, available knowledge, interaction, visible outcome and meaningful failure, or equivalent non-game examples. Consult relevant [repertoires](../../../docs/repertoires/actions.md) for context and expansion possibilities, not automatic requirements. Separate the ambitious target from feasible, incremental end-to-end stages. Follow the [root planning requirement](../../../AGENTS.md#plan-before-implementation), scaling detail to the task.
 
 ## Feature-spec or technical-design requests
 
@@ -31,6 +31,6 @@ The trigger is the developer's **chat instruction approving the discussed projec
 
 Spec/design creation alone stops at the paired deliverables, feasible stages and open choices. After chat approval, apply the root development startup before edits; follow [Documentation](../../rules/documentation.md#project-approval-and-current-truth) to link detailed maintainer work to both project files and integrate accepted decisions, then **commence implementation in the same working session**. Do not stop after planning/tracker updates or ask whether to begin. “Continue” resumes the next unfinished authorized work from current docs/trackers, not a new design/approval cycle.
 
-Honor specified items, batch or time range. Otherwise choose the first coherent batch estimated at 45 minutes of continuous agent coding; keep doing related approved work until the one-hour window is exhausted or all related work is complete. A progress report or one small completed item is not a stopping point. Do not idle to fill time or expand scope. Conflict stops, genuine blockers, permissions, budgets and platform limits still apply; report actual progress and any early stop honestly.
+Honor specified scope, batch or time range. Otherwise continue until the full agreed scope satisfies the [root completion criteria](../../../AGENTS.md#completion-and-handoff--every-task); there is no default time window for stopping early. A progress report or one completed stage is not a stopping point. Do not idle to fill time or expand scope. Conflict stops, genuine blockers, permissions, budgets and platform limits still apply; report actual progress and any incomplete work honestly.
 
-Complete the agreed slice and user/agent surfaces; resolve reversible choices and record blockers, continuing independent work only when the conflict-stop rule permits. [Verification](../../rules/verification.md) owns evidence; preserve existing work IDs/dependencies/exit criteria and distinguish implementation from unverified acceptance.
+Complete the agreed scope and user/agent surfaces; resolve reversible choices and record blockers, continuing independent work only when the conflict-stop rule permits. [Verification](../../rules/verification.md) owns evidence; preserve existing work IDs/dependencies/exit criteria and distinguish implementation from unverified acceptance.

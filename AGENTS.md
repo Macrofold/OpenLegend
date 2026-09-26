@@ -2,6 +2,22 @@
 
 OpenLegend is an engine for authored realities with a playable bundled world. Deliver useful features without making that world's laws universal or building speculative infrastructure.
 
+## Plan before implementation
+
+The first step in every development task is to read the relevant context, estimate the lines of logic affected (excluding tests), and plan the entire agreed implementation. If the estimated change is fewer than 200 lines of logic, a project document is optional; a brief plan in the conversation is sufficient. Otherwise write the plan under `docs/projects/` before implementation begins; update an existing project plan when available. Cover scope, affected owners, implementation steps, dependencies, required verification and concrete completion criteria, with detail proportional to the task. Reassess if scope grows to 200 lines or more and document the plan before continuing. This exception does not waive explicitly requested documents or updates to existing specifications and trackers affected by the change.
+
+Surface any major decisions or open questions for the developer at this stage and resolve them before implementation starts. Routine reversible choices do not require approval; existing authorization to implement remains sufficient when no major questions remain. Keep the plan current as work proceeds.
+
+## Short changes
+
+For changes estimated below 200 lines of logic excluding tests, use the conversation-plan option above. If the change is also low risk, skip separate design documents, changelog entries for minor fixes, unrelated test suites and repeated review rounds once no actionable issues remain. Line count alone does not establish low risk: consider authority, privacy, data loss, compatibility and the reach of affected behavior.
+
+Always inspect the full affected diff, verify changed behavior and fix in-scope issues. Preserve explicitly requested deliverables/checks, required CI/merge gates and updates to affected existing specifications or trackers. Record consequential decisions even in small changes. Reassess this lighter workflow if scope or risk grows.
+
+## Respond clearly and concisely
+
+Always use concise, plain language with shorthand where it remains easy to understand. Never compress wording at the expense of clarity, accuracy or completeness. Aim for short, clear, accurate and complete responses; include the context needed to understand decisions, results and limitations.
+
 ## Load only relevant context
 
 Identify the requested outcome, affected behavior, semantic owner, callers and consumers. Read applicable `AGENTS.md` files along affected paths, even if native discovery misses them. Route by intent and impact, not keywords: new files count; a typo mentioning a technology does not require its implementation workflow. Recheck when scope changes. Paths are repository-relative.
@@ -56,7 +72,7 @@ Keep one canonical owner per concept; never rewrite accepted behavior merely to 
 
 ## Work discipline
 
-For development tasks, first refresh `main`; off `main`, rebase onto it before editing. If any conflict resolution is not 100% certain or needs developer input, stop all work immediately and ask. Report major resolved conflicts and their decisions. Explicit read-only requests prohibit branch mutations.
+For development tasks, after initial planning and before implementation, refresh `main`; off `main`, rebase onto it. Reconcile the plan with any changes to the base. If any conflict resolution is not 100% certain or needs developer input, stop all work immediately and ask. Report major resolved conflicts and their decisions. Explicit read-only requests prohibit branch mutations.
 
 Preserve unrelated edits, pinned dependencies and the single lockfile. Do not author automated tests by default; follow [Verification](.agents/rules/verification.md) for permitted checks. Exercise changed behavior end to end by running/inspecting the game or one-off scripts through downstream callers; use relevant static checks and record missing coverage. CI/merge requirements remain; stress meaningful hot-path changes, not every task.
 
@@ -69,5 +85,9 @@ When delegating or handing off, carry scope, relevant owners, verification limit
 Before completion inspect the full diff for correctness, lifecycle/ownership, unnecessary work, simplification and documentation accuracy. Fix in-scope issues unless explicitly read-only and reread the result. Record actionable deferred risks without speculative checklist growth. Use the review skill for substantial changes.
 
 ## Completion and handoff — every task
+
+Development is done when 100% of the agreed feature or task is implemented, including its integration, documentation and review fixes, and all required verification is complete. If unit or integration tests are required, write all required tests and make them pass. If manual end-to-end testing is required, complete it and fix the issues it reveals. This does not change the default policy against authoring automated tests unless required.
+
+Continue through the full authorized scope; do not stop at a first implementation for developer review while agreed work remains, or relabel unfinished scope as follow-up work. Honor explicit user scope/time limits and mandatory conflict, permission, budget or platform limits. If a genuine blocker or limit prevents completion, report the task as incomplete with the remaining work and reason.
 
 Report delivered scope/findings, major decisions and assumptions with reasons, actual evidence/limits and remaining gaps. End every task with **Open decisions/questions** and **Suggested next steps**, explicitly saying “None” when empty. Never claim unrun checks, fixture-based model quality or unmeasured scale.
