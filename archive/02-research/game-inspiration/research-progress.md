@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Active: G06 — Steal a Brainrot.** Committed checkpoint: `dossiers/steal-a-brainrot.md`, revision `be8acdae28019f289a042e49ec65cad66afd0f52`. It already covers conveyor ownership, carrying/interruption, timed locks, rebirth and historical production machines. Resume the missing detailed equipment and mutation/event combinations, native versus trust-based exchange, ordinary/social play, visual/meme/audio identity, narrative framing, production/ownership/promotion, commercial definitions and substantive contrasting reception. Read its preserved subsection in `games/roblox.md`; retain the player-loss disagreement. Complete R01–R14, link review and per-game preservation before advancing to G07. Do not substitute Roblox or Grow a Garden rules.
+**Active: G07 — Fortnite.** Intended file: `dossiers/fortnite.md`. Read `games/fortnite.md` and the supplied master's matching chapter. Independently complete R01–R14: Battle Royale and Zero Build movement/combat/loot/building/survival, team recovery, item and season variation, account/cosmetic progression, Save the World and major native non-BR modes, Creative/UEFN creation and discovery, social entry, art/audio/interface, narrative/live events, production and distribution history, monetization/creator economics and substantive contrasting reception. Clearly distinguish specific modes and current versus historical/announced features. Preserve the OG record-day evidence and the unresolved exact Newzoo ranking; a different panel cannot verify that claim. Do not substitute a platform overview for actual playable systems.
 
-**Completed: 5 / 49. Active: G06. Pending: every subject G07–G49 in the roster.** Mike's latest RuneScape request is recorded as two independent required passes: G48 modern RuneScape and G49 Old School RuneScape. Both are pending, not researched merely by being added. Existing chapters/selective studies do not imply completion; a paired chapter does not complete its counterpart.
+**Completed: 6 / 49. Active: G07. Pending: every subject G08–G49 in the roster.** Mike's RuneScape request is recorded as independent required passes: G48 modern RuneScape and G49 Old School RuneScape. Both are pending, not researched merely by being added. Existing chapters/selective studies do not imply completion; a paired chapter does not complete its counterpart.
 
 | ID | Completed dossier | Completion commit |
 | --- | --- | --- |
@@ -15,6 +15,7 @@
 | G03 | [Animal Crossing](dossiers/animal-crossing-new-horizons.md) | `2ddb1736f1c0a3be002d4b0846a1eaf62076ed8d` |
 | G04 | [Roblox](dossiers/roblox.md) | `450e2cda9c993ae87425b0d83cad84b1f4924667` |
 | G05 | [Grow a Garden](dossiers/grow-a-garden.md) | `9ffda9d526463e4b1b6a27ff2ca146b2d70f393b` |
+| G06 | [Steal a Brainrot](dossiers/steal-a-brainrot.md) | `219329877a5b699c1243e14580c654bc880e55ce` |
 
 ## Final gates — all still pending
 
