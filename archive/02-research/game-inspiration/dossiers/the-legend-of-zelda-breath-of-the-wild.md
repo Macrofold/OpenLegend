@@ -157,6 +157,18 @@ The disagreement is informative rather than something to average away. Systems t
 | R13 | §10, dependencies and alternatives |
 | R14 | This map, linked source register, preserved checkpoint evidence and library/roster routes |
 
+### Mechanics inventory completeness check
+
+This closes the assignment's explicit mechanics inventory against the sourced sections above; it does not create new mechanics or infer unsourced simulation.
+
+- **Identity, attributes, progression, jobs/trees:** Link is a fixed protagonist rather than a created avatar or party leader. There is no class/job/perk tree; durable growth is distributed across hearts, stamina, inventory capacity, armor enhancement, Champion abilities and player knowledge (§§1–3).
+- **Items, equipment, crafting/upgrading, powers:** weapons, bows, shields, armor, materials and key items are covered in §§2–3. Cooking/elixirs are bounded production systems, Great Fairies upgrade armor, and runes/Champion abilities provide reusable powers. There is no unrestricted recipe-construction or spell-invention system.
+- **Traversal, environment, object interaction, activities/minigames:** walking, sprinting, jumping, swimming, climbing, gliding, riding, shield surfing and rafts are covered in §2 alongside fire, wind, water, electricity, temperature and selectively manipulable objects. Shrines, photography/Compendium work, horse tasks, treasure searches, errands and traversal challenges are covered in §4; the dossier does not invent a separate minigame engine where the game reuses ordinary verbs.
+- **Combat, stealth, loot/rewards, failure/recovery:** melee/ranged combat, guarding, evasion, parries, stealth and equipment attrition are covered in §2. Chests, quests, shrines, materials and service unlocks provide distinct reward types; §3 covers saves/autosaves, Blood Moon resets and the difference between retrying and persistent world change.
+- **Economy/trading, story, relationships/reputation, party:** rupees, shops, material sale/retention and upgrade spending are covered in §3; story and authored communities are in §4. There is no general romance/reputation ladder or conventional controllable party. Optional Wolf Link support is not native co-op.
+- **NPC/AI, factions, world, quests/events:** §4 covers authored NPCs/services, regional communities, side quests and Tarrey Town. Enemy behavior and world-state recurrence are discussed in §§2–3. Communities are not a player-switchable faction-alignment system, and NPCs are not represented as having a universal persistent schedule simulation.
+- **Building/settlements/management, multiplayer/social, endgame/return loops:** the house/Tarrey Town sequence is an authored collection/recruitment project rather than freeform settlement construction (§§3–4). The game is single-player (§1). §8 covers Master Trials, Master Mode and Champions' Ballad; §3 distinguishes continued completion play from a simulated post-ending rebuilt world.
+
 **Suggested study order:** play/read the Plateau first; compare a shrine solution with an outdoor use of the same tool; examine climate preparation and one equipment replacement decision; then inspect the Tarrey Town sequence. These are proposed observations, not experiments performed in this pass. Delay memory/final-battle material when avoiding spoilers. The [GDC session](#b22) and Nintendo product page's making-of videos are useful viewing routes, **metadata/description only here**, without invented timestamps. Existing [interaction lookup](../mechanics/interaction-lookup.md) remains the cross-game navigation owner.
 
 ## Sources and access notes
