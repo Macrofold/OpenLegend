@@ -478,3 +478,11 @@ Automated suites were neither added nor run at the owner's request. Manual execu
 ## Limits audit follow-up — blocked
 
 The full 238-entry inventory and LA01–LA04 follow-up work are maintained in the [limits audit](limits-audit.md#status-and-required-dependency). **Do not begin remaining audit work until the current data foundation is complete.** Recheck all findings against that implementation before acting; the ongoing foundation work will likely replace many of the mechanisms and limits described in the original audit.
+
+## Reviewed MCP write regression TODOs
+
+- [ ] **MW01:** identical/colliding draft operation IDs, selected revision changes, native schema failures, base definition and policy/lock changes, exact approval digest, apply without approval, repeat Apply after HTTP loss/restart, atomic receipt plus world commit and post-commit plan projection recovery.
+- [ ] **MW02:** world/principal/credential/profile/restore fencing, expired contexts, no human approval/budget grants through MCP, no context handle captured in diagnostics or artifact text, scoped recipe knowledge and ordinary action independence from invention locks.
+- [ ] **MW03:** real native Macrofold adapter body/continuation, managed billing versus legacy BYOK, exact connector grants and deny-all shell/files, model eligibility, blocked prior runs, per-root compute+run exposure, late/uncertain settlement, $0 sessions with native Apply, short grants, missing receipts, restart and cancellation.
+- [ ] **MW04:** operational backup/import/restore with both authoring tables or a pre-feature backup containing neither, reject partial authoring tables, preserve current session/cost authority on gameplay rewind, indexed recovery of active sessions without loading completed history.
+- [ ] **MW05:** local HTTP/MCP schema and return envelope parity, unsupported kinds, status condition/resource/dream graph extraction, duplicate edges, immutable policy caching, bounded large payload/read concurrency, owner review UI and reconnect/late response/accessibility.

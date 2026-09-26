@@ -6,6 +6,7 @@ export interface McpReadConfig {
   worldId: string;
   expiresAt: number;
   allowedHosts: string[];
+  allowWrites: boolean;
 }
 export function readMcpConfig(env: NodeJS.ProcessEnv): McpReadConfig | null {
   const keys = [
@@ -14,7 +15,13 @@ export function readMcpConfig(env: NodeJS.ProcessEnv): McpReadConfig | null {
     'OPEN_LEGEND_MCP_EXPIRES_AT',
     'OPEN_LEGEND_MCP_HOSTS',
   ] as const;
-  if (keys.every((key) => !env[key])) return null;
+  if (env['OPEN_LEGEND_MCP_WRITES'] && !['true', 'false'].includes(env['OPEN_LEGEND_MCP_WRITES']))
+    throw new Error('OPEN_LEGEND_MCP_WRITES must be true or false.');
+  if (keys.every((key) => !env[key])) {
+    if (env['OPEN_LEGEND_MCP_WRITES'] === 'true')
+      throw new Error('MCP writes require a configured connector.');
+    return null;
+  }
   const hash = env[keys[0]],
     worldId = env[keys[1]],
     expiry = env[keys[2]],
@@ -46,5 +53,11 @@ export function readMcpConfig(env: NodeJS.ProcessEnv): McpReadConfig | null {
     })
   )
     throw new Error('MCP hosts must be exact host[:port] values, not URLs or wildcards.');
-  return { tokenSha256: hash, worldId, expiresAt, allowedHosts: [...new Set(allowedHosts)] };
+  return {
+    tokenSha256: hash,
+    worldId,
+    expiresAt,
+    allowedHosts: [...new Set(allowedHosts)],
+    allowWrites: env['OPEN_LEGEND_MCP_WRITES'] === 'true',
+  };
 }

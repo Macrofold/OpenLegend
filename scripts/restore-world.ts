@@ -2,6 +2,7 @@ import {
   MEMORY_HISTORY_TABLES,
   MEMORY_CACHE_TABLES,
 } from '../apps/server/src/memory-repository.js';
+import { WORLD_AGENT_TABLES } from '../apps/server/src/world-agent-store.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { randomUUID } from 'node:crypto';
 import { COMMAND_TABLES, type CommandEpoch } from '../apps/server/src/command-receipts.js';
@@ -36,6 +37,12 @@ if (
   backup.tables.world.length !== 1
 )
   throw new Error('Invalid backup envelope or checksum.');
+// Pre-authoring backups have neither table. A partial pair is corrupt, not an empty session store.
+if (
+  WORLD_AGENT_TABLES.some((name) => name in backup.tables) &&
+  WORLD_AGENT_TABLES.some((name) => !Array.isArray(backup.tables[name]))
+)
+  throw new Error('Incomplete authoring state in backup.');
 const config = readConfig();
 const store = new SqliteStore(
   config.databasePath,
@@ -68,6 +75,7 @@ try {
     const tables = [
       'jobs',
       ...ACCOUNTING_TABLES,
+      ...WORLD_AGENT_TABLES,
       'intelligence_calls',
       'player_profiles',
       'game_saves',

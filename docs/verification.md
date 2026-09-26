@@ -20,11 +20,11 @@ After an actual native Resume and speech action, retained personal commitment ev
 
 The synthetic graph contains one high-degree root and source-labelled leaf records, not an actual world of that many admitted mechanics. Each size ran 1,000 first-page queries returning 50 edges. A no-match relation filter had to page through the root and could examine no more than 1,024 entries per call. Returned-copy mutation did not alter the index, and a cursor against a changed source was rejected as stale.
 
-| Synthetic graph | Build | Median page query | No-match continuation pages |
-| --- | --- | --- | --- |
-| 1,001 nodes / 1,000 edges | 3.18 ms | 0.151 ms | 1 |
-| 10,001 nodes / 10,000 edges | 22.16 ms | 0.150 ms | 10 |
-| 30,001 nodes / 30,000 edges | 74.12 ms | 0.153 ms | 30 |
+| Synthetic graph             | Build    | Median page query | No-match continuation pages |
+| --------------------------- | -------- | ----------------- | --------------------------- |
+| 1,001 nodes / 1,000 edges   | 3.18 ms  | 0.151 ms          | 1                           |
+| 10,001 nodes / 10,000 edges | 22.16 ms | 0.150 ms          | 10                          |
+| 30,001 nodes / 30,000 edges | 74.12 ms | 0.153 ms          | 30                          |
 
 Build includes indexing/sorting/snapshot identity; it is not zero cost and is not performed per simulation tick. Queries measure bounded adjacency only, not all-source extraction, transitive closure, database I/O, model use or UI layout. The raw record includes sampled RSS changes; they are not peak-memory or zero-allocation claims. Multi-hop impact jobs, persistent source indexing and all-family coverage remain pending.
 
@@ -32,17 +32,16 @@ Build includes indexing/sorting/snapshot identity; it is not zero cost and is no
 
 The existing `scripts/stress-native.ts` runner executed the committed `gems.json` and `mixed.json` scenarios for 180 steps with no warmup, frozen snapshots and a requested 3× rate (180 native seconds per real second). A headroom below 1 does not sustain that requested rate.
 
-| Scenario | Native loop | Largest step | 3× headroom |
-| --- | --- | --- | --- |
-| gems / 514 entities | 1122.59 ms | 116.59 ms | 0.891 |
-| mixed / 344 entities | 1674.33 ms | 955.58 ms | 0.597 |
+| Scenario             | Native loop | Largest step | 3× headroom |
+| -------------------- | ----------- | ------------ | ----------- |
+| gems / 514 entities  | 1122.59 ms  | 116.59 ms    | 0.891       |
+| mixed / 344 entities | 1674.33 ms  | 955.58 ms    | 0.597       |
 
 The mixed world retained 3,254 events and 31,756 awareness entries. These current-baseline samples still show meaningful cold-step cost and do not qualify large-population hosting. The source/adjacency work does not claim to improve native simulation. No witness, event, physical effect or simulation time was dropped to improve a score. Follow [PF09](maintainers/performance.md#pf09--population-work-follows-relevance) and the [encounter design](encounter-scaling.md); do not infer a cross-review speedup from different hardware or earlier baselines.
 
 ### UI and integration limits
 
 Documentation path/heading checks covered 142 Markdown files and found no newly introduced unresolved link relative to the integrated baseline. Existing checked maintainer entries were preserved; the reader/MCP subsets have separate implementation marks and their automated acceptance remains pending. Source-comment documentation anchors were also checked. This is documentation verification, not runtime acceptance.
-
 
 The owner relationship-list component builds successfully and its actual shared HTTP route was exercised. A manual Chromium navigation failed with `ERR_BLOCKED_BY_ADMINISTRATOR` in this environment; no visual, keyboard, accessibility or end-to-end browser acceptance is claimed. The restriction was not bypassed. Actual Macrofold provisioning/harness forwarding, modern protocol profile, multi-user credential/recipient controls, full output-schema qualification, larger source stores, shutdown/body-abuse matrices and full-stack sustained load remain explicit task gates.
 
@@ -944,3 +943,7 @@ Detailed gates remain in [D1/D2](maintainers/production-data.md#remaining-d1d2-i
 - **Grouped recall edits:** retrieve repeated experiences as one grouped context candidate, edit a secondary member through the actual Person editor, then validate the pending selection. The original check accepted the changed group; the repaired check rejected it. A 300-source group repeated over thirty unchanged validations measured 0.83 ms p50, 1.92 ms p95 and 2.14 ms maximum in SQLite. The original incomplete one-source check measured 0.06 ms p50; that timing did not represent equivalent work. No live attention/provider call was made.
 
 The native game-service save/load, duplicate-command, failed-record-write rollback and legacy snapshot/journal migration drill also passed after these fixes. Pinned formatting and `git diff --check` passed. `pnpm build` passed with the existing bundle-size warning. `pnpm typecheck` returned the same 168 normalized diagnostics as the established foundation baseline, with none added or removed. No automated unit/integration/browser suites were authored or run. Broader recovery regression coverage remains in [D1/D2](maintainers/production-data.md#remaining-d1d2-implementation-and-evidence), grouped-attention coverage in [CR](maintainers/cognition-redesign.md#cognition-persistence-and-consolidation-follow-up), and the previously measured population/large-save limits remain open.
+
+## Reviewed authoring transport development
+
+Production TypeScript and the client build pass at the write-transport stage. A temporary manual script used a disposable SQLite world, real local HTTP/MCP transport and synthetic credentials with zero funding. It negotiated the 2025-11-25 MCP profile (the SDK returned an SSE envelope), discovered 18 implemented tools, saved a custom charge-attribute draft, repeated the same operation without creating another draft, ran native validation, prepared a review, rejected unapproved Apply, accepted an exact human decision through the local route, applied through MCP, and repeated Apply without incrementing the manifest again. Graph search found the actual accepted definition. Reopening the application retained the definition and review; reported spending/reservations were zero. This is native/transport evidence, not a model, browser, hosted security or PostgreSQL acceptance claim. No automated tests or paid providers were run.

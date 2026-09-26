@@ -1,3 +1,4 @@
+import { WORLD_AGENT_TABLES } from '../apps/server/src/world-agent-store.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { COMMAND_TABLES } from '../apps/server/src/command-receipts.js';
 import {
@@ -31,6 +32,7 @@ const sqlite = new SqliteDatabase(resolve(source), true);
 const auxiliary = [
   'jobs',
   ...ACCOUNTING_TABLES,
+  ...WORLD_AGENT_TABLES,
   'intelligence_calls',
   'meta',
   'player_profiles',

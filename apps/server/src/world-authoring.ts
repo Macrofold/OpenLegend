@@ -1,3 +1,4 @@
+import { WORLD_READ_TOOLS } from './world-tools.js';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { ApiResult } from '@open-legend/protocol';
 import { WorldAgentStore, type AgentSession } from './world-agent-store.js';
@@ -13,6 +14,21 @@ import {
 import { fingerprint } from './relationship-index.js';
 import type { WorldService } from './world-service.js';
 
+export interface WorldAgentTurn {
+  sessionId: string;
+  contextHandle: string;
+  connectionId: string;
+  toolNames: string[];
+  budget: { id: string; limitUsd: number };
+  runUsd: number;
+  timeoutSeconds: number;
+}
+export interface AgentReply {
+  ok: boolean;
+  code: string;
+  message: string;
+  jobId?: string;
+}
 export interface ChangePlan {
   id: string;
   draftId: string;
@@ -61,6 +77,7 @@ export class WorldAuthoringService {
   constructor(
     readonly records: WorldAgentStore,
     private service: WorldService,
+    private available: () => boolean = () => true,
   ) {}
   private serial<T>(id: string, fn: () => Promise<T>): Promise<T> {
     if (this.queued >= 32)
@@ -79,15 +96,21 @@ export class WorldAuthoringService {
   private credential() {
     return this.service.config.mcpRead?.tokenSha256 ?? 'local-owner';
   }
+  private policy() {
+    const c = this.service.config;
+    return `owner-review-v1:${fingerprint([c.macrofoldUrl, c.macrofoldHarness, c.macrofoldModel, c.macrofoldWorldConnectionId, Object.keys(WORLD_AUTHORING_TOOLS), Object.keys(WORLD_READ_TOOLS)])}`;
+  }
   private permitted(s: AgentSession) {
     return (
+      this.available() &&
       this.service.config.godMode &&
       !s.closed &&
       s.expiresAt > Date.now() &&
       s.principal === this.service.profile.id &&
       s.worldId === this.service.world.id &&
       s.timeline === this.service.timelineId &&
-      s.credential === this.credential()
+      s.credential === this.credential() &&
+      s.policy === this.policy()
     );
   }
   async requireSession(id: string): Promise<AgentSession> {
@@ -127,7 +150,7 @@ export class WorldAuthoringService {
             expiresAt: Date.now() + 7 * 86400_000,
             closed: false,
             budgetUsd: Math.min(budgetUsd ?? 5, this.service.config.inventionWorkshopUsd),
-            policy: 'owner-review-v1',
+            policy: this.policy(),
             actorId: this.service.controlledEntityId,
           };
         }
@@ -184,6 +207,121 @@ export class WorldAuthoringService {
       nextPlan: plans.length > 20 ? plans[19]!.id : null,
     };
   }
+  // Invoked once on server startup, never from a model. Old handles cannot remain writable
+  // while an interrupted remote worker is being reconciled. Charges stay in the existing ledger.
+  async recover() {
+    for (;;) {
+      const rows = await this.records.db
+        .prepare(
+          "SELECT payload FROM world_agent_sessions WHERE world_id=? AND json_extract(payload,'$.activeTurn') IS NOT NULL ORDER BY id LIMIT 50",
+        )
+        .all(this.service.world.id);
+      if (!rows.length) break;
+      for (const row of rows) {
+        const s = JSON.parse(String(row['payload'])) as AgentSession;
+        const turn = await this.records.get<{ fingerprint: string; response?: AgentReply }>(
+          s.id,
+          'turn',
+          s.activeTurn!,
+        );
+        if (turn && !turn.response)
+          await this.records.put(s.id, 'turn', s.activeTurn!, {
+            ...turn,
+            response: {
+              ok: false,
+              code: 'uncertain',
+              message:
+                'Server restarted during this turn. Inspect saved drafts and the original remote run; it was not redispatched.',
+            },
+          });
+        delete s.activeTurn;
+        s.contextHash = contextHash(randomBytes(32).toString('hex'));
+        await this.records.saveSession(s);
+      }
+    }
+  }
+  async beginTurn(sessionId: string, requestId: string, text: string) {
+    return this.serial(
+      sessionId,
+      async (): Promise<{ turn?: WorldAgentTurn; response?: AgentReply }> => {
+        const s = await this.requireSession(sessionId),
+          config = this.service.config;
+        const hash = fingerprint({ text, sessionId });
+        const prior = await this.records.get<{ fingerprint: string; response?: AgentReply }>(
+          sessionId,
+          'turn',
+          requestId,
+        );
+        if (prior) {
+          if (prior.fingerprint !== hash)
+            throw new Error('Message identity conflicts with prior text.');
+          return {
+            response: prior.response ?? {
+              ok: false,
+              code: 'uncertain',
+              message: 'This message is running or uncertain. No duplicate run was dispatched.',
+              jobId: requestId,
+            },
+          };
+        }
+        if (s.activeTurn) throw new Error('This session already has a running turn.');
+        if (
+          !config.mcpRead?.allowWrites ||
+          config.mcpRead.worldId !== s.worldId ||
+          config.mcpRead.expiresAt <= Date.now()
+        )
+          throw new Error(
+            'Configure the authenticated writable OpenLegend MCP connector before running this agent.',
+          );
+        if (!/^[a-f0-9-]{36}$/i.test(config.macrofoldWorldConnectionId) || !config.macrofoldKey)
+          throw new Error(
+            'Configure MACROFOLD_API_KEY and the approved MACROFOLD_WORLD_CONNECTION_ID.',
+          );
+        if ((await this.records.count(sessionId, 'turn')) >= 256)
+          throw new Error('Session retained-turn limit reached.');
+        const contextHandle = randomBytes(32).toString('base64url');
+        s.contextHash = contextHash(contextHandle);
+        s.activeTurn = requestId;
+        // Commit both identity and handle before any external dispatch.
+        await this.records.db.transaction(async () => {
+          await this.records.put(sessionId, 'turn', requestId, { fingerprint: hash });
+          await this.records.saveSession(s);
+        });
+        return {
+          turn: {
+            sessionId,
+            contextHandle,
+            connectionId: config.macrofoldWorldConnectionId,
+            toolNames: [...Object.keys(WORLD_READ_TOOLS), ...Object.keys(WORLD_AUTHORING_TOOLS)],
+            budget: this.budget(s),
+            runUsd: Math.min(config.macrofoldWorldRunUsd, this.budget(s).limitUsd),
+            timeoutSeconds: config.macrofoldWorldTimeoutSeconds,
+          },
+        };
+      },
+    );
+  }
+  async finishTurn(sessionId: string, requestId: string, response: AgentReply) {
+    return this.serial(sessionId, async () => {
+      const s = await this.records.session(sessionId);
+      const record = await this.records.get<{ fingerprint: string }>(sessionId, 'turn', requestId);
+      if (!s || !record) throw new Error('Missing admitted turn record.');
+      await this.records.db.transaction(async () => {
+        await this.records.put(sessionId, 'turn', requestId, { ...record, response });
+        if (s.activeTurn === requestId) {
+          delete s.activeTurn;
+          // Terminal or failed runs cannot keep writing through a copied handle.
+          s.contextHash = contextHash(randomBytes(32).toString('hex'));
+          await this.records.saveSession(s);
+        }
+      });
+    });
+  }
+  async applyLocal(sessionId: string, planId: string) {
+    return this.serial(sessionId, async () =>
+      this.dispatch('ol_change_apply', { planId }, await this.requireSession(sessionId)),
+    );
+  }
   private async draft(s: AgentSession, id: string, revision: number, current = false) {
     const d = await this.records.get<AuthoringDraft>(s.id, 'revision', `${id}:${revision}`);
     const latest = current ? await this.records.get<AuthoringDraft>(s.id, 'draft', id) : undefined;
@@ -221,6 +359,8 @@ export class WorldAuthoringService {
     const tool = WORLD_AUTHORING_TOOLS[name as WorldAuthoringToolName],
       parsed = tool.schema.safeParse(raw);
     if (!parsed.success) return result('invalid', 'Arguments do not match this tool.');
+    if (JSON.stringify(parsed.data).includes(handle))
+      return result('invalid', 'Do not place session context in artifact content.');
     const s = await this.records.byContext(contextHash(handle));
     if (!s || !this.permitted(s))
       return result('forbidden', 'Session context is expired, revoked, or stale.');

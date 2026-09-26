@@ -1,3 +1,11 @@
+import { WorldAgentStore } from './world-agent-store.js';
+import { WorldAuthoringService, type AgentReply } from './world-authoring.js';
+import {
+  sessionRequest,
+  sessionOpenRequest,
+  sessionDecisionRequest,
+  authoringToolRequest,
+} from './world-authoring-contracts.js';
 import { WorldToolService, worldReadRequest } from './world-tools.js';
 import { createWorldMcp } from './world-mcp.js';
 import { executeInventionTool, inventionToolInput } from './invention-tools.js';
@@ -65,6 +73,7 @@ const worldAgentMessage = z
       })
       .strict()
       .optional(),
+    sessionId: requestIdSchema.optional(),
     retryOf: requestIdSchema.optional(),
     requestId: requestIdSchema,
     conversationId: requestIdSchema,
@@ -298,10 +307,23 @@ export async function createGameServer(
   let director = new AiDirector(service, options.aiClient, options.now);
   let loadingSave = false;
   const worldTools = new WorldToolService(service);
-  const mcp = createWorldMcp(worldTools, config.mcpRead, () => ({
-    worldId: service.world.id,
-    loading: loadingSave,
-  }));
+  const authoring = new WorldAuthoringService(
+    new WorldAgentStore(store.db),
+    service,
+    () => !loadingSave,
+  );
+  await authoring.recover();
+  const makeMcp = () =>
+    createWorldMcp(
+      worldTools,
+      config.mcpRead,
+      () => ({
+        worldId: service.world.id,
+        loading: loadingSave,
+      }),
+      authoring,
+    );
+  let mcp = makeMcp();
   let activeWrites = 0;
   const session = randomBytes(32).toString('hex');
   type StreamState = {
@@ -714,8 +736,10 @@ export async function createGameServer(
               streams.clear();
               return send(response, 200, { ok: true, message: 'Saved world loaded and paused.' });
             } finally {
-              if (drained) director = new AiDirector(service, options.aiClient, options.now);
-              else {
+              if (drained) {
+                director = new AiDirector(service, options.aiClient, options.now);
+                mcp = makeMcp();
+              } else {
                 service.storageError =
                   'Loading stopped before background work drained. Restart before continuing.';
                 service.notify();
@@ -1418,6 +1442,67 @@ export async function createGameServer(
                 : {}),
             });
           }
+          case '/api/world-agent/session/open': {
+            const value = sessionOpenRequest.parse(body);
+            // Existing same-origin owner authentication is required; MCP cannot mint sessions.
+            const data = await authoring.open(value.sessionId, value.worldId, value.budgetUsd);
+            return send(response, 200, { ok: true, ...data });
+          }
+          case '/api/world-agent/session/status': {
+            const value = sessionRequest.parse(body);
+            if (value.worldId !== service.world.id)
+              return send(response, 409, { ok: false, message: 'World mismatch.' });
+            const exists = await authoring.records.session(value.sessionId);
+            return send(response, 200, {
+              ok: true,
+              data: exists ? await authoring.view(value.sessionId) : null,
+              enabled:
+                !!config.mcpRead?.allowWrites &&
+                config.godMode &&
+                !!config.macrofoldWorldConnectionId,
+            });
+          }
+          case '/api/world-agent/session/review': {
+            const value = sessionRequest.extend({ planId: requestIdSchema }).strict().parse(body);
+            if (value.worldId !== service.world.id)
+              return send(response, 409, { ok: false, message: 'World mismatch.' });
+            return send(response, 200, {
+              ok: true,
+              data: await authoring.review(value.sessionId, value.planId),
+            });
+          }
+          case '/api/world-agent/session/decision': {
+            const value = sessionDecisionRequest.parse(body);
+            if (value.worldId !== service.world.id)
+              return send(response, 409, { ok: false, message: 'World mismatch.' });
+            return send(response, 200, {
+              ok: true,
+              data: await authoring.decide(
+                value.sessionId,
+                value.planId,
+                value.digest,
+                value.decision,
+              ),
+            });
+          }
+          case '/api/world-agent/session/apply': {
+            const value = sessionRequest.extend({ planId: requestIdSchema }).strict().parse(body);
+            if (value.worldId !== service.world.id)
+              return send(response, 409, { ok: false, message: 'World mismatch.' });
+            const data = await authoring.applyLocal(value.sessionId, value.planId);
+            return send(response, 200, { ok: data.status === 'ok', message: data.message, data });
+          }
+          case '/api/world-agent/authoring': {
+            if (!config.godMode)
+              return send(response, 403, { ok: false, message: 'World-owner tools disabled.' });
+            const value = authoringToolRequest.parse(body);
+            const data = await authoring.execute(value.name, value.arguments, value.contextHandle);
+            return send(response, 200, {
+              ok: data.status === 'ok' || data.status === 'needs_approval',
+              message: data.message,
+              data,
+            });
+          }
           case '/api/world-agent/inspect': {
             if (!config.godMode)
               return send(response, 403, {
@@ -1466,6 +1551,39 @@ export async function createGameServer(
                 message:
                   'Submit a new explicit invention request; failed work is never replayed automatically.',
               });
+            if (value.sessionId) {
+              if (
+                value.mode !== 'discuss' ||
+                value.sessionId !== value.conversationId ||
+                value.retryOf
+              )
+                return send(response, 400, {
+                  ok: false,
+                  message:
+                    'Authoring uses this conversation’s admitted session. Repeat an identical request ID to inspect its result, or send a deliberate new turn.',
+                });
+              const started = await authoring.beginTurn(
+                value.sessionId,
+                value.requestId,
+                value.text,
+              );
+              if (started.response)
+                return send(response, started.response.ok ? 200 : 409, started.response);
+              let result: AgentReply;
+              try {
+                result = await director.macrofold.message(value, started.turn!);
+              } catch {
+                result = {
+                  ok: false,
+                  code: 'uncertain',
+                  jobId: value.requestId,
+                  message:
+                    'Turn completion is uncertain. Inspect retained drafts and the original Macrofold run; no automatic retry was made.',
+                };
+              }
+              await authoring.finishTurn(value.sessionId, value.requestId, result);
+              return send(response, result.ok ? 200 : 409, result);
+            }
             const result =
               value.mode !== 'discuss'
                 ? await director.submitInteractive(
@@ -1488,7 +1606,9 @@ export async function createGameServer(
               .parse(body);
             if (value.worldId !== service.world.id)
               return send(response, 409, { ok: false, message: 'World mismatch.' });
-            await director.macrofold.closeConversation(value.conversationId);
+            const ownedSession = await authoring.records.session(value.conversationId);
+            if (ownedSession) await authoring.close(value.conversationId);
+            await director.macrofold.closeConversation(value.conversationId, !!ownedSession);
             return send(response, 200, {
               ok: true,
               message: 'Conversation ended; compute shutdown requested.',

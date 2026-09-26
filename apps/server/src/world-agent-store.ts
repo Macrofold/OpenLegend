@@ -26,6 +26,8 @@ export class WorldAgentStore {
       id TEXT PRIMARY KEY, world_id TEXT NOT NULL, context_hash TEXT NOT NULL, payload TEXT NOT NULL);
       CREATE UNIQUE INDEX IF NOT EXISTS world_agent_context ON world_agent_sessions(context_hash);
       CREATE INDEX IF NOT EXISTS world_agent_world ON world_agent_sessions(world_id,id);
+      CREATE INDEX IF NOT EXISTS world_agent_active ON world_agent_sessions(world_id,id)
+        WHERE json_extract(payload,'$.activeTurn') IS NOT NULL;
       CREATE TABLE IF NOT EXISTS world_agent_records (
         session_id TEXT NOT NULL, kind TEXT NOT NULL, id TEXT NOT NULL, payload TEXT NOT NULL,
         PRIMARY KEY(session_id,kind,id));`);
@@ -87,7 +89,7 @@ export class WorldAgentStore {
     const row = await this.db
       .prepare(
         `SELECT COALESCE(SUM(a.spent),0) AS spent,
-      COALESCE(SUM(a.reserved),0) AS reserved,
+      COALESCE(SUM(CASE WHEN a.status='reserved' THEN a.reserved ELSE 0 END),0) AS reserved,
       COALESCE(SUM(CASE WHEN a.status='uncertain' THEN a.spent ELSE 0 END),0) AS uncertain
       FROM attempts a JOIN attempt_budgets b ON b.attempt_id=a.id WHERE b.budget_id=?`,
       )
