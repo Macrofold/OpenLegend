@@ -4,6 +4,9 @@
 
 ## Start here
 
+- **[Full 130-subject research roster](research-roster.md):** canonical title/edition list for the per-game mechanics/reception expansion.
+- **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable.
+- **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
 - **[Find an interaction](mechanics/interaction-lookup.md):** cross-game navigation by the question you are exploring, from effect delivery and useful delegation to personal history, shared rewards, and creator trust.
