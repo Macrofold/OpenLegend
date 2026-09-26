@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-26 — Game mechanics inspiration corpus expansion
+
+Expanded the research-only game-inspiration program from 57 to 130 individually tracked subjects on `docs/game-inspiration-library-expansion`. The roster preserves all previously promised cases, adds the requested RPG/action/open-world/strategy franchises and titles, and adds twenty curated high-signal systemic references for simulation, NPC behavior, emergent narrative, environment interaction, relationships and creator mechanics. The completion standard now requires five substantive written-review summaries from multiple sources for every researchable game, top/helpful Steam review sampling where applicable, and an explicit comprehensive mechanics inventory. This changes research scope and navigation only; it does not adopt gameplay requirements or change runtime behavior.
+
 ## 2026-09-25 — Production data model review
 
 Reviewed the [production records](../archive/07-technical-architecture/production-data-model.md) against gameplay, current storage and accepted engine boundaries. Clarified one canonical owner per record, shared actor capabilities, operational goals/plans/due work, identity-preserving migration, timeline/source fencing and revision-aware recall indexes. [Queries](../archive/07-technical-architecture/data-queries-and-mcp.md) now specify database selection before bounded context preparation, with index gaps and the unmeasured 20 ms local-retrieval target explicit.
