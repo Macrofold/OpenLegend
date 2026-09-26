@@ -5,9 +5,9 @@ Read with the [canonical roster](research-roster.md) and [full requirements](res
 ## Resume state
 
 - **Branch / scope:** `docs/game-inspiration-games-40-60`, canonical G40–G60. Do not create another branch.
-- **Last completed numbered subject:** **G55 — Pillars of Eternity II: Deadfire**, `6271fdfaae80c158acfce40141d69c5a9120643b`.
-- **Active:** **G56 — Divinity: Original Sin**. Its target dossier and same-named `games/` chapter were absent when checked. Research the 2014 original and 2015 Enhanced Edition separately, especially dual protagonists, cooperative disagreement, surfaces, crafting, progression, companions, authoring and reception; do not import DOS2 mechanics.
-- **Next:** G57, G58, G59, G60 in canonical order, one independent completed pass at a time.
+- **Last completed numbered subject:** **G56 — Divinity: Original Sin**, `ed8c22deb63c58b1ba027ac7a6b3a64fcb157d33`.
+- **Active:** **G57 — Divinity: Original Sin II**. Target dossier and same-named `games/` chapter were absent when checked. Research original/Definitive/current platform boundaries, armor and Source, origin stories, cooperative independence, crafting, companions, authoring, production and five independent reviews. Do not import the first game's resistance/progression rules.
+- **Next:** G58, G59, G60, one independent completed pass at a time.
 - **Dragon Age family supplement:** [complete](dossiers/dragon-age-series.md), `1eaf76df27c6af52ecafb35f077eae986f0708e9`; includes Journeys, Legends/Remix, The Last Court, Heroes and Keep.
 - **Commit cadence:** after each game or at least every five minutes. Substantive checkpoints remain explicitly incomplete until the full pass is reviewed and committed.
 - **Evidence date:** September 26, 2026, America/New_York.
@@ -32,8 +32,8 @@ Read with the [canonical roster](research-roster.md) and [full requirements](res
 | G53 | Dragon Age: Inquisition | Committed | [Dossier](dossiers/dragon-age-inquisition.md), `66c0a61` |
 | G54 | Dragon Age: The Veilguard | Committed | [Dossier](dossiers/dragon-age-the-veilguard.md), `b91dcc2` |
 | G55 | Pillars of Eternity II: Deadfire | Committed | [Dossier](dossiers/pillars-of-eternity-ii-deadfire.md), `6271fdf`; checkpoint `1fd2a4a` incorporated |
-| G56 | Divinity: Original Sin | In progress | Target `dossiers/divinity-original-sin.md` |
-| G57 | Divinity: Original Sin II | Not started | Target `dossiers/divinity-original-sin-ii.md` |
+| G56 | Divinity: Original Sin | Committed | [Dossier](dossiers/divinity-original-sin.md), `ed8c22d`; checkpoint `4b59a8d` incorporated |
+| G57 | Divinity: Original Sin II | In progress | Target `dossiers/divinity-original-sin-ii.md` |
 | G58 | Pathfinder: Kingmaker | Not started | Target `dossiers/pathfinder-kingmaker.md` |
 | G59 | Pathfinder: Wrath of the Righteous | Not started | Target `dossiers/pathfinder-wrath-of-the-righteous.md` |
 | G60 | Fire Emblem: The Blazing Blade | Not started | Target `dossiers/fire-emblem-the-blazing-blade.md` |
@@ -44,7 +44,9 @@ The incoming ledger used a different ordering for G40–G50 and G55–G60. The c
 
 The corrected continuation is Inquisition → Veilguard → Deadfire → Original Sin → Original Sin II → Kingmaker → Wrath → The Blazing Blade. Pillars I, Disco Elysium, Crusader Kings III, Skyrim and The Witcher 3 are not substitutes for this range. The superseded ledger is preserved in Git history and the [fork baseline](references/games-40-60-fork-baseline.md).
 
-G53 preserves eighteen mechanics, ten cases, three expansion analyses, five inherited independent critic assessments and eight video routes. G54 supplies twelve mechanic analyses, nine causal cases, five newly read critics and six routes. Both explicitly document inaccessible helpful Steam review bodies rather than fabricating samples. G55 includes the complete mechanics/party/ship/faction inventory, ten causal cases, three independently researched expansions, five full independent reviews, an **actually inspected helpful Steam sample**, negative alternative testimony, primary development records and defined commercial evidence. Its 2019 mode is not conflated with the first Pillars game's 2026 update.
+G53 preserves eighteen mechanics, ten cases, three expansion analyses, five inherited independent critic assessments and eight video routes. G54 supplies twelve mechanic analyses, nine causal cases, five newly read critics and six routes. Both explicitly document inaccessible helpful Steam review bodies rather than fabricating samples. G55 includes the complete mechanics/party/ship/faction inventory, ten causal cases, three independently researched expansions, five full independent reviews, an actually inspected helpful Steam sample, negative alternative testimony, primary development records and defined commercial evidence. Its 2019 mode is not conflated with the first Pillars game's 2026 update.
+
+G56 now distinguishes original and Enhanced rules with twelve mechanic analyses, nine concrete cases, six substantive reviews from five independent publications, an inspected helpful Steam sample and negative alternative testimony. It records the Kickstarter milestone, attributed 2014 sales/profit account and original-blog access gap, and separates the two-player campaign from DOS2. Its previously incomplete review access and byline were resolved before completion.
 
 Do not claim gameplay, watched footage, authenticated service tests, a local checkout, runtime/build tests or repository-wide link checks that did not occur. Keep every prior chapter, mechanics study, source qualification and packet-provenance owner. A completed G40–G60 branch is not a completed 130-subject roster or a passed packet-wide reconciliation. Each new dossier must map R01–R14 and distinguish sourced observations, interpretations and proposed adaptations.
 
