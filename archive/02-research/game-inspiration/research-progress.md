@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Active: G08 — League of Legends.** Intended file: `dossiers/league-of-legends.md`. Read `games/league-of-legends-and-dota-2.md` and the supplied master's matching section. Independently complete R01–R14: lane/jungle/support activities, champion abilities and combinations, items/runes/spells, farming and match progression, map objectives and information/vision, group roles and recovery, current native mode boundaries, account progression/monetization, visual/audio clarity and narrative framing, production/distribution/community history, and substantive contrasting criticism/player accounts. Keep Dota 2, Wild Rift and Teamfight Tactics rules separate. Preserve the earlier historical re-review and Riot clarity analysis rather than substituting a current balance summary. Complete/review/commit before advancing to G09.
+**Active: G09 — Dota 2.** Intended file: `dossiers/dota-2.md`. Read `games/league-of-legends-and-dota-2.md` and the supplied master's matching section. Independently complete R01–R14: map/lane/jungle/support activity, last hits and denies, resources/items/couriers, hero abilities and compositions, vision/terrain/day-night and objectives, death/buyback and progression, native modes/Workshop, social entry, presentation/audio/lore, production/distribution/esports and commercial model, and substantive contrasting reception. Distinguish current patch rules from historical guides and do not import League-specific role quests, runes or roster purchases. Preserve the earlier Steam-only metrics and historical re-review. Complete/review/commit before advancing to G10.
 
-**Completed: 7 / 49. Active: G08. Pending: every subject G09–G49 in the roster.** Mike's RuneScape request is recorded as independent required passes: G48 modern RuneScape and G49 Old School RuneScape. Both are pending, not researched merely by being added. Existing chapters/selective studies do not imply completion; a paired chapter does not complete its counterpart.
+**Completed: 8 / 49. Active: G09. Pending: every subject G10–G49 in the roster.** Mike's RuneScape request is recorded as independent required passes: G48 modern RuneScape and G49 Old School RuneScape. Both are pending, not researched merely by being added. Existing chapters/selective studies do not imply completion; a paired chapter does not complete its counterpart.
 
 | ID | Completed dossier | Completion commit |
 | --- | --- | --- |
@@ -17,6 +17,7 @@
 | G05 | [Grow a Garden](dossiers/grow-a-garden.md) | `9ffda9d526463e4b1b6a27ff2ca146b2d70f393b` |
 | G06 | [Steal a Brainrot](dossiers/steal-a-brainrot.md) | `219329877a5b699c1243e14580c654bc880e55ce` |
 | G07 | [Fortnite](dossiers/fortnite.md) | `d91728ae1f14dc709d256a888a9ca5111eeb9482` |
+| G08 | [League of Legends](dossiers/league-of-legends.md) | `2a6c6e04520dd79e10a3085987e545ca09cfc5ec` |
 
 ## Final gates — all still pending
 
@@ -32,4 +33,4 @@
 
 Use GitHub connector writes on this branch. Commit substantive work at least every five minutes, marking unfinished checkpoints honestly. Finish, review and commit one subject before advancing; update this ledger immediately. On restart fetch the remote head, the active dossier and current blob SHAs; preserve concurrent/unrelated changes. Each active checkpoint must state remaining sections and source limits. No background work or future delivery is implied.
 
-The complete instructions remain in `research-requirements.md`, first committed as `4dcd82ebd9e7ca357bf25512b9c463ce653a7112`; the RuneScape scope amendment is `096bee4b681f8a6c960681ba9a21b960c902fda8`, with roster addition `7d016f12cf38d1dc9b049982943c5cc84c446e12`. The stable roster prevents pending subjects from being dropped during routine progress updates. Git history retains substantive incomplete checkpoints (Hades II `bb7f5b5`, Among Us `aafacb7`, Animal Crossing `f24ff06`/`b67b63a`, Roblox `87979dd`, Grow a Garden `d5a5081`, Steal a Brainrot `be8acda`, Fortnite `157520a`/`3204ed0`). Completed revisions are above. Input hashes, file counts and elapsed work are not substitutes for completed research.
+The complete instructions remain in `research-requirements.md`, first committed as `4dcd82ebd9e7ca357bf25512b9c463ce653a7112`; the RuneScape scope amendment is `096bee4b681f8a6c960681ba9a21b960c902fda8`, with roster addition `7d016f12cf38d1dc9b049982943c5cc84c446e12`. The stable roster prevents pending subjects from being dropped during routine progress updates. Git history retains substantive incomplete checkpoints (Hades II `bb7f5b5`, Among Us `aafacb7`, Animal Crossing `f24ff06`/`b67b63a`, Roblox `87979dd`, Grow a Garden `d5a5081`, Steal a Brainrot `be8acda`, Fortnite `157520a`/`3204ed0`, League `db9810a`). Completed revisions are above. Input hashes, file counts and elapsed work are not substitutes for completed research.
