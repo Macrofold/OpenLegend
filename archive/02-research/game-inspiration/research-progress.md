@@ -6,9 +6,9 @@ This tracks research only. No row authorizes an OpenLegend implementation task. 
 
 ## Resume here
 
-**Active subject: G01 — Hades II.** Next action: read `games/hades-and-hades-ii.md` and the Hades I-only mechanics study, then research the sequel independently against R01–R14. Intended output: `dossiers/hades-ii.md`. Missing work includes the sequel's full action/item/progression systems, interactions, art/audio/narrative, production/distribution and substantive reception; preserve the existing sequel discussion rather than replacing it with Hades I rules.
+**Active subject: G02 — Among Us.** Read `games/among-us-and-lethal-company.md`, retain its Among Us history and YouTube amplification evidence, and research Among Us independently against R01–R14. Intended output: `dossiers/among-us.md`. Required missing breadth includes Classic actions/tasks/sabotage, roles and information tools, maps/settings and native alternate modes, cosmetic versus gameplay progression, social entry/communication, art/audio, production and delayed discovery, and substantive positive/negative reception. Do not substitute the existing Lethal Company mechanics study.
 
-**Full passes reviewed and committed: 0 / 47.** All other subjects remain unprocessed against the complete assignment, including the 28 names with earlier selective mechanics coverage. Do not replace this figure with a count of Markdown files.
+**Full passes reviewed and committed: 1 / 47.** G01 completed in `5e549c2b88a7182a9ab4bf71dfb508ff9fd12c90`, with 31 annotated sources, distinct original criticism/player testimony, full category map and per-game preservation review. The other subjects remain unprocessed against the complete assignment, including the 28 names with earlier selective mechanics coverage. Do not replace this figure with a count of Markdown files.
 
 ## Subject order and state
 
@@ -16,8 +16,8 @@ This tracks research only. No row authorizes an OpenLegend implementation task. 
 
 | ID | Subject | Full-pass state | Existing chapter / committed dossier |
 | --- | --- | --- | --- |
-| G01 | Hades II | In progress | [Earlier pair chapter](games/hades-and-hades-ii.md) |
-| G02 | Among Us | Pending | [Earlier pair chapter](games/among-us-and-lethal-company.md) |
+| G01 | Hades II | Complete | [Full dossier](dossiers/hades-ii.md), commit `5e549c2`; [earlier pair chapter](games/hades-and-hades-ii.md) preserved |
+| G02 | Among Us | In progress | [Earlier pair chapter](games/among-us-and-lethal-company.md) |
 | G03 | Animal Crossing: New Horizons | Pending | [Chapter](games/animal-crossing-new-horizons.md) |
 | G04 | Roblox | Pending | [Platform and experience chapter](games/roblox.md) |
 | G05 | Grow a Garden | Pending | [Existing subsection](games/roblox.md) |
@@ -77,5 +77,7 @@ This tracks research only. No row authorizes an OpenLegend implementation task. 
 ## Commit evidence
 
 - `4dcd82ebd9e7ca357bf25512b9c463ce653a7112` — full assignment and R01–R14 requirements committed before the new research pass.
+- `bb7f5b55752135f1947576bd87a046904b8097c0` — substantive Hades II checkpoint, explicitly incomplete.
+- `5e549c2b88a7182a9ab4bf71dfb508ff9fd12c90` — completed Hades II full-category dossier, prior material preserved.
 
-Per-game completion commits will be linked with their dossier entries as work is actually finished. In-progress research must remain explicitly incomplete; an interruption must not be hidden by changing the definition of complete.
+Per-game completion commits are linked with their dossier entries. In-progress research must remain explicitly incomplete; an interruption must not be hidden by changing the definition of complete.
