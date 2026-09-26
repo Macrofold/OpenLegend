@@ -1,6 +1,6 @@
 # Complete research roster
 
-Read [requirements](research-requirements.md) and [current progress](research-progress.md). This is the stable **57-subject inventory**; **only the progress ledger records completion**. The original 47 subjects are preserved, G48–G49 implement Mike's September 25, 2026 RuneScape request, and G50–G57 implement his September 26 additions. The directory `dossiers/` owns full-category passes. Earlier chapters and selective mechanics remain in their existing owners and do not automatically satisfy R01–R14.
+Read [requirements](research-requirements.md) and [current progress](research-progress.md). This is the stable **130-subject inventory**; **only the progress ledger records completion**. The original 47 subjects are preserved, G48–G49 implement Mike's September 25, 2026 RuneScape request, G50–G57 preserve the first September 26 expansion, and G58–G130 implement the broader September 26 mechanics-corpus expansion. The directory `dossiers/` owns full-category passes. Earlier chapters and selective mechanics remain in their existing owners and do not automatically satisfy R01–R14.
 
 | ID | Subject | Dossier filename | Existing chapter / scope boundary |
 | --- | --- | --- | --- |
@@ -62,7 +62,96 @@ Read [requirements](research-requirements.md) and [current progress](research-pr
 | G56 | Divinity: Original Sin | `divinity-original-sin.md` | Independent full pass; original versus Enhanced Edition, dual protagonists/co-op disagreement, surfaces/crafting and authoring. |
 | G57 | Divinity: Original Sin II | `divinity-original-sin-ii.md` | Independent full pass; original versus Definitive Edition/ports, origin characters, armour/status composition, multiplayer and Game Master/editor boundaries. |
 
-These rows preserve the complete earlier 47-subject commitment and every subsequent requested addition. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each pass; research missing categories rather than duplicating complete existing sections.
+| G58 | Pathfinder: Kingmaker | `pathfinder-kingmaker.md` | Independent full pass; kingdom management, companions, alignment, class/build breadth, time pressure, encounter/quest structure and edition boundaries. |
+| G59 | Pathfinder: Wrath of the Righteous | `pathfinder-wrath-of-the-righteous.md` | Independent full pass; mythic paths, crusade layer, companions, class/build breadth, turn-based/RTwP, expansions and branching narrative. |
+| G60 | Fire Emblem: The Blazing Blade (Fire Emblem, GBA) | `fire-emblem-the-blazing-blade.md` | North American title and Japanese subtitle distinguished; permadeath, supports, weapon triangle, map objectives and campaign structure. |
+| G61 | Fire Emblem: Path of Radiance | `fire-emblem-path-of-radiance.md` | Independent Tellius pass; base conversations, supports, bonus experience, skills, laguz and map design. |
+| G62 | Fire Emblem Awakening | `fire-emblem-awakening.md` | Pair Up, marriage/children, class changes, skills, supports, map/progression and difficulty boundaries. |
+| G63 | Fire Emblem Fates | `fire-emblem-fates.md` | Birthright/Conquest/Revelation routes and availability boundaries; pair-up revisions, My Castle, children and map design. |
+| G64 | Fire Emblem: Three Houses | `fire-emblem-three-houses.md` | Academy calendar, tutoring, classes, battalions, supports, routes, monastery activities and expansion boundaries. |
+| G65 | Fire Emblem Heroes | `fire-emblem-heroes.md` | Mobile live-service pass; summon/economy, inheritance, merges, modes, power creep, events and monetization separated from mainline FE. |
+| G66 | Disco Elysium | `disco-elysium.md` | Skills as voices, checks, Thought Cabinet, time, inventory, dialogue, political/world reactivity, Final Cut changes and reception. |
+| G67 | Grand Theft Auto V | `grand-theft-auto-v.md` | Story mode and GTA Online separated; three protagonists, open-world activities, vehicles, heists, wanted system, economy and long-tail service. |
+| G68 | Cyberpunk 2077 | `cyberpunk-2077.md` | Current post-2.0 game plus Phantom Liberty distinguished from launch; builds, cyberware, combat, quests, city systems, vehicles and relationships. |
+| G69 | Red Dead Redemption | `red-dead-redemption.md` | Original game plus Undead Nightmare separated; honor, Dead Eye, open-world activities, travel, encounters and multiplayer history. |
+| G70 | Red Dead Redemption 2 | `red-dead-redemption-2.md` | Added because it is mechanically and socially distinct and highly relevant; camp, needs, horse bond, NPC/world reactions, hunting, honor and Red Dead Online separated. |
+| G71 | The Elder Scrolls V: Skyrim | `the-elder-scrolls-v-skyrim.md` | Skills-by-use, perks, shouts/magic, crafting, factions, radiant systems, followers, crime, world interaction and edition/mod boundaries. |
+| G72 | The Witcher 3: Wild Hunt | `the-witcher-3-wild-hunt.md` | Signs/alchemy/combat, gear, contracts, investigations, choices, relationships, open world, Gwent and major expansions. |
+| G73 | The Legend of Zelda: Breath of the Wild | `the-legend-of-zelda-breath-of-the-wild.md` | Physics/chemistry, runes, weapon durability, weather, climbing, cooking, shrines, exploration and systemic problem solving. |
+| G74 | Fallout 4 | `fallout-4.md` | SPECIAL/perks, VATS, settlements, crafting/modding, companions/affinity, factions, radiant quests, survival mode and DLC. |
+| G75 | Elden Ring | `elden-ring.md` | Build/stat progression, weapons/ashes/spells, stance/status, open-world exploration, NPC quests, bosses, summons, multiplayer and Shadow of the Erdtree. |
+| G76 | Black Myth: Wukong | `black-myth-wukong.md` | Transformations, stances, spells, spirits, equipment, bosses, exploration, progression and reception. |
+| G77 | Clair Obscur: Expedition 33 | `clair-obscur-expedition-33.md` | Turn-based/real-time defense hybrid, party builds, Pictos/Lumina, relationships/camp, exploration, narrative and reception. |
+| G78 | Final Fantasy I | `final-fantasy.md` | Mainline-series pass 1; original class/party, magic-charge/spell systems, equipment, world progression and major remake differences. |
+| G79 | Final Fantasy II | `final-fantasy-ii.md` | Mainline-series pass 2; use-based growth, keywords, party turnover, equipment/spells and remake differences. |
+| G80 | Final Fantasy III | `final-fantasy-iii.md` | Mainline-series pass 3; job switching, crystal progression, party/equipment/spells and remake differences. |
+| G81 | Final Fantasy IV | `final-fantasy-iv.md` | Mainline-series pass 4; fixed identities, ATB, party turnover, abilities, equipment, world/narrative progression and remake differences. |
+| G82 | Final Fantasy V | `final-fantasy-v.md` | Mainline-series pass 5; job/ability composition, ATB, equipment, exploration and challenge-run affordances. |
+| G83 | Final Fantasy VI | `final-fantasy-vi.md` | Mainline-series pass 6; ensemble characters, Espers/magic, relics, world-state shift, party composition and side content. |
+| G84 | Final Fantasy VII | `final-fantasy-vii.md` | Original game's Materia/equipment/Limit systems, party/story/world; Remake/Rebirth covered substantively as distinct reinterpretations, not substituted for the 1997 mechanics. |
+| G85 | Final Fantasy VIII | `final-fantasy-viii.md` | Junction/draw/GF systems, level scaling, Triple Triad/card refinement, party/story and world progression. |
+| G86 | Final Fantasy IX | `final-fantasy-ix.md` | Equipment-taught abilities, party identities, ATB, synthesis, exploration, minigames and narrative. |
+| G87 | Final Fantasy X | `final-fantasy-x.md` | Conditional turn battle, Sphere Grid, summons, equipment customization, Blitzball and direct-sequel X-2's major system contrast. |
+| G88 | Final Fantasy XI | `final-fantasy-xi.md` | MMORPG-specific jobs/subjobs, parties, economy, world progression, expansions, trusts and long-lived service. |
+| G89 | Final Fantasy XII | `final-fantasy-xii.md` | Gambits, licenses/jobs, active-dimension combat, hunts, loot/bazaar, party automation and Zodiac edition changes. |
+| G90 | Final Fantasy XIII | `final-fantasy-xiii.md` | Paradigms, stagger, Crystarium, equipment upgrading, linear/open progression; XIII-2/Lightning Returns covered as substantive direct-sequel contrasts. |
+| G91 | Final Fantasy XIV | `final-fantasy-xiv.md` | MMORPG jobs, duties, crafting/gathering, social systems, housing/economy, story progression, expansions and 1.0→A Realm Reborn boundary. |
+| G92 | Final Fantasy XV | `final-fantasy-xv.md` | Real-time party combat, warp/techniques, camping/food, travel, open-world activities, relationships and DLC/edition history. |
+| G93 | Final Fantasy XVI | `final-fantasy-xvi.md` | Action combat, Eikonic abilities, gear/progression, hunts, narrative structure, companions and expansion boundaries. |
+| G94 | Warcraft: Orcs & Humans | `warcraft-orcs-and-humans.md` | Original RTS; workers/resources, base building, unit control, missions and faction asymmetry in historical context. |
+| G95 | Warcraft II: Tides of Darkness | `warcraft-ii.md` | RTS sequel plus Beyond the Dark Portal; naval/air layers, economy, upgrades, factions and multiplayer. |
+| G96 | Warcraft III: Reign of Chaos / The Frozen Throne | `warcraft-iii.md` | Heroes, items, upkeep, creeps, four factions, campaigns, custom maps and Reforged boundary. |
+| G97 | World of Warcraft | `world-of-warcraft.md` | MMORPG full pass; classes/specs, combat, items, professions, quests, raids/dungeons, economy, social systems, world, expansions and live-service evolution. |
+| G98 | Assassin's Creed IV: Black Flag | `assassins-creed-iv-black-flag.md` | One of the selected top-selling franchise entries; naval exploration/combat, boarding, stealth, progression/economy and original-versus-2026 Resynced boundary. |
+| G99 | Assassin's Creed III | `assassins-creed-iii.md` | One of the selected top-selling entries with a disclosed 12M-copy milestone; frontier, homestead, naval, stealth/combat and historical mission structure. |
+| G100 | Assassin's Creed Valhalla | `assassins-creed-valhalla.md` | Selected for franchise-record launch/revenue evidence despite non-comparable public unit disclosure; settlement, raids, skill web, gear, alliances and expansions. |
+| G101 | Mass Effect | `mass-effect.md` | Main series game 1; Shepard creation, classes/powers, squad, dialogue/paragon-renegade, gear, exploration and imported choices. |
+| G102 | Mass Effect 2 | `mass-effect-2.md` | Main series game 2; loyalty, recruitment, squad powers, cover combat, ship upgrades, suicide mission and import consequences. |
+| G103 | Mass Effect 3 | `mass-effect-3.md` | Main series game 3; combat/builds, squad, war assets, multiplayer, imported decisions, endings and DLC. |
+| G104 | Mass Effect: Andromeda | `mass-effect-andromeda.md` | Separate protagonist/setting; profiles, mobility, crafting, exploration, squad/relationships and post-launch history. |
+| G105 | Mass Effect Galaxy | `mass-effect-galaxy.md` | Released mobile spin-off included because Mike requested all Mass Effect games; touch combat, dialogue/story connection, distribution and retirement. |
+| G106 | Mass Effect Infiltrator | `mass-effect-infiltrator.md` | Released mobile spin-off; cover/action mechanics, progression, Galaxy-at-War linkage, distribution and retirement. |
+| G107 | Octopath Traveler | `octopath-traveler.md` | Eight protagonists, path actions, break/boost, jobs, equipment, travel, party formation and narrative structure. |
+| G108 | Octopath Traveler II | `octopath-traveler-ii.md` | Added as a high-value sequel contrast; revised path actions, latent powers, jobs, day/night, crossed paths and world structure. |
+| G109 | Star Wars: Knights of the Old Republic | `star-wars-knights-of-the-old-republic.md` | Classes/Feats/Force powers, party, alignment, dialogue, equipment, quests, planets and consequences. |
+| G110 | Star Wars: Knights of the Old Republic II — The Sith Lords | `star-wars-knights-of-the-old-republic-ii.md` | Added as a high-value sequel contrast; influence, companions, crafting/upgrades, Force alignment, restored-content boundary and narrative reactivity. |
+| G111 | The Legend of Zelda: Tears of the Kingdom | `the-legend-of-zelda-tears-of-the-kingdom.md` | Curated OpenLegend-relevant addition: Ultrahand/Fuse/Recall/Ascend, Zonai devices, physics construction, world layers and systemic experimentation. |
+| G112 | Fallout: New Vegas | `fallout-new-vegas.md` | Curated addition: factions/reputation, skills/perks, dialogue/quests, companions, survival/crafting and consequence-heavy world structure. |
+| G113 | The Elder Scrolls III: Morrowind | `the-elder-scrolls-iii-morrowind.md` | Curated addition: skills-by-use, spellmaking/enchanting, factions/reputation, travel, hand-authored world knowledge and permissive simulation. |
+| G114 | Kingdom Come: Deliverance II | `kingdom-come-deliverance-ii.md` | Curated addition: needs, reputation/crime, skills, crafting, layered NPC/world simulation, historical questing and systemic interaction. |
+| G115 | Mount & Blade II: Bannerlord | `mount-and-blade-ii-bannerlord.md` | Curated addition: character/clan growth, troops, parties, armies, economy, workshops/caravans, diplomacy, sieges and dynamic campaign simulation. |
+| G116 | Middle-earth: Shadow of War | `middle-earth-shadow-of-war.md` | Curated addition centered on Nemesis hierarchy, procedural rivals, recruitment, traits, forts, combat and emergent personalized stories. |
+| G117 | Deus Ex (2000) | `deus-ex-2000.md` | Curated immersive-sim reference: skills/augmentations, inventory, stealth/combat/social routes, level reactivity, factions and consequences. |
+| G118 | Prey (2017) | `prey-2017.md` | Curated immersive-sim reference: Neuromods, tools, mimic/physics interactions, station ecology, resource crafting, exploration and moral/narrative choices. |
+| G119 | Dishonored 2 | `dishonored-2.md` | Curated systemic-stealth reference: powers, gadgets, traversal, lethal/nonlethal routes, chaos/consequences, reactive levels and two protagonists. |
+| G120 | Starsector | `starsector.md` | Curated simulation reference: fleet composition, officers, colonies, economy, factions, exploration, salvage and dynamic campaign systems. |
+| G121 | Battle Brothers | `battle-brothers.md` | Curated emergent-story reference: procedural mercenaries, injuries/death, equipment, contracts, company economy, overworld travel and crises. |
+| G122 | Cataclysm: Dark Days Ahead | `cataclysm-dark-days-ahead.md` | Curated deep-simulation reference: survival needs, crafting, skills, mutations/bionics, vehicles, factions/NPCs, world persistence and open-source development. |
+| G123 | Rain World | `rain-world.md` | Curated ecosystem/AI reference: creature behaviors, food/hibernation, traversal, reputation-like relationships, cycles, world ecology and narrative discovery. |
+| G124 | Persona 5 Royal | `persona-5-royal.md` | Curated social/time reference: calendar, Confidants, school/life activities, Personas/fusion, combat, social stats and authored relationships. |
+| G125 | XCOM 2 | `xcom-2.md` | Curated strategy/attachment reference: soldier classes, procedural identities, injuries/death, tactical combat, strategic layer, research/building and campaign pressure. |
+| G126 | Crusader Kings III | `crusader-kings-iii.md` | Curated character-simulation reference: traits/stress, relationships, dynasties, schemes, titles, factions, culture/religion and emergent narrative. |
+| G127 | Dragon's Dogma 2 | `dragons-dogma-2.md` | Curated agent/party reference: Pawn system, vocations, physics/combat, travel, quests, NPC affinity, emergent encounters and world persistence limits. |
+| G128 | Ultima VII: The Black Gate | `ultima-vii-the-black-gate.md` | Curated simulation-history reference: NPC schedules, object manipulation, companions, inventory/containers, world interactions and authored investigation. |
+| G129 | Oxygen Not Included | `oxygen-not-included.md` | Curated colony-simulation reference: duplicant traits/needs/jobs, gases/liquids/heat, automation, production chains, research and failure cascades. |
+| G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | `stalker-2-heart-of-chornobyl.md` | Curated world-simulation reference: A-Life claims/current behavior, factions, anomalies/artifacts, survival resources, weapons, exploration and quest consequences. |
+
+These rows preserve the complete earlier 47-subject commitment and every subsequent requested addition through G130. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each pass; research missing categories rather than duplicating complete existing sections.
+
+
+## September 26 mechanics-corpus expansion scope
+
+G58–G110 are direct additions from Mike's expanded mechanics-library request or necessary explicit franchise splits. G111–G130 are curated additions chosen for especially relevant systemic, simulation, relationship, emergent-story, environment-interaction, progression, party/agent or creator lessons. They are first-class subjects and require the same R01–R14 standard, including five substantive written-review summaries from multiple sources and top/helpful Steam review evidence when Steam is applicable and accessible.
+
+The latest Dragon Age wording asked for three popular entries. The selected classic three are **Origins, Dragon Age II and Inquisition**; G54 **The Veilguard** remains in scope because the parent branch had already recorded it as an explicit requested subject, and this expansion preserves rather than silently removes prior scope.
+
+For **Final Fantasy**, G78–G93 cover the numbered mainline games I–XVI individually. Major direct sequels/remakes with materially different systems—especially X-2, XIII-2, Lightning Returns, VII Remake and VII Rebirth—must receive substantive, clearly separated coverage in the relevant parent dossier and the final franchise comparison; the assignment is not an exhaustive survey of every Final Fantasy-branded spin-off.
+
+For **Warcraft**, G94–G97 cover the released core RTS line and World of Warcraft. Warcraft III's dossier includes The Frozen Throne and Reforged boundaries; World of Warcraft's dossier treats expansions as materially evolving systems rather than pretending one patch describes the whole service.
+
+For **Assassin's Creed**, public commercial measures are not directly comparable across the series. G98–G100 use Black Flag, Assassin's Creed III and Valhalla as the three selected top-selling/top-commercial entries because the former two have strong disclosed lifetime unit milestones while Valhalla has Ubisoft-documented franchise launch/revenue records. The dossiers must preserve metric definitions instead of inventing a precise all-time unit ranking.
+
+For **Mass Effect**, G101–G106 cover the four full-size released RPGs plus the two released standalone mobile games Galaxy and Infiltrator. Legendary Edition is edition/remaster context for the trilogy rather than a separate mechanics subject; companion apps that are not standalone games are supplemental context, not silently promoted to full games.
 
 ## RuneScape scope
 
