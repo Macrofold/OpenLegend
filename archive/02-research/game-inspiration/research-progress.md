@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Active: G127 — Dragon's Dogma 2.** Intended output: `dossiers/dragons-dogma-2.md`. Complete R01–R14: vocation/action/combat and climbing, stamina/health/loss gauge/camping, Pawns and Pawn knowledge/sharing/inclinations/specializations, quests/world travel/oxcarts/emergent encounters, items/equipment/economy, character progression and New Game+/failure, presentation/production/commercial context, five substantive written reviews and accessible Steam helpful/player evidence. Keep Pawn sharing distinct from conventional multiplayer and preserve prior owners.
+**Active: G128 — Ultima VII: The Black Gate.** Intended output: `dossiers/ultima-vii-the-black-gate.md`. Complete R01–R14: original Black Gate versus Forge of Virtue, Serpent Isle/Silver Seed and Exult boundaries; seamless world/object interaction, inventory/containers, schedules, companions, dialogue/investigation, combat/magic, economy/food/time, NPC/social simulation, presentation/production/history/commercial context, five substantive contemporary or retrospective written reviews when genuine reviews exist, and strongest accessible player testimony where Steam does not apply. Preserve prior owners and keep packet-wide audit separate.
 
-**This branch's authorized range: G121–G130 inclusive; 6 / 10 completed.** G121–G126 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
+**This branch's authorized range: G121–G130 inclusive; 7 / 10 completed.** G121–G127 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
 
 | Subject | State | Canonical output / completion commit | Exact remaining work |
 | --- | --- | --- | --- |
@@ -16,8 +16,8 @@
 | G124 — Persona 5 Royal | Complete | [Dossier](dossiers/persona-5-royal.md); `4569330cad6eae87a3726023eeac98df65451ebb` | Royal/original/spin-off boundaries, eight worked cross-system cases, full calendar/Confidant/Palace/Mementos/Persona pass, five written reviews and current Steam sampling; Royal-only versus combined-series sales metrics separated. |
 | G125 — XCOM 2 | Complete | [Dossier](dossiers/xcom-2.md); `42d9279bde9647ed2ab027efe5c90896a187af39` | Base/WotC/DLC/mod boundaries, eight tactical-strategic cases, bonds/fatigue/roster attachment, five independent base-game reviews plus WotC/Steam evidence; Steam multiplayer retirement dated. |
 | G126 — Crusader Kings III | Complete | [Dossier](dossiers/crusader-kings-iii.md); `f1b04b87520f56527a09e367d219e5b2e2b35345` | Current PC/console/expansion boundaries, eight dynastic/political cases, trait/stress/relationship/succession/faction systems, five launch reviews plus current Steam; Paradox 3m/4m base-game milestones separated from DLC. |
-| G127 — Dragon's Dogma 2 | In progress | `dossiers/dragons-dogma-2.md` | Full pass; Pawn sharing is not conventional multiplayer. |
-| G128 — Ultima VII: The Black Gate | Pending | `dossiers/ultima-vii-the-black-gate.md` | Full pass; distinguish Forge of Virtue, Serpent Isle and Exult. |
+| G127 — Dragon's Dogma 2 | Complete | [Dossier](dossiers/dragons-dogma-2.md); `b36d70cb9b794fc003a1863c468048637dd37ddc` | Current base/update/future Dark Arisen boundaries, eight worked cases, Pawn asynchronous knowledge/inclinations/Dragonsplague, six reviews and current Steam evidence; DD2 4.20m separated from 14m series sales. |
+| G128 — Ultima VII: The Black Gate | In progress | `dossiers/ultima-vii-the-black-gate.md` | Full pass; distinguish Forge of Virtue, Serpent Isle and Exult. |
 | G129 — Oxygen Not Included | Pending | `dossiers/oxygen-not-included.md` | Full pass; separate base game, Spaced Out! and content packs. |
 | G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | `dossiers/stalker-2-heart-of-chornobyl.md` | Full pass; verify A-Life claims and dated patch behavior rather than repeating launch promises. |
 
