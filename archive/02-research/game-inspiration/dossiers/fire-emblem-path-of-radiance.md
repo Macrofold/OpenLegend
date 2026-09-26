@@ -1,8 +1,7 @@
 # Fire Emblem: Path of Radiance — full research dossier
 
-**G61 · Research checkpoint, September 26, 2026.** This pass studies the original 2005 GameCube tactical RPG and distinguishes the Japanese and international difficulty/localization boundaries. The January 2026 Nintendo GameCube – Nintendo Classics release on Nintendo Switch 2 is a distribution/emulation wrapper around the original game, not a mechanically redesigned edition. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G61 · Complete research pass, September 26, 2026.** This pass studies the original 2005 GameCube tactical RPG and distinguishes the Japanese and international difficulty/localization boundaries. The January 2026 Nintendo GameCube – Nintendo Classics release on Nintendo Switch 2 is a distribution/emulation wrapper around the original game, not a mechanically redesigned edition. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-**Checkpoint state:** R01–R08 and the principal combat/progression/social systems are drafted below. Before this dossier is marked complete it still needs the full production/distribution/commercial pass, five-review comparison, player/community evidence, final OpenLegend transfer analysis, source/preservation map, and a final factual/link review.
 
 Path of Radiance is especially useful to OpenLegend because it makes **persistent people**, not disposable pieces, the substrate of a tactics game. Map consequences survive into later chapters; relationships advance across deployments; an intermission Base moves conversation and resource decisions out of battle; Bonus Experience rewards *how* a map is solved; and Shove/Rescue make one character's physical relationship to another a tactical verb rather than only an attack modifier.
 
@@ -317,7 +316,476 @@ The 2026 Nintendo Classics release should not be assumed to reproduce original G
 
 There is no native competitive or cooperative multiplayer campaign, settlement building, stealth subsystem, open-world traversal or conventional crafting tree. Those absences are important: Path of Radiance derives depth by making a relatively bounded tactical vocabulary interact with persistent people.
 
-## Sources read in this checkpoint
+
+## 17. Worked interactions: how the systems compose
+
+These examples are deliberately labeled so observed accounts are not blurred with constructed rules illustrations.
+
+### A. Shove a healer into range, then extract them — attributed contemporary play account
+
+**Intention:** heal an injured front-line unit without leaving the healer exposed.
+
+**Conditions:** the healer cannot safely reach the target and retreat under their own movement; nearby allies satisfy Shove constraints.
+
+**Actions:** GameSpot's English-version hands-on describes using one fighter to Shove the healer one tile into healing range, performing the heal, then using another fighter to Shove the healer back toward safety. [PR13](#pr13)
+
+**Result:** two allies spend their own actions to change another person's position, converting spare bodies/actions into temporary mobility.
+
+**Next decision:** the player must judge whether those allies can afford to give up attacks or other actions.
+
+**Limit:** Shove is weight-constrained and mounted units cannot use the ordinary Shove command. This is a real observed interaction, not a hypothetical.
+
+### B. Reward restraint with BEXP — constructed from documented rules
+
+**Intention:** complete a chapter efficiently or honor a secondary condition rather than merely maximizing kills.
+
+**Conditions:** the chapter has a Bonus Experience condition such as turn efficiency or preservation.
+
+**Actions:** route toward the objective, avoid unnecessary fights, then finish the map.
+
+**Result:** the team receives a shared BEXP pool at Base. [PR09](#pr09)
+
+**Next decision:** invest that pool in a lagging recruit, a favorite, or an already-dominant unit.
+
+**Limit:** the reward is indirect and partly opaque without external knowledge; a player can also undermine challenge by concentrating BEXP into already efficient units.
+
+### C. Time a laguz transformation window — constructed from documented rules
+
+**Intention:** use a laguz unit's powerful transformed state during the map's decisive contact.
+
+**Conditions:** the unit begins untransformed or has a partially filled gauge.
+
+**Actions:** position safely while the gauge rises, enter combat as transformation becomes available, then exploit the temporary power window.
+
+**Interaction:** combat accelerates gauge drain, so using the unit aggressively also consumes the state faster. [PR12](#pr12)
+
+**Result:** power has a visible temporal rhythm rather than being a permanent passive stat package.
+
+**Next decision:** press the advantage now or preserve positioning for the inevitable reversion.
+
+**Limit:** gauge management can feel like waiting if the map does not create interesting timing pressure.
+
+### D. Shared chapters → support conversation → battlefield bonus — constructed from documented rules
+
+**Intention:** develop two characters as both people and tactical partners.
+
+**Conditions:** the pair is support-compatible and participates in enough shared chapters.
+
+**Actions:** field them across chapters; when eligible, choose their support conversation at Base.
+
+**Result:** authored relationship text advances and the support can grant combat bonuses when the partners fight near each other. [PR10](#pr10)
+
+**Next decision:** continue toward a higher support rank, knowing each character has limited support capacity in a run.
+
+**Limit:** “shared deployment” is only a proxy for actual lived interaction; the game does not simulate what the pair did together between conversations.
+
+### E. Forge a personalized tool around a unit — constructed from documented rules
+
+**Intention:** make a frequently used unit more reliable without inventing an entirely new weapon family.
+
+**Conditions:** forge access, sufficient gold, a permitted base weapon and the chapter's forge opportunity.
+
+**Actions:** trade money for bounded changes to might/hit/critical/weight, then name/color the result. [PR07](#pr07)
+
+**Result:** the object remains compatible with ordinary weapon-rank, durability and combat rules while gaining authored identity.
+
+**Next decision:** decide whether the extra performance is worth scarce gold and which unit should carry the weapon.
+
+**Limit:** this is controlled parameter customization, not freeform crafting.
+
+### F. Permanent death turns tactical error into campaign history — documented rule, constructed consequence chain
+
+**Intention:** rescue a vulnerable recruit without losing another valued person.
+
+**Conditions:** the map permits ordinary continuation after that ally dies.
+
+**Actions:** choose between a risky rescue line, a safer slower line, or accepting the death.
+
+**Result:** if the unit falls and the player does not reset, later deployment/support/recruitment possibilities can disappear with them. [PR03](#pr03)
+
+**Next decision:** preserve the run's history or replay the entire map.
+
+**Limit:** because restarting is always available, the practical experience often becomes “large rollback punishment” rather than literal acceptance of death. The game gives the player the moral/strategic tension but does not solve the reset incentive.
+
+## 18. Production and development
+
+**Developer:** Intelligent Systems. **Publisher:** Nintendo. Contemporary staff material is unusually useful because the team explicitly discussed how the series' abstractions should survive the move to GameCube 3D. [PR08](#pr08)
+
+### Three-dimensional transition
+
+Producer Tohru Narihiro said the team had spent roughly three years experimenting with how to translate 2D Fire Emblem battles into 3D. The challenge was not merely adding polygons: walls, stairs, arrows, unit visibility and animation all created new expectations once the map appeared physically dimensional. [PR08](#pr08)
+
+The team used motion capture but intentionally tuned movement away from both literal realism and implausible spectacle. Game designer Taeko Kaneda described character identity as the combination of appearance, class, parameters and dialogue, while motion had to preserve that identity rather than overpower it. [PR08](#pr08)
+
+Map director Minoru Noda's account is even more transferable: attractive trees/buildings/sails were resized or made transparent when they hid units. The team prioritized **legibility over scenic realism**. [PR08](#pr08)
+
+### Base design was a deliberate separation of concerns
+
+Director Masayuki Horikawa said non-battle elements were moved into the Base so combat maps could remain focused on “pure” tactical play. Support conversations moved there partly because their content often did not plausibly belong in a battlefield and could otherwise trigger accidentally. [PR08](#pr08)
+
+This is evidence of intentional product structure, not retrospective inference.
+
+### Cut/deeper Base ideas
+
+Preserved development materials show that the Base concept went through broader spatial/function ideas before the shipped menu-centered form, including more differentiated facilities. Those concepts are useful production history but are **not** attributed to the released rules. [PR19](#pr19)
+
+### Late-platform constraint
+
+Path of Radiance arrived relatively late in the GameCube lifecycle. Contemporary reviews repeatedly noted that its technology looked modest for that stage of the console, while later retrospectives and secondary histories connect the timing with its limited original availability. This dossier does not infer that timing alone caused commercial performance.
+
+## 19. Localization and regional design
+
+Nintendo of America's Treehouse localization worked closely with Intelligent Systems. In a 2005 Nintendo World Report interview, localization staff described receiving text while the Japanese game was still being developed and consulting the development team when narrative references needed context. [PR20](#pr20)
+
+The same interview gives unusually direct evidence for difficulty changes:
+- international **Easy** was newly added;
+- international **Normal** corresponded to Japanese Normal;
+- international **Hard** was positioned between Japanese Normal and Maniac according to the localization staff's explanation;
+- the team said Japanese player feedback and North American debug/localization feedback both informed changes. [PR20](#pr20)
+
+This matters for comparative research: “Hard mode” is not a globally interchangeable label.
+
+Path of Radiance's localization is also part of its product identity. Much of the game is text-driven, so tone, terminology and political/social characterization depend on translation quality more than a mostly systemic game would.
+
+## 20. Distribution, promotion, commercial context, and preservation
+
+### Original release model
+
+The 2005 game was a conventional one-time premium GameCube retail release. It is a single-player product, not a service economy:
+- no microtransactions;
+- no battle pass;
+- no live seasonal monetization;
+- no paid power progression;
+- no multiplayer network dependency.
+
+Contemporary promotion included E3-era coverage, playable preview builds and event demos. GameSpot documented a four-chapter demo at the 2005 G-Phoria show before the North American release, showing Nintendo/press were letting outlets sample battle scenarios rather than marketing only through cinematics. [PR21](#pr21)
+
+### Participation and sales evidence
+
+A secondary historical compilation citing Japanese tracking reports **100,357 Japanese first-week units** and **156,413 Japanese units by the end of 2005**. Treat these as Japan-specific retail milestones from secondary reporting, not global lifetime sales. I did not find a reliable audited global lifetime sell-through or revenue figure in the sources read for this pass. [PR22](#pr22)
+
+The stronger commercial/preservation fact in 2026 is access rather than a new sales claim: Nintendo officially re-released the game through **Nintendo Switch Online + Expansion Pack's Nintendo GameCube – Nintendo Classics** library for Switch 2. That changes scarcity/discoverability but does not turn the old design into a live service. [PR01](#pr01)
+
+RPGFan's 2026 review explicitly notes that this was Path of Radiance's first rerelease and that original copies had become expensive on the secondary market. [PR23](#pr23)
+
+### Virality / word of mouth
+
+There is no evidence here for a modern viral acquisition loop. Path of Radiance's durable discovery appears instead through:
+- franchise continuity;
+- Smash Bros./Ike awareness;
+- retrospective recommendation;
+- sequel/Tellius interest;
+- scarcity-driven collector discussion;
+- the 2026 subscription rerelease.
+
+Those are observable channels, not measured attribution percentages. The dossier does **not** claim which one caused the most players to arrive.
+
+## 21. Five substantive written reviews
+
+The review minimum is satisfied with five independent outlets; the 2026 RPGFan retrospective is included as a sixth temporal check.
+
+### 1. GameSpot — Greg Kasavin, October 17, 2005
+
+**Praised:** strategy/RPG integration, high-stakes permadeath, large developed cast, story, soundtrack, objective variation and the flexibility opened by BEXP.
+
+**Criticized:** plain 3D presentation, loss of some GBA visual personality and an overall design that played things safe. Kasavin also identified a real BEXP tradeoff: catch-up flexibility can make growth feel less earned. [PR03](#pr03)
+
+### 2. RPGamer — Chris Privitere, November 17, 2005
+
+**Praised:** combat forecasting and weapon interactions, recruitable characters, limited durability, forging, supports, BEXP roster recovery, story themes and the interface.
+
+**Criticized:** the practical frustration of permadeath when a late-map loss makes the player replay a long chapter; the review estimates real elapsed play can exceed the in-game clock substantially because of resets. It also regretted the removal of Japanese Maniac difficulty from the international edition. [PR24](#pr24)
+
+### 3. Nintendo World Report — Karl Castaneda, October 29, 2005
+
+**Praised:** battlefield play, learning curve, story/characters, audio, menu control and CG cinematics.
+
+**Criticized:** bland in-game 3D models and repetitive attack animations, explicitly contrasting them with the stronger portraits/cinematics. [PR17](#pr17)
+
+### 4. GamesRadar+ — contemporary archived review
+
+**Praised:** simple-but-engrossing strategy, likable cast/story and a refined interface that makes enemy movement/weakness information easy to use.
+
+**Criticized:** mediocre graphics, relatively low character-customization breadth and the reset pressure created by permanent death. [PR16](#pr16)
+
+### 5. Nintendo Life — PJ O'Reilly, January 2026
+
+**Praised:** enduring tactical battles, enemy variety, cast/story, BEXP and the fact that the game still works well in the Nintendo Classics release.
+
+**Criticized:** aged 3D battle presentation, lower difficulty for experienced modern Fire Emblem players and fewer activities/options than later entries; specifically wished the rerelease exposed Maniac. [PR02](#pr02)
+
+### 6. RPGFan — Ben Love, February 7, 2026
+
+**Praised:** Tellius setting, cast, Ike, skills, clever maps and especially the Base as a major series advance.
+
+**Criticized:** rough 3D edges and some mechanics that do not contribute much; the review treats biorhythm as a weak addition. [PR23](#pr23)
+
+### Review synthesis without pretending unanimity
+
+Across launch and 2026 reviews, the strongest repeated positives are:
+- named characters/story are unusually central to tactical investment;
+- core grid strategy remains readable;
+- permadeath creates stakes;
+- Base/BEXP/skills/laguz provide useful variation.
+
+Repeated criticism clusters around:
+- slow or visually weak 3D battle presentation;
+- reset-heavy friction from permadeath;
+- limited customization compared with later entries;
+- uneven difficulty for expert players.
+
+Difficulty is audience-dependent rather than a stable consensus. A newcomer preserving every unit can experience high tension; an experienced series player can find international Normal/Hard too forgiving.
+
+## 22. Direct player/community evidence
+
+Path of Radiance has **no Steam release**, so the required Steam top/helpful review sample is not applicable. Player evidence instead uses current 2025–2026 community accounts and preserved user reviews. These are qualitative samples, not prevalence measures.
+
+### Current positive/mixed accounts
+
+A July 2026 Switch 2 player described:
+- creative maps and varied win conditions;
+- thoughtful weapon/movement planning because there is no native Casual/turn-wheel system;
+- Rescue as valuable early protection with a real opportunity cost;
+- a strong experience with specialized units such as Reyson. [PR25](#pr25)
+
+An August 2026 two-run player praised:
+- Tellius worldbuilding;
+- diverse maps;
+- the **compact Base** because it avoids the repeat-play chores they associate with later hub systems.
+
+The same player disliked slow battles/enemy phases and the inconvenience of repeatedly checking threat behavior. [PR26](#pr26)
+
+A March 2026 player review framed the game as having strong/intuitive fundamentals and purposeful map objectives but found the international difficulty too gentle for optimization-focused play. [PR27](#pr27)
+
+### Critical accounts
+
+A November 2025 player praised story/music/characters while finding Hard-mode gameplay boring or frustrating, especially slow enemy phases, surprise reinforcements and late difficulty spikes. [PR28](#pr28)
+
+Older and current community discussions repeatedly flag **tempo** as the enduring usability problem: even with battle cutaways disabled, long enemy phases and map animations can make replay after a death feel disproportionately costly. [PR29](#pr29)
+
+### What the disagreement teaches
+
+The same systems produce different outcomes:
+- permadeath can mean attachment/tension **or** reset tedium;
+- BEXP can mean roster flexibility **or** snowballing;
+- simple class paths can mean clarity **or** low customization;
+- a lean Base can mean focused pacing **or** fewer social activities.
+
+OpenLegend should preserve those tradeoffs instead of extracting only “popular feature = good.”
+
+## 23. Transferable inspiration for OpenLegend
+
+### A. Make a person mechanically identifiable across systems
+
+Path of Radiance's strongest unit identity is composite:
+- authored personality;
+- visual silhouette;
+- class/body;
+- stats/growth;
+- equipment;
+- skills;
+- relationship graph;
+- campaign history.
+
+OpenLegend should avoid reducing an agent to either:
+- prose personality with generic mechanics, or
+- mechanics sheet with interchangeable dialogue.
+
+Identity becomes convincing when the layers reinforce one another.
+
+### B. Let relationships accrue from shared history, then become discussable
+
+The support system's key idea is not “C/B/A ranks.” It is:
+> repeated shared participation creates eligibility for a later social state change.
+
+OpenLegend can generalize that to memories/events rather than fixed chapter counts:
+- survived a raid together;
+- worked the same mine for a season;
+- raised a child;
+- betrayed a faction;
+- repeatedly rescued one another.
+
+The conversation should emerge from the history instead of the history existing only to unlock a cutscene.
+
+### C. Separate urgent embodied play from reflective social/management play
+
+The Base demonstrates a clean shift in salience without changing the characters themselves.
+
+For OpenLegend:
+- combat should foreground threat, movement, cover and intent;
+- camp/home should foreground conversation, planning, maintenance and memory;
+- workshop should foreground materials/tools/experimentation.
+
+Do not expose every possible world action at equal UI priority everywhere.
+
+### D. Reward *how* a goal is achieved
+
+BEXP makes secondary conduct legible:
+- speed;
+- restraint;
+- preservation;
+- optional protection.
+
+OpenLegend can reward or remember method, not just outcome. An NPC/faction/world may care that the player:
+- solved a conflict without killing;
+- protected civilians;
+- kept a promise;
+- used fewer resources;
+- finished before winter.
+
+The reward need not always be XP; reputation, trust, knowledge and future opportunities may fit better.
+
+### E. Physical social verbs are powerful
+
+Shove, Rescue, Take and Drop show how a small body-interaction vocabulary creates tactics.
+
+OpenLegend should treat:
+- carry;
+- drag;
+- hand off;
+- brace;
+- boost;
+- restrain;
+- shield;
+- pull
+
+as composable world relations where appropriate, not bespoke cutscene events.
+
+### F. Give temporary transformations readable rhythms
+
+Laguz gauges create anticipation because power visibly approaches and recedes.
+
+Any invented transformation should specify:
+- trigger;
+- observable buildup;
+- capabilities while active;
+- depletion/recovery;
+- what others can perceive;
+- what happens if the body changes while carrying/wearing/doing something.
+
+### G. Use bounded customization to preserve system compatibility
+
+Forging works because the result is still recognizably a normal weapon participating in shared rules.
+
+For generated inventions, default to:
+> existing semantic family + bounded property changes + explicit new affordance
+
+before creating an unconstrained exception to world law.
+
+### H. Give autonomous allies orders at an intent level
+
+Path of Radiance's partner commands are primitive, but the authority distinction is useful:
+- direct units: exact orders;
+- allied autonomous actors: broad intent.
+
+OpenLegend can make this much richer through trust, hierarchy and competence:
+- “hold this bridge”;
+- “keep the children safe”;
+- “trade only above this reserve”;
+- “scout but do not engage.”
+
+An ally remains an agent, not a remote limb.
+
+### I. Favor state legibility over simulation detail
+
+The staff's decision to shorten/transparentize 3D scenery rather than hide tactical units is an unusually concrete precedent.
+
+OpenLegend's simulation may become far denser than Path of Radiance, which makes the principle more important:
+> if a consequential rule cannot be perceived or queried, the player cannot make meaningful decisions about it.
+
+### J. Loss matters most when it removes a unique future
+
+Permadeath works emotionally because the dead unit is a named person with future relationships and utility.
+
+OpenLegend does not need Fire Emblem's exact reset contract, but consequential death should propagate:
+- memories;
+- vacancies;
+- grief;
+- inheritance;
+- unfinished obligations;
+- changed faction capability;
+- lost expertise.
+
+That produces story without requiring a scripted “sad death scene” for every person.
+
+## 24. Limits and things not to copy automatically
+
+### Do not copy reset-punishment as a substitute for consequence
+
+Path of Radiance often converts death into **replay the map** because players can reset. OpenLegend can often do better by letting the world continue and making recovery/consequence interesting.
+
+### Do not make hidden secondary criteria essential without signaling
+
+BEXP can reward mastery, but hidden turn thresholds or obscure recruitment requirements encourage guide dependence. If an OpenLegend world cares about conduct, characters and environmental signals should make that value inferable.
+
+### Do not equate more enemies with better difficulty
+
+Player feedback around Path of Radiance's harder modes repeatedly distinguishes strategic pressure from slow, inflated enemy phases. Difficulty should add decisions, not just simulation volume.
+
+### Do not overfit authored support graphs to generative relationships
+
+Fixed compatibility pairs produce polished writing but cannot represent arbitrary living-world relationships. OpenLegend needs open relationship state, with authored structures used where they create value.
+
+### Do not universalize a Base
+
+Path of Radiance benefits from separating battle and intermission because it is chapter-based. An OpenLegend world may be continuous. The transferable principle is **contextual salience**, not a mandatory hub screen.
+
+### Do not treat biorhythm-like invisible modifiers as depth by default
+
+Small cyclic accuracy/evasion modifiers can create bookkeeping without meaningful planning. A dynamic internal state earns its complexity when players can perceive it, predict it and change behavior around it.
+
+## 25. Requirement map, preservation, and navigation
+
+| Requirement | Coverage |
+| --- | --- |
+| R01 identity / scope / promise | §§1, 16, 20 |
+| R02 player actions / mechanics | §§2–13, 17 |
+| R03 items / entities / composition | §§2–8, 12, 17E |
+| R04 progression / economy / time | §§2, 5–8, 12, 16–17 |
+| R05 concrete interactions | §17 |
+| R06 people / AI / social / multiplayer | §§7, 11, 13–14, 22 |
+| R07 art / audio / interface / feel | §§10, 15, 21–22 |
+| R08 story / narrative | §§7, 11, 14, 21 |
+| R09 production | §§18–19 |
+| R10 marketing / distribution / virality | §20 |
+| R11 commercial / participation | §20 |
+| R12 reviews / player feedback | §§21–22 |
+| R13 inspiration / limits | §§23–24 |
+| R14 sources / preservation / navigation | this section + Sources |
+
+### Mechanics inventory check
+
+Covered: identity/classes; statistics/growth; leveling/promotion; weapon ranks; skills/capacity; weapons/items/durability/forging; offensive magic and staves; grid movement/terrain; Shove/Rescue/Take/Drop/Canto; map interactions/objectives; combat; loot/rewards/BEXP; death/permadeath/reset; gold/shop economy; authored story; supports/Base conversations; roster/party/deployment; enemy and partner AI; factions/nations; chapter maps/weather; recruitment/events; repeat/postgame Trial Maps and GBA-link extras.
+
+**Absent or not major native systems:** free-roaming traversal, stealth system, settlement/base construction, arbitrary crafting recipes, romance simulation, open-world quest log, player-run economy, native competitive/co-op multiplayer, live-service endgame. Laguz transformation and magical weapons/staves cover supernatural combat without a freeform spell-learning system.
+
+### Preservation check
+
+Before writing G61, the inherited packet/reference owners were searched for **“Path of Radiance,” “Fire Emblem,” “Ike,” and “Tellius.” No Path of Radiance passage was found** in:
+- the preserved field guide;
+- review-evidence notebooks;
+- popularity/economics ledger;
+- source registers;
+- YouTube watchlist;
+- earlier-additional-findings;
+- master bibliography;
+- packet provenance.
+
+The inherited branch also had **no Path of Radiance game chapter, mechanics study, or dossier**. G61 is therefore a new full pass from the September 26 roster expansion rather than a rewrite of prior game-specific research. The original seven-file packet remains preserved in its existing owners; this dossier does not claim that G61 was present there.
+
+### Reading / viewing routes
+
+Best compact routes:
+1. **PR08** for development intent and the 2D→3D/Base design decisions.
+2. **PR03 + PR24** for two substantial 2005 reviews with different emphases.
+3. **PR02 + PR23** for how the unchanged game reads after the 2026 rerelease.
+4. **PR05–PR12 / PR18** when exact mechanics need verification.
+5. **PR25–PR29** for qualitative player experience and current friction.
+
+No video or footage was represented as watched in this pass. No source-preview metadata was treated as proof of a scene.
+
+
+## Sources
 
 <a id="pr01"></a>**PR01 — [Fire Emblem: Path of Radiance comes to Nintendo Classics!](https://www.nintendo.com/us/whatsnew/fire-emblem-path-of-radiance-comes-to-nintendo-classics/).** Nintendo, January 2026. Primary current distribution/premise reference; not evidence that wrapper features are original mechanics.
 
@@ -343,7 +811,7 @@ There is no native competitive or cooperative multiplayer campaign, settlement b
 
 <a id="pr12"></a>**PR12 — [Transformation gauge](https://fireemblemwiki.org/wiki/Transformation_gauge).** Fire Emblem Wiki. Community mechanics reference; exact gauges treated as Path-of-Radiance-specific.
 
-<a id="pr13"></a>**PR13 — [Fire Emblem: Path of Radiance hands-on](https://www.gamespot.com/articles/fire-emblem-path-of-radiance-hands-on/1100-6134058/).** GameSpot, 2005. Contemporary hands-on account used for the concrete Shove-healer interaction.
+<a id="pr13"></a>**PR13 — [Fire Emblem: Path of Radiance hands-on](https://www.gamespot.com/articles/fire-emblem-path-of-radiance-english-version-hands-on/1100-6134821/).** GameSpot, 2005. Contemporary hands-on account used for the concrete Shove-healer interaction.
 
 <a id="pr14"></a>**PR14 — [Rescue](https://fireemblemwiki.org/wiki/Rescue_(command)).** Fire Emblem Wiki. Community mechanics reference for carry/take/drop and penalties.
 
@@ -354,4 +822,28 @@ There is no native competitive or cooperative multiplayer campaign, settlement b
 <a id="pr17"></a>**PR17 — [Fire Emblem: Path of Radiance review](https://www.nintendoworldreport.com/review/4431/fire-emblem-path-of-radiance-gamecube).** Karl Castaneda, Nintendo World Report, October 29, 2005. Full contemporary review read; final five-review comparison pending.
 
 <a id="pr18"></a>**PR18 — [Trial Maps / postgame](https://serenesforest.net/path-of-radiance/miscellaneous/trial-maps/).** Serenes Forest. Community reference for post-completion Trial Map unlocks.
+
+
+
+<a id="pr19"></a>**PR19 — [Making of Fire Emblem: Path of Radiance](https://serenesforest.net/general/designers-notes/path-of-radiance/).** Serenes Forest preservation/translation route to development materials from *Making of Fire Emblem*. Used only for documented development concepts; cut concepts are not described as shipped features.
+
+<a id="pr20"></a>**PR20 — [Fire Emblem: Path of Radiance Interview](https://www.nintendoworldreport.com/interview/2266/fire-emblem-path-of-radiance-interview).** Nintendo World Report, 2005. Interview with Nintendo of America Treehouse localization staff Rich Amtower and Tim O'Leary; used for localization workflow and regional difficulty changes.
+
+<a id="pr21"></a>**PR21 — [Fire Emblem: Path of Radiance Hands-On](https://www.gamespot.com/articles/fire-emblem-path-of-radiance-hands-on/1100-6129895/).** Greg Kasavin, GameSpot, July 28, 2005. Four-chapter pre-release demo coverage; evidence of preview/event distribution, not final-review quality.
+
+<a id="pr22"></a>**PR22 — [Fire Emblem: Path of Radiance](https://en.wikipedia.org/wiki/Fire_Emblem:_Path_of_Radiance).** Secondary historical compilation used narrowly for Japan-specific Famitsu sales figures because a primary audited global source was not found in this pass. The figures are not generalized to worldwide lifetime sales.
+
+<a id="pr23"></a>**PR23 — [Fire Emblem: Path of Radiance Review](https://www.rpgfan.com/review/fire-emblem-path-of-radiance-3/).** Ben Love, RPGFan, February 7, 2026. Full Switch 2/Nintendo Classics retrospective read; also documents first-rerelease/scarcity context.
+
+<a id="pr24"></a>**PR24 — [Fire Emblem: Path of Radiance Review](https://rpgamer.com/review/fire-emblem-path-of-radiance-review/).** Chris Privitere, RPGamer, November 17, 2005. Full contemporary review read; especially useful for reset friction, roster breadth, forging, BEXP and postgame.
+
+<a id="pr25"></a>**PR25 — [Path of Radiance Switch 2](https://www.reddit.com/r/fireemblem/comments/1v2qlyx/path_of_radiance_switch_2/).** r/fireemblem player account, July 21, 2026. Qualitative first-person evidence on maps, Rescue, planning and current Nintendo Classics play; not a prevalence estimate.
+
+<a id="pr26"></a>**PR26 — [First Impressions of Path of Radiance](https://www.reddit.com/r/fireemblem/comments/1vjq0sm/first_impressions_of_path_of_radiance/).** r/fireemblem player account, August 9, 2026. Two-playthrough qualitative evidence on worldbuilding, compact Base and battle-speed friction.
+
+<a id="pr27"></a>**PR27 — [FE Path of Radiance — An Honest Review](https://www.reddit.com/r/fireemblem/comments/1s0a8rn/fe_path_of_radiance_an_honest_review/).** r/fireemblem player review, March 22, 2026. Qualitative evidence on intuitive core rules, map objectives and low challenge for an optimization-oriented player.
+
+<a id="pr28"></a>**PR28 — [I struggled to fully enjoy Path of Radiance](https://www.reddit.com/r/fireemblem/comments/1opapd7/).** r/fireemblem player account, November 5, 2025. Mixed qualitative evidence: strong story/music/cast alongside slow phases, reinforcements and difficulty-spike frustration.
+
+<a id="pr29"></a>**PR29 — [Did Path of Radiance and Radiant Dawn hold up well?](https://www.reddit.com/r/fireemblem/comments/122zcor/).** r/fireemblem discussion, March 26, 2023. Multiple-player qualitative evidence that game-speed/enemy-phase length remains a recurring friction point; not used to estimate prevalence.
 
