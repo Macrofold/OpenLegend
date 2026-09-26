@@ -4,7 +4,7 @@
 
 The target now supports [orbit, pitch and projection](../../docs/spatial-world.md#tactical-camera-and-perspective), with optional sprite-friendly locks rather than a fixed-camera engine restriction. Preserve the painted/procedural style: simple physical terrain/ramp/deck geometry can carry painted textures, while people and creatures may remain sprites. A backdrop’s view validity must be explicit; painted art cannot expose a correct unseen backside. Existing asynchronous art/provenance rules remain unchanged.
 
-Status: **accepted visual direction and proposed production brief**, updated September 19, 2026 (America/New_York). Requirements: F25, F40–F41. The user wants beautiful browser-based pixel art, 2.5D with 3D structure, a modern feel and restrained cartoon styling. PlayCanvas is the accepted engine direction. A procedural-art prototype now exists; the richer production family and runtime AI asset generation below remain unimplemented. [User follow-ups V01–V04](../00-source/design-followups.md), [D02/D24](../05-project/open-decisions.md)
+Status: **accepted visual direction and proposed production brief**, updated September 19, 2026 (America/New_York). Requirements: F25, F40–F41. The user wants beautiful browser-based pixel art, 2.5D with 3D structure, a modern feel and restrained cartoon styling. PlayCanvas is the accepted engine direction. The [distribution tradeoffs](../02-research/engines-art-and-audio.md#distribution-and-engine-tradeoffs) explain why; the [client replacement path](../../docs/spatial-world.md#client-replacement-path) records future migration scope and current limits. A procedural-art prototype now exists; the richer production family and runtime AI asset generation below remain unimplemented. [User follow-ups V01–V04](../00-source/design-followups.md), [D02/D24](../05-project/open-decisions.md)
 
 The [UI design-system handoff brief](../../docs/ui-design-brief.md) records the dark green adventure interface direction, proposed React Aria stack, theme boundaries and current interaction requirements for external design work. Technology adoption remains proposed.
 
@@ -22,7 +22,7 @@ Use detailed pixel sprites and textures within a real spatial scene. Positions, 
 | Palette and surfaces | Earth, bark, moss, stone, muted water and warm firelight; material-specific pixel texture | A cohesive palette with clear silhouettes and hazard contrast |
 | Terrain | Slopes, riverbanks, cliffs and structures with actual height where gameplay needs it | Feet, navigation, picking, shadows and occlusion agree across elevations |
 | Atmosphere | Daylight changes, local firelight, subtle mist, smoke, rain and moving foliage | Affordable effects that preserve visibility and interaction clarity; exact techniques are not selected |
-| Camera | Begin evaluation with a fixed elevated angle plus pan and zoom | Pixel stability, readable crowds and held-item alignment; free rotation remains an open decision |
+| Camera | Evaluate orbit, pitch, pan, zoom and selectable projection, with optional sprite-friendly locks | Pixel stability, readable crowds and held-item alignment throughout the accepted camera range |
 | Interface | Sharp, readable captions and controls independent of scene resolution | Text and selection remain usable in darkness, rain, dense foliage and at different zoom levels |
 
 Keep bloom, blur and depth effects restrained enough that people and resources remain readable. This is a production recommendation, not a locked shader recipe or a guarantee of desktop cinematic effects on every browser.

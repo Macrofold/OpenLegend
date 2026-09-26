@@ -6,6 +6,31 @@ Physical data is renderer-independent. The current `WorldRenderer` boundary acce
 
 **Status: accepted target; a bounded native 3D foundation is implemented.** This specification establishes OpenLegend's intended spatial behavior. The [runtime contract](../archive/07-technical-architecture/spatial-world-runtime.md) owns technical representation and execution. The [SW tracker](maintainers/spatial-world.md) owns tasks, dependencies, and acceptance. [Architecture](architecture.md) continues to describe the running implementation.
 
+## Client replacement path
+
+The renderer boundary preserves a future choice of presentation technology; it is not a completed portable-client SDK or a promise of cheap migration. [Engine and distribution tradeoffs](../archive/02-research/engines-art-and-audio.md#distribution-and-engine-tradeoffs) own the rationale and reconsideration criteria. The narrow interface exists today, but a dedicated authorized rendering projection and complete input extraction remain [SW10.1–SW10.2](maintainers/spatial-world.md#sw10--renderer-boundary-and-mixed-representation).
+
+Two changes have different scope. Replacing the browser renderer can retain React and the surrounding web application. Building a native Unreal client would also require substantial UI, input and client lifecycle work; the TypeScript `WorldRenderer` interface is a design seam, not something C++ or Blueprints can directly implement without adaptation.
+
+| Part                                                            | Expected treatment in a future native client                                                                                                                                                              |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hosted simulation, inventions, cognition, persistence and saves | Retain server-side authority and storage; replacing presentation alone should not require migrating world data                                                                                            |
+| Authorized views and player intentions                          | Preserve their meaning and server validation; implement serialization, transport and lifecycle handling in the new client rather than assuming TypeScript types are a cross-language SDK                  |
+| PlayCanvas scene, materials, effects, picking and animation     | Reimplement using the new engine; preserve semantic entity/surface IDs and presentation-only effects                                                                                                      |
+| React UI, accessibility, text entry and camera/input controls   | Rebuild or deliberately integrate an appropriate UI solution; qualify controller/TV interaction separately                                                                                                |
+| Art and asset metadata                                          | Reuse licensed source assets and semantic IDs where compatible; convert import settings, shaders, rigs and generated-asset loading as needed. Standard file formats do not guarantee identical appearance |
+| Accounts, reconnection and platform lifecycle                   | Adapt and qualify for the target platform without moving authorization into the client                                                                                                                    |
+
+A future migration should proceed through one playable slice:
+
+1. Identify the concrete product or production blocker and define equivalent visual, interaction and device acceptance criteria before selecting another engine.
+2. Complete the relevant SW10 separation work only as needed by that slice. Consume scoped public contracts, never database access or raw world state. Do not create a universal graphics wrapper in advance.
+3. Connect the candidate client to the same server. Demonstrate movement, inspection, conversation and invention with existing admission, plus representative art and animation.
+4. Check differing player knowledge, stale/removed targets, reconnect and save/load timeline changes. Client physics, lighting, visibility and animation must not become a second authority for movement, perception or consequences.
+5. Compare production effort, frame times, memory, startup/download, input usability and deployment cost. Commit to a full replacement only when the evidence warrants its migration and maintenance cost.
+
+An installed client can still depend on hosted simulation and AI. Offline play would be a separate architecture decision: the current TypeScript server/domain would need a local host or a deliberate port, and provider-dependent behavior needs its own offline policy. A renderer change does not deliver that capability.
+
 ## The decision
 
 OpenLegend is fundamentally a **three-dimensional simulated world**. Positions, physical extents, movement, interaction distances, sight, and hearing account for height. Its initial control style is tactical rather than first-person: actors usually walk on surfaces, and flyers initially use supported aerial routes. A free rigid-body physics sandbox is not required.

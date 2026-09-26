@@ -167,6 +167,8 @@ SW14–SW16 accompany each slice; they are not a final cleanup phase. No milesto
 
 ## SW10 — Renderer boundary and mixed representation
 
+The [client replacement path](../spatial-world.md#client-replacement-path) explains how this boundary supports a future renderer or native-client change. SW10 does not deliver an Unreal client, console support or offline play; engine reconsideration uses the existing visual proof and D02/D09 evidence.
+
 **Owners:** client renderer/art adapter. **Depends on:** SW02 and the existing art contract; SW03 geometry input for surfaces. **Touchpoints:** `scene.ts`, `art.ts`, `main.tsx`, renderer tests.
 
 - [ ] **SW10.1** Extract a small `WorldRenderer` interface and plain authorized RenderWorldView mapping. Implement PlayCanvas behind it and use a no-GPU test renderer. Do not build a universal graphics abstraction or require a second real engine.

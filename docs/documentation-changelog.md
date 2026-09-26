@@ -1,12 +1,14 @@
 # Documentation changelog
 
-## 2026-09-26 — Complete design package for foundation priorities 1–5
+## 2026-09-26 — Complete design package for foundation priorities 1–5, Browser engine rationale and future client replacement
 
 Added five separate feature specifications and technical designs under [the foundation delivery map](projects/foundations-1-5.md): shared contributions/resources, multiplayer authority, persistent objects/containment, dependency invalidation/aggregate work and persistent appraisal/directional social continuity. Each design records inspected native/data/related-branch boundaries, typed operations, lifecycle, privacy, in-place migration, bounded work, concrete consumers, failure cases and qualification requirements.
 
 Added SC01–SC08, PO01–PO09 and DI01–DI08 as focused child trackers of existing EWF/INV/DF/BW work, and decomposed MP01/MP04 and ACT07/ACT08 in their current trackers. All 46 implementation/qualification slices remain open; prior task states and historical branch coverage are preserved. The [remaining-foundations index](maintainers/remaining-foundational-work.md) and [maintainer index](maintainers/README.md) link the complete package. Proposed engineering choices are explicit; no new universal emotion taxonomy, social-state authority, inventory service, scheduler or distributed prerequisite was introduced.
 
 The design began at main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` and reconciles the subsequent main `f015b2a9712ff87589dc04e72046c4e483dcab67` into the documentation branch, preserving its shared Worker and cold-history consumer changes unchanged. Both sets of maintainer navigation and changelog entries are retained. Relative to that integrated main, this delivery changes documentation only: no runtime implementation, storage, permissions or live provider operations. Main and other active branches were not modified. No build, automated suite or runtime qualification was performed by the design task; DF02/SL00 integration and actual native/database/client/hosted evidence remain implementation requirements.
+
+Expanded [engine research](../archive/02-research/engines-art-and-audio.md#distribution-and-engine-tradeoffs) with browser access, typing/controller tradeoffs, native versus streamed delivery and concrete reconsideration triggers. Documented the [client replacement path](spatial-world.md#client-replacement-path): retain hosted authority and adapt public contracts, while rebuilding presentation and qualifying privacy/lifecycle behavior. SW10 remains incomplete; no migration, console release or offline runtime is delivered or authorized. Reconciled stale camera-choice wording with the accepted spatial direction.
 
 ## 2026-09-25 — Shared Macrofold Worker caller cutover
 
