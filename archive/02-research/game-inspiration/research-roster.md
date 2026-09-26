@@ -1,6 +1,6 @@
 # Complete research roster
 
-Read [requirements](research-requirements.md) and [current progress](research-progress.md). This is the stable 47-subject inventory; **only the progress ledger records completion**. The directory `dossiers/` owns the full-category passes. Earlier chapters and selective mechanics remain in their existing owners and do not automatically satisfy R01–R14.
+Read [requirements](research-requirements.md) and [current progress](research-progress.md). This is the stable **49-subject inventory**; **only the progress ledger records completion**. The original 47 subjects are preserved, and G48–G49 implement Mike's September 25, 2026 request to add RuneScape. The directory `dossiers/` owns full-category passes. Earlier chapters and selective mechanics remain in their existing owners and do not automatically satisfy R01–R14.
 
 | ID | Subject | Dossier filename | Existing chapter / scope boundary |
 | --- | --- | --- | --- |
@@ -51,5 +51,9 @@ Read [requirements](research-requirements.md) and [current progress](research-pr
 | G45 | Against the Storm | `against-the-storm.md` | `games/against-the-storm.md`; version/difficulty boundaries |
 | G46 | Core Keeper | `core-keeper.md` | `games/core-keeper.md`; broader than selected circuits |
 | G47 | PEAK | `peak.md` | `games/peak.md`; launch/later content, broader than rescue tools |
+| G48 | RuneScape (modern / RuneScape 3) | `runescape.md` | Added at Mike's request; no prior full case. Independently research skills, quests, combat, items, economy, modes, presentation, production and reception. |
+| G49 | Old School RuneScape | `old-school-runescape.md` | Added as a separate full pass, not a subsection discharged by G48. Distinguish its actual current rules and community-led development from modern RuneScape. |
 
-These rows preserve the complete earlier 47-subject commitment. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each pass; research missing categories rather than duplicating complete existing sections.
+These rows preserve the complete earlier 47-subject commitment and the new RuneScape addition. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each pass; research missing categories rather than duplicating complete existing sections.
+
+**RuneScape scope:** both G48 and G49 must independently satisfy all R01–R14. Their relationship and shared history should be explained, but neither game's research stands in for the other's. RuneScape Classic is historical context where relevant; a spin-off, private server or announced project is not a substitute for either live game's documented behavior. Retain the original packet's 47-subject count as a historical description, not a claim that the expanded assignment still has only 47 subjects. Both new rows remain pending until the progress ledger records actual reviewed completion.
