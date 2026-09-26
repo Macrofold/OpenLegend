@@ -1,0 +1,52 @@
+name: Publish saved invention foundation
+on:
+  push:
+    branches: [feature/invention-repertoire-foundation]
+    paths: [.github/workflows/publish-recovered-invention.yml]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: recovered-invention-objects
+          run-id: 35960014850
+          github-token: ${{ github.token }}
+          path: /tmp/recovery
+      - name: Restore exact saved Git objects and publish only this branch
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,base64,gzip,hashlib
+          root=pathlib.Path('/tmp/recovery/recovered-objects')
+          segments=[["a2059db30569a7ef5b7d932f35fb82c4b73aa4a5",0,3224],["2ca698f0fddfa0c6854f8d43de2d9bb8e45fc5e0",3225,2660],["2ca698f0fddfa0c6854f8d43de2d9bb8e45fc5e0",5886,5079],["2ca698f0fddfa0c6854f8d43de2d9bb8e45fc5e0",10967,1037],["ee1371b202d545c7124330087bee9f755934dd71",0,4000],["f69be39506e514f0bda7f293641897695ade21f9",0,2608],"1r",["f69be39506e514f0bda7f293641897695ade21f9",2619,1390],["9b15cbbdc9d56229b02876f86a0988e8ee336b6d",0,4000],["dd3edb9a39bb9304ca6b3560ddb52146adb77c6b",0,2000],["739d82ddc42bc59241ea819d814a44cfd4f44c98",0,2000],["bd5078320f6631535f89e9f5f4539b10fad051fe",0,2000],["8f11a27c4ed4435dee6d22d539076432a15f71c1",0,2000],["5f918c2c55c0d9499bfb4f8df5043b82621e681d",0,2000],["e34783c9d6fe4ebdab01bbb5f80865073598641f",0,2000],["bbb1ea7df3167e3e28cc6f1788d25dc07bd3f304",0,2000],["834f7e5c2541e260a8556fb2ede2d5e561fef4b3",0,2000],["a6d542f8f52536326215bcb9f6f863b44a274e65",0,2000],["f5863f1bb02e5cd8c902d8abe573a94d4e252815",0,2000],["30437c62d2457f470c7ef9a9b0f9844fdd6465d0",0,2000],["ee63fb82c10b6c78ede5d7be1fe72e2e23e7e93c",0,2000],["da53e698a6890f0970d686764d5c11671d5e9820",0,2000],["1b11c977f7c17e43f4897c7a8102f83967fdc8e9",0,2000],["064c6184de10cd48b921dd542f4809cf0e2d052a",0,2000],["e402d4e413c421d27d45d336e686aad435b9645e",0,2000],["415d388742ad8e6a4a0331ca901626dce2f52a79",0,2000],["d27391863e62df412252219810920c4887cd66c7",0,2000],["1b2a47617968157704502ed47928245ba707dd39",0,2000],["0f8816359b1085491105e45581b89affaff4d765",0,2000],["edb41dac7a1a6bbf0c3ab9473aeff85999e2a166",0,2000],["5d2bd8efe543b659e81567500af18e16efcb619f",0,2000],["8c6c1e2f45e8f7c3eb94c28edce417868945ff22",0,2000],["b3828ab18248ad3eca4ed794bad567e21e638ecd",0,2000],["a77e30791a8fe30879ac60486b26f62e177b15a2",0,2000],["aff174f1f3aaf6c055817533fe3c668eb5ce8410",0,2000],["a8fd6932b2ee8bd59fe54826fbc7b853edaf76d7",0,2000],["1850565c42e042750dee9251c512fa385d70dd9b",0,2000],["aadbb4789aa27f5a53c4fb1ba80a81cb860133ed",0,818],["aadbb4789aa27f5a53c4fb1ba80a81cb860133ed",820,1182],["ad7c9f58a751ed07ebf2f7205d80385775be9166",0,2000],["9e7351b24c7569ae4674bd51acb6b3ecae59f5a8",0,94],["9e7351b24c7569ae4674bd51acb6b3ecae59f5a8",95,1906],["cd136f4aef4a8ec6f0f0c5895144f3b593617541",0,2000],["7e3e1fae33c71d308902cecec9d392384dd34066",0,2000],["b77d4703fc18da62f1df8718c76723f797c8f701",0,2000],["08f82da530757c072fecba1758d2504afb84de20",0,2000],["e6a6955767da5d594b05b8825fb090edfc7fdc0f",0,2000],["f717ccc3ab874e3015d4551accd2d4067d4b727c",0,2000],["2ea2b342bdd05e44eb5e9502ca8516c5645e271e",0,2000],["d1de8121268a4cbdfed91852ecb3f792819d98b6",0,2000],["320bd5a2cfa0715557558914396f9c42aa741905",0,2000],["f62ec656c572b4a61e46374feee8ea558ac71139",0,2000],["7de2246ee7bc9776792245916189f0738e815474",0,2000],["12c1fe243f823909e36c8c47ad2caae3ec9d1f1e",0,2000],["be6fbd3fb53538c139f368c402b5fa9ba69d3141",0,2000],["ab839a096ee691b1d74919982f64b751129df757",0,2000],["85e3191285205c51e528477c44c2748ec3fd4475",0,2000],["f9d20bda5a6c717cef3476d87af90c30573c37b9",0,1288]]
+          encoded=b''
+          for item in segments:
+            if isinstance(item,str): encoded+=item.encode();continue
+            sha,start,length=item; data=b''.join(next(root.glob('*-'+sha)).read_bytes().split());encoded+=data[start:start+length]
+          bundle=gzip.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(bundle).hexdigest()=='8a61e036d69e216f8126e467264f0b621b05184ea431b0afcf71fdc433c9c353'
+          pathlib.Path('/tmp/recovered.bundle').write_bytes(bundle)
+          PY
+          git bundle verify /tmp/recovered.bundle
+          git fetch /tmp/recovered.bundle HEAD
+          test "$(git rev-parse FETCH_HEAD)" = da2094825fb5d468b7f697e2d536ad95685ee22a
+          test "$(git rev-parse FETCH_HEAD^{tree})" = 9d65f06fa5eb574c9a84d08db274fe5035b173f6
+          git config user.name 'OpenLegend implementation'
+          git config user.email 'implementation@users.noreply.github.com'
+          commit=$(printf '%s\n' '[skip ci] Publish recovered invention foundation and remove temporary recovery workflows' | git commit-tree 9d65f06fa5eb574c9a84d08db274fe5035b173f6 -p "$GITHUB_SHA" -p da2094825fb5d468b7f697e2d536ad95685ee22a)
+          git push origin "$commit:refs/heads/feature/invention-repertoire-foundation"
+          git branch published-invention "$commit"
+          git bundle create /tmp/published-invention.bundle --all
+          echo "Published $commit"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: published-invention-history
+          path: /tmp/published-invention.bundle
+          retention-days: 1
