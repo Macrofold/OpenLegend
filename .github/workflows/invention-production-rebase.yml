@@ -1,0 +1,33 @@
+name: Scoped invention production-data rebase
+on:
+  push:
+    branches: [feature/invention-repertoire-foundation]
+    paths:
+      - .integration/replay.json
+      - .github/workflows/invention-production-rebase.yml
+permissions:
+  contents: write
+concurrency:
+  group: invention-production-rebase
+  cancel-in-progress: false
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Publish only reviewed trees and leased branch references
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python .integration/replay.py
+      - name: Retain exact publication progress for recovery
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: invention-rebase-result
+          path: .integration/replay-result.json
+          if-no-files-found: warn
+          retention-days: 3
