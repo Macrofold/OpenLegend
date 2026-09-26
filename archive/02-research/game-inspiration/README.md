@@ -7,7 +7,7 @@
 - **[Full 130-subject research roster](research-roster.md):** canonical title/edition list for the per-game mechanics/reception expansion.
 - **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable.
 - **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
-- **[G101–G110 dossiers](#g101g110-full-research-dossiers):** the six released standalone Mass Effect games, both Octopath Travelers and both Knights of the Old Republic games; independent edition-aware research, not a combined franchise substitute.
+- **[G101–G110 dossiers](#g101-g110-dossiers):** the six rostered Mass Effect games, both Octopath Travelers and both Knights of the Old Republic games; independent edition-aware research, not a combined franchise substitute.
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
 - **[Find an interaction](mechanics/interaction-lookup.md):** cross-game navigation by the question you are exploring, from effect delivery and useful delegation to personal history, shared rewards, and creator trust.
@@ -26,7 +26,7 @@
 
 ### Construction, combinations, discovery, and mastery
 
-[Factorio / Satisfactory](games/factorio-and-satisfactory.md) · [Terraria](games/terraria.md) · [Valheim](games/valheim.md) · [Noita](games/noita.md) · [Caves of Qud](games/caves-of-qud.md) · [Outer Wilds](games/outer-wilds.md) · [Balatro](games/balatro.md) · [Slay the Spire](games/slay-the-spire.md) · [Vampire Survivors](games/vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) · [Core Keeper](games/core-keeper.md) · [Against the Storm](games/against-the-storm.md).
+[Factorio / Satisfactory](games/factorio-and-satisfactory.md) · [Terraria](games/terraria.md) · [Valheim](games/valheim.md) · [Noita](games/noita.md) · [Caves of Qud](games/caves-of-qud.md) · [Outer Wilds](games/outer-wilds.md) · [Balatro](games/balatro.md) · [Slay the Spire](games/slay-the-spire.md) · [Vampire Survivors](games/vampire-survivors.md) · [Core Keeper](games/core-keeper.md) · [Against the Storm](games/against-the-storm.md).
 
 ### Multiplayer, creators, communities, and return loops
 
@@ -35,6 +35,8 @@
 ### Cautionary cases and language-driven creation
 
 [Dreams / Project Spark](games/dreams-and-project-spark.md) · [EverQuest Next](games/everquest-next.md) · [Worlds Adrift](games/worlds-adrift.md) · [Spore](games/spore.md) · [No Man's Sky](games/no-man-s-sky.md) · [Ultima Online ecology](games/ultima-online-s-ecology.md) · [Scribblenauts](games/scribblenauts.md) · [AI Dungeon](games/ai-dungeon.md).
+
+<a id="g101-g110-dossiers"></a>
 
 ### G101–G110 full research dossiers
 

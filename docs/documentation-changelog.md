@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-26 — G101–G110 research range completed
+
+Completed the revised [G101–G110 assignment](../archive/02-research/game-inspiration/research-progress.md) on `docs/game-inspiration-games-101-120`, stopping at G110 as requested. The final continuation retained the nine earlier completion records and finished the [KOTOR II dossier](../archive/02-research/game-inspiration/dossiers/star-wars-knights-of-the-old-republic-ii.md): six constructed situations, five written reviews, helpful Steam evidence, 37 annotated sources and R01–R14 coverage. Original content, ports, restoration, production recollections and inaccessible commercial/cancellation-source leads are distinguished.
+
+Added ten dossier routes to the library index and six G110 routes to the interaction lookup, preserving earlier chapters and navigation. Content, source boundaries and relative links/anchors were reviewed; no gameplay, automated test suite or accessibility audit was run. The library-wide packet, earlier-conversation and full-roster audits remain pending. No runtime behavior, accepted game requirements or engineering backlog changed; G111–G120 were not started.
+
 ## 2026-09-26 — Game mechanics inspiration corpus expansion
 
 Expanded the research-only game-inspiration program from 57 to 130 individually tracked subjects on `docs/game-inspiration-library-expansion`. The roster preserves all previously promised cases, adds the requested RPG/action/open-world/strategy franchises and titles, and adds twenty curated high-signal systemic references for simulation, NPC behavior, emergent narrative, environment interaction, relationships and creator mechanics. The completion standard now requires five substantive written-review summaries from multiple sources for every researchable game, top/helpful Steam review sampling where applicable, and an explicit comprehensive mechanics inventory. This changes research scope and navigation only; it does not adopt gameplay requirements or change runtime behavior.
