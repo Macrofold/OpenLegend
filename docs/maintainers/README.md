@@ -33,6 +33,9 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 
 - [Policies to revisit](revisitable-policies.md) — accepted but changeable decisions, canonical owners and review triggers; not an implementation backlog.
 
+- [Repertoire foundation](../repertoire-foundation.md) — detailed integration contract and INV-20 delivery; live arrangements, information, commitments, methods and observer-relative art.
+
+
 - [Unified World Agent](../world-agent-runtime.md) and [MCP integration](../world-agent-mcp.md)
 - [Relationship graph](../invention-graph.md), [composition](../invention-composition.md), and [target scenarios](../invention-scenarios.md)
 - [Encounter scaling](../encounter-scaling.md) and [MCP tooling research](../../archive/02-research/mcp-tooling-and-integration.md)

@@ -1,0 +1,293 @@
+{
+  "scope": "Manual source/HTTP/native exercise and synthetic profiling only; not automated release acceptance or live agent quality.",
+  "sourceBase": "196cfd258654df40b96e70b0ac95e26d38b1eca3",
+  "implementationCheckpoint": "e0fdb314371b3174e5cd0d135e8e61fe446a666d",
+  "localDate": "2026-09-23 America/New_York",
+  "environment": {
+    "node": "v22.16.0",
+    "platform": "linux",
+    "arch": "x64",
+    "visibleCpus": 5,
+    "availableParallelism": 4,
+    "cpu": "AMD EPYC 9V74 80-Core Processor"
+  },
+  "providerSpendUsd": 0,
+  "automaticUnitSuitesRun": false,
+  "application": {
+    "httpStatus": {
+      "init": 200,
+      "list": 200,
+      "context": 200,
+      "find": 200,
+      "graph": 200,
+      "inspect": 200,
+      "bad": 401,
+      "invalid": 200,
+      "local": 200
+    },
+    "toolNames": [
+      "ol_context",
+      "ol_find",
+      "ol_inspect",
+      "ol_graph",
+      "ol_instances",
+      "ol_evidence",
+      "ol_activity",
+      "ol_validate_recipe"
+    ],
+    "unknownArgumentIsMcpError": true,
+    "readWorldDigestUnchanged": true,
+    "definitionCacheReused": true,
+    "smallWorldGraphCalls": {
+      "calls": 1000,
+      "totalMs": 21.850457000002848,
+      "maxMs": 1.6310469999999668,
+      "medianMs": 0.0170460000000503
+    },
+    "resume": true,
+    "spokenCommitment": true,
+    "retainedCommitmentInspected": true,
+    "nativeRecipePreviewValid": true,
+    "existingSuppliedAdmissionUsed": true,
+    "definitionChangeInvalidatedCache": true,
+    "cleanRestartRecoveredDefinition": true,
+    "paidProviderCalls": 0
+  },
+  "syntheticAdjacency": {
+    "node": "v22.16.0",
+    "platform": "linux",
+    "results": [
+      {
+        "nodes": 1001,
+        "edges": 1000,
+        "buildMs": 3.1830229999999915,
+        "rssDeltaBytes": 7864320,
+        "negativeQuery": {
+          "pages": 1,
+          "empty": 1,
+          "missingFilterMs": 0.30414799999999786
+        },
+        "queries": {
+          "count": 1000,
+          "totalMs": 167.35791299999968,
+          "maxMs": 1.3424619999999834,
+          "medianMs": 0.15146799999999416
+        },
+        "detached": true,
+        "stale": "stale"
+      },
+      {
+        "nodes": 10001,
+        "edges": 10000,
+        "buildMs": 22.159172000000012,
+        "rssDeltaBytes": 21946368,
+        "negativeQuery": {
+          "pages": 10,
+          "empty": 10,
+          "missingFilterMs": 0.8349979999999846
+        },
+        "queries": {
+          "count": 1000,
+          "totalMs": 167.25015400000018,
+          "maxMs": 1.6080010000000016,
+          "medianMs": 0.15045700000001716
+        },
+        "detached": true,
+        "stale": "stale"
+      },
+      {
+        "nodes": 30001,
+        "edges": 30000,
+        "buildMs": 74.12413499999991,
+        "rssDeltaBytes": 48201728,
+        "negativeQuery": {
+          "pages": 30,
+          "empty": 30,
+          "missingFilterMs": 2.4063340000000153
+        },
+        "queries": {
+          "count": 1000,
+          "totalMs": 176.5337220000016,
+          "maxMs": 3.542385000000081,
+          "medianMs": 0.15342099999998027
+        },
+        "detached": true,
+        "stale": "stale"
+      }
+    ]
+  },
+  "nativeStress": {
+    "gems": {
+      "node": "v22.16.0",
+      "initial": {
+        "simTime": 0,
+        "entities": 514,
+        "events": 0
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 3.0758830000000046,
+      "warmupSteps": 0,
+      "scenario": {
+        "seed": 73,
+        "people": 0,
+        "animals": 0,
+        "layout": "crowded",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 30,
+        "objects": [
+          {
+            "count": 500,
+            "quantity": 1,
+            "workSeconds": 2,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          }
+        ]
+      },
+      "setupMs": 25.987376000000012,
+      "cpuMs": 1534.501,
+      "heapUsedBytes": 34575480,
+      "nativeHeadroomAtRequestedSpeed": 0.8907956365530214,
+      "finalCounts": {
+        "entities": 514,
+        "events": 1024,
+        "awareness": 2048
+      },
+      "steps": 180,
+      "totalMs": 1122.591938,
+      "p50Ms": 5.281162999999879,
+      "p95Ms": 8.111566000000039,
+      "maxStepMs": 116.58835799999997,
+      "nativeSecondsPerWallSecond": 160.34321457954385,
+      "finalWorldDigest": "205faf3d6a45c33829cba9484211a182d4c93e8962e57b2122bb2a507de269f1",
+      "hottestSelfMs": [
+        ["intersectsSegment src/geometry.ts:1", 150.55599999999995],
+        ["finalizeProperty dist/immer.mjs:314", 92.66299999999995],
+        ["(anonymous) src/kernel.ts:1", 91.511],
+        ["updateEncounters src/kernel.ts:1", 74.48299999999999],
+        ["(garbage collector) :0", 70.92300000000003],
+        ["(anonymous) src/geometry.ts:1", 69.149],
+        ["shallowCopy dist/immer.mjs:121", 48.26300000000001],
+        ["get dist/immer.mjs:382", 47.32800000000001],
+        ["__name src/bounds-index.ts:1", 46.215],
+        ["set filename :0", 42.943999999999996],
+        ["isPlainObject dist/immer.mjs:60", 27.262],
+        ["post node:inspector:115", 26.434]
+      ]
+    },
+    "mixed": {
+      "node": "v22.16.0",
+      "initial": {
+        "simTime": 0,
+        "entities": 344,
+        "events": 30
+      },
+      "frozenSnapshots": true,
+      "initialFreezeMs": 5.651603999999963,
+      "warmupSteps": 0,
+      "scenario": {
+        "seed": 73,
+        "people": 10,
+        "animals": 20,
+        "layout": "scattered",
+        "steps": 180,
+        "warmup": 0,
+        "speed": 3,
+        "timeoutSeconds": 60,
+        "objects": [
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-0",
+              "version": 1,
+              "name": "Rare gem",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["rigid", "point"]
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 1,
+            "workSeconds": 1,
+            "definition": {
+              "id": "profile-material-1",
+              "version": 1,
+              "name": "Food parcel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["food"],
+              "nutrition": 20
+            }
+          },
+          {
+            "count": 100,
+            "quantity": 5,
+            "workSeconds": 10,
+            "definition": {
+              "id": "profile-material-2",
+              "version": 1,
+              "name": "Dry fuel",
+              "description": "Synthetic profiling fixture; not an authored game asset.",
+              "properties": ["fuel"]
+            }
+          }
+        ]
+      },
+      "setupMs": 78.690226,
+      "cpuMs": 2268.841,
+      "heapUsedBytes": 50118392,
+      "nativeHeadroomAtRequestedSpeed": 0.5972546230864398,
+      "finalCounts": {
+        "entities": 344,
+        "events": 3254,
+        "awareness": 31756
+      },
+      "steps": 180,
+      "totalMs": 1674.327768,
+      "p50Ms": 3.744220000000041,
+      "p95Ms": 5.808830000000171,
+      "maxStepMs": 955.5843679999999,
+      "nativeSecondsPerWallSecond": 107.50583215555916,
+      "finalWorldDigest": "e30340506b1b36aa95f8fd7742899ebc7ddf203935abf14e794b366ef734738c",
+      "hottestSelfMs": [
+        ["finalizeProperty dist/immer.mjs:314", 297.2149999999999],
+        ["updateEncounters src/kernel.ts:1", 137.12000000000003],
+        ["get dist/immer.mjs:382", 80.98900000000002],
+        ["isPlainObject dist/immer.mjs:60", 74.458],
+        ["isDraftable dist/immer.mjs:54", 70.12599999999999],
+        ["recordEvent src/events.ts:1", 64.055],
+        ["(anonymous) src/kernel.ts:1", 62.89200000000001],
+        ["(garbage collector) :0", 59.366],
+        ["freeze dist/immer.mjs:161", 56.51500000000003],
+        ["each dist/immer.mjs:77", 49.375],
+        ["mutateExperience src/experience.ts:1", 46.073],
+        ["isDraft dist/immer.mjs:51", 44.607]
+      ]
+    }
+  },
+  "browser": "Navigation blocked by environment ERR_BLOCKED_BY_ADMINISTRATOR; no visual/accessibility claim.",
+  "qualificationGaps": [
+    "Actual Macrofold/native harness and remote connector forwarding",
+    "Modern-profile MCP interoperability",
+    "Hosted multi-user scopes/OAuth",
+    "Durable session/mutation/approval and image-inclusive budget execution",
+    "Full impact closure or new social/physical/information mechanics",
+    "Browser/accessibility",
+    "Mature-world/persistence load and long-running concurrency"
+  ],
+  "measurementLimits": [
+    "Short synthetic samples; not stable tail percentiles or hosted capacity.",
+    "Native stress excludes HTTP, rendering and paid providers.",
+    "RSS deltas are samples across allocations/GC, not peak independent costs.",
+    "Adjacency measurements do not include semantic extraction, effect validation, database/network/model work.",
+    "No cross-hardware before/after speedup claim."
+  ]
+}

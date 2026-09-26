@@ -128,3 +128,92 @@ Use the official pinned SDK for protocol conversion, fresh request-scoped server
 No new saved-world fields are required for derived graph indexes. Define cache invalidation on exact immutable source identity and restore generation. Keep adapters and traversal separate so new real relation sources do not rewrite MCP or AI schemas. Do not create dormant unconsumed runtime stores for future social/physical families merely to mark a task implemented.
 
 Implementation/acceptance are tracked under INV-20 and the existing AC/EWF owners. All architecture claims must identify the delivered projection coverage. The complete graph, joint physics, information carriers, institutions, generated art and live Macrofold integration require their stated follow-up consumers and qualification.
+
+## 11. Technical extension contracts
+
+The shapes below specify future owner records, not new runtime fields delivered by the read-only bootstrap. Use the existing identity, native mutation, serialization and reference codecs when implementing each consumer. The point is to preserve required meanings, not to establish a second public schema or require a class for every row.
+
+### 11.1 Source adapters and identifiable relationships
+
+Keep traversal independent of the source model. A source reader accepts an authorized snapshot, resolves exact records and projects nodes/edges with provenance. A new adapter for a worksite, agreement or content carrier must supply its revision, disclosure projection, bounded enumeration and relevant invalidation inputs. It cannot authorize effects by returning an edge. The initial concrete functions are simpler than a general plugin registry; add a common adapter interface when a real additional source needs it.
+
+A multi-party relationship is an owner-managed record with its own identity, not a clique of pairwise edges. Its projection is the record node plus role edges to exact participants/resources/definitions. Preserve at least:
+
+```text
+Interaction identity and source revision
+  kind / exact implementing definition
+  participant roles -> actor/body/controller references as appropriate
+  actual role acceptance and withdrawal receipts
+  worksite/object/resource bindings
+  preparation, active and terminal status under the owning family
+  current committed contributions and retained progress
+  relevant clock, cancellation and recovery rules
+  disclosure policy and source evidence
+```
+
+The graph can collapse that node for display, but must retain its identity and roles for explanation and impact queries. Two people carrying one stretcher must share one stretcher identity and one load owner; two loans concerning one item remain two independently attributable records. A role edge does not make an actor willing, knowledgeable or physically present.
+
+Definition extraction is invalidated by definition/manifest changes. Live overlays depend on selected state, connected records and applicable geometry; evidence overlays depend on their actual record and source references. Merely advancing `simTime` does not change an unchanged structural record. Growing sources eventually need indexed source enumeration rather than increasing synchronous caps indefinitely. Pagination freezes the query/source binding and never implies full interaction closure.
+
+### 11.2 Information record and carrier implementation
+
+A first note implementation should use three existing-owner records or components:
+
+| Record                     | Required fields and boundaries                                                                                                                                                                                                                                                                        |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Immutable content revision | Content identity/revision, kind/encoding, bounded text or typed marks, author/source identity, optional original/copy lineage, represented references/claims, evidence/uncertainty, and permitted disclosures. A represented entity is not automatically physically present or named to every reader. |
+| Carrier binding            | Carrier instance/part or admitted nonphysical channel, exact content revision, occupied area/slot, marking method, current integrity/readability and family-owned access/decoding requirements. Do not attach an unbounded transcript to every entity.                                                |
+| Reading/copying outcome    | Actor, permitted carrier/content projection, actual action receipt, source revision and acquisition conditions. Existing observation and learning services determine resulting knowledge/belief; an `inspect` tool alone does not create that receipt.                                                |
+
+Write flow: bind a supported carrier and materials -> validate the exact requested content under the actor's evidence scope -> perform native work -> commit carrier/content binding and consumed resources -> emit the actual sensory event -> project reading opportunities. A creator placing content uses a separately authorized creator operation, not an imaginary actor writing session.
+
+Copy flow: inspect/read at supported detail -> retain the represented content and errors/uncertainty actually available -> consume the new carrier/work -> create copy provenance. A map copy must not gain missing geography; a false label can be copied faithfully without becoming true. Copying an immutable content value can reuse bytes, but carrier identity, ownership and copying evidence stay distinct.
+
+First release may limit content to plain text and one actual carrier family. Proposed starting bounds are 8 KiB text and 32 represented reference/claim entries per revision; qualify these with actual UI/storage/reader costs. Use registered language/decoding policies, not an LLM-generated interpreter or arbitrary active document. No file/URL fetched from in-world prose, JavaScript embedded in a document, OCR-derived authority, or automatic character memory grant is permitted.
+
+### 11.3 Agreements and commitments implementation
+
+Do not redefine the current personal obligation as a signed mutual agreement. A new agreement family needs a separately identified accepted-terms record linked to the existing participants' memory/commitment projections:
+
+```text
+Agreement revision
+  identity / exact term-definition and prior-amendment references
+  parties with role-specific accepted terms and authenticated action receipts
+  resource/instance commitments, recipient and fulfillment predicates
+  effective condition and deadline in an admitted fictional clock
+  amendment, withdrawal, expiry and dispute rules
+  evidence sources and known / unknown / disputed resolution
+  optional admitted enforcement binding
+```
+
+Term evaluation uses registered predicates over allowed evidence; it cannot evaluate arbitrary code, query all memories, or require every promise to have mechanically verifiable satisfaction. Subjective promises can retain personal appraisal. Public agreement state and what each participant believes about it can differ.
+
+Implement offer creation and exact acceptance through NC/AG and the owning agreement mutation. Accepting revision R does not accept revision R+1. Recheck actual parties, required participation, current items and term version at settlement. An exchange may settle atomically; a long-term promise cannot reserve another actor's behavior or hold the entire world transaction until tomorrow.
+
+Where enforcement exists, it consumes agreement/evidence through its admitted interface and emits ordinary accountable effects. Escrow owns its deposited resources; personal commitments own no imaginary copy. Deactivation/removal of an enforcement definition follows INV-5 with deposits, pending claims and participant records preserved or explicitly recovered. A rightful waiver changes only that party's claim; it cannot erase historical evidence or other parties' rights.
+
+### 11.4 Shared work and temporal validation implementation
+
+Use one current AG action owner per participant and one family owner for a shared worksite. Each participant's actual readiness binds a role, the exact shared method revision, necessary stance/channel/tool and a finite readiness lifetime. Acquire the necessary start resources in stable order at one simulation boundary. Do not keep an actor's lane indefinitely reserved while another participant is absent.
+
+A work step computes the contribution from participants who are actually ready under the family's rules, resolves finite material/channel claims, then commits worksite progress and receipts once. Withdrawal stops future contribution at the declared safe boundary. Retained progress belongs to the worksite rather than a departing worker; some processes cannot pause safely and must expose that limitation. Native load/geometry support remains a required capability for lifts, stretches, braces and collapses.
+
+Method-validation records must refer back to AC-owned constraint/predicate/result IDs. For each hard constraint retain its binding time, evidence requirement, scope and check boundary (pre-start, maintained, before irreversible effect, or terminal). Failure maps to supported stop/wait/reconsider dispositions; there is no generic rollback of completed work. Preferences influence method selection but never masquerade as enforced guards.
+
+Preparing a method checks structural ordering and known invariants. Runtime checks use the current evidence and authoritative state at the required boundary. In `brace -> remove beam`, the second step depends on actual supported bracing, not merely an accepted command. In `do not open package`, no step may request opening as a hidden implementation detail. In `stop if noticed`, the guard needs admitted recognition evidence; the engine cannot expose the observer's private thought as a convenience.
+
+### 11.5 Observation-to-presentation implementation
+
+Keep three values distinct: authoritative subject/effect state; observer-visible appearance facts; renderer asset binding. The sense/recognition/effect owner projects the second from the first. The presentation adapter selects a compatible asset from the second. No asset can back-propagate anatomy, physics or a new belief into the first.
+
+Projection identity includes the actual admitted appearance/effect revision, modality/detail and permission class where they change what can be shown. It need not include every observer ID when many observers share the same permitted appearance. Private source identities are not cache keys exposed to unauthorized clients. Reacquisition or dispelling an illusion updates the relevant observation/projection, not every unrelated asset.
+
+The default scene can retain its current rendering until illusion/disguise/carrier families exist. Their acceptance requires player-view and creator-view examples, no hidden trap label in fallback, no fake bird collision, and a map preview that does not expose unknown terrain. A generated still alone does not implement any of these semantics.
+
+### 11.6 Incremental delivery and expansion stop points
+
+The read-only foundation can ship without new saved fields, paid models, a graph database, or parallel activity execution. The next meaningful increment is the native Macrofold connector/session/approval path under INV-16/18, using these existing readers and native recipe draft services. A real authenticated deployment and live harness qualification are required before claiming that connection works.
+
+Thereafter select one unlike consumer at a time: note/carrier, exact offer/transfer, worksite hold/fasten, then a composed pot/bell/convention/request scene. Each demonstrates actual family behavior, graph extraction, cognitive projection, native use, interruption and current-format persistence. Do not call an unconsumed type declaration an implemented family.
+
+Before exposing clone/merge, local clocks, graph-world travel or deformation, the respective host consumer must define its identity, collision/topology, resource, observation, scheduling and recovery semantics. Generic references and adapter boundaries leave room for them; the current runtime must continue to report them as unsupported. These are architectural extension points, not latent gameplay switches.
