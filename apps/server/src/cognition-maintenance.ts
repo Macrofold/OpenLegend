@@ -523,8 +523,12 @@ export class CognitionMaintenance {
     return await this.job(queued.actorId, queued.reason, queued.origin, async (job) => {
       const { actorId } = queued;
       const snapshot = this.service.world.innerWorlds![actorId]!;
+      // Only live obligations constrain publication. Resolved history may leave RAM
+      // during reflection without changing any obligation or retained evidence.
       const obligations = digest(
-        (this.service.world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment'),
+        (this.service.world.memories[actorId] ?? []).filter(
+          (m) => m.kind === 'commitment' && !m.resolved,
+        ),
       );
       const prepared = await prepareDecision(
         this.service,
@@ -604,18 +608,20 @@ export class CognitionMaintenance {
         prepared.entityReferences,
         prepared.binding.knowledgeReferences,
       );
-      if (
-        obligations !==
-        digest((this.service.world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment'))
-      )
-        throw new Error('Obligations changed during reflection.');
       await this.log.record(`${job.id}:files`, 'Workspace publication proposal', {
         sourceSnapshot: value.revision,
         files: value.files,
         thoughts: value.thoughts,
       });
-      const accepted = await this.service.transition((world) =>
-        publishInnerWorld(
+      const accepted = await this.service.transition((world) => {
+        if (
+          obligations !==
+          digest(
+            (world.memories[actorId] ?? []).filter((m) => m.kind === 'commitment' && !m.resolved),
+          )
+        )
+          throw new Error('Obligations changed during reflection.');
+        return publishInnerWorld(
           world,
           actorId,
           snapshot.revision,
@@ -632,8 +638,8 @@ export class CognitionMaintenance {
           prepared.binding.entityIds,
           prepared.binding.entityEpisodes,
           prepared.binding.knowledgeReferences,
-        ),
-      );
+        );
+      });
       if (!accepted.ok) throw new Error(accepted.message);
       await this.log.record(
         `${job.id}:publication`,

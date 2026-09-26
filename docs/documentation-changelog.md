@@ -6,7 +6,11 @@ Added five separate feature specifications and technical designs under [the foun
 
 Added SC01–SC08, PO01–PO09 and DI01–DI08 as focused child trackers of existing EWF/INV/DF/BW work, and decomposed MP01/MP04 and ACT07/ACT08 in their current trackers. All 46 implementation/qualification slices remain open; prior task states and historical branch coverage are preserved. The [remaining-foundations index](maintainers/remaining-foundational-work.md) and [maintainer index](maintainers/README.md) link the complete package. Proposed engineering choices are explicit; no new universal emotion taxonomy, social-state authority, inventory service, scheduler or distributed prerequisite was introduced.
 
-This is documentation-only work from main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041`. No runtime code, storage, permissions, active implementation branches or main were changed by the design commits; no provider execution, build, automated suite or runtime qualification was performed. The package preserves current migration/privacy policies and requires DF02/SL00 integration and actual native/database/client/hosted evidence during implementation.
+The design began at main `c70f4c1e932fb9bf0fdcc61efe30ccd1bdb64041` and reconciles the subsequent main `f015b2a9712ff87589dc04e72046c4e483dcab67` into the documentation branch, preserving its shared Worker and cold-history consumer changes unchanged. Both sets of maintainer navigation and changelog entries are retained. Relative to that integrated main, this delivery changes documentation only: no runtime implementation, storage, permissions or live provider operations. Main and other active branches were not modified. No build, automated suite or runtime qualification was performed by the design task; DF02/SL00 integration and actual native/database/client/hosted evidence remain implementation requirements.
+
+## 2026-09-25 — Shared Macrofold Worker caller cutover
+
+Replaced Worktree-bound Sandbox execution with an explicitly owner-selected shared Worker. Operator selection rather than automatic creation keeps administrative lifecycle permissions and open-ended allocation costs outside actor/conversation code; the removed finite Sandbox allowance is not reinterpreted as an hourly ceiling. Existing Worktree/Session mappings and old financial records remain intact. Added demand-first native submission, target checks, durable conversation closure and Run-scoped cancellation, while preserving direct inference. [Provider setup](ai-providers.md#shared-worker-setup-and-cutover), [architecture](architecture.md#macrofold-worker-ownership) and [MW01–MW04](maintainers/macrofold-worker-api.md) replace the prior per-Worktree ownership direction. [Verification](verification.md#macrofold-worker-api-cutover) separates local runtime/build evidence from remaining live cutover and baseline CI gaps.
 
 ## 2026-09-25 — Foundation decisions and branch-aware remaining work
 
@@ -76,7 +80,7 @@ Preserved the concurrent third-pass lazy graph, closed-region proofs, native ros
 
 ## Third spatial scaling pass
 
-Replaced eager exact graph baking/weak-component labels with lazy checked edges, connector-aware A* and bounded exhausted-search proofs; documented finite native participant reuse and isolated observation copying. Updated implemented SW/PF subsets without closing the remaining preparation, private-acquisition or population gates. Added SR11/SR12 and extended SR05 instead of duplicating privacy checks. Prior automated evidence remains historical; this round records builds/manual runtime only.
+Replaced eager exact graph baking/weak-component labels with lazy checked edges, connector-aware A\* and bounded exhausted-search proofs; documented finite native participant reuse and isolated observation copying. Updated implemented SW/PF entries and remaining latency gates. Removed the obsolete PF task to implement experience-ID indexing (already delivered); its regression requirements remain SR08. Added SR11/SR12 and extended SR05 instead of duplicating privacy checks. Prior automated evidence remains historical; this round records builds/manual runtime only.
 
 ## Second spatial scaling pass
 
@@ -88,7 +92,7 @@ Added the SW delivery ledger separating implemented native subsets from broader 
 
 ## Spatial-world integration and first native provider
 
-Added spatial behavior/runtime/tracker/research owners and retained the original pinned source review as historical research. Reconciled sensory, agency, art, camera, save, storage and engine/world ownership without resetting existing task IDs. Replaced the flat-world target with XYZ/support-aware simulation and mixed representation. The initial implementation chooses bounded native surface A*/convex queries over unqualified multi-library WASM integration; researched alternatives and broader target gates remain explicit. Current behavior and actual validation are recorded in Architecture/Verification, not inferred from documentation integration.
+Added spatial behavior/runtime/tracker/research owners and retained the original pinned source review as historical research. Reconciled sensory, agency, art, camera, save, storage and engine/world ownership without resetting existing task IDs. Replaced the flat-world target with XYZ/support-aware simulation and mixed representation. The initial implementation chooses bounded native surface A\*/convex queries over unqualified multi-library WASM integration; researched alternatives and broader target gates remain explicit. Current behavior and actual validation are recorded in Architecture/Verification, not inferred from documentation integration.
 
 ## 2026-09-22 — Shared invention and plan-output slice
 

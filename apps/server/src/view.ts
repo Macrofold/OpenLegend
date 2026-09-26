@@ -828,7 +828,7 @@ export async function projectView(
         aiMode === 'fixture'
           ? 'Injected test provider. This is not live AI acceptance evidence.'
           : aiMode === 'unconfigured'
-            ? 'Configure backend AI credentials and a spending cap. Macrofold also needs a nonzero MACROFOLD_COMPUTE_MAX_USD for warm compute.'
+            ? 'Configure backend AI credentials and a spending cap. Macrofold native execution also needs an owner-selected MACROFOLD_WORKER_ID; direct inference does not.'
             : (latestProblem?.message ??
               'Jev routes bounded decisions. LLMs handle conversation, reconsideration and new recipes.'),
       jobs,

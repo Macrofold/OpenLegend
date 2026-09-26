@@ -36,10 +36,12 @@ All typecheck errors resolved; committed review protections retained; ordinary s
 
 ## Follow-up consumer review
 
-Review fixes estimated at 200–300 logic lines. Scope: preserve explicit delayed-trigger attribution after residency eviction, keep additive legacy awareness migration complete, and scope inspection freshness to the inspected actor. Owners are MemoryRepository/WorldService, response context assembly, and WorldRecords startup. Reuse canonical eligibility and source-revision validation; do not change retention semantics or materialize full histories for ordinary reads.
+Review fixes estimated at 200–300 logic lines. Scope: preserve explicit delayed-trigger attribution after residency eviction, keep additive legacy awareness migration complete, scope inspection freshness to the inspected actor, and keep reflection obligation checks independent of resolved-history eviction. Owners are MemoryRepository/WorldService, response context assembly, and WorldRecords startup. Reuse canonical eligibility and source-revision validation; do not change retention semantics or materialize full histories for ordinary reads.
 
 1. Reproduce cold-trigger, legacy-cold migration and unrelated-actor inspection failures with disposable native worlds (confirmed).
 2. Add exact eligible evidence reads and connect AI routing, trigger facts and reference roles; validate their source revisions after attention.
 3. Include only migratable legacy awareness in startup's working set; let the existing domain migration update it before release.
 4. Track actor-scoped publication freshness for private inspection while retaining restore/permission checks.
 5. Re-run native history/inspection/recovery checks, typecheck/build, review the resulting diff and update PF08/D1/D2 evidence. No new suites or paid calls. Completion requires the reproductions passing, cold sources staying nonresident, and changed/forgotten sources still rejected.
+
+Consumer review complete: repaired all four reproduced issues and moved the live-obligation guard into the publication mutation. Native SQLite/PostgreSQL context checks reject forgotten or edited trigger evidence, unrelated actors no longer invalidate inspection, same-actor changes and revoked access still do, and additive migration preserves cold trigger metadata. A local reflection harness confirms resolved-source eviction still permits publication and a new live obligation before publication rejects it. Recovery/consolidation/scheduling drills and the 100,000-source stress run passed; typecheck/build passed. [Detailed evidence and limits](../verification.md#history-consumer-review) retain the open dense-population and full-backlog/checkpoint gates. No automated suites or paid calls.

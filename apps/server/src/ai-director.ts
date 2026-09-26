@@ -515,7 +515,7 @@ export class AiDirector {
           ok: false,
           code: 'unconfigured',
           message:
-            'Configure the backend AI provider, a nonzero spending cap, and (for Macrofold) MACROFOLD_COMPUTE_MAX_USD. Macrofold uses the backend MACROFOLD_API_KEY.',
+            'Configure the backend AI provider, a nonzero spending cap, and (for Macrofold native execution) an owner-selected MACROFOLD_WORKER_ID. Macrofold uses the backend MACROFOLD_API_KEY.',
         };
       if (this.running || this.stopped)
         return {

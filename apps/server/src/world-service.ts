@@ -601,6 +601,7 @@ export class WorldService {
     await this.flush();
     const world = this.world,
       generation = this.generation;
+    if (!world.entities[actorId]?.actor) throw new Error('Actor unavailable.');
     const head = await this.store.records?.head();
     if (!this.store.memories || !head)
       return (world.experience?.awareness[actorId] ?? []).filter((entry) =>
@@ -614,6 +615,7 @@ export class WorldService {
         selected.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
       )) ||
       generation !== this.generation ||
+      !this.world.entities[actorId]?.actor ||
       world.experience?.forgotten[actorId] !== this.world.experience?.forgotten[actorId] ||
       world.experience?.corrections?.[actorId] !== this.world.experience?.corrections?.[actorId]
     )
