@@ -6,9 +6,9 @@ This tracks research only. No row authorizes an OpenLegend implementation task. 
 
 ## Resume here
 
-**Active subject: G02 — Among Us.** Read `games/among-us-and-lethal-company.md`, retain its Among Us history and YouTube amplification evidence, and research Among Us independently against R01–R14. Intended output: `dossiers/among-us.md`. Required missing breadth includes Classic actions/tasks/sabotage, roles and information tools, maps/settings and native alternate modes, cosmetic versus gameplay progression, social entry/communication, art/audio, production and delayed discovery, and substantive positive/negative reception. Do not substitute the existing Lethal Company mechanics study.
+**Active subject: G03 — Animal Crossing: New Horizons.** Read `games/animal-crossing-new-horizons.md` and the supplied master's corresponding section. Intended output: `dossiers/animal-crossing-new-horizons.md`. Complete all R01–R14: daily/calendar play, gathering and DIY/tool durability, home/island building, Nook Miles/Bells/turnips, collections and museum, villagers/visitors and relationships, local/online/shared-island rules, presentation/sound, authored framing, development/distribution/promotion, positive and negative reception, and concrete interactions. Distinguish launch, free updates, Happy Home Paradise, and any later edition/update confirmed by current sources. Preserve the earlier dated commercial comparison; it was not a full mechanics study.
 
-**Full passes reviewed and committed: 1 / 47.** G01 completed in `5e549c2b88a7182a9ab4bf71dfb508ff9fd12c90`, with 31 annotated sources, distinct original criticism/player testimony, full category map and per-game preservation review. The other subjects remain unprocessed against the complete assignment, including the 28 names with earlier selective mechanics coverage. Do not replace this figure with a count of Markdown files.
+**Full passes reviewed and committed: 2 / 47.** G01 and G02 have full-category dossiers, source annotations, contrasting reception and per-game preservation notes. The other subjects remain unprocessed against the complete assignment, including names with earlier selective mechanics coverage. Do not replace this figure with a count of Markdown files.
 
 ## Subject order and state
 
@@ -17,8 +17,8 @@ This tracks research only. No row authorizes an OpenLegend implementation task. 
 | ID | Subject | Full-pass state | Existing chapter / committed dossier |
 | --- | --- | --- | --- |
 | G01 | Hades II | Complete | [Full dossier](dossiers/hades-ii.md), commit `5e549c2`; [earlier pair chapter](games/hades-and-hades-ii.md) preserved |
-| G02 | Among Us | In progress | [Earlier pair chapter](games/among-us-and-lethal-company.md) |
-| G03 | Animal Crossing: New Horizons | Pending | [Chapter](games/animal-crossing-new-horizons.md) |
+| G02 | Among Us | Complete | [Full dossier](dossiers/among-us.md), commit `f2e46a9`; [earlier pair chapter](games/among-us-and-lethal-company.md) preserved |
+| G03 | Animal Crossing: New Horizons | In progress | [Chapter](games/animal-crossing-new-horizons.md) |
 | G04 | Roblox | Pending | [Platform and experience chapter](games/roblox.md) |
 | G05 | Grow a Garden | Pending | [Existing subsection](games/roblox.md) |
 | G06 | Steal a Brainrot | Pending | [Existing subsection](games/roblox.md) |
@@ -79,5 +79,7 @@ This tracks research only. No row authorizes an OpenLegend implementation task. 
 - `4dcd82ebd9e7ca357bf25512b9c463ce653a7112` — full assignment and R01–R14 requirements committed before the new research pass.
 - `bb7f5b55752135f1947576bd87a046904b8097c0` — substantive Hades II checkpoint, explicitly incomplete.
 - `5e549c2b88a7182a9ab4bf71dfb508ff9fd12c90` — completed Hades II full-category dossier, prior material preserved.
+- `aafacb7848ed6a000c9be2f958803e6b30c13212` — substantive Among Us checkpoint, explicitly incomplete.
+- `f2e46a95ee587238c640e39d2f1d9cadcb69fcbd` — completed Among Us dossier with native mode/role boundaries, production, promotion and contrasting reception.
 
 Per-game completion commits are linked with their dossier entries. In-progress research must remain explicitly incomplete; an interruption must not be hidden by changing the definition of complete.
