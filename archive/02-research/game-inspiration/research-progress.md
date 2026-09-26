@@ -5,9 +5,9 @@ Read with the [canonical roster](research-roster.md) and [full requirements](res
 ## Resume state
 
 - **Branch / scope:** `docs/game-inspiration-games-40-60`, canonical G40–G60. Do not create another branch.
-- **Last completed numbered subject:** **G57 — Divinity: Original Sin II**, `8acb8f696bf12e1917d2c9e6dd0a49010f75f104`.
-- **Active:** **G58 — Pathfinder: Kingmaker**. Target dossier and same-named `games/` chapter were absent when checked. Research the original, Enhanced and Definitive boundaries; character building, adventuring and kingdom calendars; companions, artisans, DLC, production and five substantive written reviews. Do not import Wrath's mythic progression or crusade systems.
-- **Next:** G59, G60, one independent completed pass at a time.
+- **Last completed numbered subject:** **G58 — Pathfinder: Kingmaker**, `9b724c691deda4da69e81be80485e9fc2419198a`.
+- **Active:** **G59 — Pathfinder: Wrath of the Righteous**. Target dossier and same-named `games/` chapter were absent when checked. Research mythic identity, party builds, combat, crusade, companions, expansions, production, commercial history and five substantive reviews independently of Kingmaker.
+- **Next:** G60, after completing and committing G59.
 - **Dragon Age family supplement:** [complete](dossiers/dragon-age-series.md), `1eaf76df27c6af52ecafb35f077eae986f0708e9`; includes Journeys, Legends/Remix, The Last Court, Heroes and Keep.
 - **Commit cadence:** after each game or at least every five minutes. Substantive checkpoints remain explicitly incomplete until the full pass is reviewed and committed.
 - **Evidence date:** September 26, 2026, America/New_York.
@@ -34,8 +34,8 @@ Read with the [canonical roster](research-roster.md) and [full requirements](res
 | G55 | Pillars of Eternity II: Deadfire | Committed | [Dossier](dossiers/pillars-of-eternity-ii-deadfire.md), `6271fdf`; checkpoint `1fd2a4a` incorporated |
 | G56 | Divinity: Original Sin | Committed | [Dossier](dossiers/divinity-original-sin.md), `ed8c22d`; checkpoint `4b59a8d` incorporated |
 | G57 | Divinity: Original Sin II | Committed | [Dossier](dossiers/divinity-original-sin-ii.md), `8acb8f6`; checkpoint `7d2cd3a` incorporated |
-| G58 | Pathfinder: Kingmaker | In progress | Target `dossiers/pathfinder-kingmaker.md` |
-| G59 | Pathfinder: Wrath of the Righteous | Not started | Target `dossiers/pathfinder-wrath-of-the-righteous.md` |
+| G58 | Pathfinder: Kingmaker | Committed | [Dossier](dossiers/pathfinder-kingmaker.md), `9b724c6`; checkpoint `679edeb` incorporated |
+| G59 | Pathfinder: Wrath of the Righteous | In progress | Target `dossiers/pathfinder-wrath-of-the-righteous.md` |
 | G60 | Fire Emblem: The Blazing Blade | Not started | Target `dossiers/fire-emblem-the-blazing-blade.md` |
 
 ## Numbering reconciliation and preservation
@@ -49,6 +49,8 @@ G53 preserves eighteen mechanics, ten cases, three expansion analyses, five inhe
 G56 now distinguishes original and Enhanced rules with twelve mechanic analyses, nine concrete cases, six substantive reviews from five independent publications, an inspected helpful Steam sample and negative alternative testimony. It records the Kickstarter milestone, attributed 2014 sales/profit account and original-blog access gap, and separates the two-player campaign from DOS2. Its previously incomplete review access and byline were resolved before completion.
 
 G57 now contains twelve mechanics groups, ten constructed/attributed interactions, six substantive reviews from five publications, actually inspected helpful and negative Steam samples, primary combat and Definitive Edition development interviews, crowdfunding and dated sales evidence. It distinguishes optional Gift Bags, Four Relics content, historical iPad/PS4 reports and the December 2025 console ports. The checkpoint's helpful-review access gap was resolved; inaccessible manual/full community-reference pages remain explicitly qualified.
+
+G58 now contains twelve mechanics groups, nine constructed/attributed cases, independent coverage of all three major expansions, six publications' full reviews and a later reassessment. It separates adviser availability from adventuring party availability, native turn-based editions from earlier mod advice, and kingdom resources from commercial evidence. The helpful Steam surface remained gated; actual GOG helpful reviews and other direct testimony are recorded instead. Kickstarter dates and the attributed January 2025 two-million-copy milestone retain their definitions.
 
 Do not claim gameplay, watched footage, authenticated service tests, a local checkout, runtime/build tests or repository-wide link checks that did not occur. Keep every prior chapter, mechanics study, source qualification and packet-provenance owner. A completed G40–G60 branch is not a completed 130-subject roster or a passed packet-wide reconciliation. Each new dossier must map R01–R14 and distinguish sourced observations, interpretations and proposed adaptations.
 
