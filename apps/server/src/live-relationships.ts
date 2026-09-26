@@ -18,7 +18,11 @@ export const inspectableEntity = (world: WorldState, e: Entity) => ({
   resource: e.resource,
   heat: e.heat,
   remains: e.remains,
-  attributeIds: e.actor ? applicableAttributes(world, e.actor).map((d) => d.id).sort() : [],
+  attributeIds: e.actor
+    ? applicableAttributes(world, e.actor)
+        .map((d) => d.id)
+        .sort()
+    : [],
   senseIds: e.actor ? (e.actor.senses ?? world.moduleManifest.defaultSenses) : [],
   actionId: e.actor?.action?.id,
   equippedItemId: e.actor?.equippedItemId,

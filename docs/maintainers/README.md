@@ -31,23 +31,22 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 
 - [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
 
+## Reviewed World Agent writes
+
+[World Agent write detail](world-agent-writes.md) expands INV-21.6–21.7 with the current body-binding slice, storage/recovery review and remaining qualification; INV-21 retains the parent lifecycle and release gates. [Write continuation evidence](../verification/workshop-continuation.md) records actual runtime scope.
+
 ## Supporting references
 
 - [Policies to revisit](revisitable-policies.md) — accepted but changeable decisions, canonical owners and review triggers; not an implementation backlog.
 
 - [Repertoire foundation](../repertoire-foundation.md) — detailed integration contract and INV-20 delivery; live arrangements, information, commitments, methods and observer-relative art.
-
-
 - [Unified World Agent](../world-agent-runtime.md) and [MCP integration](../world-agent-mcp.md)
 - [Relationship graph](../invention-graph.md), [composition](../invention-composition.md), and [target scenarios](../invention-scenarios.md)
 - [Encounter scaling](../encounter-scaling.md) and [MCP tooling research](../../archive/02-research/mcp-tooling-and-integration.md)
-
 - [World-agent invention tool contract](../invention-workshop-tools.md) — scoped read/preview/Apply and extension seams
-
 - [Extensibility roadmap](../extensibility-roadmap.md)
 - [Extensible-world worked examples](../extensible-world-examples.md)
 - [Action and interaction repertoire](../repertoires/actions.md) — stable example IDs and related-mechanic references; idea catalogue, not implementation status
-
 - [Product baseline](../../archive/01-requirements/product-baseline.md)
 - [Product roadmap](../../archive/05-project/roadmap.md)
 - [Open decisions](../../archive/05-project/open-decisions.md)
