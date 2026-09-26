@@ -1,16 +1,39 @@
 # Full research progress and resume ledger
 
-**Read first:** [complete assignment / R01–R14](research-requirements.md) and [130-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; working branch `docs/game-inspiration-library`, integrating `docs/game-inspiration-library-expansion` at `57bcd96`; original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`. Research-only tracking, not an implementation backlog.
+**Read first:** [complete assignment / R01–R14](research-requirements.md) and [130-subject roster, output paths and boundaries](research-roster.md). Research-only tracking, not an implementation backlog.
 
-## Resume here
+## Resume here — dedicated G111–G120 branch
 
-**Active: G31 — Valheim.** Intended output: `dossiers/valheim.md`. Read `games/valheim.md` and `mechanics/valheim-zomboid-preparation-risk-and-home.md`; preserve both owners and the Project Zomboid half of the shared study. Complete R01–R14: biomes/boss progression, building/support/smoke, resources/crafting/stations/repair, food/stamina/rest/comfort, equipment/combat/magic, travel/sailing/portals, farming/taming/fishing, death/recovery/raids and world modifiers, co-op/shared world/mods, presentation/production/commercial evidence, five written reviews and Steam helpful positive/negative bodies. Verify current delivered updates against future Deep North/1.0 plans. Finish/review/commit before G32 Noita.
+**Working branch:** `docs/game-inspiration-games-111-120`, created from `docs/game-inspiration-library` at `da827cd90d862a1f994b540f5e3956b606ea4a82` on September 26, 2026. Mike explicitly authorized this new branch and games 111–120 inclusive. The inherited continuation instructions below are historical base-branch context, not instructions to work on G31 or another branch here.
 
-**Completed: G01–G30, 30 / 130. Active: G31. Pending: G32–G130.** Mike confirmed `docs/game-inspiration-library` after the originally named `docs/game-inspiration-games` ref could not be resolved. The current authorized continuation is **G26–G40 inclusive**, on this existing branch: Baldur's Gate 3, Factorio, Satisfactory, Terraria, Stardew Valley, Valheim, Noita, Caves of Qud, Outer Wilds, Garry's Mod, Kenshi, Project Zomboid, Lethal Company, Scribblenauts, and AI Dungeon. This supersedes the earlier execution boundary of G39, not the 130-subject assignment. No replacement branch is to be created. G26's full pass and five review reads are committed; its unsuccessful Steam helpful-review retrieval is explicitly recorded rather than falsely counted as completed sampling.
+**Active: G111 — The Legend of Zelda: Tears of the Kingdom. Completed in this range: 0 / 10.** Output: `dossiers/the-legend-of-zelda-tears-of-the-kingdom.md`. All R01–R14 remain to be completed: actual action/item/progression inventory, worked situations, social/narrative/presentation systems, development/distribution/commercial context, five substantive written reviews and non-Steam player evidence, edition boundaries and preservation review. Primary Nintendo developer interviews and launch reviews are being retrieved. No earlier full dossier or dedicated chapter/mechanics owner for G111–G120 exists in the inherited library index/roster/dossier tree; these are explicit curated additions, not replacements for original packet cases. Preserve all earlier owners and leave the global P01–P05 gates open.
 
-RuneScape and Old School RuneScape remain independent pending full passes G48/G49. G50–G57 retain Dragonwilds, four separate mainline Dragon Age games, Deadfire, and Original Sin I/II. G58–G110 are the broader requested mechanics-library additions/franchise splits; G111–G130 are curated OpenLegend-relevant additions. Every pending dossier has the explicit five-written-review minimum and Steam top/helpful-review sampling when applicable. Adding scope is not completed research.
+| Subject | State | Output / completion commit |
+| --- | --- | --- |
+| G111 — Tears of the Kingdom | In progress | `dossiers/the-legend-of-zelda-tears-of-the-kingdom.md` |
+| G112 — Fallout: New Vegas | Pending | `dossiers/fallout-new-vegas.md` |
+| G113 — Morrowind | Pending | `dossiers/the-elder-scrolls-iii-morrowind.md` |
+| G114 — Kingdom Come: Deliverance II | Pending | `dossiers/kingdom-come-deliverance-ii.md` |
+| G115 — Mount & Blade II: Bannerlord | Pending | `dossiers/mount-and-blade-ii-bannerlord.md` |
+| G116 — Middle-earth: Shadow of War | Pending | `dossiers/middle-earth-shadow-of-war.md` |
+| G117 — Deus Ex (2000) | Pending | `dossiers/deus-ex-2000.md` |
+| G118 — Prey (2017) | Pending | `dossiers/prey-2017.md` |
+| G119 — Dishonored 2 | Pending | `dossiers/dishonored-2.md` |
+| G120 — Starsector | Pending | `dossiers/starsector.md` |
 
-## Current continuation — G22 through G40
+Commit each completed dossier before advancing; checkpoint substantive unfinished work at least every five minutes. Read the branch head and current blob before shared-file edits. Preserve inherited history below; do not infer completion on other parallel branches. No runtime changes or global packet-audit completion are authorized by this range work.
+
+## Inherited base-branch checkpoint — preserved, not the active assignment here
+
+Repository `Macrofold/OpenLegend`; base working branch `docs/game-inspiration-library`, integrating `docs/game-inspiration-library-expansion` at `57bcd96`; original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`.
+
+**Inherited active: G31 — Valheim.** Intended output: `dossiers/valheim.md`. Read `games/valheim.md` and `mechanics/valheim-zomboid-preparation-risk-and-home.md`; preserve both owners and the Project Zomboid half of the shared study. Complete R01–R14: biomes/boss progression, building/support/smoke, resources/crafting/stations/repair, food/stamina/rest/comfort, equipment/combat/magic, travel/sailing/portals, farming/taming/fishing, death/recovery/raids and world modifiers, co-op/shared world/mods, presentation/production/commercial evidence, five written reviews and Steam helpful positive/negative bodies. Verify current delivered updates against future Deep North/1.0 plans. Finish/review/commit before G32 Noita.
+
+**Inherited completed: G01–G30, 30 / 130. Inherited active: G31. Inherited pending: G32–G130.** Mike confirmed `docs/game-inspiration-library` after the originally named `docs/game-inspiration-games` ref could not be resolved. The base-branch authorized continuation was **G26–G40 inclusive**: Baldur's Gate 3, Factorio, Satisfactory, Terraria, Stardew Valley, Valheim, Noita, Caves of Qud, Outer Wilds, Garry's Mod, Kenshi, Project Zomboid, Lethal Company, Scribblenauts, and AI Dungeon. That superseded the earlier execution boundary of G39, not the 130-subject assignment. G26's full pass and five review reads are committed; its unsuccessful Steam helpful-review retrieval is explicitly recorded rather than falsely counted as completed sampling.
+
+RuneScape and Old School RuneScape remain independent pending full passes G48/G49 in the inherited checkpoint. G50–G57 retain Dragonwilds, four separate mainline Dragon Age games, Deadfire, and Original Sin I/II. G58–G110 are the broader requested mechanics-library additions/franchise splits; G111–G130 are curated OpenLegend-relevant additions. Every pending dossier has the explicit five-written-review minimum and Steam top/helpful-review sampling when applicable. Adding scope is not completed research.
+
+## Inherited continuation — G22 through G40
 
 | Completed subject | Dossier and completion commit | Evidence / preservation boundary |
 | --- | --- | --- |
@@ -46,6 +69,6 @@ This reconciliation checks content preservation, citation/link integrity and res
 
 ## Recovery rules
 
-Use connector commits on this branch; commit substantive checkpoints at least every five minutes. Incomplete files must name remaining work. Finish/review/commit one subject, then immediately advance this ledger. Read the current remote head and blob before editing; preserve concurrent changes. Mike explicitly reiterated on September 26 that work must continue until the entire assignment is complete; do not turn these recovery checkpoints into an arbitrary stopping point. No background execution or future delivery is implied.
+Use connector commits on the explicitly authorized working branch named at the top; commit substantive checkpoints at least every five minutes. Incomplete files must name remaining work. Finish/review/commit one subject, then immediately advance this ledger. Read the current remote head and blob before editing; preserve concurrent changes. Mike explicitly reiterated on September 26 that work must continue until the entire assigned range is complete; do not turn these recovery checkpoints into an arbitrary stopping point. No background execution or future delivery is implied.
 
 Full instructions: `research-requirements.md` (initial `4dcd82ebd9e7ca357bf25512b9c463ce653a7112`, RuneScape amendment `096bee4b681f8a6c960681ba9a21b960c902fda8`, September 26 expansion `e86ed921994e0fe03cc4141e3a73443f4295da1d`). Roster additions: `7d016f12cf38d1dc9b049982943c5cc84c446e12` and `7d08c16ae881344cbbe7af80e37371f3d027d9d6`. Completion ranges refer to that stable inventory and do not narrow the assignment. Git history retains detailed earlier ledgers and substantive checkpoints. File counts and elapsed work never substitute for research completion.
