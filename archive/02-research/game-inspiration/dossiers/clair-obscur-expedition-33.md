@@ -81,6 +81,8 @@ Esquie changes access to the overworld over the campaign; his role is transporta
 
 Gestral merchants are more than stationary price lists: duels can gate additional stock. Friendly Nevrons interrupt the assumption that every creature model denotes an immediate fight. Jar asks for Resin and a lit torch; Démineur needs an Intact Mine reached by a nearby platforming detour; Hexga asks for rocks; a Troubador uses performance trials. These are authored condition checks and rewards, not evidence of general-purpose dialogue generation or a simulated diplomatic faction economy. [C10][C27]
 
+**Gestral Beaches explicitly supply a bounded minigame layer rather than only combat and traversal detours.** The documented beach activities include platforming and timed movement courses, a question-and-answer challenge, an attack-volleyball activity, a deliberately awkward climbing/platforming challenge and a rock-climbing course. Their rewards include cosmetic swimsuits and materials. These are authored side games with local rules; they do not imply that ordinary overworld interactions use the same scoring or failure model. [C33]
+
 The preserved object lesson is specificity. Démineur's request connects a visible missing component, a reachable place and a concrete reward, rather than offering an interchangeable token collection quest. Jar also asks the player to use an existing shooting verb for assistance instead of damage. [C27]
 
 ### Camp bonds and bounded romance
@@ -238,6 +240,18 @@ These are research hypotheses, not requested runtime implementation.
 | R13 | §10 patterns, dependencies and failure modes |
 | R14 | This map, source annotations, preserved checkpoint evidence and navigation |
 
+### Mechanics inventory completeness check
+
+This closes the assignment's explicit mechanics inventory against the sourced sections above.
+
+- **Identity, attributes, progression, jobs/trees:** the campaign uses a fixed authored cast rather than avatar creation. §2 distinguishes six character-specific resource/action identities; §§2–5 cover attributes, levels, skill trees, weapon scaling and revisable allocation rather than a shared job system.
+- **Items, inventory, weapons/armor, crafting/upgrading, magic/powers:** §3 covers weapons, Pictos, learned Lumina, catalyst upgrade tiers, Tints and permanent Shapes. The Curator upgrades equipment; there is no broad recipe-crafting or many-slot armor-construction system. Character skills/powers remain distinct from equipment passives.
+- **Traversal, environmental/object interaction, activities/minigames:** §4 covers overworld travel, platforming, climbing, Esquie movement/revisitation and authored object/quest interactions. The Gestral Games/Beaches are now explicitly recorded as a separate bounded minigame layer rather than inferred from ordinary traversal.
+- **Combat, stealth, loot/rewards, death/failure/recovery:** §2 covers turn selection, AP, free aim, timed dodge/parry/jump defense and character-specific combat states. There is no general stealth subsystem. §§3–5 distinguish equipment/material/quest rewards, flag recovery/resting, encounter repopulation and retry/build revision.
+- **Economy/trading, story, relationships/romance/reputation, party/companions:** §§3–5 cover Chroma/services, authored narrative, camp relationship ranks and bounded romance, the active trio and reserve characters. Relationship ranks are authored per-character progress, not a general faction-reputation economy.
+- **NPC/AI/schedules, factions, world map/environment, quests/events:** §4 covers named NPC services, Nevron quests, merchants/duels, regions and world-state/story gates. NPCs and enemies are authored behavior rather than a simulated universal daily-schedule system; there is no player-managed diplomatic faction layer.
+- **Building/settlements/management, multiplayer/social, endgame/return loops:** camp is a service/social hub rather than settlement construction. Native multiplayer is absent. §5 covers late optional bosses, Endless Tower and New Game Plus, while §8 separates post-launch free additions from the launch game.
+
 G77 is an expanded-roster addition, not a retroactive replacement for an original packet chapter. All C1–C10 checkpoint evidence survives here with its provenance and qualifications. The broader library's P01–P05 audits remain owned by the progress ledger; completing this dossier does not close them.
 
 For audiovisual study, follow the **official launch trailer** embedded in C13, the **Thank You update trailer** in C6, and the **developer podcast** in C9. The podcast's written transcript was inspected; the embedded videos were not watched in full. No invented timestamps are provided. Compare the existing [Black Myth: Wukong dossier](black-myth-wukong.md) for execution-centered combat and [Disco Elysium dossier](disco-elysium.md) for character systems expressed through a very different action vocabulary.
@@ -278,3 +292,5 @@ All accessed September 26, 2026. Links support nearby numbered citations; ranges
 - **C30 —** [Official news index](https://www.expedition33.com/latest-news), checked September 26, 2026. Navigation and dated-update check; not an exhaustive platform patch history.
 - **C31 —** [Recoat item description](https://www.gamerguides.com/clair-obscur-expedition-33/database/items/tints-1/recoat), Gamer Guides. Consumed attribute-or-skill reallocation; not the unrelated healing function incorrectly assigned by some aggregators.
 - **C32 —** [Weapon acquisition and duplicate upgrades](https://game8.co/games/Clair-Obscur-Expedition-33/archives/515747), Game8. Indexed written weapon guide supplied acquisition/duplicate behavior; full page failed to render on a later direct request. Used narrowly, not counted as a read review or an exhaustive item census.
+
+- **C33 —** [Game8: Gestral Beach Locations and 100% Guide](https://game8.co/games/Clair-Obscur-Expedition-33/archives/517704), updated May 14, 2025, with its linked Gestral Games guide. Secondary written guide used narrowly to establish the five bounded Gestral side-game/minigame types and their reward role; not primary implementation evidence or a claim that every later patch leaves them unchanged.
