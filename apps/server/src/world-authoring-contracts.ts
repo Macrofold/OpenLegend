@@ -87,6 +87,21 @@ export const WORLD_AUTHORING_TOOLS = {
   },
 } as const;
 export type WorldAuthoringToolName = keyof typeof WORLD_AUTHORING_TOOLS;
+export type WorldAuthoringCall = {
+  [Name in WorldAuthoringToolName]: {
+    name: Name;
+    arguments: z.infer<(typeof WORLD_AUTHORING_TOOLS)[Name]['schema']>;
+  };
+}[WorldAuthoringToolName];
+
+/** Keep each tool name correlated with its validated arguments in both transports. */
+export function parseWorldAuthoringCall(name: string, raw: unknown): WorldAuthoringCall | null {
+  if (!Object.hasOwn(WORLD_AUTHORING_TOOLS, name)) return null;
+  const parsed = WORLD_AUTHORING_TOOLS[name as WorldAuthoringToolName].schema.safeParse(raw);
+  // The indexed schema has validated this exact name. No unchecked payload reaches dispatch.
+  return parsed.success ? ({ name, arguments: parsed.data } as WorldAuthoringCall) : null;
+}
+
 export const sessionRequest = z.object({ sessionId: id, worldId: id }).strict();
 export const sessionOpenRequest = sessionRequest.extend({
   budgetUsd: z.number().finite().min(0).max(5).optional(),
