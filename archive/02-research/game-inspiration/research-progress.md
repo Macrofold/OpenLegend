@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Active: G128 — Ultima VII: The Black Gate.** Intended output: `dossiers/ultima-vii-the-black-gate.md`. Complete R01–R14: original Black Gate versus Forge of Virtue, Serpent Isle/Silver Seed and Exult boundaries; seamless world/object interaction, inventory/containers, schedules, companions, dialogue/investigation, combat/magic, economy/food/time, NPC/social simulation, presentation/production/history/commercial context, five substantive contemporary or retrospective written reviews when genuine reviews exist, and strongest accessible player testimony where Steam does not apply. Preserve prior owners and keep packet-wide audit separate.
+**Active: G129 — Oxygen Not Included.** Intended output: `dossiers/oxygen-not-included.md`. Complete R01–R14: current base-game versus Spaced Out and later paid/free content boundaries; Duplicant traits/needs/stress/morale/skills/priorities, gases/liquids/heat/germs/resource loops, power/pipes/ventilation/automation, research/industry/agriculture/critters/space progression, colony failure and recovery, presentation/production/commercial context, five substantive written reviews and current Steam helpful/player evidence. Preserve prior owners and keep packet-wide audit separate.
 
-**This branch's authorized range: G121–G130 inclusive; 7 / 10 completed.** G121–G127 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
+**This branch's authorized range: G121–G130 inclusive; 8 / 10 completed.** G121–G128 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
 
 | Subject | State | Canonical output / completion commit | Exact remaining work |
 | --- | --- | --- | --- |
