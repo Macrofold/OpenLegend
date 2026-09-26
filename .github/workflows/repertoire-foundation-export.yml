@@ -1,0 +1,33 @@
+name: Repertoire foundation source
+on:
+  push:
+    branches: [feature/invention-repertoire-foundation]
+    paths: [.github/workflows/repertoire-foundation-export.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Export source history and installed dependencies only
+        run: |
+          git bundle create /tmp/repertoire-source.bundle --all
+          tar -czf /tmp/repertoire-dependencies.tar.gz node_modules apps/*/node_modules packages/*/node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repertoire-foundation-source
+          path: |
+            /tmp/repertoire-source.bundle
+            /tmp/repertoire-dependencies.tar.gz
+          retention-days: 1
