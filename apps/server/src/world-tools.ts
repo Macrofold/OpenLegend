@@ -210,6 +210,7 @@ export class WorldToolService {
             description: tool.description,
           })),
           definitionKinds: DEFINITION_KINDS,
+          authoringKinds: authoringKind.options,
           recipeContract: DECLARATION_CONTRACT,
           recipeSchema: declarationSchema,
           limitations: [
@@ -264,6 +265,7 @@ export class WorldToolService {
           if (input.version && input.version !== record.node.ref.version)
             throw new GraphReadError('stale', 'Memory record changed.');
           return {
+            ref: record.node.ref,
             node: record.node,
             data: record.data,
             relationships: record.index.neighborhood({ root: record.node.ref, direction: 'out' }),
@@ -283,7 +285,7 @@ export class WorldToolService {
           const entity = input.kind === 'entity' ? world.entities[input.id] : undefined;
           return {
             ref: projection.root,
-            data: item ?? (entity && inspectableEntity(entity)),
+            data: item ?? (entity && inspectableEntity(world, entity)),
             relationships: {
               ...projection.index.neighborhood({ root: projection.root, direction: 'both' }),
               subject: { kind: input.kind, id: input.id },
@@ -300,6 +302,7 @@ export class WorldToolService {
           throw new GraphReadError('stale', 'Definition changed.');
         return {
           ...entry,
+          ref: entry.node.ref,
           relationships: definitions.index.neighborhood({ root: entry.node.ref, direction: 'out' }),
         };
       }
