@@ -2,6 +2,8 @@
 
 Research initiated: 2026-09-26. This is an independent comparative study of fictional worlds, their creators, their inhabitants, and the experiences they offer audiences. It is not a product proposal, game-design document, implementation specification, or recommendation for any particular project.
 
+Navigation: [library index and roster](README.md), [source audit and access updates](source-audit.md), and [completion/verification ledger](research-progress.md). The source audit records later retrieval successes and continuing limitations; an earlier dossier's access note describes its initial research pass, not a claim that a source can never be accessed.
+
 ## The research question
 
 What makes a fictional world feel inhabited, historically deep, internally consequential, emotionally accessible, and entertaining rather than like a collection of invented facts? How do its material circumstances, institutions, histories, languages, beliefs, and ordinary experiences produce distinctive people—and how does the work let an audience discover those connections?
