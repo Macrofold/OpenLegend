@@ -18,6 +18,8 @@ export const inspectableEntity = (e: Entity) => ({
   resource: e.resource,
   heat: e.heat,
   remains: e.remains,
+  attributeIds: Object.keys(e.actor?.attributes ?? {}).sort(),
+  senseIds: e.actor?.senses,
   actionId: e.actor?.action?.id,
   equippedItemId: e.actor?.equippedItemId,
 });
@@ -101,6 +103,12 @@ export function projectLiveSubject(
         }),
         'supported_by',
       );
+    if (e.actor) {
+      for (const attributeId of Object.keys(e.actor.attributes ?? {}))
+        link(root, definition('attribute', attributeId), 'uses', 'attribute-binding');
+      for (const senseId of e.actor.senses ?? world.moduleManifest.defaultSenses)
+        link(root, definition('sense', senseId), 'uses', 'sense-binding');
+    }
     const action = e.actor?.action;
     if (action) {
       const { path, ...state } = action;
