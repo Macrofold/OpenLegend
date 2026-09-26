@@ -147,6 +147,18 @@ The useful disagreement is specific. A compact weapon vocabulary can produce mas
 | R13 | §9, dependencies and failure modes |
 | R14 | This map, source notes and preserved checkpoint observations |
 
+### Mechanics inventory completeness check
+
+This closes the assignment's explicit mechanics inventory against the sourced sections above.
+
+- **Identity, attributes, progression, jobs/trees:** the Destined One is a fixed protagonist. Sparks/skill investment, attributes, stance/spell development and revisable preparation are covered in §§1–3; there is no class/job-selection system.
+- **Items, inventory, weapons/armor, crafting/upgrading, magic/powers:** §2 covers staff/armor equipment, crafting materials, Will, gourds, drinks, soaks, medicines, Curios, Vessels and Mind Cores. Spells, Spirits and full transformations are explicitly separated. Armor/recovery improvement and service-based upgrades are bounded authoring, not freeform crafting.
+- **Traversal, environmental/object interaction, activities/minigames:** ordinary movement plus chapter-specific Somersault Cloud and authored secret-route interactions are covered in §§2–4. Later Challenge/rematch activities are covered in §§1 and 3. There is no broad standalone minigame layer in the studied campaign.
+- **Combat, stealth, loot/rewards, death/failure/recovery:** §2 covers attacks, stances, dodging, stamina, Focus and spell timing. Cloud Step supplies temporary concealment/decoy play, but there is no general stealth progression system. Bosses, secrets, quests and services yield distinct equipment/action/material rewards; §3 distinguishes retrying a fight, recovering an uncollected Spirit and permanently missing a quest opportunity.
+- **Economy/trading, story, relationships/romance/reputation, party/companions:** Will, vendors and service costs are covered in §§2–3; story and authored relationships are in §4. Zhu Bajie is bounded companion presence, not a freely assembled party. There is no romance/reputation ladder or player-run market.
+- **NPC/AI/schedules, factions, world map/environment, quests/events:** §4 covers named service NPCs, companion conditions, chapter regions, secret areas and quest chains. Service relocation to Zodiac Village is authored; there is no general NPC schedule simulation or player-selectable faction diplomacy.
+- **Building/settlements/management, multiplayer/social, endgame/return loops:** Zodiac Village is a service hub unlocked through relationships, not a freeform builder. Native multiplayer is absent. §3 separates Continue Journey, Enter a New Cycle/New Game Plus and missable world state; the later Return of Rivals/Challenge content is version-bounded in §§1 and 3.
+
 Suggested study sequence: examine one stance revision, then separate a Spirit from a transformation; compare two recovery configurations; trace Chen Loong's favor into village services; finally compare ordinary campaign retries with a Challenge rematch. These are proposed observations, not playtests performed here. The official product page and Game Science announcements link trailers and update media; the 2020 demonstration discussed in W19 is a viewing route, **not footage watched in this pass**. No invented timestamps are supplied.
 
 ## Sources and access limits
