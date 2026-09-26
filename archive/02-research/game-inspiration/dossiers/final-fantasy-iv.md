@@ -1,8 +1,8 @@
 # Final Fantasy IV — full research dossier
 
-**G81 · In-progress research checkpoint, September 26, 2026.** This dossier treats the **1991 Final Fantasy IV design** as the primary subject while separating materially different releases: the localized SNES version once titled *Final Fantasy II* in North America, later 2D ports, *Final Fantasy IV Advance*, the Nintendo DS 3D remake and its descendants, *Final Fantasy IV: The Complete Collection*, and the 2021+ *Pixel Remaster*. The roster specifically requires fixed identities, Active Time Battle, party turnover, abilities, equipment, world/narrative progression and remake differences. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G81 · Complete research pass, September 26, 2026.** This dossier treats the **1991 Final Fantasy IV design** as the primary subject while separating materially different releases: the localized SNES version once titled *Final Fantasy II* in North America, later 2D ports, *Final Fantasy IV Advance*, the Nintendo DS 3D remake and its descendants, *Final Fantasy IV: The Complete Collection*, and the 2021+ *Pixel Remaster*. The roster specifically requires fixed identities, Active Time Battle, party turnover, abilities, equipment, world/narrative progression and remake differences. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-**Checkpoint boundary:** core mechanics, narrative-system relationships, production history and the major remake branches are drafted below. Before this pass can be marked complete it still needs (1) a final edition/release chronology check, (2) five fully inspected independent written reviews with balanced reception synthesis, (3) current Steam top/helpful positive and negative sampling, (4) dated commercial/participation milestones with metric definitions, (5) a source-anchor/link audit and final R01–R14 requirement map. No completion is claimed yet.
+The current storefront/reference point is the Pixel Remaster as available in September 2026, but “current” does not erase the 1991 ruleset. Reviews and player testimony are version-labeled because the SNES localization, Advance, DS/3D remake, Complete Collection and Pixel Remaster make materially different choices about difficulty, commands, build freedom, bonus content and presentation. No personal playthrough is claimed; constructed situations below are derived from documented rules.
 
 ## 1. Identity, scope, and player promise
 
@@ -29,6 +29,8 @@ The game's long re-release history makes version discipline essential.
 ### 2.1 Original Super Famicom / SNES family
 
 The Japanese Super Famicom release is the 1991 source design. The first North American SNES release was titled **Final Fantasy II** because the original Japanese FFII and FFIII had not received equivalent North American releases. That localization also simplified or removed some commands and content. Those changes should not be silently projected back onto the Japanese original, and the later Japanese *Easy Type* is not treated here as proof that every North American simplification was identical.
+
+Clyde Mandelin's side-by-side localization research is particularly useful here because it compares the Japanese original, Japanese *Easy Type* and North American *Final Fantasy II* directly. The North American build borrows some simplifications but is **not simply Easy Type in English**: dialogue, command, item and configuration differences form their own mixture. That distinction matters whenever a remembered “SNES FFIV mechanic” is used as evidence for the original Japanese design. [FFIV14](#ffiv14) [FFIV15](#ffiv15)
 
 ### 2.2 Advance and later 2D expansion branch
 
@@ -276,6 +278,17 @@ That is the important transferable idea. A tactical system gains depth when enem
 
 The limitation is opacity. If a counter rule is poorly telegraphed, the interaction feels like trial-and-error punishment rather than an intelligible world law.
 
+### Four concrete rule-driven encounters
+
+These are edition-sensitive examples from the classic 2D rule family; exact numbers/names differ across releases, but the interaction pattern is the useful evidence.
+
+1. **Mist Dragon — learn to stop attacking.** The first major boss alternates between dragon and mist states. Attacking the mist triggers a retaliation; defending or simply waiting until it reforms is the intended answer. The encounter teaches that “Attack whenever ready” is not universally correct. [FFIV26](#ffiv26)
+2. **Demon Wall — race a spatial timer.** The wall advances toward the party while the battle continues; once it closes the distance it begins using a lethal Crush effect. Preparation and aggressive throughput matter because waiting changes the state of the fight. [FFIV27](#ffiv27)
+3. **Asura — turn healing against the healer.** Asura repeatedly uses curative magic on herself. Applying Reflect/Wall redirects those heals, converting a defensive spell into encounter control; attacking her also provokes counters, so the player balances offense and recovery. [FFIV28](#ffiv28)
+4. **Bahamut — solve a countdown.** Bahamut visibly counts toward Mega Flare. Reflect can return the attack, while Kain's Jump can put him outside the targetable state when the blast resolves. The solution composes timing, a status spell and a character-specific verb rather than demanding one raw stat threshold. [FFIV29](#ffiv29)
+
+These examples show a recurring FFIV strength: a small fixed toolbox can support varied fights when enemies alter the meaning of familiar actions.
+
 ## 11. Story and mechanics are intentionally interlocked
 
 **Major plot spoilers in this section.**
@@ -319,7 +332,7 @@ There is no general:
 
 Named kingdoms/groups such as Baron, Mysidia, Fabul, Troia, Eblan, the Dwarves, Eidolons and Lunarians matter to the plot, but their relationships are mostly authored rather than driven by a reusable faction-simulation layer.
 
-The current Pixel Remaster product is officially **single-player**. [FFIV07](#ffiv07) Historical controller-sharing quirks in older editions are not treated as modern native multiplayer without edition-specific evidence.
+The current Pixel Remaster product is officially **single-player**. [FFIV07](#ffiv07) The Super Famicom/SNES family did include a configuration that could assign battle control across two controllers; localization research shows this in the Japanese and North American variants. That was local controller sharing inside one party, not a separate persistent multiplayer world, co-op campaign economy or network social system. [FFIV15](#ffiv15)
 
 For OpenLegend this is an important negative case: memorable relationships do **not** require a generalized social simulation, but a fixed script cannot provide the open-ended interpersonal causality OpenLegend is aiming for.
 
@@ -465,7 +478,133 @@ So this dossier is additive. It does not supersede an earlier FFIV chapter.
 
 **Still required before completion:** review/reception synthesis, Steam positive/negative sample, commercial milestones, chronology check, final requirement table and source/link audit.
 
-## Sources — checkpoint set
+## 18. Comprehensive mechanics inventory
+
+| Category | FFIV implementation / absence |
+| --- | --- |
+| Character creation / identity / classes | No avatar creator and no free job choice in the 1991 core. Authored characters have fixed identities/classes; Cecil has a story-authored class transformation. DS Augments add limited cross-character ability composition. |
+| Attributes / skills / leveling | EXP and levels raise character stats; magic/abilities are largely character- and level/story-bound. No base-game skill-point tree or general respec. |
+| Items / inventory / weapons / armor | Consumables, key items, character-restricted weapons/armor, elemental/status properties and rare drops/treasure. Edge can convert weapons into Throw attacks. |
+| Crafting / upgrading | No general crafting or equipment-upgrade loop in the base game. Progress comes from shops, treasure, drops, events and optional content. |
+| Magic / spells / powers | White/Black magic, Summon, Ninjutsu, Twincast and character commands; elemental/status/reflection interactions are important. |
+| Traversal | Town/dungeon walking, overworld travel, hovercraft, airships and later the Lunar Whale; traversal upgrades reopen geography. |
+| Environmental / object interaction | NPC dialogue, chests/secrets, shops, inns, save points and authored switches/passages; some dungeon hazards reward spells such as Float. It is not a freeform physics/object-manipulation sandbox. |
+| Activities / minigames | Sparse in the original. DS adds Whyt customization/minigames and local wireless battle; later releases vary. |
+| Combat | ATB menu combat, rows/formations, timing, character commands, buffs/debuffs, elemental/status rules, counters and boss state machines. |
+| Stealth | No substantive stealth system. |
+| Loot / rewards | EXP, gil, drops, treasure, equipment, key items, optional summons and rare rewards. |
+| Death / failure / recovery | KO/revival in battle; full party defeat returns to prior save/continue behavior by edition. No persistent corpse-retrieval economy. |
+| Economy / trading | Gil, shops and inns; no player market, production economy or dynamic trading simulation. |
+| Story / narrative | Highly authored linear campaign; party composition and character transformations frequently encode plot state mechanically. |
+| Relationships / romance / reputation | Cecil/Rosa and other relationships are authored. No romance selection, affinity meter or general reputation simulation. |
+| Party / companion mechanics | Up to five party members in the classic structure; lineup changes are story-controlled. Advance and DS branches add different forms of extra agency. |
+| NPC / AI behavior / schedules | Scripted town/event NPCs and encounter AI/counter scripts; no general daily-life schedule simulation. |
+| Factions | Named kingdoms/peoples drive plot, but there is no reusable diplomacy/reputation layer. |
+| World map / environment | Surface world, Underworld and Moon with authored towns/dungeons and traversal gates. |
+| Quests / events | Main story dominates; optional summons, weapons and areas provide limited side content. |
+| Building / settlements / management | Absent. |
+| Multiplayer / social | Modern Pixel Remaster is one-player; classic two-controller battle sharing is limited local control, not a persistent social system. DS Whyt has a small local-wireless side mode. |
+| Endgame / return loops | Original culminates in the final dungeon/boss. Advance/PSP/DS branches add different bonus or New Game+ content; Pixel Remaster intentionally omits many prior-remake additions. |
+
+The omissions are part of the design. FFIV creates variety mainly by **changing the people and encounter rules**, not by stacking parallel crafting, settlement, social-simulation or endgame-service layers.
+
+## 19. Distribution, marketing, commercial context, and longevity
+
+The original Japanese game released **July 19, 1991**, Square's first Final Fantasy for the Super Famicom/SNES. Square's 2026 retrospective says the move to SNES shaped the opening airship presentation and recalls the competitive context with *Dragon Quest*; Tokita also notes that game promotion was becoming more character-centered. [FFIV12](#ffiv12)
+
+FFIV's distribution story is unusually long:
+- 1991 Super Famicom/SNES original/localized branch;
+- multiple later PlayStation, WonderSwan, GBA and other 2D rereleases;
+- 2008 Nintendo DS 3D remake, later propagated to mobile/PC;
+- 2011 PSP *Complete Collection* combining the base game, *Interlude* and *The After Years*;
+- 2021 Pixel Remaster on Steam/mobile, followed by console releases and later platform expansion. [FFIV05](#ffiv05) [FFIV07](#ffiv07) [FFIV21](#ffiv21)
+
+The modern Pixel Remaster strategy is explicitly a **catalog-consistency strategy**: Square Enix says it remastered Final Fantasy I–VI together because their earlier platform/content histories were fragmented. The series emphasizes readable modern 2D art, rearranged music, modern UI and accessibility while omitting many additions from unrelated remake branches. [FFIV06](#ffiv06)
+
+As of **December 17, 2025**, Square Enix had announced more than **six million worldwide sales for the six-game Pixel Remaster series collectively**. That figure is not an FFIV-only sales number and should not be used as one. [FFIV24](#ffiv24)
+
+As of the September 26, 2026 research snapshot, Steam showed the FFIV Pixel Remaster at **93% positive across 2,062 English-language reviews**, with **97% positive across 39 recent reviews**. Review counts are participation/reception signals, not unit-sales or active-player figures. [FFIV21](#ffiv21)
+
+No current public source inspected here provides reliable FFIV-only lifetime revenue, retention, current monthly players or profit across all ports. Their absence is an evidence limit, not evidence of poor performance.
+
+## 20. Reception: five written reviews plus current player evidence
+
+The review history is highly version-dependent, but several themes recur.
+
+| Review | Version / date | What it praised | What it resisted |
+| --- | --- | --- | --- |
+| RPGFan | Pixel Remaster, 2021 | story/cast, ATB pressure, soundtrack, modern QoL | strict linearity, little side content or build customization, omitted remake extras |
+| GameSpot | Nintendo DS, 2008 | Augment composition, difficult tactical bosses, 3D/voice presentation, added side systems | difficulty can demand very specific solutions; some remake features are minor or uneven |
+| Nintendo World Report | Nintendo DS, 2008 | story, rotating party forcing new tactics, Augments, strong 3D presentation | restrictive linearity/party control; some performance/voice/presentation preferences |
+| GamesRadar+ | Advance, 2006 | distinct character abilities, combat/dungeon variety, story continually motivating action | technical glitches, story comparatively thin by later standards, new content arriving late |
+| Pocket Gamer | Complete Collection, 2011 | historical importance, dedicated roles/ATB, remastered presentation, anthology value | frequent random encounters/grinding, complex dungeons, character writing showing age and limited newcomer accommodation |
+
+[FFIV16](#ffiv16) [FFIV17](#ffiv17) [FFIV18](#ffiv18) [FFIV19](#ffiv19) [FFIV20](#ffiv20)
+
+### What the professional reviews collectively reveal
+
+**Fixed roles are both the strength and the constraint.** Several reviews value that each party member has an immediately distinct purpose and that story-driven turnover forces tactical adaptation. The same structure also limits party choice and character-build authorship. The DS remake's Augments are repeatedly praised because they preserve recognizable characters while giving optimizers something to compose.
+
+**ATB aged better than some surrounding friction.** Reviewers still describe timing and boss-specific rules as engaging, while random-encounter frequency and grinding draw more criticism. Pixel Remaster conveniences reduce that friction, although changing encounter and EXP pacing changes the original pressure curve too.
+
+**The story remains effective for many reviewers but is visibly historical.** Modern reviews still respond to Cecil's redemption arc and the dramatic cast, while criticism points to linearity, repeated melodrama, limited choice and thinner characterization compared with later narrative RPGs.
+
+**No rerelease is universally “definitive.”** Advance adds late party freedom/bonus content, DS adds challenge and build composition, Complete Collection preserves a broad FFIV saga, and Pixel Remaster prioritizes the original 2D line plus modern convenience. Different reviews prefer different tradeoffs.
+
+### Steam top/helpful sample
+
+The current Steam aggregate is strongly positive, but the helpful-review surface contains a meaningful split over **difficulty and preservation**. A highly helpful positive veteran review calls the Pixel Remaster one of the most accessible 2D versions, praising maps, quick/autosaves, presentation and soundtrack while acknowledging the easier balance. A highly helpful negative review likewise praises music, graphics and restored commands but rejects the release because its launch balance/level curve felt too easy. [FFIV22](#ffiv22)
+
+Those 2021 player complaints are **historical version evidence**, not a complete description of the 2026 product. Square Enix later added optional encounter toggling and 0–4× EXP controls to the Pixel Remaster line, giving modern players more control over pacing. [FFIV06](#ffiv06) Helpful Steam reviews are also self-selected and discoverability-weighted; they are qualitative testimony, not prevalence estimates.
+
+## 21. OpenLegend lessons, now tested against reception
+
+The most transferable pattern is **bounded systemic depth**. FFIV does not need dozens of independent simulation layers because it knows the party's capabilities and can author situations that make particular verbs matter. GamesRadar explicitly praised how distinct characters, battle rules and dungeons reinforce one another, while DS reviews show how modest extra composition through Augments can add replay/build depth without discarding character identity. [FFIV17](#ffiv17) [FFIV19](#ffiv19)
+
+For OpenLegend that suggests:
+
+- **Make capabilities socially/fictionally owned.** A person's history, profession, body, relationships and possessions should produce verbs that feel like theirs.
+- **Let absence change possibility.** Losing a guide, healer, mechanic, translator or trusted official should change plans because their capabilities/permissions leave with them.
+- **Design world laws that support multiple known answers.** Mist Dragon, Asura and Bahamut are memorable because ordinary verbs change meaning under a local rule. OpenLegend should prefer legible causal laws over arbitrary bespoke exceptions.
+- **Preserve build authorship where the fiction allows it.** FFIV's fixed-party approach works in a scripted journey; a sandbox needs ways to learn, teach, delegate, equip, recruit or invent alternatives rather than trapping the player behind one predetermined party.
+- **Separate accessibility from world truth.** Fast-forward, automation, information display and input support can be presentation conveniences. EXP/encounter multipliers modify progression law and should be framed accordingly.
+- **Do not copy linearity by accident.** FFIV's story-first structure benefits from controlled party composition and encounter sequencing. OpenLegend's promise is different; it should borrow the mechanical legibility without assuming one authored order of events.
+
+## 22. Requirement, source, and preservation audit
+
+| Requirement | Coverage |
+| --- | --- |
+| R01 identity / scope / promise | §§1–2, 15 |
+| R02 player actions / major mechanics | §§3–10, 18 |
+| R03 items / entities / composition | §§5–7, 18 |
+| R04 progression / economy / time | §§4, 8–9, 18 |
+| R05 concrete interactions | §§9–10 |
+| R06 people / AI / social / multiplayer | §§5, 11–12, 18 |
+| R07 art / audio / interface / feel | §§2, 13, 15, 20 |
+| R08 story / narrative / play connection | §§1, 5, 11 |
+| R09 production / development | §§13–14 |
+| R10 marketing / distribution / virality | §19 |
+| R11 commercial / participation context | §19 |
+| R12 reviews / player feedback | §20 |
+| R13 transferable inspiration / limits | §§15–16, 21 |
+| R14 sources / viewing / preservation / navigation | §§2, 17, 19–23 + annotated sources |
+
+### Evidence and navigation limits
+
+- **Prior-material preservation:** no FFIV-specific earlier game chapter, mechanics study or packet passage was found in the named game-inspiration owners checked for this pass. Section 17 records the searched owners; this dossier is additive.
+- **Version discipline:** original Japanese FFIV, North American *Final Fantasy II*, *Easy Type*, Advance, DS/3D, Complete Collection and Pixel Remaster are not collapsed into one ruleset.
+- **Review discipline:** five substantive independent written reviews were inspected; Steam evidence is labeled as qualitative player testimony rather than a representative survey.
+- **Commercial discipline:** the six-million Pixel Remaster figure is series-wide, not FFIV-only. Steam review totals are reviews, not sales or active users.
+- **Video discipline:** no claim in this dossier depends on unwatched footage. Useful visual verification routes for a future media pass are the Red Wings opening/Mode 7 staging, Mist Dragon state switch, Cecil's Paladin transformation, Lunar Whale transition, DS Augment interface and Pixel Remaster's modern battle/QoL UI.
+- **Spoilers:** §11 and some encounter examples reveal major campaign mechanics/story events.
+
+## 23. Completion conclusion
+
+FFIV's lasting design value is the **tight coupling between authored identity, available verbs and encounter rules**. Its party turnover means narrative events change the player's tactical system; ATB turns menu decisions into timed commitments; traversal tools repeatedly reinterpret the world map; bosses teach that state, counters, timing and utility spells matter. The major rereleases then act like controlled experiments around the original constraint: how much build freedom, challenge, bonus content and convenience can be added without losing the clarity of fixed character identity?
+
+For OpenLegend, the highest-value lesson is not to reproduce FFIV's linear campaign. It is to make **who is present, what they know/can do, and what local world laws are active** materially determine the option space.
+
+## Sources — completed annotated set
 
 <a id="ffiv01"></a>**FFIV01 — [FINAL FANTASY IV 30th Anniversary Special Interview — Part 1](https://na.finalfantasy.com/topics/296).** Square Enix / Final Fantasy Portal, July 19, 2021. Primary retrospective interview with Takashi Tokita on fixed character roles, story/gameplay synthesis, ATB, enemy counters, difficulty and environmental use of magic.
 
@@ -492,3 +631,36 @@ So this dossier is additive. It does not supersede an earlier FFIV chapter.
 <a id="ffiv12"></a>**FFIV12 — [FINAL FANTASY IV 35th Anniversary Special Interview](https://na.finalfantasy.com/news/2831).** Square Enix / Final Fantasy Portal, July 18, 2026. Primary current retrospective with Tokita and Yoshinori Kitase on development timing, the NES-to-SNES shift and hardware-informed staging such as the Red Wings opening.
 
 <a id="ffiv13"></a>**FFIV13 — [Years After: The Final Fantasy IV Interview](https://www.gamedeveloper.com/design/years-after-the-i-final-fantasy-iv-i-interview).** Game Developer, 2011. Substantive Tokita interview on FFIV as a synthesis/model for the series and its commercial/design ambition.
+
+<a id="ffiv14"></a>**FFIV14 — [Final Fantasy IV Translation Comparison: Introduction](https://legendsoflocalization.com/comparisons/final-fantasy-iv/intro/).** Clyde Mandelin / Legends of Localization. Side-by-side original Japanese, Easy Type and North American Final Fantasy II localization/version evidence; used to avoid collapsing the SNES variants.
+
+<a id="ffiv15"></a>**FFIV15 — [Final Fantasy IV Translation Comparison: Baron](https://legendsoflocalization.com/comparisons/final-fantasy-iv/baron/).** Clyde Mandelin / Legends of Localization. Detailed side-by-side command/configuration/text evidence, including the classic two-controller battle-control option. Historical/version-specific, not evidence for modern Pixel Remaster multiplayer.
+
+<a id="ffiv16"></a>**FFIV16 — [Final Fantasy IV (Pixel Remaster) Review](https://www.rpgfan.com/review/final-fantasy-iv-pixel-remaster/).** Cory Cauthon, RPGFan, 2021. Full written review inspected; strong on ATB, story, soundtrack/QoL, linearity and lack of customization/bonus content.
+
+<a id="ffiv17"></a>**FFIV17 — [Final Fantasy IV Review](https://www.gamespot.com/reviews/final-fantasy-iv-review/1900-6193622/).** Lark Anderson, GameSpot, 2008. Full Nintendo DS review inspected; Augments, remake difficulty, party abilities, presentation, Whyt/minigames and local-wireless side feature.
+
+<a id="ffiv18"></a>**FFIV18 — [Final Fantasy IV Review](https://www.nintendoworldreport.com/review/16537/final-fantasy-iv-nintendo-ds).** Jonathan Metts, Nintendo World Report, 2008. Full DS review inspected; rotating fixed party, Augments, Auto-Battle, presentation and linearity/strategy tradeoff.
+
+<a id="ffiv19"></a>**FFIV19 — [Final Fantasy IV Advance review](https://www.gamesradar.com/final-fantasy-iv-advance-review/).** Christian Nutt, GamesRadar+, 2006. Full GBA review inspected; distinctive character abilities, dungeon variety and story-driven pacing alongside technical/story/late-content criticism.
+
+<a id="ffiv20"></a>**FFIV20 — [Final Fantasy IV: The Complete Collection Review](https://www.pocketgamer.com/final-fantasy-iv-the-complete-collection/review/).** Peter Willington, Pocket Gamer, 2011-05-05. Full PSP review inspected; ATB/dedicated roles, presentation and package value contrasted with random encounters, grind, dungeon friction and dated character depth.
+
+<a id="ffiv21"></a>**FFIV21 — [FINAL FANTASY IV Pixel Remaster on Steam](https://store.steampowered.com/app/1173800/FINAL_FANTASY_IV/).** Valve / Square Enix, snapshot retrieved 2026-09-26. Current Steam release date, single-player/product framing and review aggregate; dynamic storefront data.
+
+<a id="ffiv22"></a>**FFIV22 — [FINAL FANTASY IV most-helpful English Steam reviews](https://steamcommunity.com/app/1173800/reviews/?browsefilter=toprated&l=english).** Individual Steam reviewers, inspected 2026-09-26. Qualitative positive/negative player testimony emphasizing soundtrack/presentation/accessibility versus balance/difficulty concerns. Helpful ranking is self-selected and not representative.
+
+<a id="ffiv23"></a>**FFIV23 — [FINAL FANTASY IV positive helpful Steam reviews](https://steamcommunity.com/app/1173800/positivereviews/?browsefilter=toprated&l=english).** Individual Steam reviewers, inspected 2026-09-26. Additional positive preservation/QoL/soundtrack testimony. Hours and ranking are dynamic.
+
+<a id="ffiv24"></a>**FFIV24 — [Final Fantasy Pixel Remaster series sales top six million](https://www.gematsu.com/2025/12/final-fantasy-pixel-remaster-series-sales-top-six-million).** Sal Romano, Gematsu, 2025-12-17, reporting Square Enix's announcement. Six-million figure covers the **entire six-game Pixel Remaster series**, not FFIV alone.
+
+<a id="ffiv25"></a>**FFIV25 — [Final Fantasy I–VI Pixel Remaster Review](https://www.nintendolife.com/reviews/switch-eshop/final-fantasy-i-vi-pixel-remaster).** Lowell Bell, Nintendo Life, 2023-04-19. Supplemental collection-level review of preservation, presentation and console accessibility; not counted as one of the five FFIV-specific review minimum.
+
+<a id="ffiv26"></a>**FFIV26 — [Beginning to Kaipo / Mist Dragon](https://strategywiki.org/wiki/Final_Fantasy_IV/Beginning_to_Kaipo).** StrategyWiki community mechanics reference. Classic Mist Dragon state/retaliation interaction.
+
+<a id="ffiv27"></a>**FFIV27 — [Sealed Cave / Demon Wall](https://strategywiki.org/wiki/Final_Fantasy_IV/Sealed_Cave).** StrategyWiki community mechanics reference. Classic Demon Wall advance/Crush timing interaction.
+
+<a id="ffiv28"></a>**FFIV28 — [Cave of Monsters / Asura](https://strategywiki.org/wiki/Final_Fantasy_IV/Cave_of_Monsters).** StrategyWiki community mechanics reference. Reflect/Wall interaction with Asura's healing and physical counters.
+
+<a id="ffiv29"></a>**FFIV29 — [Bahamut](https://strategywiki.org/wiki/Final_Fantasy_IV/Bahamut).** StrategyWiki community mechanics reference. Countdown/Mega Flare, Reflect and Jump interaction; exact values are version-sensitive.
+
