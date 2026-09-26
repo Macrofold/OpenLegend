@@ -13,8 +13,8 @@ function open(path = ':memory:'): SqliteStore {
   opened.add(store);
   return store;
 }
-function close(store: SqliteStore): void {
-  store.close();
+async function close(store: SqliteStore): Promise<void> {
+  await store.close();
   opened.delete(store);
 }
 function diskPath(): string {
@@ -54,83 +54,87 @@ function job(id: string, status: JobRecord['status'] = 'generating'): JobRecord 
     request: { text: 'Make a tool.' },
   };
 }
-afterEach(() => {
-  for (const store of opened) store.close();
+afterEach(async () => {
+  for (const store of opened) await store.close();
   opened.clear();
   for (const path of directories.splice(0)) rmSync(path, { recursive: true, force: true });
   vi.useRealTimers();
 });
 
 describe('SQLite committed world boundary', () => {
-  it('persists state and command receipts together across close/reopen', () => {
+  it('persists state and command receipts together across close/reopen', async () => {
     const path = diskPath();
     let store = open(path);
     const initial = save();
-    expect(store.load()).toBeNull();
-    const revision = store.commit(0, initial);
+    expect(await store.load()).toBeNull();
+    const revision = await store.commit(0, initial);
     const food = inventoryFor(initial.world, 'player').find(
       (item) => item.definitionId === 'berries',
     )!;
     const command = { id: 'eat-once', actorId: 'player', type: 'eat' as const, itemId: food.id };
     const changed = executeCommand(initial.world, command).world;
-    const savedRevision = store.commit(revision, { ...initial, world: changed, speed: 3 });
-    close(store);
+    const savedRevision = await store.commit(revision, { ...initial, world: changed, speed: 3 });
+    await close(store);
     store = open(path);
-    expect(store.load()).toEqual({
+    expect(await store.load()).toEqual({
       revision: savedRevision,
       state: { ...initial, world: changed, speed: 3 },
     });
-    const restored = store.load()!.state.world;
+    const restored = (await store.load())!.state.world;
     expect(executeCommand(restored, command).world).toBe(restored);
     expect(
       inventoryFor(restored, 'player').find((item) => item.definitionId === 'berries')!.quantity,
     ).toBe(2);
   });
-  it('rejects a stale writer without overwriting the winner and remains usable', () => {
+  it('rejects a stale writer without overwriting the winner and remains usable', async () => {
     const path = diskPath();
     const first = open(path);
     const second = open(path);
-    const revision = first.commit(0, save());
-    const stale = second.load()!;
+    const revision = await first.commit(0, save());
+    const stale = (await second.load())!;
     const winning = { ...stale.state, speed: 8 };
-    const nextRevision = first.commit(revision, winning);
-    expect(() => second.commit(stale.revision, { ...stale.state, speed: 3 })).toThrow(/conflict/i);
-    expect(second.load()).toEqual({ revision: nextRevision, state: winning });
-    expect(second.commit(nextRevision, winning)).toBe(nextRevision + 1);
+    const nextRevision = await first.commit(revision, winning);
+    await expect(
+      async () => await second.commit(stale.revision, { ...stale.state, speed: 3 }),
+    ).rejects.toThrow(/conflict/i);
+    expect(await second.load()).toEqual({ revision: nextRevision, state: winning });
+    expect(await second.commit(nextRevision, winning)).toBe(nextRevision + 1);
   });
-  it('refuses to reinterpret an unsupported saved world schema', () => {
+  it('refuses to reinterpret an unsupported saved world schema', async () => {
     const store = open();
     const unsupported = save();
     (unsupported.world as unknown as { schemaVersion: number }).schemaVersion = 2;
-    store.commit(0, unsupported);
-    expect(() => store.load()).toThrow(/Unsupported world schema/);
+    await store.commit(0, unsupported);
+    await expect(async () => await store.load()).rejects.toThrow(/Unsupported world schema/);
   });
 });
 
 describe('durable AI allowances outside simulated time', () => {
-  it('counts outstanding reservations against one ceiling and settles only once', () => {
+  it('counts outstanding reservations against one ceiling and settles only once', async () => {
     const store = open();
-    expect(store.reserve('jev-route', 'jev', 0.02, 0.1)).toBe(true);
-    expect(store.reserve('generation', 'openai', 0.08, 0.1)).toBe(true);
-    expect(store.reserve('over-ceiling', 'openai', 0.000001, 0.1)).toBe(false);
-    expect(store.usage(0.1).budget).toEqual({
+    expect(await store.reserve('jev-route', 'jev', 0.02, 0.1)).toBe(true);
+    expect(await store.reserve('generation', 'openai', 0.08, 0.1)).toBe(true);
+    expect(await store.reserve('over-ceiling', 'openai', 0.000001, 0.1)).toBe(false);
+    expect((await store.usage(0.1)).budget).toEqual({
       limitUsd: 0.1,
       spentUsd: 0,
       reservedUsd: 0.1,
       estimated: true,
     });
-    expect(() => store.reserve('generation', 'openai', 0.08, 0.1)).toThrow(/already admitted/i);
-    store.settle('generation', receipt('generation'));
-    store.settle('generation', receipt('generation'));
-    expect(store.usage(0.1).budget.spentUsd).toBe(0.03);
-    expect(store.usage(0.1).budget.reservedUsd).toBe(0.02);
-    expect(store.usage(0.1).usage.llmCalls).toBe(1);
-    expect(store.reserve('fits-after-release', 'openai', 0.05, 0.1)).toBe(true);
+    await expect(
+      async () => await store.reserve('generation', 'openai', 0.08, 0.1),
+    ).rejects.toThrow(/already admitted/i);
+    await store.settle('generation', receipt('generation'));
+    await store.settle('generation', receipt('generation'));
+    expect((await store.usage(0.1)).budget.spentUsd).toBe(0.03);
+    expect((await store.usage(0.1)).budget.reservedUsd).toBe(0.02);
+    expect((await store.usage(0.1)).usage.llmCalls).toBe(1);
+    expect(await store.reserve('fits-after-release', 'openai', 0.05, 0.1)).toBe(true);
   });
-  it('releases an undispatched attempt and conservatively charges missing usage', () => {
+  it('releases an undispatched attempt and conservatively charges missing usage', async () => {
     const store = open();
-    store.reserve('local-rejection', 'openai', 0.08, 1);
-    store.settle(
+    await store.reserve('local-rejection', 'openai', 0.08, 1);
+    await store.settle(
       'local-rejection',
       receipt('local-rejection', {
         dispatched: false,
@@ -138,72 +142,79 @@ describe('durable AI allowances outside simulated time', () => {
         usage: undefined,
       }),
     );
-    expect(store.usage(1).budget.spentUsd).toBe(0);
-    expect(store.usage(1).usage.llmCalls).toBe(0);
-    store.reserve('missing-usage', 'openai', 0.08, 1);
-    store.settle(
+    expect((await store.usage(1)).budget.spentUsd).toBe(0);
+    expect((await store.usage(1)).usage.llmCalls).toBe(0);
+    await store.reserve('missing-usage', 'openai', 0.08, 1);
+    await store.settle(
       'missing-usage',
       receipt('missing-usage', { estimatedCostUsd: undefined, usage: undefined }),
     );
-    expect(store.usage(1).budget.spentUsd).toBe(0.08);
-    expect(store.usage(1).budget.reservedUsd).toBe(0);
+    expect((await store.usage(1)).budget.spentUsd).toBe(0.08);
+    expect((await store.usage(1)).budget.reservedUsd).toBe(0);
   });
-  it('does not erase paid usage when a world snapshot is restored', () => {
+  it('does not erase paid usage when a world snapshot is restored', async () => {
     const store = open();
     const original = save();
-    let revision = store.commit(0, original);
-    store.reserve('paid', 'openai', 0.08, 1);
-    store.settle('paid', receipt('paid'));
-    revision = store.commit(revision, { ...original, world: { ...original.world, simTime: 4000 } });
-    store.commit(revision, original);
-    expect(store.load()!.state.world.simTime).toBe(0);
-    expect(store.usage(1).budget.spentUsd).toBe(0.03);
-    expect(() => store.reserve('paid', 'openai', 0.08, 1)).toThrow(/already admitted/);
+    let revision = await store.commit(0, original);
+    await store.reserve('paid', 'openai', 0.08, 1);
+    await store.settle('paid', receipt('paid'));
+    revision = await store.commit(revision, {
+      ...original,
+      world: { ...original.world, simTime: 4000 },
+    });
+    await store.commit(revision, original);
+    expect((await store.load())!.state.world.simTime).toBe(0);
+    expect((await store.usage(1)).budget.spentUsd).toBe(0.03);
+    await expect(async () => await store.reserve('paid', 'openai', 0.08, 1)).rejects.toThrow(
+      /already admitted/,
+    );
   });
-  it('persists uncertain work after restart and fences duplicate dispatch', () => {
+  it('persists uncertain work after restart and fences duplicate dispatch', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-19T12:00:00Z'));
     const path = diskPath();
     let store = open(path);
-    store.reserve('in-flight', 'openai', 0.08, 0.1);
-    store.putJob(job('in-flight'));
-    store.putJob(job('already-complete', 'completed'));
-    close(store);
+    await store.reserve('in-flight', 'openai', 0.08, 0.1);
+    await store.putJob(job('in-flight'));
+    await store.putJob(job('already-complete', 'completed'));
+    await close(store);
     vi.setSystemTime(new Date('2026-09-20T12:00:00Z'));
     store = open(path);
-    store.recoverInterruptedWork();
-    store.recoverInterruptedWork();
-    expect(store.getJob('in-flight')!.status).toBe('stale');
-    expect(store.getJob('already-complete')!.status).toBe('completed');
-    expect(store.usage(0.1).budget).toEqual({
+    await store.recoverInterruptedWork();
+    await store.recoverInterruptedWork();
+    expect((await store.getJob('in-flight'))!.status).toBe('stale');
+    expect((await store.getJob('already-complete'))!.status).toBe('completed');
+    expect((await store.usage(0.1)).budget).toEqual({
       limitUsd: 0.1,
       spentUsd: 0.08,
       reservedUsd: 0,
       estimated: true,
     });
-    expect(() => store.reserve('in-flight', 'openai', 0.08, 0.1)).toThrow(/already admitted/);
-    expect(store.reserve('too-much', 'openai', 0.03, 0.1)).toBe(false);
+    await expect(async () => await store.reserve('in-flight', 'openai', 0.08, 0.1)).rejects.toThrow(
+      /already admitted/,
+    );
+    expect(await store.reserve('too-much', 'openai', 0.03, 0.1)).toBe(false);
   });
-  it('reconciles a late definitive receipt after restart without spending twice', () => {
+  it('reconciles a late definitive receipt after restart without spending twice', async () => {
     const store = open();
-    store.reserve('late', 'openai', 0.08, 0.1);
-    store.recoverInterruptedWork();
-    store.settle('late', receipt('late', { estimatedCostUsd: 0.09 }));
-    store.settle('late', receipt('late', { estimatedCostUsd: 0.09 }));
-    expect(store.usage(0.1).budget.spentUsd).toBe(0.09);
-    expect(store.usage(0.1).usage.llmCalls).toBe(1);
-    expect(store.usage(0.1).usage.inputTokens).toBe(1200);
-    expect(store.reserve('overspend', 'openai', 0.02, 0.1)).toBe(false);
+    await store.reserve('late', 'openai', 0.08, 0.1);
+    await store.recoverInterruptedWork();
+    await store.settle('late', receipt('late', { estimatedCostUsd: 0.09 }));
+    await store.settle('late', receipt('late', { estimatedCostUsd: 0.09 }));
+    expect((await store.usage(0.1)).budget.spentUsd).toBe(0.09);
+    expect((await store.usage(0.1)).usage.llmCalls).toBe(1);
+    expect((await store.usage(0.1)).usage.inputTokens).toBe(1200);
+    expect(await store.reserve('overspend', 'openai', 0.02, 0.1)).toBe(false);
   });
-  it('retains immutable job request identity across status updates', () => {
+  it('retains immutable job request identity across status updates', async () => {
     const store = open();
     const original = job('same-id', 'queued');
-    store.putJob(original);
-    store.putJob({ ...original, status: 'generating' });
-    expect(store.getJob(original.id)!.status).toBe('generating');
-    expect(() => store.putJob({ ...original, fingerprint: 'different-body' })).toThrow(
-      /different input/,
-    );
-    expect(store.getJob(original.id)!.fingerprint).toBe(original.fingerprint);
+    await store.putJob(original);
+    await store.putJob({ ...original, status: 'generating' });
+    expect((await store.getJob(original.id))!.status).toBe('generating');
+    await expect(
+      async () => await store.putJob({ ...original, fingerprint: 'different-body' }),
+    ).rejects.toThrow(/different input/);
+    expect((await store.getJob(original.id))!.fingerprint).toBe(original.fingerprint);
   });
 });

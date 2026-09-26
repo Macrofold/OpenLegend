@@ -194,6 +194,7 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
       ['actor_id', 'source_id'],
       ['actor_id', 'event_id'],
       ['actor_id', 'sequence'],
+      ['actor_id', 'position'],
     ],
   );
 }

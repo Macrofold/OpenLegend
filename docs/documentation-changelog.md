@@ -1,5 +1,17 @@
 # Documentation changelog
 
+## 2026-09-25 — Foundation decisions and branch-aware remaining work
+
+Recorded accepted [special invention permission](../archive/03-design-proposals/invention-governance-and-ownership.md#special-player-invention-permission), [risk-accepted law changes](../archive/07-technical-architecture/declarations-and-evolution.md#accepted-live-change-and-risk-policy), scheduled maintenance, [main-world logout/death/ghost policy](worlds/base/lifecycle-and-protection.md), persistent cause-linked emotions and foreground/background sensory policy. These are accepted targets, not runtime delivery. Gameplay risk can be explicitly accepted without granting unsupported execution or bypassing integrity; buildings remain unprotected pending a later policy.
+
+The [remaining-foundations index](maintainers/remaining-foundational-work.md) separates uncovered work from overlapping implementation branches and preserves the inspected branch provenance. MP01–MP04, BW13–BW15, ACT07–ACT08, DF01–DF02 and INV-1.7/INV-5.6 fill concrete gaps; existing EWF/EPR/SL/SW owners retain their work. D03/D07/D15/D33 retain residual questions; D06/D13/D19/D51 point to accepted owners. Current data/runtime hardening and its evidence are unchanged by this documentation-only update.
+
+## 2026-09-25 — Inactive history and runtime hardening
+
+Moved inactive actor history out of ordinary simulation recovery and commits without changing recall eligibility, forgetting or consolidation semantics. Scoped SQL context reads, explicit maintenance/edit materialization and complete save capture preserve access and fidelity. Durable ordinals keep partial histories append-safe. Dense encounter preparation and finalization reuse work while preserving all native events and recipients.
+
+The existing 168 fixture/API typecheck errors are resolved. Native crash, concurrency, migration and cold-history drills expand the evidence; measured dense latency improves but remains above interactive capacity. [Residency contract](performance.md#inactive-history-residency), [D1/D2](maintainers/production-data.md#remaining-d1d2-implementation-and-evidence), [PF08/PF09](maintainers/performance.md) and [verification](verification.md#data-runtime-hardening) distinguish delivered work from remaining large-backlog, save-size, population and hosted qualification.
+
 ## 2026-09-25 — Short-change workflow and concise responses
 
 [Root guidance](../AGENTS.md#short-changes) now lets short, low-risk tasks skip separate design documents, minor-fix changelog entries, unrelated test suites and redundant review rounds. Focused diff review, affected-behavior verification, consequential decision records, explicit requests and required gates remain; size alone does not establish low risk. Response guidance requires concise, plain, accurate and complete language, with shorthand only where clarity survives. [CG05/CG08](maintainers/agent-guidance.md) track the revised instructions and pending compliance evidence.

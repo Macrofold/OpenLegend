@@ -2,6 +2,9 @@
 
 This page is the master navigation index for active implementation work.
 
+- [Remaining foundational work](remaining-foundational-work.md) — ranked gaps, branch coverage and accepted-decision delivery map.
+- [Multiplayer authority and operations](multiplayer.md) — control, private projections, special player permissions, maintenance and absence integration.
+
 ## Focused work
 
 | Area                                                                   | Tracker                                                             | Design owner                                                                                                                                                                                                                                                   |

@@ -20,6 +20,8 @@ The broader shared-world platform, arbitrary invented physics, hosted worlds, ma
 
 - [Engine/world boundaries](docs/engine-and-world-boundaries.md), [extensibility roadmap](docs/extensibility-roadmap.md) and [EWF work](docs/maintainers/extensible-world-foundation.md) — shared foundation and staged delivery
 
+Foundation sequencing and branch coverage: [Remaining foundational work](docs/maintainers/remaining-foundational-work.md). Accepted targets are distinguished from delivered behavior.
+
 ## Run locally
 
 Use **Node.js 22.13+** and **pnpm 10.33.0**, pinned in `package.json`. Node 22 LTS is the tested baseline; its built-in SQLite module may print an experimental warning. If pnpm is not installed, use `corepack enable` with Node 22, or follow the [pnpm installation guide](https://pnpm.io/10.x/installation).

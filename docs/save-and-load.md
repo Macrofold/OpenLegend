@@ -16,6 +16,10 @@ This document owns the high-level gameplay save/load design and the constraints 
 
 Implementation is tracked in [SL00–SL10](maintainers/save-and-load.md), with an initial personal-world manual save/load slice followed by autosaves and conditional expansion.
 
+## Current history capture boundary
+
+Gameplay save capture reconstructs complete permitted actor memory, awareness and summaries from canonical records inside the consistent capture transaction. Simulation residency does not narrow the save. Restore compares against complete durable history before replacing the timeline, and shared restore enforcement preserves current forgetting/privacy restrictions and external accounting. Ordinary play releases cold sources again after durable publication. Capture still serializes in the main process with a 64 MiB guard; broader save-size and latency qualification remains in [SL](maintainers/save-and-load.md) and [PF08](maintainers/performance.md#pf08--long-lived-worlds-hot-state-and-checkpoints).
+
 ## Active development policy
 
 **Owner instruction:** evolve the existing database and world in place. Simple migrations, field backfills and direct schema/data updates are allowed and preferred. Preserve world identity, gameplay progress and unrelated records while moving to one current model. The restriction is against disproportionate effort supporting legacy game versions: no parallel legacy runtimes, speculative compatibility framework, per-feature world/save-version bumps or new-database/data-directory workflow.

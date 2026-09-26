@@ -1,3 +1,4 @@
+import { trackDetachedRecord } from './draft.js';
 import {
   observerDescription,
   recognizesSubject,
@@ -186,10 +187,11 @@ function recordEvent(
   if (source) event.actorId = source.id;
   if (targetId) event.targetId = targetId;
   event.data = {
-    ...data,
+    ...cloneValue(data),
     importancePolicy: 'native-v1',
     importanceReason: data?.['significant'] ? 'significant' : type,
   };
+  trackDetachedRecord(world, event);
   if (source && conversationId && world.conversations?.records[conversationId])
     world.conversations.records[conversationId]!.lastActivityAt = world.simTime;
   if (audience.length || importance >= (world.socialPolicy?.notableThreshold ?? 8))
@@ -218,6 +220,13 @@ function recordEvent(
             seesEntity(world, observer, recipient)))
           ? intendedId
           : undefined;
+      const perspectiveText = memoryPerspective(
+        world,
+        actorId,
+        text,
+        type === 'speech',
+        source?.id,
+      );
       mutateExperience(world, actorId, {
         operation: 'add',
         entry: {
@@ -225,7 +234,7 @@ function recordEvent(
           value: {
             eventId: event.id,
             actorId,
-            text: memoryPerspective(world, actorId, text, type === 'speech', source?.id),
+            text: perspectiveText,
             at: event.at,
             sequence: world.nextId,
             modality:
@@ -277,7 +286,9 @@ function recordEvent(
             content:
               typeof data?.['text'] === 'string'
                 ? data['text']
-                : memoryPerspective(world, actorId, text, false, source?.id),
+                : type === 'speech'
+                  ? memoryPerspective(world, actorId, text, false, source?.id)
+                  : perspectiveText,
           },
         },
       });

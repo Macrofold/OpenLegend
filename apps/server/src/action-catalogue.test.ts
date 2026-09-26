@@ -9,15 +9,15 @@ import { WorldService } from './world-service.js';
 import { readConfig } from './config.js';
 
 const stores: SqliteStore[] = [];
-function setup() {
+async function setup() {
   const store = new SqliteStore(':memory:');
   stores.push(store);
   const service = new WorldService(store, readConfig({}));
-  service.setPresence('fixture', true);
+  await service.setPresence('fixture', true);
   return { store, service };
 }
-afterEach(() => {
-  for (const store of stores.splice(0)) store.close();
+afterEach(async () => {
+  for (const store of stores.splice(0)) await store.close();
 });
 const recipe = (name: string): DeclarationDraft => ({
   schemaVersion: 1,
@@ -37,10 +37,10 @@ const recipe = (name: string): DeclarationDraft => ({
   },
 });
 
-it('previews every native family without consuming food, materials, RNG, receipts or save revisions', () => {
-  const { service, store } = setup();
+it('previews every native family without consuming food, materials, RNG, receipts or save revisions', async () => {
+  const { service, store } = await setup();
   const before = JSON.stringify(service.world),
-    saved = store.load();
+    saved = await store.load();
   const catalogue = actionCatalogue(service, {});
   expect(catalogue.actions.every((action) => action.description.length > 20)).toBe(true);
   expect(catalogue.actions.some((action) => action.id === 'invent')).toBe(false);
@@ -72,12 +72,12 @@ it('previews every native family without consuming food, materials, RNG, receipt
     enabled: false,
   });
   expect(JSON.stringify(service.world)).toBe(before);
-  expect(store.load()).toEqual(saved);
-  expect(store.recentJobs()).toEqual([]);
+  expect(await store.load()).toEqual(saved);
+  expect(await store.recentJobs()).toEqual([]);
 });
 
-it('scopes object menus to their target, including relevant missing prerequisites', () => {
-  const { service } = setup();
+it('scopes object menus to their target, including relevant missing prerequisites', async () => {
+  const { service } = await setup();
   const fire = () => actionCatalogue(service, { targetId: 'campfire' }).actions;
   expect(fire().map((action) => action.id)).toEqual(['move', 'cook']);
   expect(fire().find((action) => action.id === 'cook')).toMatchObject({
@@ -115,12 +115,12 @@ it('scopes object menus to their target, including relevant missing prerequisite
   ).toEqual(expect.arrayContaining(['prepare-cord', 'talk-ada', 'gather-reeds']));
 });
 
-it('refreshes availability after pause and never previews a hidden target', () => {
-  const { service } = setup();
+it('refreshes availability after pause and never previews a hidden target', async () => {
+  const { service } = await setup();
   expect(actionCatalogue(service, {}).actions.find((action) => action.id === 'rest')?.enabled).toBe(
     true,
   );
-  service.control({ paused: true });
+  await service.control({ paused: true });
   expect(actionCatalogue(service, {}).actions.find((action) => action.id === 'rest')).toMatchObject(
     { enabled: false, reason: 'Resume the world to act.' },
   );
@@ -129,23 +129,29 @@ it('refreshes availability after pause and never previews a hidden target', () =
   );
 });
 
-it('includes learned recipes beyond an AI retrieval limit while excluding another actor’s private knowledge', () => {
-  const { service } = setup();
+it('includes learned recipes beyond an AI retrieval limit while excluding another actor’s private knowledge', async () => {
+  const { service } = await setup();
   for (let index = 0; index < 30; index++) {
     expect(
-      service.admit(recipe(`Fixture sling ${index}`), {
-        source: 'test-fixture',
-        actorId: 'player',
-        requestId: `fixture-${index}`,
-      }).ok,
+      (
+        await service.admit(recipe(`Fixture sling ${index}`), {
+          source: 'test-fixture',
+          authority: { origin: 'player', policyRevision: 1 },
+          actorId: 'player',
+          requestId: `fixture-${index}`,
+        })
+      ).ok,
     ).toBe(true);
   }
   expect(
-    service.admit(recipe('Private fixture sling'), {
-      source: 'test-fixture',
-      actorId: 'ada',
-      requestId: 'fixture-private',
-    }).ok,
+    (
+      await service.admit(recipe('Private fixture sling'), {
+        source: 'test-fixture',
+        authority: { origin: 'player', policyRevision: 1 },
+        actorId: 'ada',
+        requestId: 'fixture-private',
+      })
+    ).ok,
   ).toBe(true);
   const catalogue = actionCatalogue(service, {});
   expect(
@@ -160,44 +166,50 @@ it('includes learned recipes beyond an AI retrieval limit while excluding anothe
   expect(craft.description).toContain('Requires: 1 fiber cord, 2 prepared fibers.');
 });
 
-it('updates contextual food descriptions from the player’s current state without leaking private memories', () => {
-  const { service } = setup();
+it('updates contextual food descriptions from the player’s current state without leaking private memories', async () => {
+  const { service } = await setup();
   const food = actionCatalogue(service, {}).actions.find(
     (action) => action.intent.kind === 'command' && action.intent.command.type === 'eat',
   )!;
   const fullness = service.world.entities.player!.actor!.fullness;
+  if (fullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
   expect(food.description).toContain(`You currently have ${Math.round(fullness)} / 100 fullness.`);
   if (food.intent.kind !== 'command') throw new Error('Missing fixture food command');
-  expect(service.command('fixture-eat', food.intent.command).ok).toBe(true);
+  expect((await service.command('fixture-eat', food.intent.command)).ok).toBe(true);
   const next = actionCatalogue(service, {}).actions.find((action) => action.id === food.id)!;
   expect(next.description).not.toBe(food.description);
+  const nextFullness = service.world.entities.player!.actor!.fullness;
+  if (nextFullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
   expect(next.description).toContain(
-    `You currently have ${Math.round(service.world.entities.player!.actor!.fullness)} / 100 fullness.`,
+    `You currently have ${Math.round(nextFullness)} / 100 fullness.`,
   );
   expect(JSON.stringify(actionCatalogue(service, {}))).not.toContain(
-    service.world.entities.ada!.actor!.goal,
+    service.world.entities.ada!.actor!.agency.goals[0]!.objective,
   );
 });
 
-it('persists profile preferences across server restarts and world restoration, independently of another profile', () => {
+it('persists profile preferences across server restarts and world restoration, independently of another profile', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'open-legend-profile-'));
   const path = join(directory, 'world.sqlite');
   let store = new SqliteStore(path);
   try {
     const service = new WorldService(store, readConfig({}));
-    const original = store.load()!;
+    await service.ready;
+    const original = (await store.load())!;
     expect(service.profile.preferences.showUnavailableActions).toBe(false);
-    service.setPreferences({ showUnavailableActions: true });
-    store.commit(original.revision, original.state);
-    expect(store.getProfile('someone-else').preferences.showUnavailableActions).toBe(false);
-    store.close();
+    await service.setPreferences({ showUnavailableActions: true });
+    await store.commit(original.revision, original.state);
+    expect((await store.getProfile('someone-else')).preferences.showUnavailableActions).toBe(false);
+    await store.close();
     store = new SqliteStore(path);
     const restarted = new WorldService(store, readConfig({}));
+    await restarted.ready;
     expect(restarted.profile.preferences.showUnavailableActions).toBe(true);
-    restarted.setPreferences({ showUnavailableActions: false });
+    await restarted.setPreferences({ showUnavailableActions: false });
+    await restarted.ready;
     expect(restarted.profile.preferences.showUnavailableActions).toBe(false);
   } finally {
-    store.close();
+    await store.close();
     rmSync(directory, { recursive: true, force: true });
   }
 });

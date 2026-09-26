@@ -102,13 +102,15 @@ test('native wilderness is visible, playable, saved and honestly reports absent 
     // An explicit native fixture move puts Ada in front of the grass sprite.
     // Her upper body overlaps the grass's center: foreground depth must win.
     expect(
-      game.service.command(
-        'fixture-overlapping-sprites',
-        {
-          type: 'move',
-          position: { y: 0, surfaceId: 'terrain', x: 19, z: 13 },
-        },
-        'ada',
+      (
+        await game.service.command(
+          'fixture-overlapping-sprites',
+          {
+            type: 'move',
+            position: { y: 0, surfaceId: 'terrain', x: 19, z: 13 },
+          },
+          'ada',
+        )
       ).ok,
     ).toBe(true);
     await expect
@@ -223,7 +225,7 @@ test('native wilderness is visible, playable, saved and honestly reports absent 
     await expect.poll(() => game.service.world.simTime).toBeGreaterThan(pausedTime);
     await page.locator('#aiLabel').click();
     await expect(page.getByText('unconfigured', { exact: true })).toBeVisible();
-    expect(game.service.store.usage(0).usage.llmCalls).toBe(0);
+    expect((await game.service.store.usage(0)).usage.llmCalls).toBe(0);
     expect(aiRequests).toEqual([]);
     expect(errors).toEqual([]);
   } finally {

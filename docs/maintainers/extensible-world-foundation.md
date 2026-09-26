@@ -257,3 +257,9 @@ For each delivered slice report: task IDs and exact changed files; behavior pres
 
 - [x] Add the trusted declarative Punch definition, native target/range/approach/impact handling and public sprite-arm animation through existing domain/server/client boundaries. This does not complete generic action-definition admission.
 - [ ] Qualify the [targeted-strike validation](TODO.md#targeted-strike-validation) before claiming broader combat coverage.
+
+## Remaining-foundation audit handoff
+
+The [foundation index](remaining-foundational-work.md) prioritizes existing owners rather than creating a second EWF plan. The invention branch delivers finite attributes/adapters/inspection but does not close EWF01–03, EWF07 or EWF08. Before more independent mechanics, complete EWF02's single-owner deterministic contribution path with INV-6.3, competing resource claims, units/provenance and contribution removal that preserves unrelated changes. Prove two unlike consumers and a real default-world consumer; do not infer completion from a custom meter alone.
+
+EWF08 must cover query-membership changes (including newly relevant entities), old/new affected neighborhoods, cumulative nested fan-out, recurring descendants and zero-time feedback. Coordinate real invalidation with SW/EPR instead of adding a second graph or scheduler. Risk acceptance under INV-5.6 cannot waive these runtime integrity bounds. EWF07 supplies exact lifecycle/dependency bindings to SL00 and the shared activation owner. These acceptance refinements retain the existing unchecked tasks and are not implementation claims.

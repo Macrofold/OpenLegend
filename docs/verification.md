@@ -2,6 +2,45 @@
 
 This file records current reproducible evidence and acceptance gaps. Fixture evidence does not establish live model quality, provider cost, hosted security, capacity or balance.
 
+## Data runtime hardening
+
+September 25, 2026: Apple M1 Pro, 32 GiB RAM, macOS arm64, Node 22.23.2; local PostgreSQL 14.17/pgvector and Node SQLite. Disposable synthetic worlds, zero AI budget, no provider calls. This extends [foundation evidence](#data-foundation-runtime) and the [review fixes](#data-foundation-review). It is not a multiplayer, browser or model-quality qualification.
+
+The baseline was clean `da02629`, including review fixes from `8f72e94`. All **168 existing test-inclusive typecheck diagnostics** were fixed by updating existing fixtures for asynchronous repository/service APIs and current command, goal and provenance contracts. Strict compiler settings were retained. No unit/integration/browser suites or new test cases were authored or run; a passing typecheck does not establish those older suites' runtime acceptance.
+
+### Cold history and complete recovery
+
+SQLite native service runs held the active world constant and seeded 1,000 versus 100,000 old memories for one actor, outside the existing six-hour raw window. After recovery and garbage collection, resident cold memories were zero and heap stayed around 16–17 MB in both runs. Startup took 24 versus 66 ms. Twenty committed speech operations measured p50 3.11 versus 2.75 ms, p95 6.43 versus 10.25 ms; twenty one-second native transitions plus commit measured p50 2.14 versus 2.06 ms, p95 18.66 versus 16.66 ms. At this small sample size p95 equals the observed maximum. These are synthetic history-growth observations, not a natural aging soak or a population guarantee.
+
+A final 100,000-source run with indexed maintenance scheduling checks measured metadata p50 0.47 ms, p95/max 2.16 ms over twenty reads. Heap remained 16.1–17.1 MB and no cold memories became resident. Ten actual recent-speech/maintenance scheduling rounds required **zero full-history reads and zero provider dispatches**. The optional player memory projection refreshed from SQL and immediately removed a forgotten source; it did not reappear when the pending refresh completed. The god mind inspector returned 100 cold experiences and both resolved/unresolved commitments while keeping only the unresolved commitment resident; revoking inspection permission during the read rejected disclosure. These exercised projection contracts natively, not through a browser.
+
+A separate 10,000-event/awareness world recovered with 512 hot events and 24 old awareness records, with all 10,000 events still durable. The existing consolidation policy found all 10,000 cold inputs. A supplied native two-source grouping committed successfully, and complete gameplay save capture contained 9,998 awareness sources and one summary. The summary remained queryable after release/restart, with no resident summaries. These runs caught and fixed sparse ordinal reconstruction and a missing parent container when publishing the first summary. SQLite and PostgreSQL 10,000-memory runs also retrieved cold text, saved all sources, forgot a selected cold source, and restored without reviving it.
+
+### Dense native work
+
+Matched native runs used `scripts/stress-native.ts`, seed 73, cold start with zero warmup, frozen snapshots, unchanged native rules and profiling enabled. The mixed scenario is the checked-in `scripts/performance/scenarios/mixed.json`: 344 total entities, 180 one-second transitions. The dense scenario adds 98 people, 50 animals and 500 rigid objects to the seed world, crowded layout, five transitions, speed 3, 120-second watchdog: 662 total entities and 100 memory-capable people. These synthetic people are not simultaneous connected human accounts.
+
+| Workload                    | Baseline total / worst step | Final total / worst step | Ordinary step p50 / p95               |
+| --------------------------- | --------------------------- | ------------------------ | ------------------------------------- |
+| Mixed, 180 steps            | 1,660 / 475 ms              | 1,375 / 182 ms           | 6.41 / 8.32 ms (baseline 6.24 / 7.99) |
+| Dense, five steps, repeat A | 4,781 / 4,474 ms            | 3,122 / 2,812 ms         | 78.63 / 2,812 ms                      |
+| Dense, five steps, repeat B | Same baseline               | 2,972 / 2,677 ms         | 72.59 / 2,677 ms                      |
+
+Dense total time improved 35–38%; the first/worst step improved 37–40%. Its 66,051 events and 75,815 awareness sources were unchanged. Final-world SHA-256 matched the baseline for both scenarios: mixed `ec1ff970ea9a5344976df5d54ad0fbf73ca7fbbf677c1a6f36d7311642ab6771`, dense `8551a3432422d0d2ec25e1a6df6d5abff8314b884e3f60081130d5a13219b80c`. No event, recipient, simulation step or RNG draw was dropped. Dense final heap was 186–199 MB versus baseline 205 MB; these post-run readings are not peak or sustained memory bounds.
+
+A larger concentrated fixture added 198 people, 100 animals and 1,000 objects (1,312 entities total), five steps. It took 14.88 seconds total, with an 11.71-second worst step and roughly 647 MB final heap. This run preceded the final name-pattern cache and has no matched baseline; it is a bottleneck observation, not an improvement claim or the user's distributed first-release workload. **Dense interaction still does not meet interactive capacity.** The mixed run also does not meet 3× native throughput. [PF08/PF09](maintainers/performance.md) retain dense acquisition/active-array work, natural aging, full-backlog maintenance, checkpoint size/serialization, regional loading and broader acceptance.
+
+### Failure and review evidence
+
+- Killing a SQLite writer after record updates but before transaction commit recovered the original revision/state. Killing immediately after commit recovered the new revision/state.
+- Two independent SQLite adapters competing from the same revision produced one winner and one rejected writer. Eight concurrent identical PostgreSQL speech requests committed one utterance and returned seven duplicates. A second PostgreSQL writer was fenced out.
+- A PostgreSQL reader blocked for 300 ms while a speech commit completed in 122 ms on the separate write connection. This demonstrates lane separation, not a sustained latency SLO.
+- An incomplete legacy journal refused recovery without removing its snapshot or installing a canonical head. A failure injected after record writes during migration rolled back; retry preserved the original state exactly.
+- The existing native service save/load, duplicate-command, failed-record-write and snapshot/journal recovery drill passed. Operational backup/restore retained the current forgetting ledger and denied forgotten audience/perspective access. Legacy-profile PostgreSQL import succeeded and left source bytes unchanged. Editing a secondary grouped-memory member invalidated the current recall selection, while the captured pre-review implementation accepted it.
+- Two review/fix rounds covered durable ordering, partial baseline ownership, read/mutation isolation, source privacy, maintenance scheduling, detached-value lifecycle, async fixture assertions and documentation. Corrections were exercised again with the relevant native drills.
+
+Typecheck, production build, generated-configuration consistency, guidance validation, changed-file formatting, whitespace checks and a 134-file Markdown link/anchor scan passed; the existing client bundle-size warning remains. Broader crash publication boundaries, long-running concurrent workloads, live models and browser interaction remain unverified. Evidence scripts/reports are local `/tmp/ol-hardening-*` artifacts, with scenarios and critical parameters above; no user world was used. [Project plan](projects/data-runtime-hardening.md), [D1/D2](maintainers/production-data.md#remaining-d1d2-implementation-and-evidence) and [CR](maintainers/cognition-redesign.md#cognition-persistence-and-consolidation-follow-up) retain the distinction between implementation and acceptance.
+
 ## Macrofold worker reuse
 
 Manual local recovery execution used a disposable SQLite database: reserve a $0.01 synthetic allocation, close/reopen before writing its operational marker, recover through the real backend allocation method, then repeat recovery. The ledger retained one $0.01 accounting entry; changing the amount or using ordinary duplicate reservation was rejected. This was local accounting evidence, not provider spend. Production build passed. The Macrofold endpoint remained unreachable, so workspace retry and zero-rate worker resume have no new live acceptance evidence. No automated tests were written or run.

@@ -1,3 +1,4 @@
+import { WorldRecords } from './world-records.js';
 import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
 import { migrateCognition } from '@open-legend/domain';
 import { upgradeWorldState } from './upgrade-world.js';
@@ -66,6 +67,7 @@ export class GameSaves {
     return [...manual, ...recovery].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
   async capture(state: SavedWorld): Promise<SavePayload> {
+    state = await new WorldRecords(this.db).withHistory(state);
     validateWorldModules(state.world);
     const history = {} as SavePayload['history'];
     for (const table of HISTORY_TABLES)

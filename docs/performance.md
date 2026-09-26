@@ -1,5 +1,17 @@
 # Runtime performance design
 
+## Inactive history residency
+
+Canonical SQL rows retain all permitted memory, awareness and summary sources. Residency is not recall eligibility or forgetting. Ordinary service recovery filters source rows before decoding their bodies; ordinary commits release inactive sources only after durable publication. The accepted record baseline tracks that release separately from semantic deletion, and durable ordinals preserve append order across eviction and restart.
+
+The working set keeps the existing six-game-hour raw window, unresolved commitments and at least the latest 24 awareness records per actor for native observation/wakeup continuity. Summaries stay in SQL. Global hot events retain their recent tail plus dependencies of resident evidence and knowledge. Cold evidence does not pin its entire global event history in RAM. A legacy perspective conversion may still need one complete recovery pass.
+
+Recall, paged editors, the god mind inspector, the player's optional memory panel, invention context and world-assistant context use scoped database selection. Optional text is hydrated only after selection; exact vector search remains the existing recall owner. The legacy lexical context path searches eligible text in SQL and still has corpus-dependent query cost. Read results require current source/generation checks. Optional history reads use the independent read lane rather than holding the simulation mutation queue.
+
+Maintenance uses indexed existence/pressure checks before obtaining a consistent actor-history snapshot for due consolidation, and source-changing operations materialize the affected actor histories through the serialized mutation owner before validating and committing. Global history edits and gameplay saves explicitly materialize complete dependencies. These are still potentially expensive paths: maintenance currently reads the actor's whole backlog, while saves retain the 64 MiB guard and main-process serialization. They must not be mistaken for bounded per-step work. The active raw window can itself become large during dense encounters; this is an age boundary, not a fixed byte cap. All current physical entities still reside in one simulation process; regional residency remains a separate target.
+
+Dense acquisition preserves every distinct event, recipient, RNG draw and native transition. The implementation builds recent encounter membership once per observer, reuses actor-name patterns and personal perspective text, and seals newly detached event/experience values at the end of the mutation so draft finalization does not repeatedly traverse them. These reduce preparation/copy overhead; they do not make actual observer-by-subject work disappear. [PF08/PF09](maintainers/performance.md) and [measured evidence](verification.md#data-runtime-hardening) retain the remaining capacity gates.
+
 ## Data foundation measurements
 
 Canonical record commits, independent read/write lanes and SQL-first memory retrieval are implemented. [Recorded runs](verification.md#data-foundation-runtime) separate structured/semantic retrieval, full local preparation, source indexing, cold extraction, native simulation, commit and recovery. Physical observation can omit memory preparation when its caller supplies SQL recall. Exact vector ranking remains the default; no arbitrary 20 ms limit or new searchable-history cap is imposed. Dense first exposure, active-history copying, checkpoint size and full browser/network/live-AI workloads remain qualification gates.

@@ -93,7 +93,7 @@ A level selector changes the focus and displayed slice, not the actor's position
 
 When a roof or upper floor obscures the selected lower area, presentation can fade or cut away the covering geometry. Its collision, support, sight blocking, and acoustic effects remain intact. Concealed entities are not sent to the ordinary client merely because a roof has been faded. A separately authorized god view can inspect them without granting character knowledge.
 
-The existing embodied-visual-parity policy remains: the active server-approved viewport narrows the character's bodily visual exposure; it does not replace the body with the camera. A camera-side wall may also hide a body-visible object from the displayed view; approved presentation cutaways can remove that camera obstruction, never the body's physical one. NPC vision remains independent of the player's viewport. The sensory owner retains the hidden-tab and multi-view policies and their unresolved details.
+The existing embodied-visual-parity policy remains: the active server-approved viewport narrows the character's bodily visual exposure; it does not replace the body with the camera. A camera-side wall may also hide a body-visible object from the displayed view; approved presentation cutaways can remove that camera obstruction, never the body's physical one. NPC vision remains independent of the player's viewport. The [sensory owner](../archive/07-technical-architecture/perception-and-attention.md#embodied-visual-parity) specifies the accepted connected-background body-sensing exception and one foreground embodied view; creator inspection remains separate. Toggleable sight blur/detail and hearing indicators follow that owner.
 
 ### Picking and controls
 

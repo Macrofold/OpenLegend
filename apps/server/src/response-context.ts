@@ -5,7 +5,7 @@ import {
   entityReferenceMap,
   entityHandles,
 } from './entity-references.js';
-import { seesEntity, type WorldState } from '@open-legend/domain';
+import { seesEntity, type Awareness, type WorldState } from '@open-legend/domain';
 import { gameTime } from './recall.js';
 import type { JsonValue } from '@open-legend/ai';
 import type { WorldService } from './world-service.js';
@@ -16,10 +16,11 @@ export function responseTrigger(
   actorId: string,
   eventId: string | undefined,
   fallback: string,
+  evidence?: Awareness[],
 ): string {
   const world = service.world;
   const aware = eventId
-    ? world.experience?.awareness[actorId]?.find((entry) => entry.eventId === eventId)
+    ? (evidence ?? world.experience?.awareness[actorId])?.find((entry) => entry.eventId === eventId)
     : undefined;
   if (!aware) return `Situation change: ${fallback}`;
   const event = service.worldEvent(aware.eventId);
@@ -64,10 +65,13 @@ export function responseTriggerContext(
   service: WorldService,
   actorId: string,
   eventId?: string,
+  evidence?: Awareness[],
 ): Record<string, JsonValue> | undefined {
   if (!eventId) return undefined;
   const world = service.world;
-  const aware = world.experience?.awareness[actorId]?.find((entry) => entry.eventId === eventId);
+  const aware = (evidence ?? world.experience?.awareness[actorId])?.find(
+    (entry) => entry.eventId === eventId,
+  );
   if (!aware) return undefined;
   const source =
     aware.sourceId && awarenessBindsSubject(world, actorId, aware, aware.sourceId)
@@ -172,10 +176,11 @@ export function responseReferences(
   visibleIds: string[],
   evidenceIds: string[],
   rememberedIds: string[] = [],
+  retainedEvidence?: Awareness[],
 ) {
   const evidence = new Set(evidenceIds);
-  const awareness = (world.experience?.awareness[actorId] ?? []).filter((entry) =>
-    evidence.has(entry.eventId),
+  const awareness = (retainedEvidence ?? world.experience?.awareness[actorId] ?? []).filter(
+    (entry) => evidence.has(entry.eventId),
   );
   const ids = [
     ...new Set([

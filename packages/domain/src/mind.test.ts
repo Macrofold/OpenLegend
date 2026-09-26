@@ -191,7 +191,14 @@ describe('fixture: bounded authored minds', () => {
   it('marks dreams imagined and does not insert them into observed episodes', () => {
     const { world, binding, proposal } = setup();
     world.entities.ada!.actor!.energy = 60;
-    const resting = executeCommand(world, { id: 'rest', actorId: 'ada', type: 'rest' }).world;
+    const resting = executeCommand(world, {
+      id: 'rest',
+      actorId: 'ada',
+      type: 'status-effect',
+      definitionId: 'rest',
+      targetId: 'ada',
+      operation: 'activate',
+    }).world;
     binding.purpose = 'dream';
     binding.restEpisode = resting.entities.ada!.actor!.action!.id;
     proposal.records.forEach((r) => (r.source = 'imagined'));

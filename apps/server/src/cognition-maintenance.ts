@@ -14,7 +14,6 @@ import { interactiveAllowance } from './cognition-budget.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
-  experiences,
   acceptConsolidation,
   publishInnerWorld,
   mindFor,
@@ -147,6 +146,7 @@ export class CognitionMaintenance {
           this.work.defer(entity.id, times.get(entity.id)! + 60000);
           continue;
         }
+        const history = await this.service.memoryMaintenanceStatus(entity.id);
         const world = this.service.world;
         const actor = world.entities[entity.id]?.actor;
         // Owner edits can remove an actor while schedule records are loading.
@@ -176,13 +176,16 @@ export class CognitionMaintenance {
             (entry) => entry.at + EXPERIENCE_LIMITS.rawHours * 3600,
           ),
         ].filter((at) => at > world.simTime);
-        this.work.inspected(entity.id, Math.min(...future));
+        this.work.inspected(
+          entity.id,
+          future.reduce((earliest, at) => Math.min(earliest, at), Infinity),
+        );
         const dreamReady =
           safe &&
           !!dreamStatus(world, world.entities[entity.id]) &&
           dreamStatus(world, world.entities[entity.id])!.elapsedSeconds >=
             dreamPolicy(world).afterSeconds;
-        const hasMemories = experiences(world, entity.id, true).length > 0;
+        const hasMemories = history.hasMemories;
         const day = Math.floor(world.simTime / 86400);
         const reflectedToday =
           mind.lastReflectionAt > 0 && Math.floor(mind.lastReflectionAt / 86400) === day;
@@ -221,7 +224,12 @@ export class CognitionMaintenance {
           this.service.config.macrofoldKey &&
           this.service.store.persistence === 'postgres';
         if (dreamReady && reviewDay >= 0 && review?.day !== reviewDay && !prioritizeReflection) {
-          const batch = consolidationBatch(world, entity.id, 'daily', reviewDay);
+          const batch = consolidationBatch(
+            await this.service.historySnapshot(entity.id),
+            entity.id,
+            'daily',
+            reviewDay,
+          );
           // Attempt each completed day at most once. Provider failure preserves every source.
           await this.service.store.putIntegration(reviewKey, { day: reviewDay });
           if (batch) {
@@ -236,18 +244,19 @@ export class CognitionMaintenance {
             return;
           }
         }
-        const batch = consolidationBatch(world, entity.id, 'hourly');
         const cleanupKey = `cleanup:${world.id}:${entity.id}`;
         const previous = (await this.service.store.getIntegration(cleanupKey)) as
           | { hour: number; sourceDigest: string }
           | undefined;
         const hour = Math.floor(world.simTime / 3600);
-        if (
-          batch &&
+        const cleanupDue =
           !prioritizeReflection &&
-          (previous?.hour !== hour || !!this.service.memoryBacklog) &&
-          previous?.sourceDigest !== digest(batch.sources)
-        ) {
+          (previous?.hour !== hour || history.pressure || !!this.service.memoryBacklog);
+        const batch =
+          cleanupDue && history.rawDue
+            ? consolidationBatch(await this.service.historySnapshot(entity.id), entity.id, 'hourly')
+            : null;
+        if (batch && previous?.sourceDigest !== digest(batch.sources)) {
           await this.service.store.putIntegration(cleanupKey, {
             hour,
             sourceDigest: digest(batch.sources),
@@ -496,9 +505,13 @@ export class CognitionMaintenance {
         });
         if (controller.signal.aborted || this.service.paused)
           throw new Error('Consolidation canceled before publication.');
-        const accepted = await this.service.transition((world) =>
-          acceptConsolidation(world, actorId, job.id, batch.sources, groups),
-        );
+        const accepted = await this.service.withActorHistory([actorId], () => {
+          if (controller.signal.aborted || this.service.paused)
+            throw new Error('Consolidation canceled before publication.');
+          return this.service.transition((world) =>
+            acceptConsolidation(world, actorId, job.id, batch.sources, groups),
+          );
+        });
         if (!accepted.ok) throw new Error(accepted.message);
         committed = true;
         await this.log.record(`${job.id}:publication`, 'Summary publication', {}, accepted);

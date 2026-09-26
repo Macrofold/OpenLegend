@@ -50,6 +50,7 @@ describe('untrusted dictionary identifiers', () => {
           actorId: 'player',
           requestId: 'bad-material',
           source: 'test-fixture',
+          authority: { origin: 'player', policyRevision: 1 },
         }).outcome.code,
       ).toBe('invalid-declaration');
       expect(
@@ -57,6 +58,7 @@ describe('untrusted dictionary identifiers', () => {
           actorId: 'player',
           requestId: id,
           source: 'test-fixture',
+          authority: { origin: 'player', policyRevision: 1 },
         }).outcome.code,
       ).toBe('invalid-provenance');
       expect(
@@ -64,6 +66,7 @@ describe('untrusted dictionary identifiers', () => {
           actorId: id,
           requestId: 'bad-actor',
           source: 'test-fixture',
+          authority: { origin: 'player', policyRevision: 1 },
         }).outcome.code,
       ).toBe('invalid-provenance');
       expect(world).toEqual(snapshot);
@@ -102,12 +105,26 @@ describe('untrusted dictionary identifiers', () => {
       expect(result.world).toBe(world);
       expect(result.events).toEqual([]);
     }
-    expect(executeCommand(world, { id, actorId: 'player', type: 'rest' }).outcome.code).toBe(
-      'invalid-command',
-    );
-    expect(executeCommand(world, { id: 'bad-actor', actorId: id, type: 'rest' }).outcome.code).toBe(
-      'invalid-command',
-    );
+    expect(
+      executeCommand(world, {
+        id,
+        actorId: 'player',
+        type: 'status-effect',
+        definitionId: 'rest',
+        targetId: 'player',
+        operation: 'activate',
+      }).outcome.code,
+    ).toBe('invalid-command');
+    expect(
+      executeCommand(world, {
+        id: 'bad-actor',
+        actorId: id,
+        type: 'status-effect',
+        definitionId: 'rest',
+        targetId: 'player',
+        operation: 'activate',
+      }).outcome.code,
+    ).toBe('invalid-command');
     expect(queryMemories(world, id)).toEqual([]);
     expect(observeActor(world, id)).toBeNull();
     expect(
@@ -147,6 +164,7 @@ describe('untrusted dictionary identifiers', () => {
       actorId: 'player',
       requestId: 'collapsed-invention',
       source: 'test-fixture',
+      authority: { origin: 'player', policyRevision: 1 },
     });
     expect(result.outcome.code).toBe('invalid-provenance');
     expect(result.world).toBe(world);

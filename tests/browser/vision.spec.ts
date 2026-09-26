@@ -60,8 +60,8 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
 
     // Explicit fixture relocation exercises a boundary crossing without waiting
     // on movement, AI or real-time survival. The client receives only its DTO.
-    const relocate = (position: { y: number; x: number; z: number }) =>
-      game.service.transition((previous) => {
+    const relocate = async (position: { y: number; x: number; z: number }) =>
+      await game.service.transition((previous) => {
         const world = structuredClone(previous);
         world.entities.player!.position = position;
         world.sequence++;
@@ -76,12 +76,12 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
     // pointer hover nor a right-click may identify the obscured object.
     await page.mouse.move(point.x, point.y);
     await expect(page.locator('.ol-world-hover')).toContainText('Vision fixture');
-    expect(relocate({ y: 0, x: 24, z: 12 }).ok).toBe(true);
+    expect((await relocate({ y: 0, x: 24, z: 12 })).ok).toBe(true);
     await expect(page.locator('.ol-world-hover')).toBeHidden();
     await canvas.click({ button: 'right', position: point });
     await expect(page.locator('#contextTitle')).toHaveText('The clearing');
     await page.keyboard.press('Escape');
-    expect(relocate({ y: 0, x: 27, z: 23 }).ok).toBe(true);
+    expect((await relocate({ y: 0, x: 27, z: 23 })).ok).toBe(true);
     await expect(page.locator('[data-entity="vision-fixture"]')).toHaveCount(0);
     await expect
       .poll(() =>
@@ -97,7 +97,7 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
     await expect(page.locator('[data-catalogue-action]')).toHaveCount(0);
     await page.keyboard.press('Escape');
 
-    expect(relocate(original).ok).toBe(true);
+    expect((await relocate(original)).ok).toBe(true);
     await page.getByRole('button', { name: 'In view', exact: true }).click();
     await expect(page.locator('[data-entity="vision-fixture"]')).toBeVisible();
     await page.getByRole('button', { name: 'Hide In view panel' }).click();
@@ -108,7 +108,7 @@ test('broad vision blurs the landscape without tint and old silhouettes have no 
       await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
     await page.screenshot({ path: info.outputPath('vision-overview.png') });
     expect(errors).toEqual([]);
-    expect(game.service.store.usage(0).usage.llmCalls).toBe(0);
+    expect((await game.service.store.usage(0)).usage.llmCalls).toBe(0);
   } finally {
     await page.close();
     await game.close();

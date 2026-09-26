@@ -15,7 +15,7 @@ test('conversation UI grows from one line and uses message-local dots and failur
   await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
   const address = game.server.address();
   if (!address || typeof address === 'string') throw new Error('No listener');
-  let release: (() => void) | undefined;
+  const gate: { release?: () => void } = {};
   let response: { ok: boolean; code: string; message: string } = {
     ok: true,
     code: 'completed',
@@ -23,7 +23,7 @@ test('conversation UI grows from one line and uses message-local dots and failur
   };
   await page.route('**/api/world-agent/messages', async (route) => {
     await new Promise<void>((resolve) => {
-      release = resolve;
+      gate.release = resolve;
     });
     await route.fulfill({ json: response });
   });
@@ -40,18 +40,18 @@ test('conversation UI grows from one line and uses message-local dots and failur
     await input.press('Enter');
     await expect(page.getByRole('status', { name: 'Waiting for a reply' })).toBeVisible();
     await expect(page.getByText(/considering|queueing|generating|thinking/i)).toHaveCount(0);
-    await expect.poll(() => typeof release).toBe('function');
-    release?.();
+    await expect.poll(() => typeof gate.release).toBe('function');
+    ((value: { release?: () => void }) => value.release?.())(gate);
     await expect(page.getByText('The clearing feels ready for change.')).toBeVisible();
     await expect(page.getByText(/completed/i)).toHaveCount(0);
 
     response = { ok: false, code: 'failed', message: 'Technical failure details.' };
-    release = undefined;
+    delete gate.release;
     await input.fill('And now?');
     await input.press('Enter');
     await expect(page.getByRole('status', { name: 'Waiting for a reply' })).toBeVisible();
-    await expect.poll(() => typeof release).toBe('function');
-    release?.();
+    await expect.poll(() => typeof gate.release).toBe('function');
+    ((value: { release?: () => void }) => value.release?.())(gate);
     const failed = page.getByRole('button', { name: 'Failed: Technical failure details.' });
     const failureDetail = page.getByRole('tooltip');
     await expect(failed).toBeVisible();

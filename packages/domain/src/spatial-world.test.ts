@@ -184,7 +184,14 @@ describe('native spatial-world integration without providers', () => {
   it('refuses a second airborne physical executor and invalid flight corridors', () => {
     const world = advance(active(), 240);
     expect(
-      executeCommand(world, { id: 'air-rest', actorId: 'bird-1', type: 'rest' }).outcome.code,
+      executeCommand(world, {
+        id: 'air-rest',
+        actorId: 'bird-1',
+        type: 'status-effect',
+        definitionId: 'rest',
+        targetId: 'bird-1',
+        operation: 'activate',
+      }).outcome.code,
     ).toBe('unsupported-airborne-action');
     const broken = structuredClone(world);
     broken.flightRoutes['clearing-bird-loop']!.points[1]!.position.x += 1;

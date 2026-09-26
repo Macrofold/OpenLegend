@@ -6,6 +6,7 @@ import type {
   ExperienceSummary,
   MemoryRecord,
 } from '@open-legend/domain';
+import { EXPERIENCE_LIMITS } from '@open-legend/domain';
 import { z } from 'zod';
 import type { SqlDatabase } from './store.js';
 import type { RecordChanges } from './world-records.js';
@@ -48,16 +49,34 @@ export interface MemoryModel {
  */
 export class MemoryRepository {
   publicationRevision = 0;
+  private actorRevisions = new Map<string, number>();
+  actorRevision(actorId: string): number {
+    return this.actorRevisions.get(actorId) ?? 0;
+  }
   constructor(private readonly db: SqlDatabase) {}
   committed(changes: RecordChanges, restored = false) {
+    const actors = new Set<string>();
+    const mark = (id: string) => {
+      const path = JSON.parse(id) as string[];
+      const actor = path[path[1] === 'experience' ? 3 : 2];
+      if (actor) actors.add(actor);
+    };
+    for (const [table, rows] of changes.writes)
+      if (table.startsWith('mind_')) for (const row of rows) mark(row.id);
+    for (const [table, ids] of changes.deletes)
+      if (table.startsWith('mind_')) for (const id of ids) mark(id);
+    if (restored) this.actorRevisions.clear();
     if (
       restored ||
-      [...changes.writes.keys(), ...changes.deletes.keys()].some(
-        (table) => table.startsWith('mind_') || table === 'experience_state',
-      )
+      actors.size ||
+      changes.writes.has('experience_state') ||
+      changes.deletes.has('experience_state')
     )
       this.publicationRevision++;
+    // Other actors' memories cannot invalidate this actor's asynchronous inspection.
+    for (const actor of actors) this.actorRevisions.set(actor, this.publicationRevision);
   }
+
   async initialize() {
     await this.db.exec(`
       CREATE TABLE IF NOT EXISTS recall_sources (
@@ -67,6 +86,8 @@ export class MemoryRepository {
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0,
         PRIMARY KEY(world_id,actor_id,id,source_kind));
       CREATE INDEX IF NOT EXISTS recall_actor_rank ON recall_sources(world_id,actor_id,eligible,importance DESC,at DESC,id);
+      CREATE INDEX IF NOT EXISTS recall_actor_recent ON recall_sources(world_id,actor_id,eligible,at DESC,id);
+      CREATE INDEX IF NOT EXISTS recall_commitments ON recall_sources(world_id,actor_id,at,id) WHERE source_kind='memory' AND memory_kind='commitment' AND eligible=1;
       CREATE INDEX IF NOT EXISTS recall_actor_event ON recall_sources(world_id,actor_id,event_id);
       CREATE INDEX IF NOT EXISTS recall_required ON recall_sources(world_id,actor_id,required,eligible,id);
       CREATE INDEX IF NOT EXISTS recall_record ON recall_sources(world_id,source_kind,record_id);
@@ -536,6 +557,91 @@ export class MemoryRepository {
       value: JSON.parse(String(row['payload'])) as unknown,
     }));
   }
+  async commitments(scope: MemoryScope): Promise<RetrievedMemory[]> {
+    return this.snapshot(async () =>
+      this.hydrate(
+        await this.db
+          .prepare(
+            `SELECT r.* FROM recall_sources r WHERE ${this.eligible} AND r.source_kind='memory' AND r.memory_kind='commitment' ORDER BY r.at,r.id`,
+          )
+          .all(...this.params(scope)),
+      ),
+    );
+  }
+  /** Indexed scheduling facts only; a wakeup must not reconstruct an actor's past. */
+  async maintenanceStatus(scope: MemoryScope, simTime: number) {
+    return this.snapshot(async () => {
+      const hasMemories = !!(await this.db
+        .prepare(`SELECT 1 AS present FROM recall_sources r WHERE ${this.eligible} LIMIT 1`)
+        .get(...this.params(scope)));
+      const cutoff = simTime - EXPERIENCE_LIMITS.rawHours * 3600;
+      let rawDue = false,
+        pressure = false;
+      for (const table of ['mind_awareness', 'mind_memories']) {
+        rawDue ||= !!(await this.db
+          .prepare(
+            `SELECT 1 AS present FROM ${table} WHERE world_id=? AND actor_id=? AND at<=?${table === 'mind_memories' ? " AND kind='episode'" : ''} LIMIT 1`,
+          )
+          .get(scope.worldId, scope.actorId, cutoff));
+        pressure ||= !!(await this.db
+          .prepare(
+            `SELECT 1 AS present FROM ${table} WHERE world_id=? AND actor_id=? LIMIT 1 OFFSET ?`,
+          )
+          .get(
+            scope.worldId,
+            scope.actorId,
+            EXPERIENCE_LIMITS.consolidationPressure + (table === 'mind_memories' ? 16 : 0) - 1,
+          ));
+      }
+      return { hasMemories, rawDue, pressure };
+    });
+  }
+  /** Database selection keeps cold sources available to legacy invention context and HUD. */
+  async selectContext(
+    scope: MemoryScope,
+    query: string | null,
+    limit: number,
+  ): Promise<RetrievedMemory[]> {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 300)
+      throw new Error('Invalid context limit.');
+    return this.snapshot(async () => {
+      if (query === null)
+        return this.hydrate(
+          await this.db
+            .prepare(
+              `SELECT r.* FROM recall_sources r WHERE ${this.eligible} ORDER BY r.at DESC,r.id LIMIT ?`,
+            )
+            .all(...this.params(scope), limit),
+        );
+      const field = (alias: string, name: string) =>
+        this.db.dialect === 'postgres'
+          ? `${alias}.payload::jsonb ->> '${name}'`
+          : `json_extract(${alias}.payload, '$.${name}')`;
+      const words =
+        this.db.dialect === 'postgres'
+          ? 'SELECT value FROM jsonb_array_elements_text(?::jsonb)'
+          : 'SELECT value FROM json_each(?)';
+      const text = `LOWER(COALESCE(${field('m', 'summary')},${field('a', 'text')},${field('s', 'text')},''))`;
+      const contains =
+        this.db.dialect === 'postgres' ? `strpos(${text},w.value)>0` : `instr(${text},w.value)>0`;
+      const rows = await this.db
+        .prepare(
+          `SELECT r.* FROM recall_sources r
+        LEFT JOIN mind_memories m ON r.source_kind='memory' AND m.world_id=r.world_id AND m.id=r.record_id
+        LEFT JOIN mind_awareness a ON r.source_kind='awareness' AND a.world_id=r.world_id AND a.id=r.record_id
+        LEFT JOIN mind_summaries s ON r.source_kind='summary' AND s.world_id=r.world_id AND s.id=r.record_id
+        WHERE ${this.eligible}
+        ORDER BY (r.importance + CASE WHEN r.required=1 THEN 20 ELSE 0 END +
+          5*(SELECT COUNT(*) FROM (${words}) w WHERE ${contains})) DESC,r.at DESC,r.id LIMIT ?`,
+        )
+        .all(
+          ...this.params(scope),
+          JSON.stringify(query.toLowerCase().split(/\W+/).filter(Boolean)),
+          limit,
+        );
+      return this.hydrate(rows);
+    });
+  }
   private async hydrate(rows: Record<string, unknown>[]): Promise<RetrievedMemory[]> {
     const result: RetrievedMemory[] = [];
     for (const kind of Object.keys(sourceTables) as SourceKind[]) {
@@ -639,6 +745,24 @@ export class MemoryRepository {
         : undefined;
     const indexed = Number(row?.['count'] ?? 0);
     return { eligible, indexed, missing: Math.max(0, eligible - indexed) };
+  }
+  /** Exact event-time evidence for pending work, including sources evicted from RAM. */
+  async evidence(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
+    return this.snapshot(async () => {
+      const unique = [...new Set(ids)];
+      const rows: Record<string, unknown>[] = [];
+      for (let offset = 0; offset < unique.length; offset += 500) {
+        const batch = unique.slice(offset, offset + 500);
+        rows.push(
+          ...(await this.db
+            .prepare(
+              `SELECT r.* FROM recall_sources r WHERE ${this.eligible} AND r.source_kind='awareness' AND r.id IN (${batch.map(() => '?').join(',')})`,
+            )
+            .all(...this.params(scope), ...batch)),
+        );
+      }
+      return this.hydrate(rows);
+    });
   }
   async required(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
     return this.snapshot(() => this.readRequired(scope, ids));

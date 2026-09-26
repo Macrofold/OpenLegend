@@ -123,7 +123,16 @@ test('native work stays continuous and paused, with usable scaled themes and no 
     await page.goto(`http://127.0.0.1:${address.port}`);
     await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true');
     await expect.poll(() => game.service.paused).toBe(false);
-    expect(game.service.command('fixture-rest', { type: 'rest' }).ok).toBe(true);
+    expect(
+      (
+        await game.service.command('fixture-rest', {
+          type: 'status-effect',
+          definitionId: 'rest',
+          targetId: 'player',
+          effectOperation: 'activate',
+        })
+      ).ok,
+    ).toBe(true);
     const progress = page.locator('.ol-status-progress > span');
     await expect(progress).toBeVisible();
     const amount = () => progress.evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
@@ -138,7 +147,7 @@ test('native work stays continuous and paused, with usable scaled themes and no 
     await expect(page.locator('.ol-qa-ring')).toHaveCount(0);
     await page.getByRole('button', { name: 'Resume world', exact: true }).click();
     await expect.poll(amount).toBeGreaterThan(frozen);
-    expect(game.service.command('fixture-cancel', { type: 'cancel' }).ok).toBe(true);
+    expect((await game.service.command('fixture-cancel', { type: 'cancel' })).ok).toBe(true);
     await expect(progress).toHaveCount(0);
     await page.getByRole('button', { name: 'Settings and help', exact: true }).click();
     await page.getByLabel('World theme', { exact: true }).selectOption('fantasy');
@@ -176,7 +185,7 @@ test('native work stays continuous and paused, with usable scaled themes and no 
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'scifi');
     await expect(page.locator('.ol-hud')).toHaveCSS('zoom', '1.3');
-    expect(game.service.store.usage(0).usage.llmCalls).toBe(0);
+    expect((await game.service.store.usage(0)).usage.llmCalls).toBe(0);
   } finally {
     await page.close();
     await game.close();

@@ -21,15 +21,15 @@ import { inspectGodMind } from './god-mind.js';
 import { projectView } from './view.js';
 const opened: SqliteStore[] = [];
 const dirs: string[] = [];
-afterEach(() => {
+afterEach(async () => {
   for (const s of opened.splice(0))
     try {
-      s.close();
+      await s.close();
     } catch {}
   for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
   vi.unstubAllGlobals();
 });
-function service(path = ':memory:', god = true) {
+async function service(path = ':memory:', god = true) {
   const store = new SqliteStore(path);
   opened.push(store);
   const config = readConfig({
@@ -39,9 +39,9 @@ function service(path = ':memory:', god = true) {
     OPEN_LEGEND_GOD_MODE: String(god),
   });
   const service = new WorldService(store, config, () => 10000);
-  service.setPresence('fixture', true, 1);
-  service.control({ paused: false });
-  service.say('fixture-encounter', 'player', 'I would like to share berries.', 'ada');
+  await service.setPresence('fixture', true, 1);
+  await service.control({ paused: false });
+  await service.say('fixture-encounter', 'player', 'I would like to share berries.', 'ada');
   return service;
 }
 function proposal(s: WorldService, id = 'fixture-decision') {
@@ -94,18 +94,18 @@ function proposal(s: WorldService, id = 'fixture-decision') {
   return { prepared, p };
 }
 describe('fixture: cognition vertical slice', () => {
-  it('accepts schema-valid bundles, survives SQLite restart, and supplies accepted mind to later decisions', () => {
+  it('accepts schema-valid bundles, survives SQLite restart, and supplies accepted mind to later decisions', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'ol-mind-'));
     dirs.push(dir);
     const path = join(dir, 'world.sqlite');
-    const s = service(path);
+    const s = await service(path);
     const { prepared, p } = proposal(s);
     expect(validateMacrofoldValue(fullCognitionJsonSchema, p)).toEqual(p);
     expect(
-      s.transition((w) => commitCognition(w, prepared.binding, proposalSchema.parse(p))).ok,
+      (await s.transition((w) => commitCognition(w, prepared.binding, proposalSchema.parse(p)))).ok,
     ).toBe(true);
-    s.store.close();
-    const reopened = service(path);
+    await s.store.close();
+    const reopened = await service(path);
     const next = cognitionContext(reopened, 'ada', 'next', 'thought', 'full');
     expect(next.context.acceptedMind.records.find((r) => r.kind === 'belief')?.documentId).toBe(
       'newcomer',
@@ -113,8 +113,8 @@ describe('fixture: cognition vertical slice', () => {
     expect(next.context.acceptedMind.documents.some((d) => d.text.includes('helpful'))).toBe(true);
     expect(JSON.stringify(next.context)).not.toContain('I am cautiously interested.');
   });
-  it('supplies 300 short native experiences and reports omissions for larger payloads', () => {
-    const s = service();
+  it('supplies 300 short native experiences and reports omissions for larger payloads', async () => {
+    const s = await service();
     s.world.memories.ada = Array.from({ length: 300 }, (_, i) => ({
       id: `experience-${i}`,
       sequence: i + 1,
@@ -134,17 +134,26 @@ describe('fixture: cognition vertical slice', () => {
     expect(long.context.recall.coverage.omitted).toBeGreaterThan(0);
     expect(long.binding.evidenceIds).toEqual(long.context.recall.entries.map((m) => m.id));
   });
-  it('offers reflection after evidence and suppresses it after accepted consolidation', () => {
-    const s = service();
+  it('offers reflection after evidence and suppresses it after accepted consolidation', async () => {
+    const s = await service();
     expect(cognitionOpportunity(s, 'ada')).toBe('reflection');
     const { prepared, p } = proposal(s);
     prepared.binding.purpose = 'reflection';
-    expect(s.transition((w) => commitCognition(w, prepared.binding, p)).ok).toBe(true);
+    expect((await s.transition((w) => commitCognition(w, prepared.binding, p))).ok).toBe(true);
     expect(cognitionOpportunity(s, 'ada')).toBeNull();
   });
-  it('offers rest/dream consolidation, lets rest continue and rejects stale sleep episodes', () => {
-    const s = service();
-    s.command('rest', { type: 'rest' }, 'ada');
+  it('offers rest/dream consolidation, lets rest continue and rejects stale sleep episodes', async () => {
+    const s = await service();
+    await s.command(
+      'rest',
+      {
+        type: 'status-effect',
+        definitionId: 'rest',
+        targetId: 'ada',
+        effectOperation: 'activate',
+      },
+      'ada',
+    );
     expect(cognitionOpportunity(s, 'ada')).toBe('dream');
     const prepared = cognitionContext(s, 'ada', 'dream', 'dream', 'full');
     const p = thoughtProposal(
@@ -153,18 +162,19 @@ describe('fixture: cognition vertical slice', () => {
       'An imagined river carries the conversation.',
       null,
     );
-    expect(s.transition((w) => commitCognition(w, prepared.binding, p)).ok).toBe(true);
+    expect((await s.transition((w) => commitCognition(w, prepared.binding, p))).ok).toBe(true);
     expect(s.world.entities.ada!.actor!.action?.type).toBe('rest');
     expect(cognitionOpportunity(s, 'ada')).toBeNull();
     expect(mindFor(s.world, 'ada').thoughts[0]?.source).toBe('imagined');
   });
-  it('enforces backend god access and excludes thoughts from ordinary state', () => {
-    const s = service();
+  it('enforces backend god access and excludes thoughts from ordinary state', async () => {
+    const s = await service();
     const { prepared, p } = proposal(s);
-    s.transition((w) => commitCognition(w, prepared.binding, p));
-    expect(inspectGodMind(s, 'ada').legacyThoughts?.[0]?.text).toBe(p.thought);
-    expect(JSON.stringify(projectView(s, 'test-fixture'))).not.toContain(p.thought);
-    expect(() => inspectGodMind(service(':memory:', false), 'ada')).toThrow('disabled');
+    await s.transition((w) => commitCognition(w, prepared.binding, p));
+    expect((await inspectGodMind(s, 'ada')).legacyThoughts?.[0]?.text).toBe(p.thought);
+    expect(JSON.stringify(await projectView(s, 'test-fixture'))).not.toContain(p.thought);
+    const disabled = await service(':memory:', false);
+    await expect(inspectGodMind(disabled, 'ada')).rejects.toThrow('disabled');
   });
   it('rejects covert mind changes in fast schemas', () => {
     expect(
@@ -177,7 +187,7 @@ describe('fixture: cognition vertical slice', () => {
     ).toBe(false);
   });
   it('fresh full harness sessions reuse a single actor workspace/sandbox and inject current instructions', async () => {
-    const s = service();
+    const s = await service();
     const requests: Array<{ path: string; body: Record<string, unknown>; key: string | null }> = [];
     let run = 0;
     let currentProposal: MindProposal;
@@ -258,8 +268,10 @@ describe('fixture: cognition vertical slice', () => {
       expect(result.outcome, result.outcome === 'value' ? '' : result.reason).toBe('value');
       if (result.outcome === 'value')
         expect(
-          s.transition((w) =>
-            commitCognition(w, prepared.binding, proposalSchema.parse(result.value)),
+          (
+            await s.transition((w) =>
+              commitCognition(w, prepared.binding, proposalSchema.parse(result.value)),
+            )
           ).ok,
         ).toBe(true);
     }

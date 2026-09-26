@@ -1,3 +1,4 @@
+import { compactHistory } from './history-residency.js';
 import { MemoryRepository } from './memory-repository.js';
 import { WorldRecords } from './world-records.js';
 import { isDeepStrictEqual } from 'node:util';
@@ -265,7 +266,7 @@ export function applyWorldChanges(state: SavedWorld, changes: WorldChanges): Sav
 
 /** Replaceable persistence boundary; SQLite is intentionally a single-process MVP adapter. */
 export interface WorldStore {
-  load(): Promise<{ revision: number; state: SavedWorld } | null>;
+  load(active?: boolean): Promise<{ revision: number; state: SavedWorld } | null>;
   commit(
     expectedRevision: number,
     state: SavedWorld,
@@ -283,6 +284,8 @@ export interface WorldStore {
 
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
+  releaseHistory?(state: SavedWorld): SavedWorld;
+  hydrateHistory?(state: SavedWorld, actorIds?: string[]): Promise<SavedWorld>;
   history?: HistoryRepository;
   saves?: GameSaves;
   commands?: CommandReceipts;
@@ -545,10 +548,23 @@ export class SqliteStore implements GameRepository {
       );
   }
 
-  async load(): Promise<{ revision: number; state: SavedWorld } | null> {
+  releaseHistory(state: SavedWorld): SavedWorld {
+    if (state !== this.acceptedState)
+      throw new Error('Only committed history may leave the working set.');
+    const released = { ...state, world: compactHistory(state.world) };
+    this.acceptedState = released;
+    return released;
+  }
+  async hydrateHistory(state: SavedWorld, actorIds?: string[]): Promise<SavedWorld> {
+    if (state !== this.acceptedState) throw new Error('Flush before materializing history.');
+    const full = await this.records.withHistory(state, actorIds);
+    this.acceptedState = full;
+    return full;
+  }
+  async load(active = false): Promise<{ revision: number; state: SavedWorld } | null> {
     await this.ready;
 
-    const canonical = await this.records.load();
+    const canonical = await this.records.load(active);
     if (canonical) {
       const state = {
         ...canonical.state,
@@ -668,6 +684,7 @@ export class SqliteStore implements GameRepository {
       if ((persisted?.revision ?? 0) !== expectedRevision)
         throw new Error('Save conflict: another writer changed this world.');
     }
+    if (historyProjection?.restore) this.acceptedState = (await this.records.load())?.state ?? null;
     appendEventCount = this.acceptedState
       ? provenAppendCount(this.acceptedState.world.events, state.world.events)
       : undefined;
@@ -676,6 +693,7 @@ export class SqliteStore implements GameRepository {
     );
     const publish = () => {
       this.readyHistoryWorlds.add(state.world.id);
+      this.records.needsHotPrune = false;
       this.history.committed();
       this.memories.committed(changes, !!historyProjection?.restore);
     };
@@ -793,6 +811,7 @@ export class SqliteStore implements GameRepository {
           !historyProjection?.restore,
         );
         await this.records.write(state.world.id, revision, changes);
+        if (this.records.needsHotPrune) await this.records.pruneActiveEvents(state);
         await this.memories.reconcile(state.world.id, memoryChanges);
         if (historyProjection?.restore || !this.acceptedState)
           await this.memories.reuseVectors(state.world.id);

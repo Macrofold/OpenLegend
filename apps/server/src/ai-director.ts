@@ -1084,9 +1084,9 @@ export class AiDirector {
     const actorId = run.job.request.npcId ?? this.service.defaultResidentEntityId;
     run.responseWatch = {
       actorId,
-      afterSequence: Math.max(
+      afterSequence: (this.service.world.experience?.awareness[actorId] ?? []).reduce(
+        (maximum, entry) => Math.max(maximum, entry.sequence),
         0,
-        ...(this.service.world.experience?.awareness[actorId] ?? []).map((entry) => entry.sequence),
       ),
       attempt,
     };
@@ -1100,17 +1100,21 @@ export class AiDirector {
     // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
     const triggerEvidenceId =
       interruptionEvidenceIds.at(-1) ?? run.playerSpeechEventId ?? run.job.triggerEvidenceId;
+    const evidence = await this.service.awarenessEvidence(actorId, [
+      ...evidenceIds,
+      ...(triggerEvidenceId ? [triggerEvidenceId] : []),
+    ]);
+    this.current(run);
     const stimulus = responseTrigger(
       this.service,
       actorId,
       triggerEvidenceId,
       run.job.request.text,
+      evidence,
     );
     const addressedSpeech = evidenceIds.some((id) => {
       if (
-        this.service.world.experience?.awareness[actorId]?.some(
-          (aware) => aware.eventId === id && aware.triggerKind === 'addressed_speech',
-        )
+        evidence.some((aware) => aware.eventId === id && aware.triggerKind === 'addressed_speech')
       )
         return true;
       const event = this.service.worldEvent(id);
@@ -1123,7 +1127,7 @@ export class AiDirector {
     });
     const speechTrigger = evidenceIds.some(
       (id) =>
-        this.service.world.experience?.awareness[actorId]?.some(
+        evidence.some(
           (aware) =>
             aware.eventId === id && (aware.eventType === 'speech' || aware.modality === 'heard'),
         ) || this.service.worldEvent(id)?.type === 'speech',

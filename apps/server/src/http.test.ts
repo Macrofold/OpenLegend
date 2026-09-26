@@ -145,11 +145,11 @@ describe('local HTTP boundary', () => {
         showUnavailableActions: true,
       });
       await post('/api/control', { speed: 0.5 });
-      game.service.tick(1);
+      await game.service.tick(1);
       expect(game.service.world.simTime).toBe(30);
       controller.abort();
       await expect.poll(() => game.service.paused).toBe(true);
-      game.service.tick(1);
+      await game.service.tick(1);
       expect(game.service.world.simTime).toBe(30);
     } finally {
       controller.abort();
@@ -165,7 +165,7 @@ describe('local HTTP boundary', () => {
     const report = await response.json();
     expect(report.catalogue.actions.length).toBeGreaterThan(10);
     expect(JSON.stringify(game.service.world)).toBe(original);
-    expect(game.service.store.recentJobs()).toEqual([]);
+    expect(await game.service.store.recentJobs()).toEqual([]);
     expect((await post('/api/actions', { actorId: 'ada' })).status).toBe(400);
     expect(
       (await post('/api/profile/preferences', { showUnavailableActions: 'true' })).status,
@@ -229,7 +229,7 @@ describe('local HTTP boundary', () => {
     ).json();
     expect(resumed.ok).toBe(true);
     expect(game.service.paused).toBe(false);
-    game.service.tick(1);
+    await game.service.tick(1);
     expect(game.service.world.simTime).toBe(60);
 
     await post('/api/presence', { clientId: 'returning-tab', visible: false, sequence: 1 });
@@ -261,18 +261,28 @@ describe('local HTTP boundary', () => {
     expect((await (await post('/api/command', body)).json()).ok).toBe(true);
     await post('/api/command', body);
     expect(game.service.world.items[food.id]?.quantity).toBe(food.quantity - 1);
-    expect(game.service.store.usage(0).usage.llmCalls).toBe(0);
+    expect((await game.service.store.usage(0)).usage.llmCalls).toBe(0);
     await post('/api/control', { paused: true, speed: 3 });
     const time = game.service.world.simTime;
-    game.service.tick(1);
+    await game.service.tick(1);
     expect(game.service.world.simTime).toBe(time);
     expect(game.service.speed).toBe(3);
   });
   it('rejects extra authority, unbounded text and unsupported controls', async () => {
     const { post } = await start();
     expect(
-      (await post('/api/command', { commandId: 'x', actorId: 'ada', command: { type: 'rest' } }))
-        .status,
+      (
+        await post('/api/command', {
+          commandId: 'x',
+          actorId: 'ada',
+          command: {
+            type: 'status-effect',
+            definitionId: 'rest',
+            targetId: 'player',
+            effectOperation: 'activate',
+          },
+        })
+      ).status,
     ).toBe(400);
     expect((await post('/api/control', { speed: 10000 })).status).toBe(400);
     expect((await post('/api/chat', { requestId: 'x', text: 'x'.repeat(1001) })).status).toBe(400);

@@ -1,5 +1,12 @@
+import { hotEventDependencies } from './hot-events.js';
+import { HISTORY_TABLES, historyPositions, historyKey } from './history-residency.js';
 import { randomUUID } from 'node:crypto';
-import { appendedRecordCount, type Entity, type ItemInstance } from '@open-legend/domain';
+import {
+  EXPERIENCE_LIMITS,
+  appendedRecordCount,
+  type Entity,
+  type ItemInstance,
+} from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import {
   RECORD_NODES,
@@ -58,6 +65,14 @@ function put(object: Value, key: string, value: Value) {
  */
 export class WorldRecords {
   constructor(readonly db: SqlDatabase) {}
+  needsHotPrune = false;
+  private get legacyAwarenessPredicate(): string {
+    const field = (name: string) =>
+      this.db.dialect === 'postgres'
+        ? `(payload::jsonb ->> '${name}')`
+        : `json_extract(payload, '$.${name}')`;
+    return `(${field('eventType')} IS NULL OR ${field('triggerKind')} IS NULL OR (CAST(${field('intelligible')} AS TEXT) IN ('true','1') AND ${field('content')} IS NULL))`;
+  }
   async initialize() {
     await this.db.exec(`CREATE TABLE IF NOT EXISTS world_head (
       id BIGINT PRIMARY KEY CHECK (id=1), world_id TEXT NOT NULL UNIQUE,
@@ -81,6 +96,9 @@ export class WorldRecords {
         .join('\n')}`;
     };
     await this.db.exec(create(WORLD_RECORD_SCHEMA));
+    await this.db.exec(
+      `CREATE INDEX IF NOT EXISTS mind_awareness_legacy_trigger ON mind_awareness(world_id,source_id) WHERE ${this.legacyAwarenessPredicate}`,
+    );
   }
   async head() {
     const row = await this.db
@@ -121,7 +139,7 @@ export class WorldRecords {
       position: number,
       oldPosition = position,
     ) => {
-      if (old === next && oldPosition === position) return;
+      if (old === next && oldPosition === position && !this.needsHotPrune) return;
       const id = recordId(path);
       if (next === undefined) {
         // Foreign keys remove this owned subtree, never another actor's records.
@@ -133,6 +151,7 @@ export class WorldRecords {
       const payload = JSON.stringify(body(node, next));
       if (
         old === undefined ||
+        (this.needsHotPrune && node.table === 'world_settings') ||
         oldPosition !== position ||
         payload !== JSON.stringify(body(node, old))
       ) {
@@ -154,7 +173,8 @@ export class WorldRecords {
       for (const [field, child] of Object.entries(node.children ?? {})) {
         const previous = field === '$' ? old : own(old, field);
         const current = field === '$' ? next : own(next, field);
-        if (previous === current) continue;
+        if (previous === current && !(this.needsHotPrune && child.node.table === 'world_settings'))
+          continue;
         const childPath = field === '$' ? path : [...path, field];
         if (child.mode === 'one') {
           visit(child.node, previous ?? undefined, current ?? undefined, childPath, id, field, 0);
@@ -163,7 +183,16 @@ export class WorldRecords {
         if (child.mode === 'list') {
           const a = Array.isArray(previous) ? previous : [];
           const b = Array.isArray(current) ? current : [];
+          const placement = historyPositions.get(a);
           const appended = appendedRecordCount(a, b);
+          const nextPlacement = placement
+            ? {
+                positions: new Map<string, number>(
+                  appended === undefined ? [] : placement.positions,
+                ),
+                next: placement.next,
+              }
+            : undefined;
           const start = appended === undefined ? 0 : a.length;
           const key = (entry: Value, index: number) =>
             child.key ? String(own(entry, child.key) ?? index) : String(index);
@@ -178,18 +207,33 @@ export class WorldRecords {
               throw new Error(`Duplicate record identity in ${child.node.table}.`);
             seen.add(entryId);
             const previousEntry = prior.get(entryId);
+            const oldIndex = placement?.positions.get(entryId) ?? previousEntry?.index;
+            const position =
+              nextPlacement && !(placement?.complete && child.node.table === 'mind_summaries')
+                ? (oldIndex ?? nextPlacement.next++)
+                : i;
+            nextPlacement?.positions.set(entryId, position);
             visit(
               child.node,
               previousEntry?.entry,
               entry,
               [...childPath, entryId],
               id,
-              String(i),
-              i,
-              previousEntry?.index,
+              String(position),
+              position,
+              oldIndex,
             );
             prior.delete(entryId);
           }
+          if (nextPlacement)
+            historyPositions.set(b, {
+              ...nextPlacement,
+              complete: placement?.complete,
+              next:
+                placement?.complete && child.node.table === 'mind_summaries'
+                  ? b.length
+                  : nextPlacement.next,
+            });
           for (const [entryId, entry] of prior)
             visit(child.node, entry.entry, undefined, [...childPath, entryId], id, '', entry.index);
         } else {
@@ -280,29 +324,66 @@ export class WorldRecords {
       }
     }
   }
-  async load(): Promise<{ revision: number; state: SavedWorld } | null> {
+  async load(active = false): Promise<{ revision: number; state: SavedWorld } | null> {
     return this.db.readTransaction
-      ? this.db.readTransaction(() => this.readRecords())
-      : this.db.transaction(() => this.readRecords());
+      ? this.db.readTransaction(() => this.readRecords(active))
+      : this.db.transaction(() => this.readRecords(active));
   }
-  private async readRecords(): Promise<{ revision: number; state: SavedWorld } | null> {
+  private async readRecords(
+    active: boolean,
+  ): Promise<{ revision: number; state: SavedWorld } | null> {
     const head = await this.head();
     if (!head) return null;
+    if (active) {
+      const experience = await this.db
+        .prepare('SELECT payload FROM experience_state WHERE world_id=?')
+        .get(head.worldId);
+      // Legacy perspective migration needs every source once; subsequent boots are scoped.
+      if (!experience || JSON.parse(String(experience['payload'])).perspectiveVersion !== 1)
+        active = false;
+    }
+    const settings = active
+      ? await this.db
+          .prepare('SELECT payload FROM world_settings WHERE world_id=?')
+          .get(head.worldId)
+      : undefined;
+    const cutoff = settings
+      ? Number(JSON.parse(String(settings['payload'])).simTime) - EXPERIENCE_LIMITS.rawHours * 3600
+      : 0;
     const groups = new Map<string, Map<string, JsonRecord[]>>();
     // Startup recovery loads the simulation working set. Ordinary feature reads use
     // scoped repositories below, not this complete reconstruction path.
     for (const table of RECORD_NODES.keys()) {
+      if (active && table === 'world_hot_events') {
+        groups.set(table, new Map());
+        continue;
+      }
       const eventId =
         this.db.dialect === 'postgres'
           ? "(t.payload::jsonb ->> 'id')"
           : "json_extract(t.payload, '$.id')";
+      const partial = active && HISTORY_TABLES.has(table);
+      const json = (field: string) =>
+        this.db.dialect === 'postgres'
+          ? `payload::jsonb ->> '${field}'`
+          : `json_extract(payload, '$.${field}')`;
+      const predicate =
+        table === 'mind_memories'
+          ? `(at>=? OR (kind='commitment' AND COALESCE(CAST(${json('resolved')} AS TEXT),'false') IN ('false','0')))`
+          : table === 'mind_awareness'
+            ? `(at>=? OR position IN (SELECT position FROM mind_awareness recent WHERE recent.world_id=t.world_id AND recent.actor_id=t.actor_id ORDER BY position DESC LIMIT 24))`
+            : '1=0';
       const rows = await this.db
         .prepare(
           table === 'world_hot_events'
             ? `SELECT t.id,t.parent_id,t.slot,t.position,h.payload FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${eventId} WHERE t.world_id=? ORDER BY t.parent_id,t.position`
-            : `SELECT id,parent_id,slot,position,payload FROM ${table} WHERE world_id=? ORDER BY parent_id,position`,
+            : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${partial ? ` AND ${predicate}` : ''}${partial && table === 'mind_awareness' ? ` UNION SELECT id,parent_id,slot,position,payload FROM mind_awareness WHERE world_id=? AND ${this.legacyAwarenessPredicate} AND source_id IN (SELECT ${this.db.dialect === 'postgres' ? "payload::jsonb ->> 'id'" : "json_extract(payload, '$.id')"} FROM world_hot_events WHERE world_id=?)` : ''} ORDER BY parent_id,position`,
         )
-        .all(head.worldId);
+        .all(
+          head.worldId,
+          ...(partial && table !== 'mind_summaries' ? [cutoff] : []),
+          ...(partial && table === 'mind_awareness' ? [head.worldId, head.worldId] : []),
+        );
       const parents = new Map<string, JsonRecord[]>();
       for (const row of rows) {
         if (typeof row['payload'] !== 'string')
@@ -314,6 +395,16 @@ export class WorldRecords {
       }
       groups.set(table, parents);
     }
+    const nextPositions = new Map<string, number>();
+    if (active)
+      for (const table of HISTORY_TABLES) {
+        for (const row of await this.db
+          .prepare(
+            `SELECT parent_id,MAX(position)+1 AS next FROM ${table} WHERE world_id=? GROUP BY parent_id`,
+          )
+          .all(head.worldId))
+          nextPositions.set(`${table}:${row['parent_id']}`, Number(row['next']));
+      }
     let consumed = 0;
     const assemble = (node: RecordNode, row: JsonRecord): Value => {
       consumed++;
@@ -332,7 +423,27 @@ export class WorldRecords {
         } else {
           const target = field === '$' ? value : child.mode === 'list' ? [] : {};
           for (const entry of children)
-            put(target, String(entry['slot']), assemble(child.node, entry));
+            put(
+              target,
+              HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events'
+                ? String((target as unknown[]).length)
+                : String(entry['slot']),
+              assemble(child.node, entry),
+            );
+          if (HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events') {
+            const entries = target as unknown[];
+            historyPositions.set(entries, {
+              complete: !active,
+              positions: new Map(
+                entries.map((entry, i) => [historyKey(entry), Number(children[i]!['position'])]),
+              ),
+              next: active
+                ? (nextPositions.get(`${child.node.table}:${row['id']}`) ?? 0)
+                : children.length
+                  ? Number(children.at(-1)!['position']) + 1
+                  : 0,
+            });
+          }
           if (field !== '$') put(value, field, target);
         }
       }
@@ -347,7 +458,95 @@ export class WorldRecords {
     );
     if (consumed !== total || state.world.id !== head.worldId)
       throw new Error('Gameplay record coverage mismatch; recovery refused.');
+    if (active) {
+      const missing = await this.db
+        .prepare(
+          `SELECT 1 AS missing FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${this.db.dialect === 'postgres' ? "t.payload::jsonb ->> 'id'" : "json_extract(t.payload, '$.id')"} WHERE t.world_id=? AND h.id IS NULL LIMIT 1`,
+        )
+        .get(head.worldId);
+      if (missing) throw new Error('Active history references a missing source; recovery refused.');
+      const ids = [...hotEventDependencies(state.world)];
+      const selector =
+        this.db.dialect === 'postgres'
+          ? 'SELECT value FROM jsonb_array_elements_text(?::jsonb)'
+          : 'SELECT value FROM json_each(?)';
+      const rows = await this.db
+        .prepare(
+          `SELECT t.position,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=${this.db.dialect === 'postgres' ? "t.payload::jsonb ->> 'id'" : "json_extract(t.payload, '$.id')"} WHERE t.world_id=? AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT 512) OR h.id IN (${selector})) ORDER BY t.position`,
+        )
+        .all(head.worldId, head.worldId, JSON.stringify(ids));
+      state.world.events = rows.map((row) => JSON.parse(String(row['payload'])));
+      historyPositions.set(state.world.events, {
+        positions: new Map(
+          state.world.events.map((entry, i) => [entry.id, Number(rows[i]!['position'])]),
+        ),
+        next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
+      });
+      const count = Number(
+        (
+          await this.db
+            .prepare('SELECT COUNT(*) AS n FROM world_hot_events WHERE world_id=?')
+            .get(head.worldId)
+        )?.['n'],
+      );
+      const removed = count - state.world.events.length;
+      if (removed < 0) throw new Error('Invalid active event coverage.');
+      if (removed) state.world.archivedEventCount = (state.world.archivedEventCount ?? 0) + removed;
+      this.needsHotPrune ||= removed > 0;
+    }
     return { revision: head.revision, state };
+  }
+  async pruneActiveEvents(state: SavedWorld): Promise<void> {
+    const selector =
+      this.db.dialect === 'postgres'
+        ? 'SELECT value FROM jsonb_array_elements_text(?::jsonb)'
+        : 'SELECT value FROM json_each(?)';
+    await this.db
+      .prepare(`DELETE FROM world_hot_events WHERE world_id=? AND id NOT IN (${selector})`)
+      .run(
+        state.world.id,
+        JSON.stringify(state.world.events.map((event) => recordId(['world', 'events', event.id]))),
+      );
+  }
+  /** Explicit dependency materialization for maintenance/edit/save, never a tick read. */
+  async withHistory(state: SavedWorld, actorIds?: string[]): Promise<SavedWorld> {
+    return this.db.readTransaction
+      ? this.db.readTransaction(() => this.readHistory(state, actorIds))
+      : this.db.transaction(() => this.readHistory(state, actorIds));
+  }
+  private async readHistory(state: SavedWorld, actorIds?: string[]): Promise<SavedWorld> {
+    const world = state.world;
+    if (!world.experience) return state;
+    const memories = { ...world.memories },
+      awareness = { ...world.experience.awareness },
+      summaries = { ...world.experience.summaries };
+    for (const [table, target] of [
+      ['mind_memories', memories],
+      ['mind_awareness', awareness],
+      ['mind_summaries', summaries],
+    ] as const) {
+      const ids = actorIds ?? Object.keys(target);
+      for (const actorId of ids) {
+        const rows = await this.db
+          .prepare(
+            `SELECT payload,position FROM ${table} WHERE world_id=? AND actor_id=? ORDER BY position`,
+          )
+          .all(world.id, actorId);
+        if (!rows.length && !Object.hasOwn(target, actorId)) continue;
+        target[actorId] = rows.map((row) => JSON.parse(String(row['payload'])));
+        historyPositions.set(target[actorId]!, {
+          complete: true,
+          positions: new Map(
+            target[actorId]!.map((entry, i) => [historyKey(entry), Number(rows[i]!['position'])]),
+          ),
+          next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
+        });
+      }
+    }
+    return {
+      ...state,
+      world: { ...world, memories, experience: { ...world.experience, awareness, summaries } },
+    };
   }
   async inventory(
     worldId: string,

@@ -1643,15 +1643,23 @@ function updateEncounters(
       (world.perceptionEpisodes ??= {})[actor.id] = Object.fromEntries(
         exposed.map((id) => [id, priorEpisodes[id] ?? `${world.sequence}:${world.simTime}:${id}`]),
       );
-    for (const id of seen.filter((id) => !previouslySeen.has(id))) {
-      const recent = (world.memories[actor.id] ?? []).some(
-        (m) =>
-          m.kind === 'episode' &&
-          m.entityIds.includes(id) &&
-          (m.summary.startsWith('I saw ') || m.eventType === 'encounter') &&
-          world.simTime - m.at < 3600,
+    const newlySeen = seen.filter((id) => !previouslySeen.has(id));
+    if (newlySeen.length) {
+      // Encounter emission adds awareness, not memories. Read the current immutable
+      // memory snapshot once instead of rescanning/proxying it for every new contact.
+      const entries = world.memories[actor.id] ?? [];
+      const records = isDraft(entries) ? current(entries) : entries;
+      const recent = new Set(
+        records
+          .filter(
+            (m) =>
+              m.kind === 'episode' &&
+              (m.summary.startsWith('I saw ') || m.eventType === 'encounter') &&
+              world.simTime - m.at < 3600,
+          )
+          .flatMap((m) => m.entityIds),
       );
-      if (!recent) encounter(actor.entity, id, true);
+      for (const id of newlySeen) if (!recent.has(id)) encounter(actor.entity, id, true);
     }
     if (
       !original.visiblePeople?.[actor.id] ||

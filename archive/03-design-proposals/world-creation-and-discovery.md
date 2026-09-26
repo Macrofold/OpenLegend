@@ -6,7 +6,7 @@ Related: [world profile](world-rules-and-parameters.md), [complexity control](si
 
 ## Invention discovers the world
 
-Ordinary invention discovers or applies what the world permits. The engine may author a missing implementation during play, but that implementation must fit the world's premise, existing definitions, and relevant committed outcomes. Deliberately changing what is possible is a separate creator/world-editing operation.
+Ordinary invention discovers or applies what the world permits. The engine may author a missing implementation during play, but that implementation must fit the world's premise, existing definitions, and relevant committed outcomes. Deliberately changing what is possible is a separate authorized world-editing operation, available to the creator or a player with the [special invention permission](invention-governance-and-ownership.md#special-player-invention-permission).
 
 This is a consistency objective, not a claim that every physical law has already been implemented. The definition can be incomplete. Unknown behavior must not silently mean impossible, immune, or unlimited. Reuse admitted defaults or evaluate a missing mechanic within the world's boundaries; preserve uncertainty when support is absent.
 

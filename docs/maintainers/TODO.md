@@ -166,7 +166,7 @@ Automated tests were explicitly excluded for this slice. Production compilation 
 
 Automated tests were explicitly deferred for this implementation. These coverage tasks do not replace the ACT, D0–D2, NC or CR focused implementation trackers and do not establish acceptance.
 
-- [ ] Repair existing async-service test typing before the full `pnpm run typecheck`/`check` gates; tests still read Promise results synchronously. No test files were changed in this implementation.
+- [x] Repair existing async-service fixture typing. The full test-inclusive typecheck now passes; [hardening evidence](../verification.md#data-runtime-hardening) records the changes. Runtime suite acceptance remains unverified.
 - [ ] ACT01–ACT06: old-save migration/idempotency/restart, preserved IDs/positions/RNG/time/inventory/knowledge/person and animal state, native wandering/fleeing/hunting, finite harvest/retry/restart, generic revival (including missing/living/incompatible/stale/duplicate/rollback), full god revival after partial/complete harvesting without inventory clawback, simultaneous effects/conditions, body susceptibility, capability upgrades, privacy, god authorization, action catalogue and protocol/browser projection. Update legacy fixtures that still mutate animal health/alive fields.
 - [ ] Diagnostic FIFO: slow store off inference/Jev/poll critical path; A→B→C ordering; enqueue-time immutable snapshots; nested secret/abort/vector redaction; failure isolation; shutdown drain; unchanged workflow/job/billing outcomes; GET poll coalescing and capture/retention limits.
 - [ ] D0/D1: WorldChanges diff/apply and array splice bounds; incomplete/head/gap rejection; CAS conflicts; append hints versus edits/deletes; 120-revision and UTF-8 1 MiB snapshot thresholds; compaction, uncheckpointed backup, empty-target restore/import, interrupted commit, clean shutdown and required event/receipt/mind/job/accounting agreement. Exercise ambiguous provider completion without paid replay. Compare SQLite/PostgreSQL record digests and verify source preservation.
@@ -203,7 +203,7 @@ No test files or suites were written or run for this change, as requested. [Iden
 
 - [ ] Cover the distinct person-creation and Person-editor schemas: creation keeps initial goals, editing round-trips description/current goals, the first goal drives native planning, and identity context receives every authored field without leaking it to another actor.
 - [ ] Cover Person-editor stat snapshots, manual refresh, 0–100 validation, fill-to-100, preservation of unedited simulation drift, and explicit stat overrides after drift.
-- [ ] Migrate stale test fixtures/callers to asynchronous repository/service APIs and current opaque actor bindings; restore the full typecheck/test gate. Tests were intentionally neither edited nor run in this change.
+- [ ] Finish current opaque actor bindings and runtime fixture migration, then qualify the test gate. Async API/optional-need typing now passes the full typecheck; no suites were run during [hardening](../verification.md#data-runtime-hardening).
 - [ ] Cover append proof across composed transitions, earlier-prefix edits, replacement/removal, divergent forks and forged caller hints; verify journal replay and durable history agree.
 - [ ] Cover milestones from routine state before flushing and after a control/editor flush and restart, including event index consistency.
 - [ ] Cover importance-only edits preserving dependent summaries/mind prose while refreshing retrieval metadata; text edits and deletion must still invalidate dependents.
@@ -223,7 +223,7 @@ Automated tests were not written or run for this change at user request. These a
 - [ ] Cover hidden/private source exclusion, invalid values and unknown predicates, unauthorized editor access, atomic invalid field batches, defaults/removal/persistence, unused fields, and replacement evaluator behavior.
 - [ ] Cover response grouping/source bounds, significance ordering, cooldown/drop/expiry, concurrent duplicate admission, restart and queued revocation, no automatic paid resend, provider failure, cancelled receipts and published-history stability.
 - [ ] Cover migration with old queued/running/completed records, awareness/memory/accounting preservation, backup/restore including banner/frequency tables, owner-scoped SQL projection on SQLite/PostgreSQL, reload/dismissal/pending/legacy banner exclusion and editor accessibility.
-- [ ] Repair existing full-typecheck failures in asynchronous store/service/view test callers; rerun full repository checks after restoring that baseline.
+- [x] Repair asynchronous store/service/view fixture typecheck failures; [full typecheck passes](../verification.md#data-runtime-hardening). Full suite/CI execution remains a separate unverified gate.
 
 - [ ] Verify World Agent retry on workspace/sandbox/run admission rejection, `execution_disabled`, genuine lost-response ambiguity, provider re-enablement, two rapid clicks, same-request transport replay, reload of local drafts, closed tabs, world/text mismatch, budget rejection and persisted older ambiguous operation journals. Check no duplicate bubble/reply or execution, preserved accounting, and shared Retry icon/tooltip. No automated tests were written or run.
 
@@ -266,7 +266,7 @@ Automated tests were neither written nor run for the initial implementation, at 
 - [ ] Inject publication/install/COMMIT failures and process death; verify rollback/cache agreement and the pre-load recovery slot. Exercise server restart, slot persistence and the operational backup/import paths with slot rows.
 - [ ] Qualify live-provider cancellation/workspace context and PostgreSQL restore under separately authorized no-spend or capped conditions; current native browser evidence does not establish these boundaries.
 - [ ] Measure large saves and cold histories before changing the 64 MiB/20-slot limits. Defer streaming, compression, incremental snapshots, autosaves and portable/cloud saves to the focused tracker rather than adding speculative machinery.
-- [ ] Reconcile the pre-existing full-typecheck failures in test files that still treat asynchronous APIs as synchronous; the production build succeeds, but that is not a green full check.
+- [x] Reconcile pre-existing asynchronous fixture typecheck failures; both full typecheck and production build now pass. [Hardening evidence](../verification.md#data-runtime-hardening) does not claim runtime-suite acceptance.
 
 ## Extensible attribute foundation — deferred automated validation
 
@@ -276,7 +276,7 @@ No automated tests were written or run for this slice at the owner's request. Ru
 - [ ] Cover atomic initialization/edit conflicts, duplicate declaration/edit requests, restore-generation fencing, presentation-only revisions, active-reference retirement rejection, definition-only reuse between worlds and exclusion of private instance state.
 - [ ] Cover private concern onset/clear and hysteresis through the existing event/awareness/ActorWork path, Narrator exclusion, restore without false novelty, and default urgency thresholds. Broader episode/sense/reminder cases stay in the EPR tracker.
 - [ ] Add browser coverage for arbitrary numeric ranges, categories, public versus owner inspection, unavailable/depleted replenishment, native continuation, cancellation and manual save/load; qualify accessibility and label injection.
-- [ ] Repair the pre-existing asynchronous API usage in test files before relying on full-repository typechecking. The untouched `dd40ad2` baseline reports 132 TypeScript diagnostics. The current typecheck reports 135 diagnostics, including three additional optional-need fixture errors. Adapt older mandatory-need fixture assumptions to optional applicable state as part of those test repairs; do not add legacy-save fixtures.
+- [x] Repair asynchronous API usage and optional-need fixture typing without legacy-save fixtures. The previous 132/135-diagnostic baselines and later 168-diagnostic baseline are resolved; [current full typecheck passes](../verification.md#data-runtime-hardening).
 - [ ] Run the existing full check and appropriate focused suites after the test repairs; compare the same PF population/history scenarios before claiming scale. No model-quality, paid-cost, or full EW-R1–EW-R3 acceptance follows from native runtime checks.
 
 - [ ] Automate contact onset/detail/end, stationary persistence, receiver hearing and teaching exclusion, unknown identity/provenance filtering, collision-limited probes, same-version episode continuation, missing sense pins and aggregate contact bounds. Include multiple moving sources, removal, sleep/incapacity and spatial candidate fairness; implementation remains EWF05/EPR-owned.

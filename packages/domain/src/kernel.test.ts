@@ -95,6 +95,7 @@ function addRecipe(
     actorId: 'player',
     requestId,
     source: 'test-fixture',
+    authority: { origin: 'player', policyRevision: 1 },
   });
   expect(result.outcome.ok, result.outcome.message).toBe(true);
   return { world: result.world, recipeId: result.outcome.recipeId! };
@@ -136,7 +137,12 @@ describe('authoritative pure world', () => {
     );
   });
   it('freezes work, needs, random draws and speech while paused', () => {
-    let world = command(createWorld(), { type: 'rest' });
+    let world = command(createWorld(), {
+      type: 'status-effect',
+      definitionId: 'rest',
+      targetId: 'player',
+      operation: 'activate',
+    });
     world = { ...world, paused: true };
     expect(advanceWorld(world, 80000).world).toBe(world);
     expect(
@@ -148,6 +154,7 @@ describe('authoritative pure world', () => {
         actorId: 'player',
         requestId: 'paused',
         source: 'test-fixture',
+        authority: { origin: 'player', policyRevision: 1 },
       }).outcome.code,
     ).toBe('paused');
   });
@@ -182,6 +189,7 @@ describe('bounded invented mechanisms', () => {
       actorId: 'player',
       requestId: 'request-sling',
       source: 'test-fixture',
+      authority: { origin: 'player', policyRevision: 1 },
     });
     expect(repeated.world).toBe(admitted.world);
     const changed = sling();
@@ -191,6 +199,7 @@ describe('bounded invented mechanisms', () => {
         actorId: 'player',
         requestId: 'request-sling',
         source: 'test-fixture',
+        authority: { origin: 'player', policyRevision: 1 },
       }).outcome.code,
     ).toBe('idempotency-conflict');
     expect(
@@ -233,6 +242,7 @@ describe('bounded invented mechanisms', () => {
         actorId: 'player',
         requestId: 'bad',
         source: 'test-fixture',
+        authority: { origin: 'player', policyRevision: 1 },
       });
       expect(result.outcome.ok).toBe(false);
       expect(result.world).toBe(world);
@@ -284,6 +294,7 @@ describe('bounded invented mechanisms', () => {
     expect(quantityOf(world, 'player', 'raw_meat')).toBe(1);
     expect(quantityOf(world, 'player', 'cooked_meat')).toBe(1);
     const fullness = world.entities.player!.actor!.fullness;
+    if (fullness === undefined) throw new Error('Wilderness fixture lacks fullness.');
     world = command(world, { type: 'eat', itemId: itemId(world, 'cooked_meat') });
     expect(world.entities.player!.actor!.fullness).toBeGreaterThan(fullness);
     expect(quantityOf(world, 'player', 'cooked_meat')).toBe(0);
@@ -421,8 +432,10 @@ describe('perception, survival and continuity', () => {
       false,
     );
     expect(
-      observeActor(world, 'player')!.visibleEntities.find((entity) => entity.id === 'ada')!.actor!
-        .goal,
+      observeActor(world, 'player')!
+        .visibleEntities.find((entity) => entity.id === 'ada')!
+        .actor!.agency.goals.map((goal) => goal.objective)
+        .join('; '),
     ).toBe('');
   });
   it('keeps native NPC foraging and eating functional without a provider', () => {

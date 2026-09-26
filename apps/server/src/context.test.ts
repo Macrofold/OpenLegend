@@ -18,7 +18,7 @@ import { SqliteStore } from './store.js';
 import { WorldService } from './world-service.js';
 
 const stores: SqliteStore[] = [];
-function setup(): WorldService {
+async function setup(): Promise<WorldService> {
   const store = new SqliteStore(':memory:');
   stores.push(store);
   const service = new WorldService(
@@ -26,7 +26,7 @@ function setup(): WorldService {
     readConfig({ WORLD_SEED: '73' }),
     () => 1_800_000_000_000,
   );
-  service.setPresence('test', true);
+  await service.setPresence('test', true);
   return service;
 }
 function addItem(
@@ -80,21 +80,21 @@ function select(
   expect(candidate, `Expected feasible ${type} candidate`).toBeDefined();
   return candidate!;
 }
-function perform(service: WorldService, candidate: CandidateAction): void {
-  const result = service.command(
+async function perform(service: WorldService, candidate: CandidateAction): Promise<void> {
+  const result = await service.command(
     `test:${service.world.sequence}:${candidate.id}`,
     candidate.command!,
     'ada',
   );
   expect(result.ok, result.message).toBe(true);
 }
-afterEach(() => {
-  for (const store of stores.splice(0)) store.close();
+afterEach(async () => {
+  for (const store of stores.splice(0)) await store.close();
 });
 
 describe('bounded actor context', () => {
-  it('fits long history, 24 recipes and 64 owned definitions without losing material mechanics or privacy', () => {
-    const service = setup();
+  it('fits long history, 24 recipes and 64 owned definitions without losing material mechanics or privacy', async () => {
+    const service = await setup();
     for (let index = 0; index < 24; index++) {
       const draft: DeclarationDraft = {
         schemaVersion: 1,
@@ -120,11 +120,14 @@ describe('bounded actor context', () => {
         },
       };
       expect(
-        service.admit(draft, {
-          actorId: 'ada',
-          requestId: `budget-recipe-${index}`,
-          source: 'test-fixture',
-        }).ok,
+        (
+          await service.admit(draft, {
+            actorId: 'ada',
+            requestId: `budget-recipe-${index}`,
+            source: 'test-fixture',
+            authority: { origin: 'player', policyRevision: 1 },
+          })
+        ).ok,
       ).toBe(true);
       const recipe = Object.values(service.world.recipes).find(
         (candidate) => candidate.name === draft.name,
@@ -144,7 +147,8 @@ describe('bounded actor context', () => {
       };
       addItem(service, definitionId, 2);
     }
-    service.world.entities['player']!.actor!.goal = 'OTHER_ACTOR_PRIVATE_GOAL';
+    service.world.entities['player']!.actor!.agency.goals[0]!.objective =
+      'OTHER_ACTOR_PRIVATE_GOAL';
     service.world.memories['player']!.push({
       id: 'private-fixture',
       actorId: 'player',
@@ -218,8 +222,8 @@ describe('bounded actor context', () => {
     expect(JSON.stringify(service.world)).toBe(before);
   });
 
-  it('fails honestly when mandatory request data cannot fit instead of truncating it', () => {
-    const service = setup();
+  it('fails honestly when mandatory request data cannot fit instead of truncating it', async () => {
+    const service = await setup();
     expect(() => buildContext(service, 'ada', 'x'.repeat(CONTEXT_BYTE_LIMIT + 1))).toThrow(
       ContextBudgetError,
     );
@@ -227,8 +231,8 @@ describe('bounded actor context', () => {
 });
 
 describe('actor-scoped native decision candidates', () => {
-  it('offers material preparation only for carried sufficient inputs', () => {
-    const service = setup();
+  it('offers material preparation only for carried sufficient inputs', async () => {
+    const service = await setup();
     expect(npcCandidates(service).some((action) => action.id === 'prepare:cord')).toBe(true);
     expect(npcCandidates(service).some((action) => action.id === 'prepare:fiber')).toBe(false);
     addItem(service, 'raw_fiber', 20, 'player');
@@ -239,14 +243,14 @@ describe('actor-scoped native decision candidates', () => {
     expect(npcCandidates(service).filter((action) => action.id === 'prepare:fiber')).toHaveLength(
       1,
     );
-    perform(
+    await perform(
       service,
       select(service, 'prepare', (action) => action.id === 'prepare:fiber'),
     );
     expect(quantityOf(service.world, 'ada', 'raw_fiber')).toBe(0);
   });
-  it('equips carried launchers only with matching ammunition and avoids duplicate equipment work', () => {
-    const service = setup();
+  it('equips carried launchers only with matching ammunition and avoids duplicate equipment work', async () => {
+    const service = await setup();
     const slingId = addTool(service, 'swing');
     const bowId = addTool(service, 'flex');
     expect(npcCandidates(service).some((action) => action.id === `equip:${slingId}`)).toBe(true);
@@ -268,8 +272,8 @@ describe('actor-scoped native decision candidates', () => {
       1,
     );
   });
-  it('hunts only visible living animals using owned equipped equipment and ammunition', () => {
-    const service = setup();
+  it('hunts only visible living animals using owned equipped equipment and ammunition', async () => {
+    const service = await setup();
     const toolId = addTool(service, 'swing');
     expect(npcCandidates(service).some((action) => action.command?.type === 'hunt')).toBe(false);
     service.world.entities.ada!.actor!.equippedItemId = toolId;
@@ -290,8 +294,8 @@ describe('actor-scoped native decision candidates', () => {
     removeItem(service, 'stone');
     expect(npcCandidates(service).some((action) => action.command?.type === 'hunt')).toBe(false);
   });
-  it('harvests finite visible remains only with a carried cutting point', () => {
-    const service = setup();
+  it('harvests finite visible remains only with a carried cutting point', async () => {
+    const service = await setup();
     service.world.entities['test-remains'] = {
       id: 'test-remains',
       spatial: { bodyProfileId: 'object', heading: 0, supportSurfaceId: 'terrain' },
@@ -317,8 +321,8 @@ describe('actor-scoped native decision candidates', () => {
       false,
     );
   });
-  it('requires owned raw meat and visible reachable heat with enough remaining fuel', () => {
-    const service = setup();
+  it('requires owned raw meat and visible reachable heat with enough remaining fuel', async () => {
+    const service = await setup();
     addItem(service, 'raw_meat', 2, 'player');
     expect(npcCandidates(service).some((action) => action.command?.type === 'cook')).toBe(false);
     const meatId = addItem(service, 'raw_meat', 2);
@@ -336,8 +340,8 @@ describe('actor-scoped native decision candidates', () => {
     service.world.entities.ada!.position = { y: 0, x: 1, z: 1 };
     expect(npcCandidates(service).some((action) => action.command?.type === 'cook')).toBe(false);
   });
-  it('does not offer unreachable visible resources or actions for paused/dead actors', () => {
-    const service = setup();
+  it('does not offer unreachable visible resources or actions for paused/dead actors', async () => {
+    const service = await setup();
     service.world.entities['isolated-berries'] = {
       id: 'isolated-berries',
       spatial: { bodyProfileId: 'object', heading: 0, supportSurfaceId: 'terrain' },
@@ -359,27 +363,27 @@ describe('actor-scoped native decision candidates', () => {
     expect(
       npcCandidates(service).some((action) => action.command?.targetId === 'isolated-berries'),
     ).toBe(false);
-    service.control({ paused: true });
+    await service.control({ paused: true });
     expect(npcCandidates(service)).toEqual([]);
-    service.control({ paused: false });
+    await service.control({ paused: false });
     service.world.entities.ada!.actor!.alive = false;
     expect(npcCandidates(service)).toEqual([]);
   });
-  it('preserves ongoing work and avoids wasting food/rest when needs are already met', () => {
-    const service = setup();
+  it('preserves ongoing work and avoids wasting food/rest when needs are already met', async () => {
+    const service = await setup();
     service.world.entities.ada!.actor!.fullness = 100;
     service.world.entities.ada!.actor!.energy = 100;
     expect(
       npcCandidates(service).some((action) => ['eat', 'rest'].includes(action.command?.type ?? '')),
     ).toBe(false);
-    perform(service, select(service, 'gather'));
+    await perform(service, select(service, 'gather'));
     expect(npcCandidates(service).map((action) => action.id)).toEqual(['continue']);
     service.world.entities.ada!.actor!.fullness = 10;
     expect(npcCandidates(service).some((action) => action.command?.type === 'eat')).toBe(true);
     expect(npcCandidates(service).some((action) => action.command?.type === 'craft')).toBe(false);
   });
-  it('executes a learned tool and food loop through scoped feasible candidates', () => {
-    const service = setup();
+  it('executes a learned tool and food loop through scoped feasible candidates', async () => {
+    const service = await setup();
     const draft: DeclarationDraft = {
       schemaVersion: 1,
       name: 'Fixture sling',
@@ -404,30 +408,36 @@ describe('actor-scoped native decision candidates', () => {
       },
     };
     expect(
-      service.admit(draft, { actorId: 'ada', requestId: 'learned-fixture', source: 'test-fixture' })
-        .ok,
+      (
+        await service.admit(draft, {
+          actorId: 'ada',
+          requestId: 'learned-fixture',
+          source: 'test-fixture',
+          authority: { origin: 'player', policyRevision: 1 },
+        })
+      ).ok,
     ).toBe(true);
-    perform(service, select(service, 'craft'));
-    service.transition((world) => advanceWorld(world, 60));
-    perform(service, select(service, 'equip'));
-    perform(
+    await perform(service, select(service, 'craft'));
+    await service.transition((world) => advanceWorld(world, 60));
+    await perform(service, select(service, 'equip'));
+    await perform(
       service,
       select(service, 'hunt', (action) => action.command?.targetId === 'hare-1'),
     );
-    service.transition((world) => advanceWorld(world, 18));
+    await service.transition((world) => advanceWorld(world, 18));
     expect(service.world.entities['hare-1']!.animal!.alive).toBe(false);
-    perform(
+    await perform(
       service,
       select(service, 'harvest', (action) => action.command?.targetId === 'hare-1'),
     );
-    service.transition((world) => advanceWorld(world, 120));
+    await service.transition((world) => advanceWorld(world, 120));
     expect(quantityOf(service.world, 'ada', 'raw_meat')).toBe(2);
-    perform(service, select(service, 'cook'));
-    service.transition((world) => advanceWorld(world, 200));
+    await perform(service, select(service, 'cook'));
+    await service.transition((world) => advanceWorld(world, 200));
     const cooked = inventoryFor(service.world, 'ada').find(
       (item) => item.definitionId === 'cooked_meat',
     )!;
-    perform(
+    await perform(
       service,
       select(service, 'eat', (action) => action.command?.itemId === cooked.id),
     );

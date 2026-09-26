@@ -137,3 +137,7 @@ Dependencies: qualified personal-world flow, relevant D60 choices and production
 - [ ] When measurements justify incremental storage or distributed capture, preserve the same logical save contract and qualify bounded recovery with the relevant performance/production tasks.
 
 Exit: each enabled extension has scoped failure and recovery evidence; unsupported modes remain explicitly unavailable rather than inheriting personal-world guarantees.
+
+## Foundation integration acceptance
+
+SL00's owner inventory must explicitly classify each subsystem's rewindable authority, non-rewindable grants/revocations/accounting/maintenance controls, derived indexes and invalidated asynchronous work. Include inactive humans, retained/summoned ghosts when supported, contribution/definition pins and approval/activation receipts. Reuse current generation and receipt boundaries; no new subsystem-specific restore patch outside its declared owner. Coordinate DF02 and INV-5.6 and prove continuation after save/load with a changed grant and pending job. The [branch audit](remaining-foundational-work.md#branch-coverage-snapshot) records partial save work; it does not close SL00 or SL09.

@@ -118,7 +118,7 @@ afterEach(async () => {
   for (const close of cleanup.splice(0)) await close();
 });
 
-function harness(
+async function harness(
   options: {
     judge?: (request: JudgeRequest) => AiResult<JudgeValue> | Promise<AiResult<JudgeValue>>;
     generate?: (request: GenerateRequest) => AiResult<unknown> | Promise<AiResult<unknown>>;
@@ -136,12 +136,12 @@ function harness(
   };
   const store = new SqliteStore(':memory:');
   const service = new WorldService(store, config, () => now);
-  service.setPresence('fixture-browser', true);
+  await service.setPresence('fixture-browser', true);
   const calls = { judges: [] as JudgeRequest[], generations: [] as GenerateRequest[] };
   const client: AiClient = {
     async judge(request) {
       calls.judges.push(request);
-      return options.judge ? options.judge(request) : judgment(request, 'swing');
+      return options.judge ? await options.judge(request) : judgment(request, 'swing');
     },
     async generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
       calls.generations.push(request);
@@ -155,19 +155,21 @@ function harness(
   const director = new AiDirector(service, client, () => now);
   cleanup.push(async () => {
     await director.close();
-    store.close();
+    await store.close();
   });
-  function change(edit: (world: WorldState) => void) {
+  async function change(edit: (world: WorldState) => void) {
     expect(
-      service.transition((world) => {
-        const next = structuredClone(world);
-        edit(next);
-        return {
-          world: next,
-          events: [],
-          outcome: { ok: true, code: 'fixture', message: 'Fixture setup' },
-        };
-      }).ok,
+      (
+        await service.transition((world) => {
+          const next = structuredClone(world);
+          edit(next);
+          return {
+            world: next,
+            events: [],
+            outcome: { ok: true, code: 'fixture', message: 'Fixture setup' },
+          };
+        })
+      ).ok,
     ).toBe(true);
   }
   return {
@@ -177,16 +179,16 @@ function harness(
     director,
     calls,
     change,
-    advanceClock(ms: number) {
+    async advanceClock(ms: number) {
       now += ms;
-      service.setPresence('fixture-browser', true);
+      await service.setPresence('fixture-browser', true);
     },
   };
 }
 
 describe('AI director with explicit fixtures, no live calls', () => {
   it('admits a generated sling, labels fixture provenance, and reuses its paraphrase without a second generation', async () => {
-    const h = harness({
+    const h = await harness({
       judge: (request) => {
         const question = request.questions['route'];
         if (!question || question.type !== 'choice') throw new Error('Expected choice');
@@ -195,13 +197,17 @@ describe('AI director with explicit fixtures, no live calls', () => {
       },
     });
     expect(h.service.world.recipes).toEqual({});
-    expect(h.director.submit('invention', 'invent-1', 'Make a cord-and-fiber sling.').ok).toBe(
-      true,
-    );
+    expect(
+      (await h.director.submit('invention', 'invent-1', 'Make a cord-and-fiber sling.')).ok,
+    ).toBe(true);
     await h.director.idle();
-    expect(h.store.getJob('invent-1')?.status).toBe('completed');
+    expect((await h.store.getJob('invent-1'))?.status).toBe('completed');
     const [recipe] = Object.values(h.service.world.recipes);
-    expect(recipe?.provenance).toMatchObject({ source: 'test-fixture', model: 'openai-fixture' });
+    expect(recipe?.provenance).toMatchObject({
+      source: 'test-fixture',
+      authority: { origin: 'player', policyRevision: 1 },
+      model: 'openai-fixture',
+    });
     expect(h.director.executionSource).toBe('test-fixture');
     expect(h.service.world.knowledge['player']).toHaveLength(1);
     expect(h.service.world.knowledge['ada']).toHaveLength(0);
@@ -211,14 +217,16 @@ describe('AI director with explicit fixtures, no live calls', () => {
       ),
     ).toBe(false);
     expect(
-      h.director.submit(
-        'invention',
-        'invent-2',
-        'Use that same woven pouch and cord to throw a pebble.',
+      (
+        await h.director.submit(
+          'invention',
+          'invent-2',
+          'Use that same woven pouch and cord to throw a pebble.',
+        )
       ).ok,
     ).toBe(true);
     await h.director.idle();
-    expect(h.store.getJob('invent-2')?.result).toEqual({ reusedRecipeId: recipe!.id });
+    expect((await h.store.getJob('invent-2'))?.result).toEqual({ reusedRecipeId: recipe!.id });
     expect(h.calls.judges).toHaveLength(2);
     expect(h.calls.generations).toHaveLength(1);
     expect(Object.keys(h.service.world.recipes)).toHaveLength(1);
@@ -226,12 +234,12 @@ describe('AI director with explicit fixtures, no live calls', () => {
 
   it('uses relevant private memory in scoped conversation and refreshes observations after judging', async () => {
     const wait = deferred<AiResult<JudgeValue>>();
-    const h = harness({
+    const h = await harness({
       judge: (request) => (request.questions['route'] ? judgment(request, 'level2') : wait.promise),
       generate: (request) =>
         value(request.requestId, 'openai', speechFixture('I remember your offer of berries.')),
     });
-    h.change((world) => {
+    await h.change((world) => {
       const inner = world.innerWorlds!.ada!;
       inner.files.push({
         path: 'berries.md',
@@ -240,7 +248,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
       inner.text += '\n\n# berries.md\nBerries\n\nBerries would help me trust the newcomer.';
       inner.revision++;
     });
-    h.service.transition((world) =>
+    await h.service.transition((world) =>
       remember(world, 'player', {
         kind: 'reflection',
         source: 'inferred',
@@ -249,11 +257,11 @@ describe('AI director with explicit fixtures, no live calls', () => {
         entityIds: [],
       }),
     );
-    h.change((world) => {
-      world.entities['player']!.actor!.goal = 'PLAYER_PRIVATE_GOAL_839';
+    await h.change((world) => {
+      world.entities['player']!.actor!.agency.goals[0]!.objective = 'PLAYER_PRIVATE_GOAL_839';
     });
-    h.director.submit('chat', 'chat-1', 'Do you remember the berries?');
-    h.change((world) => {
+    await h.director.submit('chat', 'chat-1', 'Do you remember the berries?');
+    await h.change((world) => {
       world.entities['ada']!.actor!.fullness = 25;
     });
     wait.resolve(judgment(h.calls.judges[0]!, 'yes'));
@@ -275,7 +283,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
   });
 
   it('executes known player actions with zero AI and admits a generated NPC action from offered IDs', async () => {
-    const h = harness({
+    const h = await harness({
       judge: (request) => judgment(request, 'level2'),
       generate: (request) =>
         value(
@@ -284,7 +292,16 @@ describe('AI director with explicit fixtures, no live calls', () => {
           actionFixture(offeredAction(request, 'rest to recover')),
         ),
     });
-    expect(h.service.command('native-rest', { type: 'rest' }).ok).toBe(true);
+    expect(
+      (
+        await h.service.command('native-rest', {
+          type: 'status-effect',
+          definitionId: 'rest',
+          targetId: 'player',
+          effectOperation: 'activate',
+        })
+      ).ok,
+    ).toBe(true);
     expect(h.calls.judges).toHaveLength(0);
     h.director.considerThought();
     await h.director.idle();
@@ -294,7 +311,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
   });
 
   it('uses generation for a routed semantic action without writing an immediate reflection', async () => {
-    const h = harness({
+    const h = await harness({
       judge: (request) => judgment(request, 'level2'),
       generate: (request) =>
         value(
@@ -314,7 +331,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
   });
 
   it('does not let an invented action identifier execute a command', async () => {
-    const h = harness({
+    const h = await harness({
       judge: (request) => judgment(request, 'level2'),
       generate: (request) => value(request.requestId, 'openai', actionFixture('grant-all-items')),
     });
@@ -326,14 +343,16 @@ describe('AI director with explicit fixtures, no live calls', () => {
 
   it('prevents duplicate IDs from dispatching again and rejects changed input under the same ID', async () => {
     const wait = deferred<AiResult<JudgeValue>>();
-    const h = harness({ judge: () => wait.promise });
-    h.director.submit('invention', 'same-id', 'A sling.');
-    expect(h.director.submit('invention', 'same-id', 'A sling.').ok).toBe(true);
-    expect(h.director.submit('invention', 'same-id', 'A bow.').code).toBe('idempotency-conflict');
+    const h = await harness({ judge: () => wait.promise });
+    await h.director.submit('invention', 'same-id', 'A sling.');
+    expect((await h.director.submit('invention', 'same-id', 'A sling.')).ok).toBe(true);
+    expect((await h.director.submit('invention', 'same-id', 'A bow.')).code).toBe(
+      'idempotency-conflict',
+    );
     expect(h.calls.judges).toHaveLength(1);
     wait.resolve(judgment(h.calls.judges[0]!, 'swing'));
     await h.director.idle();
-    h.director.submit('invention', 'same-id', 'A sling.');
+    await h.director.submit('invention', 'same-id', 'A sling.');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(1);
@@ -343,39 +362,39 @@ describe('AI director with explicit fixtures, no live calls', () => {
   it('holds a late explicit result while paused and admits it only after resume', async () => {
     const wait = deferred<AiResult<unknown>>();
     const started = deferred<void>();
-    const h = harness({
+    const h = await harness({
       generate: () => {
         started.resolve();
         return wait.promise;
       },
     });
-    h.director.submit('invention', 'paused-late', 'A sling.');
+    await h.director.submit('invention', 'paused-late', 'A sling.');
     await started.promise;
-    h.service.control({ paused: true });
+    await h.service.control({ paused: true });
     wait.resolve(value(h.calls.generations[0]!.requestId, 'openai', slingFixture()));
     await Promise.resolve();
     await Promise.resolve();
     expect(h.service.world.recipes).toEqual({});
-    h.service.control({ paused: false });
+    await h.service.control({ paused: false });
     await h.director.idle();
-    expect(h.store.getJob('paused-late')?.status).toBe('completed');
+    expect((await h.store.getJob('paused-late'))?.status).toBe('completed');
     expect(Object.keys(h.service.world.recipes)).toHaveLength(1);
-    expect(h.store.usage(h.config.budgetUsd).usage.llmCalls).toBe(1);
-    expect(h.store.usage(h.config.budgetUsd).budget.spentUsd).toBeGreaterThan(0);
+    expect((await h.store.usage(h.config.budgetUsd)).usage.llmCalls).toBe(1);
+    expect((await h.store.usage(h.config.budgetUsd)).budget.spentUsd).toBeGreaterThan(0);
   });
 
   it('cancels work across expired presence even when a reconnect arrives before the next tick', async () => {
     const wait = deferred<AiResult<JudgeValue>>();
-    const h = harness({ judge: () => wait.promise });
+    const h = await harness({ judge: () => wait.promise });
     h.director.considerThought();
     // Renew presence after expiry without calling tick: the reconnect must expose
     // the intervening absence before restoring a running world.
-    h.advanceClock(13_001);
+    await h.advanceClock(13_001);
     expect(h.service.paused).toBe(false);
     expect(h.calls.judges[0]!.signal?.aborted).toBe(true);
     wait.resolve(judgment(h.calls.judges[0]!, 'rest'));
     await h.director.idle();
-    const job = h.store.recentJobs()[0];
+    const job = (await h.store.recentJobs())[0];
     expect(job?.status, job?.message).toBe('cancelled');
     expect(h.service.world.entities['ada']!.actor!.action).toBeNull();
   });
@@ -383,7 +402,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
   it('rejects stale native plans and avoids generation when the plan changed during Jev', async () => {
     const wait = deferred<AiResult<JudgeValue>>();
     const started = deferred<void>();
-    const h = harness({
+    const h = await harness({
       judge: (request) => {
         if (!request.questions['route']) return judgment(request, 'yes');
         started.resolve();
@@ -392,18 +411,20 @@ describe('AI director with explicit fixtures, no live calls', () => {
     });
     h.director.considerThought();
     await started.promise;
-    expect(h.service.setGoal('new-plan', 'Attend to the camp instead.').ok).toBe(true);
+    expect((await h.service.setGoal('new-plan', 'Attend to the camp instead.')).ok).toBe(true);
     wait.resolve(judgment(h.calls.judges.at(-1)!, 'level2'));
     await h.director.idle();
     expect(h.calls.generations).toHaveLength(0);
-    expect(h.store.recentJobs()[0]?.status).toBe('stale');
-    expect(h.service.world.entities['ada']!.actor!.goal).toBe('Attend to the camp instead.');
+    expect((await h.store.recentJobs())[0]?.status).toBe('stale');
+    expect(h.service.world.entities['ada']!.actor!.agency.goals[0]!.objective).toBe(
+      'Attend to the camp instead.',
+    );
   });
 
   it('rejects a stale generated plan without changing goal, reflection, or action', async () => {
     const wait = deferred<AiResult<unknown>>();
     const started = deferred<void>();
-    const h = harness({
+    const h = await harness({
       judge: (request) => judgment(request, 'level2'),
       generate: () => {
         started.resolve();
@@ -412,7 +433,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     });
     h.director.considerThought();
     await started.promise;
-    h.service.setGoal('new-plan', 'New deliberate plan.');
+    await h.service.setGoal('new-plan', 'New deliberate plan.');
     const before = structuredClone(h.service.world);
     wait.resolve(
       value(
@@ -423,13 +444,13 @@ describe('AI director with explicit fixtures, no live calls', () => {
     );
     await h.director.idle();
     expect(h.service.world).toEqual(before);
-    expect(h.store.recentJobs()[0]?.status).toBe('stale');
+    expect((await h.store.recentJobs())[0]?.status).toBe('stale');
   });
 
   it('revalidates a native candidate whose food was consumed while Jev was deciding', async () => {
     const wait = deferred<AiResult<JudgeValue>>();
     const started = deferred<void>();
-    const h = harness({
+    const h = await harness({
       judge: (request) => {
         if (!request.questions['route']) return judgment(request, 'yes');
         started.resolve();
@@ -439,13 +460,13 @@ describe('AI director with explicit fixtures, no live calls', () => {
     const berries = Object.values(h.service.world.items).find(
       (item) => item.ownerId === 'ada' && item.definitionId === 'berries',
     )!;
-    h.change((world) => {
+    await h.change((world) => {
       world.items[berries.id]!.quantity = 1;
     });
     h.director.considerThought();
     await started.promise;
     expect(
-      h.service.command('eat-before-answer', { type: 'eat', itemId: berries.id }, 'ada').ok,
+      (await h.service.command('eat-before-answer', { type: 'eat', itemId: berries.id }, 'ada')).ok,
     ).toBe(true);
     const before = structuredClone(h.service.world);
     wait.resolve(judgment(h.calls.judges.at(-1)!, 'level2'));
@@ -454,28 +475,28 @@ describe('AI director with explicit fixtures, no live calls', () => {
     expect(h.service.world.entities['ada']!.actor!.fullness).toBe(
       before.entities['ada']!.actor!.fullness,
     );
-    expect(h.store.recentJobs()[0]?.status).toBe('stale');
+    expect((await h.store.recentJobs())[0]?.status).toBe('stale');
     expect(h.calls.generations).toHaveLength(0);
   });
 
   it('does not deliver a late reply or private reflection when the listener has left hearing range', async () => {
     const wait = deferred<AiResult<unknown>>();
     const started = deferred<void>();
-    const h = harness({
+    const h = await harness({
       judge: (request) => judgment(request, 'level2'),
       generate: () => {
         started.resolve();
         return wait.promise;
       },
     });
-    h.director.submit('chat', 'far-reply', 'Hello Ada.');
+    await h.director.submit('chat', 'far-reply', 'Hello Ada.');
     await started.promise;
-    h.change((world) => {
+    await h.change((world) => {
       world.entities['player']!.position = { y: 0, x: 26, z: 22 };
     });
     wait.resolve(value(h.calls.generations[0]!.requestId, 'openai', speechFixture('Hello there.')));
     await h.director.idle();
-    expect(h.store.getJob('far-reply')?.status).toBe('stale');
+    expect((await h.store.getJob('far-reply'))?.status).toBe('stale');
     expect(
       h.service.world.events.some((event) => event.type === 'speech' && event.actorId === 'ada'),
     ).toBe(false);
@@ -494,11 +515,11 @@ describe('AI director with explicit fixtures, no live calls', () => {
       if (fault === 'quantity') draft.inputs[0]!.quantity = 0;
       if (fault === 'hidden-material')
         draft.inputs.push({ definitionId: 'bone', quantity: 1, role: 'point' });
-      const h = harness({ generate: (request) => value(request.requestId, 'openai', draft) });
+      const h = await harness({ generate: (request) => value(request.requestId, 'openai', draft) });
       const beforeItems = structuredClone(h.service.world.items);
-      h.director.submit('invention', `invalid-${fault}`, 'A physical sling.');
+      await h.director.submit('invention', `invalid-${fault}`, 'A physical sling.');
       await h.director.idle();
-      expect(h.store.getJob(`invalid-${fault}`)?.status).toBe('failed');
+      expect((await h.store.getJob(`invalid-${fault}`))?.status).toBe('failed');
       expect(h.service.world.recipes).toEqual({});
       expect(h.service.world.items).toEqual(beforeItems);
       expect(h.service.world.knowledge['player']).toEqual([]);
@@ -506,25 +527,25 @@ describe('AI director with explicit fixtures, no live calls', () => {
   );
 
   it('fails without dispatch when the budget cannot reserve the next call', async () => {
-    const h = harness({ config: { budgetUsd: 0 } });
-    h.director.submit('invention', 'budget-zero', 'A sling.');
+    const h = await harness({ config: { budgetUsd: 0 } });
+    await h.director.submit('invention', 'budget-zero', 'A sling.');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(0);
     expect(h.calls.generations).toHaveLength(0);
-    expect(h.store.getJob('budget-zero')?.message).toContain('spending cap');
+    expect((await h.store.getJob('budget-zero'))?.message).toContain('spending cap');
   });
 
   it('cannot bypass the minimum reservation by lowering configured per-call reserves', async () => {
-    const h = harness({ config: { budgetUsd: 0.001, jevReserveUsd: 0.000001 } });
-    h.director.submit('invention', 'budget-small', 'A sling.');
+    const h = await harness({ config: { budgetUsd: 0.001, jevReserveUsd: 0.000001 } });
+    await h.director.submit('invention', 'budget-small', 'A sling.');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(0);
-    expect(h.store.getJob('budget-small')?.status).toBe('failed');
+    expect((await h.store.getJob('budget-small'))?.status).toBe('failed');
   });
 
   it('stops before LLM when only the Jev call fits the budget', async () => {
-    const h = harness({ config: { budgetUsd: 0.01 } });
-    h.director.submit('invention', 'budget-between', 'A sling.');
+    const h = await harness({ config: { budgetUsd: 0.01 } });
+    await h.director.submit('invention', 'budget-between', 'A sling.');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(1);
     expect(h.calls.generations).toHaveLength(0);
@@ -532,7 +553,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
   });
 
   it('consumes the reservation for unknown completion and sends no automatic retries', async () => {
-    const h = harness({
+    const h = await harness({
       judge: (request) => ({
         outcome: 'uncertain',
         reason: 'fixture_timeout',
@@ -543,9 +564,9 @@ describe('AI director with explicit fixtures, no live calls', () => {
         },
       }),
     });
-    h.director.submit('invention', 'unknown-cost', 'A sling.');
+    await h.director.submit('invention', 'unknown-cost', 'A sling.');
     await h.director.idle();
-    expect(h.store.usage(h.config.budgetUsd).budget.spentUsd).toBeGreaterThanOrEqual(
+    expect((await h.store.usage(h.config.budgetUsd)).budget.spentUsd).toBeGreaterThanOrEqual(
       h.config.jevReserveUsd,
     );
     expect(h.calls.judges).toHaveLength(1);
@@ -554,11 +575,11 @@ describe('AI director with explicit fixtures, no live calls', () => {
   });
 
   it('does not call either provider without credentials or while paused', async () => {
-    const h = harness({ config: { jevKey: '', llmKey: '' } });
-    expect(h.director.submit('invention', 'no-keys', 'A sling.').code).toBe('unconfigured');
+    const h = await harness({ config: { jevKey: '', llmKey: '' } });
+    expect((await h.director.submit('invention', 'no-keys', 'A sling.')).code).toBe('unconfigured');
     h.director.considerThought();
-    h.service.control({ paused: true });
-    expect(h.director.submit('chat', 'pause', 'Hello.').code).toBe('paused');
+    await h.service.control({ paused: true });
+    expect((await h.director.submit('chat', 'pause', 'Hello.')).code).toBe('paused');
     await h.director.idle();
     expect(h.calls.judges).toHaveLength(0);
     expect(h.calls.generations).toHaveLength(0);
@@ -567,43 +588,46 @@ describe('AI director with explicit fixtures, no live calls', () => {
   it('rejects an incapacitated inventor before dispatch and again on a late result', async () => {
     const wait = deferred<AiResult<unknown>>();
     const started = deferred<void>();
-    const h = harness({
+    const h = await harness({
       generate: () => {
         started.resolve();
         return wait.promise;
       },
     });
-    h.change((world) => {
+    await h.change((world) => {
       world.entities['player']!.actor!.incapacitated = true;
     });
-    expect(h.director.submit('invention', 'incapacitated-submit', 'A sling.').code).toBe('actor');
+    expect((await h.director.submit('invention', 'incapacitated-submit', 'A sling.')).code).toBe(
+      'actor',
+    );
     expect(h.calls.judges).toHaveLength(0);
-    h.change((world) => {
+    await h.change((world) => {
       world.entities['player']!.actor!.incapacitated = false;
     });
-    h.director.submit('invention', 'incapacitated-result', 'A sling.');
+    await h.director.submit('invention', 'incapacitated-result', 'A sling.');
     await started.promise;
-    h.change((world) => {
+    await h.change((world) => {
       world.entities['player']!.actor!.incapacitated = true;
     });
     wait.resolve(value(h.calls.generations[0]!.requestId, 'openai', slingFixture()));
     await h.director.idle();
-    expect(h.store.getJob('incapacitated-result')?.status).toBe('stale');
+    expect((await h.store.getJob('incapacitated-result'))?.status).toBe('stale');
     expect(h.service.world.recipes).toEqual({});
   });
 
-  it('retrieves an older relevant recipe from all 64 known entries while bounding the supplied candidates', () => {
-    const h = harness();
+  it('retrieves an older relevant recipe from all 64 known entries while bounding the supplied candidates', async () => {
+    const h = await harness();
     let oldestId = '';
     for (let index = 0; index < 64; index++) {
       const draft = slingFixture() as unknown as DeclarationDraft;
       delete draft.output.ammunition;
       draft.name =
         index === 0 ? 'Ancient shellfish pearlweave sling' : `Fixture sling variant ${index}`;
-      const admitted = h.service.admit(draft, {
+      const admitted = await h.service.admit(draft, {
         requestId: `registry-fixture-${index}`,
         actorId: 'player',
         source: 'test-fixture',
+        authority: { origin: 'player', policyRevision: 1 },
       });
       expect(admitted.ok).toBe(true);
       if (index === 0) oldestId = Object.keys(h.service.world.recipes)[0]!;
@@ -620,14 +644,14 @@ describe('AI director with explicit fixtures, no live calls', () => {
   });
 
   it('commits immediate conversation without coupling it to private reflection', async () => {
-    const h = harness({
+    const h = await harness({
       judge: (r) => judgment(r, 'level2'),
       generate: (r) =>
         value(r.requestId, 'openai', speechFixture('I promise to help you gather food.')),
     });
-    h.director.submit('chat', 'coherent-chat', 'Can we work together?');
+    await h.director.submit('chat', 'coherent-chat', 'Can we work together?');
     await h.director.idle();
-    expect(h.store.getJob('coherent-chat')?.status).toBe('completed');
+    expect((await h.store.getJob('coherent-chat'))?.status).toBe('completed');
     expect(mindFor(h.service.world, 'ada').thoughts).toHaveLength(0);
     expect(h.service.world.memories.ada!.some((m) => m.kind === 'reflection')).toBe(false);
     expect(
@@ -637,7 +661,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
     ).toBe(true);
   });
   it('rejects unsupported legacy extraction fields without committing a partial speech', async () => {
-    const h = harness({
+    const h = await harness({
       judge: (r) => judgment(r, 'level2'),
       generate: (r) =>
         value(r.requestId, 'openai', {
@@ -645,16 +669,16 @@ describe('AI director with explicit fixtures, no live calls', () => {
           commitment: { quote: 'Fabricated promise' },
         }),
     });
-    h.director.submit('chat', 'invalid-bundle', 'Hello.');
+    await h.director.submit('chat', 'invalid-bundle', 'Hello.');
     await h.director.idle();
-    expect(h.store.getJob('invalid-bundle')?.status).toBe('failed');
+    expect((await h.store.getJob('invalid-bundle'))?.status).toBe('failed');
     expect(h.service.world.events.some((e) => e.type === 'speech' && e.actorId === 'ada')).toBe(
       false,
     );
     expect(mindFor(h.service.world, 'ada').thoughts).toHaveLength(0);
   });
   it('routes difficult immediate work to the configured complex level without a mind write', async () => {
-    const h = harness({
+    const h = await harness({
       judge: (r) => judgment(r, 'level4'),
       generate: (r) => value(r.requestId, 'openai', actionFixture(null)),
     });

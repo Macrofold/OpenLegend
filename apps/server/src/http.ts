@@ -1303,7 +1303,7 @@ export async function createGameServer(
             const result = await service.godKnowledge(value);
             return send(response, 200, {
               ...result,
-              ...(result.ok ? { mind: inspectGodMind(service, value.actorId) } : {}),
+              ...(result.ok ? { mind: await inspectGodMind(service, value.actorId) } : {}),
             });
           }
           case '/api/god/mind': {
@@ -1318,7 +1318,7 @@ export async function createGameServer(
                 ok: false,
                 message: 'Human-private character content is unavailable to this principal.',
               });
-            return send(response, 200, { ok: true, mind: inspectGodMind(service, actorId) });
+            return send(response, 200, { ok: true, mind: await inspectGodMind(service, actorId) });
           }
           case '/api/control':
             return send(response, 200, await service.control(controls.parse(body)));

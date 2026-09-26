@@ -2,7 +2,7 @@
 
 ## Data foundation follow-up
 
-The record/query migration and measurements are in [D1/D2](production-data.md#remaining-d1d2-implementation-and-evidence) and [Verification](../verification.md#data-foundation-runtime). Independent PostgreSQL read/write lanes, batched witness eligibility updates, indexed required evidence and skipping discarded memory observation work are implemented. PF08 remains open: initial perception creates large actor/evidence fan-out, Immer copies growing active arrays, and retained histories still occupy RAM. The 100/100/100/1000 and half-size scene runs recovered correctly but did not meet interactive capacity. Keep the 64 MiB checkpoint guard and serialization cost visible in SL/PF; do not close D5 from a scoped SQL benchmark.
+The record/query migration and measurements are in [D1/D2](production-data.md#remaining-d1d2-implementation-and-evidence) and [Verification](../verification.md#data-foundation-runtime). Independent PostgreSQL read/write lanes, batched witness eligibility updates, indexed required evidence and skipping discarded memory observation work are implemented. Inactive memory/awareness/summary residency and scoped cold-source consumers are implemented. Dense preparation/copy work is reduced with unchanged native outcomes. PF08/PF09 remain open: initial perception still creates large actor/evidence fan-out and Immer copies growing recent arrays. [Current hardening measurements](../verification.md#data-runtime-hardening) separate cold-history growth from dense-scene cost. The 100/100/100/1000 and half-size scene runs recovered correctly but did not meet interactive capacity. Keep the 64 MiB checkpoint guard and serialization cost visible in SL/PF; do not close D5 from a scoped SQL benchmark.
 
 ## Spatial measurements
 
@@ -64,7 +64,7 @@ These are initial engineering targets for a named desktop and healthy same-host 
 
 An injected slow database may exceed normal latency budgets. Correct behavior is bounded queues, responsive pending/paused UI and truthful durability state. Do not pass by dropping events, lowering requested speed silently, disabling relevant background load or hiding confirmed latency behind prediction.
 
-PF03 snapshot freezing and bounded catch-up are implemented; [recorded profiling](../verification.md#mature-world-tick-profiling) includes mature-save before/after runtime measurements. The next priority is extended qualification of these boundaries and PF08 retained-history growth. PF04/PF07/PF10 remain gated on residual measured cost.
+PF03 snapshot freezing and bounded catch-up are implemented; [recorded profiling](../verification.md#mature-world-tick-profiling) includes mature-save before/after runtime measurements. The next priority is dense first-exposure work and extended qualification of PF08 with naturally aging worlds; synthetic cold-history growth is measured. PF04/PF07/PF10 remain gated on residual measured cost.
 
 ## PF00 — Baseline and attribution
 
@@ -185,13 +185,17 @@ Exit: better burst throughput within single-command latency budgets, finite pend
 Dependencies: PF00/PF03 and applicable production-data D1/D2 recovery contracts; D59's accepted 24-hour command policy and its epoch boundary before any receipt expiry.
 
 - [x] Separate unreferenced global events and new epoch-bound gameplay outcomes from per-step state. Retain active memory, obligation/knowledge sources and complete cold history; jobs remain in their existing durable tables.
+- [x] Keep inactive memory/awareness/summaries out of ordinary recovery and simulation snapshots; preserve SQL recall, owner editing, consolidation and complete saves. Compare 1,000 versus 100,000 cold sources with the same active world.
+- [x] Reduce repeated encounter membership scans, perspective preparation and detached-record finalization; matched dense fixture outcomes remain identical.
+- [x] Exercise process death immediately before/after commit, competing SQLite revisions, duplicate actions, PostgreSQL writer fencing/read isolation and interrupted/incomplete migration with disposable native drills.
+
 - [ ] Migrate unbounded legacy gameplay receipts without losing old ID/body deduplication. Do not expire legacy, provider, invention, billing or admin identities through the new gameplay policy.
 - [x] Add local server-issued command epochs and admission expiry, retain complete new gameplay outcomes for 24 hours, then return `expired` before domain evaluation. Persist the next generation/token before pruning. Restore fences fresh admission with a new token; other workflow identities retain their policies.
 - [x] Migrate and restore source-preserving cold event snapshots/journals, check row coverage on load, and preserve cold references in owner edits. Prepare fixed-revision snapshot JSON before the transaction; prune only a committed covered journal prefix.
 - [ ] Qualify corrupt/missing archive data, ambiguous commits and PostgreSQL migration/recovery. Move serialization off-thread only if measured CPU budgets still require it.
 - [x] Keep paged history/editor reads and indexed individual cold-event retrieval; recall consolidation never silently deletes global history.
-- [ ] Measure naturally mature history growth and rare full-dependency owner-save memory/latency before replacing that explicit slow path.
-- [ ] Verify backlog backpressure stops simulation growth while allowing cleanup commits and further distinct cleanup batches within the same game hour. Failed unchanged batches must not retry automatically; a backlog consisting entirely of recent or protected evidence needs operator resolution. Profile fixed-step cloning with large retained histories before raising population or speed limits.
+- [ ] Measure naturally mature history growth and rare full-dependency owner-save memory/latency before replacing that explicit slow path. Make maintenance source preparation bounded/off the mutation queue if large actor backlogs interfere with play; the current explicit snapshot materializes one full actor backlog.
+- [ ] Qualify consolidation pressure with active and cold backlog: native time/walking must continue while cleanup can publish further distinct batches within the same game hour. Failed unchanged batches must not retry automatically, and protected evidence must remain intact. Measure large active raw windows before raising population or speed limits.
 
 Exit: same active tiny world at increasing cold-history sizes meets per-step budgets; backup/recovery retains complete permitted history and forgetting/spending state. Command receipt expiry additionally requires the implemented and verified epoch watermark. Other historical deletion remains blocked until its own retention policy is accepted.
 

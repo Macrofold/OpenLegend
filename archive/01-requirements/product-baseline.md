@@ -170,3 +170,7 @@ The phrase “entirety of their state” establishes that all relevant systems s
 7. **Simulation breadth versus a compelling first hour.** One resident who remembers a promise is more valuable initially than dozens of unobservable internal meters.
 
 The [decision register](../05-project/open-decisions.md) tracks these tensions. Proposed defaults are working hypotheses, not retroactive agreements.
+
+## Accepted foundation policy follow-through
+
+September 25, 2026: existing requirements now use [special invention permissions](../03-design-proposals/invention-governance-and-ownership.md#special-player-invention-permission), [risk-accepted shared-law changes](../07-technical-architecture/declarations-and-evolution.md#accepted-live-change-and-risk-policy), [scheduled creator maintenance](../03-design-proposals/time-and-simulation-speed.md#creator-maintenance-pause), [main-world human protection and retained NPC ghosts](../../docs/worlds/base/lifecycle-and-protection.md), [persistent appraisals](../03-design-proposals/agents-and-social-simulation.md#accepted-appraisal-continuity) and [foreground/background sensory policy](../07-technical-architecture/perception-and-attention.md#embodied-visual-parity). These refine existing requirements rather than claim implemented behavior. The [foundation index](../../docs/maintainers/remaining-foundational-work.md) links concrete delivery and residual decisions; numerical timing, summoning/revival, lethal-action mechanics and longer-term building protection remain there or in Open decisions.

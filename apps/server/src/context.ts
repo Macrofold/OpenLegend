@@ -64,7 +64,12 @@ const excerpt = (text: string, limit: number) => {
 };
 
 /** Relevance is local and deterministic. A model cannot broaden its own knowledge scope. */
-export function buildContext(service: WorldService, actorId: string, query: string) {
+export function buildContext(
+  service: WorldService,
+  actorId: string,
+  query: string,
+  retained?: ReturnType<typeof queryMemories>,
+) {
   const observed = service.observe(actorId, { includeMemories: false });
   if (!observed) throw new Error('Actor unavailable');
   const words = [
@@ -149,10 +154,12 @@ export function buildContext(service: WorldService, actorId: string, query: stri
         ...(recipe.output.gatheringTool ? { gatheringTool: recipe.output.gatheringTool } : {}),
       },
     })),
-    memories: queryMemories(service.world, actorId, { text: query, limit: 12 }).map((memory) => ({
-      ...memory,
-      summary: excerpt(memory.summary, 220),
-    })),
+    memories: (retained ?? queryMemories(service.world, actorId, { text: query, limit: 12 })).map(
+      (memory) => ({
+        ...memory,
+        summary: excerpt(memory.summary, 220),
+      }),
+    ),
     recentEvents: observed.recentEvents.slice(-12).map((event) => {
       const data = Object.fromEntries(
         Object.entries(event.data ?? {}).filter(([key]) => key !== 'text'),
@@ -531,4 +538,9 @@ export function planningCandidates(service: WorldService, actorId: string): Cand
       command: { type: 'craft' as const, recipeId: recipe.id },
     })),
   ]);
+}
+
+export async function buildStoredContext(service: WorldService, actorId: string, query: string) {
+  const memories = await service.memoryContext(actorId, query, 12);
+  return buildContext(service, actorId, query, memories);
 }

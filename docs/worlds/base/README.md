@@ -23,3 +23,5 @@ The base world is bundled now and is intended to become an ordinary externally s
 God-mode **Add something** groups the creation catalogue into **Items**, **Actors** and **Environment**. Item subcategories remain material, food, equipment and ammunition in inventory. Actors includes people and animals; Environment includes resource sources and placed features. Every placeable catalogue entry belongs to one top-level category. These are navigation metadata, not mutually exclusive engine component types or permissions.
 
 Known items include installed generated definitions. A resource source such as a berry bush is Environment; the harvested berries are Items. “Object” is the general term, not another overlapping menu category.
+
+Lifecycle policies: [logout, protection, ghosts and lethal consequences](lifecycle-and-protection.md) (accepted targets; BW13–BW15).

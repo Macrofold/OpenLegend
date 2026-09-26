@@ -6,7 +6,20 @@ const EVICTION_BATCH = 256;
 /** Eviction is storage placement, never forgetting (docs/architecture.md#performance-critical-path). */
 export function retainHotEvents(world: WorldState): WorldState {
   if (world.events.length <= RECENT_EVENTS + EVICTION_BATCH) return world;
-  const retained = new Set(world.events.slice(-RECENT_EVENTS).map((event) => event.id));
+  const retained = hotEventDependencies(world);
+  for (const event of world.events.slice(-RECENT_EVENTS)) retained.add(event.id);
+  const events = world.events.filter((event) => retained.has(event.id));
+  const removed = world.events.length - events.length;
+  if (removed < EVICTION_BATCH) return world;
+  return {
+    ...world,
+    events,
+    archivedEventCount: (world.archivedEventCount ?? 0) + removed,
+  };
+}
+
+export function hotEventDependencies(world: WorldState): Set<string> {
+  const retained = new Set<string>();
   for (const entries of Object.values(world.experience?.awareness ?? {}))
     for (const entry of entries) retained.add(entry.eventId);
   for (const entries of Object.values(world.memories))
@@ -19,12 +32,5 @@ export function retainHotEvents(world: WorldState): WorldState {
     }
   for (const entries of Object.values(world.knowledge))
     for (const entry of entries) retained.add(entry.evidenceId);
-  const events = world.events.filter((event) => retained.has(event.id));
-  const removed = world.events.length - events.length;
-  if (removed < EVICTION_BATCH) return world;
-  return {
-    ...world,
-    events,
-    archivedEventCount: (world.archivedEventCount ?? 0) + removed,
-  };
+  return retained;
 }

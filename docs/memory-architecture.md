@@ -427,6 +427,10 @@ Grouped context candidates retain all contributing source IDs. The post-attentio
 
 The accepted requirements include embedding retrieval across all admitted semantic decision triggers, actor-perspective event/intent sentences, and the semantic levels, level-2 speech default, Jev escalation and attention, compact English context, actor awareness, hourly cleanup of routine experiences older than six hours with bounded verbatim speech continuity, background file reflection, PostgreSQL text publication, energy-based sleep and the configured continuous-sleep minimum for dreams. Implementation choices must preserve these behaviors.
 
+### Residency and maintenance inputs
+
+Inactive source bodies remain queryable in SQL rather than in each simulation snapshot. [Performance](performance.md#inactive-history-residency) owns residency thresholds and the explicit slow paths. Eviction never means forgotten, consolidated or ineligible. Memory selection, native maintenance input preparation, owner edits and gameplay saves all retain access to cold evidence. Consolidation prepares its existing semantic batch from an actor-scoped durable snapshot, then reacquires current sources under the mutation owner before accepting changes. No new classifier, grouping algorithm or retention policy is introduced. The player's latest-memory panel and legacy invention/world-assistant lexical contexts now use scoped SQL selection instead of treating resident history as complete.
+
 ## Owner-editor forgetting and raw JSON
 
 The current god-mode Person editor lists raw personal memories, awareness of shared events, and consolidated summaries. A consolidated summary is derived text with `sourceIds` pointing to its evidence; it is not an independent world event. The World Events tab projects the same actor awareness subset, while the separate global editor changes shared event records. Deleting actor awareness does not remove the global event for other observers.

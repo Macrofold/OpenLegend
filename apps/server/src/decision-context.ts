@@ -24,6 +24,7 @@ import { COGNITION_VERSION, RESPONSE_INSTRUCTIONS } from './cognition-contracts.
 import {
   readableDecisionContext,
   responseReferences,
+  responseTrigger,
   responseTriggerContext,
 } from './response-context.js';
 import { attentionRequest } from './attention-request.js';
@@ -123,11 +124,33 @@ export async function prepareDecision(
   stimulus = projectEntityMarkers(stimulus, world, actorId);
   const observed = observeActor(world, actorId, { includeMemories: false });
   if (!observed) throw new Error('Actor unavailable.');
-  const includeConversation =
+  let includeConversation =
     includeCurrentConversation ||
     !!world.conversations?.active[actorId] ||
     requiredIds.some((id) => service.worldEvent(id)?.type === 'speech');
   const head = await service.store.records?.head();
+  const evidenceIds = [
+    ...new Set([...requiredIds, ...(triggerEvidenceId ? [triggerEvidenceId] : [])]),
+  ];
+  const evidenceScope = head
+    ? { worldId: world.id, actorId, generation: head.generation }
+    : undefined;
+  const retainedEvidence =
+    service.store.memories && evidenceScope
+      ? await service.store.memories.evidence(evidenceScope, evidenceIds)
+      : undefined;
+  const evidence = retainedEvidence
+    ? retainedEvidence.flatMap((entry) => (entry.awareness ? [entry.awareness] : []))
+    : (world.experience?.awareness[actorId] ?? []).filter((entry) =>
+        evidenceIds.includes(entry.eventId),
+      );
+  if (triggerEvidenceId && evidence.some((entry) => entry.eventId === triggerEvidenceId))
+    stimulus = projectEntityMarkers(
+      responseTrigger(service, actorId, triggerEvidenceId, stimulus, evidence),
+      world,
+      actorId,
+    );
+  includeConversation ||= evidence.some((entry) => entry.eventType === 'speech');
   const memoryContext =
     service.store.memories && head
       ? await service.store.memories.context(
@@ -184,7 +207,7 @@ export async function prepareDecision(
     knowledgeInstructions: world.knowledgePolicy
       ? knowledgePolicyInstructions(world.knowledgePolicy)
       : 'Knowledge is unavailable.',
-    triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId) ?? null,
+    triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     planOffers: [],
     references: responseReferences(
@@ -195,6 +218,7 @@ export async function prepareDecision(
         .flatMap((candidate) => candidate.entityIds ?? []),
       requiredIds,
       socialEntityIds(world, actorId),
+      evidence,
     ).references,
     identity: `I am ${entityLabel(world, observed.actor, actorId)}. Species: ${snapshotActor.species ?? 'unknown'}.${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(world, actorId)
@@ -307,6 +331,15 @@ export async function prepareDecision(
   // it returns; later actions still validate their authoritative prerequisites.
   await service.flush();
   await recall.validateSources(candidates, selection.selected);
+  if (
+    retainedEvidence &&
+    evidenceScope &&
+    !(await service.store.memories!.current(
+      evidenceScope,
+      retainedEvidence.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+    ))
+  )
+    throw new Error('Trigger evidence changed during attention; discard this decision.');
   const currentWorld = service.world;
   if (generation !== service.generation)
     throw new Error('World restored during attention; discard this decision.');
@@ -355,7 +388,7 @@ export async function prepareDecision(
     knowledgeInstructions: currentWorld.knowledgePolicy
       ? knowledgePolicyInstructions(currentWorld.knowledgePolicy)
       : 'Knowledge is unavailable.',
-    triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId) ?? null,
+    triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
     intentActions: intentActions.map(({ id, description }) => ({ id, description })),
     identity: `I am ${entityLabel(currentWorld, currentObserved.actor, actorId)}. Species: ${actor.species ?? 'unknown'}.${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: activeAppraisals(currentWorld, actorId)
@@ -418,6 +451,7 @@ export async function prepareDecision(
         .flatMap((candidate) => candidate.entityIds),
       ...socialEntityIds(currentWorld, actorId),
     ],
+    evidence,
   );
   context['references'] = references.references;
   const planningTargetIds = planOffers.flatMap(({ command }) =>

@@ -9,6 +9,16 @@ type EventLineage = { tip: WorldEvent[] };
 const eventLineages = new WeakMap<WorldEvent[], EventLineage>();
 type RecordLineage = { tip: unknown[] };
 const recordLineages = new WeakMap<unknown[], RecordLineage>();
+const admittedRecords = new WeakMap<WorldState, object[]>();
+/** Newly copied event/experience values are sealed only when the transition has finished
+ * all mutations. Sealing earlier could freeze data still owned by a caller.
+ */
+export function trackDetachedRecord(world: WorldState, value: object): void {
+  if (!isDraft(world)) return;
+  const records = admittedRecords.get(world) ?? [];
+  records.push(value);
+  admittedRecords.set(world, records);
+}
 
 /** Persistence can skip old records only when the mutation owner proves an append. */
 export function appendedRecordCount(previous: unknown[], next: unknown[]): number | undefined {
@@ -38,6 +48,8 @@ export function draftWorld(world: WorldState): WorldState {
 }
 export function finishWorld(world: WorldState): WorldState {
   if (!isDraft(world)) return world;
+  for (const value of admittedRecords.get(world) ?? []) freeze(value, true);
+  admittedRecords.delete(world);
   const base = original(world)!;
   const before = base.events;
   let appendOnly = true;

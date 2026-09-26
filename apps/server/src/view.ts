@@ -18,7 +18,6 @@ import type {
 } from '@open-legend/protocol';
 import {
   NATIVE_PREPARATIONS,
-  experiences,
   hearsEntity,
   seesEntity,
   visionRadius,
@@ -699,20 +698,26 @@ export async function projectView(
           }
         : null,
       traits: actor.traits?.map((t) => ({ ...t })),
-      memories: memo<GameView['player']['memories']>(
+      memories: optional(
+        service,
         'memories',
-        [
-          world.memories[player.id],
-          world.experience?.awareness[player.id],
-          world.experience?.summaries[player.id],
-          world.experience?.forgotten[player.id],
-          world.experience?.corrections?.[player.id],
-        ],
-        () =>
-          experiences(world, player.id)
-            .sort((a, b) => a.at - b.at)
-            .slice(-20)
-            .map((m) => ({ id: m.id, text: `[${m.source}] ${m.summary}`, time: m.at })),
+        memo(
+          'memories',
+          [
+            service.timelineId,
+            service.controlledEntityId,
+            service.historyRevision,
+            world.memories[player.id],
+            world.experience?.summaries[player.id],
+            world.experience?.forgotten[player.id],
+            world.experience?.corrections?.[player.id],
+          ],
+          async () =>
+            (await service.memoryContext(player.id, null, 20))
+              .sort((a, b) => a.at - b.at)
+              .map((m) => ({ id: m.id, text: `[${m.source}] ${m.summary}`, time: m.at })),
+        ),
+        [],
       ),
       history: `Your life in this clearing began on Day 1. You have lived here for ${Math.floor(world.simTime / 86400)} full days.`,
       inventory,

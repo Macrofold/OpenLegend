@@ -161,7 +161,7 @@ SW14–SW16 accompany each slice; they are not a final cleanup phase. No milesto
 - [x] **SW09.1** Add plain camera state and pure orbit/pan/pitch/zoom/recenter controls, orthographic and perspective modes, optional heading snaps/locks, sprite-friendly pitch limits, and 3D focus. Keep camera heading independent of actor heading.
 - [ ] **SW09.2** Preserve primary/context interactions with one gesture owner; add accessible button/keyboard/touch alternatives and reduced-motion behavior. Audit shortcut conflicts, drag-release commands, DPR/CSS scaling, focus loss, and narrow screens.
 - [ ] **SW09.3** Implement coalesced camera-intent validation, monotonic view revisions, one active embodied-view lease, and bodily-LOS intersection. Pending camera expansion cannot display newly unauthorized entity details; coarse camera-side occlusion/cutaway filtering can only narrow bodily visibility. NPC senses remain camera-independent.
-- [ ] **SW09.4** Save scoped camera preferences, validate selected focus after restore, and retain pause usability. Integrate the existing sensory hidden-tab/multi-view policy without silently deciding unresolved D51 alternatives.
+- [ ] **SW09.4** Save scoped camera preferences, validate selected focus after restore, and retain pause usability. Implement the accepted D51 background body-sensing exception, single foreground embodied view and separate creator view; hidden camera motion grants no extra exposure. Qualify the toggleable sight blur and hearing overlay under the sensory owner.
 
 **Exit:** orbit/pitch/pan work with current sprites and can be locked by profile; they never move the actor, reveal through body occlusion, spend inference per frame, or accidentally issue gameplay commands.
 

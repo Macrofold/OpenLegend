@@ -1,3 +1,4 @@
+import { compactHistory } from './history-residency.js';
 import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/domain';
 import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { inventoryFor, projectStatusEffects } from '@open-legend/domain';
@@ -241,7 +242,7 @@ export class WorldService {
     const { store, config } = this;
     await store.ready;
     this.currentProfile = await store.getProfile('local-player');
-    const existing = await store.load();
+    const existing = await store.load(true);
     if (existing) validateWorldModules(existing.state.world);
     this.pauseWhenHidden = this.profile.preferences.pauseWhenHidden;
     const creationAccounts = {
@@ -290,6 +291,7 @@ export class WorldService {
       undefined,
       { after: startupHistory },
     );
+    if (store.releaseHistory) this.saved = store.releaseHistory(this.saved);
     freezeWorld(this.saved.world);
     this.persistedEvents = this.saved.world.events;
     this.worldEventsById = new Map(this.saved.world.events.map((event) => [event.id, event]));
@@ -467,7 +469,17 @@ export class WorldService {
             : [],
       );
       const historyWorld = saved.world;
-      if (this.store.history) saved = { ...saved, world: retainHotEvents(historyWorld) };
+      if (this.store.history) {
+        const hot = retainHotEvents(compactHistory(historyWorld, this.saved.world));
+        saved = {
+          ...saved,
+          world: {
+            ...historyWorld,
+            events: hot.events,
+            archivedEventCount: hot.archivedEventCount,
+          },
+        };
+      }
       this.persistedRevision = await timed('world.commit', () =>
         this.store.commit(this.persistedRevision, saved, invalidatedMemoryIds, appendEventCount, {
           before: historyBefore,
@@ -492,6 +504,7 @@ export class WorldService {
         this.transcriptRevision++;
         this.transcriptEpoch++;
       }
+      if (this.store.releaseHistory) saved = this.store.releaseHistory(saved);
       freezeWorld(saved.world);
       this.saved = saved;
       if (currentAppendCount === undefined || saved.world.events !== historyWorld.events)
@@ -540,6 +553,139 @@ export class WorldService {
     });
   }
 
+  /** Cold actor history is scoped to one serialized operation, then released. */
+  async withActorHistory<T>(
+    actorIds: string[] | undefined,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    return this.mutate(async () => {
+      await this.flush();
+      if (this.store.hydrateHistory)
+        this.saved = await this.store.hydrateHistory(this.saved, actorIds);
+      freezeWorld(this.saved.world);
+      try {
+        return await operation();
+      } finally {
+        if (this.storageError)
+          this.saved = { ...this.saved, world: compactHistory(this.saved.world) };
+        else if (this.store.releaseHistory) this.saved = this.store.releaseHistory(this.saved);
+        freezeWorld(this.saved.world);
+      }
+    });
+  }
+  async memoryContext(actorId: string, query: string | null, limit: number) {
+    await this.flush();
+    const world = this.world,
+      generation = this.generation;
+    if (!world.entities[actorId]?.actor) throw new Error('Actor unavailable.');
+    const head = await this.store.records?.head();
+    if (!this.store.memories || !head) return experiences(world, actorId).slice(-limit);
+    const scope = { worldId: world.id, actorId, generation: head.generation };
+    // Optional history selection runs on the read lane, never while holding the
+    // world's mutation queue. Verify selected sources before disclosing the result.
+    const selected = await this.store.memories.selectContext(scope, query, limit);
+    if (
+      !(await this.store.memories.current(
+        scope,
+        selected.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+      )) ||
+      generation !== this.generation ||
+      !this.world.entities[actorId]?.actor ||
+      world.experience?.forgotten[actorId] !== this.world.experience?.forgotten[actorId] ||
+      world.experience?.corrections?.[actorId] !== this.world.experience?.corrections?.[actorId]
+    )
+      throw new Error('Memory context changed during retrieval.');
+    return selected.map((entry) => entry.memory);
+  }
+  async awarenessEvidence(actorId: string, eventIds: string[]) {
+    await this.flush();
+    const world = this.world,
+      generation = this.generation;
+    const head = await this.store.records?.head();
+    if (!this.store.memories || !head)
+      return (world.experience?.awareness[actorId] ?? []).filter((entry) =>
+        eventIds.includes(entry.eventId),
+      );
+    const scope = { worldId: world.id, actorId, generation: head.generation };
+    const selected = await this.store.memories.evidence(scope, eventIds);
+    if (
+      !(await this.store.memories.current(
+        scope,
+        selected.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+      )) ||
+      generation !== this.generation ||
+      world.experience?.forgotten[actorId] !== this.world.experience?.forgotten[actorId] ||
+      world.experience?.corrections?.[actorId] !== this.world.experience?.corrections?.[actorId]
+    )
+      throw new Error('Trigger evidence changed during retrieval.');
+    return selected.flatMap((entry) => (entry.awareness ? [entry.awareness] : []));
+  }
+  async inspectMemoryContext(actorId: string) {
+    if (!this.config.godMode || !this.mayInspectPrivate(actorId))
+      throw new Error('Private mind inspection is unavailable.');
+    await this.flush();
+    const world = this.world,
+      generation = this.generation;
+    const sourceRevision = this.store.memories?.actorRevision(actorId);
+    const head = await this.store.records?.head();
+    const commitments =
+      this.store.memories && head
+        ? await this.store.memories.commitments({
+            worldId: world.id,
+            actorId,
+            generation: head.generation,
+          })
+        : undefined;
+    const recent = await this.memoryContext(actorId, null, 100);
+    const current =
+      !commitments ||
+      (await this.store.memories!.current(
+        { worldId: world.id, actorId, generation: head!.generation },
+        commitments.map((entry) => ({ id: entry.memory.id, revision: entry.revision })),
+      ));
+    if (
+      !current ||
+      generation !== this.generation ||
+      !this.mayInspectPrivate(actorId) ||
+      sourceRevision !== this.store.memories?.actorRevision(actorId)
+    )
+      throw new Error('Private mind changed during inspection.');
+    return {
+      generation,
+      sourceRevision,
+      recent: recent.sort((a, b) => a.at - b.at),
+      commitments: commitments
+        ? commitments.map((entry) => entry.memory)
+        : (world.memories[actorId] ?? []).filter((entry) => entry.kind === 'commitment'),
+    };
+  }
+  async memoryMaintenanceStatus(actorId: string) {
+    await this.flush();
+    const world = this.world;
+    const head = await this.store.records?.head();
+    if (this.store.memories && head)
+      return this.store.memories.maintenanceStatus(
+        { worldId: world.id, actorId, generation: head.generation },
+        world.simTime,
+      );
+    const all = experiences(world, actorId, true);
+    return {
+      hasMemories: all.length > 0,
+      rawDue: all.some(
+        (entry) =>
+          entry.kind === 'episode' && entry.at <= world.simTime - EXPERIENCE_LIMITS.rawHours * 3600,
+      ),
+      pressure: !!this.memoryBacklog,
+    };
+  }
+  async historySnapshot(actorId: string): Promise<WorldState> {
+    return this.mutate(async () => {
+      await this.flush();
+      return this.store.records
+        ? (await this.store.records.withHistory(this.saved, [actorId])).world
+        : this.world;
+    });
+  }
   async createSave(label: string, id: string): Promise<void> {
     return this.mutate(async () => {
       await this.flush();
@@ -1167,7 +1313,7 @@ export class WorldService {
       replacement: GodMemoryEdit | null;
     }>,
   ): Promise<ApiResult & { revision?: number }> {
-    return this.mutate(async () => {
+    return this.withActorHistory([actorId], async () => {
       await this.ready;
       if (!this.mayInspectPrivate(actorId))
         return {
@@ -1311,7 +1457,7 @@ export class WorldService {
   async saveWorldEventsEditor(
     changes: Array<{ id: string; expectedHash: string; replacement: WorldEvent | null }>,
   ): Promise<ApiResult & { revision?: number }> {
-    return this.mutate(async () => {
+    return this.withActorHistory(undefined, async () => {
       await this.ready;
       // Load cold dependencies only for an explicit owner edit, under mutation ownership.
       const original =
@@ -1566,7 +1712,7 @@ export class WorldService {
     sourceId: string,
     correctionEventId: string,
   ): Promise<ApiResult> {
-    return this.mutate(async () => {
+    return this.withActorHistory([actorId], async () => {
       await this.ready;
       if (!this.mayInspectPrivate(actorId))
         return {
@@ -1600,7 +1746,7 @@ export class WorldService {
   }
 
   async forgetMemory(actorId: string, sourceId: string): Promise<ApiResult> {
-    return this.mutate(async () => {
+    return this.withActorHistory([actorId], async () => {
       await this.ready;
       if (!this.mayInspectPrivate(actorId))
         return {

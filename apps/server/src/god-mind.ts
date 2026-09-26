@@ -1,15 +1,24 @@
 import { characterCount } from '@open-legend/domain';
 import { activeStatusEffects } from '@open-legend/domain';
-import { mindFor, experiences, wordCount } from '@open-legend/domain';
+import { mindFor, wordCount } from '@open-legend/domain';
 import type { GodMindView } from '@open-legend/protocol';
 import type { WorldService } from './world-service.js';
 /** Local host owner capability is configured by the operator, never by request JSON. */
-export function inspectGodMind(service: WorldService, actorId: string): GodMindView {
+export async function inspectGodMind(service: WorldService, actorId: string): Promise<GodMindView> {
   if (!service.config.godMode) throw new Error('God inspection is disabled by the host.');
-  const entity = service.world.entities[actorId];
+  let entity = service.world.entities[actorId];
   if (!entity?.actor) throw new Error('Character not found.');
   if (!service.mayInspectPrivate(actorId))
     throw new Error('Human-private character content is unavailable to this principal.');
+  const history = await service.inspectMemoryContext(actorId);
+  entity = service.world.entities[actorId];
+  if (
+    !entity?.actor ||
+    !service.mayInspectPrivate(actorId) ||
+    history.generation !== service.generation ||
+    history.sourceRevision !== service.store.memories?.actorRevision(actorId)
+  )
+    throw new Error('Private mind changed during inspection.');
   const mind = mindFor(service.world, actorId);
   return {
     actorId,
@@ -35,12 +44,18 @@ export function inspectGodMind(service: WorldService, actorId: string): GodMindV
     revision: service.world.innerWorlds?.[actorId]?.revision ?? mind.revision,
     corrections: service.world.experience?.corrections?.[actorId],
     acceptedText: service.world.innerWorlds?.[actorId]?.text,
-    experiences: experiences(service.world, actorId, true)
-      .slice(-100)
-      .map((m) => ({ id: m.id, text: m.summary, at: m.at, kind: m.kind, source: m.source })),
-    commitments: (service.world.memories[actorId] ?? [])
-      .filter((m) => m.kind === 'commitment')
-      .map((m) => ({ id: m.id, text: m.summary, resolved: !!m.resolved })),
+    experiences: history.recent.map((m) => ({
+      id: m.id,
+      text: m.summary,
+      at: m.at,
+      kind: m.kind,
+      source: m.source,
+    })),
+    commitments: history.commitments.map((m) => ({
+      id: m.id,
+      text: m.summary,
+      resolved: !!m.resolved,
+    })),
     skills: (service.world.knowledge[actorId] ?? []).map((k) => ({
       name: service.world.recipes[k.recipeId]?.name ?? 'Unavailable technique',
       source: k.source,

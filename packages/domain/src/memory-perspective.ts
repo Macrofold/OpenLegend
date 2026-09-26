@@ -4,6 +4,26 @@ import type { WorldState } from './types.js';
 
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+// A draft actor is stable during its observation burst; edits to its name invalidate
+// the compiled patterns. Weak ownership avoids a process-wide cache of historical names.
+const subjectPatterns = new WeakMap<
+  object,
+  { name: string; possessive: RegExp; subject: RegExp }
+>();
+function patterns(actor: { name: string }) {
+  let cached = subjectPatterns.get(actor);
+  if (!cached || cached.name !== actor.name) {
+    const name = escape(actor.name);
+    cached = {
+      name: actor.name,
+      possessive: new RegExp(`^${name}['’]s\\b`),
+      subject: new RegExp(`^${name}\\b`),
+    };
+    subjectPatterns.set(actor, cached);
+  }
+  return cached;
+}
+
 /** Rephrase narration, never the contents of someone's attributed speech. */
 export function memoryPerspective(
   world: WorldState,
@@ -42,12 +62,12 @@ export function memoryPerspective(
           );
         return result;
       }
-      const name = escape(actor.name);
+      const names = patterns(actor);
       // Only the leading native subject is known to be the event source.
       // Later occurrences may name a different entity with the same label.
       if (index === 0) {
-        result = result.replace(new RegExp(`^${name}['’]s\\b`), 'my');
-        result = result.replace(new RegExp(`^${name}\\b`), 'I');
+        result = result.replace(names.possessive, 'my');
+        result = result.replace(names.subject, 'I');
       }
       return result
         .replace(/\bI is\b/g, 'I am')

@@ -127,7 +127,7 @@ test('right drag pans without actions, while right click and canceled gestures s
     }
 
     expect(commands).toEqual([]);
-    expect(game.service.store.usage(0).usage.llmCalls).toBe(0);
+    expect((await game.service.store.usage(0)).usage.llmCalls).toBe(0);
     expect(errors).toEqual([]);
   } finally {
     await page.close();

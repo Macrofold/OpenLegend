@@ -10,7 +10,7 @@ import {
 import type { GenerateRequest, JudgeRequest, JudgeValue, JudgmentAnswer } from '@open-legend/ai';
 import { inventionQuestions } from './jev-questions.js';
 import { declarationSchema } from './ai-schemas.js';
-import { buildContext } from './context.js';
+import { buildContext, buildStoredContext } from './context.js';
 import type { JobRecord } from './store.js';
 import type { WorldService } from './world-service.js';
 
@@ -146,7 +146,7 @@ export async function inventSupportedTechnique(
       }
     : undefined;
   const context = {
-    ...buildContext(service, actorId, request.text),
+    ...(await buildStoredContext(service, actorId, request.text)),
     ...(scope.previous ? { previousProposal: scope.previous } : {}),
     ...(selected ? { selectedBase: baseDraft } : {}),
   };
@@ -184,7 +184,7 @@ export async function inventSupportedTechnique(
       ammunition: DeclarationDraft['output']['ammunition'] | null;
     };
   };
-  const generationContext = buildContext(service, actorId, request.text);
+  const generationContext = await buildStoredContext(service, actorId, request.text);
   const generated = await port.generate<Generated>({
     execution: 'complex',
     maxOutputTokens: 1800,

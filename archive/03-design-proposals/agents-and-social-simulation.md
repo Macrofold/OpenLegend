@@ -41,7 +41,7 @@ Needs use thresholds with hysteresis: begin seeking food below one value, stop a
 
 ## Emotion as an evolving appraisal, not a fixed response table
 
-Start with a small set of dimensions: pleasant/unpleasant affect, arousal, perceived safety, social connection, and frustration. Store sparse named appraisals such as gratitude toward Ada, fear of fire, grief tied to a loss, or anger about a broken promise. Named emotions refer to causes, targets, intensity, decay, and relevant memories.
+Start with a small set of dimensions: pleasant/unpleasant affect, arousal, perceived safety, social connection, and frustration. Store sparse named appraisals such as gratitude toward Ada, fear of fire, grief tied to a loss, or anger about a broken promise. Named emotions refer to causes, targets, intensity, persistence/update policy, and relevant memories. These dimensions are optional authored choices, not an engine-wide mandatory taxonomy.
 
 A common event can produce different reactions. A gift may be comforting because it recalls a friend, awkward because the giver is distrusted, or irrelevant because the recipient is exhausted. Rules can resolve mundane effects; language models help interpret genuinely ambiguous social meaning. No need to generate prose for every small mood shift.
 
@@ -90,11 +90,11 @@ Conversation lifecycle and merge semantics are defined only in [Narration, agent
 
 God-mode stat authoring must satisfy [typed-state ownership, concern and presentation](../07-technical-architecture/world-module-runtime.md#4-typed-state-and-attributes); a label alone supplies no behavior. This does not change ordinary NPC or relationship permissions.
 
-Accepted direction, September 20, 2026; detailed design and implementation remain future work. Players may invent stats and their effects **only in god mode**. For example, if someone wants to attempt seduction and no charisma stat exists, an authorized player in god mode can design charisma. An ordinary character's action request does not itself authorize creating a stat.
+Accepted target, revised September 25, 2026; detailed design and implementation remain future work. Players may author stats and their effects through creator authority or the explicit [full invention freedom permission](invention-governance-and-ownership.md#special-player-invention-permission), without requiring world-creator status. For example, if someone wants to attempt seduction and no charisma stat exists, an authorized player in god mode can design charisma. An ordinary character's action request does not itself authorize creating a stat.
 
 Stats and their effects must live in declarative configurations, not hard-coded stat names or special cases in gameplay or UI. A definition must specify all parameters governing what the stat can affect, when stat checks run, how checks resolve and what their outcomes can change. Exact schemas, value ranges, defaults, modifiers and balancing are deferred. Existing native prototype needs are not evidence that this configurable stat system is implemented.
 
-Use the shared declaration/admission boundary: trusted generic code validates and executes supported configuration rules, while the server verifies god-mode authority. Freeform design is authoring freedom, not permission to execute generated code or give unknown fields automatic effects. Unsupported effect/check capabilities require explicit engine support. Relationship descriptions remain memory-based prose and must not become stat-derived scores or forced labels.
+Use the shared declaration/admission boundary: trusted generic code validates and executes supported configuration rules, while the server verifies the applicable current creator or invention-specific authority. Freeform design is authoring freedom, not permission to execute generated code or give unknown fields automatic effects. Unsupported effect/check capabilities require explicit engine support. Relationship descriptions remain memory-based prose and must not become stat-derived scores or forced labels.
 
 ## Later tool-assisted planning and interaction
 
@@ -111,3 +111,13 @@ Evaluate through observable episodes: a resident finds food without instruction;
 ## Later harness delivery tasks
 
 The [cognition extension checklist](../../docs/maintainers/cognition-redesign.md#later-harness-extensions) owns **CH01** (difficult planning/investigation), **CH02** (tool-assisted teaching and coordination) and **CH03** (behavioral/cost comparison). They follow core cognition acceptance and usable scoped tools. [INV-7.6](../../docs/maintainers/inventions-and-world-evolution.md#inv-7--discover-missing-mechanics-during-play-without-endless-generation) owns the bridge to missing-capability authoring; do not create a second invention or reflection queue here.
+
+## Accepted appraisal continuity
+
+Accepted target, September 25, 2026; ACT07 owns implementation. Personality is extensible authored character information with structured traits where actual mechanics need them. Emotions are sparse, cause-linked appraisals that influence attention, expression, dialogue and choices without inherently forcing one behavior or taking control from a human player. Authored worlds may choose different taxonomies and models.
+
+An emotion need not be short-lived or automatically decay. Grief can persist; a memory, enduring circumstance, personality or disposition can sustain or regenerate emotion without a new external event. Support apparently spontaneous emotion through explicit internal causes/provenance, using saved randomness where relevant, rather than fabricated external evidence. Reflection and later experience may sustain, revise or resolve an appraisal; personality is an input, not another duplicate emotional-state owner. Avoid reapplying the same cause every tick or demanding paid reasoning for continuous persistence.
+
+Keep objective relations, subjective relationship descriptions, beliefs, personality and emotional state distinct. Persistence policy may omit expiry; sparse records, scoped references and current disclosure apply equally to persistent causes. The [data model](../07-technical-architecture/production-data-model.md) owns storage; [memory architecture](../../docs/memory-architecture.md) owns accepted inner-world authority. Do not create a second writable copy in a table projection.
+
+Main-world death and absence use the [lifecycle policy](../../docs/worlds/base/lifecycle-and-protection.md), including retained NPC ghosts and protected inactive human characters.
