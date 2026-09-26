@@ -11,7 +11,7 @@ import {
   type Transition,
   type WorldState,
 } from '@open-legend/domain';
-import type { AuthoringKind } from './world-authoring-contracts.js';
+import { AuthoringRequestError, type AuthoringKind } from './world-authoring-contracts.js';
 import { normalizeInventionProposal } from './invention-service.js';
 import { scopedInventionErrors } from './invention-context.js';
 import { fingerprint } from './relationship-index.js';
@@ -38,8 +38,14 @@ export interface AuthoringDraft {
 const object = (v: unknown): Record<string, unknown> =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 export function decodeAuthoringPayload(kind: AuthoringKind, text: string): unknown {
-  const v: unknown = JSON.parse(text);
-  if (!v || typeof v !== 'object' || Array.isArray(v)) throw new Error('Supply an object payload.');
+  let v: unknown;
+  try {
+    v = JSON.parse(text);
+  } catch {
+    throw new AuthoringRequestError('Supply a valid JSON object payload.');
+  }
+  if (!v || typeof v !== 'object' || Array.isArray(v))
+    throw new AuthoringRequestError('Supply an object payload.');
   return kind === 'recipe' ? normalizeInventionProposal(v) : v;
 }
 export function draftBase(
@@ -61,17 +67,18 @@ export function draftBase(
     if (typeof resource === 'string') materialIds.add(resource);
     baseRecipeId = inherited?.recipe?.recipeId ?? baseRecipeId;
     const recipe = baseRecipeId ? world.recipes[baseRecipeId] : undefined;
-    if (baseRecipeId && !recipe) throw new Error('The base recipe is unavailable.');
+    if (baseRecipeId && !recipe) throw new AuthoringRequestError('The base recipe is unavailable.');
     return {
-      materials: {
-        ...inherited?.materials,
-        ...Object.fromEntries(
-          [...materialIds].map((id) => [
-            id,
-            inherited?.materials?.[id] ?? fingerprint(world.itemDefinitions[id] ?? null),
-          ]),
-        ),
-      },
+      // Removed inputs no longer invalidate this revision; retained inputs keep their pins.
+      // docs/invention-validation.md
+      materials: Object.fromEntries(
+        [...materialIds].map((id) => [
+          id,
+          (inherited?.materials && Object.hasOwn(inherited.materials, id)
+            ? inherited.materials[id]
+            : undefined) ?? fingerprint(world.itemDefinitions[id] ?? null),
+        ]),
+      ),
       ...(recipe
         ? {
             recipe: inherited?.recipe ?? {
@@ -274,14 +281,12 @@ export function validateAuthoring(service: WorldService, d: AuthoringDraft) {
 export function authoringImpact(world: WorldState, d: AuthoringDraft) {
   if (d.kind !== 'status-effect-policy') return { token: 'none', affected: 0 };
   const proposed = object(d.payload).definitions;
-  const definitions = Array.isArray(proposed) ? proposed : [];
+  const definitions = new Map(
+    (Array.isArray(proposed) ? proposed : []).map((value) => [object(value).id, value]),
+  );
   const changed = new Set(
     world.statusEffectPolicy.definitions
-      .filter(
-        (old) =>
-          fingerprint(old) !==
-          fingerprint(definitions.find((v) => object(v).id === old.id) ?? null),
-      )
+      .filter((old) => fingerprint(old) !== fingerprint(definitions.get(old.id) ?? null))
       .map((v) => v.id),
   );
   const affected: string[][] = [];
