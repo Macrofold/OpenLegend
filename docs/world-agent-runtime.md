@@ -103,3 +103,13 @@ Initial kind adapters cover native recipes, supported custom attributes, existin
 Database transactions for operational edits must not enter the world mutation lane while holding a database lock. Apply takes world ownership first, performs only short state/authority reads, and commits through the existing repository. Model calls, connector provisioning, image requests and long scenario execution never run inside either lock. Short per-session edit queues are bounded and removed when idle; no permanent worker or global cross-session conversation lock is introduced.
 
 Operational backups retain sessions, drafts, reviews and ledger relationships, while gameplay rewind fences them by the current timeline. Import into an empty host can restore these records; restoring gameplay into a running host does not replace current spending or session authority. Old backup envelopes lacking authoring tables must not silently lose known authoring state.
+
+## Durable turn delivery
+
+The application acknowledges an admitted native-agent message before waiting for external execution. The turn identity, original text, session scope and monotonic sequence are committed first. The existing Macrofold executor runs outside the HTTP request, database transaction and world mutation lane. Up to four in-process admission/execution slots protect the local host; this is not a distributed queue or a new paid retry policy.
+
+The same-origin session API exposes paged `turns`, exact `turn`, and exact-turn `cancel` operations. Status reads never start or resume an agent. Repeating an identical submitted request returns its running or retained terminal receipt; changed text under that identity conflicts. The client persists pending request identity before sending and uses these reads after a disconnect, instead of buying a replacement run.
+
+Cancellation first revokes the session context for that exact active turn, then signals its in-process executor. It does not close the conversation, refund work, undo committed changes, or cancel a later turn. Finishing a run retains its response and invalidates its old context. On application shutdown or gameplay load, drain admissions and cancel/await active turns before closing their repository; the existing startup recovery records unresolved external work without redispatch. Failure to retain a terminal result pauses admission through the existing storage-error boundary.
+
+Human waiting is not an active model run. The agent saves its draft/review, ends with its question, and later receives a deliberately submitted reply under the same session allowance. Streaming partial provider output is optional future UX; durable status/replies are the required recovery path.

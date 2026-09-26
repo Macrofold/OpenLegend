@@ -1,7 +1,10 @@
+import { WorldAgentRunner } from './world-agent-runner.js';
 import { WorldAgentStore } from './world-agent-store.js';
-import { WorldAuthoringService, type AgentReply } from './world-authoring.js';
+import { WorldAuthoringService } from './world-authoring.js';
 import {
   sessionRequest,
+  sessionTurnsRequest,
+  sessionTurnRequest,
   sessionOpenRequest,
   sessionDecisionRequest,
   authoringToolRequest,
@@ -313,6 +316,15 @@ export async function createGameServer(
     () => !loadingSave,
   );
   await authoring.recover();
+  const agentRuns = new WorldAgentRunner(
+    authoring,
+    (message, turn) => director.macrofold.message(message, turn),
+    () => {
+      service.storageError =
+        'Authoring result persistence failed. Restart to reconcile the original turn; do not resubmit it.';
+      service.notify();
+    },
+  );
   const makeMcp = () =>
     createWorldMcp(
       worldTools,
@@ -726,6 +738,7 @@ export async function createGameServer(
               if (!paused.ok) throw new GameSaveError(paused.message);
               director.macrofold.stop();
               await mcp.close();
+              await agentRuns.drain();
               await director.close();
               drained = true;
               await service.restoreSave(value.id, value.requestId, payload);
@@ -739,6 +752,7 @@ export async function createGameServer(
               if (drained) {
                 director = new AiDirector(service, options.aiClient, options.now);
                 mcp = makeMcp();
+                agentRuns.resume();
               } else {
                 service.storageError =
                   'Loading stopped before background work drained. Restart before continuing.';
@@ -1462,6 +1476,30 @@ export async function createGameServer(
                 !!config.macrofoldWorldConnectionId,
             });
           }
+          case '/api/world-agent/session/turns': {
+            const value = sessionTurnsRequest.parse(body);
+            if (value.worldId !== service.world.id)
+              return send(response, 409, { ok: false, message: 'World mismatch.' });
+            return send(response, 200, {
+              ok: true,
+              data: await authoring.turns(value.sessionId, value.before),
+            });
+          }
+          case '/api/world-agent/session/turn': {
+            const value = sessionTurnRequest.parse(body);
+            if (value.worldId !== service.world.id)
+              return send(response, 409, { ok: false, message: 'World mismatch.' });
+            return send(response, 200, {
+              ok: true,
+              data: await authoring.turn(value.sessionId, value.requestId),
+            });
+          }
+          case '/api/world-agent/session/cancel': {
+            const value = sessionTurnRequest.parse(body);
+            if (value.worldId !== service.world.id)
+              return send(response, 409, { ok: false, message: 'World mismatch.' });
+            return send(response, 200, await agentRuns.cancel(value.sessionId, value.requestId));
+          }
           case '/api/world-agent/session/review': {
             const value = sessionRequest.extend({ planId: requestIdSchema }).strict().parse(body);
             if (value.worldId !== service.world.id)
@@ -1562,27 +1600,12 @@ export async function createGameServer(
                   message:
                     'Authoring uses this conversation’s admitted session. Repeat an identical request ID to inspect its result, or send a deliberate new turn.',
                 });
-              const started = await authoring.beginTurn(
-                value.sessionId,
-                value.requestId,
-                value.text,
+              const result = await agentRuns.submit({ ...value, sessionId: value.sessionId });
+              return send(
+                response,
+                result.ok ? (result.code === 'running' ? 202 : 200) : 409,
+                result,
               );
-              if (started.response)
-                return send(response, started.response.ok ? 200 : 409, started.response);
-              let result: AgentReply;
-              try {
-                result = await director.macrofold.message(value, started.turn!);
-              } catch {
-                result = {
-                  ok: false,
-                  code: 'uncertain',
-                  jobId: value.requestId,
-                  message:
-                    'Turn completion is uncertain. Inspect retained drafts and the original Macrofold run; no automatic retry was made.',
-                };
-              }
-              await authoring.finishTurn(value.sessionId, value.requestId, result);
-              return send(response, result.ok ? 200 : 409, result);
             }
             const result =
               value.mode !== 'discuss'
@@ -1607,7 +1630,10 @@ export async function createGameServer(
             if (value.worldId !== service.world.id)
               return send(response, 409, { ok: false, message: 'World mismatch.' });
             const ownedSession = await authoring.records.session(value.conversationId);
-            if (ownedSession) await authoring.close(value.conversationId);
+            if (ownedSession) {
+              await authoring.close(value.conversationId);
+              agentRuns.cancelSession(value.conversationId);
+            }
             await director.macrofold.closeConversation(value.conversationId, !!ownedSession);
             return send(response, 200, {
               ok: true,
@@ -1781,6 +1807,7 @@ export async function createGameServer(
       unsubscribe();
       director.macrofold.stop();
       await mcp.close();
+      await agentRuns.drain();
       await activeTick;
       await thinking;
       await director.close();
