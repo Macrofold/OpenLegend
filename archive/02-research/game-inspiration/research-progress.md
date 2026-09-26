@@ -4,16 +4,16 @@
 
 ## Resume here
 
-**Active: G123 — Rain World.** Intended output: `dossiers/rain-world.md`. Complete R01–R14: original/Downpour/The Watcher and platform boundaries; movement, food/hibernation, karma and failure, tools, creature perception/relationships/ecology, authored world/narrative, optional multiplayer and modes; presentation, production/distribution/commercial evidence; five substantive written reviews and accessible Steam helpful/player evidence with sampling limits. Preserve prior owners and distinguish this range's preservation from the pending packet-wide audit.
+**Active: G124 — Persona 5 Royal.** Intended output: `dossiers/persona-5-royal.md`. Complete R01–R14: distinguish Royal from original Persona 5 and spin-offs; calendar/time-slot structure, school/life activities, social stats, Confidants and romance, Palaces/Mementos, turn-based combat, Persona capture/fusion/progression, equipment/items/economy, Thieves Den/Challenge Battle and Royal additions; art/audio/UI, production/distribution/commercial context, five substantive written reviews and accessible Steam helpful/player evidence. Preserve prior owners and keep packet-wide audit separate.
 
-**This branch's authorized range: G121–G130 inclusive; 2 / 10 completed.** G121–G122 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
+**This branch's authorized range: G121–G130 inclusive; 3 / 10 completed.** G121–G123 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
 
 | Subject | State | Canonical output / completion commit | Exact remaining work |
 | --- | --- | --- | --- |
 | G121 — Battle Brothers | Complete | [Dossier](dossiers/battle-brothers.md); `f1924325cfc0a63709e2649956acb59de1f003b1` | Full systems/expansion pass, eight worked cases, five written reviews and helpful Steam bodies. Helpful-negative endpoint unavailable; contrasting recent negative body retained with sampling limit. Earlier owners unchanged. |
 | G122 — Cataclysm: Dark Days Ahead | Complete | [Dossier](dossiers/cataclysm-dark-days-ahead.md); `9a6dea642c0ce588cc95cb3c625a47f8f545b476` | Stable 0.I primary help/FAQ, eight cases, five written critical accounts (one shorter firsthand-impressions article), Steam helpful indexed and positive/negative permalink evidence. Direct access limits explicit; separate co-op fork and unused faction fields not confused with upstream implemented behavior. |
-| G123 — Rain World | In progress | `dossiers/rain-world.md` | Full pass; separate original, Downpour and The Watcher. |
-| G124 — Persona 5 Royal | Pending | `dossiers/persona-5-royal.md` | Full pass; distinguish Royal from original Persona 5 and spin-offs. |
+| G123 — Rain World | Complete | [Dossier](dossiers/rain-world.md); `d2dae3fc6768d27a82557a43bc460e6cf643e22d` | Base/Downpour/Remix/Watcher separated; eight worked interactions, modular creature-AI evidence, five written reviews and current/all-time Steam sampling. Third-party sales estimates excluded from official commercial claims; no inherited dedicated Rain World owner existed. |
+| G124 — Persona 5 Royal | In progress | `dossiers/persona-5-royal.md` | Full pass; distinguish Royal from original Persona 5 and spin-offs. |
 | G125 — XCOM 2 | Pending | `dossiers/xcom-2.md` | Full pass; separate base game, War of the Chosen, DLC and mods. |
 | G126 — Crusader Kings III | Pending | `dossiers/crusader-kings-iii.md` | Full pass; version/expansion boundaries and character simulation. |
 | G127 — Dragon's Dogma 2 | Pending | `dossiers/dragons-dogma-2.md` | Full pass; Pawn sharing is not conventional multiplayer. |
