@@ -6,7 +6,7 @@ Read [requirements / R01–R14](research-requirements.md) and the [canonical 130
 
 **Branch:** `docs/game-inspiration-games-101-120`, created September 26, 2026 from `docs/game-inspiration-library-expansion` at `57bcd96f75f4561baff10ea57e28210dd908ebd5`. Mike explicitly assigned **G101–G120**, one game at a time, with a commit after every game and substantive checkpoints at least every five minutes. Do not modify the parallel range branches or claim their work is present here.
 
-**Active: G101 — Mass Effect. Completed in this range: 0 / 20.** Next action: research and write `dossiers/mass-effect.md`; distinguish the 2007 game, PC port, DLC and Legendary Edition; cover R01–R14, five independent written reviews, accessible helpful Steam player evidence, concrete interactions and the Shepard/squad/choice-import boundary. Finish, review, commit and record its commit before proceeding to G102.
+**Active: G102 — Mass Effect 2. Completed in this range: 1 / 20.** Next action: research and write `dossiers/mass-effect-2.md`; cover recruitment, loyalty, defense layers/power combinations, ship preparation, the suicide mission, imported decisions, DLC and port/remaster boundaries. Complete R01–R14, five authored written reviews, accessible helpful Steam evidence or documented access limits and direct-player alternatives, then review and commit before advancing to G103.
 
 The inherited baseline contains completed dossiers G01–G20 and an active G21 RimWorld assignment. Those inherited completion claims are **not newly re-audited here**. G21–G100 and G121–G130 are outside this branch's assignment; their progress on other branches must be reconciled during integration. The original parent ledger, including all earlier completion SHAs, detailed resume instructions and historical scope changes, is preserved [at the branch base](https://github.com/Macrofold/OpenLegend/blob/57bcd96f75f4561baff10ea57e28210dd908ebd5/archive/02-research/game-inspiration/research-progress.md). Its latest inherited completion was Minecraft, `4f6b715814dd932af34806517539cfe55ed1a6a0`. Original library baseline: `feab691827a7cd62b6146f31eef20ee12e1a4770`.
 
@@ -16,8 +16,8 @@ A row is complete only after substantive R01–R14 coverage, evidence/access rev
 
 | ID | Subject / canonical output | Status | Dossier completion commit |
 | --- | --- | --- | --- |
-| G101 | `dossiers/mass-effect.md` | In progress | — |
-| G102 | `dossiers/mass-effect-2.md` | Pending | — |
+| G101 | [Mass Effect](dossiers/mass-effect.md) | Complete; ranked Steam reviews inaccessible, alternatives documented | `f88cbf88dd4b99e0c2804859db147d9d6f9daffb` |
+| G102 | `dossiers/mass-effect-2.md` | In progress | — |
 | G103 | `dossiers/mass-effect-3.md` | Pending | — |
 | G104 | `dossiers/mass-effect-andromeda.md` | Pending | — |
 | G105 | `dossiers/mass-effect-galaxy.md` | Pending | — |
@@ -37,11 +37,15 @@ A row is complete only after substantive R01–R14 coverage, evidence/access rev
 | G119 | `dossiers/dishonored-2.md` | Pending | — |
 | G120 | `dossiers/starsector.md` | Pending | — |
 
+### Completed-pass evidence notes
+
+**G101:** full independent dossier, six constructed interactions, five authored written reviews across three outlets, 31 annotated source groups and a requirement map. Separates original/Windows/PS3/Legendary rules, DLC packaging, unshipped developer promises, replay versus sequel import, and dated sales. Steam's ranked review surfaces failed; the dossier records the attempts and uses attributed Steam discussion and other player testimony without claiming a helpful-review sample. Substantive checkpoint: `234706d41a2daf53714ac37b5bc4a8af3f327c73`; completion: `f88cbf88dd4b99e0c2804859db147d9d6f9daffb`.
+
 ## Preservation and navigation evidence
 
 At the base commit, the complete `games/`, `mechanics/` and `dossiers/` directory inventories were inspected. None contains an existing G101–G120 full chapter or dossier; these are September 26 roster additions, not replacements for one of the original 38 chapters. Existing chapters, selective mechanics studies, essays, references and their factual/review/video material remain owned by their existing files. Incidental cross-game mentions are not promoted into completed independent research. The original seven-file packet and conversation-wide reconciliation remain a separate global gate; this range must not claim that audit passed.
 
-Navigation for new dossiers will be added without removing existing library or interaction-lookup routes. Each dossier must state its edition/access limitations, requirement map, source annotations, spoiler boundary and preservation relationship. Rules-based illustrative situations must not be described as observed playtests.
+Navigation for new dossiers will be added without removing existing library or interaction-lookup routes. Each dossier states its edition/access limitations, requirement map, source annotations, spoiler boundary and preservation relationship. Rules-based illustrative situations must not be described as observed playtests.
 
 ## Final integration gates
 
