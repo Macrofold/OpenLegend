@@ -1151,7 +1151,7 @@ For OpenLegend:
 
 <a id="ffxi15"></a>**FFXI15 — [FINAL FANTASY XI Battle Guide](https://www.playonline.com/ff11us/guide/system/battle.html).** Square Enix. Official Weapon Skill, Skillchain and Magic Burst overview.
 
-<a id="ffxi16"></a>**FFXI16 — [Computer Gaming World issue 230 FFXI preview](https://www.cgwmuseum.org/galleries/issues/cgw_230.pdf).** Historical written preview describing six-person party / up-to-18 alliance-era cooperation and linkshells. Indexed text was available; the PDF was not otherwise relied on for claims beyond this historically corroborated party/alliance structure.
+<a id="ffxi16"></a>**FFXI16 — [Campaign Notorious Monster battle conditions](https://www.playonline.com/pcd2/topics/ff11us/detail/4196/detail.html).** Square Enix / PlayOnline, 2009. First-party historical evidence that a standard encounter was tuned for a six-member party while permitting an 18-member alliance; used only for party/alliance size structure, not current endgame tuning.
 
 <a id="ffxi17"></a>**FFXI17 — [Returning Adventurer Guide Vol. 1](https://we-are-vanadiel.finalfantasyxi.com/post/?id=678&lang=en).** Square Enix, 2023. Current Trust onboarding, up-to-five alter egos through Rhapsodies, Records of Eminence, fast-travel and level-99 route.
 
