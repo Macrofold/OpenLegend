@@ -35,7 +35,7 @@ async function service(path = ':memory:', god = true) {
   const config = readConfig({
     AI_BUDGET_USD: '100',
     MACROFOLD_API_KEY: 'fixture-only-key',
-    MACROFOLD_COMPUTE_MAX_USD: '0.01',
+    MACROFOLD_WORKER_ID: 'fixture-worker',
     OPEN_LEGEND_GOD_MODE: String(god),
   });
   const service = new WorldService(store, config, () => 10000);
@@ -186,7 +186,7 @@ describe('fixture: cognition vertical slice', () => {
       }).success,
     ).toBe(false);
   });
-  it('fresh full harness sessions reuse a single actor workspace/sandbox and inject current instructions', async () => {
+  it('fresh full harness sessions reuse a single actor workspace on the selected Worker and inject current instructions', async () => {
     const s = await service();
     const requests: Array<{ path: string; body: Record<string, unknown>; key: string | null }> = [];
     let run = 0;
@@ -211,9 +211,6 @@ describe('fixture: cognition vertical slice', () => {
           };
         else if (path === '/v1/workspaces')
           data = { id: 'fixture-workspace', default_worktree_id: 'fixture-worktree' };
-        else if (path === '/v1/sandboxes') data = { id: 'fixture-sandbox' };
-        else if (path === '/v1/sandboxes/fixture-sandbox')
-          data = { id: 'fixture-sandbox', status: 'ready', active_run_id: null };
         else if (path === '/v1/runs') {
           run++;
           const prompt = JSON.parse(body.prompt);
@@ -222,7 +219,8 @@ describe('fixture: cognition vertical slice', () => {
           data = {
             run_id: `fixture-run-${run}`,
             session_id: `fixture-session-${run}`,
-            sandbox_id: 'fixture-sandbox',
+            worker_id: 'fixture-worker',
+            worktree_id: 'fixture-worktree',
             urls: {
               status: `http://localhost:3210/v1/runs/fixture-run-${run}`,
               result: `http://localhost:3210/v1/runs/fixture-run-${run}/result`,
@@ -278,11 +276,9 @@ describe('fixture: cognition vertical slice', () => {
     const native = requests.filter((r) => r.path === '/v1/runs');
     expect(native).toHaveLength(2);
     expect(
-      native.every(
-        (r) => r.body.session_id === undefined && r.body.sandbox_id === 'fixture-sandbox',
-      ),
+      native.every((r) => r.body.session_id === undefined && r.body.worker_id === 'fixture-worker'),
     ).toBe(true);
-    expect(requests.filter((r) => r.path === '/v1/sandboxes')).toHaveLength(1);
+    expect(requests.filter((r) => r.path.startsWith('/v1/sandboxes'))).toHaveLength(0);
     expect(requests.filter((r) => r.path === '/v1/workspaces')).toHaveLength(1);
     expect(native[0]!.key).not.toBe(native[1]!.key);
   });

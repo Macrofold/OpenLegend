@@ -437,7 +437,9 @@ export class MacrofoldBackend implements AiClient {
             max_cost_micro_usd: String(Math.ceil(config.macrofoldRunUsd * 1e6)),
           },
         },
-        signal,
+        // Closure/shutdown must not discard an in-flight acceptance: a lost Run ID
+        // could not be cancelled. The checks below cancel a late-accepted Run.
+        AbortSignal.timeout(config.macrofoldTimeoutSeconds * 1000),
       );
       lane.run = string(accepted['run_id']);
       receipt.providerRequestId = lane.run;
