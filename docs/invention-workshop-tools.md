@@ -129,3 +129,7 @@ Use the existing repository for drafts/jobs/receipts and a replaceable graph rea
 Catalogue descriptions explain when to use an operation and its non-effects. For example `ol_validate` returns native findings or a retained analysis job; it does not install a definition, consume fictional ingredients, teach an NPC, or approve itself. `ol_action` is an explicit native-action intention scoped to an authorized controller and current target; it is not a general world-state patch.
 
 MCP request IDs, native action IDs and external provider attempt IDs remain distinct. Propagate correlation for inspection, but only the owning durable receipt determines whether an effect was committed. Log bounded summaries and exact refs rather than every private payload.
+
+## Activity and repertoire integration
+
+The shared service must consume [AC invocation/activity contracts](action-capabilities.md), not restrict ordinary use to pre-enumerated action handles. [Repertoire foundation](repertoire-foundation.md) specifies live/evidence relationships, shared participation, observer-relative presentation and information/social records. Activity inspection can precede new start/modify tools; only implemented operations are invocable.
