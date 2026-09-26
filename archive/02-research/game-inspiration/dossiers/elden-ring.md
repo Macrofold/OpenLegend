@@ -47,6 +47,8 @@ Smithing Stone Miner's Bell Bearings are especially revealing economic rewards. 
 
 The early game emphasizes basic survival and selecting ambitions. Middle play interleaves regions, legacy dungeons, equipment specialization and NPC threads. Late play increasingly concentrates on demanding encounters, remaining discoveries, alternate outcomes and optional challenges. Rebirth permits a substantial tactical reset before abandoning a character, while another journey can support a different build. None of this means a player can complete the main story without facing any hard gate. [E3](#e3) [E17](#e17)
 
+After an ending, **Journey 2 can begin immediately after the ending prompt or later from the Table of Lost Grace while the player remains in the completed current world**. Character level, most equipment and much inventory carry into New Game Plus, while story/quest progression and key progression state reset; later journeys also increase enemy pressure and rune rewards. This is a repeat-campaign boundary, not an indefinitely evolving post-ending polity, and it is distinct from Shadow of the Erdtree's regional progression. A secondary community guide is used for this Journey 2 retention/reset boundary rather than inferred from review shorthand. [E27](#e27)
+
 There is no settlement labor market, food/hunger survival schedule or native user-authored construction layer. Crafting supports expeditions rather than establishing a home-production simulation. **Transfer distinction:** resources can make preparation consequential without demanding that every basic need remain a permanent chore. Conversely, a crafting catalogue unused by a particular build is not automatically a broken system; its value depends on whether other approaches genuinely benefit.
 
 ## 4. NPCs, relationships, online play and narrative
@@ -160,6 +162,18 @@ An additional direct Steam discussion about expansion blessings contains a subst
 | R13 | §10, dependencies, alternatives and failure modes |
 | R14 | This map, annotated sources and preserved checkpoint material |
 
+### Mechanics inventory completeness check
+
+This closes the assignment's explicit mechanics inventory against the sourced sections above.
+
+- **Identity, attributes, progression, jobs/trees:** character creation, starting classes, attributes, leveling and build revision are covered in §§1–3. Starting class is an initial package rather than a permanent profession; there is no separate conventional perk tree.
+- **Items, inventory, weapons/armor, crafting/upgrading, magic/powers:** §2 covers weapons, shields, armor, talismans, Ashes of War, Spirit Ashes, sorceries/incantations and consumables; §3 covers smithing access and Rebirth. Cookbooks/materials support bounded item crafting rather than settlement production.
+- **Traversal, environmental/object interaction, activities/minigames:** walking, sprinting, jumping, crouching, ladders, Torrent and Spirit Springs are covered in §2, with authored dungeons/world gates throughout. Optional caves, bosses, NPC routes and arena/community activities provide side goals; there is no central standalone minigame layer comparable to a card or sports game.
+- **Combat, stealth, loot/rewards, death/failure/recovery:** §2 covers melee/ranged/magic combat, guarding, parrying, dodging and critical actions. Crouching and enemy detection support stealthy approaches without a separate stealth skill tree. Loot/merchant/encounter rewards and rune loss/recovery, Grace and Stakes of Marika are covered in §§2–3.
+- **Economy/trading, story, relationships/romance/reputation, party/companions:** runes, merchants and upgrade access are in §3; story/NPC relationships are in §4. Ranni's route is authored narrative rather than a general approval/romance system. Spirit Ashes and summons are bounded assistance, not a persistent controllable party.
+- **NPC/AI/schedules, factions, world map/environment, quests/events:** §4 covers NPC quest state, enemy patrol/detection behavior and world-state closures. The world has political/lore factions but no general player faction-reputation economy. NPC opportunity is authored and stateful rather than a universal schedule simulation.
+- **Building/settlements/management, multiplayer/social, endgame/return loops:** settlement construction and household management are absent (§3). Native co-op, invasions, messages and arena play are covered in §4. §3 now closes the base game's Journey 2/New Game Plus retention/reset boundary; §5 separately covers Shadow of the Erdtree progression.
+
 Suggested study sequence: compare a failed early encounter with the route chosen afterward; inspect one weapon/skill compatibility change; follow a bearing from dungeon to shop; then examine Rebirth and an expansion blessing. Narrative study can follow Ranni only after accepting major spoilers. These are proposed observations, not playtests performed in this pass. Martin's linked reveals and Bandai Namco's edition/gameplay videos are **unwatched viewing routes**, without invented timestamps. The earlier packet and selective mechanics studies remain unchanged.
 
 ## Sources and access notes
@@ -215,3 +229,5 @@ Accessed September 26, 2026. Relevant written bodies were read unless described 
 <a id="e25"></a>**E25.** [GamesRadar: Golden Scarab](https://www.gamesradar.com/elden-ring-golden-scarab-talisman-cleanrot-knights/). Focused talisman/temporary-consumable interaction; uncertain displayed percentage range is not repeated.
 
 <a id="e26"></a>**E26.** [Shadow of the Erdtree reference overview](https://en.wikipedia.org/wiki/Elden_Ring:_Shadow_of_the_Erdtree). Secondary cross-check for the regional blessing/Torrent boundary and source discovery; primary release, production and sales owners above take precedence. No borrowed review score is counted as a read review.
+
+<a id="e27"></a>**E27.** [Game8: New Game Plus Guide](https://game8.co/games/Elden-Ring/archives/355390), updated June 19, 2024. Secondary community guide used narrowly for the Journey 2 start point, broad carryover/reset boundary and repeat-journey scaling; not primary implementation evidence and not a substitute for the official sources above.
