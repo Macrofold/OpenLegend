@@ -50,6 +50,12 @@ Clarified the existing [production data model](../archive/07-technical-architect
 
 Corrected the policy: small migrations are allowed and preferred; maintaining legacy game versions is not required. Removed automatic fresh-world recovery and its per-feature save-format gate. The preceding startup recovery did reset the development gameplay world while retaining accounting; that behavior is superseded, not an acceptance requirement. Current behavior is owned by Save/load and Architecture.
 
+## 2026-09-23 — Reconcile current main with World Agent specification
+
+- Replayed the review branch onto main `11be9312dd560b8fcae5016acb1fc6ddf6216d86`, preserving the earlier integrated invention changes and all incoming domain/spatial work. Retained both changelog additions at the sole replay conflict; no runtime conflict was resolved by discarding a side.
+- Updated encounter/PF guidance to reuse delivered source-audience, experience membership, native roster and observation-copy optimizations. Historical performance measurements remain pinned to their original workloads; private EPR acquisition and full-stack qualification stay pending. Preserved existing upstream checkboxes and SR regression cases.
+- Removed temporary source/publication tooling. The current change remains a specification update plus the previously recorded $5 configuration default, not a new MCP server, graph implementation or live-agent acceptance.
+
 - The MCP stack selection distinguishes SDK major versions from protocol revisions: prefer the official v2 server with its documented 2025-era compatibility handler for the inspected Macrofold client. No custom dual protocol or forced client upgrade is required; actual interoperability remains unqualified.
 
 ## 2026-09-23 — Unified World Agent and end-to-end authoring
