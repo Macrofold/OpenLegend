@@ -2,6 +2,8 @@
 
 This page is the master navigation index for active implementation work.
 
+For a fresh conversation continuing invention and World Agent work, start with [the no-context handoff](../invention-handoff.md). It maps settled decisions, source files and existing task owners without creating another specification.
+
 ## Focused work
 
 | Area | Tracker | Design owner |
