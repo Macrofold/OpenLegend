@@ -11,3 +11,5 @@
 **For embodied play.** Give the player enough evidence to choose among imperfect alternatives. A person should be able to reason “this tool fits our plan, but it makes another situation harder.” That supports strategy without requiring a massive ontology or exact numerical optimization.
 
 **Growth and economics limit.** This case is included for an influential design pattern and a documented release path, not an unverified current revenue estimate. The report does not assume a sequel’s later popularity proves the original formula applies unchanged to persistent simulations.
+
+**Detailed system study:** [Deck ecology, information, and costly synergies](../mechanics/slay-the-spire-deck-ecology-information-and-costly-synergies.md) examines Runic Dome, Corruption and Dead Branch, Snecko Eye and Runic Pyramid, rest-versus-upgrade decisions, startup risk, and the developers' use of telemetry alongside qualitative feedback. It concerns the original game, not sequel or mod-specific behavior.
