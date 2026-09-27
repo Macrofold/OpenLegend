@@ -9,7 +9,7 @@
 - **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
 - **[G61–G80 full-game dossier index](dossiers/README.md):** direct reading routes through the tactical, open-world and party-RPG range, plus comparisons of character growth, useful objects and changing access.
 - **[G121–G130 dossiers](#full-dossiers--curated-references-g121g130):** mercenary, survival, social-simulation and systemic-world references.
-- **[G131–G148 survival expansion](research-roster.md#september-27-survival-game-expansion-scope):** approved subjects and edition boundaries; [G141–G148 dossiers](#full-dossiers--survival-references-g141g148) are complete on their range branch, while [progress](research-progress.md#survival-expansion--g131g148) keeps G131–G140 pending.
+- **[G131–G148 survival expansion](research-roster.md#september-27-survival-game-expansion-scope):** approved subjects and edition boundaries; [G141–G148 dossiers](#full-dossiers--survival-references-g141g148) and their [requirements/corrections audit](coverage-audit-g141-g148.md) are complete, while [progress](research-progress.md#survival-expansion--g131g148) keeps G131–G140 pending.
 - **[G101–G110 dossiers](#g101-g110-dossiers):** the six rostered Mass Effect games, both Octopath Travelers and both Knights of the Old Republic games; independent edition-aware research, not a combined franchise substitute.
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
@@ -85,7 +85,7 @@ These ten imported dossiers have completed initial research and the full require
 
 ## Full dossiers — survival references G141–G148
 
-These eight September 27 survival passes are independent full R01–R14 studies with explicit version boundaries, comprehensive mechanics inventories, eight worked interactions each, five substantive written reviews, current player evidence where applicable, production/commercial context and declared evidence limits. They do **not** imply that G131–G140 or the separate P01–P05 whole-library gates are complete.
+These eight September 27 survival passes are independent full R01–R14 studies with explicit version boundaries, comprehensive mechanics inventories, eight worked interactions each, five substantive written reviews, current player evidence where applicable, production/commercial context and declared evidence limits. Mike's requested [second-pass requirements-and-corrections audit](coverage-audit-g141-g148.md) subsequently reread every dossier against the explicit mechanics inventory, corrected stale/current-version claims and filled real gaps game by game. G131–G140 and the separate P01–P05 whole-library gates remain pending.
 
 | Roster ID | Dossier | Useful starting question |
 | --- | --- | --- |
