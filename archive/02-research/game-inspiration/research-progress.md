@@ -477,7 +477,7 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 
 ## Survival expansion — G131–G148
 
-**Initial research: 8 / 18 complete; G139 Subnautica in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
+**Initial research: 9 / 18 complete; G140 Don't Starve Together in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
 
 | ID | Subject | Initial research | Follow-up audit |
 | --- | --- | --- | --- |
@@ -489,8 +489,8 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 | G136 | Conan Exiles | **Complete** — [dossier](dossiers/conan-exiles.md); Steam Enhanced UE5.8.2/Legacy-console split, full build/follower/sorcery/religion/Purge/Siptah pass, ten worked cases, five independent reviews and current Steam evidence | Not started |
 | G137 | The Forest | **Complete** — [dossier](dossiers/the-forest.md); original-game survival/building/traps/cannibal-AI/caves/story/co-op pass, ten worked cases, five final reviews plus current Steam, sequel mechanics excluded | Not started |
 | G138 | Sons of the Forest | **Complete** — [dossier](dossiers/sons-of-the-forest.md); sequel physical construction/Kelvin/Virginia/seasons/traversal/story/Artifact/current-patch pass, twelve worked cases, five independent reviews plus current Steam, original-game rules kept separate | Not started |
-| G139 | Subnautica | **In progress** — original game's oxygen/depth/ecology/tools/vehicles/bases/crafting/discovery/story progression plus Below Zero/Subnautica 2/multiplayer-mod boundaries underway | Not started |
-| G140 | Don't Starve Together | Pending | Not started |
+| G139 | Subnautica | **Complete** — [dossier](dossiers/subnautica.md); original-game oxygen/depth/ecology/tools/vehicles/base/story pass, twelve worked cases, six review bodies plus current Steam, 2025/2026 maintenance and sequel/multiplayer boundaries explicit | Not started |
+| G140 | Don't Starve Together | **In progress** — standalone multiplayer characters/needs/sanity/seasons/ecology/crafting/bosses/co-op roles/current live-service and original-game/DLC divergence underway | Not started |
 | G141 | Raft | Pending | Not started |
 | G142 | Grounded | Pending | Not started |
 | G143 | The Long Dark | Pending | Not started |
