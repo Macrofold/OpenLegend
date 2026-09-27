@@ -477,13 +477,13 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 
 ## Survival expansion — G131–G148
 
-**Initial research: 1 / 18 complete; G132 DayZ in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
+**Initial research: 2 / 18 complete; G133 ARK: Survival Evolved in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
 
 | ID | Subject | Initial research | Follow-up audit |
 | --- | --- | --- | --- |
 | G131 | Rust | **Complete** — [dossier](dossiers/rust.md); full R01–R14 pass, ten worked interactions, five independent written reviews, current Steam sampling and 2026 live-service boundaries | Not started |
-| G132 | DayZ | **In progress** — standalone/current-version pass, bodily survival/condition/persistence/server boundaries and reception underway | Not started |
-| G133 | ARK: Survival Evolved | Pending | Not started |
+| G132 | DayZ | **Complete** — [dossier](dossiers/dayz.md); stable 1.29/Experimental 1.30 boundaries, full bodily survival/condition/persistence pass, ten worked interactions, five independent reviews plus current Steam evidence | Not started |
+| G133 | ARK: Survival Evolved | **In progress** — original-release taming/breeding/tribes/building/technology/bosses/expansions and official-service-history pass underway | Not started |
 | G134 | ARK: Survival Ascended | Pending | Not started |
 | G135 | 7 Days to Die | Pending | Not started |
 | G136 | Conan Exiles | Pending | Not started |
