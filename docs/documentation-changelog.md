@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — G121–G130 game-inspiration requirements audit
+
+Re-audited the ten research-only dossiers from Battle Brothers through S.T.A.L.K.E.R. 2 against the full [R01–R14 assignment and explicit mechanics inventory](../archive/02-research/game-inspiration/research-requirements.md), with per-game corrections and a second-pass cross-game completeness matrix recorded in the [G121–G130 coverage audit](../archive/02-research/game-inspiration/coverage-audit-g121-g130.md). Material corrections include Rain World's current Jolly/Downpour-body and Gourmand-crafting boundaries, Persona 5 Royal's mandatory Maruki semester gate, XCOM 2's retired 2K launcher, current/future Crusader Kings III content, Dragon's Dogma 2 Title Update 3.2, Ultima VII identity/recovery and Exult preservation boundaries, Oxygen Not Included's explicit noncombat/social absences, and S.T.A.L.K.E.R. 2's current A-Life/version and return-loop boundaries.
+
+The audit now records no unaddressed required mechanics category for G121–G130 while preserving source-access and version limitations. This is reference-research correction only: it changes no OpenLegend gameplay contract or runtime behavior and does not close the separate whole-library P01–P05 packet/integration gates.
+
 ## 2026-09-26 — Game mechanics inspiration corpus expansion
 
 Expanded the research-only game-inspiration program from 57 to 130 individually tracked subjects on `docs/game-inspiration-library-expansion`. The roster preserves all previously promised cases, adds the requested RPG/action/open-world/strategy franchises and titles, and adds twenty curated high-signal systemic references for simulation, NPC behavior, emergent narrative, environment interaction, relationships and creator mechanics. The completion standard now requires five substantive written-review summaries from multiple sources for every researchable game, top/helpful Steam review sampling where applicable, and an explicit comprehensive mechanics inventory. This changes research scope and navigation only; it does not adopt gameplay requirements or change runtime behavior.
