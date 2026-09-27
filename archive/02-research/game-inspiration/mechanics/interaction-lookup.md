@@ -113,26 +113,17 @@ Use the concrete example to find a study, then read its limitations and countere
 | What makes a limited creative contribution reach ordinary players? | Scene Makers submissions, selection, and distribution | [Core Keeper](core-keeper-resource-circuits-food-and-inhabited-discovery.md) |
 | Can a demo teach the real reward through repeated bounded play? | Content-limited versus round-capped demos | [Balatro](balatro-scoring-operators-risk-and-readable-combinations.md) |
 
-## Party identity, learning and changing access
 
-The linked [full-game dossiers](../dossiers/README.md) own the detailed evidence and edition boundaries for these comparisons. The original games, 3D remakes and Pixel Remasters must not be combined into an imaginary single ruleset.
+
+## Party identity, authored alternatives and preparation
+
+The [G101–G110 dossier index](../README.md#g101-g110-dossiers) supplies independent Mass Effect, Octopath Traveler and KOTOR studies. These KOTOR II entries lead to six constructed situations, not recorded play sessions. Each target retains its prerequisites, version limits, alternative and next decision; the underlying dossier owns the sources.
 
 | Question | Named reference or interaction | Read |
 | --- | --- | --- |
-| Can equipment teach a passive without permanently occupying its original slot? | Picto learning versus equipped statistics and Lumina capacity | [Expedition 33](../dossiers/clair-obscur-expedition-33.md) |
-| Can defense change the next offensive decision? | Nusaro, Monoco's Bestial Wheel and parry-dependent mask changes | [Expedition 33](../dossiers/clair-obscur-expedition-33.md) |
-| Can a relationship reopen familiar geography? | Esquie's bond and access to underwater rewards | [Expedition 33](../dossiers/clair-obscur-expedition-33.md) |
-| Can repeatable item use undermine an intended resource limit? | Healing Staff recovery and the incentive to prolong a solved encounter | [Final Fantasy I](../dossiers/final-fantasy.md) |
-| Does being allowed to equip something mean it supports the intended role? | Weapon proficiency and visible Magic Interference | [Final Fantasy II](../dossiers/final-fantasy-ii.md) |
-| Is knowing about an object equivalent to being able to use it? | Learned Sunfire keyword versus possession of Egil's Torch and carried Sunfire | [Final Fantasy II](../dossiers/final-fantasy-ii.md) |
-| Can an informational action make another character's turn more valuable? | Scholar's Study and Hein's changing weakness | [Final Fantasy III](../dossiers/final-fantasy-iii.md) |
-| Does a free role change undo every previous investment? | Character level, job proficiency, HP history and current spell reserves | [Final Fantasy III](../dossiers/final-fantasy-iii.md) |
-| Can a later vehicle complement rather than replace an earlier one? | Nautilus diving versus Invincible mountain access and onboard services | [Final Fantasy III](../dossiers/final-fantasy-iii.md) |
-
-## Keep the comparison honest
-
-The same word can conceal different promises: a story can be authored, generated, mechanically recorded, or interpreted by a player. A reusable object can preserve its image, its relationships, its behavior, or its surrounding scenario. A helper can execute a job, choose a purpose, or become someone the player cares about. Identify which property matters before borrowing a pattern.
-
-For broader comparisons, see [what makes these worlds fun](../essays/what-actually-makes-these-worlds-fun.md), [virality and discovery](../essays/virality-and-discovery.md), and [production pitfalls](../essays/production-and-platform-pitfalls.md). For dates, review context, and source limitations, follow the individual studies rather than treating this lookup as an independent evidence source.
-
-[Back to granular studies](README.md) · [Library home](../README.md)
+| Can a social skill change an information-gathering route without becoming mandatory? | Peragus sonic imprint sensor, persuasion and recorded evidence | [KOTOR II — G110-I01](../dossiers/star-wars-knights-of-the-old-republic-ii.md#g110-i01--a-voice-becomes-a-key-on-peragus) |
+| Can preparation target an opponent instead of raising every damage number? | Ion Charger, recipe skill and installation choice | [KOTOR II — G110-I02](../dossiers/star-wars-knights-of-the-old-republic-ii.md#g110-i02--rebuild-a-weapon-for-the-opponent-rather-than-the-headline-number) |
+| Can personal history open a new capability? | Atton's outside warning, influence and training | [KOTOR II — G110-I03](../dossiers/star-wars-knights-of-the-old-republic-ii.md#g110-i03--knowledge-of-a-companion-becomes-a-progression-opportunity) |
+| Can medicine, technical skills and goodwill converge on one later event? | Khoonda defenses, wounded militia and recruits | [KOTOR II — G110-I04](../dossiers/star-wars-knights-of-the-old-republic-ii.md#g110-i04--defending-khoonda-begins-before-the-battle) |
+| Does a party remain useful without the protagonist? | Dxun team selection and mutually exclusive turret interventions | [KOTOR II — G110-I05](../dossiers/star-wars-knights-of-the-old-republic-ii.md#g110-i05--send-a-capable-team-where-the-protagonist-cannot-go) |
+| Can a relationship change the action economy through a precise exception? | Kreia–Exile Force Chain and qualifying beneficial powers | [KOTOR II — G110-I06](../dossiers/star-wars-knights-of-the-old-republic-ii.md#g110-i06--a-narrative-bond-changes-who-should-spend-an-action) |
