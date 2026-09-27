@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — G141–G148 survival research range completed
+
+Completed independent R01–R14 research passes for **Raft, Grounded, The Long Dark, Green Hell, Enshrouded, V Rising, Once Human and Abiotic Factor** on `docs/game-inspiration-games-141-148`. Each dossier records its current edition/service boundary, comprehensive mechanics inventory, eight worked interactions, five substantive written reviews, current player evidence where applicable, production/distribution/commercial context, transferable observations and explicit evidence/access limits. The Raft pass was tightened during final review so an unavailable Checkpoint review body remains supplemental rather than being counted toward the five fully read reviews.
+
+Updated the [library navigation](../archive/02-research/game-inspiration/README.md#full-dossiers--survival-references-g141g148) and [progress ledger](../archive/02-research/game-inspiration/research-progress.md#survival-expansion--g131g148) for this range. The work changes research documentation only: no runtime behavior, accepted game requirement or maintainer engineering task changed. **G131–G140 remain pending**, and this range does not close the separate packet/full-roster/navigation/evidence gates P01–P05.
+
 ## 2026-09-27 — Research branch refresh and survival roster expansion
 
 Updated `docs/game-inspiration-library` from all six range branches with ordinary merges, including the previously separate G121–G130 dossiers. The [integrated ledger](../archive/02-research/game-inspiration/research-progress.md#integrated-branch-state--september-27-2026) records the exact source heads and scoped audit states; G61–G80 now has all twenty follow-up audits complete, while the G121–G130 audit remains active. Source manuscripts, historical evidence and shared navigation are preserved; stale progress pointers are reconciled against newer committed audit evidence.
