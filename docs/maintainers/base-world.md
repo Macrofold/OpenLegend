@@ -58,7 +58,7 @@ BW13 evidence is in [MP01/MP04](multiplayer.md) and [Verification](../verificati
 
 ### BW18 — Ada and the lean starting camp
 
-**Status:** starter content implemented and native/live context inspected; UI and integrated hunting acceptance remain open. [Feature specification](../projects/embodied-survival-feature-spec.md) · [Technical design](../projects/embodied-survival-tech-design.md#starter-content-and-observability). The owner confirmed existing NPC ghost/revival policy remains; this does not implement BW15.
+**Status:** starter content implemented and native/live context inspected; Jev-only hunting/retry is demonstrated, while UI acceptance remains open. [Feature specification](../projects/embodied-survival-feature-spec.md) · [Technical design](../projects/embodied-survival-tech-design.md#starter-content-and-observability). The owner confirmed existing NPC ghost/revival policy remains; this does not implement BW15.
 
 - [x] After design approval, author Ada's consistent biography, traits and practical knowledge through existing identity/About me sources. Explicit empty goals must stay empty in both actor creation and mind initialization; no fallback survival instruction or fictional witnessed hunting event.
 - [x] Add the installed knife definition and one knife to each named Mike/Ada starter loadout, using AC09.6's general melee profile. Do not grant it to every `createActor` call or silently modify existing characters/saves.

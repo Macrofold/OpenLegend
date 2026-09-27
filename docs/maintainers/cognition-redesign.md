@@ -315,7 +315,7 @@ These pending checks directly define cognition completion and were moved from th
 ### Jev through OpenRouter
 
 - [ ] Supersedes the separate Typesafe-connection requirement: Macrofold Jev choice requests now use `provider:"openrouter"`, `model:"typesafe/jev-1.13"` (the exact identifier accepted by Macrofold's decision-model resolver), with the existing OpenRouter BYOK connection by default. `MACROFOLD_JEV_CONNECTION_ID` remains an optional override; `MACROFOLD_JEV_MODEL` controls this route independently of direct Typesafe `JEV_MODEL`.
-- [ ] Verify live Jev choice parsing, confidence/probabilities, BYOK connection selection, spending and NPC/invention routing. No paid calls or automated tests run for this configuration change. Setup/provider documentation now reflects this route; runtime and live checks remain pending.
+- [ ] Verify live Jev choice parsing, confidence/probabilities, BYOK connection selection, spending and NPC/invention routing. Setup/provider documentation reflects this route; complete qualification remains pending. The [survival diagnosis](../verification/embodied-survival.md#renewed-jev-only-diagnosis-and-hunting-demonstration) observed four `invalid_probabilities` failures in diagnostic batches containing 42-option Choice questions. Inspect original provider distributions before changing decoding; do not normalize invalid output or retry automatically. Its production independent-Noul hunt trials succeeded.
 
 ### Conversations across simulation pauses
 

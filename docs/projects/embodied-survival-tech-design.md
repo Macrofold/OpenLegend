@@ -1,6 +1,6 @@
 # Embodied survival: technical design
 
-**Status: approved for implementation in chat, September 27, 2026; mechanics implemented, integrated acceptance incomplete.** [Feature specification](embodied-survival-feature-spec.md) owns the proposed experience. Required directions are distinguished there from recommended content and tuning.
+**Status: approved for implementation in chat, September 27, 2026; mechanics implemented and Jev-only hunt/retry demonstrated; broader qualification incomplete.** [Feature specification](embodied-survival-feature-spec.md) owns the proposed experience. Required directions are distinguished there from recommended content and tuning.
 
 ## Baseline, scope and risk
 
@@ -183,7 +183,7 @@ Attacking once satisfies the first demonstration only when it arose from Ada's u
 
 ## Current delivery evidence
 
-Native condition, inventory, finite melee and named starter integration are implemented; [verification](../verification/embodied-survival.md) records actual checks and limits. The strict live scenario is **not complete**: Jev chose eating/gathering in comparison worlds, but repeatedly deferred in the lean world through starvation. UI automation also failed before visual acceptance. Unmet criteria remain with their existing trackers; this is not a reduced acceptance target.
+Native condition, inventory, finite melee and named starter integration are implemented. The renewed [Jev-only trials](../verification/embodied-survival.md#renewed-jev-only-diagnosis-and-hunting-demonstration) demonstrate unassigned-goal hunting, knife equip/approach, real misses, outcome-aware retries and successful hits on hare/deer. Food-present comparisons select eating/gathering. Broader UI, scheduling-race and population qualification remain incomplete in their existing trackers; successful hunting does not waive those requirements or establish reliable long-term survival.
 
 The owner explicitly rejected generation even solely to formulate a freeform intention. Keep every scenario decision Jev/native, with no seeded operational goal, forced hunting rule or silent threshold change to manufacture a pass. Jev’s inability to author novel goal prose remains visible; choosing a known action without a formal goal is allowed.
 
@@ -192,3 +192,18 @@ The owner explicitly rejected generation even solely to formulate a freeform int
 The owner additionally requires live Jev-only qualification of ordinary action decisions. Known equip, movement, contact strike, retry, gathering and eating choices use Jev selection over actor-permitted supplied actions and the existing native admission/execution owners. No generative response is necessary to execute a known action. Continuing an admitted plan is native. Uncertainty is a recorded deferral, never an invented successful selection or an automatic paid fallback.
 
 Jev selects supplied possibilities; novel freeform goal text, new proposals and spoken language still require generation when enabled. The starter has no imposed operational goal and can select a practical action directly. Live acceptance must disable generation and reflection, record all provider calls and enforce the shared task budget. Merely substituting a fixture does not establish Jev-only behavior.
+
+### Renewed diagnosis and implementation plan
+
+The owner requested further implementation and controlled experiments after the initial deferrals, explicitly including different goals, action sets, a weapon-aware hunting option, food-source knowledge and fictional-game framing. Diagnostic goal overrides are permitted experiments, not a change to the accepted unassigned starter goal. Baseline: `main` and freshly fetched `origin/main` at `0b9c51aa5ab601f9d8048e25ff8f5900d1c1b6d1`.
+
+Initial estimate: 50–250 changed logic lines. The delivered fix is roughly 40 added/changed logic lines across shared questions, decision context, action descriptions and world-owned knowledge/biography. The principal risk is replacing genuine selection with a hidden prescribed hunt or weakening uncertainty handling. Existing action authority, privacy and finite-strike guarantees remain required.
+
+1. Capture fresh actual decision input; compare controlled question/context variants, including positive controls, without changing execution. Determine whether prerequisites, action semantics, irrelevant context, goal absence or fictional framing explain deferral. Test the actual Noul/Choice contract rather than treating a probability of agreement as calibrated action quality.
+2. Trace real condition crossings through cognition admission and confirm exact tool/target offers. Reuse existing native-melee evidence unless a changed contract invalidates it.
+3. Implement the smallest general fix in the semantic owner: world facts/content where authored, actor-scoped context where selected, and shared Jev questions/selection where interpreted. Keep every decision Jev-only and every effect under normal native admission.
+4. Demonstrate real selected equip/approach/strike and outcome-aware reconsideration in a fresh disposable PostgreSQL world; compare available food, berries, missing weapon and missing prey. Record failures as well as successes. Update affected specifications/trackers and run focused checks plus full affected-diff review.
+
+The continuation permits at most $4 in new conservative reservations; combined with the prior $5 trial reservations and $0.25 uncertain application reserve this remains below the standing $10 task ceiling. Reservation totals are not billed cost. No generation, automatic paid retries or destructive save changes are authorized by these experiments. Completion requires the real integrated hunting demonstration, not a diagnostic prompt alone.
+
+The four diagnosis/implementation steps are complete for the requested hunting follow-up; [results](../verification/embodied-survival.md#renewed-jev-only-diagnosis-and-hunting-demonstration) include real hare/deer strikes and miss-aware retries. Existing broader qualification remains with AG13 and its dependencies. No engine action, physiology or saved-state contract changed in this follow-up.

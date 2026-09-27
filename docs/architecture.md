@@ -358,7 +358,7 @@ Installed numeric definitions may author condition bands, factual meaning, hyste
 
 Decision preparation shares an actor-scoped observation across discovery/planning. Possession descriptors cache immutable definition facts and combine current custody/equipment. Relevant inventory revisions reach the opportunity fingerprint; unrelated inventory changes do not themselves request cognition. `decision-observation.ts` falls back to an explicitly disclosed inventory page plus bound tools when total preparation would overflow. `inspectPossessions` supplies revision-bound own-inventory continuation, and the last inspected item IDs remain bindable. [CG04](limits/cognition.md#cg04) retains full-scope scan cost and limits. Other actors receive none of the private condition, inspection or recovery state.
 
-The bundled world owns hunger/death meanings, Ada’s biography, lean supplies and knife balance. Generic mechanisms do not choose food or aggression. [Survival](worlds/base/survival.md), [targeted strikes](targeted-actions.md) and [evidence](verification/embodied-survival.md) describe delivered behavior and incomplete acceptance.
+The bundled world owns hunger/death meanings, Ada’s biography, lean supplies, knife balance and common species food knowledge. Weapon-strike descriptions can explain a hunting purpose and subsequent preparation without executing those later steps. Jev judges concrete progress toward current needs/goals; generic mechanisms do not choose food or aggression. [Survival](worlds/base/survival.md), [targeted strikes](targeted-actions.md) and [evidence](verification/embodied-survival.md) describe delivered behavior and incomplete acceptance.
 
 ### Actor agency foundation
 
