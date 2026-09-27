@@ -16,7 +16,7 @@ Important boundaries:
 - **The Silver Seed (1993)** — an expansion for Serpent Isle, not for The Black Gate.
 - **The Complete Ultima VII** — later compilations bundle both games and both expansions, which is why current storefront packaging can obscure the boundary. [Compilation reference](https://wiki.ultimacodex.com/wiki/The_Complete_Ultima_VII).
 - **SNES Ultima: The Black Gate (1994)** — a heavily altered adaptation with reduced world/NPC/object simulation; it should not be used as evidence for the DOS design.
-- **Exult** — an open-source modern engine implementation that runs the original game data and adds modern-platform/configuration support. Exult is not the 1992 Origin engine and its conveniences/mods are not silently attributed to the original. [Exult documentation](https://www.exult.info/docs.html).
+- **Exult** — an open-source modern engine implementation that runs the original game data and adds modern-platform/configuration support. Exult is not the 1992 Origin engine and its conveniences/mods are not silently attributed to the original. **September 27, 2026 audit check:** Exult's official download page lists **1.12.1** (January 8, 2026) as the stable release, with the Windows installer reissued as 1.12.1-1 on March 27 for an installer-library false-positive problem; 1.13.x builds are snapshots/pre-releases. This version information describes the preservation engine, not the 1992 game's rules. [Exult documentation](https://www.exult.info/docs.html) · [Exult downloads](https://exult.info/download.html).
 
 As of 2026, GOG sells **Ultima 7 The Complete Edition** and lists it in the GOG Preservation Program with current Windows support. That is the easiest commercial route, but the product includes more than The Black Gate. [GOG](https://www.gog.com/en/game/ultima_7_complete).
 
@@ -57,6 +57,12 @@ The Black Gate therefore models **character knowledge as state**, not merely pla
 Combat is real-time and substantially less praised than the simulation around it. The player can equip weapons/armor, set party combat behavior and engage enemies, but companions often operate autonomously enough that precise control is limited.
 
 Magic uses spellbook access, mana/stat capacity and reagents. Magic is also narratively compromised: Britannian magic is malfunctioning, tying a mechanical system directly to the central mystery.
+
+### Useful absences: general crafting and stealth
+
+The Black Gate supports **specific world-object transformations and production actions**—the breadmaking example is the clearest—but it does **not** expose a general crafting profession/recipe tree comparable to a modern survival RPG. Baking or otherwise combining authored objects should therefore be described as systemic object interaction, not inflated into a universal crafting subsystem.
+
+Likewise, theft is possible because property is physically present, but the game has no dedicated crouch/concealment/detection-meter stealth skill loop. Avoiding witnesses, manipulating objects and entering spaces are world-interaction consequences; "stealing things" is not evidence for a modern stealth system.
 
 ## R03 — objects, inventory, party, equipment, and composition
 
@@ -238,7 +244,7 @@ Modern friction instead centers on:
 - opaque quest note-taking;
 - weak real-time combat controls.
 
-Exult can modernize execution, resolution/input and mod support, but those improvements must not be attributed to Origin's 1992 release.
+Exult can modernize execution, resolution/input and mod support, but those improvements must not be attributed to Origin's 1992 release. The audit's current preservation boundary is stable Exult 1.12.1/Windows 1.12.1-1 versus separate 1.13.x snapshots, so snapshot behavior should not be silently treated as the stable route.
 
 ## R08 — narrative, themes, and world connection
 
@@ -362,6 +368,7 @@ The transferable principle is **build consistency beneath the fiction**: residen
 
 - [Forge of Virtue](https://wiki.ultimacodex.com/wiki/Ultima_VII%3A_Forge_of_Virtue), [Complete Ultima VII](https://wiki.ultimacodex.com/wiki/The_Complete_Ultima_VII), [Silver Seed](https://wiki.ultimacodex.com/wiki/Ultima_VII_Part_Two%3A_The_Silver_Seed) — fan-maintained version/packaging references cross-checked against historical release sources.
 - [Exult documentation](https://www.exult.info/docs.html) — current reimplementation requirements/paths and distinction from original data.
+- [Exult official downloads/news](https://exult.info/download.html) — inspected September 27, 2026; 1.12.1 is the current official stable release, Windows 1.12.1-1 is a packaging reissue, and 1.13.x is the snapshot line. Used only for preservation-engine version boundaries.
 - [GOG Complete Edition](https://www.gog.com/en/game/ultima_7_complete) — current commercial package/preservation status and storefront reviews.
 
 ### Critical sources
@@ -377,7 +384,7 @@ G128 is a newly curated subject. Direct branch checks found no prior dedicated B
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Black Gate/Forge/Serpent Isle/Silver Seed/SNES/Exult boundaries |
-| R02 | Real-time world, object verbs, dialogue knowledge, combat/magic |
+| R02 | Real-time world, object verbs, dialogue knowledge, combat/magic, plus explicit limited-crafting/stealth absences |
 | R03 | Object ecology, containers/equipment and eight-person party composition |
 | R04 | Training, economy, hunger, sleep/schedules and campaign knowledge progression |
 | R05 | Eight worked investigation/object/schedule/social/combat cases |
