@@ -2,13 +2,13 @@
 
 **Full research pass, September 26, 2026.** Original Octopath Traveler; not Octopath Traveler II, Champions of the Continent or Octopath Traveler 0. Research and interpretations are not accepted OpenLegend requirements. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md).
 
-**Evidence boundary:** five independent written reviews were read. Helpful Steam review endpoints failed; contrasting named Steam discussion participants and other direct players are documented instead, not mislabeled as a ranked review sample. Rules-based examples below are constructed illustrations, not personally observed playtests. Late-game spoilers are isolated.
+**Evidence boundary:** five independent written reviews were read. During the September 27 audit, the current English all-time Steam helpful-review surfaces became accessible, so this dossier now also samples highly ranked positive and negative player reviews; these are qualitative snapshots, not prevalence estimates. Earlier named Steam discussion participants and other direct players remain preserved as separate testimony. Rules-based examples below are constructed illustrations, not personally observed playtests. Late-game spoilers are isolated.
 
 ## Identity, scope and player promise
 
 Select one of eight authored travelers, explore Orsterra, recruit others, and choose an itinerary through their personal chapters. This is a single-player party RPG, not an eight-person multiplayer game or an avatar creator. Square Enix and Acquire are the credited developers; the Windows/Steam release was June 7, 2019. The distinctive promise is freedom of starting identity and route inside an authored episodic world, not unrestricted simulation. [S01](#s01)
 
-The original Switch release was July 13, 2018. Subsequent releases included Stadia in 2020, Xbox One in 2021 and PlayStation in 2024. A September 26, 2026 scope check matters: Japanese digital Switch 2 editions launched July 13, while the western launch is scheduled for October 1, 2026. The reported Switch 2 improvements concern resolution/frame rate, with no Switch save compatibility or upgrade path. The announcement contains an apparent year error for Octopath II; that date is not propagated here. These ports do not add the sequel's day/night Path Actions, latent powers or Crossed Paths. [S08](#s08)
+The original Switch release was July 13, 2018. Subsequent releases included Stadia in 2020, Xbox One in 2021 and PlayStation in 2024. A September 27, 2026 scope check matters: Japanese digital Switch 2 editions launched July 13, while Nintendo's current US listing schedules the Switch 2 bundle for **October 1, 2026**. The reported Switch 2 improvements concern resolution/frame rate, with no Switch save compatibility or upgrade path. The secondary announcement contains an apparent year error for Octopath II; that date is not propagated here. These ports do not add the sequel's day/night Path Actions, latent powers or Crossed Paths. [S08](#s08) [S39](#s39)
 
 The opening teaches a chosen person's motive, field command and combat role. Established play alternates among recruitment, chapter destinations, side stories, equipment acquisition and job experiments. The initial protagonist occupies a party slot until completing **their own** fourth chapter, not until every story is finished; towns' taverns manage the active group and deferred chapters. Thus “start anywhere” does not mean every early choice is immediately reversible. [S11](#s11)
 
@@ -123,6 +123,8 @@ The menu-driven combat allows deliberation without action-game reflex demands. C
 
 A February 2018 Siliconera article translates/summarizes a Famitsu interview with producer Masashi Takahashi and director Keisuke Miyauchi. It describes choosing Acquire for pixel-art expertise, then iterating on resolution, saturation, depth and water treatment. The finished aesthetic was not simply an old game passed through one filter. It also connects medieval occupations with the idea of field commands. These are attributed development accounts through a translated secondary presentation, not inspected engine internals or proof of a particular implementation architecture. [S07](#s07)
 
+A more concrete iteration loop followed the September 2017 demo. In a January 2018 feedback presentation, Takahashi reported **more than one million demo downloads and 45,500 survey responses**. Named team members then described changes motivated by that feedback: automatic/faster running plus fast travel, clearer traversable-space cues and a radar, interface refinements, event-scene changes and battle-system adjustments. This is unusually direct evidence that public testing changed the shipped design; it does not establish that every requested change was accepted or that every response represented a unique player. [S38](#s38)
+
 The launch-day letter provides primary statements from composer, director and producer. Takahashi describes the demands of a simultaneous worldwide release; Miyauchi emphasizes residents and route choice. The existence of a shared first-party promotional platform is documented, but exact team costs, publisher profit and channel conversion are not disclosed in the evidence reviewed here. [S09](#s09)
 
 The June 14, 2018 **Prologue Demo** offered three hours and transferred progress into the full game. Contemporary coverage distinguishes it from the preceding demo. This demonstrates a concrete acquisition mechanism: players could test the opening and keep their investment rather than restart after purchase. The claim that this reduced conversion friction is an interpretation; no controlled conversion figures were found. [S25](#s25)
@@ -147,7 +149,11 @@ All five substantive review bodies were inspected. These are authored critical a
 
 **WIRED — Julie Muncy, July 30, 2018, Switch.** Muncy likes the combat but rejects repeated beginnings and weak ensemble motivation. She also criticizes gendered character tropes and some navigation. This is a substantial dissenting perspective rather than merely a lower rating. [S06](#s06)
 
-**Steam access and substitute evidence.** The store loaded, but requests to the English top-rated Community review surface and the appreviews JSON endpoint failed. Individual helpful-review rankings were therefore **not** inspected. In an accessible May 19–21, 2024 Steam discussion, **Katie** objects that purple chests and the locked protagonist effectively constrain two slots. **Miketopus** finds Therion less burdensome once his combat role fits the group. **Melodia** disputes that leaving early chests makes the party unviable and emphasizes other talents. These are contrasting named player accounts, not a representative sample or a factual authority for optimal builds. [S34](#s34)
+**Steam helpful sample and additional direct-player evidence.** Earlier September 26 attempts to retrieve the helpful-review endpoints failed, but the September 27 audit successfully loaded Steam's current English **Most Helpful (All Time)** surfaces. On the positive surface, **Sin** (December 26, 2025) praises HD-2D presentation, music, Break/Boost planning and role variety while still criticizing disconnected stories, reading volume and occasional grind/slow chapters. **Xelios** (January 11, 2020) offers a much longer mixed-positive account: strong job/combat freedom and soundtrack alongside overlapping Path Actions, repetitive geography/enemies and weak party integration. These are current ranking snapshots whose helpful-vote counts can change; neither is treated as a representative prevalence estimate. [S36](#s36)
+
+The all-time English negative surface supplies contrasting material. **Malhagor** (June 18, 2019) explicitly says the game is good but rejects the launch-era value proposition as overpriced. A March 14, 2020 reviewer likewise likes the battle depth, graphics and Path Actions yet ultimately objects to story/character-development limitations and full-price value. Other highly ranked negatives praise presentation and combat while criticizing the disconnected ensemble or repetitive chapter structure. This distinction matters: price/value, narrative structure and mechanical quality are separable complaints. [S37](#s37)
+
+The prior May 19–21, 2024 Steam discussion remains useful because it addresses a different concrete friction. **Katie** objects that purple chests and the locked protagonist effectively constrain two slots. **Miketopus** finds Therion less burdensome once his combat role fits the group. **Melodia** disputes that leaving early chests makes the party unviable and emphasizes other talents. These are contrasting named player accounts, not a ranked review sample or a factual authority for optimal builds. [S34](#s34)
 
 An accessible Reddit discussion offers a different tension: **w4rm_h4nds** appreciates the battle puzzle and art/music but struggles to stay engaged; **DungeonMasterDood** values compact episodes that fit limited play time; **Myurside** objects to paired verbs and roster leveling. Relative dates displayed by the page are not converted into fabricated exact dates. These accounts reinforce the distinction between preference and a broken rule. [S35](#s35)
 
@@ -169,7 +175,7 @@ An accessible Reddit discussion offers a different tension: **w4rm_h4nds** appre
 
 ## Sources, viewing routes and preservation
 
-All sources accessed September 26, 2026. Main text was inspected unless stated otherwise. Developer testimony is distinguished from independent criticism, player discussion and guide interpretation. No quoted review passage is reproduced at length. Videos are reading/viewing routes only; no footage or transcript was represented as watched.
+Sources were initially accessed September 26, 2026; the Steam helpful-review surfaces, demo-feedback transcript and current Nintendo US Switch 2 listing were freshly checked September 27, 2026. Main text was inspected unless stated otherwise. Developer testimony is distinguished from independent criticism, player discussion and guide interpretation. No quoted review passage is reproduced at length. Videos are reading/viewing routes only; no footage or transcript was represented as watched.
 
 <a id="s01"></a> **S01 — [Steam product page](https://store.steampowered.com/app/921570/OCTOPATH_TRAVELER/).** Primary storefront: credits, Windows date and mode. Aggregate summaries are not individual player evidence; prices and ratings are dynamic.
 
@@ -241,6 +247,14 @@ All sources accessed September 26, 2026. Main text was inspected unless stated o
 
 <a id="s35"></a> **S35 — [Reddit: engagement and episodic structure](https://www.reddit.com/r/JRPG/comments/18kjaqc/so_whats_the_deal_with_octopath_traveler/).** Named player contributions inspected; page displayed relative dates. A linked [travel-banter playlist](https://m.youtube.com/playlist?list=PLYACijaOYF_k_XgB3_pWWy3Q5l7mfp9p7) is an optional **metadata-only** viewing route, not evidence of watched scenes.
 
+<a id="s36"></a> **S36 — [Steam English Most Helpful (All Time) reviews](https://steamcommunity.com/app/921570/reviews?browsefilter=toprated&l=english).** Current surface freshly inspected September 27, 2026. Sampled named positive reviews include Sin and Xelios; ranking and helpful-vote counts are dynamic and are not used as prevalence estimates.
+
+<a id="s37"></a> **S37 — [Steam English negative Most Helpful (All Time) reviews](https://steamcommunity.com/app/921570/negativereviews/?browsefilter=toprated&l=english).** Current negative surface freshly inspected September 27, 2026. Sampled Malhagor and additional long-form negative accounts to separate price/value, narrative and mechanical complaints.
+
+<a id="s38"></a> **S38 — [Project Octopath Traveler demo feedback survey improvements](https://www.gematsu.com/2018/01/project-octopath-traveler-video-details-demo-feedback-survey-improvements).** Gematsu, January 29, 2018. Full supplied transcript inspected September 27, 2026; records Takahashi's >1 million demo downloads and 45,500 survey responses plus named team explanations of traversal, visibility, UI, event-scene and battle changes.
+
+<a id="s39"></a> **S39 — [Octopath Traveler + Octopath Traveler II Bundle for Nintendo Switch 2](https://www.nintendo.com/us/store/products/octopath-traveler-plus-octopath-traveler-ii-bundle-switch-2/).** Nintendo US primary storefront, checked September 27, 2026; lists the US digital Switch 2 bundle for October 1, 2026. Dynamic storefront availability is not treated as evidence that the future date has already occurred.
+
 **Suggested reading/viewing sequence:** read S09 for creator intent, S10 for battle grammar and S11 for field friction; compare S02 with S03/S06 rather than reading only favorable reception. Use the banter route in S35 to investigate ensemble presentation separately from main scenes. Leave S19 until late-game spoilers are acceptable. No timestamps or watched durations are claimed.
 
 **Preservation:** complete inherited `games/` and `mechanics/` inventories were inspected at resume; neither contains a dedicated Octopath chapter. This is an additive G107 owner, not a replacement. Prior essays, packet references, examples, economic history and video routes are untouched. The global seven-file packet reconciliation remains pending in the ledger and is not certified by this pass.
@@ -257,10 +271,10 @@ All sources accessed September 26, 2026. Main text was inspected unless stated o
 | R06 | Character matrix; NPC summons, party restrictions, narrative/social boundaries |
 | R07 | Art, audio, interface and feel; production testimony |
 | R08 | Quests, people and narrative structure; marked optional-closure spoilers |
-| R09 | Production accounts, iteration and port/version boundaries |
-| R10 | Prologue Demo, worldwide launch, later distribution and sharing hypotheses |
+| R09 | Production accounts, public-demo feedback iteration and port/version boundaries |
+| R10 | Demo acquisition/feedback loop, worldwide launch, later distribution and sharing hypotheses |
 | R11 | Premium model; dated two-million shipments-plus-digital-sales milestone; unavailable finances |
-| R12 | Five written reviews; contrasting direct players; actual Steam access limits |
+| R12 | Five written reviews; current all-time helpful Steam positive/negative samples; contrasting direct players |
 | R13 | Transferable patterns and limits, explicitly analytical |
 | R14 | Annotated sources, viewing limits, navigation and preservation statement |
 
