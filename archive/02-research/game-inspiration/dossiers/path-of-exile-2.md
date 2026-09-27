@@ -191,6 +191,26 @@ The earlier comparison's Dawn of the Hunt developer-response history remains pre
 
 ## 12. Transferable inspiration, completion and preservation
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and preserves the Early Access / future-release distinction:
+
+- **Identity / classes / attributes / skills / leveling / trees:** eight released Early Access classes, class-specific Ascendancies, attributes, levels and the passive tree are covered in §§1–3.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** equipment bases, sockets/Augments, flasks/charms, tradeable crafting currencies and modifier development are covered in §§3–5.
+- **Magic / spells / powers:** skill gems, supports, Meta gems, Spirit-maintained effects and class/Ascendancy abilities form the central ability system.
+- **Traversal / environmental and object interaction:** dodge/cancel movement, checkpoints, area travel, campaign islands, Trials and endgame maps/Atlas interactions are covered across §§2, 4, 6–7.
+- **Activities / minigames:** campaign, Ascendancy Trials, endgame Atlas, Ritual/Delirium and current league mechanics are distinct activities within the ARPG structure.
+- **Combat / stealth / loot / rewards:** real-time combat, boss encounters, loot and build-relevant rewards are central; conventional stealth is not a major pillar.
+- **Death / failure / recovery:** flasks/charms/checkpoints, campaign failure, Trial-specific loss, map revivals and Hardcore migration are distinct recovery contracts (§§4, 6–8).
+- **Economy / trading:** crafting currencies, gold, direct/asynchronous trade and SSF are separate systems (§§5, 8).
+- **Story / relationships / romance / reputation / party / companions:** authored campaign NPCs and human co-op exist; Mercenary/minion-like helpers are bounded combat systems. Romance/reputation simulation is not a central system.
+- **NPC/AI behavior and schedules / factions:** monsters, bosses and minions have authored combat behavior, not autonomous civilian schedules or faction politics.
+- **World map / environment / quests / events:** campaign acts/interludes, Ngamakanui islands, Trials, Atlas/endgame and league events provide the world/objective structure.
+- **Building / settlements / management:** absent as a primary player progression system.
+- **Multiplayer / social / endgame / return loops:** up-to-six-player online co-op, couch co-op, trade/SSF, seasonal leagues, Atlas progression and build experimentation supply the long-term loop.
+
+**Current boundary check:** Path of Exile 2 is still explicitly labeled **Early Access** on Steam on September 27, 2026. **Forbidden Rites**, launched September 4, remains the current event/league line in the official feed, while GGG is separately running **Full Release Registration** for the planned December 11 free-to-play release. [Q37](#q37) The audit therefore does not promote the advertised twelve-class/six-act 1.0 target into current Early Access content.
+
 The strongest transferable patterns are **a skill as a composable object**, **a preparation choice that enables automatic execution**, **a resource budget that changes with active configuration**, and **a difficulty modifier that also changes recovery opportunities**. The corresponding limits are equally important: better-shaped output is not automatically a compatible action, and preserving an object is not the same as preserving its usefulness.
 
 For OpenLegend, expose which stage failed: missing resource, incompatible support, invalid target, unsuitable active set or a technical defect. Let an invented capability alter a real approach. Do not import periodic economic resets, extreme punishment or enormous loot breadth without testing whether they serve the intended persistent-world experience.
