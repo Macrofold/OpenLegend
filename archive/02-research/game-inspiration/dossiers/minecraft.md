@@ -24,7 +24,7 @@ A mechanic documented for Java should not automatically be treated as identical 
 
 ### Current 2026 update boundary
 
-Java **26.3 / Wilderness Bound**, released September 15, 2026, adds the Dappled Forest biome, poplar trees, abandoned camps, explorer-map content, cushions, straw beds and related blocks/features. Earlier 2026's Tiny Takeover emphasized baby-mob variants and pet/collection expression. [MC01](#mc01) [MC02](#mc02)
+Java **26.3 / Wilderness Bound**, released September 15, 2026, adds the Dappled Forest biome, poplar trees, abandoned camps, explorer-map content, cushions, straw beds and related blocks/features. Bedrock shipped the same drop as **26.50** and has already received hotfixes through **26.52 (September 25)**. Java's **26.4 Snapshot 1** is testing-only as of September 27 and must not be described as the stable game. Earlier 2026's Tiny Takeover emphasized baby-mob variants and pet/collection expression. [MC01](#mc01) [MC02](#mc02) [MC17](#mc17)
 
 Those drops expand the vocabulary; they do not replace the basic loops below.
 
@@ -1175,6 +1175,27 @@ Then execute the boring parts while keeping the meaningful choice with the playe
 
 ## 31. Requirement and preservation check
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and confirms the Java/Bedrock distinctions:
+
+- **Identity / classes / attributes / skills / leveling / trees:** vanilla has no character class/skill tree. Identity emerges from skins/personas, possessions, enchantments, pets, builds, advancements and multiplayer roles (§§2–4).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** inventory, tools, weapons/armor, crafting/smelting, enchanting, brewing, smithing, trims, containers and redstone components are covered across §§5–17.
+- **Magic / spells / powers:** no learned spellbook; enchantments, potions/status effects, beacons, commands and extension layers supply bounded supernatural/system powers.
+- **Traversal / environmental and object interaction:** mining/placing, swimming/climbing/flying, mounts/boats/minecarts, Nether/End travel, terrain manipulation and block/entity interactions are central.
+- **Activities / minigames:** survival, building, farming, exploration, archaeology, redstone/automation, combat, authored maps, servers and community minigames coexist without one required loop.
+- **Combat / stealth / loot / rewards:** melee/ranged combat, crouch/visibility/noise-related mechanics, mob/structure loot and progression materials exist; stealth is contextual rather than a full social-stealth system.
+- **Death / failure / recovery:** mode-specific death/respawn/item loss, Hardcore permanence and server/map-authored variants are distinguished.
+- **Economy / trading:** villager/bartering systems and player/server economies exist; there is no one universal global market, and Marketplace is a Bedrock content/business layer rather than the in-fiction economy.
+- **Story / relationships / romance / reputation / party / companions:** vanilla has light environmental/progression framing, pets and villagers/reputation-like systems; romance/companion-affinity campaign structure is absent. Human multiplayer supplies the richest social continuity.
+- **NPC/AI behavior and schedules / factions:** mobs/villagers have bounded schedules/behaviors and raid/hostility relationships, but no deep individual autobiographical memory or autonomous political simulation.
+- **World map / environment / quests / events:** procedural biomes/structures/dimensions, advancements and authored server/map objectives provide direction without a conventional mandatory quest campaign.
+- **Building / settlements / management:** construction, farms, storage, automation and village manipulation are central; player-managed worker-population governance is emergent/server-authored rather than a canonical colony-management layer.
+- **Multiplayer / social / endgame / return loops:** Java servers/mods/data packs and Bedrock cross-platform/Marketplace/Realms are separate ecosystems. The End/dragon is a formal milestone, while building, technical projects, exploration, servers and recurring game drops provide continuing purpose.
+
+**Current boundary check:** **Wilderness Bound shipped September 15, 2026** as Java **26.3** and Bedrock **26.50**. Bedrock's latest stable maintenance in this audit is **26.52 (September 25)**. Java **26.4 Snapshot 1 (September 22)** is explicitly a development snapshot, not the current stable release. Mojang's new year-based versioning intentionally lets Java and Bedrock use different trailing numbers, so matching “26.x” labels are not assumed feature-identical patch numbers. [MC01](#mc01) [MC17](#mc17)
+
+
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / scope / promise | §§1–3, 28 |
@@ -1227,3 +1248,5 @@ Then execute the boring parts while keeping the meaningful choice with the playe
 <a id="mc15"></a>**MC15 — [Constant Danger Fuels Addictive Indie Game Minecraft](https://www.wired.com/2010/10/minecraft-danger/).** Clive Thompson, Wired, 2010. Contemporary player/community reporting on survival, builds, redstone computing and shared experiments; not a formal review.
 
 <a id="mc16"></a>**MC16 — [Java system requirements update](https://www.minecraft.net/en-us/article/minecraft-java-edition-system-requirements).** Mojang, 2026-07-21. Current evidence that Java remains actively evolving technically and edition-specific; not used as a gameplay-quality source.
+
+<a id="mc17"></a>**MC17 — [Bedrock 26.50 Wilderness Bound](https://feedback.minecraft.net/hc/en-us/articles/48826825649933-Minecraft-Bedrock-Edition-26-50-Changelog-Wilderness-Bound), [Bedrock 26.52 hotfix](https://feedback.minecraft.net/hc/en-us/articles/49175370527501-Minecraft-Bedrock-Edition-26-52-Hotfix-Changelog), [Java 26.4 Snapshot 1](https://feedback.minecraft.net/hc/en-us/articles/49076034811533-Minecraft-Java-Edition-26-4-Snapshot-1), and [version-numbering explanation](https://www.minecraft.net/en-us/article/minecraft-new-version-numbering-system), checked September 27, 2026.** Primary Mojang/Minecraft support material distinguishing current Bedrock maintenance from Java stable and snapshot lines; snapshot features are not promoted to stable scope.
