@@ -1,8 +1,8 @@
 # Vampire Survivors — full research dossier
 
-**G44 · Complete research pass, September 26, 2026.** This dossier uses **Vampire Survivors 1.16.x** as the current product boundary, while separating the base-game rules from paid DLC and from historical versions. Local couch co-op and current online co-op are treated as distinct rulesets. The August 2026 **Legacy of the Bloodmoon** expansion is included as current expansion scope but is not silently attributed to the base game.
+**G44 · Research pass and substantive audit remedies, September 26, 2026.** This dossier uses **Vampire Survivors 1.16.x** as its current product boundary, separating base rules, DLC, local cooperation and online cooperation. The audit adds the missing mode/progression operations, exact expansion inventory, group-access restrictions and an actually inspected helpful Steam sample. Historical rules and unresolved official-document discrepancies remain qualified. This is reference research, not accepted OpenLegend implementation requirements, and no game, network session, footage or soundtrack was tested.
 
-[Preserved overview](../games/vampire-survivors.md) · [Detailed mechanics study](../mechanics/vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
+[Preserved overview](../games/vampire-survivors.md) · [Detailed mechanics study](../mechanics/vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md)
 
 Vampire Survivors is a compact demonstration that **automation can relocate agency instead of eliminating it**. The character attacks automatically, yet movement, weapon geometry, build selection, evolution dependencies, pickup timing, route choice and cooperative resource allocation remain meaningful. For OpenLegend, this is unusually relevant to delegation: a player does not need to manually issue every low-level action if the remaining intervention points still determine purpose and risk.
 
@@ -23,7 +23,7 @@ As of September 2026, Steam's current line is **1.16.x**, following:
 - 1.15 “The Wet One,” which added save slots, content filters, stability/performance work, a new stage/characters/weapons/Darkanas/Relics;
 - 1.16, which supports **Legacy of the Bloodmoon**, additional Moonspell content and further performance/QOL changes. [VS-A](#vs-a) [VS-B](#vs-b)
 
-Current paid/free content history includes multiple expansions and collaborations. This dossier focuses on the base grammar, using expansion content only where it demonstrates how the grammar scales.
+The exact eight gameplay DLC packages and their paid/free distinction are in §16. The soundtrack is separate merchandise, not a ninth gameplay expansion. A desktop feature or later patch is not automatically available on every mobile/console edition. [VS-X](#vs-x)
 
 ## 2. First-session loop
 
@@ -167,7 +167,7 @@ to
 to
 - actively curate uncertainty.
 
-A September 2026 Steam complaint argues that the ever-growing content pool can make reroll/Banish management itself feel like wasted time. That is a meaningful downside of extensibility: more valid options can reduce **signal density**. [VS-D](#vs-d)
+The original pass recorded a September 2026 complaint that the growing content pool makes offer management itself feel wasteful. This is retained as dated testimony rather than a representative finding or a newly recovered helpful-ranked account. [VS-D](#vs-d)
 
 ## 7. Passive items and build constraints
 
@@ -191,6 +191,14 @@ A passive can therefore be selected for a future dependency even when another it
 
 This is a clear commitment mechanic:
 > future recipe potential competes with present survival.
+
+### Six slots are an acquisition rule, not a universal ceiling
+
+Ordinary level-up selection allows six weapons and six passive items. Picking up stage-spawned equipment can exceed those limits. Therefore filling the ordinary slots before collecting a known floor item can produce a different final build from taking that item early. This is not unrestricted mid-run equipment replacement. [VS-R](#vs-r)
+
+Special content adds further exceptions. The 1.16.100 notes explicitly let eligible Operation Guns and Emergency Meeting special passives appear through level-ups/Arma Dio despite a filled passive inventory. Older references saying an empty slot is always required should not override that dated change. [VS-B](#vs-b)
+
+**Interpretation:** a clear limit can create route planning, but exceptions need to identify which acquisition channel they belong to. “Six items maximum” would incorrectly erase both ordinary floor pickups and the later explicit DLC rule.
 
 ## 8. Weapon evolution: understandable dependency with strong payoff
 
@@ -267,11 +275,21 @@ A persistent OpenLegend world cannot simply reset after thirty minutes. Once aut
 
 not manufactured endless busywork.
 
-## 11. Arcana and Darkana: global run modifiers
+### Inverse and Endless change different contracts
 
-Arcana and later Darkana systems add broader rule modifiers.
+**Gracia's Mirror** unlocks Inverse, a harder stage variant with greater enemy pressure and reward bonuses. The upside-down presentation can be controlled separately from the difficulty; it is not merely a cosmetic rotation. Additional Merchant offerings also change preparation. [VS-S](#vs-s)
 
-They can reshape:
+**Seventh Trumpet** unlocks Endless. The stage-ending Reaper is suppressed and enemy waves cycle with increasing pressure; this does not make the run harmless or freeze progression at the first cycle. Merchant returns can create further opportunities. Eudaimonia Machine's Directer grants the relics through its “Too Easy”/“Too Hard” interaction; receiving one first does not permanently exclude the other. [VS-S](#vs-s)
+
+**Interpretation:** removing an endpoint and increasing difficulty are separate decisions that can compose. Neither should be silently inferred from the other. A player who wants to see a completed build operate longer is expressing a different preference from a player asking for harder initial survival.
+
+## 11. Arcana and Darkana: global rules with acquisition timing
+
+Randomazzo in Gallo Tower unlocks the Arcana system. When enabled, a player ordinarily selects an unlocked card at the start and later chooses from randomized offers in Arcana chests. The familiar thirty-minute-stage bosses appear at minutes 11 and 21, but shorter stages use different schedules. Three is the ordinary acquisition pattern, not a universal hard maximum. [VS-T](#vs-t)
+
+Darkasso in Room 1665 extends that same selection system with Darkanas, rather than creating a separate equipment inventory. **Moonlight Bolero** adds a treasure-bearing boss each minute; some resulting chests can supply further Arcanas or passives beyond ordinary limits. The cost is facing and collecting from those enemies, not receiving every desired modifier automatically. [VS-U](#vs-u)
+
+These cards can reshape:
 - weapon behavior;
 - damage relationships;
 - pickups;
@@ -280,17 +298,11 @@ They can reshape:
 - stage events;
 - build incentives.
 
-These are closer to run-level “law modifiers” than normal equipment.
-
 Version 1.15 added three Darkanas alongside other content. [VS-A](#vs-a)
 
-OpenLegend world packages can similarly support:
-- explicit local laws;
-- scenario modifiers;
+**Interpretation:** a run modifier can alter how later modifiers are obtained. That is more consequential than another flat bonus and creates another reason to explain timing, eligibility and limits. OpenLegend world packages can support explicit local laws or scenario modifiers, but these should be inspectable and versioned rather than hidden prompt text.
 
-but those should be inspectable and versioned rather than hidden prompt text.
-
-## 12. Gold, PowerUps and persistent progression
+## 12. Gold, PowerUps and several kinds of progression
 
 Runs award resources/unlocks that persist outside the run.
 
@@ -307,6 +319,22 @@ Persistent progression includes:
 - Adventures/DLC content.
 
 The progression is largely **breadth + controlled baseline advantage**, not one endless RPG level ladder.
+
+### Limit Break extends the current weapon build
+
+Great Gospel unlocks this selectable modifier. Once equipped weapons and passives reach their ordinary upgrade limits, further levels can offer weapon-stat improvements instead of the usual gold/healing options. “Random always” automates those repeated choices. Acquiring an additional unmaxed stage passive can temporarily restore ordinary upgrading. Chests do not simply become the same Limit Break menu. [VS-V](#vs-v)
+
+The reference documents evolution resetting accumulated extra stats in the ordinary case; that should not be generalized into an untested claim about every later DLC union. This is growth within a run, not an automatic permanent upgrade to the character's next attempt.
+
+**Interpretation:** a mature build gains somewhere to put experience, but another input's arrival can change what “fully upgraded” means. A meaningful explanation identifies the scope of growth rather than calling every larger number persistent progression.
+
+### Adventures reset a subset, not the main save
+
+The official FAQ describes chapter-based mini-campaigns with restricted arsenals and distinct objectives. Main-game Relics and unlocked modes carry over, while most other advancement does not. Buying a weapon from an Adventure Merchant equips it for that run and opens it in that Adventure's later choices—not every other Adventure. Completing the sequence can reward the main game with coins; Ascending restarts that Adventure while awarding adjustable bonuses. [VS-Q](#vs-q)
+
+Base access uses Atlas Gate under its documented progression conditions; DLC Adventures require their relevant pack. **Evidence limit:** the same FAQ contains incompatible old and updated Ascension percentage/cap descriptions. This dossier relies on the reset-and-bonus structure, not a fabricated exact reconciliation or its obsolete “launch soon” sentence. [VS-Q](#vs-q)
+
+**Interpretation:** bounded local renewal can coexist with a durable larger collection. Reusing a known grammar with a smaller initial arsenal creates another learning arc without deleting what the player already earned elsewhere.
 
 ### Golden Eggs / extreme scaling
 
@@ -353,53 +381,38 @@ versus
 
 This makes resource allocation social without requiring dialogue trees.
 
-## 15. Current online co-op
+## 15. Online cooperation: access and continuity are part of the mode
 
-Current online play is **not just couch play over the internet**.
+The official FAQ describes up to four independently roaming players, using invitations/room codes rather than random matchmaking. Each needs a device and game copy; couch and online cannot be mixed. Mobile was excluded at online launch. Crossplay is **within identified ecosystems**—for example Microsoft-store PC/Xbox and PS4/PS5—not universal Steam/console interoperability. Relevant DLC content requires ownership by everyone. [VS-E](#vs-e)
 
-Official online documentation distinguishes:
-- up to four players;
-- independent roaming rather than one shared camera;
-- invitation/room-code entry rather than random matchmaking;
-- host-owned stage/item availability;
-- individual unlocks;
-- optional acceptance of acquired progress back into a player's own save;
-- host/client disconnect consequences. [VS-E](#vs-e)
+Characters come from each player's save, while the host determines available stages/items. Group-acquired progress can optionally be accepted into an individual's save afterward. If the host disconnects, everyone's session ends. A departing client's weapons are redistributed and play continues, but that player cannot rejoin mid-run. Console access may also require its platform subscription. These are dated documentation rules, not a current connection test. [VS-E](#vs-e)
 
-Current 1.15/1.16 patch notes also show continued work on:
-- online desyncs;
-- DLC sharing groundwork;
-- save management.
+Current 1.15/1.16 notes show continued desync, save and DLC-sharing work. A plan or groundwork for sharing does not itself supersede the FAQ's published ownership requirement. [VS-A](#vs-a)
 
-This is useful OpenLegend evidence:
-> multiplayer changes ownership/progression semantics, not only network transport.
+**Interpretation:** multiplayer changes ownership, admission and interruption costs, not only transport. Independent roaming removes some shared-camera negotiation while a host departure introduces a different collective dependency.
 
 ## 16. DLC and collaboration boundaries
 
-Major expansion/collaboration families include historically:
-- Legacy of the Moonspell;
-- Tides of the Foscari;
-- Emergency Meeting;
-- Operation Guns;
-- Ode to Castlevania;
-- later packs/content;
-- **Legacy of the Bloodmoon** in 2026.
+The inspected Steam DLC catalog lists eight gameplay packages, plus a separate soundtrack. Dates below identify those packages, not the introduction of every later feature inside them. Paid/free is the inspected storefront classification, not a permanent price promise. [VS-X](#vs-x)
 
-Bloodmoon adds:
-- 12 characters;
-- 16+ weapons/evolutions;
-- 11 tracks;
-- one Adventure;
-- a large stage. [VS-B](#vs-b)
+| Package | Release | Access and identity |
+| --- | --- | --- |
+| Legacy of the Moonspell | December 15, 2022 | Paid; Moonspell clan and eastern-fantasy setting. |
+| Tides of the Foscari | April 13, 2023 | Paid; academy/fairy-tale adventure. |
+| Emergency Meeting | December 18, 2023 | Paid; Among Us collaboration. |
+| Operation Guns | May 9, 2024 | Paid; Contra collaboration. |
+| Ode to Castlevania | October 31, 2024 | Paid; Castlevania collaboration. |
+| Emerald Diorama | April 10, 2025 | Free; SaGa: Emerald Beyond collaboration. |
+| Ante Chamber | October 28, 2025 | Free; Balatro collaboration. |
+| Legacy of the Bloodmoon | August 28, 2026 | Paid; Bloodmoon clan expansion. |
 
-It also shipped with a free Moonspell content expansion and 1.16 base-engine/QOL changes.
+**Emerald Diorama** adds Glimmer: attacking with eligible weapons can reveal an additional technique. Fleuret can acquire a freezing cutting technique, for example. Its characters also include paired/puppet allies and a low-health Showstopper burst. These are defined conditions, not arbitrary emergent ability invention. [VS-Y](#vs-y)
 
-These are **content built on the same grammar**.
+**Ante Chamber** translates Balatro motifs into this game's activity: Jimbo amplifies Survarot stat rewards, Chicot changes bosses, and Fibonacci Seltzer can trigger other weapons. The Outer Saboteur spends the player's coins offensively. A collaboration therefore can modify resources and triggers instead of simply importing a costume; it does not turn the game into Balatro's turn-based hand scoring. [VS-Z](#vs-z)
 
-OpenLegend's expansion packs should ideally do the same:
-- add actors/items/laws/content;
-- reuse common systems;
-- avoid building an unrelated one-off runtime for every pack.
+**Bloodmoon** adds twelve characters, sixteen-plus weapons/evolutions, eleven tracks, an Adventure and a large stage. Its release accompanies free Moonspell additions and base 1.16 work; those are different entitlements. The exact original announcement and inspected official-text mirror are preserved below. [VS-B](#vs-b)
+
+**Interpretation:** expansion packs can deepen a shared grammar through new eligibility, resources and relationships. The counterpressure is discoverability: more content can dilute the pool from which a player is trying to construct a particular experiment.
 
 ## 17. Story and narrative
 
@@ -417,6 +430,8 @@ DLC can add stronger authored setting/story identity:
 - Foscari's academy/fairy-tale framing;
 - Castlevania collaboration;
 - Bloodmoon's clan/pilgrimage/manor premise.
+
+Adventures add short, connected chapter objectives within their limited inventories (§12). The developer treats their lore playfully rather than presenting a comprehensive, authoritative history of a simulated society. [VS-Q](#vs-q)
 
 The meaningful base narrative is often:
 - what the build became;
@@ -441,9 +456,7 @@ Sound is disproportionately important:
 
 Nintendo Life praised the soundtrack/sound design and “flow,” while noting framerate/readability problems when the screen becomes overloaded, particularly in co-op. [VS-F](#vs-f)
 
-The current Steam surface still contains both:
-- praise for audiovisual spectacle;
-- complaints that huge content and effects can overwhelm menus/readability/performance. [VS-D](#vs-d)
+The player surfaces contain both praise for spectacle and complaints about menus, readability and performance. These are particular experiences, not uniform hardware results. [VS-D](#vs-d) [VS-O](#vs-o)
 
 Patch 1.15 directly responded with:
 - filters;
@@ -551,37 +564,27 @@ The review directly supports the “automation relocates agency” interpretatio
 
 **Criticized:** the visual presentation can look generic/dull enough to repel players before they understand the loop; the game's depth is not legible from trailers/screenshots alone. [VS-N](#vs-n)
 
-## 23. Current Steam/player feedback
+## 23. Steam and other direct player evidence
 
-Steam's aggregate rating remains extremely positive.
+### Actually inspected helpful-positive sample
 
-### Positive sample
+The English **Most Helpful (All Time)** general surface was successfully reopened during the audit remedy. **Baron Calamity, January 15, 2022**, values controls that work for their access needs and later appended a positive release-edition update. **hsagebear0, February 2, 2024**, similarly values one-handed movement and simple menu inputs. **Osirus, February 21, 2022**, values immediate, low-ceremony repeat play. These are specific accounts of accessibility and appeal, not proof that the game is accessible to every disabled player. Present hours and later edits are not publication-time measurements. [VS-W](#vs-w)
 
-Current reviews praise:
-- huge content volume;
-- inexpensive DLC;
-- soundtrack;
-- the pleasure of watching a build become overwhelming;
-- easy “background/relaxing” play.
+Many highly ranked entries are jokes or price comparisons. They are retained as cultural context rather than coded as detailed mechanics evidence. The original pass's broader positive feed also recorded appreciation for content volume, inexpensive additions, music and relaxing escalation; that feed was not a helpful-ranked sample. [VS-O](#vs-o)
 
-A September 2026 review explicitly praises the massive roster/stage/item volume while noting menu/display roughness. [VS-O](#vs-o)
+### Negative contrast and a narrower ranking claim
 
-### Negative/current sample
+The ranked negative URLs repeatedly failed retrieval, including language and pagination variants. A reopened **Most Recent / Negative Only** page instead exposed a cached early-September surface. **caeris, displayed September 6 without a year**, dislikes cooperative waiting and repeated death; **jerry, September 5**, reports level-up freezes and an inability to rejoin; **lorainpsycho, September 1**, objects to obtaining a required Foscari progression tool through uncertain offers. These are directly read criticisms, **not all-time top-negative rankings or independent bug verification**. The displayed day/month is preserved without inventing a year. [VS-D](#vs-d)
 
-A September 25, 2026 negative review argues that the content pool has become so large that players spend excessive time on Banish/Reroll/Skip/restarts to force desired builds. [VS-D](#vs-d)
+The original pass separately recorded a September 25, 2026 account objecting to content-pool/Banish/Reroll burden. The reopened cache did not expose that same post, so it is retained as inherited evidence rather than a newly re-read account. The actual 1.16 Banish change and broader complaint about managing offers need not contradict one another. [VS-D](#vs-d) [VS-B](#vs-b)
 
-Other current complaints include:
-- online crashes/desyncs;
-- late-run performance;
-- clutter/content overload.
+Metacritic's original-pass 2026 sample includes praise for continued inexpensive updates and complaints about crashes/slowdowns, especially online. That is another self-selected surface, not representative telemetry. [VS-P](#vs-p)
 
-Metacritic's 2026 user sample includes both:
-- praise for continued inexpensive updates;
-- complaints about crashes/slowdowns, especially online. [VS-P](#vs-p)
-
-No prevalence is inferred beyond the official Steam aggregate.
+**Interpretation:** simplicity can remove an access barrier while also leaving another player wanting more active control. Group progression can create negotiation or unwanted waiting. These are different preferences and failure modes, not one average satisfaction score.
 
 ## 24. Concrete situations
+
+These are constructed rules-based illustrations, not claimed sessions played for this research.
 
 ### Situation A — automatic weapon still rewards deliberate movement
 
@@ -632,6 +635,18 @@ No prevalence is inferred beyond the official Steam aggregate.
 **Result:** build optimization becomes negotiation.
 
 **Lesson:** multiplayer changes resource ownership, not simply player count.
+
+### Situation F — delay a pickup to change the final inventory
+
+**Goal:** include a known stage passive beyond the normal selected set. **Conditions:** its location is reachable and ordinary slots are not yet full. **Action:** finish selecting the intended six before collecting it. **Result:** acquisition order changes the final composition. **Next decision:** accept the travel risk or take the immediate benefit instead. This is a permitted pickup exception, not an arbitrary capacity increase. [VS-R](#vs-r)
+
+### Situation G — renew a small campaign without deleting the larger one
+
+**Goal:** repeat a favorite Adventure with another bonus emphasis. **Conditions:** that Adventure is complete. **Action:** Ascend and redistribute its supported bonuses. **Result:** local progression restarts while the main save remains distinct. **Next decision:** pursue the remixed route rather than assume every main-game weapon is immediately available. Exact unresolved FAQ coefficients are not required for the example. [VS-Q](#vs-q)
+
+### Situation H — an apparent cap becomes a different kind of growth
+
+**Goal:** keep developing an already maxed loadout. **Conditions:** Limit Break is enabled. **Action:** choose further weapon-stat upgrades, then collect an unmaxed stage passive. **Result:** ordinary upgrading temporarily returns before extra weapon growth resumes. **Next decision:** finish that new dependency or avoid adding it. A completion condition should be evaluated against actual current state. [VS-V](#vs-v)
 
 ## 25. Transferable inspiration for OpenLegend
 
@@ -705,36 +720,40 @@ from early on.
 
 | Requirement | Coverage |
 | --- | --- |
-| R01 identity / scope / promise | §§1–2 |
-| R02 player actions / mechanics | §§2–16 |
-| R03 items / entities / composition | §§3–12, 16 |
-| R04 progression / economy / time | §§6–13, 16, 21 |
-| R05 concrete interactions | §24 |
-| R06 people / AI / social / multiplayer | §§13–15 |
+| R01 identity / scope / promise | §§1–2, exact expansion inventory in §16 |
+| R02 player actions / mechanics | §§2–16, including the formerly missing mode operations |
+| R03 items / entities / composition | §§3–12, 16; acquisition-channel limits |
+| R04 progression / economy / time | §§6–13, 16, 21; Adventure versus run versus permanent growth |
+| R05 concrete interactions | §24, eight constructed cases |
+| R06 people / AI / social / multiplayer | §§13–15; explicit ecosystem and continuity limits |
 | R07 art / audio / interface / feel | §18 |
-| R08 story / narrative | §17 |
+| R08 story / narrative | §§12, 16–17 |
 | R09 production / development | §19 |
 | R10 marketing / distribution / virality | §20 |
 | R11 commercial / participation | §21 |
-| R12 reviews / player feedback | §§22–23 |
-| R13 inspiration / limits | §25 |
-| R14 sources / preservation / navigation | this section + sources |
+| R12 reviews / player feedback | §§22–23; actual helpful-positive and labeled negative alternatives |
+| R13 inspiration / limits | §25 and section-level interpretations |
+| R14 sources / preservation / navigation | this section + annotated sources |
 
-**Mechanics-inventory check:** characters, stats/PowerUps, weapons/passives, evolutions, pickups/chests, movement/traversal, combat/targeting, stages/waves, death, gold/meta progression, Arcana/Darkana, local/online multiplayer and DLC boundaries are covered. There is no conventional crafting, settlement construction, NPC relationship/faction or dialogue-driven narrative system in the base game.
+**Mechanics-inventory check:** characters, stats/PowerUps, weapons/passives and capacity exceptions, evolutions, pickups/chests, movement/targeting, waves, death, gold/meta growth, Limit Break, Adventures/Ascension, Inverse/Endless, Arcana/Darkana, local/online multiplayer and all eight identified gameplay DLC packages are covered. There is no conventional crafting, settlement construction, NPC relationship/faction or dialogue-driven narrative system in the base game.
 
-**Preservation check:** [the original Vampire Survivors chapter](../games/vampire-survivors.md) remains intact. [The detailed automation/co-op study](../mechanics/vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) remains the canonical owner for Whip/Wand/Knife, King Bible/Garlic, Pentagram/Gorgeous Moon and couch-versus-online examples. This dossier adds the current 1.16/Bloodmoon/content-management boundary rather than overwriting the dated study.
+**Preservation check:** [the original chapter](../games/vampire-survivors.md) and [automation/co-op study](../mechanics/vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md) remain intact. They preserve the targeting, evolution, geometric, engine-migration, game-value and cooperation evidence. Earlier five-review summaries and all five original constructed cases remain here, with later additions rather than replacement.
+
+**Audit remedies applied:** the missing mode and progression frameworks are operationally explained, exact DLC scope and online restrictions are supplied, the helpful-positive page was actually read, and the exact Bloodmoon release was recovered. Failed ranked-negative requests are distinguished from the newly read recent-negative alternative. Conflicting official Adventure coefficients and cache dates remain explicit. The historical audit matrix is not the live tracker; current remedy state belongs in the progress ledger. No packet-wide preservation certification, fresh gameplay, soundtrack audition or performance test is claimed.
+
+**Reading route:** compare §§7/10/11/12 for four distinct ways rules change; read the online FAQ before treating a group invitation as compatible; contrast the helpful control-access accounts with the cooperation complaints. Existing linked videos remain viewing routes, not footage represented as watched.
 
 ## Sources
 
-<a id="vs-a"></a>**VS-A — [Vampire Survivors official Steam announcements](https://steamcommunity.com/app/1794680/announcements/?l=english).** poncle, accessed 2026-09-26. Current 1.15/1.16 update, platform, content-management and performance history.
+<a id="vs-a"></a>**VS-A — [Vampire Survivors official Steam announcements](https://steamcommunity.com/app/1794680/announcements/?l=english).** poncle, accessed 2026-09-26. Original pass's 1.15/1.16, platform, content-management and performance history; not proof of every announced future release.
 
-<a id="vs-b"></a>**VS-B — [Legacy of the Bloodmoon is out now](https://steamcommunity.com/app/1794680/announcements/).** poncle, 2026-08-28; current announcement surface also shows 1.16.107 hotfixes in September. Expansion scope and base/Moonspell accompanying changes.
+<a id="vs-b"></a>**VS-B — [Legacy of the Bloodmoon is out now](https://steamcommunity.com/games/1794680/announcements/detail/717913919982667417), [inspected official-text mirror](https://steamdb.info/patchnotes/24926490/).** poncle, August 28, 2026, build 24926490 / 1.16.100. The mirror's original link was followed; the direct page returned a shell. Relevant expansion, Moonspell, Banish and special-passive change sections read. Later planned platform/achievement work is not represented as already shipped by this announcement.
 
 <a id="vs-c"></a>**VS-C — [Vampire Survivors automated attacks, evolution, and cooperative agency](../mechanics/vampire-survivors-automated-attacks-evolution-and-cooperative-agency.md).** Internal detailed study with adjacent community/official mechanic sources.
 
-<a id="vs-d"></a>**VS-D — [Vampire Survivors recent negative Steam reviews](https://steamcommunity.com/app/1794680/negativereviews/?browsefilter=mostrecent&p=1).** Steam Community, accessed 2026-09-26. Self-selected current criticism including content-pool/reroll friction.
+<a id="vs-d"></a>**VS-D — [Recent negative Steam reviews](https://steamcommunity.com/app/1794680/negativereviews/?browsefilter=mostrecent&p=1).** Accessed 2026-09-26. Original pass's late-September complaint is retained with its access attribution; the remedy's reopened cache shows earlier day/month-only posts by caeris, jerry and lorainpsycho. Ranked-negative variants failed. The recent page is not recast as all-time helpful ranking or independently verified current bug prevalence.
 
-<a id="vs-e"></a>**VS-E — [poncle Online FAQ](https://poncle.games/vs-online-faq).** Official current online-mode documentation, accessed 2026-09-26. Online/couch/progress/disconnect boundaries.
+<a id="vs-e"></a>**VS-E — [poncle Online FAQ](https://poncle.games/vs-online-faq).** Official body reopened 2026-09-26. Independent movement, platform ecosystems, ownership, save acceptance and disconnect/rejoin restrictions. The page is marked under construction and contains launch-qualified mobile wording; no current all-platform connection test is implied.
 
 <a id="vs-f"></a>**VS-F — [Vampire Survivors Review](https://www.nintendolife.com/reviews/switch-eshop/vampire-survivors).** Charlie Wacholz, Nintendo Life, 2023-08-16. Switch/local-co-op criticism.
 
@@ -744,17 +763,36 @@ from early on.
 
 <a id="vs-i"></a>**VS-I — [Vampire Survivors gets surprise mobile release, and it's free](https://www.pcgamer.com/vampire-survivors-gets-surprise-mobile-release-and-its-free/).** PC Gamer, 2022-12-09. Historical mobile free/ad model.
 
-<a id="vs-j"></a>**VS-J — [Vampire Survivors on Steam](https://store.steampowered.com/app/1794680/Vampire_Survivors/).** Steam, accessed 2026-09-26. Dynamic review counts/current product surface; SteamDB rating used only as a separate current storefront-derived metric.
+<a id="vs-j"></a>**VS-J — [Vampire Survivors on Steam](https://store.steampowered.com/app/1794680/Vampire_Survivors/).** Steam, accessed 2026-09-26. Dynamic review counts/current product surface; SteamDB rating is a separate storefront-derived metric.
 
 <a id="vs-k"></a>**VS-K — [Vampire Survivors review](https://www.pcgamer.com/vampire-survivors-review/).** Ted Litchfield, PC Gamer, 2022-10-27. Original 1.0 review.
 
 <a id="vs-l"></a>**VS-L — [Vampire Survivors Review](https://nintendoworldreport.com/review/64583/vampire-survivors-switch-review).** Melanie Zawodniak, Nintendo World Report, 2023-08-16. Switch review.
 
-<a id="vs-m"></a>**VS-M — [Review: Vampire Survivors](https://www.destructoid.com/reviews/review-vampire-survivors-switch-pc-indie-xbox/).** Destructoid, 2023. Full independent review.
+<a id="vs-m"></a>**VS-M — [Review: Vampire Survivors](https://www.destructoid.com/reviews/review-vampire-survivors-switch-pc-indie-xbox/).** Destructoid, 2023. Full independent review from the original pass.
 
 <a id="vs-n"></a>**VS-N — [Vampire Survivors review](https://godisageek.com/reviews/vampire-survivors-review/).** Chris White, God is a Geek, 2022-08-08. Early Access criticism of progression and visual first impression.
 
-<a id="vs-o"></a>**VS-O — [Vampire Survivors Steam review feed](https://steamcommunity.com/app/1794680/reviews/).** Steam Community, accessed 2026-09-26. Current self-selected positive/negative qualitative evidence.
+<a id="vs-o"></a>**VS-O — [Steam review feed](https://steamcommunity.com/app/1794680/reviews/).** Accessed 2026-09-26 in the original pass. Self-selected qualitative evidence, not a demonstrated helpful-ranked sample; remedy sampling is VS-W.
 
-<a id="vs-p"></a>**VS-P — [Vampire Survivors user reviews](https://www.metacritic.com/game/vampire-survivors/user-reviews/).** Metacritic, accessed 2026-09-26. Current dated individual user accounts; not representative telemetry.
+<a id="vs-p"></a>**VS-P — [User reviews](https://www.metacritic.com/game/vampire-survivors/user-reviews/).** Metacritic, accessed 2026-09-26 in the original pass. Dated individual accounts; not representative telemetry.
 
+<a id="vs-q"></a>**VS-Q — [Adventures FAQ](https://poncle.games/adventures-faq).** poncle, reopened 2026-09-26. Chapter, inventory, reset and cross-mode reward rules. Mixed old/new Ascension coefficients and obsolete launch-future wording are explicitly not reconciled by invention.
+
+<a id="vs-r"></a>**VS-R — [Weapons](https://vampire-survivors.fandom.com/wiki/Weapons) and [Passive items](https://vampire-survivors.fandom.com/wiki/Passive_items).** Community rules/game-description references, indexed relevant sections inspected 2026-09-26. Ordinary six-slot selection versus floor acquisition; old special-passive wording is qualified by the primary 1.16 notes. Exact expanding catalog counts are not copied.
+
+<a id="vs-s"></a>**VS-S — [Stages](https://vampire-survivors.fandom.com/wiki/Stages), [Gracia's Mirror](https://vampire-survivors.fandom.com/wiki/Gracia%27s_Mirror) and [Seventh Trumpet](https://vampire-survivors.fandom.com/wiki/Seventh_Trumpet).** Indexed original-game mode/relic sections inspected 2026-09-26. Distinguishes harder conditions, display rotation, repeating waves and access; no exhaustive current coefficient table or personally reproduced unlock claimed.
+
+<a id="vs-t"></a>**VS-T — [Arcanas](https://vampire-survivors.fandom.com/wiki/Arcanas).** Indexed selection/timing/exception sections inspected 2026-09-26. Ordinary three-card sequence is not a hard cap; exact exception strategies are not prescribed as universal optima.
+
+<a id="vs-u"></a>**VS-U — [Moonlight Bolero](https://vampire-survivors.fandom.com/wiki/Moonlight_Bolero_%28VI%29), with Darkasso access in VS-S.** Indexed Darkana acquisition and extra-boss/chest behavior inspected 2026-09-26. Random outcomes are not guaranteed delivery of a selected passive.
+
+<a id="vs-v"></a>**VS-V — [Limit Break](https://vampire-survivors.fandom.com/wiki/Limit_Break).** Indexed mechanics inspected 2026-09-26. Great Gospel, maxed-inventory condition, random selection, new-passive interruption and chest distinction; ordinary evolution/reset description not extended blindly to every later union.
+
+<a id="vs-w"></a>**VS-W — [Most Helpful (All Time) Steam reviews](https://steamcommunity.com/app/1794680/reviews/?browsefilter=toprated).** English bodies actually read 2026-09-26. Baron Calamity, hsagebear0 and Osirus are identified in §23. Initial language-filtered request failed; this simpler route succeeded. Jokes, current hours and mutable votes are not a representative survey.
+
+<a id="vs-x"></a>**VS-X — [Publisher's Steam DLC catalog](https://store.steampowered.com/dlc/1794680/Vampire_Survivors/).** Full nine-result listing inspected 2026-09-26: eight gameplay packs plus soundtrack. Exact release dates and free/paid boundaries; sale prices not frozen as permanent economics.
+
+<a id="vs-y"></a>**VS-Y — [Emerald Diorama](https://store.steampowered.com/app/3451100/Vampire_Survivors_Emerald_Diorama/).** poncle, April 10, 2025; full relevant product body read. Glimmer, character-party examples and Showstopper are developer-described features, not independent quality or a general NPC cognition claim.
+
+<a id="vs-z"></a>**VS-Z — [Ante Chamber](https://store.steampowered.com/app/3929770/Vampire_Survivors_Ante_Chamber/).** poncle, October 28, 2025; relevant product body read after following the catalog link. Free access, named effects and resource-spending sidekick; no Balatro hand-scoring system inferred from the collaboration's imagery.
