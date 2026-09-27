@@ -6,9 +6,7 @@ The base contains **270 retained introductory pattern cards in 27 catalogues**, 
 
 Start with the [design foundation](design-foundation.md): what people seek, what resists them, what can be won or lost, and how the 27 categories connect. Then use [selection and scale](selection-and-scale.md) to choose a coherent playable experience and [combinations](combinations.md) to examine actual situations and aftermath. Browse the category owners for their coverage and retained patterns.
 
-These worlds make room for mastery, combat, adventure, rivalry, ambition, wealth, romance, treachery, cruelty, fear and loss, alongside beauty, humor, care, creativity and belonging. Inhabitants have purposes of their own and can be admirable, malicious, conflicted or ordinary. A fictional character need not behave like a helpful assistant. A selected world can favor a particular tone; the library must not silently impose one cooperative or uniformly bleak interpretation on every genre.
-
-**Adult audience and scope:** the creative target is R-rated in tone. The [adult-scope foundation](design-foundation.md#adult-scope-and-world-specific-tone) explicitly covers sex, drugs and alcohol, nightlife, abuse, rape and sexual assault, torture, horror, demons, black magic and deadly catastrophes. PG worlds remain an available authored choice. The shared mechanics vocabulary is not restricted to a PG default.
+The library spans discovery, mastery, creation, relationships, everyday life, ambition, conflict and loss. Particular people can be generous, ordinary, conflicted or cruel; homes, cultures and institutions provide both opportunities and constraints. [World tone and scope](design-foundation.md#world-tone-and-scope) guides the author's selection, including mature subjects or a PG audience. A chosen world has its own character and emphasis.
 
 ## Catalogue map
 

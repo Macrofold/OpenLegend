@@ -1,33 +1,33 @@
 # Conflict, tactics, rescue and aftermath
 
-[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
+[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** Combat can be a central source of mastery, danger, power and fun. Build a satisfying contest of attack, defense, positioning and resources before layering on large simulations. Rescue, restraint, retreat and negotiation broaden its outcomes; they do not require every enemy to be redeemable or every confrontation to have a peaceful victory. Lethality, injury and permanence are authored world and difficulty choices. Warfare, horror, torture and deliberate atrocities belong in the foundation as consequential fictional dynamics.
+**Proposal catalogue · September 27, 2026.** Combat joins physical skill, tactical judgment, equipment and teamwork. A sparring bout, monster hunt, battle or desperate escape offers different objectives and rewards. Build readable attacks, defenses and resource choices, then connect victory, defeat, surrender and rescue to the people and places involved.
 
 [Win by getting everyone home](#win-by-getting-everyone-home) · [Tools for a nonlethal intention](#tools-for-a-nonlethal-intention) · [A warning worth believing](#a-warning-worth-believing) · [The battlefield was a workplace](#the-battlefield-was-a-workplace) · [The companion rescue invitation](#the-companion-rescue-invitation) · [Preparation with several good answers](#preparation-with-several-good-answers) · [Injury changes the team temporarily](#injury-changes-the-team-temporarily) · [Surrender as an actual branch](#surrender-as-an-actual-branch) · [A rival remembers the encounter](#a-rival-remembers-the-encounter) · [The debrief at the kitchen table](#the-debrief-at-the-kitchen-table)
 
 ## Coverage of the playable foundation
 
-The [shared design foundation](design-foundation.md) owns the overall range and selection principles. This compact map establishes coverage for future specific entries; the ten existing cards below remain reusable patterns, not the whole category or a required implementation bundle. World labels describe the domain’s fit; individual examples still require suitable world rules. The [adult scope and world-specific tone](design-foundation.md#adult-scope-and-world-specific-tone) defines the shared content range and presentation choices.
+These domains guide later inventories; the ten cards illustrate selected patterns. Seed-world labels mark fit, with individual examples depending on the chosen world’s rules.
 
-| Domain                              | Seed worlds | Play and consequences                                                                                                                                                                                                                              |
-| ----------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Weapons and direct fighting         | ALL         | Melee reach, ranged aim, armor, damage and clear feedback give swords, bows, firearms or claws distinct jobs; victory must feel effective.                                                                                                         |
-| Defense and execution               | ALL         | Block, dodge, parry, take cover or interrupt; readable preparation and response windows reward practiced timing and tactical judgment.                                                                                                             |
-| Position, terrain and opportunity   | ALL         | Flank, control a choke point, exploit elevation, break a support or escape a hazard; the place changes which actions succeed.                                                                                                                      |
-| Enemy roles and decisive threats    | ALL         | Counter a charger, healer, tyrant’s guard, demon or undead swarm; enemies need supported capabilities and readable threats. A cruel opponent may seek terror or extermination and refuse every offer of mercy.                                     |
-| Builds, preparation and teamwork    | ALL         | Choose equipment, counters and limited supplies; set up a powerful combination, protect a vulnerable ally or trade offense for control.                                                                                                            |
-| Objectives beyond clearing enemies  | ALL         | Defend a person, seize a fort, steal an object, rescue a captive or escape pursuit; lethal victory and careful restraint can both be purposeful choices.                                                                                           |
-| Surrender, captivity and atrocities | ALL         | Captors may ransom, exploit, torture, execute or release prisoners; captives can resist, deceive, escape or receive help. Track goals, custody, actual harm and aftermath; cruelty does not automatically produce obedience or reliable testimony. |
-| Wounds, loss and earned aftermath   | ALL         | Treat injuries, mourn, celebrate survival, claim spoils or face revenge after battle, abuse or atrocity. Loss and disability may persist; recovery creates possible further play without guaranteeing restoration or forgiveness.                  |
+| Domain                              | Seed worlds | Play and consequences                                                                                                                                                                                                  |
+| ----------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Weapons and direct fighting         | ALL         | Spar, duel, hunt or fight a battle; reach, aim, armor, damage and clear feedback give swords, bows, firearms and claws distinct jobs.                                                                                  |
+| Defense and execution               | ALL         | Block, dodge, parry, take cover or interrupt; readable preparation and response windows reward practiced timing and tactical judgment.                                                                                 |
+| Position, terrain and opportunity   | ALL         | Flank, control a choke point, exploit elevation, break a support or escape a hazard; the place changes which actions succeed.                                                                                          |
+| Enemy roles and decisive threats    | ALL         | Counter a charger, healer, tyrant’s guard, demon or undead swarm; opponents have distinct capabilities and aims, including predation, conquest or deliberate terror.                                                   |
+| Builds, preparation and teamwork    | ALL         | Choose equipment, counters and supplies; practice a combination, protect an ally or trade offense for control. Complementary styles make coordinated success satisfying.                                               |
+| Objectives beyond clearing enemies  | ALL         | Defend a person, seize a fort, steal an object, rescue a captive or escape pursuit; the objective determines what victory requires.                                                                                    |
+| Surrender, captivity and escalation | ALL         | Negotiate release or ransom, attempt escape, or confront captors who exploit, torture or execute prisoners. Track custody, resistance, harm and aftermath; cruelty does not guarantee obedience or reliable testimony. |
+| Wounds, rewards and aftermath       | ALL         | Treat injuries, celebrate survival, claim spoils, mourn or face revenge. Recovery, lasting disability, renewed friendship and further ambition produce different continuations.                                        |
 
-Research anchors: [Fire Emblem: The Blazing Blade](source-atlas.md#g60), [Elden Ring](source-atlas.md#g75), [Clair Obscur: Expedition 33](source-atlas.md#g77), [Final Fantasy XVI](source-atlas.md#g93) and [Warcraft III](source-atlas.md#g96). Use the lessons selectively; franchise mechanics and moral cosmologies are not universal OpenLegend laws.
+Research anchors: [Fire Emblem: The Blazing Blade](source-atlas.md#g60), [Elden Ring](source-atlas.md#g75), [Clair Obscur: Expedition 33](source-atlas.md#g77), [Final Fantasy XVI](source-atlas.md#g93) and [Warcraft III](source-atlas.md#g96).
 
 ## Win by getting everyone home
 
 **MD SC FA · Play · High · 2/Extend.** Gap: evacuation goals, carrying, pursuit and withdrawal outcomes.
 
-A party caught near a collapsing bridge can fight, distract, negotiate or retreat with an injured companion. For this encounter, success is survival and preserved relationships; other encounters can legitimately require defeating an enemy or holding ground. Roles include route finder, carrier and rear guard. Make withdrawal a supported outcome with legible pursuit, and avoid awarding so much combat experience that rescue becomes the inferior choice.
+A party caught near a collapsing bridge can fight, distract, negotiate or retreat with an injured companion. This encounter is won by getting the party home. Roles include route finder, carrier and rear guard. Make withdrawal a supported outcome with legible pursuit, and avoid awarding so much combat experience that rescue becomes the inferior choice.
 
 Seeds: [Kenshi](source-atlas.md#g36), [PEAK](source-atlas.md#g47), [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60).
 
@@ -59,7 +59,7 @@ Seeds: [Divinity: Original Sin](source-atlas.md#g56), [Divinity: Original Sin II
 
 **ALL · Play · High · 2/Extend.** Gap: reciprocal cooperation offers and acceptance before movement.
 
-A companion offers a rope pull or shielding position; the player chooses whether and when to accept. Mutual timing makes this cooperative move skillful. Hostile pulls, tackles and forced movement are distinct combat effects with resistance and collision rules, not cooperative invitations. The same mechanic can help in hiking or building. Show capacity, destination and interruption risks, and let a declined offer remain useful information rather than a relationship penalty.
+A companion offers a rope pull or shielding position; the player chooses whether and when to accept. Mutual timing makes this cooperative move skillful. Hostile forced movement uses separate resistance and collision rules. The same mechanic can help in hiking or building. Show capacity, destination and interruption risks, and let a declined offer remain useful information rather than a relationship penalty.
 
 Seeds: [League of Legends](source-atlas.md#g08), [Dota 2](source-atlas.md#g09), [PEAK](source-atlas.md#g47).
 
@@ -75,7 +75,7 @@ Seeds: [Terraria](source-atlas.md#g29), [Elden Ring](source-atlas.md#g75), [Fina
 
 **ALL · Blend · Try · 3/New.** Gap: localized injury, accommodation, recovery and staffing continuity.
 
-An injured scout becomes a map teacher while another member leads fieldwork. Recovery opens social and organizational choices without removing the character from the story. Permanent injury or death can instead be an explicit world or difficulty policy, with stakes made clear before commitment. Show prognosis and care needs, permit useful alternative roles, and avoid a loss spiral where reduced staffing makes all further recovery impossible.
+An injured scout becomes a map teacher while another member leads fieldwork. Recovery opens social and organizational choices without removing the character from the story. Recovery follows the chosen injury and mortality rules. Show prognosis and care needs, permit useful alternative roles, and avoid a loss spiral where reduced staffing makes all further recovery impossible.
 
 Seeds: [Kenshi](source-atlas.md#g36), [Battle Brothers](source-atlas.md#g121), [XCOM 2](source-atlas.md#g125).
 

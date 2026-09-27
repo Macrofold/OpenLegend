@@ -1,27 +1,27 @@
 # Discovery, expeditions and authored situations
 
-[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
+[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** Adventure needs things worth seeking, threats worth facing and discoveries that change what players can do. Author starting conditions, coherent obstacles and possible consequences without requiring one sequence of obedience. Treasure, victory, wonder, companionship, escape and returning home can each justify a journey; a finite directed story can coexist with optional exploration. Horror, zombie apocalypses and struggles against demons, cruel gods or tyrants can be the central promise of a selected world.
+**Proposal catalogue · September 27, 2026.** Adventure begins with a reason to go somewhere and something worth finding there. Treasure, curiosity, work, companionship, escape and ambition lead to different journeys. Places, obstacles and discoveries should offer choices, with enough direction to sustain a finite story and enough freedom to explore.
 
 [The return expedition](#the-return-expedition) · [The missing person who made a choice](#the-missing-person-who-made-a-choice) · [A treasure that is a route](#a-treasure-that-is-a-route) · [The expedition with several purposes](#the-expedition-with-several-purposes) · [The mystery that permits useful error](#the-mystery-that-permits-useful-error) · [A rival expedition with manners](#a-rival-expedition-with-manners) · [The monster is a location](#the-monster-is-a-location) · [A local ending worth choosing](#a-local-ending-worth-choosing) · [The guided path and the wild path](#the-guided-path-and-the-wild-path) · [A discovery that invites a party](#a-discovery-that-invites-a-party)
 
 ## Coverage of the playable foundation
 
-The [shared design foundation](design-foundation.md) owns the overall range and selection principles. This compact map establishes coverage for future specific entries; the ten existing cards below remain reusable patterns, not the whole category or a required implementation bundle. World labels describe the domain’s fit; individual examples still require suitable world rules. The [adult scope and world-specific tone](design-foundation.md#adult-scope-and-world-specific-tone) defines the shared content range and presentation choices.
+These domains guide later inventories; the ten cards illustrate selected patterns. Seed-world labels mark fit, with individual examples depending on the chosen world’s rules.
 
-| Domain                               | Seed worlds | Play and consequences                                                                                                                                                                                                             |
-| ------------------------------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Invitation, purpose and reward       | ALL         | Take a monster contract, pursue a thief, seek a rare object or answer a friend’s call; show a concrete desire and a worthwhile potential payoff.                                                                                  |
-| Travel and dangerous routes          | ALL         | Choose speed, supplies, stealth or safety; landmarks, hostile territory, weather and shortcuts make navigation a series of decisions, not empty distance.                                                                         |
-| Dungeons, horror and contested sites | ALL         | Explore tombs, occupied forts, laboratories and beast lairs; horror can make knowledge, light, supplies and escape uncertain. Clues, hazards, secrets and routes give fear decisions rather than only frightening description.    |
-| Monsters, adversaries and climaxes   | ALL         | Track a predator, evade zombies, expose an ambush or confront a demon, cruel ruler or god. Investigation and preparation inform resistance, flight or victory; understanding an enemy need not make peace possible.               |
-| Treasure, secrets and advancement    | ALL         | Find money, equipment, a spell, a recipe, an heirloom or forbidden history; rewards change builds, relationships, access or the pleasure of owning something beautiful.                                                           |
-| Rivals, factions and betrayal        | ALL         | Race another expedition, accept a dubious patron or uncover a double agent; some aims conflict irreconcilably and choices can cost allies or close routes.                                                                        |
-| Companions, wonder and homecoming    | ALL         | Share camp stories, discover a breathtaking place or bring someone home; quiet scenes and celebration let danger and victory acquire personal meaning.                                                                            |
-| Failure, changed returns and endings | ALL         | Escape a lost battle, survive an apocalypse, revisit a changed home or bury a friend; deaths, betrayals and destroyed places can endure. A finite ending may be joyful, compromised or tragic without forcing another escalation. |
+| Domain                               | Seed worlds | Play and consequences                                                                                                                                                                      |
+| ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Invitation, purpose and reward       | ALL         | Answer a friend’s call, seek a rare flower, accept a monster contract or pursue a thief; give the journey a concrete desire and a worthwhile payoff.                                       |
+| Travel and route knowledge           | ALL         | Read landmarks, stop at an inn, visit a festival or cross hostile territory; supplies, weather and shortcuts shape the pace and approach.                                                  |
+| Dungeons, horror and contested sites | ALL         | Explore tombs, occupied forts, laboratories and beast lairs; clues, puzzles, hazards and routes create discovery. In horror, uncertain light, supplies and escape intensify those choices. |
+| Monsters, adversaries and climaxes   | ALL         | Track a predator, evade zombies, expose an ambush or confront a demon, tyrant or cruel god; investigation and preparation inform resistance, flight or victory.                            |
+| Treasure, secrets and advancement    | ALL         | Find money, equipment, a spell, a recipe, an heirloom or forgotten history; rewards change builds, relationships, access or the pleasure of owning something beautiful.                    |
+| Rivals, factions and betrayal        | ALL         | Race another expedition, work with a patron or uncover a double agent; alliances offer resources, while incompatible aims can cost friends or close routes.                                |
+| Companions, wonder and homecoming    | ALL         | Share camp stories and jokes, discover a breathtaking place, begin a romance or bring someone home; the journey creates shared memories and new interests.                                 |
+| Changed returns and endings          | ALL         | Revisit a thriving home, retire after a victory, recover from defeat or survive an apocalypse; a finite ending can be joyful, compromised or tragic, with persistent consequences.         |
 
-Research anchors: [The Witcher 3](source-atlas.md#g72), [Elden Ring](source-atlas.md#g75), [Final Fantasy XV](source-atlas.md#g92), [Assassin’s Creed IV: Black Flag](source-atlas.md#g98) and [Narnia](source-atlas.md#w19). Use the lessons selectively; franchise mechanics and moral cosmologies are not universal OpenLegend laws.
+Research anchors: [The Witcher 3](source-atlas.md#g72), [Elden Ring](source-atlas.md#g75), [Final Fantasy XV](source-atlas.md#g92), [Assassin’s Creed IV: Black Flag](source-atlas.md#g98) and [Narnia](source-atlas.md#w19).
 
 ## The return expedition
 
@@ -67,7 +67,7 @@ Seeds: [Outer Wilds](source-atlas.md#g34), [Disco Elysium](source-atlas.md#g66),
 
 **ALL · Play · Try · 2/Extend.** Gap: independent bounded plans and negotiable shared interests.
 
-Another team wants the same summit but carries the spare rope you need. Compete for a record, share supplies or divide research goals. This courteous rivalry need not turn violent. Other expeditions may steal, sabotage or kill for the prize, with discoverable motives and consequences. Their progress should follow plausible resources and information, not teleport ahead to preserve drama, and cooperation should not erase their desire for recognition.
+Another team wants the same summit but carries the spare rope you need. Compete for a record, share supplies or divide research goals. Their competitive spirit can make an eventual shared camp enjoyable as well as useful. Their progress should follow plausible resources and information, not teleport ahead to preserve drama, and cooperation should not erase their desire for recognition.
 
 Seeds: [Battle Brothers](source-atlas.md#g121), [Dragon's Dogma 2](source-atlas.md#g127), [Middle-earth](source-atlas.md#w01).
 
@@ -83,7 +83,7 @@ Seeds: [Caves of Qud](source-atlas.md#g33), [Elden Ring](source-atlas.md#g75), [
 
 **ALL · Play · High · 1/Compose.** Gap: authored milestones and persistent acknowledgment.
 
-An adventure can end when a ferry runs, a friend comes home or a workshop opens. Players may stay, hand responsibility over or begin another life elsewhere. The world can continue without escalating to apocalypse. Completion should leave a tangible change and room for quiet play, rather than treating every modest accomplishment as merely a tutorial for conquest.
+An adventure can end when a ferry runs, a friend comes home or a workshop opens. Players may stay, hand responsibility over or begin another life elsewhere. Completion leaves a tangible change, recognition from the people involved and room to enjoy the result.
 
 Seeds: [Old School RuneScape](source-atlas.md#g49), [Final Fantasy XIV](source-atlas.md#g91), [Battle Brothers](source-atlas.md#g121).
 
@@ -99,6 +99,6 @@ Seeds: [Elden Ring](source-atlas.md#g75), [Final Fantasy XVI](source-atlas.md#g9
 
 **ALL · Play · Try · 1/Compose.** Gap: authored social reuse of a discovered place.
 
-Explorers find a cave with beautiful acoustics. A different expedition might seek a legendary weapon; both discoveries can be worth the journey. Musicians, builders and cautious neighbors may turn it into a venue, leave it quiet or arrange occasional visits. Discovery feeds ordinary life. The place need not produce a stat reward; its atmosphere, access and social possibilities can justify the expedition on their own.
+Explorers find a cave with beautiful acoustics. Musicians, builders and cautious neighbors may turn it into a venue, leave it quiet or arrange occasional visits. Discovery feeds ordinary life. The place need not produce a stat reward; its atmosphere, access and social possibilities can justify the expedition on their own.
 
 Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Outer Wilds](source-atlas.md#g34), [Final Fantasy XV](source-atlas.md#g92).

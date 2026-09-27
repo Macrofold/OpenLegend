@@ -2,7 +2,7 @@
 
 [Library](README.md) · [Labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Original, untested proposal scenes.** These combine specific cards into playable predicaments. The listed methods are examples, not exhaustive solutions or outcomes the narrator may guarantee. Participants act with their own knowledge and priorities. Implementation estimates cover a bounded scene, not a whole world. Stop when the scene's meaningful outcome is reached; do not generate endless emergencies to keep it running. The original sixteen constructive scenes remain alongside nine additional situations centered on competition, combat, power, treachery and their aftermath. A gentle scene need not become a battle; the collection as a whole must also support actual opposition, desired victories and lasting losses.
+**Original, untested proposal scenes.** These 25 situations combine specific cards into celebrations, discoveries, practical problems, rivalries, battles and turning points in people's lives. The listed methods are examples, not exhaustive solutions or outcomes the narrator may guarantee. Participants act with their own knowledge and priorities. Implementation estimates cover a bounded scene, not a whole world. Stop when the scene's meaningful outcome is reached; do not generate endless emergencies to keep it running. Give the result room to matter: enjoy the occasion, use a discovery, claim a victory, live with a loss or follow a changed relationship.
 
 ## The wedding bridge
 

@@ -4,7 +4,7 @@
 
 **Optional setting proposal, not canonical world history or implemented content.** Threewater March is a medieval survival and adventure world about **winning a place in a beautiful, dangerous borderland**. Build a home, hunt, learn a trade, explore abandoned works, fight for pay or conviction, acquire better equipment, and choose who gains power over the river crossings. Knights want land and renown, raiders want plunder, merchants want profitable control, households want another good winter, and these purposes can collide.
 
-The proposed starter experience joins **prepare → venture into danger → fight, bargain, steal or improvise → bring something consequential home → recover, improve and choose a larger ambition**. The joy of a harvest feast and the thrill of winning a difficult fight both matter. Peaceful homesteading is a possible variant; it does not replace the default proposal's armed opponents, loss, rivalry and adventure. Nor must every resident be miserable or every dispute end in violence. The [shared design foundation](../design-foundation.md) explains the wider range.
+Home, work and expeditions feed one another. At home, cultivate a garden, make a useful thing, trade, train, form a relationship or enjoy the fair. Expeditions follow **prepare → venture out → fight, bargain, explore or improvise → bring something consequential home → recover, improve and choose what comes next**. A finished room, successful harvest, discovered route and hard-won victory offer different satisfying returns. The [shared design foundation](../design-foundation.md) connects these systems.
 
 The material palette takes a loose regional inspiration from medieval societies around 1000–1200: timber, stone, iron, sail, water power, swords, spears and bows. This is an invented region whose starting play omits firearms, not a claim that the entire historical world was then before gunpowder. Technology can advance through knowledge, resources and institutions. The starting period is an aesthetic and capability choice, not an immutable prohibition on invention.
 
@@ -12,7 +12,7 @@ The material palette takes a loose regional inspiration from medieval societies 
 
 ## A place worth surviving in
 
-Three rivers meet around a low wooded ridge. The upper river is cold and fast, the middle river powers mills, and the lower river spreads through reed marshes before reaching the sea. Flooding is both danger and fertility. A place can be beautiful without being benign: ice sings under bridges, cranes gather in wet fields and autumn smoke lies between the hills.
+Three rivers meet around a low wooded ridge. The upper river is cold and fast, the middle river powers mills, and the lower river spreads through reed marshes before reaching the sea. Flooding brings both danger and fertile soil. Ice sings under bridges, cranes gather in wet fields and autumn smoke lies between the hills.
 
 | Place or polity                                           | Proposed life and tension                                                                                                       | Build path                                           |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
@@ -28,19 +28,19 @@ These are political communities, not fixed ethnic temperaments. A Ternmere perso
 
 **Seventy years ago: the Three Winters.** Consecutive difficult harvests led several villages to share seed stores. Some remember the pact as generosity, others as the moment large households gained leverage over smaller ones. The surviving ledgers can guide present reserves without settling the moral history.
 
-**Twenty-six years ago: the Reed War.** Competing landing tolls escalated into a short, destructive conflict. Many people were displaced; others profited from repair contracts. The war matters through missing records, abandoned orchards and relationships, not an obligation to make every character traumatized or vengeful. Its peace agreement protects crossings but leaves maintenance responsibility vague.
+**Twenty-six years ago: the Reed War.** Competing landing tolls escalated into a short, destructive conflict. Many people were displaced; others profited from repair contracts. The war matters through missing records, abandoned orchards and relationships; later marriages, new work and shared celebrations have also shaped the intervening years. Its peace agreement protects crossings but leaves maintenance responsibility vague.
 
 **Eight years ago: the south river moved.** A flood made Bellwold's old mill nearly useless and created a new ferry opportunity. The celebrated rescue of trapped families involved a ferryman, several washerwomen and two rival soldiers; the public plaque names only the ferryman. That omission is one possible historical dispute.
 
 **Now: the crossing without a master.** A bank crack threatens the old ford just before the harvest fair. An iron-and-seed convoy has been taken near the Reed Road; its stolen toll seal can make the thieves look like lawful collectors to travelers who cannot verify it. The Veyl Compact offers troops in exchange for control of the repaired crossing. A Cairnward knight claims the same duty under an older oath, while the raiders prepare to sell the cargo downriver. Bellwold has something to lose before anybody attacks: a working forge, seed for spring, a beloved fair and the chance to govern its own landing.
 
-The opening allows an ordinary first meal, a practice bout or a small useful job before the crisis reaches the player. That introduction establishes people and capabilities; it is not an extended obligation to complete civic chores before adventure becomes available.
+The harvest fair is an occasion to play as well as the backdrop to the convoy crisis. Sell a first well-made tool, compare Iven's fruit, enter an archery contest, hear Oren's new comic song, dance or arrange a private meeting. Mira's oven, Tavin's gardens and Nella's workshop support ongoing projects and relationships. These activities have their own pleasures and useful results; a player can pursue them, take up the convoy opportunity or move between the two.
 
 Alternative history: replace the war with a failed grand canal and a generation of debt. The same displaced households, disputed records and infrastructure questions remain, with a less martial tone. Both versions are **1/Compose** lore; the canal variant can still include greed, armed toll-taking and rival claimants. Modeled long-term demographic or military consequences would be separate **3/New** work.
 
 ## Powers with something to gain and lose
 
-Factions have resources, methods and internal disagreements. Their demands are **fictional** claims: a knight's title, an outlaw's threat or a priest's judgment does not confer platform authority. No faction is required to negotiate away its core aim because the player delivers an eloquent speech.
+Factions have resources, methods and internal disagreements. Their commitments and responses follow their means, interests and knowledge; a persuasive appeal still needs something its recipient values. Fictional titles and commands remain separate from platform authority under [engine/world boundaries](../../engine-and-world-boundaries.md#4-what-must-remain-protected).
 
 | Power                        | Wants and resources                                                                                              | Methods and concrete pressure                                                                               | Red line, vulnerability or possible deal                                                                                                                                   |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -75,11 +75,11 @@ Progression connects **practice, access, knowledge, equipment and social positio
 
 Loot can be practical, luxurious, informational or political: good arrowheads, coin, a captured mail shirt, a fine cup, a route sketch, letters revealing a paid informer, or a banner whose capture humiliates its owner. Taking a defeated raider's equipment is different from robbing Iven's adopted family. The world can recognize that difference without requiring the player to choose the honorable act.
 
-A first dangerous trip should offer something tangible enough to plan around. Its reward need not be a permanent upgrade: returning with a friend, good venison, a boast worth telling or an unobstructed route can satisfy different ambitions. Conversely, material power, glory and profit are legitimate motives without a required altruistic explanation.
+A first dangerous trip should offer something tangible enough to plan around. Its reward need not be a permanent upgrade: returning with a friend, good venison, a boast worth telling or an unobstructed route can satisfy different ambitions. A player may equally seek material power, glory or profit.
 
 ## Customs, belief and names
 
-The **Keepers of the Open Table** understand hospitality as leaving room for a traveler, but households contribute differently. The **River Witnesses** maintain flood marks and remembrance stones; some speak of river spirits, others regard the same practices as duties to future neighbors. Neither tradition has to be mechanically supernatural. A minority of residents practice neither and still participate in festivals. Faith also has teeth: an oath can recruit fighters, a shrine can protect a wanted person, and a keeper can bless a claimant others regard as a usurper. Devotion, charity, ambition and fanaticism can coexist within a tradition. The player can respect, exploit, defy or fight its worldly power; supernatural intervention is not assumed.
+The **Keepers of the Open Table** understand hospitality as leaving room for a traveler, but households contribute differently. The **River Witnesses** maintain flood marks and remembrance stones; some speak of river spirits, others regard the same practices as duties to future neighbors. Neither tradition has to be mechanically supernatural. A minority of residents practice neither and still participate in festivals. The shrines also host weddings, teach records and offer company in grief. An oath can recruit fighters, a shrine can protect a wanted person, and a keeper can bless a claimant others regard as a usurper. Devotion, charity, ambition and fanaticism can coexist within a tradition. The player can respect, exploit, defy or fight its worldly power; supernatural intervention is not assumed.
 
 Bellwold names favor short stress-first forms and practical compounds: **Nella, Oren, Tavin; Reed, Venn, Bellwold, Ashford**. Downriver names allow open syllables and flowing sequences: **Sela, Iven, Neris; Ternmere, Velin**. Upland place names tend toward compact consonants and descriptive endings: **Darn, Kel, Rusk; Cairnward, Stonefold**. These are invented sound palettes, not claims to reproduce a real language. Personal, household and occupational names can differ; speakers use aliases rather than forcing one official form.
 
@@ -123,7 +123,7 @@ Iven's graft labels point toward an orchard near the raiders' winter refuge. He 
 
 Darn spent years guarding roads and learned that a dry sleeping place often prevented more violence than a threat. He now builds shelters and wants to replace an old toll post with a travelers' hall. He can be overprotective and still speaks as if every suggestion were an order, then apologizes awkwardly. He adores carved roof birds. His pension depends on the Compact, complicating his criticism of its officials. Tavin's clamp could help his stiff hands, if Darn admits he wants it.
 
-Halven Rusk is Darn's nephew and former pupil. Darn still knows spear drills, approaches to the ford and the cost of a failed withdrawal; retirement does not erase that competence. Their argument is over service and ambition, not whether defending Bellwold can require killing.
+Halven Rusk is Darn's nephew and former pupil. Darn still knows spear drills, approaches to the ford and the cost of a failed withdrawal; retirement does not erase that competence. Their argument concerns service, ambition and how to defend Bellwold.
 
 ### Mira Neris, 37 — the host learning to close the door
 
@@ -139,7 +139,7 @@ Pell offers to buy recovered cargo quickly and pay the Ash Company before Bellwo
 
 ## Four people who mean to act
 
-These additions share the original cast's biography-first approach, but supply active martial ambitions, threats and loyalties. **Play, High, 1/Compose** as authored people; combat, pursuit and faction consequences remain capability-dependent **2/Extend or 3/New** work. These are tendencies and opening commitments, not guaranteed scripts.
+These people bring active martial ambitions, threats and loyalties into the cast's existing relationships. **Play, High, 1/Compose** as authored people; combat, pursuit and faction consequences remain capability-dependent **2/Extend or 3/New** work. These are tendencies and opening commitments, not guaranteed scripts.
 
 ### Ser Jessa Cairn, 29 — the knight who wants the banner to be hers
 
@@ -149,7 +149,7 @@ She enjoys ballads with impossible heroes, lets Tavin decorate her battered prac
 
 ### Halven Rusk, 33 — the captain who keeps his company's name
 
-Darn taught Halven road fighting, but it was years of escort work that taught him which employers actually paid. During a winter withdrawal he chose to recover two wounded fighters rather than a nobleman's baggage and lost a valuable patron. He now leads the Ash Company and wants enough money to own a defensible hall, keep his company together and choose whose wars to enter. He enjoys the tactical problem of a difficult fight and takes pride in beating richer opponents; he is not secretly waiting to retire from every martial purpose.
+Darn taught Halven road fighting, but it was years of escort work that taught him which employers actually paid. During a winter withdrawal he chose to recover two wounded fighters rather than a nobleman's baggage and lost a valuable patron. He now leads the Ash Company and wants enough money to own a defensible hall, keep his company together and choose whose wars to enter. He enjoys the tactical problem of a difficult fight and takes pride in beating richer opponents; he wants to keep fighting with a company of his own.
 
 His core method is a short spear line, a bow on a useful flank and a reserved escape route. He carries a plain axe as a close weapon and keeps a ridiculous embroidered cloak won at dice. He wants Nella's dependable repairs, sees Tavin as a promising supplier and may ask the player to scout, recruit or take command of a flank. He distrusts Jessa's appetite for glory but would follow a sound plan. Missed wages, needless sacrifice or a richer rescue contract can put him at odds with an employer; a named comrade is harder to buy than his service.
 
@@ -157,11 +157,11 @@ His core method is a short spear line, a bow on a useful flank and a reserved es
 
 Maer grew up among reed cutters whose landing was destroyed during a later toll dispute. He began by moving untaxed goods, discovered that armed collection paid better, and now dresses plunder in the language of repayment. The grievance is real and the entitlement is his own. He wants the stolen convoy's silver, a winter refuge in the ruined storehouses and enough fear that traders pay before testing him. He has killed a surrendered informer to make an example; a favorable interpretation does not undo that act.
 
-Maer fights from prepared positions with a bow and hooked blade, preferring a trapped route or distracted victim to a fair duel. He loves racing shallow boats and gives extravagant gifts to a favored younger cousin, whose belief in him is becoming a liability. Sela once carried him without charge; he remembers and may spare her boat while harming her neighbors. Iven's orchard lies inconveniently close to his refuge. His followers can be bribed or divided, and he can retreat, bargain, betray a bargain or be killed. He is not obliged to become good once somebody understands him.
+Maer fights from prepared positions with a bow and hooked blade, preferring a trapped route or distracted victim to a fair duel. He loves racing shallow boats and gives extravagant gifts to a favored younger cousin, whose belief in him is becoming a liability. Sela once carried him without charge; he remembers and may spare her boat while harming her neighbors. Iven's orchard lies inconveniently close to his refuge. His followers can be bribed or divided, and he can retreat, bargain, betray a bargain or be killed. His decisions follow his aims and loyalties as the situation changes.
 
 ### Edda Vey, 31 — the shrine's sworn sword with an inconvenient oath
 
-Edda learned wrestling at river fairs, read flood records with her mother and joined a Witness shrine because its keepers helped strangers whose rulers would not. She later took its protection oath after driving armed collectors from a burial ground. She wants the shrine's sanctuary respected, the disputed crossing judged before witnesses and a life in which faith means visible acts. She trains eagerly, likes winning, and regards force against a broken oath as honorable rather than automatically regrettable.
+Edda learned wrestling at river fairs, read flood records with her mother and joined a Witness shrine because its keepers helped strangers whose rulers would not. She later took its protection oath after driving armed collectors from a burial ground. She wants the shrine's sanctuary respected, the disputed crossing judged before witnesses and a life in which faith means visible acts. She trains eagerly, likes winning, and regards force against a broken oath as honorable.
 
 With a staff, shield and short sword she favors holding entrances and separating a target from support. She also loves river swims and Mira's bad animal cups; they disagree warmly until sanctuary would endanger Mira's daughter. Jessa hopes for her public blessing, the Compact wants her records, and Maer would profit from hiding behind her oath. Edda can defend a captive she hates, refuse a superior keeper, or harden into certainty that harms innocents. The player may follow her, challenge her judgment or fight her when loyalties collide. Her conviction is a motive, not supernatural proof.
 
@@ -177,7 +177,7 @@ With a staff, shield and short sword she favors holding entrances and separating
 4. **Act before a stated opportunity closes.** Maer intends to move the cargo downriver after the fair's third evening. That deadline is an authored, discoverable fact, not a hidden timer; a world creator can tune its pace. Delay changes where the cargo and captives go and who occupies the ford. It does not require the whole world to end if one objective is missed.
 5. **Return to a materially changed home.** Deliver, keep or sell actual recovered goods. Pay hired help or face the debt. Rest, improve a weapon or room, feast, argue over credit, visit a loved person or plan an expedition into the old storehouses. A victory can be enjoyed before the next pressure arrives.
 
-The storm and bank crack create a second route to significance. Repairing a crossing can enable a flank or evacuation as well as commerce. A strong builder or negotiator should have substantial agency; a player seeking skillful battle should not be forced to earn it through a long sequence of unrelated domestic favors.
+The storm and bank crack create a second route to significance. Repairing a crossing can enable a flank or evacuation as well as commerce. Building, negotiation and skillful battle each offer a substantial way to pursue the crossing's future. Meanwhile a successful market stall or a completed household project remains an achievement of its own.
 
 ### The ford fight: skill and preparation both matter
 
@@ -200,15 +200,15 @@ A cart set alight may force defenders out while destroying valuable cargo and th
 | Break guest-right or destroy a shrine               | A tactical advantage can close later diplomatic options or inspire retaliation. Different witnesses and factions learn and judge separately.                                                                    |
 | Establish a stable home or profitable route         | Enjoy it. A feast, romance, hunt, craft project, tourney or voluntary farther expedition can be the next invitation; no automatic catastrophe is needed to punish success.                                      |
 
-The existing [wedding bridge](../combinations.md#the-wedding-bridge), [soup before the summit](../combinations.md#soup-before-the-summit) and [harvest that tastes wrong](../combinations.md#the-harvest-that-tastes-wrong) remain useful domestic, diplomatic and environmental situations. They share people, routes and resources with the armed conflict; they do not all have to become disguised combat quests.
+The existing [wedding bridge](../combinations.md#the-wedding-bridge), [soup before the summit](../combinations.md#soup-before-the-summit) and [harvest that tastes wrong](../combinations.md#the-harvest-that-tastes-wrong) remain useful domestic, diplomatic and environmental situations. They share people, routes and resources with the wider setting while providing different reasons to gather, explore and create.
 
 ### Pace, limits and variants
 
 Solved meals and ordinary maintenance can become dependable routines. Initial preparations and rare emergencies still demand attention. Dangerous regions have evidence and reasons to visit; enemy strength is learnable enough that retreat, a better loadout or hiring help can be intelligent choices. Finite stocks and explicit recovery limits prevent farming the same raider, self-harm training and resource duplication from becoming dominant strategies.
 
-Loss severity, time during absence, player-versus-player violence and shared-property damage are declared world/session choices. A gentler version can emphasize patrols, wildlife and recoverable defeat; a harsher version can permit lasting injury, death, burnt homes and conquest. Fictional coercion, betrayal and capture never grant access to real private data, external spending or ungranted platform controls. Preserve consequences inside the chosen fiction rather than silently protecting every treasured object or forcing every aggressor to reconcile.
+Loss severity, time during absence, player-versus-player violence and shared-property damage are declared world/session choices. A gentler version can emphasize patrols, wildlife and recoverable defeat; a harsher version can permit lasting injury, death, burnt homes and conquest. Use the shared [world tone and scope](../design-foundation.md#world-tone-and-scope) guidance to establish these choices; the selected consequences follow actual events.
 
-The first slice needs observable aftermath, not a model call for each background household or simulated water molecule. Record important deaths, ownership changes, known betrayals, cargo transfers and route changes; aggregate distant trade and political pressure. Expanding from a local toll conflict to regional war is a separate design decision with new costs.
+The first slice needs observable aftermath, not a model call for each background household or simulated water molecule. Record important commitments, completed projects, discoveries, deaths, ownership changes, known betrayals, cargo transfers and route changes; aggregate distant trade and political pressure. Expanding from a local toll conflict to regional war is a separate design decision with new costs.
 
 Open choices before adoption: bodily-needs severity; real-time versus more assisted tactical execution; injury, capture and death/recovery rules; coarse versus detailed seasons; shared-player property terms; and whether distant settlements are authored snapshots or bounded aggregates. None becomes an engine-wide law through this proposal.
 

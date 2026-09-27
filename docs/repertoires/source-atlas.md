@@ -26,7 +26,7 @@ The [revised foundation](design-foundation.md) uses the integrated **148-game sn
 
 The fresh reading covered selected substantive mechanics, worked situations, character/institution dynamics and reception or criticism across every game and world dossier. The work was divided across G01–G50 / W01–W10, G51–G100 / W11–W20, and G101–G148 / W21–W28, with an additional synthesis of the game essays on enjoyment, evidence, comparison, implications and production, and the world essays on comparative design, character formation, institutions and magic/ecology. Focused rereads of The Sims, Baldur's Gate 3, Kenshi, The Wire, The Sopranos and Austen's social worlds informed the shared foundation and modern proposal.
 
-The purpose was to recover the full range of the sources: mastery, danger, ambition, power, deception, conquest and loss as well as affection, beauty, care, creativity and belonging. Concrete interactions and criticism take precedence over an inherited recommendation to favor one tone. The revised category coverage, factions, active characters and worked situations are our design interpretations, not copied world canon or demonstrated player preferences.
+The purpose was to recover the full range of the sources: discovery, mastery, affection, beauty, care, creativity, belonging, ambition, danger, power, deception, conquest and loss. Concrete interactions and criticism guide selection within each source's particular character and appeal. The revised category coverage, factions, active characters and worked situations are our design interpretations, not copied world canon or demonstrated player preferences.
 
 Depth varies by dossier. This was not a line-by-line reread of every appendix, audit register or bibliography, an independent reopening of every external citation, or a new current-version verification of the games. New G131–G148 takeaways and targeted corrections below reflect this pass; useful earlier takeaways remain where they still express a particular lesson. Neither broad coverage nor retained references proves these proposed worlds will be fun: they still require playable selection and evaluation.
 
@@ -200,7 +200,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Worlds Adrift](../../archive/02-research/game-inspiration/dossiers/worlds-adrift.md)
 
-**Design takeaway:** Physical components connect construction, piracy, boarding, destruction and salvage; peaceful exploration gains tension from lurking danger.
+**Design takeaway:** Physical components, grappling and revisable ships connect exploration, collaborative journeys, invention, piracy, destruction and salvage.
 
 **Caution to carry forward:** Loss can create memorable adventure or erase newcomers' ability to participate. Recovery design and operating costs matter alongside affection for the world.
 
@@ -756,7 +756,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Red Dead Redemption 2](../../archive/02-research/game-inspiration/dossiers/red-dead-redemption-2.md)
 
-**Design takeaway:** Camp meals, jokes, horses and ordinary routines deepen attachment, making a gang’s violence, betrayal, decline and eventual losses matter to particular people.
+**Design takeaway:** Camp meals, jokes, horses and familiar routines make everyday company enjoyable and deepen attachment; those relationships also shape how violence, betrayal and loss are experienced.
 
 **Caution to carry forward:** The same deliberate pacing can feel like friction to another audience.
 
@@ -918,7 +918,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Final Fantasy IX](../../archive/02-research/game-inspiration/dossiers/final-fantasy-ix.md)
 
-**Design takeaway:** Equipment can teach abilities while active capacity remains a separate choice; recognizable character roles, humor and affection make war and questions of personhood more affecting.
+**Design takeaway:** Equipment teaches abilities while active capacity remains a separate choice; distinctive roles, humor and affection support a lively ensemble whose journey also confronts war, mortality and personhood.
 
 **Caution to carry forward:** Acquired knowledge, equipped item and usable power must not become one ambiguous state.
 
@@ -978,7 +978,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Final Fantasy XV](../../archive/02-research/game-inspiration/dossiers/final-fantasy-xv.md)
 
-**Design takeaway:** Meals, photographs and road-trip routines make friends particular; their shared fighting, a kingdom’s betrayal and costly obligations give that companionship weight.
+**Design takeaway:** Meals, photographs, jokes and road-trip routines make spending time with these friends rewarding; shared fighting, political betrayal and costly obligations change what the group faces together.
 
 **Caution to carry forward:** Repetition and presentation alone do not guarantee consequential contribution.
 
@@ -1122,7 +1122,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 **Design takeaway:** Short encounters can link positioning, abilities and optional research goals.
 
-**Caution to carry forward:** Scores and service dependencies can punish interface mastery or make continuity fragile.
+**Caution to carry forward:** Control friction can make scoring reflect interface struggle rather than tactical judgment; service dependencies can make continuity fragile.
 
 **New catalogue:** [adventure discovery](adventure-discovery.md)
 
@@ -1302,7 +1302,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Persona 5 Royal](../../archive/02-research/game-inspiration/dossiers/persona-5-royal.md)
 
-**Design takeaway:** Calendars, hobbies and friendship can have several kinds of payoff.
+**Design takeaway:** Calendars, hobbies and friendship make a daily life enjoyable while creating distinct opportunities for competence, intimacy and shared routines.
 
 **Caution to carry forward:** Hidden time gates and compulsory optimization can undermine a lived-in social rhythm.
 
@@ -1556,7 +1556,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Middle-earth](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/01-middle-earth.md)
 
-**Design takeaway:** Language, memory, hospitality and beauty give conquest, resistance, sacrifice and returning home something particular to put at stake.
+**Design takeaway:** Language, remembered places, hospitality, fellowship and beauty make the world worth inhabiting; conquest, resistance and returning home transform particular attachments.
 
 **Caution to carry forward:** Mystery and selective depth matter; martial confidence, restraint and repair can coexist without demanding one moral response from every character.
 
@@ -1566,7 +1566,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Wizarding World](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/02-wizarding-world.md)
 
-**Design takeaway:** A beloved school can become an institution whose power and access are questioned.
+**Design takeaway:** Magical lessons, friendships, school rituals, rivalries and mysteries make a familiar institution engaging; its rules, power and access can also become contested.
 
 **Caution to carry forward:** Magic's social consequences can be unevenly developed; belonging does not excuse abuse.
 
@@ -1686,7 +1686,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [One Piece](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/14-one-piece.md)
 
-**Design takeaway:** Ambitious voyages, complementary crew skills and chosen family connect freedom to shared consequences; defeating oppressive enemies makes rescue, feasts and celebration matter.
+**Design takeaway:** Ambitious voyages, complementary crew skills and chosen family connect freedom to shared consequences; feasts, comedy, discovery and battles against oppressive enemies provide different pleasures and stakes.
 
 **Caution to carry forward:** Long rescue formulas and savior patterns can limit the agency of local people.
 
@@ -1776,7 +1776,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Austen’s social worlds](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/23-austens-social-worlds.md)
 
-**Design takeaway:** Invitations, jokes, money and unequal freedom make small social acts consequential.
+**Design takeaway:** Wit, love, aesthetic pleasure, invitations and money give courtship and ordinary social acts weight, while unequal freedom changes what each person can risk.
 
 **Caution to carry forward:** Comfort depends on labor often outside the frame; social fluency is not moral superiority.
 

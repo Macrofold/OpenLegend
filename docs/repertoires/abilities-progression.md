@@ -1,27 +1,27 @@
 # Abilities, learning and expressive progression
 
-[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
+[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** Progression should make players more capable and let them express who they want to become. Stronger attacks, harder-won mastery, distinct classes, remarkable powers, craft expertise and respected social roles are all legitimate rewards. Separate learned knowledge, equipped abilities, resources, execution skill and institutional authority; none substitutes automatically for the others.
+**Proposal catalogue · September 27, 2026.** Progression makes people more capable and gives them styles of their own. Learning an instrument, mastering a bow, earning a professional role and wielding extraordinary power offer different satisfactions. Learned knowledge, equipped abilities, resources, execution skill and institutional authority each contribute something distinct.
 
 [The loadout as a sentence](#the-loadout-as-a-sentence) · [A skill remembered after the uniform](#a-skill-remembered-after-the-uniform) · [The signature move with two lives](#the-signature-move-with-two-lives) · [A specialization with a neighbor](#a-specialization-with-a-neighbor) · [The technique you choose not to use](#the-technique-you-choose-not-to-use) · [A curriculum made of civic problems](#a-curriculum-made-of-civic-problems) · [Respec through a new way of living](#respec-through-a-new-way-of-living) · [The expert's shorter path](#the-experts-shorter-path) · [A talent discovered by someone else](#a-talent-discovered-by-someone-else) · [Power with a public footprint](#power-with-a-public-footprint)
 
 ## Coverage of the playable foundation
 
-The [shared design foundation](design-foundation.md) owns the overall range and selection principles. This compact map establishes coverage for future specific entries; the ten existing cards below remain reusable patterns, not the whole category or a required implementation bundle. World labels describe the domain’s fit; individual examples still require suitable world rules.
+These domains guide later inventories; the ten cards illustrate selected patterns. Seed-world labels mark fit, with individual examples depending on the chosen world’s rules.
 
-| Domain                                 | Seed worlds | Play and consequences                                                                                                                                                              |
-| -------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Foundational competence                | ALL         | Move, defend, attack, observe, use tools and manage resources reliably; ordinary useful abilities belong early, even when their implementation composes several systems.           |
-| Combat roles and classes               | ALL         | Shield fighters, scouts, marksmen, medics and fantasy mages offer different ranges, defenses, costs and team jobs; recognizable roles need actual capabilities, not only costumes. |
-| Power and equipment growth             | ALL         | Earn a stronger bow, better armor, spell focus or precision tool; upgrades should change success against meaningful challenges and feel worth obtaining.                           |
-| Execution and tactical mastery         | ALL         | Learn parry timing, aim, position, interruption and resource windows; practice and legible feedback allow improvement beyond statistical growth.                                   |
-| Build expression and combinations      | ALL         | Choose limited active skills, elemental interactions, party roles and equipment synergies; preserve signature strengths instead of giving everyone the same final kit.             |
-| Learning, teachers and discovery       | ALL         | Train, study a found technique, learn from a rival or practice a profession; teachers have histories, prices and loyalties, and knowledge can outlast employment.                  |
-| Cooperative expertise and independence | ALL         | Set up an ally’s decisive strike or combine craft skills; specialized challenges can reward a party while ordinary life remains accessible without a mandatory roster.             |
-| Exceptional power and its price        | SC FA       | Master transformations, forbidden arts, legendary weapons or command; ambition opens new enemies and obligations, with authored costs and clear limits.                            |
+| Domain                                 | Seed worlds | Play and consequences                                                                                                                                          |
+| -------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Foundational competence                | ALL         | Move, observe, defend, use tools and manage resources reliably; ordinary useful abilities belong early even when implementation requires several systems.      |
+| Combat roles and classes               | ALL         | Shield fighters, scouts, marksmen, medics and fantasy mages have different ranges, defenses, costs and team jobs; training gives those roles substance.        |
+| Power and equipment growth             | ALL         | Earn a stronger bow, better armor, spell focus or precision tool; an upgrade opens a method or improves performance against a meaningful challenge.            |
+| Practice and execution mastery         | ALL         | Improve aim, parry timing, carving accuracy or a musical phrase; demonstrations, practice and clear feedback make progress observable.                         |
+| Build expression and combinations      | ALL         | Choose active techniques, tools, spell interactions and team roles; limited capacity encourages distinctive repertoires and experiments.                       |
+| Learning, teachers and discovery       | ALL         | Study a found technique, train with a rival or learn a profession; teachers have histories, prices and loyalties, and knowledge can outlast employment.        |
+| Cooperative expertise and independence | ALL         | Combine craft skills, perform an ensemble piece or set up an ally’s decisive strike; show the contribution of each specialist and the options available alone. |
+| Exceptional power and its price        | SC FA       | Master transformations, forbidden arts or legendary weapons; enjoy new reach and strength while learning their costs, limits and effects on other people.      |
 
-Research anchors: [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Elden Ring](source-atlas.md#g75), [Final Fantasy V](source-atlas.md#g82), [Final Fantasy VII](source-atlas.md#g84) and [Final Fantasy XVI](source-atlas.md#g93). Use the lessons selectively; franchise mechanics and moral cosmologies are not universal OpenLegend laws.
+Research anchors: [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Elden Ring](source-atlas.md#g75), [Final Fantasy V](source-atlas.md#g82), [Final Fantasy VII](source-atlas.md#g84) and [Final Fantasy XVI](source-atlas.md#g93).
 
 ## The loadout as a sentence
 
@@ -99,6 +99,6 @@ Seeds: [Wildermyth](source-atlas.md#g25), [Fire Emblem: Three Houses](source-atl
 
 **SC FA · Play · Try · 3/New.** Gap: bounded high-impact effects and visible dependencies on services or consent.
 
-A hero can lift a heavy gate but needs stable footing and a clear area; a city can build anchor points that make the power useful in emergencies. Communities adapt around capability without becoming helpless admirers. Make the footprint inspectable and preserve ordinary alternatives. Increasing power should deliver perceptible strength, new methods and worthy challenges. Stronger enemies can test it, but endless inflated health bars should not erase the reward of becoming powerful.
+A hero can lift a heavy gate but needs stable footing and a clear area; a city can build anchor points that make the power useful in emergencies. Communities adapt around capability without becoming helpless admirers. Make the footprint inspectable and preserve ordinary alternatives. Greater strength should be perceptible in familiar tasks as well as useful against new challenges.
 
 Seeds: [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Cyberpunk 2077](source-atlas.md#g68), [Marvel](source-atlas.md#w05), [DC Universe](source-atlas.md#w06).

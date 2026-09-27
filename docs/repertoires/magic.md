@@ -1,27 +1,27 @@
 # Magic, costs, traditions and impossible affordances
 
-[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
+[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** These are alternative fictional rule families to select deliberately: magic can nurture, dazzle, protect, deceive, transform, dominate or destroy. Black magic, demons, necromancy and cruel gods are part of this range. Start with a small coherent grammar that makes power worth seeking and its limits worth learning. A particular tradition’s ethics do not define every possible world, and a fictional effect never grants real platform authority or private-data access.
+**Proposal catalogue · September 27, 2026.** Magic gives a world distinctive ways to live, make, travel and fight. Its pleasures include wonder, mastery, useful craft and impossible experiences; its dangers follow from the same rules. Select a small coherent family of powers with understandable sources, costs and limits.
 
 [Borrowed warmth](#borrowed-warmth) · [Promise knots](#promise-knots) · [Echo carpentry](#echo-carpentry) · [Names as invitations](#names-as-invitations) · [The grammar of useful charms](#the-grammar-of-useful-charms) · [Moonbound forms](#moonbound-forms) · [A dragon's weather debt](#a-dragons-weather-debt) · [Ink that keeps a threshold](#ink-that-keeps-a-threshold) · [Mending by shared pattern](#mending-by-shared-pattern) · [The school of deliberate limits](#the-school-of-deliberate-limits)
 
 ## Coverage of the playable foundation
 
-The [shared design foundation](design-foundation.md) owns the overall range and selection principles. This compact map establishes coverage for future specific entries; the ten existing cards below remain reusable patterns, not the whole category or a required implementation bundle. World labels describe the domain’s fit; individual examples still require suitable world rules. The [adult scope and world-specific tone](design-foundation.md#adult-scope-and-world-specific-tone) defines the shared content range and presentation choices.
+These domains guide later inventories; the ten cards illustrate selected patterns. Seed-world labels mark fit, with individual examples depending on the chosen world’s rules.
 
-| Domain                                   | Seed worlds | Play and consequences                                                                                                                                                                                                                              |
-| ---------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Everyday wonder and skilled work         | FA          | Warm a room, grow a luminous garden, mend a cup or shape a performance; beauty, convenience and shared pleasure make magic desirable.                                                                                                              |
-| Offense and battlefield control          | FA          | Burn, freeze, blast, blind or obstruct; range, resistance, cover, friendly fire and limited charge create decisions and dangerous opponents.                                                                                                       |
-| Defense, healing and rescue              | FA          | Ward a doorway, brace a shield, stabilize an injury or extract an ally; healing and resurrection follow explicit limits rather than erasing every loss.                                                                                            |
-| Movement, exploration and deception      | FA          | Cross a gap, illuminate ruins, disguise a face or misdirect a guard; knowledge, duration and countermeasures keep alternate methods consequential.                                                                                                 |
-| Summoning, necromancy and transformation | FA          | Become a beast, bind a guardian, bargain with a demon or raise zombies; bodies, allegiance, control, release and the fate of the dead follow authored rules. An undead army can be a threat or a sought source of power.                           |
-| Curses, compulsion and black magic       | FA          | A curse steals sleep; a tyrant binds a spirit; black magic inflicts suffering or possession. Define targets, signs, resistance, duration and consequences, including whether release exists. Power can tempt or enable deliberate cruelty.         |
-| Traditions, faith and rival authority    | FA          | Schools, temples and renegades contest power; a cruel god demands sacrifice, a demon exploits a pact, and believers may serve or resist. Genuine divinity, sincere care, doubt and fraud can coexist without making divine commands morally right. |
-| Artifacts, mastery and magical conflict  | FA          | Recover a relic, master a spell, contest an apocalyptic ritual or face a dragon; finite costs and established rules make victory earned. A cursed treasure can offer real power, and some evils remain unreformed.                                 |
+| Domain                                   | Seed worlds | Play and consequences                                                                                                                                                                          |
+| ---------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Everyday wonder and skilled work         | FA          | Warm a room, grow a luminous garden, mend a cup or shape a performance; beauty, convenience and shared pleasure make magic desirable.                                                          |
+| Offense and battlefield control          | FA          | Burn, freeze, blast, blind or obstruct; range, resistance, cover, friendly fire and limited charge create tactical choices.                                                                    |
+| Defense, healing and rescue              | FA          | Ward a doorway, ease pain, stabilize an injury or extract an ally; healing and resurrection have defined capabilities and costs.                                                               |
+| Movement, exploration and deception      | FA          | Cross a gap, illuminate ruins, change a stage set or disguise a face; duration and material limits make different methods worth learning.                                                      |
+| Summoning, necromancy and transformation | FA          | Become a beast, call a companion, bargain with a demon or raise zombies; bodies, allegiance, control, release and the fate of the dead follow authored rules.                                  |
+| Curses, compulsion and black magic       | FA          | A curse steals sleep; a tyrant binds a spirit; black magic inflicts suffering or possession. Define signs, resistance, duration and consequences, including whether release exists.            |
+| Traditions, faith and rival authority    | FA          | Learn from schools, temples or hedge practitioners; share rites, debate a doctrine or resist a cruel god’s demand for sacrifice. Their beliefs, powers and institutional interests can differ. |
+| Artifacts, mastery and discovery         | FA          | Develop a signature spell, recover a relic, face a dragon or stop an apocalyptic ritual. A prized artifact can offer beauty, knowledge, power or a dangerous bargain.                          |
 
-Research anchors: [Divinity: Original Sin](source-atlas.md#g56), [Final Fantasy VII](source-atlas.md#g84), [Earthsea](source-atlas.md#w11), [Avatar](source-atlas.md#w13) and [His Dark Materials](source-atlas.md#w20). Use the lessons selectively; franchise mechanics and moral cosmologies are not universal OpenLegend laws.
+Research anchors: [Divinity: Original Sin](source-atlas.md#g56), [Final Fantasy VII](source-atlas.md#g84), [Earthsea](source-atlas.md#w11), [Avatar](source-atlas.md#w13) and [His Dark Materials](source-atlas.md#w20).
 
 ## Borrowed warmth
 
@@ -35,7 +35,7 @@ Seeds: [Noita](source-atlas.md#g32), [Divinity: Original Sin](source-atlas.md#g5
 
 **FA · Play · High · 3/New.** Gap: voluntary bounded commitments linked to defined magical effects.
 
-Two willing people tie a cord that glows when a specified obligation is due. It cannot force action or decide ambiguous moral questions. A courier uses it as a reminder; a community uses several to coordinate a festival. Wording, release and failure are visible. This particular tradition supports voluntary trust. A different curse or coercive pact requires its own authored power, escape conditions and consequences; it is not smuggled into an agreed reminder.
+Two willing people tie a cord that glows when a specified obligation is due. It cannot force action or decide ambiguous moral questions. A courier uses it as a reminder; a community uses several to coordinate a festival. Wording, release and failure are visible; the cord performs the accepted reminder and no additional binding.
 
 Seeds: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [A Song of Ice and Fire](source-atlas.md#w10).
 
@@ -51,7 +51,7 @@ Seeds: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Disho
 
 **FA · Play · Try · 3/New.** Gap: registered relationships and consent-based invocation within range.
 
-Learning a river spirit's chosen name permits asking it for a service; the name is a relationship, not ownership. A stranger can still negotiate through gestures or an intermediary. Language matters without becoming a secret password exploit. In this chosen invitation tradition a stolen name grants no forced obedience. A world may separately author dangerous true-name binding with limits and resistance; neither form grants a model access to unprovided private state.
+Learning a river spirit's chosen name permits asking it for a service; the name is a relationship, not ownership. A stranger can still negotiate through gestures or an intermediary. Invocations can succeed, be misunderstood or be refused. This invitation tradition is distinct from the binding powers described above.
 
 Seeds: [Caves of Qud](source-atlas.md#g33), [Earthsea](source-atlas.md#w11), [His Dark Materials](source-atlas.md#w20).
 
@@ -67,7 +67,7 @@ Seeds: [Noita](source-atlas.md#g32), [Balatro](source-atlas.md#g42), [Final Fant
 
 **FA · Play · Try · 3/New.** Gap: voluntary transformations with clear cycle and identity continuity.
 
-A lineage can adopt a night-running form when moonlight reaches a prepared mark, using cloth or architecture to control exposure. Couriers, dancers and rescuers find different uses. Communities develop customs without assigning one temperament to everyone. This voluntary lineage retains agency. A distinct cursed transformation can instead create loss of control, danger and a search for release under explicit authored rules; neither temperament nor cruelty follows automatically from a body.
+A lineage can adopt a night-running form when moonlight reaches a prepared mark, using cloth or architecture to control exposure. Couriers, dancers and rescuers find different uses. The voluntary transformation preserves identity while changing movement and equipment needs. Communities develop customs around it, and individuals use it differently.
 
 Seeds: [Wildermyth](source-atlas.md#g25), [Caves of Qud](source-atlas.md#g33), [His Dark Materials](source-atlas.md#w20).
 
@@ -75,7 +75,7 @@ Seeds: [Wildermyth](source-atlas.md#g25), [Caves of Qud](source-atlas.md#g33), [
 
 **FA · Play · Try · 3/New.** Gap: bounded regional weather influence and durable negotiated commitments.
 
-A dragon can lift fog from one valley by thickening it in another. Farmers, travelers and the dragon negotiate when and where the trade is acceptable. The creature has a life beyond serving as a boss or resource node. Another dragon may deliberately weaponize the same leverage, demand tribute or hunt people, becoming an adversary with coherent means and motives. Keep the affected region finite and forecasts legible; weather bargaining must not become a global climate simulation or inevitable tribute grind.
+A dragon can lift fog from one valley by thickening it in another. Farmers, travelers and the dragon negotiate when and where the trade is acceptable. The dragon has its own household, plans and reasons for accepting or refusing the arrangement. Keep the affected region finite and forecasts legible; weather bargaining must not become a global climate simulation or inevitable tribute grind.
 
 Seeds: [Elden Ring](source-atlas.md#g75), [Dune](source-atlas.md#w09), [Avatar: The Last Airbender](source-atlas.md#w13).
 

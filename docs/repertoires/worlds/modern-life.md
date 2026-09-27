@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Labels](../README.md#reading-the-labels) · [Selection and scale](../selection-and-scale.md) · [Design foundation](../design-foundation.md)
 
-**Optional setting proposal, not canonical world history or implemented content.** Linden Reach is a contemporary river-and-rail city where people pursue love, money, recognition, security, pleasure and power through work, households, friendships and rival institutions. Its central question is: _what life will you make, what will it cost, and what will you defend or compromise to keep it?_ Domestic life, romance, career competition, public achievement, investigation and crime are substantial possible directions. The selected opening establishes which of those pressures the player enters; it does not make every neighbor a criminal or require every ambition to become a community project.
+**Optional setting proposal, not canonical world history or implemented content.** Linden Reach is a contemporary river-and-rail city where people pursue love, money, recognition, security, pleasure and power through work, households, friendships and rival institutions. Its central question is: _what life will you make, what will it cost, and what will you defend or compromise to keep it?_ Domestic life, romance, career competition, public achievement, investigation and crime are substantial possible directions. The selected opening gives the player a foothold and connects their ambitions to particular neighbors, opportunities and pressures.
 
 **Estimate:** Play/Blend, High, **2/Extend** for one household, several workplaces and a small neighborhood; **3/New** for modeled city services, institutions and economy. This is a later and more demanding world family if those interactions must execute broadly. An attractive city description does not establish support for its interlocking systems. Setting and cast content are **1/Compose** candidates.
 
@@ -49,7 +49,7 @@ A **repair library**, a **shared cold pantry** and a **neighborhood shift board*
 
 ## Desires, power and opposition
 
-Linden Reach supports adult ambitions and disagreements as well as domestic comfort. A resident may want a lover, a championship, an admired house, revenge, artistic recognition, freedom from debt, a profitable business or authority over other people. Some conflicts can be negotiated; some involve deliberate exploitation, incompatible claims or a person who prefers winning to being fair. The city's pleasure includes wit, flirtation, music, taste, skill and the satisfaction of succeeding at something difficult.
+Linden Reach connects domestic comfort, personal ambition and public life. A resident may want a lover, a championship, an admired house, revenge, artistic recognition, freedom from debt, a profitable business or authority over other people. Some conflicts can be negotiated; some involve deliberate exploitation, incompatible claims or a person who prefers winning to being fair. The city's pleasure includes wit, flirtation, music, taste, skill and the satisfaction of succeeding at something difficult.
 
 | Power or network                         | Wants and means                                                                                                         | Internal difference and potential opposition                                                                                                                                       |
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -87,7 +87,7 @@ Street names preserve industry and landscape—**Kiln Row, Willow Steps, Morrow 
 
 ## Eight people to meet
 
-**Cast defaults: Play, High, 1/Compose** for authored life histories; **2/Extend** for executing schedules, commitments, selective memory and relationship changes. These eight existing people retain their everyday pleasures, histories and competencies. Their virtues do not guarantee agreement or remove the effects of money, desire, status and pressure; four additional people below connect the cast to competition, investigation and organized coercion.
+**Cast defaults: Play, High, 1/Compose** for authored life histories; **2/Extend** for executing schedules, commitments, selective memory and relationship changes. The twelve people across the two groups below share workplaces, creative projects, loyalties and rivalries. Their histories and ordinary pleasures give context to what they want and how they treat one another.
 
 ### Mara Venn, 33 — the transit electrician who wants mornings back
 
@@ -125,7 +125,7 @@ Tomas grew up in an apartment over a shop and sincerely admires mixed neighborho
 
 ### Kira Dane, 29 — the boxer who intends to win
 
-Kira is a delivery driver and a skilled amateur boxer competing for a paid place on the regional circuit. A supportive father taught her to enjoy training and take an opponent seriously; she loves the contest, the crowd and the pleasure of a cleanly executed combination. She wants a championship, not a lesson that winning does not matter. Her impatience with weaker training partners can become arrogance. Leon offers sponsorship that would solve a real financial problem and make her useful to his venues. She trains with Mara after shifts, admires Priya's discipline and has an opponent she respects but fully intends to beat. A player can train, compete, sponsor or oppose her without becoming her automatic best friend.
+Kira is a delivery driver and a skilled amateur boxer competing for a paid place on the regional circuit. A supportive father taught her to enjoy training and take an opponent seriously; she loves the contest, the crowd and the pleasure of a cleanly executed combination. She wants a championship and a professional career. Her impatience with weaker training partners can become arrogance. Leon offers sponsorship that would solve a real financial problem and make her useful to his venues. She trains with Mara after shifts, admires Priya's discipline and has an opponent she respects but fully intends to beat. A player can train, compete, sponsor or oppose her without becoming her automatic best friend.
 
 ### Leon Vale, 43 — the patron whose hospitality has teeth
 
@@ -137,7 +137,7 @@ Sera earned her reputation by patiently linking testimony to physical evidence. 
 
 ### Vic Orrel, 27 — the performer who will not stay an apprentice
 
-Vic is Lian's nephew, a charismatic performer and event promoter who grew up helping set up exhibitions while better-connected guests received the praise. He wants his staged musical act to win the single River Lights centerpiece commission, then turn the tram shed into a venue with his name on it. He genuinely loves an audience and works hard at an act that Jo privately admires. He also flatters patrons, takes disproportionate credit and keeps two collaborators uncertain about promises he cannot honor together. His relationship with Kira combines attraction and competition for the same sponsor. He may choose honesty at a real cost, double down on a lie or win despite a rival's dislike. His ambition should produce entertaining performances and consequential decisions, not only punishments for wanting recognition.
+Vic is Lian's nephew, a charismatic performer and event promoter who grew up helping set up exhibitions while better-connected guests received the praise. He wants his staged musical act to win the single River Lights centerpiece commission, then turn the tram shed into a venue with his name on it. He genuinely loves an audience and works hard at an act that Jo privately admires. He also flatters patrons, takes disproportionate credit and keeps two collaborators uncertain about promises he cannot honor together. His relationship with Kira combines attraction and competition for the same sponsor. He may choose honesty at a real cost, double down on a lie or win despite a rival's dislike. His performances give players reasons to admire his skill while deciding how far to trust his promises.
 
 ## A first month of play
 
