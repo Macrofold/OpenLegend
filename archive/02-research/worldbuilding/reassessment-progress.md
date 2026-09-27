@@ -1,6 +1,6 @@
 # Whole-world reassessment: progress and evidence
 
-**Pass opened: 2026-09-27. Branch: `codex/world-idea-repertoires`. Current world: 12, Discworld. Completed dossier revisions: 11/28. Shared synthesis reconciliation: pending the dossier pass.**
+**Pass opened: 2026-09-27. Branch: `codex/world-idea-repertoires`. Current world: 15, The Expanse. Completed dossier revisions: 14/28. Shared synthesis reconciliation: pending the dossier pass.**
 
 This is the current correction/deepening ledger. [research-progress.md](research-progress.md) records the earlier packet and its integration history; its earlier completion status does not mean this reassessment is complete. Each revised dossier owns a closing record of sections reviewed, sources actually consulted, changes, and unresolved evidence gaps. “Revised” never means the entire franchise was freshly read, watched, or played.
 
@@ -23,10 +23,10 @@ The requested branch did not contain the library. The existing 28-world packet w
 | [09. Dune](worlds/09-dune.md) | Revised | `35551148cc4c6b58ab672836207c9ebe3e4d6a8e`; ritual pleasure, music, worm-riding mastery, coercion, reproductive control and unequal outcomes. |
 | [10. A Song of Ice and Fire](worlds/10-a-song-of-ice-and-fire.md) | Revised | `d55a075d35c0eb8640d3b9e3ab23d70c5f542f27`; feasting, martial aspiration, intimacy, coercion and lasting effects. |
 | [11. Earthsea](worlds/11-earthsea.md) | Revised | `1d6c8fa44551f87301bdaa7a1b5ddcbc81bca14f`; Pendor's victory, musical vocation, adult love, deliberate harm and differentiated endings. |
-| [12. Discworld](worlds/12-discworld.md) | In progress | Dossier-specific evidence and commit pending. |
-| [13. Avatar: The Last Airbender](worlds/13-avatar-the-last-airbender.md) | Pending | — |
-| [14. One Piece](worlds/14-one-piece.md) | Pending | — |
-| [15. The Expanse](worlds/15-the-expanse.md) | Pending | — |
+| [12. Discworld](worlds/12-discworld.md) | Revised | `3c1ea9f967cdb944634cbee829f18532f92ee7a6`; musical ambition, bawdy pleasure, wedding, purposeful cruelty, effective medicine and distinct justice/loss. |
+| [13. Avatar: The Last Airbender](worlds/13-avatar-the-last-airbender.md) | Revised | `0a9eee5d9b8b1efd50168fef4e6f8b3be38bd63f`; dancing, competitive mastery, embodied wonder, coercion and sparing distinguished from forgiveness. |
+| [14. One Piece](worlds/14-one-piece.md) | Revised | `a03e644227feff64110116c69c5d361ca90437bf`; rivalry, music, celebration, happy household, working infrastructure and consequential defeat. |
+| [15. The Expanse](worlds/15-the-expanse.md) | In progress | Dossier-specific evidence and commit pending. |
 | [16. Foundation](worlds/16-foundation.md) | Pending | — |
 | [17. The Culture](worlds/17-the-culture.md) | Pending | — |
 | [18. The Broken Earth](worlds/18-the-broken-earth.md) | Pending | — |
