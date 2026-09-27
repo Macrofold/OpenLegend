@@ -1,10 +1,10 @@
 # Final Fantasy XII — full research dossier
 
-**G89 · Complete research pass, September 26, 2026.** Primary mechanics baseline: the 2006 PlayStation 2 Final Fantasy XII. Final Fantasy XII International Zodiac Job System (Japan, 2007) and Final Fantasy XII: The Zodiac Age (2017 onward) are separated where they materially change license/job progression, summoning, Quickenings, Trial Mode, speed/QoL or respec behavior. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G89 · Research pass and corrective coverage review, September 26, 2026.** Primary mechanics baseline: the 2006 PlayStation 2 Final Fantasy XII. Final Fantasy XII International Zodiac Job System (Japan, 2007) and Final Fantasy XII: The Zodiac Age (2017 onward) are separated where they materially change license/job progression, summoning, Quickenings, Trial Mode, speed/QoL or respec behavior. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
 The highest-value OpenLegend precedent is the **Gambit system**: the player does not merely issue commands; they author prioritized conditional policies that party members execute autonomously. This turns party AI into a visible, editable part of play.
 
-No personal playthrough is claimed. Mechanics examples are reconstructed from developer interviews, reviews and version-specific written references.
+No personal playthrough is claimed. Mechanics examples are reconstructed from developer interviews, reviews and version-specific written references. The corrective pass preserves the original research while correcting example priorities and adding operative equipment, Bazaar, fishing, musical and interaction detail. **Spoilers:** section 24 discusses political identities; section 27 reveals optional fishing progression.
 
 ## 1. Identity, scope and player promise
 
@@ -182,13 +182,15 @@ OpenLegend should not copy XII's exact condition/action menu, but it can offer:
 
 The 2020 PS4/PC update increased Gambit sets from one to three. Square Enix explicitly framed this as a way to save different behaviors for situations such as exploration versus boss fights. [FFXII04](#ffxii04)
 
-Example:
+**Illustrative configurations, not universally safe builds.** Each requires the named actions, resources and targets to be available.
 
 ### Exploration set
 1. Ally: KO → Raise
 2. Ally: HP < 50% → Cura
-3. Foe: lowest HP → Attack
-4. Foe: status = Oil → Fire
+3. Foe: status = Oil → Fire
+4. Foe: lowest HP → Attack
+
+The conditional Fire rule must precede general Attack; the original example reversed them and normally hid the intended behavior. Oil is not itself a complete fire-safety check, so enemy properties and current circumstances still require inspection. [FFXII06](#ffxii06)
 
 ### Boss set
 1. Ally: KO → Phoenix Down
@@ -198,9 +200,12 @@ Example:
 5. Party leader's target → Attack
 
 ### Farming set
-1. Foe: HP = 100% → Steal
-2. Foe: party leader's target → Attack
-3. Ally: HP < 40% → Cure
+1. Ally: KO → Phoenix Down
+2. Ally: HP < 40% → Cure
+3. Foe: HP = 100% → Steal
+4. Foe: party leader's target → Attack
+
+Survival rules now precede theft and offense. **Full HP is a proxy for a fresh target, not a test that it still carries loot.** Steal does not damage the target, so a successful theft can leave its condition true. Another ally's attack, a manual order or disabling the rule ends the loop; assigning it to every attacker defeats that assumed cooperation. Thresholds and medicine/spell choices require adjustment to the encounter rather than certification as optimal values. [FFXII31](#ffxii31)
 
 The same character has one identity but multiple **operational policies**.
 
@@ -407,6 +412,14 @@ OpenLegend could preserve the causal economy while exposing knowledge through:
 - trade expertise;
 - inspectable market demand.
 
+### A named recipe and the shared-counter trap
+
+**Four Snake Skins, two Serpent Eyes and one High Arcana** unlock **Jewel of the Serpent**, a 19,998-gil package containing Serpentarius. It is an intermediate good, not an automatically equipped weapon. **Jewel of Creation** instead needs two Wargod's Bands, one Soul Powder and one High Arcana for Empyreal Soul. The overlapping High Arcana illustrates why selling everything in an arbitrary order can waste effort. [FFXII32](#ffxii32)
+
+The original detailed Bazaar reference explains that **buying** an available package resets the sold counters for its ingredients, including excess; merely carrying more of an ingredient is a different state. Two packages that have both been unlocked remain available, so satisfying both before purchasing can reuse a shared counter. Selling many sets does not imply an indefinitely banked stock of repeated offers. This is a documented counter rule, not a realistic merchant supply-chain simulation. [FFXII12](#ffxii12)
+
+**Interpretation:** choosing when to purchase can matter as much as finding the rare material. The hidden bookkeeping makes the system harder to learn from ordinary play: the visible action is a sale, but its future meaning depends on unseen recipe relationships. A future design should preserve meaningful dependencies without requiring unobservable transaction arithmetic.
+
 ## 16. Battle chains reward ecological focus
 
 Defeating the same enemy family repeatedly without breaking the chain can raise a **battle chain**.
@@ -529,6 +542,18 @@ Accessories provide encounter-specific effects.
 
 In Zodiac versions, job boards restrict equipment more strongly, so role identity is partly encoded through what a character **may legally/effectively use**.
 
+### Different weapons ask different questions
+
+Swords emphasize Strength; daggers add Speed to their offensive calculation; axes and hammers include Vitality and unusually variable output. **Maces** use the wielder's Magick Power while still meeting an opponent's physical defense. A magically developed character therefore need not rely exclusively on spending MP for useful attacks. One-handed use can also retain a shield. [FFXII33](#ffxii33)
+
+**Katanas** combine Strength and Magick Power and emphasize combos. **Poles** use Strength against the target's Magick defense, so “physical-looking weapon” does not identify the defense it tests. Certain staves strengthen an element, making their casting benefit more relevant than their ordinary strike. These are family distinctions, not a claim that any one damage formula defeats every immunity or special encounter rule. [FFXII34](#ffxii34)
+
+**Guns** use weapon/ammunition power without the same dependence on the wielder's Strength or ordinary target defense, but attack slowly. Bows use a different Strength/Speed relationship. Ammunition types add elements or statuses, so comparing two launchers without their ammunition can miss the actual loadout. [FFXII35](#ffxii35)
+
+**Measures** can apply beneficial effects when striking allies, instead of functioning as conventional damage weapons. The **Gilt Measure** supplies a Protect-on-hit example. Its action can support the party, but equipping it is not a permanent Protect aura: the user must perform the appropriate attack and then choose whether to retain or change weapons. [FFXII33](#ffxii33) [FFXII36](#ffxii36)
+
+**Interpretation:** job pairing, armor statistics, enemy defenses and weapon behavior jointly determine a role. A displayed attack value cannot explain that relationship on its own. The danger is making a useful difference invisible until an external formula guide explains why a plausible build underperforms.
+
 ## 21. Status effects become automation tests
 
 FFXII contains a dense status ecosystem:
@@ -612,6 +637,8 @@ OpenLegend can use the same broad principle:
 - let routine travel become easier afterward.
 
 ## 24. Story: Ashe is the political agent, Vaan the perspective catalyst
+
+**Spoilers for political identities and later narrative relationships.**
 
 FFXII is often summarized as “Vaan is not the real protagonist,” but that is too simple.
 
@@ -699,6 +726,14 @@ For OpenLegend:
 - invisible author intent is not.
 The player should be able to investigate the world itself.
 
+### Fishing: an input game becomes a geographic investigation
+
+**Optional-quest spoilers.** Obtain **Muramata** in Balfonheim after the relevant conversations, then give it to **Ruksel** in South Bank Village. An outing presents timed button sequences for catches; completing the set gives an additional riverbed-reward opportunity. Further success opens more demanding stages. This is an input-sequence game, not free aiming of a simulated rod. [FFXII37](#ffxii37)
+
+Colored bottles later supply clues to places elsewhere in Ivalice. Resolving their chain and the relevant Gilgamesh/Barheim prerequisites leads to **Matamune**, enabling further progression. Those requirements block completion of the later stages, not starting the first outing. The eventual **Lu Shang's Badge** joins separate superboss badges in the Wyrmhero Blade Bazaar route. Emulator speed advice in the guide is not a native feature or a personally tested accessibility option. [FFXII37](#ffxii37)
+
+**Interpretation:** a pastime can gain world relevance by supplying information, a new tool and finally a resource used outside itself. The failure mode is making every relaxing activity an unexpectedly long prerequisite chain for unrelated combat completion.
+
 ## 28. Endgame: hunts, superbosses and Trial Mode reward policy redesign
 
 Major optional challenges include:
@@ -772,6 +807,12 @@ The later 2020 patch further demonstrates that a remaster can continue revising 
 
 This is useful for OpenLegend's own long-term design:
 **preservation does not require preserving every usability defect.**
+
+### The score's identity and the cost of changing its medium
+
+In Justin Massongill's **January 18, 2022 interview**, Hitoshi Sakimoto describes bright harmonic and orchestral choices as central to XII, including deliberate recovery from darker passages. He chose a fantasy musical framing rather than emphasizing the setting's science-fiction elements. Those are stated intentions, not a claim that every listener hears the same emotional arc. [FFXII38](#ffxii38)
+
+Sakimoto says the original budget limited live performances to the opening and ending. For The Zodiac Age he sought a broadly live rerecording that preserved the atmosphere; passages effective with synthesized instruments needed adaptation and discussion with musicians and the conductor. **Interpretation:** preservation can require changing the production method rather than mechanically reproducing every original pattern. This account establishes a musical workflow, not a personally heard comparison or a guarantee that live instruments are inherently better. The interview's then-current subscription promotion is not a present access offer. [FFXII38](#ffxii38)
 
 ## 33. Commercial and distribution context
 
@@ -864,6 +905,8 @@ Steam reviews are self-selected and not prevalence estimates.
 
 ## 36. Concrete interaction studies
 
+**Constructed rules-based situations, not personal playthroughs or universally optimal configurations.** The original five examples are retained and completed; two additional cases broaden the decisions beyond routine offense.
+
 ### A. Gambit priority is executable policy
 
 **Goal:** keep party alive while maintaining damage.
@@ -882,6 +925,8 @@ What happens:
 
 Reorder Attack to the top and the party may never heal while an enemy remains targetable.
 
+**Conditions and next choice:** the character must own the available commands and have the necessary medicine or MP. After the threat changes, revise the threshold or disable an inappropriate rule. **Limit:** correct priority cannot create a missing action or resource, and a very slow recovery can still arrive too late. The ordering describes eligible action selection, not guaranteed survival. [FFXII06](#ffxii06)
+
 **Lesson:** policy priority changes behavior without changing any action's local definition.
 
 ### B. Elemental weakness becomes automated exploitation
@@ -891,7 +936,7 @@ Reorder Attack to the top and the party may never heal while an enemy remains ta
 3. mage automatically exploits applicable targets;
 4. when Fire is inappropriate, the rule no longer matches and lower rules execute.
 
-This is automated expertise expressed as a condition.
+This is automated expertise expressed as a condition. **Conditions:** the relevant target predicate and spell must be available, and the mage must be able to cast. **Result/next choice:** a new enemy mix can trigger the fallback; reconsider MP spending or area effects rather than assuming the old route remains economical. **Limit:** “weak” and merely “vulnerable” are different predicates, and immunity to a particular action is not solved by raising its priority. [FFXII31](#ffxii31)
 
 ### C. Loot → Bazaar turns ecology into market production
 
@@ -903,7 +948,7 @@ This is automated expertise expressed as a condition.
 6. merchant inventory gains a new package;
 7. buy equipment/material produced by the market system.
 
-The player has indirectly “crafted” through economic circulation.
+The player has indirectly “crafted” through economic circulation. **Named application:** a Serpentarius goal requires Jewel of the Serpent's Snake Skins, Serpent Eyes, High Arcana and purchase money. When also pursuing Empyreal Soul, plan both shared-ingredient unlocks before buying either. **Next choice:** obtain the remaining distinct input or purchase the ready package. **Limit:** buying early can reset the shared counter; having sold surplus is not proof it remains banked afterward. [FFXII12](#ffxii12) [FFXII32](#ffxii32)
 
 ### D. Hunt turns environment into information
 
@@ -914,7 +959,7 @@ The player has indirectly “crafted” through economic circulation.
 5. fight requires status/element preparation;
 6. return for reward/rank progress.
 
-The quest tests **world knowledge**, not only combat stats.
+The quest tests **world knowledge**, not only combat stats. **Conditions:** the notice, petitioner's conversation and actual appearance condition belong to that Mark, not every creature nearby. **Result/next choice:** a failed search should prompt checking the condition or choosing another task rather than indiscriminate fighting. **Limit:** this is a general class of hunts, not a claim that every Mark requires weather or shares the same spawn rule. [FFXII14](#ffxii14)
 
 ### E. Job + Gambit composition defines an agent role
 
@@ -931,7 +976,17 @@ Policy:
 The job boards determine what actions exist.
 The Gambits determine **when to use them**.
 
+**Conditions:** the relevant licenses and actual Magicks must be acquired; choosing the two job names does not automatically supply the finished kit. **Result:** one person can maintain several forms of support under ordered priorities. **Next choice:** adjust the policy or, in a version supporting it, revisit Montblanc to try another pairing. **Limit:** repeatable respec returns build choice, not every piece of gear or spell that another configuration would require. [FFXII04](#ffxii04) [FFXII08](#ffxii08)
+
 That separation between **capability** and **policy** is foundational for agent architecture.
+
+### F. A support weapon changes the intended target
+
+**Intention:** add Protect without spending a spell cast. **Conditions:** a usable Gilt Measure and an ally who can receive the effect are available. **Actions:** target the ally for the measure's on-hit benefit, then return to an appropriate combat loadout. **Interaction:** equipment changes what an attack is for. **Result:** a nominal weapon performs preparation rather than enemy damage. **Next choice:** retain its utility or restore the normal weapon. **Limit:** leaving the wrong target or fallback attack policy active can defeat the intention; equipping the measure alone is not the same as applying its effect. [FFXII33](#ffxii33) [FFXII36](#ffxii36)
+
+### G. Better execution cannot replace the missing rod
+
+**Intention:** reach a later fishing stage. **Conditions:** the early stages are open, but progression needs Matamune. **Actions:** stop repeating the current challenge, follow the bottle clues and fulfill the relevant access prerequisites, then deliver the new rod. **Interaction:** a minigame's progression becomes exploration and quest knowledge. **Result:** another kind of action reopens the skill challenge. **Next choice:** return to fishing or pursue another purpose. **Limit:** this is not evidence that every failed catch is an equipment gate; determine whether execution or access is the actual problem. [FFXII37](#ffxii37)
 
 ## 37. Comprehensive mechanics inventory
 
@@ -942,17 +997,17 @@ That separation between **capability** and **policy** is foundational for agent 
 | Attributes/levels | EXP levels + LP licenses + equipment; no broad enemy level scaling like FFVIII |
 | Skill tree | License Board grants permissions/augments; Zodiac boards job-specific |
 | Ability system | Magicks, Technicks, Quickenings, Espers, Gambit policies |
-| Equipment | Weapon/armor/accessory families with job/license permissions and varied formulas |
-| Items/inventory | Consumables, key items, Loot, ammo, equipment, Teleport Stones |
-| Crafting | No conventional direct crafting; Bazaar acts as hidden recipe/economic production layer |
+| Equipment | Weapon/armor/accessory families with job/license permissions, different stat/defense formulas, ammunition and support-on-hit measures |
+| Items/inventory | Consumables, key items, Loot, ammo, equipment, Teleport Stones, fishing rods and clues |
+| Crafting | No conventional direct crafting; Bazaar has shared sold-input counters, package purchase/reset and named intermediate recipes |
 | Magic | MP-based Magicks, status/element interactions; resource specifics vary by version |
 | Summons | Espers are defeated then exclusively licensed; summoned as temporary allied actors |
 | Combat | Seamless field ADB, action charge, manual commands + editable automated Gambits |
-| AI/automation | Prioritized condition→action Gambits; current TZA has three stored sets |
+| AI/automation | Prioritized condition→action Gambits; current TZA has three stored sets; full-HP Steal needs oversight |
 | Enemy interaction | Aggro/neutral states, Steal/Poach, chains, rare game, status/element manipulation |
 | Traversal | Connected zones, chocobos, airships/commercial routes, Gate Crystal teleportation |
 | Environmental systems | Weather changes elements/spawns/hunts; rare-game conditions |
-| Activities | Hunts, Clan Centurio, Rare Game, fishing and other side content |
+| Activities | Hunts, Clan Centurio, Rare Game, timed fishing with clue/rod progression and other side content |
 | Economy | Gil largely from selling Loot; shops + Bazaar; no player market |
 | Death/failure | KO/revival; party failure returns to save/autosave; no persistent corpse |
 | Story | Authored political narrative |
@@ -1074,35 +1129,37 @@ OpenLegend should make irreversible life decisions rare and causally justified; 
 
 ## 39. Preservation and requirement audit
 
-No FFXII-specific prior game/mechanics/dossier owner existed on this branch before G89, so this dossier is additive.
+No FFXII-specific prior game/mechanics/dossier owner existed on this branch before G89, so this dossier is additive. This corrective pass preserves original sections, examples and FFXII01–30, corrects shadowed/unsafe sample priorities, and expands the originally abbreviated weapon, Bazaar, fishing, audiovisual and worked-case coverage. Recommendations remain research interpretations rather than accepted engine requirements.
 
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / scope / promise | §§1–2 |
-| R02 actions / major mechanics | §§3–29, 36–37 |
-| R03 items / entities / composition | §§8–16, 20–21 |
-| R04 progression / economy / time | §§8–16, 23, 28–29 |
-| R05 concrete interactions | §§4–7, 12–19, 36 |
+| R02 actions / major mechanics | §§3–29, 36–37, including operative fishing and corrected policies |
+| R03 items / entities / composition | §§8–16, 20–21; named Bazaar inputs, weapon properties and measures |
+| R04 progression / economy / time | §§8–16, 23, 27–29; counter reset and distinct activity prerequisites |
+| R05 concrete interactions | §36: seven completed cases, retaining original sequences and adding limits/next decisions |
 | R06 people / AI / social / multiplayer | §§4–7, 11, 17, 24–26, 37 |
-| R07 art / audio / interface / feel | §§1–7, 32, 34–35 |
-| R08 story / narrative / play | §§17, 24–27 |
+| R07 art / audio / interface / feel | §§1–7, 32, 34–35; primary Sakimoto score account |
+| R08 story / narrative / play | §§17, 24–27, with spoiler labels |
 | R09 production / development | §§30–32 |
 | R10 marketing / distribution / virality | §33 |
 | R11 commercial / participation | §§33, 35 |
 | R12 reviews / player feedback | §§34–35 |
-| R13 transferable inspiration / limits | §38 |
-| R14 sources / viewing / preservation / navigation | §§2, 39 + sources |
+| R13 transferable inspiration / limits | §38 and labeled local interpretations |
+| R14 sources / viewing / preservation / navigation | §§2, 39 + sources; existing numbered headings retained |
 
 ### Evidence limits
 
 - Original PS2, IZJS and current Zodiac Age rules are separated.
 - Modern job resets/Gambit sets are not attributed to 2017 launch builds before their platform patches.
-- Five substantive independent review publications were inspected.
-- Steam current helpful/recent material is qualitative/self-selected.
+- Five substantive independent review publications were inspected in the original pass; the correction does not claim to repeat every inherited reading.
+- Steam current helpful/recent material is qualitative/self-selected; retained snapshots are not a fresh compatibility survey.
 - 2007 “>5m original sales” and 2017 “>1m Zodiac PS4 shipments+digital” are different dated metrics and are not summed.
 - Leadership-change reporting is limited to documented public accounts; no health speculation is made.
-- Community mechanics sources support rule details; developer interviews support intent.
-- No claim depends on unwatched video footage.
+- Community mechanics sources support rule details; developer interviews support intent. The added licensed guides are versioned rules references, not a personally reproduced benchmark.
+- Contradictory secondary shorthand about Bazaar reset timing, weapon interactions or item prices is not automatically adopted over the detailed operative reference.
+- No claim depends on unwatched video footage or unheard audio. Useful subsequent viewing targets include a full-HP Steal loop, conditional rules overtaken by a general rule, a measure used on an ally and a fishing clue route. The written Sakimoto interview is a production reading route, not a listening report.
+- Final slice-wide source-tail/link checks and global packet-preservation gates remain separate.
 
 ## 40. Completion conclusion
 
@@ -1134,7 +1191,7 @@ For OpenLegend, the most important takeaway is:
 
 <a id="ffxii05"></a>**FFXII05 — [Final Fantasy XII Review](https://www.gamespot.com/reviews/final-fantasy-xii-review/1900-6160816/).** Greg Kasavin, GameSpot, 2006-10-31. Contemporary original review; seamless strategic combat, presentation, story and hands-off tradeoff.
 
-<a id="ffxii06"></a>**FFXII06 — [Final Fantasy XII Gambit System FAQ](https://gamefaqs.gamespot.com/ps2/459841-final-fantasy-xii/faqs/46605).** Community mechanics reference for condition/target→action behavior and top-down priority.
+<a id="ffxii06"></a>**FFXII06 — [Final Fantasy XII Gambit System FAQ](https://gamefaqs.gamespot.com/ps2/459841-final-fantasy-xii/faqs/46605).** Community mechanics reference for condition/target→action behavior and top-down priority. Corrective pass inspected Steal/priority passages; the author's particular farming order is not adopted as a universal safety policy.
 
 <a id="ffxii07"></a>**FFXII07 — [Final Fantasy XII original License Board/Gambit reference](https://gamefaqs.gamespot.com/ps2/459841-final-fantasy-xii/faqs/46605).** Community mechanics reference for original common board, LP permissions and Gambit slot relationships.
 
@@ -1146,7 +1203,7 @@ For OpenLegend, the most important takeaway is:
 
 <a id="ffxii11"></a>**FFXII11 — [Final Fantasy XII Loot reference](https://finalfantasy.fandom.com/wiki/Loot_(Final_Fantasy_XII)).** Community mechanics reference for Loot as principal gil source and Bazaar input.
 
-<a id="ffxii12"></a>**FFXII12 — [Final Fantasy XII Loot/Bazaar Goods FAQ](https://gamefaqs.gamespot.com/ps2/459841-final-fantasy-xii/faqs/45805).** Community mechanics reference for hidden sold-Loot recipe counters and Bazaar package unlocks.
+<a id="ffxii12"></a>**FFXII12 — [Final Fantasy XII Loot/Bazaar Goods FAQ](https://gamefaqs.gamespot.com/ps2/459841-final-fantasy-xii/faqs/45805).** FeuFeu, detailed original-game reference. Hidden sold-Loot counters and package unlocks; corrective pass read purchase/reset and overlapping-recipe examples. One counter is not an unlimited physical stockpile; exact rule timing is not inferred from brief secondary summaries.
 
 <a id="ffxii13"></a>**FFXII13 — [Final Fantasy XII Kill Chain Guide](https://gamefaqs.gamespot.com/ps2/459841-final-fantasy-xii/faqs/61198).** Community mechanics reference for species-focused battle chains and Loot effects.
 
@@ -1183,3 +1240,23 @@ For OpenLegend, the most important takeaway is:
 <a id="ffxii29"></a>**FFXII29 — [Current Steam store review excerpts](https://store.steampowered.com/app/595520/?curator_clanid=9730205).** Valve, inspected 2026-09-26. Recent player praise of Gambit/build depth and current negative “fatal error” testimony.
 
 <a id="ffxii30"></a>**FFXII30 — [Current FFXII Steam technical discussion/review evidence](https://steamcommunity.com/app/595520/discussions/0/570416524212386860/).** Steam Community, June–July 2026, plus current review surface. Multiple self-reported fatal/runtime error cases and workarounds; hardware/driver-sensitive qualitative evidence, not a prevalence estimate.
+
+### Corrective-pass sources
+
+Accessed September 26, 2026. Relevant rule passages and written interviews were inspected. No linked demonstration, soundtrack listening or actual game execution is claimed.
+
+<a id="ffxii31"></a>**FFXII31 — [Gambits](https://primagames.com/eguides/final-fantasy-xii-the-zodiac-age-eguide/gambits/gambits).** Licensed Zodiac Age guide. Full-HP Steal, survival priority, manual interruption and weakness/vulnerability passages read. Numerical income promises and every sample policy are not adopted as proven optimization.
+
+<a id="ffxii32"></a>**FFXII32 — [The Bazaar](https://primagames.com/eguides/final-fantasy-xii-the-zodiac-age-eguide/the-bazaar/the-bazaar).** Licensed Zodiac Age guide. Relevant Serpentarius/Empyreal Soul recipes and shared selling explanation inspected; detailed reset behavior cross-checked with FFXII12. Tables are not reproduced wholesale.
+
+<a id="ffxii33"></a>**FFXII33 — [One-handed weapons](https://primagames.com/eguides/final-fantasy-xii-the-zodiac-age-eguide/weapons-armor-and-accessories/one-handed-weapons).** Licensed Zodiac Age guide. Family attributes, maces and measures read. Description of an on-hit buff is not permanent protection merely from equipping the item.
+
+<a id="ffxii34"></a>**FFXII34 — [Two-handed weapons](https://primagames.com/eguides/final-fantasy-xii-the-zodiac-age-eguide/weapons-armor-and-accessories/two-handed-weapons).** Licensed Zodiac Age guide. Katana, pole and staff distinctions inspected. Unsupported shorthand about all spell defenses or target immunities is not imported.
+
+<a id="ffxii35"></a>**FFXII35 — [Ranged weapons](https://primagames.com/eguides/final-fantasy-xii-the-zodiac-age-eguide/weapons-armor-and-accessories/ranged-weapons).** Licensed Zodiac Age guide. Gun/bow and ammunition differences read; no inferred universal answer to every special defense.
+
+<a id="ffxii36"></a>**FFXII36 — [Measures](https://finalfantasy.neoseeker.com/wiki/Measures_%28FFXII%29).** Community equipment reference. Substantive indexed Gilt Measure/Protect table inspected; direct open failed. Corroborates the named item, not an independently tested current-mod effect.
+
+<a id="ffxii37"></a>**FFXII37 — [Fishing](https://guides.flactem.com/final-fantasy-xii/minigames/fishing/).** Flactem, authored play guide. Entry, input sequences, rods, clues and external reward chain read. Emulator instructions remain external; ambiguous final-catch count is not asserted.
+
+<a id="ffxii38"></a>**FFXII38 — [How Hitoshi Sakimoto composed Final Fantasy XII](https://blog.playstation.com/2022/01/18/interview-how-hitoshi-sakimoto-composed-the-score-of-final-fantasy-xii/).** Justin Massongill interviewing Sakimoto, PlayStation Blog, January 18, 2022. Written primary intent/budget/rerecording account read. No soundtrack listening or present subscription availability inferred.
