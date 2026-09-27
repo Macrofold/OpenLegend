@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Research standard](../research-requirements.md)
 
-**Research pass: September 26, 2026.** Reference research, not accepted OpenLegend requirements. Scope: the single-player base game, its documented post-launch changes, separate competitive multiplayer and the delivered War Sails expansion. Historical guides are used for their established systems, not as current balance tables. The latest stable build number was not reliably recoverable; this dossier does not call the verified November 2025 feature milestone the latest patch. Six original written reviews and a helpful-player-review sample were read. No gameplay, footage or source-code audit was performed.
+**Research pass and follow-up audit: September 26, 2026.** Reference research, not accepted OpenLegend requirements. Scope: the single-player base game, its documented post-launch changes, separate competitive multiplayer and the delivered War Sails expansion. Historical guides establish systems, not current balance tables. The audit read the complete existing dossier and checked R01–R14; original external-source reading is not represented as repeated. Six original written reviews and a helpful-player-review sample were read in the original pass. Newly retrieved patch records resolve the earlier release-identification gap, and direct negative Steam bodies resolve the earlier negative-filter failure. No gameplay, footage or source-code audit was performed.
 
 ## 1. Identity, promise and edition boundaries
 
@@ -11,6 +11,8 @@ Bannerlord connects an embodied fighter to a strategic campaign: recruit and mai
 **War Sails is delivered content, not an upcoming expansion:** its primary store dates release to November 26, 2025 and identifies it as a paid single-player add-on requiring the base game. It adds the Nord faction, northern territory, ships, naval combat and maritime progression. Its current description also includes coastal raids, custom naval battles and a pirate tutorial quest. Do not project these features backward onto the 2022 reviews. [S2]
 
 The free **1.3.4 launch update of November 2025** is a separate boundary from the paid expansion. Contemporary reporting describes alliances/trade agreements, caravan-route control, journey events, deserters, Fast Mode, improved battle AI and post-knockout troop control. Stealth gained light/noise-sensitive guards, distractions, takedowns and body concealment. These are delivered-update reports, not a claim of having inspected all 17,000 words of underlying notes: the linked Steam announcement returned only its JavaScript shell and the community mirror failed. [S15]
+
+**Release correction:** TaleWorlds' current news index and reproduced release notes identify **Bannerlord 1.4.8 / War Sails 1.2.8, August 10, 2026**, as the latest stable release found in this audit. The August 19 **1.5.0 / 1.3.0** announcement is explicitly **beta**, not the same release channel. This replaces the earlier inability to identify a newer stable milestone; it is not a guarantee against unindexed platform-specific hotfixes. The Steam announcement shells still do not expose their full bodies, so the substantial notes were read through labeled SteamDB reproductions. [S31, S32, S33]
 
 **What the first session becomes:** early recruitment, tournament or courier income and avoiding stronger parties develop into a choice of merchant, mercenary, vassal or independent ruler. Progress changes the scale of responsibility rather than replacing the battlefield with a wholly different game. This is an interpretation of the linked action, party and faction systems, not evidence that every career has equal depth. [S17, S26, S28]
 
@@ -32,6 +34,8 @@ Creation selects appearance, culture and a background that establishes initial s
 Relevant activity develops skills; attribute investment and skill-specific focus affect learning. Milestone perks add personal or organizational benefits. A combat specialist and a quartermaster therefore invest in different forms of effectiveness. This inventory follows the November 2022 character guide; its simplified leveling prose and numerical culture bonuses are **not** used as an exact current XP formula. [S22]
 
 The important compositional distinction is **who supplies which skill in which role**. Scout, surgeon, engineer and quartermaster assignments draw on Scouting, Medicine, Engineering and Steward respectively. Leaving a role unassigned uses the leader rather than magically pooling every companion's highest statistic. A governor, caravan leader, party leader and formation captain are different appointments; a capable person cannot fill all remote jobs simultaneously. Check the perk's role label rather than assuming every bonus is global. [S11, S24]
+
+**A later rule changes staffing:** May 21, 2026's **1.4.5 / 1.2.5** update permits one clan member to hold **two party roles**. War Sails adds **First Mate**, tied to **Boatswain**, and **Navigator**, tied to **Shipmaster**. Alongside **Mariner**, these are the expansion's three additional skill families, not replacements for the eighteen base skills. A dual assignment within a party does not allow simultaneous command of two remote organizations. Governing-attribute and exact perk-value claims are omitted where prerelease and later references differ. [S34, S33]
 
 ### Personal combat, equipment and physical constraints
 
@@ -67,6 +71,8 @@ Trade is an arbitrage problem in a changing world. Workshops turn inputs into go
 
 TaleWorlds' 2023 development account introduced warehouse decisions about input supply and whether to hold output instead of automatically selling it. The same account described weather effects, information restrictions in the encyclopedia, criminal alleys and the planned destruction of landless kingdoms. It was written around the 1.1 live/1.2 beta transition: it establishes the evolution and intention of those systems, not the exact date every later platform shipped each rule. In particular, the source qualifies launch-era claims that workshop operation or information access never changed. [S10]
 
+**Crime can become an enterprise:** the delivered 1.1.0 notes describe taking an alley and appointing a clan member with suitable traits and Roguery. It supplies money and access to bandit recruits, but also increases criminal exposure and needs defense against rivals. This is a bounded town activity, not freely placing a criminal business anywhere. It makes the companion's location and suitability another economic cost. [S35]
+
 ### Clan versus party versus kingdom
 
 The clan is the persistent household/organization; a party is a traveling group; an army combines parties for a campaign; a kingdom contains clans and settlements. Renown develops clan tier and expands organizational capacity. Separately, money pays wages and purchases, relations concern particular people/groups, and influence supports kingdom decisions and collective action. Treating these as one generic reputation currency would obscure the game. A companion-led extra party recruits and fights on the map but adds a wage bill borne by the clan. [S24, S28]
@@ -83,19 +89,27 @@ The prisoner decision has social consequences beyond its immediate military util
 
 ### Settlements and endgame pressure
 
-A fief is an obligation as well as an income stream. Governors, garrisons, construction, security, food and loyalty turn conquest into continuing management. The December 2025 loyalty account warns that the old Festival and Games daily-default solution was removed with the 1.3 changes. Culture-compatible governors, relevant perks and kingdom policies become important; increasing security through a larger garrison carries an expense. Low loyalty can slow useful output and culminate in rebellion. This is a post-update description, not a claim to have tested every threshold on the latest build. [S25]
+A fief is an obligation as well as an income stream. Governors, garrisons, construction, security, food and loyalty turn conquest into continuing management. The December 2025 loyalty account warns that the old Festival and Games daily-default solution was removed with the 1.3 changes. Culture-compatible governors, relevant perks and kingdom policies become important; increasing security through a larger garrison carries an expense. Low loyalty can slow useful output and culminate in rebellion. This is a post-update description, not a claim to have tested every threshold on the latest build. The later 1.5.0 beta removes the different-culture governor penalty, so this guidance must not be applied unchanged to that experimental channel. [S25, S33]
 
 Early purposes are survival and credibility; middle purposes are reliable income, a competent force and useful allies; late purposes are territory, dynasty and the player's chosen kind of rule. Losing a battle may mean capture, separation from troops and rebuilding, rather than deleting the campaign. Hero death/aging settings affect continuity. Repeatedly defending and recapturing territory can produce attachment—or an attritional loop in which nominal progress no longer feels meaningful. The reviews below document both reactions. [S3, S6, S17]
+
+**Voluntary closure also exists:** at **The Retreat**, near Lageta, **The Hermit** offers retirement with either succession through an heir or a complete conclusion. The 1.1.0 update also introduced an end-of-campaign statistics view. This is different from requiring death or world conquest before a player can conclude a character's story. It is an authored retirement interaction, not arbitrary transfer into every NPC. [S35]
 
 ### Activities, omissions and multiplayer boundaries
 
 The action inventory includes tournament participation, arena practice, escort/delivery and combat quests, recruiting, looting, prisoner management, smithing, commerce, town conversations, hideouts, criminal activity, field battles and sieges. Later stealth is not imported from Warband or a mod. The game does not offer a native spell system, freely assembled housing, crop-by-crop farming or an independently verified cooperative campaign. Its relationships are primarily operational/dynastic rather than a party-romance content library. [S1, S15, S17, S23, S29]
+
+**Board games were missing from the inventory.** The six original cultural games are imperial **Tablut**, Vlandian **MuTorere**, Battanian **Bagh-Chal**, Sturgian **Konane**, Aserai **Seega** and Khuzait **Puluc**. Taverns and keeps provide play opportunities; the documented tavern/keep culture rules differ. This does not establish a seventh game for War Sails' Nords. [S36] In the documented Bannerlord version of Tablut, the defender maneuvers a king toward the board edge while the attacker tries to prevent that escape. The player can risk a wager, protect the king while capturing opposing pieces, then decide when an escape lane is safe. The guide's claim of always winning is not adopted as a proven strategy or current AI guarantee. No real-world variant's extra rules are silently imported. [S37]
 
 Competitive modes studied by launch reviewers include team fighting, sieges, small-team skirmishes and Captain battles in which players direct AI soldiers. These have their own match rules rather than simply sharing the single-player clan save. Modded persistent worlds and cooperative projects must be named as mods. A review's report of sparse console servers in November 2022 is not a September 2026 population measurement. [S3, S6]
 
 ### What War Sails changes
 
 The current expansion description adds wind/weather-aware sailing, boarding and collision damage; fleets can blockade coastal targets and conduct coastal raids. The advertised roster is now 22 vessels, not necessarily the count in its first announcement. Ships can be acquired, captured and upgraded, while northern settlements and maritime skills change travel and recruitment. Custom naval battles are distinct from the campaign. A sea route is therefore a new logistical and tactical layer, not merely a blue version of a road. These are storefront-declared capabilities; detailed balance and AI reliability were not independently tested. [S2]
+
+The May 2026 release adds delegated ship control, letting the crew handle the helm while the player fights. Its hideout changes also allow reaching the campfire by stealth without first eliminating every guard. These are practical examples of preserving the player's goal while widening the supported means, not proof of unrestricted action. [S34]
+
+**Experimental additions are not stable rules:** the August 2026 beta adds blood feuds after clan executions, possible retaliatory execution of the player, configurable clan-party behavior, and visible battle/wreck sites. Its documented aim is more recognizable consequences, not just hidden AI weights. These are promising comparative references, but a beta announcement cannot certify shipped reliability or be silently included in the stable worked cases below. [S33]
 
 ## 4. Eight worked situations
 
@@ -127,7 +141,7 @@ The current expansion description adds wind/weather-aware sailing, boarding and 
 
 ### G. A castle award is not a loyalty solution
 
-**Intention:** keep a newly acquired settlement. **Conditions:** population/governor culture and local security affect loyalty. **Actions:** appoint a suitable governor, inspect policies and decide how much garrison expense is affordable. **Interaction:** military occupation and political acceptance are separate constraints. **Result:** the settlement can become productive rather than a recurring rebellion. **Next decision/limit:** defend fewer places well or continue expansion; the old passive Festival and Games advice does not automatically apply after the documented 1.3 change. [S25]
+**Intention:** keep a newly acquired settlement. **Conditions:** population/governor culture and local security affect loyalty in the documented stable-era account. **Actions:** appoint a suitable governor, inspect policies and decide how much garrison expense is affordable. **Interaction:** military occupation and political acceptance are separate constraints. **Result:** the settlement can become productive rather than a recurring rebellion. **Next decision/limit:** defend fewer places well or continue expansion; the old passive Festival and Games advice does not automatically apply after the documented 1.3 change, and the 1.5 beta changes the governor-culture penalty again. [S25, S33]
 
 ### H. Removing a rival can destroy future options
 
@@ -154,6 +168,8 @@ TaleWorlds developed and publishes the digital game. Early Access preceded full 
 A particularly concrete primary design account is the May 10, 2018 workshop blog: production interiors were organized around reusable, tagged props so changing the enterprise did not require authoring every possible complete scene. Its proposed enterprise list is **prerelease design**, not evidence that every listed business shipped. The blog also explains skipping E3 that year to prioritize development while discussing Gamescom plans. This is a documented production/marketing tradeoff, not a generic claim that the game succeeded without marketing. [S12]
 
 The 2021 anniversary account describes iterative work on UI, AI decision-making, family systems, prison breaks and modding tools, including scene, terrain, navigation, materials and related editing. It also mentions testing tools with modders. The 2023 update account makes later changes to economic control and campaign information legibility visible. Both were available through substantive indexed text during this pass; direct TaleWorlds article retrieval returned 403, so their access status is not represented as a complete direct-site inspection. [S10, S11]
+
+The August 2026 **War Sails Modding Kit** adds creation of ships, naval maps and wind/current flowmaps, coastal-raid scenes and Nord-asset variants. The release credits closed-beta modders' feedback. Tools and documentation make this a concrete authoring/distribution story, but their release does not establish source-code openness, unrestricted asset licensing or successful use of every editor feature. [S32]
 
 ### Distribution, community and economics
 
@@ -195,7 +211,7 @@ Klimas praises the expanded battlefield orders, troop development, equipment and
 
 The accessible **English / Most Helpful (All Time)** surface was inspected September 26, 2026. Michael {United Critics}'s April 8, 2020 recommendation praises immersive fighting and self-directed play while criticizing thin story and roughness; it is marked as a free copy. Ravenfdr's October 5, 2022 recommendation contains substantial criticism of defeated kingdoms continuing to raid and demand tribute. Later kingdom-destruction development makes that an explicitly historical complaint. Walsingham's June 13, 2024 recommendation values combat and the opening, but criticizes late-game grind and weak connections between systems. [S9]
 
-These are contrasting **bodies inside positive recommendations**, not three uniformly enthusiastic votes. A separate negative-filter request failed; no inaccessible negative review is counted. Helpful order is mutable; displayed present hours are not publication-time hours, and a posting date does not prove the body was never edited. The sample is qualitative, not a frequency estimate or current-bug census. [S9]
+These are contrasting **bodies inside positive recommendations**, not three uniformly enthusiastic votes. The original negative-filter request failed; the follow-up recovered the direct **Most Helpful (All Time), Negative Only, English** page. **Machette666**, July 5, 2024, criticizes mod-breaking updates despite enjoying the game; the page displayed 620.7 hours and 379 helpful votes. **andeh**, February 2, 2024, likes the opening but objects to repetitive late wars, weak diplomacy and ineffective relationships; 797.9 hours and 479 helpful votes were displayed. Their broad claims that updates never add substance or diplomacy does not exist cannot describe the documented 2025–2026 changes. These are historical expectations and experiences, not present-code diagnoses. Helpful order and counters are mutable; hours are not necessarily publication-time values. This closes the negative-body access gap, not a representative current-build survey. [S38]
 
 ## 7. Transferable inspiration and limits
 
@@ -212,10 +228,10 @@ The reviews do not support a simple 'deep versus shallow' verdict. Bannerlord ca
 
 ## 8. Sources, viewing routes and evidence limits
 
-All accessed September 26, 2026. Review/guide bodies were read unless a narrower access status is stated. Paraphrases rather than reproduced source prose. Older guides establish mechanics families, not a current balance guide; detailed numerical claims were avoided where editions disagreed.
+All accessed September 26, 2026, in the original pass or expressly identified follow-up. Original review/guide bodies were read unless a narrower access status is stated; auditing this dossier does not imply rereading all of them. Paraphrases rather than reproduced source prose. Older guides establish mechanics families, not a current balance guide; detailed numerical claims were avoided where editions disagreed.
 
 - **S1 — Primary storefront:** [TaleWorlds, Bannerlord on Steam](https://store.steampowered.com/app/261550/Mount__Blade_II_Bannerlord/). Release/mode declarations and broad actions; not independent reception.
-- **S2 — Primary expansion storefront:** [War Sails on Steam](https://store.steampowered.com/app/2927200/Mount__Blade_II_Bannerlord__War_Sails/). Delivered release and current advertised content, not hands-on AI/balance evidence.
+- **S2 — Primary expansion storefront:** [War Sails on Steam](https://store.steampowered.com/app/2927200/Mount__Blade_II_Bannerlord__War_Sails/). Delivered release and current advertised content, not hands-on AI/balance evidence. About text rechecked during the audit.
 - **S3 — Original review:** [Fraser Brown, PC Gamer](https://www.pcgamer.com/mount-and-blade-2-bannerlord-review/), October 28, 2022. PC launch; full substantive body read.
 - **S4 — Original review:** [Pezh J., GameGrin](https://www.gamegrin.com/reviews/mount-and-blade-ii-bannerlord-review/), 2022. Full body; exact publication date not exposed there.
 - **S5 — Original review:** [Khayl Adam, Push Square](https://www.pushsquare.com/reviews/ps5/mount-and-blade-ii-bannerlord), November 17, 2022. PS5; full body.
@@ -245,27 +261,40 @@ All accessed September 26, 2026. Review/guide bodies were read unless a narrower
 - **S29 — Mechanics guide:** [Gamepressure, executing lords](https://www.gamepressure.com/mount-blade-ii-bannerlord/how-to-execute-of-the-lord/zed352), updated November 3, 2022. Irreversible removal and social consequences, not every current relation calculation.
 - **S30 — Historical campaign guide:** [Gamepressure, creating a kingdom](https://www.gamepressure.com/mount-blade-ii-bannerlord/how-to-create-your-own-kingdom/zed3fa), updated November 3, 2022. Neretzes, Istiana/Arzagos and Dragon Banner route; its old tier/checklist and minimization of later consequences are not adopted as current universal rules.
 
+### Follow-up source additions
+
+- **S31 — Primary release index:** [TaleWorlds homepage/news](https://www.taleworlds.com/). Current indexed release headings read: stable August 10 and beta August 19, 2026. Not every historical linked article was inspected.
+- **S32 — Primary notes, labeled reproduction:** [War Sails 1.2.8 / Bannerlord 1.4.8 and Modding Kit](https://steamdb.info/patchnotes/24573425/), August 10, 2026. Substantive tool and release sections read; original Steam announcement returned a shell. No editor or EULA audit.
+- **S33 — Primary beta notes, labeled reproduction:** [War Sails 1.3.0 / Bannerlord 1.5.0 beta](https://steamdb.info/patchnotes/24816291/), August 19, 2026. Introduction and relevant traits/feuds, party control, skills and settlement sections read. Explicitly experimental, not certification of every listed fix or later release.
+- **S34 — Primary release notes, labeled reproduction:** [War Sails 1.2.5 / Bannerlord 1.4.5](https://steamdb.info/patchnotes/23344486/), May 21, 2026. Published highlights and relevant roles, stealth and naval-command sections read, not every inherited beta-changelog line. Access does not retroactively resolve S15's original patch-host failure.
+- **S35 — Primary older release notes, labeled reproduction:** [Bannerlord 1.1.0](https://steamdb.info/patchnotes/10653869/), March 1, 2023. Retirement, campaign statistics and alley sections read. Historical delivered additions, not current numerical balances.
+- **S36 — Community reference:** [Mount & Blade Wiki, Board Games](https://mountandblade.fandom.com/wiki/Board_Games). Complete indexed introductory/list text read; direct opening failed. Historical trivia and optimal-strategy claims excluded.
+- **S37 — Community play guide:** [Gameplay.tips, Tablut](https://gameplay.tips/guides/7244-mount-blade-ii-bannerlord.html), 2020. Indexed substantive play explanation read; guaranteed-win framing not adopted. No gameplay or real-world-rules equivalence test.
+- **S38 — Direct player evidence:** [Steam negative helpful reviews](https://steamcommunity.com/app/261550/negativereviews/?browsefilter=toprated). Direct bodies of the two named reviewers read; all-time English, not a present-version sample. Allegations about developer motives and universal mod breakage are not independently established facts.
+
+**Reading route:** compare Brown's remembered Ortysia [S3] with the dated negative accounts [S38], then the delivered role/stealth changes [S34] and explicitly experimental response to consequence legibility [S33]. That sequence distinguishes an experienced problem from a proposed remedy and from a verified result. For lifecycle design, read the short retirement/alley sections [S35].
+
 **Viewing route, not watched evidence:** use the official base/War Sails storefront trailers for visual vocabulary; the linked development-update page for the developer's demonstrations; the competition's public demonstrations for mod authoring examples. Study one field battle, one siege preparation/assault pair, a town's finance/loyalty screens and a naval boarding encounter rather than only cinematic montages. These are proposed observations; no timestamps, watched duration or firsthand outcomes are claimed.
 
 ## 9. Coverage and preservation review
 
 | Requirement | Substantive owner in this dossier |
 | --- | --- |
-| R01 | Section 1: identity, modes, release and update boundaries |
-| R02 | Section 2 and activities in section 3: actions, skills, commands, crafting, traversal and stealth |
-| R03 | Section 2: equipment, troops, components and competing object uses |
-| R04 | Section 3: currencies, household growth, logistics, failure and endgame |
+| R01 | Section 1: identity, modes, release/update and stable/beta boundaries |
+| R02 | Section 2 and activities in section 3: actions, skills including naval additions, commands, crafting, traversal and stealth |
+| R03 | Section 2: equipment, troops, components, role assignments and competing object uses |
+| R04 | Section 3: currencies, household growth, logistics, retirement, failure and endgame |
 | R05 | Section 4: eight causal situations with limits and next decisions |
-| R06 | Section 3: people, roles, relationships, autonomous parties and multiplayer boundaries |
+| R06 | Section 3: people, roles, relationships, autonomous parties, board-game participation and multiplayer boundaries |
 | R07 | Section 5: visual/physical language, sound, camera, menus and access friction |
 | R08 | Section 5: spoiler-marked authored campaign and emergent place history |
-| R09 | Section 5: primary design/iteration accounts and production evidence limits |
+| R09 | Section 5: primary design/iteration and new authoring-kit accounts, with evidence limits |
 | R10 | Section 5: distribution, mod program and explicitly hypothetical sharing mechanisms |
 | R11 | Section 5: premium/expansion model, metric limits and no fabricated sales/profit |
-| R12 | Section 6: six independent reviews and helpful Steam testimony |
+| R12 | Section 6: six independent reviews and helpful positive/negative Steam testimony |
 | R13 | Section 7: six transferable patterns, dependencies and alternatives |
-| R14 | Sections 8–9: annotated sources, viewing route, navigation and preservation |
+| R14 | Sections 8–9: annotated sources, reading/viewing routes, navigation and preservation |
 
 G115 is a curated roster addition, not one of the original packet's dedicated game chapters. The inspected branch roster, library navigation and dossier tree contain no earlier dedicated Bannerlord owner. The initial checkpoint's six review accounts, Ortysia example, uncertainty notes and source identities are retained here; its temporary incomplete instructions are replaced by completed coverage and explicit residual source limits. No original chapter, mechanics study, source register or supplied-packet material is replaced. Global packet-preservation gates remain open in the progress ledger.
 
-Reviewed against the written assignment for mechanics breadth, source/edition distinctions, all six review identities, eight situations and relative navigation. Actual commit comparison and completion commit reference belong in the progress ledger. This pass is not a current-build execution test, proof that all bugs are fixed, or completion of the 130-subject integration audit.
+The follow-up read the whole dossier, checked all R01–R14 and preserved the original eight cases, six independent review accounts and earlier sources. It resolves concrete current-release and negative-review retrieval gaps, adds missing minigames/retirement/alley/naval-role coverage, and corrects the stable-versus-beta governor advice without removing its historical context. Actual commit comparison and completion references belong in the progress ledger. This is not a current-build execution test, proof that all bugs are fixed, or completion of the 130-subject integration audit.
