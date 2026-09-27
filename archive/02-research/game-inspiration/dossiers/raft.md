@@ -14,6 +14,12 @@ Difficulty changes the pressure. Peaceful/Easy can substantially reduce or remov
 
 ## R02 — player actions and major mechanics
 
+### Character identity, camera and progression baseline
+
+Raft is a **first-person** survival game. The player starts with one of the two default cosmetic identities, **Maya or Rouhi**, and can unlock **Tala, Johnny, Elaine and Shogo** at story locations. These six playable identities do **not** have distinct statistics, classes or abilities; changing character changes appearance/identity rather than build rules. GameSpot's 1.0 character guide explicitly describes the unlockables as cosmetic/blank-slate variants. [GameSpot character guide](https://www.gamespot.com/articles/raft-the-final-chapter-how-to-unlock-all-new-characters/1100-6504930/).
+
+There is no Strength/Dexterity-style attribute sheet and no character XP level. Long-term capability comes from recipes, equipment, raft infrastructure, story blueprints and player knowledge.
+
 ### Hooking, gathering and the moving resource field
 
 The signature early action is throwing a rope-and-hook into the ocean, timing the cast so the hook intersects floating planks, plastic, palm leaves and barrels/crates. The important systemic twist is that the resource field moves relative to the raft. Missing an object often means choosing whether to spend time/paddle durability chasing it or accept the loss.
@@ -50,6 +56,18 @@ Cooking pots and the 1.0 **Juicer** turn ingredient combinations into higher-val
 
 Combat is deliberately simple rather than a deep action system. Spears, bows/arrows and eventually higher-tier melee/equipment defend against the recurring shark and destination/island animals. Story destinations introduced bespoke encounters and bosses including the Rhino Shark. Armor and better weapons increase margin, but several reviews criticize animation/feel or the shark becoming routine rather than frightening.
 
+### Equipment, armor and carried inventory
+
+The player's gear layer is small but mechanically meaningful. Current equipment includes:
+- **oxygen bottle** for longer dives;
+- **flippers** for faster underwater movement;
+- **head lights** for dark interiors;
+- **backpacks** for more carried slots;
+- **zipline/electric zipline tools** for authored traversal;
+- a three-piece **Leather Armor** set that reduces enemy damage but wears with use.
+
+Only one piece can occupy a given equipment slot. Armor is therefore a durability/resource trade rather than a character-stat tree, and it does not prevent environmental dangers such as drowning/falling in the same way it reduces creature attacks. [Equipment reference](https://raft.fandom.com/wiki/Equipment) · [Leather Armor](https://raft.fandom.com/wiki/Leather_Armor).
+
 ### Scavenging, underwater extraction and environmental traversal
 
 Islands break the "moving home" rhythm with short expeditions:
@@ -62,13 +80,25 @@ Islands break the "moving home" rhythm with short expeditions:
 
 Ziplines and the electric zipline tool become notable traversal devices at later authored locations.
 
+### Activities, puzzles and collection loops
+
+Beyond ordinary gathering/combat, Raft includes several distinct activity loops:
+- **fishing**, with ordinary catches for food and bait-gated rare fish for Trading Posts;
+- **treasure hunting** with the metal detector on qualifying islands;
+- story-location **platforming, code/key puzzles and environmental mechanisms**;
+- cooking/juicing recipe discovery and buff preparation;
+- net-launcher **animal capture** and livestock maintenance;
+- collection/achievement goals around recipes, notes, cosmetic hats and playable-character unlocks.
+
+These are not separate casino/arcade-style minigames with their own progression economy. They reuse movement, tools, inventory and story infrastructure. Fishing's late-game bait/trade role is documented by PC Gamer's 1.0 guide. [Fishing bait](https://www.pcgamer.com/raft-how-to-get-bait-fishing-rod/).
+
 ### Trading as a material sink
 
 The Final Chapter added **Trading Posts** to large islands. A Recycler converts surplus materials into **Trash Cubes**. Rare fish bought/caught through bait tiers can be sold for **Trade Coins**; cubes and coins buy recipes, bait, resources, cosmetics and utility items. This gives old stockpiles a use and adds a light loop of waste → cube → bait/fish → coin → specialized goods. [1.0 notes](https://steamdb.info/patchnotes/8972572/).
 
 ### Useful absences
 
-Raft has no character class tree, conventional XP/level progression or RPG attribute allocation. Capability is primarily **equipment, recipes, blueprints, infrastructure and player knowledge**. There is no stealth system of consequence, political-faction reputation campaign, romance system, settlement population simulation or recruitable AI crew. Playable characters unlocked through story locations are avatar identities/outfits, not mechanically differentiated classes.
+Raft has no character class tree, conventional XP/level progression or RPG attribute allocation. Capability is primarily **equipment, recipes, blueprints, infrastructure and player knowledge**. There is no magic/spell/power system, meaningful stealth progression, political-faction reputation campaign, romance/relationship progression, settlement population simulation or recruitable AI crew/companion party. Story NPCs/playable-character unlocks provide authored identity and dialogue, not schedules, affinity or mechanically differentiated classes.
 
 ## R03 — items, resources, entities and composition
 
@@ -123,7 +153,16 @@ The best progression beats change the **kind of attention** required. Nets repla
 
 ### Death and recovery
 
-Death penalties depend on difficulty. A downed multiplayer player can be carried/rescued to a bed rather than immediately accepting a harsher death outcome, giving co-op a direct rescue use beyond dividing labor. Solo play cannot rely on another human for that recovery. Because exact item-loss rules vary by selected difficulty, the meaningful design point is the **difficulty-dependent risk to carried inventory/progress**, not one universal "death drops X" rule.
+Death rules differ materially by selected world difficulty:
+
+- **Peaceful / Easy:** the current community rules reference reports that the player can respawn without losing carried inventory.
+- **Normal:** self-respawn loses a substantial portion of carried stacks/items and can damage equipped/tool durability; another player can instead carry the downed body to a bed to avoid the ordinary inventory-loss penalty. Redbeet's own support article describes Normal as a choice between respawning with an item-loss penalty or being rescued to a bed without that penalty; the current community rules page gives the more specific contemporary inventory behavior.
+- **Hard:** there is **no solo self-respawn**. Another player must carry the downed character to a bed/hammock; this makes a solo Hard death effectively unrecoverable within the normal rules.
+- **Creative:** the player is immortal.
+
+[Redbeet support](https://support.redbeetinteractive.com/hc/en-us/articles/360007303292-I-died-How-do-I-get-back-on-my-raft) · [current Respawn reference](https://raft.fandom.com/wiki/Respawn) · [Game Modes](https://raft.fandom.com/wiki/Game_Modes).
+
+This is stronger than a generic "drop loot on death" rule: difficulty changes whether another human is merely helpful or **structurally required for continuation**.
 
 ### Economy and sinks
 
@@ -228,9 +267,11 @@ Current Xbox metadata advertises online co-op/multiplayer for **2–10** players
 
 Cross-play added world-code joining, controller support and in-game voice chat. Redbeet's 2025 beta notes and 2026 1.1/default-branch work show that networking required substantial rewriting and continued fixes; some player reviews/discussions report connection failures. That is a useful reminder that widening social reach can create a new reliability surface.
 
-### Story NPCs and playable characters
+### Story NPCs, playable characters and absent relationship systems
 
-The Final Chapter added four unlockable playable characters and story destinations contain human traces/encounters. These identities primarily change avatar appearance/voice/notebook framing, not skill loadouts. Raft is therefore social in co-op but **not companion-simulation-heavy**.
+The Final Chapter added four unlockable identities—**Tala, Johnny, Elaine and Shogo**—to defaults Maya and Rouhi. GameSpot explicitly describes them as cosmetic/blank-slate character choices rather than different stat packages. Finding them gives the story human faces, but after unlock they do not become autonomous raft workers or a companion party. [GameSpot](https://www.gamespot.com/articles/raft-the-final-chapter-how-to-unlock-all-new-characters/1100-6504930/).
+
+There is no romance, affinity, reputation or joinable-faction progression. Story people do not run a schedule/relationship simulation around the raft. Raft is therefore socially rich **between human co-op players** while comparatively light on simulated interpersonal systems.
 
 ### Animals and hostile AI
 
@@ -295,9 +336,12 @@ Early Access supported repeated publicity beats through chapter updates, while t
 
 Raft is a premium game with no battle-pass or consumable-microtransaction progression described on its core storefronts. The durable commercial story is unusually strong, but public metrics must be kept distinct.
 
-A 2025 TTAB decision reproducing Redbeet evidence states that:
-- Steam-game sales through **October 1, 2023** were in the **low nine figures** worldwide (currency context is in the case record, so this dossier does not convert it into a new precise lifetime-revenue claim);
-- nearly **3 million units** had been sold to U.S. customers in that period.
+A November 2025 U.S. Trademark Trial and Appeal Board decision reproduces Redbeet testimony stating that through **October 1, 2023**:
+- Steam **sales revenue worldwide** was in the **low nine figures**;
+- U.S. Steam revenue was in the **mid-eight figures in U.S. dollars**;
+- nearly **3 million units** had been sold to U.S. customers.
+
+The opinion does not provide a clean current worldwide unit total, and the underlying testimony's broad worldwide currency wording should not be silently converted into a precise USD lifetime-revenue figure.
 
 The same record documents enormous free-prototype exposure. [TTAB decision mirror](https://www.casemine.com/judgement/us/69302eff26590b243424fd78).
 
@@ -475,6 +519,21 @@ https://steamcommunity.com/app/648800/negativereviews/?browsefilter=toprated&l=e
 **S18 — Checkpoint Gaming review, July 8, 2022, via current Metacritic critic index.** Credited assessment inspected; original review body was not reliably retrieved, so this remains supplemental indexed reception and is not counted toward the five full-review minimum.  
 https://www.metacritic.com/game/raft/critic-reviews/
 
+**S19 — GameSpot, Mark Delaney, June 27, 2022, playable-character guide.** Full guide read; six-character roster and explicit cosmetic/blank-slate boundary.  
+https://www.gamespot.com/articles/raft-the-final-chapter-how-to-unlock-all-new-characters/1100-6504930/
+
+**S20 — Redbeet Interactive Support, death/respawn.** First-party support article; Peaceful/Easy/Normal/Hard recovery structure. The page predates 1.0, so current community rules are used for finer inventory-loss detail rather than pretending the old support copy supplies every current value.  
+https://support.redbeetinteractive.com/hc/en-us/articles/360007303292-I-died-How-do-I-get-back-on-my-raft
+
+**S21 — Raft community mechanics references: Equipment, Leather Armor, Respawn, Game Modes.** Current community-maintained operational references for worn gear and difficulty-specific death rules. Used for mechanics rather than developer intent.  
+https://raft.fandom.com/wiki/Equipment  
+https://raft.fandom.com/wiki/Leather_Armor  
+https://raft.fandom.com/wiki/Respawn  
+https://raft.fandom.com/wiki/Game_Modes
+
+**S22 — U.S. TTAB, Redbeet Interactive AB v. Alexander Novikov, Nov. 20, 2025.** Primary legal decision reproducing Redbeet testimony on worldwide/U.S. Steam sales revenue and nearly three million U.S. units through Oct. 1, 2023.  
+https://www.casemine.com/judgement/us/69302eff26590b243424fd78
+
 ### Useful reading/viewing route
 
 1. **Start with S05 (PC Gamer review)** for the arc from miserable manual survival to empowered moving-base exploration.
@@ -508,6 +567,7 @@ https://www.metacritic.com/game/raft/critic-reviews/
 - No game build was installed or played for this pass.
 - No video footage, trailer sequence or soundtrack was represented as watched/listened to.
 - Checkpoint's credited review assessment was available through an index but the original body was not reliably retrieved; it is labeled accordingly.
+- Redbeet's respawn support article is older than the current 1.1 build; it supports the difficulty-level recovery structure, while current community references supply finer item-loss detail.
 - Community-wiki rules are used for concrete mechanics where primary patch/store sources are insufficient, not for claims of designer intent.
 - Current exact cross-platform lifetime units/revenue are not public enough to justify promoting third-party estimates into fact.
 - Steam samples are direct qualitative testimony and version-sensitive; they are not statistical prevalence measures.
