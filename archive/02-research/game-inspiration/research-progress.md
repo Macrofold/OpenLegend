@@ -477,7 +477,7 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 
 ## Survival expansion — G131–G148
 
-**Initial research: 4 / 18 complete; G135 7 Days to Die in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
+**Initial research: 5 / 18 complete; G136 Conan Exiles in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
 
 | ID | Subject | Initial research | Follow-up audit |
 | --- | --- | --- | --- |
@@ -485,8 +485,8 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 | G132 | DayZ | **Complete** — [dossier](dossiers/dayz.md); stable 1.29/Experimental 1.30 boundaries, full bodily survival/condition/persistence pass, ten worked interactions, five independent reviews plus current Steam evidence | Not started |
 | G133 | ARK: Survival Evolved | **Complete** — [dossier](dossiers/ark-survival-evolved.md); full original-release mechanics/progression/tribe pass plus 2023 official-network closure, 2025 Aquatica boundary, twelve worked cases and six independent reviews | Not started |
 | G134 | ARK: Survival Ascended | **Complete** — [dossier](dossiers/ark-survival-ascended.md); independent current Early Access pass, delivered-vs-roadmap map audit, ASA-only building/Traits/Lost Colony/Tides/mod systems, twelve worked interactions and five independent substantive reviews plus current Steam | Not started |
-| G135 | 7 Days to Die | **In progress** — current 1.0+ survival/building/structural-support/trader/vehicle/horde progression and legacy-alpha/console boundaries underway | Not started |
-| G136 | Conan Exiles | Pending | Not started |
+| G135 | 7 Days to Die | **Complete** — [dossier](dossiers/7-days-to-die.md); V3.2 stable/V3.3 Experimental boundary, full destructible-building/structural-integrity/horde/trader/vehicle/progression pass, twelve worked cases and five current/post-1.0 reviews plus historical-console contrast | Not started |
+| G136 | Conan Exiles | **In progress** — current original/Enhanced/platform/update boundary plus construction, followers, crafting, religion/sorcery, dungeons, siege, Siptah and server/mod systems underway | Not started |
 | G137 | The Forest | Pending | Not started |
 | G138 | Sons of the Forest | Pending | Not started |
 | G139 | Subnautica | Pending | Not started |
