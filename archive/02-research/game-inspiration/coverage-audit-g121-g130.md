@@ -12,20 +12,24 @@ The audit proceeds one game at a time. Material corrections are committed to the
 
 ## Current audit state
 
-**Active: G124 — Persona 5 Royal.** G121–G123 have been reread against the complete standard and corrected where needed.
+**Active: G125 — XCOM 2.** G121–G124 have been reread against the complete standard and corrected where needed.
 
 | ID | Subject | Audit status | Audit commit / finding |
 | --- | --- | --- | --- |
 | G121 | Battle Brothers | **Audited** | `81fbb840f8a09c5e9deb6cb135d07633e5aeaaef` — R01–R14 and explicit mechanics inventory were already substantive. Audit replaced the latest-version dependency on a third-party GOG mirror with directly inspected June/July 2026 Steam primary announcements, explicitly pinning v1.5.2.3 as the newest published Steam patch found and preserving platform-parity limits. |
 | G122 | Cataclysm: Dark Days Ahead | **Audited** | `a916e8e76b77f8808544728c797daaa0247e234c` — mechanics/reception coverage was already substantive; audit added a September 27 primary check that the official releases page still names 0.I Ito as latest stable while keeping experimental builds separate. |
 | G123 | Rain World | **Audited** | `fbd32f6956bfed39e7acf93e49851ee260703af5` — corrected the stale Downpour-era Jolly boundary using Watcher 1.5: official local co-op now covers all five More Slugcats campaigns and The Watcher. Added explicit stealth/perception coverage and current 1.11.7/1.11.8 patch chronology. |
-| G124 | Persona 5 Royal | **In progress** | Full R01–R14/mechanics/current-version audit. |
-| G125 | XCOM 2 | Pending | — |
+| G124 | Persona 5 Royal | **Audited** | `ec1844a66a5449206b864cfa909229f48e331d4b` — clarified that Maruki Councillor Rank 9 by Nov. 17, not all three Royal Confidants, is the mandatory third-semester gate; Akechi/Kasumi remain additional-content routes. Added explicit absence of a dynamic faction-reputation system. |
+| G125 | XCOM 2 | **In progress** | Full R01–R14/mechanics/current-version audit. |
 | G126 | Crusader Kings III | Pending | — |
 | G127 | Dragon's Dogma 2 | Pending | — |
 | G128 | Ultima VII: The Black Gate | Pending | — |
 | G129 | Oxygen Not Included | Pending | — |
 | G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | — |
+
+## G124 — Persona 5 Royal closure evidence
+
+The audit found one important endgame-gate ambiguity and one explicit-inventory omission. The dossier now states that Maruki's Councillor Rank 9 by November 17 is the mandatory third-semester unlock, while Akechi/Kasumi deadlines preserve additional scenes/content rather than opening the semester themselves. R06 now explicitly says Royal has no general dynamic faction-reputation/territory system. Calendar, combat, Personas, crafting, social stats, Confidants, Mementos, multiplayer/network absence, eight situations and five reviews remain intact.
 
 ## G123 — Rain World closure evidence
 
