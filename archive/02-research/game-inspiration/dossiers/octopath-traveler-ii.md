@@ -2,13 +2,13 @@
 
 **Full research pass, September 26, 2026.** Standalone sequel set in Solistia, not the original's Orsterra or the mobile Champions of the Continent. This is an inspiration dossier, not an approved OpenLegend feature specification. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Original game](octopath-traveler.md).
 
-Five substantive written reviews were read, alongside primary character/system descriptions, developer testimony, specialist guides and contrasting direct players. Helpful Steam review endpoints failed; the discussion accounts below are explicitly **not** a ranked review sample. Worked interactions are constructed from documented rules, not firsthand playtests.
+Five substantive written reviews were read, alongside primary character/system descriptions, developer testimony, specialist guides and contrasting direct players. The September 27 audit recovered Steam's indexed English **Most Helpful (All Time)** review surface plus current negative-review bodies, so this dossier now includes ranked positive testimony and contrasting negative player accounts; dynamic rankings are not prevalence estimates. Worked interactions are constructed from documented rules, not firsthand playtests.
 
 ## Identity, editions and the opening promise
 
 Square Enix and Acquire released this single-player RPG for Switch, PS4, PS5 and PC in February 2023; the international launch date is February 24, while the Japanese site dates the Steam release February 25. The new setting and cast make the first game unnecessary preparation. Choose one authored traveler, experience their opening, recruit others, then alternate personal chapters with exploration and optional discoveries. Character creation does not mean inventing a new protagonist: the choice is among eight distinct histories and toolkits. [S01](#s01) [S02](#s02) [S09](#s09)
 
-Keep three later boundaries separate. Xbox versions arrived in June 2024. That month's free update added **Extra Battles**, accessible after completing the extra story; it is not part of a February 2023 reviewer's original experience. Japanese Switch 2 digital editions arrived July 13, 2026, with the western release scheduled for October 1, 2026 as of this dossier date. The port report states no Switch-to-Switch-2 save compatibility or upgrade path. A retrospective year typo for the sequel in that report is excluded. [S09](#s09) [S10](#s10)
+Keep three later boundaries separate. Xbox versions arrived in June 2024. That month's free update added **Extra Battles**, accessible after completing the extra story; it is not part of a February 2023 reviewer's original experience. Japanese Switch 2 digital editions arrived July 13, 2026; Nintendo's current US listing independently confirms an **October 1, 2026** digital Switch 2 release and explicitly says Switch and Switch 2 save data are incompatible. The secondary port report additionally says there is no upgrade path. A retrospective year typo for the sequel in that report is excluded. [S09](#s09) [S10](#s10) [S34](#s34)
 
 The central promise remains personal freedom of itinerary rather than freeform simulation. One can pursue a favorite story, assemble broad field coverage, hunt powerful equipment or follow a mysterious side route. Starting with one character also shapes initial geography and combat vulnerability. The first chosen traveler remains in the group until their story concludes, so recruitment freedom and immediate party-slot freedom are not the same thing. [S04](#s04)
 
@@ -131,7 +131,7 @@ The same interview says broader platform reach reflected fan requests and examin
 
 The **Prologue Demo** provides three hours and save carryover, reducing the need to repeat early investment after buying. Official promotion includes a traveler-selection quiz, trailers and live-action advertisements named around field actions. Those are concrete discovery surfaces, not evidence that a particular campaign went viral. The premium product also had collector merchandise and a preorder consumable pack; the official page states those consumables can be obtained through play. This differs fundamentally from the mobile series' service model. [S31](#s31) [S09](#s09)
 
-**Dated commercial claim:** on **June 7, 2023**, the publisher/developer announcement placed worldwide **shipments plus digital sales above one million**. That does not reveal net revenue, profit, full-price mix, active users or retention, and is not a synchronized 2026 lifetime total. No title-specific budget or profitability figure was established. Comparing it directly with a different game's later lifetime milestone would mix observation windows. [S01](#s01)
+**Dated commercial claims:** on **June 7, 2023**, the publisher/developer announcement placed Octopath Traveler II worldwide **shipments plus digital sales above one million**. In December 2024 Square Enix announced that the **series** had passed five million shipments plus digital sales; that later figure combines titles and therefore cannot be assigned to this sequel. Neither measure reveals net revenue, profit, full-price mix, active users or retention, and neither is a synchronized 2026 title-level lifetime total. No title-specific budget or profitability figure was established. [S01](#s01) [S35](#s35)
 
 Potential sharing units include favorite protagonists, discovered field solutions, powerful job/person combinations, music and reactions to endings. The inspected discussions and community guides demonstrate participation, but not the relative causal contribution of streamers, advertising or word of mouth. Official intent, visible community output and measured acquisition are three different evidence categories.
 
@@ -151,11 +151,13 @@ All five main review bodies were inspected. These are independent authored artic
 
 **Interpretation:** improved writing and party acknowledgment do not eliminate the costs of modular structure. Repeated openings, unequal levels and selective attachment remain structural tradeoffs. Praise for battle rules and criticism of encounter duration address different questions.
 
-## Direct players and the actual Steam access limitation
+## Steam helpful reviews and additional direct players
 
-The English top-rated Steam Community review URL and appreviews JSON endpoint failed. Store aggregates do not substitute for reading review bodies. No helpful-review ranking was inspected.
+The September 27 audit recovered Steam's indexed English **Most Helpful (All Time)** surface even though direct loading of the same URL remained inconsistent. The ranked page contains strongly favorable but not purely celebratory accounts. A March 14, 2023 reviewer who disliked the first game calls the sequel a modernization of old-school JRPG structure, credits it with visibly connecting the eight stories and discusses both improvements and remaining flaws. Another highly ranked review from February 2023 treats the expanded freedom of Path Actions as part of the joke as well as the appeal. These are ranked player testimonies at the time of retrieval, not a representative sample; helpful counts and ordering can change. [S32](#s32)
 
-In an accessible April 1, 2023 Steam discussion, the opening poster—currently **Baron Slopbane**, quoted in replies as **JCD3nton**—reports that strong builds trivialized later fights and eight openings damaged pacing, while praising art/music. **saideron** also outleveled content but enjoyed the battles and stories. **Grakor** connects an early spike to secondary-job exploration and finds later chapters closer to appropriate levels. These are situated accounts, not prevalence estimates. The opening poster's claim of no overarching plot is not adopted as final-story documentation. [S08](#s08)
+Contrasting negative bodies are also accessible. **Megu**, after roughly a full-story playthrough, calls the game solid but declines to recommend it because the eight-way narrative structure leaves individual stories and character development too basic for that player's taste. Current negative-review pages also contain complaints about required roster leveling, fragmented momentum, side-quest guidance and frequent encounters alongside praise for art, music or combat. Those concerns overlap with professional criticism but remain individual player judgments, not measured prevalence. [S33](#s33)
+
+The prior April 1, 2023 Steam discussion still adds a different angle. The opening poster—currently **Baron Slopbane**, quoted in replies as **JCD3nton**—reports that strong builds trivialized later fights and eight openings damaged pacing, while praising art/music. **saideron** also outleveled content but enjoyed the battles and stories. **Grakor** connects an early spike to secondary-job exploration and finds later chapters closer to appropriate levels. These are situated accounts, not prevalence estimates. The opening poster's claim of no overarching plot is not adopted as final-story documentation. [S08](#s08)
 
 Another player's objection is about labor rather than power: **SacredSacrifice** understands Castti's usefulness but dislikes managing ingredients. Replies favor her resource restoration, while **Daysfastforward1** says the appeal became clearer at a difficult optional encounter. The page displayed relative dates, so no exact date is invented. This is useful evidence that a powerful system can still feel unappealing to operate. [S28](#s28)
 
@@ -177,7 +179,7 @@ These are comparative design hypotheses, not instructions to copy characters, mu
 
 ## Annotated evidence and viewing routes
 
-All access dates: September 26, 2026. Main bodies were read unless an entry says otherwise. Primary Japanese text was interpreted directly into English; no external translation was claimed. Sources with internal errors are restricted to corroborated claims. No video footage is represented as watched.
+Initial source access was September 26, 2026; the Steam review surfaces, current Nintendo US Switch 2 listing and later series-sales context were freshly checked September 27, 2026. Main bodies were read unless an entry says otherwise. Primary Japanese text was interpreted directly into English; no external translation was claimed. Sources with internal errors are restricted to corroborated claims. No video footage is represented as watched.
 
 <a id="s01"></a> **S01 — [One-million announcement](https://www.gematsu.com/2023/06/octopath-traveler-ii-shipments-and-digital-sales-top-one-million).** Sal Romano, June 7, 2023; publisher/developer units and original launch, not financial results.
 
@@ -241,6 +243,14 @@ All access dates: September 26, 2026. Main bodies were read unless an entry says
 
 <a id="s31"></a> **S31 — [Steam storefront and Prologue Demo](https://store.steampowered.com/app/1971650/OCTOPATH_TRAVELER_II/).** Primary credits, premium offering and three-hour/save-transfer demo. Dynamic prices and aggregate ratings are not frozen as historical results.
 
+<a id="s32"></a> **S32 — [Steam English Most Helpful (All Time) reviews](https://steamcommunity.com/app/1971650/reviews/?browsefilter=toprated&l=english).** Ranked surface recovered through Steam's indexed page on September 27, 2026 after direct loading proved inconsistent. Multiple substantive positive/mixed bodies were inspected; helpful counts/order are dynamic.
+
+<a id="s33"></a> **S33 — [Megu's Steam review](https://steamcommunity.com/profiles/76561198044140409/recommended/1971650) and [current English negative review surface](https://steamcommunity.com/app/1971650/negativereviews/?browsefilter=mostrecent&l=english&p=1).** Contrasting negative player bodies inspected September 27, 2026. Current/recent ordering is not represented as the all-time negative ranking.
+
+<a id="s34"></a> **S34 — [Octopath Traveler + Octopath Traveler II Bundle for Nintendo Switch 2](https://www.nintendo.com/us/store/products/octopath-traveler-plus-octopath-traveler-ii-bundle-switch-2/).** Nintendo US primary storefront, checked September 27, 2026; lists October 1, 2026 and explicitly states Switch/Switch 2 save incompatibility. Future release status is not represented as already shipped in the US.
+
+<a id="s35"></a> **S35 — [Octopath Traveler series shipments and digital sales top five million](https://www.gematsu.com/2024/12/octopath-traveler-series-shipments-and-digital-sales-top-five-million).** December 20, 2024 report of Square Enix's series-level announcement. Kept separate from the sequel's one-million title milestone; no title-level allocation is inferred.
+
 **Reading/viewing route:** start with S11 and the character pages, compare S04 with S06/S07, then read S29 for intent rather than treating criticism as a proxy for intent. The official site's Movie page offers launch/field-action promotional routes; they are **metadata-only recommendations**, with no invented timestamps or viewing claims. S25 contains major ending spoilers.
 
 ## Preservation and R01–R14 review
@@ -259,9 +269,9 @@ No dedicated Octopath II owner existed in the inspected inherited `games/` or `m
 | R08 | Solistia, personal stakes, side-story example and spoiler-separated closure |
 | R09 | Primary development interview, world-first writing, continuity and platform rationale |
 | R10 | Demo, quiz, action-focused promotion, ports and sharing-evidence limits |
-| R11 | Premium/merchandise model, dated million-unit milestone and unknown financials |
-| R12 | Five full reviews plus contrasting direct players; actual Steam access limits |
+| R11 | Premium/merchandise model, title-level one-million milestone, later series-level five-million context and unknown financials |
+| R12 | Five full reviews plus ranked Steam positive/mixed testimony, contrasting negative bodies and other direct players |
 | R13 | Transferable patterns with counterpressures, not accepted requirements |
 | R14 | Annotated sources, access/version caveats, viewing routes and preservation |
 
-Checked source anchors, edition separation, source-error exclusions, review attribution and constructed-versus-observed examples. No source-code audit, runtime test, gameplay benchmark or comprehensive accessibility test was performed. This pass completes G108 research, not the global 130-game roster or packet audit.
+Checked source anchors, edition separation, current port status, source-error exclusions, review attribution, Steam evidence mode and constructed-versus-observed examples. No source-code audit, runtime test, gameplay benchmark or comprehensive accessibility test was performed. This pass completes G108 research, not the global 130-game roster or packet audit.
