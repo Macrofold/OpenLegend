@@ -2,7 +2,7 @@
 
 [Research roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Mass Effect 2](mass-effect-2.md) · [Library](../README.md)
 
-**Research date:** September 26, 2026. **Pass:** R01–R14 complete, with evidence-access limitations recorded below. Documentary research, not a gameplay test. **Spoilers:** sections 5–7 discuss Tuchanka, Rannoch and the ending; DLC sections disclose premises and modes. No video, benchmark or personal play observation is claimed.
+**Research date:** September 26, 2026. **Pass:** R01–R14 complete, with evidence-access limitations recorded below and the requested second-pass audit recorded after the requirement map. Documentary research, not a gameplay test. **Spoilers:** sections 5–7 discuss Tuchanka, Rannoch and the ending; DLC sections disclose premises and modes. No video, benchmark or personal play observation is claimed.
 
 **Central finding — interpretation:** the strongest consequences preserve the identity of the people involved, not merely the quantity of support earned. A returning friend, a substitute with different convictions and a species whose future depends on old decisions can make the same war feel personally specific. The aggregate military-strength system connects many activities, but also exposes the risk of compressing distinctive commitments into interchangeable points. The reception dispute over the finale makes that tension unusually visible.
 
@@ -43,17 +43,25 @@ The game distinguishes biotic, electrical, fire and cryogenic combination famili
 
 Nova uses a particularly clear resource exchange: a Vanguard spends barrier energy on an area attack. Charge can restore barrier energy, creating an aggressive sequence, but the player still needs an available target, appropriate timing and a safe exit. The animation's protection is not universal immunity to lethal grabs. Defense becomes a resource that can be deliberately converted into offense, not a passive statistic that always improves independently of damage. [S8](#s8)
 
+**Enemy roles and temporary machinery.** Grissom Academy mixes infantry, shield-support devices, riot-shield Guardians and Atlas mechs. A shield-removing power and a way around a physical riot shield answer different obstacles. Near the mission's end, Shepard can enter an empty Atlas and use its gun and missiles, then abandon it if its protection becomes inadequate. This is a bounded pilotable weapon platform, not an exploration vehicle retained for later planets. Smoke, shield support and different engagement ranges make target selection matter beyond recognizing a faction label. [S37](#s37)
+
 ## 3. Equipment, progression, resources and recovery
 
 The conventional weapon families are pistols, submachine guns, assault rifles, shotguns and sniper rifles. The M-3 Predator, M-4 Shuriken and M-8 Avenger are concrete examples of recognizable equipment rather than anonymous loot tiers. Weapons can be upgraded through the Normandy's armory; a first playthrough's ordinary upgrade ceiling differs from New Game Plus, which permits rank X under its acquisition conditions. Reacquiring a found weapon can matter as well as paying for its improvement. [S20](#s20)
 
 Mods change a weapon's practical role, and armor bonuses offer another layer of configuration. A weapon can be found during a mission or bought from a vendor; the Normandy's procurement interface provides another route to purchases. This is not the first game's constant management of randomly generated tiers for every companion, nor a workshop economy that manufactures arbitrary designs. The finite campaign's vendors and rewards support prepared combat styles. [S26](#s26)
 
+A conventional weapon has **two modification slots**, with compatibility restrictions between some modifications. A discovered mod is reusable across applicable weapons and squad loadouts, not consumed to improve only one physical gun. Additional instances raise that mod's level, up to V; this differs from the weapon's own upgrade rank. Thus finding a better barrel and paying to upgrade a rifle are separate progression routes. [S35](#s35)
+
+The Normandy procurement interface exposes visited shops at a **10% markup**. Buying there trades credits for less travel; it does not create a second autonomous supply market. Its neighboring weapon-upgrade, workbench and armor interfaces make the shuttle bay a preparation hub. A player can rationally pay for convenience or return to a store, depending on the value of credits and interruption. [S43](#s43)
+
 Experience develops Shepard up to level 60. An imported Mass Effect 2 character begins with carried development rather than necessarily returning to level one. Powers require increasing point investment and branch at ranks four through six. Retraining allows a player to reconsider allocation; it is not permission to turn one class into every class simultaneously. The separate multiplayer progression has its own level-20 milestone and unlock structure, not a second Shepard leveling track inside the campaign. [S18](#s18) [S21](#s21) [S22](#s22)
 
 **Interpretation:** respecialization and a soft equipment constraint encourage experimentation because a mistaken build is not automatically a ruined career. The tradeoff still needs to be visible: changing from an elaborate arsenal to a lighter setup should alter how the player fights, not merely move a hidden efficiency value.
 
 Ordinary defeat is a checkpoint/save-recovery problem. Scripted deaths, failed rescues and imported absences are separate kinds of state. New Game Plus restarts the campaign with retained character/equipment development, not an already won war or every prior war asset. A post-ending return is not an unrestricted playable reconstruction of the galaxy after the chosen ending. The campaign's closure and replay systems therefore differ from a persistent society simulator. [S20](#s20) [S27](#s27)
+
+**First Aid is not unchanged Unity.** The single-player ability spends medi-gel to heal/revive the squad and restore Shepard's health, with a health-restoration exception on Insanity while taking damage. A living squadmate's shields are not restored by it. Shepard can instead revive an ordinarily fallen squadmate manually at their body without spending gel, exchanging movement and exposure for supply preservation. First Aid has its own activation behavior rather than the universal power cooldown. None of this reverses an authored permanent death. [S36](#s36)
 
 In multiplayer, named supplies make preparation concrete: **Cobra Missile Launcher**, **Thermal Clip Pack**, **Medi-Gel** and **Ops Survival Pack** answer different emergencies. A single-mission equipment boost is distinct from a capacity upgrade or a persistent gear slot. A player can spend a scarce emergency item to save an objective rather than hoard it for a hypothetical perfect match. This vocabulary belongs to the cooperative mode and should not be copied wholesale into Shepard's single-player inventory. [S12](#s12) [S23](#s23)
 
@@ -76,6 +84,8 @@ The Reaper assault changes the meaning of familiar places. Earth is no longer si
 War assets represent people, fleets, equipment and other contributions through recorded military values. In the original game, **Effective Military Strength** combines total assets with Galactic Readiness. Multiplayer and associated original Galaxy at War routes can affect readiness. Legendary Edition removes that active readiness layer and multiplayer dependency, rebalancing the single-player asset requirements. Original EMS thresholds are therefore not safe instructions for the remaster's visible total. [S14](#s14)
 
 **Interpretation:** aggregation solves a practical problem: many different activities can visibly contribute to one shared effort. It also creates a narrative hazard. A diplomatic compromise and an unrelated recovered resource may both increase a total, even though the player does not regard them as substitutes. The dossier's central question is how much of that difference survives when the campaign resolves.
+
+**Different deadline types.** Once acquired, **Tuchanka: Bomb** fails after completing three other missions. **Grissom Academy: Emergency Evacuation** instead expires at **Priority: The Citadel II**. That distinction corrects the tempting but unsupported generalization that every urgent rescue has the same three-mission timer. The guide also warns that returning to the Citadel after the Tuchanka story transition triggers an attack rather than an ordinary shopping visit. These are authored mission-state changes, not a sixty-minute rescue clock or a universal simulation of everyone waiting off-screen. [S37](#s37)
 
 **Tuchanka spoilers.** The cure negotiation involves krogan leadership, salarian demands and the scientist's convictions. Earlier preservation of Maelon's research affects Eve's survival. Sabotaging the cure is not automatically an undetectable way to obtain everyone's support: Wrex can discover the deception later, unlike Wreav. The situation links previous judgment, present trust and future political consequences, rather than presenting a universally superior moral answer. [S16](#s16)
 
@@ -121,7 +131,11 @@ The following are **constructed, rules-based illustrations**, not observed sessi
 
 **Omega, November 2012:** Aria's attempt to retake the station supplies temporary companions, including Nyreen, aggressive enemies and larger-feeling combat spaces. It does not restore Omega as a freely revisitable hub or add those companions permanently to the Normandy. VanOrd praises the fighting while arguing that thin characterization fails to make the mission's stakes matter. Winning a location in fiction is therefore not the same as acquiring an ongoing management system. [S30](#s30)
 
-**Citadel, March 2013:** an assassination conspiracy leads to a deliberately comic reunion and time with the crew. The apartment party, Silversun Strip activities and Armax Arena create a social and mechanical return loop. Arena modifiers and returning simulated teammates provide replay opportunities without rewriting the campaign roster. McGee enjoys the reunion but sees limited narrative substance beyond fan-oriented humor. The tonal shift is a design choice with an audience boundary, not automatically a better version of the war story. [S31](#s31)
+**Citadel, March 2013:** an assassination conspiracy leads to a deliberately comic reunion and time with the crew. The apartment party, Silversun Strip activities and Armax Arena create a social and mechanical return loop. Arena modifiers and eligible former squadmates provide replay opportunities without rewriting the regular campaign roster; the enemies are simulated, while returning companions require survival and access conditions. McGee enjoys the reunion but sees limited narrative substance beyond fan-oriented humor. The tonal shift is a design choice with an audience boundary, not automatically a better version of the war story. [S31](#s31) [S38](#s38)
+
+**Armax's repeatable rules.** Configure the map, enemy set, challenge tier and zero to two allies; earn score through the fights, streaks and bonus objectives. Optional handicaps such as removing placed ammunition increase score, whereas a player-damage advantage reduces it. Bronze, silver and gold rewards can buy further options or credits. Former squadmates such as Wrex and Miranda require ally licences and suitable living/story states; the simulator does not resurrect dead friends. These choices turn repeated combat into constrained experimentation, but they are not the separate four-player mode. [S38](#s38)
+
+**The arcade is actual play, not just scenery.** Shattered Eezo uses mech-boxing jabs, blocks and charged attacks; the Claw Game rewards selecting moving/color-changing prizes; Relay Defense combines shooting threats with routing allied shuttles. Credits fund attempts, and rewards include mods, apartment items and money. By contrast, the visible Kepesh-Yakshi and Towers of Hanoi installations are not playable by Shepard. This matters when cataloguing environmental affordances: a named fictional game or a companion's scene does not establish a player-controlled minigame. [S39](#s39)
 
 **Original multiplayer support:** Resurgence, Rebellion, Earth, Retaliation and Reckoning expanded maps, objectives, kits, enemies and equipment across the first year. Earth adds urban battlefields and a higher difficulty; its announced N7 kits include roles such as Fury, Demolisher and Paladin. The Acolyte, Piranha and Typhoon are named weapon additions, not proof of automatic ownership. Maps can be immediately available while characters and weapons still require reinforcement-pack unlocks. [S11](#s11) [S24](#s24) [S32](#s32)
 
@@ -131,15 +145,19 @@ Randomized packs and earned currency provide a longer-term multiplayer acquisiti
 
 The campaign alternates spectacle with quiet scenes. Refugees, memorials and a hospital visit can give the war a scale that a larger explosion cannot. Dark environments and contrasting colors reinforce danger, while performances carry uncertainty and grief. These are authored presentation techniques, not measured proof that every player develops the same attachment. Reviewers also observed camera errors, awkward animations and allied AI behavior that could interrupt the effect. [S1](#s1) [S4](#s4)
 
+Sam Hulick describes increasing piano's emotional role while revisiting the first game's electronic sound. Cris Velasco and Sascha Dikiciyan describe a hybrid orchestral/electronic score that introduces material without abandoning the series' identity; their earlier Arrival theme informs “The Scientists.” Hulick identifies the romance cue's piano/orchestra/synth combination and layered Mars combat music as different uses of that vocabulary. These are composers' stated choices, not a soundtrack listening test performed for this dossier. [S40](#s40)
+
 The contextual movement/interact button illustrates a practical conflict: minimizing controls can make intentions ambiguous. PC Gamer and Destructoid describe unwanted cover or movement actions. Destructoid also criticizes a journal that inadequately records changing side-task status. These are not cosmetic objections. When the game asks players to care about consequences, poor action and information feedback can make a failure feel accidental rather than owned. [S2](#s2) [S3](#s3)
 
 The Wii U edition uses the tablet for mapped powers and squad positioning. VanOrd finds direct power access helpful to combat flow but describes setup and positioning friction. Its comic helps newcomers establish context, and its incorporated Extended Cut differs from the original launch ending. Leviathan and Omega were absent from the reviewed package. These observations concern that port, not a feature set automatically present in Legendary Edition. [S26](#s26)
 
-Xbox 360 Kinect voice support is another original-platform interface option, not a universal remaster capability. The selectable Story, Action and Role Playing styles vary the balance of combat difficulty and conversation control, rather than creating different autonomous worlds. No formal accessibility audit, subtitle legibility measurement, soundtrack analysis or input-latency test was performed for this dossier. [S3](#s3) [S12](#s12)
+Xbox 360 Kinect voice support is another original-platform interface option, not a universal remaster capability. The selectable Story, Action and Role Playing styles vary the balance of combat difficulty and conversation control, rather than creating different autonomous worlds. Specifically, Action automates dialogue choices into scenes, while Story retains conversation choices with greatly reduced combat difficulty; Role Playing keeps both normal choice and combat control. These presets change participation, not the world's simulated breadth. No formal accessibility audit, subtitle legibility measurement, soundtrack analysis or input-latency test was performed for this dossier. [S3](#s3) [S12](#s12)
 
 ## 9. Production, promotion and the maintenance of a shared story
 
 The developer's reputation explanation provides direct evidence of a specific design revision: separating moral expression from the penalty of inconsistent point collection. That is a stronger production claim than inferring internal intentions from a score or a character's popularity. The original game also had to reconcile imported survivors and absences with a finite authored campaign; the differing replacement characters visible in reviews show the result, not the exact proprietary implementation or staffing cost. [S6](#s6) [S2](#s2)
+
+**A concrete production collaboration.** Audio lead Rob Blake describes planning ME3's musical narrative with Casey Hudson after ME2, then coordinating Clint Mansell with Christopher Lennertz, Sam Hulick, Sascha Dikiciyan and Cris Velasco. The aim was to keep individual relationships emotionally intelligible amid a galactic war. This corrects the shorthand that Mansell alone scored the whole game. Blake's retrospective about layered combat music between ME1 and ME2 is historical background, not proof that a particular new middleware system was invented for ME3. The account provides team roles and an iteration goal without inventing budget, staffing totals or proprietary architecture. [S41](#s41)
 
 Extended Cut documents post-release work responding to audience feedback. BioWare explicitly framed the revision around greater context while preserving its intended conclusion. That is neither proof that all criticism was a misunderstanding nor evidence that the entire ending was replaced. The first-anniversary post subsequently treats substantial single-player DLC, multiplayer additions and weekly challenges as parallel forms of support. [S10](#s10) [S24](#s24)
 
@@ -165,9 +183,13 @@ Five distinct written launch reviews were read in substantive form across five o
 | John McCarroll, RPGFan, March 6, 2012 | Character resolution, performances and richer development choices. | Urgent fiction conflicts with leisurely errands; bugs and weaker minor performances remain. The editor explicitly excludes multiplayer from the evaluated experience. [S4](#s4) |
 | Hollander Cooper, GamesRadar, original-release review | Imported decisions make the journey unusually personal and dramatic. | The ending seems less specifically shaped by choices than the preceding game's climax. Both substantive pages were read; exact original publication date was not recovered from the surviving page presentation. [S5](#s5) |
 
-### Steam attempt and the strongest accessible direct-player alternatives
+The second-pass audit retrieved these review pages and checked relevant character, combat, mode and ending passages against the summaries. Their different scopes remain important: Francis and McCarroll exclude a live multiplayer evaluation, whereas Cooper discusses the cooperative experience. Review language that merges assets and readiness remains reception evidence, not an exact replacement for the separately sourced rule description. This was a targeted attribution check, not a claim that every page was freshly read in full again. [S2](#s2) [S4](#s4) [S5](#s5)
 
-Steam app **1238020** represents the original game's later Steam release, not the Legendary Edition compilation. Its top-rated community review surface and public review endpoint failed in the web reader. **No ranked helpful-review sample was accessible or claimed.** A third-party review mirror was not treated as equivalent to verified original review identities or rankings.
+### Steam attempt, recovered sample and direct-player alternatives
+
+Steam app **1238020** represents the original game's later Steam release, not the Legendary Edition compilation. During the initial pass, its top-rated community review surface and public review endpoint failed in the web reader. **No ranked helpful-review sample was accessible in that pass.** A third-party review mirror was not treated as equivalent to verified original review identities or rankings.
+
+**Second-pass recovery:** the default Community page now exposes a **Most Helpful (Week), English** surface with actual bodies. The retrieved snapshot contains January posts, not a synchronized September ranking; one author explicitly dates their update January 8, 2026, while the other displayed dates omit a year. **HermesTrismegistus** reports being blocked at a Rannoch door and does not recommend the game. **frelf** praises multiplayer. **Jack Howitzer** reports renewed enjoyment of cooperative PvE after earlier console play, while questioning random-map variety. Each of these entries displays zero helpful votes. This is a small, cached qualitative sample on the helpful-review surface, not an all-time top ranking, representative survey or current server-status test. The door report is not independently reproduced or diagnosed. [S42](#s42)
 
 The original game's Metacritic user-review page supplied directly attributed alternatives. **joshjmilli**, December 2, 2024, admires the writing and presentation while qualifying the ending and emphasizing the fuller DLC experience. **slugnutt**, May 21, 2024, argues that added explanation in Extended Cut does not answer the desire for a better conclusion. **Dom007**, May 4, 2021, instead regards Extended Cut as a meaningful improvement and values Citadel's send-off. These are qualitative individual accounts, not verified Steam purchases or a representative sample. [S34](#s34)
 
@@ -193,22 +215,22 @@ These are research hypotheses, not accepted product requirements, implementation
 
 ## 13. Reading, viewing, requirement map and preservation
 
-For a lower-spoiler route, read identity, combat, presentation and the review comparison before the political examples. The developer reputation post is the most direct account of one deliberate systemic improvement. Compare the original manual with updated community power documentation for mode/patch boundaries. Read the ending discussion alongside the differently dated player accounts rather than treating one review as universal reception. BioWare's expansion posts provide promotional viewing routes; **no linked trailer, gameplay video or infographic has been watched, time-coded or measured here**.
+For a lower-spoiler route, read identity, combat, presentation and the review comparison before the political examples. The developer reputation post is the most direct account of one deliberate systemic improvement. Compare the original manual with updated community power documentation for mode/patch boundaries. Read the ending discussion alongside the differently dated player accounts rather than treating one review as universal reception. BioWare's expansion posts provide promotional viewing routes; **no linked trailer, gameplay video or infographic has been watched, time-coded or measured here**. The composer and audio-lead interviews add a concrete reading route into musical continuity and production roles. [S40](#s40) [S41](#s41)
 
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Sections 1, 7–8; original, Wii U, Extended Cut and Legendary boundaries. |
-| R02 | Section 2; verbs, conditions, feedback, defense, combos and weight. |
-| R03 | Sections 2–3 and 7; named weapons, powers, supplies, mods and acquisition distinctions. |
-| R04 | Sections 3, 5 and 10; progression, recovery, replay, resources and business model. |
+| R02 | Section 2; verbs, conditions, feedback, defense, combos, weight, enemy roles and temporary Atlas use. |
+| R03 | Sections 2–3 and 7; named weapons, powers, recovery supplies, reusable mods and acquisition distinctions. |
+| R04 | Sections 3, 5, 7 and 10; progression, recovery, replay, deadlines, arena rewards, resources and business model. |
 | R05 | Section 6; six constructed multi-system situations with prerequisites and limits. |
-| R06 | Sections 1, 4 and 7; squad, romance, authored social state and separate cooperative mode. |
-| R07 | Section 8; presentation, information quality, control ambiguity and port-specific interfaces. |
+| R06 | Sections 1, 4 and 7; squad, romance, authored social state, arena companion eligibility and separate cooperative mode. |
+| R07 | Section 8; presentation, musical vocabulary, information quality, control ambiguity and port-specific interfaces. |
 | R08 | Sections 5–7; named political conflicts, history-dependent decisions and DLC. |
-| R09 | Section 9; documented reputation revision, imported-state result and post-launch response. |
+| R09 | Section 9; reputation revision, imported-state result, audio collaboration and post-launch response. |
 | R10 | Sections 7 and 9; release positioning, community operations and support cadence. |
 | R11 | Section 10; dated shipment claim and explicit commercial unknowns. |
-| R12 | Section 11; five authored reviews, Steam access investigation and direct-player disagreement. |
+| R12 | Section 11; five authored reviews, recovered cached Steam bodies and direct-player disagreement. |
 | R13 | Section 12; conditional lessons, dependencies and failure modes. |
 | R14 | This section and annotated sources; access, spoilers, attribution and preservation. |
 
@@ -216,19 +238,21 @@ The baseline inventories contain no dedicated earlier G103 chapter, mechanics st
 
 Review checked requirement coverage, edition/mode separation, named examples, source anchors, the five-review count, explicit player-sample limits and shipment terminology. No runtime code changed. The [progress ledger](../research-progress.md) records the successful completion commit separately.
 
+**Second-pass audit, September 26:** read the complete dossier against every R01–R14 and mechanics category. Added mod-slot/reuse rules, procurement cost, specific recovery alternatives, different deadline types, enemy/Atlas interactions, concrete arcade/arena activities, participation presets and primary musical-production evidence. Corrected the implication that returning arena allies were simulated or available regardless of survival. Recovered actual Steam review bodies while retaining the initial failure history and qualifying the cached dates/zero-vote sample. All six worked scenarios, five original-review summaries and 34 earlier source groups remain; nine source groups were added. Public financial unknowns, unobserved footage and untested current service availability remain explicit.
+
 ## Annotated sources
 
 Research capture: **September 26, 2026**. “Indexed” denotes substantive text exposed by search rather than a claim of complete page retrieval. Reviews retain their authors' judgments; guides remain secondary documentation. Publisher and developer claims are attributed, not independently audited.
 
-<a id="s1"></a>**S1.** Kevin VanOrd, [Mass Effect 3 Review](https://www.gamespot.com/reviews/mass-effect-3-review/1900-6363912/), GameSpot, March 6, 2012. Full substantive body inspected; launch experience.
+<a id="s1"></a>**S1.** Kevin VanOrd, [Mass Effect 3 Review](https://www.gamespot.com/reviews/mass-effect-3-review/1900-6363912/), GameSpot, March 6, 2012. Full substantive body inspected in the initial pass; relevant combat/character passages rechecked in the audit. Launch experience.
 
-<a id="s2"></a>**S2.** Tom Francis, [Mass Effect 3 review](https://www.pcgamer.com/mass-effect-3-review/), PC Gamer, March 6, 2012. Full substantive body inspected; multiplayer access restriction stated in the article.
+<a id="s2"></a>**S2.** Tom Francis, [Mass Effect 3 review](https://www.pcgamer.com/mass-effect-3-review/), PC Gamer, March 6, 2012. Full substantive body inspected initially; targeted attribution passages rechecked. Multiplayer access restriction stated in the article.
 
-<a id="s3"></a>**S3.** Conrad Zimmerman, [Review: Mass Effect 3](https://www.destructoid.com/reviews/review-mass-effect-3/), Destructoid, March 6, 2012. Full substantive body inspected. Readiness interpretation is reception evidence, not the mechanical authority.
+<a id="s3"></a>**S3.** Conrad Zimmerman, [Review: Mass Effect 3](https://www.destructoid.com/reviews/review-mass-effect-3/), Destructoid, March 6, 2012. Full substantive body inspected initially; mode and multiplayer passages rechecked. Readiness interpretation is reception evidence, not the mechanical authority.
 
-<a id="s4"></a>**S4.** John McCarroll, [Mass Effect 3](https://www.rpgfan.com/review/mass-effect-3-3/), RPGFan, March 6, 2012. Substantive body inspected; multiplayer expressly excluded by the editor.
+<a id="s4"></a>**S4.** John McCarroll, [Mass Effect 3](https://www.rpgfan.com/review/mass-effect-3-3/), RPGFan, March 6, 2012. Substantive body inspected; multiplayer expressly excluded by the editor. Audit retrieved the editor's note and character, equipment and pacing discussion.
 
-<a id="s5"></a>**S5.** Hollander Cooper, [Mass Effect 3 review](https://www.gamesradar.com/mass-effect-3-review/) and [second page](https://www.gamesradar.com/mass-effect-3-review/2/), GamesRadar. Both substantive pages inspected; one authored review. Exact original date not verified from the surviving presentation.
+<a id="s5"></a>**S5.** Hollander Cooper, [Mass Effect 3 review](https://www.gamesradar.com/mass-effect-3-review/) and [second page](https://www.gamesradar.com/mass-effect-3-review/2/), GamesRadar. Both substantive pages inspected initially; one authored review. Audit retrieved ending and cooperative-mode discussion; exact original date remains unverified from the surviving presentation.
 
 <a id="s6"></a>**S6.** Patrick Weekes, [Reputation in Mass Effect 3](https://blog.bioware.com/2012/03/01/reputation-in-mass-effect-3/), BioWare Blog, March 1, 2012. Primary developer explanation; substantive indexed text inspected.
 
@@ -286,4 +310,22 @@ Research capture: **September 26, 2026**. “Indexed” denotes substantive text
 
 <a id="s33"></a>**S33.** [Special Edition manual — multiplayer](https://manualzz.com/doc/o/jf7zf/electronic-arts-mass-effect-3-special-edition-video-game-...-multiplayer), publisher-authored HTML transcription, supplies and earned-credit store rules; GamesBeat, [What does $100 buy you in Mass Effect 3 multiplayer?](https://gamesbeat.com/what-does-100-buy-you-in-mass-effect-3-multiplayer/), March 6, 2012, displayed update June 18, 2025. The manual's relevant text and the report's first-page experiment/method were inspected. The GamesBeat report, not the Wii U manual, documents paid Veteran/Spectre packs in the original Microsoft Points economy. Its one purchase sample is not a probability estimate or evidence of present payment availability.
 
-<a id="s34"></a>**S34.** [Mass Effect 3 user reviews](https://www.metacritic.com/game/mass-effect-3/user-reviews/), Metacritic. Relevant dated player statements inspected, including joshjmilli, slugnutt and Dom007. Qualitative alternatives after failed Steam top-rated and review-endpoint retrieval; not a representative or verified-purchase sample.
+<a id="s34"></a>**S34.** [Mass Effect 3 user reviews](https://www.metacritic.com/game/mass-effect-3/user-reviews/), Metacritic. Relevant dated player statements inspected, including joshjmilli, slugnutt and Dom007. Qualitative alternatives after the initial failed Steam retrieval; retained alongside the later recovered sample, not a representative or verified-purchase survey.
+
+<a id="s35"></a>**S35.** Mass Effect Wiki, [Weapons](https://masseffect.fandom.com/wiki/Weapons), ME3 modification section. Substantive indexed slot, compatibility, reuse and mod-level passages read in the audit. First-game and Andromeda rules elsewhere on the page are not imported.
+
+<a id="s36"></a>**S36.** Mass Effect Wiki, [First Aid](https://masseffect.fandom.com/wiki/First_Aid), ME3 section. Substantive indexed recovery, medi-gel, manual-revival and difficulty-exception passages read. Similarly named first-game talents and ME2 Unity are explicitly distinct.
+
+<a id="s37"></a>**S37.** Prima Games, [Act 2 — Priority: The Citadel](https://primagames.com/eguides/mass-effect-3-eguide/walkthrough/act-2/act-2-priority-the-citadel); Mass Effect Wiki, [Tuchanka: Bomb](https://masseffect.fandom.com/wiki/Tuchanka%3A_Bomb), [Grissom Academy: Emergency Evacuation](https://masseffect.fandom.com/wiki/Grissom_Academy%3A_Emergency_Evacuation) and [Priority: The Citadel II](https://masseffect.fandom.com/wiki/Priority%3A_The_Citadel_II). Relevant Prima body and substantive indexed mission passages read. Mission-count and plot-transition deadlines agree across these accounts. Conflicting generic checklist claims that Grissom always expires after three missions were not adopted. Atlas use and enemy-role examples come from the Academy walkthrough, not personally reproduced play.
+
+<a id="s38"></a>**S38.** Mass Effect Wiki, [Armax Arsenal Arena](https://masseffect.fandom.com/wiki/Armax_Arsenal_Arena). Direct retrieval failed, but substantive indexed setup, companion eligibility, scoring and prize sections were read. Holographic opponents do not establish holographic or resurrected squadmates. Exact difficulty-cap bug claims were not reproduced without an edition-specific test.
+
+<a id="s39"></a>**S39.** Mass Effect Wiki, [Castle Arcade](https://masseffect.fandom.com/wiki/Castle_Arcade). Substantive indexed rules for all three playable games and the separately identified non-playable games read. Embedded developer-post and video links were not inspected; their implementation anecdotes are not asserted here.
+
+<a id="s40"></a>**S40.** Jon Leo, [Sound Byte: Meet the Composers — Mass Effect 3](https://www.gamespot.com/articles/sound-byte-meet-the-composers-mass-effect-3/1100-6350923/), GameSpot, February 24, 2012. Full written interview with Hulick, Velasco and Dikiciyan read. Primary creative accounts; linked audio samples not played or evaluated.
+
+<a id="s41"></a>**S41.** Timothy J. Seppala, [The S+V Interview: Mass Effect 3 Audio Lead Rob Blake](https://www.soundandvision.com/content/sv-interview-mass-effect-3-audio-lead-rob-blake), March 1, 2012. First-page interview body read, with only a limited second-page passage inspected. Primary account of creative planning, composer roles and series continuity; no claim of reading the entire second page or watching its video.
+
+<a id="s42"></a>**S42.** [Steam Community original-app reviews](https://steamcommunity.com/app/1238020/reviews/). September 26 retrieval exposed actual weekly-helpful English review bodies, names and zero helpful-vote displays for the three specified entries. Snapshot posts are from January, including one explicit January 8, 2026 update, not a live September population measurement. Self-reported playtime and historical console hours are not validated telemetry.
+
+<a id="s43"></a>**S43.** Gamer Guides, [Normandy I — Legendary Edition](https://www.gamerguides.com/mass-effect-3-legendary-edition/guide/walkthrough/campaign-act-1-354/normandy-second-visit). Substantive indexed procurement, markup and shuttle-bay preparation passages read. The interpretation of convenience versus credits is ours, not a measured preference distribution.
