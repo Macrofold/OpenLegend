@@ -8,13 +8,13 @@ Each game is reread against the full R01–R14 requirements, the explicit mechan
 
 ## Current audit state
 
-**Active: G142 — Grounded.** Raft is audited and corrected; Grounded is now being reread against the explicit mechanics inventory, current Fully Yoked/original-game boundaries, Shared Worlds, combat/progression/social absences and current player evidence.
+**Active: G143 — The Long Dark.** G141–G142 are audited; The Long Dark is now being checked against current post-Episode-Five Survival/WINTERMUTE/TALES/Challenge boundaries, skills/feats, activities, treatment/equipment, Trader/customization and current reception.
 
 | ID | Subject | Audit status | Audit commit / findings |
 | --- | --- | --- | --- |
 | G141 | Raft | **Audited** | `a66f7135677c3c1f2791a0ee9b1b0a23dcd51acb` — added explicit cosmetic-only character identities, worn equipment/Leather Armor, activities, magic/social/party absences and difficulty-specific death/recovery; corrected TTAB commercial wording to distinguish worldwide sales revenue, U.S. revenue and nearly 3m U.S. units. Current Xbox 2–10 and March 2026 cross-play boundary retained. |
-| G142 | Grounded | **In progress** | Full dossier/mechanics/current-version audit underway. |
-| G143 | The Long Dark | Pending | — |
+| G142 | Grounded | **Audited** | `50f24385d7fe996a5c71bed5b0b1745b11f69eba` — added fixed-teen identity baseline, pets/companion mechanics, BURG.L quest/activity rewards, loot structure, explicit insect-faction/raid behavior and soundtrack/audio evidence; pinned latest first-party original-game patch found to 1.4.7.4815 and separated all-time Early Access Steam testimony from current evidence. |
+| G143 | The Long Dark | **In progress** | Full dossier/mechanics/current-version audit underway. |
 | G144 | Green Hell | Pending | — |
 | G145 | Enshrouded | Pending | — |
 | G146 | V Rising | Pending | — |
