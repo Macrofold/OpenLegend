@@ -66,7 +66,7 @@ These per-subject studies supplement the original chapters below. Each contains 
 
 ## Full dossiers — curated references G121–G130
 
-These ten imported dossiers have initial research passes. The separate follow-up audit and its current evidence limits are tracked in the [progress ledger](research-progress.md#g121g130-branch-research-state).
+These ten imported dossiers have completed initial research and the full requirements-and-corrections audit. Per-game closure commits, the final mechanics matrix and retained evidence limits are tracked in the [progress ledger](research-progress.md#g121g130-branch-research-state).
 
 | Roster ID | Dossier |
 | --- | --- |
