@@ -278,6 +278,27 @@ These are research interpretations, not accepted OpenLegend implementation requi
 
 ## 17. Coverage, viewing routes and preservation
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and rechecked the current season/expansion boundary:
+
+- **Identity / classes / attributes / skills / leveling / trees:** Barbarian, Sorcerer, Druid, Rogue, Necromancer plus expansion classes Spiritborn, Paladin and Warlock; skill trees, level cap and Paragon are covered in §§1–8.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** weapons/armour/jewellery, Aspects/Uniques, Tempering, Masterworking, Horadric Cube, Talismans, runes and crafting currencies are covered in §§6–8.
+- **Magic / spells / powers:** class skills/resources, summons, transformations, Runewords and seasonal powers form bounded systems.
+- **Traversal / environmental and object interaction:** open-world travel, mounts, dungeons/strongholds, town services, Citadel interactions and activity-specific objectives are covered across §§1, 8–10.
+- **Activities / minigames:** campaign/side quests, Nightmare Dungeons, Helltides, Whispers, Pit, Hordes, Undercity, Citadel, War Plans, Tower and seasonal activities provide distinct loops.
+- **Combat / stealth / loot / rewards:** real-time combat and build-relevant loot are central; conventional stealth is not a primary progression pillar.
+- **Death / failure / recovery:** potions/Fortify/revival, ordinary death, Hardcore permanence, party revival and activity-specific retry contracts are distinguished (§§8–10).
+- **Economy / trading:** gold, salvage/crafting materials and eligible player trade are separate from premium Platinum/pass/expansion entitlements. No universal auction-market simulation is implied.
+- **Story / relationships / romance / reputation / party / companions:** authored campaigns, side quests, human parties and Mercenaries are covered; romance/affinity simulation is not a core system.
+- **NPC/AI behavior and schedules / factions:** enemies, Mercenaries and world-event actors have bounded authored behavior; Sanctuary is not modeled as a full civilian schedule/faction-politics simulation.
+- **World map / environment / quests / events:** Sanctuary regions, Nahantu/Skovos expansion content, campaign/side quests, seasonal questlines and public/endgame events are covered.
+- **Building / settlements / management:** absent as a player construction/settlement-management pillar.
+- **Multiplayer / social / endgame / return loops:** shared-world encounters, four-player parties, couch co-op, Dark Citadel, seasons/Rebirth, endgame activities and build iteration provide the long-term loop.
+
+**Current boundary check:** Blizzard's official season page lists **Season of Hell's Legacy as Live Now**, and the current Diablo IV landing page lists **Lord of Hatred as available now**. The September BlizzCon recap separately identifies the **Amazon class pack as a 2027 future addition**; it is not part of the current class roster. [D26](#d26) [D38](#d38) This audit therefore preserves seasonal powers as temporary unless separately made permanent and does not backport announced future Diablo franchise content.
+
+
 Start with the current class/expansion descriptions, then the historical original review and modern item/progression changes. Compare the first **Runeword** example with a **Dark Citadel** interaction: both have prerequisites, but one composes a personal build while the other requires another participant. Read the SSF failure and restoration together.
 
 For presentation, the official March 2022 environment update and October 2021 sound update contain directly linked demonstrations and ambience recordings. The published soundtrack and [Making the Music Score route](https://www.rpgsite.net/news/20431-diablo-iv-lord-of-hatred-behind-the-scenes-soundtrack-video-music) offer additional listening/production context. These are identified routes; no complete recordings were watched or heard for this pass, and no invented timestamps support the findings. Campaign images and the expansion review contain spoilers. [D30](#d30) [D31](#d31) [D33](#d33) [D41](#d41)
