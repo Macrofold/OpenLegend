@@ -995,19 +995,19 @@ Current Skyrim's “what is vanilla?” ambiguity is a warning.
 
 | Requirement | Coverage |
 | --- | --- |
-| R01 identity / scope / promise | §§1–2, 22–23 |
-| R02 player actions / mechanics | §§2–23 |
-| R03 items / entities / composition | §§5–9, 21–23 |
-| R04 progression / economy / time | §§3–4, 8–10, 21 |
-| R05 concrete interactions | §29 |
-| R06 people / AI / social / multiplayer | §§13–18, 21, 23 |
-| R07 art / audio / interface / feel | §24 |
-| R08 story / narrative | §§15–18, 22 |
-| R09 production | §25 |
-| R10 marketing / distribution / virality | §§23, 26 |
-| R11 commercial / participation | §26 |
-| R12 reviews / player feedback | §§27–28 |
-| R13 inspiration / limits | §§30–31 |
+| R01 identity / scope / promise | §§1–2, 23–24 |
+| R02 player actions / mechanics | §§2–24 |
+| R03 items / entities / composition | §§5–9, 21–24 |
+| R04 progression / economy / time | §§3–4, 8–10, 21–22 |
+| R05 concrete interactions | §30 |
+| R06 people / AI / social / multiplayer | §§13–18, 22, 24 |
+| R07 art / audio / interface / feel | §25 |
+| R08 story / narrative | §§15–18, 23 |
+| R09 production | §26 |
+| R10 marketing / distribution / virality | §§24, 27 |
+| R11 commercial / participation | §27 |
+| R12 reviews / player feedback | §§28–29 |
+| R13 inspiration / limits | §§31–32 |
 | R14 sources / preservation / navigation | this section + Sources |
 
 ### Mechanics inventory
