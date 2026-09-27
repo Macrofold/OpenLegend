@@ -1,8 +1,8 @@
 # Palworld — full research dossier
 
-**G41 · Complete research pass, September 26, 2026.** This pass treats **Palworld 1.0 (July 10, 2026)** as the current game and keeps the January 2024 Early Access state separate. Historical launch reviews are retained because they document the original concept and weaknesses; current 1.0 patch notes, criticism and Steam testimony are used for present scope. The prior chapter and field guide remain preserved owners for the earlier RimWorld-influence, helper-emotion and worker-friction findings.
+**G41 · Research pass and substantive audit remedies, September 26, 2026.** The design baseline is **Palworld 1.0 (July 10, 2026)**, with explicitly identified later documentation snapshots, not a claim that 1.0 was the last maintenance patch. January 2024 Early Access observations remain historical. The audit adds operational fishing, passive modification, mission/faction and multiplayer rules, corrects the furnace example and source attribution, and replaces the incomplete 1.0 citation. It does not claim a fresh playthrough or re-verification of every inherited fact. Proposed OpenLegend adaptations remain research interpretations, not accepted implementation requirements.
 
-[Preserved overview](../games/palworld.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
+[Preserved overview](../games/palworld.md) · [Detailed creature/work study](../mechanics/palworld-useful-creatures-care-and-automation.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md)
 
 Palworld matters to OpenLegend because it connects **useful autonomous creatures** to almost every part of play. Pals are not merely combat summons or cosmetic companions: they can fight, traverse, gather, farm, transport, craft, generate power, operate production, breed, inherit traits, become sick or stressed, and visually inhabit a base. The result is one of the clearest mainstream examples of “a helper is more emotionally legible when it is also a creature with a body, needs and recognizable identity.”
 
@@ -24,7 +24,7 @@ The current loop combines:
 - open-world exploration;
 - dungeons, raids, fishing and high-difficulty content;
 - single-player, four-player hosted co-op and larger dedicated-server play;
-- PvP/trading features added during development.
+- PvP and Pal-transfer systems with different rules, explained in §17.
 
 Version 1.0 adds or restructures:
 - **Sunreach**, floating islands with unique resources/Pals/bosses;
@@ -179,9 +179,11 @@ The result is hybrid agency:
 
 Version 1.0 rebalanced Pal stats/abilities and reworked Partner Skills across more than 200 Pals. [PAL-C](#pal-c)
 
-### Limitation
+### Limitation and current qualification
 
 Pal combat autonomy can make tactical intent less precise than a fully commanded party. Early reviewers described cases where Pals attacked something the player wanted to capture or made poor positioning choices. That is launch-era evidence, not a guarantee of current behavior, but the delegation problem is structural. [PAL-H](#pal-h)
+
+The 1.0 notes specifically prevent **follow-up-attack Partner Skills** from delivering the finishing blow. That is a scoped capture safeguard, not a promise that every ordinary Pal attack is nonlethal. [PAL-C](#pal-c)
 
 ## 6. Partner Skills make species materially different
 
@@ -317,6 +319,8 @@ Beds, food, medicine and better working conditions affect sustainability.
 
 The game can also let the player push toward harsher efficiency, creating the deliberately uncomfortable “creature capitalism” framing noted by reviewers. [PAL-G](#pal-g)
 
+**Version qualification:** Home Sweet Home's December 2025 notes already removed SAN loss from taking damage and reduced several ailment penalties; the 1.0 notes repeat that boundary. Do not describe every combat hit as a current stress debit. Hunger, working conditions and recovery still matter. [PAL-AA](#pal-aa) [PAL-C](#pal-c)
+
 ### Design tension
 
 If needs are too forgiving:
@@ -361,6 +365,8 @@ This creates a scalable transition:
 
 The player remains the strategic organizer while Pals increasingly execute repeatable work.
 
+**Concrete dependency:** the Primitive Furnace's Ingot recipe consumes Ore and requires Kindling work. Wood is used to construct the furnace and in its separate Charcoal recipe; it is not an additional fuel consumed by the ordinary Ore-to-Ingot recipe. An electrical higher-tier facility can have other requirements. Construction inputs, recipe inputs and operating capability must not be merged into one generic “fuel” assumption. [PAL-X](#pal-x)
+
 ## 11. Weapons and human combat
 
 Human combat includes:
@@ -401,6 +407,16 @@ This creates several layers:
 3. breed;
 4. evaluate offspring;
 5. repeat toward a goal.
+
+### Modify the existing individual: Surgery Table
+
+Breeding is not the only way to improve a favored Pal. Tides of Terraria introduced the Surgery Table, which replaces passive skills using implants and also supports a separate gender-change operation. [PAL-T](#pal-t)
+
+The documented procedure selects a party Pal and a passive slot, spends the appropriate implant plus gold, and fills an empty slot or replaces an existing trait. Examples include Hard Skin, Workaholic and Ferocious. Arena tickets and bounty rewards connect acquisition to other activities. Gender change instead consumes a **Pal Reversal** item. These are different transformations, not one universal reroll. [PAL-V](#pal-v)
+
+The 2025 guide's precise technology levels, vendor prices and speculative chest/salvage sources are not promoted into an exact 2026 table. December 2025 added further implant choices, and 1.0 improved the facility's access to stored base items. [PAL-AA](#pal-aa) [PAL-C](#pal-c)
+
+**Interpretation:** improving an existing individual can preserve attachment while changing its role. The costs are scarce replacement inputs and the trait displaced; a nominal upgrade may undermine a work or combat specialization. This is authored trait editing, not a generative genetics simulator or evidence that a Pal consents to surgery.
 
 ### Awakening
 
@@ -465,6 +481,18 @@ which expands where the player can explore next.
 
 That reciprocal loop is one of Palworld's strongest structural successes.
 
+### Fishing, ponds and salvage are different activities
+
+Tides of Terraria added fishing and ocean salvage in June 2025. [PAL-T](#pal-t) With a rod and bait, the player casts near visible fish shadows, responds to a bite and keeps a control bar aligned with the moving target until the catch gauge fills. The result can be a **Pal plus items**, not merely a food fish. Better rods and bait change the opportunity and difficulty. A swimming mount makes offshore targets reachable. [PAL-U](#pal-u)
+
+A base Fishing Pond substitutes delegation for that manual minigame: supply bait, assign a Handiwork-capable Pal, then collect catches and items from the adjacent cooler. Larger ponds broaden the catch options. A functioning worker does not mean the output has already entered the player's intended destination. [PAL-U](#pal-u)
+
+Salvage instead targets floating debris and uses a timed ring interaction; it is not the same catch-tracking minigame. The historical guide did not verify its suggested high-end metal/magnet outcome, so that speculation is not adopted. [PAL-U](#pal-u)
+
+In the 1.0 party system, Gloopie reduces fishing failure and Jelliette improves item returns; Solmora and Whalaska supply different fishing benefits. Higher-tier spots in Sunreach and the World Tree connect party preparation to exploration. [PAL-C](#pal-c)
+
+**Interpretation:** one activity links travel, tools, food-derived bait, companions, collection and base work. The important choice is whether to improve personal execution, change the expedition party or delegate a bounded alternative—not simply accumulate another skill bar.
+
 ## 14. Story, NPCs and factions
 
 The original Early Access structure was mechanically strong but narratively sparse.
@@ -477,6 +505,16 @@ Version 1.0 explicitly reworks the main story so that:
 - the World Tree
 
 connect into a more directed progression. New sub-missions, NPCs and journals expand world context. [PAL-C](#pal-c)
+
+### Named people make the progression intelligible
+
+**Story spoilers.** The current mission text links the Small Settlement Chief's advice to capturing Foxparks and making its Harness, then visiting Zoe at the Rayne Syndicate Tower. After the confrontation, the mysterious Key Sphere sends the player back for interpretation. Zoe then explains the wider tower-and-sphere objective. This is **preparation → encounter → object → conversation → larger goal**, not merely eight unrelated boss icons. [PAL-AB](#pal-ab)
+
+The later chain connects Bjorn's defeat to the Azure Covenant Tower, Auri's explanation of the Calamity, Panthalus and entry through the World Tree's barrier. The mission record identifies Echobones and an Echoing Flute among that preparation. Selected text contains unresolved display placeholders, so precise missing names or an unshown cinematic sequence are not reconstructed. [PAL-AB](#pal-ab)
+
+The tower roster distinguishes **Zoe/Grizzbolt and the Rayne Syndicate**, **Lily/Lyleen and the Free Pal Alliance**, **Axel/Orserk and the Brothers of the Eternal Pyre**, **Marcus/Faleris and PIDF**, and **Victor/Shadowbeak and the genetic-research faction**. Saya/Selyne, Bjorn/Bastigor and Auri/Shaolong locate later confrontations in Sakurajima, Feybreak and Sunreach. These are authored faction identities and encounter pairs, not a general reputation/diplomacy simulation. [PAL-AC](#pal-ac)
+
+Zoe's separate mission sequence can recruit her as an ally; June 2025's release notes explicitly establish that trust/recruitment outcome. Enemy bases also yield faction-related building blueprints when successfully raided. This links a social encounter or hostile site to later practical capability without proving autonomous political behavior. [PAL-T](#pal-t)
 
 However, current September 2026 Steam testimony still includes players who find human NPC characterization and story weaker than the Pals/world. [PAL-N](#pal-n)
 
@@ -510,7 +548,7 @@ These are not necessary moral endorsements; they are world actions the design al
 For OpenLegend, the useful point is:
 > a systemic world can permit socially prohibited behavior while making law, witnesses, reputation and consequences explicit.
 
-Palworld often uses these systems primarily for dark comedy/gameplay. OpenLegend's social simulation can make consequences deeper.
+Palworld often uses these systems primarily for dark comedy/gameplay. OpenLegend's social simulation can make consequences deeper. The comparison does not credit Palworld with a general consent, legal-evidence or remembered-reputation model.
 
 ## 16. Failure, death and recovery
 
@@ -519,6 +557,8 @@ Player defeat is governed by world/server difficulty settings.
 Depending on configured rules, death can impose different loss/recovery burdens, including dropped possessions and corpse-run-like recovery.
 
 Pals can be incapacitated and recover through Palbox-related systems rather than functioning as ordinary one-life permadeath companions.
+
+**Do not confuse death with the menu recovery command:** 1.0 renamed that command **Emergency Escape** and removed its item-drop penalty regardless of world settings. Ordinary death and a configured PvP loot rule remain separate contracts. [PAL-C](#pal-c) [PAL-W](#pal-w)
 
 World settings are unusually important in Palworld because players can tune:
 - experience rates;
@@ -545,13 +585,23 @@ The store page currently describes:
 - up to four players in normal online co-op;
 - up to 32 on dedicated servers. [PAL-D](#pal-d)
 
-Players can:
-- explore;
-- build;
-- fight;
-- trade Pals;
-- cooperate on resource/production goals;
-- participate in PvP-related systems depending on mode/current rules.
+Players can explore, build, fight, transfer Pals and cooperate on resource/production goals. Multiplayer does not mean every world has the same permissions or competitive rules.
+
+### Arena versus server-wide PvP
+
+The Arena offers bounded competition rather than unrestricted attacks on a shared home. June 2025 added a solo challenge ladder, battle-ticket rewards, configurable Pal bans, an entrance Palbox and multiplayer spectating. Solo opponents and another human are different participants even though both use the Arena surface. [PAL-T](#pal-t)
+
+December 2025 separately introduced **experimental dedicated-server PvP tools**. [PAL-AA](#pal-aa) The official server guide, displayed as version 1.0.4 when inspected, requires enabling PvP, player damage and hostile-player defense. It describes trespass defense, access to other guilds' chests and restrictions on building/repair during a base battle. Optional policies alter fast travel, technology access, death drops and whether logged-out bodies remain exposed. These are administrator choices, not universal normal-co-op rules. [PAL-W](#pal-w)
+
+A server can also use kill-dropped Champion's Emblems and their displayed totals to support a local competitive objective. The feature is explicitly trial/unsupported in the guide; no matchmaking population, fairness or reliability test is claimed. **Unresolved documentation conflict:** that guide still says missions are disabled, whereas the 1.0 release notes say main missions can progress in PvP. The dossier records both rather than guaranteeing either behavior for every configuration. [PAL-W](#pal-w) [PAL-C](#pal-c)
+
+### Pal transfer is not automatically an atomic trade
+
+The historical hands-on transfer guide describes two methods: drop a party Pal for another player to pick up, or place it in a guild base's working slots for a guildmate to withdraw. A dropped Pal can be collected by an unintended person. Those are handoffs, not an escrow system ensuring that two promised Pals change owners together. [PAL-Z](#pal-z)
+
+This February 2024 guide does not certify every 2026 permission edge. The 1.0 release adds more granular guild roles and structure-access restrictions, so shared base access must be checked under the actual world policy. Neither shared work slots nor a published claim of “trading” establishes unrestricted access to another person's private Palbox. [PAL-C](#pal-c)
+
+**Constructed social consequence:** one member supplies a useful worker, another withdraws it for exploration, and production loses that capability. The relevant questions are access, expected purpose and responsibility—not only whether transfer technically succeeds. A negotiated exchange needs clearer commitments than an unprotected drop.
 
 Persistent-server play changes the value of automation:
 - a base can become shared infrastructure;
@@ -640,7 +690,7 @@ Producer/CEO Takuro Mizobe's January 2024 interview is especially relevant becau
 - broad experimentation rather than a narrowly genre-pure design;
 - the difficulty of adding PvP meaningfully rather than as a checkbox. [PAL-E](#pal-e)
 
-At that time, Mizobe described the game as roughly 60% complete even though the “basic functions” were established. The following two-plus years added:
+At that time, Mizobe described the game as roughly 60% complete even though the “basic functions” were established. That is a historical production-state account. [PAL-F](#pal-f) Later releases added:
 - major islands;
 - raids;
 - PvP;
@@ -649,7 +699,7 @@ At that time, Mizobe described the game as roughly 60% complete even though the 
 - base systems;
 - Terraria collaboration;
 - story restructuring;
-- eventual 1.0. [PAL-F](#pal-f)
+- eventual 1.0. [PAL-T](#pal-t) [PAL-AA](#pal-aa) [PAL-C](#pal-c)
 
 ### Sudden scale
 
@@ -662,7 +712,7 @@ That created:
 - legal/public controversy;
 - rapid hiring/production pressure.
 
-A later GDC-era developer account emphasized the human cost of enormous attention. The earlier library preserves that source. [PAL-E](#pal-e)
+The later **GDC 2025 account is John Buckley's**, not the January 2024 producer interview. In Chris Kerr's reporting, Buckley describes threats, reduced public communication, muting work channels outside working hours and deliberately circulating positive feedback internally. Those are attributed coping practices, not an independent finding about every allegation or worker's experience. The live article displays **March 18, 2025**; the older library register recorded March 17. Its content is preserved through the same source, with the live metadata discrepancy stated rather than hidden. [PAL-Y](#pal-y)
 
 ### OpenLegend lesson
 
@@ -752,13 +802,11 @@ The value of this source is that it articulates the player fantasy being satisfi
 
 ### 5. PC Gamer — Andrea Shearon, August 1, 2026
 
-**Current 1.0 review.** This is the most important temporal counterweight to the launch corpus.
+**Full 1.0 review reopened during the audit remedy.** Shearon values immediately legible work-suitability icons, useful workers without elaborate taming, and optional role-specific breeding/implant optimization. She praises painting and alignment controls while finding the large, restrictive building grid and unpaintable furnishings limiting. Empty-feeling exploration and repeatedly advertised cartoon cruelty weaken the identity for her. These are specific design objections, not merely a paraphrase of the score. [PAL-Q](#pal-q)
 
-**Praised:** the creature/survival interaction remains the core, with enormous content breadth and the 1.0 world/progression now much more mature.
+Her experience also qualifies the progression claim: much of her story party remained wild-caught, with surgical modification rather than obligatory intensive breeding. After failing against Panthalus, she changed to Jetragon-based aerial combat. The distinction is between having a larger statistical total and discovering a more useful way to employ the companion. This is her reported play, not ours. [PAL-Q](#pal-q)
 
-**Criticized:** the game remains uneven enough to land at a middling-positive critical assessment rather than suddenly becoming frictionless because 1.0 shipped.
-
-Because Pocketpair deliberately did not distribute advance 1.0 review keys, the current formal-review pool is thinner than the 2024 launch commentary. [PAL-Q](#pal-q) [PAL-R](#pal-r)
+Pocketpair's statement about not distributing advance 1.0 keys supplies publication context; it does not independently measure how many formal reviews exist or prove why each outlet did or did not publish. [PAL-R](#pal-r)
 
 ## 24. Current Steam review sample
 
@@ -796,7 +844,7 @@ Do not combine those into one “majority complaint.” Some negative reviews ar
 
 ## 25. Concrete situations
 
-These are rules-based illustrations unless explicitly sourced.
+These are rules-based illustrations unless explicitly sourced. None is a playtest conducted for this research.
 
 ### Situation A — one captured creature changes several systems
 
@@ -818,19 +866,19 @@ These are rules-based illustrations unless explicitly sourced.
 
 ### Situation B — worker choice changes a production bottleneck
 
-**Goal:** increase ingot production.
+**Goal:** produce Ingots in a Primitive Furnace.
 
-**Conditions:** ore/furnace/fuel exist; current worker mix lacks enough kindling/transport.
+**Conditions:** the built furnace, Ore, a Kindling-capable Pal such as Foxparks, and reachable working space exist. The recipe does not require an additional Wood/Charcoal fuel stack. [PAL-X](#pal-x)
 
-**Action:** assign a suitable fire Pal and transporter.
+**Action:** select the Ingot job and provide compatible Kindling work; organize transport/storage separately.
 
-**Interaction:** the fire Pal operates the furnace while logistics Pals move materials.
+**Interaction:** the correct recipe and worker produce the metal; merely adding transport or replenishing imaginary fuel does not supply Kindling.
 
-**Result:** production improves without the player manually holding the crafting input.
+**Result:** the player can delegate processing rather than perform every repeated action.
 
-**Counterpressure:** hunger/SAN/pathfinding/other jobs can reduce throughput.
+**Next decision and counterpressure:** diagnose absent inputs, a competing job, an inaccessible station or the worker's condition before adding more labor. This is a bounded facility example, not a promise that all furnaces share identical power requirements.
 
-**Lesson:** useful autonomy should solve execution while preserving staffing/logistics decisions.
+**Lesson:** separate construction cost, consumable inputs, operating capability and logistics.
 
 ### Situation C — overwork becomes character-visible cost
 
@@ -865,6 +913,34 @@ These are rules-based illustrations unless explicitly sourced.
 **Tradeoff:** optimization can push toward repetitive breeding/grind.
 
 **Lesson:** inheritance gives creatures continuity, but the system should avoid making individuals disposable spreadsheets.
+
+### Situation F — change a trait without replacing the individual
+
+**Goal:** improve an existing worker rather than breed a replacement.
+
+**Conditions:** an eligible party Pal, Surgery Table, appropriate implant, gold and a chosen slot.
+
+**Action:** fill or overwrite the slot.
+
+**Result:** the same Pal has a different capability profile; an overwritten useful trait is a real opportunity cost.
+
+**Next decision:** test whether the revised specialization fits the job before spending another implant. The operation does not manufacture an arbitrary passive or guarantee that a work bonus is a combat improvement. [PAL-V](#pal-v)
+
+**Lesson:** identity can persist through bounded mechanical revision, but the interface must expose what is replaced.
+
+### Situation G — acquire a worker through a worker
+
+**Goal:** supplement aquatic collection without personally repeating every fishing attempt.
+
+**Conditions:** a Fishing Pond, bait and an available Handiwork Pal.
+
+**Action:** assign the job and collect its cooler output.
+
+**Result:** delegated production can supply further Pals and useful items.
+
+**Next decision:** spend attention on a harder wild spot, improve the base setup or stop when the collection need is met. Delegation does not remove the inputs, eligibility or collection step. [PAL-U](#pal-u)
+
+**Lesson:** automation changes where attention is spent; it should still have a comprehensible end state.
 
 ## 26. Transferable inspiration for OpenLegend
 
@@ -953,24 +1029,28 @@ Current 1.0 feedback that human NPCs remain thin is a warning for OpenLegend: sy
 
 | Requirement | Coverage |
 | --- | --- |
-| R01 identity / scope / promise | §§1–2 |
-| R02 player actions / mechanics | §§3–18 |
-| R03 items / entities / composition | §§3–12 |
-| R04 progression / economy / time | §§2–3, 8–12, 16, 18 |
-| R05 concrete interactions | §25 |
-| R06 people / AI / social / multiplayer | §§5, 7–9, 14–17 |
-| R07 art / audio / interface / feel | §19 |
-| R08 story / narrative | §§14–15 |
-| R09 production / development | §20 |
+| R01 identity / scope / promise | §§1–2; named edition and later-document boundaries |
+| R02 player actions / mechanics | §§3–18, including fishing, surgery, Arena and server PvP |
+| R03 items / entities / composition | §§3–13; furnace inputs and passive replacement |
+| R04 progression / economy / time | §§2–3, 8–13, 16–18 |
+| R05 concrete interactions | §25; mission and transfer chains in §§14/17 |
+| R06 people / AI / social / multiplayer | §§5, 7–9, 14–17; permissions and limitations |
+| R07 art / audio / interface / feel | §19 and the specific 1.0 review |
+| R08 story / narrative | §§14–15; named mission/faction chain |
+| R09 production / development | §20; corrected GDC attribution |
 | R10 marketing / distribution / virality | §21 |
 | R11 commercial / participation | §22 |
-| R12 reviews / player feedback | §§23–24 |
-| R13 inspiration / limits | §§26 |
-| R14 sources / preservation / navigation | this section + sources |
+| R12 reviews / player feedback | §§23–24; substantive fifth-review argument |
+| R13 inspiration / limits | §26 and explicit section/case interpretations |
+| R14 sources / preservation / navigation | this section + exact source locators below |
 
-**Mechanics-inventory check:** character creation, stats/levels/Technology, items/inventory, weapons/armor, crafting, capture, combat, traversal, base building, Pal work, needs, breeding, Partner Skills, factions/story, multiplayer, raids/high-difficulty loops and failure/recovery are covered. Palworld does **not** use a conventional spellbook/class/job system; extraordinary abilities are primarily Pal skills/Partner Skills/equipment rather than one universal player magic tree.
+**Mechanics-inventory check:** character creation, stats/levels/Technology, items/inventory, weapons/armor, crafting, capture, combat, traversal, base building, Pal work, needs, breeding, passive implants, fishing/ponds/salvage, Partner Skills, factions/story, multiplayer transfer/access, Arena/server PvP, raids/high-difficulty loops and failure/recovery are covered. Palworld does **not** use a conventional spellbook/class/job system; extraordinary abilities are primarily Pal skills/Partner Skills/equipment rather than one universal player magic tree.
 
-**Preservation check:** [the prior Palworld chapter](../games/palworld.md) remains intact. Its January 2024 AUTOMATON developer interview, 2025 32M-player milestone, field-guide production examples, Steam testimony and launch review are linked here rather than replaced. Historical launch bugs/pathfinding criticism is not silently asserted as current 1.0 behavior.
+**Preservation check:** [the prior Palworld chapter](../games/palworld.md) and [granular creature/work study](../mechanics/palworld-useful-creatures-care-and-automation.md) remain intact. They retain the January 2024 AUTOMATON interview, earlier commercial milestones, named Partner Skills, field-guide examples, Steam testimony, launch review and video. These are linked, not overwritten. Historical launch bugs are not silently asserted as current behavior.
+
+**Audit remedies applied:** fishing and its delegated alternative (§13); trait modification (§12); named mission/faction structure (§14); Arena, server PvP and transfer/permission distinctions (§17); recipe-specific furnace correction (§10/25B); actual GDC account (§20); substantive fifth review (§23); and exact 1.0 announcement plus inspected mirror (PAL-C). The PvP mission conflict and legacy-guide timing are disclosed evidence limitations, not invented resolutions. The baseline audit remains historical; current state is in the progress ledger.
+
+**Reading route:** the original creature/work study → PAL-U's manual versus delegated fishing → PAL-V's replacement cost → PAL-AB's named mission chain → PAL-W's world-policy choices → PAL-Q's contrary preferences. Read the release notes before applying a 2025 numerical guide to a 2026 save. No current multiplayer session or gameplay test was performed.
 
 **Viewing boundary:** the preserved CurtisCompletes video remains a recommended viewing route only; this pass did not claim to watch its footage or transcript.
 
@@ -980,23 +1060,23 @@ Current 1.0 feedback that human NPCs remain thin is a warning for OpenLegend: sy
 
 <a id="pal-b"></a>**PAL-B — [Palworld 1.0 launch trailer announcement](https://www.pocketpair.jp/en/game-news/palworld-1-0-official-launch-trailer-unveiled/).** Pocketpair, 2026-07-09. Primary launch boundary.
 
-<a id="pal-c"></a>**PAL-C — [Palworld v1.0 — Official Release Changelog](https://steamcommunity.com/games/1623730/announcements/detail/).** Pocketpair/Steam, 2026-07-10; accessible through Steam news mirrors. Primary 1.0 scope: Sunreach, World Tree, 72 new Pals, Awakening/Mutation, mission/base/multiplayer/Partner Skill changes. The Steam news listing was read; exact announcement URL may vary by locale.
+<a id="pal-c"></a>**PAL-C — [Palworld v1.0 — Official Release Changelog](https://steamcommunity.com/games/1623730/announcements/detail/686383649529010624), [inspected SteamDB reproduction](https://steamdb.info/patchnotes/24088745/).** Pocketpair, 2026-07-10, build 24088745. The mirror's original link was followed and identifies the exact announcement; the direct Steam page returned a shell, so the official-authored text was read through the named mirror. This replaces the earlier incomplete `/detail/` citation. Relevant mission, Pal, fishing, guild, recovery and facility sections were inspected, not independently executed. A mirror is not a second independent source.
 
 <a id="pal-d"></a>**PAL-D — [Palworld on Steam](https://store.steampowered.com/app/1623730/Palworld/).** Pocketpair / Valve, accessed 2026-09-26. Current platform features, store positioning, multiplayer limits and review snapshot; storefront price/review counts are volatile.
 
 <a id="pal-e"></a>**PAL-E — [Palworld producer interview](https://automaton-media.com/en/interviews/20240123-25950/).** AUTOMATON / Takuro Mizobe, 2024-01-23. Preserved source PAL1/FG-PAL-D: RimWorld influence, automation with emotional creatures, 1.4M prelaunch wishlists and PvP design tradeoffs.
 
-<a id="pal-f"></a>**PAL-F — [Palworld was about 60% finished at Early Access launch](https://www.gamespot.com/articles/palworld-is-about-60-finished-dev-considering-pvp/1100-6520539/).** GameSpot, 2024-01-23. Secondary reporting of Mizobe interview, useful for production-state boundary.
+<a id="pal-f"></a>**PAL-F — [Palworld was about 60% finished at Early Access launch](https://www.gamespot.com/articles/palworld-is-about-60-finished-dev-considering-pvp/1100-6520539/).** GameSpot, 2024-01-23. Secondary reporting of Mizobe interview, useful for production-state boundary; not evidence for updates released afterward.
 
 <a id="pal-g"></a>**PAL-G — [Palworld early access review](https://www.pcgamesn.com/palworld/review).** Nat Smith, PCGamesN, 2024-01-24. Preserved FG-PAL-C: creature-capitalism framing, survival loop, worker friction and early polish.
 
 <a id="pal-h"></a>**PAL-H — [Palworld review](https://www.gamesradar.com/palworld-review/).** Joel Franey, GamesRadar+, 2024-01. Early Access review: automation/community strengths versus tactical AI, bottlenecks, tonal/world-design concerns.
 
-<a id="pal-i"></a>**PAL-I — [Palworld: 25 million players after one month](https://www.pocketpair.jp/news/%E3%80%8Epalworld-%E3%83%91%E3%83%AB%E3%83%AF%E3%83%BC%E3%83%AB%E3%83%89%E3%80%8F%E3%82%A2%E3%83%BC%E3%83%AA%E3%83%BC%E3%82%A2%E3%82%AF%E3%82%BB%E3%81%8B%E3%82%891-2/).** Pocketpair, 2024-02-23. Primary: ~15M Steam copies and ~10M Xbox players; measures differ.
+<a id="pal-i"></a>**PAL-I — [Palworld: 25 million players after one month](https://www.pocketpair.jp/news/%E3%80%8Epalworld-%E3%83%91%E3%83%AB%E3%83%AF%E3%83%BC%E3%83%AB%E3%83%89%E3%80%8F%E3%82%A2%E3%83%BC%E3%83%AA%E3%83%BC%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9%E3%81%8B%E3%82%891-2/).** Pocketpair, 2024-02-23. Primary: ~15M Steam copies and ~10M Xbox players; measures differ.
 
 <a id="pal-j"></a>**PAL-J — [Palworld Blasts Past 32 Million Players](https://www.pocketpair.jp/en/news/palworld-blasts-past-32-million-players/).** Pocketpair, 2025-02-19. Primary developer milestone; players ≠ paid copies.
 
-<a id="pal-k"></a>**PAL-K — [Pocketpair game news archive](https://www.pocketpair.jp/en/game-news/).** Pocketpair, accessed 2026-09-26. Lists July 13, 2026 announcement of 850,000+ concurrent Steam players after 1.0; company-reported participation milestone.
+<a id="pal-k"></a>**PAL-K — [Pocketpair game news archive](https://www.pocketpair.jp/en/game-news/).** Pocketpair, accessed 2026-09-26. Lists July 13, 2026 announcement of 850,000+ concurrent Steam players after 1.0; company-reported participation milestone. Retained as the original pass's archive evidence, not relabelled as a newly reopened specific release.
 
 <a id="pal-l"></a>**PAL-L — [Palworld — most helpful negative Steam reviews](https://steamcommunity.com/app/1623730/negativereviews/?browsefilter=toprated&l=english).** Steam Community, accessed 2026-09-26. Self-selected all-time negatives, including late-game progression and policy objections.
 
@@ -1008,9 +1088,28 @@ Current 1.0 feedback that human NPCs remain thin is a warning for OpenLegend: sy
 
 <a id="pal-p"></a>**PAL-P — [Palworld Review: The Pokémon Game I've Wanted Since 1999](https://www.forbes.com/sites/paultassi/2024/01/30/palworld-review-the-pokemon-game-ive-wanted-since-1999/).** Paul Tassi, Forbes, 2024-01-30. Independent Early Access criticism emphasizing the long-sought open-world creature fantasy while acknowledging unfinished scope.
 
-<a id="pal-q"></a>**PAL-Q — [Palworld 1.0 review](https://www.pcgamer.com/games/survival-crafting/palworld-review/).** Andrea Shearon, PC Gamer, 2026-08-01. Current post-1.0 professional review; used to avoid extrapolating launch state into 2026.
+<a id="pal-q"></a>**PAL-Q — [Palworld 1.0 review](https://www.pcgamer.com/games/survival-crafting/palworld-review/).** Andrea Shearon, PC Gamer, 2026-08-01. Full substantive review reopened for the audit remedies: work readability, building restrictions, optional optimization, tone and the Panthalus/Jetragon account. Her reported hours and choices are not universal completion or balance measurements.
 
-<a id="pal-r"></a>**PAL-R — [Pocketpair says it did not send advance 1.0 review keys](https://www.gamesradar.com/games/survival/palworld-1-0-is-very-much-for-the-fans-so-the-pocketpair-devs-werent-really-thinking-about-critic-reception-at-all-lead-says/).** GamesRadar+, 2026-08. Explains why formal 1.0 review coverage is thinner than launch coverage.
+<a id="pal-r"></a>**PAL-R — [Pocketpair says it did not send advance 1.0 review keys](https://www.gamesradar.com/games/survival/palworld-1-0-is-very-much-for-the-fans-so-the-pocketpair-devs-werent-really-thinking-about-critic-reception-at-all-lead-says/).** GamesRadar+, 2026-08. Attributed publication-context statement, not a census or causal measurement of review coverage.
 
 <a id="pal-s"></a>**PAL-S — [Palworld — most helpful Steam reviews](https://steamcommunity.com/app/1623730/reviews/?browsefilter=toprated&l=english).** Steam Community, accessed 2026-09-26. Historical/current positive qualitative sample; joke/protest reviews excluded from mechanics claims.
 
+<a id="pal-t"></a>**PAL-T — Pocketpair, June 25, 2025. [Tides of Terraria announcement](https://steamcommunity.com/games/1623730/announcements/detail/518590951147438123), [readable official-text mirror](https://steamdb.info/patchnotes/18943542/).** Relevant release sections read: fishing/salvage, Surgery Table, Zoe recruitment, faction bases and Arena. The original link was followed but returned a shell. Historical introduction, not a synchronized 2026 balance table.
+
+<a id="pal-u"></a>**PAL-U — S.E. Doster, GameSpot, June 25, 2025. [Fishing, rods, bait, ponds and salvage](https://www.gamespot.com/articles/palworld-fishing-guide-how-to-craft-fishing-rods-and-bait/1100-6532739/).** Full relevant firsthand guide text read. Distinct minigames and delegated pond process; explicit uncertainty about magnet/metal outcomes is not converted into fact. Current 1.0 additions are separately sourced to PAL-C.
+
+<a id="pal-v"></a>**PAL-V — S.E. Doster, GameSpot, June 2025. [Pal Surgery Table](https://www.gamespot.com/articles/how-to-change-a-pals-gender-and-passive-skills-in-palworld/1100-6532740/).** Body read: eligible party selection, implant/gold expenditure, slot replacement and separate Pal Reversal use. Historical numbers and speculative acquisition channels omitted from current assertions.
+
+<a id="pal-w"></a>**PAL-W — Pocketpair, [dedicated-server PvP guide](https://docs.palworldgame.com/settings-and-operation/pvp/), displayed version 1.0.4, accessed September 26, 2026.** Full relevant official configuration text read. Trial/support boundary, hostility, property, logout, travel and reward rules. The “Disable Mission” line conflicts with PAL-C's later main-mission statement; no executable test resolves it here. Configuration examples are not universal defaults.
+
+<a id="pal-x"></a>**PAL-X — PalDB, [Primitive Furnace](https://paldb.cc/en/Primitive_Furnace), accessed September 26, 2026; site labels data v1.0.5.** Fan-hosted game-data/description record, explicitly unaffiliated with Pocketpair. Construction and separate Charcoal/Ingot recipe rows read; Kindling distinguished from consumable fuel. No proprietary source-code inspection or all-furnace equivalence claimed.
+
+<a id="pal-y"></a>**PAL-Y — Chris Kerr, Game Developer, live page dated March 18, 2025. [Pocketpair on the human cost of success](https://www.gamedeveloper.com/marketing/-the-public-are-kinda-crazy-palworld-developer-pocketpair-underlines-the-human-cost-of-success).** Original GDC reporting of John Buckley's statements, body reopened. Same work preserved as [PAL3](../references/sources-03.md#source-pal3); the older register's March 17 metadata differs from the inspected live page. Not the January 2024 Mizobe interview and not a fresh legal or workplace audit.
+
+<a id="pal-z"></a>**PAL-Z — Michelle Cornelia, Dexerto, February 11, 2024. [Pal transfer methods](https://www.dexerto.com/palworld/how-to-trade-pals-with-another-player-in-palworld-2526920/).** Actual procedural body read: drop/pickup and shared working-slot handoffs. Historical observations, not proof of an atomic exchange UI or every later guild permission. The site's surrounding current navigation does not change the article's date.
+
+<a id="pal-aa"></a>**PAL-AA — Pocketpair, December 17, 2025. [Home Sweet Home](https://steamcommunity.com/games/1623730/announcements/detail/627819185726031240), [inspected official-text mirror](https://steamdb.info/patchnotes/21102090/).** Experimental server PvP, SAN changes and added implants; original link followed, body read through mirror. Demonstrates that these changes predate 1.0 rather than treating repeated release-note wording as first introduction.
+
+<a id="pal-ab"></a>**PAL-AB — PalDB, [Mission text and objectives](https://paldb.cc/en/Mission), accessed September 26, 2026.** Fan-hosted game-text/objective record; selected main-mission sequence and Zoe-related entries read. Names, objective lists and next-mission links establish the bounded examples. Unresolved template placeholders, unused-looking entries and uninspected cinematics are not reconstructed into additional plot claims.
+
+<a id="pal-ac"></a>**PAL-AC — Palworld Wiki, [Tower/faction leader reference](https://palworld.wiki.gg/wiki/Faction_Leader_Bosses), accessed September 26, 2026.** Indexed encounter table/history inspected; direct page retrieval failed. Used narrowly for named faction/Pal pairs and regions, not its complete mechanics, exact coordinates or a claimed firsthand boss test.
