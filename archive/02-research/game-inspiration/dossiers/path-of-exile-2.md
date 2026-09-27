@@ -274,3 +274,5 @@ For OpenLegend, expose which stage failed: missing resource, incompatible suppor
 <a id="q35"></a>**Q35 — [Augments](https://poe2db.tw/Augment).** Retrieved item text and family definitions. Ordinary replacement, equipment-dependent effects and the current Artificer's Orb entry are distinguished from an older glossary; unused database items are not promoted to released mechanics.
 
 <a id="q36"></a>**Q36 — [Socket-bound Augments](https://poe2db.tw/Socket-bound_Augments).** Retrieved specific permanence rule, also exposed in Q35's glossary. This is an exception, not a claim that all socketed items are irreversible.
+
+<a id="q37"></a>**Q37 — [Path of Exile 2 official Steam/community feed](https://steamcommunity.com/app/2694490/) and [official site](https://pathofexile2.com/en/home), checked September 27, 2026.** Primary current boundary: game remains Early Access; Forbidden Rites launched September 4; Full Release Registration is active for the planned December 11 release. Steam Deck verification on September 24 is a platform-compatibility update, not 1.0 delivery.
