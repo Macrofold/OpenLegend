@@ -8,6 +8,9 @@ import { readConfig } from '../fixtures/database.js';
 test('playable elevated world, mixed artwork, camera controls and exact surface picking', async ({
   page,
 }, info) => {
+  // Hosted software rendering spends ~18s on the two screenshots alone.
+  // Bound the complete journey separately from its unchanged assertion deadlines.
+  test.setTimeout(120_000);
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
     store: await testRepository(),
