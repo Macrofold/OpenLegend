@@ -1,6 +1,6 @@
 # Whole-world reassessment: progress and evidence
 
-**Pass opened: 2026-09-27. Branch: `codex/world-idea-repertoires`. Current world: 09, Dune. Completed dossier revisions: 8/28. Shared synthesis reconciliation: pending the dossier pass.**
+**Pass opened: 2026-09-27. Branch: `codex/world-idea-repertoires`. Current world: 12, Discworld. Completed dossier revisions: 11/28. Shared synthesis reconciliation: pending the dossier pass.**
 
 This is the current correction/deepening ledger. [research-progress.md](research-progress.md) records the earlier packet and its integration history; its earlier completion status does not mean this reassessment is complete. Each revised dossier owns a closing record of sections reviewed, sources actually consulted, changes, and unresolved evidence gaps. “Revised” never means the entire franchise was freshly read, watched, or played.
 
@@ -20,10 +20,10 @@ The requested branch did not contain the library. The existing 28-world packet w
 | [06. DC Universe](worlds/06-dc-universe.md) | Revised | `c48d79dc8bdc6f0d8225fb38345b7cfd84d1bd51`; superpowered pleasure, marriage, competition, deliberate cruelty, working institutions and distinct recovery/loss. |
 | [07. The Witcher](worlds/07-the-witcher.md) | Revised | `599a3f479f387b6c355a3b0bad587639c1039838`; paid music, intimacy, bridge victory, reproductive coercion, abuse, a lively wedding and unequal consequences. |
 | [08. Pokémon](worlds/08-pokemon.md) | Revised | `27ccc7ee7e8cb734fd21020f43eb127841de19a4`; competitive mastery, athletic recreation, effective institutions, deliberate manipulation and distinct rescue/recovery. |
-| [09. Dune](worlds/09-dune.md) | In progress | Dossier-specific evidence and commit pending. |
-| [10. A Song of Ice and Fire](worlds/10-a-song-of-ice-and-fire.md) | Pending | — |
-| [11. Earthsea](worlds/11-earthsea.md) | Pending | — |
-| [12. Discworld](worlds/12-discworld.md) | Pending | — |
+| [09. Dune](worlds/09-dune.md) | Revised | `35551148cc4c6b58ab672836207c9ebe3e4d6a8e`; ritual pleasure, music, worm-riding mastery, coercion, reproductive control and unequal outcomes. |
+| [10. A Song of Ice and Fire](worlds/10-a-song-of-ice-and-fire.md) | Revised | `d55a075d35c0eb8640d3b9e3ab23d70c5f542f27`; feasting, martial aspiration, intimacy, coercion and lasting effects. |
+| [11. Earthsea](worlds/11-earthsea.md) | Revised | `1d6c8fa44551f87301bdaa7a1b5ddcbc81bca14f`; Pendor's victory, musical vocation, adult love, deliberate harm and differentiated endings. |
+| [12. Discworld](worlds/12-discworld.md) | In progress | Dossier-specific evidence and commit pending. |
 | [13. Avatar: The Last Airbender](worlds/13-avatar-the-last-airbender.md) | Pending | — |
 | [14. One Piece](worlds/14-one-piece.md) | Pending | — |
 | [15. The Expanse](worlds/15-the-expanse.md) | Pending | — |
