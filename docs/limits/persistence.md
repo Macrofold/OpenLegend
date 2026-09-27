@@ -346,13 +346,13 @@ Legacy feeling migration only supports the known fear/discomfort format and deca
 
 ## SB15
 
-**Current — source inspected 2026-09-26 · Restrictiveness: Safe.**
+**Changed · Restrictiveness: Safe.**
 
-**Only two streamed table layouts are recognized.** The stream reader explicitly accepts the current table layout and one exact preceding pre-foundation layout. Future owner/table changes follow the [development save policy](../../AGENTS.md#development-save-policy). Arbitrary missing current tables are rejected; legacy whole-JSON saves have a separate reader.
+**Only the current physical format is supported.** Database format 2, `records-jsonl-2` and save format `development-2026-09-27-history2` require the combined perspective/access table and maintained event totals. Exact current table coverage is mandatory. Incompatible databases and checkpoints fail explicitly without conversion or deletion under the [development save policy](../../AGENTS.md#development-save-policy).
 
-**Historical rationale / current scope:** The delivered reader converted one understood preceding layout without guessing missing state. Its presence describes implementation, not an ongoing support window. Current packages still require complete tables; compatibility decisions belong to the linked root policy and [RP02](../maintainers/revisitable-policies.md#rp02--development-state-compatibility).
+**Historical rationale / current scope:** The former reader converted one understood preceding foundation layout. That reader was removed with the history layout change; it is not a promised support window. Same-version integrity and complete recovery remain required. [RP02](../maintainers/revisitable-policies.md#rp02--development-state-compatibility) tracks any future owner decision.
 
-[Implementation](../../apps/server/src/checkpoint.ts).
+[Implementation](../../apps/server/src/checkpoint.ts). Normal startup's maintained-count check and explicit full-audit boundary are documented in [save/load](../save-and-load.md#current-history-capture-boundary).
 
 ## SB16
 

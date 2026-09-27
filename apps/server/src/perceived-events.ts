@@ -27,19 +27,18 @@ const validPosition = (p: Position) =>
   p.id.length > 0 &&
   p.id.length <= 160;
 
-export function perspectiveField(db: SqlDatabase, name: 'order' | 'type', alias = ''): string {
-  const column = `${alias ? `${alias}.` : ''}payload`;
-  const value = `(${column}::jsonb->>'${name}')`;
-  return name === 'order' ? `CAST(${value} AS BIGINT)` : value;
+export function perspectiveField(name: 'order' | 'type', alias = ''): string {
+  return `${alias ? `${alias}.` : ''}${name === 'order' ? 'position' : 'event_type'}`;
 }
-/** Index the existing perspective, not all world events; the same expressions drive reads.
+/** Index the existing perspective, not all world events; the same columns drive reads.
  * docs/perceived-world-events.md#4-query-and-storage-behavior */
 export async function initializePerceivedEventIndexes(db: SqlDatabase): Promise<void> {
-  const order = perspectiveField(db, 'order'),
-    type = perspectiveField(db, 'type');
   await db.exec(`
-    CREATE INDEX IF NOT EXISTS history_perspective_order ON history_perspectives(world_id,actor_id,(${order}),event_id);
-    CREATE INDEX IF NOT EXISTS history_perspective_type_order ON history_perspectives(world_id,actor_id,(${type}),(${order}),event_id);
+    CREATE INDEX IF NOT EXISTS history_perspective_order ON history_perspectives(world_id,actor_id,position,event_id);
+    CREATE INDEX IF NOT EXISTS history_perspective_type_order ON history_perspectives(world_id,actor_id,event_type,position,event_id);
+    CREATE INDEX IF NOT EXISTS history_perspective_peer_order ON history_perspectives(world_id,actor_id,speech_peer_id,position,event_id) WHERE speech_peer_id IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS history_perspective_response_order ON history_perspectives(world_id,actor_id,position,event_id) WHERE response_action;
+    CREATE INDEX IF NOT EXISTS history_perspective_source_response_order ON history_perspectives(world_id,actor_id,source_id,position,event_id) WHERE response_action;
   `);
 }
 
@@ -74,8 +73,8 @@ export async function readPerceivedEvents(
   if (options.limit !== undefined && !Number.isFinite(options.limit))
     throw new HistoryCursorError('Invalid event page size.');
   const limit = Math.max(1, Math.min(100, Math.floor(options.limit ?? 50)));
-  const position = perspectiveField(db, 'order', 'p');
-  const eventType = perspectiveField(db, 'type', 'p');
+  const position = perspectiveField('order', 'p');
+  const eventType = perspectiveField('type', 'p');
   const field = (name: string) => `(e.payload::jsonb->>'${name}')`;
   // Private thoughts, plans and diagnostics do not become world events. Own sensed body/contact
   // episodes are permitted observations, even though their acquisition is receiver-private.
@@ -84,7 +83,7 @@ export async function readPerceivedEvents(
     (type === 'all' ? '' : ` AND ${eventType}=?`);
   const args: unknown[] = [worldId, actorId, ...(type === 'all' ? [] : [type])];
   const join =
-    'history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id JOIN history_audiences a ON a.world_id=e.world_id AND a.event_id=e.id AND a.actor_id=p.actor_id';
+    'history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id';
   let watermark = cursor?.watermark;
   if (!watermark) {
     const row = await db

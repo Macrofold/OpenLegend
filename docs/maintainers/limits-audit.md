@@ -91,7 +91,7 @@ Current actor-wide invalidation discards unrelated continuity. [FL17](../limits/
 
 **P2. Conditional: creator edits/corrections after history accumulates.** Complete dependency hydration can stall mutation processing or exhaust memory.
 
-Replace full-history owner-edit materialization with indexed affected-dependency reads and atomic publication.
+Implemented indexed affected-dependency preparation outside mutation ownership and stale-checked atomic publication. Remaining growth follows the actual dependency closure and actor-wide appraisal privacy cleanup; resumable preparation requires measured need.
 
 A small correction should not need every historical body in RAM. Keep complete propagation/privacy handling; qualify current slow paths before allowing partial materialization. [Inventory](../limits/memory.md#mh07) · [Work: D2 / PF08](production-data.md)
 

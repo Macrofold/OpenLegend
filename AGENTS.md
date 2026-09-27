@@ -22,6 +22,8 @@ Always use concise, plain language with shorthand where it remains easy to under
 
 Describe behavior using the people, objects and actions involved. Never use an internal label as the explanation—even if it is an ordinary English word. Say “recording what a character notices,” not “acquisition.” Introduce a technical term only when useful or well-known. Prefer an extra sentence over compressed wording.
 
+**Make references unambiguous.** When mentioning something, identify it specifically enough that the reader knows exactly which thing you mean. Do not use generic terms such as “response,” “state,” “context,” “history,” or “job” unless their referent is already clear. Say “a character’s AI-generated reply to something the player said,” not merely “a response.” Do not assume the reader shares the code or implementation context you inspected. Once you have clearly identified something, shorthand is fine. Before sending, check whether a phrase could reasonably refer to several different things; if so, make it more specific.
+
 For requests consisting only of questions or explanations, assume the reader knows software architecture, TypeScript and relevant core technologies but none of this project's internal details. Define unfamiliar project concepts, describe them using widely understood technical or gaming terminology, or link to their code/documentation. When explaining an implementation, include why it was needed, what it enables and the major decisions made. Keep the entire answer concise; cut fluff and filler rather than clarity or accuracy.
 
 ## Load only relevant context

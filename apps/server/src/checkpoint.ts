@@ -1,6 +1,6 @@
-import { HISTORY_TABLES } from './history.js';
+import { HISTORY_TABLES, HistoryRepository } from './history.js';
 import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
-import { RECORD_NODES, legacyObjectRecordSchema, type JsonRecord } from './world-record-schema.js';
+import { RECORD_NODES, type JsonRecord } from './world-record-schema.js';
 import { assembleWorldRecords, WorldRecords } from './world-records.js';
 import type { SqlDatabase } from './store.js';
 import type { SavePayload } from './game-saves.js';
@@ -12,23 +12,6 @@ export const CHECKPOINT_TABLES = [
   ...HISTORY_TABLES,
   ...MEMORY_HISTORY_TABLES,
 ];
-
-// Exact preceding layout: upgrade through the existing in-place object migration,
-// never treat arbitrary missing owner tables as optional current state.
-const FOUNDATION_TABLES = new Set([
-  'config_participation',
-  'sim_containers',
-  'sim_declared_owners',
-  'sim_object_retirements',
-  'sim_object_state',
-  'sim_object_lineage',
-  'sim_resource_reservations',
-  'sim_work_state',
-  'sim_work_invocations',
-  'mind_appraisal_processes',
-  'actor_milestones',
-]);
-const PRE_FOUNDATION_TABLES = CHECKPOINT_TABLES.filter((table) => !FOUNDATION_TABLES.has(table));
 
 /** Shared capture path for the worker and an already-owned operational snapshot. */
 export async function writeCheckpoint(
@@ -52,6 +35,7 @@ export async function writeCheckpoint(
     if (!settings) throw new Error('Checkpoint world settings missing.');
     const simTime = Number(JSON.parse(String(settings['payload'])).simTime);
     options.captured?.();
+    await new HistoryRepository(db).auditEventCount(head.worldId);
     await files.writeStream(
       { ...identity, createdAt: new Date().toISOString(), simTime, revision: head.revision },
       checkpointLines(db, head.worldId, identity.format, head.revision),
@@ -97,7 +81,6 @@ export async function readCheckpoint(
   const memory = Object.fromEntries(
     MEMORY_HISTORY_TABLES.map((table) => [table, [] as JsonRecord[]]),
   ) as NonNullable<SavePayload['memory']>;
-  let legacyRecordLayout = false;
   let header = false,
     index = -1;
   let tables: string[] = [];
@@ -106,10 +89,6 @@ export async function readCheckpoint(
     const value = JSON.parse(line) as Record<string, unknown>;
     if (!header) {
       const declared = value['tables'];
-      legacyRecordLayout =
-        Array.isArray(declared) &&
-        declared.length === PRE_FOUNDATION_TABLES.length &&
-        PRE_FOUNDATION_TABLES.every((table) => declared.includes(table));
       if (
         value['encoding'] !== CHECKPOINT_ENCODING ||
         value['worldId'] !== worldId ||
@@ -117,9 +96,8 @@ export async function readCheckpoint(
         !Array.isArray(declared) ||
         declared.some((table) => typeof table !== 'string' || !CHECKPOINT_TABLES.includes(table)) ||
         new Set(declared).size !== declared.length ||
-        (!legacyRecordLayout &&
-          (declared.length !== CHECKPOINT_TABLES.length ||
-            !CHECKPOINT_TABLES.every((table) => declared.includes(table))))
+        declared.length !== CHECKPOINT_TABLES.length ||
+        !CHECKPOINT_TABLES.every((table) => declared.includes(table))
       )
         throw new Error('Unsupported or incomplete checkpoint manifest.');
       header = true;
@@ -168,6 +146,9 @@ export async function readCheckpoint(
           Number(a['position']) - Number(b['position']) ||
           String(a['id']).localeCompare(String(b['id'])),
       );
+  const total = history.history_totals;
+  if (total.length !== 1 || Number(total[0]!['event_count']) !== history.history_events.length)
+    throw new Error('Checkpoint retained event coverage disagrees with its count.');
   const events = new Map(history.history_events.map((row) => [row['id'], row['payload']]));
   for (const siblings of groups.get('world_hot_events')?.values() ?? [])
     for (const row of siblings) {
@@ -175,19 +156,10 @@ export async function readCheckpoint(
       if (!events.has(id)) throw new Error('Checkpoint is missing referenced event history.');
       row['payload'] = events.get(id);
     }
-  const schema = legacyRecordLayout ? legacyObjectRecordSchema() : undefined;
-  if (legacyRecordLayout) {
-    for (const row of [...(groups.get('world_settings')?.values() ?? [])].flat()) {
-      const world = JSON.parse(String(row['payload']));
-      if (world.objectState || world.workState || world.participationPolicy)
-        throw new Error('Current world cannot omit foundation checkpoint tables.');
-    }
-  }
   return {
     format,
-    state: assembleWorldRecords(groups, worldId, false, undefined, schema),
+    state: assembleWorldRecords(groups, worldId, false),
     history,
     memory,
-    ...(legacyRecordLayout ? { legacyRecordLayout: true } : {}),
   };
 }

@@ -498,11 +498,14 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
 export function editWorldEvents(
   original: WorldState,
   changes: Array<{ id: string; replacement: WorldEvent | null }>,
+  retainedEventReferences: ReadonlySet<string> = new Set(),
 ): Transition {
   if (new Set(changes.map((change) => change.id)).size !== changes.length)
     return reject(original, 'invalid-events', 'An event may only be changed once per save.');
   const eventsById = new Map(original.events.map((event) => [event.id, event]));
-  const protectedEventIds = new Set<string>();
+  // The server supplies indexed references from cold events; native callers still
+  // validate all references present in their complete input.
+  const protectedEventIds = new Set(retainedEventReferences);
   for (const memories of Object.values(original.memories))
     for (const memory of memories)
       if (memory.kind === 'commitment' && !memory.resolved) {

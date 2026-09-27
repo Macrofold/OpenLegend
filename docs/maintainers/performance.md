@@ -220,6 +220,11 @@ Exit: better burst throughput within single-command latency budgets, finite pend
 
 ## PF08 — Long-lived worlds, hot state and checkpoints
 
+The approved [history storage plan](../projects/history-storage-efficiency.md)
+delivers indexed startup selection, selective event editing and combined
+event/observer storage identified in the production-data review. D1/D2 owns the
+delivery checklist; [local evidence](../verification.md#history-storage-efficiency) records query plans, caller/failure checks and disk costs. PF08 retains natural-aging and full-workload qualification.
+
 Dependencies: PF00/PF03 and applicable production-data D1/D2 recovery contracts; D59's accepted 24-hour command policy and its epoch boundary before any receipt expiry.
 
 - [x] Separate unreferenced global events and new epoch-bound gameplay outcomes from per-step state. Retain active memory, obligation/knowledge sources and complete cold history; jobs remain in their existing durable tables.

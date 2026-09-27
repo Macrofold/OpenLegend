@@ -26,11 +26,12 @@ import { z } from 'zod';
 import type { SqlDatabase } from './store.js';
 import type { RecordChanges } from './world-records.js';
 
-const sourceTables = {
+export const MEMORY_SOURCE_TABLES = {
   awareness: 'mind_awareness',
   memory: 'mind_memories',
   summary: 'mind_summaries',
 } as const;
+const sourceTables = MEMORY_SOURCE_TABLES;
 export type MemoryChanges = Map<string, Set<string> | null>;
 type SourceKind = keyof typeof sourceTables;
 // Payload/text bodies must not leak into metadata selection before byte admission.
@@ -194,18 +195,22 @@ export class MemoryRepository {
         id TEXT NOT NULL, source_kind TEXT NOT NULL, record_id TEXT NOT NULL, revision TEXT NOT NULL,
         event_id TEXT, memory_kind TEXT, acquisition TEXT, event_type TEXT,
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
+        search_text TEXT NOT NULL DEFAULT '',
+        search_vector tsvector GENERATED ALWAYS AS (to_tsvector('simple',search_text)) STORED,
         PRIMARY KEY(world_id,actor_id,id,source_kind));
       CREATE INDEX IF NOT EXISTS recall_actor_rank ON recall_sources(world_id,actor_id,eligible,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_source_validation ON recall_sources(world_id,actor_id,eligible,id);
       CREATE INDEX IF NOT EXISTS recall_context_rank ON recall_sources(world_id,actor_id,eligible,required DESC,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_actor_recent ON recall_sources(world_id,actor_id,eligible,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_commitments ON recall_sources(world_id,actor_id,at,id) WHERE source_kind='memory' AND memory_kind='commitment' AND eligible=1;
+      CREATE INDEX IF NOT EXISTS recall_world_event ON recall_sources(world_id,event_id,actor_id);
       CREATE INDEX IF NOT EXISTS recall_actor_event ON recall_sources(world_id,actor_id,event_id);
       CREATE INDEX IF NOT EXISTS recall_required ON recall_sources(world_id,actor_id,required,eligible,id);
       CREATE INDEX IF NOT EXISTS recall_record ON recall_sources(world_id,source_kind,record_id);
       CREATE TABLE IF NOT EXISTS mind_summary_sources (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,summary_id TEXT NOT NULL,source_id TEXT NOT NULL,
         PRIMARY KEY(world_id,actor_id,summary_id,source_id));
+      CREATE INDEX IF NOT EXISTS mind_summary_world_source ON mind_summary_sources(world_id,source_id,actor_id,summary_id);
       CREATE INDEX IF NOT EXISTS mind_summary_reverse ON mind_summary_sources(world_id,actor_id,source_id);
       CREATE TABLE IF NOT EXISTS mind_source_versions (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,
@@ -232,93 +237,11 @@ export class MemoryRepository {
         model TEXT NOT NULL,dimensions BIGINT NOT NULL,embedding TEXT NOT NULL,
         PRIMARY KEY(world_id,actor_id,source_id,source_revision,model,dimensions));
     `);
-    await this.db.transaction(async () => {
-      const columns = await this.db
-        .prepare(
-          "SELECT column_name AS name FROM information_schema.columns WHERE table_schema='open_legend' AND table_name='recall_sources'",
-        )
-        .all();
-      if (!columns.some((row) => row['name'] === 'sequence')) {
-        await this.db.exec(
-          'ALTER TABLE recall_sources ADD COLUMN sequence BIGINT NOT NULL DEFAULT 0',
-        );
-        let batch: Record<string, unknown>[] = [];
-        const backfill = async () => {
-          for (const [kind, table] of Object.entries(sourceTables)) {
-            const keys = batch
-              .filter((row) => row['source_kind'] === kind)
-              .map((row) => ['world_id', 'actor_id', 'id', 'source_kind'].map((key) => row[key]));
-            if (!keys.length) continue;
-            await this.db
-              .prepare(
-                `UPDATE recall_sources SET sequence=COALESCE((SELECT sequence FROM ${table} t WHERE t.world_id=recall_sources.world_id AND t.id=recall_sources.record_id),0)
-              WHERE (world_id,actor_id,id,source_kind) IN (VALUES ${keys.map(() => '(?,?,?,?)').join(',')})`,
-              )
-              .run(...keys.flat());
-          }
-          batch = [];
-        };
-        // Additive migration is atomic, with bounded transfers/statements even
-        // for an existing lifetime backlog. Its source records remain untouched.
-        for await (const row of tableRows(this.db, 'recall_sources')) {
-          batch.push(row);
-          if (batch.length === 64) await backfill();
-        }
-        if (batch.length) await backfill();
-      }
-      if (!columns.some((row) => row['name'] === 'search_text')) {
-        await this.db.exec(
-          "ALTER TABLE recall_sources ADD COLUMN search_text TEXT NOT NULL DEFAULT ''",
-        );
-        // Rebuild only the derived search projection. Bounded migration statements
-        // preserve canonical source bodies and stay inside one atomic migration.
-        let batch: Record<string, unknown>[] = [];
-        const backfill = async () => {
-          for (const [kind, table] of Object.entries(sourceTables)) {
-            const field = kind === 'memory' ? 'summary' : 'text';
-            const value = `t.payload::jsonb ->> '${field}'`;
-            const scopes = new Map<string, Record<string, unknown>[]>();
-            for (const row of batch.filter((row) => row['source_kind'] === kind)) {
-              const key = JSON.stringify([row['world_id'], row['actor_id']]);
-              const group = scopes.get(key) ?? [];
-              group.push(row);
-              scopes.set(key, group);
-            }
-            for (const group of scopes.values())
-              await this.db
-                .prepare(
-                  `UPDATE recall_sources SET search_text=COALESCE(
-              (SELECT ${value} FROM ${table} t WHERE t.world_id=recall_sources.world_id AND t.id=recall_sources.record_id),'')
-              WHERE world_id=? AND actor_id=? AND source_kind=? AND id IN (${group.map(() => '?').join(',')})`,
-                )
-                .run(
-                  group[0]!['world_id'],
-                  group[0]!['actor_id'],
-                  kind,
-                  ...group.map((row) => row['id']),
-                );
-          }
-          batch = [];
-        };
-        for await (const row of tableRows(this.db, 'recall_sources')) {
-          batch.push(row);
-          if (batch.length === 64) await backfill();
-        }
-        if (batch.length) await backfill();
-      }
-
-      if (!columns.some((row) => row['name'] === 'search_vector'))
-        await this.db.exec(
-          "ALTER TABLE recall_sources ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (to_tsvector('simple',search_text)) STORED",
-        );
-      await this.db.exec(
-        'CREATE INDEX IF NOT EXISTS recall_text_vector ON recall_sources USING GIN(search_vector)',
-      );
-
-      await this.db
-        .exec(`CREATE INDEX IF NOT EXISTS recall_maintenance ON recall_sources(world_id,actor_id,eligible,at,sequence,id);
-        CREATE INDEX IF NOT EXISTS recall_maintenance_speech ON recall_sources(world_id,actor_id,eligible,event_type,at DESC,sequence DESC,id DESC)`);
-    });
+    await this.db.exec(`
+      CREATE INDEX IF NOT EXISTS recall_text_vector ON recall_sources USING GIN(search_vector);
+      CREATE INDEX IF NOT EXISTS recall_maintenance ON recall_sources(world_id,actor_id,eligible,at,sequence,id);
+      CREATE INDEX IF NOT EXISTS recall_maintenance_speech ON recall_sources(world_id,actor_id,eligible,event_type,at DESC,sequence DESC,id DESC);
+    `);
     await this.db.exec(`
       CREATE TABLE IF NOT EXISTS memory_vectors (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,generation TEXT NOT NULL,source_id TEXT NOT NULL,
@@ -361,10 +284,15 @@ export class MemoryRepository {
       const ids = new Set([...direct, ...writes.filter((row) => !row.create).map((row) => row.id)]);
       // Only deletion needs ancestor matching; ordinary appends inspect their own IDs.
       for (const ancestor of ancestors) {
-        const prefix = ancestor === '[]' ? '[' : ancestor.slice(0, -1) + ',';
+        // Deleting an actor-owned list has an exact structural parent. Root/world/
+        // experience deletion intentionally affects every source in that world.
+        const path = JSON.parse(ancestor) as string[];
+        const actorOwner = path.length === (kind === 'memory' ? 3 : 4);
         const rows = await this.db
-          .prepare(`SELECT id FROM ${table} WHERE world_id=? AND substr(id,1,?)=?`)
-          .all(worldId, [...prefix].length, prefix);
+          .prepare(
+            `SELECT id FROM ${table} WHERE world_id=?${actorOwner ? ' AND parent_id=?' : ''}`,
+          )
+          .all(worldId, ...(actorOwner ? [ancestor] : []));
         for (const row of rows) ids.add(String(row['id']));
       }
       const next = new Map(writes.map((row) => [row.id, row.payload]));
