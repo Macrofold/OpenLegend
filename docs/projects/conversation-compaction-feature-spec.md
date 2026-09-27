@@ -32,6 +32,23 @@ Recent exact wording and the current trigger remain outside this abstraction whe
 
 Research basis: [conversation state and grounding](../../archive/02-research/conversation-state-and-grounding.md) and [long-conversation memory and compaction](../../archive/02-research/long-conversation-memory-and-compaction.md).
 
+### Research lineage and terminology
+
+This design deliberately adopts concepts from decades of dialogue research rather than inventing a new conversational-state vocabulary. The OpenLegend names are simplified adaptations of established terms:
+
+| Research lineage | OpenLegend term | How we use it |
+| --- | --- | --- |
+| **Dialogue Gameboard / information state** — especially shared assumptions, **Questions Under Discussion (QUD)** and **LatestMove** | Overall compact conversation projection | Maintain a small evolving conversational state instead of replaying an unbounded transcript. We do not copy a full dialogue-manager ontology. |
+| **Common ground / grounding** | **Established conversational context** | Preserve what this actor can treat as established for continuing the exchange, while keeping attribution, disagreement and uncertainty. This is actor-local conversational context, not objective or globally shared truth. |
+| **QUD** plus **discourse focus / Centering Theory** | **Active issues and focus** | Preserve the questions, decisions, explanations, disputes and referents that currently organize what a sensible next turn is about. |
+| **Conversational repair / clarification** | **Updates and repairs** | Preserve explicit corrections, clarifications, reversals, retractions and resolutions so obsolete compact state is not presented as current. |
+| **LatestMove / local discourse coherence** | **Recent verbatim dialogue + exact Trigger** | Keep recent turns and the current speech exact rather than forcing pronouns, ellipsis, tone and local coherence through lossy summary text. |
+| **Persistent referential grounding** | **Reference continuity** | Preserve temporal, spatial, attributive and comparative relationships needed to resolve later references to people, objects, places and events. |
+
+The terminology is intentionally not identical where the research term would imply stronger semantics than OpenLegend can safely claim. In particular, **common ground** often describes mutually established information; OpenLegend stores an actor-specific permitted projection and must not infer mutual agreement or objective truth merely from speech. The underlying concepts and original names remain documented here so future readers can trace the design lineage.
+
+Key background includes Dialogue Gameboard/information-state work, Questions Under Discussion, common-ground/grounding research, Centering Theory, clarification/repair, discourse obligations and recent persistent-reference research. See the linked research notes for primary sources and the limits of each analogy.
+
 ### Examples considered
 
 - **Small talk:** weather, jokes and greetings can collapse aggressively once they stop affecting the exchange.
