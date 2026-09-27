@@ -264,7 +264,7 @@ For audiovisual study, follow the **official launch trailer** embedded in C13, t
 
 ## Sources and access notes
 
-All accessed September 26, 2026. Links support nearby numbered citations; ranges such as C15–C18 refer to the individually annotated entries below. Guides describe documented rules, not source-code verification. Where a source's exact update date was not exposed, the access date is the observation date. No source text, protected art or full review is reproduced.
+Original-pass sources were accessed September 26, 2026; C30 and C34 were re-checked/added in the September 27 audit. Links support nearby numbered citations; ranges such as C15–C18 refer to the individually annotated entries below. Guides describe documented rules, not source-code verification. Where a source's exact update date was not exposed, the access date is the observation date. No source text, protected art or full review is reproduced.
 
 - **C1 —** [PC Gamer review](https://www.pcgamer.com/games/rpg/clair-obscur-expedition-33-review/), Justin Wagner, April 23, 2025. Original written criticism; strategic/execution disagreement. Full-body reading recorded in the prior checkpoint and continued here.
 - **C2 —** [GamesRadar review](https://www.gamesradar.com/games/rpg/clair-obscur-expedition-33-review/), Alan Wen, launch review. Full body, including closing relationship/navigation discussion and platform disclosure, read in this continuation.
@@ -300,6 +300,5 @@ All accessed September 26, 2026. Links support nearby numbered citations; ranges
 - **C32 —** [Weapon acquisition and duplicate upgrades](https://game8.co/games/Clair-Obscur-Expedition-33/archives/515747), Game8. Indexed written weapon guide supplied acquisition/duplicate behavior; full page failed to render on a later direct request. Used narrowly, not counted as a read review or an exhaustive item census.
 
 - **C33 —** [Game8: Gestral Beach Locations and 100% Guide](https://game8.co/games/Clair-Obscur-Expedition-33/archives/517704), updated May 14, 2025, with its linked Gestral Games guide. Secondary written guide used narrowly to establish the five bounded Gestral side-game/minigame types and their reward role; not primary implementation evidence or a claim that every later patch leaves them unchanged.
-
 
 - **C34 —** [Clair Obscur: Expedition 33 on Steam](https://store.steampowered.com/app/1903340/Clair_Obscur_Expedition_33/), Valve store/review surface, audited September 27, 2026. Current dated aggregate plus visible Most Helpful/recent review bodies were read through the public store index. Used for the current English/recent sentiment snapshot and direct positive/negative testimony; counts/hours are mutable store metadata, not sales or representative polling.
