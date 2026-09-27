@@ -8,7 +8,7 @@
 
 The stricter substantive audit found nine dossiers with coverage across R01–R14 and eleven requiring additions or corrections. Earlier “twenty complete” wording described committed passes but overclaimed their satisfaction of every requirement. A heading, a source count or a coverage-table checkmark is not sufficient evidence of depth.
 
-The original full audit and exact-text correction manifest were supplied as conversation artifacts. This repository record preserves their actionable findings below and will record actual closure evidence. It does not claim that the entire seven-file source packet has been reconciled. The canonical assignment status remains in `research-progress.md`; this file owns the review findings and verification evidence, not a competing roster.
+The original full audit and exact-text correction manifest were supplied as conversation artifacts. This repository record preserves their actionable findings and the closure evidence below. It does not claim that the entire seven-file source packet has been reconciled. The canonical assignment status remains in `research-progress.md`; this file owns the review findings and verification evidence, not a competing roster.
 
 ## Per-game closure criteria
 
@@ -30,7 +30,7 @@ The original full audit and exact-text correction manifest were supplied as conv
 
 ## Baseline requirement matrix
 
-C = substantive documented coverage; G = a gap or correction in that dimension. Multiple G cells may arise from one omission. The matrix records the audit baseline, not completion of the repair.
+C = substantive documented coverage; G = a gap or correction in that dimension. Multiple G cells may arise from one omission. The matrix records the audit baseline, not completion of the repair. Keeping the original G cells preserves what was found; the repair table records what changed.
 
 | Game | R01 | R02 | R03 | R04 | R05 | R06 | R07 | R08 | R09 | R10 | R11 | R12 | R13 | R14 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -55,14 +55,30 @@ C = substantive documented coverage; G = a gap or correction in that dimension. 
 | G99 | C | C | C | C | C | C | C | C | C | C | C | C | C | C |
 | G100 | C | C | C | C | C | C | C | C | C | C | C | C | C | C |
 
-## Repair evidence — in progress
+## Committed repair evidence
 
-The canonical ledger records committed G81–G85 repairs from the preceding continuation. This continuation has committed G86 at `5578872c19a3a8e357ba9b94c0485bded0110c9b` and G87 at `83da33fca0d4f341f98c2fbdd3d582a2d6aff21a`. Their principal actual diffs were inspected: IX corrects Trance/cooperative conditions and develops cards, frogs, Mognet and six complete situations; X adds Mix, Primers, temple operations, musical/art evidence and six situations while correcting its party label and unsupported Steam attribution. Source-tail and final local-link checks remain pending.
+All eleven game-specific corrective passes are committed. This closes the listed content gaps, not the separate final integration or packet-preservation gates. Final source-tail/navigation review is still being completed at this checkpoint.
 
-### G88 evidence checkpoint — not completion
+| ID | Corrective commit | Substantive closure evidence |
+| --- | --- | --- |
+| G81 | `6f78d298839d8ebd0e87e28d4d61b19c419a5ce7` | §24 adds storage/version distinctions, Kokkol's material/vehicle chain and three complete noncombat situations; original encounter studies remain. |
+| G82 | `7e43906456a8f74eaa99bca49f16f403e1376889` | §§12 and 24 explain succession, piano/song progression, White Wind learning, Dragon Power ingredients and five complete situations. |
+| G83 | `93f69afaa403863dbda1db32eaad7625954e6f59` | Coliseum and recovery rules, named wager and completed situations, spoiler labels and source-access qualifications replace the previously abbreviated treatment. |
+| G84 | `32eda3c24ff979f993d4d760076eaa1833e78344` | Battle Square/Fort Condor operations, fuller Remake/Rebirth mechanics and complete situations supplement the original Materia and traversal research. |
+| G85 | `4479ef42a6c29b9907c8ed1ec96af2216e190ed0` | Corrected eligibility/command statements; Quistis, Chocobo World, named transformations, music, motion-capture evidence and spoiler-qualified situations added. |
+| G86 | `5578872c19a3a8e357ba9b94c0485bded0110c9b` | Corrected Eiko and Sword Magic; operative Tetra Master, frogs, Mognet and six full situations; FFIX23–31 added without deleting earlier source identities. |
+| G87 | `83da33fca0d4f341f98c2fbdd3d582a2d6aff21a` | Named Mix, Primer/compilation, Cloister and audiovisual evidence plus six situations; party-label and unsupported Steam-trend attribution corrected. |
+| G88 | `bc2a57c128a8bd668e08ba60b1593e99f1763340` | Named item/learning and story cases; endgame, PvP and noncombat loops; eight complete situations with distinct entry, reward and loss contracts. |
+| G89 | `4541722ee512966f8d0a1c93eed2c24657b185f6` | Corrected Gambit priorities and Steal proxy; named Bazaar/counter, weapon, fishing and score evidence; seven completed situations. |
+| G90 | `0ad79c25513dd07993221cc1f808acc0e3fa907c` | Recovery/ATB/TP, ratings, Retry, preparation, named weapon lineages, clock exceptions, art/audio and seven situations. Exact 5.55-million chart was visually inspected in the primary May 2010 presentation. |
+| G93 | `1443965701e5dc7ef632a99855b40c91516bdabc` | §13 adds three dated PS5 player bodies and explicit sample limitations; failed Steam access remains documented and is not relabeled successful. |
 
-Primary evidence inspected September 26, 2026: [returning guide volume 5](https://we-are-vanadiel.finalfantasyxi.com/post/?id=712&lang=en) supplies the Ambuscade entry, two encounter families, difficulty and monthly reward rules; [volume 6](https://we-are-vanadiel.finalfantasyxi.com/post/?id=721&lang=en) distinguishes Omen's branching objectives, Sortie's conditional chests and Odyssey's expedition/boss modes; [volume 3](https://we-are-vanadiel.finalfantasyxi.com/post/?id=695&lang=en) supplies operative noncombat systems. These are current research readings of dated documentation, not personal game tests or guarantees about all future patch values.
+The earlier G88 evidence checkpoint is retained in [the audit at c620abd](https://github.com/Macrofold/OpenLegend/blob/c620abd95fab96dd246c8ec6aa921623c8ddde4a/archive/02-research/game-inspiration/coverage-audit-g81-g100.md). Its primary-guide findings, version caveats and Skillchain example were integrated into the completed dossier; it is no longer an active incomplete-game instruction.
 
-The [official Skillchain lesson](https://www.playonline.com/ff11us/guide/development/vt/extra/03-1.html) provides a named Flat Blade → Gust Slash → Detonation example. Its sweeping statement that a weapon skill cannot repeat is not adopted as a universal rule for later multi-property skills. [Ballista's original account](https://www.playonline.com/ff11us/guide/development/vt/26/02-2.html) and [Brenner's rules](https://www.playonline.com/pcd/update/ff11us/20060221ALyQT2/detail.html) establish different scoring objectives; original schedules and fees are not current service promises. The live dossier still requires integration of these findings, item/scroll acquisition, a named story arc and complete worked situations before its repair can close.
+## Verification and remaining review
 
-Final review must check the actual changes, requirement-to-section maps, source anchors and relative links, and distinguish verified corrections from inherited evidence. The nine unchanged dossiers should remain unchanged unless a concrete additional issue is discovered. Packet-wide P01–P05 and cross-branch integration remain separate from this slice's corrective work.
+At content head `1443965701e5dc7ef632a99855b40c91516bdabc`, the connector comparison against the audit baseline reports exactly eleven modified dossiers plus this audit and the progress ledger. No runtime file or unaffected dossier changed. The four original-owner tree hashes were confirmed unchanged: `games/` `2276af0e8a9e4d6dc4dec70d10211356dbf3c12b`, `mechanics/` `752d3ef188f702472beaa5c6d6c88339b2eaaad3`, `references/` `c31f2747b9b49285f53a97f861bcbb915350fd7e`, and `essays/` `8c397c72fa86854fa301dc834434487b25b07ad5`. The nine unaffected dossier blobs also match the baseline.
+
+Principal per-game diffs were inspected, including G93's narrow change. The final review is inspecting source-register tails, local navigation and the remaining status/changelog wording. It is a manual static document review, not an automated whole-repository or external-link crawl. Earlier citations are not all independently reread merely by preserving them. No gameplay, benchmark, watched footage or soundtrack listening is claimed. The only visual PDF inspection asserted in the repairs is the actually rendered commercial chart in G90.
+
+The canonical ledger must be reconciled after these checks; the library navigation and one coherent documentation-changelog entry must reflect the completed repair. Packet-wide P01–P05 and cross-branch integration remain separate. An unchanged source-owner tree proves preservation during this repair, not completeness of the earlier packet split.
