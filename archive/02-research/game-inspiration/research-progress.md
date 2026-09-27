@@ -4,13 +4,13 @@
 
 ## Requirements-and-corrections audit — G121 through G130
 
-**Audit active.** Fresh audit baseline: `757bafba40efa875733aba635c3aec829d4c92ad`. Findings and corrective evidence are owned by [coverage-audit-g121-g130.md](coverage-audit-g121-g130.md). The audit rechecks actual dossier substance against R01–R14 plus the explicit mechanics inventory; initial completion labels are not treated as certification.
+**Audit complete.** Fresh audit baseline: `757bafba40efa875733aba635c3aec829d4c92ad`. Findings, corrections, per-game closure commits and the final cross-game mechanics matrix are owned by [coverage-audit-g121-g130.md](coverage-audit-g121-g130.md). The audit reread actual dossier substance against R01–R14 plus the explicit mechanics inventory rather than treating initial completion labels as certification.
 
-**Current audit state: G121–G124 audited; G125 active; G126–G130 pending.** Closure commits are recorded in [coverage-audit-g121-g130.md](coverage-audit-g121-g130.md). Global P01–P05 gates remain separate and pending.
+**Current audit state: G121–G130 audited; no active game remains in this range.** The second-pass matrix found no unaddressed explicit mechanics category after repair. G121/G122 intentionally combine R10–R11 in one substantive section; this is a heading shape, not missing marketing/commercial coverage. Global P01–P05 gates remain separate and pending.
 
 ## Resume here
 
-**Range complete: G121–G130.** All ten authorized subjects have complete R01–R14 dossiers and per-game completion commits on this branch. No per-game subject remains active here. The next repository-wide work is the separately tracked P01–P05 packet audit/reconciliation; this branch does not claim those global gates are complete.
+**Range complete and requirements-audited: G121–G130.** All ten authorized subjects have complete dossiers plus a fresh September 27 R01–R14/mechanics-inventory audit on this branch. No per-game subject or range-level corrective pass remains active here. The next repository-wide work is the separately tracked P01–P05 packet audit/reconciliation; this branch does not claim those global gates are complete.
 
 **This branch's authorized range: G121–G130 inclusive; 10 / 10 completed.** G121–G130 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
 
