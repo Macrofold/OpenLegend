@@ -9,7 +9,7 @@
 - **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
 - **[G61–G80 full-game dossier index](dossiers/README.md):** direct reading routes through the tactical, open-world and party-RPG range, plus comparisons of character growth, useful objects and changing access.
 - **[G121–G130 dossiers](#full-dossiers--curated-references-g121g130):** mercenary, survival, social-simulation and systemic-world references.
-- **[G131–G148 survival expansion](research-roster.md#september-27-survival-game-expansion-scope):** approved subjects and edition boundaries; [progress](research-progress.md#survival-expansion--g131g148) records the pending research.
+- **[G131–G148 survival expansion](research-roster.md#september-27-survival-game-expansion-scope):** approved subjects and edition boundaries; [G131–G140 full dossiers](#full-dossiers--survival-expansion-g131g140) are complete on the scoped research branch, while the [progress ledger](research-progress.md#survival-expansion--g131g148) owns the remaining G141–G148 state.
 - **[G101–G110 dossiers](#g101-g110-dossiers):** the six rostered Mass Effect games, both Octopath Travelers and both Knights of the Old Republic games; independent edition-aware research, not a combined franchise substitute.
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
@@ -80,6 +80,23 @@ These ten imported dossiers have completed initial research and the full require
 | G128 | [Ultima VII: The Black Gate](dossiers/ultima-vii-the-black-gate.md) |
 | G129 | [Oxygen Not Included](dossiers/oxygen-not-included.md) |
 | G130 | [S.T.A.L.K.E.R. 2: Heart of Chornobyl](dossiers/stalker-2-heart-of-chornobyl.md) |
+
+## Full dossiers — survival expansion G131–G140
+
+These ten full passes cover the requested first half of the September 27 survival expansion, and the September 27 follow-up requirements/corrections audit is complete for all ten. Each dossier owns its current/version boundary, mechanics inventory, worked interactions, reception evidence, follow-up corrections and source limitations. The [progress ledger](research-progress.md#survival-expansion--g131g148) remains the completion owner; G141–G148 are still separate pending subjects rather than implicitly covered here.
+
+| Roster ID | Dossier | Useful starting question |
+| --- | --- | --- |
+| G131 | [Rust](dossiers/rust.md) | How do temporary ownership, wipes, social uncertainty and player-authored infrastructure turn ordinary resources into conflict? |
+| G132 | [DayZ](dossiers/dayz.md) | How can bodily state, item compatibility, geography and strangers create progression without levels? |
+| G133 | [ARK: Survival Evolved](dossiers/ark-survival-evolved.md) | How do tame utility, breeding lineages, tribes, bosses and configurable time costs make creatures into infrastructure? |
+| G134 | [ARK: Survival Ascended](dossiers/ark-survival-ascended.md) | Which redesigned building, Trait, follower, mod-platform and ship systems make the reimagined release mechanically distinct from Evolved? |
+| G135 | [7 Days to Die](dossiers/7-days-to-die.md) | How do destructible structure, zombie pathfinding and a recurring horde deadline turn base design into an iterative test? |
+| G136 | [Conan Exiles](dossiers/conan-exiles.md) | How do RPG builds, followers, sorcery, Purges and connected authored maps sit on top of a survival sandbox? |
+| G137 | [The Forest](dossiers/the-forest.md) | How does ambiguous cannibal behavior make a compact building-and-cave survival game feel socially threatening? |
+| G138 | [Sons of the Forest](dossiers/sons-of-the-forest.md) | What changes when free-form physical construction, delegated labor and rapid traversal expand the original formula? |
+| G139 | [Subnautica](dossiers/subnautica.md) | How can oxygen, depth, vehicles and knowledge make world access itself the progression system? |
+| G140 | [Don't Starve Together](dossiers/dont-starve-together.md) | How do seasons, sanity, asymmetric characters, shared death and persistent worlds turn the calendar into cooperative progression? |
 
 ## Game studies
 
