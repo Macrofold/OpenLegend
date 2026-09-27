@@ -1,11 +1,13 @@
 ---
 name: openlegend-ai
 description: >-
-  Implement or review Jev/TypeSafe, LLM prompts, embeddings, cognition context, model outputs or
-  provider execution across OpenLegend.
+  Implement, review or diagnose character decisions, Jev/TypeSafe, LLM prompts, embeddings,
+  cognition context, model outputs or provider execution across OpenLegend.
 ---
 
 # Work through the existing AI boundary
+
+When diagnosing why a character does not choose or complete an expected behavior, or running controlled behavior experiments, use [Behavior debugging](../openlegend-behavior-debugging/SKILL.md). Ordinary provider/tooling changes do not require that workflow.
 
 Read the applicable sections of [AI providers](../../../docs/ai-providers.md), then the changed caller and [execution types/client](../../../packages/ai/src/types.ts). Use [memory architecture](../../../docs/memory-architecture.md) only for cognition/attention changes and the owning conversation/invention specification for those behaviors. Verify changing APIs, model capabilities and prices against current official docs and the actual adapter/version; do not bake volatile vendor values into these instructions.
 

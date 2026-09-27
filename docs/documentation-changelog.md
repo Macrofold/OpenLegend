@@ -1,5 +1,15 @@
 # Documentation changelog
 
+## 2026-09-27 — Minimal hunting context and compatible weapon options
+
+At the owner's request, controlled removals replaced numeric combat descriptions with short world-owned hunt labels and equipment-derived melee, ranged and unarmed options. The base-world configuration owns food species, allowed methods, purpose and finite scope; existing native actions own equipment, ammunition, movement, chance, damage and feedback. Ada's explicit acceptance of hunting and food-preparation paragraph are removed; general characterization and empty goals remain. This reverses the earlier decision to repeat exact combat statistics and promote hunting through her biography. The v10 generic question rubric stays after shorter/shared variants weakened reconsideration.
+
+[Evidence](verification/embodied-survival.md#minimal-context-and-equipment-derived-hunting) records 66 live Jev calls, actual deer/unarmed hare attacks, a delayed deer retry, food/no-prey comparisons and separate native spear/bow checks. One option shrank from 580 to 98 bytes; the complete matched request shrank about 7%. Unarmed preference, slow retries and wider qualification remain explicit under [AG13](maintainers/agent-agency.md#ag13--embodied-survival-demonstration), CG04/CG05 and D54. This demonstrates a small working combination, not global minimality, optimal weapon choice or reliable survival. No save schema, reset, generative fallback or automatic hunting controller was added.
+
+## 2026-09-27 — Reusable behavior debugging
+
+Added the shared [behavior-debugging skill](../.agents/skills/openlegend-behavior-debugging/SKILL.md), routed through AI guidance, to investigate expected character choices systematically. Controlled variations cover environment, context, internal state, psychology, goals, action options, questions and outcome feedback. Temporary hardcoding is encouraged as a diagnostic control, followed by removing assistance and fixing the missing general capability; scripted success alone cannot establish autonomous behavior. This formalizes the hunting investigation's method without prescribing hunting policy or changing game behavior. [CG11](maintainers/agent-guidance.md) tracks instruction delivery; existing task boundaries, spending policy and native-dispatch qualification remain.
+
 ## 2026-09-27 — Jev-only hunting demonstrated
 
 Controlled comparisons identified missing action purpose and overly broad willingness judgments in the earlier failed hunting trials. The selector now rates concrete progress with explicit positive/negative criteria, retaining the 0.7 threshold and native authority. Base-world species knowledge explains weapon strikes as possible hunting steps and distinguishes them from later meat preparation; Ada's biography now explicitly accepts subsistence hunting while rejecting needless cruelty. This refines the earlier cautious characterization without assigning an operational goal, prey or method. The engine still contains no hunger-to-hunt choice or automatic attack retry.
@@ -258,6 +268,7 @@ The [retention ledger](../archive/07-technical-architecture/data-delivery-and-sc
 ## September 25 — Hearing integration and native execution slices
 
 Historical hearing-branch integration through `03105fed` added graded speech, receiver/transfer reuse and native supply indexing. It used fixed one-second execution and a four-second routine-discovery compromise; both were superseded by the main elapsed-time integration under [RP06](maintainers/revisitable-policies.md#rp06--elapsed-time-fidelity-and-integration-limits). Its [344-entity 8× observation](verification.md#hearing-8x-runtime-qualification) remains workload/host-specific historical evidence, not qualification of the combined tree. Speech re-authoring is D66; main retains D63–D65 for social exposure.
+
 ## 2026-09-27 — Repertoire category ownership clarified
 
 The [library ownership guide](repertoires/README.md#category-ownership-and-cross-references) now assigns specific weapons, armor and ammunition to Objects; fighting rules to Combat; learned techniques to Abilities; and concrete attempts to Actions. It also distinguishes reusable interaction patterns, crafting processes, material inputs, technical systems, supernatural effects and adventure premises. Catalogue scope notes, navigation and the shared foundation point to these boundaries so separate category expansions can connect their work without duplicating inventories.

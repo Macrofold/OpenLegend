@@ -36,7 +36,7 @@ Use [README](README.md) for onboarding, relevant [Architecture](docs/architectur
 - Feature-spec/tech-design or architecture requests, changed engine/world contracts, or chat approval/start/continuation of a project plan: [Design](.agents/skills/openlegend-design/SKILL.md)
 - Requested or substantial implementation review: [Review](.agents/skills/openlegend-review/SKILL.md)
 - Changed hot paths, perception queries, scaling or latency investigation: [Performance](.agents/skills/openlegend-performance/SKILL.md)
-- Jev/TypeSafe, LLMs, prompts, cognition context, embeddings or provider behavior: [AI](.agents/skills/openlegend-ai/SKILL.md)
+- Character decisions, Jev/TypeSafe, LLMs, prompts, cognition context, embeddings or provider behavior: [AI](.agents/skills/openlegend-ai/SKILL.md)
 - PlayCanvas, camera, picking, scene assets or render lifecycle: [PlayCanvas](.agents/skills/openlegend-playcanvas/SKILL.md)
 - Development startup, base selection or any rebase/merge conflict: [Rebase](.agents/skills/openlegend-rebase/SKILL.md)
 - Instructions, skills, adapters or their checker: [Guidance maintenance](.agents/skills/openlegend-guidance/SKILL.md)

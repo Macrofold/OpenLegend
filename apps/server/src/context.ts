@@ -6,7 +6,7 @@ import { dropItemReason } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { entityLabel } from './entity-references.js';
 import { statusEffectActions } from './status-effect-actions.js';
-import { availableStrikes, strikeDefinition, knownHuntingUse } from '@open-legend/domain';
+import { availableStrikes, strikeDefinition, huntingDescription } from '@open-legend/domain';
 import {
   canReachEntity,
   findApproachPath,
@@ -481,8 +481,12 @@ export function npcCandidates(
         command: { type: 'prepare', preparation: preparation as 'fiber' | 'cord' },
       });
   }
-  const compatibleAmmo = (kind: string) =>
-    inventory.find((item) => definitions.get(item.definitionId)?.ammunition?.kind === kind);
+  const ammunitionByKind = new Map<string, (typeof inventory)[number]>();
+  for (const item of inventory) {
+    const kind = definitions.get(item.definitionId)?.ammunition?.kind;
+    if (kind && !ammunitionByKind.has(kind)) ammunitionByKind.set(kind, item);
+  }
+  const compatibleAmmo = (kind: string) => ammunitionByKind.get(kind);
   for (const item of inventory) {
     const definition = definitions.get(item.definitionId);
     if (
@@ -494,13 +498,16 @@ export function npcCandidates(
     )
       actions.push({
         id: `equip:${item.id}`,
-        description: `Equip ${definition.name}: ${definition.description}${definition.melee ? ` Contact weapon: ${definition.melee.damage} damage, ${definition.melee.accuracy * 100}% accuracy, ${definition.melee.range} units reach, ${definition.melee.windupSeconds} seconds wind-up and ${definition.melee.recoverySeconds} seconds recovery.` : ''}`,
+        description: `Equip ${definition.name}: ${definition.description}`,
         command: { type: 'equip', itemId: item.id },
       });
   }
-  const equipped = inventory.find((item) => item.id === actor.equippedItemId);
-  const launcher = equipped && definitions.get(equipped.definitionId)?.launcher;
-  const ammunition = launcher && compatibleAmmo(launcher.ammunitionKind);
+  const launchers = inventory.flatMap((item) => {
+    const definition = definitions.get(item.definitionId);
+    const launcher = definition?.launcher;
+    const ammunition = launcher && compatibleAmmo(launcher.ammunitionKind);
+    return definition && launcher && ammunition ? [{ item, definition, launcher, ammunition }] : [];
+  });
   const cuttingTool = inventory.some((item) =>
     definitions.get(item.definitionId)?.properties.includes('point'),
   );
@@ -508,7 +515,10 @@ export function npcCandidates(
     ...availableStrikes(service.world, actorId),
     ...inventory
       .filter(
-        (item) => item.id !== actor.equippedItemId && definitions.get(item.definitionId)?.melee,
+        (item) =>
+          item.id !== actor.equippedItemId &&
+          item.quantity === 1 &&
+          definitions.get(item.definitionId)?.melee,
       )
       .flatMap((item) => {
         const strike = strikeDefinition(item.definitionId, service.world, item.id);
@@ -519,33 +529,57 @@ export function npcCandidates(
   for (const entity of observed.visibleEntities) {
     // Target discovery uses only this actor's perception. Terrain is the same public
     // geometry used by native movement, never a search for hidden entities/items.
-    const reach = entity.animal && launcher ? launcher.range : SIMULATION_RULES.interactionRadius;
-    const route =
-      reach === SIMULATION_RULES.interactionRadius
-        ? approaches.get(entity.id)
-        : canReachEntity(service.world, observed.actor, entity, reach)
-          ? { status: 'reached', path: [] as import('@open-legend/spatial').SurfacePoint[] }
-          : findApproachPath(service.world, observed.actor, entity, reach);
+    // Ranged offers use their own reach, even when the target cannot be approached
+    // for contact. Equal ranges share geometry work within this observed snapshot.
+    if (entity.animal && entity.actor?.alive) {
+      const reachable = new Map<number, boolean>();
+      for (const { item, definition, launcher, ammunition } of launchers) {
+        const description =
+          huntingDescription(entity.actor.species, 'launcher', entity.name, definition.name) ??
+          `Shoot ${entity.name} with ${definition.name}. One shot.`;
+        if (!reachable.has(launcher.range))
+          reachable.set(
+            launcher.range,
+            canReachEntity(service.world, observed.actor, entity, launcher.range) ||
+              !!findApproachPath(service.world, observed.actor, entity, launcher.range),
+          );
+        if (!reachable.get(launcher.range)) continue;
+        actions.push({
+          id: `hunt:${item.id}:${entity.id}`,
+          description,
+          command: {
+            type: 'hunt',
+            targetId: entity.id,
+            itemId: item.id,
+            ammunitionId: ammunition.id,
+          },
+        });
+      }
+    }
+    const route = approaches.get(entity.id);
     if (!route) continue;
     const path = route.path;
     if (entity.actor?.alive && entity.id !== actorId && supportsManualWork(observed.actor)) {
-      const huntingUse = knownHuntingUse(entity.actor.species);
       for (const definition of strikes) {
-        // A weapon's possible subsistence use comes from authored species knowledge,
-        // not a hunger rule. Choosing it still binds one ordinary finite strike.
-        const hunting = definition.weaponItemId ? huntingUse : undefined;
+        // Authored intent describes the same finite command; equipment capability
+        // supplies the variants, never a knife-name or hunger-specific rule.
+        const tool = definition.weaponItemId ? definitions.get(definition.id)?.name : undefined;
+        const description = huntingDescription(
+          entity.actor.species,
+          definition.weaponItemId ? 'melee' : 'unarmed',
+          entity.name,
+          tool,
+        );
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
-          description: `${hunting ? 'Hunt for meat: ' : ''}${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Requires first equipping the carried weapon in a separate action. ' : ''}${definition.label} ${entity.name}: approach within ${definition.range} units, then one strike after ${definition.workSeconds} game seconds; ${definition.damage} injury damage if still in reach; ${Math.round((definition.accuracy ?? 1) * 100)}% hit probability, ${definition.recoverySeconds ?? 0} seconds recovery.${hunting ? ` This can wound or kill the animal. ${hunting} This choice only equips if necessary, approaches and attempts one strike, not the later preparation steps.` : ''}`,
+          description: `${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Requires first equipping the carried weapon in a separate action. ' : ''}${description ?? `${definition.label} ${entity.name}. Approach and attempt one attack.`}`,
           command: {
             type: 'strike',
             definitionId: definition.id,
             itemId: definition.weaponItemId,
             targetId: entity.id,
           },
-          ...(definition.weaponItemId &&
-          definition.weaponItemId !== actor.equippedItemId &&
-          inventory.find((item) => item.id === definition.weaponItemId)?.quantity === 1
+          ...(definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId
             ? { prerequisite: { type: 'equip' as const, itemId: definition.weaponItemId } }
             : {}),
         });
@@ -556,17 +590,6 @@ export function npcCandidates(
         id: `gather:${entity.id}`,
         description: gatherDescription(entity),
         command: { type: 'gather', targetId: entity.id },
-      });
-    if (entity.animal && entity.actor?.alive && equipped && launcher && ammunition)
-      actions.push({
-        id: `hunt:${entity.id}`,
-        description: `Hunt the visible ${entity.name} using ${definitions.get(equipped.definitionId)!.name} and one ${launcher.ammunitionKind} projectile.`,
-        command: {
-          type: 'hunt',
-          targetId: entity.id,
-          itemId: equipped.id,
-          ammunitionId: ammunition.id,
-        },
       });
     if (
       entity.remains &&
