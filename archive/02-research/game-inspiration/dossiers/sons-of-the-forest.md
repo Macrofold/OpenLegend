@@ -60,6 +60,19 @@ The full release substantially expanded/polished:
 
 ## R02 — player actions and major mechanics
 
+### Strength and dependent player stats — audit correction
+
+The initial dossier incorrectly said Sons of the Forest had **no level progression**. It has no class, XP currency or perk tree, but it does have a real **Strength level** that rises through physical actions. In the full release the cap increased from 50 to **100**; each Strength level increases maximum Health and melee/tree-chop damage under the current rules. The HUD's Strength ring makes the progression visible when it levels. [Stats](https://sonsoftheforest.wiki.gg/wiki/Stats) · [Full Game release](https://sonsoftheforest.wiki.gg/wiki/Full_Game_release).
+
+Other player state is more interconnected than the initial pass conveyed:
+
+- **Vitality** determines usable stamina and depends on Fullness, Hydration, Energy and Warmth;
+- **Stealth** depends on worn armor/clothing, local light and cover while crouched;
+- **Warmth** depends on wetness, local temperature, fire/torch use and clothing;
+- **Sickness** can result from unsafe water, spoiled/unhealthy food or poisonous plants and reduces effective Health until it clears/is treated.
+
+This is not a point-allocation RPG, but it is genuine embodied character progression and condition simulation.
+
 ### Survival state
 
 The player manages:
@@ -146,6 +159,12 @@ The January 2025 update makes this delegation more powerful by allowing the play
 
 Kelvin is not a colony-management worker with schedules/priorities. His value is that a single persistent helper removes repetitive low-level labor while leaving major planning to the player.
 
+### Companion sentiment and memory — audit expansion
+
+Kelvin and Virginia are not merely scripts with current orders. The game's AI data includes **Sentiment** and related memory variables such as Fear/Anger. Current patch history exposes high-sentiment behavior directly: high-Sentiment Virginia visits more often; multiplayer story variants can key off whether any player has high sentiment with her; Virginia has positive/negative emotional reactions and can be permanently lost if killed. [Virginia](https://sonsoftheforest.wiki.gg/wiki/Virginia_Puffton) · [AI System](https://sonsoftheforest.wiki.gg/wiki/AI_System).
+
+This should be interpreted cautiously. Community technical pages expose internal variables, but not every hidden number has a fully documented gameplay consequence. The reliable design conclusion is narrower: **repeated treatment changes companion behavior/availability enough to make relationship state mechanically meaningful**, especially for Virginia, without a dialogue approval screen.
+
 ### Virginia — trust-based combat companion
 
 Virginia Puffton initially approaches cautiously rather than joining through a quest-dialogue button. Non-hostile player behavior allows trust to grow; aggressive treatment can drive her away.
@@ -160,6 +179,27 @@ She can:
 [Companions/Virginia](https://sonsoftheforest.wiki.gg/wiki/Companions).
 
 Unlike Kelvin, Virginia is not primarily command-driven. Her partial autonomy makes her feel more like a resident ally than an extension of a task menu.
+
+### Electricity and electric defenses — audit addition
+
+The sequel has a real player-built **power grid** that the initial pass omitted. Solar Panels generate daytime power; free-form Wire connects circuits; **Large Batteries** can store solar energy for night use; powered devices include Light Bulbs and **Electric Fences**. Solar output follows in-game time rather than actual occlusion, while grid segments can split when wire is removed. [Solar Panel](https://sonsoftheforest.wiki.gg/wiki/Solar_Panel) · [Patch 08](https://sonsoftheforest.wiki.gg/wiki/Patch_08).
+
+This gives bases a second infrastructure layer beyond logs/stones:
+- construction determines where wires/fences can run;
+- daytime generation can charge night capacity;
+- fences turn power into perimeter control;
+- lighting can improve work/readability while making a settlement more visible.
+
+The system is much smaller than Rust's industrial/electrical stack, but it is mechanically real and belongs in the building-management inventory.
+
+### Solafite equipment progression and storms — audit addition
+
+Patch 12 introduced **Solafite Plating**, later extended at full release to armor. A discovered Weapon Plater/Armor Plater consumes mined Solafite to coat compatible equipment. Most compatible melee weapons gain performance; a plated Pickaxe mines Solafite more efficiently; Bone Armor can become Solafite Armor; the Ancient Armor's plating is part of late story progression. [Solafite Plating](https://sonsoftheforest.wiki.gg/wiki/Solafite_Plating).
+
+The upgrade is not a quiet crafting-menu click. Activating a Plater causes a **Solafite Storm**, attracts mutant attack waves toward the active structure and can expose nearby construction to lightning damage if structural damage is enabled. The upgraded item remains unavailable during the cycle, and interrupted processing loses the consumed Solafite.
+
+This is a strong composition loop:
+deep-cave mining → rare material → player-built upgrade structure → world event/attack → improved equipment → more efficient future mining/combat.
 
 ### Seasons
 
@@ -521,7 +561,32 @@ Creative Mode in 1.0 creates an explicitly building-focused return path separate
 **Interaction:** wildlife moves from one-off hunting resource into persistent base economy.  
 **Result:** camp self-sufficiency increases.
 
-### Case 12 — a raft changes the meaning of shore bases
+### Case 12 — Strength makes repetitive physical play persist in the avatar
+
+**Intention:** become tougher without finding a new weapon.  
+**Conditions:** survivor repeatedly performs Strength-building physical actions over many days.  
+**Actions:** continue ordinary chopping/combat/labor until the Strength ring levels.  
+**Interaction:** behavior changes maximum Health and melee/tree-chop damage without an XP allocation screen.  
+**Result:** the avatar gains durable capability from lived activity rather than only equipment.
+
+### Case 13 — a Plater upgrade deliberately summons a defense encounter
+
+**Intention:** improve a favorite melee weapon or armor.  
+**Conditions:** blueprint/Plater, compatible item and enough Solafite are available.  
+**Actions:** insert the item/material and start the plating cycle.  
+**Interaction:** the crafting station creates a Solafite Storm, attracts mutant waves and temporarily removes the item from use.  
+**Result:** equipment upgrading becomes a defend-the-machine world event.  
+**Next decision:** place the Plater away from valuable construction, fortify it, or risk lightning/mutant damage.
+
+### Case 14 — batteries make sunlight a stored base resource
+
+**Intention:** keep electric fences/lights useful after sunset.  
+**Conditions:** Solar Panels, Wire and Large Battery capacity are installed.  
+**Actions:** generate/route power during daytime and store surplus for night.  
+**Interaction:** time-of-day, base layout and defense infrastructure become one system.  
+**Result:** the player converts a transient environmental condition into persistent protection.
+
+### Case 15 — a raft changes the meaning of shore bases
 
 **Intention:** move along coastline with buildable water transport.  
 **Conditions:** January 2025 current content.  
@@ -881,6 +946,10 @@ The seven-file source packet predates G138, so the separate global P01 packet re
 - **Steam — [store](https://store.steampowered.com/app/1326470/Sons_Of_The_Forest/), accessed September 27, 2026.** Current PC product/review surface.
 - **GamesRadar developer interview — [bigger/more detailed sequel](https://www.gamesradar.com/sons-of-the-forest-isnt-just-a-bigger-sequel-everything-is-more-detailed-this-time/), January 2023.** Direct Endnight quotes on 4× world, physical crafting/building and design intent.
 - **Sons of the Forest Wiki — [Guide Book](https://sonsoftheforest.wiki.gg/wiki/Guide_Book), [Kelvin](https://sonsoftheforest.wiki.gg/wiki/Kelvin), [Companions/Virginia](https://sonsoftheforest.wiki.gg/wiki/Companions), [Seasons](https://sonsoftheforest.wiki.gg/wiki/Seasons), [Artifact](https://sonsoftheforest.wiki.gg/wiki/Artifact), accessed September 2026.** Maintained community operational mechanics. Hidden-AI formulas are not treated as official intent.
+- **Sons of the Forest Wiki — [Stats](https://sonsoftheforest.wiki.gg/wiki/Stats) and [Full Game release](https://sonsoftheforest.wiki.gg/wiki/Full_Game_release), accessed September 27, 2026.** Follow-up correction for Strength levels, Health/damage scaling and dependent bodily stats.
+- **Sons of the Forest Wiki — [Solar Panel](https://sonsoftheforest.wiki.gg/wiki/Solar_Panel), [Patch 08](https://sonsoftheforest.wiki.gg/wiki/Patch_08), accessed September 27, 2026.** Power-grid, battery and electric-fence evidence.
+- **Sons of the Forest Wiki — [Solafite Plating](https://sonsoftheforest.wiki.gg/wiki/Solafite_Plating), [Weapon Plater](https://sonsoftheforest.wiki.gg/wiki/Weapon_Plater), [Armor Plater](https://sonsoftheforest.wiki.gg/wiki/Armor_Plater), accessed September 27, 2026.** Equipment-upgrade and Solafite Storm mechanics.
+- **Sons of the Forest Wiki — [Virginia Puffton](https://sonsoftheforest.wiki.gg/wiki/Virginia_Puffton), [AI System](https://sonsoftheforest.wiki.gg/wiki/AI_System), accessed September 27, 2026.** Companion sentiment/behavior evidence; hidden-variable interpretations remain qualified.
 
 ### Production/commercial sources
 
@@ -919,7 +988,7 @@ No video scene or timestamp is represented as watched.
 | R02 actions/major mechanics | R02 |
 | R03 items/entities/composition | R03 |
 | R04 progression/economy/time | R04 |
-| R05 interactions | R05, twelve cases |
+| R05 interactions | R05, fifteen cases |
 | R06 people/AI/social/multiplayer | R06 |
 | R07 art/audio/interface/feel | R07 |
 | R08 story/narrative/play | R08 |
@@ -932,6 +1001,10 @@ No video scene or timestamp is represented as watched.
 
 ### Explicit mechanics-inventory closure
 
-Fixed mission protagonist rather than class creator; no attributes/XP/perk tree; items/inventory/weapons/armor; hand crafting/3D printing/building; no conventional magic, but late Artifact has supernatural/technology-like world effects; walking/swimming/ziplines/glider/Knight V/golf carts/rafts; destructible/physical log and stone construction; hunting/fishing/foraging/rabbit husbandry/cooking; combat/practical stealth/traps/firearms; cave/bunker looting; death/save/revive; no currency/trader economy; authored story/endings; Kelvin/Virginia companion relationships but no romance/party-approval system; cannibal/mutant AI/villages; large fixed island/seasons; cave/bunker progression rather than conventional quest log; extensive building/storage/defense; solo/co-op/dedicated-server/proximity voice; and post-story Artifact/building/Creative Mode return loops are all covered.
+Fixed mission protagonist rather than a class creator; **Strength levels and dependent Health/Vitality/Stealth/Warmth/Sickness state**, but no XP currency, spendable attributes or perk tree; items/inventory/weapons/armor plus Solafite equipment plating; hand crafting/3D printing/building and a small solar/battery/wire/electric-fence grid; no conventional magic, but late Artifact has supernatural/technology-like world effects; walking/swimming/ziplines/glider/Knight V/golf carts/rafts; destructible/physical log and stone construction; hunting/fishing/foraging/rabbit husbandry/cooking; combat/practical stealth/traps/firearms; cave/bunker looting; death/save/revive; no currency/trader economy; authored story/endings; Kelvin/Virginia companion relationships with sentiment/memory but no conventional dialogue approval/romance system; cannibal/mutant AI/villages; large fixed island/seasons; cave/bunker progression rather than conventional quest log; extensive building/storage/power/defense; solo/co-op/dedicated-server/proximity voice; and post-story Artifact/building/Creative Mode return loops are all covered.
 
 **Research boundary:** current content evidence was checked through September 27, 2026. The last verified gameplay-content patch in the official feed is January 15, 2025 with January hotfixes; the October 2025 post is security remediation. Community hidden-AI claims are kept separate from Endnight's documented features and observed review evidence.
+
+### Follow-up audit — September 27, 2026
+
+The second pass found another factual closure error inherited from the initial write: Sons of the Forest **does have durable player Strength levels** even though it lacks conventional XP/perk allocation. The audit also fills three missing applicable systems: the solar/battery/electric-fence network, Solafite weapon/armor plating and its attack-generating storm, and companion Sentiment/memory. Three new worked interactions make those systems operational rather than merely named. The January 2025 raft/defensive-wall patch remains the latest gameplay-content update located; the October 2025 Unity security patch is still correctly separated from gameplay.
