@@ -25,6 +25,14 @@ The console remaster launch was April 19, 2023 on PS4 and Switch. Subsequent PC 
 
 The immediate verbs remain physical attack, cast, use an item, select targets, manage formation and escape. The long-term consequence is less familiar: different actions contribute to different kinds of development. A named character is not simply a level number plus a fixed class. [I10]
 
+### Rows make formation a targeting and training decision
+
+The original pass named formation but did not explain why it matters. In the Famicom rules, characters in the **back row cannot be targeted by ordinary physical attacks and cannot make normal physical attacks themselves unless using a Bow**; spells are unaffected. If the front row falls, the rear automatically moves forward. Enemy formations also have front/back ranks that determine which monsters can physically attack or be reached in melee. [I12]
+
+That rule composes directly with FFII's growth model: protecting a fragile caster in the back can reduce the physical hits that would otherwise contribute to HP/evasion development, while putting them in front for training exposes them to much more danger. The row system is therefore not just “tank in front, mage in back”; it can change what a character practices and which future stats mature.
+
+This paragraph is explicitly **original/Famicom mechanics evidence**. Pixel Remaster preserves front/back-row battle behavior broadly enough that early patches fixed a back-row promotion bug, but exact original targeting/growth implications should not be projected mechanically unchanged across every remake. [I32]
+
 | Developing component | What it represents and why it matters |
 | --- | --- |
 | **HP / MP capacity** | Survival and casting reserves. Spending or losing resources can contribute to capacity growth; the remaster also has compensatory HP growth. This is not proof that every individual fight guarantees an increase. |
@@ -93,7 +101,7 @@ A **keyword** and a **key item** are different inventories. The former records a
 
 ### Where freedom is real and where it is bounded
 
-The repeating route is town information and preparation, travel, dungeon or mission, then changed access or capabilities. Canoe travel, Josef's Snowcraft and later ships/airship extend reach. Travel remains a terrain-and-access system, not a seamless simulation of every apparent surface. The walkthrough's route warnings also matter: a reachable region can contain enemies far beyond the party's present ability. [I11]
+The repeating route is town information and preparation, travel, dungeon or mission, then changed access or capabilities. Canoe travel, Josef's Snowcraft and later ships/airship extend reach. **Final Fantasy II also introduces the series' first Chocobo**: the forest below Kashuan provides a temporary fast-overland mount that helps the party cross dangerous world-map distance without treating it as a permanent owned vehicle. [I11][I33] Travel remains a terrain-and-access system, not a seamless simulation of every apparent surface. The walkthrough's route warnings also matter: a reachable region can contain enemies far beyond the party's present ability. [I11]
 
 Dungeon doors do not always promise treasure. Empty trap rooms and their additional encounter burden recur in both criticism and player accounts. Navigation can therefore become a test of prior knowledge rather than a meaningful choice among visible rewards. A map that reduces getting lost does not itself make those empty detours valuable. [I1][I7]
 
@@ -131,7 +139,11 @@ A defeat can indicate a dangerous region, neglected defense, incompatible equipm
 
 Pixel Remaster's save conveniences and later boost controls reduce different costs. Faster growth changes preparation time; an encounter toggle changes travel exposure; showing an existing penalty changes information. These should not all be collapsed into “easy mode.” Difficulty, inconvenience and opacity are different problems. [I8]
 
-Return play includes alternate builds, completion records and the challenge content of the relevant edition. In the PSP Arcane material, chosen keywords determine rooms and puzzles and connect to rewards; the same conversational vocabulary gains a different use. Pixel Remaster does not include that content, and the historical Soul of Rebirth scenario is not a present-day service update. [I6]
+Return play includes alternate builds, completion records and the challenge content of the relevant edition. In the PSP Arcane material, chosen keywords determine rooms and puzzles and connect to rewards; the same conversational vocabulary gains a different use. [I6]
+
+**Soul of Rebirth** deserves a more concrete boundary than the original one-line mention. In the GBA/PSP lineage it unlocks after completing the main story and shifts control to **Minwu, Scott, Josef and Ricard**—dead supporting characters whose prior combat development materially affects the bonus scenario—inside an afterlife story that parallels/completes the ending. [I34] It is therefore both a story-perspective shift and a consequence of how much the player invested in temporary/departing allies before their authored deaths.
+
+Pixel Remaster does **not** include Soul of Rebirth or the PSP Arcane dungeons. Those are historical remake extras, not a present-day service update or hidden PR endgame. [I6][I9]
 
 There is no native daily-energy economy, seasonal battle pass or paid power progression in the studied campaign. Current soundtrack and bundle listings are commercial extras, not additional playable FFII scenarios. [I9]
 
@@ -222,6 +234,12 @@ The English **Most Helpful (All Time)** surface for app **1173780** was readable
 
 These early accounts predate the 2024 status-display addition. That matters to interpretation, but does not invalidate their experience or establish that every underlying concern disappeared. [I7][I8]
 
+### September 2026 current-store cross-check
+
+The September 27 audit re-read the live Steam storefront rather than relying only on 2021 helpful reviews. The English corpus remains **Very Positive** at roughly **81% positive across about 2.2k English reviews**, with the recent 30-day sample around **90% positive**. The current product page also explicitly advertises the modern assist layer: encounter toggling, compensatory HP and weapon-skill-growth multipliers from 0× to 4×, while warning that this remaster omits some content from earlier rereleases. [I9][I35]
+
+That current aggregate does not settle the old design dispute. The most useful interpretation is narrower: modern distribution lets players **change the cost of practicing the system** without changing its fundamental use-based identity, while the Pixel Remaster's omission of Soul of Rebirth/Arcane content remains a separate preservation tradeoff.
+
 ## 10. Transferable patterns and failure modes — R13
 
 **Practice can describe a character without a class label.** Dependency: the player understands which action develops which capability. Failure mode: visible behavior and hidden accounting diverge, rewarding repetitive manipulation instead of interesting use.
@@ -265,7 +283,7 @@ For audiovisual follow-up, use the official anniversary conversation linked by I
 
 ## Sources and access notes
 
-All accessed September 26, 2026. Written review bodies and relevant reference sections were read; entire walkthroughs and linked videos are not claimed exhaustively inspected. Source dates are publication dates when exposed. Historical databases are secondary rule research, not verified proprietary code. Numbered ranges refer to the individual entries below.
+Original-pass sources were accessed September 26, 2026; the current Steam/storefront and added row/Chocobo/Soul-of-Rebirth references were re-checked September 27 during the audit. Written review bodies and relevant reference sections were read; entire walkthroughs and linked videos are not claimed exhaustively inspected. Source dates are publication dates when exposed. Historical databases are secondary rule research, not verified proprietary code. Numbered ranges refer to the individual entries below.
 
 - **I1:** [RPGFan review](https://www.rpgfan.com/review/final-fantasy-ii-pixel-remaster/), Audra Bowling, July 29, 2021. Full PC review, including closing discussion; reported bugs and her preferred training are not universal requirements.
 - **I2:** [WorthPlaying review](https://worthplaying.com/article/2021/8/4/reviews/127615-pc-review-final-fantasy-ii-pixel-remaster/), Chris DeAngelus, August 4, 2021. Full PC body; non-www route worked after a failed alternate request.
@@ -298,5 +316,9 @@ All accessed September 26, 2026. Written review bodies and relevant reference se
 - **I29:** [Xbox February Game Pass announcement](https://news.xbox.com/en-us/2026/02/03/xbox-game-pass-february-2026-wave-1/), February 3, 2026. Primary dated availability addition; no inferred subscribers or revenue.
 - **I30:** [Wild Rose](https://guides.gamercorner.net/ffii/keywords/wild-rose), Gamer Corner Guides. Hilda-taught password and scripted loyalty signaling.
 - **I31:** [Sunfire](https://guides.gamercorner.net/ffii/key-items/sunfire), Gamer Corner Guides. Visible flame, required Torch and Dreadnought purpose.
+- **I32:** [Game Systems — Final Fantasy II (Famicom)](https://guides.gamercorner.net/ffii/walkthrough/game-systems), Gamer Corner Guides, re-audited September 27, 2026. Original-version row targeting/action behavior and monster-rank rules; paired with the Pixel Remaster's documented early back-row bug fix rather than assumed universal identity across versions.
+- **I33:** [Final Fantasy II walkthrough](https://www.rpgsite.net/feature/11551-final-fantasy-ii-walkthrough-where-to-go-missable-bestiary-entries-and-chests-step-by-step-guide), RPG Site, re-audited September 27, 2026. Used for the Kashuan Chocobo-forest route and current Pixel Remaster world progression; not an exhaustive combat-mechanics authority.
+- **I34:** [Final Fantasy I & II: Dawn of Souls review](https://archive.rpgamer.com/games/ff/ff1-2dos/ff1-2dosstrev1.html), RPGamer archive. Used narrowly for Soul of Rebirth's post-main-story structure and deceased-character party; historical GBA content, not Pixel Remaster functionality.
+- **I35:** [FINAL FANTASY II on Steam](https://store.steampowered.com/app/1173780/FINAL_FANTASY_II/), Valve/Square Enix current storefront, audited September 27, 2026. Current review snapshot and advertised boost/encounter/compensatory-HP/weapon-skill options plus the explicit warning that some earlier-rerelease additions are omitted; dynamic counts are not sales.
 
 **Access exclusions:** the requested Crunchyroll Kawazu interview rendered no body and is not used. A version-differences wiki request failed; its search snippets are not treated as a full reading. Several GameFAQs URLs labeled Pixel Remaster exposed 2001–2007 FAQ text; they were not mistaken for contemporary testing. These exclusions do not replace the six directly read original reviews above.
