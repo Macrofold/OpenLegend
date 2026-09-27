@@ -12,7 +12,7 @@ The audit proceeds one game at a time. Material corrections are committed to the
 
 ## Current audit state
 
-**Active: G127 — Dragon's Dogma 2.** G121–G126 have been reread against the complete standard and corrected where needed.
+**Active: G128 — Ultima VII: The Black Gate.** G121–G127 have been reread against the complete standard and corrected where needed.
 
 | ID | Subject | Audit status | Audit commit / finding |
 | --- | --- | --- | --- |
@@ -22,10 +22,14 @@ The audit proceeds one game at a time. Material corrections are committed to the
 | G124 | Persona 5 Royal | **Audited** | `ec1844a66a5449206b864cfa909229f48e331d4b` — clarified that Maruki Councillor Rank 9 by Nov. 17, not all three Royal Confidants, is the mandatory third-semester gate; Akechi/Kasumi remain additional-content routes. Added explicit absence of a dynamic faction-reputation system. |
 | G125 | XCOM 2 | **Audited** | `284cd3bebd2f6bff7a7d9c69d48cdc86affe9de0` — all major mechanics were covered; corrected present-tense launcher-friction language because 2K removed the launcher from Steam/Epic in Nov. 2024, while preserving older complaints as dated reception. |
 | G126 | Crusader Kings III | **Audited** | `29455348aa9f7c6d486225c627ab07790b83b00a` — pinned By God Alone to Sept. 30, 2026 as future scope and Silk & Silver as later roadmap, added the current optional content subscription, and explicitly closed the absent general crafting/avatar-stealth categories. |
-| G127 | Dragon's Dogma 2 | **In progress** | Full R01–R14/mechanics/current-version audit. |
-| G128 | Ultima VII: The Black Gate | Pending | — |
+| G127 | Dragon's Dogma 2 | **Audited** | `16c8837cc5a6e5a7f4a389885050978dae19faea` — integrated the shipped Sept. 1 Title Update 3.2 into core mechanics: three Arisen save slots with Autosave/Interim/Inn Rest data, six skill slots, Dragonsplague cure/behavior changes and performance work. Added explicit stealth and dynamic-faction-system absences; Dark Arisen remains future Oct. 9 content. |
+| G128 | Ultima VII: The Black Gate | **In progress** | Full R01–R14/mechanics/current-version audit. |
 | G129 | Oxygen Not Included | Pending | — |
 | G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | — |
+
+## G127 — Dragon's Dogma 2 closure evidence
+
+The audit found that the original dossier reduced a substantial shipped systems update to vague "performance and save/configuration" language. Title Update 3.2 is now represented in R01/R02/R04/R05/R07: three independent Arisen/Main Pawn playthrough slots, Autosave/Interim/Last Inn Rest recovery within each slot, six equipped weapon skills, revised Dragonsplague behavior and cure, Pawn/combat changes and current performance work. The audit also explicitly records that Thief is not a general stealth subsystem and Vermund/Battahl politics do not constitute a joinable dynamic faction-reputation simulation. The October 9 Dark Arisen expansion remains future and its announced systems are not counted as current.
 
 ## G126 — Crusader Kings III closure evidence
 
