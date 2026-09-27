@@ -20,11 +20,27 @@ The current Early Access world includes eight major updates culminating in:
 - **Wake of the Water** (Nov. 10, 2025): dynamically simulated water, swimming/diving, Veilwater Basin, fishing, water-powered crafting and level-cap expansion;
 - **Forging the Path** (Apr. 21, 2026): physical-combat overhaul, rebuilt skill tree, gear-upgrade changes, Adventure Sharing v1 and broad QoL work.
 
+The latest first-party live hotfix located in this audit is **Hotfix #42, v0.9.1.2 (June 29, 2026)**. September's "1.0 Combat" articles are previews of the October release, not evidence of a later live Early Access patch. [Keen hotfix index](https://enshrouded.com/en-US/news/category/hot-fixes).
+
 The player's promise is intentionally more action-RPG/adventure-heavy than punishing-survival-heavy. You awaken as a **Flameborn** in the ruined kingdom of Embervale, explore a handcrafted fantasy continent swallowed in places by the deadly Shroud, rescue survivors, improve the Flame, fight bosses, acquire RPG builds/equipment, build elaborate settlements and reshape terrain—alone or cooperatively.
 
-Unlike Green Hell or The Long Dark, Enshrouded deliberately removes mandatory hunger/thirst. Food is a **buff/loadout system**, not a starvation clock. GameSpot's mechanics guide and several Early Access reviews identify this as a defining "survival-lite" choice. [Shroud guide](https://www.gamespot.com/articles/enshrouded-survive-shroud-effects-guide/1100-6520563/) · [PC Gamer impressions](https://www.pcgamer.com/co-op-survival-rpg-enshrouded-forgiving-survival-systems-in-a-surprisingly-massive-open-world/).
+On the **Default** world rules, Enshrouded is much lighter on bodily survival than Green Hell or The Long Dark: food is primarily a **buff/loadout system**, not an always-on starvation clock. However, current World Settings include a **Survival** preset and a configurable **Starvation Mode** that can turn hunger/starvation on. The correct distinction is therefore "not mandatory in the default rules," not "the game has no starvation system." [World Settings](https://enshrouded.wiki.gg/wiki/World_Settings) · [Shroud guide](https://www.gamespot.com/articles/enshrouded-survive-shroud-effects-guide/1100-6520563/).
 
 ## R02 — player actions and major mechanics
+
+### Character creation, attributes and open build identity
+
+Players create a customizable Flameborn from presets and appearance options such as skin tone, hair, beard and eye color; after rescuing the Barber, appearance can be changed and additional cosmetic options unlocked. [Character Creation](https://enshrouded.wiki.gg/wiki/Character_Creation).
+
+The character has six primary build attributes:
+- **Constitution** → Health;
+- **Spirit** → Mana;
+- **Endurance** → Stamina;
+- **Strength** → melee damage;
+- **Dexterity** → ranged damage;
+- **Intelligence** → magic damage.
+
+XP from enemies/quests and other progression raises **Character Level**, which grants skill points; Shroud Roots and Elixir Wells also award skill points. Forging the Path's current tree has named archetype/path clusters, but **any character can buy connected skills regardless of a fixed class**. [Attributes](https://enshrouded.wiki.gg/wiki/Attributes) · [Skills](https://enshrouded.wiki.gg/wiki/Skills).
 
 ### The Shroud turns exploration into timed risk
 
@@ -94,6 +110,8 @@ Forging the Path overhauled physical combat and the skill tree; live September 2
 
 Players gain XP from enemies, exploration/quests and other activities, earn skill points and construct a build through a branching/open tree. Respec/reset support lowers the cost of experimentation.
 
+The current tree also contains actual **stealth mechanics**, not merely "avoid enemies": crouching/sneaking can preserve enemy unawareness, **Sneak Attack** delivers a very large unaware-target multiplier, and Assassin-path skills such as **Silent Stride** improve sneaking movement. [Sneak Attack](https://enshrouded.wiki.gg/wiki/Sneak_Attack) · [Skills](https://enshrouded.wiki.gg/wiki/Skills). Stealth is still a secondary combat approach rather than a full detection-gadget/infiltration game.
+
 ### Equipment, rarity, upgrading and gems
 
 Weapons/armor have RPG stats/rarities/perks. Update 6 added **Weapon Gems**:
@@ -104,11 +122,11 @@ Weapons/armor have RPG stats/rarities/perks. Update 6 added **Weapon Gems**:
 
 Forging the Path introduced/reworked gear upgrading as part of its progression overhaul. Loot therefore sits between authored rewards and a randomized rarity/perk economy rather than being entirely recipe-deterministic.
 
-### Food is positive preparation, not starvation avoidance
+### Food is normally positive preparation, but Survival rules can enable starvation
 
-Food supplies timed buffs to attributes/resources such as health, stamina and mana/spirit-related capability. The player chooses complementary meals before combat/exploration instead of eating solely to prevent a hunger meter from killing them.
+Under Default-style rules, food supplies timed buffs to attributes/resources such as health, stamina and mana/spirit-related capability. The player chooses complementary meals before combat/exploration rather than eating solely to prevent a hunger meter from killing them.
 
-This matters for tone: crafting/cooking becomes **build preparation**. A player can remain at home decorating without a nutrition timer forcing interruption.
+Current World Settings can instead turn **Starvation Mode** on, with configurable time-until-starvation values. This lets the same content operate as a relaxed action-RPG/building game or a more conventional survival game without changing Embervale's map. [World Settings](https://enshrouded.wiki.gg/wiki/World_Settings).
 
 ### Rest and Comfort
 
@@ -126,7 +144,7 @@ This creates a strong loop:
 
 The NPC is simultaneously a character, progression key and reason the base feels repopulated.
 
-Later updates improve survivor schedules/pathfinding/animations. These are not autonomous colony workers who harvest/build for the player; their primary mechanical role is crafting/service/quest progression.
+Later updates made this much more concrete than the initial dossier implied. Current survivors are divided into **Craftspeople, Assistants and Villagers**. They can roam a player-defined base radius, inspect points of interest, talk, take breaks, and follow a day/night cycle that includes sleeping in assigned sheltered beds; updates have repeatedly fixed their pathfinding and bed use. They still are **not autonomous colony workers** who mine, harvest or build the settlement for the player—their primary mechanical roles are crafting/services, quests, ambience and happiness/Flame requirements. [Survivors](https://enshrouded.wiki.gg/wiki/NPCs) · [Souls of the Frozen Frontier](https://enshrouded.wiki.gg/wiki/Souls_Of_The_Frozen_Frontier_Update).
 
 ### Crafting stations and distributed recipes
 
@@ -140,9 +158,11 @@ The live FAQ notes that when a character moves between worlds, **most station/NP
 
 This distinction is crucial to Enshrouded's multiplayer persistence model.
 
-### Farming, animals and domestic systems
+### Farming, animals, pets and domestic systems
 
-Players can cultivate crops and maintain domestic animals/pets introduced/expanded across updates. NPC/survivor routines and farm-animal behavior have been iterated. These systems reinforce the sanctuary fantasy but do not form a deep autonomous colony simulation.
+Players can cultivate crops and maintain a real animal-husbandry layer. Current tameable wildlife includes several goats/deer-like creatures, yaks and capybaras; domestic animals need species-appropriate food and sheltered beds, can reproduce, and some produce crafting materials such as milk, wool or bristles. Cats and dogs are non-producing pets whose petting can grant a temporary health buff. [Animal Husbandry](https://enshrouded.wiki.gg/wiki/Animal_Husbandry).
+
+Taming itself uses behavioral stealth: approach quietly, bait, stop when the animal becomes alert, pet while distracted, back off, and repeat. This makes animal care a genuine activity rather than decoration. These systems reinforce the sanctuary fantasy but still do not form a deep autonomous colony simulation.
 
 ### Glider, grapple and vertical traversal
 
@@ -172,6 +192,8 @@ Update 7 materially changed the simulation:
 [Keen Update 7](https://enshrouded.com/en-US/news/enshrouded-wake-of-the-water-update).
 
 Only player-base water modifications persist; the authored overworld maintains stronger reset semantics.
+
+Wake of the Water also added a full **fishing interaction**. Rods/bait have fishing-specific stats; hooked fish require the player to counter their movement while managing both fish and player stamina, and catches can include fish or other items. [Fishing](https://enshrouded.wiki.gg/wiki/Fishing).
 
 ### Difficulty customization
 
@@ -203,21 +225,29 @@ This **portable character + persistent world** split is one of the game's most i
 ### Useful absences
 
 Current Enshrouded has no:
-- mandatory hunger/thirst/starvation simulation;
+- **mandatory default** hunger/thirst loop (but World Settings can enable starvation);
 - PvP mode as a core/planned game contract;
 - permadeath default;
-- deep NPC relationship/romance system;
+- deep NPC romance/affinity relationship system;
+- recruitable combat-companion party built around named humanoid followers;
 - autonomous RimWorld-style settlement labor simulation;
 - conventional class lock at character creation;
+- joinable political-faction reputation/territory campaign;
 - procedural-every-run world layout.
 
-[Keen FAQ](https://enshrouded.com/en-US/FAQ).
+Stealth, magic and NPC schedules are **present** and should not be listed as absences: the live skill tree has sneak-specific abilities, spells/mana are core build systems, and settlement survivors have day/night behaviors.
 
 ## R03 — items, resources, entities and composition
 
 ### Resource families follow geography
 
 Wood, stone, ores/metals, plants, animal materials, Shroud-exclusive resources, water/fish and biome-specific materials form tiered crafting chains. Because Embervale is handcrafted, resource acquisition becomes geographic knowledge rather than only random spawn farming.
+
+### Loot, rarity and reward acquisition
+
+Exploration has a substantial loot layer rather than only deterministic crafting. World chests range from basic wooden containers to silver/gold/ornate chests; higher tiers can produce rare, epic or legendary weapons/armor, while elites, bosses and quests provide additional equipment/material rewards. [Lootable Chests](https://enshrouded.wiki.gg/wiki/Lootable_Chests).
+
+Runes can come from enemies, chests or dismantled weapons and feed weapon enhancement/respec; legendary runes enable top-tier weapon enhancement and gem insertion. Weapon Gems then add another discoverable/upgradeable modifier layer. [Runes](https://enshrouded.wiki.gg/wiki/Runes) · [Legendary Runes](https://enshrouded.wiki.gg/wiki/Legendary_Runes) · [Gems](https://enshrouded.wiki.gg/wiki/Gems).
 
 ### Equipment is a build package
 
@@ -273,9 +303,11 @@ It also introduces balance/social questions when a highly geared character visit
 
 This produces many reasons to explore beyond raw XP.
 
-### Death is punitive but not character-erasing
+### Death is configurable and character-preserving
 
-Death does not wipe the character. A recoverable grave/loot-loss structure applies to carried resources rather than eliminating equipped character progression entirely (details can vary with current difficulty settings). This keeps expedition risk while preserving RPG identity.
+On **Default** difficulty, death drops backpack **materials** into a tombstone for recovery while the character respawns; World Settings can instead choose **Keep All** or **Lose All** item behavior. The character's level/build/world identity are not erased. [Death](https://enshrouded.wiki.gg/wiki/Death) · [World Settings](https://enshrouded.wiki.gg/wiki/World_Settings).
+
+This keeps expedition risk while preserving RPG identity, and lets server owners decide whether corpse recovery is central to their world's contract.
 
 ### Resource reset versus persistent base
 
@@ -292,7 +324,7 @@ The meaningful economy is:
 - travel/risk;
 - base storage and production.
 
-A later vanity trader/service may use exchange mechanisms, but there is no MMO auction house or player-run currency economy.
+**Runes** act as an important enhancement/respec resource, but there is no MMO auction house or player-run universal currency economy. Materials, loot and world-owned crafting access remain the dominant economic substrate.
 
 ### Early Access itself is a progression layer
 
@@ -375,13 +407,15 @@ Unless attributed otherwise, these are rules-based illustrations from the live S
 
 ### Survivors make a dead world feel recoverable
 
-The Flameborn rescues named survivors and places them in settlements. They offer services/quests/crafting and later updates give them more believable base routines. This is lighter than simulation-heavy colony NPCs but stronger than static menu stations because progression is embodied in people.
+The Flameborn rescues named survivors and places them in settlements. Current NPCs include **Craftspeople, Assistants and Townsfolk/Villagers**. They offer services/quests/crafting and now physically roam within configured areas, inspect props, talk, take breaks and sleep on a simple day/night schedule. [Survivors](https://enshrouded.wiki.gg/wiki/NPCs) · [Souls of the Frozen Frontier](https://enshrouded.wiki.gg/wiki/Souls_Of_The_Frozen_Frontier_Update).
+
+This is lighter than simulation-heavy colony NPCs because they do not independently run production chains, choose strategic jobs or form deep relationship webs, but it is stronger than static menu stations because progression is embodied in people.
 
 The transferable pattern is **capability as relationship/place**: "we found the blacksmith" is more memorable than "crafting tier 2 unlocked."
 
 ### Enemies are encounter/RPG actors, not long-memory agents
 
-Scavengers, Shroud creatures, wildlife and bosses have combat behavior, patrol/awareness and encounter roles. Update 6 and later patches improve Shroud enemies and cover/pathing. There is no evidence of persistent individual enemy memory, reputation or emergent diplomacy; do not project OpenLegend-style agency onto them.
+Scavengers, Shroud creatures, wildlife and bosses have combat behavior, patrol/awareness and encounter roles. Update 6 and later patches improve Shroud enemies and cover/pathing. There is no evidence of persistent individual enemy memory, player-joinable faction reputation or emergent diplomacy; do not project OpenLegend-style agency onto them. Keen's own product copy refers to rival creature factions, but the player does not negotiate/join them through a dynamic political-reputation layer.
 
 ### Co-op is cooperative, not PvP competitive
 
@@ -414,6 +448,12 @@ Combat camera/lock-on/input have been recurrent criticism points, especially wit
 
 Difficulty is highly adjustable. One of the most-helpful all-time Steam positives is from an older player who specifically credits detailed difficulty controls with making the whole game playable/enjoyable. [Steam helpful positives](https://steamcommunity.com/app/1203620/positivereviews/?browsefilter=toprated&l=english).
 
+### Music and spatial identity
+
+Keen's official soundtrack release credits **Alex Röder, Armin Haas and Matthias Wolf**. Its large track list is explicitly organized around Embervale places, characters and danger states—examples include *The Ancient Spires*, *Melody of the Springlands*, *Into the Revelwoods*, *The Shroud Grows* and boss/POI cues. [Keen soundtrack announcement](https://enshrouded.com/en-US/news/the-enshrouded-original-soundtrack-is-now-available).
+
+The official community reference says music loops are assigned to specific POIs/biomes and boss fights and are individual per player. This makes audio another geographic/state cue rather than an undifferentiated background album. [Music](https://enshrouded.wiki.gg/wiki/Music).
+
 Keen says 1.0 work is heavily focused on **performance optimization**, including lower/mid-range PC configurations. This is future-release work in progress, not evidence that current performance issues no longer exist. [Aug. 27, 2026 update](https://enshrouded.com/en-US/news/were-still-cooking-for-10-heres-some-news-you-may-have-missed).
 
 ## R08 — story, worldbuilding and player-authored narrative
@@ -421,12 +461,15 @@ Keen says 1.0 work is heavily focused on **performance optimization**, including
 The world of **Embervale** fell after its people mined/used magical **Elixir** and unleashed the corrupting Shroud. Flameborn were preserved so they could awaken after the catastrophe and reclaim what remains. [FAQ](https://enshrouded.com/en-US/FAQ).
 
 Narrative delivery uses:
-- survivor quests;
+- **The Flame**, Craftspeople/other Survivors and found Lore as quest sources;
+- primary quests that gate story/region progression and can reward NPCs, workshops or biome access;
+- secondary/lore quests that can reward weapons, armor, materials or additional NPCs;
 - ruins and crafted worldspaces;
-- notes/lore texts;
 - bosses/dungeons;
 - environmental traces of settlements;
 - progression through Shroud-afflicted regions.
+
+The current official community quest index lists **148 quests** in the live build, making authored questing a major progression substrate rather than a thin wrapper around sandbox play. [Quests](https://enshrouded.wiki.gg/wiki/Quests).
 
 The handcrafted map matters because story can be written into exact topology: a ruined town can tell a history, then later become the player's restored base.
 
@@ -525,7 +568,7 @@ That is both upside and schedule risk: commercial success can **expand the defin
 
 ### Current Steam evidence — September 2026
 
-Current direct Steam review surfaces were inspected.
+Current direct Steam review surfaces were inspected, including current-week English reviews and **Most Helpful negative** bodies. [current English](https://steamcommunity.com/app/1203620/reviews/?filterLanguage=english) · [helpful negatives](https://steamcommunity.com/app/1203620/negativereviews/?browsefilter=toprated&l=english).
 
 **Positive themes**
 - handcrafted world/exploration;
@@ -708,6 +751,34 @@ https://steamcommunity.com/app/1203620/reviews/?filterLanguage=english
 https://steamcommunity.com/app/1203620/negativereviews/  
 https://steamcommunity.com/app/1203620/positivereviews/?browsefilter=toprated&l=english
 
+**S23 — Keen Hot Fixes index / Hotfix #42 v0.9.1.2, June 29, 2026.** Primary latest live Early Access patch located in this audit; separates shipped Update 8 maintenance from September's future-1.0 previews.  
+https://enshrouded.com/en-US/news/category/hot-fixes
+
+**S24 — Official Enshrouded Wiki: Character Creation, Attributes, Skills and Death.** Current operational references for appearance customization, six primary attributes, open skill paths/sneak mechanics and configurable tombstone item loss.  
+https://enshrouded.wiki.gg/wiki/Character_Creation  
+https://enshrouded.wiki.gg/wiki/Attributes  
+https://enshrouded.wiki.gg/wiki/Skills  
+https://enshrouded.wiki.gg/wiki/Death
+
+**S25 — Official Enshrouded Wiki: Quests, Survivors and Souls of the Frozen Frontier.** Current quest/reward/NPC categories and simple day/night survivor behaviors.  
+https://enshrouded.wiki.gg/wiki/Quests  
+https://enshrouded.wiki.gg/wiki/NPCs  
+https://enshrouded.wiki.gg/wiki/Souls_Of_The_Frozen_Frontier_Update
+
+**S26 — Official Enshrouded Wiki: World Settings, Animal Husbandry and Fishing.** Current starvation/death configuration, animal/pet domestic systems and fishing interaction.  
+https://enshrouded.wiki.gg/wiki/World_Settings  
+https://enshrouded.wiki.gg/wiki/Animal_Husbandry  
+https://enshrouded.wiki.gg/wiki/Fishing
+
+**S27 — Official Enshrouded Wiki: Lootable Chests, Runes, Legendary Runes and Gems.** Current loot-rarity and item-enhancement economy.  
+https://enshrouded.wiki.gg/wiki/Lootable_Chests  
+https://enshrouded.wiki.gg/wiki/Runes  
+https://enshrouded.wiki.gg/wiki/Legendary_Runes  
+https://enshrouded.wiki.gg/wiki/Gems
+
+**S28 — Keen, Enshrouded Original Soundtrack, Feb. 2, 2024.** Primary composer credits and place/state-oriented soundtrack list.  
+https://enshrouded.com/en-US/news/the-enshrouded-original-soundtrack-is-now-available
+
 ### Suggested reading route
 
 1. Read **S05** first: it defines the actual current live systems.
@@ -745,3 +816,5 @@ https://steamcommunity.com/app/1203620/positivereviews/?browsefilter=toprated&l=
 - Current Steam reviews are qualitative samples, not prevalence measurements.
 - Player counts are not converted into revenue or audited unit sales.
 - Exact current item/drop/skill values can change again at 1.0; the dossier emphasizes stable system structure and dated live-update boundaries.
+- The latest shipped patch identified here is Hotfix #42 v0.9.1.2 (June 29, 2026); September 1.0 previews are not silently promoted to live mechanics.
+- Official wiki pages are operational community references, not substitutes for Keen's first-party release/roadmap statements.
