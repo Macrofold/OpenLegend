@@ -17,6 +17,18 @@
 - **[Implications for OpenLegend](essays/implications-for-openlegend.md):** research hypotheses, not accepted requirements.
 - **[Study itinerary](essays/prioritized-study-itinerary.md)** and **[YouTube watchlist](references/youtube-watchlist.md)**.
 
+## Full dossiers — G81–G100
+
+These independent per-game passes supplement the original chapters and mechanics studies; they do not replace them. Each dossier identifies its editions, systems, worked interactions, production and reception evidence, sources and access limits. Completion commits and the scope of verification live in the [completed slice register](research-progress.md#completed-slice-register), not in a duplicate status list here.
+
+**Final Fantasy, G81–G93:** [IV](dossiers/final-fantasy-iv.md) · [V](dossiers/final-fantasy-v.md) · [VI](dossiers/final-fantasy-vi.md) · [VII](dossiers/final-fantasy-vii.md) · [VIII](dossiers/final-fantasy-viii.md) · [IX](dossiers/final-fantasy-ix.md) · [X](dossiers/final-fantasy-x.md) · [XI](dossiers/final-fantasy-xi.md) · [XII](dossiers/final-fantasy-xii.md) · [XIII](dossiers/final-fantasy-xiii.md) · [XIV](dossiers/final-fantasy-xiv.md) · [XV](dossiers/final-fantasy-xv.md) · [XVI](dossiers/final-fantasy-xvi.md).
+
+**Warcraft, G94–G97:** [Orcs & Humans](dossiers/warcraft-orcs-and-humans.md) · [Warcraft II](dossiers/warcraft-ii.md) · [Warcraft III](dossiers/warcraft-iii.md) · [World of Warcraft](dossiers/world-of-warcraft.md).
+
+**Assassin's Creed, G98–G100:** [IV: Black Flag](dossiers/assassins-creed-iv-black-flag.md) · [III](dossiers/assassins-creed-iii.md) · [Valhalla](dossiers/assassins-creed-valhalla.md).
+
+The [roster](research-roster.md) retains all other subjects and their canonical output paths. Completing this slice does not certify the separate 130-subject integration or seven-file packet-preservation audit; those gates remain explicitly tracked in [research progress](research-progress.md#final-integration-gates--pending).
+
 ## Game studies
 
 ### People, relationships, place, and systemic stories
