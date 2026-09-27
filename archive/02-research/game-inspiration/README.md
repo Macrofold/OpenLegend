@@ -17,6 +17,23 @@
 - **[Implications for OpenLegend](essays/implications-for-openlegend.md):** research hypotheses, not accepted requirements.
 - **[Study itinerary](essays/prioritized-study-itinerary.md)** and **[YouTube watchlist](references/youtube-watchlist.md)**.
 
+## Full dossiers — curated references G111–G120
+
+These per-subject studies supplement the original chapters below. Each contains a mechanics inventory, concrete situations, reception and production research, a requirement map, and annotated evidence limits. The [progress ledger](research-progress.md) owns completion state and commit references; this navigation does not certify the other 120 subjects or the packet-wide preservation audit.
+
+| Roster ID | Dossier |
+| --- | --- |
+| G111 | [The Legend of Zelda: Tears of the Kingdom](dossiers/the-legend-of-zelda-tears-of-the-kingdom.md) |
+| G112 | [Fallout: New Vegas](dossiers/fallout-new-vegas.md) |
+| G113 | [The Elder Scrolls III: Morrowind](dossiers/the-elder-scrolls-iii-morrowind.md) |
+| G114 | [Kingdom Come: Deliverance II](dossiers/kingdom-come-deliverance-ii.md) |
+| G115 | [Mount & Blade II: Bannerlord](dossiers/mount-and-blade-ii-bannerlord.md) |
+| G116 | [Middle-earth: Shadow of War](dossiers/middle-earth-shadow-of-war.md) |
+| G117 | [Deus Ex (2000)](dossiers/deus-ex-2000.md) |
+| G118 | [Prey (2017)](dossiers/prey-2017.md) |
+| G119 | [Dishonored 2](dossiers/dishonored-2.md) |
+| G120 | [Starsector](dossiers/starsector.md) |
+
 ## Game studies
 
 ### People, relationships, place, and systemic stories
