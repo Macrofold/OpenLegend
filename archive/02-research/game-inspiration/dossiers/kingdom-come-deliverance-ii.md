@@ -1,12 +1,12 @@
 # G114 — Kingdom Come: Deliverance II
 
-**Full research pass — September 26, 2026; Steam-body access gap retained.** [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Comparative reference, not an implementation specification. Five independent written reviews, primary publisher/creator accounts and specific observed-rule guides were read. No gameplay execution, footage viewing or engine audit is claimed. **Quest and relationship spoilers follow.**
+**Full research pass — September 26, 2026; follow-up audit the same day, with Steam-body evidence recovered through qualified alternate routes.** [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Comparative reference, not an implementation specification. Five independent written reviews, primary publisher/creator accounts and specific observed-rule guides were read in the original pass. The follow-up read the entire dossier, checked all requirements, and researched the additions identified below; it does not imply that every original external source was read a second time. No gameplay execution, footage viewing or engine audit is claimed. **Quest and relationship spoilers follow.**
 
 ## Identity, editions and central promise
 
 Warhorse's sequel launched February 4, 2025 for PC, PS5 and Xbox Series consoles. It continues Henry's story alongside Hans Capon rather than offering an anonymous race/class creator. Delivering a letter becomes entangled with the struggle between Wenceslas and Sigismund. Trosky and Kuttenberg provide distinct regions. This is a first-person, single-player historical RPG—not a documentary, medieval MMO or spellcasting fantasy. [PC Gamer](#r-pcg), [strategy index](#s-hub)
 
-Royal Edition includes three delivered story expansions, additional equipment and The Lion's Crest. The Saga package also contains the first game and its expansions; those earlier systems must not be silently assigned to the sequel. [Publisher](#s-publisher) A **Switch 2 Royal Edition was announced in September 2026 for 2027**. Its proposed mouse controls and enlarged menus are future-port features, not evidence of shipped performance. [Portable announcement](#s-port)
+Royal Edition includes three delivered story expansions, additional equipment and The Lion's Crest. The Saga package also contains the first game and its expansions; those earlier systems must not be silently assigned to the sequel. [Publisher](#s-publisher) A **Switch 2 Royal Edition was announced in September 2026 for 2027**. Its proposed mouse controls and enlarged menus are future-port features, not evidence of shipped performance. The follow-up retrieved the primary announcement again and confirmed those future-tense boundaries; its malformed resolution text is still excluded. [Portable announcement](#s-port)
 
 The central analytical distinction is between **permission to attempt**, **practical competence**, and **social acceptance**. A road may be open while Henry is hungry, poorly equipped or unwelcome at its destination. Initial vulnerability contrasts with later resources, habits and relationships. This explains why mundane preparation can become meaningful without assuming all friction is beneficial.
 
@@ -23,6 +23,8 @@ The analytical significance is that a persuasive Henry need not be a master figh
 Henry walks, runs, crouches, jumps, rides, draws weapons, aims, attacks, blocks, parries, dodges and uses trained combinations. Swords, maces, polearms, bows, crossbows and early firearms differ in handling and maintenance. The publisher describes weapon-specific motion capture; dramatic equipment-failure language is not an audited universal formula. [Publisher](#s-publisher)
 
 Directional fighting asks the player to read stance, timing, reach and stamina. Several opponents create a different visibility and positioning problem from one duel. Kobylanski dislikes group fighting even while finding one-on-one feedback improved. No current-patch damage or counter-window measurement is claimed. [RPGFan](#r-rpgfan)
+
+**A learned counter has an actual execution contract:** Combat Training 2 follows Tomcat's first lesson at the Nomad Camp. Henry must arrive suitably armored with a sword and complete the duel before learning the Master Strike. Hold the opposite attack direction to the opponent, then **attack**, rather than block, at the green defensive prompt. This directly counters the incoming blow, unlike a perfect-block riposte that can itself be avoided. Guided practice then becomes three independently judged attempts. Merely leveling Warfare is not the whole acquisition route. This documents the taught sword technique, not a claim that every weapon supports it or that its timing is unchanged in all patches. [Tomcat's lesson](#s-counter)
 
 Travel consumes time and connects planning to geography. Ordinary fast travel differs from unrestricted teleportation during danger. Later Hardcore mode removes it and much navigation assistance, changing the knowledge demanded by the same terrain. [Hardcore](#s-hardcore)
 
@@ -60,6 +62,12 @@ Groschen purchases food, clothing, lodging, training, equipment and services. Wo
 
 This is not a player-operated international market or fully simulated feudal tax economy. The forge DLC adds a specific home/business progression, not ownership of every shop. A useful evaluation asks whether resources still generate interesting decisions once Henry becomes affluent.
 
+### Dice makes acquisition and risk relevant outside combat
+
+Roll six dice, select scoring results, then bank the turn or reroll the remainder. A roll without a scoring result loses the **unbanked turn**, not every previously banked point. Single ones and fives score; sets and straights offer other rewards. Dice already scored cannot be held to build a later triple. Scoring all six permits another six-dice roll while leaving the accumulated turn at risk. Found, bought or stolen special dice alter probabilities: Saint Antiochus' die favors threes. The guide's assertion that the computer universally cheats is opinion, not verified random-number behavior. [Dice rules](#s-dice)
+
+Badges add another layer: **Transmutation** changes a result, **Doppelganger** doubles a throw's score, and **Resurrection** offers recovery after a bust; quality affects their uses or effects. This is not simply buying a higher damage stat. The article's rankings and promised guaranteed wins are not adopted. Our interpretation: a familiar side activity can sustain equipment choices when rewards alter its decisions rather than merely its payout. [Badge effects](#s-badges)
+
 ## Time, progression, failure and return
 
 Early play emphasizes food, rest, suitable clothes and basic access. Middle play broadens mobility, equipment and contacts. Later play concentrates on political commitments, specialized capabilities, side stories and expansions. Some optional tasks close at campaign transitions. Post-ending exploration does not restore every failed or missed quest. [Strategy index](#s-hub)
@@ -83,6 +91,10 @@ NPC schedules matter locally: Radovan may be asleep when the player arrives, req
 ### Animals, companions and romance
 
 Mutt and horses provide practical assistance, while Houndmaster and Horsemanship reward relevant use. Story allies are not a permanently customizable tactical party. [Skills](#s-stats)
+
+**Mutt's distinct jobs:** reunion supplies the Lifesaver defense/attack ability; **Hunt!** and **Search!** become available at Houndmaster 6. Hunting adds game pursuit/retrieval, while searching uses the Free command and barking to identify discoveries. **Bark!** deliberately distracts others; **Body Heat** improves rough sleeping, and **Charming Companion** affects Henry's Charisma. Feeding, praising and working together develop Houndmaster, but repeated praise has diminishing returns. Injury can send Mutt away; neglected obedience can prevent reliable commands. This is training, care and temporary loss of assistance, not a permanently equipped passive damage bonus. The late **Sic 'em!** perk improves damage rather than first unlocking all attacks. [Houndmaster](#s-hound)
+
+**Keeping a familiar mount can pay off:** Joshua Wolens reports that riding Pebbles roughly 35 kilometers unlocks Good Old Pebbles, increasing speed, stamina and carrying capacity while leaving courage unchanged in his comparison. That links continued use to characterful progression rather than inevitable replacement. The same article's Herring comparison comes from community figures with different equipment assumptions; it is not used here as a controlled ranking or claim of an exhaustive current-patch horse test. [Pebbles](#s-pebbles)
 
 Specific romance opportunities exist. Klara's later scene links assistance with wounded soldiers to a personal encounter. A walkthrough's claim that it is her only opportunity is contradicted by comments describing an earlier one, so exclusivity is not asserted. This is authored relationship content, not a universal courtship, marriage or dynasty model. [Klara](#s-klara)
 
@@ -160,7 +172,7 @@ The model is a premium base game, paid story additions and collected editions al
 
 The publisher connects its community to events, concerts and gatherings. Our interpretation is that recognizable characters, unusual everyday anecdotes and visible competence supply retellable material. No causal acquisition effect for a streamer, award, controversy or post is quantified.
 
-## Reception: five complete reviews and explicit player-evidence limit
+## Reception: five complete reviews and qualified player evidence
 
 **Steven Mills, Destructoid, February 3, 2025:** values flexible episodes and improved reliability; geometry and dense-area performance problems remain. The Cuman incident above is attributed. [Review](#r-destructoid)
 
@@ -172,7 +184,11 @@ The publisher connects its community to events, concerts and gatherings. Our int
 
 **Tom Bardwell, VideoGamer, February 3, 2025:** admires the physical world and steadier performance but finds the opening, busywork, loading and late repetition tiring. He cautions against treating historical framing as neutral fact. [Review](#r-vg)
 
-**Steam gap:** app 1771300's store/community pages returned age gates. Filtered routes and the attempted review API supplied no usable bodies. No helpful positive/negative sample or aggregate-score substitute is claimed. This is unresolved retrieval, not non-applicability. Five independent full written reviews are nevertheless read.
+**Steam access correction:** the original store/community/API attempts supplied no bodies. Follow-up direct index/API attempts still failed or age-gated, but an individual page and indexed all-time negative-review bodies were recovered. This closes the former total body gap, **not** a representative or fully browsable positive/negative ranking audit.
+
+**Weeddrunken**, recommended, posted February 6, 2025 and updated April 5: the full individual body praises understandable consequences, NPC responses, landscapes and audiovisual detail, disclosing no play of the first game. It displayed 72.4 hours and two helpful votes at retrieval, not necessarily at publication. Its claims of historical realism are the player's impression, not independent historical verification. Its position among all positive reviews is unknown. [Individual review](#s-steam-positive)
+
+The indexed **Most Helpful (All Time), Negative Only, English** surface supplied **AdventureGnome's** complete long body, December 21, 2025, with 32.4 displayed hours and 470 helpful votes. It values atmosphere, stealth and risky crime but criticizes repeated alchemy, searching for contacts, group combat and restrictions on preferred approaches. **CowboyPug**, March 19, 2025, displayed 317.9 hours and 70 helpful votes: it likes city presentation/performance but dislikes writing, protected NPCs and perceived sword emphasis. These are experiences, not proof of unlimited enemy stamina or universally impossible bow play. Other prominent indexed entries concern alleged studio employment/AI decisions, not solely gameplay; no underlying employment facts were verified here. Counters are retrieval snapshots; localized duplicate renderings are not additional reviewers. Direct index access remained gated. [Indexed negative bodies](#s-steam-negative)
 
 Narrower player testimony is available in quest comments: **GotrekAK** identifies an earlier Klara encounter; **KimPossible** and another respondent report the later scene not triggering. These self-selected reports do not establish diagnosis or frequency, but warn against treating one walkthrough as a complete specification. [Klara comments](#s-klara)
 
@@ -196,11 +212,11 @@ These hypotheses do not authorize implementation, copy names or settings, or est
 
 ## Annotated sources and limits
 
-All accessed **September 26, 2026**. Reviews were read through their conclusions. Guides support the attributed rules/cases, not unseen linked pages. No video was watched. Product language is not an exhaustive simulation guarantee. The annual report was read as reproduced HTML narrative; garbled table extraction was not used.
+All accessed **September 26, 2026**, in the original pass or the expressly identified follow-up. Original review bodies were read through their conclusions; this audit preserves that provenance rather than claiming a second reading. Guides support the attributed rules/cases, not unseen linked pages. No video was watched. Product language is not an exhaustive simulation guarantee. The annual report was read as reproduced HTML narrative; garbled table extraction was not used.
 
 <a id="s-publisher"></a>**Deep Silver, product/editions.** Current English and initially redirected Polish material. [Source](https://www.deepsilver.com/games/kingdom-come-deliverance-ii).
 
-<a id="s-port"></a>**Deep Silver, Bohemia Is Going Portable, September 2026.** 2027 announcement without final date/price; malformed resolution text excluded. [Source](https://www.deepsilver.com/games/kingdom-come-deliverance-ii/news/bohemia-is-going-portable).
+<a id="s-port"></a>**Deep Silver, Bohemia Is Going Portable, September 2026.** 2027 announcement without final date/price; malformed resolution text excluded. Full substantive announcement reread during the follow-up; not a shipped-port test. [Source](https://www.deepsilver.com/games/kingdom-come-deliverance-ii/news/bohemia-is-going-portable).
 
 <a id="s-stats"></a>**PowerPyx, stats/skills, February 3, 2025.** Development and skill inventory, not a tested balance table. [Source](https://www.powerpyx.com/kingdom-come-deliverance-2-how-to-level-up-all-stats-skills/).
 
@@ -250,8 +266,36 @@ All accessed **September 26, 2026**. Reviews were read through their conclusions
 
 <a id="r-vg"></a>**Tom Bardwell, VideoGamer, updated February 3, 2025.** Full review including its continuation. [Source](https://www.videogamer.com/reviews/kingdom-come-deliverance-2-review/).
 
+### Follow-up sources
+
+<a id="s-counter"></a>**Gage, PowerPyx, Combat Training 2, February 3, 2025.** Full walkthrough read; prerequisites, opposite-direction attack and guided/independent practice. No current-frame-window test. [Source](https://www.powerpyx.com/kingdom-come-deliverance-2-combat-training-2-walkthrough/).
+
+<a id="s-hound"></a>**Nathan Garvin, Gamer Guides, Houndmaster.** Uses, leveling and perk table read; tactical value judgments are the author's, not measured efficiency. The overall guide's update timestamp does not independently date each rule. [Source](https://www.gamerguides.com/kingdom-come-deliverance-ii/guide/stats-and-skills/houndmaster).
+
+<a id="s-dice"></a>**Nathan Garvin, Gamer Guides, Dice Rules and Tips.** Full rules/acquisition body read on its earth subdomain. Unsupported computer-cheating claims excluded; no probability simulation or guaranteed-win claim. [Source](https://earth.gamerguides.com/kingdom-come-deliverance-ii/guide/getting-started/tips-and-tricks/dice-rules-and-tips).
+
+<a id="s-badges"></a>**Burair Noor, The Escapist, updated February 26, 2025.** Full badge article read; selected effects only, not adoption of its ranking or every vendor-location claim. [Source](https://www.escapistmagazine.com/best-badges-in-kingdom-come-deliverance-2/).
+
+<a id="s-pebbles"></a>**Joshua Wolens, PC Gamer, February 17, 2025.** Full short article read; Pebbles comparison separated from explicitly secondhand Herring figures and speculative courage-bug explanation. [Source](https://www.pcgamer.com/games/rpg/dont-get-rid-of-your-starting-horse-in-kingdom-come-deliverance-2-theres-a-secret-perk-that-makes-her-the-best-in-the-game/).
+
+<a id="s-steam-positive"></a>**Weeddrunken, Steam app 1771300, February 6 / April 5, 2025.** Entire individual review retrieved, duplicated rendering counted once. Self-selected positive evidence, not a ranked positive sample. [Source](https://steamcommunity.com/id/weeddrunken/recommended/1771300).
+
+<a id="s-steam-negative"></a>**Steam app 1771300, indexed Most Helpful (All Time), Negative Only, English.** Complete visible AdventureGnome and CowboyPug bodies read through search retrieval; direct page remained age-gated. Underlying employment allegations not investigated or adopted. [Source](https://steamcommunity.com/app/1771300/negativereviews/?browsefilter=toprated&snr=1_5_100010_).
+
+## Reading route
+
+Begin with [Tomcat's lesson](#s-counter) and [the smithing lesson](#s-smith) to compare two kinds of taught execution, then [Houndmaster](#s-hound) for care and delegated action. Compare [Wolens](#r-pcg), [Bardwell](#r-vg) and the qualified [negative Steam bodies](#s-steam-negative) on the point where meaningful routine becomes repetition. Read the [future-port announcement](#s-port) separately from launch reviews; its linked trailer was not watched. The rescue and relationship guides contain major quest spoilers.
+
 ## Coverage and preservation
 
-R01–R04: identity/editions, actions, skills, equipment, creation, resources, progression and failure/return. R05: eight situations. R06–R08: people, routines, relationships, institutions, story and presentation. R09–R11: creator testimony, distribution/support and dated commercial evidence. R12: five full independent reviews; **Steam bodies remain inaccessible**, not falsely counted. R13–R14: transfer hypotheses, annotated evidence and preservation.
+| Requirement | Substantive coverage |
+| --- | --- |
+| R01–R02 | Identity/editions/modes, full main skill families, actions and learned-counter contract. |
+| R03–R04 | Equipment, creation, resources, dice/badges, animal-use progression, economy, time, recovery and failure/return. |
+| R05 | Eight preserved situations with intent, conditions, interaction, next choice and limits. |
+| R06–R08 | Named people, routines, relationships, institutions, Mutt's separate roles, story, home and presentation. |
+| R09–R11 | Creator testimony, distribution/support, free/paid/future-edition boundaries and dated commercial evidence. |
+| R12 | Five original full independent reviews; newly recovered full individual positive and indexed negative bodies, with ranking/access limits explicit. |
+| R13–R14 | Transfer hypotheses, annotated evidence, actual reading route and preservation. |
 
-Checkpoint findings and substantive examples are retained, with provisional review statuses resolved and the wedding source corrected. This curated dossier does not overwrite earlier chapters, studies, notebooks or viewing recommendations. No dedicated G114 predecessor was found in the inspected inherited roster, library index and dossier tree. Global seven-file preservation, all-130-subject coverage and P01–P05 remain open. This is a major-system pass with an explicit reception-access limitation, not certification of every patch, recipe or quest permutation.
+Checkpoint findings, all eight examples, five original review perspectives and substantive earlier sources are retained. This curated dossier does not overwrite earlier chapters, studies, notebooks or viewing recommendations. No dedicated G114 predecessor was found in the inspected inherited roster, library index and dossier tree. The audit adds missing mechanics and corrects the former total Steam-body gap without pretending its direct index/API failures disappeared. Positive all-time ranking, a representative player sample, exhaustive patch/recipe permutations, current performance/accessibility testing and private finances remain unestablished. Global seven-file preservation, all-130-subject coverage and **P01–P05 remain open**.
