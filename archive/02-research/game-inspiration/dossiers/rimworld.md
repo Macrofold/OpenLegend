@@ -654,6 +654,27 @@ Recommended order for understanding RimWorld without needing dozens of hours:
 
 ## 26. Requirement map
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and confirms the Core-versus-expansion boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** generated colonists carry backstories, traits, skills, passions, work incapabilities and health/social histories rather than fixed player classes; skills improve through use (§§2–4).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** spatial stockpiles/storage, materials, apparel, weapons/armor, medicine/drugs, production bills, quality/material variation and expansion-specific equipment are covered across §§5–10.
+- **Magic / spells / powers:** Core has no conventional magic tree; Royalty psycasts, Ideology roles, Biotech genes/mechs and Anomaly powers are expansion-specific capability layers, not universal Core mechanics.
+- **Traversal / environmental and object interaction:** colony movement/pathing, caravans, doors/zones, temperature/power/fire, hauling, construction and Odyssey gravship travel are covered across §§5–9, 13–17.
+- **Activities / minigames:** colony planning, farming, crafting, research, trade, caravans, quests, diplomacy, combat, rituals, child-rearing, containment and Odyssey exploration are systems within the colony simulation rather than separate arcade minigames.
+- **Combat / stealth / loot / rewards:** drafted melee/ranged combat, cover/positioning, raids/ambushes, equipment/quest rewards and captured/recruited enemies are central. Stealth is situational rather than a universal stealth-stat campaign.
+- **Death / failure / recovery:** wounds, disease, incapacitation/death, rescue/treatment, replacement parts, save modes and colony collapse are covered; difficulty/storyteller choices alter the loss contract.
+- **Economy / trading:** production, spatial storage, caravan/visitor trade and faction economics are covered; there is no one global auction-house economy.
+- **Story / relationships / romance / reputation / party / companions:** colonist memories, opinions, romance/family/social fights, faction relations and authored quest actors are major systems; the player manages a colony rather than one companion party (§§4, 10–14).
+- **NPC/AI behavior and schedules / factions:** colonist work/schedules/priorities, animals, raiders, factions and storyteller incidents are bounded simulation systems. The storyteller is an incident selector/pacer, not character cognition.
+- **World map / environment / quests / events:** generated world/biomes, caravans, settlements, incidents/quests and Odyssey travel/orbit expand the colony beyond one local map.
+- **Building / settlements / management:** construction, rooms, power, temperature, agriculture, production, research, medicine and population/work management are the core activity.
+- **Multiplayer / social / endgame / return loops:** vanilla PC RimWorld remains **single-player**; Workshop mods are an extension layer. Multiple storytellers/scenarios, colony histories, expansion arcs and optional endings provide replay rather than account-level multiplayer progression.
+
+**Current boundary check:** the PC game remains on the **1.6 / Odyssey** generation. Odyssey, the fifth expansion, shipped July 11, 2025 together with free update 1.6; Steam still lists Odyssey as the newest expansion. The latest official numbered PC patch already verified in this dossier is **1.6.4850 (June 8, 2026)**. No newer official gameplay expansion or 1.7 release was found in the September 27 audit, and console content remains a separate Double Eleven branch. [RW01](#rw01) [RW02](#rw02) [RW28](#rw28)
+
+
 | Requirement | Substantive coverage |
 | --- | --- |
 | **R01 — identity/scope/promise** | §§1–2; PC/console/mod/expansion boundaries |
