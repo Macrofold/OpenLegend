@@ -1,10 +1,10 @@
 # Final Fantasy XIII — full research dossier
 
-**G90 · Complete research pass, September 26, 2026.** Primary mechanics baseline: the 2009 Japanese / 2010 international *Final Fantasy XIII*. The 2014 Windows port is separated where technical behavior matters. *Final Fantasy XIII-2* and *Lightning Returns: Final Fantasy XIII* are treated as substantive direct-sequel contrasts rather than substituted for XIII's mechanics. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G90 · Research pass and corrective coverage review, September 26, 2026.** Primary mechanics baseline: the 2009 Japanese / 2010 international *Final Fantasy XIII*. The 2014 Windows port is separated where technical behavior matters. *Final Fantasy XIII-2* and *Lightning Returns: Final Fantasy XIII* are treated as substantive direct-sequel contrasts rather than substituted for XIII's mechanics. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
 FFXIII's most important systems contribution is a change in **control abstraction**. The player does not micromanage every party member's command queue. Instead, they preconfigure whole-party role combinations called **Paradigms** and switch the party's operating policy in real time. The Stagger/Chain system then makes the timing of those policy changes the core battle skill.
 
-No personal playthrough is claimed. Concrete examples are reconstructed from primary developer interviews, the game/manual/reference ecosystem and written reviews.
+No personal playthrough is claimed. Concrete examples are reconstructed from primary developer interviews, the game/manual/reference ecosystem and written reviews. This corrective pass preserves the original research while adding resource/recovery rules, a named upgrade chain, complete situations, audiovisual evidence and an exact primary commercial locator. Story premises and later traversal/activity unlocks are disclosed; no linked video or soundtrack is represented as watched or heard.
 
 ## 1. Identity, scope and player promise
 
@@ -102,6 +102,14 @@ This means the player can operate at two levels:
 - **macro:** let role-aware automation fill the queue and focus on Paradigm timing.
 
 Battle director Yuji Abe described the goal as “speedy and tactical”: the team wanted to remove the need to micromanage each character while preserving strategic control over the battle's overall flow. [FFXIII05](#ffxiii05) [FFXIII06](#ffxiii06)
+
+### Time, health and techniques have different budgets
+
+Ordinary magic does **not** consume a conventional MP pool. The relevant command costs are primarily ATB and action opportunity, while the Magic statistic affects power rather than representing remaining spell fuel. After battle, party HP is restored. This reduces between-fight healing maintenance without making it safe to ignore health while an enemy can still act. [FFXIII36](#ffxiii36)
+
+The player can execute a partially charged command queue rather than always wait for every segment. Items do not spend ATB, but consume inventory. Techniques instead spend **TP**: Libra, recovery techniques and summoning therefore do not share the same replenishment contract as routine attacks. [FFXIII35](#ffxiii35)
+
+**Interpretation:** XIII concentrates much of its survival problem inside an encounter, while retaining scarce preparation and technique resources around it. Removing MP is not removing all costs; it changes which tradeoffs the player must inspect.
 
 ## 4. Six roles define tactical behavior
 
@@ -263,6 +271,14 @@ The game offsets punishment by allowing a fast retry immediately before many bat
 
 **OpenLegend warning:** control focus should not automatically imply ontological authority. If several autonomous people are still alive, a human-controlled avatar dying should not necessarily mean the whole simulation declares failure.
 
+### Retry, victory and a high rating are different results
+
+Retry returns to the prebattle situation, restoring items used in that attempt and resetting enemy damage. It is not a conventional escape that preserves partial progress against the enemy. A successful battle instead produces its actual rewards and resource consequences. [FFXIII35](#ffxiii35)
+
+The rating compares completion time with a target influenced by the encounter and party. Higher stars improve rare-drop odds and TP recovery, but **lower ratings improve shroud-drop odds**. Five stars are therefore not a universal multiplier for every desired item. Ordinary success does not automatically refill the entire TP supply, even though health is restored. The detailed guide's reward tables describe probabilities, not guaranteed drops or a recommendation to waste time in every fight. [FFXIII37](#ffxiii37)
+
+**Interpretation:** an apparent performance score can conceal several reward objectives. A researcher should explain the reward being pursued instead of equating a higher score with strictly better progress in every system.
+
 ## 10. Field enemies and preemptive engagement connect exploration to combat state
 
 Enemies are visible on the field.
@@ -284,6 +300,12 @@ OpenLegend can extend this:
 - terrain
 
 should affect the initial combat state.
+
+### Preparation can buy an opening or better information
+
+**Fortisol** and **Aegisol** prepare battle-start benefits; **Deceptisol** suppresses detection for a limited field duration. These are consumable shrouds used before combat, not permanent stealth skills. **Libra** spends a different resource to reveal enemy information and improve allies' choices. It changes knowledge, not the enemy's actual resistance. A suitable elemental attack can already work before the vulnerability has been recorded. [FFXIII35](#ffxiii35)
+
+**Interpretation:** preparation has at least three meanings here: alter the initial state, avoid an encounter, or help the party choose correctly. They should not be collapsed into one generic damage boost.
 
 ## 11. Crystarium: role-gated progression
 
@@ -378,6 +400,12 @@ An early weapon can therefore remain part of a long-term build path.
 
 OpenLegend lesson:
 - meaningful possessions should often be **improvable** rather than disposable by item-level churn.
+
+### Blazefire Saber is a particular chain, not a generic promise
+
+Lightning's **Blazefire Saber**, initially equipped, reaches its first cap at level 26; **Perovskite** transforms it into **Flamberge**. At Flamberge's cap, **Trapezohedron** transforms it into one version of **Omega Weapon**. That final form adds an ATB slot. The separate **Axis Blade → Enkindler** route uses **Adamantite** for its first transformation and carries an attack-linked ATB-charge property into its final form. Sharing the name Omega Weapon does not make every lineage's statistics and passive behavior identical. [FFXIII38](#ffxiii38)
+
+**Interpretation:** an item's ancestry can remain mechanically relevant even when several paths converge on one displayed name. The player must choose which role to improve, not simply assume the final label identifies one universal best object.
 
 ## 15. Gil is decoupled from normal monster kills
 
@@ -635,30 +663,18 @@ Defense also becomes more action-oriented:
 
 The world runs under an apocalyptic countdown.
 
-Developer Toriyama described:
-- an in-game day of roughly 2–3 real-world hours under ordinary conditions;
-- abilities such as Chronostasis that can pause the world clock temporarily;
-- difficulty options affecting the pressure. [FFXIII26](#ffxiii26)
+In the 2013 pre-release interview, Toriyama estimated a day at roughly two to three real-world hours and described Chronostasis and difficulty choices. That estimate is **not the running clock's fixed conversion rate** and is not a guaranteed session deadline. [FFXIII26](#ffxiii26)
 
-The player has up to roughly thirteen in-game days to complete enough soul-saving work and reach the ending.
+The licensed guide describes one in-game minute as 2.5 real seconds **while the clock is advancing**. Ordinary battles, conversations, cutscenes, menus and the Ark pause it; Chronostasis spends **EP**, not XIII's TP, to create additional field time. Consequently a day of play can last much longer than a continuously ticking day. The Ultimate Lair is an explicit combat-time exception, so “all battles pause time” is too broad. [FFXIII39](#ffxiii39) [FFXIII42](#ffxiii42)
 
-Time passes during:
-- exploration;
-- travel;
-- some activities;
-- failures such as fleeing can impose time consequences.
-
-Quest completion becomes progression:
-- saves souls;
-- extends/affects available time;
-- raises Lightning's stats.
-
-There is no normal Crystarium-level progression.
+The campaign presents an extendable deadline rather than thirteen uninterrupted hours at a desk. Quest completion saves souls, supplies Eradia and raises Lightning's stats; there is no normal Crystarium progression. Schedules change when people and locations can be approached. Travel, deliberate waiting and mode-specific escape penalties therefore remain relevant even though many interfaces pause the clock. [FFXIII24](#ffxiii24) [FFXIII39](#ffxiii39)
 
 This is a major systems contrast:
 - XIII gates growth by authored story chapter;
 - XIII-2 opens time/area route selection;
 - Lightning Returns makes **time itself a spendable strategic resource**.
+
+**Interpretation:** the useful pressure is choosing an order of activities, not preventing the player from reading a menu. An explanation that omits pauses can create anxiety about a timer the player is not actually spending at that moment.
 
 ## 28. Comprehensive mechanics inventory
 
@@ -668,19 +684,21 @@ This is a major systems contrast:
 | Classes/roles | Six combat roles; Paradigms switch whole party roles mid-battle |
 | Attributes/leveling | Crystarium CP nodes; stage-gated story progression; secondary roles expensive |
 | Skill tree | Role-specific Crystarium paths |
-| Equipment | Character-specific weapon/accessory families with upgrade/transformation trees |
-| Upgrading | Component EXP + organic multiplier + mechanical high-EXP inputs + catalysts |
-| Magic | Role-bound abilities; no traditional universal spellbook; elemental/status logic |
+| Equipment | Character-specific weapon/accessory families with upgrade/transformation trees; named final forms can retain different lineages |
+| Upgrading | Component EXP + organic multiplier + mechanical high-EXP inputs + catalysts; named Blazefire/Axis chains |
+| Magic | Role-bound abilities; ordinary spells use ATB rather than MP; elemental/status logic |
+| Techniques | TP-paid Libra, recovery and summoning; knowledge differs from changing enemy resistance |
 | Summons | Character-specific Eidolons won in Gestalt trials; temporary allied actors |
-| Combat | ATB multi-command queue, leader control, AI allies, Paradigm shifts, Stagger |
-| Automation | Auto-battle selects commands; AI allies follow role policies |
+| Combat | ATB multi-command queue, partial execution, leader control, AI allies, Paradigm shifts, Stagger |
+| Automation | Auto-battle selects commands; AI allies follow role policies and known enemy information |
 | Party | Three active; player controls leader; leader KO causes failure |
-| Enemy interaction | Visible field enemies, preemptive strike, Scan/knowledge, stagger/status |
+| Enemy interaction | Visible field enemies, preemptive strike, Libra/knowledge, stagger/status and finite prebattle shrouds |
 | Traversal | Primarily corridor/zone progression; Gran Pulse open field, Waystone teleport, Chocobos |
 | Environment | Minimal systemic physics; Gran Pulse geography/traversal and enemy placement matter |
 | Activities | Cie'th Stone hunts, Chocobo treasure, optional enemies; little town/minigame breadth |
 | Economy | Gil from selling valuable components/treasure; Retail Networks at Save Stations |
-| Death/failure | Leader KO ends battle; generous near-battle restart |
+| Death/failure | Leader KO ends battle; Retry restores prebattle state rather than retaining enemy damage |
+| Postbattle state | HP restored; TP/consumables have different recovery and persistence rules; rating affects distinct reward chances |
 | Story | Strongly authored Cocoon→Pulse narrative |
 | Relationships | Authored party/family ties; no general social simulation |
 | NPCs/factions | Cocoon Sanctum/fal'Cie/Pulse history authored; few systemic NPC interactions |
@@ -691,7 +709,7 @@ This is a major systems contrast:
 | Multiplayer | Absent |
 | Endgame | Gran Pulse missions, superbosses, Crystarium/gear optimization |
 | XIII-2 contrast | Monster third slot, Paradigm retention, Historia Crux/time-area choice, more sidequests |
-| Lightning Returns contrast | Solo Lightning, swappable Schemata/ATB gauges, active defense, world countdown, quest-driven stats |
+| Lightning Returns contrast | Solo Lightning, swappable Schemata/ATB gauges, active defense, pause-qualified world countdown, EP and quest-driven stats |
 
 ## 29. Production and design intent
 
@@ -711,6 +729,18 @@ The important product lesson is not “copy shooters.”
 It is:
 **interaction pacing can be learned across genres without importing the whole genre.**
 
+### Hamauzu and Mina: a musical place need not have literal lyrics
+
+In Jeriaska's **April 26, 2011** interview, Mina describes improvising for Masashi Hamauzu's demos and eventually recording four vocal pieces. She identifies English in **Sulyya Springs** and **Will to Fight**, a fictitious-language solution when precise lyrics disrupted **The Gapra Whitewood**, and Ainu counting in **Battle Results**. She also played mukkuri for **Taejin's Tower**. These are participant accounts of specific sounds, not this researcher's listening notes. [FFXIII40](#ffxiii40)
+
+Hamauzu describes piano arrangement as preserving a many-layered composition's richness with one instrument. **Interpretation:** an identifiable musical world can survive reinterpretation when the expressive function is understood; literal reuse of every sound is not the only preservation method. The interview's concert and later-project discussion is not additional evidence of in-game features or a claim that the soundtrack reconstructs a real culture. [FFXIII40](#ffxiii40)
+
+### Kamikokuryo: make the imagined place clear to its builders
+
+In Square Enix's **March 16, 2020** interview, art director **Isamu Kamikokuryo** describes an early science-fiction direction and inviting designers across departments to submit ideas, exposing strengths outside their formal assignments. His work extended from concept design through model supervision to checking appearance in the actual game. New staff and the move into overall art direction increased the coordination burden. [FFXIII41](#ffxiii41)
+
+He describes preparing scenes and images until colleagues understood the world well enough to act with greater confidence. **Interpretation:** concept art is an internal communication tool as well as a polished illustration. Coherence depends on what other builders can infer and reproduce, not merely on one impressive picture. The page's Eden and Gran Pulse images are a viewing route; this pass used the written interview rather than claiming frame-by-frame visual analysis. [FFXIII41](#ffxiii41)
+
 ## 30. Distribution and commercial context
 
 Final Fantasy XIII launched:
@@ -720,9 +750,9 @@ Final Fantasy XIII launched:
 
 Square Enix announced on **March 10, 2010** that worldwide **sell-in shipments exceeded five million units**, including about three million shipped for the North American/PAL launch. [FFXIII28](#ffxiii28)
 
-Square Enix's fiscal-year material later reported **5.55 million cumulative sales as of March 31, 2010**, roughly distributed across Japan, North America and Europe. [FFXIII29](#ffxiii29)
+The exact later primary disclosure is **slide 9 of Square Enix's May 18, 2010 results presentation**. Its chart labels the unit as millions and the data as March-end: **5.55 total**, comprising Japan **1.85**, North America **1.79**, Europe **1.77** and Asia/Other **0.14**. The chart was visually inspected, not inferred from the annual-report index. It establishes a dated publisher-reported unit measure, not a separately verified retail sell-through, active-player or profit total. [FFXIII29](#ffxiii29)
 
-These are dated company metrics with different wording; the dossier does not casually add them together or extrapolate an unsupported 2026 lifetime figure.
+These dated measures are not added together or extrapolated into an unsupported 2026 lifetime figure. The more precise locator replaces the prior generic source citation without erasing the earlier milestone's different wording.
 
 ## 31. Five substantive independent written reviews
 
@@ -795,6 +825,8 @@ Steam testimony is self-selected and not prevalence evidence.
 
 ## 33. Concrete interaction studies
 
+**Constructed rules-based illustrations, not sessions personally played.** The original five situations are retained with explicit conditions, consequences and limits; two additional cases separate resource and clock contracts.
+
 ### A. Paradigm timing as group policy control
 
 **Situation:** boss has heavy damage windows but a large stagger vulnerability.
@@ -808,13 +840,13 @@ Steam testimony is self-selected and not prevalence evidence.
 7. return to stagger buildup;
 8. once Staggered, switch to high damage.
 
-The tactical skill is recognizing when the **whole party policy** should change.
+The tactical skill is recognizing when the **whole party policy** should change. **Conditions:** the chosen characters must actually have the named roles and relevant abilities, and the deck must contain those configurations. **Next decision:** preserve the opening or interrupt offense for another incoming attack. **Limit:** a mode switch does not erase existing damage or guarantee a cast completes before the next hit. Leaving a safe posture too early can defeat an otherwise sound plan. [FFXIII07](#ffxiii07) [FFXIII08](#ffxiii08)
 
 ### B. Auto-command is useful only because role bounds the search space
 
 Ravager Auto-battle does not choose arbitrary game actions. It chooses from Ravager-legal abilities using enemy knowledge.
 
-That boundedness is why the automation remains predictable.
+That boundedness is why the automation remains predictable. **Situation:** the player wants elemental pressure but the currently assigned role is wrong for that purpose. **Actions:** choose the appropriate Paradigm, inspect the selected queue and override it when necessary. **Result:** role assignment changes what the automated controller can propose. **Next decision:** continue the mode or return to a recovery role. **Limit:** no role can select an ability the character has not learned; automation is not a substitute for build readiness. [FFXIII05](#ffxiii05) [FFXIII07](#ffxiii07)
 
 **OpenLegend implication:** agent autonomy should usually operate within explicit roles/permissions rather than search every possible world action.
 
@@ -828,7 +860,7 @@ That boundedness is why the automation remains predictable.
 6. transform rather than discard;
 7. continue investing into a weapon identity chosen much earlier.
 
-Long-lived possessions retain meaning through upgrading.
+Long-lived possessions retain meaning through upgrading. **Named case:** after capping Blazefire Saber, use Perovskite to begin Flamberge rather than keep treating ordinary component EXP as the missing requirement. **Next decision:** invest in the new tier or preserve materials for a different role. **Limit:** a capped item, an uncapped item and an item lacking its catalyst need different actions; the final Omega name does not erase the selected lineage. [FFXIII12](#ffxiii12) [FFXIII38](#ffxiii38)
 
 ### D. Cie'th mission creates infrastructure
 
@@ -838,7 +870,7 @@ Long-lived possessions retain meaning through upgrading.
 4. Waystone activates;
 5. the completed challenge becomes a persistent teleport node.
 
-A quest result alters world logistics.
+A quest result alters world logistics. **Conditions:** this must be a Waystone-linked mission, not simply any defeated field monster. **Next decision:** connect it to another activated destination and reassess which trip is now practical. **Limit:** one activated point is not permission to teleport to every location; normal missions can have different rewards. The value is a changed route network, not an invented free-coordinate travel system. [FFXIII19](#ffxiii19)
 
 ### E. Eidolon acquisition tests role understanding
 
@@ -849,7 +881,15 @@ A quest result alters world logistics.
 5. fills gauge rather than depleting HP;
 6. Eidolon becomes a permanent character-specific resource.
 
-Narrative transformation is earned by demonstrating system knowledge.
+Narrative transformation is earned by demonstrating system knowledge. **Conditions:** the required actions depend on that Eidolon; another acquisition fight's method is not automatically correct here. **Next decision:** use the new summon in a suitable future situation rather than assume ownership removes its resource cost. **Limit:** an ordinary damage-maximizing approach can fail the actual objective even when it looks effective against a health bar. [FFXIII14](#ffxiii14) [FFXIII15](#ffxiii15)
+
+### F. Full health does not mean the same preparation is available again
+
+**Intention:** continue exploring after a demanding victory. **Conditions:** HP has recovered, but a technique or consumable was spent. **Actions:** inspect TP and inventory before selecting the next fight, preserving a scarce resource when ordinary role-based actions suffice. **Interaction:** automatic recovery restores one capacity without restoring every input to the previous plan. **Result:** the next encounter begins healthy but with a different preparation budget. **Next choice:** continue, seek recovery or choose an easier task. **Limit:** treating the health reset as a total reset can leave a needed technique unavailable. [FFXIII36](#ffxiii36) [FFXIII37](#ffxiii37)
+
+### G. A paused clock is time to plan, not time to panic
+
+**Lightning Returns comparison. Intention:** reach a scheduled opportunity before it closes. **Conditions:** the route is uncertain and Chronostasis is available. **Actions:** inspect the map and plan while the ordinary menu pauses the clock; use the EP ability only when field time matters. **Interaction:** information gathering and timed travel spend different resources. **Result:** planning need not consume the same deadline as running the route. **Next choice:** travel, complete a nearby task or deliberately wait for an opening. **Limit:** carry the correct rule into the chosen activity—the Ultimate Lair does not preserve ordinary battle-time protection. [FFXIII39](#ffxiii39) [FFXIII42](#ffxiii42)
 
 ## 34. OpenLegend transferable inspiration and limits
 
@@ -924,34 +964,36 @@ Lightning Returns:
 
 ## 35. Preservation and requirement audit
 
-No FFXIII-specific prior game/mechanics/dossier owner existed on this branch before G90, so this dossier is additive.
+No FFXIII-specific prior game/mechanics/dossier owner existed on this branch before G90, so this dossier is additive. The corrective pass preserves the original sections, five example sequences, sequel comparisons and FFXIII01–34 source identities. It supplies missing operative and audiovisual detail and replaces the generic FFXIII29 locator with the exact inspected primary chart. Recommendations remain research interpretations, not adopted engine requirements.
 
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / scope / promise | §§1–2 |
-| R02 actions / major mechanics | §§3–23, 25–28, 33 |
-| R03 items / entities / composition | §§11–19, 22–23 |
-| R04 progression / economy / time | §§11–16, 21–23, 26–27 |
-| R05 concrete interactions | §§5–10, 13–19, 22–23, 33 |
+| R02 actions / major mechanics | §§3–23, 25–28, 33; added resource, retry, preparation and clock rules |
+| R03 items / entities / composition | §§11–19, 22–23; named catalysts and distinct weapon lineages |
+| R04 progression / economy / time | §§3, 9–16, 21–23, 26–27; recovery and reward distinctions |
+| R05 concrete interactions | §33: seven complete situations retaining earlier examples, with prerequisites, next choices and limits |
 | R06 people / AI / social / multiplayer | §§4–9, 17–19, 24–26, 28 |
-| R07 art / audio / interface / feel | §§2–6, 16, 20, 29–32 |
+| R07 art / audio / interface / feel | §§2–6, 16, 20, 29–32; direct Hamauzu/Mina and Kamikokuryo accounts |
 | R08 story / narrative / play | §§1, 17, 20–24, 25–27 |
 | R09 production / development | §29 |
 | R10 marketing / distribution / virality | §30 |
-| R11 commercial / participation | §§30, 32 |
+| R11 commercial / participation | §§30, 32; exact slide and metric boundaries |
 | R12 reviews / player feedback | §§31–32 |
-| R13 transferable inspiration / limits | §34 |
-| R14 sources / viewing / preservation / navigation | §§2, 35 + sources |
+| R13 transferable inspiration / limits | §34 and labeled local interpretations |
+| R14 sources / viewing / preservation / navigation | §§2, 35 + sources; original numbered routes retained |
 
 ### Evidence limits
 
 - Console original and 2014 PC-port quality are distinguished.
-- Five independent substantive written reviews were inspected.
-- Steam player evidence is self-selected and current hardware/port-sensitive.
-- March 10 “>5m sell-in shipments” and March 31 “5.55m cumulative sales” are kept as separately worded/datestamped company metrics.
-- XIII-2 and Lightning Returns are treated as distinct games/rulesets.
-- Gran Pulse is described as freer/more open, not falsely labeled a full modern open-world simulation.
-- No claim depends on unseen video footage.
+- Five independent substantive written reviews were inspected in the original pass; their inherited readings are not falsely claimed to have all been repeated in this correction.
+- Steam player evidence is self-selected and hardware/port-sensitive; the original snapshot is retained rather than represented as a fresh survey.
+- March 10 “>5m sell-in shipments” and slide 9's March-end 5.55m units are distinct dated company measures, not added together or relabeled as profit.
+- XIII-2 and Lightning Returns are distinct games/rulesets. Ordinary clock pauses do not apply universally to the Ultimate Lair.
+- Gran Pulse is freer/more open, not a full modern open-world simulation.
+- Added guide passages are documentary evidence, not a personally tested build, probability experiment or current-mod certification.
+- No claim depends on unseen video footage or unheard audio. The financial chart was actually rendered and visually inspected; the production interviews were read as text. Useful subsequent viewing targets include partial ATB execution, shroud approach, weapon transformation and a paused versus running Lightning Returns clock.
+- The final slice-wide source/link review and seven-file packet audit remain separate gates.
 
 ## 36. Completion conclusion
 
@@ -1024,13 +1066,13 @@ For OpenLegend:
 
 <a id="ffxiii25"></a>**FFXIII25 — [Lightning Returns: Final Fantasy XIII review](https://www.gamesradar.com/lightning-returns-final-fantasy-xiii-review/).** GamesRadar+, 2014. Independent Schemata, multiple ATB gauges, active defense and clock-pressure evidence.
 
-<a id="ffxiii26"></a>**FFXIII26 — [Lightning Returns interview: world clock](https://blog.playstation.com/2013/06/13/lightning-returns-final-fantasy-xiii-e3-interview/).** PlayStation Blog, 2013. Primary estimate that an in-game day is roughly 2–3 real hours under ordinary play and that time can be paused through abilities such as Chronostasis.
+<a id="ffxiii26"></a>**FFXIII26 — [Lightning Returns interview: world clock](https://blog.playstation.com/2013/06/13/lightning-returns-final-fantasy-xiii-e3-interview/).** PlayStation Blog, 2013. Pre-release estimate of roughly 2–3 real hours per experienced day, not a fixed active-clock ratio. Shipped pause and exception rules are separately sourced below.
 
 <a id="ffxiii27"></a>**FFXIII27 — [Final Fantasy XIII director interview](https://www.digitalchumps.com/final-fantasy-xiii-director-interview/).** Digital Chumps, 2010. Toriyama on Crystal Tools construction/testing and HD multiplatform development.
 
 <a id="ffxiii28"></a>**FFXIII28 — [FINAL FANTASY XIII worldwide sell-in exceeds five million units](https://www.hd.square-enix.com/eng/news/2010/20100310_01en.html).** Square Enix Holdings, 2010-03-10. Primary dated sell-in shipment milestone.
 
-<a id="ffxiii29"></a>**FFXIII29 — [Square Enix Holdings Annual Report 2010 / shareholder materials](https://www.hd.square-enix.com/eng/ir/library/ar.html).** Square Enix. Company fiscal-year reporting used for 5.55 million cumulative FFXIII sales as of March 31, 2010; retained as a distinct metric/date from launch sell-in.
+<a id="ffxiii29"></a>**FFXIII29 — [Square Enix results presentation, May 18, 2010, slide 9](https://www.hd.square-enix.com/eng/ir/library/pdf/explanatory_20100518_02.pdf#page=9).** Square Enix Holdings. Primary chart titled “Globalization: Increased AAA Title Releases,” units in millions, data as of March-end. PDF page index 8 was rendered and visually inspected September 26, 2026. Exact 5.55 total and regional components verified; no independent retail/active-user/profit interpretation inferred. Replaces the previous generic annual-report-index locator.
 
 <a id="ffxiii30"></a>**FFXIII30 — [Final Fantasy XIII Review](https://www.gamespot.com/reviews/final-fantasy-xiii-review/1900-6252884/).** Kevin VanOrd, GameSpot, 2010-03-05. Full independent review; one of five review publications.
 
@@ -1042,3 +1084,22 @@ For OpenLegend:
 
 <a id="ffxiii34"></a>**FFXIII34 — [Final Fantasy XIII Review](https://www.thesixthaxis.com/2010/03/05/review-final-fantasy-xiii/).** TheSixthAxis, 2010-03-05. Full independent review; battle/presentation praise and linearity/character criticism.
 
+### Corrective-pass sources
+
+Accessed September 26, 2026. Primary game text, licensed guides, community mechanics references and participant interviews have different evidentiary roles. No guide's proposed optimal tactic is a personally reproduced result.
+
+<a id="ffxiii35"></a>**FFXIII35 — [Datalog Guide](https://gamefaqs.gamespot.com/ps3/928790-final-fantasy-xiii/faqs/59505).** Original game text transcribed by squall48632, updated March 14, 2010. Partial queues, items, Retry, technique/Libra and shroud passages inspected. Transcription defects and sweeping strategic claims are not universal rules.
+
+<a id="ffxiii36"></a>**FFXIII36 — [FFXIII gameplay](https://thefinalfantasy.net/ff13/gameplay.html).** The Final Fantasy, community system reference. No-MP and postbattle HP passages read; descriptive resource behavior, not a source-code or current-mod audit.
+
+<a id="ffxiii37"></a>**FFXIII37 — [Advanced Mechanics](https://gamefaqs.gamespot.com/xbox360/950899-final-fantasy-xiii/faqs/80345/advanced-mechanics).** Lost_Nemo10, guide v1.0, February 7, 2023. Battle-rank and TP/reward sections inspected. Probabilities and reward categories distinguished; exact whole tables not reproduced.
+
+<a id="ffxiii38"></a>**FFXIII38 — [Lightning's Weapons](https://gamefaqs.gamespot.com/xbox360/950899-final-fantasy-xiii/faqs/80345/lightnings-weapons).** Lost_Nemo10, same guide. Blazefire, Flamberge, Axis, Enkindler and corresponding Omega entries read. Names, catalysts and retained properties establish examples, not a universal best build.
+
+<a id="ffxiii39"></a>**FFXIII39 — [Time Management in Lightning Returns](https://primagames.com/news/time-management-lightning-returns-final-fantasy-xiii).** Prima Games Staff, January 29, 2014; licensed-guide excerpt/promotion. Running-clock ratio, pauses, schedules and Chronostasis text read. Advice to remain constantly productive is not endorsed as necessary for every player; the Ultimate Lair exception is supplied by FFXIII42.
+
+<a id="ffxiii40"></a>**FFXIII40 — [Interview: Following Final Fantasy XIII, Composer Hamauzu Bound for Paris](https://www.gamedeveloper.com/audio/interview-following-i-final-fantasy-xiii-i-composer-hamauzu-bound-for-paris).** Jeriaska, April 26, 2011, direct Hamauzu/Mina interview. Vocal languages, named tracks, instrument and arrangement passages read. Interview is before the announced May concert; no performance or album listening claimed.
+
+<a id="ffxiii41"></a>**FFXIII41 — [Isamu Kamikokuryo interview](https://na.finalfantasy.com/topics/160).** Square Enix, March 16, 2020. Primary XIII art-direction answers read within a broader trading-card interview. Concept submissions, modeling supervision and communication accounts are not independently measured productivity or quality results.
+
+<a id="ffxiii42"></a>**FFXIII42 — [Ultimate Lair and Last One Strategies](https://www.gamerguides.com/lightning-returns-final-fantasy-xiii/guide/normal-walkthrough/extra-day/ultimate-lair-and-last-one-strategies).** Gamer Guides, authored Lightning Returns walkthrough. Explicit combat-time and Chronostasis restrictions inspected. Optional-dungeon rules are not projected onto every ordinary battle; no personal clear claimed.
