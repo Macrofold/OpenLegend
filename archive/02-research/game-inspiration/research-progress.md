@@ -32,8 +32,8 @@ RuneScape and Old School RuneScape remain independent pending full passes G48/G4
 | G12 — Diablo IV | **Audited** | `9e936ceb5ea647a93d0cdb800b9a6b661887f68b` — explicit mechanics-inventory closure; rechecked Hell's Legacy/Lord of Hatred as live and kept the announced 2027 Amazon future. |
 | G13 — Dreams | **Audited** | `e4a015ebb24b6a39f66d65a043ff224e99b52031` — explicit platform-level mechanics closure; preserved live-support sunset versus continued play/create/share, with online multiplayer correctly recorded as never shipped. |
 | G14 — Project Spark | **Audited** | `62ae3e91121b5c4f69930958320e2f7717b02ec3` — explicit creator-platform mechanics closure; preserved 2016 online-service shutdown versus limited local/offline artifact survival. |
-| G15 — Worlds Adrift | **In progress** | Recheck original-MMO shutdown versus Lost Skies successor boundary and full mechanics inventory. |
-| G16 — Spore | Pending | — |
+| G15 — Worlds Adrift | **Audited** | `ecfb2164e0ca076956ca794d47b0a196369289dd` — explicit mechanics-inventory closure; preserved 2019 MMO shutdown versus separate Lost Skies 1.0 and unofficial reconstruction projects. |
+| G16 — Spore | **In progress** | Recheck legacy service/edition boundaries and full five-stage/creator mechanics inventory. |
 | G17 — No Man's Sky | Pending | — |
 | G18 — EverQuest Next | Pending | — |
 | G19 — Ultima Online | Pending | — |
