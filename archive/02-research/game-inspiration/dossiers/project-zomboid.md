@@ -8,7 +8,7 @@
 
 The Indie Stone's Project Zomboid is an isometric survival sandbox in fictionalized 1993 Kentucky. The player creates an ordinary survivor, scavenges, establishes shelter and tries to keep living. There is no conventional campaign victory that makes all subsequent survival unnecessary. The Steam Early Access date is November 8, 2013, distinct from the earlier public game. The current storefront still identifies the product as Early Access; a stable numbered build is not a 1.0 declaration. [P4] [P13] [G2]
 
-On July 29, 2026, the developer released **Build 42.20 to Stable**, with older-save incompatibility and legacy branch choices explained. On September 23, it released **42.21 Unstable**, an opt-in follow-up addressing disappearing zombies, synchronization, duplication and visibility problems. The specific dated post supersedes the site's stale channel header; it does not demonstrate that the fixes are already in every stable installation. Its advice to back up saves is not evidence that a particular player's save has been tested. [P1] [P2]
+On July 29, 2026, the developer released **Build 42.20 to Stable**, with older-save incompatibility and legacy branch choices explained. The current official news header and the September 23 patch text identify the maintained Stable line as **42.20.4**. On September 23, the team released **42.21 Unstable**, an opt-in follow-up addressing disappearing zombies, synchronization, duplication, visibility, anti-cheat and other issues. The dated 42.21 post supersedes the site's stale Unstable header, which still displays 42.20.4; it does **not** demonstrate that 42.21 fixes are already in every stable installation. Its advice to back up saves is not evidence that a particular player's save has been tested. [P1] [P2]
 
 Current presets include **Apocalypse, Outbreak, Rising and Extinction**, alongside custom sandbox configuration and named challenges. They change the intended rhythm rather than creating one universal difficulty. Build 42's animals, broader crafting, map revisions, controller remapping and mod-management work are delivered scope in the 42.20 overview. This is separate from **planned human NPCs** and the old Kate/Baldspot story ambitions listed on the product page. Animal behavior and human co-op do not prove a finished social-NPC simulation. [P3] [P4]
 
@@ -192,6 +192,26 @@ The September 23 Unstable patch addresses related defect categories, but this do
 
 ## 11. Coverage, preservation and viewing routes
 
+### September 26 requirements-and-corrections audit
+
+A fresh audit against the full mechanics inventory confirms broad coverage and closes the remaining explicit categories:
+
+- **Identity / classes / attributes / skills / leveling / trees:** appearance, occupations, positive/negative traits, Strength/Fitness and use-grown skill tracks are covered in §2. Occupations are starting competencies rather than immutable classes; there is no generic character-level/perk tree.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** spatial/weight carrying, melee/firearms, clothing protection, tools, medical supplies, vehicle parts, recipes, workstations and Build 42's deeper material/part lifecycle are covered in §§2–4.
+- **Magic / spells / powers:** absent natively. Capability comes from traits, skills, tools, equipment, infrastructure, knowledge and configuration rather than supernatural player powers.
+- **Traversal / environmental and object interaction:** walking/running, climbing, doors/windows, vehicles, searching, construction, generators, utilities, farming and world-object interaction are covered across §§3–5.
+- **Activities / minigames:** scavenging, building, farming, fishing, foraging, animal care, reading, cooking, vehicle restoration and crafting are integrated survival activities rather than separate arcade minigame economies.
+- **Combat / stealth / loot / rewards:** melee/firearms, noise/avoidance, cautious line-of-sight play, scavenged supplies and practical rewards are covered in §§2–5. Avoidance and sneaking are survival behaviors rather than a dialogue/social-stealth subsystem.
+- **Death / failure / recovery / economy / trading:** wounds, Knox Infection, moodles, treatment, permadeath/restarting lives and configurable loss are covered in §§2 and 5. There is no completed native human merchant economy; multiplayer barter is player-driven (§4).
+- **Story / relationships / romance / reputation / party / companions:** radio/TV/documents/environmental storytelling and player-authored survivor histories are covered in §5. Native human romance, recruitable NPC party members and faction-reputation progression remain absent in delivered Build 42.20.
+- **NPC/AI schedules / factions:** zombies and Build 42 animals have AI behavior; planned human NPCs are explicitly future scope, so the dossier does not infer a delivered civilian schedule, diplomacy or survivor-faction simulation (§§1, 4).
+- **World map / environment / quests / events:** the expanded authored Knox Country, utility shutdowns, weather/environment and configurable scenarios/challenges are covered in §§1, 4–5. There is no mandatory conventional main quest.
+- **Building / settlements / management:** fortification, utilities, farming, animal keeping, crafting/workstations and cooperative long-term bases are major systems (§4).
+- **Multiplayer / social / endgame / return loops:** solo, online player-hosted multiplayer, local split-screen, custom servers and mods are covered in §5. There is no console release inferred from controller support. Long-term return is driven by new survivor stories, server communities, settings/mods, exploration and Build 42's expanded late-game production rather than a formal campaign victory.
+
+The freshness check also clarifies a confusing official-site presentation: **42.20.4 remains Stable**, while **42.21 is the September 23 opt-in Unstable test**. The news index header still shows 42.20.4 for both channels, but the newer dated release body explicitly provides 42.21 opt-in instructions and calls it Unstable; the dated post is the authoritative state for that branch. [P2][P13]
+
+
 | Requirement | Substantive owner |
 | --- | --- |
 | R01 identity/version/promise | §1; dated stable/unstable distinction |
@@ -217,8 +237,8 @@ For viewing, retain the chapter's **Build 42 beginner guide** and **200-hour ret
 
 Accessed September 26, 2026. Wiki pages are first-party-hosted, volunteer-maintained documentation with mixed Build 41 and early Build 42 labels. Specific old thresholds and exact balancing tables are not asserted as current unless corroborated. Relevant mechanics sections were read; this does not mean every catalog entry, navigation link or source-code sample was audited.
 
-- **P1 — [Build 42.20 release][P1], July 29, 2026.** Primary Stable delivery/save boundary.
-- **P2 — [42.21 Unstable][P2], September 23, 2026.** Dated release body and fixes; stale header explicitly superseded.
+- **P1 — [Build 42.20 release][P1], July 29, 2026.** Primary Stable delivery/save boundary; subsequent official pages identify the maintained stable line as 42.20.4.
+- **P2 — [42.21 Unstable][P2], September 23, 2026.** Dated opt-in release body and fixes; it explicitly supersedes the stale news-index Unstable header without implying Stable has moved to 42.21.
 - **P3 — [42.20 feature overview][P3].** Complete overview read; current presets, parts, controller and mod-management scope, not independent reception.
 - **P4 — [The game][P4].** Published native modes, purchase route and clearly separate future NPC promises.
 - **P5 — [Carless/Porter][P5], June 9, 2026.** Published interview excerpts plus analyst model; linked extended Q&A not read and modeled sales not an audited company total.
