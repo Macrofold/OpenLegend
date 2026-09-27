@@ -12,20 +12,24 @@ The audit proceeds one game at a time. Material corrections are committed to the
 
 ## Current audit state
 
-**Active: G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl.** G121–G129 have been reread against the complete standard and corrected where needed.
+**Audit complete: G121–G130.** Every game in this branch range has been reread against R01–R14 and the explicit mechanics inventory; all material gaps/corrections found in this pass have been repaired and committed. The separate whole-library P01–P05 gates remain pending.
 
 | ID | Subject | Audit status | Audit commit / finding |
 | --- | --- | --- | --- |
 | G121 | Battle Brothers | **Audited** | `81fbb840f8a09c5e9deb6cb135d07633e5aeaaef` — R01–R14 and explicit mechanics inventory were already substantive. Audit replaced the latest-version dependency on a third-party GOG mirror with directly inspected June/July 2026 Steam primary announcements, explicitly pinning v1.5.2.3 as the newest published Steam patch found and preserving platform-parity limits. |
 | G122 | Cataclysm: Dark Days Ahead | **Audited** | `a916e8e76b77f8808544728c797daaa0247e234c` — mechanics/reception coverage was already substantive; audit added a September 27 primary check that the official releases page still names 0.I Ito as latest stable while keeping experimental builds separate. |
-| G123 | Rain World | **Audited** | `fbd32f6956bfed39e7acf93e49851ee260703af5` — corrected the stale Downpour-era Jolly boundary using Watcher 1.5: official local co-op now covers all five More Slugcats campaigns and The Watcher. Added explicit stealth/perception coverage and current 1.11.7/1.11.8 patch chronology. |
-| G124 | Persona 5 Royal | **Audited** | `ec1844a66a5449206b864cfa909229f48e331d4b` — clarified that Maruki Councillor Rank 9 by Nov. 17, not all three Royal Confidants, is the mandatory third-semester gate; Akechi/Kasumi remain additional-content routes. Added explicit absence of a dynamic faction-reputation system. |
+| G123 | Rain World | **Audited** | `873ce900eb0739a6fc0c4e0c6bf0e0363d8c7bf2` — corrected Watcher-era Jolly scope and current patch chronology, added stealth/perception, then completed the explicit mechanics inventory with the five Downpour body identities, Gourmand crafting, and loot/faction/building/class-system boundaries. |
+| G124 | Persona 5 Royal | **Audited** | `f5079ceb4d71b2243a407005985696f31135582d` — clarified Maruki Rank 9 by Nov. 17 as the mandatory third-semester gate, separated Akechi/Kasumi additional-content routes, and explicitly closed both dynamic-faction and building/settlement-management absences. |
 | G125 | XCOM 2 | **Audited** | `284cd3bebd2f6bff7a7d9c69d48cdc86affe9de0` — all major mechanics were covered; corrected present-tense launcher-friction language because 2K removed the launcher from Steam/Epic in Nov. 2024, while preserving older complaints as dated reception. |
-| G126 | Crusader Kings III | **Audited** | `29455348aa9f7c6d486225c627ab07790b83b00a` — pinned By God Alone to Sept. 30, 2026 as future scope and Silk & Silver as later roadmap, added the current optional content subscription, and explicitly closed the absent general crafting/avatar-stealth categories. |
+| G126 | Crusader Kings III | **Audited** | `c09d278ce86f7a00d7d1bc23ca35451ffef6eb99` — pinned By God Alone/Silk & Silver as future, added the current optional content subscription, and explicitly closed general crafting/avatar-stealth/adventuring-party absences plus the 1453/no-end-date campaign-return boundary. |
 | G127 | Dragon's Dogma 2 | **Audited** | `16c8837cc5a6e5a7f4a389885050978dae19faea` — integrated the shipped Sept. 1 Title Update 3.2 into core mechanics: three Arisen save slots with Autosave/Interim/Inn Rest data, six skill slots, Dragonsplague cure/behavior changes and performance work. Added explicit stealth and dynamic-faction-system absences; Dark Arisen remains future Oct. 9 content. |
-| G128 | Ultima VII: The Black Gate | **Audited** | `7aa2c107c4253e864c37a4519c2c9253479b687f` — explicit limited-crafting and absent dedicated-stealth boundaries added; current preservation route verified as Exult 1.12.1 stable (Windows 1.12.1-1 packaging reissue) versus 1.13.x snapshots. |
+| G128 | Ultima VII: The Black Gate | **Audited** | `ec7110a1c676972bcd45cce4c40e1f1200c9fb3a` — verified Exult stable/snapshot preservation boundaries; added limited-crafting, no dedicated-stealth/base-building distinctions; added original name/gender character creation and diegetic Avatar/companion death-recovery coverage. |
 | G129 | Oxygen Not Included | **Audited** | `be6d1466b5193ff94c8a964f0c96c6b70742e201` — rechecked the current DLC line through Aquatic and subsequent July maintenance updates; explicitly closed conventional combat, stealth and political-faction absences rather than relying on implication. |
-| G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | **In progress** | Full R01–R14/mechanics/current-version/A-Life audit. |
+| G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | **Audited** | `a47b3d4520aa97f99fb6e3e56d5e5af2e312967c` — reconfirmed 2.0.6 as the newest gameplay patch visible Sept. 27; retained versioned A-Life evidence; explicitly closed fixed-protagonist/class-tree, crafting, party/romance, base-building and endgame/Cost of Hope return-route boundaries. |
+
+## G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl closure evidence
+
+The original dossier already had unusually strong versioned A-Life evidence: launch failures, Patch 1.1's explicit offline-simulation bug, 1.5 persistence, 1.7 territorial behavior and 2.0's current POI/off-screen-looting changes. The audit reconfirmed **2.0.6 (September 18)** as the newest gameplay patch visible on September 27; the September 24 official item is promotional rather than 2.0.7. It also closes the explicit mechanics inventory: Skif is fixed rather than a character-creation/class-tree build; technician upgrades are not a general crafting profession; there is no persistent recruitable party/romance or base-building system; and the dossier now explains endings plus Cost of Hope's Early/Advanced Start return routes rather than implying an unbounded postgame/NG+ loop.
 
 ## G129 — Oxygen Not Included closure evidence
 
@@ -33,7 +37,7 @@ The existing dossier already covered Duplicant traits/skills/morale/needs, prior
 
 ## G128 — Ultima VII: The Black Gate closure evidence
 
-The original dossier already covered the signature world simulation—object manipulation, nested inventory, party equipment, schedules, conversation knowledge, spells/reagents, vehicles, hunger, economy/training, NPC social structure, eight situations and five historical/retrospective critical accounts. The audit closes two explicit mechanics-inventory edges: breadmaking and similar authored transformations are not inflated into a general crafting profession, and theft/object access are not mislabeled as a dedicated stealth subsystem. Exult's current preservation boundary is now verified as stable 1.12.1 (Windows 1.12.1-1 packaging reissue) versus separate 1.13.x snapshots.
+The original dossier already covered the signature world simulation—object manipulation, nested inventory, party equipment, schedules, conversation knowledge, spells/reagents, vehicles, hunger, economy/training, NPC social structure, eight situations and five historical/retrospective critical accounts. The audit adds the original manual's **name/gender Avatar creation** boundary and explicit death/recovery behavior for the Avatar and companions. It also closes three inventory edges: breadmaking/specific transformations are not inflated into a general crafting profession, theft/object access is not mislabeled as a dedicated stealth subsystem, and free object rearrangement is not base/settlement construction. Exult's current preservation boundary is verified as stable 1.12.1 (Windows 1.12.1-1 packaging reissue) versus separate 1.13.x snapshots.
 
 ## G127 — Dragon's Dogma 2 closure evidence
 
@@ -41,7 +45,7 @@ The audit found that the original dossier reduced a substantial shipped systems 
 
 ## G126 — Crusader Kings III closure evidence
 
-The initial dossier already covered ruler identity/skills, lifestyles, stress, schemes/hooks, dynasties, succession, titles, vassals/factions, culture/faith, warfare, travel, landless and nomadic modes, eight worked cases, multiplayer, production, commercial milestones and five reviews. The audit corrected the September 2026 roadmap boundary: By God Alone is scheduled for September 30 and therefore remains future, with Silk & Silver later still. It also records the current optional released-content subscription and explicitly states that CK3 has no general material-crafting profession or avatar-scale stealth mode; hidden action instead lives in schemes, secrecy and social information.
+The initial dossier already covered ruler identity/skills, lifestyles, stress, schemes/hooks, dynasties, succession, titles, vassals/factions, culture/faith, warfare, travel, landless and nomadic modes, eight worked cases, multiplayer, production, commercial milestones and five reviews. The audit corrected the September 2026 roadmap boundary: By God Alone is scheduled for September 30 and therefore remains future, with Silk & Silver later still. It records the current optional released-content subscription and explicitly states that CK3 has no general material-crafting profession, avatar-scale stealth mode or controllable adventuring party; people instead occupy council/court/army/travel roles. The return loop now explicitly distinguishes the default 1453 end date from the no-end-date game rule and replay through different rulers/dynasties.
 
 ## G125 — XCOM 2 closure evidence
 
@@ -49,11 +53,11 @@ The dossier already covered the complete tactical/strategic inventory: classes, 
 
 ## G124 — Persona 5 Royal closure evidence
 
-The audit found one important endgame-gate ambiguity and one explicit-inventory omission. The dossier now states that Maruki's Councillor Rank 9 by November 17 is the mandatory third-semester unlock, while Akechi/Kasumi deadlines preserve additional scenes/content rather than opening the semester themselves. R06 now explicitly says Royal has no general dynamic faction-reputation/territory system. Calendar, combat, Personas, crafting, social stats, Confidants, Mementos, multiplayer/network absence, eight situations and five reviews remain intact.
+The audit found one important endgame-gate ambiguity and two explicit-inventory omissions. The dossier now states that Maruki's Councillor Rank 9 by November 17 is the mandatory third-semester unlock, while Akechi/Kasumi deadlines preserve additional scenes/content rather than opening the semester themselves. It explicitly says Royal has no general dynamic faction-reputation/territory system and no building/settlement-management loop; Thieves Den is a collection/activity space rather than a base builder. Calendar, combat, Personas, infiltration-tool crafting, social stats, Confidants, Mementos, multiplayer/network absence, eight situations and five reviews remain intact.
 
 ## G123 — Rain World closure evidence
 
-The audit found a substantive version error rather than a missing major system. The dossier still repeated the original Downpour store wording that Jolly Co-Op was limited to base campaigns. Primary Watcher 1.5 announcements show that September 25, 2025 retroactively added official Jolly support to all five More Slugcats campaigns and The Watcher campaign. The dossier now records that current local-co-op boundary, adds explicit stealth/concealment/perception coverage, and pins the inspected 2026 gameplay-patch chronology through 1.11.8. Original reviews, eight worked cases, Steam sampling and source limits remain.
+The audit first found a substantive version error: the dossier repeated the original Downpour wording that Jolly Co-Op was limited to base campaigns. Watcher 1.5 added official Jolly support to all five More Slugcats campaigns and The Watcher; the dossier now records that current boundary and the 2026 patch line through 1.11.8. A second mechanics-inventory pass then found that Downpour's actual body diversity was too compressed. The repaired dossier now covers Rivulet, Gourmand, Artificer, Spearmaster and Saint as distinct authored playstyles, includes the developers' account of **Gourmand crafting**, and explicitly distinguishes Rain World's lack of conventional classes/attribute trees, loot treadmill, political faction management, romance and base-building from its real equivalents. Original reviews, eight worked cases, Steam sampling and source limits remain.
 
 ## G122 — Cataclysm: Dark Days Ahead closure evidence
 
@@ -66,6 +70,18 @@ The audit's only material change was current-version certification. The project'
 The original dossier already contained the required mechanics-inventory closure: generated identities/backgrounds/traits, attributes and perks, items/equipment, taxidermy and armor attachments, supernatural-but-not-player-spellcasting boundaries, strategic/tactical traversal, contracts/ambitions/arena, combat and map avoidance, salvage/rewards, permanent death/injuries/ironman recovery, economy/payroll, company mood/reputation, enemy behavioral distinctions, crises/factions, single-player/mod boundary and late-game replay/origin loops. Eight worked situations and five independent written reviews plus Steam player evidence were retained.
 
 The one audit correction was evidentiary/current-version quality rather than missing mechanics. The dossier now uses the directly readable Steam update stream for v1.5.2.2/v1.5.2.3 rather than treating the GOGDB mirror as the primary authority. No prior examples, reviews, limitations or source identities were removed.
+
+## Cross-game mechanics-inventory verification
+
+After the game-by-game repairs, the audit reran a second-pass matrix across all ten dossiers for every explicit mechanics-inventory category named by the assignment: identity/creation/classes, attributes/skills, progression/perks/tech, items/inventory/equipment, crafting/upgrading, magic/powers or useful absence, traversal, environmental/object interaction, activities, combat, stealth, looting/rewards, death/failure/recovery, economy/trading, story, relationships/romance/reputation, party/companions, NPC/AI/schedules, factions, world/environment, quests/events, building/settlement/management, multiplayer/social systems and endgame/return loops.
+
+**Result after repair: no category is unaddressed for G121–G130.** Where a category is inapplicable, the dossier now states the useful absence instead of borrowing a superficially similar mechanic. G121 and G122 intentionally combine R10 and R11 into one substantive `R10–R11` section; both distribution/marketing and commercial/participation requirements are present, so this is a heading shape rather than missing coverage. Every other dossier has explicit R01 through R14 sections. Five-written-review minimums and Steam/player sampling (or the documented non-Steam substitute for Ultima VII) remain present.
+
+## Final diff and verification
+
+The final branch comparison against audit baseline `757bafba40efa875733aba635c3aec829d4c92ad` contains only the **ten G121–G130 dossiers**, this audit record, the canonical `research-progress.md` ledger and `docs/documentation-changelog.md`. No runtime file, unrelated dossier or prior research owner changed. The audit table has **zero Pending/In progress rows**, and the canonical ledger records G121–G130 as requirements-audited with no active game in this range.
+
+A second-pass mechanics matrix checked every explicit inventory category named by the assignment after the repairs; no G121–G130 dossier has an unaddressed category. Parent navigation to the roster, requirements and progress owners was retained, and the new audit link is present in the canonical ledger. This is a scoped static document/diff review, not an automated external-link crawler.
 
 ## Verification boundary
 

@@ -14,9 +14,9 @@ This library now contains the six parallel research branches below, merged with 
 | `docs/game-inspiration-games-81-100` | `203b409d9fe8` | [Identified G81–G100 audit repairs complete, with retained evidence limits.](#g81g100-branch-research-state) |
 | `docs/game-inspiration-games-101-120` | `b1a383dc7796` | [Revised scope is G101–G110; second-pass audit and scoped integration recorded complete.](#g101g110-branch-research-state) |
 | `docs/game-inspiration-games-111-120` | `2e7ddf5f53a1` | [G111–G120 follow-up audit recorded complete, with retained evidence limits.](#g111g120-branch-research-state) |
-| `docs/game-inspiration-games-121-end` | `ec7110a1c676` | [All ten initial passes complete; latest follow-up audit state and closure evidence are retained.](#g121g130-branch-research-state) |
+| `docs/game-inspiration-games-121-end` | `28cc5a5fc0c1` | [All ten initial passes and full requirements-and-corrections audits complete; final mechanics matrix and scoped verification retained.](#g121g130-branch-research-state) |
 
-All G01–G130 initial research is now present. The approved [G131–G148 survival expansion](#survival-expansion--g131g148) adds eighteen pending passes, bringing the roster to 148. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
+All G01–G130 initial research is now present, and all original ranges record their scoped audit/remediation work as complete. The approved [G131–G148 survival expansion](#survival-expansion--g131g148) adds eighteen pending passes, bringing the roster to 148. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
 
 For later updates, fetch `origin` and merge each updated remote branch into `docs/game-inspiration-library` with a normal merge commit. Do not squash or rebase the shared histories. Keep dossier paths stable and reconcile any shared ledger changes within their own range; no propagation back to source branches is required for subsequent merges. Earlier updates received during this integration from the library, G61–G80 and G101–G110 branches merged cleanly. A later G101–G110 closeout changed its global-gate/recovery tail and needed reconciliation with the adjacent imported range; its completion evidence is preserved below.
 
@@ -448,17 +448,17 @@ The original range pass produced ten dossiers with eight worked situations each,
 
 ## G121–G130 branch research state
 
-Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4c40e1f1200c9fb3a`. Its [immutable source ledger](https://github.com/Macrofold/OpenLegend/blob/ec7110a1c676972bcd45cce4c40e1f1200c9fb3a/archive/02-research/game-inspiration/research-progress.md) preserves the inherited G01–G25/fork history and source-specific recovery instructions; current states for those other ranges are owned by their sections above.
+Imported from `docs/game-inspiration-games-121-end` at `28cc5a5fc0c13e0789e82475a0924a2eaec12666`. Its [immutable source ledger](https://github.com/Macrofold/OpenLegend/blob/28cc5a5fc0c13e0789e82475a0924a2eaec12666/archive/02-research/game-inspiration/research-progress.md) preserves the inherited G01–G25/fork history and source-specific recovery instructions; current states for those other ranges are owned by their sections above.
 
 ### Requirements-and-corrections audit — G121 through G130
 
-**Audit active.** Fresh audit baseline: `757bafba40efa875733aba635c3aec829d4c92ad`. Findings and corrective evidence are owned by [coverage-audit-g121-g130.md](coverage-audit-g121-g130.md). The audit rechecks actual dossier substance against R01–R14 plus the explicit mechanics inventory; initial completion labels are not treated as certification.
+**Audit complete.** Fresh audit baseline: `757bafba40efa875733aba635c3aec829d4c92ad`. Findings, corrections, per-game closure commits and the final cross-game mechanics matrix are owned by [coverage-audit-g121-g130.md](coverage-audit-g121-g130.md). The audit reread actual dossier substance against R01–R14 plus the explicit mechanics inventory rather than treating initial completion labels as certification.
 
-**Current audit state:** use the [current audit register](coverage-audit-g121-g130.md#current-audit-state), whose per-game closure records supersede the older active-subject pointer in the source progress ledger. Global P01–P05 gates remain separate.
+**Current audit state: G121–G130 audited; no active game remains in this range.** The second-pass matrix found no unaddressed explicit mechanics category after repair. G121/G122 intentionally combine R10–R11 in one substantive section; this is a heading shape, not missing marketing/commercial coverage. Global P01–P05 gates remain separate and pending.
 
 ### Initial G121–G130 research completion
 
-**Initial research complete: G121–G130.** All ten subjects have R01–R14 dossiers and initial per-game completion commits. The separate follow-up audit above remains active; this initial-pass record does not close it or the global P01–P05 gates.
+**Initial research and requirements audit complete: G121–G130.** All ten subjects have dossiers, per-game completion commits and the September 27 R01–R14/mechanics-inventory audit recorded above. No game or range-level corrective pass remains active here. The table preserves initial completion provenance; the [audit register](coverage-audit-g121-g130.md#current-audit-state) owns the later correction commits and evidence. Global P01–P05 gates remain pending.
 
 **This branch's authorized range: G121–G130 inclusive; 10 / 10 completed.** G121–G130 are committed and reviewed; their completion compares changed only the intended dossier. The inherited snapshot reports G01–G25 completed and G26 in progress elsewhere; do not claim this branch completes the other ranges or the global P01–P05 gates. Commit substantive checkpoints at least every five minutes through the GitHub connector.
 
