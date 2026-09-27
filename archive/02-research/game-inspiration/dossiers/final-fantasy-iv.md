@@ -1,6 +1,6 @@
 # Final Fantasy IV — full research dossier
 
-**G81 · Complete research pass, September 26, 2026.** This dossier treats the **1991 Final Fantasy IV design** as the primary subject while separating materially different releases: the localized SNES version once titled *Final Fantasy II* in North America, later 2D ports, *Final Fantasy IV Advance*, the Nintendo DS 3D remake and its descendants, *Final Fantasy IV: The Complete Collection*, and the 2021+ *Pixel Remaster*. The roster specifically requires fixed identities, Active Time Battle, party turnover, abilities, equipment, world/narrative progression and remake differences. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G81 · Complete research pass, September 26, 2026; subsequently expanded against the substantive coverage audit.** This dossier treats the **1991 Final Fantasy IV design** as the primary subject while separating materially different releases: the localized SNES version once titled *Final Fantasy II* in North America, later 2D ports, *Final Fantasy IV Advance*, the Nintendo DS 3D remake and its descendants, *Final Fantasy IV: The Complete Collection*, and the 2021+ *Pixel Remaster*. The roster specifically requires fixed identities, Active Time Battle, party turnover, abilities, equipment, world/narrative progression and remake differences. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
 The current storefront/reference point is the Pixel Remaster as available in September 2026, but “current” does not erase the 1991 ruleset. Reviews and player testimony are version-labeled because the SNES localization, Advance, DS/3D remake, Complete Collection and Pixel Remaster make materially different choices about difficulty, commands, build freedom, bonus content and presentation. No personal playthrough is claimed; constructed situations below are derived from documented rules.
 
@@ -194,7 +194,7 @@ This creates a modest composition layer even in a game without freeform jobs:
 
 Consumables provide healing, revival, status recovery, escape/travel and battle utility depending on edition. Key items gate authored story/world progression.
 
-There is **no base-game crafting system** comparable to later sandbox/RPG crafting loops. Acquisition is primarily treasure, shops, drops, optional quests/areas and story rewards. That absence is useful: FFIV's equipment game is about **selection and discovery**, not production.
+There is **no general base-game crafting profession** comparable to later sandbox/RPG production loops. Acquisition is primarily treasure, shops, drops, optional quests/areas and story rewards. This does not exclude a bespoke transformation: Kokkol forges Excalibur from the Sword of Legend and Adamantite. Section 24 explains that exception and storage rather than treating “no crafting system” as “no object can be made.” [FFIV30](#ffiv30)
 
 ## 8. Progression, economy, failure, and time
 
@@ -287,7 +287,7 @@ These are edition-sensitive examples from the classic 2D rule family; exact numb
 3. **Asura — turn healing against the healer.** Asura repeatedly uses curative magic on herself. Applying Reflect/Wall redirects those heals, converting a defensive spell into encounter control; attacking her also provokes counters, so the player balances offense and recovery. [FFIV28](#ffiv28)
 4. **Bahamut — solve a countdown.** Bahamut visibly counts toward Mega Flare. Reflect can return the attack, while Kain's Jump can put him outside the targetable state when the blast resolves. The solution composes timing, a status spell and a character-specific verb rather than demanding one raw stat threshold. [FFIV29](#ffiv29)
 
-These examples show a recurring FFIV strength: a small fixed toolbox can support varied fights when enemies alter the meaning of familiar actions.
+These examples show a recurring FFIV strength: a small fixed toolbox can support varied fights when enemies alter the meaning of familiar actions. They are complemented by the full noncombat situations in section 24, not treated as sufficient coverage of every system by themselves.
 
 ## 11. Story and mechanics are intentionally interlocked
 
@@ -476,7 +476,7 @@ No prior FFIV-specific file or packet passage was found in:
 
 So this dossier is additive. It does not supersede an earlier FFIV chapter.
 
-**Completion check:** the reception minimum, Steam sampling, commercial-context limits, edition chronology, R01–R14 map, source anchors and preservation boundary are all addressed below. No FFIV-specific prior owner was displaced.
+**Completion check:** the reception minimum, Steam sampling, commercial-context limits, edition chronology, R01–R14 map, source anchors and preservation boundary are addressed below. The corrective pass additionally closes storage, bespoke forging and noncombat-example depth in §24. No FFIV-specific prior owner was displaced; the global packet audit remains separate.
 
 ## 18. Comprehensive mechanics inventory
 
@@ -484,8 +484,8 @@ So this dossier is additive. It does not supersede an earlier FFIV chapter.
 | --- | --- |
 | Character creation / identity / classes | No avatar creator and no free job choice in the 1991 core. Authored characters have fixed identities/classes; Cecil has a story-authored class transformation. DS Augments add limited cross-character ability composition. |
 | Attributes / skills / leveling | EXP and levels raise character stats; magic/abilities are largely character- and level/story-bound. No base-game skill-point tree or general respec. |
-| Items / inventory / weapons / armor | Consumables, key items, character-restricted weapons/armor, elemental/status properties and rare drops/treasure. Edge can convert weapons into Throw attacks. |
-| Crafting / upgrading | No general crafting or equipment-upgrade loop in the base game. Progress comes from shops, treasure, drops, events and optional content. |
+| Items / inventory / weapons / armor | Consumables, key items, character-restricted weapons/armor, elemental/status properties and rare drops/treasure. Edge can convert weapons into Throw attacks. Fat Chocobo storage and its changed remake purpose are detailed in §24. |
+| Crafting / upgrading | No general crafting profession. Kokkol's Excalibur is a bespoke item-transformation quest; most gear comes from shops, treasure, drops, events and optional content. |
 | Magic / spells / powers | White/Black magic, Summon, Ninjutsu, Twincast and character commands; elemental/status/reflection interactions are important. |
 | Traversal | Town/dungeon walking, overworld travel, hovercraft, airships and later the Lunar Whale; traversal upgrades reopen geography. |
 | Environmental / object interaction | NPC dialogue, chests/secrets, shops, inns, save points and authored switches/passages; some dungeon hazards reward spells such as Float. It is not a freeform physics/object-manipulation sandbox. |
@@ -575,10 +575,10 @@ For OpenLegend that suggests:
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / scope / promise | §§1–2, 15 |
-| R02 player actions / major mechanics | §§3–10, 18 |
-| R03 items / entities / composition | §§5–7, 18 |
-| R04 progression / economy / time | §§4, 8–9, 18 |
-| R05 concrete interactions | §§9–10 |
+| R02 player actions / major mechanics | §§3–10, 18, 24 |
+| R03 items / entities / composition | §§5–7, 18, 24 |
+| R04 progression / economy / time | §§4, 8–9, 18, 24 |
+| R05 concrete interactions | §§9–10 and complete cross-system situations in §24 |
 | R06 people / AI / social / multiplayer | §§5, 11–12, 18 |
 | R07 art / audio / interface / feel | §§2, 13, 15, 20 |
 | R08 story / narrative / play connection | §§1, 5, 11 |
@@ -586,23 +586,53 @@ For OpenLegend that suggests:
 | R10 marketing / distribution / virality | §19 |
 | R11 commercial / participation context | §19 |
 | R12 reviews / player feedback | §20 |
-| R13 transferable inspiration / limits | §§15–16, 21 |
-| R14 sources / viewing / preservation / navigation | §§2, 17, 19–23 + annotated sources |
+| R13 transferable inspiration / limits | §§15–16, 21, 24 |
+| R14 sources / viewing / preservation / navigation | §§2, 17, 19–24 + annotated sources |
 
 ### Evidence and navigation limits
 
 - **Prior-material preservation:** no FFIV-specific earlier game chapter, mechanics study or packet passage was found in the named game-inspiration owners checked for this pass. Section 17 records the searched owners; this dossier is additive.
 - **Version discipline:** original Japanese FFIV, North American *Final Fantasy II*, *Easy Type*, Advance, DS/3D, Complete Collection and Pixel Remaster are not collapsed into one ruleset.
-- **Review discipline:** five substantive independent written reviews were inspected; Steam evidence is labeled as qualitative player testimony rather than a representative survey.
+- **Review discipline:** five substantive independent written reviews were inspected; Steam evidence is labeled as qualitative player testimony rather than a representative survey. The inherited Steam sample has weaker author/permalink identification than newer dossiers; no new identity is invented for it.
 - **Commercial discipline:** the six-million Pixel Remaster figure is series-wide, not FFIV-only. Steam review totals are reviews, not sales or active users.
 - **Video discipline:** no claim in this dossier depends on unwatched footage. Useful visual verification routes for a future media pass are the Red Wings opening/Mode 7 staging, Mist Dragon state switch, Cecil's Paladin transformation, Lunar Whale transition, DS Augment interface and Pixel Remaster's modern battle/QoL UI.
-- **Spoilers:** §11 and some encounter examples reveal major campaign mechanics/story events.
+- **Spoilers:** §11 and some encounter and forging examples reveal major campaign mechanics/story events.
 
 ## 23. Completion conclusion
 
 FFIV's lasting design value is the **tight coupling between authored identity, available verbs and encounter rules**. Its party turnover means narrative events change the player's tactical system; ATB turns menu decisions into timed commitments; traversal tools repeatedly reinterpret the world map; bosses teach that state, counters, timing and utility spells matter. The major rereleases then act like controlled experiments around the original constraint: how much build freedom, challenge, bonus content and convenience can be added without losing the clarity of fixed character identity?
 
 For OpenLegend, the highest-value lesson is not to reproduce FFIV's linear campaign. It is to make **who is present, what they know/can do, and what local world laws are active** materially determine the option space.
+
+## 24. Storage, bespoke forging and complete noncombat situations
+
+**Corrective research, September 26, 2026.** These additions address R02/R03/R05 depth, retaining the four earlier encounter examples rather than replacing them. The situations are constructed from written rules, not personally played sessions. Late traversal and optional-reward spoilers follow.
+
+### Fat Chocobo: possession is different from immediate availability
+
+In the classic 2D structure, Fat Chocobo stores surplus items. Gysahl Greens summon him at designated locations, including Chocobo woods; a Gysahl Whistle supplies another access route. The Lunar Whale eventually provides access without spending Greens. Storage lets the party retain future-use equipment instead of selling or discarding it, but preparing a carried loadout remains a separate decision. The inspected classic references disagree about exact slot accounting, so no universal numeric capacity is asserted. [FFIV31](#ffiv31) [FFIV33](#ffiv33)
+
+Pixel Remaster retains storage while relaxing the old carried-item capacity constraint: it can be used for organization rather than the same survival-of-inventory pressure. The DS remake instead repurposes Fat Chocobo as an extras interface, including bestiary, events, music and Whyt activities. A familiar character therefore need not preserve a familiar service. These are edition boundaries, not evidence that stored equipment became a tradeable multiplayer bank. [FFIV31](#ffiv31) [FFIV32](#ffiv32)
+
+### Kokkol: a crafted quest object without a crafting profession
+
+The Excalibur route connects the Rat Tail found in the Land of Summons, the collector at the Adamant Grotto near Mythril, and Kokkol in the Underworld. The collector exchanges the tail for Adamantite; the smith transforms the Sword of Legend with that material. Reaching the collector requires the hovercraft, with the Enterprise's hook supporting its transport. Possessing a newer flying vehicle does not remove the old vehicle's specialized usefulness. [FFIV30](#ffiv30)
+
+Finishing the sword is also progression-sensitive, not a measured real-time smithing timer. The inspected Pixel Remaster route raises the Lunar Whale before collecting it; other guides describe the prerequisite more loosely as visiting the Moon. This dossier does not convert that disagreement into an exact waiting duration. The useful principle is the dependency chain and the need to return after the relevant story state, not an invented continuous production simulation. [FFIV30](#ffiv30) [FFIV34](#ffiv34)
+
+### A. Preserve a tool without packing every possession
+
+**Intention:** keep equipment for later while preparing for a dungeon. **Conditions:** the player uses a classic storage-based edition and can summon Fat Chocobo. **Actions:** distinguish immediate supplies from surplus, deposit the latter, then depart with the intended equipment. **Interaction:** storage preserves ownership while changing immediate availability and carried space. **Result:** clearing inventory need not destroy future options. **Next decision:** retrieve a stored item when the next journey needs it. **Limit:** depositing something needed on the current expedition creates a return trip; the original capacity pressure should not be projected onto Pixel Remaster or the DS extras menu. [FFIV31](#ffiv31) [FFIV33](#ffiv33)
+
+### B. The newer vehicle does not replace the older tool
+
+**Intention:** obtain Excalibur. **Conditions:** Rat Tail is owned, the hook-equipped Enterprise and hovercraft remain accessible, and Underworld travel is available. **Actions:** transport the hovercraft to Mythril, use it to reach the collector, exchange for Adamantite and take the material to Kokkol. **Interaction:** collection, NPC exchange, two travel capabilities and an old sword form one production chain. **Result:** an apparently obsolete transport remains useful for a major reward. **Next decision:** return after the story prerequisite or pursue another objective meanwhile. **Limit:** flying near the cave with the wrong vehicle does not complete the final access step; the smith does not accept arbitrary substitute metal. [FFIV30](#ffiv30) [FFIV34](#ffiv34)
+
+### C. A household object becomes a relationship-mediated reward
+
+**Intention:** help the incapacitated Yang. **Conditions:** the relevant Sylvan Cottage and Fabul interactions are available. **Actions:** obtain the Frying Pan from Yang's wife, use it at his bedside and later return it. **Interaction:** revisiting a person changes both a companion-related event and the reward path. **Result:** the chain supplies Sylph summon access and, on returning the pan, a special Knife for Edge's Throw. **Next decision:** preserve the single-use weapon for a meaningful encounter rather than spend it casually. **Limit:** this is a specific authored exchange, not permission for every household item to wake any injured person or teach a summon. [FFIV30](#ffiv30)
+
+**Interpretation:** storage, transport and exchange can create meaningful plans even when there is no broad crafting or settlement layer. The danger is hiding prerequisites so thoroughly that a small causal chain becomes an external-guide checklist. A reusable design should make the needed service, object and route discoverable within the world.
 
 ## Sources — completed annotated set
 
@@ -664,3 +694,12 @@ For OpenLegend, the highest-value lesson is not to reproduce FFIV's linear campa
 
 <a id="ffiv29"></a>**FFIV29 — [Bahamut](https://strategywiki.org/wiki/Final_Fantasy_IV/Bahamut).** StrategyWiki community mechanics reference. Countdown/Mega Flare, Reflect and Jump interaction; exact values are version-sensitive.
 
+<a id="ffiv30"></a>**FFIV30 — [A Lunar Whale, a Frying Pan, and a Legendary Sword](https://gamefaqs.gamespot.com/pc/323467-final-fantasy-iv-pixel-remaster/faqs/79579/a-lunar-whale-a-frying-pan-and-a-legendary-sword).** mynockx, GameFAQs, guide v2.50, February 4, 2022; relevant full chapter read during the corrective pass. Pixel Remaster travel, Rat Tail exchange, Kokkol and household-object quest. Its sequence obtains the Lunar Whale first; no universal elapsed-time claim or guaranteed drop rate is adopted.
+
+<a id="ffiv31"></a>**FFIV31 — [Fat Chocobo storage](https://gcgx.games/ff4/chubby.html).** GCGX, authored Japanese SFC/Pixel Remaster analysis, updated December 28, 2021; full substantive body read and paraphrased during the corrective pass. Access and versioned purpose are used; disputed slot accounting is not asserted as a universal number.
+
+<a id="ffiv32"></a>**FFIV32 — [Final Fantasy IV DS](https://azureflame.info/2009/06/15/final-fantasy-iv-ds/).** Karura, Azure Flame, June 15, 2009; firsthand review's extras section read during the corrective pass. Fat Chocobo's replacement services and lifted inventory restriction only; erroneous general franchise-history wording is not adopted.
+
+<a id="ffiv33"></a>**FFIV33 — [Final Fantasy IV Advance walkthrough](https://www.neoseeker.com/final-fantasy-iv/faqs/131236-advance-g.html).** Authored GBA guide; substantive indexed Chocobo Forest/storage passage inspected after direct retrieval failed. Corroborates storing items through Greens in that edition, not a personal capacity test.
+
+<a id="ffiv34"></a>**FFIV34 — [Excalibur Sword](https://strategywiki.org/wiki/Final_Fantasy_IV/Excalibur_Sword).** Community walkthrough; substantive indexed route read after direct retrieval failed. Used to preserve the differing Moon/progression description alongside the edition-specific route, not silently invent a precise timer.
