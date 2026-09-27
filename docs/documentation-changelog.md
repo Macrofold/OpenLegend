@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — G141–G148 substantive requirements audit and corrections
+
+Re-audited **Raft, Grounded, The Long Dark, Green Hell, Enshrouded, V Rising, Once Human and Abiotic Factor** one game at a time against the full [R01–R14 assignment and explicit mechanics inventory](../archive/02-research/game-inspiration/research-requirements.md). The [audit record](../archive/02-research/game-inspiration/coverage-audit-g141-g148.md) now owns the corrective commits and cross-game closure evidence; the [progress ledger](../archive/02-research/game-inspiration/research-progress.md#survival-expansion--g131g148) separates initial completion from the follow-up audit.
+
+Material corrections include The Long Dark's shipped Cheat Death system, Enshrouded's optional Starvation Mode and live Early Access boundary, V Rising's September 2026 hotfix/disguise/vendor/death rules, Once Human's 2026 Tech/blueprint rewrite and mode-specific death/stealth rules, Green Hell's Spirits of Amazonia Trust progression, plus missing identity/equipment/activities/social/audio evidence across the range. The final matrix records no unaddressed explicit mechanics category in G141–G148 and retains five written reviews, Steam/player evidence, eight worked cases and source limits per dossier. No runtime behavior, accepted OpenLegend requirement or engineering tracker changed; G131–G140 and P01–P05 remain pending.
+
 ## 2026-09-27 — G141–G148 survival research range completed
 
 Completed independent R01–R14 research passes for **Raft, Grounded, The Long Dark, Green Hell, Enshrouded, V Rising, Once Human and Abiotic Factor** on `docs/game-inspiration-games-141-148`. Each dossier records its current edition/service boundary, comprehensive mechanics inventory, eight worked interactions, five substantive written reviews, current player evidence where applicable, production/distribution/commercial context, transferable observations and explicit evidence/access limits. The Raft pass was tightened during final review so an unavailable Checkpoint review body remains supplemental rather than being counted toward the five fully read reviews.
