@@ -301,6 +301,8 @@ Rebase the reviewed implementation onto the developer-selected `origin/main` at 
 
 Carry the existing heard-word predicate into SQL and resident conversation selection, preserve main's speech embedding text/revisions, and retain compaction's required-source distinction. Keep both sets of independent documentation and evidence. Review the resulting branch diff and run TypeScript, build, guidance/format/link checks plus fresh current-format native scenarios for short/long conversation, heard fragments versus no-word/visual cues, source revocation and actual cognition. Use zero-cost fixtures, not paid requalification or old-save migration. Completion requires a clean rebased branch and evidence of the combined behavior; broader PF14/NC12 work remains separately tracked.
 
+Integration completed with the existing hearing predicate preserved in both source paths and all independent guidance/history retained. [Rebase evidence](../verification.md#conversation-compaction-main-rebase) records current-format SQLite/PostgreSQL lifecycle, cognition/reflection and source-race checks. PF14 preparation consolidation remains unimplemented because this run reconciles main without extending optimization scope; NC12 maintained automation and independent live qualification remain deferred under the existing test/spending policy. Earlier model-quality and performance measurements retain their original revision/workload scope.
+
 ## Maintained records
 
 - Implementation: [Narration and conversation tasks, NC14–NC17](../maintainers/narration-and-conversations.md).
