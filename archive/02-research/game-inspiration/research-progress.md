@@ -23,8 +23,8 @@ RuneScape and Old School RuneScape remain independent pending full passes G48/G4
 | G03 — Animal Crossing: New Horizons | **Audited** | `ec985d8787ff4fd5d9fc504e6bdfadf2023f18d6` — explicit mechanics-inventory closure; rechecked Ver. 3.0.3 as the latest Nintendo support version and preserved free 3.0 versus paid Switch 2 Edition boundaries. |
 | G04 — Roblox | **Audited** | `99549978885a9bbef41362d95d192a53483ba287` — explicit platform-level mechanics closure; retained RDC 2026 delivered-vs-roadmap boundaries instead of promoting future web/offline/creation features into current capability. |
 | G05 — Grow a Garden | **Audited** | `c8808755dae39c56b6e8e9b0a69014a979803d04` — explicit mechanics-inventory closure; preserved live-service uncertainty instead of inventing a canonical September 2026 build or immutable mutation/trade table. |
-| G06 — Steal a Brainrot | **In progress** | Recheck current live-experience loss/economy/social boundaries and full mechanics inventory. |
-| G07 — Fortnite | Pending | — |
+| G06 — Steal a Brainrot | **Audited** | `f0eedc0e27527ff60d2e715dec4f9cc08a739c9b` — explicit mechanics-inventory closure; current official experience still exposes the core buy/steal/income/rebirth loop while rotating event titles remain non-versioned live-service state. |
+| G07 — Fortnite | **In progress** | Recheck current Battle Royale/Creative/UEFN/mode boundaries and full mechanics inventory. |
 | G08 — League of Legends | Pending | — |
 | G09 — Dota 2 | Pending | — |
 | G10 — Path of Exile | Pending | — |
