@@ -32,9 +32,11 @@ The modern game is:
 
 There is **no released multiplayer mode**. Earlier announced/planned multiplayer ambitions do not count as shipped functionality.
 
-### Current patch
+### Current software boundary
 
-**Patch 2.31**, released September 11, 2025, remains the latest official patch located for this pass. It improves the 2.3 AutoDrive/Free Roam driving behavior and Photo Mode and fixes issues across PC, PS5, Xbox Series, Mac, and Switch 2. [CP03](#cp03)
+**Patch 2.31**, released September 11, 2025, remains the latest **numbered general patch** located in CDPR's current news archive. It improves the 2.3 AutoDrive/Free Roam driving behavior and Photo Mode and fixes issues across PC, PS5, Xbox Series, Mac, and Switch 2. [CP03](#cp03)
+
+However, the original pass's “latest official patch” wording was too broad: CDPR shipped a later **PlayStation 5 Pro Update on April 8, 2026**, adding PSSR/graphics-mode/ray-tracing support specifically for PS5 Pro. [CP28](#cp28) That platform update does not establish a new cross-platform gameplay version, so this dossier continues to use 2.31 for shared mechanics while recording the later PS5 Pro software state separately.
 
 ## 2. V: body, identity, and Lifepath
 
@@ -363,6 +365,16 @@ Vehicles can participate in the same world affordances:
 - ownership;
 - navigation;
 - autonomous control.
+
+### Update 2.1: transit, repeatable relationship space, and world leisure
+
+The original pass jumped from 2.0 to later vehicle/customization updates and omitted several post-launch world interactions added by **Update 2.1**. That free December 2023 update added:
+- the **NCART metro**, with 19 stations on five lines that can be ridden or used as fast travel;
+- the portable **Radioport**, allowing music while walking/using transit;
+- **repeatable apartment hangouts** with a completed romance partner;
+- repeatable car races and additional ambient/QoL features. [CP27](#cp27)
+
+These are not as mechanically foundational as the 2.0 perk/police rebuild, but they matter to the OpenLegend comparison because they make Night City more inhabitable after the authored relationship quest ends. In particular, the romance hangout is a small attempt to turn a completed narrative relationship into **repeatable persistent social state** rather than leaving it frozen at the end of a quest chain.
 
 ## 13. Quests, Gigs, and open-world activity
 
@@ -753,6 +765,8 @@ The franchise also expanded through:
 - comics/merchandise;
 - Switch 2/Mac ports.
 
+On September 13, 2026 CD PROJEKT RED also announced that Cyberpunk 2077, Phantom Liberty and the Ultimate Edition will come to **Battle.net later in 2026**. [CP29](#cp29) This is an announced distribution expansion, not a platform/version change already live at the September 27 audit date.
+
 ## 26. Five substantive written review perspectives
 
 ### 1. PC Gamer — James Davenport, December 2020
@@ -1006,7 +1020,8 @@ Covered:
 - police;
 - gigs/jobs/scanner/cyberpsychos;
 - dialogue/choices;
-- relationships/romance;
+- relationships/romance plus post-2.1 repeatable apartment hangouts;
+- NCART transit/Radioport and repeatable races;
 - gangs/corps;
 - open-world activity;
 - death/reload;
@@ -1029,7 +1044,18 @@ G68 is an independent expanded-roster pass and no inherited full Cyberpunk 2077 
 - paid Phantom Liberty;
 - current 2.31 branch.
 
-No launch review is used as proof of current technical quality; current Steam reviews are sampled separately.
+No launch review is used as proof of current technical quality; current Steam reviews are sampled separately. The September 2026 audit also separates Patch 2.31 as the latest numbered general patch from the later PS5 Pro-specific update rather than calling 2.31 the newest software change of any kind.
+
+### Reading / viewing routes
+
+For a compact route:
+1. **CP06–CP09 + CP27** for the free 2.0/2.1 systemic rebuild and world/social additions.
+2. **CP13–CP15** for Phantom Liberty and the base-update-versus-paid-expansion boundary.
+3. **CP10/CP21/CP22/CP24** for launch PC/last-gen reception, plus **CP13 or CP14** for a modern expansion review.
+4. **CP25–CP26 + CP11** for current Steam praise/criticism.
+5. **CP03 + CP28** for the current cross-platform numbered-patch versus PS5 Pro update boundary; **CP18–CP20/CP29** for current commercial/distribution context.
+
+No video or footage is represented as watched in this audit.
 
 ## Sources
 
@@ -1084,4 +1110,10 @@ No launch review is used as proof of current technical quality; current Steam re
 <a id="cp25"></a>**CP25 — [Cyberpunk 2077 on Steam](https://store.steampowered.com/app/1091500/Cyberpunk_2077).** Current aggregate: Very Positive current/English in September 2026 surface.
 
 <a id="cp26"></a>**CP26 — [Steam most-helpful reviews](https://steamcommunity.com/app/1091500/reviews/?browsefilter=toprated&l=english).** Current qualitative helpful-player sample; includes post-2.0 build/Phantom Liberty/recovery praise.
+
+<a id="cp27"></a>**CP27 — [Update 2.1 Patch Notes](https://www.cyberpunk.net/en/news/49597/update-2-1-patch-notes).** CD PROJEKT RED, December 4, 2023. Primary source for the NCART metro, Radioport, repeatable romance-partner apartment hangouts, repeatable races and related free-update world features.
+
+<a id="cp28"></a>**CP28 — [PlayStation 5 Pro Update Is Live](https://www.cyberpunk.net/en/news/51938/playstation-r-5-pro-update-is-live).** CD PROJEKT RED, April 8, 2026. Primary platform-specific update source; used to correct the claim that 2.31 was the latest software update of any kind while preserving it as the latest numbered general patch.
+
+<a id="cp29"></a>**CP29 — [Cyberpunk 2077 Comes to Battle.net](https://press.cdprojektred.com/en/news/1847/cyberpunk-2077-comes-to-battle-net).** CD PROJEKT RED press center, September 13, 2026. Primary announcement that the base game, Phantom Liberty and Ultimate Edition are scheduled for Battle.net later in 2026; announced future distribution only as of this audit.
 
