@@ -1,8 +1,8 @@
 # Final Fantasy VII — full research dossier
 
-**G84 · Complete research pass, September 26, 2026.** Primary mechanics baseline: the 1997 PlayStation *Final Fantasy VII*. Later ports are separated where presentation or convenience materially differs, especially the February 24, 2026 PC re-release. *Final Fantasy VII Remake* (2020), *Final Fantasy VII Rebirth* (2024), and the announced *Final Fantasy VII Revelation* (2027) are treated as a separate reinterpretation trilogy rather than substitutes for the original ruleset. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G84 · Complete research pass, September 26, 2026; expanded after the substantive coverage audit.** Primary mechanics baseline: the 1997 PlayStation *Final Fantasy VII*. Later ports are separated where presentation or convenience materially differs, especially the February 24, 2026 PC re-release. *Final Fantasy VII Remake* (2020), *Final Fantasy VII Rebirth* (2024), and the announced *Final Fantasy VII Revelation* (2027) are treated as a separate reinterpretation trilogy rather than substitutes for the original ruleset. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
-No personal playthrough is claimed. Concrete examples are reconstructed from documented rules, contemporary developer interviews, reviews and version-specific reference material.
+No personal playthrough is claimed. Concrete examples are reconstructed from documented rules, contemporary developer interviews, reviews and version-specific reference material. Section 30 supplies the corrected audit's deeper minigame and remake comparison and complete cross-system situations; the earlier material is retained.
 
 ## 1. Identity, scope and player promise
 
@@ -315,7 +315,7 @@ This creates a diegetic sub-economy:
 - the player earns special currency by engaging with the venue;
 - rewards include items and important character progression such as Cloud's Omnislash manual.
 
-The broader game frequently changes interaction genre for a few minutes. That variety creates memorability, but reviews also show that not every minigame ages equally well.
+The broader game frequently changes interaction genre for a few minutes. That variety creates memorability, but reviews also show that not every minigame ages equally well. Section 30 develops the operative Battle Square and Fort Condor rules rather than treating this inventory as sufficient explanation.
 
 ## 13. Optionality: characters, areas, limits, summons and superbosses
 
@@ -433,7 +433,7 @@ This creates explicit **training gear** versus **combat gear**.
 4. cross otherwise impassable sea to a hidden island;
 5. collect Knights of Round Materia. [FFVII16](#ffvii16)
 
-A long optional husbandry/racing chain produces a top-tier combat capability through world traversal.
+A long optional husbandry/racing chain produces a top-tier combat capability through world traversal. Section 30 supplies conditions, next choices and counterexamples for these retained sketches.
 
 ## 17. Progression, economy, death and time
 
@@ -600,7 +600,7 @@ This evidence must be read carefully:
 - helpful-review rankings are self-selected;
 - a review rejecting the 2026 port may still strongly admire the 1997 game.
 
-For R12, the correct conclusion is not “FFVII is 74%-liked.” It is: **the current PC package has mixed port reception sitting on top of a much more positively regarded underlying classic.**
+For R12, the correct conclusion is not “FFVII is 74%-liked.” It is: **the current PC package has mixed port reception sitting on top of a much more positively regarded underlying classic.** The qualitative sample does not measure what proportion of the aggregate difference was caused by port problems; “heavily affected” above records the original interpretation, not a causal estimate established by this audit.
 
 ## 23. Remake (2020): the same fiction becomes a different game architecture
 
@@ -629,7 +629,7 @@ Remake Midgar:
 
 Push Square's review praised the combat and expanded core character work while criticizing some corridor level design, sidequests and uneven environmental texture quality; it also emphasized that the narrative is not an exact replica. [FFVII30](#ffvii30)
 
-**OpenLegend lesson:** a reinterpretation can preserve a resource/system concept while changing its interaction layer. “ATB” need not imply identical controls.
+**OpenLegend lesson:** a reinterpretation can preserve a resource/system concept while changing its interaction layer. “ATB” need not imply identical controls. Pressure, weapon learning and Hard Mode are developed in §30.
 
 ## 24. Rebirth (2024): relationship mechanics and regional exploration move to the foreground
 
@@ -656,6 +656,8 @@ The modern trilogy therefore provides a useful comparison:
 - Remake adds **real-time embodiment**;
 - Rebirth adds more explicit **inter-character mechanical cooperation**.
 
+Section 30 distinguishes Synergy Skills from Synergy Abilities and develops crafting and Queen's Blood. Those systems are not interchangeable merely because the initial overview groups them under “side content” or “synergy.”
+
 ## 25. Revelation (announced, not yet released)
 
 As of September 26, 2026, *Final Fantasy VII Revelation* is announced as the trilogy's final entry for **April 8, 2027** on PS5, Switch 2, Xbox Series X|S and PC storefronts. [FFVII06](#ffvii06)
@@ -675,15 +677,15 @@ This section exists only to keep the 2026 trilogy status accurate.
 | Magic | Magic Materia, summons, Enemy Skills, support-linked modifications |
 | Equipment | Character-specific weapons; armor; one accessory; Materia-slot topology/growth |
 | Inventory/items | Consumables, key items, Limit manuals, equipment, greens/nuts, Materia |
-| Crafting | No general crafting system; chocobo breeding is the closest long-horizon production/breeding loop |
+| Crafting | No general crafting system; chocobo breeding is the closest long-horizon production/breeding loop; Rebirth's Item Transmuter is a different system (§30) |
 | Combat | Three-character ATB, rows/range, commands, magic, summons, statuses, Limits |
 | Character identity | Weapons/stats/Limit Breaks/story; most general abilities portable via Materia |
 | Enemy interaction | Steal, Sense, Manipulate, Morph, Enemy Skill learning |
 | Exploration | Pre-rendered field scenes, world map, hidden/optional areas, secrets |
 | Traversal | Walking, vehicles, airship, submarine, chocobos with terrain permissions |
-| Minigames | Gold Saucer, motorcycle, snowboarding, submarine, Fort Condor, racing and many bespoke events |
+| Minigames | Gold Saucer, motorcycle, snowboarding, submarine, Fort Condor, racing and many bespoke events; operative arena/defense rules in §30 |
 | Economy | Gil plus Gold Saucer GP/BP sub-economies |
-| Death/failure | KO/revival; party wipe returns to save/modern continue |
+| Death/failure | KO/revival; party wipe returns to save/modern continue; minigame loss contracts differ |
 | Story | Authored linear main plot with optional characters/sidequests and some hidden relationship tracking |
 | Relationships | Light hidden affinity/date outcome; no general social simulation |
 | NPCs/factions | Scripted NPCs; Shinra/Avalanche/communities authored, no reusable diplomacy engine |
@@ -727,7 +729,7 @@ Enemy Skill + Manipulate means knowledge comes from interacting with entities.
 
 Chocobo breeding is not isolated amusement: it grants traversal and rare Materia.
 
-**Borrow:** hobbies/professions/minigames should produce capabilities, relationships, resources or access that matter elsewhere.
+**Borrow:** hobbies/professions/minigames should produce capabilities, relationships, resources or access that matter elsewhere in the world.
 
 ### F. Traversal progression should reinterpret remembered geography
 
@@ -755,40 +757,40 @@ Remake retains ATB as a strategic resource while surrounding it with real-time a
 
 ### J. Beware port evidence when evaluating game design
 
-The 2026 Steam aggregate is depressed by criticisms of the current client.
+The 2026 Steam aggregate includes criticisms of the current client, although their quantitative contribution was not measured.
 
 **Borrow for research process:** always separate **artifact quality** (port/client/UI/performance) from **underlying system quality**.
 
 ## 28. Preservation and requirement audit
 
-No prior FFVII-specific game/mechanics/dossier owner existed on this branch before G84, so this dossier is additive. It does not replace an older FFVII research chapter.
+No prior FFVII-specific game/mechanics/dossier owner existed on this branch before G84, so this dossier is additive. It does not replace an older FFVII research chapter. The corrective pass retains all four original interaction sketches and FFVII01–33, expanding rather than substituting the original and remake comparison.
 
 | Requirement | Coverage |
 | --- | --- |
-| R01 identity / scope / promise | §§1–2 |
-| R02 player actions / major mechanics | §§3–18, 26 |
-| R03 items / entities / composition | §§3–8, 11–13, 26 |
-| R04 progression / economy / time | §§4, 7, 11–12, 17 |
-| R05 concrete interactions | §§6, 11–12, 16 |
-| R06 people / AI / social / multiplayer | §§7, 13–15, 26 |
-| R07 art / audio / interface / feel | §§2, 18, 22–24 |
+| R01 identity / scope / promise | §§1–2, 30 |
+| R02 player actions / major mechanics | §§3–18, 26, 30 |
+| R03 items / entities / composition | §§3–8, 11–13, 26, 30 |
+| R04 progression / economy / time | §§4, 7, 11–12, 17, 30 |
+| R05 concrete interactions | §§6, 11–12, 16; complete cases in §30 |
+| R06 people / AI / social / multiplayer | §§7, 13–15, 26, 30 |
+| R07 art / audio / interface / feel | §§2, 18, 22–24, 30 |
 | R08 story / narrative / play | §§10, 13–15, 23–25 |
 | R09 production / development | §§18–19 |
 | R10 marketing / distribution / virality | §20 |
 | R11 commercial / participation | §§20, 22 |
-| R12 reviews / player feedback | §§21–24 |
-| R13 transferable inspiration / limits | §27 |
-| R14 sources / viewing / preservation / navigation | §§2, 28 + annotated sources |
+| R12 reviews / player feedback | §§21–24, with sample limits retained |
+| R13 transferable inspiration / limits | §§27, 30 |
+| R14 sources / viewing / preservation / navigation | §§2, 28, 30 + annotated sources |
 
 ### Evidence limits
 
 - The 1997 game, old PC build, 2013 Steam edition and 2026 PC re-release are kept separate where relevant.
 - Remake/Rebirth/Revelation are not backfilled into original mechanics.
-- Five independent substantive reviews of the original/ports were inspected.
-- Steam review evidence is self-selected and unusually confounded by the February 2026 client replacement.
+- Five independent substantive reviews of the original/ports were inspected in the original pass; this repair does not claim a fresh reading of every inherited review.
+- Steam review evidence is self-selected and confounded by the February 2026 client replacement. It does not establish quantitative causal attribution for the aggregate.
 - The 15.5-million sales figure is Square Enix's current claim for the 1997 original across its releases.
 - Revelation is unreleased; only officially published facts are included.
-- No claim depends on unwatched video footage. Future visual-study targets include Midgar's pre-rendered navigation, field→FMV transitions, linked Materia UI, Gold Saucer activity transitions, chocobo traversal, original vs Remake ATB feedback and Rebirth Synergy presentation.
+- No claim depends on unwatched video footage. Future visual-study targets include Midgar's pre-rendered navigation, field→FMV transitions, linked Materia UI, Gold Saucer activity transitions, chocobo traversal, original vs Remake ATB feedback, Rebirth Synergy presentation and Queen's Blood's territory/score indicators.
 
 ## 29. Completion conclusion
 
@@ -801,6 +803,92 @@ Around that combat core, chocobo breeding and Gold Saucer show how side systems 
 For OpenLegend, the highest-value lesson is:
 
 > **Let capability move through the world—through people, objects, teaching and discovery—without letting mobility of skill erase the causal identity of the person using it.**
+
+## 30. Operative minigames, substantive remake contrast and complete situations
+
+**Corrective research, September 26, 2026.** These rules are edition-labeled. The cases are constructed illustrations, not personal gameplay tests. They close the audit's R02–R05 deficiencies without treating every remake system as a 1997 feature.
+
+### Original Battle Square: earned currency can be locally temporary
+
+Entry costs 10 GP. One selected character fights up to eight rounds, choosing whether to continue between victories. Continuing adds a slot-selected handicap. Quitting safely or completing the sequence earns BP; defeat forfeits that attempt's points. BP purchases prizes such as Omnislash, but leaving Battle Square clears the accumulated balance. It is not a permanent account currency. The arena also does not award ordinary EXP/AP or permanently teach Enemy Skills, despite using familiar battle presentation. [FFVII34](#ffvii34)
+
+### Original Fort Condor: funding, composition and a fallback battle
+
+The player finances and positions a force, then directs it against troops climbing toward the reactor. Attackers counter Beasts, Defenders counter Barbarians and Shooters counter Wyverns; each has a corresponding weakness. Workers place explosives, Repairers sustain allies, and fixed artillery trades mobility for area coverage. An impressive army can still fail if its composition or placement is wrong. These are bounded minigame units, not newly recruitable members of Cloud's ordinary party. [FFVII36](#ffvii36)
+
+The game's own dialogue offers either direct participation or financial help. Clearing the attackers or defeating their commander wins the strategic encounter; an enemy reaching the shed instead triggers a direct party battle. Thus a breached defense is a change of control scale, not automatically the ordinary game-over screen. Later story use of the location is distinct from repeated earlier optional visits. The similarly named board games in INTERmission/Rebirth must not supply rules for this original activity. [FFVII35](#ffvii35)
+
+### Remake: create an opening, then exploit it
+
+**Pressure is not stagger.** Pressure is an enemy-specific temporary opportunity in which suitable actions fill the stagger gauge more effectively. Filling that gauge produces the larger vulnerability window. Assess can explain relevant conditions; elemental weaknesses, interrupted attacks, defended actions and destroyed parts do not all pressure every enemy identically. A move valuable for building stagger need not be the highest-damage move once stagger begins. [FFVII38](#ffvii38)
+
+Weapons add a learning axis beyond original Materia AP: using a weapon's ability increases its proficiency until the wielder can use it with another weapon. Spending SP to improve a weapon's statistics or Materia capacity is a different operation. Classic mode can automate ordinary actions while leaving ATB spending to the player; direct intervention remains possible. These options separate learned technique, equipped object and motor-control assistance rather than combining them into one “level.” [FFVII37](#ffvii37)
+
+**Hard Mode** changes expedition planning as well as enemy strength: items are unavailable and benches restore HP but not MP. Manuscripts from specified encounters and expanded simulator challenges provide further goals. Chapter Select governs entering this difficulty; it is not an unrestricted mid-fight switch. The guide's proposed maximum-level preparation is advice, not a universal eligibility condition. These are Remake rules; Rebirth's Cushion exception is not imported backward. [FFVII40](#ffvii40) [FFVII43](#ffvii43)
+
+### Rebirth: two kinds of synergy and a separate growth interface
+
+**Synergy Skills** are real-time paired actions, accessed through the defensive shortcut interface—R1 plus an assigned button in the documented PlayStation controls. They do not consume ATB. Availability depends on the participating characters, so “free” is not “usable by anyone at any time.” [FFVII42](#ffvii42)
+
+**Synergy Abilities** require qualifying ATB actions to build the participating characters' charges. Their consequences extend beyond a cinematic hit: Cloud/Tifa's Relentless Rush can extend an existing stagger, whereas other pairs affect Limit access. Folio spending supplies character upgrades and additional paired actions; it can be reallocated. Weapon passives and learned weapon techniques remain separate from that growth interface. The reviewed benefit is coordinated timing, not merely making two attack animations overlap. [FFVII41](#ffvii41)
+
+### Rebirth: craft knowledge is not character combat level
+
+Broden supplies the Item Transmuter early in Chapter 2. Materials and craftsmanship gate recipes; making a recipe for the first time earns crafting EXP, so repeatedly producing one familiar consumable is not an unlimited leveling loop. Transmuter Chips add recipes obtained through exploration and other activities. The inspected reference includes incomplete tables, so this dossier uses its operative rules rather than copying questionable or placeholder recipes. [FFVII43](#ffvii43)
+
+For example, the first armor-upgrade chip comes from Grasslands excavation and unlocks improvements to early armor. A discovery therefore changes what existing possessions can become. It does not grant the missing materials or automatically perform the upgrade. The broader chip page contains obvious repeated placeholder rows for unrelated objects; those are explicitly excluded from this account. [FFVII45](#ffvii45)
+
+### Rebirth: Queen's Blood is territory, deck composition and lane scoring
+
+The ordinary game uses a fifteen-card deck and a three-by-five board. A card needs a friendly position with sufficient pawn rank; its pattern changes future placement opportunities, while special effects can enhance, weaken or replace cards. After play ends, a player receives the score from lanes they win, not automatically every point they placed. Consequently, winning more lanes is not itself the scoring objective. NPC victories and card acquisition provide a progression route separate from battle equipment. [FFVII44](#ffvii44)
+
+**Interpretation:** these revisions preserve the broad idea of connected activities while changing the ownership of progress. Original Materia grows as a transferable object; Remake adds a character's retained weapon technique; Rebirth adds paired readiness and a separately learned production repertoire. A comparison that only says “more action and bigger regions” misses those different decisions.
+
+### A. Original Elemental: placement chooses the intended protection
+
+**Intention:** survive a known elemental threat. **Conditions:** compatible Materia and linked armor slots are available. **Actions:** move the Elemental pair from offensive gear into armor and inspect its attained level. **Interaction/result:** the same objects now modify incoming damage rather than ordinary attacks. **Next decision:** retain that defense or sacrifice it for another encounter's need. **Limit:** lower development does not grant the strongest absorption effect, and unlinked slots do not establish the relationship. This completes §16's first sketch. [FFVII11](#ffvii11)
+
+### B. Original learning: the recipient matters as much as the source
+
+**Intention:** acquire a learnable enemy action. **Conditions:** the creature is manipulable and the intended recipient carries Enemy Skill. **Actions:** control the creature and direct the suitable move onto that recipient. **Interaction/result:** the particular Materia records the ability. **Next decision:** transfer the trained object or keep building its repertoire. **Limit:** another copy is not automatically taught, and an arbitrary enemy move is not necessarily learnable. This completes §16's second sketch without presenting a generic successful control attempt as guaranteed. [FFVII12](#ffvii12)
+
+### C. Original training gear: accelerated learning has a present cost
+
+**Intention:** mature important Materia before a difficult encounter. **Conditions:** growth-boosting gear and a manageable source of AP exist. **Actions:** equip the training loadout, earn AP, then move the developed Materia into the intended combat configuration. **Interaction/result:** weaker immediate equipment can create future capability. **Next decision:** train another object or stop preparing. **Limit:** fewer slots, lost links or reduced survival can negate the practical advantage; no-growth equipment does not secretly train its sockets. This completes §16's third sketch. [FFVII10](#ffvii10)
+
+### D. Original breeding: a traversal reward still needs a route
+
+**Intention:** reach the island holding Knights of Round. **Conditions:** the breeding chain has produced a gold chocobo. **Actions:** locate the otherwise inaccessible island and ride across the relevant terrain to claim the Materia. **Interaction/result:** husbandry and racing preparation become geographic access, then combat power. **Next decision:** equip and develop the new option or pursue another cave. **Limit:** owning the bird does not automatically reveal every destination or remove the summon's use costs. This completes §16's fourth sketch. [FFVII16](#ffvii16)
+
+### E. Original arena: stop safely, then spend before leaving
+
+**Intention:** earn a desired BP prize. **Conditions:** a solo attempt has accumulated points but acquired a damaging handicap. **Actions:** choose a safe between-round exit and redeem the balance locally. **Interaction/result:** restraint preserves an attempt's payout. **Next decision:** reenter or leave. **Limit:** leaving the venue before spending clears the balance; surviving a single round is not the same as banking permanent wealth. [FFVII34](#ffvii34)
+
+### F. Original defense: an opening can demand a new kind of control
+
+**Intention:** protect the fort. **Conditions:** purchased defenders are losing ground near the shed. **Actions:** redirect suitable units; if the line breaks, confront the commander with the ordinary party. **Interaction/result:** tactical failure changes the action system rather than instantly deleting the campaign. **Next decision:** improve the next deployment or fund defenders while traveling. **Limit:** a strong party is not evidence that its mercenary formation was effective; repeated failures have their own consequences. [FFVII35](#ffvii35) [FFVII36](#ffvii36)
+
+### G. Remake Sweeper: damage is not the only value of a spell
+
+**Intention:** make a dangerous machine vulnerable. **Conditions:** Lightning and sufficient ATB/MP are available. **Actions:** use Thunder to pressure the Sweeper, spend the short window on Focused Thrust, then switch to damage once staggered. **Interaction/result:** one action changes the usefulness of another. **Next decision:** exploit the opening or rescue a bound ally by changing controlled characters. **Limit:** the window expires and the same elemental plan does not pressure every enemy. [FFVII39](#ffvii39)
+
+### H. Remake Hard Mode: recovery now competes with resources later
+
+**Intention:** reach a chapter's later fight with enough MP. **Conditions:** the party is injured and a bench or non-MP healing action is available. **Actions:** use the appropriate recovery instead of automatically casting another costly heal. **Interaction/result:** mode restrictions change the value of an ordinary rest stop and the equipped Materia. **Next decision:** spend MP on a necessary weakness or preserve it. **Limit:** avoiding all expenditure can cause defeat now; no-item rules do not make every encounter safely avoidable. [FFVII40](#ffvii40)
+
+### I. Rebirth cooperation: spending earlier creates a later joint option
+
+**Intention:** extend a useful stagger window. **Conditions:** Cloud and Tifa have earned the charges for Relentless Rush. **Actions:** trigger the paired ability during stagger rather than solely because it is ready. **Interaction/result:** earlier individual actions enable a shared timing benefit. **Next decision:** exploit the extension or recover. **Limit:** the partner and charges must be available; a Synergy Skill shortcut is not interchangeable with this charged ability. [FFVII41](#ffvii41) [FFVII42](#ffvii42)
+
+### J. Rebirth crafting: diversity of production teaches more than repetition
+
+**Intention:** unlock additional recipes. **Conditions:** several unmade recipes and materials are available. **Actions:** make useful new outputs rather than endlessly repeating one known item. **Interaction/result:** first-time crafting develops the separate craftsmanship track. **Next decision:** gather a missing ingredient or seek a chip. **Limit:** character EXP and raw money do not automatically satisfy every crafting requirement; consuming rare material for novelty can conflict with a more urgent recipe. [FFVII43](#ffvii43)
+
+### K. Rebirth cards: a larger local lead can be the wrong investment
+
+**Intention:** win the total Queen's Blood score. **Conditions:** one lane is already secure while another could change hands. **Actions:** compare the end-of-game lane totals before placing the next card. **Interaction/result:** strengthening the right lane can matter more than maximizing one card's raw power. **Next decision:** commit or pass. **Limit:** card abilities and remaining moves can change the result; the board is not scored by simply counting captured spaces. [FFVII44](#ffvii44)
+
+**Transfer limits:** these cases demonstrate several forms of connected design, not a recommendation to copy their exact currencies, slots or scripted exceptions. An interface needs to disclose the actual persistence rule: an arena balance, a learned technique, a crafting level and temporary paired readiness should not look like interchangeable kinds of progress. The original and remake comparison is now substantive; it does not certify unseen footage, every current patch statistic or five separate reviews for every edition.
 
 ## Sources — annotated set
 
@@ -842,7 +930,7 @@ For OpenLegend, the highest-value lesson is:
 
 <a id="ffvii19"></a>**FFVII19 — [Yoshinori Kitase on creating Final Fantasy VII](https://blog.playstation.com/?p=353736).** PlayStation Blog, 2021. Developer retrospective emphasizing Materia's player-controlled abilities and Vincent as an optional recruit.
 
-<a id="ffvii20"></a>**FFVII20 — [FINAL FANTASY VII REBIRTH — Latest Updates Vol. 1](https://www.square-enix.com/asia/newsportal/en/topics/ffvii-rebirth/post26.html).** Square Enix Asia, 2026-04-10. Primary current source stating the 1997 original has sold **over 15.5 million copies worldwide**.
+<a id="ffvii20"></a>**FFVII20 — [FINAL FANTASY VII REBIRTH — Latest Updates Vol. 1](https://www.square-enix.com/asia/newsportal/en/topics/ffvii-rebirth/post26.html).** Square Enix Asia, 2026-04-10. Primary current source stating the 1997 original has sold **over 15.5 million copies worldwide**. The corrective pass also inspected its written battle/synergy descriptions; embedded media was not watched.
 
 <a id="ffvii21"></a>**FFVII21 — [Final Fantasy VII Review](https://www.gamespot.com/reviews/final-fantasy-vii-review/1900-2547583/).** Greg Kasavin, GameSpot, 1997-09-29. Contemporary PlayStation review; one of the five independent review publications.
 
@@ -869,3 +957,27 @@ For OpenLegend, the highest-value lesson is:
 <a id="ffvii32"></a>**FFVII32 — [Final Fantasy VII Rebirth developer interview](https://blog.playstation.com/?p=384274).** PlayStation Blog, 2023. Director Naoki Hamaguchi on Synergy moves, character bonds, skill trees and new Materia.
 
 <a id="ffvii33"></a>**FFVII33 — [Final Fantasy VII Rebirth Review](https://www.rpgfan.com/review/final-fantasy-vii-rebirth/).** Zach Wilkerson, RPGFan, 2024-02-22. Independent reception evidence for regional exploration, combat, character writing, minigames and divisive narrative/visual issues.
+
+<a id="ffvii34"></a>**FFVII34 — [Battle Square](https://finalfantasy.fandom.com/wiki/Battle_Square).** Community mechanics reference; substantive indexed rules read September 26, 2026 after direct retrieval failed. Entry, rounds, handicaps, reward/reset and learning exclusions; no personally tested odds.
+
+<a id="ffvii35"></a>**FFVII35 — [Fort Condor script](https://www.yinza.com/Fandom/Script/11.html).** Original game text transcribed by Yinza; funding, unit instructions and breach/result dialogue read September 26, 2026. Primary text via transcription, not footage watched. Awkward localization is not interpreted as an aircraft-simulation claim.
+
+<a id="ffvii36"></a>**FFVII36 — [The Battle(s) of Fort Condor](https://www.cavesofnarshe.com/ff7/condor.php).** Zephir, Caves of Narshe; substantive indexed operative rules read September 26, 2026 after direct retrieval failed. Composition and placement, not mandatory adoption of the guide's favored strategy.
+
+<a id="ffvii37"></a>**FFVII37 — [Remake weapon abilities and Classic mode](https://blog.playstation.com/archive/2019/11/25/new-final-fantasy-vii-remake-screens-feature-moogles-weapon-abilities-materia-mini-games-and-more/).** Square Enix-supplied explanations hosted by PlayStation Blog, November 25, 2019; relevant full text read September 26, 2026. Old planned release date and changed author-profile affiliation are not game facts.
+
+<a id="ffvii38"></a>**FFVII38 — [Stagger in Remake](https://finalfantasy.fandom.com/wiki/Stagger_(VII_Remake)).** Community rules reference; pressure/conditions/intel paragraphs read September 26, 2026. No reconstruction of every hidden formula or personal timing test.
+
+<a id="ffvii39"></a>**FFVII39 — [Sweeper in Remake](https://finalfantasy.fandom.com/wiki/Sweeper_(VII_Remake)).** Community encounter reference; Thunder, Focused Thrust and binding passages read September 26, 2026. Specific example, not a universal enemy solution.
+
+<a id="ffvii40"></a>**FFVII40 — [Remake Hard Mode guide](https://game8.co/games/FF7-Remake/archives/286622).** Authored Game8 guide; substantive indexed restrictions, recovery and reward text read September 26, 2026 after direct access failed. Recommended levels/builds are not requirements; INTERmission/Rebirth rules remain separate.
+
+<a id="ffvii41"></a>**FFVII41 — [Rebirth: Destiny's Child review](https://www.gamespot.com/reviews/final-fantasy-7-rebirth-review-destinys-child/1900-6418187/).** Tamoor Hussain, GameSpot, February 22, 2024; substantive synergy and growth passages read September 26, 2026. “Only way” strategy rhetoric is not adopted as necessity. This is supplementary remake evidence, not another original-game review.
+
+<a id="ffvii42"></a>**FFVII42 — [Synergy Skills and controls](https://game8.co/games/Final-Fantasy-VII-Rebirth/archives/Skill-Trees-Synergy-Skills).** Game8, March 10, 2024; substantive indexed controls/no-ATB text read September 26, 2026 after direct failure. PlayStation bindings are not universal keyboard mappings.
+
+<a id="ffvii43"></a>**FFVII43 — [Rebirth items and transmutation](https://gamefaqs.gamespot.com/ps5/371123-final-fantasy-vii-rebirth/faqs/81141/items).** Uta, guide v0.8.6, January 26, 2025; operative acquisition/crafting/restriction text read September 26, 2026. Incomplete or contradictory numerical recipe rows are not copied as certified values.
+
+<a id="ffvii44"></a>**FFVII44 — [Queen's Blood tips](https://www.gamespot.com/gallery/final-fantasy-7-rebirth-queens-blood-tips-guide/2900-5133/).** Jason Rodriguez, GameSpot, March 2, 2024; written board, rank, effects and scoring rules read September 26, 2026. The “five decks in hand” typo is not adopted; no screenshot position is claimed personally reproduced.
+
+<a id="ffvii45"></a>**FFVII45 — [Transmuter Chips](https://gamefaqs.gamespot.com/ps5/371123-final-fantasy-vii-rebirth/faqs/81141/transmuter-chip).** Uta, guide v0.8.6; introductory mechanism and first armor-chip entry read September 26, 2026. Repeated placeholder entries for later/key items are excluded. The recipe-unlock concept is not unrestricted material fabrication.
