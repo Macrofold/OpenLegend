@@ -491,7 +491,7 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 | G138 | Sons of the Forest | Pending | Not started |
 | G139 | Subnautica | Pending | Not started |
 | G140 | Don't Starve Together | Pending | Not started |
-| G141 | Raft | Pending | Not started |
+| G141 | Raft | **In progress** | Initial R01–R14 pass underway in `dossiers/raft.md`; verify Early Access→1.0/platform boundaries, complete mechanics inventory, five written reviews, Steam/player evidence, production/commercial history, eight worked interactions, source/access limits and preservation/navigation before completion. |
 | G142 | Grounded | Pending | Not started |
 | G143 | The Long Dark | Pending | Not started |
 | G144 | Green Hell | Pending | Not started |
