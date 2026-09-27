@@ -228,6 +228,26 @@ The [RPGFan soundtrack review](https://www.rpgfan.com/music-review/hades-ii-orig
 
 ## 16. Completion and preservation review
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the assignment's explicit mechanics inventory found the dossier substantively complete. The remaining category boundaries are made explicit here:
+
+- **Identity / classes / attributes / skills / leveling / trees:** Melinoë is a fixed protagonist rather than a class-created avatar. Long-term build choice comes through Nocturnal Arms/Aspects, Arcana/Grasp, Incantations, Keepsakes, Familiars and other unlocks; there is no conventional character-XP/class-level tree (§§1–8).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** weapon families/Aspects, temporary Daedalus modifications, Armor, Arachne outfits, materials, Arcana upgrades, Keepsakes and Incantations are covered across §§2–8.
+- **Magic / spells / powers:** Ω moves, Cast/Ω Cast, Boons, curses, Hexes and Magick are central bounded systems (§§1–4).
+- **Traversal / environmental and object interaction:** dash/sprint, route selection, room interactions, Crossroads facilities, gardens and region transitions are covered in §§1, 6–7. The game is not a freeform physics/object-manipulation sandbox.
+- **Activities / minigames:** repeated combat journeys, gathering/gardening, gifting, bathing/fishing-style intimacy activities and Crossroads decoration provide side activities; there is no separate persistent casino/sport economy.
+- **Combat / stealth / loot / rewards:** combat, positional control and run rewards are central; there is no general-purpose stealth subsystem or randomized gear-loot ladder analogous to an ARPG.
+- **Death / failure / recovery / economy / trading:** run failure returns Melinoë to the Crossroads; run-local Gold is distinct from durable resources, Broker exchanges and permanent unlocks (§§5–7).
+- **Story / relationships / romance / reputation / party / companions:** authored relationships, gifts, Keepsakes, intimacy events and Familiar assistance are covered in §§7–9. There is no recruitable multiplayer party or faction-reputation sandbox.
+- **NPC/AI behavior and schedules / factions:** enemies and Familiars have authored combat behaviors; Crossroads characters have authored event availability rather than autonomous daily-schedule simulation.
+- **World map / environment / quests / events:** Underworld and Surface routes, Guardians, Oath/Testaments, Fated Prophecies and Crossroads events are covered in §§6–9.
+- **Building / settlements / management:** Crossroads improvements, garden plots and decoration create a home-upgrade layer, not settlement population or production-chain management.
+- **Multiplayer / social / endgame / return loops:** Supergiant still describes Hades II as single-player; repeat routes, Fear/Vows, Testaments, weapon builds, relationships and late-game unlocks provide the return loop.
+
+**Current boundary check:** Supergiant's September 25, 2026 first-anniversary post celebrates one year since v1.0 and announces a Noclip documentary and concert/community material; it does not announce a new gameplay expansion or supersede the April 14, 2026 all-platform content/quality patch described above. [H232](#h232) This is a current evidence boundary, not a promise that no later patch can occur.
+
+
 | Requirement | Substantive coverage |
 | --- | --- |
 | R01 — Identity and scope | §1, §6 and §11; exact sequel/platform/mode boundaries |
@@ -312,3 +332,5 @@ The [RPGFan soundtrack review](https://www.rpgfan.com/music-review/hades-ii-orig
 <a id="h230"></a>**H230 — [Most-helpful negative Steam reviews](https://steamcommunity.com/app/1145350/negativereviews/?browsefilter=toprated).** Direct review bodies inspected for named dated examples; dynamic, nonrandom listing. Edits and version differences matter; no complaint percentages inferred.
 
 <a id="h231"></a>**H231 — [Most-helpful positive Steam reviews](https://steamcommunity.com/app/1145350/positivereviews/?browsefilter=toprated).** Direct player testimony; substantive witch-identity account used, jokes excluded. An early-access opinion does not evaluate the finished ending.
+
+<a id="h232"></a>**H232 — [Hades II first-anniversary post](https://www.supergiantgames.com/blog/hades-ii-1st-anniversary/), September 25, 2026.** Primary current-status/community post confirming one year since v1.0 and announcing documentary/concert material; it does not announce a new gameplay expansion or change the release/platform facts above.
