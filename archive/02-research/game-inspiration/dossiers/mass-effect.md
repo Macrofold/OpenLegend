@@ -2,7 +2,7 @@
 
 [Research roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Library](../README.md)
 
-**Research date:** September 26, 2026. **Pass:** R01–R14 complete, with the source-access limitations recorded below. This is documentary research, not a gameplay test. **Spoilers:** the social-system and worked-example sections discuss Virmire, Feros and Bring Down the Sky; the story section names the central threat. Readers preserving a first playthrough should stop before those sections.
+**Research date:** September 26, 2026. **Pass:** R01–R14 complete, with the source-access limitations recorded below; the requested second-pass audit and corrections are recorded at the end. This is documentary research, not a gameplay test. **Spoilers:** the social-system and worked-example sections discuss Virmire, Feros and Bring Down the Sky; the story section names the central threat. Readers preserving a first playthrough should stop before those sections.
 
 **Central finding — interpretation:** Mass Effect makes a finite, authored campaign feel personally owned by combining a customizable officer, a persistent crew, selectable expedition order and remembered decisions. Its most useful lesson is not that every object or citizen is simulated. It is that a relatively small number of understandable commitments can connect tactical preparation, personal relationships and political consequences. Its corresponding warning is that an expansive fiction does not automatically make repeated exploration tasks interesting.
 
@@ -43,15 +43,27 @@ Lift, Throw and Singularity alter an opponent's position or ability to respond. 
 
 **Interpretation:** the tactical resource is often the opportunity to act safely. Temporarily preventing retaliation can be worth more than increasing damage per shot. Conversely, combat control is not permission to manipulate arbitrary scenery: the released game's authored interaction targets and ability rules remain the boundary.
 
+### Vehicle operation, exploration and minigame boundaries
+
+The Mako has distinct machine-gun and cannon attacks, zoom and jump jets. A clear camera view does not guarantee the turret can reach an extremely close or steeply elevated target. Shields recover, while hull repair spends omni-gel; the original repair procedure requires stopping. Electronics investment increases repair effectiveness as well as supporting shields, Overload and technical access. These connect a specialist's combat, exploration and maintenance value rather than adding a separate vehicle-driving profession. [S32](#s32) [S34](#s34)
+
+Driving over terrain, dismounting at an anomaly and entering a ruin are different activities from surveying a planet on the map. Surveying and collectible discoveries support assignments and rewards, not player-operated mines or industrial production. Bratcher's review describes optional discoveries ranging from a nuclear-warhead problem to searching creatures for a data module, but also notes that not every planet is landable and that ordinary civilian theft/crime is not freely simulated. These are bounded encounters, not evidence for a general pickpocketing, stealth-career or ecology system. [S5](#s5)
+
+The PC port replaces the console's button-sequence hacking presentation with moving through rotating concentric barriers under a time limit. Watters values that variation and the port's tactical shortcuts. A failed manipulation challenge and an unmet Decryption/Electronics prerequisite are different failure conditions; changing the interface does not remove the party-skill gate. [S2](#s2) [S29](#s29)
+
 ## 3. Equipment, resources and the economy
 
-The major equipment families are pistols, shotguns, assault rifles, sniper rifles, armor, grenades, bio-amps and omni-tools. Weapons, ammunition, armor and grenades have compatible modification slots. Bio-amps support biotics; omni-tools support technical performance. Credits buy equipment and upgrades; medi-gel supports healing; omni-gel can assist technical actions and Mako repair. These are fictional campaign resources, not purchasable premium currencies. [S8](#s8)
+The major equipment families are pistols, shotguns, assault rifles, sniper rifles, armor, grenades, bio-amps and omni-tools. Weapons accept compatible weapon and ammunition modifications; armor and grenades have their own upgrade categories. An ammunition modification changes the weapon's behavior: it is not a consumable stack of bullets with modification slots of its own. Ordinary original-game gunfire is constrained by heat rather than the sequel's thermal-clip reload loop. Bio-amps support biotics; omni-tools support technical performance. Credits buy equipment and upgrades; medi-gel supports healing; omni-gel can assist technical actions and Mako repair. These are fictional campaign resources, not purchasable premium currencies. [S8](#s8) [S10](#s10)
 
 Armor separates physical damage protection, shields and technological/biotic resistance. Light, medium and heavy categories impose training constraints. Upgrades can alter defensive or cooldown behavior, so the comparison is not always reducible to one armor number. Exploits that equip otherwise invalid armor do not establish an intended universal wardrobe system. [S9](#s9)
 
 For a concrete equipment comparison, a community Garrus guide contrasts **Colossus** protection with **Predator** shielding/resistance, and discusses **Savant** omni-tools, **Medical Exoskeleton**, **Energized Plating**, **Scram Rail** and **Frictionless Materials**. Those are examples of composing a role: protection, power availability, gun performance and heat interact. The guide covers original/Legendary play and expresses its author's build preferences; its preferred loadout is not a universally optimal solution. Exact item-tier statistics are deliberately not generalized across editions. [S26](#s26)
 
 Selling an unwanted item and breaking it into omni-gel are mutually exclusive dispositions of that item. Equipment allocation among companions creates another opportunity cost: a surplus for Shepard may still upgrade a specialist. The result is a loot-and-replacement economy, not a deep crafting profession, resource-production chain or market with autonomous suppliers. Container rewards and shops chiefly support the mission loop. [S8](#s8) [S10](#s10)
+
+**Merchant and crew access.** Buying a manufacturer licence expands the Normandy requisition officer's possible assortment; it does not manufacture an item or guarantee every desired tier is immediately stocked. The cargo-bay lockers open the corresponding squadmate's equipment screen, including crew not currently in the field team. Licences therefore improve access, while lockers reduce the cost of maintaining several specialists. [S32](#s32)
+
+The PC guide distinguishes merchant inventories, level/quest conditions and successive medi-gel/grenade capacity upgrades. For example, Ledra's Feros shop depends on local quest progression and his survival; purchasing an earlier capacity tier enables the next rather than allowing arbitrary maximum capacity at the opening. This makes credits compete between immediate equipment, future inventory breadth and additional emergency supplies. It is a finite authored economy, not a player market or a generic crafting tree. [S33](#s33)
 
 **Analytical warning:** when replacement frequency overwhelms the importance of each decision, an apparently rich equipment system becomes clerical work. The original game's inventory criticism should not be read as evidence that all equipment choice is undesirable. It points instead to a mismatch between the number of comparisons requested and the number that change the player's plan. [S1](#s1) [S3](#s3)
 
@@ -68,6 +80,8 @@ A March 2014 Steam participant, **Argentino_88**, reported leaving side missions
 ## 5. People, relationships and the simulation boundary
 
 The six recruitable companions are Ashley, Kaidan, Garrus, Wrex, Tali and Liara. Their different specialties and perspectives make party composition both tactical and expressive. Conversations aboard the Normandy and at authored encounters expose disagreements about duty, institutions, species and personal history. This is **scripted character reactivity**, not evidence that every resident has an independently simulated daily agenda or develops arbitrary relationships off-screen. [S4](#s4) [S14](#s14)
+
+Power automation is configurable: the original review distinguishes using all powers automatically, only defensive powers, or leaving power use to player commands. This is a real delegation choice, not autonomous mission planning. Bratcher separately criticizes enemies that rush directly or remain distant rather than coordinating and flanking convincingly. Those are his observed combat limitations, not an inspection of the game's AI source code. [S1](#s1) [S5](#s5)
 
 Romance is a bounded set of written routes. In the unmodified original, Ashley is available to male Shepard, Kaidan to female Shepard, and Liara to either. Sha'ira's encounter is not equivalent to the ongoing companion romance route. Later-game romance options, unused recorded lines and save-edit/mod possibilities do not establish native original-game availability. Conversations and story progression matter; this is not a repeatable gift economy with every NPC. [S14](#s14)
 
@@ -137,6 +151,8 @@ Pinnacle Station was not included in the official Legendary Edition. Reporting o
 
 **Windows, 2008:** a consolidated tactical view, shortcuts, individual squad orders and an altered hacking interface change access to existing mechanics. Original console criticisms cannot simply be copied onto that port. **Legendary Edition, 2021:** BioWare documents changes to aiming, weapon usability, melee, inventory handling, experience progression and the Mako. These should not be backdated to 2007. The remaster modernizes the original campaign; it does not turn it into a universal open-world simulation. [S2](#s2) [S6](#s6)
 
+More specifically, Legendary removes class penalties for using weapon types but retains class-specific specializations; adds out-of-combat sprint and a separate melee input; and changes several weapon-ability and inventory conveniences. Its Mako rear boosters have a cooldown independent of the jump jets, while vehicle kills lose the original experience penalty and lava changes from instant mission failure to damage over time. These can alter a player's preparation and risk calculus, not just the image quality. They are documented remaster changes, not original-console capabilities. [S6](#s6)
+
 ## 10. Production history, promotion and distribution
 
 In an August 2007 interview, Casey Hudson dates early preproduction to 2004 after the PC version of Knights of the Old Republic. He identifies Unreal Engine 3 as the foundation and describes substantial BioWare work on digital actors, combat and exploration. He also names cinematic science-fiction influences and a planned trilogy. These are a developer's contemporary account, not an audited production budget. [S18](#s18)
@@ -164,12 +180,14 @@ These are **five distinct authored reviews across three editorial outlets**. Two
 | Kevin VanOrd, GameSpot, November 19, 2007, Xbox 360 | Character investment, dramatic choices and the combination of powers with shooting. | Reused outposts, inventory friction, awkward cover and the Mako. | Connect the compelling overall adventure to the less consistent local actions. [S1](#s1) |
 | Chris Watters, GameSpot, May 30, 2008, PC | Tactical shortcuts and more direct squad control make the existing vocabulary easier to use. | Loading/performance issues remain; this is a port-specific judgment. | Usability can change the experienced depth of unchanged systems. [S2](#s2) |
 | Bryan Grosnick, RPGFan, February 22, 2011, retrospective | A less-confident shooter player can participate through powers and adjustable difficulty; character customization supports ownership. | Vehicle exploration, equipment overload, camera bugs and male Shepard's performance. | Preserve an accessibility-related player perspective without claiming a formal accessibility audit. [S3](#s3) |
-| John McCarroll, RPGFan, June 9, 2008, PC | Humanity's uneasy political position and the dialogue presentation. | Some choices reconverge; bugs and the action emphasis can disappoint traditional RPG expectations. | Distinguish expressive agency from structural branching. The misleading URL slug is not a review of Mass Effect 3. [S4](#s4) |
+| John McCarroll, RPGFan, June 9, 2008, PC | Humanity's uneasy political position and the dialogue presentation. | Some choices reconverge and technical faults remain. He identifies the action emphasis as different from earlier BioWare RPGs, explicitly not inherently bad. | Distinguish his actual criticism from an inferred traditional-RPG objection. The misleading URL slug is not a review of Mass Effect 3. [S4](#s4) |
 | Eric Bratcher, GamesRadar, November 19, 2007, Xbox 360 | Detailed fiction and the uncertainty of optional expeditions. | Limited shooter behavior and a world less physically open than anticipated. | Rich description is not proof of arbitrary civilian interaction or universal planetary access. [S5](#s5) |
 
 ### Steam investigation and the strongest accessible alternatives
 
 The original is Steam app **17460**. Its listing was found, but the reader encountered an age-check page. Repeated community top-rated-review URLs and the public review endpoint failed; a container request also failed at DNS resolution. **No top/helpful review ranking or individual helpful-review sample was accessible.** This limitation is not evidence that Steam reviews do not exist, and collection app reviews were not substituted for the original game.
+
+The September 26 second-pass audit retried the default Community review page, a top-rated negative-review route and the public app-review JSON endpoint. All three still failed in the research reader. This confirms an access limitation for this audit, not an absence of player criticism. The five editorial reviews above were freshly reread, including all three pages of Bratcher's single review; their summaries remain edition-specific.
 
 Two direct Steam discussion accounts were accessible. **J6 / J6 The Bounty Hunter**, February 19, 2021, reported failed DLC installation; another participant's license-key explanation remains an unverified user diagnosis. **Argentino_88**, March 30, 2014, reported frustration at having saved unfinished content for a nonexistent free-roam postgame. These identify concrete distribution and expectation problems without establishing prevalence. Only the relevant discussion passages were inspected, not every paginated reply. [S11](#s11) [S24](#s24)
 
@@ -200,11 +218,11 @@ For a low-spoiler entry, read the identity and edition sections, then the five r
 | Requirement | Principal coverage |
 | --- | --- |
 | R01 — Identity/version boundary | Sections 1 and 9; original, Windows, PS3, DLC and remaster distinguished. |
-| R02 — Major playable systems | Section 2 action/condition/failure table and capability discussion. |
-| R03 — Items/resources/abilities | Sections 2–3; named powers, equipment, upgrades and opportunity costs. |
+| R02 — Major playable systems | Section 2 action/condition/failure table, capability discussion, vehicle operation and hacking. |
+| R03 — Items/resources/abilities | Sections 2–3; named powers, equipment, upgrades, licences, capacity improvements and opportunity costs. |
 | R04 — Progression/time/economy | Sections 2–4 and 11; levels, specialization, resources, ending, replay and import boundary. |
 | R05 — Worked interactions | Section 7, six explicitly constructed examples with conditions and limits. |
-| R06 — People/social/multiplayer | Sections 1 and 5; squad, romance, persuasion, political fiction and native-mode absences. |
+| R06 — People/social/multiplayer | Sections 1 and 5; squad automation, romance, persuasion, political fiction and native-mode absences. |
 | R07 — Presentation/feel | Section 8 and the port comparisons; specific disagreement retained. |
 | R08 — Story/worldbuilding | Sections 5–7; named places and decisions tied to play. |
 | R09 — Production | Section 10; development origins, engine foundation, collaborators and unshipped plans. |
@@ -226,9 +244,9 @@ Research capture: **September 26, 2026**. Publication dates are stated where ver
 
 <a id="s4"></a>**S4.** John McCarroll, [Mass Effect Review — PC](https://www.rpgfan.com/review/mass-effect-3/), RPGFan, June 9, 2008. Substantive body inspected. The slug ends in `mass-effect-3`, but the article is about the original game's PC port.
 
-<a id="s5"></a>**S5.** Eric Bratcher, [Mass Effect review](https://www.gamesradar.com/mass-effect-review/), [combat page](https://www.gamesradar.com/mass-effect-review/2/) and [exploration page](https://www.gamesradar.com/mass-effect-review/3/), GamesRadar, November 19, 2007. One multi-page review, counted once; substantive combat/world sections inspected.
+<a id="s5"></a>**S5.** Eric Bratcher, [Mass Effect review](https://www.gamesradar.com/mass-effect-review/), [combat page](https://www.gamesradar.com/mass-effect-review/2/) and [exploration page](https://www.gamesradar.com/mass-effect-review/3/), GamesRadar, November 19, 2007. One multi-page review, counted once; all three substantive pages reread during the second-pass audit.
 
-<a id="s6"></a>**S6.** BioWare/EA, [Gameplay Calibrations](https://www.ea.com/ea-play/news/gameplay-calibrations), April 6, 2021. Primary remaster change account; relevant sections inspected. Not original-launch rules.
+<a id="s6"></a>**S6.** BioWare/EA, [Gameplay Calibrations](https://www.ea.com/ea-play/news/gameplay-calibrations), April 6, 2021. Primary remaster change account; relevant sections inspected and reread for the audit. Not original-launch rules.
 
 <a id="s7"></a>**S7.** Mass Effect Wiki, [Talents](https://masseffect.fandom.com/wiki/Talents) and [Classes](https://masseffect.fandom.com/wiki/Classes). Community mechanics references; substantial indexed passages inspected, direct retrieval failed. Only original-game sections used.
 
@@ -280,8 +298,16 @@ Research capture: **September 26, 2026**. Publication dates are stated where ver
 
 <a id="s31"></a>**S31.** Gamepur, [Free or kill the rachni queen](https://www.gamepur.com/guides/should-you-free-or-kill-the-rachni-queen-in-mass-effect-legendary-edition). Indexed choice/consequence guide inspected. Only the original decision is summarized here; sequel outcome details belong to their own dossiers.
 
+<a id="s32"></a>**S32.** [Codex: Player Tutorials](https://masseffect.fandom.com/wiki/Codex/Player_Tutorials). Community-hosted transcription of the game's instructional text; substantial indexed Mako, cargo-bay locker and manufacturer-licence passages read during the September 26 audit; direct retrieval failed. This is source text reproduced by a community, not a second independent playtest. Equivalent cargo-bay transcription on Gamicus was also located but is not counted as independent corroboration.
+
+<a id="s33"></a>**S33.** Prima Games, [Mass Effect PC eGuide — Merchants](https://primagames.com/eguides/mass-effect-pc-eguide/essentials/appendix-ii-merchants/appendix-ii-merchants). Full substantive merchant table and explanatory notes read during the audit. PC-guide progression, licence and capacity conditions, not a synchronized Legendary inventory or a current-price list.
+
+<a id="s34"></a>**S34.** GameBanshee, [Electronics](https://www.gamebanshee.com/masseffect/talents/electronics.php). Talent description and rank table read during the audit; establishes the shared shield, vehicle-repair, access and Overload roles. No proprietary implementation claim or universal optimal build is inferred.
+
 ## Preservation and review record
 
 The baseline `games/`, `mechanics/` and `dossiers/` inventories contained no dedicated G101 owner. This is an additive September 26 roster subject; it does not replace an earlier chapter. Existing source-packet material, incidental references, essays and viewing recommendations remain untouched. See [packet provenance](../references/packet-provenance.md); the global seven-file and earlier-conversation reconciliation is **not** certified by this range pass.
 
-Review covered R01–R14, distinction between original/port/remaster, native versus modded features, pre-release promises, attributed sales versus other metrics, five authored reviews, explicit Steam access limits, spoiler labeling and local source anchors. Relative links point to inherited canonical files. No runtime code changed; no game execution, benchmark, unit test or unreviewed-video observation is claimed. The [progress ledger](../research-progress.md) records the successful completion commit separately.
+The initial review covered R01–R14, distinction between original/port/remaster, native versus modded features, pre-release promises, attributed sales versus other metrics, five authored reviews, explicit Steam access limits, spoiler labeling and local source anchors. Relative links point to inherited canonical files. No runtime code changed; no game execution, benchmark, unit test or unreviewed-video observation is claimed. The [progress ledger](../research-progress.md) records successful commits separately.
+
+**Second-pass audit, September 26:** read the complete dossier against R01–R14 and the explicit mechanics inventory. Added the underdeveloped vehicle-operation, hacking, merchant-licence, crew-equipment, consumable-capacity and automation details; clarified ammunition-modification wording and concrete original-versus-Legendary changes. Corrected the McCarroll summary so a difference he explicitly calls not inherently bad is not presented as his negative judgment. Freshly read all five review bodies and the relevant primary remaster account; retained the six constructed examples, earlier commercial/source history and explicitly unavailable evidence. The original 31 source groups remain, with three annotated additions. This is a content/evidence audit, not a claim that every linked historical webpage, private financial statistic or video was independently reverified.
