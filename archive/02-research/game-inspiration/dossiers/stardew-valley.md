@@ -142,6 +142,26 @@ Five independently credited substantive written review bodies were read through 
 
 ## 13. Interpretation, coverage and preservation
 
+### September 26 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the existing research substantively complete. These category boundaries make that coverage explicit:
+
+- **Identity / classes / attributes / skills / leveling / professions:** character/farm customization and layouts are in §§1–2; five activity skills, levels, professions and Mastery are in §2/§8. There is no combat-class picker or native spell-school progression.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** §§2–5 cover tools, tool upgrades, chests/refrigerators, weapons/rings/boots, Forge upgrades, crafting, processors, cooking and consumables.
+- **Magic / spells / powers:** absent as a general player spell system. Capability growth comes from tools, equipment, recipes, food/drink buffs, skills and infrastructure.
+- **Traversal / environment / object interaction:** tools reshape the farm; mine/elevator travel, minecarts/boat routes, horse and Ginger Island expand movement and access (§§2, 5, 8). Seasonal/weather/time rules materially change what the environment permits.
+- **Activities / minigames:** farming, fishing, mining/combat, foraging, cooking, decorating, festivals and the separately unlocked Junimo Kart are all represented. Fishing is an execution minigame rather than passive gathering (§5).
+- **Combat / stealth / loot / rewards:** mine combat, weapons/equipment and monster/mineral rewards are in §5. There is no general stealth system; social timing/route planning should not be mislabeled stealth.
+- **Death / failure / recovery / economy / trading:** §5 distinguishes health loss from passing out and item recovery; §§3, 6 and 11 cover gold, selling, processing, service costs, Joja/bundle alternatives and in-world sinks. No premium currency is involved.
+- **Story / relationships / romance / reputation / party / companions:** §7 covers friendship, gifts, heart events, romance/marriage and Krobus' roommate route. Relationships are individual authored tracks rather than a single faction-reputation meter, and spouses are not commandable adventuring companions.
+- **NPC/AI behavior and schedules / factions:** villagers have authored schedules, households, services and event conditions (§§6–7), but not unrestricted autonomous careers. Joja versus Community Center is a consequential development route, not a fully systemic faction-war simulation.
+- **World map / environment / quests / events:** farm maps, Pelican Town, mines/desert, Ginger Island, seasons/weather, bundles, requests, festivals and special events are covered across §§1–8.
+- **Building / settlements / management:** farm buildings, animal housing, machines, decoration and spatial farm planning are central; this is personal farm management, not population-level colony governance.
+- **Multiplayer / social / endgame / return loops:** §10 covers host/farmhand persistence and platform differences; §8 covers Mastery, Perfection, Ginger Island and continuing ownership after formal objectives rather than a forced seasonal reset.
+
+The current-version reread also confirms that **1.6.15 remains the PC baseline**, while ConcernedApe's February 26, 2026 primary anniversary post says a new update is in development without presenting it as shipped. The same post reports 50 million copies; no later release or sales total is invented here. [V1][V2]
+
+
 **Give routine a purpose the player owns.** An improving home, a preferred craft or a relationship can motivate ordinary work. Visible progress should not make an exploratory or social day seem inherently irresponsible.
 
 **Make care different from a delivery score.** A preference can help an object express attention, but acquiring the preference table is not the same as growing mutual understanding. A richer social game should demonstrate reciprocity in later behavior, not only generate longer greetings.
