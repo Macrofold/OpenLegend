@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — Cross-world repertoire proposal library
+
+Added a [master idea library](repertoires/README.md) with 270 proposal cards across 27 catalogues, 16 worked combinations and four optional world settings containing eight original characters each. The existing 384 action examples retain their IDs and meanings. Broad world-fit, play/simulation, potential and implementation-gap labels are dated design estimates, not a live support matrix. The [source atlas](repertoires/source-atlas.md) maps all 130 game and 28 world subjects to takeaways and cautions, recording immutable research snapshots so the active source branches can continue independently.
+
+The proposals emphasize expressive reuse, particular people and places, useful autonomy, quiet pleasures and bounded complexity. The science-fiction proposal uses inhabited ships, crew capabilities and abstract route transitions, excluding playable spaceflight/navigation. None of the four settings is adopted as canonical content; no runtime behavior or accepted engine/world contract changes. INV, EWF, AG, ACT, EPR and SW remain the implementation/acceptance owners linked from the library, with no criteria closed or parallel backlog created. Validation is document structure, source-path, local-link/anchor, formatting and content review; no gameplay, live-model or scientific-model validation is claimed.
+
 ## 2026-09-27 — Parallel game-inspiration library integration
 
 Merged the five G40–G120 research branches into `docs/game-inspiration-library` with ordinary merge commits, preserving their ancestry and stable dossier paths so subsequent source-branch commits can be merged incrementally. Reconciled the shared navigation, interaction lookup and [progress ledger](../archive/02-research/game-inspiration/research-progress.md#integrated-branch-state--september-27-2026); the branch named G101–G120 actually owns the revised G101–G110 range. Both independent AI Dungeon studies and their separate evidence limits remain in one dossier.
