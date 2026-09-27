@@ -8,7 +8,7 @@
 
 Zeekerss develops and publishes this first-person cooperative scavenging game. Its Steam Early Access release was October 23, 2023. A crew lands on abandoned moons, retrieves scrap, sells it to the Company and tries to meet a recurring quota. Native play supports solo or up to four people; enlarged lobbies and voice-mimicking modifications must not be mistaken for that baseline. The shop's old six-month Early Access estimate is not a current completion schedule. [P1]
 
-**Version 80, The Blooming Update, left beta on April 5, 2026.** The latest retrieved primary feed still describes Version 85 as future work. V80 adds Backwater Gunkfish, Feiopars and Cadaver Bloom, returns the Kidnapper Fox, and revises forest exteriors and factory rooms. This is delivered scope, not an assertion that every newly named creature's complete behavior was independently inspected. [P2]
+**Version 80, The Blooming Update, left beta on April 5, 2026.** The official Steam announcement feed still has V80 as its newest shipped release at this September 26 audit. Zeekerss' later August development note still treats Version 85 as future and says its timing is undecided; the hoped-for October completion of the whole game had become unrealistic, with a large spooky update and the ending update still ahead. V80 adds Backwater Gunkfish, Feiopars and Cadaver Bloom, returns the Kidnapper Fox, and revises forest exteriors and factory rooms. This is delivered scope, not an assertion that every newly named creature's complete behavior was independently inspected or that the roadmap has a guaranteed date. [P2][P5]
 
 **Interpretation:** the invitation is compact: bring enough valuable things home without losing the crew. Much of the complexity comes from incompatible local priorities rather than a complicated initial objective. The observer can understand a rescue attempt before understanding every piece of equipment.
 
@@ -215,6 +215,26 @@ These are research observations, not accepted OpenLegend architecture changes or
 
 ## 10. Coverage, preservation and viewing
 
+### September 26 requirements-and-corrections audit
+
+A fresh audit against the assignment's full mechanics inventory confirms coverage and makes the meaningful absences explicit:
+
+- **Identity / classes / attributes / skills / leveling / trees:** employees are role-neutral avatars; emergent operator/scout/carrier/driver duties are team choices rather than persistent classes. There is no character XP, stat allocation, perk tree or job-skill progression (§§1, 5).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** scrap, ordinary cargo slots, V80's utility slot, belt bag, purchased tools, ship upgrades and Cruiser are covered in §§2–3. There is no native crafting/manufacturing or armor-upgrade tree.
+- **Magic / spells / powers:** absent natively. Capability is technological/equipment-based and human-coordination-based.
+- **Traversal / environmental and object interaction:** walking/sprinting/crouching/jumping, carrying, doors/hazards, terminal interactions, teleporters, ladder/jetpack/Cruiser use and weather-dependent routes are covered in §§3–4.
+- **Activities / minigames:** ordinary quota expeditions and Weekly Challenge Moons are the principal activity structures; furniture/ship social play is ancillary. There is no separate persistent casino/sport-style minigame economy (§2).
+- **Combat / stealth / loot / rewards:** shovel/control tools, enemy-specific observation/sound/avoidance, valuable scrap and creature-linked equipment are covered in §§3–4. “Stealth” is contextual threat avoidance rather than one universal stealth-stat system.
+- **Death / failure / recovery / economy / trading:** individual death, body recovery, whole-crew scrap loss, quota dismissal, credits, Company selling and routing costs are distinguished in §2. There is no human merchant market beyond the Company/store contract loop.
+- **Story / relationships / romance / reputation / party / companions:** Sigurd's logs, bestiary records and the Company's frame are authored narrative; the crew's relationships are human multiplayer relationships. Native romance, NPC reputation and recruitable autonomous party companions are absent (§5).
+- **NPC/AI schedules / factions:** creatures have distinct encounter behaviors, but there is no civilian daily-schedule or political-faction simulation. The Company is an authored institutional frame rather than a diplomacy system (§§4–5).
+- **World map / environment / quests / events:** selectable moons, generated interiors, authored exterior geography, weather and the recurring quota provide world/objective structure. There is no conventional branching quest journal (§§2, 4).
+- **Building / settlements / management:** ship furnishings/upgrades and stored cargo create a shared base-like space, but there is no settlement construction, farming or population-management layer.
+- **Multiplayer / social / endgame / return loops:** native Windows Early Access play is solo or up to four-player co-op; larger lobbies and voice-mimic features remain mods unless separately delivered (§§1, 5). Escalating quotas, challenge moons, new versions and social stories provide replay, while a finished authored ending is still future scope rather than current endgame.
+
+The current-version audit therefore keeps **V80 as delivered scope**. Zeekerss' August 2026 development note says V85 “might” arrive before a planned spooky update or might itself be that update, and that the ending comes later; those are intentions, not shipped content or fixed dates. [P5]
+
+
 | Requirement | Substantive owner |
 | --- | --- |
 | R01 identity/version/promise | §1 |
@@ -244,6 +264,7 @@ Accessed September 26, 2026. Most Fandom pages blocked direct retrieval but expo
 - **P2 — [Official announcement feed][P2].** Full V80 release note and preceding updates read; beta/future separation, utility rationale, options and mod-label boundary.
 - **P3 — [V70 announcement][P3].** Full primary text read in P2's feed; standalone route returned only a shell. Radar, mansion, vehicle and music attribution, not claims of personal performance testing.
 - **P4 — [Carless's discovery analysis][P4], November 15, 2023.** Full relevant article section read; modeled economics and reported iteration clearly attributed. Embedded videos and linked developer announcement body not newly reviewed.
+- **P5 — [Zeekerss, “Steady, healthy progress”][P5], August 2026.** Primary creator development note: V85 timing still undecided, hoped-for October full-game completion retracted as unrealistic, with a spooky update and ending update still future. Roadmap intent only, not shipped scope or a promised schedule.
 - **R1–R5 — [Corrosion Hour][R1], [GameCritics][R2], [The Tartan][R3], [Common Sense Media][R4], [Game8][R5].** Five independently authored critical bodies, with dates and limitations in §8.
 - **S1–S2 — [Helpful Steam positives][S1] and [helpful Steam negatives][S2].** English all-time selection, actual historical bodies rather than review-ratio inference.
 - **G1–G8 — [Quota][G1], [Contract][G2], [Ship][G3], [Selling][G4], [Body][G5], [Challenge update][G6], [Employee][G7], [Scrap][G8].** Quota/credits and reset distinctions; body fine conflict acknowledged.
@@ -256,6 +277,7 @@ Accessed September 26, 2026. Most Fandom pages blocked direct retrieval but expo
 [P2]: https://steamcommunity.com/app/1966720/allnews/
 [P3]: https://steamcommunity.com/games/1966720/announcements/detail/544484746860693721
 [P4]: https://newsletter.gamediscover.co/p/what-can-we-learn-from-lethal-companys
+[P5]: https://www.patreon.com/posts/steady-healthy-167151251
 [R1]: https://www.corrosionhour.com/lethal-company-review/
 [R2]: https://gamecritics.com/gc-staff/lethal-company-review/
 [R3]: https://the-tartan.org/2023/12/10/lethal-company-review-a-co-op-of-horror-and-fun/
