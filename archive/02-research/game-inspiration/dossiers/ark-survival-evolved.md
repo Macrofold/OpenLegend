@@ -198,6 +198,24 @@ Tribes are ARK's guild/ownership layer. Governance can determine ownership/acces
 
 In practice a tribe is also a labor organization: one person can breed, another build, another farm metal, another tame, another run caves/bosses. Many default timers make that division materially advantageous.
 
+### Cross-ARK transfers and server clusters — audit addition
+
+The initial pass under-covered one of ASE's most important continuity systems: **CrossARK Transfers**. Survivors can upload/download their survivor, items and tamed creatures between compatible ARKs through Obelisks, Tek Transmitters and map-specific terminals/crates where server rules allow it. Transfers can work in single-player/non-dedicated play and across dedicated-server clusters; unofficial clusters require shared cluster configuration, while official rules historically constrained transfers by game mode/server class. [CrossARK Transfers](https://ark.wiki.gg/wiki/CrossARK_Transfers).
+
+This means expansion maps are not merely disconnected campaigns. A long-lived survivor can carry identity/progression across geography, and tribes can move selected creatures/resources between maps. Restrictions matter: inventories on uploaded creatures are dropped, some items/creatures/maps disallow transfer, multiplayer uploads can expire, and server owners can disable survivor/item/dino upload/download independently. Cross-map continuity is therefore a **permissioned logistics system**, not unrestricted teleportation.
+
+Cryopods interact strongly with transfers because a tame can become a portable inventory item rather than consuming a direct creature-transfer slot. In ASE, cryopods halt food consumption, preserve many creature stats/identity and have charge/cryofridge rules; failure to recharge a pod can permanently kill the stored tame. [Cryopod](https://ark.wiki.gg/wiki/Cryopod). This makes creature storage itself a persistent maintenance dependency.
+
+### Activities and mission structures — audit addition
+
+ASE includes structured activities beyond caves/bosses:
+
+- **Fishing** requires sitting on an eligible chair/bench/raft/Pelagornis, applying bait and completing directional/time-sensitive input prompts while the hooked fish struggles. Fish size, species, bait and rod quality affect meat/resources and possible blueprint/item rewards. Aquatica adds new bait types to the original fishing system. [Fishing Rod](https://ark.wiki.gg/wiki/Fishing_Rod).
+- **Genesis: Part 1 Missions** are repeatable authored activities with Gamma/Beta/Alpha difficulties. Mission types include hunts, races and other scenario structures; rewards include XP, items and Hexagons. Some missions permit tames, some supply temporary creatures and some temporarily cryopod participants' tames. [Genesis missions](https://ark.wiki.gg/wiki/Mission).
+- Explorer Note hunting, cave runs, Orbital Supply Drops/Extinction events and map-specific arenas also create repeatable/collectible goals outside ordinary gathering.
+
+These activities matter because ARK's sandbox repeatedly introduces **bounded challenge formats inside persistent survival worlds** rather than requiring every objective to emerge from player construction.
+
 ### PvE, PvP, local and server settings
 
 Server settings can alter:
@@ -431,7 +449,25 @@ Unless otherwise attributed, these are rules-based illustrations.
 **Result:** taming produces a story of protection rather than only progress-bar waiting.  
 **Counterexample:** if no threat occurs, the same timer can become literal waiting.
 
-### Case 12 — Aquatica makes "land creature" adaptation a crafting problem
+### Case 12 — a survivor crosses maps but not without transfer rules
+
+**Intention:** take a mature survivor and selected tames from The Island to another compatible ARK.  
+**Conditions:** source/destination are in a transfer-compatible configuration and uploads/downloads are permitted.  
+**Actions:** move survivor/items/tames to an Obelisk/terminal, upload them under the relevant tabs, then download at the destination.  
+**Interaction:** character identity, creature ownership, item logistics and server policy all meet at one transfer boundary.  
+**Result:** progression can continue across maps rather than restarting every expansion.  
+**Limit:** creature inventories drop, transfers can expire or be disabled, and not every creature/item is legal on every map.
+
+### Case 13 — fishing turns bait knowledge into blueprint loot
+
+**Intention:** obtain resources/possible high-quality loot without another cave run.  
+**Conditions:** player has a Fishing Rod, valid seat, bait and visible catchable fish.  
+**Actions:** bait/cast, respond to prompted inputs while the fish struggles and land the catch.  
+**Interaction:** bait type, fish species/size and rod quality affect reward quality.  
+**Result:** an apparently quiet food activity can feed equipment/blueprint progression.  
+**Next decision:** consume fish, repeat with better bait/rod or return to higher-risk loot sources.
+
+### Case 14 — Aquatica makes "land creature" adaptation a crafting problem
 
 **Intention:** operate in the submerged tenth-anniversary map with familiar survival logic.  
 **Conditions:** Aquatica uses underwater hazards/current/pressure and provides new Engrams/creatures.  
@@ -775,6 +811,8 @@ This dossier therefore establishes the dedicated owner for G133 and does **not**
 - **ARK/Steam announcements — [ASE/Aquatica update stream](https://steamcommunity.com/app/346110/allnews/), 2025–2026.** Primary operational record for preaquatica branch, compatibility fixes, DevKit work and January 30, 2026 Aquatica official-server closure.
 - **Snail investor relations — [June 2025 anniversary momentum](https://investor.snail.com/news-releases/news-release-details/ark-demonstrates-robust-june-momentum-snail-games-celebrates-10).** Publisher-defined campaign sales lift; not converted into lifetime demand.
 - **ARK Official Community Wiki — [Taming](https://ark.wiki.gg/wiki/Taming), [Breeding](https://ark.wiki.gg/wiki/Breeding), [Engrams](https://ark.wiki.gg/wiki/Engrams), [Building](https://ark.wiki.gg/wiki/Building), [Tribes](https://ark.wiki.gg/wiki/Tribes), [Artifacts](https://ark.wiki.gg/wiki/Artifacts), [Leveling](https://ark.wiki.gg/wiki/Leveling), [DLCs](https://ark.wiki.gg/wiki/DLCs), accessed September 27, 2026.** Maintained community technical documentation used for current ASE mechanical relationships. Pages that contain both ASA and ASE are read with their edition tabs/labels; ASA-only rows are not imported.
+- **ARK Official Community Wiki — [CrossARK Transfers](https://ark.wiki.gg/wiki/CrossARK_Transfers) and [ASE server configuration](https://ark.wiki.gg/wiki/Server_configuration_%28Survival_Evolved%29), accessed September 27, 2026.** Current transfer/server-cluster mechanics and permission boundaries added during follow-up audit.
+- **ARK Official Community Wiki — [Cryopod](https://ark.wiki.gg/wiki/Cryopod), [Fishing Rod](https://ark.wiki.gg/wiki/Fishing_Rod), and [Genesis Missions](https://ark.wiki.gg/wiki/Mission), accessed September 27, 2026.** Current ASE creature-storage, fishing/minigame and repeatable-mission mechanics.
 - **Studio Wildcard — [Genesis II delay/final-DLC announcement](https://survivetheark.com/index.php?/forums/topic/599024-community-crunch-256-introducing-voidwyrm-update-on-genesis-ii/), February 2021.** Primary historical wording for "final DLC" of the original saga, later qualified by subsequent content.
 
 ### Production and commercial sources
@@ -817,7 +855,7 @@ No video scene or timestamp is represented as watched in this pass.
 | R02 actions/major mechanics | R02 |
 | R03 items/entities/composition | R03 |
 | R04 progression/economy/time | R04 |
-| R05 worked interactions | R05, twelve cases |
+| R05 worked interactions | R05, fourteen cases |
 | R06 people/AI/social/multiplayer | R06 |
 | R07 art/audio/interface/feel | R07 |
 | R08 story/narrative/play | R08 |
@@ -830,6 +868,10 @@ No video scene or timestamp is represented as watched in this pass.
 
 ### Explicit mechanics-inventory closure
 
-Character creation/appearance and attribute investment; XP/levels; Engram/Tekgram progression; items/inventory/weight/quality/blueprints; weapons/armor/saddles; crafting/refining/electricity/irrigation/industrial/Tek production; traversal across land/air/sea; environmental survival; farming/cooking/kibble; combat/practical stealth/defense; taming and creature commands; breeding/inheritance/mutation/imprinting; caves/Artifacts/bosses; looting/death/corpse recovery/beds; resource/barter economy; Explorer Notes/canonical story; tribes/alliances/governance; wild/tamed AI; maps/biomes/expansions; building/base persistence; PvE/PvP/local/unofficial/modded play; Ascension/endgame/continued sandbox are covered above. There is no conventional magic spell system, romance system or recruitable dialogue-companion party; creatures fill a different mechanical/social role.
+Character creation/appearance and attribute investment; XP/levels; Engram/Tekgram progression; items/inventory/weight/quality/blueprints; weapons/armor/saddles; crafting/refining/electricity/irrigation/industrial/Tek production; traversal across land/air/sea plus Cross-ARK survivor/item/tame transfers; environmental survival; farming/cooking/kibble/fishing; combat/practical stealth/defense; taming, cryopod storage and creature commands; breeding/inheritance/mutation/imprinting; caves/Artifacts/bosses/Genesis missions and other activities; looting/death/corpse recovery/beds; resource/barter economy; Explorer Notes/canonical story; tribes/alliances/governance; wild/tamed AI; maps/biomes/expansions; building/base persistence; PvE/PvP/local/unofficial/modded cluster play; Ascension/endgame/continued sandbox are covered above. There is no conventional magic spell system, romance system or recruitable dialogue-companion party; creatures fill a different mechanical/social role.
 
 **Research boundary:** current evidence was checked through September 27, 2026. ASE is unusually version-fragmented because mainline post-Aquatica, preaquatica, platform editions, unofficial server configs and mods can all coexist. Exact rates, timers, stack sizes, transfer rules and PvP conventions should therefore be verified against the specific server/build before implementation-level comparison.
+
+### Follow-up audit — September 27, 2026
+
+The second pass found the dossier's creature/building/breeding/boss coverage strong but identified three missing applicable dimensions: **Cross-ARK continuity**, structured activities/minigames, and operational cryopod logistics. CrossARK transfer now explains how survivor identity, items and tames can persist across compatible maps/server clusters; fishing and Genesis missions close the activities requirement; cryopod charge/storage/transfer consequences make creature persistence concrete. These additions remain ASE-specific and do not import ASA transfer or creature systems.
