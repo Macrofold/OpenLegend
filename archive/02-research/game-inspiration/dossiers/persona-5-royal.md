@@ -44,6 +44,10 @@ Joker is the Wild Card and can hold multiple Personas. During negotiation, compa
 
 Party members instead have personal Personas that develop with their character/Confidant progression.
 
+### Useful absence: building and settlement management
+
+Royal has places the player repeatedly uses—the attic room at Leblanc, the Phantom Thieves' hideout contexts, school/city venues and the collectible **Thieves Den**—but it does **not** have a player-built base, settlement economy, construction grid or facility-management progression. Thieves Den unlocks/collects presentation content and activities; it should not be misclassified as a colony/base-building system. The calendar is the management layer: the player decides **where to spend time**, not what structures to construct.
+
 ## R03 — items, equipment and composition
 
 Equipment is conventional but tightly tied to the broader economy:
@@ -234,7 +238,7 @@ G124 is a newly curated G111–G130 subject. Direct branch-path checks found no 
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Royal/original/spin-off and platform boundaries |
-| R02 | Calendar, Palaces, Mementos, combat, Persona systems |
+| R02 | Calendar, Palaces, Mementos, combat, Persona systems and explicit no-building/settlement boundary |
 | R03 | Equipment, consumables, tools and Persona composition |
 | R04 | Levels, social stats, Confidants, yen, HP/SP, time and NG+ |
 | R05 | Eight cross-system worked cases |
