@@ -218,6 +218,16 @@ A character may therefore study one role for a persistent technique and later wo
 
 A person's profession can contribute persistent learned capabilities without becoming their permanent ontological identity.
 
+### Core combat stats, equipment, and death contract
+
+The original pass described Three Houses' flexible training in more detail than its tactical baseline. Characters still grow through ordinary levels with individual **HP, Strength, Magic, Dexterity, Speed, Luck, Defense, Resistance, and Charm** growth tendencies; the current class adds its own growth modifiers and stat/movement adjustments. [TH21](#th21) A certification can also raise a character up to a class's minimum base stats, so changing profession can affect both future growth and the immediate floor of a weak statistic. [TH03](#th03)
+
+Weapons remain physical inventory objects with rank requirements, Might/Hit/Crit/Weight/Range and finite uses. Swords, lances, axes, bows and gauntlets are broadly usable across many physical classes rather than locked to one class tree; shields/rings and other equipment occupy a separate accessory slot, and consumables include healing items, keys, torches, stat boosters and certification seals. [TH22](#th22) The Blacksmith can **repair** durability or **forge** weapons into improved/different forms using gold plus materials such as Smithing Stone, Wootz Steel or Umbral Steel. [TH23](#th23)
+
+Three Houses does **not** use the old universal sword > axe > lance weapon triangle as an always-on base rule. Weapon matchups instead emerge from weapon properties, effective damage, range, learned prowess/breaker-style abilities, class abilities, battalions and Combat Arts. The normal attack sequence remains forecastable: range determines whether the target can counter, and sufficient Attack Speed can produce a follow-up. [TH24](#th24)
+
+The player also chooses **Classic** or **Casual** consequence separately from difficulty. In Classic, an ordinary defeated student/unit is lost for future deployment; in Casual, defeated units return after the battle. Divine Pulse then sits on top of either contract as a limited local rollback tool. [TH24](#th24) This distinction belongs in the death/recovery inventory rather than being implied by the rewind section alone.
+
 ## 7. Combat arts, weapon durability, and deliberate exertion
 
 Weapon durability returns after Fates.
@@ -949,7 +959,9 @@ Professor Level works because it rewards engagement; it also incentivizes repeti
 
 Covered:
 - Byleth identity;
-- stats/levels;
+- character/class stats, growth and levels;
+- Classic/Casual defeat recovery plus Divine Pulse;
+- weapon families, equipment/consumables, keys and Blacksmith forge/repair;
 - skill ranks;
 - flexible certification/class mastery;
 - abilities/combat arts;
@@ -988,6 +1000,17 @@ G64 was added by the September 26 roster expansion and had no inherited full dos
 - current 2026 Switch/Switch 2 availability.
 
 No video footage is represented as watched.
+
+### Reading / viewing routes
+
+For a compact audit route:
+1. **TH13–TH14** for the co-development split, school-loop intent, world construction and Cindered Shadows production.
+2. **TH02–TH05 + TH21–TH24** for training/classes, combat arts, battalions, core stats/equipment/repair and the Classic/Casual tactical contract.
+3. **TH16–TH19** for five independent launch-era critical perspectives when combined with TH06.
+4. **TH09–TH10 + TH20** for current qualitative disagreement about monastery texture versus repeat-run friction.
+5. **TH11–TH12** for Expansion Pass and Cindered Shadows' separate-save/unlock boundary.
+
+No audiovisual source is represented as watched in this audit.
 
 ## Sources
 
@@ -1030,4 +1053,12 @@ No video footage is represented as watched.
 <a id="th19"></a>**TH19 — [Fire Emblem: Three Houses Review](https://www.rpgsite.net/review/8760-fire-emblem-three-houses-review).** Adam Vitale, RPG Site, July 25, 2019. Full review.
 
 <a id="th20"></a>**TH20 — [2026 Three Houses replay discussion](https://www.reddit.com/r/fireemblem/comments/1u4r0jk/).** r/fireemblem, June 2026. Qualitative evidence that repeated routes remain enjoyable for some players while route-binging can cause burnout.
+
+<a id="th21"></a>**TH21 — [Character Growth Rates](https://serenesforest.net/three-houses/characters/growth-rates/) and [Class Growth Rates](https://serenesforest.net/three-houses/classes/growth-rates/).** Serenes Forest community mechanics tables, audited September 27, 2026. Used for the individual-plus-class level-growth model and stat families; exact percentages are reference data rather than design conclusions.
+
+<a id="th22"></a>**TH22 — [Three Houses weapons and items index](https://serenesforest.net/three-houses/).** Serenes Forest mechanics index, audited September 27, 2026, with linked weapon, equipment and consumable tables. Used for weapon families, separate equipment, keys/torches/healing items and certification seals.
+
+<a id="th23"></a>**TH23 — [Forge & Repair](https://serenesforest.net/three-houses/miscellaneous/forge-repair/).** Serenes Forest community mechanics reference, audited September 27, 2026. Used for Blacksmith availability and the gold/material-based repair/forging loop.
+
+<a id="th24"></a>**TH24 — [Three Houses gameplay overview](https://serenesforest.net/three-houses/pre-release/gameplay/).** Serenes Forest mechanics/reference page built from pre-release and released-system information. Audited September 27, 2026 for counter/follow-up structure, progression layers, and the documented Casual-mode return-after-battle boundary; exact current data is cross-checked against the dossier's released-game references.
 
