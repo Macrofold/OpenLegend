@@ -1104,6 +1104,27 @@ or extensibility will eventually become the same kind of layered archaeology.
 
 ## 30. Requirement and preservation check
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the production-shard dossier complete and confirms these version-sensitive boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** classless Strength/Dexterity/Intelligence plus use-based, capped skills and Raise/Lock/Lower atrophy define character development (§§2–4). Templates are emergent combinations rather than engine classes.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** world containers/corpses, equipment, crafted goods, repair, resources, vendors, housing storage and later item-property systems are covered across §§5–15.
+- **Magic / spells / powers:** Magery's 64-spell/eight-circle vocabulary plus later spell schools and Virtue/mastery-like systems provide bounded capability families (§6 and later system sections).
+- **Traversal / environmental and object interaction:** walking/riding/boats/travel magic, containers/doors/locks, stealing/snooping, housing, world items and spatial crime/property rules are covered throughout.
+- **Activities / minigames:** combat, taming, crafting, fishing, treasure hunting, trade/shopkeeping, housing, guild/social activity and live events coexist rather than one mandatory combat loop.
+- **Combat / stealth / loot / rewards:** PvE/PvP, Hiding/Stealth, stealing, corpse loot, crafted/equipped rewards and ruleset-specific consent/risk are explicitly separated.
+- **Death / failure / recovery:** ghosts, corpses, resurrection, item insurance and harsher shard rules are covered; modern production loss is not identical to 1997 full-loot expectations.
+- **Economy / trading:** player vendors, direct exchange, crafted production, resource scarcity and housing/property create a player-mediated economy rather than one central auction-house model.
+- **Story / relationships / romance / reputation / party / companions:** authored lore/events coexist with guilds, reputation/karma/virtues and player society; animal followers exist, while romance/affinity is not a central native progression system.
+- **NPC/AI behavior and schedules / factions:** vendors/guards/creatures/factional actors have authored behaviors, but the dossier does not inflate them into a modern deep individual-memory simulator. The failed launch ecology is preserved as a specific simulation case.
+- **World map / environment / quests / events:** facets/shards, towns/dungeons/housing plots, live publishes/events and New Legacy's narrative/job structures are covered.
+- **Building / settlements / management:** player housing, customization, storage, vendors and community spaces are major persistent-world systems; these are property/community systems rather than worker-population colony simulation.
+- **Multiplayer / social / endgame / return loops:** the shared persistent shard, guild/player economy, housing, skills, collections, events and expansion/live-publish content supply the long-term loop rather than a finite campaign ending.
+
+**Current boundary check:** production shards remain on **Publish 124** after the August worldwide rollout and September hotfixes; the game marked its **29th anniversary on September 24, 2026**, with current weekend/live-event activity continuing. **New Legacy Season 2 is still future** on September 27: final Season 1 transfer deadline September 28, pre-season/soft launch October 1, final wipe October 13, and Season 2 launch October 15. Publish 125/client work is likewise announced future scope, not current production behavior. [UO01](#uo01) [UO02](#uo02) [UO35](#uo35)
+
+
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / scope / promise | §§1–3, 24, 27 |
