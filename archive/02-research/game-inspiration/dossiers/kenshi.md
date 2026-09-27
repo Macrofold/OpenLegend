@@ -18,7 +18,7 @@ There is no native multiplayer, spell system, standard romance progression or ma
 
 Lo-Fi's old FAQ says severed limbs were not added. The current product page explicitly describes replacement prostheses, and the launch review recounts losing an arm. Likewise, the FAQ's unbounded-squad and prospective-editor wording is historical, not a reliable current specification. The **256 Recruitment Limit** creator documents a base recruit cap of 30 and explains the mod's larger limits and compatibility risks. The official patch archive includes the shipped Forgotten Construction Set, ending in the retrieved archive with Kenshi 1.0.55/FCS 2.12; that archive endpoint is not proof of the version installed on every distribution. [P1] [P2] [R4] [M1] [P6]
 
-The official Kenshi 2 landing page still says it is in development without an announced release date. No prequel mechanics or engine promises are attributed to original Kenshi. [P4]
+The official Kenshi 2 landing page still offers only a signup and says Lo-Fi will share more “when the time comes”; no release date is announced. Lo-Fi's September 2026 hiring activity confirms ongoing studio work but is not a release schedule. No prequel mechanics, engine promises or staffing implications are attributed to original Kenshi. [P4]
 
 ## 2. The action, body and equipment inventory
 
@@ -176,6 +176,26 @@ Multiple negative-only and filtered Steam routes returned retrieval errors. **No
 
 ## 11. Coverage, preservation and viewing
 
+### September 26 requirements-and-corrections audit
+
+A fresh pass against the assignment's explicit mechanics inventory confirms coverage and records the meaningful absences:
+
+- **Identity / classes / attributes / skills / leveling / trees:** starts, appearance, peoples, Strength/Dexterity/Toughness/Perception and use-grown combat/civil skills are covered in §§1–2. There is no fixed class picker or universal character-level/perk tree.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** spatial/weight inventory, melee/ranged families, armor, prosthetics, food/medical/repair/ammo supplies, crafted equipment and quality grades are covered in §§2–4.
+- **Magic / spells / powers:** absent natively; extraordinary capability comes from training, gear, prosthetics, squad composition and world knowledge rather than spellcasting.
+- **Traversal / environmental and object interaction:** walking/running/swimming, carrying casualties, stealth/crime interactions, doors/locks, town buildings, caravans and large-map travel are covered across §§2–5.
+- **Activities / minigames:** trading, mining, crafting, research, farming, base planning, scavenging, exploration, crime, bounty-like goals and combat are integrated activities rather than separate arcade minigames.
+- **Combat / stealth / loot / rewards:** squad combat, Block/Passive/Ranged/Taunt, stealth/theft/disguise/assassination, scavenging, unique equipment and research loot are covered in §§2–5.
+- **Death / failure / recovery / economy / trading:** body-part injuries, blood loss, unconsciousness/death, capture, first aid/robot repair, beds/prosthetics, Cats and regional trade are covered in §§2–4.
+- **Story / relationships / romance / reputation / party / companions:** named recruits, squad dependence, hireable mercenaries, faction relations and emergent shared histories are covered in §§5–6. Native romance/marriage and a mandatory protagonist quest arc are absent.
+- **NPC/AI schedules / factions:** factions, town states, roaming squads, jobs/automation and authored conditional world-state changes are substantial; the dossier explicitly distinguishes them from a fully simulated strategic war or unrestricted autonomous society (§§4–5).
+- **World map / environment / quests / events:** the seamless world, ruins, factions, raids/encounters and optional destinations supply projects without a conventional required main-quest itinerary (§5).
+- **Building / settlements / management:** research, farms, industry, storage, walls, gates, turrets, housing and job priorities make outpost management a major pillar (§4).
+- **Multiplayer / social / endgame / return loops:** original Kenshi is **single-player**; mods/community stories are external social layers. Optional faction conflict, unique enemies, exploration, production and player-defined settlement goals substitute for a mandatory authored endgame (§§1, 5, 8–9).
+
+The release/commercial audit also rechecks three easily conflated boundaries: Lo-Fi's patch archive currently ends at **Kenshi 1.0.55 / FCS 2.12**; the May 26, 2026 primary milestone says **more than three million copies**; and Kenshi 2 remains an unreleased future title with no date on its official signup page. None of those facts is used to imply current active-user counts, Kenshi 2 mechanics or continued Kenshi 1 feature development. [P3][P4][P6]
+
+
 | Requirement | Substantive owner |
 | --- | --- |
 | R01 identity, scope, versions | §1 and current prequel/mod boundaries |
@@ -204,7 +224,7 @@ Accessed September 26, 2026. Primary pages can still be obsolete; the explicit c
 - **P1 — [Lo-Fi product page][P1].** Current published scope and prostheses; broad promotional intelligence claims are not algorithm evidence.
 - **P2 — [Old FAQ][P2].** Historical design framing; limb, squad and editor statements explicitly qualified.
 - **P3 — [Three-million announcement][P3], May 26, 2026.** Primary cumulative units and dated community campaign, not profit or current preorder availability.
-- **P4 — [Kenshi 2 page][P4].** Current undeclared release date; no prequel rules imported.
+- **P4 — [Kenshi 2 page][P4].** Current signup-only status and undeclared release date; no prequel rules imported.
 - **P5 — [Hunt/Priestman interview][P5], August 30, 2015.** Full creator account of injuries, influences, early financing and team formation; historical staffing only.
 - **P6 — [Patch archive][P6].** Relevant recent-end version/FCS, UI, crafting and disguise entries read; not every historical patch line audited or installed.
 - **R1–R4 — [PC Gamer][R1], [GameGrin][R2], [GameSkinny][R3], [Cultured Vultures][R4].** Full criticism and disclosures, dated/scoped in §9; their incidents remain attributed.
