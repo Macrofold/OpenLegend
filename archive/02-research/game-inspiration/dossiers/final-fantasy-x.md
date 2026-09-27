@@ -1,8 +1,8 @@
 # Final Fantasy X — full research dossier
 
-**G87 · Complete research pass, September 26, 2026.** Primary mechanics baseline: the 2001 PlayStation 2 *Final Fantasy X*. The International/PAL content line and *Final Fantasy X/X-2 HD Remaster* are separated where they add the Expert Sphere Grid, Dark Aeons/Penance, presentation changes or platform-specific boosters. *Final Fantasy X-2* is covered substantively as a direct-sequel contrast rather than substituted for FFX's mechanics. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G87 · Research pass and corrective coverage review, September 26, 2026.** Primary mechanics baseline: the 2001 PlayStation 2 *Final Fantasy X*. The International/PAL content line and *Final Fantasy X/X-2 HD Remaster* are separated where they add the Expert Sphere Grid, Dark Aeons/Penance, presentation changes or platform-specific boosters. *Final Fantasy X-2* is covered substantively as a direct-sequel contrast rather than substituted for FFX's mechanics. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
-No personal playthrough is claimed. Concrete situations are reconstructed from documented rules, primary developer interviews, written reviews and version-specific reference material.
+No personal playthrough is claimed. Concrete situations are reconstructed from documented rules, primary developer interviews, written reviews and version-specific reference material. The corrective pass preserves the original research while adding named Mix inputs, language learning, temple operations, audiovisual evidence and six complete situations. Optional-puzzle solutions are disclosed below; section 20 contains major story spoilers.
 
 ## 1. Identity, scope and player promise
 
@@ -256,6 +256,12 @@ The risk:
 
 Modern challenge-run documentation shows how powerful item-based play can become: even severe No-Sphere-Grid/No-Summon/No-Overdrive runs rely heavily on carefully sourced items and Rikku's Use toolkit. [FFX14](#ffx14)
 
+### Named recipes and the cost that the ingredient list hides
+
+**Potion + Potion → Ultra Potion** supplies party-wide full-HP recovery; **Potion + Antidote → Panacea** addresses abnormal statuses instead. These are different decisions despite sharing a cheap ingredient. Mix consumes the selected items and Rikku's Overdrive opportunity, so two inexpensive Potions are not equivalent to unlimited party healing at any moment. A recipe can also accept valuable ingredients that have other uses; obtaining the same effect with common inputs preserves rarer materials for another system. These examples follow the original licensed-guide-derived recipe reference, not arbitrary experimentation asserted to work. [FFX31](#ffx31)
+
+**Interpretation:** resource composition becomes expressive when the desired outcome determines which transformation to use. It becomes hostile to experimentation when the player cannot distinguish an economical recipe from one that silently wastes an irreplaceable input. The Overdrive gate is as important as the inventory: possessing ingredients does not by itself authorize the action.
+
 ## 10. Equipment is defined by abilities, then becomes customizable
 
 Weapons and armor are character-specific families but are primarily distinguished by **Auto-Abilities**, not a single conventional attack/defense tier.
@@ -336,6 +342,14 @@ Both explanations matter:
 
 **OpenLegend limit:** this is not a template for an open authored reality. OpenLegend should borrow **route meaning**, not the assumption that one route must exist.
 
+### Cloisters are object-state puzzles, not only ceremonial stops
+
+**Puzzle spoilers.** Glyph, temple-specific and Destruction Spheres operate doors, pedestals and hidden routes. Only one sphere can be carried at once, so moving it between receptacles requires managing the state left behind. In Besaid, the Glyph Sphere is reused after opening a door; the Besaid Sphere powers a pedestal route, and putting the Destruction Sphere into the vacated Besaid recess reveals the Rod of Wisdom. Moving the pedestal to the final position completes the trial separately from collecting that treasure. [FFX33](#ffx33)
+
+The treasure also records a prerequisite for later Anima acquisition. Returning for it is much more difficult when International/PAL/HD's Dark Valefor blocks Besaid; that obstacle is absent from the original North American PS2 version. The consequence is delayed and version-specific, not simply a different reward chest. [FFX34](#ffx34) [FFX03](#ffx03)
+
+**Interpretation:** the puzzle teaches that an object can first be a key and then remain useful elsewhere. The weak point is a distant, insufficiently signposted consequence: a player can solve the immediate temple problem while unknowingly complicating an unrelated future goal.
+
 ## 14. Spira: institutions create world logic
 
 Spira is organized around institutions and beliefs:
@@ -360,6 +374,12 @@ The party's journey repeatedly encounters tensions between:
 
 FFX does not simulate these institutions autonomously, but it demonstrates how **rules, taboo and material technology** can make cultures mechanically/narratively distinct.
 
+### Al Bhed Primers: knowledge changes what the player can read
+
+The 26 Primers progressively decode letters in displayed Al Bhed dialogue. For example, the first teaches the English-language version's Al Bhed **Y → A** substitution. This is a collection-driven translation overlay, not a general natural-language fluency model. Volumes XIX–XXII are missable at their original locations. A Compilation Sphere can import discovered Primers from a compatible saved game, preserving a knowledge benefit without importing that save's whole party. It cannot create a missing Primer that no source save contains. [FFX32](#ffx32)
+
+**Interpretation:** progress can change the interpretation of a familiar conversation rather than its speaker or outcome. Importable language knowledge also distinguishes the returning player's experience from Tidus's apparent unfamiliarity. That is a deliberate interface/persistence choice, not evidence that arbitrary memories transfer between worlds.
+
 ## 15. Voice acting changed story production
 
 FFX was the first fully voiced mainline Final Fantasy.
@@ -378,6 +398,14 @@ It also created localization constraints. Current player criticism still notices
 
 This is an important production lesson:
 - adding a richer presentation channel changes **authoring constraints**, not only fidelity.
+
+### Musical roles and visual direction
+
+The original soundtrack credits **Nobuo Uematsu, Masashi Hamauzu and Junya Nakano**. In the reproduced album liner notes, Nakano contrasts projecting a memorable arcade cue in a noisy setting with creating music that works through repeated listening at home. Hamauzu discusses the difficulty of making an expressive piece connect with listeners whose interpretation may differ. These are translated primary statements, not this researcher's listening impressions. [FFX35](#ffx35)
+
+Lucy Rzeminski's February 2002 soundtrack review describes her response changing after playing: remembered scenes changed how the album worked for her. Its selected tracks include **Zanarkand, Otherworld, Besaid, Blitz Off!** and **Suteki da ne**, spanning different scene purposes rather than one continuous orchestral tone. This is one listener's account of context and music, not an audience consensus or a claim that every version uses identical arrangements. [FFX36](#ffx36)
+
+Kitase separately attributes Spira's Asian visual direction to art director **Yusuke Naora**, contrasting it with the preceding industrial/science-fiction settings. The late resolution-versus-color decision shows that this direction still had to fit a constrained display and production budget. **Interpretation:** place identity emerges from coordinated environments, performance and musical recurrence, not just a high-fidelity asset count. The Asian inspiration is a declared artistic direction, not certification that Spira faithfully represents any real culture. [FFX01](#ffx01)
 
 ## 16. Blitzball is a sport, recruitment system and progression economy
 
@@ -648,7 +676,7 @@ At the September 2026 snapshot:
 - approximately **88% of ~11.3k English-language reviews** were positive;
 - recent English/all-language snapshots were around the low-70s positive range, fluctuating by retrieval window. [FFX06](#ffx06)
 
-Current player evidence is especially useful because the **recent decline is dominated by PC technical complaints**, not a sudden re-evaluation of FFX's story/battle design.
+The sampled player accounts include PC technical complaints alongside appreciation of the story and battle design. This qualitative sample does **not** establish what proportion of an aggregate review change is attributable to port problems or changing design preferences. The earlier assertion that technical complaints dominated the decline is withdrawn. [FFX19](#ffx19)
 
 Recent/top review themes include:
 
@@ -664,7 +692,35 @@ Negative:
 
 A recent player explicitly says their only major complaint is the PC green-screen bug while praising Sphere Grid and mid-fight swapping. Another reports crashes and frozen visuals. These are hardware/configuration-sensitive qualitative reports, not prevalence estimates.
 
-**Research conclusion:** current Steam sentiment is partly **port maintenance evidence**, not simply FFX-design evidence.
+**Research conclusion:** current Steam testimony supplies both **port maintenance evidence** and game-design opinions; it cannot allocate the causes of aggregate sentiment without a representative, coded sample.
+
+## Worked cross-system situations
+
+**Constructed explanations of documented mechanics, not sessions personally played.** These complete the earlier system sketches with explicit conditions, consequences and limits.
+
+### A. Two ordinary items become an emergency party action
+
+**Intention:** recover several living party members before the next hostile turn. **Conditions:** Rikku can act with Mix ready and two Potions available. **Actions:** select Potion + Potion for Ultra Potion rather than spending separate turns on individual medicine. **Interaction:** an Overdrive converts cheap inventory into a party-scale effect. **Result:** recovery changes what the next ally can safely do. **Next choice:** resume offense or address a separate status problem. **Limit:** the ingredient stock alone is insufficient when Mix is unavailable; healing does not automatically replace the different Panacea outcome. [FFX31](#ffx31)
+
+### B. Reaching a node does not purchase its effect
+
+**Intention:** obtain a useful ability on the Sphere Grid. **Conditions:** the character has enough Sphere Levels to reach it but lacks the required activation sphere. **Actions:** inspect both movement and material costs, acquire the missing item, then return to the relevant position and activate the node. **Interaction:** spatial progress and possession govern learning separately. **Result:** the desired action becomes available only after both conditions are fulfilled. **Next choice:** continue down the same route or save movement for a branch. **Limit:** spending more movement without examining activation requirements can strand development behind a different resource shortage. [FFX11](#ffx11) [FFX12](#ffx12)
+
+### C. The obvious exit can leave a future goal unfinished
+
+**Intention:** clear Besaid's temple while retaining access to its hidden reward. **Conditions:** the Glyph and Besaid Spheres have opened the route, but the Destruction Sphere remains unused. **Actions:** put the Destruction Sphere into the vacated Besaid recess, collect the Rod of Wisdom, then finish moving the pedestal. **Interaction:** local object placement records both an immediate reward and later summon progress. **Result:** the trial and its optional acquisition are both complete. **Next choice:** proceed with the pilgrimage. **Limit:** taking only the exit can create a much harder return in the editions where Dark Valefor later guards Besaid. [FFX34](#ffx34)
+
+### D. Recover knowledge without recovering the whole character
+
+**Intention:** fill a missed Al Bhed Primer entry. **Conditions:** a compatible save already contains that discovery and a Compilation Sphere is reachable. **Actions:** compile the source's Primer knowledge and inspect newly decoded dialogue. **Interaction:** collection persistence changes readable information without importing combat growth. **Result:** understanding improves in the current journey. **Next choice:** seek another missing volume or continue the story. **Limit:** no source save means this is not a universal repair for every missed one-time location. [FFX32](#ffx32)
+
+### E. An efficient kill can be the wrong collection action
+
+**Intention:** register a missing fiend for Monster Arena progress. **Conditions:** a suitable encounter is available and a party member has an eligible Capture weapon. **Actions:** weaken the target while leaving the final blow for a qualifying attack. **Interaction:** equipment and the finishing action determine whether a victory also advances the collection. **Result:** the encounter can count toward an area or species goal. **Next choice:** locate the next missing creature or claim an unlocked reward. **Limit:** defeating it with an ineligible finish wins the battle without fulfilling the actual purpose of the trip. [FFX21](#ffx21)
+
+### F. A summon changes who must survive the next action
+
+**Intention:** protect the ordinary party from a telegraphed major attack. **Conditions:** Yuna can summon an available Aeon before the attack resolves. **Actions:** replace the party with that Aeon and choose whether to defend or spend its own resources first. **Interaction:** summoning changes the current combatants rather than only adding damage. **Result:** the Aeon's survival and the returning party's situation become separate concerns. **Next choice:** continue with the summon or resume the ordinary party's plan. **Limit:** the Aeon can be defeated; this does not make Yuna's entire repertoire permanently available without recovery or defeat every encounter rule. [FFX16](#ffx16)
 
 ## 26. Comprehensive mechanics inventory
 
@@ -678,18 +734,19 @@ A recent player explicitly says their only major complaint is the PC green-scree
 | Crafting/upgrading | Item-consuming equipment customization; Celestial Weapon upgrade chains |
 | Magic | White/Black magic learned via Grid; elements/status/time manipulation |
 | Summons | Aeons replace party and act as controllable combatants |
-| Items | Recovery, battle items, sphere items, Mix/customization materials |
+| Items | Recovery, battle items, sphere items, named Mix/customization materials and Al Bhed Primers |
 | Combat | CTB, visible turn queue, action-delay manipulation, instant party switching |
-| Overdrives | Character-specific interactive moves + selectable gauge-fill modes |
+| Overdrives | Character-specific interactive moves + selectable gauge-fill modes; Mix spends ingredients and an Overdrive opportunity |
 | Enemy interaction | Steal/Use, Lancet/Ronso Rage, Capture, Overkill, status/element weaknesses |
 | Traversal | Mostly contiguous pilgrimage path; boats/chocobo/airship and late world selection |
-| Environment | Cloister puzzles, temples, settlements, field exploration; no freeform physics sandbox |
+| Environment | Cloister sphere/receptacle/pedestal puzzles, temples, settlements, field exploration; no freeform physics sandbox |
 | Activities/minigames | Blitzball, chocobo races, lightning dodge, butterflies, Cactuar quests and more |
+| Knowledge | Primer discovery decodes dialogue; compilation imports compatible saved Primer progress, not full party state |
 | Economy | Gil, merchants, bribe/item loops; no dynamic player market |
 | Death/failure | KO/revival; three active-party wipe causes game over despite reserves |
 | Story | Authored pilgrimage with institutional/religious conflict |
 | Relationships | Authored Tidus/Yuna/guardian relationships; no generic affinity sim |
-| Party | Seven main controllable humans + instant reserves; Yuna's Aeons |
+| Party | Seven main playable party members, including the Ronso Kimahri, with instant reserve switching; Yuna's Aeons |
 | NPC/AI | Scripted NPCs; Blitzball recruitable athletes; no broad autonomy |
 | Factions | Yevon, Al Bhed, Crusaders, Ronso/Guado etc. are authored, not dynamically simulated |
 | World map | No classic walkable overworld; late airship destination/coordinate system |
@@ -757,40 +814,42 @@ Monster Arena and airship endgame make prior regions relevant again.
 
 ### J. Keep port/runtime quality separate from system quality
 
-2026 Steam complaints are often technical.
+The sampled 2026 Steam complaints include technical problems, without establishing their population share.
 
-**Borrow for research:** never infer that a mechanic is disliked because a current client crashes.
+**Borrow for research:** never infer that a mechanic is disliked because a current client crashes, or infer an aggregate trend's cause from selected anecdotes.
 
 ## 28. Preservation and requirement audit
 
-No FFX-specific prior game/mechanics/dossier owner existed on this branch before G87, so this dossier is additive.
+No FFX-specific prior game/mechanics/dossier owner existed on this branch before G87, so this dossier is additive. This corrective pass retains the original sections, examples, X-2 contrast and FFX01–30 source identities. It adds operative and audiovisual evidence, replaces the incorrect all-human party label and withdraws an unsupported aggregate-sentiment explanation.
 
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity/scope/promise | §§1–2 |
-| R02 actions/major mechanics | §§3–19, 23, 26 |
-| R03 items/entities/composition | §§5–12, 16–19 |
-| R04 progression/economy/time | §§3, 5–10, 16–19 |
-| R05 concrete interactions | §§3–12, 16–19 |
+| R02 actions/major mechanics | §§3–19, 23, 26, including Cloisters and Primers |
+| R03 items/entities/composition | §§5–14, 16–19, including named Mix inputs |
+| R04 progression/economy/time | §§3, 5–10, 13–14, 16–19 |
+| R05 concrete interactions | [Six full situations](#worked-cross-system-situations), retaining earlier §§3–12, 16–19 examples |
 | R06 people/AI/social/multiplayer | §§4, 14, 16, 20–21, 26 |
-| R07 art/audio/interface/feel | §§2, 15, 22, 25 |
+| R07 art/audio/interface/feel | §§2, 15, 22, 25; named score contributors and visual direction |
 | R08 story/narrative/play | §§13–15, 20, 23 |
 | R09 production/development | §§15, 24 |
 | R10 marketing/distribution/virality | §24 |
 | R11 commercial/participation | §§24–25 |
-| R12 reviews/player feedback | §§22, 25 |
-| R13 transferable inspiration/limits | §27 |
-| R14 sources/viewing/preservation/navigation | §§2, 28 + sources |
+| R12 reviews/player feedback | §§22, 25; qualitative limitations corrected |
+| R13 transferable inspiration/limits | §27 and labeled local interpretations |
+| R14 sources/viewing/preservation/navigation | §§2, 28 + sources; original numbered headings retained |
 
 ### Evidence limits
 
 - Launch, International/PAL and HD content are separated.
 - Dark Aeons/Penance are not attributed to every 2001 version.
-- Five independent substantive written review publications were inspected.
-- Steam's current score measures a combined X/X-2 PC package and is affected by technical issues.
+- Five independent substantive written review publications were inspected in the original pass; this correction does not pretend to repeat every inherited reading.
+- Steam's retained snapshot measures a combined X/X-2 PC package; selected technical complaints do not establish the causes or proportions of changes in its aggregate score.
 - 20.8m is a combined FFX-series shipments + digital-sales milestone as of September 2021.
 - X-2 is treated as a separate ruleset.
-- No claim depends on unseen video footage; the official *Inside Final Fantasy X/X-2* featurette is recorded as a useful viewing route, but this dossier uses written primary interviews for factual production claims.
+- New Mix, Primer, Cloister and audio passages were inspected; their constructed situations were not personally tested.
+- No claim depends on unseen video footage; the official *Inside Final Fantasy X/X-2* featurette remains a useful viewing route. The album credits and liner notes are written evidence, not a claimed listening session. Useful visual-study targets include the turn queue during switching, Besaid's sphere reuse, partial Al Bhed subtitles and the Mix selection interface.
+- The global packet-preservation and 130-subject integration gates remain separate.
 
 ## 29. Completion conclusion
 
@@ -809,7 +868,7 @@ For OpenLegend, the highest-value principle is:
 
 ## Sources — annotated set
 
-<a id="ffx01"></a>**FFX01 — [Final Fantasy X and X-2 producer reflects on the innovative PS2 titles](https://blog.playstation.com/2022/01/05/final-fantasy-x-and-x-2-producer-reflects-on-the-innovative-ps2-titles/).** Yoshinori Kitase / PlayStation Blog, 2022-01-05. Primary developer account of PS2 production, no-world-map decision, CTB strategy goal, Sphere Grid board-game inspiration and X-2 Dressphere/ATB rationale.
+<a id="ffx01"></a>**FFX01 — [Final Fantasy X and X-2 producer reflects on the innovative PS2 titles](https://blog.playstation.com/2022/01/05/final-fantasy-x-and-x-2-producer-reflects-on-the-innovative-ps2-titles/).** Yoshinori Kitase / PlayStation Blog, 2022-01-05. Primary developer account of PS2 production, no-world-map decision, CTB strategy goal, Sphere Grid board-game inspiration and X-2 Dressphere/ATB rationale. The corrective pass also inspected Naora's Asian visual-direction attribution and the resolution/color tradeoff.
 
 <a id="ffx02"></a>**FFX02 — [Final Fantasy X Gameplay](https://strategywiki.org/wiki/Final_Fantasy_X/Gameplay).** StrategyWiki community mechanics reference. Sphere Grid, Expert Grid and Aeon system.
 
@@ -845,7 +904,7 @@ For OpenLegend, the highest-value principle is:
 
 <a id="ffx18"></a>**FFX18 — [FINAL FANTASY IV 35th Anniversary & FINAL FANTASY X 25th Anniversary Special Interview](https://na.finalfantasy.com/news/2831).** Square Enix / Final Fantasy Portal, 2026-07-18. Primary Kitase/Tokita account of FFX development start, Eastern fantasy direction, team split, late-resolution shift, water ambitions and early voice-recording process.
 
-<a id="ffx19"></a>**FFX19 — [FINAL FANTASY X/X-2 HD Remaster current Steam review feed](https://steamcommunity.com/app/359870/reviews/).** Individual Steam reviewers, inspected 2026-09-26. Qualitative current praise for Sphere Grid/party swapping and negative reports of crashes/green-screen FMV issues; hardware/self-selected evidence, not prevalence.
+<a id="ffx19"></a>**FFX19 — [FINAL FANTASY X/X-2 HD Remaster current Steam review feed](https://steamcommunity.com/app/359870/reviews/).** Individual Steam reviewers, inspected 2026-09-26. Qualitative current praise for Sphere Grid/party swapping and negative reports of crashes/green-screen FMV issues; hardware/self-selected evidence, not prevalence or aggregate-change attribution.
 
 <a id="ffx20"></a>**FFX20 — [Final Fantasy X Blitzball](https://strategywiki.org/wiki/Final_Fantasy_X/Blitzball).** StrategyWiki. Player/team stats, positions, formations, leagues, tournaments and recruitment/activity structure.
 
@@ -869,3 +928,18 @@ For OpenLegend, the highest-value principle is:
 
 <a id="ffx30"></a>**FFX30 — [Inside FINAL FANTASY X/X-2 HD Remaster featurette announcement](https://na.finalfantasy.com/news/1081).** Square Enix, 2019-05-07. Official viewing route listing Kitase, Toriyama, Naora and Katano interviews. The video itself was not represented as watched.
 
+### Corrective-pass sources
+
+Accessed September 26, 2026. Operative guide passages and written production evidence were read; no linked video, audio or game session is claimed as consumed.
+
+<a id="ffx31"></a>**FFX31 — [Mix List](https://gamefaqs.gamespot.com/ps2/197344-final-fantasy-x/faqs/14551).** Ceebs, final December 20, 2001 version. Named Potion recipes and effect descriptions inspected. The author identifies the licensed Ultimania chart and English guide as sources; this is translated/transcribed rules evidence, not a new exhaustive recipe test.
+
+<a id="ffx32"></a>**FFX32 — [Al Bhed Primers](https://eip.gg/ffx-x2/guides/al-bhed-primers/).** KainHighwind27, EIP Gaming, October 2, 2021, updated March 2, 2022. Translation, missable-volume and compilation passages read. English substitution example is localization-specific; compatible-save behavior is not universal cloud cross-save.
+
+<a id="ffx33"></a>**FFX33 — [Cloister of Trials: Besaid](https://www.gamerguides.com/final-fantasy-x-hd/guide/walkthrough/besaid-island/cloister-of-trials-besaid).** Gamer Guides, authored walkthrough. Sphere, carrying and pedestal/treasure operations read. Written steps, not screenshot or gameplay observation.
+
+<a id="ffx34"></a>**FFX34 — [Besaid](https://gamefaqs.gamespot.com/ps2/197344-final-fantasy-x/faqs/79145/besaid).** Authored GameFAQs walkthrough. Substantive indexed Rod of Wisdom, Anima prerequisite and original-versus-HD return restrictions inspected. Optional advice is not a mandatory route for every player.
+
+<a id="ffx35"></a>**FFX35 — [Original soundtrack credits and translated liner notes](https://finalfantasy.fandom.com/wiki/Final_Fantasy_X:_Original_Soundtrack).** Original album statements by Uematsu, Nakano and Hamauzu reproduced on a community host. Credits and named statements read; translation quality and editorial surrounding text are separate from the primary statements. No claim to have listened to the album.
+
+<a id="ffx36"></a>**FFX36 — [Uematsu's Best Selection: Final Fantasy X Official Soundtrack](https://www.rpgfan.com/music-review/uematsus-best-selection-final-fantasy-x-official-soundtrack/).** Lucy Rzeminski, RPGFan, February 28, 2002. Written firsthand music criticism and selected track list inspected. Supplementary listening testimony, not an additional gameplay review or the entire four-disc soundtrack.
