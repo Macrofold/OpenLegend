@@ -1,8 +1,8 @@
 # Final Fantasy VI — full research dossier
 
-**G83 · Complete research pass, September 26, 2026.** Primary mechanics baseline: the 1994 Super Famicom *Final Fantasy VI*. The initial North American SNES localization, later PlayStation/GBA/mobile branches and the 2022+ Pixel Remaster are treated as distinct versions where mechanics, translation, content or presentation differ. The roster focus is ensemble characters, Espers/magic, Relics, the World of Balance → World of Ruin state shift, party composition and side content. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G83 · Complete research pass, September 26, 2026; expanded after the substantive coverage audit.** Primary mechanics baseline: the 1994 Super Famicom *Final Fantasy VI*. The initial North American SNES localization, later PlayStation/GBA/mobile branches and the 2022+ Pixel Remaster are treated as distinct versions where mechanics, translation, content or presentation differ. The roster focus is ensemble characters, Espers/magic, Relics, the World of Balance → World of Ruin state shift, party composition and side content. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
-No personal playthrough or unwatched-video evidence is claimed. Worked examples below are reconstructed from documented mechanics and version-specific written sources.
+No personal playthrough or unwatched-video evidence is claimed. Worked examples below are reconstructed from documented mechanics and version-specific written sources. **Major spoilers:** sections 10–15 discuss the catastrophe, optional character survival/recruitment and late-game choices.
 
 ## 1. Identity, scope and player promise
 
@@ -66,6 +66,14 @@ The best version therefore depends on the question:
 - **original rules/presentation history:** Super Famicom/SNES;
 - **bonus-content breadth:** Advance/legacy-mobile line;
 - **current accessibility and presentation:** Pixel Remaster.
+
+### 2.6 Defeat is not the same operation in every edition
+
+The **Advance manual, printed page 30**, explicitly says that a game-over restart returns to the last saved location, resets items and gil acquired since saving, but retains earned EXP and levels. That is not a manual reload of the old save. The title-screen Continue command also has a separate quicksave meaning in that manual; it should not be used as a universal name for post-defeat recovery. [FFVI30](#ffvi30)
+
+The community version reference distinguishes **Pixel Remaster**, where loading saved progress after defeat loses unsaved EXP as well. The PR-specific mechanics guide independently describes restarting from the last saved game. Neither source supplies a personally verified test of every platform build here. The older EXP exception is therefore preserved, but not generalized into retention of every learned spell, item or Esper-related bonus. [FFVI31](#ffvi31) [FFVI33](#ffvi33)
+
+**Interpretation:** a game can preserve some investment while undoing a failed excursion. That can soften repetition, but players need to know which history survives. An inherited assumption about recovery can change whether they save, reload or accept a defeat.
 
 ## 3. Ensemble structure: many protagonists rather than one permanent lead
 
@@ -211,7 +219,13 @@ There is no general crafting/building economy. Items are acquired through:
 - optional dungeons;
 - the Coliseum's wager/reward system.
 
-The Coliseum is especially notable because it turns owned equipment into **risked input for deterministic reward chains** rather than simply buying/selling gear.
+The Coliseum is especially notable because it turns owned equipment into **risked input for specified reward chains** rather than simply buying/selling gear. Specified rewards do not make winning deterministic.
+
+### Coliseum: preparation replaces direct combat control
+
+The World of Ruin's arena takes an item wager and pits one selected character against one opponent. The player chooses the loadout beforehand, but actions are selected automatically from eligible commands. Items and Esper summons are not ordinary options there, and the reward is the prize rather than EXP/AP training. The opponent/reward relationship lets a player plan an exchange chain before having all its necessary equipment. [FFVI28](#ffvi28)
+
+Both victory and defeat consume the wager; victory replaces it with the promised prize. Ejection through effects such as Teleport or Snort returns the wager without the prize. The PR guide distinguishes that from holding the ordinary flee buttons, which can waste actions without escaping. A large learned spellbook can produce unwanted choices; Gogo's configurable commands offer a different kind of preparation. **Interpretation:** more available actions need not mean better autonomous behavior. [FFVI29](#ffvi29)
 
 ## 8. ATB, party formation and combat pacing
 
@@ -248,7 +262,7 @@ In Kefka's Tower, weak characters cannot simply hide forever: separate groups en
 
 ## 10. World of Balance → World of Ruin: catastrophic state transition
 
-FFVI's defining structural move is that the apparent midpoint climax **fails**.
+**Major story and world-state spoilers.** FFVI's defining structural move is that the apparent midpoint climax **fails**.
 
 Kefka disrupts the Warring Triad, the world is physically devastated, continents and settlements change, the party scatters, and the player later begins from Celes's isolated perspective.
 
@@ -276,7 +290,7 @@ A catastrophe becomes meaningful when it alters routes, institutions, people, re
 
 ## 11. Optional recruitment makes relationships mechanically consequential
 
-The World of Ruin turns old relationships into optional recovery projects.
+**Character-availability spoilers.** The World of Ruin turns old relationships into optional recovery projects.
 
 Examples:
 - Terra's situation in Mobliz links her character arc to protecting children and a community.
@@ -348,41 +362,53 @@ For OpenLegend, systemic composition should create power without making the rest
 
 ## 14. Example interactions
 
+**Constructed rules-based situations, not recorded play.** The four original examples remain below with the missing conditions, next decisions and counterexamples supplied. The added arena case connects equipment ownership to autonomous action and risk. Late-game spoilers follow.
+
 ### A. Magicite as both teacher and growth modifier
 
-A player wants one character to become a stronger spellcaster.
+**Intention:** develop a stronger spellcaster. **Conditions:** the character can equip the desired Esper, has spells left to learn and still has levels available. The original sequence is:
 
 1. equip an Esper that teaches useful spells;
 2. earn AP until the spells become permanent;
 3. before level-ups, equip Magicite with a desired stat-growth bonus;
 4. later remove the Esper but retain learned magic/stat growth.
 
-One object has generated short-term combat effect, learning progression and permanent development. [FFVI09](#ffvi09)
+One object has generated short-term combat effect, learning progression and permanent development. **Next decision:** keep training another spell or switch to a different level-up bonus. **Limit:** AP learning and an EXP level-up are separate events; an Esper chosen for its spell list need not grant the desired growth bonus, and equipping it after the level-up cannot retroactively change that event. [FFVI09](#ffvi09)
 
 ### B. Relic composition changes attack structure
+
+**Intention:** build a repeated-strike attacker. **Conditions:** Genji Glove, Master's Scroll/Offering and compatible weapons are available. The original sequence is:
 
 1. equip a Relic that enables dual wield;
 2. equip a Relic that changes Attack into repeated strikes;
 3. choose compatible weapons;
 4. the resulting turn has qualitatively different behavior from either Relic alone.
 
-This is rule composition, not additive +5% stacking.
+This is rule composition, not additive +5% stacking. **Next decision:** retain the offensive combination or replace a slot with protection for the next enemy. **Limit:** both Relic slots are committed; the multi-strike effect changes targeting and suppresses some ordinary attack properties, including random spell activation in the documented original rules. Multiplying hits is not the same as multiplying every weapon effect. [FFVI11](#ffvi11) [FFVI28](#ffvi28)
 
 ### C. Phoenix Cave requires distributed coordination
+
+**Intention:** reach Locke and the Phoenix-related conclusion. **Conditions:** two parties are prepared for their separate routes, not one strong party and an unusable reserve. The original sequence is:
 
 1. divide available characters into two parties;
 2. move Party A to a switch/path control;
 3. switch to Party B and traverse the opened route;
 4. repeat while each party handles its own encounters;
-5. eventual progress depends on both spatial positions. [FFVI16](#ffvi16)
+5. eventual progress depends on both spatial positions.
+
+**Result:** an actor elsewhere changes the controlled party's reachable space. **Next decision:** advance the newly opened route or return control to the team needed at the next mechanism. **Limit:** making one party overwhelmingly strong does not let it occupy both required positions; an underprepared second team can interrupt the entire plan. This is spatial coordination by one player, not native network co-op. [FFVI16](#ffvi16)
 
 ### D. Ragnarok creates an irreversible world choice
 
-In Narshe, one late-game choice can grant Ragnarok as:
+**Intention:** choose the most useful form of a rare reward. **Conditions:** the Narshe choice is available and the player understands its alternative uses. The original choice grants Ragnarok as:
 - an Esper that teaches Ultima and can transform enemies into items; or
 - a sword that can be developed through the Coliseum reward chain.
 
-Alternative routes can later provide Ultima, but the immediate decision still makes one object express **different system identities**. [FFVI17](#ffvi17)
+Alternative routes can later provide Ultima, but the immediate decision still makes one object express **different system identities**. **Actions/result:** choose the form, then either allocate the teacher to a learner or build around the weapon/exchange path. **Next decision:** pursue the missing capability elsewhere rather than assuming the unchosen option remains in the same menu. **Limit:** a sword is not also the equipped Esper, and the initial reward decision should not be confused with version-specific later acquisition opportunities. [FFVI17](#ffvi17)
+
+### E. A desired weapon requires a reliable delegate
+
+**Intention:** exchange Ragnarok for Lightbringer. **Conditions:** the sword is owned and an arena fighter is prepared. **Actions:** inspect the wager, select a character/loadout suited to automatic action and fight Daedalus. **Interaction:** an equipment exchange depends on how the delegated fighter uses its available commands. **Result:** victory replaces the wager with Lightbringer. **Next decision:** equip the reward or preserve it for another build. **Limit:** a suicidal or unhelpful automatic choice can lose the wager; ejection merely preserves it without earning the reward. This is a planned exchange, not a guaranteed upgrade purchase. Older localization names such as Illumina describe the corresponding reward, not an extra separate sword in this chain. [FFVI29](#ffvi29) [FFVI28](#ffvi28)
 
 ## 15. Story-mechanics coupling
 
@@ -515,22 +541,30 @@ Historical sales figures for the 1994 release are commonly reported in secondary
 
 ## 21. Current Steam helpful/player evidence
 
-The current 2026 review feed is overwhelmingly positive and repeatedly highlights:
+### Preserved original capture and its locator limits
+
+The original pass described a positive 2026 feed emphasizing:
 - music;
 - Terra/Celes and the broader cast;
 - scale/ambition relative to earlier 2D entries;
 - exploration and optional World of Ruin content;
 - nostalgia that survives the remaster. [FFVI25](#ffvi25)
 
-Helpful negative testimony exists as well. A negative Pixel Remaster review criticizes:
+It also recorded a negative account criticizing:
 - brighter/color-shifted presentation;
 - animation feel;
 - technical behavior/performance on its setup;
 - differences from the SNES aesthetic. [FFVI26](#ffvi26)
 
-That criticism aligns with professional-review disagreements about brightness/art direction, but it remains one player's experience rather than evidence that all users encounter the same technical problems.
+**Correction to evidence status:** the inherited FFVI26 link identifies a review-profile root, not a reliable game-specific permalink. Attempts to recover its game-specific page and the negative-only feed failed in the corrective pass. The earlier summary is preserved as the earlier researcher's account, not recertified as newly read testimony. It cannot establish a reproducible defect or a representative audience view.
 
-Steam discussion also surfaces a different recurring criticism: some players find later bosses opaque enough that they consult external strategies or feel pushed toward grinding/specific preparations. This is qualitative community evidence, not a prevalence estimate. [FFVI27](#ffvi27)
+The original pass also recorded Steam discussion about boss opacity and reliance on external strategies. That remains qualitative community evidence, not a prevalence estimate. [FFVI27](#ffvi27)
+
+### Fresh, identifiable native review bodies
+
+The corrective pass read the native **Most Helpful (Week), All, English** page. **BabytheStorm, August 23 as displayed**, recommends the game and values Terra's theme and the cast, but finds the story less impressive by modern standards and the difficulty insufficient to demand much tactical variety. **SpyroThyKing, August 21**, does not recommend this version and objects to perceived art/content changes; hostile motive claims and unverified mod-support assertions are not adopted as facts. **Mr. E Knight, August 24**, praises the characters, story and fantasy/technology mixture. [FFVI32](#ffvi32)
+
+The cards did not expose publication years; displayed lifetime hours are not publication-time play duration. This is a selected weekly surface, not an all-time ranking or statistically representative survey. The mixed recommended account is especially useful: liking the work does not imply liking every system or every difficulty decision.
 
 ## 22. Comprehensive mechanics inventory
 
@@ -542,14 +576,14 @@ Steam discussion also surfaces a different recurring criticism: some players fin
 | Skill acquisition | Unique commands + Magicite-taught spells + Lore/Rage/Dance and other character-specific learning |
 | Equipment | Character-restricted weapons/armor; Relics can alter commands/equipment/rules |
 | Inventory / items | Consumables, key items, throwables, Tools, equipment, Coliseum wagers |
-| Crafting | No general crafting/production system |
+| Crafting | No general crafting/production system; Coliseum exchanges risk an owned item for a specified reward |
 | Magic / powers | Shared learned spell layer via Espers; summons; Terra transformation; unique commands |
 | Combat | ATB, four-person active party, rows, status/elemental/reflection/counter rules |
 | Multi-party | Scenario splits, Phoenix Cave two-party coordination, Kefka's Tower three parties |
 | Exploration | Towns, dungeons, overworld, hidden routes, optional areas/characters/Espers |
 | Traversal | Walking, ships/chocobos/airships and story/event-specific transport |
 | Economy | Gil shops/inns plus item-risk Coliseum exchange; no market simulation |
-| Death/failure | KO/revival and save recovery; no persistent corpse state |
+| Death/failure | KO/revival; older post-defeat EXP retention differs from manual load and Pixel Remaster recovery (§2.6); no persistent corpse state |
 | Story | Authored first half; catastrophic world-state transition; more optional reconstruction second half |
 | Relationships | Authored histories and optional resolution; no scalar affinity/romance system |
 | Party/recruitment | Large roster; World of Ruin makes many reunions optional and order-flexible |
@@ -608,24 +642,30 @@ If everyone learns the same best magic, distinct identities weaken.
 
 **Borrow:** powerful general-purpose skills need costs, prerequisites, contexts or countervailing specialties.
 
+### H. Capability breadth and delegated reliability are different
+
+The Coliseum can make a large action repertoire a liability because the fighter does not select actions as a human would.
+
+**Borrow:** evaluate an agent's policy over its capabilities, not just whether it possesses enough abilities. Restricting a task's action set can improve reliability, but opaque restrictions or random self-defeating behavior can instead make delegation feel arbitrary. This is a research interpretation, not an accepted OpenLegend implementation requirement.
+
 ## 24. Preservation and requirement audit
 
-No FFVI-specific prior game/mechanics/dossier owner existed on this branch before G83, so this dossier is additive rather than a replacement.
+No FFVI-specific prior game/mechanics/dossier owner existed on this branch before G83, so this dossier is additive rather than a replacement. The corrective pass preserves the four earlier situations, expands their missing reasoning, adds a fifth arena case and qualifies the unrelocated player source instead of silently replacing its historical account.
 
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity/scope/promise | §§1–3 |
-| R02 player actions/major mechanics | §§4–14, 22 |
-| R03 items/entities/composition | §§5–7, 22 |
-| R04 progression/economy/time | §§5, 7, 19, 22 |
-| R05 concrete interactions | §§9–14 |
-| R06 people/AI/social/multiplayer | §§3, 11–12, 16, 22 |
+| R02 player actions/major mechanics | §§4–14, 22, including operative Coliseum rules |
+| R03 items/entities/composition | §§5–7, 14, 22 |
+| R04 progression/economy/time | §§2.6, 5, 7, 19, 22 |
+| R05 concrete interactions | §14: five full situations spanning learning, loadouts, spatial coordination, reward choice and autonomous wagering |
+| R06 people/AI/social/multiplayer | §§3, 7, 11–12, 16, 22 |
 | R07 art/audio/interface/feel | §§2, 17 |
-| R08 story/narrative/play | §§3, 10–15 |
+| R08 story/narrative/play | §§3, 10–15, with explicit spoiler boundaries |
 | R09 production/development | §§17–18 |
 | R10 marketing/distribution/virality | §19 |
 | R11 commercial/participation | §19 |
-| R12 reviews/player feedback | §§20–21 |
+| R12 reviews/player feedback | §§20–21, including fresh named native players and inherited-source limits |
 | R13 transferable inspiration/limits | §23 |
 | R14 sources/viewing/preservation/navigation | §§2, 24 + sources |
 
@@ -633,10 +673,11 @@ No FFVI-specific prior game/mechanics/dossier owner existed on this branch befor
 
 - Original, North American SNES, Advance, mobile/legacy PC and Pixel Remaster are not collapsed into one ruleset.
 - GBA-only bonus Espers/dungeons are not attributed to the 1994 original or Pixel Remaster.
-- Five independent substantive written reviews were inspected.
-- Steam review evidence is self-selected player testimony.
+- Five independent substantive written reviews were inspected in the original pass; this repair did not reread every inherited article.
+- Steam evidence is self-selected. The new named weekly sample is separately identified from the old negative account that could not be relocated.
 - Six-million Pixel Remaster sales are series-wide, not FFVI-specific.
-- No claim depends on unseen video footage; useful future visual-study targets include the Magitek snow opening, opera staging across versions, party-split dungeons, World of Ruin map transition, character-specific command animations and Kefka's multi-tier final battle.
+- Recovery is source- and version-qualified, not personally reproduced on every port.
+- No claim depends on unseen video footage; useful future visual-study targets include the Magitek snow opening, opera staging across versions, party-split dungeons, World of Ruin map transition, character-specific command animations, the arena selection/result screens and Kefka's multi-tier final battle.
 
 ## 25. Completion conclusion
 
@@ -696,8 +737,20 @@ For OpenLegend, the highest-value lesson is: **make identity persistent but lear
 
 <a id="ffvi24"></a>**FFVI24 — [Final Fantasy VI mobile review](https://www.pocketgamer.com/final-fantasy-vi-ios-android/review/).** Matthew Diener, Pocket Gamer, 2014-02-06. Full independent review; ATB, fixed commands, Esper/Relic customization and mobile-QoL evidence.
 
-<a id="ffvi25"></a>**FFVI25 — [FINAL FANTASY VI English Steam reviews](https://steamcommunity.com/app/1173820/reviews/?l=english).** Individual Steam reviewers, inspected 2026-09-26. Current qualitative positive sample; self-selected and dynamic.
+<a id="ffvi25"></a>**FFVI25 — [FINAL FANTASY VI English Steam reviews](https://steamcommunity.com/app/1173820/reviews/?l=english).** Individual Steam reviewers, original inspection 2026-09-26. Preserved qualitative positive sample; self-selected and dynamic. Fresh identified bodies are separately recorded as FFVI32.
 
-<a id="ffvi26"></a>**FFVI26 — [Helpful negative Steam review](https://steamcommunity.com/profiles/76561198001743210/recommended).** Individual Steam reviewer, inspected 2026-09-26. Qualitative criticism of Pixel Remaster art/animation/technical presentation; one user's setup/experience, not prevalence evidence.
+<a id="ffvi26"></a>**FFVI26 — [Inherited negative-review locator](https://steamcommunity.com/profiles/76561198001743210/recommended).** Original pass reported inspection on 2026-09-26 and criticism of art/animation/technical presentation. The locator is a profile root; the corrective pass could not recover a game-specific body after real attempts. Earlier testimony is preserved but not independently recertified; it is not used as a new sampled player or measured defect.
 
-<a id="ffvi27"></a>**FFVI27 — [FINAL FANTASY VI Steam community discussions](https://steamcommunity.com/app/1173820/).** Current discussion surface inspected 2026-09-26; qualitative evidence of boss-difficulty/strategy opacity complaints, not a representative sample.
+<a id="ffvi27"></a>**FFVI27 — [FINAL FANTASY VI Steam community discussions](https://steamcommunity.com/app/1173820/).** Original discussion capture 2026-09-26; qualitative boss-difficulty/strategy-opacity complaints, not a representative sample.
+
+<a id="ffvi28"></a>**FFVI28 — [The Colosseum](https://guides.gamercorner.net/ffvi/walkthrough/the-colosseum).** Gamer Corner Guides, authored original/SNES reference; operative arena and Offering passages read September 26, 2026. Reward chains, automated selection and tradeoffs; older names remain version-labeled. The loose word “run” is qualified by the specific PR ejection/flee distinction rather than treated as a guaranteed manual escape.
+
+<a id="ffvi29"></a>**FFVI29 — [Coliseum](https://gamefaqs.gamespot.com/pc/323473-final-fantasy-vi-pixel-remaster/faqs/79866/coliseum).** bover_87, GameFAQs Pixel Remaster guide v1.1, updated June 5, 2023; mechanics, Ragnarok wager and preparation passages read September 26, 2026. Specific outcomes and commands, not personally tested success probabilities or a universal optimal build.
+
+<a id="ffvi30"></a>**FFVI30 — [Final Fantasy VI Advance instruction manual](https://manuals.plus/square-enix/agb-bz6e-final-fantasy-vi-advance-manual).** Square Enix/Nintendo AGB-BZ6E manual, hosted HTML transcription; printed page 30's Game Over paragraph and save/Continue distinctions read September 26, 2026. Primary recovery wording; not proof that every later edition retains the same rule.
+
+<a id="ffvi31"></a>**FFVI31 — [Final Fantasy VI stats — EXP](https://finalfantasy.fandom.com/wiki/Final_Fantasy_VI_stats).** Community mechanics reference; substantive indexed EXP/version passage inspected September 26, 2026 after direct retrieval failed. Pixel Remaster saved-state recovery is kept distinct from the older EXP-retention rule. Other formulas and exploit claims on the page are not adopted.
+
+<a id="ffvi32"></a>**FFVI32 — [Native weekly-helpful Steam review page](https://steamcommunity.com/app/1173820/reviews/).** Direct player bodies read September 26, 2026: BabytheStorm, SpyroThyKing and Mr. E Knight. Displayed August dates lack years; ranking and hours are dynamic. This is a new identifiable qualitative sample, not an invented replacement identity for FFVI26.
+
+<a id="ffvi33"></a>**FFVI33 — [Game Mechanics — battle outcomes](https://gamefaqs.gamespot.com/pc/323473-final-fantasy-vi-pixel-remaster/faqs/79866/game-mechanics).** bover_87's PR guide; substantive game-over/escape/reward passage inspected September 26, 2026. Supports the saved-game recovery distinction; unrelated disputed status/EXP details are not generalized.
