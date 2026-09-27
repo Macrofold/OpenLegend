@@ -12,7 +12,7 @@ import { worldPosition, worldSupport } from '@open-legend/domain';
 import { createGameServer } from '../../apps/server/src/http.ts';
 import { readConfig } from '../../apps/server/src/config.ts';
 import { performanceSnapshot } from '../../apps/server/src/performance.ts';
-import { SqliteStore } from '../../apps/server/src/store.ts';
+import { SqlGameRepository } from '../../apps/server/src/store.ts';
 import { PostgresDatabase } from '../../apps/server/src/postgres.ts';
 import { createProfileDatabase } from './profile-database.mjs';
 
@@ -252,7 +252,7 @@ async function main() {
   // Retain the resource until the factory returns a closeable server. An initialization
   // failure otherwise leaves the database socket/worker alive with no returned handle.
   const startGame = async (tick) => {
-    const store = new SqliteStore(
+    const store = new SqlGameRepository(
       config.databasePath,
       config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
     );

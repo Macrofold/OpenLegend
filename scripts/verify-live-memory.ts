@@ -8,7 +8,7 @@ import { dreamPolicy } from '../packages/domain/src/index.js';
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { readConfig } from '../apps/server/src/config.js';
-import { SqliteStore, digest } from '../apps/server/src/store.js';
+import { SqlGameRepository, digest } from '../apps/server/src/store.js';
 import { WorldService } from '../apps/server/src/world-service.js';
 import { MacrofoldBackend } from '../apps/server/src/macrofold.js';
 import {
@@ -21,7 +21,7 @@ import { commitCognition, mindFor } from '@open-legend/domain';
 const config = { ...readConfig(), databasePath: resolve('.data/live-memory-acceptance.sqlite') };
 if (!config.macrofoldKey || config.budgetUsd <= 0 || !config.macrofoldWorkerId)
   throw new Error('Explicit backend credentials, Run caps and MACROFOLD_WORKER_ID required.');
-let store = new SqliteStore(config.databasePath);
+let store = new SqlGameRepository(config.databasePath);
 let service = new WorldService(store, config);
 await service.ready;
 await service.setPresence('live-acceptance', true, 1);
@@ -108,7 +108,7 @@ try {
     throw new Error('Encounter did not produce the required relationship and belief.');
   const revision = first.revision;
   await store.close();
-  store = new SqliteStore(config.databasePath);
+  store = new SqlGameRepository(config.databasePath);
   service = new WorldService(store, config);
   await service.ready;
   await service.setPresence('live-acceptance-restart', true, 1);

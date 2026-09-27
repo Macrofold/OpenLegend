@@ -11,7 +11,7 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { populateScenario, parseScenario } from './performance/scenario.js';
-import { SqliteStore, type SavedWorld } from '../apps/server/src/store.js';
+import { SqlGameRepository, type SavedWorld } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { retainHotEvents } from '../apps/server/src/hot-events.js';
 import { isDeepStrictEqual } from 'node:util';
@@ -34,7 +34,7 @@ if (
   );
 const directory = await mkdtemp(join(tmpdir(), 'openlegend-world-data-stress-'));
 const url = process.env['OPENLEGEND_STRESS_DATABASE_URL'];
-const store = new SqliteStore(
+const store = new SqlGameRepository(
   join(directory, 'world.sqlite'),
   url ? new PostgresDatabase(url) : undefined,
 );

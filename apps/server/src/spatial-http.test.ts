@@ -8,12 +8,12 @@ import { advanceWorld } from '@open-legend/domain';
 import type { GameView } from '@open-legend/protocol';
 import { createGameServer } from './http.js';
 import { readConfig } from './config.js';
-import { SqliteStore } from './store.js';
+import { SqlGameRepository } from './store.js';
 
 it('requires exact 3D surface intentions and preserves the HTTP retry boundary', async () => {
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: new SqliteStore(':memory:'),
+    store: new SqlGameRepository(':memory:'),
     production: true,
     tick: false,
   });
@@ -83,7 +83,7 @@ it('restores a saved elevated route and native flight through SQLite and manual 
   const config = readConfig({ AI_BUDGET_USD: '0', OPEN_LEGEND_DATA_DIR: directory });
   let game = await createGameServer({
     config,
-    store: new SqliteStore(config.databasePath),
+    store: new SqlGameRepository(config.databasePath),
     production: true,
     tick: false,
   });
@@ -111,7 +111,7 @@ it('restores a saved elevated route and native flight through SQLite and manual 
     await game.close();
     game = await createGameServer({
       config,
-      store: new SqliteStore(config.databasePath),
+      store: new SqlGameRepository(config.databasePath),
       production: true,
       tick: false,
     });

@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../../apps/server/src/config.js';
-import { SqliteStore } from '../../apps/server/src/store.js';
+import { SqlGameRepository } from '../../apps/server/src/store.js';
 test('scaled themes, reduced motion and responsive controls persist across reload', async ({
   page,
 }, info) => {
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: new SqliteStore(':memory:'),
+    store: new SqlGameRepository(':memory:'),
     production: true,
     tick: false,
   });

@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { commitCognition, mindFor, type MindProposal } from '@open-legend/domain';
 import { validateMacrofoldValue } from '@open-legend/ai';
 import { readConfig } from './config.js';
-import { SqliteStore } from './store.js';
+import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 import {
   cognitionContext,
@@ -21,7 +21,7 @@ import {
 import { MacrofoldBackend } from './macrofold.js';
 import { inspectGodMind } from './god-mind.js';
 import { projectView } from './view.js';
-const opened: SqliteStore[] = [];
+const opened: SqlGameRepository[] = [];
 const dirs: string[] = [];
 afterEach(async () => {
   for (const s of opened.splice(0))
@@ -32,7 +32,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 async function service(path = ':memory:', god = true) {
-  const store = new SqliteStore(path);
+  const store = new SqlGameRepository(path);
   opened.push(store);
   const config = readConfig({
     AI_BUDGET_USD: '100',

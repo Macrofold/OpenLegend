@@ -25,6 +25,7 @@ import { timed, timedSync } from './performance.js';
 import { HistoryRepository } from './history.js';
 import { prepareHistory } from './history-preparation.js';
 import { insertRows } from './sql-rows.js';
+import { IntegrationValues } from './integration-values.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
 import type { GameView, IntelligenceCall } from '@open-legend/protocol';
@@ -55,6 +56,8 @@ function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: s
 }
 export interface SqlDatabase {
   dialect?: 'postgres';
+  /** Undefined adapters cannot prove whether shared committed reads are safe. */
+  readonly transactionActive?: boolean;
   checkpointSource?: import('./checkpoint-worker-client.js').CheckpointSource;
   transaction<T>(operation: () => Promise<T>): Promise<T>;
   readTransaction?<T>(operation: () => Promise<T>): Promise<T>;
@@ -396,15 +399,17 @@ export interface GameRepository extends WorldStore {
 }
 
 /**
+ * Shared SQL repository for SQLite and PostgreSQL.
  * World snapshots and command receipts commit together. Paid attempts live outside the
  * simulated timeline, so reopening a save cannot repeat or erase provider usage.
  */
-export class SqliteStore implements GameRepository {
+export class SqlGameRepository implements GameRepository {
   readonly commands: CommandReceipts;
   readonly authority: AuthorityRepository;
   readonly db: SqlDatabase;
   readonly records: WorldRecords;
   readonly memories: MemoryRepository;
+  private readonly integrationValues: IntegrationValues;
   private acceptedRevision = -1;
   private acceptedState: SavedWorld | null = null;
   private intelligenceWrites = 0;
@@ -548,6 +553,7 @@ export class SqliteStore implements GameRepository {
   constructor(path: string, database?: SqlDatabase) {
     if (!database && path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = database ?? new SqliteDatabase(path);
+    this.integrationValues = new IntegrationValues(this.db);
     this.records = new WorldRecords(this.db);
     this.memories = new MemoryRepository(this.db);
     this.history = new HistoryRepository(this.db);
@@ -841,6 +847,9 @@ export class SqliteStore implements GameRepository {
         );
         if (historyProjection?.restore) {
           if (!this.acceptedState) throw new Error('No active world to replace.');
+          this.integrationValues.clear();
+          this.db.afterCommit?.(() => this.integrationValues.clear());
+          this.db.afterRollback?.(() => this.integrationValues.clear());
           await this.saves.install(this.acceptedState, historyProjection.restore);
           await this.memories.invalidateConversationCompactions(state.world.id);
         }
@@ -1090,16 +1099,20 @@ export class SqliteStore implements GameRepository {
 
   async putJob(job: JobRecord): Promise<void> {
     await this.ready;
-
-    const previous = await this.getJob(job.id);
-    if (previous && previous.fingerprint !== job.fingerprint)
-      throw new Error('A request ID cannot be reused with different input.');
-    if (previous?.status === 'completed' && job.status !== 'completed') return;
-    await this.db
+    const status =
+      this.db.dialect === 'postgres'
+        ? "jobs.payload::jsonb ->> 'status'"
+        : "json_extract(jobs.payload, '$.status')";
+    // Check identity and preserve completed work in the same statement that writes it;
+    // a separate read costs a round trip and races concurrent completions.
+    const written = await this.db
       .prepare(
-        'INSERT INTO jobs VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload',
+        `INSERT INTO jobs VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload=
+          CASE WHEN ${status}='completed' AND ?<>'completed' THEN jobs.payload ELSE excluded.payload END
+          WHERE jobs.fingerprint=excluded.fingerprint RETURNING fingerprint`,
       )
-      .run(job.id, job.fingerprint, JSON.stringify(job), job.createdAt);
+      .get(job.id, job.fingerprint, JSON.stringify(job), job.createdAt, job.status);
+    if (!written) throw new Error('A request ID cannot be reused with different input.');
   }
 
   async claimInventionContinuation(job: JobRecord, parentId: string): Promise<boolean> {
@@ -1143,20 +1156,12 @@ export class SqliteStore implements GameRepository {
 
   async getIntegration(key: string): Promise<unknown> {
     await this.ready;
-
-    const row = await this.db
-      .prepare('SELECT value FROM meta WHERE key = ?')
-      .get(`integration:${key}`);
-    return row ? JSON.parse(String(row['value'])) : undefined;
+    return this.integrationValues.get(key);
   }
   async putIntegration(key: string, value: unknown): Promise<void> {
     await this.ready;
 
-    await this.db
-      .prepare(
-        'INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE meta.value IS DISTINCT FROM excluded.value',
-      )
-      .run(`integration:${key}`, JSON.stringify(value));
+    await this.integrationValues.put(key, value);
   }
 
   async reserve(
@@ -1298,7 +1303,7 @@ export class SqliteStore implements GameRepository {
   private usageCache?: {
     period: string;
     ceiling: number;
-    value: ReturnType<SqliteStore['readUsage']>;
+    value: ReturnType<SqlGameRepository['readUsage']>;
   };
 
   async usage(ceilingUsd: number, actorId?: string) {

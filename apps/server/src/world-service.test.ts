@@ -9,14 +9,14 @@ import { DatabaseSync } from 'node:sqlite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { quantityOf } from '@open-legend/domain';
 import { readConfig } from './config.js';
-import { SqliteStore } from './store.js';
+import { SqlGameRepository } from './store.js';
 import { projectView } from './view.js';
 import { WorldService } from './world-service.js';
 
-const stores = new Set<SqliteStore>();
+const stores = new Set<SqlGameRepository>();
 const directories: string[] = [];
 async function setup(path = ':memory:', existingClock?: { now: number }) {
-  const store = new SqliteStore(path);
+  const store = new SqlGameRepository(path);
   stores.add(store);
   const clock = existingClock ?? { now: 1_800_000_000_000 };
   const config = readConfig({

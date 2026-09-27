@@ -7,13 +7,13 @@ import { join } from 'node:path';
 import { afterEach, expect, it } from 'vitest';
 import type { DeclarationDraft } from '@open-legend/domain';
 import { actionCatalogue } from './action-catalogue.js';
-import { SqliteStore } from './store.js';
+import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 import { readConfig } from './config.js';
 
-const stores: SqliteStore[] = [];
+const stores: SqlGameRepository[] = [];
 async function setup() {
-  const store = new SqliteStore(':memory:');
+  const store = new SqlGameRepository(':memory:');
   stores.push(store);
   const service = new WorldService(store, readConfig({}));
   await enterLocalWorld(service);
@@ -173,7 +173,7 @@ it('updates contextual food descriptions from the player’s current state witho
 it('persists profile preferences across server restarts and world restoration, independently of another profile', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'open-legend-profile-'));
   const path = join(directory, 'world.sqlite');
-  let store = new SqliteStore(path);
+  let store = new SqlGameRepository(path);
   try {
     const service = new WorldService(store, readConfig({}));
     await enterLocalWorld(service);
@@ -183,7 +183,7 @@ it('persists profile preferences across server restarts and world restoration, i
     await store.commit(original.revision, original.state);
     expect((await store.getProfile('someone-else')).preferences.showUnavailableActions).toBe(false);
     await store.close();
-    store = new SqliteStore(path);
+    store = new SqlGameRepository(path);
     const restarted = new WorldService(store, readConfig({}));
     await enterLocalWorld(restarted);
     expect(restarted.profile.preferences.showUnavailableActions).toBe(true);

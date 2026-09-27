@@ -84,11 +84,25 @@ Full snapshots are checkpoint work. Capture an immutable revision, serialize out
 
 ### Preserve order without one global database bottleneck
 
+Record writes group new rows separately from updated rows within each table, retaining bounded batches and insert-only duplicate detection. Tables with secondary unique indexes keep their original row order. This avoids alternating new/updated visibility records producing separate statements for every observer. Parent tables still precede children; dependent history, source eligibility and the world head remain in one atomic transaction. Job identity and completed-status protection are checked by the same upsert that writes the job.
+
+The observer/subject sight-episode map explicitly has no insertion-order meaning: consumers resolve identities by key. Its codec therefore writes neutral ordinals and only changed bindings; a bird leaving view does not renumber every still-visible object. Reload may enumerate those map keys differently, but preserves every episode identity and disappearance/reappearance boundary. Entity order, visible-subject lists and history order retain their existing semantics. New collections must opt in only when all consumers are order-independent.
+
 Gameplay writes retain one ordered writer connection and the advisory ownership lock. First remove idle queries and redundant writes on that connection. If optional activity still materially delays commits, add a bounded auxiliary primary-database connection for inspection, diagnostics and independent background job bookkeeping. It must not attempt to acquire a second world-writer lock or mutate world state through a side door.
 
 A second connection removes application head-of-line waiting, not database contention. Keep its transactions short, queries indexed and deadlines bounded; long scans, shared-row locks and large writes can still hurt gameplay. Required reservations and uncertain paid receipts remain durable before dispatch/settlement under their existing accounting contract. Provider calls run outside SQL transactions and outside the mutation queue.
 
 Cross-connection reads use captured scope/revision tokens and reject stale results on return. Revocation and publication compare authoritative source versions; optional caches or indexes never expand permission. No read replica, generic task broker or large connection pool is needed for this stage.
+
+The shared work queue captures each submitting operation's asynchronous context. Waiting work must not inherit request, diagnostic or transaction context from the preceding operation. Transaction owners still establish their own active lifetime and publication hooks; queue ordering alone does not provide context isolation.
+
+### Committed cognition metadata
+
+The store shares concurrent and repeated reads of committed interest, reflection-queue and semantic-schedule records. Only encoded immutable values are retained; each consumer receives a separately parsed value. Explicit transactions bypass this cache so they see their own writes or their original read snapshot. Writes invalidate before execution and again after commit/rollback; restoring a game clears the whole cache before installation and after settlement. Cache eviction returns to SQL without dropping records. [Inventory and bounds](limits/cognition.md#cg03).
+
+Conversation compaction uses separate SQL compare-and-swap writers and remains outside this cache. Accounting, authority and arbitrary integration keys also use their existing durable read paths. Adapters lacking transaction-state and publication hooks cannot enable shared metadata reads.
+
+Unchanged committed memory/vector coverage counts return without opening a read transaction; transaction callers always query their own snapshot. Ordinary current-visibility/encounter-identity changes no longer invalidate retained-memory revisions or wake memory indexing. Actual awareness, memory, correction, forgetting, accepted-mind and restore changes retain their invalidation paths. These optimizations do not change what characters perceive or remember.
 
 ## Triggered background work
 
@@ -121,6 +135,8 @@ Use scoped conversation/narration revisions on the existing SSE stream to invali
 Keep presence heartbeats because they establish liveness, and retain diagnostics' existing visible-panel cadence while making reads coalesced, bounded and independent of gameplay. Provider operation polling may remain necessary where no reliable callback/stream exists; back off while idle, respect provider limits, and preserve receipt reconciliation. Do not treat all timers as defects.
 
 ## Simulation CPU and growing history
+
+Position baselines and event-observer candidate indexes copy only the scalar fields they retain. They do not snapshot complete actors, plans or bodies just to capture a position and sight range. Exact sight checks still use current world geometry; the later encounter phase retains its full phase snapshot where required.
 
 Read immutable installed attribute/sense/status definitions outside draft proxies only where admission replaces them wholesale. Never use that shortcut for mutable actor state. Bounded visibility caches must degrade to uncached exact queries at capacity rather than evicting the whole working set on each sequential scan. Cache limits restrict retained optimization state, not the number of sources perceived.
 

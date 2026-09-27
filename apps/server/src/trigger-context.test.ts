@@ -1,7 +1,7 @@
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { expect, it } from 'vitest';
 import { readConfig } from './config.js';
-import { SqliteStore } from './store.js';
+import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 import { IntelligenceLog } from './intelligence-log.js';
 import { RecallService } from './recall.js';
@@ -10,7 +10,7 @@ import { responseTrigger } from './response-context.js';
 
 it('keeps coalesced evidence in context without adding it to the literal trigger', async () => {
   // Local world and failing relevance fixture: no provider or network requests.
-  const store = new SqliteStore(':memory:');
+  const store = new SqlGameRepository(':memory:');
   const service = new WorldService(store, readConfig({}));
   await enterLocalWorld(service);
   const log = new IntelligenceLog(store);

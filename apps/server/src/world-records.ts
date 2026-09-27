@@ -411,10 +411,14 @@ export class WorldRecords {
           for (const [key, entry] of members(current)) {
             positions?.set(key, index);
             const prior = oldEntries.get(key);
-            const oldPosition = priorPlacement?.positions.get(key) ?? prior?.index;
-            const position = nextPlacement
-              ? (oldPosition ?? currentPlacement?.positions.get(key) ?? nextPlacement.next++)
-              : index;
+            const oldPosition = child.unordered
+              ? 0
+              : (priorPlacement?.positions.get(key) ?? prior?.index);
+            const position = child.unordered
+              ? 0
+              : nextPlacement
+                ? (oldPosition ?? currentPlacement?.positions.get(key) ?? nextPlacement.next++)
+                : index;
             nextPlacement?.positions.set(key, position);
             visit(
               child.node,
@@ -449,8 +453,16 @@ export class WorldRecords {
   async write(worldId: string, revision: number, changes: RecordChanges) {
     // Schema preorder guarantees parents exist before children, including brand-new actors.
     for (const [table, node] of RECORD_NODES) {
-      const rows = changes.writes.get(table);
-      if (!rows?.length) continue;
+      const changed = changes.writes.get(table);
+      if (!changed?.length) continue;
+      // Returning entities interleave new and updated visibility rows per observer.
+      // Group those operations instead of paying two SQL round trips per observer.
+      // Keep insert-only conflict detection, parent-table order, and original row
+      // order where a secondary uniqueness constraint can make ordering meaningful.
+      const rows =
+        node.uniqueIndexes?.length || changed.every((row) => row.create === changed[0]!.create)
+          ? changed
+          : [...changed.filter((row) => row.create), ...changed.filter((row) => !row.create)];
       const columns = [
         'world_id',
         'id',

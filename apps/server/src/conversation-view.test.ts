@@ -2,18 +2,18 @@ import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { afterEach, expect, it } from 'vitest';
 import { readConfig } from './config.js';
-import { SqliteStore, type JobRecord } from './store.js';
+import { SqlGameRepository, type JobRecord } from './store.js';
 import { projectView } from './view.js';
 import { WorldService } from './world-service.js';
 
-const stores: SqliteStore[] = [];
+const stores: SqlGameRepository[] = [];
 
 afterEach(async () => {
   await Promise.all(stores.splice(0).map(async (store) => await store.close()));
 });
 
 it('projects active, failed and interrupted reply outcomes on the originating speech', async () => {
-  const store = new SqliteStore(':memory:');
+  const store = new SqlGameRepository(':memory:');
   stores.push(store);
   const service = new WorldService(store, readConfig({}));
   await enterLocalWorld(service);

@@ -10,12 +10,12 @@ import {
   npcCandidates,
   type CandidateAction,
 } from './context.js';
-import { SqliteStore } from './store.js';
+import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 
-const stores: SqliteStore[] = [];
+const stores: SqlGameRepository[] = [];
 async function setup(): Promise<WorldService> {
-  const store = new SqliteStore(':memory:');
+  const store = new SqlGameRepository(':memory:');
   stores.push(store);
   const service = new WorldService(
     store,

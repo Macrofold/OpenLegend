@@ -3,7 +3,7 @@ import { allItems, itemFor } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGameServer } from './http.js';
 import { readConfig } from './config.js';
-import { SqliteStore } from './store.js';
+import { SqlGameRepository } from './store.js';
 import type { GameView } from '@open-legend/protocol';
 
 const cleanup: Array<() => Promise<void>> = [];
@@ -13,7 +13,7 @@ afterEach(async () => {
 async function start(godMode = false) {
   const game = await createGameServer({
     config: readConfig({ OPEN_LEGEND_GOD_MODE: String(godMode) }),
-    store: new SqliteStore(':memory:'),
+    store: new SqlGameRepository(':memory:'),
     production: true,
     tick: false,
   });

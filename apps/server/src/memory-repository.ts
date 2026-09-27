@@ -111,15 +111,21 @@ export class MemoryRepository {
   constructor(private readonly db: SqlDatabase) {}
   committed(changes: RecordChanges, restored = false) {
     const actors = new Set<string>();
+    // Current visibility/encounter bookkeeping is not retained evidence. A bird
+    // crossing the view must not invalidate memory counts or wake the indexer.
+    // Actual observations still arrive through mind_awareness in this same commit.
+    const affectsMemory = (table: string) =>
+      table.startsWith('mind_') &&
+      !/^mind_(exposure|visible_objects|visible_people)(?:_owners)?$/.test(table);
     const mark = (id: string) => {
       const path = JSON.parse(id) as string[];
       const actor = path[path[1] === 'experience' ? 3 : 2];
       if (actor) actors.add(actor);
     };
     for (const [table, rows] of changes.writes)
-      if (table.startsWith('mind_')) for (const row of rows) mark(row.id);
+      if (affectsMemory(table)) for (const row of rows) mark(row.id);
     for (const [table, ids] of changes.deletes)
-      if (table.startsWith('mind_')) for (const id of ids) mark(id);
+      if (affectsMemory(table)) for (const id of ids) mark(id);
     if (changes.writes.has('experience_state') || changes.deletes.has('experience_state')) {
       this.coverageCache.clear();
       this.vectorRevision++;
@@ -1227,24 +1233,23 @@ export class MemoryRepository {
     });
   }
   async coverage(scope: MemoryScope, model: MemoryModel) {
-    return this.snapshot(async () => {
-      const key = JSON.stringify([scope, model]);
-      const revision = this.actorRevision(scope.actorId),
-        vectorRevision = this.vectorRevision;
-      const cached = this.coverageCache.get(key);
-      if (cached?.revision === revision && cached.vectorRevision === vectorRevision)
-        return cached.value;
-      const value = await this.readCoverage(scope, model);
-      if (
-        revision === this.actorRevision(scope.actorId) &&
-        vectorRevision === this.vectorRevision
-      ) {
-        if (this.coverageCache.size >= 512)
-          this.coverageCache.delete(this.coverageCache.keys().next().value!);
-        this.coverageCache.set(key, { revision, vectorRevision, value });
-      }
-      return value;
-    });
+    // A cached committed count needs no BEGIN/COMMIT. Explicit transactions instead
+    // use their own snapshot, which may predate the cache or include tentative writes.
+    if (this.db.transactionActive !== false)
+      return this.snapshot(() => this.readCoverage(scope, model));
+    const key = JSON.stringify([scope, model]);
+    const revision = this.actorRevision(scope.actorId),
+      vectorRevision = this.vectorRevision;
+    const cached = this.coverageCache.get(key);
+    if (cached?.revision === revision && cached.vectorRevision === vectorRevision)
+      return { ...cached.value };
+    const value = await this.snapshot(() => this.readCoverage(scope, model));
+    if (revision === this.actorRevision(scope.actorId) && vectorRevision === this.vectorRevision) {
+      if (this.coverageCache.size >= 512)
+        this.coverageCache.delete(this.coverageCache.keys().next().value!);
+      this.coverageCache.set(key, { revision, vectorRevision, value });
+    }
+    return { ...value };
   }
   private async readCoverage(scope: MemoryScope, model: MemoryModel) {
     const eligible = await this.count(scope);

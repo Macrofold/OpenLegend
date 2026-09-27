@@ -68,7 +68,8 @@ body,
 .ol-root h3 {
   margin: 0;
 }
-.ol-root input:not([type='checkbox']):not(.ol-select-input):not(.ol-search input),
+.ol-root
+  input:not([type='checkbox']):not([type='radio']):not(.ol-select-input):not(.ol-search input),
 .ol-root select,
 .ol-root textarea {
   box-sizing: border-box;
@@ -164,6 +165,9 @@ body,
   animation: ol-interaction-in calc(220ms * var(--motion-scale)) var(--ease-out) both;
 }
 .ol-radio {
+  /* Anchor React Aria's hidden native input to its visible option. Focusing it
+     must scroll the option into view, not displace the surrounding panel. */
+  position: relative;
   min-width: var(--control-md);
   height: 28px;
   display: grid;

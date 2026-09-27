@@ -2,10 +2,11 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir, availableParallelism, loadavg } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Session } from 'node:inspector/promises';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { observeDurations, performanceSnapshot } from '../apps/server/src/performance.js';
 import { createGameServer } from '../apps/server/src/http.js';
 import { readConfig } from '../apps/server/src/config.js';
-import { SqliteStore } from '../apps/server/src/store.js';
+import { SqlGameRepository } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { createWorld, worldPosition, worldRootEntities } from '@open-legend/domain';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
@@ -35,8 +36,12 @@ const config = readConfig({
   OPEN_LEGEND_GOD_MODE: 'true',
 });
 const database = config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined;
+let measuring = false;
 const sql = new Map<string, { count: number; ms: number }>();
 const slowSql: Array<{ sql: string; ms: number }> = [];
+const commitTrace = new AsyncLocalStorage<{ count: number; statements: string[] }>();
+const commits = { count: 0, ms: 0, statements: 0, maxStatements: 0 };
+const slowCommits: Array<{ ms: number; count: number; statements: string[] }> = [];
 if (database) {
   const query = database.query.bind(database);
   database.query = async (statement, params) => {
@@ -44,16 +49,29 @@ if (database) {
     try {
       return await query(statement, params);
     } finally {
-      const key = statement.replace(/\s+/g, ' ').slice(0, 120);
-      const entry = sql.get(key) ?? { count: 0, ms: 0 };
-      if (performance.now() - at > 100) {
-        slowSql.push({ sql: key, ms: performance.now() - at });
-        slowSql.sort((a, b) => b.ms - a.ms);
-        slowSql.length = Math.min(slowSql.length, 30);
+      if (measuring) {
+        const metadataKind =
+          /\bmeta\b/.test(statement) &&
+          typeof params?.[0] === 'string' &&
+          params[0].startsWith('integration:')
+            ? ` [${params[0].split(':').slice(0, 2).join(':')}]`
+            : '';
+        const key = statement.replace(/\s+/g, ' ').slice(0, 120) + metadataKind;
+        const commit = commitTrace.getStore();
+        if (commit) {
+          commit.count++;
+          if (commit.statements.length < 128) commit.statements.push(key);
+        }
+        const entry = sql.get(key) ?? { count: 0, ms: 0 };
+        if (performance.now() - at > 100) {
+          slowSql.push({ sql: key, ms: performance.now() - at });
+          slowSql.sort((a, b) => b.ms - a.ms);
+          slowSql.length = Math.min(slowSql.length, 30);
+        }
+        entry.count++;
+        entry.ms += performance.now() - at;
+        sql.set(key, entry);
       }
-      entry.count++;
-      entry.ms += performance.now() - at;
-      sql.set(key, entry);
     }
   };
 }
@@ -70,7 +88,27 @@ if (database) {
     );
   }
 }
-const store = new SqliteStore(config.databasePath, database);
+const store = new SqlGameRepository(config.databasePath, database);
+const commit = store.commit.bind(store);
+store.commit = async (...args) => {
+  if (!measuring) return commit(...args);
+  const trace = { count: 0, statements: [] as string[] };
+  const at = performance.now();
+  try {
+    return await commitTrace.run(trace, () => commit(...args));
+  } finally {
+    if (measuring) {
+      const ms = performance.now() - at;
+      commits.count++;
+      commits.ms += ms;
+      commits.statements += trace.count;
+      commits.maxStatements = Math.max(commits.maxStatements, trace.count);
+      slowCommits.push({ ms, count: trace.count, statements: trace.statements });
+      slowCommits.sort((a, b) => b.ms - a.ms);
+      slowCommits.length = Math.min(slowCommits.length, 10);
+    }
+  }
+};
 await store.ready;
 if (await store.load()) {
   await store.close();
@@ -182,7 +220,6 @@ const stopTrace = observeDurations((stage, ms, endedAt) => {
   if (spans.length > 2000) spans.splice(0, 1000);
 });
 let measureStart = 0;
-let measuring = false;
 let bytes = 0,
   updates = 0;
 try {
@@ -326,6 +363,8 @@ try {
   measuring = true;
   const before = performanceSnapshot();
   sql.clear();
+  Object.assign(commits, { count: 0, ms: 0, statements: 0, maxStatements: 0 });
+  slowCommits.length = 0;
   slowSql.length = 0;
   profiler.connect();
   await profiler.post('Profiler.enable');
@@ -439,6 +478,8 @@ try {
     after,
     sql: [...sql].sort((a, b) => b[1].ms - a[1].ms).slice(0, 30),
     slowSql,
+    commits,
+    slowCommits,
     longGaps,
   };
   await writeFile(resolve(output), JSON.stringify(report, null, 2), { flag: 'wx', mode: 0o600 });
@@ -452,6 +493,8 @@ try {
       after: undefined,
       sql: undefined,
       slowSql: undefined,
+      commits: undefined,
+      slowCommits: undefined,
       longGaps: undefined,
     }),
   );

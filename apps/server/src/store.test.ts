@@ -5,16 +5,16 @@ import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createWorld, executeCommand, inventoryFor } from '@open-legend/domain';
 import type { AiReceipt } from '@open-legend/ai';
-import { SqliteStore, type JobRecord, type SavedWorld } from './store.js';
+import { SqlGameRepository, type JobRecord, type SavedWorld } from './store.js';
 
-const opened = new Set<SqliteStore>();
+const opened = new Set<SqlGameRepository>();
 const directories: string[] = [];
-function open(path = ':memory:'): SqliteStore {
-  const store = new SqliteStore(path);
+function open(path = ':memory:'): SqlGameRepository {
+  const store = new SqlGameRepository(path);
   opened.add(store);
   return store;
 }
-async function close(store: SqliteStore): Promise<void> {
+async function close(store: SqlGameRepository): Promise<void> {
   await store.close();
   opened.delete(store);
 }

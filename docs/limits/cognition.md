@@ -597,3 +597,9 @@ Ordinary animal/object first sightings and returns update current visibility and
 **Implemented · Restrictiveness: Medium.** A failed advisory maintenance scheduling read defers another scheduling attempt for 60 real seconds. Gameplay continues if authoritative saves succeed; background maintenance reports the failure. No automatic paid retry or source deletion is introduced.
 
 **Reason / tradeoff:** A transient read failure should not stop the world or create a query retry storm. Cleanup can lag during the delay; retained history and ordinary durability remain intact. Reconsider the interval if operational measurements show delayed maintenance causing pressure. [Owner](../memory-architecture.md#maintenance-storage-failures).
+
+## CG03
+
+**Implemented — September 27 · Restrictiveness: Safe.** Committed interest/reflection/schedule metadata caching retains at most **512 keys and 2 MiB of estimated string storage** per store, counting two bytes per key/value character. Pending reads share entries; oldest entries and oversized resolved values are evicted. Memory/vector coverage caching retains its existing **512 scope/model entries**. Overflow performs ordinary database reads, with no cap on retained memories, interested characters or perception.
+
+**Reason / tradeoff:** Avoid repeatedly fetching unchanged scheduling facts while bounding optimization memory. Values remain isolated from consumer edits, and transaction/restore invalidation preserves freshness. Raise the cache bounds only if measured eviction churn warrants it; no current Remove/Change/Expand task. [Contract](../performance.md#committed-cognition-metadata) · [Metadata owner](../../apps/server/src/integration-values.ts) · [Coverage owner](../../apps/server/src/memory-repository.ts).

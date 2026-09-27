@@ -60,6 +60,8 @@ Original recommendation: **Keep**.
 
 Write batches use at most 10,000 PostgreSQL parameters or 900 SQLite parameters and approximately 262,144 encoded bytes; one oversized row remains admissible. History construction enforces its combined parameter-byte bound before retaining additional rows, writing source rows before audiences/perspectives inside the same transaction. Other record batches use the shared parameter limit and their existing encoded-byte bounds.
 
+Compatible new/updated record rows are grouped within their table before batching; alternating observer updates no longer force separate statements per observer. Secondary-unique-index tables retain original row order. Duplicate-create checks, parent ordering and atomic commit remain unchanged.
+
 **Reason / tradeoff:** Larger PostgreSQL batches reduce local round trips; SQLite retains the portable parameter floor. The byte bound prevents one huge multi-row statement. The former shared 900-parameter ceiling was replaced only for PostgreSQL; this is not a cap on saved records or permission to split authoritative commits.
 
 [Shared parameter limit](../../apps/server/src/sql-rows.ts) · [HistoryBatch](../../apps/server/src/history-batch.ts) · [Measurement limits](../verification/three-times-scene-performance.md) · [AR04.3](../maintainers/action-reconciliation.md#integration-tasks).

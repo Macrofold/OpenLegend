@@ -14,7 +14,7 @@ import {
   BACKUP_TABLES,
 } from '../apps/server/src/operational-backup.js';
 import { readConfig } from '../apps/server/src/config.js';
-import { SqliteStore, digest, type SavedWorld } from '../apps/server/src/store.js';
+import { SqlGameRepository, digest, type SavedWorld } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { migrateActors, migrateCognition, forgetExperience } from '@open-legend/domain';
 import { upgradeWorldState } from '../apps/server/src/upgrade-world.js';
@@ -48,7 +48,7 @@ if (!statSync(file).isDirectory()) {
   };
 }
 const config = readConfig();
-const store = new SqliteStore(
+const store = new SqlGameRepository(
   config.databasePath,
   config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
 );

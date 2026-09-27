@@ -67,6 +67,10 @@ export class PostgresDatabase implements SqlDatabase {
     return this.writeLane.run(operation);
   }
 
+  get transactionActive(): boolean {
+    return this.transactionContext.getStore()?.active ?? false;
+  }
+
   afterCommit(callback: () => void) {
     const scope = this.transactionContext.getStore();
     if (scope?.active) scope.committed.push(callback);

@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { executeCommand } from '../packages/domain/src/index.js';
 import { WorldService } from '../apps/server/src/world-service.js';
-import { SqliteStore } from '../apps/server/src/store.js';
+import { SqlGameRepository } from '../apps/server/src/store.js';
 import { readConfig } from '../apps/server/src/config.js';
 import { projectView } from '../apps/server/src/view.js';
 import { performanceSnapshot } from '../apps/server/src/performance.js';
@@ -31,7 +31,7 @@ const config = readConfig({
   WORLD_SEED: '73',
   OPEN_LEGEND_DATA_DIR: directory,
 });
-const store = new SqliteStore(config.databasePath);
+const store = new SqlGameRepository(config.databasePath);
 const service = new WorldService(store, config);
 let heartbeat: ReturnType<typeof setInterval> | undefined;
 let heartbeatWork: Promise<unknown> | undefined;

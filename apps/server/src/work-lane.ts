@@ -1,4 +1,5 @@
 import { recordDuration } from './performance.js';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 export class OverloadError extends Error {
   readonly code = 'busy';
@@ -31,6 +32,9 @@ export class WorkLane {
   run<T>(operation: () => T | Promise<T>): Promise<T> {
     if (this.pending.length >= this.maximum) return Promise.reject(new OverloadError());
     const queuedAt = performance.now();
+    // A queued operation belongs to its submitter, not whoever finishes before it.
+    // Preserve request/diagnostic/transaction contexts across the queue boundary.
+    const run = AsyncLocalStorage.bind(operation);
     return new Promise<T>((resolve, reject) => {
       const entry = {
         start: () => {
@@ -43,7 +47,7 @@ export class WorkLane {
             return;
           }
           Promise.resolve()
-            .then(operation)
+            .then(run)
             .then(resolve, reject)
             .finally(() => this.finish());
         },

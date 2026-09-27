@@ -130,7 +130,7 @@ export function snapshotEncounters(world: WorldState): EncounterBaseline {
       (next
         ? [...next.inputs.values()].map((input) => [input.id, input.position] as const)
         : undefined) ??
-        worldRootEntities(world, true).map((entity) => [entity.id, { ...worldPosition(entity) }]),
+        worldRootEntities(world).map((entity) => [entity.id, { ...worldPosition(entity) }]),
     ),
     contacts: new Map(),
     ...(world.visiblePeople ? { visiblePeople: snapshot(world.visiblePeople) } : {}),

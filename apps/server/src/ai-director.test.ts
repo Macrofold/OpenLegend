@@ -15,7 +15,7 @@ import { AiDirector } from './ai-director.js';
 import { buildContext } from './context.js';
 import { declarationSchema } from './ai-schemas.js';
 import { readConfig, type AppConfig } from './config.js';
-import { SqliteStore } from './store.js';
+import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 
 // Explicit specimens for orchestration verification, never production seeds or evidence of model quality.
@@ -130,7 +130,7 @@ async function harness(
     }),
     ...options.config,
   };
-  const store = new SqliteStore(':memory:');
+  const store = new SqlGameRepository(':memory:');
   const service = new WorldService(store, config, () => now);
   await enterLocalWorld(service);
   await service.setPresence('fixture-browser', true);

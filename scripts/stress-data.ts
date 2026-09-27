@@ -12,7 +12,7 @@ import {
   observeActor,
   type MemoryRecord,
 } from '@open-legend/domain';
-import { SqliteStore, type SavedWorld } from '../apps/server/src/store.js';
+import { SqlGameRepository, type SavedWorld } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { candidateSet } from '../apps/server/src/recall.js';
 
@@ -41,7 +41,7 @@ if (
 if (process.env['AI_BUDGET_USD'] !== '0') throw new Error('Set AI_BUDGET_USD=0.');
 const directory = await mkdtemp(join(tmpdir(), 'openlegend-data-stress-'));
 const url = process.env['OPENLEGEND_STRESS_DATABASE_URL'];
-const store = new SqliteStore(
+const store = new SqlGameRepository(
   join(directory, 'world.sqlite'),
   url ? new PostgresDatabase(url) : undefined,
 );

@@ -33,7 +33,7 @@ import type { AiClient } from '@open-legend/ai';
 import { AiDirector } from './ai-director.js';
 import { readConfig, type AppConfig } from './config.js';
 import { PostgresDatabase } from './postgres.js';
-import { SqliteStore, digest } from './store.js';
+import { SqlGameRepository, digest } from './store.js';
 import { WorldService, commandInputSchema, requestIdSchema } from './world-service.js';
 import { projectPatch, projectView } from './view.js';
 import type { GameView } from '@open-legend/protocol';
@@ -300,7 +300,7 @@ function writeJson(response: ServerResponse, status: number, value: unknown) {
 interface GameServerOptions {
   config?: AppConfig;
   production?: boolean;
-  store?: SqliteStore;
+  store?: SqlGameRepository;
   aiClient?: AiClient;
   now?: () => number;
   tick?: boolean;
@@ -332,7 +332,7 @@ async function initializeGameServer(
   const config = options.config ?? readConfig();
   const store =
     options.store ??
-    new SqliteStore(
+    new SqlGameRepository(
       config.databasePath,
       config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
     );

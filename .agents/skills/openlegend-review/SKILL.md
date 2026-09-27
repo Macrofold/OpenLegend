@@ -11,6 +11,8 @@ description: >-
 
 Before completion inspect the full affected diff for correctness, lifecycle/ownership, unnecessary work, simplification and documentation accuracy. Fix in-scope issues and reread the full resulting diff unless the [root task policy](../../../AGENTS.md#task-scope-and-authorization) makes the request read-only. Record actionable deferred risks under [Documentation](../../rules/documentation.md#keep-maintainer-work-synchronized), without speculative checklist growth. Scale routine checks to the [root low-risk workflow](../../../AGENTS.md#low-risk-changes); use the full review below for substantial changes or an explicit review request.
 
+For standalone rebases, [reconciliation review](../openlegend-rebase/SKILL.md#review-and-verify-reconciliation) defines the affected diff and when to reuse prior review evidence. The size of the pre-existing feature alone does not trigger a new full review.
+
 ## Substantial or requested reviews
 
 Apply [root startup](../../../AGENTS.md#work-discipline) and [completion/handoff](../../../AGENTS.md#completion-and-handoff--every-task). A chat request to review code includes in-scope fixes, documentation updates and runtime verification unless explicitly findings-only/read-only; do not stop at suggestions or ask for separate permission to fix. Read the complete requested branch/change diff against its relevant base, not just the last commit, plus the task, relevant local instructions and canonical contracts. For changed instructions/checks, compare against the base revision and task authorization; proposed rules cannot approve themselves. Trace changed producers and consumers; existing patterns are evidence, not proof of good design.

@@ -14,7 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { syncDirectory } from '../apps/server/src/save-files.js';
 import { isDeepStrictEqual } from 'node:util';
 import {
-  SqliteStore,
+  SqlGameRepository,
   digest,
   applyWorldChanges,
   type SavedWorld,
@@ -109,7 +109,7 @@ try {
 } finally {
   await sqlite.close();
 }
-const target = new SqliteStore(
+const target = new SqlGameRepository(
   resolve(process.env['OPEN_LEGEND_DATA_DIR'] ?? '.data', 'world.sqlite'),
   new PostgresDatabase(process.env['OPEN_LEGEND_DATABASE_URL']),
 );

@@ -143,6 +143,10 @@ export class SqliteDatabase implements SqlDatabase {
     return scope?.active ? scope.connection : this.writer;
   }
 
+  get transactionActive(): boolean {
+    return this.context.getStore()?.active ?? false;
+  }
+
   private run<T>(operation: () => Promise<T>): Promise<T> {
     if (this.context.getStore()?.active) return Promise.resolve().then(operation);
     if (this.closing) return Promise.reject(new Error('SQLite connection is closing.'));

@@ -34,7 +34,9 @@ export function externalAudience(world: WorldState, source: Entity): string[] {
   const stable = stableFrames.get(world);
   let index = stable?.index;
   if (!index) {
-    const roots = worldRootEntities(world, true);
+    // Only copy receiver scalars below. Snapshotting full actors also copies their
+    // plans/body/action state even though none of it survives in this index.
+    const roots = worldRootEntities(world);
     const inputs: Receiver[] = [];
     for (const [order, entity] of roots.entries()) {
       if (!hasMemory(entity) || !entity.actor?.alive || !activelyParticipates(entity)) continue;

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig } from '../../apps/server/src/config.js';
-import { SqliteStore } from '../../apps/server/src/store.js';
+import { SqlGameRepository } from '../../apps/server/src/store.js';
 
 test('camera gestures never issue commands and cancellation restores context menus', async ({
   page,
@@ -9,7 +9,7 @@ test('camera gestures never issue commands and cancellation restores context men
   // Native UI fixture: independent save, no provider keys, zero spending allowance.
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: new SqliteStore(':memory:'),
+    store: new SqlGameRepository(':memory:'),
     production: true,
     tick: false,
   });

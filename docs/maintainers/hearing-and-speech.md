@@ -18,6 +18,8 @@ World Events now uses the existing scoped client request helper, including the c
 
 The requested follow-up review gives HUD measurements one lifecycle owner, includes the clock settings popup, separates caption preferences from scene updates, and keeps unchanged caption measurement subscriptions intact. A manual browser component check exercised three captions, 130% scale, HUD resizing and destruction without errors; it is not full-game keyboard, narrow-layout, modal obstruction or 60 FPS qualification. See the [review evidence](../verification/three-times-scene-performance.md#requested-implementation-review-september-27); HE05 remains open.
 
+The [scale/startup continuation](../verification/three-times-scene-performance.md#startup-scale-and-save-latency--september-27) repairs the shared radio's hidden-input positioning and accidental text-field styling. Full-game selection, keyboard use, reload and caption layout at 130% remain unverified: the browser tool rejected access to the local game URL, so this run could not interact with the panel. Keep HE05 open until that access is restored and the actual control is exercised.
+
 ## Delivery order
 
 ### HE01 — Acoustic policy and rich exposure

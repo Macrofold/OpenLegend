@@ -9,6 +9,8 @@ description: >-
 
 Apply [root task authorization](../../../AGENTS.md#task-scope-and-authorization) and perform development synchronization after initial planning, before implementation. Explicit read-only tasks permit inspection only.
 
+A standalone rebase is a narrow reconciliation task, not fresh feature qualification. Plan from the expected overlap and risk; a routine rebase needs no new durable plan under [Documentation](../../rules/documentation.md#keep-maintainer-work-synchronized). Before rewriting, record the old base and branch tip so the resulting patch series can be compared and prior review/verification evidence assessed.
+
 ## Select the target
 
 Inspect branch/worktree status, remotes, tracking upstream, PR metadata and uncommitted work. Select the base in this order:
@@ -33,4 +35,10 @@ Resolve conflicts from both sides' intent and current contracts, not blanket our
 
 If any resolution is not 100% certain or requires developer input, stop all work immediately, preserve the conflicted state and ask the developer with the affected paths, competing intentions and decision needed. Do not continue independent conflicts or implementation while awaiting input. Do not add new features merely to make divergent designs coexist. Report major resolved conflicts and their rationale, especially decisions or initially uncertain resolutions settled by the developer.
 
-After reconciliation inspect the complete branch diff against the updated base under [Review](../openlegend-review/SKILL.md), run applicable [verification](../../rules/verification.md), and reconcile owners/trackers under [Documentation](../../rules/documentation.md). Use the [root completion/handoff policy](../../../AGENTS.md#completion-and-handoff--every-task). Do not force-push a shared branch without authorization; an authorized rewrite should use a lease, not an unconditional force.
+Do not force-push a shared branch without authorization; an authorized rewrite should use a lease, not an unconditional force.
+
+## Review and verify reconciliation
+
+Compare the pre/post-rebase patch series, for example with `git range-diff` over the old and new base/tip pairs. Inspect conflict resolutions and overlapping upstream behavior, including affected callers and contracts even when Git applied the commits cleanly. For previously reviewed work, this is the affected diff under [Review](../openlegend-review/SKILL.md); reuse prior evidence where its assumptions remain valid. Repeat a full branch review only when reconciliation materially changes the feature, invalidates that review evidence or the task explicitly requires it. Missing prior evidence is a reported limit, not a claim that the feature was qualified.
+
+Select checks from the reconciliation's actual effects under [Verification](../../rules/verification.md#rebase-verification). Update only genuinely affected owners/trackers under [Documentation](../../rules/documentation.md#keep-maintainer-work-synchronized). Report the reconciled refs, significant resolutions and actual checks or reused evidence, then apply the [root completion and stopping rule](../../../AGENTS.md#completion-and-handoff--every-task). A routine rebase does not restart the feature's entire acceptance matrix.

@@ -5,13 +5,13 @@
  * stop for reconciliation instead of creating duplicates. Never prints credentials.
  */
 import { readConfig } from '../apps/server/src/config.js';
-import { SqliteStore } from '../apps/server/src/store.js';
+import { SqlGameRepository } from '../apps/server/src/store.js';
 import { MacrofoldProvisioner } from '../apps/server/src/macrofold-provisioning.js';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 
 await initializeCollisionRuntime();
 const config = readConfig();
-const store = new SqliteStore(config.databasePath);
+const store = new SqlGameRepository(config.databasePath);
 try {
   const saved = await store.load();
   if (!saved) throw new Error('Start Open Legend once to create a local world first.');

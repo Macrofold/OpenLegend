@@ -1,7 +1,7 @@
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { expect, it } from 'vitest';
 import { readConfig } from './config.js';
-import { SqliteStore } from './store.js';
+import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 import { IntelligenceLog } from './intelligence-log.js';
 import { RecallService } from './recall.js';
@@ -9,7 +9,7 @@ import { prepareDecision } from './decision-context.js';
 
 async function fixture() {
   const config = readConfig({ AI_BUDGET_USD: '0' });
-  const store = new SqliteStore(':memory:');
+  const store = new SqlGameRepository(':memory:');
   const service = new WorldService(store, config);
   await enterLocalWorld(service);
   await service.setConnection('speech-fixture', true);

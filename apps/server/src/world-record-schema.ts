@@ -15,6 +15,8 @@ export interface RecordCollection {
   mode: 'map' | 'list' | 'one';
   node: RecordNode;
   key?: string;
+  /** Key lookup only; insertion order is not part of the owned value's meaning. */
+  unordered?: boolean;
 }
 const leaf = (table: string): RecordNode => ({ table });
 const map = (table: string, children?: RecordNode['children']): RecordCollection => ({
@@ -115,7 +117,12 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       actorKnowledge: actorMaps('mind_knowledge_documents'),
       knowledgeRevisions: map('mind_knowledge_revisions'),
       observerIdentities: actorMaps('mind_recognition'),
-      perceptionEpisodes: actorMaps('mind_exposure'),
+      // A subject leaving view must not renumber every remaining sight binding.
+      // Episode identities fence recognition by key, never by iteration order.
+      // docs/performance.md#preserve-order-without-one-global-database-bottleneck
+      perceptionEpisodes: map('mind_exposure_owners', {
+        $: { ...map('mind_exposure'), unordered: true },
+      }),
       visibleObjects: actorLists('mind_visible_objects'),
       visiblePeople: actorLists('mind_visible_people'),
       appraisals: actorMaps('mind_appraisals'),

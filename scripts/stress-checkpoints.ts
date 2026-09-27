@@ -10,7 +10,7 @@ import {
   worldPosition,
   type WorldState,
 } from '@open-legend/domain';
-import { SqliteStore, digest } from '../apps/server/src/store.js';
+import { SqlGameRepository, digest } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { WorldService } from '../apps/server/src/world-service.js';
 import { performanceSnapshot, startRuntimeMonitoring } from '../apps/server/src/performance.js';
@@ -41,7 +41,7 @@ if (
   );
 const directory = await mkdtemp(join(tmpdir(), 'openlegend-checkpoint-stress-'));
 const url = process.env['OPENLEGEND_STRESS_DATABASE_URL'];
-const store = new SqliteStore(
+const store = new SqlGameRepository(
   join(directory, 'world.sqlite'),
   url ? new PostgresDatabase(url) : undefined,
 );
