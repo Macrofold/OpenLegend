@@ -2,7 +2,7 @@
 
 [Research roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Mass Effect](mass-effect.md) · [Library](../README.md)
 
-**Research date:** September 26, 2026. **Pass:** R01–R14 complete with the access limitations below. Documentary research; no gameplay, benchmark or video-viewing claim. **Spoilers:** recruitment, loyalty, Tali's trial, the Reaper IFF and final-mission sections disclose consequential rules. The opening premise itself reveals the first mission's outcome.
+**Research date:** September 26, 2026. **Pass:** R01–R14 complete with the access limitations below; the requested second-pass audit is recorded after the requirement map. Documentary research; no gameplay, benchmark or video-viewing claim. **Spoilers:** recruitment, loyalty, Tali's trial, the Reaper IFF and final-mission sections disclose consequential rules. The opening premise itself reveals the first mission's outcome.
 
 **Central finding — interpretation:** preparation is the campaign, not administrative work before the campaign. Recruiting a person, understanding their specialty, helping with a personal problem, funding an expedition and assigning responsibility all contribute to a final operation. The corresponding warning is that friendship, qualification, equipment and group capacity are different variables: reducing them to one “loyalty” score misrepresents both the game and its strongest lesson.
 
@@ -10,7 +10,7 @@
 
 BioWare and EA released Mass Effect 2 for Windows and Xbox 360 on January 26, 2010 in North America and January 29 in Europe. The PlayStation 3 version followed in January 2011. Legendary Edition includes a revised version of this campaign in its May 2021 trilogy remaster. The current Steam listing labeled **Mass Effect 2 (2010) Edition** packages substantial DLC; its presentation should not be mistaken for the contents of every original retail disc. [S12](#s12) [S13](#s13) [S14](#s14)
 
-This is a **single-player third-person action RPG**. Shepard directly controls movement, aim and conversation; two AI squadmates accompany most field missions. There is no native co-op campaign, player trading, settlement building or independently playable squadmate campaign. The Normandy SR-2 is a persistent home and mission-selection hub rather than a freely piloted combat spacecraft. [S1](#s1) [S3](#s3)
+This is a **single-player third-person action RPG**. Shepard directly controls movement, aim and conversation; two AI squadmates accompany most field missions. There is no native co-op campaign, player trading, settlement building or independently playable squadmate campaign. The Normandy SR-2 is a persistent home and mission-selection hub rather than a freely piloted combat spacecraft. [S1](#s1) [S3](#s3) A brief, scripted Joker-control sequence is an important exception to the usual playable protagonist, not a freely selectable second career; see section 6. [S41](#s41)
 
 The opening destroys the original Normandy and reconstructs Shepard through Cerberus. This creates a fictional reason to reconsider appearance and class when importing an earlier character, while keeping selected history. A newcomer can create a Shepard; the interactive Genesis recap available in relevant packages supplies selected prior decisions, not every possible original-game flag. Neither route imports the first game's entire equipment and talent system unchanged. [S13](#s13) [S15](#s15)
 
@@ -24,6 +24,8 @@ The six familiar class names now express more sharply differentiated action styl
 
 Leveling supplies points for a relatively compact power set. Investment is increasingly costly across ranks, and maximum-rank evolutions offer alternatives such as stronger individual effects versus wider coverage. Choosing a small number of developed powers can be more consequential than spreading points thinly. A signature class power, an ammunition power and a learned bonus power are different types of access, not an unrestricted spellbook. [S3](#s3) [S7](#s7) [S9](#s9)
 
+**Revising a build.** After Horizon, **Retrain Powers** spends 2,500 element zero to refund Shepard's allocated power points; it grants no extra points and does not change class. **Advanced Training**, at 5,000 element zero per use, selects one unlocked bonus power instead. These are different research actions despite similar names. A repeat visit can replace the bonus choice, not accumulate every companion's unique ability simultaneously. The Shadow Broker base later provides a separate squadmate redistribution service. [S18](#s18) [S37](#s37)
+
 | Activity | Decisions and prerequisites | Costs, feedback and limits |
 | --- | --- | --- |
 | Shooting and cover | Select an available weapon, aim, reload, move between firing positions and use melee when appropriate. | Thermal clips and heavy-weapon ammunition constrain sustained fire. Cover does not guarantee safety from flanking or aggressive enemies. |
@@ -35,11 +37,15 @@ Leveling supplies points for a relatively compact power set. Investment is incre
 
 This table combines the manual, reviews and upgrade references; it is an inventory of supported actions, not a promise that every location accepts every action. [S2](#s2) [S16](#s16) [S20](#s20)
 
+The two technical minigames ask for different attention: hacking matches a target code fragment against scrolling material; bypass links matching symbols. They interrupt exploration with bounded recognition tasks, rather than letting the player write software or spend a companion's Decryption rank. VanOrd found them brief enough to provide variety; this contrasts with his criticism of protracted planet scanning. [S1](#s1)
+
 ### Defense layers make target state legible
 
 Health, armor, shields and barriers are distinct combat states, displayed with different colors. Many control effects do not work normally through protective layers. A plan can therefore require stripping a defense before lifting, freezing or hacking the target. Difficulty affects how commonly enemies possess protection; a tactic that feels effortless on one setting may have an additional prerequisite on another. Health and shielding can recover after avoiding damage, but special powers and enemy types complicate a universal regeneration rule. [S6](#s6)
 
 Overload is particularly valuable against shields and synthetics. Its higher ranks add interference effects; its final evolution can favor concentration or coverage. Warp addresses armor and biotic barriers and can detonate a target suspended by a compatible biotic effect. These are not interchangeable forms of generic damage. In particular, the second game's biotic interactions should not be redescribed as the broader fire, cryo and tech combination vocabulary of the third game. [S7](#s7) [S8](#s8)
+
+**Unity and supplies.** Shepard's default Unity ability spends limited medi-gel to revive fallen squadmates. The base ability is not a general-purpose self-heal. Researching Trauma Module and Emergency Shielding extends its usefulness to health and shields, including damaged but conscious members and Shepard. Availability therefore depends on both the current injury and purchased capability: spending a consumable, waiting for recovery and reloading after defeat are different responses. The research does not reverse a companion's authored story death. [S36](#s36)
 
 **Interpretation:** the interesting cooperative unit is often a sequence of state changes. One person's action makes another person's ability appropriate. This differs from a party in which everyone simply contributes independent damage to the same health bar.
 
@@ -52,6 +58,10 @@ Named weapons such as the Carnifex pistol, Mantis or Widow sniper rifle, Mattock
 Recruiting Mordin enables the Normandy's research laboratory. Discovered plans and purchased upgrades are not identical: some purchases apply immediately, while research projects consume minerals and can require earlier tiers. Iridium, palladium, platinum and element zero support different upgrade families. Probes extract resources from scanned planets, and deposits deplete. Fuel and probe expenditure makes searching an activity with costs rather than an unlimited free menu action. [S18](#s18) [S19](#s19) [S20](#s20)
 
 This is **research-based upgrading**, not open-ended crafting from arbitrary objects. There is no deep production economy of mines, labor, workshops and autonomous trade routes. Shops, mission rewards, recovered credits and research exist chiefly to support the expedition. A purchase can improve a personal combat role or contribute to ship preparation; those are different benefits from the same limited pool of time and resources. [S18](#s18) [S20](#s20)
+
+**Commerce is not the first game's salvage market.** Shop terminals sell authored supplies, armor components and upgrades; conversations with their operators can unlock discounts. There is no corresponding loop of selling stacks of unwanted equipment as in the first game. Weapon loadouts are selected at mission departure or weapon lockers, while the cabin armor interface configures Shepard's outfit. An acquired weapon remains an available loadout choice rather than a disposable commodity that must be resold to free ordinary loot slots. [S40](#s40) [S1](#s1)
+
+Ship improvements also serve different goals. Miranda's scanner proposal reduces search friction; Thane's probe capacity and Samara's fuel capacity reduce resupply frequency. They are not substitutes for the armor, shields and weapon preparation relevant to the finale. The original guide tables disagree about some percentage increases, so this dossier does not derive exact capacities from their conflicting shorthand. The distinction between convenience and mission protection is nevertheless explicit in the upgrade descriptions. [S43](#s43)
 
 Legendary Edition changes some acquisition paths: equipment associated with old promotional DLC can require an in-game purchase or research rather than simply appearing under the original entitlement rules. A modern bundled store package also changes what content a purchaser receives. The dossier therefore separates **owning an add-on**, **having its equipment available in the campaign**, and **paying the fictional cost to obtain it**. [S14](#s14) [S20](#s20)
 
@@ -77,6 +87,8 @@ Companions have authored histories, differing values and recurring conversation 
 
 Native romance routes are limited and gender-specific: male Shepard can pursue Miranda, Jack or Tali; female Shepard can pursue Jacob, Garrus or Thane. Imported first-game relationships provide continuity, with Liara receiving additional treatment in Lair of the Shadow Broker. Flirtation or a limited encounter is not automatically equivalent to a full companion romance arc. Mods and unused content do not establish native availability. There is no universal gift, marriage or family-management system. [S24](#s24)
 
+**Optional cabin life and delegated care.** Fish, ship models and a space hamster let the cabin become a collection space, not only an equipment menu. Fish are unusual because they need feeding after mission/assignment returns and can die; replacements can be bought. An eligible relationship and dinner with Kelly can lead to her offering to feed them. The sequel's purchased Aquarium VI is not a native ME2 solution. This small task connects personal interaction to useful assistance without amounting to a general pet-breeding or household simulation. [S38](#s38) [S1](#s1)
+
 Paragon and Renegade remain distinct accumulated approaches. The original second game does not retain Charm and Intimidate as separately trained talents; some persuasive options depend on how much available morality the player has earned, with relevant character bonuses. A visually impressive bar therefore need not guarantee every response. These mechanics can pressure players toward consistency even when a mixed response would better express their imagined Shepard. That last tension is our interpretation, not a claim of universal player behavior. [S25](#s25)
 
 ## 6. Story, places and preparation for the finale
@@ -84,6 +96,8 @@ Paragon and Renegade remain distinct accumulated approaches. The original second
 Cerberus supplies Shepard's resurrection and resources while remaining an organization whose methods and agenda invite distrust. The Illusive Man's direction does not turn Shepard into the manager of Cerberus's entire economy. Colony disappearances, the Collectors and the approach to the Omega-4 relay provide the central operation; recruitment and personal stories supply much of the actual campaign's substance. [S1](#s1) [S3](#s3)
 
 The contrasting social settings matter. Omega supplies criminal and mercenary life; Illium connects corporate power with personal business; the quarian fleet makes Tali's problem institutional as well as familial. Returning characters and imported decisions can appear through major scenes, minor acknowledgments or messages. Those callbacks differ in scope: recognizing a past action is meaningful without implying a completely independent campaign branch. [S4](#s4)
+
+**Abduction spoilers — a different playable body.** During the Normandy attack the player briefly controls Joker, who moves slowly and lacks Shepard's weapons. EDI's instructions and floor lights guide him toward ship systems; lingering near a Collector can cause failure and restart the sequence. This makes cooperation with EDI and vulnerability playable rather than merely described. It does not unlock Joker as a normal field companion or permit rescuing every abducted crew member within that scene. [S41](#s41)
 
 **Finale spoilers.** The approach to the Collector Base checks important ship preparations, including upgraded armor, shielding and the Thanix cannon. Once on foot, the operation asks for specialists and leaders. A suitable technician, a credible fire-team leader and a sufficiently capable biotic are not interchangeable, even when all are loyal. Later, the group left to defend itself has a different survival problem from Shepard's immediate combat team. Loyalty is relevant but insufficient as a universal explanation. [S10](#s10)
 
@@ -131,11 +145,15 @@ RPGFan particularly values the character performances, including Mordin's delive
 
 **Zaeed and the Normandy crash site** extend different parts of the fantasy: another recruit and personal mission versus a return to the destroyed ship's history. Their distribution through the original Cerberus Network is not the same as buying all later paid expansions. **Firewalker** adds the Hammerhead hover vehicle and vehicle-focused missions, not the original Mako's entire planetary-exploration structure. [S14](#s14) [S32](#s32)
 
+The Hammerhead's actual vocabulary includes guided missiles, short vertical hops, forward boosting and resource collection. Sustained jet use overheats; simultaneously boosting and hovering accelerates that limit. Its gameplay durability depends on avoiding fire long enough to recover, rather than spending the Mako's omni-gel on stationary repair. The community reference explicitly distinguishes its vulnerable gameplay behavior from codex descriptions of vehicle protection. These constraints make motion and route selection relevant; they do not authorize using the vehicle freely on every planet. [S39](#s39)
+
 **Kasumi: Stolen Memory** mixes party infiltration, vault access and combat around Hock and Keiji's memories. It adds a companion and equipment, but the critic notes the compressed characterization compared with a full recruitment-plus-personal-mission arc. This is useful variety with a bounded amount of relationship development, not a new open-ended stealth career. [S27](#s27)
 
 **Overlord** combines a Cerberus experiment, disturbing audiovisual framing, Hammerhead traversal and action sequences. Its ethical horror gives the institutional question behind Cerberus a personal focus. VanOrd finds the atmosphere and final revelation effective while noting that the vehicle is underused and technical roughness remains. Those criticisms concern the add-on's execution, not the absence of new weapons alone. [S33](#s33)
 
 **Lair of the Shadow Broker** returns Liara to the center of an investigation involving Feron and Tela Vasir. It changes pacing through a skycar chase, a storm-battered exterior and character-focused scenes, then supplies an intelligence-center return loop and a continuation of a possible relationship. VanOrd praises the setting and emotional presentation while retaining reservations about stiff vehicle handling and allied combat behavior. A familiar relationship gains new context without pretending Liara has become a permanently selectable base-game squad member. [S34](#s34) [S24](#s24)
+
+The completed base has substantive functions beyond its ending scene: spend 1,000 element zero per squadmate to redistribute ability points; examine dossiers and surveillance clips; collect deliveries; buy locations of resource-rich planets; or invest credits in authored opportunities that can return money or fail. Survey information is useful only while suitable deposits remain. These are bounded services and information displays, not a freely directed spy network, player stock exchange or another settlement-management campaign. [S37](#s37)
 
 **Arrival** follows Shepard without a normal squad into a rescue involving Dr. Kenson and evidence of the Reapers' approach. Its bridge to the third game imposes consequential story movement more than it offers a range of outcomes. VanOrd's criticism is that removing squad banter and meaningful choice leaves the retained shooting insufficient; he still acknowledges atmospheric settings and some enjoyable action. This is an especially clear counterexample to treating the game's combat as an isolated explanation of its appeal. [S35](#s35)
 
@@ -169,9 +187,13 @@ Five distinct substantive written reviews were inspected across five outlets. St
 | GamesRadar, original-release review | Imported history and individual companion stories make selecting a small field team emotionally difficult. | Mining, intrusive helmets and equipment management pared back too far. The surviving body was readable, but its byline and exact publication date were not verified. [S4](#s4) |
 | Gus Mastrapa, Wired, January 26, 2010 | Deliberately declining a compassionate interrupt becomes a memorable role-playing decision; reduced administration improves flow. | Players who specifically enjoy traditional RPG management may find the simplification less satisfying. This is attributed experience, not our playtest. [S5](#s5) |
 
+The audit checked all five summaries against newly retrieved substantive review material. A review's enthusiasm is not a mechanics authority: GamesRadar's claim that only the heavy-weapon loadout matters is too broad given the weapon-role and ammunition differences documented above. Its description of automatic loyalty after a personal mission also cannot override Tali's counterexample. The five earlier summaries are preserved, with these factual limits explicit rather than copying such shorthand into the rules inventory. [S4](#s4) [S6](#s6) [S26](#s26)
+
 ### Steam access and direct-player alternatives
 
-Top-rated review surfaces for Steam apps **24980** and **2362420** both returned reader errors. An additional public review-endpoint request failed. The newer store listing itself was accessible, but **no ranked helpful-review sample was read**. Original-game, bundled-SKU and Legendary Edition reviews were not pooled to disguise that gap.
+During the initial pass, top-rated review surfaces for Steam apps **24980** and **2362420** returned reader errors, as did an additional public review-endpoint request. The newer store listing was accessible, but **no ranked helpful-review sample was read**. Original-game, bundled-SKU and Legendary Edition reviews were not pooled to disguise that gap.
+
+The second-pass default-page retry reached app 24980's **Most Helpful (Week), English** interface, but it exposed no review bodies; app 2362420 displayed a content-preference gate. This is a more precise access finding than claiming every page still errors. Seeing a helpfulness selector without any reviews is not a helpful-review sample or evidence that no such reviews exist. [S42](#s42)
 
 The original game's Metacritic user-review page supplied accessible indexed testimony. **JLord701** (February 25, 2025) values the personal-mission structure and finale while finding the central antagonist less compelling. **AmateurfilmVWR** (January 22, 2025) likes the combat/UI improvements but finds the large new cast insufficiently developed in places. **mikeslemonade** (June 11, 2025) objects to the shift toward shooting. **xuanbinh** (June 8, 2026) appreciates world and choice structure while judging the shooting and presentation less exceptional. These are qualitative accounts, not verified purchases, a random sample or a helpfulness ranking. [S31](#s31)
 
@@ -200,13 +222,13 @@ For a low-spoiler route, read sections 1–4 and the review comparison before th
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Section 1; original, PS3, bundled SKU and remaster boundaries. |
-| R02 | Section 2; verbs, classes, prerequisites, defenses and feedback. |
-| R03 | Sections 2–3; powers, weapon families, named gear, research and acquisition. |
-| R04 | Sections 3–4 and 11; progression, currencies, failure, timing, replay and business model. |
+| R02 | Section 2; verbs, classes, retraining, hacking, prerequisites, defenses and recovery; section 9 vehicle controls. |
+| R03 | Sections 2–3; powers, weapon families, named gear, research, loadout access and commerce. |
+| R04 | Sections 3–4 and 11; progression, currencies, failure, timing, replay and business model; section 9 intelligence-center services. |
 | R05 | Section 7; six constructed multi-system situations with limits. |
-| R06 | Section 5; squad, loyalty, romance, people and absent native modes. |
+| R06 | Section 5; squad, loyalty, romance, delegated fish care, people and absent native modes. |
 | R07 | Section 8; presentation, readable state, interface and friction. |
-| R08 | Sections 5–7 and 9; named world/people, authored consequences and DLC. |
+| R08 | Sections 5–7 and 9; named world/people, playable vulnerability, authored consequences and DLC. |
 | R09 | Section 10; developer accounts of revision and finale production. |
 | R10 | Section 10; promotion, content access and sharing hypotheses. |
 | R11 | Section 11; dated sold-in evidence and explicit financial unknowns. |
@@ -218,17 +240,19 @@ No dedicated G102 chapter, mechanics study or dossier existed in the inherited b
 
 Review checked the requirement map, edition boundaries, source anchors, five-review count, attribution of constructed examples, sold-in terminology and the distinction between loyalty, qualification and group defense. Relative navigation targets are inherited canonical files or the committed G101 dossier. No runtime tests or unobserved footage are claimed. The ledger records the successful completion commit separately.
 
+**Second-pass audit, September 26:** read the entire dossier and all R01–R14 against the explicit inventory. Expanded retraining, Unity/medi-gel, technical minigames, commerce/loadout access, optional cabin care, Joker's playable exception, Hammerhead actions and the Shadow Broker's repeatable services. Kept all six worked situations and the 35 earlier source groups. Examined newly retrieved material from all five reviews and documented misleading review shorthand rather than adopting it. Retried Steam and distinguished an empty review interface/content gate from a successful sample. Eight annotated source groups were added. Review metadata and unretrieved original evidence remain qualified; this is not a claim of replaying any version or viewing the GDC recording.
+
 ## Annotated sources
 
 Capture date: **September 26, 2026**. “Indexed” means substantive text exposed by search, not a claim of complete page retrieval. Review bodies were read where explicitly stated. Community guides are secondary documentation; publisher announcements and developer interviews retain their attribution.
 
-<a id="s1"></a>**S1.** Kevin VanOrd, [Mass Effect 2 Review](https://www.gamespot.com/reviews/mass-effect-2-review/1900-6246931/), GameSpot, January 26, 2010. Substantive review body read; original-release criticism.
+<a id="s1"></a>**S1.** Kevin VanOrd, [Mass Effect 2 Review](https://www.gamespot.com/reviews/mass-effect-2-review/1900-6246931/), GameSpot, January 26, 2010. Substantive review body read; original-release criticism. Newly retrieved review text also supports the minigame and equipment-access additions.
 
 <a id="s2"></a>**S2.** Brad Nicholson, [Review: Mass Effect 2](https://www.destructoid.com/reviews/review-mass-effect-2/), Destructoid, January 26, 2010. Full substantive body read. Current byline display duplicates the author's name; counted once.
 
 <a id="s3"></a>**S3.** Ashton Liu, [Mass Effect 2](https://www.rpgfan.com/review/mass-effect-2-2/), RPGFan, January 31, 2010. Full review body read; Xbox 360 launch context.
 
-<a id="s4"></a>**S4.** [Mass Effect 2 review](https://www.gamesradar.com/mass-effect-2-review/), GamesRadar. Substantive body read, including imported history and companion missions. Byline/exact original date not recovered from the surviving presentation.
+<a id="s4"></a>**S4.** [Mass Effect 2 review](https://www.gamesradar.com/mass-effect-2-review/), GamesRadar. Substantive body read, including imported history and companion missions. Byline/exact original date not recovered from the surviving presentation. New audit checked the accessible discussion of companions, equipment, scanning and ship life; loose mechanical generalizations are qualified above.
 
 <a id="s5"></a>**S5.** Gus Mastrapa, [Spin Your Own Space Opera in Mass Effect 2](https://www.wired.com/2010/01/mass-effect-2-review/), Wired, January 26, 2010. Substantive body read; brief paraphrase only.
 
@@ -256,7 +280,7 @@ Capture date: **September 26, 2026**. “Indexed” means substantive text expos
 
 <a id="s17"></a>**S17.** Mass Effect Wiki, [Adrenaline Rush](https://masseffect.fandom.com/wiki/Adrenaline_Rush) and [Soldier Guide (Mass Effect 2)](https://masseffect.fandom.com/wiki/Soldier_Guide_%28Mass_Effect_2%29). Indexed ability and named-loadout passages inspected. A recommended build is not a universal optimum.
 
-<a id="s18"></a>**S18.** Mass Effect Wiki, [Research](https://masseffect.fandom.com/wiki/Research). Indexed laboratory access and research-family rules inspected.
+<a id="s18"></a>**S18.** Mass Effect Wiki, [Research](https://masseffect.fandom.com/wiki/Research). Indexed laboratory access and research-family rules inspected. The second pass additionally retrieved substantive training and medical-upgrade entries, including names, costs and the Horizon gate; these distinguish Retrain Powers from Advanced Training.
 
 <a id="s19"></a>**S19.** Mass Effect Wiki, [Planet Scanning](https://masseffect.fandom.com/wiki/Planet_Scanning). Indexed resource, probe and depletion passages inspected.
 
@@ -291,3 +315,19 @@ Capture date: **September 26, 2026**. “Indexed” means substantive text expos
 <a id="s34"></a>**S34.** Kevin VanOrd, [Lair of the Shadow Broker Review](https://www.gamespot.com/reviews/mass-effect-2-lair-of-the-shadow-broker-review/1900-6275465/), GameSpot, 2010; [publisher-description listing](https://www.metacritic.com/game/mass-effect-2-lair-of-the-shadow-broker/details/), Metacritic. Substantive indexed review and description inspected; latter records September 7, 2010 release and intelligence-center addition, not independent reception.
 
 <a id="s35"></a>**S35.** Kevin VanOrd, [Arrival Review](https://www.gamespot.com/reviews/mass-effect-2-arrival-review/1900-6306542/), GameSpot, March 31, 2011. Full substantive body inspected; companion-free mission and constrained-choice criticism.
+
+<a id="s36"></a>**S36.** Mass Effect Wiki, [Unity](https://masseffect.fandom.com/wiki/Unity). Substantive indexed ME2 healing/revival, medi-gel and upgrade passages read in the audit; direct page retrieval failed. The page explicitly distinguishes the first and third games' similarly named recovery abilities.
+
+<a id="s37"></a>**S37.** Mass Effect Wiki, [Shadow Broker Base](https://masseffect.fandom.com/wiki/Shadow_Broker_Base). Substantive indexed Intel Center service descriptions read; direct retrieval failed. Squad retraining, deliveries, dossiers, investment and mineral-survey services are DLC-specific. Later-game and exploit passages are not treated as baseline rules.
+
+<a id="s38"></a>**S38.** Mass Effect Wiki, [Fish](https://masseffect.fandom.com/wiki/Fish). Indexed ME2 care/collection and separately headed ME3 automation sections read; direct retrieval failed. The audit uses only the limited cabin-care loop, not a claim that every detailed feeding or romance timing variant was replayed.
+
+<a id="s39"></a>**S39.** Mass Effect Wiki, [M-44 Hammerhead](https://masseffect.fandom.com/wiki/M-44_Hammerhead). Substantive indexed movement, weapon, overheating, collection and recovery description read. Codex fiction, trailers and ME3 references do not prove additional native ME2 vehicle features.
+
+<a id="s40"></a>**S40.** Mass Effect Wiki, [Merchants Guide](https://masseffect.fandom.com/wiki/Merchants_Guide), ME2 section. Indexed shop/discount and no-resale description read. Generic wording about weapon availability is qualified by the edition-specific DLC acquisition discussion; it is not an exhaustive current shop list.
+
+<a id="s41"></a>**S41.** Mass Effect Wiki, [Stop the Collectors](https://masseffect.fandom.com/wiki/Stop_the_Collectors), “Save the Ship.” Substantive indexed walkthrough read for Joker's control, movement, route cues and failure. Mission-state timing remains with S23; this is documented play structure, not firsthand reproduction.
+
+<a id="s42"></a>**S42.** Steam Community, [original app 24980 reviews](https://steamcommunity.com/app/24980/reviews/) and [2010 Edition app 2362420 reviews](https://steamcommunity.com/app/2362420/reviews/). September 26 audit retrieval exposed a weekly-helpful English selector with no bodies for the former, and a content-preference gate for the latter. Neither supplied a usable player-review sample.
+
+<a id="s43"></a>**S43.** Prima Games, [Normandy Upgrades](https://primagames.com/eguides/mass-effect-2-eguide/essentials/upgrades-and-research-projects/normandy-upgrades), and Nightsolo, [Mass Effect 2 Upgrades](https://www.nightsolo.net/games/masseffect2/upgrades.html), latter last modified June 29, 2013. Relevant tables read. Both support different crew-proposed ship services; inconsistent percentage shorthand is not promoted to exact capacity. Nightsolo's ME1-import claim for bonus-power access is not used; S18 owns the specific training rules.
