@@ -1,5 +1,23 @@
 # Documentation changelog
 
+## 2026-09-27 — G131–G148 research integration into repertoire branch
+
+Merged `docs/game-inspiration-games-131-140` at `7d78c055ee7a554f78a9430eeccddbfb502ab8f6` and `docs/game-inspiration-games-141-148` at `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a` into `codex/world-idea-repertoires` with ordinary merge commits. Preserved all eighteen dossiers, source audit evidence and existing repertoire work. The [library index](../archive/02-research/game-inspiration/README.md) and [survival progress ledger](../archive/02-research/game-inspiration/research-progress.md#survival-expansion--g131g148) now reconcile both ranges as present with their scoped audits recorded complete, superseding the other-range pending statements in the historical entries below.
+
+Integration verification checks source-content preservation and local links; it does not repeat external research, validate gameplay or close global P01–P05 gates. No runtime behavior, accepted world canon or implementation acceptance criteria change.
+
+## 2026-09-27 — G141–G148 substantive requirements audit and corrections
+
+Re-audited **Raft, Grounded, The Long Dark, Green Hell, Enshrouded, V Rising, Once Human and Abiotic Factor** one game at a time against the full [R01–R14 assignment and explicit mechanics inventory](../archive/02-research/game-inspiration/research-requirements.md). The [audit record](../archive/02-research/game-inspiration/coverage-audit-g141-g148.md) now owns the corrective commits and cross-game closure evidence; the [progress ledger](../archive/02-research/game-inspiration/research-progress.md#survival-expansion--g131g148) separates initial completion from the follow-up audit.
+
+Material corrections include The Long Dark's shipped Cheat Death system, Enshrouded's optional Starvation Mode and live Early Access boundary, V Rising's September 2026 hotfix/disguise/vendor/death rules, Once Human's 2026 Tech/blueprint rewrite and mode-specific death/stealth rules, Green Hell's Spirits of Amazonia Trust progression, plus missing identity/equipment/activities/social/audio evidence across the range. The final matrix records no unaddressed explicit mechanics category in G141–G148 and retains five written reviews, Steam/player evidence, eight worked cases and source limits per dossier. No runtime behavior, accepted OpenLegend requirement or engineering tracker changed; G131–G140 and P01–P05 remain pending.
+
+## 2026-09-27 — G141–G148 survival research range completed
+
+Completed independent R01–R14 research passes for **Raft, Grounded, The Long Dark, Green Hell, Enshrouded, V Rising, Once Human and Abiotic Factor** on `docs/game-inspiration-games-141-148`. Each dossier records its current edition/service boundary, comprehensive mechanics inventory, eight worked interactions, five substantive written reviews, current player evidence where applicable, production/distribution/commercial context, transferable observations and explicit evidence/access limits. The Raft pass was tightened during final review so an unavailable Checkpoint review body remains supplemental rather than being counted toward the five fully read reviews.
+
+Updated the [library navigation](../archive/02-research/game-inspiration/README.md#full-dossiers--survival-references-g141g148) and [progress ledger](../archive/02-research/game-inspiration/research-progress.md#survival-expansion--g131g148) for this range. The work changes research documentation only: no runtime behavior, accepted game requirement or maintainer engineering task changed. **G131–G140 remain pending**, and this range does not close the separate packet/full-roster/navigation/evidence gates P01–P05.
+
 ## 2026-09-27 — G131–G140 survival-game full passes and requirements audit
 
 Completed independent R01–R14 research dossiers for Rust, DayZ, ARK: Survival Evolved, ARK: Survival Ascended, 7 Days to Die, Conan Exiles, The Forest, Sons of the Forest, Subnautica and Don't Starve Together, then re-audited every dossier against the explicit mechanics inventory, current-version boundaries, five-review/player-evidence requirement and preservation rules. The [survival progress ledger](../archive/02-research/game-inspiration/research-progress.md#survival-expansion--g131g148) records per-game completion and audit commits; the [library index](../archive/02-research/game-inspiration/README.md#full-dossiers--survival-expansion-g131g140) owns navigation.

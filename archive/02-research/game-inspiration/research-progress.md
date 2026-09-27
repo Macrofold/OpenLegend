@@ -4,7 +4,7 @@
 
 ## Integrated branch state — September 27, 2026
 
-This library now contains the six parallel research branches below, merged with their original commit ancestry. The source branches remain independent and may receive further commits. Research directions, dated roster counts and verification statements retained in each range section describe that source's assignment and evidence; they do not change this integration's scope or certify other ranges.
+This checkout now contains the research branches below, merged with their original commit ancestry. The source branches remain independent and may receive further commits. Research directions, dated roster counts and verification statements retained in each range section describe that source's assignment and evidence; they do not change this integration's scope or certify other ranges.
 
 | Source branch | Merged source head | Range status and detailed owner |
 | --- | --- | --- |
@@ -15,14 +15,16 @@ This library now contains the six parallel research branches below, merged with 
 | `docs/game-inspiration-games-101-120` | `b1a383dc7796` | [Revised scope is G101–G110; second-pass audit and scoped integration recorded complete.](#g101g110-branch-research-state) |
 | `docs/game-inspiration-games-111-120` | `2e7ddf5f53a1` | [G111–G120 follow-up audit recorded complete, with retained evidence limits.](#g111g120-branch-research-state) |
 | `docs/game-inspiration-games-121-end` | `28cc5a5fc0c1` | [All ten initial passes and full requirements-and-corrections audits complete; final mechanics matrix and scoped verification retained.](#g121g130-branch-research-state) |
+| `docs/game-inspiration-games-131-140` | `7d78c055ee7a` | [Ten initial passes and scoped requirements/corrections audits complete.](#g131g140-follow-up-audit-closure--september-27-2026) |
+| `docs/game-inspiration-games-141-148` | `41e3e6cc7b1c` | [Eight initial passes and scoped requirements/corrections audits complete, with retained evidence limits.](#g141g148-follow-up-audit-and-range-verification--september-27-2026) |
 
-All G01–G130 initial research is now present, and all original ranges record their scoped audit/remediation work as complete. The approved [G131–G148 survival expansion](#survival-expansion--g131g148) adds eighteen pending passes, bringing the roster to 148. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
+All G01–G148 initial research is now present. The original ranges and both halves of the [G131–G148 survival expansion](#survival-expansion--g131g148) record their scoped audit/remediation work as complete. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not independently repeat source verification or close whole-library acceptance. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
 
 For later updates, fetch `origin` and merge each updated remote branch into `docs/game-inspiration-library` with a normal merge commit. Do not squash or rebase the shared histories. Keep dossier paths stable and reconcile any shared ledger changes within their own range; no propagation back to source branches is required for subsequent merges. Earlier updates received during this integration from the library, G61–G80 and G101–G110 branches merged cleanly. A later G101–G110 closeout changed its global-gate/recovery tail and needed reconciliation with the adjacent imported range; its completion evidence is preserved below.
 
 The earlier integration review verified exact preservation in 221 file/source comparisons, both complete AI Dungeon study texts, every source navigation/changelog line and every per-game status row. A local Markdown path/anchor scan checked the integrated library without unresolved targets. Pinned Prettier 3.6.2 passed with repository ignore rules (the research archive is excluded). These are integration checks, not fresh research, external-URL validation or game execution.
 
-**September 27 refresh verification:** all 130 initial dossier paths are present and the eighteen new G131–G148 paths remain pending. Source comparison found 129 dossiers byte-for-byte identical to their owning branch; all 405 source paragraphs of the separately integrated AI Dungeon study remain in the combined dossier. The four new operational supplements and G121–G130 audit record match their source content. The original 130 roster rows are unchanged, all 148 IDs/filenames are unique, and current requirements/navigation distinguish research completion from pending work. A local scan of the library and changelog found no missing paths or anchors; pinned Prettier 3.6.2 passed with repository ignore rules. This is content-preservation/static verification, not a fresh external-source audit or game execution.
+**September 27 refresh verification:** the original 130 dossier paths remain present; subsequent range work added all eighteen G131–G148 dossiers, now integrated in this checkout. Source comparison at the original refresh found 129 dossiers byte-for-byte identical to their owning branch; all 405 source paragraphs of the separately integrated AI Dungeon study remained in the combined dossier. The four operational supplements and completed G121–G130 audit record match their source content. The original 130 roster rows are unchanged, all 148 IDs/filenames remain unique, and current requirements/navigation distinguish research completion from pending work. The original local scan of the library/changelog and pinned Prettier 3.6.2 result are historical evidence from that refresh; later G131–G148 verification is recorded in the respective range sections below.
 
 ## Resume here
 
@@ -477,7 +479,7 @@ Imported from `docs/game-inspiration-games-121-end` at `28cc5a5fc0c13e0789e82475
 
 ## Survival expansion — G131–G148
 
-**Initial research: 10 / 18 complete; assigned G131–G140 range complete. Follow-up requirements/corrections audit: 10 / 10 complete for G131–G140.** G141–G148 remain pending on the canonical survival-expansion roster and are outside this branch's requested range. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
+**Initial research: 18 / 18 complete. Follow-up requirements/corrections audits: 18 / 18 recorded complete across both source ranges.** G131–G140 is integrated from `docs/game-inspiration-games-131-140` at `7d78c055ee7a554f78a9430eeccddbfb502ab8f6`; G141–G148 is integrated from `docs/game-inspiration-games-141-148` at `41e3e6cc7b1c4d3fbcb58dfe33a365fd90d73b2a`. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). Per-game evidence and both range closures follow; the detailed G141–G148 audit is [coverage-audit-g141-g148.md](coverage-audit-g141-g148.md). The G121–G130 audit and global P01–P05 gates remain separate.
 
 | ID | Subject | Initial research | Follow-up audit |
 | --- | --- | --- | --- |
@@ -491,14 +493,26 @@ Imported from `docs/game-inspiration-games-121-end` at `28cc5a5fc0c13e0789e82475
 | G138 | Sons of the Forest | **Complete** — [dossier](dossiers/sons-of-the-forest.md); sequel physical construction/Kelvin/Virginia/seasons/traversal/story/Artifact/current-patch pass, twelve worked cases, five independent reviews plus current Steam, original-game rules kept separate | **Audited/corrected** — `520712e`; corrected Strength progression, added dependent bodily stats, electrical grid, Solafite plating/storm and companion sentiment |
 | G139 | Subnautica | **Complete** — [dossier](dossiers/subnautica.md); original-game oxygen/depth/ecology/tools/vehicles/base/story pass, twelve worked cases, six review bodies plus current Steam, 2025/2026 maintenance and sequel/multiplayer boundaries explicit | **Audited** — `01475ab`; added Air Pump/Pipe oxygen networks, filtration/charging infrastructure and asynchronous Time Capsule player artifacts |
 | G140 | Don't Starve Together | **Complete** — [dossier](dossiers/dont-starve-together.md); stable-vs-September-beta boundary, characters/Insight/sanity/seasons/farming/ocean/boss/co-op/death pass, twelve worked cases, five accessible substantive written reviews plus current Steam; original-game/DLC rules kept separate | **Audited** — `a7dd8f9`; added freshwater/ocean fishing, Woby courier delegation, Pearl friendship, resource regrowth and an additional accessible Early Access review |
-| G141 | Raft | Pending | Not started |
-| G142 | Grounded | Pending | Not started |
-| G143 | The Long Dark | Pending | Not started |
-| G144 | Green Hell | Pending | Not started |
-| G145 | Enshrouded | Pending | Not started |
-| G146 | V Rising | Pending | Not started |
-| G147 | Once Human | Pending | Not started |
-| G148 | Abiotic Factor | Pending | Not started |
+| G141 | Raft | [Dossier](dossiers/raft.md); initial `c236d8a2c0fd6050f4e441fcaa1691cfed59b955`, reception repair `b7bbc3ea5584572c27a260af03a057a341cf1007` | **Audited — `a66f7135677c3c1f2791a0ee9b1b0a23dcd51acb`.** Added explicit character identity/equipment/activities/absence boundaries and difficulty-specific death/recovery; corrected TTAB commercial wording to distinguish worldwide revenue, U.S. revenue and nearly 3m U.S. units. |
+| G142 | Grounded | [Dossier](dossiers/grounded.md); `1ff2c665aa34ceea19ab1339357b682718c0382a` | **Audited — `50f24385d7fe996a5c71bed5b0b1745b11f69eba`.** Added pets/companions, BURG.L quest/activity rewards, loot, insect-faction/payback behavior and audio evidence; pinned latest first-party original-game patch found to 1.4.7.4815 and separated historical Steam material from current evidence. |
+| G143 | The Long Dark | [Dossier](dossiers/the-long-dark.md); `7cdf1a4a49eba87e22b80ba60363432703854f93` | **Audited — `b582ffd1868be31347b64644fc9a4a00cb326416`.** Corrected stale absolute-permadeath wording for shipped Cheat Death, added Misery Mode, survivor identity, mapping/collection activities, explicit absences and current music-production evidence. |
+| G144 | Green Hell | [Dossier](dossiers/green-hell.md); `d403e37c2ccbb09a312e8073b3ec90fb977b3471` | **Audited — `258406ffc7d436d8bcf622d15fc6853c35b7da07`.** Added armor/forging, full use-skill roster, activities/loot and soundtrack evidence; corrected the overbroad faction absence by documenting Spirits of Amazonia Trust/ritual progression and explicit party/schedule boundaries. |
+| G145 | Enshrouded | [Dossier](dossiers/enshrouded.md); `30464f8c11f81421b07904b74188cf61e7cc3387` | **Audited — `353e3ee3ed1dac1d7761feb2a9700beafbf1fc30`.** Corrected default-food wording because World Settings can enable Starvation; added creation/attributes/stealth, configurable death, loot/runes/gems, quest breadth, NPC schedules, husbandry/fishing and soundtrack evidence; pinned live hotfix v0.9.1.2 while keeping 1.0 future. |
+| G146 | V Rising | [Dossier](dossiers/v-rising.md); `ecee349ac549e5aed49487af355364e84bac03d3` | **Audited — `301e2c7053a7516132074e0e5d2afbfe6697d4b0`.** Updated live boundary to Hot Fix 12 (Sep. 11, 2026); added creation/attributes/equipment, Human Form stealth, Journal/activities, vendor currencies, current servant Hunts, configurable death, faction/party boundaries and music-production evidence. |
+| G147 | Once Human | [Dossier](dossiers/once-human.md); `df0c73d2f06228e3bc1e3e322d8ad3b448df09bf` | **Audited — `7329baad9b52d701687bc06618677b1f148a39e5`.** Added current body/level rules, rebuilt 2026 Tech and blueprint progression, dropped gear, quests/activities, RaidZone stealth/death, companion/faction/economy boundaries and monetization nuance; kept Sep. 28 changes and Isles test future. |
+| G148 | Abiotic Factor | [Dossier](dossiers/abiotic-factor.md); `2234fcdee8881458c9cd2b4298520a667eba4f20` | **Audited — `c5ee670a4a64b9a20635beae18ab44443fbb9ed9`.** Pinned 1.4.0.28206; added appearance/Job/Traits respec, armor/inventory/weight, loot, item upgrades/coatings, objectives/factions/social boundaries, audio credits and >1.4m Aug-2025 Steam sales milestone attributed to Playstack. |
+
+### G141–G148 follow-up audit and range verification — September 27, 2026
+
+**Scoped range complete: 8 / 8 initial passes and 8 / 8 second-pass audits. No active game remains on this branch.** After the initial authoring/review pass, Mike explicitly requested another game-by-game check against every instruction. The second pass reread each complete dossier against R01–R14 **and every explicit mechanics-inventory category**, researched current/version-sensitive gaps and committed corrections before advancing. The detailed finding ledger is [coverage-audit-g141-g148.md](coverage-audit-g141-g148.md).
+
+Raft's final review caught one evidence-quality issue: a Checkpoint Gaming assessment was only available through an index, so it was demoted to supplemental evidence and replaced in the counted minimum by a fully read HitPoint Reviews article (`b7bbc3ea5584572c27a260af03a057a341cf1007`). The final five-review claim therefore does not count an unavailable review body.
+
+**Cross-game mechanics matrix after corrective commits:** all eight dossiers explicitly address character identity/classes; attributes/skills; leveling/progression/perks/tech; items/inventory/weapons/armor/equipment; crafting/repair/upgrading; magic/powers or useful absence; traversal; environmental/object interaction; activities/minigames; combat; stealth; looting/rewards; death/failure/recovery; economy/trading; story; relationships/romance/reputation; party/companions; NPC/AI/schedules; factions; world/environment; quests/events; building/settlements/management; multiplayer/social systems; and endgame/return loops. All eight retain R01–R14, **eight worked cases**, at least **five substantive written reviews**, Steam/player positive and negative material, annotated source registers and evidence limits.
+
+The source branch `docs/game-inspiration-library` advanced during the initial range work with the completed G121–G130 audit. Shared README/progress/changelog content was reconciled from that newer library state before the first-pass handoff rather than overwritten. At that range handoff, the source remained a separate Git lineage because no merge/rebase was requested. Its second-pass verification is source-branch evidence; the current integration preserves that lineage through a normal merge.
+
+Verification is scoped documentation/static review. No game executable, multiplayer server, automated gameplay suite or audiovisual source was represented as tested/watched; no full external-link crawler or P01–P05 packet/full-roster audit is claimed. The separate G131–G140 range is also integrated here with its own audit evidence.
 
 ### G131–G140 follow-up audit closure — September 27, 2026
 
@@ -506,7 +520,7 @@ Every dossier in the assigned range was reread against R01–R14, the explicit m
 
 Audit commits in roster order: G131 `979384b`, G132 `2aa490b`, G133 `c439b29`, G134 `f506898`, G135 `8152c1f`, G136 `65eec86`, G137 `b77444c`, G138 `520712e`, G139 `01475ab`, G140 `a7dd8f9`.
 
-This closes only the requested G131–G140 follow-up audit. G141–G148 and global gates P01–P05 remain separate pending work.
+This closes only the requested G131–G140 follow-up audit. G141–G148 has its separate completed audit above; global gates P01–P05 remain pending.
 
 ## Final integration gates — pending
 
