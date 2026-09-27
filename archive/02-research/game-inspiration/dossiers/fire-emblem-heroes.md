@@ -392,7 +392,9 @@ Heroes accumulated many modes. Major families include:
 
 ### Divine Games
 
-Ver. 10.9.0 adds **Divine Games**, described by Nintendo as a new event centered on specialized skills and the player's own strength. [HE03](#he03)
+Ver. 10.9.0 adds **Divine Games**, and the original dossier understated how different its run structure is. Nintendo's September 8 notice says a run is **five consecutive battles** in which a Hero's ordinary enhancement stack—owned skills and support effects—is disabled; weapons, Specials and Assist skills are replaced by event-specific versions. Before each stage the player chooses **two of six Divine Arts**, with acquired Arts carrying into later battles so the temporary build grows across the run. [HE03](#he03)
+
+That makes Divine Games a deliberate answer to the service's accumulated build complexity: instead of asking a new/returning player to parse nine years of inherited kit, it temporarily normalizes the roster and creates progression inside the event itself. It is therefore closer to a bounded roguelite/build-drafting mode than another ordinary “use your strongest collection” event.
 
 ### Live-service insight
 
@@ -880,7 +882,18 @@ G65 is an independent roster pass and no inherited full Heroes dossier existed o
 - later accumulated systems;
 - September 2026 current state.
 
-No launch review is treated as evidence for current balance, and current Reddit anecdotes are qualitative rather than prevalence estimates.
+No launch review is treated as evidence for current balance, and current Reddit anecdotes are qualitative rather than prevalence estimates. The September 27 audit re-read the official current topic/update feed: Ver. 10.9.0, Vista Heroes and Divine Games are released September 2026 facts, not announced future systems. No later 10.10.0 update was present in the official English topic feed inspected for this audit.
+
+### Reading / viewing routes
+
+For a compact route:
+1. **HE02–HE03** for the current September 2026 service state, Vista Heroes and the exact Divine Games rules.
+2. **HE04 + HE10** for launch-era mobile compression and battle/economy framing.
+3. **HE06/HE07/HE11/HE13/HE15** for five independent launch reviews.
+4. **HE05/HE08/HE09** for current qualitative player evidence on power creep, readability and newcomer friction.
+5. **HE12** for the dated third-party $1B spending / install milestone, kept separate from current revenue claims.
+
+The official update links to a Feh Channel preview, but this audit did **not** inspect that video; the Divine Games description above comes from the written first-party notice.
 
 ## Sources
 
