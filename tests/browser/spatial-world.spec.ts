@@ -26,7 +26,8 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
     if (request.url().endsWith('/api/command')) commands.push(request.postDataJSON());
   });
   try {
-    await page.goto(`http://127.0.0.1:${address.port}`);
+    await page.goto(`http://127.0.0.1:${address.port}/auth/login`);
+    await page.getByRole('button', { name: 'Control here', exact: true }).click();
     const canvas = page.locator('#world');
     await expect(canvas).toHaveAttribute('data-ready', 'true');
     await expect(canvas).toHaveAttribute('data-floor', 'all');

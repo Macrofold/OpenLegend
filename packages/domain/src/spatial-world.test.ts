@@ -11,6 +11,8 @@ import {
   createWorld,
   executeCommand,
   hearsEntity,
+  speechExposure,
+  soundOrigin,
   quantityOf,
   replaceSpatialLayout,
   seesEntity,
@@ -73,17 +75,24 @@ describe('native spatial-world integration without providers', () => {
     setSpatialPosition(world, b, { x: 20, y: 3, z: 5.5 }, 'lookout-deck');
     expect(canReachEntity(world, a, b, 1.6)).toBe(false);
     expect(seesEntity(world, a, b)).toBe(false);
-    expect(hearsEntity(world, a, b)).toBe(false);
+    // The current acoustic policy attenuates a slab; it does not make it soundproof.
+    expect(hearsEntity(world, a, b)).toBe(true);
+    expect(speechExposure(world, a, b, 'whisper').detail).not.toBe('clear');
     const speech = executeCommand(world, {
       id: 'above-speech',
       actorId: b.id,
       type: 'say',
       text: 'Private words above the floor',
+      volume: 'whisper',
     });
-    expect(speech.events.find((event) => event.type === 'speech')?.audience).not.toContain(a.id);
-    expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(
-      worldPosition(b),
+    const heard = speech.world.experience?.awareness[a.id]?.find(
+      (entry) => entry.eventId === speech.events.find((event) => event.type === 'speech')?.id,
     );
+    expect(heard?.speech?.intelligibility ?? 'none').toBe('none');
+    expect(heard?.speech?.segments.some((segment) => segment.kind === 'heard') ?? false).toBe(
+      false,
+    );
+    expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(soundOrigin(b));
     const bird = world.entities['bird-1']!;
     setSpatialPosition(world, bird, { x: 20, y: 6, z: 5.5 }, null);
     expect(canReachEntity(world, a, bird, 1.6)).toBe(false);

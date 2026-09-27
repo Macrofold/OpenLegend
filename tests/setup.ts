@@ -6,4 +6,5 @@ import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 // Keep initialization outside the deterministic domain and do not substitute a geometry mock.
 await initializeCollisionRuntime();
 
-afterAll(closeTestDatabases);
+// Allow the bounded administrative checkpoint wait while removing owned fixture databases.
+afterAll(closeTestDatabases, 60_000);

@@ -26,17 +26,29 @@ it('sees distant objects across prototype obstacles without extending speech exp
     id: 'fixture-distant-speech',
     actorId: PLAYER_ID,
     type: 'say',
+    volume: 'whisper',
     targetId: NPC_ID,
     text: 'Can you hear me?',
   });
-  expect(directed.outcome.code).toBe('not-heard');
+  // Addressing someone does not deliver words at a distance; speech itself still occurs.
+  expect(directed.outcome.code).toBe('spoken');
+  const directedEvidence = directed.world.experience?.awareness[NPC_ID]?.find(
+    (entry) => entry.eventId === directed.events.find((event) => event.type === 'speech')?.id,
+  );
+  expect(directedEvidence?.speech?.intelligibility).toBe('none');
   const spoken = executeCommand(world, {
     id: 'fixture-local-speech',
     actorId: PLAYER_ID,
     type: 'say',
+    volume: 'whisper',
     text: 'A quiet observation.',
   });
-  expect(spoken.world.events.at(-1)!.audience).not.toContain(NPC_ID);
+  // Visual speech evidence may exist at this distance, but no whispered words are granted.
+  const seen = spoken.world.experience?.awareness[NPC_ID]?.find(
+    (entry) => entry.eventId === spoken.events.find((event) => event.type === 'speech')?.id,
+  );
+  expect(seen?.speech?.intelligibility).toBe('none');
+  expect(seen?.speech?.segments.some((segment) => segment.kind === 'heard')).toBe(false);
 });
 
 it('keeps an authoritative outer sight boundary even though the renderer can remember old images', () => {

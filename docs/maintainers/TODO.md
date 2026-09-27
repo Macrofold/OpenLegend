@@ -2,7 +2,7 @@
 
 ## Existing automated suite compatibility
 
-- [ ] Confirm hosted CI after publishing the rebased branch. The owner-authorized [spatial/cadence cleanup](../verification/spatial-cadence-main-integration.md) restored a passing local `pnpm check` with 188 retained tests, including the current Worker cognition fixture. It adapted identity, immutable-state, admission, save and usage fixtures and removed obsolete/overlapping cases; discovery and CI gates remain enabled. The unchanged main baseline failed 127 of 214 tests. Hosted Linux execution remains a publication gate, distinct from the local pass and [MW04](macrofold-worker-api.md#mw04--remaining-deployment-and-qualification-gates) live-provider qualification.
+- [ ] Confirm hosted CI after publishing the rebased branch. The owner-authorized [spatial/cadence cleanup](../verification/spatial-cadence-main-integration.md) restored a passing local `pnpm check` with 188 retained tests, including the current Worker cognition fixture. It adapted identity, immutable-state, admission, save and usage fixtures and removed obsolete/overlapping cases; discovery and CI gates remain enabled. The unchanged main baseline failed 127 of 214 tests. The [invention integration](../verification/invention-main-integration.md#published-ci-reconciliation) additionally reconciles current hearing assertions and the hosted checkpoint cleanup deadline without changing gameplay. Hosted Linux execution remains a publication gate, distinct from the local pass and [MW04](macrofold-worker-api.md#mw04--remaining-deployment-and-qualification-gates) live-provider qualification.
 
 ## World Agent session continuation — deferred regression coverage
 
