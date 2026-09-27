@@ -8,7 +8,7 @@ Dragon's Dogma 2 is especially useful as a study of **single-player companionshi
 
 Capcom released Dragon's Dogma 2 worldwide on March 22, 2024 for PlayStation 5, Xbox Series X|S and PC. It is a single-player open-world action RPG directed by Hideaki Itsuno. The player creates the Arisen and a permanent Main Pawn, then hires up to two additional support Pawns to form a four-character party. Online connectivity enables Pawn exchange and related asynchronous systems; it does **not** make another human a controllable party member.
 
-The current base game in September 2026 is materially changed from launch through title updates, including performance and usability work. Capcom's September 2026 update improved performance and expanded save/configuration options; current Steam accounts broadly report large gains on some hardware while other users still report poor performance, so "fixed" is hardware-dependent rather than universal.
+The current base game in September 2026 is materially changed from launch through two major 2026 title updates. The June update added the reusable Eternal Ferrystone and additional Portcrystals. **Title Update 3.2 went live September 1, 2026** and is much more than a performance patch: it expands the game to **three separate Arisen/Main Pawn save slots**, each with Autosave, Interim Save and Last Inn Rest data; increases equipped weapon-skill slots from four to six; adds a Dragonsbaulk Draught cure and revised combat behavior/readability for Dragonsplague; adjusts Pawn commands/AI and many vocation/combat interactions; and performs engine/performance work across platforms. Current Steam accounts broadly report large gains on some hardware while other users still report poor performance, so "fixed" remains hardware-dependent rather than universal. [Official Steam announcement](https://steamcommunity.com/app/2054970/allnews/).
 
 **Future boundary:** Capcom has announced **Dragon's Dogma 2: Dark Arisen** for **October 9, 2026**, after this research date. It is a paid expansion adding a new story/region/content and is also the vehicle for a Nintendo Switch 2 version containing the main game plus expansion. It is **not yet released** and none of its announced systems are counted as current base-game behavior. [Capcom announcement](https://www.capcom.co.jp/ir/english/news/html/e260610.html).
 
@@ -37,7 +37,7 @@ The Arisen can change vocations through vocation guilds after unlocking them. La
 - **Trickster** — Arisen-only indirect/illusion/support play, including manipulating aggro and empowering Pawns.
 - **Warfarer** — Arisen-only flexible weapon/vocation mixture at the cost of specialization.
 
-Vocation rank unlocks weapon skills, core skills and **Augments**. Augments learned through one vocation can be equipped while using another, making vocation experimentation a persistent build investment. Vocation Maisters can grant special teachings after relationship/quest conditions are met. [Official Warfarer/Maister overview](https://blog.playstation.com/2024/01/31/new-dragons-dogma-2-trailer-showcases-warfarer-vocation-out-march-22/).
+Vocation rank unlocks weapon skills, core skills and **Augments**. Augments learned through one vocation can be equipped while using another, making vocation experimentation a persistent build investment. Vocation Maisters can grant special teachings after relationship/quest conditions are met. **Current 3.2 rule:** six weapon skills can now be assigned instead of the original four, materially broadening each vocation's in-combat vocabulary; launch reviews and earlier guides describe the four-skill build. [Official Warfarer/Maister overview](https://blog.playstation.com/2024/01/31/new-dragons-dogma-2-trailer-showcases-warfarer-vocation-out-march-22/) · [Title Update 3.2 announcement](https://steamcommunity.com/app/2054970/allnews/).
 
 ### Travel as gameplay
 
@@ -108,7 +108,7 @@ The Main Pawn has its own level/vocation progression and equipment. Borrowed sup
 
 ### Save/failure
 
-The game historically uses restrictive autosave/manual/inn-rest recovery compared with conventional RPG save scumming. That made bad travel outcomes unusually consequential in launch reviews; Digital Trends recounts losing substantial progress after an emergent death. 2026 title updates add more save flexibility, so the current experience should not be described solely through launch restrictions.
+At launch, one adventure was mediated through autosave/manual-style current save plus Inn Rest recovery, and loading an older inn state could erase much later progress; Digital Trends' launch review recounts substantial loss after an emergent death. **Title Update 3.2 changes the current contract:** the player can keep **three separate Arisen playthrough slots**, and each slot holds Autosave, player-created **Interim Save**, and Last Inn Rest Save data. Loading an inn rest no longer deletes the other current save data. Inn rests still matter to Pawn-network/state systems, so the game has not become unrestricted quicksave/quickload. [Official 3.2 announcement and developer Q&A](https://steamcommunity.com/app/2054970/announcements/?l=english).
 
 Wakestones can reverse many deaths, including important NPCs, but they are finite enough to make death recovery a choice.
 
@@ -181,7 +181,7 @@ These are rules-based illustrations unless attributed.
 **Actions:** travel/rest while missing behavioral/visual symptoms.  
 **Interaction:** the disease can spread among Pawns and at advanced state can cause a devastating calamity.  
 **Result:** a social import can affect the player's local world.  
-**Boundary:** Capcom later adjusted frequency/readability after launch, so early anecdotes must be dated. Capcom publicly described the disease before release as something transferred among Pawns "on their travels between worlds." [PlayStation Blog](https://blog.playstation.com/2024/01/31/new-dragons-dogma-2-trailer-showcases-warfarer-vocation-out-march-22/).
+**Boundary:** Capcom adjusted frequency/readability after launch and changed the system again in Title Update 3.2. Afflicted Pawns now receive clearer/stronger combat behavior and the player can use the new **Dragonsbaulk Draught** to cure the condition, so launch-era "diagnose it or dismiss/kill the Pawn" accounts are incomplete descriptions of September 2026 play. Capcom originally described the disease before release as something transferred among Pawns "on their travels between worlds." [PlayStation Blog](https://blog.playstation.com/2024/01/31/new-dragons-dogma-2-trailer-showcases-warfarer-vocation-out-march-22/) · [3.2 announcement](https://steamcommunity.com/app/2054970/allnews/).
 
 ### Case 8 — NPC death changes quest access
 
@@ -210,6 +210,12 @@ Many town/world NPCs have daily positions/schedules and can die persistently. Af
 
 Large and small monsters can attack travelers, fight near settlements, interrupt transport and collide with other systems. They do not exist only inside fenced combat arenas, which is why the same road can produce substantially different trips.
 
+### Useful absences: stealth and factions
+
+The **Thief vocation is not a dedicated stealth class**. Dragon's Dogma 2 has darkness, aggro, line-of-sight-like encounter behavior and skills that help evade or reposition, but there is no general crouch/detection-meter/infiltration progression comparable to a stealth RPG. Calling Thief combat "stealth" would overstate the system.
+
+Vermund, Battahl, the false Sovran's court and other political groups matter to authored quests, but the base game does **not** expose a general joinable-faction reputation/territory simulation. NPC affinity is individual and quest state can alter allegiance/context; that is different from a systemic faction standing layer.
+
 ### Multiplayer boundary
 
 Storefront/platform metadata lists one player. Pawns are shared online, but **no human-controlled cooperative party exists in Dragon's Dogma 2**. Pawn exchange is asynchronous persistence, not conventional multiplayer.
@@ -227,7 +233,7 @@ The game deliberately minimizes some modern convenience:
 
 That supports immersion for players who enjoy expedition friction but becomes tedium for others. Reviews repeatedly split on this exact boundary.
 
-Performance is the biggest presentation caveat. Launch reviews from PC Gamer, RPG Site, Push Square and TechRadar all document frame-rate/CPU problems, particularly in cities. Capcom continued performance updates through September 2026. Current Steam reports range from dramatic improvements to "still unplayable" on particular systems; current technical quality therefore must be described as improved but configuration-dependent, not universally solved.
+Performance is the biggest presentation caveat. Launch reviews from PC Gamer, RPG Site, Push Square and TechRadar all document frame-rate/CPU problems, particularly in cities. Capcom continued performance work through **Title Update 3.2 on September 1, 2026**, including engine-level and platform-specific optimizations. Current Steam reports range from dramatic improvements to "still unplayable" on particular systems; current technical quality therefore must be described as improved but configuration-dependent, not universally solved.
 
 ## R08 — story, world and narrative connection to play
 
@@ -267,7 +273,7 @@ Capcom separately states that the **Dragon's Dogma series** exceeded **14 millio
 
 The base commercial model is premium software plus optional DLC. Dark Arisen is an upcoming paid expansion; Nintendo Switch 2 receives a combined package. Online Pawn infrastructure adds a service obligation even though the game is single-player.
 
-Steam participation remains active in September 2026, with current reviews heavily discussing the September performance update and upcoming expansion. Review counts/concurrency are participation signals, not sales or retention rates.
+Steam participation remains active in September 2026, with current reviews heavily discussing Title Update 3.2 and the upcoming expansion. Review counts/concurrency are participation signals, not sales or retention rates.
 
 ## R12 — reception, five written reviews and Steam evidence
 
@@ -349,6 +355,8 @@ The transferable principle is **make companions and journeys stateful enough tha
 - [PlayStation/Capcom Warfarer article](https://blog.playstation.com/2024/01/31/new-dragons-dogma-2-trailer-showcases-warfarer-vocation-out-march-22/) — vocation Maisters and official pre-release Dragonsplague description.
 - [Japanese PlayStation developer interview](https://blog.ja.playstation.com/2024/03/06/20240306-dragonsdogma2/) — Itsuno on strengthening Pawn individuality, Specializations, Pawn Quests/badges and guidance; Japanese-language primary interview.
 - [Digital Trends technical analysis](https://www.digitaltrends.com/computing/dragons-dogma-2-pc-performance-best-settings/) — secondary measured launch PC/CPU performance context.
+- [Steam Community — Title Update 3.2 live / current DD2 announcements](https://steamcommunity.com/app/2054970/allnews/) — primary September 1, 2026 current-state evidence for three Arisen save slots, Autosave/Interim/Inn Rest model, six weapon skills, Dragonsplague changes and performance/QOL work. The linked developer Q&A on the announcement stream explains the save-system motivation and Pawn implications.
+- [Capcom Town Dark Arisen trailer page](https://captown.capcom.com/en/theaters/dragonsdogma/57) — future October 9 expansion scope and the June/August-then-Sept-1 base-title-update roadmap; future Norgan/Lost Rites content remains excluded from current base mechanics.
 
 ### Critical/player sources read
 
@@ -367,11 +375,11 @@ G127 is a newly curated subject. Direct branch checks found no prior dossier, ga
 | Requirement | Coverage |
 | --- | --- |
 | R01 | Current base game, platform, update and future Dark Arisen boundaries |
-| R02 | Combat/climbing, vocations, travel, health/rest |
+| R02 | Combat/climbing, current six-skill vocations, travel, health/rest, plus explicit stealth absence |
 | R03 | Pawn composition, inclinations, equipment, resources |
-| R04 | Level/vocation/Main Pawn progression, currencies, save/failure, NG+/endgame |
+| R04 | Level/vocation/Main Pawn progression, currencies, current 3-slot save/recovery model, NG+/endgame |
 | R05 | Eight worked systemic travel/combat/Pawn/NPC cases |
-| R06 | Asynchronous Pawn knowledge, NPC mortality/affinity, monster actors, no co-op |
+| R06 | Asynchronous Pawn knowledge, NPC mortality/affinity, monster actors, faction-simulation absence, no co-op |
 | R07 | RE Engine presentation, character creation, friction and dated performance |
 | R08 | Arisen/Dragon framing, player stories and spoiler-marked late world state |
 | R09 | Itsuno's sequel goals, Pawn iteration, RE Engine/performance and ongoing updates |
