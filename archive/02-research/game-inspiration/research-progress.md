@@ -6,11 +6,31 @@
 
 **Active: requirements-and-corrections audit of G26–G39, beginning with G26 Baldur's Gate 3.** Mike requested checking every applicable research dimension, correcting errors and finishing missing research in this batch. **G40 AI Dungeon is explicitly excluded from this audit at Mike's request because it was handled on another branch.** Its existing dossier and historical completion record below are preserved; this audit does not re-certify or overwrite that work. Baseline for this audit: `e01d800a839e6bbbbc8ff0ed13eb45b0a3a3d01c`.
 
-Initial full passes are recorded for G01–G40, but that is not evidence that the newly requested audit has passed. Check actual content against R01–R14 and the explicit mechanics inventory, not just headings or prior completion labels. For each subject, reread its dossier and earlier owners, investigate material factual/version disagreements, repair missing coverage and evidence, review changes and commit before advancing. Keep genuinely inaccessible evidence distinct from unfinished research. Current audit state: **G26 in progress; G27–G39 pending; G40 skipped by instruction.** No G41+ work or global P01–P05 completion is claimed.
+Initial full passes are recorded for G01–G40, but that is not evidence that the newly requested audit has passed. Check actual content against R01–R14 and the explicit mechanics inventory, not just headings or prior completion labels. For each subject, reread its dossier and earlier owners, investigate material factual/version disagreements, repair missing coverage and evidence, review changes and commit before advancing. Keep genuinely inaccessible evidence distinct from unfinished research. Current audit state: **G26 audited; G27 in progress; G28–G39 pending; G40 skipped by instruction.** No G41+ work or global P01–P05 completion is claimed.
 
 The preceding continuation through G40 produced full dossiers, requirement maps, worked situations, annotated sources and explicit evidence-access limitations. Its earlier statement that the requested continuation was complete referred to those initial passes, not this subsequent audit. Mike confirmed `docs/game-inspiration-library` after the originally named `docs/game-inspiration-games` ref could not be resolved. No replacement branch was created. G26's unsuccessful Steam helpful-review retrieval and later per-game access limits remain recorded rather than falsely counted as completed sampling.
 
 RuneScape and Old School RuneScape remain independent pending full passes G48/G49. G50–G57 retain Dragonwilds, four separate mainline Dragon Age games, Deadfire, and Original Sin I/II. G58–G110 are the broader requested mechanics-library additions/franchise splits; G111–G130 are curated OpenLegend-relevant additions. Every pending dossier has the explicit five-written-review minimum and Steam top/helpful-review sampling when applicable. Adding scope is not completed research.
+
+## Requirements-and-corrections audit — G26 through G40
+
+| Subject | Audit status | Audit commit / correction boundary |
+| --- | --- | --- |
+| G26 — Baldur's Gate 3 | **Audited** | `37fddfc677c58883d4aa195e857ddec497ab0045` — explicit mechanics-inventory closure added; Patch 8 vs post-Patch-8 Hotfix 30–36 maintenance boundary rechecked against Larian's support index. No prior review/Steam-access claim was upgraded. |
+| G27 — Factorio | **In progress** | Recheck 2.0/2.1, current port/version boundaries, and explicit mechanics inventory. |
+| G28 — Satisfactory | Pending | — |
+| G29 — Terraria | Pending | — |
+| G30 — Stardew Valley | Pending | — |
+| G31 — Valheim | Pending | — |
+| G32 — Noita | Pending | — |
+| G33 — Caves of Qud | Pending | — |
+| G34 — Outer Wilds | Pending | — |
+| G35 — Garry's Mod | Pending | — |
+| G36 — Kenshi | Pending | — |
+| G37 — Project Zomboid | Pending | — |
+| G38 — Lethal Company | Pending | — |
+| G39 — Scribblenauts | Pending | — |
+| G40 — AI Dungeon | **Skipped by instruction** | Audited on another branch; this pass does not re-certify or overwrite it. |
 
 ## Current continuation — G22 through G40
 
