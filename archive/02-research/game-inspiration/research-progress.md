@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Corrective research active: G90 — Final Fantasy XIII.** Add postbattle recovery and TP/ATB/no-MP rules, Shrouds/Libra and rating/retry consequences; a named upgrade/catalyst chain and complete situations; qualify Lightning Returns' clock; add Hamauzu/art evidence and locate the precise primary 5.55-million disclosure or withdraw its certification. Then complete G93's alternative direct-player evidence and final slice review.
+**Corrective research active: G93 — Final Fantasy XVI.** Retain the documented failed Steam access and add the researched alternative direct-player layer, explicitly identifying PS5, dates and sample limitations. Then perform the final changed-file, source-anchor/navigation and preservation review; reconcile this audit and the documentation changelog.
 
-**Latest completed repair: G89**, `4541722ee512966f8d0a1c93eed2c24657b185f6`. Corrected the shadowed Fire and unsafe farming priorities and explained the full-HP Steal loop. Added named Bazaar recipes/shared-counter reset behavior, actual weapon-family distinctions and Gilt Measure support, fishing access/clues/tool/reward progression, primary Sakimoto score evidence and seven completed situations. FFXII01–30 remain; FFXII31–38 annotate new evidence. Principal actual diff inspected; final source-tail/local-link checks remain pending.
+**Latest completed repair: G90**, `0ad79c25513dd07993221cc1f808acc0e3fa907c`. Added HP/no-MP versus ATB/TP/consumable budgets, Retry and rating distinctions, shrouds/Libra, named Blazefire and Axis weapon chains, seven complete situations, direct Hamauzu/Mina and Kamikokuryo accounts, and pause-qualified Lightning Returns time including the Ultimate Lair exception. Replaced the generic commercial locator with visually inspected slide 9 of Square Enix's May 18, 2010 presentation. Original sections, five example sequences, sequel contrasts and FFXIII01–34 identities remain; FFXIII35–42 annotate added evidence. Principal committed diff inspected; final source-tail/local-link checks remain pending.
 
 The substantive audit reopened G81–G90 and G93; nine other dossiers retain coverage judgments. Mike authorized corrections and completion of missing research. The old blanket twenty-of-twenty statement was too strong. Complete and commit each game before advancing; headings and source counts are not substantive coverage.
 
@@ -25,10 +25,10 @@ Heading retained for inbound links. **Needs repair** is not complete. **Coverage
 | G87 | [Final Fantasy X](dossiers/final-fantasy-x.md) | Repair complete — `83da33fca0d4f341f98c2fbdd3d582a2d6aff21a` |
 | G88 | [Final Fantasy XI](dossiers/final-fantasy-xi.md) | Repair complete — `bc2a57c128a8bd668e08ba60b1593e99f1763340` |
 | G89 | [Final Fantasy XII](dossiers/final-fantasy-xii.md) | Repair complete — `4541722ee512966f8d0a1c93eed2c24657b185f6` |
-| G90 | [Final Fantasy XIII](dossiers/final-fantasy-xiii.md) | Corrective research active |
+| G90 | [Final Fantasy XIII](dossiers/final-fantasy-xiii.md) | Repair complete — `0ad79c25513dd07993221cc1f808acc0e3fa907c` |
 | G91 | [Final Fantasy XIV](dossiers/final-fantasy-xiv.md) | Coverage present; unchanged |
 | G92 | [Final Fantasy XV](dossiers/final-fantasy-xv.md) | Coverage present; unchanged |
-| G93 | [Final Fantasy XVI](dossiers/final-fantasy-xvi.md) | Needs alternative direct-player evidence |
+| G93 | [Final Fantasy XVI](dossiers/final-fantasy-xvi.md) | Corrective player-evidence pass active |
 | G94 | [Warcraft: Orcs & Humans](dossiers/warcraft-orcs-and-humans.md) | Coverage present; unchanged |
 | G95 | [Warcraft II](dossiers/warcraft-ii.md) | Coverage present; unchanged |
 | G96 | [Warcraft III](dossiers/warcraft-iii.md) | Coverage present; unchanged |
