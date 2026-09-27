@@ -141,6 +141,12 @@ Ike's eventual mastery skill **Aether** is a named example of a high-impact char
 
 That is substantially richer than either “skills are permanently hard-coded to classes” or “every learned spell can be equipped simultaneously.”
 
+### Biorhythm: visible cyclic state with modest tactical leverage
+
+Every battlefield unit also has a **biorhythm** state. In *Path of Radiance* it modifies Hit and Avoid rather than damage or skill activation: high states grant a small accuracy/evasion bonus, low states impose the corresponding penalty, and the current direction/state is inspectable through the portrait arrow and the status-screen sine-wave display. The cycle advances with chapter progression and accumulated battles; **Tempest** magnifies the modifier while **Serenity** reduces it. [PR05](#pr05)
+
+This is useful precisely because it is *not* hidden. A player can inspect the state before committing, but the effect is small enough that reviews and later player discussion often treat it as bookkeeping rather than a defining tactical layer. The design lesson is therefore narrower than “cyclic mood stats are good”: if a changing internal state matters, expose it clearly and give it enough consequence or agency to justify the mental load.
+
 ## 7. Supports and Base conversations: persistent social state
 
 ### Supports
@@ -241,6 +247,12 @@ That is a direct OpenLegend lesson:
 Chapter 10, **Prisoner Release**, supports an optional undetected escape. The Bonus Experience table explicitly rewards leaving the chapter undetected, while community testing documents detection around ending a turn inside designated guards' threat ranges or attacking those guards. Rescue/mounted movement can be composed with this rule to move exposed units back out before Enemy Phase. [PR09](#pr09) [PR30](#pr30)
 
 This is important scope discipline: Path of Radiance has a **chapter-specific stealth/detection challenge**, not a reusable campaign-wide stealth skill/perception subsystem.
+
+### Chests, doors, villages, hidden finds, and theft
+
+Map interaction is not limited to standing on objectives. Chapters place **chests**, locked **doors**, villages/visit tiles and occasional hidden items into the tactical route. Keys create explicit inventory-versus-route decisions, while thieves can provide alternate access and can use **Steal** against eligible enemy-held items. The stealing rule is constrained rather than universal: the thief needs the Steal skill, must exceed the target's attack speed, must have enough Strength for the item's Weight, and cannot steal the target's currently equipped weapon. [PR06](#pr06) [PR31](#pr31)
+
+The item-location record shows these interactions repeatedly producing meaningful rewards—skill scrolls, stat items, rare weapons, staves and keys—so “send someone to the side room” can compete directly with turn pressure, safety and the main objective. [PR31](#pr31) This also sharpens the Chapter 10 stealth example: treasure extraction and undetected escape can pull the same formation in different directions.
 
 ## 11. Recruitment, death, and irreversible opportunity
 
@@ -736,9 +748,9 @@ Fixed compatibility pairs produce polished writing but cannot represent arbitrar
 
 Path of Radiance benefits from separating battle and intermission because it is chapter-based. An OpenLegend world may be continuous. The transferable principle is **contextual salience**, not a mandatory hub screen.
 
-### Do not treat biorhythm-like invisible modifiers as depth by default
+### Do not treat low-leverage cyclic modifiers as depth by default
 
-Small cyclic accuracy/evasion modifiers can create bookkeeping without meaningful planning. A dynamic internal state earns its complexity when players can perceive it, predict it and change behavior around it.
+Path of Radiance's biorhythm is **inspectable**, not invisible: the portrait arrow and status-screen wave expose its direction/state. The limitation is instead that a small cyclic Hit/Avoid modifier can create bookkeeping without offering much agency. A dynamic internal state earns its complexity when players can perceive it, predict it **and** make meaningful decisions around it.
 
 ## 25. Requirement map, preservation, and navigation
 
@@ -761,7 +773,7 @@ Small cyclic accuracy/evasion modifiers can create bookkeeping without meaningfu
 
 ### Mechanics inventory check
 
-Covered: identity/classes; statistics/growth; leveling/promotion; weapon ranks; skills/capacity; weapons/items/durability/forging; offensive magic and staves; grid movement/terrain; Shove/Rescue/Take/Drop/Canto; map interactions/objectives; combat; loot/rewards/BEXP; death/permadeath/reset; gold/shop economy; authored story; supports/Base conversations; roster/party/deployment; enemy and partner AI; factions/nations; chapter maps/weather; recruitment/events; repeat/postgame Trial Maps and GBA-link extras.
+Covered: identity/classes; statistics/growth; leveling/promotion; weapon ranks; skills/capacity; biorhythm; weapons/items/durability/forging; offensive magic and staves; grid movement/terrain; Shove/Rescue/Take/Drop/Canto; chests/doors/keys/villages/hidden items/Steal; map interactions/objectives; combat; loot/rewards/BEXP; death/permadeath/reset; gold/shop economy; authored story; supports/Base conversations; roster/party/deployment; enemy and partner AI; factions/nations; chapter maps/weather; recruitment/events; repeat/postgame Trial Maps and GBA-link extras.
 
 **Absent or not major native systems:** free-roaming traversal, a general stealth subsystem beyond the Chapter 10 detection challenge, settlement/base construction, arbitrary crafting recipes, romance simulation, open-world quest log, player-run economy, native competitive/co-op multiplayer, live-service endgame. Laguz transformation and magical weapons/staves cover supernatural combat without a freeform spell-learning system.
 
@@ -855,3 +867,5 @@ No video or footage was represented as watched in this pass. No source-preview m
 
 
 <a id="pr30"></a>**PR30 — [How do I stealth Chapter 10 without getting caught?](https://gamefaqs.gamespot.com/gamecube/920189-fire-emblem-path-of-radiance/answers/561498-how-do-i-stealth-chapter-10-without-getting-caught).** GameFAQs community Q&A. Used narrowly for the observed Chapter 10 detection rule; PR09 independently establishes the undetected-clear BEXP reward. Community mechanics evidence, not developer intent.
+
+<a id="pr31"></a>**PR31 — [Item Locations](https://serenesforest.net/path-of-radiance/miscellaneous/item-locations/).** Serenes Forest community mechanics reference. Audited September 27, 2026 for chapter-level chest, key, village, hidden-item and stealable-item examples; used as rules/equipment-route evidence, not developer intent or reception.
