@@ -45,6 +45,19 @@ Sons of the Forest is a separate G138 subject. Kelvin/Virginia companions, free-
 
 ## R02 — player actions and major mechanics
 
+### Hidden/use-based character stats — audit correction
+
+The initial dossier incorrectly said the original game had no attribute progression. The final game has several **player stats**, but they are not a point-buy/class system:
+
+- **Strength** increases melee damage. Its system was substantially reworked before release around exercise and nutrition/calories; the v1.0 rules make ordinary-mode calories more forgiving, while Hard Survival exposes the full calorie/weight relationship.
+- **Athleticism** improves endurance by reducing stamina drain for sprinting/swimming and increases underwater breath capacity; v1.0 also makes higher Athleticism slightly increase run speed.
+- **Sanity** rises/falls in response to activities such as cave time, cannibalism, rest/music and normal food. In the shipped game it does **not** create a broad hallucination/mental-health simulation; its verified mechanical consequence is tied to access to player effigies.
+- **Weight/calories** are primarily a **Hard Survival** system in v1.0: calories, exercise, strength and weight interact, while the ordinary game hides/relaxes much of that bookkeeping.
+
+The Survival Guide's Stats page exposes these values/trends. This is a valuable distinction: The Forest has **practice/behavior-shaped attributes without XP levels, perks or spendable stat points**. [Athleticism](https://theforest.fandom.com/wiki/Athleticism) · [Stats](https://theforest.fandom.com/wiki/Stats) · [v1.0 changes](https://theforest.fandom.com/wiki/V1.0).
+
+The maintained wiki's Sanity/Effigy pages disagree on the exact final unlock threshold (the v1.0 changelog says the Effigy page appears below 50% Sanity, while a current Sanity page states under 90%). This dossier therefore records only the reliable relationship—**low sanity gates player-effigy access**—rather than inventing one uncontested threshold. [Sanity](https://theforest.fandom.com/wiki/Sanity).
+
 ### Survival state
 
 The player manages:
@@ -57,6 +70,8 @@ The player manages:
 - injuries/poison/illness-like status as applicable.
 
 Food comes from animals, fish, plants, scavenged snacks and cooked/dried meat. Water can come from suitable sources and player-made rain collectors; unsafe food/water can punish careless survival choices.
+
+The stats layer also includes distinct conditions such as **Infection/Sickness/Cold** under applicable circumstances. Community-maintained final-version documentation records Infection as capable of reducing Strength until cleaned/treated, while sickness can reduce the benefit gained from food. These are bounded status systems rather than DayZ-style full medical simulation. [Stats](https://theforest.fandom.com/wiki/Stats).
 
 The system is not a medical simulation like DayZ. It is readable enough to keep horror/exploration moving.
 
@@ -292,6 +307,15 @@ Some weapons can be upgraded by attaching crafted materials such as teeth/feathe
 
 This makes scavenged materials affect a favorite tool rather than only unlock replacements.
 
+### Effigies and sanity-linked intimidation
+
+Player-built effigies use cannibal body parts plus ordinary building resources and, when available/lit, can sometimes make cannibals hesitate or flee. Their effect is deliberately unreliable and does not work as a universal "fear turret," especially against mutants. The v1.0 changelog explicitly makes the Effigy book page conditional on low Sanity.
+
+This creates a small but thematically important loop:
+combat/cannibalism/cave behavior can reduce Sanity → low Sanity exposes grotesque effigy construction → enemy corpses become intimidation materials.
+
+The mechanic should be treated narrowly. Sanity otherwise has little verified gameplay effect in the final game, and community sources conflict over its exact threshold. [v1.0](https://theforest.fandom.com/wiki/V1.0) · [Sanity](https://theforest.fandom.com/wiki/Sanity) · [Building/Effigies](https://theforest.fandom.com/wiki/Building).
+
 ### Bodies as resources
 
 Cannibal bodies can be:
@@ -448,7 +472,25 @@ The important design point is that the sandbox has a **real authored ending** wi
 **Interaction:** failure moves the player deeper into the world’s mystery.  
 **Result:** death-like failure can create exploration/story instead of only subtraction.
 
-### Case 10 — a physical body becomes crafting material
+### Case 10 — ordinary actions slowly change the survivor
+
+**Intention:** become more capable without finding a new tool.  
+**Conditions:** the player spends many days running/swimming/fighting while maintaining enough food.  
+**Actions:** ordinary movement/combat/nutrition gradually increase Athleticism and/or Strength under the applicable mode rules.  
+**Interaction:** repeated embodied actions change future stamina use, breath/run performance and melee damage without XP allocation.  
+**Result:** the character itself remembers how the player has lived.  
+**Limit:** the nutrition/weight side is much more explicit in Hard Survival, and exact formulas are poorly communicated in-world.
+
+### Case 11 — low sanity unlocks a disturbing defensive option
+
+**Intention:** discourage ordinary cannibals around a camp.  
+**Conditions:** Sanity has fallen enough for the effigy pages to become available and the player has enemy body parts/sticks/rocks.  
+**Actions:** construct and light an effigy.  
+**Interaction:** a psychological/stat condition changes the building vocabulary, and corpse resources become social signaling.  
+**Result:** some cannibals may hesitate/flee rather than attack immediately.  
+**Limit:** the effect is unreliable, mutants ignore it, and final-version sources conflict on the precise sanity threshold.
+
+### Case 12 — a physical body becomes crafting material
 
 **Intention:** obtain bone armor/materials.  
 **Conditions:** cannibal corpse exists.  
@@ -763,6 +805,8 @@ The original seven-file packet predates G137 and its separate packet-wide P01 re
 - **Endnight — [updates archive](https://endnightgames.com/updates?page=2).**
 - **PlayStation Blog / Endnight — [PS4 launch article](https://blog.playstation.com/2018/08/29/the-forest-launches-november-6-on-ps4/).** Primary creative-freedom statement.
 - **Official community wiki — [Building](https://theforest.fandom.com/wiki/Building), [Mechanics](https://theforest.fandom.com/wiki/Mechanics), [Enemies](https://theforest.fandom.com/wiki/Enemies), accessed September 27, 2026.** Detailed current/final-build mechanics; community-maintained, so used for operational relationships rather than developer intent.
+- **Official community wiki — [Athleticism](https://theforest.fandom.com/wiki/Athleticism), [Stats](https://theforest.fandom.com/wiki/Stats), [Calories](https://theforest.fandom.com/wiki/Calories), [Weight](https://theforest.fandom.com/wiki/Weight), [Sanity](https://theforest.fandom.com/wiki/Sanity), accessed September 27, 2026.** Follow-up evidence correcting the initial "no attributes" statement and distinguishing ordinary from Hard Survival nutrition/weight rules.
+- **Official community wiki — [v1.0 changelog](https://theforest.fandom.com/wiki/V1.0).** Preserved final-release evidence for Athleticism/run-speed changes, Hard-Survival calorie presentation and the sanity-conditioned effigy page; used to expose, not conceal, the threshold conflict in later community pages.
 - **Interview archive — [Endnight interviews](https://theforest.fandom.com/wiki/Interviews).** Secondary-preserved developer interviews; access limitations/translation caveats retained.
 
 ### Production/commercial sources
@@ -802,7 +846,7 @@ No video scene/timestamp is represented as watched.
 | R02 actions/major mechanics | R02 |
 | R03 items/entities/composition | R03 |
 | R04 progression/economy/time | R04 |
-| R05 concrete situations | R05, ten cases |
+| R05 concrete situations | R05, twelve cases |
 | R06 people/AI/social/multiplayer | R06 |
 | R07 art/audio/interface/feel | R07 |
 | R08 story/narrative/play | R08 |
@@ -815,6 +859,10 @@ No video scene/timestamp is represented as watched.
 
 ### Explicit mechanics-inventory closure
 
-Fixed protagonist rather than character creator/classes; no RPG attributes/levels/perk tree; items/inventory/weapons/armor/upgrades; crafting and blueprint-based construction; no magic; walking/swimming/climbing cave ropes/rafts/ziplines/hang-glider-era traversal; harvestable/choppable environment; hunting/fishing/gardening/cooking; combat/practical stealth/traps; scavenging/cave loot; death/capture/save recovery; no currency/trade economy; authored story/endings; no romance/recruitable companions; cannibal/mutant AI and social-looking patrol behavior; fixed peninsula/cave world; story/cave encounters rather than quest log; extensive base construction/storage/defense; solo/online/LAN co-op/VR boundaries; and postgame/building/exploration loops are covered above.
+Fixed protagonist rather than a class creator; **use/behavior-shaped Strength and Athleticism plus Sanity, with Hard-Survival calorie/weight rules**, but no XP levels, perk tree or spendable attribute points; items/inventory/weapons/armor/upgrades; crafting and blueprint-based construction including sanity-linked effigies; no magic; walking/swimming/climbing cave ropes/rafts/ziplines/hang-glider-era traversal; harvestable/choppable environment; hunting/fishing/gardening/cooking; combat/practical stealth/traps; scavenging/cave loot; death/capture/save recovery; no currency/trade economy; authored story/endings; no romance/recruitable companions; cannibal/mutant AI and social-looking patrol behavior; fixed peninsula/cave world; story/cave encounters rather than quest log; extensive base construction/storage/defense; solo/online/LAN co-op/VR boundaries; and postgame/building/exploration loops are covered above.
 
 **Research boundary:** the original game is effectively feature-frozen and its final behavior is much less version-volatile than the preceding G131–G136 subjects. Exact enemy AI formulas remain partially opaque; observed/reviewed behaviors are kept distinct from unverified community theories about hidden aggression/reputation variables.
+
+### Follow-up audit — September 27, 2026
+
+The second pass found one **material factual error** in the initial mechanics closure: The Forest does have character stats/progression. Strength and Athleticism improve through behavior/nutrition rather than point allocation, while Sanity and Hard-Survival calories/weight add narrower state/progression rules. The audit also adds the sanity→effigy relationship and distinct infection/sickness status effects. Final-version sources disagree on the exact effigy Sanity threshold, so the disagreement is preserved instead of choosing an unsupported number.
