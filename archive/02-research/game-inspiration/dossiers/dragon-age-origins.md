@@ -1,6 +1,6 @@
 # Dragon Age: Origins — full research dossier
 
-**G51 · Complete research pass, September 26, 2026.** Scope: BioWare/EA's 2009 Origins, the 2010 Awakening expansion and the major downloadable campaigns. PC and original console interfaces differ; Ultimate Edition bundles content but does not turn every module into one continuous campaign. Design transfers below are research proposals, not accepted OpenLegend requirements.
+**G51 · Research pass and identified production-history remedy completed September 26, 2026.** Scope: BioWare/EA's 2009 Origins, the 2010 Awakening expansion and the major downloadable campaigns. PC and original console interfaces differ; Ultimate Edition bundles content but does not turn every module into one continuous campaign. Design transfers below are research proposals, not accepted OpenLegend requirements. Section 13.1 adds the base game's development sequence and constraints; inherited gameplay and review evidence is preserved, not represented as newly replayed or reread.
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md)
 
@@ -158,6 +158,24 @@ Reviewers consistently value dialogue, voices and character work more than the u
 
 **Interpretation:** strong characterization is jointly produced by writing, acting, staging and remembered context. Replacing only the dialogue generator is unlikely to reproduce that effect automatically.
 
+### 13.1 Base-game development: establish a world, then make it playable across platforms
+
+**Creative direction and ownership.** Greg Zeschuk's July 2009 interview connects the project to BioWare's inability to simply continue making its earlier licensed Baldur's Gate series. Creating an owned setting let the team revisit the party-based fantasy experience on different terms. His account also regards the earlier story arc as having a conclusion; it is not a claim that Dragon Age used the same characters, license or engine. The design lineage and literal intellectual property are separate. [S9](#s9)
+
+**Preproduction was not full-team production.** In Eric Farand's pre-release interview, Laidlaw estimates roughly six years of development but only about three with a full team. He describes a smaller early effort establishing the world's history, goals and consistency before production could build on it. His estimate of more than 180 people is explicitly a short peak, not the average team size for the entire period and not a basis for calculating budget. These are attributed approximate recollections rather than an audited calendar. [S4](#s4)
+
+**The shared world supported more than one artifact.** Laidlaw's PCWorld interview explains that David Gaider developed history beyond the immediate game's answers, allowing the prequel novel to draw on an established setting rather than invent everything independently. The resulting fiction could support other products, but this does not prove every later franchise plot was already planned. **Interpretation:** an authoring foundation helps different contributors remain consistent; an immense encyclopedia is not automatically useful unless production actually relies on it. [S8](#s8)
+
+**Iteration was concrete rather than merely a claimed philosophy.** Brent Knowles' October 22, 2008 interview describes playing through the build, providing feedback and coordinating designers who were integrating art, code and features. The source places this in a late testing/integration phase, not at initial conception. It does not certify that the version was finished, or that no substantial changes followed. [S5](#s5)
+
+**2009 platform work tested actual tasks.** In the May interview, Laidlaw says the PC content was playable and near lock while the team concentrated on bugs and console controls. They loaded saves into specific situations and checked fighting, menus, equipping and comparison. Tactics presets and adjustable rules helped support controlling four characters with limited direct inputs. His production objective was preserving the activity, not copying mouse motions onto a stick. These are developer-reported checks, not independent proof that every shipped interface succeeded. [S6](#s6)
+
+The October Strategy Informer interview distinguishes long-standing intent to support consoles from the later concentrated work: Laidlaw recalls about a year of strong effort and perhaps a year and a half including profiling. Xbox 360 and PS3 were developed alongside each other. The approximate language matters; it does not establish that full console production ran for the whole six-year project. He also explains adding the Origins subtitle around the playable backgrounds, BioWare's fantasy roots and the beginning of an owned setting. [S7](#s7)
+
+**Constraints and feedback access.** The RPGFan account describes the difficulty of a coordinated PC/console launch: the team could not wait for public reaction to one finished platform before adjusting the other. It sought experience from other BioWare teams and used focus/usability testing, including EA facilities. **Interpretation:** shared organizational knowledge can reduce uncertainty, but simultaneous delivery removes a feedback opportunity. That tradeoff explains a production problem without excusing the specific camera, control and reliability complaints preserved in the reviews. [S4](#s4)
+
+**Limits:** this evidence now supplies the base game's purpose, development phases, iteration and delivery constraints. It does not reconstruct every abandoned prototype, private budget, labor condition or proprietary tool. The five-part making-of series linked by BioWare is a further viewing route, not footage watched for this remediation. [S10](#s10)
+
 ## 14. Distribution, commercial evidence and the long tail
 
 Origins launched across PC and the contemporary Xbox 360/PlayStation 3 market; later packaging and distribution created several ways to own its content. The mix of a substantial base game, a major expansion, companion DLC, smaller experiments and promotional items is itself a production/distribution study. Bartel's 2010 interview explicitly describes experimenting with content formats, prices, development costs and platform delivery, rather than claiming the final strategy was known in advance. [D4](#d4)
@@ -168,7 +186,7 @@ Current player reviews show a long tail of replay and attachment, alongside comp
 
 ## 15. Five independent written assessments
 
-All five substantive bodies were read; these are separate publications, not five scores copied from one aggregator.
+All five substantive bodies were read in the original research; these are separate publications, not five scores copied from one aggregator. This production-history remediation does not claim five new readings.
 
 | Assessment | What works | Criticism / boundary |
 | --- | --- | --- |
@@ -236,6 +254,8 @@ An Awakening commander finds ore and funds fortification work rather than spendi
 
 **Do not copy authored branching and call it universal agency.** Origins' powerful moments are carefully constructed. A more open simulation needs rules for analogous consequences when no writer has pre-enumerated the branch, plus safeguards against incoherent or irreversible outcomes.
 
+**Budget for consistency and task-specific usability.** The production accounts distinguish establishing a shared world from producing content, and a stable scenario from an easy-to-use interface. A smaller project can borrow that separation without copying the staffing or scope. Test the actual activity on each intended control surface; promotional intent is not sufficient evidence of success.
+
 ## 19. Requirement, preservation and evidence review
 
 | Requirement | Coverage |
@@ -248,8 +268,8 @@ An Awakening commander finds ore and funds fortification work rather than spendi
 | R06 people, AI, relationships and multiplayer boundary | §§5, 8–12 |
 | R07 art, sound, UI and feel | §§5, 13, 15–16 |
 | R08 narrative and gameplay connections | §§1, 8–12, 17 |
-| R09 production and evolution | §§12–14 |
-| R10 distribution, promotion and community | §§12, 14–16 |
+| R09 production and evolution | §13.1 base-game chronology/constraints plus §§12–14 |
+| R10 distribution, promotion and community | §§12–14, 16; making-of viewing route |
 | R11 dated commercial definitions | §14 |
 | R12 five independent reviews and player contrast | §§15–16; DLC reception in §§11–12 |
 | R13 transferable ideas, dependencies and limits | §18 and worked-example limits |
@@ -257,88 +277,102 @@ An Awakening commander finds ore and funds fortification work rather than spendi
 
 **Inventory check:** creation, classes/attributes/skills/specializations, items/equipment/crafting, spell composition, party tactics, dialogue/theft/locks/traps, travel, quests, factions/approval/romance, failure, ending/replay and expansion boundaries are covered. General NPC schedules, autonomous politics, free construction, survival farming and multiplayer are not silently inferred. This is not an exhaustive item table or optimal-build manual.
 
-**Preservation:** G51 is a post-packet addition with no earlier full chapter identified in the canonical roster. The checkpoint's five reviews, uncertainty notes and identity distinctions remain here. Existing game/mechanics studies are unchanged. G52–G54 and the required series/smaller-game comparison remain separate work; this dossier does not claim to complete them.
+**Preservation:** G51 is a post-packet addition with no earlier full chapter identified in the canonical roster. The checkpoint's five reviews, uncertainty notes, seven situations and identity distinctions remain here. Existing game/mechanics studies are unchanged. The other numbered Dragon Age dossiers and the committed series/smaller-game supplement remain separate owners, not work certified by this remedy. The audit's missing base-game production account is now supplied in §13.1; no claim of a packet-wide reconciliation is made.
 
-**Access:** the publisher manual was read as a third-party HTML transcription, not a downloaded PDF. Prima's accessible guide text, developer interviews, reviews and selected wiki/guide passages were inspected. Some wiki bodies were only accessible through indexed sections; inaccessible Eurogamer reviews were not counted as read. No footage, hands-on play, mod testing or soundtrack audition is claimed. The source anchors and requirement map were checked while composing; repository-wide integration gates remain pending.
+**Access:** the publisher manual was read as a third-party HTML transcription, not a downloaded PDF. Prima's accessible guide text, developer interviews, reviews and selected wiki/guide passages were inspected in the original pass. Some wiki bodies were only accessible through indexed sections; inaccessible Eurogamer reviews were not counted as read. The new production sources identify full, relevant-section or indexed access below. No footage, hands-on play, mod testing or soundtrack audition is claimed. Source anchors and the requirement map were reviewed; no repository-wide automated link crawl occurred.
 
-**Reading/viewing route:** start with the contrasting GameSpot/Destructoid reviews, then the tactics guide, Redcliffe/Landsmeet walkthroughs and Bartel's Darkspawn interview. They respectively expose experience, execution rules, consequence structure and a deliberate variation on the party contract. Trailers and video reviews linked by source pages are optional routes, not watched evidence for this pass.
+**Reading/viewing route:** start with the contrasting GameSpot/Destructoid reviews, then the tactics guide, Redcliffe/Landsmeet walkthroughs and Bartel's Darkspawn interview. For production, compare the early integration account, the distinction between preproduction and full-team work, and concrete console task testing. BioWare's five documentary links are optional viewing routes, not watched evidence.
 
 ## Annotated sources
 
-<a id="r1"></a>**R1 — Kevin VanOrd, GameSpot, November 3, 2009.** [Origins review](https://www.gamespot.com/reviews/dragon-age-origins-review/1900-6238632/). Full body read; PC/console differences retained.
+<a id="r1"></a>**R1 — Kevin VanOrd, GameSpot, November 3, 2009.** [Origins review](https://www.gamespot.com/reviews/dragon-age-origins-review/1900-6238632/). Full body read in the original pass; PC/console differences retained.
 
-<a id="r2"></a>**R2 — James Stephanie Sterling, Destructoid, November 3, 2009.** [Origins review](https://www.destructoid.com/review-dragon-age-origins/). Full Xbox 360 review; current byline retained.
+<a id="r2"></a>**R2 — James Stephanie Sterling, Destructoid, November 3, 2009.** [Origins review](https://www.destructoid.com/review-dragon-age-origins/). Original full Xbox 360 review reading; current byline retained.
 
-<a id="r3"></a>**R3 — John P. Hussey, RPGFan, January 4, 2010.** [Origins review](https://www.rpgfan.com/review/dragon-age-origins/). Full PS3 assessment; not used as authoritative lore chronology.
+<a id="r3"></a>**R3 — John P. Hussey, RPGFan, January 4, 2010.** [Origins review](https://www.rpgfan.com/review/dragon-age-origins/). Original full PS3 assessment; not authoritative lore chronology.
 
-<a id="r4"></a>**R4 — Mike Moehnke, RPGamer, August 3, 2014.** [PC Ultimate retrospective](https://rpgamer.com/review/dragon-age-origins-review-pc/). Full body read; original PC already had an overhead camera.
+<a id="r4"></a>**R4 — Mike Moehnke, RPGamer, August 3, 2014.** [PC Ultimate retrospective](https://rpgamer.com/review/dragon-age-origins-review-pc/). Original full reading; PC already had an overhead camera.
 
-<a id="r5"></a>**R5 — Wesley Yin-Poole, VideoGamer.** [Historical review](https://www.videogamer.com/reviews/dragon-age-origins-review/). Full body; June 6, 2021 is displayed update metadata.
+<a id="r5"></a>**R5 — Wesley Yin-Poole, VideoGamer.** [Historical review](https://www.videogamer.com/reviews/dragon-age-origins-review/). Original full reading; June 6, 2021 is update metadata.
 
-<a id="m1"></a>**M1 — Prima guide.** [Attributes](https://primagames.com/eguides/dragon-age-origins-eguide/essentials/character-generation/attributes). Read stat roles; exact damage formula/errata not reproduced.
+<a id="m1"></a>**M1 — Prima guide.** [Attributes](https://primagames.com/eguides/dragon-age-origins-eguide/essentials/character-generation/attributes). Original stat-role reading; exact formulas not reproduced.
 
-<a id="m2"></a>**M2 — Prima guide.** [Skills](https://primagames.com/eguides/dragon-age-origins-eguide/essentials/the-classes/skills). Shared skills, prerequisites and distinction from class talents.
+<a id="m2"></a>**M2 — Prima guide.** [Skills](https://primagames.com/eguides/dragon-age-origins-eguide/essentials/the-classes/skills). Shared skills and distinction from talents.
 
-<a id="m3"></a>**M3 — Prima guide.** [Skills, talents and specializations](https://primagames.com/eguides/dragon-age-origins-eguide/essentials/basics/skills-talents-and-specializations). Progression and reserved-resource distinction.
+<a id="m3"></a>**M3 — Prima guide.** [Skills, talents and specializations](https://primagames.com/eguides/dragon-age-origins-eguide/essentials/basics/skills-talents-and-specializations). Progression and reserved resources.
 
-<a id="m4"></a>**M4 — Dragon Age Wiki.** [Classes and specializations](https://dragonage.fandom.com/wiki/Classes_and_specializations_%28Origins%29). Indexed unlock/allocation and persistence rules; not a claim of source-code inspection.
+<a id="m4"></a>**M4 — Dragon Age Wiki.** [Classes/specializations](https://dragonage.fandom.com/wiki/Classes_and_specializations_%28Origins%29). Indexed unlock and allocation distinctions; not source-code inspection.
 
-<a id="m5"></a>**M5 — Prima guide.** [Crafting](https://primagames.com/eguides/dragon-age-origins-eguide/essentials/equipment/crafting). Actual recipes and production skills; no full table reproduced.
+<a id="m5"></a>**M5 — Prima guide.** [Crafting](https://primagames.com/eguides/dragon-age-origins-eguide/essentials/equipment/crafting). Actual recipes and skills; no full table copied.
 
-<a id="m6"></a>**M6 — Dragon Age Wiki.** [Item sets](https://dragonage.fandom.com/wiki/Item_sets_%28Origins%29), [massive chestpieces](https://dragonage.fandom.com/wiki/Massive_chestpieces). Indexed material/set/fatigue distinctions; current web access does not make these new game updates.
+<a id="m6"></a>**M6 — Dragon Age Wiki.** [Item sets](https://dragonage.fandom.com/wiki/Item_sets_%28Origins%29), [massive chestpieces](https://dragonage.fandom.com/wiki/Massive_chestpieces). Indexed equipment/material/fatigue distinctions; web access date is not a game update.
 
-<a id="m7"></a>**M7 — Prima guide.** [Tactics](https://primagames.com/eguides/dragon-age-origins-eguide/essentials/the-party/tactics). Rule priority, target/condition/action and delegation.
+<a id="m7"></a>**M7 — Prima guide.** [Tactics](https://primagames.com/eguides/dragon-age-origins-eguide/essentials/the-party/tactics). Priority, targets, conditions and delegation.
 
-<a id="m8"></a>**M8 — EA/BioWare Xbox 360 manual, HTML mirror.** [Manualzz transcription](https://manualzz.com/doc/14387906/dragon-age-origins-manuals_microsoft%2520xbox360). Injury, map and platform-specific friendly-fire rules; not generalized to PC values.
+<a id="m8"></a>**M8 — EA/BioWare Xbox 360 manual, HTML mirror.** [Manualzz](https://manualzz.com/doc/14387906/dragon-age-origins-manuals_microsoft%2520xbox360). Injury/map/friendly-fire rules; not generalized to PC.
 
-<a id="m9"></a>**M9 — In-game codex text via Dragon Age Wiki.** [Shattering](https://dragonage.fandom.com/wiki/Codex_entry%3A_Shattering). Indexed effect combination and resistance boundary.
+<a id="m9"></a>**M9 — In-game codex via wiki.** [Shattering](https://dragonage.fandom.com/wiki/Codex_entry%3A_Shattering). Indexed combination and resistance boundary.
 
-<a id="m10"></a>**M10 — Prima guide.** [Paragon of Her Kind](https://primagames.com/eguides/dragon-age-origins-eguide/walkthrough/walkthrough/paragon-of-her-kind). Political support, access and quest routes; guide recommendations distinguished from rules.
+<a id="m10"></a>**M10 — Prima guide.** [Paragon of Her Kind](https://primagames.com/eguides/dragon-age-origins-eguide/walkthrough/walkthrough/paragon-of-her-kind). Political support and access; advice distinguished from rules.
 
-<a id="m11"></a>**M11 — Dragon Age Wiki.** [Approval](https://dragonage.fandom.com/wiki/Approval_%28Origins%29). Read relationship conditions and exceptions; individual approval is not a general moral alignment.
+<a id="m11"></a>**M11 — Dragon Age Wiki.** [Approval](https://dragonage.fandom.com/wiki/Approval_%28Origins%29). Relationship conditions and exceptions; not global morality.
 
-<a id="m12"></a>**M12 — Prima guide.** [Arl of Redcliffe](https://primagames.com/eguides/dragon-age-origins-eguide/walkthrough/walkthrough/arl-of-redcliffe). Defence preparation, possession and alternative assistance routes.
+<a id="m12"></a>**M12 — Prima guide.** [Arl of Redcliffe](https://primagames.com/eguides/dragon-age-origins-eguide/walkthrough/walkthrough/arl-of-redcliffe). Preparation and alternative assistance.
 
-<a id="m13"></a>**M13 — Prima guide.** [The Landsmeet](https://primagames.com/eguides/dragon-age-origins-eguide/walkthrough/walkthrough/the-landsmeet). Evidence, alliances, companion and ruler conditions; no exhaustive ending matrix copied.
+<a id="m13"></a>**M13 — Prima guide.** [Landsmeet](https://primagames.com/eguides/dragon-age-origins-eguide/walkthrough/walkthrough/the-landsmeet). Evidence, alliances and consequential conditions.
 
-<a id="m14"></a>**M14 — Prima guide.** [The Final Onslaught](https://primagames.com/eguides/dragon-age-origins-eguide/walkthrough/walkthrough/the-final-onslaught). Optional ritual and sacrifice, explicitly branching.
+<a id="m14"></a>**M14 — Prima guide.** [Final Onslaught](https://primagames.com/eguides/dragon-age-origins-eguide/walkthrough/walkthrough/the-final-onslaught). Branching ritual/sacrifice.
 
-<a id="m15"></a>**M15 — Dragon Age Wiki.** [Toolset](https://dragonage.fandom.com/wiki/Toolset). Indexed PC extension boundary; original technical site failed retrieval, so no API/source implementation claims.
+<a id="m15"></a>**M15 — Dragon Age Wiki.** [Toolset](https://dragonage.fandom.com/wiki/Toolset). Indexed extension boundary; original technical site unavailable, so no inferred API implementation.
 
-<a id="a1"></a>**A1 — Kevin VanOrd, GameSpot, March 16, 2010.** [Awakening review](https://www.gamespot.com/reviews/dragon-age-origins-awakening-review/1900-6253668/). Full body; tactical praise and character/story reservations retained.
+<a id="a1"></a>**A1 — Kevin VanOrd, GameSpot, March 16, 2010.** [Awakening review](https://www.gamespot.com/reviews/dragon-age-origins-awakening-review/1900-6253668/). Full original reading; character/story reservations preserved.
 
-<a id="a2"></a>**A2 — Dragon Age Wiki.** [Awakening](https://dragonage.fandom.com/wiki/Dragon_Age%3A_Origins_-_Awakening). Indexed import and version-specific equipment caveats.
+<a id="a2"></a>**A2 — Dragon Age Wiki.** [Awakening](https://dragonage.fandom.com/wiki/Dragon_Age%3A_Origins_-_Awakening). Indexed import and item exceptions.
 
-<a id="a3"></a>**A3 — Prima Awakening guide.** [Skills, talents and specialties](https://primagames.com/eguides/dragon-age-origins-awakening-eguide/essentials/the-basics/skills-talents-and-specialties). Added specializations and allocation levels.
+<a id="a3"></a>**A3 — Prima Awakening guide.** [Skills/talents/specialties](https://primagames.com/eguides/dragon-age-origins-awakening-eguide/essentials/the-basics/skills-talents-and-specialties). Added progression and allocations.
 
-<a id="a4"></a>**A4 — Cheat Code Central, historical firsthand review.** [Awakening Xbox 360 review](https://www.cheatcc.com/articles/dragon-age-origins-awakening-review-for-xbox-360-xbox360/). Accessible skill/equipment discussion; not counted among the five base-game reviews.
+<a id="a4"></a>**A4 — Cheat Code Central.** [Awakening Xbox 360 review](https://www.cheatcc.com/articles/dragon-age-origins-awakening-review-for-xbox-360-xbox360/). Historical firsthand skill/equipment discussion, not one of the five base reviews.
 
-<a id="a5"></a>**A5 — Greg Boccia, Gamer Guides; XboxAchievements guide.** [Keep-upgrade guide](https://earth.gamerguides.com/dragon-age-origins/guide/downloadable-content/trophyachievement-guide/awakening-achievements), [achievement walkthrough](https://www.xboxachievements.com/game/dragon-age-origins/guide/). Indexed material/fortification requirements and late quest structure; trophy conditions are not population statistics.
+<a id="a5"></a>**A5 — Greg Boccia/Gamer Guides; XboxAchievements.** [Keep-upgrade guide](https://earth.gamerguides.com/dragon-age-origins/guide/downloadable-content/trophyachievement-guide/awakening-achievements), [achievement walkthrough](https://www.xboxachievements.com/game/dragon-age-origins/guide/). Indexed resource/fortification and later quest structure.
 
-<a id="d1"></a>**D1 — Prima guide.** [The Stone Prisoner](https://primagames.com/eguides/dragon-age-origins-eguide/dlc/the-stone-prisoner/walkthrough). Read Honnleath, crystals and Cadash Thaig relationship links.
+<a id="d1"></a>**D1 — Prima.** [Stone Prisoner](https://primagames.com/eguides/dragon-age-origins-eguide/dlc/the-stone-prisoner/walkthrough). Honnleath, equipment and history links.
 
-<a id="d2"></a>**D2 — Prima guide.** [Warden's Keep](https://primagames.com/eguides/dragon-age-origins-eguide/dlc/wardens-keep/walkthrough). Read Avernus/Sophia, abilities, vendors, storage and Starfang.
+<a id="d2"></a>**D2 — Prima.** [Warden's Keep](https://primagames.com/eguides/dragon-age-origins-eguide/dlc/wardens-keep/walkthrough). Avernus/Sophia, power, services and Starfang.
 
-<a id="d3"></a>**D3 — Dragon Age Wiki.** [Return to Ostagar quest](https://dragonage.fandom.com/wiki/Return_to_Ostagar_%28quest%29). Read revisit and companion-commentary structure; platform-specific return-access differences not flattened.
+<a id="d3"></a>**D3 — Dragon Age Wiki.** [Return to Ostagar](https://dragonage.fandom.com/wiki/Return_to_Ostagar_%28quest%29). Revisit and companion context; platform access distinctions preserved.
 
-<a id="d4"></a>**D4 — Rob Bartel interviewed by GameSpot, May 6, 2010.** [Darkspawn Chronicles Q&A](https://www.gamespot.com/articles/dragon-age-origins-darkspawn-chronicles-qanda/1100-6261320/). Primary explanation of counterfactual history, thralls and DLC production experiments.
+<a id="d4"></a>**D4 — Rob Bartel/GameSpot, May 6, 2010.** [Darkspawn Q&A](https://www.gamespot.com/articles/dragon-age-origins-darkspawn-chronicles-qanda/1100-6261320/). Primary counterfactual, thrall and production explanation.
 
-<a id="d5"></a>**D5 — Kevin VanOrd, GameSpot, July 13, 2010.** [Leliana's Song review](https://www.gamespot.com/reviews/dragon-age-origins-lelianas-song-review/1900-6268965/). Written body read; three-member active party and character-focused assessment.
+<a id="d5"></a>**D5 — Kevin VanOrd, GameSpot, July 13, 2010.** [Leliana's Song](https://www.gamespot.com/reviews/dragon-age-origins-lelianas-song-review/1900-6268965/). Full original reading; three-person active party.
 
-<a id="d6"></a>**D6 — Gamer Guides.** [Amgarrak walkthrough](https://www.gamerguides.com/dragon-age-origins/guide/downloadable-content/the-golems-of-amgarrak/amgarrak). Colour-state access and research-linked golem upgrades.
+<a id="d6"></a>**D6 — Gamer Guides.** [Amgarrak](https://www.gamerguides.com/dragon-age-origins/guide/downloadable-content/the-golems-of-amgarrak/amgarrak). Color-state access and research upgrades.
 
-<a id="d7"></a>**D7 — Dragon Age Wiki.** [In Search of Amgarrak](https://dragonage.fandom.com/wiki/In_Search_of_Amgarrak), [The Runic Golem](https://dragonage.fandom.com/wiki/The_Runic_Golem). Indexed party/context details; no newly read full professional review claimed.
+<a id="d7"></a>**D7 — Dragon Age Wiki.** [In Search of Amgarrak](https://dragonage.fandom.com/wiki/In_Search_of_Amgarrak), [Runic Golem](https://dragonage.fandom.com/wiki/The_Runic_Golem). Indexed party/context, not a newly read critic review.
 
-<a id="d8"></a>**D8 — Kevin VanOrd, GameSpot.** [Witch Hunt review](https://www.gamespot.com/reviews/dragon-age-origins-witch-hunt-review/1900-6275485/). Historical DLC review; migrated page displays October 5, 2013. Full criticism read, not treated as a fresh 2013 release.
+<a id="d8"></a>**D8 — Kevin VanOrd, GameSpot.** [Witch Hunt](https://www.gamespot.com/reviews/dragon-age-origins-witch-hunt-review/1900-6275485/). Full historical criticism; migrated October 5, 2013 metadata is not a fresh release.
 
-<a id="d9"></a>**D9 — Wikipedia, reference overview.** [Origins downloadable content](https://en.wikipedia.org/wiki/Dragon_Age:_Origins_downloadable_content). Read product/module distinctions and promotional inventory; not evidence of current service availability or a substitute for the substantive DLC sources above.
+<a id="d9"></a>**D9 — [DLC overview](https://en.wikipedia.org/wiki/Dragon_Age:_Origins_downloadable_content).** Reference inventory of modules/promotions; not current availability or replacement for substantive DLC sources.
 
-<a id="s1"></a>**S1 — Mike Laidlaw interview, Destructoid, September 9, 2009.** [Moral-choice design](https://www.destructoid.com/dragon-ages-moral-choices-will-be-aggressively-grey/). Primary design intent; success not assumed from intent.
+<a id="s1"></a>**S1 — Mike Laidlaw/Destructoid, September 9, 2009.** [Moral-choice interview](https://www.destructoid.com/dragon-ages-moral-choices-will-be-aggressively-grey/). Primary intent, not proof of success.
 
 <a id="s2"></a>**S2 — BioWare, July 2, 2010.** [Corinne Kempa interview](https://blog.bioware.com/2010/07/02/leliana-speaks-an-interview-with-corrine-kempa/). Primary voice-production account.
 
-<a id="s3"></a>**S3 — EA, February 8, 2010.** [Triple-platinum sales release](https://news.ea.com/press-releases/press-releases-details/2010/BioWares-Dragon-Age-Origins-Reaches-Triple-Platinum-Sales/default.aspx). Publisher's over-3.2-million sold-in metric, not current active users.
+<a id="s3"></a>**S3 — EA, February 8, 2010.** [Sales release](https://news.ea.com/press-releases/press-releases-details/2010/BioWares-Dragon-Age-Origins-Reaches-Triple-Platinum-Sales/default.aspx). Over 3.2M sold-in, not active users.
 
-<a id="p1"></a>**P1 — Steam Community, accessed September 26, 2026.** [Most helpful/all-time](https://steamcommunity.com/app/47810/reviews/?browsefilter=toprated). Selected dated positive accounts, with free-copy disclosure retained.
+<a id="s4"></a>**S4 — Eric Farand/RPGFan, pre-release Mike Laidlaw interview.** [Original transcript](https://classic.rpgfan.com/features/Dragon_Age_Interview/). Full body read September 26, 2026. Approximate total/full-team chronology, temporary peak staffing and platform/usability constraints; exact posted day not exposed. Promotional runtime estimates are not adopted as player telemetry.
 
-<a id="p2"></a>**P2 — Steam Community, accessed September 26, 2026.** [Broader review stream](https://steamcommunity.com/app/47810/reviews/). Cached August negative accounts; year and all-time helpful rank not established. Technical claims not independently tested.
+<a id="s5"></a>**S5 — Wesley Yin-Poole/Brent Knowles, VideoGamer, October 22, 2008.** [Interview](https://www.videogamer.com/previews/dragon-age-origins-interview/). Relevant substantive indexed opening read; direct retrieval failed. Actual testing/integration description, not a claim of reading the unavailable remainder.
+
+<a id="s6"></a>**S6 — Mike Laidlaw interview, Prima, May 10, 2009.** [Lead-designer interview](https://primagames.com/news/dragon-age-origins-lead-designer-interview). Full body read; PC lock/testing, console task checks and intended tactics accessibility. Migrated 2023 metadata is not the interview date.
+
+<a id="s7"></a>**S7 — Dakota Grabowski/Mike Laidlaw, Strategy Informer, October 13, 2009; now GameWatcher.** [Original interview](https://www.gamewatcher.com/interviews/dragon-age-origins-interview/11396). Relevant opening sections read; subtitle and approximate console-development sequence. “About” dates are not exact audited milestones.
+
+<a id="s8"></a>**S8 — Mike Laidlaw interview, PCWorld, 2009.** [Storytelling interview, part one](https://www.pcworld.com/article/520025/dragon_age_interview_p1.html). Substantive indexed worldbuilding/novel passage read; linked parts not inferred as read.
+
+<a id="s9"></a>**S9 — Greg Zeschuk interview, VideoGamer, July 10, 2009.** [Owned-setting and Baldur's Gate discussion](https://www.videogamer.com/previews/20090710101929-dragon-age-origins-interview/). Substantive indexed primary answer read; historical rights context, not current ownership advice.
+
+<a id="s10"></a>**S10 — BioWare, October 9, 2009.** [Making-of documentary collection](https://blog.bioware.com/2009/10/09/documentaries-on-the-making-of-dragon-age-origins/). Official written identities and viewing routes; videos not watched, transcripts not invented.
+
+<a id="p1"></a>**P1 — Steam Community, original September 26, 2026 access.** [Most helpful/all-time](https://steamcommunity.com/app/47810/reviews/?browsefilter=toprated). Named positive accounts and free-copy disclosure retained; not a newly collected sample.
+
+<a id="p2"></a>**P2 — Steam Community, original September 26, 2026 access.** [Broader review stream](https://steamcommunity.com/app/47810/reviews/). Cached August negatives; year/all-time rank unresolved, technical allegations not independently tested.
