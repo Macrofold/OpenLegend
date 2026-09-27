@@ -534,6 +534,25 @@ These are research interpretations, not accepted OpenLegend implementation tasks
 
 ## 17. Requirement and preservation check
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory confirms the platform dossier is complete and that creator-defined systems remain distinct from Dreams' platform-level capabilities:
+
+- **Identity / classes / attributes / skills / leveling / trees:** no universal RPG character/class/skill/level system exists; creators can author these from puppets, variables, selectors and logic (§§5–7).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** creator-defined through Elements, variables, logic, emitters and authored interfaces; there is no platform-global inventory/equipment schema (§§1–7).
+- **Magic / spells / powers:** creator-defined from inputs, conditions, resources, effects and logic; no universal magic grammar.
+- **Traversal / environmental and object interaction:** Imp manipulation, possession, authored character controls, physics, connectors, sensors, movers, trigger zones and scene transitions are core platform capabilities (§§2–7).
+- **Activities / minigames / combat / stealth / loot / rewards:** defined per Dream. Art's Dream, Ancient Dangers, Tren and community works demonstrate different finished activities rather than a universal ruleset (§§5–10).
+- **Death / failure / recovery:** creator-defined; checkpoints/health/respawn gadgets provide primitives but no platform-wide death contract.
+- **Economy / trading:** creator-defined in fiction. Dreams itself has no in-Dreams player marketplace/creator-payment economy comparable to Roblox/Fortnite (§§6, 11–13).
+- **Story / relationships / romance / reputation / party / companions:** creator-defined with dialogue/state/variables; platform collaboration between human creators is a separate social system (§§5–7, 10–11).
+- **NPC/AI behavior and schedules / factions:** sensors/follower/flee/state-machine logic can author bounded actors, but Dreams does not supply a general cognitive-agent or faction-simulation layer (§§6–7).
+- **World map / quests / events / building / settlements / management:** Scenes/Dreams/Collections plus creator tools can implement these; the platform itself supplies authoring primitives rather than one canonical world-management model.
+- **Multiplayer / social / endgame / return loops:** local couch multiplayer can be authored, but planned **online multiplayer never shipped**. Long-term platform use is discover/play/create/remix/release/iterate rather than one shared endgame.
+
+**Current service boundary:** Media Molecule ended **live feature support on September 1, 2023**, but its final roadmap statements explicitly preserved the ability to **play, create and share** Dreams afterward. The final major update was **v2.64 (September 13, 2023)**, with later limited maintenance such as v2.65 rather than resumed feature development. The official support material remains online and does not announce a server shutdown. [DR53](#dr53) [DR56](#dr56) This audit therefore keeps “live support ended” distinct from “Dreams is inaccessible.”
+
+
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / promise | §§1, 5, 13 |
