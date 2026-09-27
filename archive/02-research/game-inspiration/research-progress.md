@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Corrective research active: G82 — Final Fantasy V.** Complete piano/song progression, named Mix and Blue Magic examples, spoiler-marked Galuf–Krile continuity and fully worked situations. Preserve the existing dossier and its source IDs. Then finish G83–G90 and G93; exact closure criteria are in the audit owner.
+**Corrective research active: G83 — Final Fantasy VI.** Integrate the Coliseum's automatic combat, wager/reward and ejection rules, expand the four existing situations, add spoiler warnings and versioned recovery. The Advance manual, printed page 30, explicitly preserves EXP/levels after game over while resetting acquired items/gil; Pixel Remaster uses saved-state recovery. Do not conflate that with manually loading an old save or invent retention of all Esper bonuses. A fresh native Steam weekly page supplies named contrasting accounts after the inherited negative-review locator failed.
 
-**Latest completed repair: G81**, `6f78d298839d8ebd0e87e28d4d61b19c419a5ce7`. The actual commit diff was read: earlier research/examples and FFIV01–29 remain; §24 supplies storage/version boundaries, Kokkol forging and three complete noncombat situations, with FFIV30–34 and an updated requirement map. Exact storage capacity and disputed story-gating language remain qualified rather than invented.
+**Latest completed repair: G82**, `7e43906456a8f74eaa99bca49f16f403e1376889`. The actual content diff was inspected: prior combinations and FFV01–25 remain; §§12/24 add succession, piano/song acquisition and five complete situations, with FFV26–31 and an updated map. G81 was repaired in `6f78d298839d8ebd0e87e28d4d61b19c419a5ce7` and its actual diff reviewed. Final source-tail/link review remains part of the final gate.
 
 The September 26 substantive audit reopened G81–G90 and G93; nine other dossiers retain coverage judgments. Mike authorized applying the correction package and completing missing research. The old blanket twenty-of-twenty statement was too strong. Connector writes work in this continuation. Complete and commit each game before advancing; do not use a source count or heading as a substitute for substantive coverage.
 
@@ -17,8 +17,8 @@ This heading is retained for existing inbound links. **Needs repair** is not com
 | ID | Dossier | Current state / corrective commit |
 | --- | --- | --- |
 | G81 | [Final Fantasy IV](dossiers/final-fantasy-iv.md) | Repair complete — `6f78d298839d8ebd0e87e28d4d61b19c419a5ce7` |
-| G82 | [Final Fantasy V](dossiers/final-fantasy-v.md) | Corrective research active |
-| G83 | [Final Fantasy VI](dossiers/final-fantasy-vi.md) | Needs repair |
+| G82 | [Final Fantasy V](dossiers/final-fantasy-v.md) | Repair complete — `7e43906456a8f74eaa99bca49f16f403e1376889` |
+| G83 | [Final Fantasy VI](dossiers/final-fantasy-vi.md) | Corrective research active |
 | G84 | [Final Fantasy VII](dossiers/final-fantasy-vii.md) | Needs repair |
 | G85 | [Final Fantasy VIII](dossiers/final-fantasy-viii.md) | Needs repair |
 | G86 | [Final Fantasy IX](dossiers/final-fantasy-ix.md) | Needs repair |
