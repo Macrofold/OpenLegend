@@ -191,3 +191,13 @@ saved. Deterministic conversation lifecycle notices are not generation failures.
 [Contract](../narration-and-conversations.md#9-triggers-ordering-and-transcript-reconstruction) ·
 [Implementation work](../maintainers/narration-and-conversations.md) ·
 [Plan](../projects/narration-failure-cleanup.md).
+
+## LA236
+
+**Proposed target — design only · Restrictiveness: Safe.**
+
+Long conversations have no conversation-turn cutoff for durable saved history. Model-facing conversation context must remain bounded: when one actor's permitted transcript no longer fits its assigned request allowance, the target design represents older permitted speech with actor-scoped compaction while retaining recent speech verbatim. Exact summary/recent byte allocation is deliberately not fixed by the design and must be selected against the actual provider/request allowance during implementation qualification.
+
+**Reason / tradeoff:** Bound inference context without deleting conversation history, inventing a turn-count forgetting rule or widening what an NPC was allowed to hear. A byte budget matches the actual transport constraint better than a fixed number of turns; leaving the initial split tunable avoids treating an unmeasured prompt allocation as gameplay semantics.
+
+[Design](../projects/conversation-compaction-tech-design.md).
