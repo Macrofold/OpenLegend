@@ -239,6 +239,26 @@ A source's factual claims also need checking. The inspected user listing include
 
 ## 16. Reading routes, coverage and preservation
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and confirms the following category boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** the player customizes identity and island life but has no RPG class, combat attribute, skill-level or perk tree. Progress is expressed through island facilities, home/storage expansion, recipes, collections, relationships and creative permissions.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** pockets/storage, tools, DIY/cooking recipes, catalogued furniture/clothing, plants, art and expressive designs are covered in §§3–8. There is no combat gear progression ladder.
+- **Magic / spells / powers:** absent. Extraordinary affordances come from tools, permits and game-specific systems such as terraforming rather than supernatural player powers.
+- **Traversal / environmental and object interaction:** walking, swimming/diving, vaulting, island visits, shovel/axe/net/fishing-tool use, furniture placement, Island Designer, food-enabled tree/rock manipulation and Resetti cleanup are covered across §§3, 6–9.
+- **Activities / minigames:** fishing, bug catching, diving, fossil/art collecting, gardening, decorating, hotel-room assignments, Slumber Island creation and seasonal events are integrated activities rather than a separate arcade progression layer.
+- **Combat / stealth / loot / rewards:** conventional combat/stealth are absent. Catching/collecting, Nook Miles, Bells, recipes, museum donations and expressive objects are the reward structures.
+- **Death / failure / recovery / economy / trading:** there is no ordinary death-loss loop. Bells, turnips, Nook Miles, Poki and Hotel Tickets have distinct roles; trading/visiting with other players is social exchange, not a global auction economy.
+- **Story / relationships / romance / reputation / party / companions:** villagers have friendship, requests, hobbies and bounded routines; there is no romance/marriage system or commandable adventuring party (§5).
+- **NPC/AI behavior and schedules / factions:** villagers and special characters follow authored schedules/behaviors and services, but there is no political-faction simulation or unrestricted autonomous social planning.
+- **World map / environment / quests / events:** the island, mystery tours, Harv's Island, Happy Home Paradise, Slumber Islands, seasons/weather and event calendar are covered across §§4–9.
+- **Building / settlements / management:** placing buildings, bridges/inclines, terraforming, housing, decorating and island evaluation are central; this is personal island/community authorship rather than worker-population production management.
+- **Multiplayer / social / endgame / return loops:** same-console residents, local/online visits, dream visits and Switch 2 twelve-player sessions are version-scoped in §9. Collections, relationships, seasonal events, design projects and later hotel/Slumber content provide continuing goals rather than a formal combat endgame.
+
+**Current boundary check:** Nintendo's support page still lists **Ver. 3.0.3 (April 29, 2026)** as the latest software update on September 27, 2026. It includes the free 3.0 content for both Switch generations while the paid Switch 2 Edition adds separate hardware/online enhancements. No later content update is inferred from storefront availability or anniversary items. [AC03](#ac03) [AC04](#ac04)
+
+
 For orientation, read Nintendo's free-update/paid-edition explanation and the original island-design interview, then compare the launch and paid-upgrade reviews. The Famitsu CEDEC report provides the strongest art-production detail in this pass. The Gameplay episode provides an **actually inspected written transcript** of musical analysis; its linked videos and Nintendo performance are viewing pointers, not claimed full-footage inspection. Getty's generator is a useful concrete artifact-sharing reference, with the access limitation described above.
 
 | Requirement | Substantive coverage |
