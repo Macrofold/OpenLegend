@@ -8,7 +8,7 @@ Each game is reread against the full R01–R14 requirements, the explicit mechan
 
 ## Current audit state
 
-**Active: G145 — Enshrouded.** G141–G144 are audited; Enshrouded is now being checked against the September-27 Early Access boundary, explicit character/build/loot/death/quest/social inventory, current Update 8 mechanics, future 1.0 separation and current player evidence.
+**Active: G146 — V Rising.** G141–G145 are audited; V Rising is now being checked against current 1.1.1/no-1.2 scope, character/customization/build inventory, boss/spell/item progression, activities/stealth/social/faction boundaries, death/server rules, production and current player evidence.
 
 | ID | Subject | Audit status | Audit commit / findings |
 | --- | --- | --- | --- |
@@ -16,8 +16,8 @@ Each game is reread against the full R01–R14 requirements, the explicit mechan
 | G142 | Grounded | **Audited** | `50f24385d7fe996a5c71bed5b0b1745b11f69eba` — added fixed-teen identity baseline, pets/companion mechanics, BURG.L quest/activity rewards, loot structure, explicit insect-faction/raid behavior and soundtrack/audio evidence; pinned latest first-party original-game patch found to 1.4.7.4815 and separated all-time Early Access Steam testimony from current evidence. |
 | G143 | The Long Dark | **Audited** | `b582ffd1868be31347b64644fc9a4a00cb326416` — corrected stale absolute-permadeath language for shipped Cheat Death (up to three continuations with escalating cost), added Misery Mode, survivor identity, mapping/collection activities, magic/stealth/social absences and current WINTERMUTE/Survival music credits. |
 | G144 | Green Hell | **Audited** | `258406ffc7d436d8bcf622d15fc6853c35b7da07` — added fixed-protagonist progression baseline, six limb-armor tiers/metal forging, full use-skill roster, fishing/blueprint/activity and loot/reward coverage; corrected the overbroad faction absence by documenting Spirits of Amazonia Trust/ritual progression, and added NPC-schedule/party absences plus official soundtrack credits and current helpful Steam evidence. |
-| G145 | Enshrouded | **In progress** | Full dossier/mechanics/current-version audit underway. |
-| G146 | V Rising | Pending | — |
+| G145 | Enshrouded | **Audited** | `353e3ee3ed1dac1d7761feb2a9700beafbf1fc30` — corrected default-food wording because World Settings can enable Starvation Mode; added character creation/six attributes/open skill paths, actual sneak skills, configurable tombstone death loss, chest/rune/gem loot, 148-quest structure, survivor day/night routines, husbandry/fishing and soundtrack evidence; pinned latest live hotfix found to v0.9.1.2 while keeping October 1.0 changes future. |
+| G146 | V Rising | **In progress** | Full dossier/mechanics/current-version audit underway. |
 | G147 | Once Human | Pending | — |
 | G148 | Abiotic Factor | Pending | — |
 
