@@ -57,9 +57,9 @@ RuneScape and Old School RuneScape are independent subjects G48/G49; their impor
 | G16 — Spore | **Audited** | `58495e5efa10c522b0d032456846a6f6aed71e00` — explicit stage-relative mechanics closure; freshly verified live Sporepedia and September 2026 official creation activity. |
 | G17 — No Man's Sky | **Audited** | `0d02834da3d8c3706743085e4462247b800393bb` — explicit mechanics-inventory closure; advanced current boundary from Cosmos 7.0 launch to 7.04 maintenance plus the live anniversary Expedition. |
 | G18 — EverQuest Next | **Audited** | `9c513bd05a7edb7bd2c9b525807152464acb7979` — explicit documented-design mechanics closure; preserved cancelled/unreleased evidence boundary without fabricating shipped systems or reviews. |
-| G19 — Ultima Online | **In progress** | Recheck current production-shard/New Legacy/season boundaries and full mechanics inventory. |
-| G20 — Minecraft | Pending | — |
-| G21 — RimWorld | Pending | — |
+| G19 — Ultima Online | **Audited** | `11514866fe9c0c5f7e1c9f618afe07bd7bcf35b0` — explicit mechanics-inventory closure; rechecked Publish 124/29th-anniversary live state and preserved New Legacy Season 2 as future until October 15. |
+| G20 — Minecraft | **Audited** | `30d71e1d540309fbaa4e75a2719f790501aa55a0` — explicit mechanics-inventory closure; rechecked Wilderness Bound as Java 26.3/Bedrock 26.50, Bedrock maintenance through 26.52, and Java 26.4 as snapshot-only. |
+| G21 — RimWorld | **In progress** | Recheck current expansion/version boundaries and full mechanics inventory. |
 | G22 — Hades I | Pending | — |
 | G23 — Dwarf Fortress | Pending | — |
 | G24 — The Sims | Pending | — |
