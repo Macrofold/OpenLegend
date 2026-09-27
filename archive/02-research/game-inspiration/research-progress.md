@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Corrective research active: G86 — Final Fantasy IX.** Correct Eiko's Trance; develop Tetra Master, frog-catching and Mognet; add complete equipment, synthesis, activity and cooperative situations and spoiler warnings. Then continue G87–G90 and G93. The audit owner records exact closure criteria.
+**Corrective research active: G87 — Final Fantasy X.** Correct the party-label and aggregate-Steam-attribution errors; add named Mix inputs, Al Bhed Primers, Cloister operations, complete cross-system situations and specific audiovisual evidence. Then continue G88–G90 and G93. The audit owner records exact closure criteria.
 
-**Latest completed repair: G85**, `4479ef42a6c29b9907c8ed1ec96af2216e190ed0`. Actual principal diff read: magazine/Item-command errors corrected; Quistis, Chocobo World, named transformations, six complete situations and music added; original written Kitase interview replaces weak motion-capture metadata evidence. Original examples and FFVIII01–24 remain. G81–G84 principal diffs were also inspected. Final source-tail/local-link review remains pending.
+**Latest completed repair: G86**, `5578872c19a3a8e357ba9b94c0485bded0110c9b`. Corrected Eiko's Trance and qualified Sword Magic's partner-state/MP rules; added operative Tetra Master, frog and Mognet descriptions, six complete situations and explicit spoilers. Original sections, examples and FFIX01–22 sources remain; FFIX23–31 document new evidence. Principal committed diff inspected. Final source-tail/local-link review remains pending alongside the preceding repairs.
 
 The substantive audit reopened G81–G90 and G93; nine other dossiers retain coverage judgments. Mike authorized corrections and completion of missing research. The old blanket twenty-of-twenty statement was too strong. Complete and commit each game before advancing; headings and source counts are not substantive coverage.
 
@@ -21,8 +21,8 @@ Heading retained for inbound links. **Needs repair** is not complete. **Coverage
 | G83 | [Final Fantasy VI](dossiers/final-fantasy-vi.md) | Repair complete — `93f69afaa403863dbda1db32eaad7625954e6f59` |
 | G84 | [Final Fantasy VII](dossiers/final-fantasy-vii.md) | Repair complete — `32eda3c24ff979f993d4d760076eaa1833e78344` |
 | G85 | [Final Fantasy VIII](dossiers/final-fantasy-viii.md) | Repair complete — `4479ef42a6c29b9907c8ed1ec96af2216e190ed0` |
-| G86 | [Final Fantasy IX](dossiers/final-fantasy-ix.md) | Corrective research active |
-| G87 | [Final Fantasy X](dossiers/final-fantasy-x.md) | Needs repair |
+| G86 | [Final Fantasy IX](dossiers/final-fantasy-ix.md) | Repair complete — `5578872c19a3a8e357ba9b94c0485bded0110c9b` |
+| G87 | [Final Fantasy X](dossiers/final-fantasy-x.md) | Corrective research active |
 | G88 | [Final Fantasy XI](dossiers/final-fantasy-xi.md) | Needs repair |
 | G89 | [Final Fantasy XII](dossiers/final-fantasy-xii.md) | Needs repair |
 | G90 | [Final Fantasy XIII](dossiers/final-fantasy-xiii.md) | Needs repair |
@@ -43,7 +43,7 @@ The earlier review established twenty files and navigation, not uniform complian
 
 **Preservation baseline:** `games/` tree `2276af0e8a9e4d6dc4dec70d10211356dbf3c12b`; `mechanics/` `752d3ef188f702472beaa5c6d6c88339b2eaaad3`; `references/` `c31f2747b9b49285f53a97f861bcbb915350fd7e`; `essays/` `8c397c72fa86854fa301dc834434487b25b07ad5`. Confirm unchanged at final repair review. Unchanged owners do not certify the earlier seven-file packet split.
 
-Per-game source, coverage and actual-diff review accompanies completion. Final all-changed-files, source-tail and local-link review remains pending. No automated game tests, benchmark, personal playthrough, watched footage or soundtrack listening is claimed.
+G81–G85 principal diffs were inspected in the preceding continuation. Per-game source, coverage and actual-diff review accompanies completion. Final all-changed-files, source-tail and local-link review remains pending. No automated game tests, benchmark, personal playthrough, watched footage or soundtrack listening is claimed.
 
 ## Base-branch state at branch point
 
