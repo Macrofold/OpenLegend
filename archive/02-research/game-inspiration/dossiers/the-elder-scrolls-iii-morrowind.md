@@ -1,6 +1,6 @@
 # G113 — The Elder Scrolls III: Morrowind
 
-**Full research pass — September 26, 2026.** [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research reference, not an implementation specification. Five independently authored written reviews, an expansion review, selected manual sections, developer accounts, quest documentation and contrasting Steam testimony were read. No gameplay execution, video playback or proprietary-code inspection is claimed. **Main-story, faction and expansion spoilers follow.**
+**Full research pass — September 26, 2026; follow-up requirement audit the same day.** [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research reference, not an implementation specification. Five independently authored written reviews, an expansion review, selected manual sections, developer accounts, quest documentation and contrasting Steam testimony were read in the original pass. The follow-up read the complete dossier and researched the specifically identified additions below; it does not claim to have reread every original external source. No gameplay execution, video playback or proprietary-code inspection is claimed. **Main-story, faction and expansion spoilers follow.**
 
 ## Identity, editions and the central tension
 
@@ -192,6 +192,36 @@ App 22320's accessible page displayed **Most Helpful (Week), All, English**, not
 
 Displayed hours and small helpful counts are capture-time values, not proven values at original publication. Unsupported universal claims about enemy scaling and insults/jokes are excluded. The sample establishes different experiences, not the prevalence of each.
 
+## Follow-up: missing rule distinctions and edition corrections
+
+### A birthsign is not merely another stat bonus
+
+**Atronach** combines a larger Magicka reserve, spell absorption and Stunted Magicka; the latter removes ordinary rest-based replenishment, so resource planning changes rather than simply improving all spellcasting. **Apprentice** increases reserves with a Magicka weakness. **Lover** adds Agility and a daily paralysis power that also damages the user's Fatigue. **Shadow** provides a daily invisibility opportunity, whereas **Steed** supplies ongoing Speed. **Lord's** healing is a learned spell paired with a fire weakness, not automatic passive regeneration. These are concrete differences among constant abilities, castable spells and limited-use powers. [Birthsign rules](#s-signs)
+
+The primary manual distinguishes powers—daily use, no casting failure or school practice—from always-active abilities and learned spells. Waiting restores Fatigue but is not equivalent to resting for Health/Magicka; Atronach is an important exception to the general rest rule. [Manual, printed pp. 36 and 45](#s-manual)
+
+### Anatomy, equipment and consequences
+
+Argonian and Khajiit characters cannot wear ordinary boots or face-covering helmets in the original rules. This removes access to particular equipment, including the Boots of Blinding Speed, rather than just applying a numerical armor penalty. Mods changing those restrictions are not evidence that the base game permits them. The source's preferred-race rankings and universal scaling assertions are not adopted. [Community character guide, relevant subsection](#s-beast)
+
+Reported ordinary crimes create a bounty. Arrest offers payment, resistance or jail; confiscation can remove stolen possessions, and jail can reduce skills. Thus the cost is not always just money. This is the ordinary system against which the specific Morag Tong writ exception should be read, not an exact exhaustive account of guard scripts. [Manual, printed p. 45](#s-manual)
+
+### Transformations change the available game, not just appearance
+
+**Vampirism:** the Porphyric Hemophilia incubation period gives a roughly seventy-two-hour opportunity for an ordinary common-disease cure. Established vampirism instead needs the dedicated cure quest. Sunlight damage, lost rest-based Health recovery and widespread refusal of dialogue/services make travel and social access part of the cost. It is not a generic cosmetic clan choice. The manual's atmospheric statement that no cure is known must not be read as proof that the authored cure quest does not exist. [Vampirism documentation](#s-vampire)
+
+**Bloodmoon lycanthropy:** leaving the infection untreated for three days and resting can produce the first transformation; the documented ongoing cycle is 9 p.m.–6 a.m. Wolf form replaces normal inventory/spell use with claws, whose attacks damage Health rather than ordinary hand-to-hand Fatigue. A nightly humanoid victim sustains the form's needs; being observed changing can expose the human identity to hostility. The cure can involve a ritual or a hidden scroll in Gloomy Cave, giving recovery its own discovery route. This is a major gameplay constraint, not a freely toggled combat stance. The guide's speculative rare-spawn arithmetic and vampire/werewolf stacking claims are excluded. Another guide incorrectly says a poison cure handles the initial infection; the dedicated lycanthropy guide specifies a disease cure. [Werewolf rules and cure](#s-werewolf)
+
+### Tribunal changes information management and route validity
+
+Tribunal adds quest-based journal organization rather than leaving every task solely in one chronological stream. Levitation is disabled in Mournhold, despite its importance in the Vvardenfell situations above. That makes an edition/location boundary essential: owning a mobility effect does not guarantee that every new area accepts it. The community article's explanation of internal geometry and authorial motive is not adopted as a verified technical account. [Tribunal features](#s-tribunal)
+
+**Source correction:** the Steam-hosted PDF visibly identifies itself as the **Game of the Year Edition manual**. It was previously labeled “original manual.” It is primary documentation for the collected edition, not proof that every described interface feature existed at the original launch. The follow-up inspected printed pp. 25 and 45 as images; the p. 36 screenshot failed, although its parsed text was available. [Manual](#s-manual)
+
+### Additional reception check, not an inflated review count
+
+Aegis's September 8, 2002 GameBanshee review describes transparent/resizable interface windows, responsive individual dispositions and warning through music favorably—useful contrast with the original dossier's interface and generic-dialogue objections. **Only page one was accessible**; page two and the all-pages route repeatedly failed. It is therefore supplementary partial testimony, **not a sixth fully read review**, and its broad ease-of-use claim is not an accessibility test. The original five independent full reviews remain the R12 evidence. [Partial review](#r-aegis)
+
 ## Transferable patterns and counterexamples — interpretation
 
 **Different forms of progress should meet.** A mobility spell can open a political route; technical skill can support an economy; a document can alter legal treatment. The dependency is a world that recognizes those capabilities in concrete situations. Separate meters that never affect each other will not produce the same experience.
@@ -210,11 +240,11 @@ Displayed hours and small helpful counts are capture-time values, not proven val
 
 ## Annotated sources and reading routes
 
-All accessed **September 26, 2026**. Guides document observed rules; they are not source-code audits. Selected manual mechanics sections were read, with spellmaking/enchanting page screenshots inspected. Reviews were read through their conclusions. Unavailable GameSpot/UESP routes were not counted. No embedded footage was watched. Older guide inaccuracies specifically identified above were excluded.
+All accessed **September 26, 2026**, in the original pass or expressly identified follow-up. Guides document observed rules; they are not source-code audits. Selected manual mechanics sections were read, with spellmaking/enchanting page screenshots inspected in the original pass. The original five full reviews were read through their conclusions; the new partial review is explicitly excluded from that count. Unavailable GameSpot/UESP routes were not counted. No embedded footage was watched. Older guide inaccuracies specifically identified above were excluded.
 
 <a id="s-store"></a>**Bethesda description on Steam, app 22320.** Bundle/mode/editor-exclusion evidence; current store metadata does not resolve all original regional release dates. [Source](https://store.steampowered.com/app/22320/The_Elder_Scrolls_III_Morrowind_Game_of_the_Year_Edition/).
 
-<a id="s-manual"></a>**Bethesda, original manual, Steam-hosted PDF.** Selected character, advancement, fatigue, spellmaking, enchanting and alchemy sections; printed pages 38–39 visually inspected. Not a claim to have read every legal/support page. [Source](https://store.steampowered.com/manual/22320).
+<a id="s-manual"></a>**Bethesda, GOTY PC manual, Steam-hosted PDF.** Corrected edition identification in the audit. Original selected character, advancement, fatigue, spellmaking, enchanting and alchemy sections; printed pages 38–39 visually inspected in the original pass. Follow-up read birthsign, powers/disease, rest and crime text, visually inspecting pp. 25 and 45; p. 36 image retrieval failed. Not a claim to have read every legal/support page, nor a definitive absence-of-cure specification. [Source](https://store.steampowered.com/manual/22320).
 
 <a id="s-races"></a>**GameBanshee, race index.** Roster identification, not independent reading of all linked racial descriptions. [Source](https://www.gamebanshee.com/morrowind/races.php).
 
@@ -268,18 +298,38 @@ All accessed **September 26, 2026**. Guides document observed rules; they are no
 
 <a id="s-steam"></a>**Steam community app 22320, September 26, 2026 capture.** Visible Most Helpful (Week), All, English bodies; self-selected testimony, not a census. [Source](https://steamcommunity.com/app/22320/reviews/).
 
+### Follow-up source additions
+
+<a id="s-signs"></a>**GameBanshee, Birthsigns, undated.** Entire thirteen-sign table read, including effect type and drawbacks. Used for named distinctions, not an independently tested optimal build. [Source](https://www.gamebanshee.com/morrowind/birthsigns.php).
+
+<a id="s-beast"></a>**Icehair, Character Creation Guide, race subsection.** Relevant introduction and beast-race equipment discussion read; community strategy rather than official documentation. Ranking preferences, universal scaling language and optional mod advice excluded. [Source](https://icehair.wordpress.com/morrowind/character-creation/).
+
+<a id="s-vampire"></a>**Elder Scrolls Wiki, Vampirism (Morrowind).** Acquisition, recovery, social costs and ability sections read; not the unseen contents of every linked quest. The page's record metadata is not treated as a normal learnable five-Magicka vampirism spell. [Source](https://elderscrolls.fandom.com/wiki/Vampirism_(Morrowind)).
+
+<a id="s-werewolf"></a>**GameBanshee, Werewolf Quests.** Infection, transformed actions, quest changes and both cure routes read. Unverified rare-spawn calculations, stacking discussion and exact regeneration model excluded. A separate Siege of the Skaal Village page's poison-cure wording was rejected in favor of this disease-specific account. [Source](https://www.gamebanshee.com/morrowind/locations/sqwerewolfquests.php).
+
+<a id="s-tribunal"></a>**Elder Scrolls Wiki, Tribunal, Features section.** Journal and levitation boundaries, not a technical geometry or author-intent audit. Other feature counts and purported universally best merchant prices not adopted. [Source](https://elderscrolls.fandom.com/wiki/The_Elder_Scrolls_III:_Tribunal).
+
+<a id="r-aegis"></a>**Aegis, GameBanshee, September 8, 2002.** First review page fully read; page two/all-pages unavailable despite retries. Supplementary partial criticism only, excluded from five-full-review count. [Source](https://www.gamebanshee.com/reviews/29306-the-elder-scrolls-iii-morrowind-review.html).
+
+### Reading route
+
+Start with [birthsigns](#s-signs) and the [manual](#s-manual) to distinguish automatic abilities, powers and ordinary spells. Compare [Cavner](#r-cavner) with [Boske](#r-boske) on freedom versus recognition. Then read [Three Informants](#s-informants), [Morag Tong](#s-tong) and [East Empire Company](#s-eec) for knowledge, permission and staged place change. The transformation/cure and quest routes contain spoilers. The Bethesda [anniversary account](#s-anniversary) is an inspected written production route; embedded or linked footage is not represented as watched.
+
 ## Coverage and preservation check
 
 | Requirement | Substantive coverage |
 | --- | --- |
-| R01–R02 | Editions, player promise, character creation, complete skill-family inventory and actual actions. |
-| R03–R04 | Equipment, magic composition, alchemy, resources, growth, travel, economy and failure/return. |
+| R01–R02 | Editions, player promise, character creation, complete skill-family inventory, named birthsign contracts and actual actions. |
+| R03–R04 | Equipment and racial restrictions, magic composition, alchemy, resources, growth, travel, economy, crime, recovery and failure/return. |
 | R05 | Eight documented-rule situations plus an attributed interaction mistake. |
-| R06–R08 | Institutions, specific relationships, followers/transformations, named narrative and presentation. |
-| R09–R11 | Primary production accounts, editor/distribution boundaries, maintenance and qualified participation evidence. |
-| R12 | Five independent full reviews, additional expansion criticism and positive/negative Steam bodies. |
-| R13–R14 | Transfer hypotheses with dependencies/counterexamples, annotated sources and navigation. |
+| R06–R08 | Institutions, specific relationships, followers/transformations and their costs, named narrative and presentation. |
+| R09–R11 | Primary production accounts, editor/distribution boundaries, maintenance, corrected manual edition and qualified participation evidence. |
+| R12 | Five independent full reviews, additional expansion criticism, positive/negative Steam bodies and explicitly partial supplemental criticism. |
+| R13–R14 | Transfer hypotheses with dependencies/counterexamples, annotated sources, actual reading route and navigation. |
 
 This curated addition does not replace any earlier Morrowind references, original packet chapter, selective study, review notebook or video recommendation. No dedicated earlier G113 owner was identified in the inspected base roster, library navigation and dossier tree. Checkpoint criticism and qualifications are retained and expanded.
+
+The follow-up checked the entire dossier against all R01–R14 and the major-mechanics minimum. It preserves all eight situations, five original reviews, named examples, existing source limitations and commercial qualifications. Its additions address concrete omissions rather than substituting new completion labels: birthsigns, anatomical equipment restrictions, crime/recovery, transformation consequences and Tribunal exceptions. The GOTY manual label is corrected in place, and newly inaccessible pages are not counted as read.
 
 Source limits remain explicit: no gameplay benchmark, exhaustive item database, current mod audit, representative player survey or audited title finances. Completion of this major-system pass does not close the global seven-file preservation, all-130-game or integration gates **P01–P05**.
