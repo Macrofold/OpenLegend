@@ -12,7 +12,7 @@ The audit proceeds one game at a time. Material corrections are committed to the
 
 ## Current audit state
 
-**Active: G129 — Oxygen Not Included.** G121–G128 have been reread against the complete standard and corrected where needed.
+**Active: G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl.** G121–G129 have been reread against the complete standard and corrected where needed.
 
 | ID | Subject | Audit status | Audit commit / finding |
 | --- | --- | --- | --- |
@@ -24,8 +24,12 @@ The audit proceeds one game at a time. Material corrections are committed to the
 | G126 | Crusader Kings III | **Audited** | `29455348aa9f7c6d486225c627ab07790b83b00a` — pinned By God Alone to Sept. 30, 2026 as future scope and Silk & Silver as later roadmap, added the current optional content subscription, and explicitly closed the absent general crafting/avatar-stealth categories. |
 | G127 | Dragon's Dogma 2 | **Audited** | `16c8837cc5a6e5a7f4a389885050978dae19faea` — integrated the shipped Sept. 1 Title Update 3.2 into core mechanics: three Arisen save slots with Autosave/Interim/Inn Rest data, six skill slots, Dragonsplague cure/behavior changes and performance work. Added explicit stealth and dynamic-faction-system absences; Dark Arisen remains future Oct. 9 content. |
 | G128 | Ultima VII: The Black Gate | **Audited** | `7aa2c107c4253e864c37a4519c2c9253479b687f` — explicit limited-crafting and absent dedicated-stealth boundaries added; current preservation route verified as Exult 1.12.1 stable (Windows 1.12.1-1 packaging reissue) versus 1.13.x snapshots. |
-| G129 | Oxygen Not Included | **In progress** | Full R01–R14/mechanics/current-version audit. |
-| G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | — |
+| G129 | Oxygen Not Included | **Audited** | `be6d1466b5193ff94c8a964f0c96c6b70742e201` — rechecked the current DLC line through Aquatic and subsequent July maintenance updates; explicitly closed conventional combat, stealth and political-faction absences rather than relying on implication. |
+| G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | **In progress** | Full R01–R14/mechanics/current-version/A-Life audit. |
+
+## G129 — Oxygen Not Included closure evidence
+
+The existing dossier already covered Duplicant traits/skills/morale/needs, priorities/schedules, gases/liquids/heat/germs, power/plumbing/automation, farming/ranching, research/industry, multi-world Spaced Out logistics, failure cascades, eight worked systems cases, five reviews and current player evidence. The audit reconfirmed Aquatic Planet Pack as the latest paid gameplay pack in Klei's current catalog, with later visible 2026 announcements representing maintenance updates. It also makes three useful absences explicit: ONI does not have a conventional tactical-combat campaign, avatar-scale stealth system or joinable political faction-reputation layer; its complexity is primarily physical, logistical and labor-oriented.
 
 ## G128 — Ultima VII: The Black Gate closure evidence
 

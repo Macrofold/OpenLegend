@@ -14,13 +14,15 @@ This library now contains the six parallel research branches below, merged with 
 | `docs/game-inspiration-games-81-100` | `203b409d9fe8` | [Identified G81–G100 audit repairs complete, with retained evidence limits.](#g81g100-branch-research-state) |
 | `docs/game-inspiration-games-101-120` | `b1a383dc7796` | [Revised scope is G101–G110; second-pass audit and scoped integration recorded complete.](#g101g110-branch-research-state) |
 | `docs/game-inspiration-games-111-120` | `2e7ddf5f53a1` | [G111–G120 follow-up audit recorded complete, with retained evidence limits.](#g111g120-branch-research-state) |
-| `docs/game-inspiration-games-121-end` | `be6d1466b519` | [All ten initial passes complete; latest follow-up audit state and closure evidence are retained.](#g121g130-branch-research-state) |
+| `docs/game-inspiration-games-121-end` | `d61073073e25` | [All ten initial passes complete; latest follow-up audit state and closure evidence are retained.](#g121g130-branch-research-state) |
 
 All G01–G130 initial research is now present. The approved [G131–G148 survival expansion](#survival-expansion--g131g148) adds eighteen pending passes, bringing the roster to 148. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
 
 For later updates, fetch `origin` and merge each updated remote branch into `docs/game-inspiration-library` with a normal merge commit. Do not squash or rebase the shared histories. Keep dossier paths stable and reconcile any shared ledger changes within their own range; no propagation back to source branches is required for subsequent merges. Earlier updates received during this integration from the library, G61–G80 and G101–G110 branches merged cleanly. A later G101–G110 closeout changed its global-gate/recovery tail and needed reconciliation with the adjacent imported range; its completion evidence is preserved below.
 
 The earlier integration review verified exact preservation in 221 file/source comparisons, both complete AI Dungeon study texts, every source navigation/changelog line and every per-game status row. A local Markdown path/anchor scan checked the integrated library without unresolved targets. Pinned Prettier 3.6.2 passed with repository ignore rules (the research archive is excluded). These are integration checks, not fresh research, external-URL validation or game execution.
+
+**September 27 refresh verification:** all 130 initial dossier paths are present and the eighteen new G131–G148 paths remain pending. Source comparison found 129 dossiers byte-for-byte identical to their owning branch; all 405 source paragraphs of the separately integrated AI Dungeon study remain in the combined dossier. The four new operational supplements and G121–G130 audit record match their source content. The original 130 roster rows are unchanged, all 148 IDs/filenames are unique, and current requirements/navigation distinguish research completion from pending work. A local scan of the library and changelog found no missing paths or anchors; pinned Prettier 3.6.2 passed with repository ignore rules. This is content-preservation/static verification, not a fresh external-source audit or game execution.
 
 ## Resume here
 
@@ -446,7 +448,7 @@ The original range pass produced ten dossiers with eight worked situations each,
 
 ## G121–G130 branch research state
 
-Imported from `docs/game-inspiration-games-121-end` at `be6d1466b5193ff94c8a964f0c96c6b70742e201`. Its [immutable source ledger](https://github.com/Macrofold/OpenLegend/blob/be6d1466b5193ff94c8a964f0c96c6b70742e201/archive/02-research/game-inspiration/research-progress.md) preserves the inherited G01–G25/fork history and source-specific recovery instructions; current states for those other ranges are owned by their sections above.
+Imported from `docs/game-inspiration-games-121-end` at `d61073073e250312d98dfa8428d5f1fa42a02a02`. Its [immutable source ledger](https://github.com/Macrofold/OpenLegend/blob/d61073073e250312d98dfa8428d5f1fa42a02a02/archive/02-research/game-inspiration/research-progress.md) preserves the inherited G01–G25/fork history and source-specific recovery instructions; current states for those other ranges are owned by their sections above.
 
 ### Requirements-and-corrections audit — G121 through G130
 
