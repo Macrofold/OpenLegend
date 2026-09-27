@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — Research branch refresh and survival roster expansion
+
+Updated `docs/game-inspiration-library` from all six range branches with ordinary merges, including the previously separate G121–G130 dossiers. The [integrated ledger](../archive/02-research/game-inspiration/research-progress.md#integrated-branch-state--september-27-2026) records the exact source heads and scoped audit states; G61–G80 now has all twenty follow-up audits complete, while the G121–G130 audit remains active. Source manuscripts, historical evidence and shared navigation are preserved; stale progress pointers are reconciled against newer committed audit evidence.
+
+Expanded the [canonical roster](../archive/02-research/game-inspiration/research-roster.md#september-27-survival-game-expansion-scope) from 130 to 148 subjects with the approved eighteen survival games. ARK: Survival Evolved, ARK: Survival Ascended, The Forest and Sons of the Forest each receive independent IDs and planned dossiers. All eighteen additions remain pending under the unchanged R01–R14 research standard; this change adds no runtime behavior or engine-maintainer tasks and does not close the global P01–P05 gates.
+
 ## 2026-09-27 — Parallel game-inspiration library integration
 
 Merged the five G40–G120 research branches into `docs/game-inspiration-library` with ordinary merge commits, preserving their ancestry and stable dossier paths so subsequent source-branch commits can be merged incrementally. Reconciled the shared navigation, interaction lookup and [progress ledger](../archive/02-research/game-inspiration/research-progress.md#integrated-branch-state--september-27-2026); the branch named G101–G120 actually owns the revised G101–G110 range. Both independent AI Dungeon studies and their separate evidence limits remain in one dossier.

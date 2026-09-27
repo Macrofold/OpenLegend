@@ -1,10 +1,10 @@
 # Full research progress and resume ledger
 
-**Read first:** [complete assignment / R01–R14](research-requirements.md) and [130-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; working branch `docs/game-inspiration-library`, integrating `docs/game-inspiration-library-expansion` at `57bcd96`; original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`. Research-only tracking, not an implementation backlog.
+**Read first:** [complete assignment / R01–R14](research-requirements.md) and [148-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; working branch `docs/game-inspiration-library`, integrating `docs/game-inspiration-library-expansion` at `57bcd96`; original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`. Research-only tracking, not an implementation backlog.
 
 ## Integrated branch state — September 27, 2026
 
-This library now contains the six parallel research branches below, merged with their original commit ancestry. The source branches remain independent and may receive further commits. Research directions and verification statements retained in each range section describe that source's assignment and evidence; they do not change this integration's scope or certify other ranges.
+This library now contains the six parallel research branches below, merged with their original commit ancestry. The source branches remain independent and may receive further commits. Research directions, dated roster counts and verification statements retained in each range section describe that source's assignment and evidence; they do not change this integration's scope or certify other ranges.
 
 | Source branch | Merged source head | Range status and detailed owner |
 | --- | --- | --- |
@@ -16,7 +16,7 @@ This library now contains the six parallel research branches below, merged with 
 | `docs/game-inspiration-games-111-120` | `2e7ddf5f53a1` | [G111–G120 follow-up audit recorded complete, with retained evidence limits.](#g111g120-branch-research-state) |
 | `docs/game-inspiration-games-121-end` | `b79a6fd69135` | [G121–G130 initial passes complete; follow-up audit has G121–G122 audited and G123 active.](#g121g130-branch-research-state) |
 
-All G01–G130 initial research is now present. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
+All G01–G130 initial research is now present. The approved [G131–G148 survival expansion](#survival-expansion--g131g148) adds eighteen pending passes, bringing the roster to 148. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
 
 For later updates, fetch `origin` and merge each updated remote branch into `docs/game-inspiration-library` with a normal merge commit. Do not squash or rebase the shared histories. Keep dossier paths stable and reconcile any shared ledger changes within their own range; no propagation back to source branches is required for subsequent merges. Earlier updates received during this integration from the library, G61–G80 and G101–G110 branches merged cleanly. A later G101–G110 closeout changed its global-gate/recovery tail and needed reconciliation with the adjacent imported range; its completion evidence is preserved below.
 
@@ -473,13 +473,38 @@ Imported from `docs/game-inspiration-games-121-end` at `b79a6fd6913519cf1f9c7f71
 | G129 — Oxygen Not Included | Complete | [Dossier](dossiers/oxygen-not-included.md); `714ab6cbff9036294504ba8651258279d9e5ee0c` | Base/Spaced Out/Frosty/Bionic/Prehistoric/Neutronium/Aquatic boundaries, eight causal engineering cases, five written reviews plus current Steam evidence; no unsupported lifetime sales claimed. |
 | G130 — S.T.A.L.K.E.R. 2: Heart of Chornobyl | Complete | [Dossier](dossiers/stalker-2-heart-of-chornobyl.md); `12ca0a145cdf4357a498124c9f4744c6175779e6` | Launch/current 2.0/2.0.6 and Cost of Hope boundaries; versioned A-Life evidence, eight worked cases, five independent launch reviews and September 2026 Steam samples; one-million sales and six-million players kept distinct. |
 
+## Survival expansion — G131–G148
+
+**Initial research: 0 / 18 complete; all eighteen pending.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
+
+| ID | Subject | Initial research | Follow-up audit |
+| --- | --- | --- | --- |
+| G131 | Rust | Pending | Not started |
+| G132 | DayZ | Pending | Not started |
+| G133 | ARK: Survival Evolved | Pending | Not started |
+| G134 | ARK: Survival Ascended | Pending | Not started |
+| G135 | 7 Days to Die | Pending | Not started |
+| G136 | Conan Exiles | Pending | Not started |
+| G137 | The Forest | Pending | Not started |
+| G138 | Sons of the Forest | Pending | Not started |
+| G139 | Subnautica | Pending | Not started |
+| G140 | Don't Starve Together | Pending | Not started |
+| G141 | Raft | Pending | Not started |
+| G142 | Grounded | Pending | Not started |
+| G143 | The Long Dark | Pending | Not started |
+| G144 | Green Hell | Pending | Not started |
+| G145 | Enshrouded | Pending | Not started |
+| G146 | V Rising | Pending | Not started |
+| G147 | Once Human | Pending | Not started |
+| G148 | Abiotic Factor | Pending | Not started |
+
 ## Final integration gates — pending
 
 | Gate | Work still required |
 | --- | --- |
 | P01 — Seven-file packet preservation | Compare all original passages, examples, reviews, source annotations, economic dates and viewing recommendations with repository owners. [Provenance](references/packet-provenance.md) identifies inputs but is not a completeness audit. |
 | P02 — Earlier conversation coverage | Recover accessible original scope; distinguish supplied material from unavailable conversation-only details. |
-| P03 — Full roster review | Verify all 130 passes and version/combined-chapter boundaries against R01–R14, including the explicit mechanics inventory, five-review minimum, Steam evidence where applicable, Dragon Age expansion/smaller-game coverage, and franchise boundaries. |
+| P03 — Full roster review | Verify all 148 passes and version/combined-chapter boundaries against R01–R14, including the explicit mechanics inventory, five-review minimum, Steam evidence where applicable, Dragon Age expansion/smaller-game coverage, and franchise boundaries. |
 | P04 — Navigation and links | Connect full dossiers through library/chapter routes; validate internal links and source anchors while preserving old routes. |
 | P05 — Evidence/diff review | Check actual changes, dates, source-access limits and unsupported claims. No unseen footage represented as watched. |
 

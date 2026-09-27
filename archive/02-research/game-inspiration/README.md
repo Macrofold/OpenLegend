@@ -4,10 +4,12 @@
 
 ## Start here
 
-- **[Full 130-subject research roster](research-roster.md):** canonical title/edition list for the per-game mechanics/reception expansion.
+- **[Full 148-subject research roster](research-roster.md):** canonical title/edition list for the per-game mechanics/reception expansion.
 - **[Research requirements](research-requirements.md):** R01–R14 completion standard, including five written reviews per game and Steam review sampling where applicable.
 - **[Live research progress](research-progress.md):** completed, active and pending subjects; resume here after interruption.
 - **[G61–G80 full-game dossier index](dossiers/README.md):** direct reading routes through the tactical, open-world and party-RPG range, plus comparisons of character growth, useful objects and changing access.
+- **[G121–G130 dossiers](#full-dossiers--curated-references-g121g130):** mercenary, survival, social-simulation and systemic-world references.
+- **[G131–G148 survival expansion](research-roster.md#september-27-survival-game-expansion-scope):** approved subjects and edition boundaries; [progress](research-progress.md#survival-expansion--g131g148) records the pending research.
 - **[G101–G110 dossiers](#g101-g110-dossiers):** the six rostered Mass Effect games, both Octopath Travelers and both Knights of the Old Republic games; independent edition-aware research, not a combined franchise substitute.
 - **[Comparative map](essays/comparative-map.md):** find games by the experience they offer.
 - **[Granular mechanics studies](mechanics/README.md):** detailed item/action interactions, reusable constructs, bodies, relationships, resource flows, perception, and knowledge progression, with review disagreements and production context.
@@ -21,7 +23,7 @@
 
 ## Expanded per-game dossiers
 
-The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [progress ledger](research-progress.md) for completion state and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire 130-subject assignment or packet-wide preservation audit is finished.
+The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [progress ledger](research-progress.md) for completion state and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire 148-subject assignment or packet-wide preservation audit is finished.
 
 **September 27, 2026 scoped resolution:** all recorded G40–G60 manuscript-audit findings now have committed remedies. Seventeen subjects required corrections or additional research; four had no major gap identified. The [original matrix](references/games-40-60-coverage-audit.md) and [later-game findings](references/games-51-60-coverage-audit.md) remain historical baseline evidence, not competing current task trackers. Their pending labels are superseded by the ledger's per-game remedy records. Declared source/access/version limits remain, rather than being relabelled as successful reading or testing.
 
@@ -43,11 +45,11 @@ These independent per-game passes supplement the original chapters and mechanics
 
 **Assassin's Creed, G98–G100:** [IV: Black Flag](dossiers/assassins-creed-iv-black-flag.md) · [III](dossiers/assassins-creed-iii.md) · [Valhalla](dossiers/assassins-creed-valhalla.md).
 
-The [roster](research-roster.md) retains all other subjects and their canonical output paths. Completing this slice does not certify the separate 130-subject integration or seven-file packet-preservation audit; those gates remain explicitly tracked in [research progress](research-progress.md#final-integration-gates--pending).
+The [roster](research-roster.md) retains all other subjects and their canonical output paths. Completing this slice does not certify the separate 148-subject integration or seven-file packet-preservation audit; those gates remain explicitly tracked in [research progress](research-progress.md#final-integration-gates--pending).
 
 ## Full dossiers — curated references G111–G120
 
-These per-subject studies supplement the original chapters below. Each contains a mechanics inventory, concrete situations, reception and production research, a requirement map, and annotated evidence limits. The [progress ledger](research-progress.md) owns completion state and commit references; this navigation does not certify the other 120 subjects or the packet-wide preservation audit.
+These per-subject studies supplement the original chapters below. Each contains a mechanics inventory, concrete situations, reception and production research, a requirement map, and annotated evidence limits. The [progress ledger](research-progress.md) owns completion state and commit references; this navigation does not certify the other rostered subjects or the packet-wide preservation audit.
 
 | Roster ID | Dossier |
 | --- | --- |
@@ -61,6 +63,23 @@ These per-subject studies supplement the original chapters below. Each contains 
 | G118 | [Prey (2017)](dossiers/prey-2017.md) |
 | G119 | [Dishonored 2](dossiers/dishonored-2.md) |
 | G120 | [Starsector](dossiers/starsector.md) |
+
+## Full dossiers — curated references G121–G130
+
+These ten imported dossiers have initial research passes. The separate follow-up audit and its current evidence limits are tracked in the [progress ledger](research-progress.md#g121g130-branch-research-state).
+
+| Roster ID | Dossier |
+| --- | --- |
+| G121 | [Battle Brothers](dossiers/battle-brothers.md) |
+| G122 | [Cataclysm: Dark Days Ahead](dossiers/cataclysm-dark-days-ahead.md) |
+| G123 | [Rain World](dossiers/rain-world.md) |
+| G124 | [Persona 5 Royal](dossiers/persona-5-royal.md) |
+| G125 | [XCOM 2](dossiers/xcom-2.md) |
+| G126 | [Crusader Kings III](dossiers/crusader-kings-iii.md) |
+| G127 | [Dragon's Dogma 2](dossiers/dragons-dogma-2.md) |
+| G128 | [Ultima VII: The Black Gate](dossiers/ultima-vii-the-black-gate.md) |
+| G129 | [Oxygen Not Included](dossiers/oxygen-not-included.md) |
+| G130 | [S.T.A.L.K.E.R. 2: Heart of Chornobyl](dossiers/stalker-2-heart-of-chornobyl.md) |
 
 ## Game studies
 
