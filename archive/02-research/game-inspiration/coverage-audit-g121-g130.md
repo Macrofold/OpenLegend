@@ -12,7 +12,7 @@ The audit proceeds one game at a time. Material corrections are committed to the
 
 ## Current audit state
 
-**Active: G126 — Crusader Kings III.** G121–G125 have been reread against the complete standard and corrected where needed.
+**Active: G127 — Dragon's Dogma 2.** G121–G126 have been reread against the complete standard and corrected where needed.
 
 | ID | Subject | Audit status | Audit commit / finding |
 | --- | --- | --- | --- |
@@ -21,11 +21,15 @@ The audit proceeds one game at a time. Material corrections are committed to the
 | G123 | Rain World | **Audited** | `fbd32f6956bfed39e7acf93e49851ee260703af5` — corrected the stale Downpour-era Jolly boundary using Watcher 1.5: official local co-op now covers all five More Slugcats campaigns and The Watcher. Added explicit stealth/perception coverage and current 1.11.7/1.11.8 patch chronology. |
 | G124 | Persona 5 Royal | **Audited** | `ec1844a66a5449206b864cfa909229f48e331d4b` — clarified that Maruki Councillor Rank 9 by Nov. 17, not all three Royal Confidants, is the mandatory third-semester gate; Akechi/Kasumi remain additional-content routes. Added explicit absence of a dynamic faction-reputation system. |
 | G125 | XCOM 2 | **Audited** | `284cd3bebd2f6bff7a7d9c69d48cdc86affe9de0` — all major mechanics were covered; corrected present-tense launcher-friction language because 2K removed the launcher from Steam/Epic in Nov. 2024, while preserving older complaints as dated reception. |
-| G126 | Crusader Kings III | **In progress** | Full R01–R14/mechanics/current-version audit. |
-| G127 | Dragon's Dogma 2 | Pending | — |
+| G126 | Crusader Kings III | **Audited** | `29455348aa9f7c6d486225c627ab07790b83b00a` — pinned By God Alone to Sept. 30, 2026 as future scope and Silk & Silver as later roadmap, added the current optional content subscription, and explicitly closed the absent general crafting/avatar-stealth categories. |
+| G127 | Dragon's Dogma 2 | **In progress** | Full R01–R14/mechanics/current-version audit. |
 | G128 | Ultima VII: The Black Gate | Pending | — |
 | G129 | Oxygen Not Included | Pending | — |
 | G130 | S.T.A.L.K.E.R. 2: Heart of Chornobyl | Pending | — |
+
+## G126 — Crusader Kings III closure evidence
+
+The initial dossier already covered ruler identity/skills, lifestyles, stress, schemes/hooks, dynasties, succession, titles, vassals/factions, culture/faith, warfare, travel, landless and nomadic modes, eight worked cases, multiplayer, production, commercial milestones and five reviews. The audit corrected the September 2026 roadmap boundary: By God Alone is scheduled for September 30 and therefore remains future, with Silk & Silver later still. It also records the current optional released-content subscription and explicitly states that CK3 has no general material-crafting profession or avatar-scale stealth mode; hidden action instead lives in schemes, secrecy and social information.
 
 ## G125 — XCOM 2 closure evidence
 
