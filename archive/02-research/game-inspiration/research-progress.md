@@ -6,7 +6,7 @@
 
 **Active: requirements-and-corrections audit of G26–G39, beginning with G26 Baldur's Gate 3.** Mike requested checking every applicable research dimension, correcting errors and finishing missing research in this batch. **G40 AI Dungeon is explicitly excluded from this audit at Mike's request because it was handled on another branch.** Its existing dossier and historical completion record below are preserved; this audit does not re-certify or overwrite that work. Baseline for this audit: `e01d800a839e6bbbbc8ff0ed13eb45b0a3a3d01c`.
 
-Initial full passes are recorded for G01–G40, but that is not evidence that the newly requested audit has passed. Check actual content against R01–R14 and the explicit mechanics inventory, not just headings or prior completion labels. For each subject, reread its dossier and earlier owners, investigate material factual/version disagreements, repair missing coverage and evidence, review changes and commit before advancing. Keep genuinely inaccessible evidence distinct from unfinished research. Current audit state: **G26–G27 audited; G28 in progress; G29–G39 pending; G40 skipped by instruction.** No G41+ work or global P01–P05 completion is claimed.
+Initial full passes are recorded for G01–G40, but that is not evidence that the newly requested audit has passed. Check actual content against R01–R14 and the explicit mechanics inventory, not just headings or prior completion labels. For each subject, reread its dossier and earlier owners, investigate material factual/version disagreements, repair missing coverage and evidence, review changes and commit before advancing. Keep genuinely inaccessible evidence distinct from unfinished research. Current audit state: **G26–G28 audited; G29 in progress; G30–G39 pending; G40 skipped by instruction.** No G41+ work or global P01–P05 completion is claimed.
 
 The preceding continuation through G40 produced full dossiers, requirement maps, worked situations, annotated sources and explicit evidence-access limitations. Its earlier statement that the requested continuation was complete referred to those initial passes, not this subsequent audit. Mike confirmed `docs/game-inspiration-library` after the originally named `docs/game-inspiration-games` ref could not be resolved. No replacement branch was created. G26's unsuccessful Steam helpful-review retrieval and later per-game access limits remain recorded rather than falsely counted as completed sampling.
 
@@ -18,8 +18,8 @@ RuneScape and Old School RuneScape remain independent pending full passes G48/G4
 | --- | --- | --- |
 | G26 — Baldur's Gate 3 | **Audited** | `37fddfc677c58883d4aa195e857ddec497ab0045` — explicit mechanics-inventory closure added; Patch 8 vs post-Patch-8 Hotfix 30–36 maintenance boundary rechecked against Larian's support index. No prior review/Steam-access claim was upgraded. |
 | G27 — Factorio | **Audited** | `8a87a10e2fe3d8d567cf097cc9a1296e53e09e09` — explicit mechanics-inventory closure; corrected the easy Fluids 2.0 version trap by distinguishing the discarded unlimited FFF-416 prototype from the shipped 250×250 extent, pump and per-operation flow limits documented in FFF-430. Stable 2.0.77 / experimental 2.1.20 remained current. |
-| G28 — Satisfactory | **In progress** | Recheck current 1.1/1.2-era boundaries, console/cross-play statements and explicit mechanics inventory. |
-| G29 — Terraria | Pending | — |
+| G28 — Satisfactory | **Audited** | `d939ff1b8bc641e0bb3bbe2f2a9a8642bc6bfd9e` — explicit mechanics-inventory closure; replaced the cautious cross-play wording with Coffee Stain's current official boundary: PlayStation ↔ Xbox console cross-play, no PC/console cross-play and no console dedicated-server joining. |
+| G29 — Terraria | **In progress** | Recheck current 1.4.5-era release/cross-play/tModLoader boundaries and explicit mechanics inventory. |
 | G30 — Stardew Valley | Pending | — |
 | G31 — Valheim | Pending | — |
 | G32 — Noita | Pending | — |
