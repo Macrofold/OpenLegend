@@ -1,6 +1,6 @@
 # Dragon Age: The Veilguard — research dossier
 
-**G54 · Completed research pass, September 26, 2026.** Scope: BioWare/EA's October 31, 2024 single-player action RPG for PC, PlayStation 5 and Xbox Series X|S, including documented subsequent accessibility, cosmetic and platform updates. Earlier multiplayer concepts are development history, not a shipped mode. The substantive source checkpoint at `d56815c` is incorporated and preserved here. No firsthand gameplay, footage viewing, soundtrack audition or performance benchmark is claimed.
+**G54 · Completed research pass and targeted source remedies, September 26, 2026.** Scope: BioWare/EA's October 31, 2024 single-player action RPG for PC, PlayStation 5 and Xbox Series X|S, including documented subsequent accessibility, cosmetic and platform updates. Earlier multiplayer concepts are development history, not a shipped mode. The substantive source checkpoint at `d56815c` is incorporated and preserved here. No firsthand gameplay, footage viewing, soundtrack audition or performance benchmark is claimed. The later remedy corrects G10's primary URL and distinguishes S9's separately hosted credits from EA's official announcement; inherited review readings are not claimed as newly repeated.
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Inquisition](dragon-age-inquisition.md) · [Library](../README.md)
 
@@ -179,7 +179,7 @@ Veilguard uses a vivid, stylized presentation rather than simply increasing the 
 
 Action readability depends on separating enemy preparation, Rook's animation commitment, target selection and environmental clutter. The reviewers' class-specific disagreement matters: Bowling's mage/Spellblade was a highlight, while Ramée found mage targeting and effects much more troublesome than warrior/rogue combat. A single generic camera verdict would erase a useful dependency between build, animation and perception. [R2](#r2) [R3](#r3)
 
-Hans Zimmer and Lorne Balfe co-composed the score. The official credits also identify production, mixing, arranging and performance collaborators, including orchestral recording at Ocean Way. This is collaborative audio production, not evidence that two famous names personally performed every musical role. The official announcement supplies a main-theme listening route; no audition occurred in this pass. [S8](#s8) [S9](#s9)
+EA's official announcement establishes Hans Zimmer and Lorne Balfe as co-composers. The separately hosted credit record inspected in the earlier pass also lists production, mixing, arranging and performance collaborators, including orchestral recording at Ocean Way; its official status was not established, so it is not labelled an official production source. These records describe collaborative audio production, not proof that two famous names personally performed every musical role. EA supplies a main-theme listening route; no audition occurred. [S8](#s8) [S9](#s9)
 
 The interface's stated concern with accessibility includes incoming-attack audio, subtitles, HUD controls, field of view, camera motion, remapping and alternatives to held inputs. These address different access barriers. A smaller or top-down game can learn from the separation of those needs without copying the cinematic budget. Conversely, stripping out faces and performances changes how intimate conversations carry emotion; prose alone should not be assumed to reproduce their effect. [S4](#s4)
 
@@ -209,7 +209,7 @@ Patch 5 on **January 23, 2025** shifted the stated maintenance posture to monito
 
 ## 8. Five independent written reviews and direct player evidence
 
-All five substantive review bodies were inspected during this pass and summarized in the committed checkpoint. The summaries below preserve the disagreements rather than reducing them to an average. Launch versions and platform/class differences matter. Exact reviewer playtimes are not population completion statistics.
+All five substantive review bodies were inspected during the original pass and summarized in the committed checkpoint. The summaries below preserve the disagreements rather than reducing them to an average. Launch versions and platform/class differences matter. Exact reviewer playtimes are not population completion statistics. This targeted source remedy does not claim five new readings.
 
 ### Lauren Morton — PC Gamer, October 28, 2024, PC
 
@@ -267,12 +267,12 @@ For an initial study, create two contrasting backgrounds but play one through th
 | [Combat presentation and four-part series](https://www.ea.com/games/dragon-age/dragon-age-the-veilguard/news/combat-in-dragon-age-the-veilguard) | Inspect direct movement, the wheel and transitions from setup to detonation. | Official embedded-video landing page; written rules read, footage not watched. |
 | [Progression and companion demonstrations](https://www.ea.com/games/dragon-age/dragon-age-the-veilguard/news/combat-and-progression) | Follow a skill allocation, gear modification and coordinated ability example. | Written worked example verified; timestamps intentionally not invented. |
 | [Exploration presentation](https://www.ea.com/games/dragon-age/dragon-age-the-veilguard/news/exploration-across-thedas) | Examine the Lighthouse, regional navigation and the dagger's capability transfer. | Official text read; compare marketing footage against actual play rather than assuming equivalence. |
-| [Main-theme announcement/listening route](https://www.ea.com/games/dragon-age/dragon-age-the-veilguard/news/composers-announcement) | Study public musical identity separately from an individual companion scene. | Credits/announcement read; soundtrack not auditioned. |
+| [Main-theme announcement/listening route](https://www.ea.com/games/dragon-age/dragon-age-the-veilguard/news/composers-announcement) | Study public musical identity separately from an individual companion scene. | Official announcement read; separately hosted credits classified separately, soundtrack not auditioned. |
 | [VGC review and embedded review discussion](https://www.videogameschronicle.com/review/dragon-age-the-veilguard/) | Contrast polished feature demonstrations with criticism of repetitive missions and civic reactivity. | Written review read; embedded video not watched. |
 
 ### Annotated sources
 
-All retrieved September 26, 2026. Official statements describe intended or published rules; guides describe observed rules; reviews and player reports are experiences. Access limitations are part of the evidence, not erased by a completion label.
+All originally retrieved September 26, 2026. Official statements describe intended or published rules; guides describe observed rules; reviews and player reports are experiences. The targeted remedy reopened S8 and G10 and attempted S9; other access statements below preserve the original pass, not a claim of new full rereading. Access limitations are not erased by a completion label.
 
 <a id="s1"></a>**S1 — BioWare/EA, August 24, 2024.** [Lethality and Levelling](https://www.ea.com/games/dragon-age/dragon-age-the-veilguard/news/combat-in-dragon-age-the-veilguard). Full written body read; combat/runes/specializations and official video routes.
 
@@ -288,9 +288,9 @@ All retrieved September 26, 2026. Official statements describe intended or publi
 
 <a id="s7"></a>**S7 — EA current product page.** [Standalone Character Creator](https://www.ea.com/games/dragon-age/dragon-age-the-veilguard-character-creator). Product features and same-platform transfer; separate tool, not a campaign demo.
 
-<a id="s8"></a>**S8 — EA, October 2024.** [Co-composers](https://www.ea.com/games/dragon-age/dragon-age-the-veilguard/news/composers-announcement). Announcement and listening route inspected; no audio analysis invented.
+<a id="s8"></a>**S8 — EA, October 2, 2024.** [Co-composers](https://www.ea.com/games/dragon-age/dragon-age-the-veilguard/news/composers-announcement). Official announcement and listening route inspected, then reopened for the source-classification remedy. Establishes Zimmer/Balfe collaboration; no audio analysis invented.
 
-<a id="s9"></a>**S9 — Score credits.** [Hans Zimmer project page](https://hans-zimmer.com/product/dragon-age-the-veilguard-video-game/). Indexed detailed credits inspected; source for collaborators and recording location, not a listening review.
+<a id="s9"></a>**S9 — Separately hosted score-credit record.** [hans-zimmer.com project page](https://hans-zimmer.com/product/dragon-age-the-veilguard-video-game/). Indexed detailed credits were inspected in the original pass for collaborators and recording location. Official status was not established; current direct retrieval of the page and root failed. It is therefore not labelled an official composer/publisher source or a newly verified full body. S8 is the primary co-composer announcement. The inherited credit details remain attributed to this record, not a listening review.
 
 <a id="s10"></a>**S10 — EA, August 21, 2024.** [PC Features](https://www.ea.com/games/dragon-age/dragon-age-the-veilguard/news/journal-4-pc-features-for-dragon-age-the-veilguard). Official dedicated-platform/testing account; numerical testing claims remain attributed.
 
@@ -324,7 +324,7 @@ All retrieved September 26, 2026. Official statements describe intended or publi
 
 <a id="g9"></a>**G9 — Josh Tolentino, RPG Site, November 30, 2024.** [Choices and consequences](https://www.rpgsite.net/guide/16594-dragon-age-the-veilguard-choices-consequences-decisions-that-matter-throughout-game). Substantive body read. Its obvious geography/approval typos, faction penalty counts, claims of random chance and inconsistent Mythal-detail wording are not adopted. Used narrowly for verified narrative dependencies.
 
-<a id="g10"></a>**G10 — Gamer Social Club, November 28, 2024.** [Ending without saving Minrathous](https://gamerssocialclub.ca/2024/11/28/dragon-age-the-veilguard-get-the-best-ending-without-saving-minrathous/). The accessible source was hosted at **[gamersocialclub.ca](https://gamersocialclub.ca/2024/11/28/dragon-age-the-veilguard-get-the-best-ending-without-saving-minrathous/)** (single s after gamer); indexed firsthand Wisp-merchant example. Together with the updated [PowerPyx route](https://www.powerpyx.com/dragon-age-the-veilguard-trophy-guide-roadmap/), this prevents presenting older irrecoverable-vendor advice as universal. Exact patch causality not verified.
+<a id="g10"></a>**G10 — Gamer Social Club, November 28, 2024.** [Ending without saving Minrathous](https://gamersocialclub.ca/2024/11/28/dragon-age-the-veilguard-get-the-best-ending-without-saving-minrathous/). The primary target now uses the working `gamersocialclub.ca` spelling, correcting the previously duplicated s. The earlier pass read an indexed firsthand Wisp-merchant example; the actual page and relevant section were reopened during remediation. Together with the updated [PowerPyx route](https://www.powerpyx.com/dragon-age-the-veilguard-trophy-guide-roadmap/), this prevents presenting older irrecoverable-vendor advice as universal. The guide is testimony, not an exhaustive ending formula; exact patch causality remains unverified.
 
 <a id="r1"></a>**R1 — Lauren Morton, PC Gamer, October 28, 2024.** [Review](https://www.pcgamer.com/games/dragon-age/dragon-age-the-veilguard-review/). Full substantive body read, PC.
 
@@ -352,13 +352,13 @@ All retrieved September 26, 2026. Official statements describe intended or publi
 | R04 progression/economy/time | Sections 1–3, faction resources, campaign/readiness and failure distinctions. |
 | R05 situations | Nine causal examples in section 4, with prerequisites and limitations. |
 | R06 people/AI/social | Section 5; explicit control, autonomy and multiplayer limits. |
-| R07 presentation | Section 6 and accessibility/PC/audio primary sources. |
+| R07 presentation | Section 6 and accessibility/PC/audio sources, with S9's status qualified. |
 | R08 narrative | Sections 1, 4 and 5; authored scope, named people and consequential choices. |
 | R09 production | Section 7 official pivot/testing accounts and investigative-access limitation. |
 | R10 promotion | Section 7, standalone creator and six annotated viewing routes. |
 | R11 commerce | Defined EA participation milestone, purchase model and support chronology. |
 | R12 reception | Five substantive independent critics, direct contrasting player accounts and actual Steam access attempts. |
 | R13 transfer | Section 9 and explicitly analytical mechanic/case interpretations. |
-| R14 sources/preservation | Section 10; links, access annotations, mapping and checkpoint preservation. |
+| R14 sources/preservation | Section 10; corrected G10, source classification, access annotations and checkpoint preservation. |
 
-This was an added post-packet subject without a prior full game chapter to overwrite. All findings and five review summaries from checkpoint `d56815c` have been incorporated with their access boundaries. G51–G53 and all earlier chapters/mechanics remain unchanged. The required Dragon Age family/smaller-game comparison is a separate output; this dossier does not substitute for it. Textual coverage and citation-anchor review were performed. No game execution, automated repository-wide link crawl, runtime test or whole-130-subject completion is claimed.
+This was an added post-packet subject without a prior full game chapter to overwrite. All findings and five review summaries from checkpoint `d56815c` remain with their access boundaries. The targeted remedies change source precision, not the nine cases or the gameplay/production findings. G51–G53 and all earlier chapters/mechanics remain separate owners. The Dragon Age family/smaller-game comparison is a separate committed output, not independently re-audited here. Textual coverage and citation-anchor review were performed. No game execution, automated repository-wide link crawl, runtime test, complete new source re-audit or whole-130-subject completion is claimed.
