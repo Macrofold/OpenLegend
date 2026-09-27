@@ -18,8 +18,8 @@ RuneScape and Old School RuneScape remain independent pending full passes G48/G4
 
 | Subject | Audit status | Audit commit / correction boundary |
 | --- | --- | --- |
-| G01 — Hades II | **In progress** | Recheck current release/update boundary and full mechanics inventory. |
-| G02 — Among Us | Pending | — |
+| G01 — Hades II | **Audited** | `c10f00e47a12b5e691c1627cd7a682da7ac31ddc` — explicit mechanics-inventory closure; September 25, 2026 anniversary post rechecked as community/documentary/concert context, not a new gameplay expansion. |
+| G02 — Among Us | **In progress** | Recheck current modes/platform/update boundary and full mechanics inventory. |
 | G03 — Animal Crossing: New Horizons | Pending | — |
 | G04 — Roblox | Pending | — |
 | G05 — Grow a Garden | Pending | — |
