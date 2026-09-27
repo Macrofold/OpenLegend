@@ -1,6 +1,6 @@
 # Dragon Age II — full research dossier
 
-**G52 · Research pass completed September 26, 2026, with a documented Steam-sampling access gap (§17).** Scope: BioWare/EA's 2011 game, Legacy, Mark of the Assassin, The Exiled Prince and the smaller equipment/service additions. Interpretations are research proposals, not accepted OpenLegend requirements.
+**G52 · Research pass and identified production-history remedy completed September 26, 2026, with the documented Steam-sampling access limit retained (§17).** Scope: BioWare/EA's 2011 game, Legacy, Mark of the Assassin, The Exiled Prince and the smaller equipment/service additions. Interpretations are research proposals, not accepted OpenLegend requirements. Section 15.1 now separates creative intent, production workflow and schedule constraints; earlier mechanics, seven cases, reviews and expansion evidence remain.
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Origins](dragon-age-origins.md)
 
@@ -130,9 +130,25 @@ Launch reception should also be separated from later fixes. Accessible official 
 
 In April 2011 BioWare reported over **one million units** since the March 8 launch, reached faster than Origins. The contemporary report does not settle a sell-in versus end-customer definition, so the figure is not relabelled as active users or audited sell-through. A cross-promotion offered eligible owners Mass Effect 2 for PC; that historical offer is not represented as available today. Current profit, budget and active-user numbers were not established. [S4](#s4)
 
+### 15.1 Base-game production: intent, pipeline and a compressed delivery window
+
+**Why one city and elapsed years?** Gaider's August 2011 interview describes a deliberate alternative to repeating the Warden's journey or selecting one prior ending as universal history. Laidlaw proposed a new protagonist and a city revisited through time jumps. The aim was to show delayed consequences during play rather than force immediate resolution or consign them to an epilogue. That introduced its own questions about continuity and the cost of remembering small decisions. [S7](#s7)
+
+**How the writing became a game.** The same interview describes an initial plot outline expanded into approved narrative overviews covering beats, choices, gameplay, assets and budget. Writers, combat designers and artists shared those plans. Editors maintained searchable lore, including the problem of stale information. Early placeholder reviews tested pacing, choice and understandable objectives; later reviews examined scene-level detail and companion reactions. This is concrete production work, not evidence that a large lore wiki automatically produces consistency. [S7](#s7)
+
+**A deadline is not a complete origin story.** Darrah's later recollection, quoted in February 2025 reporting, dates the leadership decision to December 2009 and connects the March 2011 target to a revenue gap following The Old Republic's delays. That is an attributed explanation from a participant, not independently audited internal financial evidence. The often-repeated sixteen-month description and his other account of less than fifteen months need not refer to identical start/end milestones; neither is converted here into a precise labor or budget calculation. [S10](#s10) [S9](#s9)
+
+**What reuse did and did not mean.** In the 2022 retrospective account, Darrah distinguishes intentionally revisiting Kirkwall from recognizably repeating an ostensibly different cave. He regards the latter's distinctive reused details as a serious weakness. He also rejects the suggestion that a substantially finished expansion simply became the sequel: some planning was inherited, but little relevant level/art production existed. The same account says the proposed Exodus title could have set different expectations from a numbered sequel. These are his retrospective judgments; the underlying video was not watched for this research. [S9](#s9)
+
+**Revisions had several motivations.** Laidlaw's written GameSpot interview explains companion selection as balancing plausible people with a workable ensemble, and fixed companion outfits as an effort to preserve recognizable bodies and animations. These choices are not automatically evidence that every removed option was cut solely for time. His account of retuning core combat, tactics and noncombat abilities likewise concerns perceived weaknesses in Origins as well as the new format. The preserved critics independently judge whether those changes worked. [S8](#s8)
+
+**Interpretation:** narrowing scope and changing the experience are different operations. A city can be a productive creative constraint, while insufficient change across its years can still break the promise. Reuse is most convincing when the fiction acknowledges the same place or when genuinely different activity changes its significance. A unique cave repeatedly presented as a new one instead calls attention to the production shortcut. A stronger plan would identify which repeated spaces need changed institutions, occupants, access or encounter logic before committing to the chronology.
+
+**Limits and lesson:** the record now explains the base game's concept, authoring pipeline, delivery pressure and specific compromises. It does not establish every prototype, cut quest, staffing allocation or private cost. It also does not prove that a different title or longer schedule would have guaranteed success. The useful lesson is to align the promised scale, the parts actually being changed and the time available to test them—not to celebrate rushed production as a necessary source of good characterization.
+
 ## 16. Five independent written assessments
 
-All five substantive bodies were read; platform and publication context are preserved.
+All five substantive bodies were read in the original pass; platform and publication context are preserved. The production remedy does not claim a new reading of each review.
 
 | Assessment | What works | Reservations |
 | --- | --- | --- |
@@ -148,7 +164,7 @@ All five substantive bodies were read; platform and publication context are pres
 
 A directly accessible account by **kirin109, October 24, 2025**, recommends Dragon Age II and values its personal story, believable companions and self-contained city. It also criticizes reused environments, fewer class options and shallower combat/branching. Helpful votes were visible, but **an all-time helpful rank was not established**. This is a selected player testimony, not a representative survey. [P1](#p1)
 
-The application's helpful and negative-review surfaces repeatedly returned age gates or failed retrieval. **A directly read, separately negative Steam review and a ranked positive/negative sample remain an evidence gap.** The negative professional reviews above are not silently substituted for Steam testimony. Nor are unrelated negative reviews of Origins or Veilguard on the same player's profile misattributed to Dragon Age II. This limits the reception sampling, not the existence of the documented mechanics and DLC research.
+The application's helpful and negative-review surfaces repeatedly returned age gates or failed retrieval. **A directly read, separately negative Steam review and a ranked positive/negative sample remain an access limitation.** The negative professional reviews above are not silently substituted for Steam testimony. Nor are unrelated negative reviews of Origins or Veilguard on the same player's profile misattributed to Dragon Age II. This limits the reception sampling, not the existence of the documented mechanics and DLC research. No new successful Steam access is claimed by this production-history remedy.
 
 ## 18. Worked cross-system situations
 
@@ -196,6 +212,8 @@ Tallis and Hawke enter a section whose visibility and distraction rules differ f
 
 **Keep social cognition and operational execution distinct.** Strong character writing, relationship state, combat policy and movement are separate owners. Failure in one should not be hidden behind the word 'AI'.
 
+**Distinguish intentional scope from insufficient execution.** A smaller geographical canvas can be a creative choice and still need more production work than the schedule permits. The appropriate response is to test the promised change, not assume that either a larger map or a shorter script automatically resolves it.
+
 ## 20. Requirement, preservation and access review
 
 | Requirement | Coverage |
@@ -208,93 +226,101 @@ Tallis and Hawke enter a section whose visibility and distraction rules differ f
 | R06 people, AI, relationships and multiplayer boundary | §§5–11 |
 | R07 art, audio, controls and feel | §§5, 15–16 |
 | R08 story and gameplay links | §§1–2, 9–14 |
-| R09 production and iteration | §15 |
-| R10 distribution, promotion and community | §§14–17 |
+| R09 production and iteration | §15.1 base-game sequence/constraints plus §15's writing/audio/patch evidence |
+| R10 distribution, promotion and community | §§14–17; title/expectations and dated promotion |
 | R11 dated commercial context | §15, definitions and unknowns explicit |
-| R12 five independent reviews; Steam evidence | §§16–17; **ranked contrasting Steam sample remains inaccessible** |
+| R12 five independent reviews; Steam evidence | §§16–17; ranked contrasting Steam sample remains inaccessible |
 | R13 inspirations and limitations | §§18–19 |
 | R14 evidence, preservation and reading route | this section and sources |
 
 **Inventory:** creation/imports, attributes/classes/specializations, active/passive/sustained/upgraded abilities, equipment/crafting, magic/combos, party tactics, travel/day/night, locks/traps/dialogue, loot, relationships/romance, story consequences, failure, DLC and replay are addressed. General NPC schedules, procedural invention, autonomous politics, farming/building and multiplayer are not inferred.
 
-**Preservation:** G52 is a post-packet addition without an identified prior full chapter. The checkpoint's five reviews, relationship-design rationale, DLC criticism and access limits are retained. G51 and earlier studies are untouched. The four-game comparison and smaller franchise games remain a separate required supplement through G54.
+**Preservation:** G52 is a post-packet addition without an identified prior full chapter. The checkpoint's five reviews, seven cases, relationship-design rationale, DLC criticism and access limits are retained. The identified base-game production gap is now addressed in §15.1. G51 and earlier studies remain separate. The committed four-game/smaller-franchise supplement is a separate owner, not an unfinished document implied by the old checkpoint or something independently audited here.
 
-**Access:** review bodies were read; guide/manual rules were obtained as accessible HTML or indexed passages. The EA PC manual was an HTML transcription, not an inspected PDF. Some primary interviews and patch notes were accessible only in indexed text. No footage, hands-on gameplay, audio audition, mod test or source-code inspection is claimed. Local source anchors and the requirement map were checked during composition; global integration gates remain separate.
+**Access:** original review bodies were read; guide/manual rules were obtained as accessible HTML or indexed passages. The EA PC manual was an HTML transcription, not an inspected PDF. New primary interviews and attributed retrospective excerpts are distinguished below; the linked videos were not watched. No hands-on gameplay, audio audition, mod test or source-code inspection is claimed. Local source anchors and the requirement map were reviewed; global packet and roster integration gates remain separate.
 
-**Reading route:** compare the PC Gamer and WIRED reviews, then read Friendship & Rivalry, the dialogue guide and cross-class combinations. Follow with Legacy and Mark of the Assassin to see how a smaller module changes the core action contract. Linked videos are optional viewing routes, not evidence represented as watched here.
+**Reading route:** compare the PC Gamer and WIRED reviews, then Friendship & Rivalry, dialogue and cross-class combinations. Read §15.1's contemporary production interviews against the later retrospective before attributing every change to one cause. Legacy and Mark of the Assassin show smaller-module changes to the action contract. Linked videos are optional viewing routes, not watched evidence.
 
 ## Annotated sources
 
-<a id="r1"></a>**R1 — Rich McCormick, PC Gamer, March 8, 2011.** [Review](https://www.pcgamer.com/dragon-age-2-review/). Full body read; criticism distinguished from rules documentation.
+<a id="r1"></a>**R1 — Rich McCormick, PC Gamer, March 8, 2011.** [Review](https://www.pcgamer.com/dragon-age-2-review/). Full body read in the original pass; criticism distinguished from rules.
 
-<a id="r2"></a>**R2 — Joseph Leray, Destructoid, March 22, 2011.** [Review](https://www.destructoid.com/reviews/review-dragon-age-ii/). Full Xbox 360 review.
+<a id="r2"></a>**R2 — Joseph Leray, Destructoid, March 22, 2011.** [Review](https://www.destructoid.com/reviews/review-dragon-age-ii/). Original full Xbox 360 review reading.
 
-<a id="r3"></a>**R3 — Kyle E. Miller, RPGFan, April 8, 2011.** [Review](https://www.rpgfan.com/review/dragon-age-ii-2/). Full PC review; another platform review from the same outlet was not counted separately.
+<a id="r3"></a>**R3 — Kyle E. Miller, RPGFan, April 8, 2011.** [Review](https://www.rpgfan.com/review/dragon-age-ii-2/). Original full PC review; another platform from the same outlet is not another independent publication.
 
-<a id="r4"></a>**R4 — Jason Schreier, WIRED, March 28, 2011.** [Review](https://www.wired.com/2011/03/dragon-age-ii-review/). Full Xbox 360 assessment; summary kept brief.
+<a id="r4"></a>**R4 — Jason Schreier, WIRED, March 28, 2011.** [Review](https://www.wired.com/2011/03/dragon-age-ii-review/). Original full Xbox 360 assessment, briefly summarized.
 
-<a id="r5"></a>**R5 — Kevin VanOrd, GameSpot, March 8, 2011.** [Review](https://www.gamespot.com/reviews/dragon-age-ii-review/1900-6301579/). Full body and platform distinctions.
+<a id="r5"></a>**R5 — Kevin VanOrd, GameSpot, March 8, 2011.** [Review](https://www.gamespot.com/reviews/dragon-age-ii-review/1900-6301579/). Original full body and platform distinctions.
 
-<a id="m1"></a>**M1 — Prima/Piggyback guide.** [Friendship & Rivalry](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/friendship-rivalry). Rules and plot exceptions; not two independent currencies.
+<a id="m1"></a>**M1 — Prima/Piggyback.** [Friendship & Rivalry](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/friendship-rivalry). Rules/plot exceptions, not two independent currencies.
 
-<a id="m2"></a>**M2 — Prima/Piggyback guide.** [Dialogue system](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/the-dialogue-system). Accessible indexed/HTML passages on tone, investigation and special options.
+<a id="m2"></a>**M2 — Prima/Piggyback.** [Dialogue](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/the-dialogue-system). Indexed/HTML tone, investigation and special options.
 
-<a id="m3"></a>**M3 — Prima/Piggyback guide.** [Creating Hawke](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/prologue/creating-hawke). Creation/import/difficulty boundaries.
+<a id="m3"></a>**M3 — Prima/Piggyback.** [Creating Hawke](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/prologue/creating-hawke). Identity, imports and difficulty.
 
-<a id="m4"></a>**M4 — Prima/Piggyback guide.** [XP and level-up](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/prologue/xp-level-up). Allocation rules.
+<a id="m4"></a>**M4 — Prima/Piggyback.** [XP and level-up](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/prologue/xp-level-up). Allocation rules.
 
-<a id="m5"></a>**M5 — Prima/Piggyback guide.** [Attributes](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/attributes). Attribute roles; no exhaustive formula table reproduced.
+<a id="m5"></a>**M5 — Prima/Piggyback.** [Attributes](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/attributes). Roles, not an exhaustive formula table.
 
-<a id="m6"></a>**M6 — Prima/Piggyback guide.** [Introduction to abilities](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/abilities/introduction-to-abilities). Active/sustained/passive/upgraded distinctions.
+<a id="m6"></a>**M6 — Prima/Piggyback.** [Ability introduction](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/abilities/introduction-to-abilities). Active/sustained/passive/upgraded distinctions.
 
-<a id="m7"></a>**M7 — Prima/Piggyback guide.** [Warrior abilities](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/abilities/warrior-abilities). Accessible indexed class/specialization rules.
+<a id="m7"></a>**M7 — Prima/Piggyback.** [Warriors](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/abilities/warrior-abilities). Indexed class/specialization rules.
 
-<a id="m8"></a>**M8 — Prima/Piggyback guide.** [Rogue abilities](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/abilities/rogue-abilities). Accessible indexed class/specialization rules.
+<a id="m8"></a>**M8 — Prima/Piggyback.** [Rogues](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/abilities/rogue-abilities). Indexed class/specialization rules.
 
-<a id="m9"></a>**M9 — Prima/Piggyback guide.** [Mage abilities](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/abilities/mage-abilities). Accessible detailed school and companion-tree passages.
+<a id="m9"></a>**M9 — Prima/Piggyback.** [Mages](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/abilities/mage-abilities). Detailed school and companion-tree passages.
 
-<a id="m10"></a>**M10 — Prima/Piggyback guide.** [Party builds](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/party-builds). Suggested compositions, not mandatory roles.
+<a id="m10"></a>**M10 — Prima/Piggyback.** [Party builds](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/party-builds). Suggested, not mandatory composition.
 
-<a id="m11"></a>**M11 — Prima/Piggyback guide.** [Tactics](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/tactics). Accessible indexed rule examples and priority behavior.
+<a id="m11"></a>**M11 — Prima/Piggyback.** [Tactics](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/tactics). Indexed examples and priority.
 
-<a id="m12"></a>**M12 — Prima/Piggyback guide.** [Cross-class combinations](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/cross-class-combos). Status/upgrade relationships; patch-sensitive multipliers omitted.
+<a id="m12"></a>**M12 — Prima/Piggyback.** [Cross-class combos](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/cross-class-combos). Status/upgrade conditions; patch-sensitive multipliers omitted.
 
-<a id="m13"></a>**M13 — Prima/Piggyback guide.** [Combat strategy](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/combat-strategy). Target priority, control and movement examples.
+<a id="m13"></a>**M13 — Prima/Piggyback.** [Combat strategy](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/combat-strategy). Target priority and movement examples.
 
-<a id="m14"></a>**M14 — Prima/Piggyback guide.** [Crafting](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/inventory/crafting). Persistent source discovery and repeat ordering; an inconsistent recipe count between prose/table is not reproduced.
+<a id="m14"></a>**M14 — Prima/Piggyback.** [Crafting](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/inventory/crafting). Source discovery/repeat orders; inconsistent recipe totals not adopted.
 
-<a id="m15"></a>**M15 — EA PC manual, HTML transcription.** [Manualzz](https://www.manualzz.com/doc/12311670/ea-dragon-age-ii-video-game-user-manual). Equipment, runes and inventory boundaries; not a newly inspected PDF.
+<a id="m15"></a>**M15 — EA PC manual, HTML transcript.** [Manualzz](https://www.manualzz.com/doc/12311670/ea-dragon-age-ii-video-game-user-manual). Equipment/runes/inventory; not an inspected PDF.
 
-<a id="m16"></a>**M16 — In-game codex via Dragon Age Wiki.** [Art of War](https://dragonage.fandom.com/wiki/Codex%3A_Art_of_War). Indexed world-map/day-night and lock/trap explanations.
+<a id="m16"></a>**M16 — In-game codex via wiki.** [Art of War](https://dragonage.fandom.com/wiki/Codex%3A_Art_of_War). Indexed map/day-night/lock/trap rules.
 
-<a id="m17"></a>**M17 — In-game codex via Dragon Age Wiki.** [Injuries](https://dragonage.fandom.com/wiki/Codex_entry%3A_Injuries_%28Dragon_Age_II%29). Indexed recovery rules.
+<a id="m17"></a>**M17 — In-game codex via wiki.** [Injuries](https://dragonage.fandom.com/wiki/Codex_entry%3A_Injuries_%28Dragon_Age_II%29). Indexed recovery.
 
-<a id="m18"></a>**M18 — Prima/Piggyback guide.** [Companion analysis](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/companion-analysis). Accessible individual relationship and plot-boundary passages.
+<a id="m18"></a>**M18 — Prima/Piggyback.** [Companions](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/strategy-analysis/companion-analysis). Individual relationship and plot boundaries.
 
-<a id="j1"></a>**J1 — Prima/Piggyback guide.** [Deep Roads expedition](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/act-one/the-deep-roads-expedition). Funding and preparation; guide prose, not watched walkthrough footage.
+<a id="j1"></a>**J1 — Prima/Piggyback.** [Deep Roads expedition](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/act-one/the-deep-roads-expedition). Funding/preparation; written guide, not footage.
 
-<a id="j2"></a>**J2 — Dragon Age Wiki.** [Deep Roads expedition](https://dragonage.fandom.com/wiki/The_Deep_Roads_Expedition). Indexed sibling/Anders branch details; ordinary-party absence is not permanent erasure.
+<a id="j2"></a>**J2 — Dragon Age Wiki.** [Expedition](https://dragonage.fandom.com/wiki/The_Deep_Roads_Expedition). Indexed sibling/Anders branches; party absence is not erasure.
 
-<a id="j3"></a>**J3 — Prima/Piggyback guide.** [Act III main quests](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/act-three-quests/main-plot-quests), [The Last Straw](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/act-three/the-last-straw). Endgame boundary and decisions.
+<a id="j3"></a>**J3 — Prima/Piggyback.** [Act III](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/act-three-quests/main-plot-quests), [Last Straw](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/act-three/the-last-straw). Endgame decisions and limits.
 
-<a id="d1"></a>**D1 — Kevin VanOrd, GameSpot.** [Legacy review](https://www.gamespot.com/reviews/dragon-age-ii-legacy-review/1900-6325886/). Full historical review; migrated 2013 page metadata is not release chronology.
+<a id="d1"></a>**D1 — Kevin VanOrd, GameSpot.** [Legacy](https://www.gamespot.com/reviews/dragon-age-ii-legacy-review/1900-6325886/). Full historical review; migrated 2013 metadata is not release chronology.
 
-<a id="d2"></a>**D2 — Kevin VanOrd, GameSpot, October 13, 2011.** [Mark of the Assassin review](https://www.gamespot.com/reviews/dragon-age-ii-mark-of-the-assassin-review/1900-6339912/). Full body, including temporary companion and stealth limitations.
+<a id="d2"></a>**D2 — Kevin VanOrd, GameSpot, October 13, 2011.** [Mark of the Assassin](https://www.gamespot.com/reviews/dragon-age-ii-mark-of-the-assassin-review/1900-6339912/). Full historical body and guest/stealth limits.
 
-<a id="d3"></a>**D3 — In-game codex and Dragon Age Wiki.** [Upgrading Hawke's Key](https://dragonage.fandom.com/wiki/Codex_entry%3A_Upgrading_Hawke%27s_Key), [weapon](https://dragonage.fandom.com/wiki/The_Hawke%27s_Key), [Legacy quest](https://dragonage.fandom.com/wiki/Legacy_%28quest%29). Indexed rules and continuity; exploits not treated as intended upgrades.
+<a id="d3"></a>**D3 — Codex/wiki.** [Upgrading Hawke's Key](https://dragonage.fandom.com/wiki/Codex_entry%3A_Upgrading_Hawke%27s_Key), [weapon](https://dragonage.fandom.com/wiki/The_Hawke%27s_Key), [Legacy quest](https://dragonage.fandom.com/wiki/Legacy_%28quest%29). Indexed rules; exploits not ordinary intended upgrade paths.
 
-<a id="d4"></a>**D4 — Prima/Piggyback guide.** [The Exiled Prince](https://primagames.com/eguides/dragon-age-ii-eguide/dlc/quests/the-exiled-prince). Accessible indexed recruitment/act structure.
+<a id="d4"></a>**D4 — Prima/Piggyback.** [Exiled Prince](https://primagames.com/eguides/dragon-age-ii-eguide/dlc/quests/the-exiled-prince). Indexed act/recruitment structure.
 
-<a id="d5"></a>**D5 — Prima/Piggyback guide and Dragon Age Wiki.** [Act I side quests](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/act-one-quests/side-quests), [Black Emporium DLC](https://dragonage.fandom.com/wiki/The_Black_Emporium_%28DLC%29). Mirror/shop and summon/distribution distinctions; current availability not inferred.
+<a id="d5"></a>**D5 — Prima/Piggyback and wiki.** [Act I side quests](https://primagames.com/eguides/dragon-age-ii-eguide/walkthrough/act-one-quests/side-quests), [Emporium](https://dragonage.fandom.com/wiki/The_Black_Emporium_%28DLC%29). Shop, mirror, summon and distribution distinctions; no current availability inference.
 
-<a id="s1"></a>**S1 — BioWare developers, published guide interview.** [Writing as a Cornerstone](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/dragon-age-encyclopedia/writing-as-a-cornerstone). Accessible indexed primary interview passages; design intent distinguished from reception.
+<a id="s1"></a>**S1 — BioWare developers, guide interview.** [Writing as a Cornerstone](https://primagames.com/eguides/dragon-age-ii-eguide/essentials/dragon-age-encyclopedia/writing-as-a-cornerstone). Indexed primary passages; intent separated from reception.
 
-<a id="s2"></a>**S2 — Inon Zur interview, Game Informer, March 1, 2011.** [Composer interview](https://gameinformer.com/b/features/archive/2011/03/01/interview-dragon-age-composer-inon-zur.aspx). Accessible indexed primary testimony; no fresh listening claim.
+<a id="s2"></a>**S2 — Inon Zur/Game Informer, March 1, 2011.** [Interview](https://gameinformer.com/b/features/archive/2011/03/01/interview-dragon-age-composer-inon-zur.aspx). Indexed primary account, no listening claim.
 
-<a id="s3"></a>**S3 — EA, February 28, 2011.** [Music collaboration](https://www.ea.com/en-gb/news/bioware-florence-machine-inon-zur). Primary soundtrack/promotional announcement.
+<a id="s3"></a>**S3 — EA, February 28, 2011.** [Music collaboration](https://www.ea.com/en-gb/news/bioware-florence-machine-inon-zur). Primary production/promotion statement.
 
-<a id="s4"></a>**S4 — Tor Thorsen, GameSpot, April 6, 2011.** [Million-unit announcement and promotion](https://www.gamespot.com/articles/dragon-age-ii-platinum-mass-effect-2-pc-being-offered-for-free/1100-6307225/). Contemporary report of BioWare's figure; underlying channel metric not independently resolved.
+<a id="s4"></a>**S4 — Tor Thorsen, GameSpot, April 6, 2011.** [Million-unit announcement](https://www.gamespot.com/articles/dragon-age-ii-platinum-mass-effect-2-pc-being-offered-for-free/1100-6307225/). Attributed BioWare figure; channel definition unresolved, promotion historical.
 
-<a id="s6"></a>**S6 — EA/BioWare official Steam patch notes.** [Update notes](https://store.steampowered.com/oldnews/7422). Accessible indexed fix list; not a full current compatibility audit.
+<a id="s6"></a>**S6 — EA/BioWare Steam notes.** [Patches](https://store.steampowered.com/oldnews/7422). Indexed fixes, not a current compatibility audit.
 
-<a id="p1"></a>**P1 — Steam Community, kirin109.** [Public review page](https://steamcommunity.com/profiles/76561198124463418/recommended). Dragon Age II review dated October 24, 2025 directly read on September 26, 2026. Helpful votes visible, rank unknown; reviews of other games on the page are not attributed to DAII.
+<a id="s7"></a>**S7 — Brad Kane interviewing David Gaider, Game Developer, August 1, 2011.** [The Writing of Dragon Age II](https://www.gamedeveloper.com/design/the-writing-of-bioware-s-i-dragon-age-ii-i-david-gaider-speaks). Full substantive body read September 26, 2026. Primary concept and authoring-process evidence; editorial accolades and historical award-policy claims not adopted as current facts.
+
+<a id="s8"></a>**S8 — Shaun McInnis interviewing Mike Laidlaw, GameSpot.** [Final Thoughts](https://www.gamespot.com/articles/dragon-age-ii-final-thoughts/1100-6305575/). Substantive written interview read. Page displays May 25, 2012 while discussing the original release's immediate aftermath; no exact unverified original interview date or fresh 2012 playthrough inferred.
+
+<a id="s9"></a>**S9 — Ken Allsop, PCGamesN, June 3, 2022, quoting Mark Darrah.** [Constraints retrospective](https://www.pcgamesn.com/dragon-age-2/characters-constraints). Full reporting read; attributed excerpts from Darrah's linked development video, which was not watched. His judgments on reuse/title/expansion history are testimony, not independently audited schedules.
+
+<a id="s10"></a>**S10 — Dustin Bailey, GamesRadar+, February 2025, quoting Mark Darrah.** [Development chronology report](https://www.gamesradar.com/games/dragon-age/dragon-age-2-director-acknowledges-really-fast-rush-behind-the-rpgs-development-as-the-team-tried-to-jump-on-the-grenade-that-was-being-placed-in-front-of-bioware/). Relevant report body read; December 2009 decision and fiscal deadline attributed to Darrah. Full video not watched; unrelated MMO budget estimates and corporate-motive speculation excluded.
+
+<a id="p1"></a>**P1 — Steam Community, kirin109.** [Review page](https://steamcommunity.com/profiles/76561198124463418/recommended). DAII account dated October 24, 2025 read in original September 26, 2026 pass. Helpful votes but no established rank; neighboring games' reviews excluded.
