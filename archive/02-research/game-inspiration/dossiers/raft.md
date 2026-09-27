@@ -317,9 +317,11 @@ The game's support obligation changed after 1.0: narrative expansion ended, but 
 
 3. **GosuNoob — Miodrag Kuzmanovic, June 30, 2022.** Calls the first hours slow/grindy and under-explained, with survival meters dominating normal difficulty, but argues the layered escalation in technology, raft customization and story produces a major payoff. It is particularly positive about the story's widening stakes. [Full review](https://www.gosunoob.com/reviews/raft-review-waterworld/).
 
-4. **Checkpoint Gaming — July 8, 2022.** Its published review assessment praises the core collect/craft loop and the variety created when on-foot authored areas interrupt rafting; it flags limited content after the closing moments and strongly frames the game as a co-op success. The accessible current Metacritic index preserves this review's credited summary while the original body was not reliably retrievable in this pass, so the dossier does **not** claim a full-body reread. [Metacritic critic index](https://www.metacritic.com/game/raft/critic-reviews/).
+4. **HitPoint Reviews — “Sailing the High-Tech Seas: A Raft Review,” updated November 20, 2023.** Praises the visible growth of the floating home, approachable crafting, atmospheric audio/art and especially co-op, while criticizing occasional bugs/AI failures and the loneliness/repetitive resource grind of solo play. The complete review body was read for this pass. [Full review](https://hitpointreviews.com/reviews/648800/raft).
 
 5. **eXputer — Moiz Banoori, June 2, 2024.** A later retrospective praises crafting breadth, Creative mode and multiplayer design while criticizing rough animation, weak survival depth after stabilization, and exploration that feels constrained because permanent construction is raft-only. It is useful precisely because it disagrees with 2022 reviewers who found exploration/story the major payoff. [Full review](https://exputer.com/reviews/raft-the-final-chapter/).
+
+**Supplemental indexed perspective:** Checkpoint Gaming's July 8, 2022 credited assessment praises the collect/craft loop and variety from authored on-foot areas while flagging limited post-ending content and strongly framing the game as a co-op success. The current Metacritic index preserves that assessment, but the original body was not reliably retrievable, so it is **not** counted toward the five full written reviews. [Metacritic critic index](https://www.metacritic.com/game/raft/critic-reviews/).
 
 **Supplemental co-op perspective:** Coop Games' review describes a natural labor split, full story availability in co-op and no special client/host gameplay-role distinction, but its original review dates to the evolving 2020 build and its current page includes later metadata; it is supplemental rather than substituted for one of the five above. [Coop Games](https://coopgames.com/game/57/raft).
 
@@ -438,8 +440,8 @@ https://www.shacknews.com/article/131150/raft-review-steam
 **S07 — GosuNoob, Miodrag Kuzmanovic, “Raft Review – Waterworld,” June 30, 2022.** Full review read; normal-mode survival pressure, animal/resource loops, receiver/story and gradual escalation.  
 https://www.gosunoob.com/reviews/raft-review-waterworld/
 
-**S08 — Checkpoint Gaming review, July 8, 2022, via current Metacritic critic index.** Credited review summary inspected; original body was not reliably retrieved in this pass, so only the indexed assessment is used.  
-https://www.metacritic.com/game/raft/critic-reviews/
+**S08 — HitPoint Reviews, “Sailing the High-Tech Seas: A Raft Review,” updated November 20, 2023.** Full independent review read; raft growth, crafting, audiovisual atmosphere and co-op praise, with bugs/AI and solo resource-grind criticism.  
+https://hitpointreviews.com/reviews/648800/raft
 
 **S09 — eXputer, Moiz Banoori, “Raft The Final Chapter Review,” June 2, 2024.** Full retrospective review read; crafting/multiplayer strengths, animation/combat/exploration criticism.  
 https://exputer.com/reviews/raft-the-final-chapter/
@@ -470,12 +472,15 @@ https://steamcommunity.com/app/648800/
 https://steamcommunity.com/app/648800/negativereviews/?browsefilter=trendthreemonths&filterLanguage=default&l=english&p=1  
 https://steamcommunity.com/app/648800/negativereviews/?browsefilter=toprated&l=english
 
+**S18 — Checkpoint Gaming review, July 8, 2022, via current Metacritic critic index.** Credited assessment inspected; original review body was not reliably retrieved, so this remains supplemental indexed reception and is not counted toward the five full-review minimum.  
+https://www.metacritic.com/game/raft/critic-reviews/
+
 ### Useful reading/viewing route
 
 1. **Start with S05 (PC Gamer review)** for the arc from miserable manual survival to empowered moving-base exploration.
 2. **Read S02 (1.0 notes)** for the authoritative final-content boundary and concrete system additions.
 3. **Read S11 (2018 developer interview)** for the origin/market/creator-discovery history.
-4. **Contrast S06/S07 with S09 and S17** to see why the same repetition/story structure delights some players and exhausts others.
+4. **Contrast S06/S07/S08 with S09 and S17** to see why the same repetition/story structure delights some players and exhausts others.
 5. Use S13–S16 only when a concrete mechanic/story rule needs a community reference; they are not substitutes for primary production evidence.
 6. Spoiler-sensitive readers should postpone S16 and the later-destination sections of S02 until after playing.
 
