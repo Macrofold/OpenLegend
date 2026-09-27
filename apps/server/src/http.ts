@@ -531,6 +531,14 @@ export async function createGameServer(
         : `http://${request.headers.host}`;
     if (request.method === 'GET' && url.pathname.startsWith('/auth/')) {
       try {
+        if (config.authentication.mode === 'local' && url.pathname === '/auth/login') {
+          // A database reset invalidates saved browser sessions. Let the existing
+          // loopback-only /api/state bootstrap issue the current local session.
+          response.setHeader('Set-Cookie', cookie('ol_session', '', 0));
+          response.writeHead(303, { Location: '/', 'Cache-Control': 'no-store' });
+          response.end();
+          return;
+        }
         if (!authentication) throw new AuthorityError('forbidden');
         if (url.pathname === '/auth/login') {
           const browserToken = browserLoginToken();
