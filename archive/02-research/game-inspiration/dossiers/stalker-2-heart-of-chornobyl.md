@@ -14,7 +14,7 @@ The base fantasy is to enter the anomalous Chornobyl Exclusion Zone as **Skif**,
 
 The major current baseline is **Back to the Zone — Update 2.0**, released August 20, 2026. GSC calls it the largest overhaul since launch and says it includes a significant engine upgrade, reworked lighting/foliage, more A-Life behavior, Custom Rules difficulty, binoculars, new weapons/attachments, gameplay-affecting fog, a PDA Statistics page, fauna variants and a major Zone Kit update. [Official Update 2.0 overview](https://www.stalker2.com/news/back-to-the-zone-2-0-update).
 
-The current hotfix line has continued after 2.0. **Patch 2.0.6 released September 18, 2026** and targets AMD-related and other high-priority crashes. [Current Steam announcements](https://steamcommunity.com/app/1643320/announcements/).
+The current hotfix line has continued after 2.0. **Patch 2.0.6 released September 18, 2026** and targets AMD-related and other high-priority crashes. **September 27 audit check:** the official Steam announcement stream still shows 2.0.6 as the newest gameplay patch; the September 24 item is a Cost of Hope/2.0 accolades trailer rather than a 2.0.7 update. [Current Steam announcements](https://steamcommunity.com/app/1643320/allnews/).
 
 ### Cost of Hope expansion
 
@@ -84,6 +84,14 @@ This creates a strong expedition rhythm: **prepare → leave safety → accumula
 ### Fog and current stealth
 
 Update 2.0 makes fog a mechanical state rather than only visual weather. GSC says both player and enemies see and hear less in fog, creating opportunities for sneaking or avoidance. Patch 2.0.5 further adjusted NPC hearing in fog, rain and thunderstorms. The current stealth/perception model should therefore not be inferred solely from launch reviews.
+
+### Useful absences: character builds, crafting, party/romance and settlement management
+
+Skif is a **fixed authored protagonist**, not a blank character-creation chassis. The base game has no selectable class, attribute-allocation screen, XP level ladder or perk/skill tree; progression comes through gear, artifacts, tools, reputation, access and player knowledge. Equipment upgrades performed by technicians are real progression, but they are not a general player crafting profession where ingredients are freely combined into weapons or structures.
+
+Heart of Chornobyl is also not a party RPG. Story NPCs can accompany or fight alongside Skif in authored situations, but there is no persistent recruitable companion roster with equipment/approval/romance progression. Dialogue and faction reputation create social consequence without a general romance simulator.
+
+Finally, hubs and faction-controlled locations are persistent world infrastructure, but the player does **not** construct a base, found settlements or place production buildings. Traders, technicians, guides and stashes make hubs operationally important without turning the game into settlement management. These absences distinguish its survival friction from survival-crafting/base-builder genres.
 
 ## R03 — items, weapons, artifacts, condition and composition
 
@@ -475,6 +483,7 @@ The transferable principle is **persistent hostility with readable causality**: 
 - [Update 2.0](https://www.stalker2.com/news/back-to-the-zone-2-0-update) — August 2026 engine/visual/A-Life/fog/custom-rules changes.
 - [Cost of Hope release](https://www.stalker2.com/news/cost-of-hope-release) and [combined FAQ](https://www.stalker2.com/news/cost-of-hope-update-2-0-everything-to-know) — current paid expansion scope, platforms and starting options.
 - [Official news index](https://www.stalker2.com/news) — current September 2026 patch/news chronology.
+- [Steam official announcement stream](https://steamcommunity.com/app/1643320/allnews/) — inspected September 27, 2026 to confirm Patch 2.0.6 remains the newest gameplay patch visible after the September 24 accolades post.
 - [Major Patch 1.1](https://support.stalker2.com/hc/en-us/articles/32829700589073-Major-Patch-1-1-is-here) — first A-Life repair iteration and explicit offline-simulation bug.
 - [Patch 1.5](https://support.stalker2.com/hc/en-us/articles/36536418994961-Patch-1-5-Guns-Looting-is-live-new-threats-new-loot-and-more) — persistent A-Life, mutant loot and gear changes.
 - [Update 1.7](https://www.stalker2.com/news/expedition-update-showcase) — territorial A-Life, Master/Expedition difficulty, perception/inventory/stamina systems.
@@ -517,11 +526,11 @@ G130 is a newly curated G111–G130 subject. Direct branch checks found no prior
 | Requirement | Coverage |
 | --- | --- |
 | R01 | launch/current platforms, 2.0/2.0.6, Cost of Hope, multiplayer and mod boundaries |
-| R02 | first-person combat, anomalies/detectors/bolts, Emissions, hubs and fog |
+| R02 | first-person combat, anomalies/detectors/bolts, Emissions, hubs/fog plus explicit class/crafting/party/base-building absences |
 | R03 | weapons, condition/upgrades, artifacts, consumables, encumbrance and mutant loot |
-| R04 | gear/knowledge progression, coupons/repairs, reputation, time/weather and failure |
+| R04 | fixed-protagonist gear/knowledge progression, coupons/repairs, reputation, time/weather and failure |
 | R05 | eight worked artifact/logistics/A-Life/faction/weather situations |
-| R06 | versioned A-Life history, factions, reputation and no verified current multiplayer |
+| R06 | versioned A-Life history, factions/reputation, no persistent companion/romance system and no verified current multiplayer |
 | R07 | UE5 visual/audio world identity, UI and current-versus-launch technical friction |
 | R08 | Skif/faction narrative, emergent travel stories and Cost of Hope boundary |
 | R09 | long development, wartime displacement, launch delay and iterative system rebuilding |
