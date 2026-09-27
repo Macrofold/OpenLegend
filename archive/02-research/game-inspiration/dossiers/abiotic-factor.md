@@ -14,7 +14,7 @@ The version boundary is important because the game continued receiving substanti
 - **Community Update #3 / 1.1 — November 3, 2025.** Added further content/QoL and challenge options including **Hardcore** and **Iron Mode**.
 - **1.2 — December 2025.** Seasonal/community content and refinements.
 - **Cosmic Companions / 1.3 — May 4, 2026.** Reworked pets into a much deeper taming/growth/field-companion system, added chemistry, and added the *Voices of the Void* crossover portal world Dunkeltaler Forest. [Official-wiki changelog copy](https://abioticfactor.wiki.gg/wiki/1.3.0_Cosmic_Companions_Update).
-- **Community Update #4 / 1.4 — July 13, 2026.** Anniversary update with new devices, gear, pets, Pet Pointer commands, perks, foods, crops and broad polish. The subsequent 1.4 hotfix line is the latest released branch identified in this pass. [Steam announcement](https://steamdb.info/patchnotes/23174881/) · [current announcement stream](https://steamcommunity.com/app/427410/allnews/).
+- **Community Update #4 / 1.4 — July 13, 2026.** Anniversary update with new devices, gear, pets, Pet Pointer commands, perks, foods, crops and broad polish. The newest released build found in this audit is **Hotfix v1.4.0.28206 (July 27, 2026)** on Steam, PS5 and Xbox/PC App. It fixes pets, decorating, cooking and related issues; no later shipped patch was located before September 27. [Hotfix](https://steamcommunity.com/app/427410/discussions/7/574921277455785829/) · [current announcement stream](https://steamcommunity.com/app/427410/announcements/).
 
 Two future boundaries must remain explicit on September 27, 2026:
 
@@ -31,13 +31,18 @@ The player's promise is intentionally anti-power-fantasy at first: you are a sci
 
 ## R02 — player actions and major mechanics
 
-### Jobs make the first character different without locking a class
+### Character appearance, Jobs and Traits
 
-Character creation begins with a **Job**. Jobs provide starting skill levels, XP bonuses, trait-point budgets and sometimes forced traits or starting equipment. Current examples include **Lab Assistant**, **Somatic Gastrologist** and **Paratheoretical Physicist**, alongside other specialized GATE professions. [Jobs](https://abioticfactor.wiki.gg/wiki/Jobs).
+Character creation begins with a **Job** and **Traits**. Appearance is deliberately separate: the player's visual presentation can be changed from the main menu without changing the character build. Jobs provide starting skill levels, XP bonuses, trait-point budgets and sometimes forced traits or starting equipment; examples include **Lab Assistant**, **Somatic Gastrologist** and **Paratheoretical Physicist**. [Character Creation](https://abioticfactor.wiki.gg/wiki/Character_Creation) · [Jobs](https://abioticfactor.wiki.gg/wiki/Jobs).
 
-The important design is that a Job is a **head start, not a destiny**. Skills continue improving through use regardless of starting profession, and later-game systems can permit character/job restructuring when the relevant world option/system is available.
+The initial choice is meaningful but not permanently class-locked. After reaching Cascade Laboratories, **IS-0017 / the Amnesia Threshold** allows the player to reselect Job **and Traits**, resets all Skills to level 3 and does not re-grant starting gear; recipes, journal entries and compendium knowledge persist. [IS-0017](https://abioticfactor.wiki.gg/wiki/IS-0017).
 
-This makes co-op specialization feel natural without forcing a classic tank/healer/DPS composition.
+This is a strong separation between:
+- **appearance** — freely revisitable presentation;
+- **background build** — Job/Traits that can later be reset at real cost;
+- **lived expertise** — use-grown Skills that are partially erased by that respecialization.
+
+Jobs are therefore a head start and identity/history, not a permanent tank/healer/DPS class.
 
 ### Traits create explicit strengths and handicaps
 
@@ -47,7 +52,7 @@ This produces scientists who can be physically/socially/comically different befo
 
 ### Skills improve through doing
 
-Abiotic Factor has **no single global character level**. Skills gain XP through relevant behavior and unlock perks at thresholds. The current skill set spans combat and ordinary survival/research activities such as:
+Abiotic Factor has **no single global character level or Strength/Dexterity-style attribute-point sheet**. Skills gain XP through relevant behavior and unlock perks at thresholds. Jobs/Traits establish initial asymmetry while Health, Stamina, carry weight and other derived capacities are affected by traits, equipment, statuses and skill perks rather than manually allocated level-up points. The current skill set spans combat and ordinary survival/research activities such as:
 
 - Blunt Melee;
 - Sharp Melee;
@@ -146,6 +151,14 @@ Progression eventually yields:
 
 The transition communicates competence without turning the protagonist into a generic military hero.
 
+### Repair, salvage and true item upgrading
+
+Durability is not only a replacement tax. Players can repair many items with Duct Tape or at the **Repair and Salvage Station**, which can also break unwanted items back into useful materials. [Repair/Salvage](https://abioticfactor.wiki.gg/wiki/Repair_and_Salvage_Station).
+
+By 1.0, the **Enhancement Bench** adds genuine upgrades/refits: current weapons, tools and armor with upgrade paths can be transformed into stronger or functionally changed variants; Overworld firearms can also have biometric locks removed there. Cold Fusion added multiple armor/item upgrades and visibly marks upgradeable items. [Enhancement Bench](https://abioticfactor.wiki.gg/wiki/Enhancement_Bench) · [Cold Fusion 1.0](https://abioticfactor.wiki.gg/wiki/1.0.0_Major_Update:_Cold_Fusion).
+
+Current Chemistry adds another equipment-composition layer: weapon **Coatings** apply temporary/special effects and persist through Enhancement-Bench upgrades, while tinctures provide character buffs/treatments. [Chemistry](https://abioticfactor.wiki.gg/wiki/Chemistry).
+
 ### Cooking is a full skill and production path
 
 Cooking uses pans, pots, stoves and later equipment. Soups require water and ingredient combinations; higher Cooking skill improves capability/quality and unlocks further methods such as advanced baking equipment. [Cooking](https://abioticfactor.wiki.gg/wiki/Cooking).
@@ -213,6 +226,14 @@ Weapon durability matters. At zero durability a weapon becomes much less useful 
 
 The game deliberately allows "bad fighter, good scientist" solutions: trap a hallway, funnel an enemy into a machine, make a weapon out of things that should never be weapons.
 
+### Armor, inventory and carried load
+
+The player inventory is split into dedicated **Armor & Gear**, hotbar and main-inventory areas. Main pockets start at 12 slots; backpacks add slots and can reduce carried-weight impact. Dedicated gear slots include headlamp/goggles, head/arm/chest/leg armor, off-hand armament, trinkets, backpack and companion-pet support. [Inventory](https://abioticfactor.wiki.gg/wiki/Inventory).
+
+Armor protects the specific body part it covers, degrades with damage and can trade protection/resistance against movement weight. Trinkets supply passive or utility effects rather than acting as cosmetic collectibles only. [Armor and Gear](https://abioticfactor.wiki.gg/wiki/Gear_item).
+
+Carry weight itself feeds movement/stamina penalties and even Strength XP in some encumbered states. Inventory therefore links object choice to character progression, not just storage convenience. [Mechanics](https://abioticfactor.wiki.gg/wiki/Mechanics).
+
 ### Stealth is a real skill, not just crouching
 
 Sneaking improves enemy detection behavior and unlocks perks such as faster crouched movement, avoidance of certain traps and stronger unaware-enemy attacks. This means stealth can become a character specialty through actual repeated sneaking. [skills example](https://abioticfactor.wiki.gg/wiki/Sharp_Melee).
@@ -229,6 +250,8 @@ Threats include:
 - base assault forces.
 
 The strongest enemy encounters often require understanding a rule rather than only increasing DPS.
+
+Enemies also support a concrete **loot/research** loop. Corpses can be harvested with sharp tools for entity-specific remains/materials; the result depends on the target and harvesting tool. Equipment, key items, ID cards, anomalous drops, portal materials and objective rewards then feed research/crafting/progression. [Mechanics](https://abioticfactor.wiki.gg/wiki/Mechanics) · [Compendium Entries](https://abioticfactor.wiki.gg/wiki/Compendium_Entries).
 
 ### Vehicles and transport
 
@@ -260,6 +283,8 @@ This prevents a cozy paid building environment from being confused with mandator
 Current 1.0+ systems include **NPC traders** and machine-style exchanges. Fixed and traveling traders can exchange specific items, while quantum exchangers provide deterministic exchanges. [Trading](https://abioticfactor.wiki.gg/wiki/Trading).
 
 The economy is barter-like and item-specific rather than a universal gold market.
+
+Traders are authored service actors rather than members of a simulated player market: they offer fixed/exchange-specific value propositions, and the game has no auction house or universal coin ladder that displaces scavenging, skills or crafting.
 
 ### Pets / companions
 
@@ -302,16 +327,18 @@ That makes "Abiotic Factor difficulty" a world-law configuration, not one univer
 ### Useful absences
 
 Abiotic Factor has no:
-- conventional global XP level;
+- conventional global XP level or manually allocated RPG attribute points;
 - rigid MMORPG class roles;
+- character spellbook/mana-school progression (anomalous science, chemistry and special gear provide power-like effects instead);
 - romance/companion-affinity system;
+- recruitable **human** adventuring party with dialogue/relationship arcs;
 - player-run auction-house economy;
 - freeform city/settlement population management;
-- persistent faction reputation campaign as its primary progression;
+- joinable faction reputation/diplomacy campaign;
 - procedurally generated main facility;
 - default competitive PvP endgame.
 
-The main campaign is cooperative PvE/exploration.
+Stealth is **present** as a use-grown Sneaking skill, and nonhuman pets are genuine companions. The main campaign remains cooperative PvE/exploration.
 
 ## R03 — items, entities and composition
 
@@ -330,20 +357,21 @@ The important lesson is that the object retains enough identity to be memorable 
 
 ### A scientist build is compositional
 
-A character's capabilities emerge from:
-
-- starting Job;
-- positive/negative Traits;
+A character has no global RPG level. Their operational build composes background and use-history with:
+- Job and Traits;
 - use-grown Skills/perks;
-- armor/protective equipment;
-- weapons/tools;
-- inventory/backpack;
-- food/buffs;
-- pets;
+- head/arm/chest/leg armor and other Gear slots;
+- backpack/weight budget;
+- hotbar weapons/tools and off-hand;
+- trinkets;
+- upgraded/refitted equipment;
+- chemistry coatings/tinctures;
+- food/status buffs;
+- companion pet;
 - current anomalous equipment;
 - group role.
 
-There is no moment where "choose Scientist Level 20 class specialization" replaces the embodied history of what the player actually did.
+There is no moment where "choose Scientist Level 20 class specialization" replaces the embodied history of what the player actually did. Even changing Job/Traits through IS-0017 deliberately resets skill history rather than pretending background and practiced expertise are the same state.
 
 ### Power network is a composed object
 
@@ -467,6 +495,8 @@ There is no universal coin-driven marketplace. The effective economy is:
 
 The value of a resource depends heavily on what the current science/crafting problem requires.
 
+The **Enhancement Bench** gives late equipment another sink/return loop: certain weapons, tools and armor can be upgraded/refitted rather than discarded, and Chemistry coatings can further modify weapon behavior. This preserves some attachment to favored equipment instead of making every tier a clean replacement.
+
 ### Renewable portal worlds solve depletion
 
 Main-facility furniture/resources can be finite or inconvenient. Portal Worlds reset on schedules, allowing resource replenishment without erasing the player's facility/base history.
@@ -573,9 +603,13 @@ Player characters are scientists defined through:
 
 In multiplayer, those differences are socially meaningful because tasks can be delegated. The group can naturally identify "our cook," "our builder," "our sneaky person," or "the one who understands electronics."
 
-### NPCs and story people
+### NPCs, objectives and factions
 
-The GATE facility has surviving staff, recorded personnel, traders and narrative figures. Conversations, terminals/logs and environmental evidence reveal institutional history. NPCs are meaningful for story/trading/progression but do not form a full relationship/romance/schedule simulation.
+The GATE facility has surviving staff, recorded personnel, traders and narrative figures. A large **Objectives** chain explicitly moves the player through the facility—examples include reaching the Elevator, fixing Office-sector pumps, activating the Synchrotron, finding Mycofields materials and infiltrating Security. Objectives provide authored direction without replacing the scavenging/survival rules. [Objectives](https://abioticfactor.wiki.gg/wiki/Objectives).
+
+The world also has clear factions: the player is a **GATE employee**; the **Order** is the major hostile religious/militant organization; the **Gatekeepers** are GATE-adjacent occult containment forces whose relationship becomes increasingly complicated; other portal-world groups appear later. [GATE-101 factions](https://abioticfactor.wiki.gg/wiki/Gate-101) · [Order](https://abioticfactor.wiki.gg/wiki/Order) · [Gatekeepers](https://abioticfactor.wiki.gg/wiki/Gatekeeper).
+
+These are authored affiliations/conflicts rather than a player-managed reputation/diplomacy system. The dossier found no romance/affinity ladder or rich daily-schedule social simulation for ordinary NPCs; NPCs are primarily story/service/encounter actors.
 
 ### Hostile AI
 
@@ -624,6 +658,12 @@ The retro art is not simply nostalgia. It keeps a dense world of interactable ju
 
 PC Gamer's review praises how the place feels like a coherent abandoned institution rather than a generic survival biome, while TheXboxHub says the retro presentation looks deliberately 1998-ish yet remains clean/readable. [PC Gamer review](https://www.pcgamer.com/games/survival-crafting/abiotic-factor-review/) · [TheXboxHub review](https://www.thexboxhub.com/abiotic-factor-review/).
 
+### Audio production, music and voice
+
+The current credits give unusually concrete production evidence. **Stephanie Engelbrecht** and **Chahd Sbai** are credited as sound designers, while art director **Connor "MadDok" Moran** is credited for the facility's soundscape before dedicated sound designers joined. **Chris Geddes** composed the main theme and **Mario Sello Nuñez** composed sector music. [Credits](https://abioticfactor.wiki.gg/wiki/Credits).
+
+The voice cast includes scientists, GATE staff, Order/Gatekeeper characters and security bots; the mix of dead-serious institutional announcements, strange entity sounds and comic scientist reactions is part of the game's tone. These credits establish authorship/production, while this audit still does not claim to have listened through the soundtrack or every voice scene.
+
 ### Need feedback uses comedy and embodiment
 
 The scientist complains, eyelids close under fatigue, toilet need becomes increasingly obvious, and bad food can produce ridiculous bodily consequences. The presentation makes survival state memorable without reducing the tone to grim medical simulation.
@@ -647,7 +687,7 @@ It is not a complete accessibility substitute, but rule customization materially
 
 **Moderate structural spoilers; late ending details omitted.**
 
-The player arrives for their first day at the **GATE Cascade Research Facility**, a secret complex that studies anomalies and portal-linked worlds. Something has gone catastrophically wrong:
+The player arrives for their first day at the **GATE Cascade Research Facility**, a secret complex that studies anomalies and portal-linked worlds. The objective system gives that investigation a concrete authored spine while sector exploration, scavenging and portal trips supply the systemic path between objectives. Something has gone catastrophically wrong:
 - containment has failed;
 - portals/Anteverses are active;
 - hostile entities move through the facility;
@@ -793,11 +833,12 @@ No battle pass, gacha or recurring power monetization is central to current prog
 Strong title-specific public evidence includes:
 
 - near **300k sold** in May 2024, developer interview;
-- **600k Steam units** by about three months after Early Access, reported by GameDiscoverCo/launch press.
+- **600k Steam units** by about three months after Early Access, reported by GameDiscoverCo;
+- **more than 1.4 million Steam copies by late August 2025**, with GameDiscoverCo explicitly attributing that total to Playstack after the 1.0 launch.
 
-[PC Gamer](https://www.pcgamer.com/games/survival-crafting/abiotic-factor-interview-survival-immersive-sim/) · [GameDiscoverCo](https://newsletter.gamediscover.co/p/how-abiotic-factor-sold-600k-copies).
+[PC Gamer](https://www.pcgamer.com/games/survival-crafting/abiotic-factor-interview-survival-immersive-sim/) · [600k analysis](https://newsletter.gamediscover.co/p/how-abiotic-factor-sold-600k-copies) · [1.4m follow-up](https://newsletter.gamediscover.co/p/how-abiotic-factor-rode-a-hot-steam).
 
-Secondary later reporting places the game materially above that by 1.0, but this dossier avoids inventing a current lifetime figure without a clean title-specific first-party statement.
+The 1.4m figure is a dated Steam-sales milestone relayed by an independent analytics publication **from Playstack**, not a current September-2026 lifetime total and not console/subscription participation.
 
 ### Playstack aggregate cannot be assigned to Abiotic Factor alone
 
@@ -807,7 +848,7 @@ The distinction is preserved rather than converting an aggregate into a title st
 
 ### Current participation signal
 
-The current Steam store has tens of thousands of English purchaser reviews and an **Overwhelmingly Positive** aggregate; review counts are not sales. [Steam](https://store.steampowered.com/app/427410/Abiotic_Factor/).
+The current Steam store has tens of thousands of purchaser reviews and an **Overwhelmingly Positive** aggregate; review counts are not sales. Current third-party unit estimates disagree materially, so this dossier does not substitute September-2026 model estimates for a publisher-reported milestone. [Steam](https://store.steampowered.com/app/427410/Abiotic_Factor/).
 
 ## R12 — reception, five written reviews and player evidence
 
@@ -1078,13 +1119,44 @@ https://steamcommunity.com/app/427410/reviews/?browsefilter=toprated
 https://steamcommunity.com/app/427410/negativereviews/?browsefilter=toprated  
 https://steamcommunity.com/app/427410/reviews/
 
+**S28 — Hotfix v1.4.0.28206, July 27, 2026.** First-party current-version boundary across Steam, PS5 and Xbox/PC App; pet/decorating/cooking fixes and explicit note that official mod support is not yet live.  
+https://steamcommunity.com/app/427410/discussions/7/574921277455785829/
+
+**S29 — Character Creation, Jobs and IS-0017.** Current operational references for appearance separation, Job/Trait background rules and late respecialization resetting all Skills to level 3 while preserving recipes/journal/compendium.  
+https://abioticfactor.wiki.gg/wiki/Character_Creation  
+https://abioticfactor.wiki.gg/wiki/Jobs  
+https://abioticfactor.wiki.gg/wiki/IS-0017
+
+**S30 — Inventory / Armor and Gear / Mechanics.** Current operational references for 12-slot starting pockets, backpacks/weight, dedicated armor/gear slots, body-part armor, harvesting remains and item durability.  
+https://abioticfactor.wiki.gg/wiki/Inventory  
+https://abioticfactor.wiki.gg/wiki/Gear_item  
+https://abioticfactor.wiki.gg/wiki/Mechanics
+
+**S31 — Enhancement Bench / Repair and Salvage / Chemistry / Cold Fusion 1.0.** Current item repair, salvage, upgrade/refit and coating/tincture mechanics plus 1.0 upgrade-family addition.  
+https://abioticfactor.wiki.gg/wiki/Enhancement_Bench  
+https://abioticfactor.wiki.gg/wiki/Repair_and_Salvage_Station  
+https://abioticfactor.wiki.gg/wiki/Chemistry  
+https://abioticfactor.wiki.gg/wiki/1.0.0_Major_Update:_Cold_Fusion
+
+**S32 — Objectives / faction references.** Current authored objective chain plus GATE, Order and Gatekeeper faction boundaries.  
+https://abioticfactor.wiki.gg/wiki/Objectives  
+https://abioticfactor.wiki.gg/wiki/Gate-101  
+https://abioticfactor.wiki.gg/wiki/Order  
+https://abioticfactor.wiki.gg/wiki/Gatekeeper
+
+**S33 — Current credits.** Deep Field credits for sound designers Stephanie Engelbrecht/Chahd Sbai, early soundscape by Connor Moran, main-theme composer Chris Geddes and sector-music composer Mario Sello Nuñez.  
+https://abioticfactor.wiki.gg/wiki/Credits
+
+**S34 — GameDiscoverCo 1.0 follow-up, Aug. 2025.** Independent commercial analysis reporting >1.4m Steam copies, explicitly attributed to Playstack; kept dated and distinct from console/subscription participation.  
+https://newsletter.gamediscover.co/p/how-abiotic-factor-rode-a-hot-steam
+
 ### Suggested reading route
 
 1. Read **S17 (developer interview)** first to understand why the survival rules deliberately differ from genre defaults.
 2. Read **S22 (PC Gamer review)** for the strongest whole-game positive case.
 3. Read **S24 (GamingTrend)** immediately after for the strongest late-game counterpoint.
 4. Read **S09/S10/S11/S12** for the exact power/death/portal/base rules behind the worked cases.
-5. Read **S02/S03/S04/S05** to establish the current September-2026 release boundary.
+5. Read **S02/S03/S28** to establish the current September-2026 release boundary; 1.4.0.28206 is shipped, while Entropic Break and official mod support remain future.
 6. Read **S18** for the studio's pre-launch narrative/philosophy.
 7. Use S27 last for player testimony; helpful negatives contain major story/endgame spoilers.
 
@@ -1111,9 +1183,12 @@ https://steamcommunity.com/app/427410/reviews/
 
 - No current build/server was installed or executed for this pass.
 - No video, podcast or soundtrack is represented as watched/listened to.
-- Community wiki mechanics are used for operational rules, not developer intent.
+- The official community wiki is used for operational mechanics/credits and is not substituted for Deep Field's release-roadmap intent.
+- Current Character Creation text and Jobs/IS-0017 pages can look contradictory if read in isolation: the initial Job/Trait choice is fixed at creation, but current late-game IS-0017 explicitly provides respecialization with a skill reset. The dossier records both stages.
 - Exact perk values, recipe ingredients and resource reset timing can change; this dossier focuses on current structural behavior and version-dates the mutable parts.
 - Entropic Break and Community Update #5/mod support are **future** on September 27, 2026.
 - The five-review set intentionally includes one 2024 Early Access review, clearly separated from four full-release reviews; its technical complaints are not presented as current.
 - Steam player samples are qualitative evidence, not prevalence.
 - Playstack's >3m H1 unit statement combines Balatro and Abiotic Factor and is not misreported as Abiotic Factor's units.
+- The >1.4m Steam figure is a dated August-2025 GameDiscoverCo report explicitly attributed to Playstack, not a current lifetime or all-platform count.
+- Hotfix v1.4.0.28206 (Jul. 27, 2026) is the newest shipped build located in this audit; Community Update #5/mod support and Entropic Break remain future.
