@@ -124,6 +124,27 @@ For OpenLegend, a reusable invention should expose requirements, effects, incomp
 
 ## 12. Coverage, preservation and viewing routes
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and revalidated the current league boundary:
+
+- **Identity / classes / attributes / skills / leveling / trees:** seven base classes, Ascendancies, shared passive tree, Cluster Jewels, levels and skill/support gems define builds (§§1–3, 6).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** equipment bases/modifiers/sockets/links, jewels, flasks, currencies, recipes and targeted crafting operators are covered in §§2–4.
+- **Magic / spells / powers:** skill gems, support gems, auras/minions and item-granted interactions form the central ability vocabulary.
+- **Traversal / environmental and object interaction:** movement skills, areas/maps, terrain, doors/objects, Labyrinth traps and endgame map/voyage navigation are covered; the game is not a general physics sandbox.
+- **Activities / minigames:** campaign, Labyrinth, Atlas/endgame systems, challenge-league mechanics, Charts/Voyages and optional content provide distinct activities within the ARPG loop.
+- **Combat / stealth / loot / rewards:** real-time combat and loot are central; conventional stealth is not a major systemic pillar. Reward filtering/build relevance matter more than a single rarity ladder.
+- **Death / failure / recovery:** experience loss, Hardcore migration, Animate Guardian local loss and flask/recovery systems are distinguished (§§3, 5, 7).
+- **Economy / trading:** currencies double as crafting operators; trade league, SSF, Currency Exchange and Merchant's Tabs have different social/access contracts (§§4, 7).
+- **Story / relationships / romance / reputation / party / companions:** campaign NPCs/quests and temporary/permanent Mercenary or minion assistance exist; romance/reputation simulation is not a core system.
+- **NPC/AI behavior and schedules / factions:** monsters, minions, Mercenaries and bosses have bounded combat behavior; there is no autonomous civilian schedule or systemic faction-politics simulation.
+- **World map / quests / events:** campaign acts, Labyrinth, Atlas destinations, league mechanics and Voyages provide the world/objective structure.
+- **Building / settlements / management:** hideout customization exists, but settlement/population production management is not the core player progression.
+- **Multiplayer / social / endgame / return loops:** parties, trade/economy, leagues, races/community builds, Atlas progression and repeated fresh-league starts provide long-term return; SSF explicitly removes some of those social systems.
+
+**Current boundary check:** Grinding Gear Games' official Steam announcement feed shows **Path of Exile 1: Curse of the Allflame / 3.29** launched July 24, 2026 and remains the current PoE1 league in late September; current posts still advertise Curse of the Allflame content and cosmetics. The feed also announced **3.29.1** content after launch. [P23](#p23) This supersedes any Mirage-era “current league” wording while preserving older systems that remain core.
+
+
 R01 is addressed in §1; R02 in §§1–6; R03 in §§2–5; R04 in §§3–7; R05 in the distinct worked cases throughout; R06 in §§5 and 7–8; R07 in §9; R08 in §8; R09 in §9 and the preserved creator-history section; R10–R11 in §10; R12 in §10; R13 in §11; R14 here and below.
 
 **Preservation:** the complete existing three-game chapter and corresponding supplied-master section were compared. Its Wilson accounts, earlier growth/cadence interpretation and cautions about changing learned builds remain unchanged. This dossier does not claim completion of PoE2 or Diablo IV. Original metric/review/source/video registers remain intact; packet-wide reconciliation is still pending.
@@ -175,3 +196,5 @@ R01 is addressed in §1; R02 in §§1–6; R03 in §§2–5; R04 in §§3–7; R
 <a id="p21"></a>**P21 — [PC Gamer re-review](https://www.pcgamer.com/path-of-exile-review/), Fraser Brown, May 25, 2018.** Original written criticism; historical appreciation, not a current technical audit.
 
 <a id="p22"></a>**P22 — [Mirage New Atlas discussion](https://www.pathofexile.com/forum/view-thread/3916660), March 8, 2026.** Two direct contrasting player accounts. Early impressions and reported scarcity are not representative measurements.
+
+<a id="p23"></a>**P23 — [Path of Exile official Steam announcements](https://steamcommunity.com/app/238960/announcements/), checked September 27, 2026.** Primary Grinding Gear Games feed confirming Curse of the Allflame / 3.29 launched July 24, remains the active PoE1 league in current posts, and received 3.29.1 follow-up content. Current promotions are not treated as gameplay-mechanics evidence beyond the live-league boundary.
