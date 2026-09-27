@@ -27,12 +27,11 @@ test('playable elevated world, mixed artwork, camera controls and exact surface 
   });
   try {
     await page.goto(`http://127.0.0.1:${address.port}/auth/login`);
-    await page.getByRole('button', { name: 'Control here', exact: true }).click();
     const canvas = page.locator('#world');
     await expect(canvas).toHaveAttribute('data-ready', 'true');
     await expect(canvas).toHaveAttribute('data-floor', 'all');
     await page.screenshot({ path: info.outputPath('spatial-clearing.png') });
-    // A fresh in-memory fixture starts unpaused; no wall-clock ticks run.
+    // The first local browser owns control in this fresh database; no wall-clock ticks run.
     await expect(page.getByRole('button', { name: 'Pause world', exact: true })).toBeVisible();
     // Project a known public deck point through the default orthographic camera.
     // This clicks actual scene geometry, not a hidden test-only move endpoint.
