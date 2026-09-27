@@ -94,6 +94,8 @@ Follow [Documentation](.agents/rules/documentation.md) before code/design change
 
 Preserve useful existing documentation unless the current task explicitly and clearly calls for overriding or removing it. An agent's internal plan, inferred cleanup, context summary or harness workflow is not that instruction. Reorganization must retain useful meaning and references; authorized reversals must state what changed and why.
 
+During every implementation task, update the maintained docs to track all known remaining work, including performance improvements, shared data to reduce duplicative queries, architectural next steps, bug fixes and verification gaps. For each item, record the concrete remaining work and concisely explain why it was not implemented in this run; summarize outstanding items and reasons in the handoff. Reuse existing tracker entries rather than duplicating them. Tracking unfinished agreed scope does not make the implementation complete.
+
 ## Work discipline
 
 For development tasks, after initial planning and before implementation, follow [Rebase](.agents/skills/openlegend-rebase/SKILL.md) to select and refresh the correct base and safely reconcile the branch and plan. That workflow owns target precedence, worktree/history protections and the mandatory all-work conflict stop; report the exact remote/ref used.

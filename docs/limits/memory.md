@@ -556,7 +556,7 @@ Knowledge-note pages: **40 default / 100 maximum**.
 
 Conversation/required/correction preparation allows 8,192 unique sources and 4 MiB of serialized bodies. Selection detects overflow before hydration in one scoped SQL snapshot. No partial required set is returned. Existing paged history provides access beyond one preparation.
 
-**Reason / tradeoff:** Keep ordinary decisions from materializing arbitrary history while preserving all durable evidence. A very long required conversation may explicitly refuse a full-context decision; semantic conversation condensation remains separate. Optional top-result limits do not bound exact search. [Owner](../memory-architecture.md#retrieval-preparation-admission).
+**Reason / tradeoff:** Keep ordinary decisions from materializing arbitrary history while preserving all durable evidence. Conversation context now uses [actor-scoped compaction](narration.md#la236); metadata admission and uncovered-body hydration retain these safety bounds, so an oversized cold preparation still fails explicitly. Optional top-result limits do not bound exact search. [Owner](../memory-architecture.md#retrieval-preparation-admission).
 
 ## MH05
 

@@ -1,6 +1,6 @@
 # Long-conversation continuity and compaction — feature specification
 
-**Status:** approved for implementation by the developer on 2026-09-26. [Technical design](conversation-compaction-tech-design.md) owns the mechanism and implementation plan. [NC14–NC17](../maintainers/narration-and-conversations.md) track delivery and qualification; approval is not evidence of runtime completion.
+**Status:** implemented and locally qualified on 2026-09-27, following developer approval and the updated remote design. [Technical design](conversation-compaction-tech-design.md) owns the mechanism and implementation plan. [NC14–NC17](../maintainers/narration-and-conversations.md) record delivery; [runtime evidence and limits](../verification.md#conversation-compaction) distinguish native checks, live constructed scenarios and broader acceptance still outside this slice.
 
 ## 1. Outcome
 

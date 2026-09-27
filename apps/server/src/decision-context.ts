@@ -103,6 +103,7 @@ export async function prepareDecision(
     !!world.conversations?.active[actorId] ||
     requiredIds.some((id) => service.worldEvent(id)?.type === 'speech');
   const head = await service.store.records?.head();
+  // The singular trigger can sit outside the coalesced list; keep its source binding.
   const evidenceIds = [
     ...new Set([...requiredIds, ...(triggerEvidenceId ? [triggerEvidenceId] : [])]),
   ];
@@ -158,7 +159,7 @@ export async function prepareDecision(
     world,
     actorId,
     observed,
-    requiredIds,
+    evidenceIds,
     [],
     [],
     stimulus,
@@ -275,11 +276,18 @@ export async function prepareDecision(
   requiredBytes =
     Buffer.byteLength(readableDecisionContext(requiredContext, [], false)) +
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
-  // Conversation has its own mandatory projection; optional recall must not
-  // reintroduce an arbitrary older transcript subset alongside its summary.
+  // A duplicate group may retain another conversation's representative ID.
+  // Check every member so optional recall cannot reintroduce compacted speech.
+  // Recent-memory coverage can also mark a group required; only trigger,
+  // commitment and correction evidence needs an independent raw-source path.
   const conversationIds = new Set(conversation.sourceIds);
   for (let index = candidates.length - 1; index >= 0; index--)
-    if (!candidates[index]!.required && conversationIds.has(candidates[index]!.id))
+    if (
+      !candidates[index]!.requiredSource &&
+      (candidates[index]!.sourceIds ?? [candidates[index]!.id]).some((id) =>
+        conversationIds.has(id),
+      )
+    )
       candidates.splice(index, 1);
   if (requiredBytes + actionReserveBytes > 100000)
     throw new Error('Complete accepted inner world and required context exceed the input budget.');
@@ -445,7 +453,7 @@ export async function prepareDecision(
     currentSelection
       .filter((candidate) => candidate.kind === 'entity')
       .flatMap((candidate) => candidate.entityIds ?? []),
-    requiredIds,
+    evidenceIds,
     [
       ...currentSelection
         .filter(
@@ -480,10 +488,15 @@ export async function prepareDecision(
     policy: MIND_POLICY,
     tier: 'fast',
     purpose: 'thought',
-    watermark: Math.max(0, ...selection.selected.map((c) => c.at)),
-    evidenceIds: selection.selected
-      .filter((c) => c.kind === 'memory' || c.kind === 'conversation')
-      .flatMap((c) => c.sourceIds ?? [c.id]),
+    watermark: Math.max(conversation.watermark, ...selection.selected.map((c) => c.at)),
+    evidenceIds: [
+      ...new Set([
+        ...selection.selected
+          .filter((c) => c.kind === 'memory' || c.kind === 'conversation')
+          .flatMap((c) => c.sourceIds ?? [c.id]),
+        ...conversation.evidenceIds,
+      ]),
+    ],
     entityIds: Object.values(entityReferences),
     entityEpisodes: Object.fromEntries(
       [

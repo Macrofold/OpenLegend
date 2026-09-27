@@ -1,6 +1,6 @@
 # Long-conversation continuity and compaction — technical design
 
-**Status:** approved for implementation by the developer on 2026-09-26. [Feature specification](conversation-compaction-feature-spec.md) owns behavior. [NC14–NC17](../maintainers/narration-and-conversations.md) track implementation and qualification.
+**Status:** implemented and locally qualified on 2026-09-27, following developer approval and the updated remote design. [Feature specification](conversation-compaction-feature-spec.md) owns behavior. [NC14–NC17](../maintainers/narration-and-conversations.md) record delivery; [runtime evidence and limits](../verification.md#conversation-compaction) distinguish native checks, live constructed scenarios and broader acceptance still outside this slice.
 
 ## 1. Architectural decision
 
@@ -114,7 +114,7 @@ Repeated summary-plus-new-turns compaction is accepted for v1 because it is simp
 
 ## 6. Provider execution
 
-Use the existing OpenLegend AI generation boundary with a small/cleanup-capable model route and strict output-size validation. No Letta, LangChain, Zep, Mem0 or provider-specific opaque compaction dependency is required.
+Use the existing OpenLegend AI generation boundary with a model route qualified for attributed compaction and strict output-size validation. Live qualification selected the configured complex reasoning route at low effort after smaller routes lost material distinctions; see the [implementation policy](#16-tradeoffs-and-open-decisions). No Letta, LangChain, Zep, Mem0 or provider-specific opaque compaction dependency is required.
 
 The input contains:
 
@@ -266,21 +266,40 @@ The rolling summary can accumulate semantic drift across many generations. That 
 
 The summary rubric is intentionally broad rather than a fixed conversation ontology. Classic dialogue-state work motivates established context, active issues/focus and recent moves, while grounding/repair work motivates explicit handling of updates and uncertainty; none requires new authoritative dialogue records. This keeps v1 adaptable while relying on existing semantic owners for mechanically important obligations and corrections.
 
-**Blocking implementation decisions:** exact byte allocation and selected configured cleanup model should be chosen against the actual request budget/provider at implementation time. They do not change the architecture.
-
-## Maintained records
+**Implementation policy:** use the configured complex reasoning model at low effort; live qualification rejected nano cleanup after attribution/boundary drift and mini after it invented disagreement from distinct overheard participants. Attributed third-person prose plus an explicit memory-owner binding addresses speaker/listener confusion. [Evidence](../verification.md#conversation-compaction) records the trials; the initial byte allocation and cold-preparation ceiling are recorded in [LA236](../limits/narration.md#la236). These are tunable context policy, not conversational semantics. No blocking product decisions remain.
 
 ## Implementation plan — 2026-09-26
 
-Scope is NC14–NC17, approximately 700–1,100 changed logic lines. The privacy, asynchronous publication and persistence contracts make this substantial work. The refreshed base is `Macrofold/OpenLegend` `origin/main` at `45210d41075dc1db09dbd48f562b76b8b39bcc10`; this detached checkout already descends from it, so no history rewrite is required.
+Scope is NC14–NC17, approximately 700–1,100 changed logic lines. The privacy, asynchronous publication and persistence contracts make this substantial work. The initial base was `Macrofold/OpenLegend` `origin/main` at `45210d41075dc1db09dbd48f562b76b8b39bcc10`. On 2026-09-27 the developer explicitly selected the updated `origin/design/conversation-compaction` at `33bbfde1e8f38480407f19f96dace25fb6719f8b`. Implementation was checkpointed locally and rebased cleanly onto that ref; its researched rubric and expanded qualification take precedence.
 
 1. Add a single server conversation-context owner and reuse the existing actor-perspective speech renderer. Give it the remaining conversation byte allowance before optional recall/action selection. Route immediate cognition and reflection through it; keep current trigger and mandatory semantic records separate.
 2. Read bounded actor-scoped conversation metadata from the memory repository, hydrate only uncovered speech, and store one derived rolling row per actor/conversation. Bind cached coverage to source revisions, perspective, compactor version and restore generation. Revalidate and install atomically; concurrent competing publication must fail explicitly.
-3. Generate bounded prose with the existing cleanup execution route through the caller's admitted/accounted AI boundary. Use stable attempt/chunk identities, cancellation and explicit failure with no retry. Split large permitted prefixes into bounded chronological inputs; retain the existing 8,192-row/4-MiB preparation ceilings and fail visibly at capacity rather than omit evidence.
+3. Generate bounded prose with the existing configured reasoning execution route through the caller's admitted/accounted AI boundary. Use stable attempt/chunk identities, cancellation and explicit failure with no retry. Split large permitted prefixes into bounded chronological inputs; retain the existing 8,192-row/4-MiB preparation ceilings and fail visibly at capacity rather than omit evidence.
 4. Reuse cognition diagnostics for full/compacted mode, source/summary/recent bytes, coverage and exact projection. Preserve full speech storage. Reconcile the persistent owners, limits, tracker, implementation snapshot and decision history.
-5. Verify with pinned formatting, TypeScript and production build; exercise disposable SQLite worlds and downstream context assembly with short, long, corrected, disputed, private and partial-hearing input, failed/cancelled generation, stale publication, restart and restore. Measure bounded history preparation. No automated test suites are authorized by default. Live continuity qualification needs configured authorized credentials and a credible bound within the shared $10 task ceiling; report unavailable evidence separately.
+5. Verify with pinned formatting, TypeScript and production build; exercise disposable SQLite worlds and downstream context assembly with short, long, corrected, disputed, private and partial-hearing input, failed/cancelled generation, stale publication, restart and restore. Measure bounded history preparation and repeated compaction over 1,000+ turns, including assertion versus agreement, explicit repair versus contradiction, temporal/spatial/comparative references, I/you perspective, implicit callbacks, old-topic return and unknown/abstention. Inspect both projection fidelity and downstream behavior; fixture summaries only establish plumbing. No automated test suites are authorized by default. Live continuity qualification needs configured authorized credentials and a credible bound within the shared $10 task ceiling; report unavailable evidence separately.
 
 Completion means integrated NC14–NC16 behavior, all feasible NC17 scenarios exercised, full diff reviewed and in-scope findings fixed. Keep unverified live quality acceptance open rather than claiming deterministic fixture output proves model quality.
+
+## Delivery — 2026-09-27
+
+NC14–NC17 are complete for this slice. One shared owner, atomic derived storage, lifecycle invalidation, admitted generation, exact-source bindings and authorized diagnostics are implemented. Both SQL adapters passed native lifecycle/failure scenarios; final live qualification exercised repeated compaction and game-path callbacks. Review fixes addressed publication-time cancellation, evidence binding, serialized input bounds and cold PostgreSQL query planning. [Verification](../verification.md#conversation-compaction) records measured results, provider accounting and the limits of constructed-case qualification; broader integrated acceptance stays with NC12.
+
+## Requested implementation review — 2026-09-27
+
+Review the complete NC14–NC17 implementation against the updated design, including source/privacy ownership, asynchronous admission, persistence, byte bounds, repeated work, modularity and comments. The reviewed scope is approximately 650 logic lines; expected fixes are localized, but disclosure and publication paths remain high consequence. Refreshed `origin/design/conversation-compaction` is still `33bbfde1e8f38480407f19f96dace25fb6719f8b`, already an ancestor of the preserved implementation; no history rewrite is needed.
+
+1. Trace both cognition consumers through preparation, generation and mutation; reproduce concrete failures before fixing them.
+2. Measure cold/warm preparation with representative histories, remove redundant work within existing owners and simplify code only where semantics remain explicit. Preserve the rolling-summary seam and qualified prompt unless evidence requires changing them.
+3. Recheck native lifecycle/privacy failures through downstream callers on disposable stores, with zero-cost generation fixtures; run formatting, TypeScript and build checks for changed code. Use live calls only if a changed prompt/model requires requalification, within the existing shared task ceiling.
+4. Review the resulting full diff, update comments beside non-obvious invariants and reconcile the canonical owners, limits, tracker and evidence. Completion requires all actionable in-scope findings fixed and verified, with remaining broader acceptance stated accurately.
+
+Review completed: reproduced and fixed covered-speech reintroduction through recent-memory/duplicate grouping, concurrent awareness edits crossing a SQL validation read, and custom-store forgetting/edit checks. Shared metadata selection and snapshot fingerprints reduce repeated work without introducing another cache, queue or memory authority. Cache publication derives its actor/conversation key internally. Comments explain the read-publication fence, immutable-world reuse and independently protected evidence; the qualified v8 prompt/model policy is unchanged. [Review evidence](../verification.md#conversation-compaction-review) records matched measurements and remaining limits.
+
+## Main integration — 2026-09-27
+
+Rebase the reviewed implementation onto the developer-selected `origin/main` at `1e17fcac82eec8a849278108f1c516cfb1650fab`. Expected runtime reconciliation is under 30 logic lines, concentrated in privacy-sensitive speech eligibility; preserve main's listener-specific capsules, embedding publication fences, narration failure policy and protected development-save instructions alongside compaction and its remaining-work rule.
+
+Carry the existing heard-word predicate into SQL and resident conversation selection, preserve main's speech embedding text/revisions, and retain compaction's required-source distinction. Keep both sets of independent documentation and evidence. Review the resulting branch diff and run TypeScript, build, guidance/format/link checks plus fresh current-format native scenarios for short/long conversation, heard fragments versus no-word/visual cues, source revocation and actual cognition. Use zero-cost fixtures, not paid requalification or old-save migration. Completion requires a clean rebased branch and evidence of the combined behavior; broader PF14/NC12 work remains separately tracked.
 
 ## Maintained records
 

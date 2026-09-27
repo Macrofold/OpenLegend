@@ -710,6 +710,7 @@ export class CognitionMaintenance {
         100000
       )
         throw new Error('Complete reflection context exceeds its admitted input budget.');
+      await prepared.validateConversation();
       const value = await this.paid(request.requestId, 'openai', () =>
         this.log.run(
           'Reflection harness',

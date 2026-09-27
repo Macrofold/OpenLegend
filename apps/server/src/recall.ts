@@ -49,6 +49,8 @@ export interface AttentionCandidate {
   embeddingText?: string;
   revision: string;
   required: boolean;
+  /** Trigger, commitment or correction evidence, independent of recent-memory coverage. */
+  requiredSource?: boolean;
   automatic: boolean;
   entityIds: string[];
   at: number;
@@ -109,6 +111,11 @@ export function memoryCandidate(
       ? `${relation}: ${JSON.stringify(awareness.content)}`
       : 'I heard indistinct speech.';
   }
+  const required =
+    matches(requiredIds) ||
+    (memory.kind === 'commitment' && !memory.resolved) ||
+    !!corrections[memory.id] ||
+    correctedIds.has(memory.id);
   return {
     id: memory.id,
     kind: matches(conversationIds) ? 'conversation' : 'memory',
@@ -117,11 +124,8 @@ export function memoryCandidate(
       ? { embeddingText: `${gameTime(memory.at)} [${memory.source}]: ${memory.summary}` }
       : {}),
     revision: awareness?.speech ? digest(memory) : digest({ ...memory, summary }),
-    required:
-      matches(requiredIds) ||
-      (memory.kind === 'commitment' && !memory.resolved) ||
-      !!corrections[memory.id] ||
-      correctedIds.has(memory.id),
+    required,
+    requiredSource: required,
     automatic: matches(automaticIds),
     entityIds: [...new Set(memory.entityIds)].filter(
       (id) =>

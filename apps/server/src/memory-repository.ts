@@ -650,37 +650,63 @@ export class MemoryRepository {
           }
         }
       }
-      const rows =
+      const sources =
         includeConversation && conversation
-          ? await this.db
-              .prepare(
-                `SELECT a.source_id,r.revision,a.sequence,c.payload AS correction FROM history_events e
-        JOIN mind_awareness a ON a.world_id=e.world_id AND a.source_id=e.id
-        JOIN recall_sources r ON r.world_id=a.world_id AND r.actor_id=a.actor_id AND r.id=a.source_id AND r.source_kind='awareness'
-        LEFT JOIN mind_corrections c ON c.world_id=r.world_id AND c.actor_id=r.actor_id AND c.source_id=r.id
-        WHERE ${this.eligible} AND e.conversation_id=? AND ${this.db.dialect === 'postgres' ? "(e.payload::jsonb->>'type')" : "json_extract(e.payload,'$.type')"}='speech' AND ${this.linguisticSpeech}
-        ORDER BY a.sequence LIMIT ${RETRIEVAL_ROWS + 1}`,
-              )
-              .all(...this.params(scope), conversation)
+          ? await this.conversationSources(scope, conversation)
           : [];
-      if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
       const required = new Set(requiredIds);
       return {
         sequence: Number(watermark?.['sequence'] ?? 0),
         conversationId: includeConversation ? conversation : undefined,
-        sources: rows.map(
-          (row): ConversationSource => ({
-            id: String(row['source_id']),
-            revision: String(row['revision']),
-            sequence: Number(row['sequence']),
-            correction: String(row['correction'] ?? ''),
-          }),
-        ),
-        conversationIds: rows
-          .map((row) => String(row['source_id']))
-          .filter((id) => !required.has(id)),
+        sources,
+        conversationIds: sources.map((source) => source.id).filter((id) => !required.has(id)),
       };
     });
+  }
+  /** One SQL snapshot of eligible metadata; validation needs no transcript bodies
+   * or fresh awareness watermark. Callers separately fence the world generation. */
+  async conversationSources(
+    scope: MemoryScope,
+    conversationId: string,
+  ): Promise<ConversationSource[]> {
+    // Restrict history by conversation, then check actor-scoped sources by key.
+    // A multiway join multiplied scans with cold PostgreSQL statistics; starting
+    // at recall instead scanned unrelated personal history.
+    // docs/verification.md#conversation-compaction
+    const permittedSource =
+      "r.world_id=e.world_id AND r.actor_id=? AND r.id=e.id AND r.eligible=1 AND r.source_kind='awareness'";
+    const rows = await this.db
+      .prepare(
+        `SELECT e.id AS source_id,
+        (SELECT r.revision FROM recall_sources r WHERE ${permittedSource}) AS revision,
+        (SELECT r.sequence FROM recall_sources r WHERE ${permittedSource}) AS sequence,
+        (SELECT c.payload FROM mind_corrections c WHERE c.world_id=e.world_id AND c.actor_id=? AND c.source_id=e.id) AS correction
+        FROM history_events e WHERE e.world_id=? AND e.conversation_id=?
+        AND (SELECT generation FROM world_head WHERE id=1)=?
+        AND ${this.db.dialect === 'postgres' ? "(e.payload::jsonb->>'type')" : "json_extract(e.payload,'$.type')"}='speech'
+        AND EXISTS (SELECT 1 FROM mind_awareness a WHERE a.world_id=e.world_id AND a.actor_id=? AND a.source_id=e.id AND ${this.linguisticSpeech})
+        AND (SELECT 1 FROM recall_sources r WHERE ${permittedSource})=1
+        ORDER BY sequence LIMIT ${RETRIEVAL_ROWS + 1}`,
+      )
+      .all(
+        scope.actorId,
+        scope.actorId,
+        scope.actorId,
+        scope.worldId,
+        conversationId,
+        scope.generation,
+        scope.actorId,
+        scope.actorId,
+      );
+    if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    return rows.map(
+      (row): ConversationSource => ({
+        id: String(row['source_id']),
+        revision: String(row['revision']),
+        sequence: Number(row['sequence']),
+        correction: String(row['correction'] ?? ''),
+      }),
+    );
   }
   /** Compare the entire permitted snapshot, including removals, before replacing
    * derived context. Ordinary later speech may append without invalidating it.
@@ -690,10 +716,11 @@ export class MemoryRepository {
     conversationId: string,
     sequence: number,
     sources: ConversationSource[],
-    key: string,
     expected: unknown,
     value: unknown,
+    assertCurrent: () => void,
   ): Promise<void> {
+    const key = conversationCompactionKey(scope.worldId, scope.actorId, conversationId);
     await this.db.transaction(async () => {
       // Serialize with gameplay commits, including restore, on both SQL backends.
       const head = await this.db
@@ -702,9 +729,10 @@ export class MemoryRepository {
         )
         .get(scope.worldId, scope.generation);
       if (!head) throw new Error('Conversation compaction generation changed.');
-      const current = await this.context(scope, [], true, conversationId);
+      assertCurrent();
+      const current = await this.conversationSources(scope, conversationId);
       if (
-        JSON.stringify(current.sources.filter((source) => source.sequence <= sequence)) !==
+        JSON.stringify(current.filter((source) => source.sequence <= sequence)) !==
         JSON.stringify(sources)
       )
         throw new Error('Conversation compaction sources changed.');
@@ -718,6 +746,8 @@ export class MemoryRepository {
           'INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
         )
         .run(`integration:${key}`, JSON.stringify(value));
+      // Abort or disclosure changes while waiting for SQL must roll this write back.
+      assertCurrent();
     });
   }
   async invalidateConversationCompactions(worldId: string, actorId?: string): Promise<void> {

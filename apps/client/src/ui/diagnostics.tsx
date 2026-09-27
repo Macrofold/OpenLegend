@@ -458,8 +458,11 @@ function shortValue(value: unknown): string {
 function stageInput(call: IntelligenceCall): string {
   if (call.kind === 'Jev')
     return `${Object.keys(object(path(call.input, 'questions')) ?? {}).length} questions · actor context and candidates`;
-  if (call.kind.startsWith('LM'))
-    return `${lmPurposeTitle(textAt(call.input, 'task'))} · ${String(path(call.input, 'context') ?? '').length.toLocaleString()} context characters`;
+  if (call.kind.startsWith('LM')) {
+    const context = path(call.input, 'context') ?? '';
+    const rendered = typeof context === 'string' ? context : JSON.stringify(context);
+    return `${lmPurposeTitle(textAt(call.input, 'task'))} · ${rendered.length.toLocaleString()} context characters`;
+  }
   return shortValue(call.input);
 }
 function stageResult(call: IntelligenceCall): string {
@@ -631,6 +634,8 @@ function lmPurposeTitle(task?: string): string {
       return 'Invention proposal';
     case 'memory_consolidation':
       return 'Memory consolidation';
+    case 'conversation_compaction':
+      return 'Conversation compaction';
     case 'background_reflection':
       return 'Background reflection';
     case 'npc_cognition':
@@ -1067,6 +1072,7 @@ type Retrieval = {
   automaticCount: number;
   attentionStatus?: string;
   triggerFacts?: unknown;
+  conversation?: JsonObject;
 };
 
 function retrievalFrom(calls: IntelligenceCall[]): Retrieval | undefined {
@@ -1077,6 +1083,7 @@ function retrievalFrom(calls: IntelligenceCall[]): Retrieval | undefined {
   return {
     query: valueText(selection['query']),
     triggerFacts: path(stage.input, 'triggerFacts'),
+    conversation: object(path(stage.input, 'conversation')),
     embedding: object(selection['embedding']),
     mandatoryCount: Array.isArray(selection['mandatory']) ? selection['mandatory'].length : 0,
     automaticCount: Array.isArray(selection['automatic']) ? selection['automatic'].length : 0,
@@ -1099,6 +1106,45 @@ function RetrievalSummary({ retrieval }: { retrieval: Retrieval }) {
     .sort((a, b) => Number(b['score']) - Number(a['score']));
   return (
     <div className="ol-retrieval-summary">
+      {retrieval.conversation && (
+        <section className="ol-diagnostic-card">
+          <strong>Conversation context</strong>
+          <dl className="ol-diagnostic-fields">
+            <Labeled label="Mode">{valueText(retrieval.conversation['mode'])}</Labeled>
+            <Labeled label="Conversation">
+              {valueText(retrieval.conversation['conversationId']) ?? 'None'}
+            </Labeled>
+            <Labeled label="Compactor version">
+              {valueText(retrieval.conversation['compactorVersion'])}
+            </Labeled>
+            <Labeled label="Permitted speech">
+              {valueText(retrieval.conversation['permittedTurns'])} turns ·{' '}
+              {valueText(retrieval.conversation['permittedBytes'])} bytes
+            </Labeled>
+            <Labeled label="Model context">
+              {valueText(retrieval.conversation['projectionBytes'])} /{' '}
+              {valueText(retrieval.conversation['maxBytes'])} bytes
+            </Labeled>
+            <Labeled label="Recent verbatim speech">
+              {valueText(retrieval.conversation['recentTurns'])} turns ·{' '}
+              {valueText(retrieval.conversation['recentBytes'])} bytes
+            </Labeled>
+            <Labeled label="Summary">
+              {valueText(retrieval.conversation['summaryBytes'])} bytes · coverage{' '}
+              {valueText(retrieval.conversation['throughAwarenessSequence']) ?? 'none'}
+            </Labeled>
+            <Labeled label="Compaction calls">
+              {valueText(retrieval.conversation['compactionCalls'])}
+            </Labeled>
+          </dl>
+          <details>
+            <summary>Exact model-facing conversation</summary>
+            <pre>
+              {valueText(retrieval.conversation['projection']) ?? 'No conversation supplied.'}
+            </pre>
+          </details>
+        </section>
+      )}
       {retrieval.triggerFacts != null && (
         <section className="ol-diagnostic-card">
           <strong>Trigger facts</strong>
