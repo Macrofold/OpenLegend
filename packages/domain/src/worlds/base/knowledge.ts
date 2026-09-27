@@ -7,14 +7,6 @@ import config from './config/knowledge.generated.json' with { type: 'json' };
 
 export const BASE_KNOWLEDGE_POLICY: KnowledgePolicy = config.knowledge;
 
-/** Common species knowledge in the bundled world, not a universal animal law.
- * Uses the observed species only; never reveals an individual's hidden body/yield.
- * docs/worlds/base/survival.md#embodied-survival-and-authored-start
- */
-export function knownHuntingUse(species: string | undefined): string | undefined {
-  if (species !== 'hare' && species !== 'deer' && species !== 'bird') return;
-  return 'Death leaves finite remains that can be harvested with a carried cutting tool. Meat can then be cooked at a lit fire and eaten.';
-}
 export interface ObserverIdentity {
   givenName: string;
   revision: number;

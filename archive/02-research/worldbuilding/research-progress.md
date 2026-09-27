@@ -4,11 +4,11 @@
 
 ## Repository and preserved history
 
-Repository: `Macrofold/OpenLegend`. Original research branch: `docs/worldbuilding-research-library`. Original branch base: `61c9d1ca52b4267aa405187f4b6799ded9b24317`. The continuation began from the remotely verified commit `eb0c9f1da8619f240abeb21d039e4c67085894de`.
+Repository: `Macrofold/OpenLegend`. Working branch: `docs/worldbuilding-research-library`. Original branch base: `61c9d1ca52b4267aa405187f4b6799ded9b24317`. The continuation began from the remotely verified commit `eb0c9f1da8619f240abeb21d039e4c67085894de`.
 
 The initial pass supplied 28 substantive dossiers, the research method, and three comparative essays. The continuation preserved that work and added three further essays, the reading guide, comparison matrix, source audit, and this ledger. The existing method now links the completed navigation and source audit. A four-line addition to `archive/README.md` makes the library discoverable without changing the archive's existing material.
 
-During the original research pass, no code, product specification, implementation tracker, or default-branch content was changed. That pass performed no merge, rebase, or history rewrite. Research documents were committed individually as completed through the GitHub connector.
+No code, product specification, implementation tracker, or default-branch content was changed by these operations. No merge, rebase, or history rewrite was performed. Research documents were committed individually as completed through the GitHub connector.
 
 ## Delivered inventory
 
@@ -57,10 +57,6 @@ Material continuity boundaries were checked explicitly: comics versus screen uni
 No automated Markdown crawler, link checker, formatter, code tests, or game execution was run. A local read-only copy for automated auditing could not be obtained; verification used connector reads, comparison metadata, the inspected archive patch, manual content/navigation review, and web retrieval. External URLs were checked selectively, not exhaustively. A working URL does not by itself prove every claim attributed to it.
 
 No exact word count, current-sales ranking, complete reception study, or independent peer review is claimed. The source audit records substantive evidence limits rather than treating them as passes.
-
-## Main-branch integration
-
-On 2026-09-26, the owner requested a squash of all 42 branch commits into `main`. The source was refreshed at `b387e7caeda5cec301045b877ca50a2815a869dd` against `origin/main` at `0a9d3e9e9b8ea195df3d2ac8b1ef219e8ea01db4`. The squash applied without conflicts, preserving existing archive navigation and unrelated main-branch content. Local verification checked all 546 relative links across the 40 imported/modified Markdown files; none were broken. Pinned Prettier and Git whitespace checks passed. This integration did not rerun external-source verification or game tests, and does not expand the research's evidence claims.
 
 ## Remaining evidence boundaries
 

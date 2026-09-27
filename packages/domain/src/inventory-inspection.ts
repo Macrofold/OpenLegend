@@ -15,9 +15,7 @@ export function describePossession(
       definition.description,
       `Properties: ${definition.properties.join(', ')}.`,
       definition.nutrition ? `Edible now; restores ${definition.nutrition} nourishment.` : '',
-      melee
-        ? `Can be equipped for contact strikes: ${melee.damage} injury damage, ${melee.accuracy * 100}% accuracy, ${melee.range} units reach, ${melee.windupSeconds} seconds wind-up and ${melee.recoverySeconds} seconds recovery. One strike per chosen action.`
-        : '',
+      melee ? 'Can be equipped for close-range attacks.' : '',
     ]
       .filter(Boolean)
       .join(' ');

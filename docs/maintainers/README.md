@@ -64,7 +64,7 @@ Begin with [Invention foundation](../invention-foundation.md) for coordination a
 - [Policies to revisit](revisitable-policies.md) — accepted but changeable decisions, canonical owners and review triggers; not an implementation backlog.
 - [Extensibility roadmap](../extensibility-roadmap.md)
 - [Extensible-world worked examples](../extensible-world-examples.md)
-- [Action and interaction repertoire](../repertoires/actions.md) — stable example IDs and related-mechanic references; idea catalogue, not implementation status
+- [World and interaction repertoires](../repertoires/README.md) — idea catalogues, four optional world proposals and source coverage; [action examples](../repertoires/actions.md) retain stable IDs. These proposals do not change implementation status or close tracker criteria.
 
 - [Mechanics repertoire](../repertoires/mechanics.md) — related concepts, reusable mechanisms and authored-world choices; ideas, not another backlog.
 - [Social playable slices](base-world.md#social-playable-slices) — proposed family and promise UI; [ACT09](actor-model.md#act09--internal-feeling-process-authoring) covers conditional process authoring. Documentation only; runtime implementation is not authorized by these entries.

@@ -208,6 +208,8 @@ The [embodied-survival feature](../projects/embodied-survival-feature-spec.md) n
 
 ### AG13 — Embodied survival demonstration
 
+The minimization follow-up uses world-owned hunting labels/method configuration and equipment-derived melee, ranged and unarmed options. Exact native bindings, ammunition requirements and actor-permitted targets remain authoritative. The earlier numeric action prose, repeated food-preparation explanation and explicit hunting biography are removed; [current comparisons](../verification/embodied-survival.md#minimal-context-and-equipment-derived-hunting) distinguish a working small combination from global minimality or reliability.
+
 **Status:** mechanics implemented and **Jev-only hunting/retry demonstrated**; broader qualification remains incomplete. Live Jev selected knife hunts and miss-aware retries in lean worlds, eating carried food and gathering available berries in comparisons. The owner explicitly keeps the whole scenario Jev-only: no generative goal formation, seeded hunt or forced action. [Actual evidence and gaps](../verification/embodied-survival.md). [Feature specification](../projects/embodied-survival-feature-spec.md) · [Technical plan](../projects/embodied-survival-tech-design.md#delivery-and-verification).
 
 **Depends on:** scoped EPR04/EPR05 and AG06/AG07 work, AC09.6 equipped melee, and BW18 starter content. Those owners retain their individual task bodies; this item owns their integrated behavioral acceptance. Existing AG12 owns broader quality/cost evaluation.
