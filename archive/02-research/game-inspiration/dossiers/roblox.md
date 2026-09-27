@@ -193,6 +193,23 @@ Do not assume a general engine needs a public marketplace first, that a catalog 
 
 ## 15. Reading routes, coverage and preservation
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory confirms the platform-level dossier is complete and preserves the key scope boundary: Roblox supplies **capabilities and services**, while each experience owns its actual combat, crafting, progression, death, quest, economy and social rules.
+
+- **Identity / classes / attributes / skills / leveling / trees:** platform avatars/rigs provide portable identity; class/stat/skill/level systems are experience-defined (§§1, 3).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** avatar items, packages and Creator Store assets are platform artifacts; player inventories/weapons/crafting are experience-defined (§§3, 5, 7).
+- **Magic / spells / powers:** not platform-universal; individual games define them.
+- **Traversal / environmental and object interaction:** Humanoid movement, physics/materials, pathfinding and creator-authored interactions are platform capabilities, not one universal gameplay vocabulary (§§2–4, 8).
+- **Activities / minigames / combat / stealth / loot / death / recovery:** all are experience-level contracts; the platform does not impose one canonical form.
+- **Economy / trading / monetization:** passes, developer products, subscriptions, private servers, avatar commerce, Creator Rewards and DevEx are distinct platform/business layers (§7, §11); an individual game's fictional economy remains separate.
+- **Story / relationships / romance / reputation / party / companions / NPC schedules / factions:** experience-authored. Platform pathfinding or avatar systems do not imply autonomous social cognition (§§4, 9).
+- **World map / quests / events / building / settlements / management:** creators build these per experience; Studio, packages and publishing are authoring/distribution capabilities rather than player-facing universal mechanics (§§2, 5, 9).
+- **Multiplayer / social / endgame / return loops:** platform identity, friends/chat, servers, discovery and persistence support many forms, but each experience determines continuity and endgame (§§3–6, 10).
+
+**Current boundary check:** Roblox's September 11, 2026 RDC announcement remains the newest broad platform roadmap in the official newsroom at this audit. It explicitly separates **delivered** features (for example Friends chat, voice typing, Moments in the US and limited Build alpha expansion) from **future** targets such as Chrome web play later in 2026, offline solo play by mid-2027, broader turn-based/asynchronous support and Scene Generator. [RB20](#rb20) The dossier therefore does not upgrade roadmap language into current universal capability.
+
+
 For an actual creation path, follow the core curriculum rather than starting from a feature catalog. Read Packages for an artifact's lifecycle and the Duvall production/narrative chapters for a coherent authored example. Read Discovery and Creator Rewards separately: one describes matching people to games, the other describes compensation conditions. Pair those documents with the dated creator replies and the particular player/critic experiences above.
 
 The official tutorial and case-study pages link videos and editable examples. This research inspected their written documentation, not full video playback or an independently executed place file. Their availability as examples does not certify that every present device, dependency or account configuration will reproduce the original result.
