@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Research pass — September 26, 2026.** Reference research, not accepted OpenLegend requirements. Scope: the 2016 campaign and explicitly dated subsequent modes. Five independent written reviews were read in full, plus direct Steam accounts, creator interviews and practical guides. No gameplay, audio listening, footage viewing, source-code inspection or present account-entitlement test was performed. Exact chaos weights and modern hardware behavior are not certified. Death of the Outsider is a separate game.
+**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted OpenLegend requirements. Scope: the 2016 campaign and explicitly dated subsequent modes. Five independent written reviews were read in full in the original pass, plus direct Steam accounts, creator interviews and practical guides. The follow-up read the entire dossier against R01–R14, retained the original evidence and added separately identified sources. It does not claim every original external URL was reread. No gameplay, audio listening, footage viewing, source-code inspection or present account-entitlement test was performed. Exact chaos weights and modern hardware behavior are not certified. Death of the Outsider is a separate game.
 
 ## 1. Identity, promise and edition boundaries
 
@@ -13,6 +13,8 @@ The player's starting identity is authored, not a custom class or occupation. Th
 Refusing the Outsider's gift supports a no-powers campaign. That is not the later Iron Mode, which adds permadeath and prevents manual saving/loading. GameSpot's original complaint that there was no New Game Plus describes its review period, not the later feature set. [S2, S7, S9]
 
 On December 19, 2016, the first free game update added New Game Plus, including both characters' ability suites and reallocation of carried runes. January 23, 2017 brought custom difficulty and mission selection: more than twenty settings can affect details such as sleep-dart onset, leaning and active attackers. Selected missions use their original mission-start state rather than rewriting every subsequent campaign variable. [S8, S9]
+
+**Carryover is narrower than retaining the entire inventory.** Bethesda's announcement broadly describes runes and bonecharm traits; the community mode reference specifies runes **spent on abilities** and learned trait progression. Possessing an unsacrificed charm is not equivalent to having learned its trait, nor should unspent runes be silently assumed to survive. These distinctions explain preparation advice to learn desired ordinary traits and spend runes before completing a run. They are documented carryover qualifications, not a newly executed save-migration test or a guarantee about every item and upgrade. [S8, S35]
 
 The December 13, 2018 promotion added account-linked Mission+, a black-and-white visual option and the earlier Imperial Assassin's Pack. Mission+ opens previously completed missions with powers and weapons for experimentation. It differs from ordinary mission selection and NG+. The bonus pack includes charms, cabin objects and starting money, not a new campaign. The historical login offer was read; present entitlement behavior was not tested. [S10]
 
@@ -74,7 +76,11 @@ Blueprint-gated upgrades affect such things as ammunition behavior, reload speed
 
 ### Materials and expressive loadouts
 
-Bonecharms supply traits; sacrificing ordinary charms can teach traits and provide material. Raw whalebone and learned traits support crafted combinations, while corruption introduces drawbacks. Black and corrupted finds should not be assumed to have the same learning/crafting rules as ordinary charms. Ability investment and equipped capacity constrain how much can be combined. [S7, S14]
+Bonecharms supply traits; sacrificing ordinary charms can teach traits and provide material. Raw whalebone and learned traits support crafted combinations, while corruption introduces drawbacks. **Black and corrupted charms yield material but do not teach their special traits when sacrificed.** Ability investment and equipped capacity constrain how much can be combined. [S7, S14, S33]
+
+The crafting limits matter: **Trait Synergy allows four uses of a trait across crafted charms, not four new stacks in every equipped slot.** Master Crafting removes corruption from three-trait crafts but leaves a low risk for four-trait crafts. Repeatedly dismantling and recrafting a four-trait charm loses material: the guide records six whalebone to create versus five recovered. Its advice to reload until satisfied is the author's optimization preference, not a compulsory mechanic or an Iron Mode option. Concentrating a benefit therefore competes with breadth, material and risk. [S33]
+
+Specific traits clarify what is being composed. **Swift Shadow** changes crouched movement, **Undertaker** affects carrying a body, **Strong Arms** speeds choking and **Lucky Needle** improves sleep-dart recovery. These improve different steps of a stealth plan rather than one undifferentiated stealth statistic. Prima's assertion that every build should prioritize crafting remains advice, not an objective requirement. [S38]
 
 Coins come from money and valuables such as paintings, ingots and amber. Black markets turn those discoveries into ammunition, upgrades and access-related purchases. Blueprint discovery and the money to use it are separate requirements. Loot is not a weight-based hauling-and-selling business: valuable pickups feed a currency economy, while weapons, consumables and charms have their own capacity rules. The currency guide's “only currency” wording refers to shop money, not denial that runes are another advancement resource. [S29]
 
@@ -110,6 +116,8 @@ The finale and epilogue can reflect the Duke's fate or replacement, other leader
 
 Chaos, detection and kill statistics should not be collapsed into one moral score. Indirect deaths can count even when the player did not swing the final weapon. Exact weights sometimes repeated in online summaries mix the first game's rules with the sequel's; no unverified numeric threshold is certified here. What is directly established is that methods and specific choices have consequences, and that the game supports substantially different playthroughs. [S12, S26]
 
+**Primary design clarification:** in an August 2016 interview, Harvey Smith describes assigning ordinary mission characters the categories **sympathetic, guilty or murderous**, with different contributions to chaos when killed. He links this decision to players using the Heart's secrets to judge people in the first game, where that assumed weighting had not actually existed. He also describes chaos affecting security, bloodfly infestation and dialogue, including the protagonist's tone. This is attributed prerelease design testimony, not an independently decoded final formula or a guarantee that each anecdotal secret maps transparently to a numeric value. In particular, an inherited “kill fewer than 20 percent” shortcut is not supported as a complete sequel rule. [S34]
+
 **Interpretation:** the story tension concerns how the protagonist responds to lost authority, not merely whether a target is reachable. A technically ingenious solution may still be cruel. Conversely, refusing a proposed bargain can be a meaningful expression of agency when the environment supports an alternative rather than forcing the player to click one of two faction buttons.
 
 ## 7. Eight concrete situations
@@ -142,9 +150,9 @@ The useful resource is procedural knowledge, not only stronger combat power. The
 
 ### 5. A faulty component defeats an institution
 
-At the Royal Conservatory, replacing the Oraculum's lenses and activating it removes Ashworth's and her coven's powers. Ordinary incapacitation of Ashworth is not the same system-wide intervention. Early versions had a documented unintended-death issue associated with this route; the official update notes address it. [S25, S8]
+At the Royal Conservatory, replacing the Oraculum's lenses and activating it removes Ashworth's and her coven's powers. Ordinary incapacitation of Ashworth is not the same system-wide intervention. The December 2016 update specifically corrected an **Oraculum false-kill count**. That wording establishes an accounting defect; the original dossier's “unintended-death issue” overstated what the patch note proved. [S25, S8]
 
-The result rewards learning a dependency rather than eliminating every subordinate individually. The next decision is whether to prioritize the apparatus or continue confronting guards and collecting evidence. A system-wide effect can be satisfying only if its targets and side effects are sufficiently understandable; a bug that silently kills people undermines precisely the nonlethal intention the route appears to support.
+The result rewards learning a dependency rather than eliminating every subordinate individually. The next decision is whether to prioritize the apparatus or continue confronting guards and collecting evidence. A system-wide effect can be satisfying only if its targets and side effects are sufficiently understandable. Incorrectly reporting a kill can undermine a player's confidence in a nonlethal route even when that statistic does not establish an actual death.
 
 ### 6. A locked door need not mean choosing a faction
 
@@ -155,6 +163,8 @@ The immediate result is access without fulfilling either faction's proposed barg
 ### 7. Preventing an event changes the present
 
 In A Crack in the Slab, the Timepiece lets the player compare and traverse versions of Stilton's manor. Incapacitating Stilton before the ritual prevents his attendance and changes the present; leaving him alone or killing him produces different circumstances. The nonlethal intervention also changes Meagan's later injuries. Once the present changes, the originally encountered version is not simply another permanently available toggle. [S23]
+
+The Timepiece is also a substitution of capabilities: the mission disables the usual supernatural powers and supplies observation and transitions between two periods three years apart. Looking through its lenses permits timing a crossing around people in the other period. [S34]
 
 The next decision is whether to finish exploring before intervening and what future to preserve. The device is mission-specific, with authored causal links; it does not support arbitrary historical travel throughout Karnaca. The striking effect comes from a small action whose meaning becomes visible across both environment and a known person's body, not from the number of years on a timeline.
 
@@ -182,6 +192,8 @@ For the Timepiece mission, past and present use different music and reverberatio
 
 Carrier credits Dana Nightingale and David Di Giacomo with building the Clockwork Mansion. Bob Potts's kinetic sculpture informed linked movement; room functions helped maintain intelligibility. Early prototypes used the first game's engine while new tools were developed. The ambitious announcement trailer helped revive ideas previously reduced in scope. AI had to navigate during transformations, not merely after each finished configuration; the resulting animation tooling was reused elsewhere. [S19]
 
+The publisher's PlayStation credits identify the shipped **Void Engine powered by id Tech**, alongside Havok, Simplygon, FaceFX, Bink, Iggy, Umbra 3 and Wwise. These credits establish named technology use, not how every subsystem was implemented or why a particular frame stalled. No percentage of rewritten engine code, exact staffing count or alleged license-cost motive is inferred from forum discussion. The engine identity also should not be confused with the earlier prototype's toolchain. [S36]
+
 **Interpretation:** a signature level can justify reusable production infrastructure, but only after confronting authoring, navigation, orientation and AI constraints. The lesson is not to build the most elaborate possible showcase first. A smaller transformation that remains readable and mechanically reliable can be more valuable than a larger one that becomes a one-off technical liability.
 
 ### Readability, accessibility and maintenance
@@ -200,7 +212,7 @@ A dated Chart-Track reproduction places Dishonored 2 fourth in UK retail charts 
 
 ## 10. Reception: five full written reviews and direct player accounts
 
-All five bodies below were read, not merely their scores or search snippets. Their disagreement is retained rather than averaged away.
+All five bodies below were read in the original pass, not merely their scores or search snippets. Their disagreement is retained rather than averaged away.
 
 ### Phil Savage — PC Gamer, November 18, 2016
 
@@ -228,6 +240,10 @@ The English **Most Helpful (Week)** surface was readable. PrexMP3's September 20
 
 This is not an all-time census. Rintzler's feeling that lethal powers are effectively forbidden is reception evidence, not a universal rule. kencudi had not completed the campaign. Small vote counts, changing order and cumulative hours limit generalization; brief praise-only posts do not satisfy the five-review gate.
 
+**Follow-up all-time sample:** the English **Most Helpful (All Time)** page was successfully read. **Chupi**, June 14, 2017 (33.3 displayed hours; 3,531 helpful votes), praises varied routes and creative encounters but finds the voiced protagonists less nuanced, the narrative predictable and later difficulty too low. **Bad Whippet**, November 23, 2016 (262.4 hours; 656 helpful votes), values the enlarged spaces, crafting and alternate protagonists while qualifying the recommendation around contemporary performance and disliking the changed Outsider presentation. These are full substantive accounts, not the page's highly voted discount joke or short demo advice. Displayed hours/votes are retrieval snapshots, not values at publication, and body edits cannot be ruled out. [S37]
+
+The dedicated all-time negative endpoint failed on both attempted URL variants in the follow-up. The original directly read weekly negative account remains valid, but is not relabeled all-time or representative. No current compatibility problem was independently reproduced.
+
 **Interpretation:** Carter's Heart-led exploration and Kain's dislike of that interface expose a genuine design tradeoff. A contextual tool can make knowledge acquisition tangible, but repeated swapping can obstruct attention. Likewise, a no-kill target is satisfying for some players yet can become brittle when indirect causation and imperfect feedback turn experimentation into repeated checking.
 
 ## 11. Transferable patterns and constraints
@@ -250,37 +266,39 @@ These are research interpretations, not accepted OpenLegend features or requests
 
 | Requirement | Substantive coverage |
 | --- | --- |
-| R01 | Section 1: identity, promise, protagonist and edition boundaries |
+| R01 | Section 1: identity, promise, protagonist, carryover and edition boundaries |
 | R02 | Sections 2–3: action grammar and all major power/enhancement families |
-| R03 | Sections 3–4: targets, objects, equipment, upgrades and composition |
+| R03 | Sections 3–4: targets, objects, equipment, upgrades and concrete crafting limits |
 | R04 | Sections 4–5: currencies, progression, capacities, saves and replay modes |
 | R05 | Section 7: eight causal situations, evidence type and limits |
-| R06 | Section 6: people, AI, institutions, temporary allies and social-system boundaries |
+| R06 | Section 6: people, AI, institutions, temporary allies, weighted-chaos design testimony and social boundaries |
 | R07 | Section 8 plus reception: art, audio, controls, readability and friction |
 | R08 | Section 6 and cases 4–7: marked story/ending spoilers and consequences |
-| R09 | Section 8: direct production accounts, tooling and maintenance |
+| R09 | Section 8: direct production accounts, named technology, tooling and maintenance |
 | R10 | Section 9: launch channels, trial, updates and bounded sharing hypotheses |
 | R11 | Section 9: dated retail metric, business model and unavailable financial evidence |
-| R12 | Section 10: five full independent reviews and direct Steam bodies |
+| R12 | Section 10: five full independent reviews, original direct Steam bodies and all-time supplement |
 | R13 | Section 11: transferable patterns, prerequisites, alternatives and failure modes |
 | R14 | This section and annotated register: routes, access limits, preservation |
 
 For a low-spoiler orientation, read the customization, Karnaca and equipment creator accounts [S7, S21, S22]. The full reviews explain why the same systems can engage or frustrate. Carrier's deep dive and the sound-team interview are practical production routes [S19, S20]. The Timepiece case and ending guide contain substantial spoilers. Embedded trailers and demonstration videos linked from the official pages are **unwatched viewing routes**, not inspected footage or timestamped evidence.
 
-G119 is a curated roster addition; the inspected base tree/navigation had no dedicated earlier chapter, mechanics study or dossier. This new owner does not replace original packet passages or incidental cross-game references. The checkpoint's five review disagreements, Steam sample limits, two observed incidents and dated update distinctions are preserved and expanded. The two inaccessible Prima equipment/gameplay endpoints were replaced with specifically identified accessible evidence, not silently counted as read. Global reconciliation remains pending in the ledger.
+G119 is a curated roster addition; the inspected base tree/navigation had no dedicated earlier chapter, mechanics study or dossier. This new owner does not replace original packet passages or incidental cross-game references. The checkpoint's five review disagreements, Steam sample limits, three attributed observed cases and dated update distinctions are preserved and expanded. The two inaccessible Prima equipment/gameplay endpoints were replaced with specifically identified accessible evidence, not silently counted as read. Global reconciliation remains pending in the ledger.
+
+The follow-up reviewed every R01–R14 and retains all eight cases and original sources S1–S32. It corrects the Oraculum claim to the primary patch's false-count wording, strengthens crafting/trait and carryover boundaries, adds primary chaos-design testimony, Timepiece restrictions, named middleware and a substantive all-time player sample. A previously failed Prima gameplay article now has relevant indexed text, not a successful direct read. Negative all-time access, exact executable chaos weights, save-transfer behavior and modern performance remain bounded gaps rather than invented passes. The actual diff review and audit commit belong in the progress ledger.
 
 ## 13. Annotated sources
 
-Accessed **September 26, 2026**. Written material only. “Full review” refers to the critic's body, not every linked page. Practical guides reflect their documented versions and sometimes contain simplifications; recommendations and exact current balance are not assumed authoritative.
+Accessed **September 26, 2026**, in the original pass or identified follow-up. Written material only. “Full review” refers to the critic's body, not every linked page. Original access provenance is retained without implying every original URL was revisited. Practical guides reflect their documented versions and sometimes contain simplifications; recommendations and exact current balance are not assumed authoritative.
 
 - **S1.** Phil Savage, [Dishonored 2 review](https://www.pcgamer.com/dishonored-2-review/), PC Gamer, November 18, 2016. Full written review; attributed fire incident.
 - **S2.** Scott Butterworth, [Dishonored 2 Review](https://www.gamespot.com/reviews/dishonored-2-review/1900-6416571/), GameSpot, November 12, 2016. Full body and disclosure; launch-only NG+ criticism.
 - **S3.** Chris Carter, [Review: Dishonored 2](https://www.destructoid.com/reviews/review-dishonored-2/), November 14, 2016. Full Xbox One critical body.
 - **S4.** Hayden Dingman, [New stealth highs hobbled by frustrating PC performance lows](https://www.pcworld.com/article/411103/dishonored-2-review-new-stealth-highs-hobbled-by-frustrating-pc-performance-lows.html), November 23, 2016. Full review; platform/build scope and attributed escape.
 - **S5.** Erik Kain, [A Disappointing Sequel](https://www.forbes.com/sites/games/2016/11/18/dishonored-2-review-a-disappointing-sequel/), November 18, 2016. Full contributor body including qualifications; not merely the headline.
-- **S6.** [Community reviews](https://steamcommunity.com/app/403640/reviews/), English Most Helpful (Week). Direct positive/negative bodies; small votes and incomplete-play accounts qualified.
+- **S6.** [Community reviews](https://steamcommunity.com/app/403640/reviews/), English Most Helpful (Week). Direct original positive/negative bodies; small votes and incomplete-play accounts qualified. Follow-up negative all-time endpoint failed, not counted as read.
 - **S7.** Bethesda, [Customization Guide](https://bethesda.net/en-US/news/dishonored-2-customization-guide), October 2016. Relevant primary no-powers, crafting, combination and release passages.
-- **S8.** Bethesda, [New Game Plus Mode](https://bethesda.net/en-US/news/dishonored-2-update-new-game-plus-mode), December 19, 2016. Primary update announcement/notes, including Oraculum correction.
+- **S8.** Bethesda, [New Game Plus Mode](https://bethesda.net/en-US/news/dishonored-2-update-new-game-plus-mode), December 19, 2016. Primary update announcement/notes. Follow-up rechecked the **false-kill count** wording and broad carryover description; see S35 for the narrower community account.
 - **S9.** Bethesda, [Custom Difficulty and Mission Select](https://bethesda.net/en-US/news/dishonored-2-update-custom-difficulty-and-mission-select), January 23, 2017. Mode descriptions and relevant maintenance notes.
 - **S10.** Bethesda, [Free Content for Dishonored 2 & Death of the Outsider](https://bethesda.net/en-US/news/free-content-for-dishonored-2-and-death-of-the-outsider), December 13, 2018. Full mode/bonus description; historical account requirement not live-tested.
 - **S11.** Bethesda, [The Clockwork Soldiers](https://bethesda.net/en-US/news/dishonored-2-the-clockwork-soldiers), October 31, 2016. Primary enemy description, optics, resistance and rewiring.
@@ -289,7 +307,7 @@ Accessed **September 26, 2026**. Written material only. “Full review” refers
 - **S14.** Prima, [Shared Abilities](https://primagames.com/eguides/dishonored-2-eguide/the-supernatural-arts/shared-abilities). Full family descriptions inspected; normative build advice and simplified chaos statements not adopted. Cross-check: [SegmentNext ability guide](https://segmentnext.com/dishonored-2-abilities-guide/), full body read, but erroneous wording about possession, teleportation and playstyles is not used as authority.
 - **S15.** Prima, [Corvo's Unique Abilities](https://primagames.com/eguides/dishonored-2-eguide/the-supernatural-arts/corvos-unique-abilities). Substantive family/upgrade descriptions read; recommendations distinguished from rules.
 - **S16.** Prima, [Emily's Unique Abilities](https://primagames.com/eguides/dishonored-2-eguide/the-supernatural-arts/emilys-unique-abilities). Full family/upgrade text; Far Reach visibility and Shadow Walk limitations.
-- **S17.** Prima, [Dust District](https://primagames.com/eguides/dishonored-2-eguide/stealth-walkthrough/dust-district) and guide navigation. Relevant mission/activity structure inspected, not the entire eGuide. Separate gameplay/equipment endpoints failed direct retrieval.
+- **S17.** Prima, [Dust District](https://primagames.com/eguides/dishonored-2-eguide/stealth-walkthrough/dust-district) and guide navigation. Relevant mission/activity structure inspected, not the entire eGuide. Separate gameplay/equipment endpoints failed direct retrieval; S38 adds a specifically limited indexed recovery.
 - **S18.** Bethesda, [Corvo High Chaos Demo](https://bethesda.net/tr-TR/news/dishonored-2-at-quakecon-corvo-high-chaos-demo), 2016. Written indexed primary demonstration account; additional viewing route, video not watched and no footage claims based on it.
 - **S19.** Christophe Carrier, [Level Design Deep Dive: Clockwork Mansion](https://www.gamedeveloper.com/design/level-design-deep-dive-i-dishonored-2-s-i-clockwork-mansion), March 15, 2017. Full primary creator account; credits, prototyping, orientation, moving AI and reusable tools.
 - **S20.** Adriane Kuzminski, [Creating the Sound for Dishonored 2](https://designingsound.org/2017/02/22/dishonored-2-interview/), February 22, 2017. Full interview with Thomas Mitton, Fabrice Fournet and Frederic Devanlay. Reported implementation, not code/performance verification or listening test.
@@ -305,3 +323,12 @@ Accessed **September 26, 2026**. Written material only. “Full review” refers
 - **S30.** Community reference, [Dishonored 2 upgrades](https://dishonored-archive.fandom.com/wiki/Dishonored_2_upgrades). Indexed prerequisite/effect table inspected; examples only, not a certified exhaustive balance table.
 - **S31.** Gamepressure, [Game endings](https://www.gamepressure.com/dishonored2/game-endings/z794fd), 2016 guide. Relevant outcome passages read; **major spoilers**, simplified exhaustive/moral labels not adopted.
 - **S32.** Jason Dunning, [UK retail chart](https://www.playstationlifestyle.net/2016/11/14/uk-sales-chart-dishonored-2-falls-short-original-infinite-warfare-repeats-1/), November 14, 2016. Full contemporary reproduction of GfK Chart-Track results; regional physical scope, not original current chart access or audited lifetime finances.
+
+### Follow-up evidence
+
+- **S33.** James Kozanitis, [Guide to Bonecharm Crafting](https://www.gamerevolution.com/originals/13160-guide-to-bonecharm-crafting-in-dishonored-2), November 23, 2016. Full written guide read; concrete limits retained, “required” build choices and reload advice not adopted. Cross-check: [Bonecharm Crafting](https://dishonored.fandom.com/wiki/Bonecharm_Crafting), indexed community upgrade/trait descriptions; shared franchise header is not evidence that every rule applies identically to Death of the Outsider.
+- **S34.** Scott Butterworth interviewing Harvey Smith, [Designer Dives Deep Into Assassin Abilities](https://www.gamespot.com/articles/dishonored-2-designer-dives-deep-into-assassin-abi/1100-6442571/), August 11, 2016. Full written primary interview read; prerelease account, not executable verification. Images/embedded demonstrations not inspected.
+- **S35.** Community reference, [New Game +](https://dishonored.fandom.com/wiki/New_Game_%2B). Relevant indexed mode/carryover description read. Spent runes and learned traits distinguished from whole-inventory transfer; no account or save-file experiment. Its platform-entitlement allegation is not promoted to a verified current fact.
+- **S36.** Bethesda's [PlayStation product and technology credits](https://www.playstation.com/en-id/games/dishonored-2/). Indexed publisher credit text read. Regional prices/subscription availability not used; credits identify technologies without certifying detailed architecture or source-code proportions.
+- **S37.** [Steam helpful all-time reviews](https://steamcommunity.com/app/403640/reviews/?browsefilter=toprated). Direct full Chupi and Bad Whippet bodies read. Selected testimony, not a census or current performance audit. Dedicated negative all-time URLs failed retrieval.
+- **S38.** Prima, [Become a Master of Stealth and Combat](https://primagames.com/eguides/dishonored-2-eguide/gameplay/become-a-master-of-stealth-and-combat). Relevant indexed crafting/trait text recovered; direct page still failed. Concrete named trait roles used, not the author's universal build recommendation.
