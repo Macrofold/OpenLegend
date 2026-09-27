@@ -6,7 +6,7 @@
 
 **Audit active.** Fresh audit baseline: `757bafba40efa875733aba635c3aec829d4c92ad`. Findings and corrective evidence are owned by [coverage-audit-g121-g130.md](coverage-audit-g121-g130.md). The audit rechecks actual dossier substance against R01–R14 plus the explicit mechanics inventory; initial completion labels are not treated as certification.
 
-**Current audit state: G121 audited; G122 active; G123–G130 pending.** G121 correction commit: `81fbb840f8a09c5e9deb6cb135d07633e5aeaaef`. Global P01–P05 gates remain separate and pending.
+**Current audit state: G121–G124 audited; G125 active; G126–G130 pending.** Closure commits are recorded in [coverage-audit-g121-g130.md](coverage-audit-g121-g130.md). Global P01–P05 gates remain separate and pending.
 
 ## Resume here
 
