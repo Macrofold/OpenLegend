@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — Jev-only hunting demonstrated
+
+Controlled comparisons identified missing action purpose and overly broad willingness judgments in the earlier failed hunting trials. The selector now rates concrete progress with explicit positive/negative criteria, retaining the 0.7 threshold and native authority. Base-world species knowledge explains weapon strikes as possible hunting steps and distinguishes them from later meat preparation; Ada's biography now explicitly accepts subsistence hunting while rejecting needless cruelty. This refines the earlier cautious characterization without assigning an operational goal, prey or method. The engine still contains no hunger-to-hunt choice or automatic attack retry.
+
+[New evidence](verification/embodied-survival.md#renewed-jev-only-diagnosis-and-hunting-demonstration) records real Jev-selected equip/approach, hare/deer strikes, remembered misses and chosen retries, plus food/weapon/prey comparisons and actual hunger-band admission. It supersedes the earlier failure to demonstrate hunting, while retaining failed trials and wider qualification gaps. [AG13](maintainers/agent-agency.md#ag13--embodied-survival-demonstration), [CG05](limits/cognition.md#cg05) and [world survival](worlds/base/survival.md#embodied-survival-and-authored-start) own current acceptance, policy and content. No save reset, generative fallback or claim of reliable full survival was added.
+
 ## 2026-09-27 — Progressive 3D pixel-art design package
 
 Added the requested [feature specification](projects/3d-pixel-art-feature-spec.md) and [technical design](projects/3d-pixel-art-tech-design.md), with focused [appearance-family](projects/3d-pixel-art-appearance-families.md), [runtime art pipeline](projects/3d-pixel-art-asset-pipeline.md), and [qualification](projects/3d-pixel-art-validation.md) documents. The proposal recommends a measured hybrid of sprites and real models, reusable rigs/parts/materials/state, and optional 2D-first/3D-later publication from one appearance brief. It preserves mechanical identity, authoritative spatial/action state, observer privacy, current-format saves, retained asset rights, and existing spending/no-paid-retry rules.

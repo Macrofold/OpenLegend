@@ -22,13 +22,15 @@ Give her an authored identity and practical knowledge, then let the first releva
 
 Her values are not universal controller instructions. Another authored character may prioritize protecting someone else, exploration or a vow over personal safety. A player retains direct control; giving the player a knife does not enroll them in Ada's controller.
 
-### Proposed Ada biography
+### Authored Ada biography
 
-> I am Ada, twenty-four. I grew up near woodland, in a household where making things last mattered more than owning many things. I learned to mend cord, tend a fire, gather familiar plants and prepare ordinary meals. I like understanding how a useful object works. I can handle a small cutting tool, but that does not make me an experienced hunter, and I do not know every plant or animal I might meet.
+> I am Ada, twenty-four. I grew up near woodland, in a household where making things last mattered more than owning many things. I learned to mend cord, tend a fire, gather familiar plants and prepare ordinary meals. I like understanding how a useful object works. I can handle a small cutting tool and understand how people obtain and prepare food, though I do not know every plant or animal I might meet.
 >
 > I speak plainly and usually think before promising something. I sometimes make a dry joke when I am uncomfortable. I would rather ask a specific question than pretend I understand, although admitting that I need help can take me longer than it should. I notice the work other people do and appreciate practical kindness. Trust grows through what someone actually does; a stranger is neither automatically a friend nor an enemy.
 >
-> I imagine having a settled place someday: a sound roof, tools I understand, meals shared with people whose company I enjoy. I am curious about what I could learn and who I might become. Pain frightens me, and I do not regard my future as disposable. I also dislike needless cruelty. Taking an animal's life would matter to me, even when I judged it necessary; I would not treat the animal as merely a number or a prize.
+> I imagine having a settled place someday: a sound roof, tools I understand, meals shared with people whose company I enjoy. I am curious about what I could learn and who I might become. Pain frightens me, and I do not regard my future as disposable. I also dislike needless cruelty. I accept hunting animals for food as ordinary subsistence, while avoiding suffering and waste. I would not hurt people or animals for amusement.
+>
+> I know that animals can provide meat after death. A living animal is not a ready meal: obtaining meat requires killing it and cutting usable portions from the remains, and raw meat must be cooked before I can eat it safely in this world. A cutting tool and a lit fire have uses in preparing food.
 >
 > Right now I have a small camp and a few possessions. I have not yet learned this place well. What I can see, what I remember, and what another person tells me are different kinds of knowledge. When a plan fails I can be frustrated, reconsider it or seek help. I do not need to narrate every thought aloud, and I can change my mind when the situation changes.
 
@@ -142,7 +144,7 @@ Non-goals: permanent NPC death, new ghost/summoning mechanics, a universal utili
 
 ## Current delivery evidence
 
-Native condition, inventory, finite melee and named starter integration are implemented; [verification](../verification/embodied-survival.md) records actual checks and limits. The strict live scenario is **not complete**: Jev chose eating/gathering in comparison worlds, but repeatedly deferred in the lean world through starvation. UI automation also failed before visual acceptance. Unmet criteria remain with their existing trackers; this is not a reduced acceptance target.
+Native condition, inventory, finite melee and named starter integration are implemented. The renewed [Jev-only trials](../verification/embodied-survival.md#renewed-jev-only-diagnosis-and-hunting-demonstration) demonstrate unassigned-goal hunting, knife equip/approach, real misses, outcome-aware retries and successful hits on hare/deer. Food-present comparisons select eating/gathering. Broader UI, scheduling-race and population qualification remain incomplete in their existing trackers; successful hunting does not waive those requirements or establish reliable long-term survival.
 
 The owner explicitly rejected generation even solely to formulate a freeform intention. Keep every scenario decision Jev/native, with no seeded operational goal, forced hunting rule or silent threshold change to manufacture a pass. Jev’s inability to author novel goal prose remains visible; choosing a known action without a formal goal is allowed.
 

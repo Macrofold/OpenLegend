@@ -6,7 +6,7 @@ import { dropItemReason } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { entityLabel } from './entity-references.js';
 import { statusEffectActions } from './status-effect-actions.js';
-import { availableStrikes, strikeDefinition } from '@open-legend/domain';
+import { availableStrikes, strikeDefinition, knownHuntingUse } from '@open-legend/domain';
 import {
   canReachEntity,
   findApproachPath,
@@ -528,11 +528,15 @@ export function npcCandidates(
           : findApproachPath(service.world, observed.actor, entity, reach);
     if (!route) continue;
     const path = route.path;
-    if (entity.actor?.alive && entity.id !== actorId && supportsManualWork(observed.actor))
-      for (const definition of strikes)
+    if (entity.actor?.alive && entity.id !== actorId && supportsManualWork(observed.actor)) {
+      const huntingUse = knownHuntingUse(entity.actor.species);
+      for (const definition of strikes) {
+        // A weapon's possible subsistence use comes from authored species knowledge,
+        // not a hunger rule. Choosing it still binds one ordinary finite strike.
+        const hunting = definition.weaponItemId ? huntingUse : undefined;
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
-          description: `${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Requires first equipping the carried weapon in a separate action. ' : ''}${definition.label} ${entity.name}: approach within ${definition.range} units, then one strike after ${definition.workSeconds} game seconds; ${definition.damage} injury damage if still in reach; ${Math.round((definition.accuracy ?? 1) * 100)}% hit probability, ${definition.recoverySeconds ?? 0} seconds recovery.`,
+          description: `${hunting ? 'Hunt for meat: ' : ''}${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Requires first equipping the carried weapon in a separate action. ' : ''}${definition.label} ${entity.name}: approach within ${definition.range} units, then one strike after ${definition.workSeconds} game seconds; ${definition.damage} injury damage if still in reach; ${Math.round((definition.accuracy ?? 1) * 100)}% hit probability, ${definition.recoverySeconds ?? 0} seconds recovery.${hunting ? ` This can wound or kill the animal. ${hunting} This choice only equips if necessary, approaches and attempts one strike, not the later preparation steps.` : ''}`,
           command: {
             type: 'strike',
             definitionId: definition.id,
@@ -545,6 +549,8 @@ export function npcCandidates(
             ? { prerequisite: { type: 'equip' as const, itemId: definition.weaponItemId } }
             : {}),
         });
+      }
+    }
     if (entity.resource && entity.resource.quantity > 0)
       actions.push({
         id: `gather:${entity.id}`,
