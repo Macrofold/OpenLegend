@@ -1,16 +1,33 @@
 # Needs, desires and the relief of enough
 
-[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
+[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** Physiological needs, social aspirations and chosen projects have different semantics. Do not flatten them into constantly declining bars.
+**Proposal catalogue · September 27, 2026.** Physiological requirements, psychological concerns and chosen desires have different semantics. People can seek safety, pleasure, love, mastery, wealth, revenge, glory, domination or transcendence, and can want incompatible things. These motives help produce play; they are not all deficiencies to cure or constantly declining bars.
 
 [A dependable meal](#a-dependable-meal) · [Somewhere to return](#somewhere-to-return) · [To be useful without being used](#to-be-useful-without-being-used) · [Privacy with a door](#privacy-with-a-door) · [Mastery with a stopping point](#mastery-with-a-stopping-point) · [To be remembered accurately](#to-be-remembered-accurately) · [Room for wonder](#room-for-wonder) · [Belonging across difference](#belonging-across-difference) · [Sensory refuge](#sensory-refuge) · [Continuity after change](#continuity-after-change)
+
+## Base coverage
+
+These domains restore the category's range before later inventories expand it. They are coverage foundations, not additional item counts or a requirement to simulate every row in one starter world. Select a coherent subset using the [shared design foundation](design-foundation.md). The ten existing pattern cards remain useful particular examples.
+
+| Domain                                  | Seed worlds | Positive appeal                                             | Opposition, danger or ambiguity                                | Concrete examples and interactions                                                                                                                                            |
+| --------------------------------------- | ----------- | ----------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bodily survival and recovery            | ALL         | Food, warmth, rest and relief after danger                  | Hunger, injury, exposure and triage                            | A hungry traveler needs food; a wounded fighter needs time and care. Bounded needs can drive expeditions and hard choices without demanding uninterrupted household clicking. |
+| Comfort, beauty and pleasure            | ALL         | Good meals, a lovely room, games, music and sensory delight | Envy, excess, cost and pleasure competing with duty            | A feast celebrates victory and consumes reserves. Aesthetic preference can remain meaningful without becoming an optimal buff or an addiction model.                          |
+| Love, belonging and recognition         | ALL         | Friendship, intimacy, trust and being understood            | Jealousy, abandonment, betrayal and divided loyalties          | A fighter leaves a profitable expedition to protect a lover; another conceals an affair. Affection does not settle consent, obedience or every disagreement.                  |
+| Competence, curiosity and ambition      | ALL         | Learning, invention, discovery and proving oneself          | Pride, rivalry, dangerous overreach and fear of insignificance | A novice enters a tournament before being ready; an inventor risks a workshop to test a theory. Mastery may end in contentment or further chosen ambition.                    |
+| Security, autonomy and control          | ALL         | Independence, reliable shelter and freedom from domination  | Fear, coercion, paranoia and controlling others to feel safe   | A household buys a lock; a ruler seizes a crossing. Distinguish a subject's desire for safety from the legitimacy or actual effectiveness of the chosen method.               |
+| Wealth, status and power                | ALL         | Prosperity, prestige, command and changing the world        | Greed, exploitation, corruption and conflict with equals       | A merchant wants a monopoly; a knight wants land and a title. These are playable ambitions with consequences, not automatically mistakes to be cured by generosity.           |
+| Justice, revenge and destructive desire | ALL         | Redress, retribution, defiance and defeating a hated enemy  | Cruelty, escalation, mistaken blame and harm to bystanders     | A bereaved scout seeks the raider who killed her partner. Evidence, loyalty and opportunity shape pursuit; neither forgiveness nor revenge is the mandatory ending.           |
+| Faith, legacy and meaning               | ALL         | Devotion, service, wonder and leaving something lasting     | Fanaticism, sacrifice, false prophecy and incompatible duties  | A keeper protects a shrine, a captain wants a song, a dissenter rejects a holy war. A supernatural answer exists only if that world actually supports it.                     |
+
+Research basis: [G21](source-atlas.md#g21), [G22](source-atlas.md#g22), [G24](source-atlas.md#g24), [G30](source-atlas.md#g30), [G36](source-atlas.md#g36), [G38](source-atlas.md#g38), [W01](source-atlas.md#w01), [W07](source-atlas.md#w07), [W09](source-atlas.md#w09), [W10](source-atlas.md#w10). These are original synthesis and coverage choices, not claims that the sources implement the proposed examples.
 
 ## A dependable meal
 
 **ALL · Play · High · 2/Extend.** Gap: food access, reliable delegation and optional dietary variation.
 
-Early play may involve finding supper; later the reward is knowing supper will happen. Players then choose company, recipe or celebration rather than repeating hunger maintenance. A broken supply should create one understandable project with substitutes. Worlds can choose harsher nutrition modes, but ordinary play should not punish taking time to decorate, explore or converse.
+Early play may involve finding supper; later the reward is knowing supper will happen. Players then choose company, recipe or celebration rather than repeating hunger maintenance. A broken supply should create one understandable project with substitutes. Choose pressure that serves the selected experience: a harsh expedition can demand rationing, while a settled household can free time for decorating, exploring or conversation.
 
 Seeds: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Valheim](source-atlas.md#g31).
 
@@ -18,7 +35,7 @@ Seeds: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [
 
 **ALL · Play · High · 2/Extend.** Gap: recognized home, access and recurring welcome conditions.
 
-A workshop corner, rented room or shared camp can satisfy the desire for a dependable place. Improvement changes activities and social invitations, not just rest efficiency. Players may prefer mobility or several homes. Loss should offer relocation and community help; an ever-rising comfort requirement would turn attachment into an endless furniture treadmill.
+A workshop corner, rented room or shared camp can satisfy the desire for a dependable place. Improvement changes activities and social invitations, not just rest efficiency. Players may prefer mobility or several homes. Loss may be permanent; relocation, rebuilding and community help can create further play without restoring the lost home by fiat. An ever-rising comfort requirement would turn attachment into an endless furniture treadmill.
 
 Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Hades I](source-atlas.md#g22), [Valheim](source-atlas.md#g31).
 
@@ -34,7 +51,7 @@ Seeds: [Palworld](source-atlas.md#g41), [Assassin's Creed III](source-atlas.md#g
 
 **ALL · Blend · High · 2/Extend.** Gap: spatial access, interruption preferences and scoped disclosure.
 
-A crowded home has enough beds but no place for private letters or grief. Curtains, schedules and a lock can each help while creating different accessibility tradeoffs. Builders gain reasons to design rooms beyond size bonuses. A privacy need must never authorize the engine to expose hidden thoughts as a collectible clue or gossip resource.
+A crowded home has enough beds but no place for private letters or grief. Curtains, schedules and a lock can each help while creating different accessibility tradeoffs. Builders gain reasons to design rooms beyond size bonuses. A privacy need grants no hidden-state access. Supported fictional eavesdropping, stolen letters or telepathy may reveal bounded evidence under the world's rules; none grants access to real users' private data.
 
 Seeds: [The Sims](source-atlas.md#g24), [Disco Elysium](source-atlas.md#g66), [His Dark Materials](source-atlas.md#w20).
 

@@ -2,9 +2,26 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** Author interesting starting conditions and possible consequences, not a required sequence of player obedience. Knowledge should change what people can attempt.
+**Proposal catalogue · September 27, 2026.** Adventure needs things worth seeking, threats worth facing and discoveries that change what players can do. Author starting conditions, coherent obstacles and possible consequences without requiring one sequence of obedience. Treasure, victory, wonder, companionship, escape and returning home can each justify a journey; a finite directed story can coexist with optional exploration.
 
 [The return expedition](#the-return-expedition) · [The missing person who made a choice](#the-missing-person-who-made-a-choice) · [A treasure that is a route](#a-treasure-that-is-a-route) · [The expedition with several purposes](#the-expedition-with-several-purposes) · [The mystery that permits useful error](#the-mystery-that-permits-useful-error) · [A rival expedition with manners](#a-rival-expedition-with-manners) · [The monster is a location](#the-monster-is-a-location) · [A local ending worth choosing](#a-local-ending-worth-choosing) · [The guided path and the wild path](#the-guided-path-and-the-wild-path) · [A discovery that invites a party](#a-discovery-that-invites-a-party)
+
+## Coverage of the playable foundation
+
+The [shared design foundation](design-foundation.md) owns the overall range and selection principles. This compact map establishes coverage for future specific entries; the ten existing cards below remain reusable patterns, not the whole category or a required implementation bundle. World labels describe the domain’s fit; individual examples still require suitable world rules.
+
+| Domain                               | Seed worlds | Play and consequences                                                                                                                                                   |
+| ------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Invitation, purpose and reward       | ALL         | Take a monster contract, pursue a thief, seek a rare object or answer a friend’s call; show a concrete desire and a worthwhile potential payoff.                        |
+| Travel and dangerous routes          | ALL         | Choose speed, supplies, stealth or safety; landmarks, hostile territory, weather and shortcuts make navigation a series of decisions, not empty distance.               |
+| Dungeons and contested sites         | ALL         | Explore tombs, occupied forts, laboratories and beast lairs; connect guards, hazards, puzzles, secrets and retreat routes in a legible place.                           |
+| Monsters, adversaries and climaxes   | ALL         | Track a predator, expose an ambush or defeat a commander; investigation and preparation inform a decisive encounter with an opponent who has real aims.                 |
+| Treasure, secrets and advancement    | ALL         | Find money, equipment, a spell, a recipe, an heirloom or forbidden history; rewards change builds, relationships, access or the pleasure of owning something beautiful. |
+| Rivals, factions and betrayal        | ALL         | Race another expedition, accept a dubious patron or uncover a double agent; some aims conflict irreconcilably and choices can cost allies or close routes.              |
+| Companions, wonder and homecoming    | ALL         | Share camp stories, discover a breathtaking place or bring someone home; quiet scenes and celebration let danger and victory acquire personal meaning.                  |
+| Failure, changed returns and endings | ALL         | Escape a lost battle, revisit a cleared route, bury a friend or settle down; aftermath persists and a complete local arc does not require perpetual escalation.         |
+
+Research anchors: [The Witcher 3](source-atlas.md#g72), [Elden Ring](source-atlas.md#g75), [Final Fantasy XV](source-atlas.md#g92), [Assassin’s Creed IV: Black Flag](source-atlas.md#g98) and [Narnia](source-atlas.md#w19). Use the lessons selectively; franchise mechanics and moral cosmologies are not universal OpenLegend laws.
 
 ## The return expedition
 
@@ -50,7 +67,7 @@ Seeds: [Outer Wilds](source-atlas.md#g34), [Disco Elysium](source-atlas.md#g66),
 
 **ALL · Play · Try · 2/Extend.** Gap: independent bounded plans and negotiable shared interests.
 
-Another team wants the same summit but carries the spare rope you need. Compete for a record, share supplies or divide research goals. Rivalry can create stories without obligatory combat. Their progress should follow plausible resources and information, not teleport ahead to preserve drama, and cooperation should not erase their desire for recognition.
+Another team wants the same summit but carries the spare rope you need. Compete for a record, share supplies or divide research goals. This courteous rivalry need not turn violent. Other expeditions may steal, sabotage or kill for the prize, with discoverable motives and consequences. Their progress should follow plausible resources and information, not teleport ahead to preserve drama, and cooperation should not erase their desire for recognition.
 
 Seeds: [Battle Brothers](source-atlas.md#g121), [Dragon's Dogma 2](source-atlas.md#g127), [Middle-earth](source-atlas.md#w01).
 
@@ -82,6 +99,6 @@ Seeds: [Elden Ring](source-atlas.md#g75), [Final Fantasy XVI](source-atlas.md#g9
 
 **ALL · Play · Try · 1/Compose.** Gap: authored social reuse of a discovered place.
 
-Explorers find a cave with beautiful acoustics rather than a weapon chest. Musicians, builders and cautious neighbors may turn it into a venue, leave it quiet or arrange occasional visits. Discovery feeds ordinary life. The place need not produce a stat reward; its atmosphere, access and social possibilities can justify the expedition on their own.
+Explorers find a cave with beautiful acoustics. A different expedition might seek a legendary weapon; both discoveries can be worth the journey. Musicians, builders and cautious neighbors may turn it into a venue, leave it quiet or arrange occasional visits. Discovery feeds ordinary life. The place need not produce a stat reward; its atmosphere, access and social possibilities can justify the expedition on their own.
 
 Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Outer Wilds](source-atlas.md#g34), [Final Fantasy XV](source-atlas.md#g92).

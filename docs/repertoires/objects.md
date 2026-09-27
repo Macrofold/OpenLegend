@@ -1,16 +1,33 @@
 # Objects worth keeping and repurposing
 
-[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
+[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** Objects earn their place through use, attachment or legible affordances. Sentimental and decorative value need not become a numerical buff.
+**Proposal catalogue · September 27, 2026.** Objects can equip a fighter, sustain a household, unlock a ruin, advertise power, conceal a lie or become precious for no practical reason. Keep ordinary essentials alongside strange finds: a dependable spear and a beautiful cup both belong. The patterns below demonstrate relationships; they are not a complete object inventory.
 
 [The mended kettle](#the-mended-kettle) · [Surveyor's folding frame](#surveyors-folding-frame) · [The honest empty box](#the-honest-empty-box) · [Festival cloth](#festival-cloth) · [Witness lamp](#witness-lamp) · [Borrower's tool roll](#borrowers-tool-roll) · [A chair with a place](#a-chair-with-a-place) · [Map of unfinished things](#map-of-unfinished-things) · [Companion vessel](#companion-vessel) · [Celebration kit](#celebration-kit)
+
+## Base coverage
+
+These domains restore the category's range before later inventories expand it. They are coverage foundations, not additional item counts or a requirement to simulate every row in one starter world. Select a coherent subset using the [shared design foundation](design-foundation.md). The ten existing pattern cards remain useful particular examples.
+
+| Domain                                   | Seed worlds | Positive appeal                                                             | Opposition, danger or ambiguity                                              | Concrete examples and interactions                                                                                                                                                  |
+| ---------------------------------------- | ----------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tools and everyday equipment             | ALL         | Competence, convenience and making a place your own                         | Breakage, scarcity, theft and ill-suited equipment                           | A shovel digs a ditch or opens a buried cache; rope secures cargo or binds a captive. Track the actual supported use, load and recipient rather than assuming a benevolent purpose. |
+| Weapons, armor and ammunition            | ALL         | Skillful combat, protection, intimidating presence and a satisfying upgrade | Reach, exposure, reloads, wear and opponents who exploit a weakness          | A hunting bow, spear, shield and padded coat create different distance and commitment choices. A distinctive weapon can be valuable loot without being universally superior.        |
+| Containers, supplies and expedition kits | ALL         | Preparation, discovery and bringing valuable things home                    | Capacity, spoilage, noisy cargo and choosing what to abandon                 | An oilskin map case, quiver and medicine chest compete for space with captured silver. A rescued person and recovered loot are separate objectives.                                 |
+| Treasure, trophies and status objects    | ALL         | Anticipation, collection, wealth, prestige and remembrance                  | Rival claimants, stolen provenance and an object worth betraying an ally for | A tournament clasp, lost payroll or royal seal changes opportunity as well as price; ordinary coins and gems remain legitimate rewards.                                             |
+| Homes, ornament and intimate belongings  | ALL         | Beauty, comfort, affection, play and private expression                     | Jealousy, dispossession, status competition and irreplaceable loss           | The kettle, favorite chair and embroidered blanket retain specific histories. A burnt keepsake can stay lost while its remembered owner still matters.                              |
+| Tools of access, disguise and sabotage   | ALL         | Clever infiltration, discovery, escape and deception                        | Detection, traps, false evidence and failure that alerts opponents           | A copied key, concealed pouch or cut bridge fastening changes actual access; a costume affects recognition only through supported perception.                                       |
+| Machines and dangerous assemblies        | ALL         | Inventive combinations and taking command of useful power                   | Heat, incompatible components, hostile control and collateral damage         | A pump or pressure-powered launcher shares reservoirs and fittings with civilian equipment; destructive use follows the same admitted material rules.                               |
+| Exceptional artifacts and living objects | SC FA       | Wonder, a distinctive play style and attachment to a companion              | Obligations, unreliable cooperation and powers with costly limits            | A lamp that detects one contamination or a mobile greenhouse has a specific operating scope; its beautiful description alone supplies no effect.                                    |
+
+Research basis: [G01](source-atlas.md#g01), [G06](source-atlas.md#g06), [G22](source-atlas.md#g22), [G29](source-atlas.md#g29), [G32](source-atlas.md#g32), [G36](source-atlas.md#g36), [W01](source-atlas.md#w01), [W05](source-atlas.md#w05). These are original synthesis and coverage choices, not claims that the sources implement the proposed examples.
 
 ## The mended kettle
 
 **ALL · Play · High · 1/Compose.** Gap: authored provenance and reactions; heating still needs its own mechanic.
 
-A kettle repaired with three visibly different handles passes between households. It can prepare a welcoming drink, mark a debt repaid or become the village meeting signal. Its history emerges from actual owners and repairs. Let players treasure it without outperforming all new kettles; destroying it should not erase the remembered kindness or make a relationship unrecoverable.
+A kettle repaired with three visibly different handles passes between households. It can prepare a welcoming drink, mark a debt repaid or become the village meeting signal. Its history emerges from actual owners and repairs. Let players treasure it without outperforming all new kettles; destroying it does not erase the remembered kindness, though deliberate destruction may cause a lasting rupture.
 
 Seeds: [The Sims](source-atlas.md#g24), [Red Dead Redemption 2](source-atlas.md#g70), [Spirited Away](source-atlas.md#w25).
 
@@ -50,7 +67,7 @@ Seeds: [Outer Wilds](source-atlas.md#g34), [Dragon Age: Inquisition](source-atla
 
 **ALL · Play · High · 2/Extend.** Gap: lending terms, item identity and substitutable consumables.
 
-A shared roll includes a named hammer, replaceable nails and a note about who knows the best repair. Borrowers may return equivalent nails but should discuss replacing the hammer. It connects tool access to people without demanding ownership of every profession's kit. Make due terms forgiving and renegotiable; tracking every nail's biography would add noise.
+A shared roll includes a named hammer, replaceable nails and a note about who knows the best repair. Borrowers may return equivalent nails but should discuss replacing the hammer. It connects tool access to people without demanding ownership of every profession's kit. This shared roll can use forgiving, renegotiable terms; another lender may be strict or exploitative, with those terms and their consequences visible. Tracking every nail's biography would add noise.
 
 Seeds: [Ultima Online](source-atlas.md#g19), [Assassin's Creed III](source-atlas.md#g99), [Kingdom Come: Deliverance II](source-atlas.md#g114).
 
@@ -74,7 +91,7 @@ Seeds: [Outer Wilds](source-atlas.md#g34), [Elden Ring](source-atlas.md#g75), [D
 
 **SC FA · Play · Try · 3/New.** Gap: inhabitable object identity, interiors and bounded embodied agency.
 
-A small mobile greenhouse has a resident caretaker intelligence and room for passengers. It can prefer sunlight while still needing permission to relocate sleeping guests. Builders gain a home that participates in stories. Define its senses, entrances, capacity and shutdown conditions; do not give it invisible knowledge or a full second simulation for every decorative compartment.
+A small mobile greenhouse has a resident caretaker intelligence and room for passengers. It may agree to ask before relocating sleeping guests, or break that promise in an emergency or betrayal under the chosen fictional rules. Builders gain a home that participates in stories. Define its senses, entrances, capacity and shutdown conditions; do not give it invisible knowledge or a full second simulation for every decorative compartment.
 
 Seeds: [Caves of Qud](source-atlas.md#g33), [Assassin's Creed IV: Black Flag](source-atlas.md#g98), [His Dark Materials](source-atlas.md#w20).
 

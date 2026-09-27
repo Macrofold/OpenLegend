@@ -1,54 +1,56 @@
 # Repertoires for inhabited worlds
 
-**A prioritized proposal library and input to an implementation roadmap.** These are ideas for worlds people might invent, inhabit, care for, investigate and change. Priorities guide selection; they are not an approved delivery commitment or fixed world canon. Selecting a proposal does not install a capability. Accepted contracts remain in their existing owners; the engine must not acquire one world's laws merely because a proposal is appealing.
+**A prioritized proposal library and input to an implementation roadmap.** These are ideas for worlds people might invent, inhabit, explore, love, fight for, conquer or change. Priorities guide selection; they are not an approved delivery commitment or fixed world canon. Selecting a proposal does not install a capability. Accepted contracts remain in their existing owners; the engine must not acquire one world's laws merely because a proposal is appealing.
 
-The library contains **270 introductory pattern cards in 27 catalogues**, **384 stable action examples**, **16 worked combinations**, and **four optional world proposals with eight characters each**. The patterns are starting points for much larger inventories of concrete ideas; those inventories have not yet been filled out. The action catalogue already uses the shared table labels below. It draws on the original 130-game and 28-world research corpus; the game roster's eighteen newly planned additions are not yet covered by this synthesis. The [source atlas](source-atlas.md) records an individual takeaway and caution for the original subjects, including the research snapshots used. All new ideas are our design synthesis; none has been playtested by this work.
+The base contains **270 retained introductory pattern cards in 27 catalogues**, category coverage tables, **384 stable action examples**, worked combinations, and **four optional world proposals with connected casts, opportunities and opposing powers**. The [design foundation](design-foundation.md) owns the shared account of motives, systems, conflict, pleasure and consequence. The patterns and coverage tables prepare for much larger inventories of specific ideas; those individual expansions are separate work. This revision draws on the **148-game and 28-world research corpus**, including the eighteen survival additions now present. The [source atlas](source-atlas.md#research-basis-for-the-foundation-revision) records sources and the scope of the fresh reading. These proposals have not been playtested.
 
-Start with [selection and scale](selection-and-scale.md) for the strongest candidates, contrasting audiences and cost tradeoffs. Use [combinations](combinations.md) to see concrete situations with several viable approaches. Then browse by the thing you want to create.
+Start with the [design foundation](design-foundation.md): what people seek, what resists them, what can be won or lost, and how the 27 categories connect. Then use [selection and scale](selection-and-scale.md) to choose a coherent playable experience and [combinations](combinations.md) to examine actual situations and aftermath. Browse the category owners for their coverage and retained patterns.
+
+These worlds make room for mastery, combat, adventure, rivalry, ambition, wealth, romance, treachery, cruelty, fear and loss, alongside beauty, humor, care, creativity and belonging. Inhabitants have purposes of their own and can be admirable, malicious, conflicted or ordinary. A fictional character need not behave like a helpful assistant. A selected world can favor a particular tone; the library must not silently impose one cooperative or uniformly bleak interpretation on every genre.
 
 ## Catalogue map
 
-| Create or explore                     | Catalogue                                                   | Useful starting point                                        |
-| ------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------ |
-| Consequences that combine             | [Mechanics](mechanics.md)                                   | Borrowed purpose; promises that occupy tomorrow              |
-| Specific attempts                     | [Actions and interactions](actions.md)                      | 384 preserved examples across 32 domains                     |
-| Things to use and treasure            | [Objects](objects.md)                                       | The mended kettle; map of unfinished things                  |
-| Meaningful scarcity                   | [Materials and resources](materials-resources.md)           | Warmstone; honest substitutes                                |
-| Learned powers and changing careers   | [Abilities and progression](abilities-progression.md)       | Loadout as a sentence; skill after the uniform               |
-| Interpretations and compound behavior | [Psychology and behavior](psychology-behavior.md)           | Two appraisals; trust in ability versus intent               |
-| Particular personalities              | [Traits](traits.md)                                         | Risk has a shape; practical generosity                       |
-| Lives with room for enough            | [Needs](needs.md)                                           | A dependable meal; somewhere to return                       |
-| People who affect each other          | [Relationships](relationships.md)                           | Reliable disagreement; household agreements                  |
-| Formative experiences                 | [Characters and backstories](characters-backstories.md)     | Late beginner; an ordinary happy childhood                   |
-| Different ways to inhabit reality     | [Bodies and species](bodies-species.md)                     | Touch-mapped citizen; accommodation as invention             |
-| Living surroundings                   | [Ecology and weather](ecology-weather.md)                   | Orchard neighbors; wildlife with an elsewhere                |
-| Places that invite behavior           | [Settlements and architecture](settlements-architecture.md) | Public kitchen; courtyard with several lives                 |
-| Useful expertise                      | [Work and crafting](work-crafting.md)                       | Diagnostic profession; prototype club                        |
-| Livelihoods and exchange              | [Economy and logistics](economy-logistics.md)               | Circular route; a job with a life around it                  |
-| Collective decisions                  | [Institutions and politics](institutions-politics.md)       | Repair budget; bureaucracy that can improve                  |
-| Cooperation across differences        | [Diplomacy and conflict](diplomacy-conflict.md)             | Trade before friendship; border market                       |
-| A past that affects the present       | [History and myth](history-myth.md)                         | Hero's useful mistake; flood anniversaries                   |
-| Shared meaning                        | [Faith and ritual](faith-ritual.md)                         | Open table; festival of unfinished repairs                   |
-| Understanding and misunderstanding    | [Languages and knowledge](languages-knowledge.md)           | Translation leaves a question; knowledge in craft            |
-| Pleasure without an efficiency excuse | [Arts and leisure](arts-leisure.md)                         | Garden for looking at; neighborhood sound                    |
-| Machines and networks                 | [Technology](technology.md)                                 | Heat loom; route room                                        |
-| Coherent impossibilities              | [Magic](magic.md)                                           | Borrowed warmth; grammar of useful charms                    |
-| Reasons to leave and return           | [Adventure and discovery](adventure-discovery.md)           | Treasure that is a route; local endings                      |
-| Danger, care and recovery             | [Combat and rescue](combat-rescue.md)                       | Get everyone home; debrief at the kitchen table              |
-| Reuse and larger worlds               | [Automation and creators](automation-creators.md)           | Blueprint plus reasons; bounded civic planner                |
-| Stranger creator possibilities        | [Unusual realities](unusual-realities.md)                   | Walking city; borrowed afternoon; civilization in the cracks |
-| Explicit experimental models          | [Simulation experiments](simulation-experiments.md)         | Compound effects; institutional handoffs                     |
+| Create or explore                         | Catalogue                                                   | Coverage and starting points                                            |
+| ----------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Consequences that combine                 | [Mechanics](mechanics.md)                                   | Contests, costs, leverage, interruption and persistent outcomes         |
+| Specific attempts                         | [Actions and interactions](actions.md)                      | 384 preserved examples across 32 domains                                |
+| Things to wield, use and treasure         | [Objects](objects.md)                                       | Weapons, armor, tools, heirlooms, loot and everyday possessions         |
+| Scarcity, abundance and access            | [Materials and resources](materials-resources.md)           | Food, fuel, rare substances, contested supplies and substitutes         |
+| Learned powers and changing careers       | [Abilities and progression](abilities-progression.md)       | Combat builds, useful expertise, forbidden powers and new vocations     |
+| Interpreting, wanting and deciding        | [Psychology and behavior](psychology-behavior.md)           | Fear, pride, affection, deception, conviction and self-justification    |
+| Particular personalities                  | [Traits](traits.md)                                         | Courage, cruelty, generosity, ambition and contradictory conduct        |
+| Lives with needs and ambitions            | [Needs](needs.md)                                           | Survival, pleasure, security, autonomy, recognition and belonging       |
+| People who affect each other              | [Relationships](relationships.md)                           | Love, rivalry, loyalty, patronage, dependency and betrayal              |
+| People with a past and a future           | [Characters and backstories](characters-backstories.md)     | Knights, rivals, ordinary families, personal histories and present aims |
+| Different ways to inhabit reality         | [Bodies and species](bodies-species.md)                     | Senses, growth, injury, predation, mortality and unusual bodies         |
+| Living surroundings                       | [Ecology and weather](ecology-weather.md)                   | Habitats, predators, harvests, disasters and beautiful places           |
+| Places that shape action                  | [Settlements and architecture](settlements-architecture.md) | Homes, workshops, fortresses, prisons, ruins and contested routes       |
+| Expertise, labor and making               | [Work and crafting](work-crafting.md)                       | Arms, comforts, quality, dangerous work and useful inventions           |
+| Wealth, livelihoods and exchange          | [Economy and logistics](economy-logistics.md)               | Trade, wages, debt, monopoly, smuggling and spoils                      |
+| Authority and collective life             | [Institutions and politics](institutions-politics.md)       | Law, office, class, corruption, coercion, services and succession       |
+| Alliances and opposed purposes            | [Diplomacy and conflict](diplomacy-conflict.md)             | Treaties, espionage, war, conquest, resistance and peace                |
+| A past that affects the present           | [History and myth](history-myth.md)                         | Heroes, atrocities, migrations, myths and disputed legacies             |
+| Faith and sacred authority                | [Faith and ritual](faith-ritual.md)                         | Devotion, consolation, prophecy, fanaticism and dissent                 |
+| Understanding and controlling information | [Languages and knowledge](languages-knowledge.md)           | Knowledge, secrets, translation, propaganda and discovery               |
+| Pleasure, expression and competition      | [Arts and leisure](arts-leisure.md)                         | Music, beauty, sport, satire, festivals and fame                        |
+| Machines, networks and new power          | [Technology](technology.md)                                 | Medicine, weapons, communications, surveillance and infrastructure      |
+| Coherent impossibilities                  | [Magic](magic.md)                                           | Spells, enchantment, curses, bargains, wonder and domination            |
+| Reasons to leave and return               | [Adventure and discovery](adventure-discovery.md)           | Treasure, dangerous routes, mysteries, hunts and revelation             |
+| Fighting, victory, rescue and loss        | [Combat and rescue](combat-rescue.md)                       | Weapons, tactics, enemies, capture, spoils and recovery                 |
+| Delegation and authored worlds            | [Automation and creators](automation-creators.md)           | Work, defense, routines, blueprints and playable creations              |
+| Stranger creator possibilities            | [Unusual realities](unusual-realities.md)                   | Different time, space, minds, scale, death and causality                |
+| Explicit experimental models              | [Simulation experiments](simulation-experiments.md)         | Ecology, inequality, cooperation, conflict and institutional change     |
 
 ## Four possible world families
 
 These are mutually adaptable proposals, not four accepted canonical worlds. A creator can select a family, borrow a small setting or reject its lore. None belongs in the accepted base-world rules until separately adopted.
 
-| Code   | Proposal                                                             | Experience at its center                                                        |
-| ------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| **MD** | [Threewater March — medieval survival](worlds/medieval-survival.md)  | Make a life together where weather, materials and neighbors matter              |
-| **MO** | [Linden Reach — modern life](worlds/modern-life.md)                  | Build a home, career, circle of friends and a more livable neighborhood         |
-| **SC** | [Veyra Reach — planetary science fiction](worlds/planetary-scifi.md) | Meet unfamiliar peoples, adapt useful technology and connect ground settlements |
-| **FA** | [The Borrowed Dawn — living fantasy](worlds/living-fantasy.md)       | Learn a small magical grammar and change daily life as well as adventures       |
+| Code   | Proposal                                                             | Experience at its center                                                                                        |
+| ------ | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **MD** | [Threewater March — medieval survival](worlds/medieval-survival.md)  | Survive, build, gain standing and contest a frontier shaped by weather, kinship and force                       |
+| **MO** | [Linden Reach — modern life](worlds/modern-life.md)                  | Pursue a home, career, love, wealth or influence amid competing people and institutions                         |
+| **SC** | [Veyra Reach — planetary science fiction](worlds/planetary-scifi.md) | Explore and contest planetary frontiers with a capable crew, alien encounters and useful technology             |
+| **FA** | [The Borrowed Dawn — living fantasy](worlds/living-fantasy.md)       | Seek mastery, treasure and allegiance in a magical realm with dangerous adventures and lives worth caring about |
 
 The **Seed worlds** column recommends the most natural homes for an idea: MD, MO, SC and FA may be combined. **ALL** means a natural fit in all four, with appropriate local details; mere theoretical reskinning is not enough. **—** means an idea is retained for other possible worlds but is outside these four proposals. These recommendations are not engine prohibitions. The science-fiction family excludes playable ship piloting, space navigation and dogfighting: ships are inhabited locations and crew/capability spaces; journeys are abstract transitions.
 
@@ -121,13 +123,13 @@ Difficulty assumes a deliberately bounded version; combining ten moderate ideas 
 
 The research supports **qualitative patterns of appeal and friction**, not numerical rankings of individual mechanics. Review samples are self-selected and version-specific; shipped systems, marketing proposals, retrospective explanations and our inferences remain different evidence. EverQuest Next is an unreleased proposal case, not proof that its planned ecology worked. A canceled service does not establish that players disliked its creative tools. Current product, revenue and population claims are unnecessary here.
 
-High selections favor readable consequences, attachment to particular people and places, expressive reuse and a manageable first encounter. They are judgments to test, not causal claims that a named mechanic made a source commercially successful. Lab work requires validation of its model before scientific interpretation. See the [method and source coverage](source-atlas.md#method-and-limits) and [research evidence guidance](../../archive/02-research/game-inspiration/essays/how-to-interpret-the-evidence.md).
+High selections favor a clear player desire and payoff: mastery, victory, discovery, expression, power, attachment, suspense or another identifiable experience, with readable consequences and a manageable first encounter. They are judgments to test, not causal claims that a named mechanic made a source commercially successful. Lab work requires validation of its model before scientific interpretation. See the [method and source coverage](source-atlas.md#method-and-limits) and [research evidence guidance](../../archive/02-research/game-inspiration/essays/how-to-interpret-the-evidence.md).
 
 Cards take **relationships among systems** as seeds, then change the situation, purpose, participants and consequences. Source links explain the origin of a question; they do not claim the source contains our invented object, character or rule. Franchise names, lore, art and signature named systems are not the proposed world's content.
 
 ## From an idea to a selected design
 
-Choose a player-visible situation, intended audience and smallest worthwhile result. Identify what actors can know, several plausible methods, an observable outcome and a meaningful failure or uncertainty. Select the minimum cards needed, including one quiet pleasure or relationship worth returning to. Use an existing action example where useful; do not create a new native verb for every story.
+Choose a player-visible situation, intended audience and smallest worthwhile result using the [foundation questions](design-foundation.md#how-systems-produce-a-situation). Identify what actors want and can know, what resists them, plausible methods, desired rewards and meaningful failure. Select the interlocking systems needed for that experience and its aftermath. A quiet pleasure can have value in itself; a battle can be worth playing for its tactics, stakes and victory. Use an existing action example where useful; do not create a new native verb for every story.
 
 Then trace the required capabilities to their owners. [Engine/world boundaries](../engine-and-world-boundaries.md) and [action capabilities](../action-capabilities.md) retain authority and execution contracts. [INV](../maintainers/inventions-and-world-evolution.md) owns invention admission and broader composition gaps; [EWF](../maintainers/extensible-world-foundation.md) owns world foundation gaps; [AG](../maintainers/agent-agency.md), [ACT](../maintainers/action-capabilities.md), [EPR](../maintainers/events-perception-and-reactions.md) and [SW](../maintainers/spatial-world.md) retain agency, grounded action, observation and space work. This library closes none of their acceptance criteria and creates no parallel implementation backlog.
 

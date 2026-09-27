@@ -2,9 +2,26 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** Relationship ideas create particular obligations and opportunities. Affection, trust, disagreement, attraction, authority and practical dependence remain distinct.
+**Proposal catalogue · September 27, 2026.** Relationships create joy, intimacy, obligations, opportunity and vulnerability. Friendship, romance, rivalry, family, dependence and enmity deserve distinct behavior; affection, trust, attraction, authority and allegiance cannot collapse into one approval score. People can love each other and still betray, leave, oppose or refuse forgiveness.
 
 [The reliable disagreement](#the-reliable-disagreement) · [An apprenticeship with an exit](#an-apprenticeship-with-an-exit) · [Household agreements](#household-agreements) · [The debt no one can settle](#the-debt-no-one-can-settle) · [Rivals who need the same bridge](#rivals-who-need-the-same-bridge) · [A gift whose meaning changes](#a-gift-whose-meaning-changes) · [An absent friend remains present](#an-absent-friend-remains-present) · [Found family with boundaries](#found-family-with-boundaries) · [Reputation has an address](#reputation-has-an-address) · [Repair without erasure](#repair-without-erasure)
+
+## Coverage of the playable foundation
+
+The [shared design foundation](design-foundation.md) owns the overall range and selection principles. This compact map establishes coverage for future specific entries; the ten existing cards below remain reusable patterns, not the whole category or a required implementation bundle. World labels describe the domain’s fit; individual examples still require suitable world rules.
+
+| Domain                                       | Seed worlds | Play and consequences                                                                                                                                              |
+| -------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Friendship, companionship and play           | ALL         | Share jokes, meals, games, travel and reliable help; a relationship can be valuable and entertaining without an unresolved crisis.                                 |
+| Romance, attraction and intimacy             | ALL         | Court, flirt, share affection, sustain a partnership or part; desire and commitment develop between particular people rather than through a gift-purchase formula. |
+| Family, households and inheritance           | ALL         | Raise children, care for kin, dispute a legacy or leave a household; shared resources and histories create both security and conflict.                             |
+| Mentorship, admiration and rivalry           | ALL         | Learn from an expert, surpass a teacher, compete for recognition or envy a colleague; admiration need not eliminate ambition.                                      |
+| Loyalty, duty and incompatible sides         | ALL         | Choose a lover over an oath, defend a faction against a friend or refuse an order; certain decisions cost a relationship even when affection survives.             |
+| Betrayal, manipulation and revenge           | ALL         | Sell a secret, exploit dependence, abandon an ally or seek retribution; motives and evidence make a breach particular, and harm can be deliberate.                 |
+| Patronage, coercion and practical dependence | ALL         | Bargain with a patron, endure blackmail or escape a controlling household; fictional power can constrain choices without becoming real platform authority.         |
+| Separation, loss and reconciliation          | ALL         | Remember an absent friend, mourn someone, repair trust or keep a permanent boundary; restitution can enable change but cannot purchase forgiveness.                |
+
+Research anchors: [Dragon Age: Inquisition](source-atlas.md#g53), [Fire Emblem: Three Houses](source-atlas.md#g64), [Red Dead Redemption 2](source-atlas.md#g70), [Final Fantasy XV](source-atlas.md#g92) and [One Piece](source-atlas.md#w14). Use the lessons selectively; franchise mechanics and moral cosmologies are not universal OpenLegend laws.
 
 ## The reliable disagreement
 
@@ -34,7 +51,7 @@ Seeds: [The Sims](source-atlas.md#g24), [Red Dead Redemption 2](source-atlas.md#
 
 **ALL · Play · Try · 2/Extend.** Gap: asymmetric interpretations of help and bounded reminders.
 
-Someone saved a traveler who now insists on repaying every favor, while the rescuer wants ordinary friendship. An expedition may expose the tension through an unnecessary risk. Players can acknowledge, decline or redirect repayment toward a community. A rescue creates history, not permanent ownership, and no hidden debt balance should authorize dangerous orders.
+Someone saved a traveler who now insists on repaying every favor, while the rescuer wants ordinary friendship. An expedition may expose the tension through an unnecessary risk. Players can acknowledge, decline or redirect repayment toward a community. A rescue creates history, not an automatic entitlement to obedience. A manipulator can nevertheless claim such an entitlement within the fiction, creating refusal, exploitation or escape to play through; a hidden debt score cannot silently grant platform permissions.
 
 Seeds: [Kenshi](source-atlas.md#g36), [Red Dead Redemption](source-atlas.md#g69), [Earthsea](source-atlas.md#w11).
 

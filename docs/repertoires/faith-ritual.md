@@ -2,15 +2,30 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** Belief can organize care, calendars, art and disagreement. A religion is not merely a magic shop, alignment label or unanimous faction.
+**Proposal catalogue · September 27, 2026.** Belief can offer awe, love, courage, consolation and belonging; it can also authorize conquest, demand sacrifice, exclude dissenters or challenge rulers. Traditions contain sincere believers, opportunists, skeptics and reformers. A real miracle does not settle every moral argument, and ordinary devotion need not conceal a fraud. See the [design foundation](design-foundation.md) for the shared creative direction.
 
 [Keepers of the open table](#keepers-of-the-open-table) · [The shrine that measures the river](#the-shrine-that-measures-the-river) · [A festival of unfinished repairs](#a-festival-of-unfinished-repairs) · [Two readings of mercy](#two-readings-of-mercy) · [Pilgrimage by useful stages](#pilgrimage-by-useful-stages) · [A sacred silence with exceptions](#a-sacred-silence-with-exceptions) · [Relics that need caretakers](#relics-that-need-caretakers) · [The doubter who keeps the choir](#the-doubter-who-keeps-the-choir) · [Divinity with a jurisdiction](#divinity-with-a-jurisdiction) · [A calendar people can amend](#a-calendar-people-can-amend)
+
+## Coverage to develop
+
+These domains broaden the catalogue base. The ten patterns below remain useful examples, not an exhaustive inventory or a requirement that every world include every domain.
+
+| Domain                              | Dynamics and player aims                                                       | Concrete situations and interactions                                                                                                          | Seed worlds | Research seeds                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------- |
+| Devotion and everyday care          | Practice a meaningful commitment, welcome strangers or find comfort.           | An open table feeds a traveler; a memorial song gives a grieving family a place among neighbors.                                              | ALL         | [W23](source-atlas.md#w23), [W25](source-atlas.md#w25)     |
+| Awe, beauty and celebration         | Witness something magnificent, perform, belong or simply enjoy it.             | Lanterns rise above a tidal shrine while choirs compete for the honor of singing at dawn.                                                     | ALL         | [W24](source-atlas.md#w24), [W27](source-atlas.md#w27)     |
+| Authority, orthodoxy and dissent    | Interpret doctrine, control access, challenge a hierarchy or conceal doubt.    | A temple owns the only safe crossing; a dissident ferries people without collecting the required offering.                                    | ALL         | [G113](source-atlas.md#g113), [G128](source-atlas.md#g128) |
+| Pilgrimage, vows and ordeal         | Prove commitment, seek transformation or undertake a dangerous journey.        | Pilgrims carry a relic through contested territory; a vow of silence complicates negotiation but leaves practical communication alternatives. | MD SC FA    | [G114](source-atlas.md#g114), [W27](source-atlas.md#w27)   |
+| Miracles, gods and bargains         | Ask, defy, serve or bargain with a power whose reach has limits.               | A river deity can flood an enemy camp, but doing so destroys the worshippers’ orchard; another refuses even sincere prayer.                   | FA          | [W26](source-atlas.md#w26), [W27](source-atlas.md#w27)     |
+| Sacred violence and resistance      | Fight for a holy place, resist forced conversion or split a militant movement. | A commander invokes a shrine’s desecration to justify invasion while believers inside the same tradition shelter the accused.                 | MD SC FA    | [G126](source-atlas.md#g126), [W26](source-atlas.md#w26)   |
+| Relics, memory and competing claims | Preserve, wield, steal, return or reinterpret an inherited object.             | A revered cloak can still warm a refugee; its custodians argue whether using it honors or destroys its history.                               | ALL         | [G113](source-atlas.md#g113), [W24](source-atlas.md#w24)   |
+| Reform, doubt and coexistence       | Keep a relationship while changing a belief or a shared practice.              | A doubter still leads the choir; rival congregations negotiate a festival date without merging their theology.                                | ALL         | [W22](source-atlas.md#w22), [W23](source-atlas.md#w23)     |
 
 ## Keepers of the open table
 
 **ALL · Play · High · 1/Compose.** Gap: authored practices and voluntary participation; service routines optional.
 
-A tradition asks households to keep one place available for an unexpected guest. Some followers offer food, others quiet shelter or tools. Players can participate without adopting the theology. The custom creates welcome and practical limits: hosts may be exhausted or poor. A sacred duty should invite support, not magically compel generosity or punish every refusal.
+A tradition asks households to keep one place available for an unexpected guest. Some followers offer food, others quiet shelter or tools. Players can participate without adopting the theology. The custom creates welcome and practical limits: hosts may be exhausted or poor. This welcoming tradition relies on human choices and practical support. Some followers may judge a refusal; their social pressure is distinct from an automatic divine penalty. Other traditions can demand harsher obligations when that is part of the chosen world.
 
 Seeds: [The Sims](source-atlas.md#g24), [Assassin's Creed III](source-atlas.md#g99), [Discworld](source-atlas.md#w12).
 
@@ -34,7 +49,7 @@ Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](so
 
 **ALL · Play · Try · 2/Extend.** Gap: distinct ethical commitments and practical alternatives.
 
-Two members of one faith disagree about sheltering a dangerous exile: one emphasizes refuge, the other responsibility to neighbors. A supervised arrangement or mediated hearing may help. Players engage with a living tradition rather than a single moral switch. Avoid making one interpretation automatically the deity's certified answer unless that is an explicitly chosen world premise.
+Two members of one faith disagree about sheltering a dangerous exile: one emphasizes refuge, the other responsibility to neighbors. A supervised arrangement or mediated hearing may help, but the exile may reject the terms or endanger someone the player loves. Shelter, expulsion and armed defense can remain consequential choices rather than converge on a guaranteed compromise. Players engage with a living tradition rather than a single moral switch. Avoid making one interpretation automatically the deity's certified answer unless that is an explicitly chosen world premise.
 
 Seeds: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Earthsea](source-atlas.md#w11).
 
@@ -42,7 +57,7 @@ Seeds: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Rig
 
 **MD SC FA · Play · High · 2/Extend.** Gap: route milestones, hospitality and optional return travel abstraction.
 
-Travelers visit wells, observatories or ancestral gardens, contributing a small service at each stop. The journey teaches geography and connects communities. Different people travel for devotion, curiosity or company. Once a route is familiar, summarize uneventful travel; do not turn a contemplative journey into repeated mandatory combat or lock essentials behind religious participation.
+Travelers visit wells, observatories or ancestral gardens, contributing a small service at each stop. The journey teaches geography and connects communities. Different people travel for devotion, curiosity or company. A particular pilgrimage may be contemplative or an ordeal through hostile territory. Once a route is familiar, summarize uneventful travel instead of adding repetitive encounters; state whether danger, devotion or discovery is the central promise.
 
 Seeds: [Old School RuneScape](source-atlas.md#g49), [Elden Ring](source-atlas.md#g75), [Middle-earth](source-atlas.md#w01).
 
@@ -74,7 +89,7 @@ Seeds: [Disco Elysium](source-atlas.md#g66), [Earthsea](source-atlas.md#w11), [A
 
 **FA · Play · Try · 3/New.** Gap: bounded fictional agents and powers with explicit knowledge limits.
 
-A small river deity can redirect water within its basin but cannot read minds, settle distant wars or create rain. Worshippers negotiate practical requests and disagree about fairness. Limited powers invite ingenuity. The deity remains an in-world participant; divine language cannot grant platform authority, access private records or justify arbitrary success outside admitted mechanics.
+A small river deity can redirect water within its basin but cannot read minds, settle distant wars or create rain. Worshippers negotiate practical requests and disagree about fairness. It might generously protect a village, exact an unjust offering, or aid one army against another; demonstrable power does not make its demands morally correct. Limited powers invite ingenuity. The deity remains an in-world participant; divine language cannot grant platform authority, access private records or justify arbitrary success outside admitted mechanics.
 
 Seeds: [Hades II](source-atlas.md#g01), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Narnia](source-atlas.md#w19).
 

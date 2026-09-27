@@ -4,9 +4,9 @@
 
 ## Method and limits
 
-This atlas gives an individual design takeaway, caution and destination for **the original 130 game subjects and all 28 fictional worlds**. It synthesizes dossier interaction cases, mechanics, reception/criticism and transfer discussions, together with the related thematic research. It is not a claim that every citation in every dossier was independently reopened, that every inherited research gate is complete, or that these new ideas have been tested with players.
+This atlas gives an individual design takeaway, caution and destination for **all 148 game subjects and all 28 fictional worlds**. It synthesizes dossier interaction cases, mechanics, reception/criticism and transfer discussions, together with the related thematic research. It is not a claim that every citation in every dossier was independently reopened, that every inherited research gate is complete, or that these new ideas have been tested with players.
 
-The [research roster](../../archive/02-research/game-inspiration/research-roster.md) now contains 148 subjects, including 18 planned survival additions (G131–G148); those additions are outside this atlas. Their inclusion in the roster does not establish completed research or synthesis.
+The [research roster](../../archive/02-research/game-inspiration/research-roster.md) contains 148 subjects. The eighteen survival dossiers G131–G148 are now present in this checkout and included below. The [research progress ledger](../../archive/02-research/game-inspiration/research-progress.md) owns research completion and audit status; this proposal synthesis does not close its separate acceptance gates.
 
 The takeaways are interpretations. The cautions include both source-reported friction and our design implications; they do not assert that all reviewers agreed, that a complaint remains true in every version, or that a mechanic caused commercial success. Consult the linked dossier for editions, named reviews, access limitations, examples and primary evidence. Broad reception comparisons cannot rank the popularity of individual mechanics from these purposive samples. Historical, proposed and shipped systems retain their distinctions.
 
@@ -14,15 +14,23 @@ Source codes are navigation anchors inherited from the research roster (G) and t
 
 ## Pinned research snapshots
 
-The active research branches can continue changing independently. The original proposal synthesis used the following immutable Git commits. They remain the historical source versions for the takeaways below; the later research merge does not replace these pins or recertify the synthesis:
+The active research branches can continue changing independently. The original proposal synthesis used the following immutable Git commits. They remain the historical source versions for the original synthesis; the foundation revision below records its newer game snapshot separately:
 
 - [G01–G120 integrated research](https://github.com/Macrofold/OpenLegend/blob/cfa1611dc95418fa36d1805c13f2502ed64060d6/archive/02-research/game-inspiration) — `cfa1611dc95418fa36d1805c13f2502ed64060d6`.
 - [G121–G130 continuation](https://github.com/Macrofold/OpenLegend/blob/757bafba40efa875733aba635c3aec829d4c92ad/archive/02-research/game-inspiration) — `757bafba40efa875733aba635c3aec829d4c92ad`.
 - [28-world research and thematic essays](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding) — `b387e7caeda5cec301045b877ca50a2815a869dd`.
 
-The updated `docs/game-inspiration-library` source at [`cb3d85f32d669dd617b505efbaf8c75db967c6d3`](https://github.com/Macrofold/OpenLegend/commit/cb3d85f32d669dd617b505efbaf8c75db967c6d3) has since been merged into this branch, bringing G121–G130 into the checkout along with subsequent research audits and corrections. All G01–G130 dossier links below are now local for convenient reading and may contain work newer than the original synthesis. The [research progress ledger](../../archive/02-research/game-inspiration/research-progress.md) owns current completion and audit state; this navigation update does not re-review the takeaways or certify research gates.
+## Research basis for the foundation revision
 
-The world corpus still uses immutable remote links because it is not in this checkout. Those links may require repository access. Their committed paths were checked during the original synthesis; this update does not claim an external-link availability audit. Later dossier edits can inform later selection without rewriting this library as a live status mirror.
+The [revised foundation](design-foundation.md) uses the integrated **148-game snapshot at [`9c24bc58bd6d640ba475bc9bd3030332704f7809`](https://github.com/Macrofold/OpenLegend/tree/9c24bc58bd6d640ba475bc9bd3030332704f7809/archive/02-research/game-inspiration)** and the **28-world snapshot at `b387e7caeda5cec301045b877ca50a2815a869dd`** linked above. These pins establish the research available for this pass while the source branches continue independently.
+
+The fresh reading covered selected substantive mechanics, worked situations, character/institution dynamics and reception or criticism across every game and world dossier. The work was divided across G01–G50 / W01–W10, G51–G100 / W11–W20, and G101–G148 / W21–W28, with an additional synthesis of the game essays on enjoyment, evidence, comparison, implications and production, and the world essays on comparative design, character formation, institutions and magic/ecology. Focused rereads of The Sims, Baldur's Gate 3, Kenshi, The Wire, The Sopranos and Austen's social worlds informed the shared foundation and modern proposal.
+
+The purpose was to recover the full range of the sources: mastery, danger, ambition, power, deception, conquest and loss as well as affection, beauty, care, creativity and belonging. Concrete interactions and criticism take precedence over an inherited recommendation to favor one tone. The revised category coverage, factions, active characters and worked situations are our design interpretations, not copied world canon or demonstrated player preferences.
+
+Depth varies by dossier. This was not a line-by-line reread of every appendix, audit register or bibliography, an independent reopening of every external citation, or a new current-version verification of the games. New G131–G148 takeaways and targeted corrections below reflect this pass; useful earlier takeaways remain where they still express a particular lesson. Neither broad coverage nor retained references proves these proposed worlds will be fun: they still require playable selection and evaluation.
+
+All 148 game dossier links below are local and can develop beyond this snapshot. The world corpus still uses immutable remote links because it is not in this checkout; those committed paths were checked against the world snapshot. Remote access may require repository permissions. Later research can inform another selection without turning this atlas into a duplicate live progress ledger.
 
 Related game research: [what makes these worlds fun](../../archive/02-research/game-inspiration/essays/what-actually-makes-these-worlds-fun.md), [implications](../../archive/02-research/game-inspiration/essays/implications-for-openlegend.md), [production pitfalls](../../archive/02-research/game-inspiration/essays/production-and-platform-pitfalls.md), [evidence interpretation](../../archive/02-research/game-inspiration/essays/how-to-interpret-the-evidence.md), and the [mechanics studies](../../archive/02-research/game-inspiration/mechanics/README.md). The earlier broad essays and later dossiers have different scope and dates; use the individual dossier when resolving a subject-specific detail.
 
@@ -52,9 +60,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Hades II](../../archive/02-research/game-inspiration/dossiers/hades-ii.md)
 
-**Design takeaway:** Returning home after failure can deepen specific relationships and change available choices.
+**Design takeaway:** Distinct weapon handling, risky combat builds and a war with personal stakes make returning home and changing relationships rewarding.
 
-**Caution to carry forward:** Repeated callbacks must remember meaningful events, not merely repeat praise.
+**Caution to carry forward:** Preserve commitment, range and defense choices alongside continuity; material overload and repeated callbacks can both become friction.
 
 **New catalogue:** [relationships](relationships.md)
 
@@ -62,9 +70,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Among Us](../../archive/02-research/game-inspiration/dossiers/among-us.md)
 
-**Design takeaway:** Partial observations and competing work create social inference.
+**Design takeaway:** Tasks compete with watching others; murder, deception, truthful partial evidence and mistaken accusations create social deduction.
 
-**Caution to carry forward:** Uncertainty is interesting; omniscient accusations and forced suspicion are not.
+**Caution to carry forward:** Separate suspicion from knowledge, preserve room for informed discussion, and distinguish enjoyable fictional betrayal from disruptive group conduct.
 
 **New catalogue:** [languages knowledge](languages-knowledge.md)
 
@@ -102,9 +110,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Steal a Brainrot](../../archive/02-research/game-inspiration/dossiers/steal-a-brainrot.md)
 
-**Design takeaway:** Carrying, exposure and ownership phases make possession a social event.
+**Design takeaway:** Theft, a vulnerable escape and defensive interruption make an accumulated possession the center of a contest.
 
-**Caution to carry forward:** Loss and theft require a clear chosen mode; coercive attendance is not a default.
+**Caution to carry forward:** Some enjoy opportunistic theft while others stop returning when loss threatens valued collections; expose the loss contract and avoid coercive attendance.
 
 **New catalogue:** [objects](objects.md)
 
@@ -112,9 +120,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Fortnite](../../archive/02-research/game-inspiration/dossiers/fortnite.md)
 
-**Design takeaway:** A shared interaction grammar can support distinct activities and modes.
+**Design takeaway:** Acquisition, positioning, combat and revisable terrain create tactical play; the shared grammar also supports distinct creative and social modes.
 
-**Caution to carry forward:** Shared tools do not imply shared permissions, severity or loss policy.
+**Caution to carry forward:** Building mastery can be the attraction or a barrier; shared tools do not imply identical challenge, permission or loss rules across modes.
 
 **New catalogue:** [automation creators](automation-creators.md)
 
@@ -122,9 +130,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [League of Legends](../../archive/02-research/game-inspiration/dossiers/league-of-legends.md)
 
-**Design takeaway:** A rescue can be offered by one actor and accepted by another; effect origin matters.
+**Design takeaway:** Contested resources, positioning, timing and differentiated roles create mastery; assistance, displacement and effect origin add distinct tactical relationships.
 
-**Caution to carry forward:** Cooperation should not silently remove the recipient's agency.
+**Caution to carry forward:** State each ability's recipient and control rules accurately: an accepted rescue is different from an enemy displacement. Deep knowledge and team conduct can burden entry.
 
 **New catalogue:** [combat rescue](combat-rescue.md)
 
@@ -132,9 +140,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Dota 2](../../archive/02-research/game-inspiration/dossiers/dota-2.md)
 
-**Design takeaway:** Tethers, return timing and copied capabilities produce decisions beyond raw damage.
+**Design takeaway:** Resource denial, spatial information, equipment choices, tethers and scheduled returns turn conflict into linked tactical and economic decisions.
 
-**Caution to carry forward:** Copying a power is not copying identity; complex interactions need readable boundaries.
+**Caution to carry forward:** Copied powers need clear boundaries, and depth does not excuse hostile group behavior or invisible learning requirements.
 
 **New catalogue:** [mechanics](mechanics.md)
 
@@ -162,9 +170,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Diablo IV](../../archive/02-research/game-inspiration/dossiers/diablo-iv.md)
 
-**Design takeaway:** Separate finding, modifying, activating and irrevocably finalizing a capability.
+**Design takeaway:** Combat identity, loot, horror and powerful combinations connect finding, modifying, activating and finalizing equipment.
 
-**Caution to carry forward:** Repeated progression investment and unclear access boundaries can undermine retained identity.
+**Caution to carry forward:** Repetition and repeated build investment can obscure the payoff; keep acquisition and access restrictions understandable.
 
 **New catalogue:** [automation creators](automation-creators.md)
 
@@ -192,9 +200,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Worlds Adrift](../../archive/02-research/game-inspiration/dossiers/worlds-adrift.md)
 
-**Design takeaway:** Attachment, force and inhabited structures can give the same object several functions.
+**Design takeaway:** Physical components connect construction, piracy, boarding, destruction and salvage; peaceful exploration gains tension from lurking danger.
 
-**Caution to carry forward:** Persistent physical worlds have operating costs; affection alone does not establish viability.
+**Caution to carry forward:** Loss can create memorable adventure or erase newcomers' ability to participate. Recovery design and operating costs matter alongside affection for the world.
 
 **New catalogue:** [objects](objects.md)
 
@@ -232,9 +240,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Ultima Online](../../archive/02-research/game-inspiration/dossiers/ultima-online.md)
 
-**Design takeaway:** Professions, ownership and material chains can create social dependence.
+**Design takeaway:** Professions, trade, theft, murder status and property create social dependence and conflict inside a persistent world.
 
-**Caution to carry forward:** The discarded ecology is a qualified subsystem case, not proof all simulation fails.
+**Caution to carry forward:** Different players want different loss contracts; technical friction and punitive onboarding are distinct from the appeal of consequence. The discarded ecology remains a qualified case.
 
 **New catalogue:** [economy logistics](economy-logistics.md)
 
@@ -264,9 +272,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Hades I](../../archive/02-research/game-inspiration/dossiers/hades.md)
 
-**Design takeaway:** Failure, return and specific character reactions can reinforce one another.
+**Design takeaway:** Readable fast combat, weapon geometry, adaptive builds and family relationships make failure, return and another attempt reinforce one another.
 
-**Caution to carry forward:** Callbacks need relevant continuity; repeated trips are not automatically new stories.
+**Caution to carry forward:** Preserve the actual pleasure of fighting as well as callbacks; repeated enemies, currencies and trips can still become tiring.
 
 **New catalogue:** [relationships](relationships.md)
 
@@ -274,9 +282,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Dwarf Fortress](../../archive/02-research/game-inspiration/dossiers/dwarf-fortress.md)
 
-**Design takeaway:** Artifacts, labor and remembered events make particular things meaningful.
+**Design takeaway:** Material chains, construction choices and inhabitants turn food, artifacts, danger and remembered failures into particular histories.
 
-**Caution to carry forward:** Historical detail needs selective presentation; quantity alone does not create attachment.
+**Caution to carry forward:** Detail needs selective presentation and legible causes; plentiful stored food can conceal the loss of future seed or brewing options.
 
 **New catalogue:** [history myth](history-myth.md)
 
@@ -334,9 +342,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Terraria](../../archive/02-research/game-inspiration/dossiers/terraria.md)
 
-**Design takeaway:** Mobility, accessories, preparation and settlement services diversify progress.
+**Design takeaway:** Exploration, desirable equipment, bosses and construction share one space; mobility and preparation can change both the route and the fight.
 
-**Caution to carry forward:** Equipment variety and crafting dependencies can overwhelm without good discovery tools.
+**Caution to carry forward:** Progression should reveal useful possibilities without burying players in opaque crafting dependencies or inventory work.
 
 **New catalogue:** [combat rescue](combat-rescue.md)
 
@@ -354,9 +362,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Valheim](../../archive/02-research/game-inspiration/dossiers/valheim.md)
 
-**Design takeaway:** Expedition and comfortable home give preparation an emotional purpose.
+**Design takeaway:** Dangerous expeditions, boss and material progression, meaningful cargo and a comfortable home make preparation and return reinforce one another.
 
-**Caution to carry forward:** Travel, repairs and resource runs can become repetitive taxes after the lesson is learned.
+**Caution to carry forward:** A perilous silver haul can be memorable while repeated mining and chest handling are tedious; do not equate every inconvenience with meaningful stakes.
 
 **New catalogue:** [adventure discovery](adventure-discovery.md)
 
@@ -364,9 +372,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Noita](../../archive/02-research/game-inspiration/dossiers/noita.md)
 
-**Design takeaway:** Delivery, payload, order, material effects and throughput can form a powerful grammar.
+**Design takeaway:** Material interactions and composable spells enable spectacular power, clever reuse and entertaining self-inflicted disasters.
 
-**Caution to carry forward:** Opacity and sudden death can hide the lesson; safe experiments need room to exist.
+**Caution to carry forward:** Keep causes learnable: danger and sudden death are part of some players' appeal, while opacity or irreversible experiments make others prefer gentler variants.
 
 **New catalogue:** [magic](magic.md)
 
@@ -404,9 +412,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Kenshi](../../archive/02-research/game-inspiration/dossiers/kenshi.md)
 
-**Design takeaway:** Rescue, injury and dependence can create memorable aftermath.
+**Design takeaway:** Harsh combat, captivity, escape, hired help and bodily injury can turn defeat into a new self-chosen objective.
 
-**Caution to carry forward:** Recovery can become training grind or an unrecoverable loss spiral.
+**Caution to carry forward:** Consequential loss can be compelling without making repetitive training, slow travel or an inescapable loss spiral universally desirable.
 
 **New catalogue:** [combat rescue](combat-rescue.md)
 
@@ -424,9 +432,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Lethal Company](../../archive/02-research/game-inspiration/dossiers/lethal-company.md)
 
-**Design takeaway:** Limited remote information and complementary roles make cooperation valuable.
+**Design takeaway:** Hostile creatures, a quota, uncertain information and complementary roles create fear, comic mistakes, rescue dilemmas and costly expeditions.
 
-**Caution to carry forward:** Communication and funny predicament do not require compulsory hostility or total information.
+**Caution to carry forward:** Horror and failure supply the stakes; unfair-feeling spikes, repetition and inaccessible signals can undermine them. Rescuing a person need not recover the cargo.
 
 **New catalogue:** [technology](technology.md)
 
@@ -456,9 +464,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Palworld](../../archive/02-research/game-inspiration/dossiers/palworld.md)
 
-**Design takeaway:** Useful workers and creatures connect practical projects with attachment.
+**Design takeaway:** Capturing, fighting alongside and assigning creatures to work connects progression and useful autonomy with attachment and deliberately uncomfortable exploitation.
 
-**Caution to carry forward:** Visible work needs routes, capacity, care and understandable reasons for stopping.
+**Caution to carry forward:** Base autonomy can charm while combat autonomy frustrates; make routes, priorities and worker condition understandable rather than erasing the tonal conflict.
 
 **New catalogue:** [needs](needs.md)
 
@@ -476,9 +484,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Slay the Spire](../../archive/02-research/game-inspiration/dossiers/slay-the-spire.md)
 
-**Design takeaway:** Constraints, removal and intent information make configuration choices meaningful.
+**Design takeaway:** Enemy intent, escalating threats, route choices, card removal and build synergies make deliberate combat planning and adaptation satisfying.
 
-**Caution to carry forward:** More options are not always better; hidden rules should not masquerade as uncertainty.
+**Caution to carry forward:** Learnable failure and powerful combinations need visible rules; additional options can weaken a build instead of improving it.
 
 **New catalogue:** [combat rescue](combat-rescue.md)
 
@@ -506,9 +514,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Core Keeper](../../archive/02-research/game-inspiration/dossiers/core-keeper.md)
 
-**Design takeaway:** Home, food, resources and exploration can reinforce one another.
+**Design takeaway:** Mining, bosses, equipment, food and useful automation connect a changing expedition frontier to an inhabited home.
 
-**Caution to carry forward:** Repeated inventory returns and resource circuits need shortcuts and satisfying endpoints.
+**Caution to carry forward:** Boss walls, thin early combat and inventory-return chores can interrupt the loop; finite deposits and resolved projects can have satisfying endpoints.
 
 **New catalogue:** [settlements architecture](settlements-architecture.md)
 
@@ -516,9 +524,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [PEAK](../../archive/02-research/game-inspiration/dossiers/peak.md)
 
-**Design takeaway:** Shared burdens, spatial tools and rescue make dependence playful.
+**Design takeaway:** A dangerous climb makes bodily position, burdens, tools, cooperation and rescue consequential; dependence can create both comedy and tension.
 
-**Caution to carry forward:** A costly failure needs proportionate recovery and clear physical expectations.
+**Caution to carry forward:** Failure and separation belong to the premise, but physical expectations must be clear; solo harshness and group rescue are different experiences.
 
 **New catalogue:** [combat rescue](combat-rescue.md)
 
@@ -556,7 +564,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Dragon Age: Origins](../../archive/02-research/game-inspiration/dossiers/dragon-age-origins.md)
 
-**Design takeaway:** Origins, moral commitments and companion differences make social choices specific.
+**Design takeaway:** Origins, tactical party roles and moral commitments make choices specific; political compromises can gain a useful ally while losing a beloved companion.
 
 **Caution to carry forward:** Social access, persuasion and affection should not collapse into one universal score.
 
@@ -566,7 +574,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Dragon Age II](../../archive/02-research/game-inspiration/dossiers/dragon-age-ii.md)
 
-**Design takeaway:** A changing city and relationships can preserve trust amid disagreement.
+**Design takeaway:** A changing city and strong relationships can preserve affection amid disagreement, while family, ideology and escalating conflict can still force an irreversible break.
 
 **Caution to carry forward:** A single approval meter would lose the distinction between affection and agreement.
 
@@ -576,7 +584,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Dragon Age: Inquisition](../../archive/02-research/game-inspiration/dossiers/dragon-age-inquisition.md)
 
-**Design takeaway:** Delegated work and specialized observation can broaden a party's contribution.
+**Design takeaway:** Leading an institution joins delegated work and specialist contributions to political power; a companion’s community loyalty can conflict with, and even overcome, personal affection.
 
 **Caution to carry forward:** Waiting, repeated errands and undifferentiated side content can dilute the payoff.
 
@@ -586,9 +594,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Dragon Age: The Veilguard](../../archive/02-research/game-inspiration/dossiers/dragon-age-the-veilguard.md)
 
-**Design takeaway:** Companion roles, readiness and affinity can support different decisions.
+**Design takeaway:** Responsive action, party combinations and distinct companion roles can make spectacular combat and shared adventure enjoyable.
 
-**Caution to carry forward:** Convenient control should not erase a specialist's identity or confuse readiness with affection.
+**Caution to carry forward:** Convenient control should preserve specialist identity and separate readiness from affection; an overly agreeable moral landscape can weaken roleplaying and sustained disagreement.
 
 **New catalogue:** [combat rescue](combat-rescue.md)
 
@@ -606,7 +614,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Divinity: Original Sin](../../archive/02-research/game-inspiration/dossiers/divinity-original-sin.md)
 
-**Design takeaway:** Ordinary materials and equipment can participate in environmental solutions.
+**Design takeaway:** Shared material rules make fire, water, surfaces and equipment useful in tactical combat and ordinary problem-solving; partners can disagree about what to do with that power.
 
 **Caution to carry forward:** Unexpected interactions need enough feedback to be learnable rather than arbitrary.
 
@@ -626,7 +634,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Pathfinder: Kingmaker](../../archive/02-research/game-inspiration/dossiers/pathfinder-kingmaker.md)
 
-**Design takeaway:** An expedition can return to civic responsibilities and adviser perspectives.
+**Design takeaway:** Character builds and dangerous expeditions feed a ruler’s power, while returning home brings civic responsibilities, deadlines and competing advisers.
 
 **Caution to carry forward:** Hidden timers and administrative busywork can overwhelm the adventuring promise.
 
@@ -636,7 +644,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Pathfinder: Wrath of the Righteous](../../archive/02-research/game-inspiration/dossiers/pathfinder-wrath-of-the-righteous.md)
 
-**Design takeaway:** Public identity and exceptional powers can change social responsibilities.
+**Design takeaway:** Distinct builds and mythic powers deliver extraordinary combat and roleplaying identities, changing alliances, authority and the kind of ruler or monster a character can become.
 
 **Caution to carry forward:** Taxonomy, build complexity and opaque consequences can obstruct roleplaying intent.
 
@@ -658,7 +666,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Fire Emblem: Path of Radiance](../../archive/02-research/game-inspiration/dossiers/fire-emblem-path-of-radiance.md)
 
-**Design takeaway:** Identity, historical conflict and support relationships give tactical companions context.
+**Design takeaway:** Named fighters, tactical roles and support relationships make wartime danger personal; cultural history and prejudice shape loyalties without fixing every individual’s character.
 
 **Caution to carry forward:** Cultural or bodily categories should not dictate every individual's personality.
 
@@ -688,7 +696,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Fire Emblem: Three Houses](../../archive/02-research/game-inspiration/dossiers/fire-emblem-three-houses.md)
 
-**Design takeaway:** Teaching, motivation, institutions and career changes connect social and tactical life.
+**Design takeaway:** Teaching, institutions and career choices bind social investment to tactical mastery; war can put former students and valued companions on incompatible sides.
 
 **Caution to carry forward:** Calendar repetition and compulsory social chores can undermine the appeal of the school.
 
@@ -718,7 +726,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Grand Theft Auto V](../../archive/02-research/game-inspiration/dossiers/grand-theft-auto-v.md)
 
-**Design takeaway:** One city supports work, recreation, crime and different social spaces.
+**Design takeaway:** A shared city supports recreation, criminal ambition, heist preparation and emergent pursuit; distinct protagonists bring conflicting loyalties and desires into that space.
 
 **Caution to carry forward:** A convincing city is not proof that every unseen citizen and economy is fully simulated.
 
@@ -738,7 +746,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Red Dead Redemption](../../archive/02-research/game-inspiration/dossiers/red-dead-redemption.md)
 
-**Design takeaway:** Capture, transport, public recognition and local trust can be separate systems.
+**Design takeaway:** A capable outlaw’s coercive mission to recover his family joins gunplay, capture and transport to local recognition, old loyalties and betrayal.
 
 **Caution to carry forward:** Nonlethal intent and fame do not automatically imply harmlessness or personal trust.
 
@@ -748,7 +756,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Red Dead Redemption 2](../../archive/02-research/game-inspiration/dossiers/red-dead-redemption-2.md)
 
-**Design takeaway:** Camp life, horses, habits and small details can deepen attachment.
+**Design takeaway:** Camp meals, jokes, horses and ordinary routines deepen attachment, making a gang’s violence, betrayal, decline and eventual losses matter to particular people.
 
 **Caution to carry forward:** The same deliberate pacing can feel like friction to another audience.
 
@@ -758,7 +766,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [The Elder Scrolls V: Skyrim](../../archive/02-research/game-inspiration/dossiers/the-elder-scrolls-v-skyrim.md)
 
-**Design takeaway:** Homes, local law, skills and institutions support self-directed identities.
+**Design takeaway:** Exploration, improving equipment and practiced skills support self-directed identities, from householder to assassin or mage, amid local laws and competing institutions.
 
 **Caution to carry forward:** Perverse crafting/training loops and empty rank ladders weaken meaningful progression.
 
@@ -768,7 +776,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [The Witcher 3: Wild Hunt](../../archive/02-research/game-inspiration/dossiers/the-witcher-3-wild-hunt.md)
 
-**Design takeaway:** A profession can combine evidence, preparation, local people and difficult choices.
+**Design takeaway:** Monster hunting joins evidence, preparation and combat mastery to payment, local lives and difficult choices; love and political loyalties give a professional’s decisions lasting stakes.
 
 **Caution to carry forward:** Investigation should not reduce to following a highlighted answer trail.
 
@@ -798,7 +806,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Elden Ring](../../archive/02-research/game-inspiration/dossiers/elden-ring.md)
 
-**Design takeaway:** Retreat, exploration and alternate routes can make failure productive.
+**Design takeaway:** Dangerous enemies, expressive builds and precise combat reward mastery; retreat into a beautiful, threatening world can bring knowledge, equipment and a satisfying later victory.
 
 **Caution to carry forward:** Obscurity and severe loss need an intended audience and readable recovery paths.
 
@@ -808,7 +816,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Black Myth: Wukong](../../archive/02-research/game-inspiration/dossiers/black-myth-wukong.md)
 
-**Design takeaway:** A familiar vessel can host layered abilities and service relationships.
+**Design takeaway:** Distinctive bosses, stance and resource choices, transformations and readable attack patterns reward combat mastery within a visually rich mythic journey; tools such as the gourd add preparation choices.
 
 **Caution to carry forward:** Invisible boundaries and thin equipment differences can undermine anticipated freedom.
 
@@ -818,7 +826,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Clair Obscur: Expedition 33](../../archive/02-research/game-inspiration/dossiers/clair-obscur-expedition-33.md)
 
-**Design takeaway:** Shared timing conventions can coexist with distinct character resources and roles.
+**Design takeaway:** Timed defense, powerful combinations and distinct character resources create expressive combat, while beauty, companionship and grief give the expedition emotional stakes.
 
 **Caution to carry forward:** Reflex demands should not be mistaken for the only form of tactical agency.
 
@@ -860,7 +868,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Final Fantasy IV](../../archive/02-research/game-inspiration/dossiers/final-fantasy-iv.md)
 
-**Design takeaway:** Distinct people and commands make changes in party composition meaningful.
+**Design takeaway:** Distinct people and commands make party changes matter in battle, while complicity, redemption, jealousy and sacrifice turn those capabilities into personal stakes.
 
 **Caution to carry forward:** Do not flatten every companion into interchangeable skill slots.
 
@@ -880,7 +888,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Final Fantasy VI](../../archive/02-research/game-inspiration/dossiers/final-fantasy-vi.md)
 
-**Design takeaway:** An ensemble can regroup after a changed world while preserving individual identities.
+**Design takeaway:** An ensemble’s signature abilities and attachments survive a world-changing catastrophe; reunion, resistance and chosen care give the later freedom purpose.
 
 **Caution to carry forward:** A catastrophe should not make all prior relationships or useful work irrelevant.
 
@@ -910,7 +918,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Final Fantasy IX](../../archive/02-research/game-inspiration/dossiers/final-fantasy-ix.md)
 
-**Design takeaway:** Tools can teach abilities while active capacity remains a separate choice.
+**Design takeaway:** Equipment can teach abilities while active capacity remains a separate choice; recognizable character roles, humor and affection make war and questions of personhood more affecting.
 
 **Caution to carry forward:** Acquired knowledge, equipped item and usable power must not become one ambiguous state.
 
@@ -920,7 +928,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Final Fantasy X](../../archive/02-research/game-inspiration/dossiers/final-fantasy-x.md)
 
-**Design takeaway:** Visible action order and specialist participation support planning.
+**Design takeaway:** Visible action order and specialist participation support tactical planning, while pilgrimage, love and the price of inherited religious duty make the journey consequential.
 
 **Caution to carry forward:** A character's contribution should not depend on repetitive token participation in every encounter.
 
@@ -970,7 +978,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Final Fantasy XV](../../archive/02-research/game-inspiration/dossiers/final-fantasy-xv.md)
 
-**Design takeaway:** Meals, photographs and travel routines can make companions feel particular.
+**Design takeaway:** Meals, photographs and road-trip routines make friends particular; their shared fighting, a kingdom’s betrayal and costly obligations give that companionship weight.
 
 **Caution to carry forward:** Repetition and presentation alone do not guarantee consequential contribution.
 
@@ -980,7 +988,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Final Fantasy XVI](../../archive/02-research/game-inspiration/dossiers/final-fantasy-xvi.md)
 
-**Design takeaway:** Returning to people and contextual lore can support an action-centered experience.
+**Design takeaway:** Expressive combat and spectacular power support a rebellion against brutal institutions; returning to friends and a hard-won home gives the action a personal purpose.
 
 **Caution to carry forward:** Spectacle does not compensate for thin equipment decisions or excessive explanation.
 
@@ -990,7 +998,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Warcraft: Orcs & Humans](../../archive/02-research/game-inspiration/dossiers/warcraft-orcs-and-humans.md)
 
-**Design takeaway:** Workers, buildings and material dependencies give construction practical stakes.
+**Design takeaway:** Workers, buildings and material dependencies create an economy worth defending or attacking; army composition and finite-force missions turn those investments into tactical stakes.
 
 **Caution to carry forward:** More production is not automatically more interesting once a pattern is solved.
 
@@ -1000,7 +1008,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Warcraft II: Tides of Darkness](../../archive/02-research/game-inspiration/dossiers/warcraft-ii.md)
 
-**Design takeaway:** Transport, information and economic geography can shape group decisions.
+**Design takeaway:** Transport, scouting and economic geography shape military decisions: exposed routes, resource sites and complementary forces create opportunities to defend, raid or invade.
 
 **Caution to carry forward:** Do not require simulating a whole military campaign for a local logistics problem.
 
@@ -1010,7 +1018,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Warcraft III: Reign of Chaos / The Frozen Throne](../../archive/02-research/game-inspiration/dossiers/warcraft-iii.md)
 
-**Design takeaway:** Recurring heroes, support roles and creator-authored maps connect tactical and authored play.
+**Design takeaway:** Recurring heroes, armies and support roles connect tactical growth to ambition, betrayal and changing allegiance; creator-authored maps reuse those capabilities for other forms of play.
 
 **Caution to carry forward:** Exceptional units and revivals need consequences rather than endless escalation.
 
@@ -1020,7 +1028,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [World of Warcraft](../../archive/02-research/game-inspiration/dossiers/world-of-warcraft.md)
 
-**Design takeaway:** A shared world can offer several kinds of session goals and identities.
+**Design takeaway:** Distinct class fantasies, cooperative combat mastery and faction identity coexist with crafting, collecting, social life and different satisfying session goals.
 
 **Caution to carry forward:** Account, character and community progression are distinct; checklists can crowd out chosen play.
 
@@ -1030,9 +1038,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Assassin's Creed IV: Black Flag](../../archive/02-research/game-inspiration/dossiers/assassins-creed-iv-black-flag.md)
 
-**Design takeaway:** An inhabited vessel can connect preparation, social life and expeditions.
+**Design takeaway:** Pirate ambition, plunder and upgrades connect dangerous expeditions to a crew and an inhabited home; opportunism and losses can change what the protagonist values.
 
-**Caution to carry forward:** Borrow home/crew relationships here, without importing playable sailing or spaceflight.
+**Caution to carry forward:** Borrow the expedition rewards, crew relationships and visible pursuit pressure within the chosen scope; playable sailing or spaceflight is a separate capability, and repetitive trailing tasks need not come with the fantasy.
 
 **New catalogue:** [technology](technology.md)
 
@@ -1050,9 +1058,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Assassin's Creed Valhalla](../../archive/02-research/game-inspiration/dossiers/assassins-creed-valhalla.md)
 
-**Design takeaway:** Return to a settlement can give exploration a visible social destination.
+**Design takeaway:** Raiding, personal combat, equipment and political alliances feed a settlement worth returning to; home, wealth and status give expeditions a visible purpose.
 
-**Caution to carry forward:** Multiple currencies and long activity lists need distinct purposes rather than noise.
+**Caution to carry forward:** Consequence-light raids can weaken stakes; long activity lists, repetitive regional arcs and multiple currencies need distinct purposes rather than accumulated noise.
 
 **New catalogue:** [settlements architecture](settlements-architecture.md)
 
@@ -1072,7 +1080,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Mass Effect 2](../../archive/02-research/game-inspiration/dossiers/mass-effect-2.md)
 
-**Design takeaway:** Preparation and appropriate expertise can cause specific crisis outcomes.
+**Design takeaway:** Preparation, loyalty and appropriate expertise produce specific crisis outcomes; saving a companion, completing an objective and preserving a relationship can be different achievements.
 
 **Caution to carry forward:** Loyalty is not competence; repetitive resource scanning can obscure the meaningful preparation.
 
@@ -1122,7 +1130,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Octopath Traveler](../../archive/02-research/game-inspiration/dossiers/octopath-traveler.md)
 
-**Design takeaway:** Distinct town abilities can create alternative routes to information and resources.
+**Design takeaway:** Distinct town abilities let characters buy, steal, persuade or investigate their way to resources and information, while individual stories pursue work, revenge, healing and ambition.
 
 **Caution to carry forward:** Sweeping every NPC with every verb turns social possibility into repetitive extraction.
 
@@ -1172,7 +1180,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Fallout: New Vegas](../../archive/02-research/game-inspiration/dossiers/fallout-new-vegas.md)
 
-**Design takeaway:** Early recognition of professions and localized faction standing support roleplay.
+**Design takeaway:** Recognized professions and local faction standing let a character prepare a defense, bargain, betray or fight for a political outcome without one universal morality score.
 
 **Caution to carry forward:** Faction trust should remain contextual rather than become a universal morality score.
 
@@ -1202,9 +1210,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Mount & Blade II: Bannerlord](../../archive/02-research/game-inspiration/dossiers/mount-and-blade-ii-bannerlord.md)
 
-**Design takeaway:** Responsibility can scale from a person to groups while material vulnerability remains.
+**Design takeaway:** A vulnerable fighter can become a mercenary leader, conqueror or ruler; winning battles brings spoils, wages, disputed fiefs and political obligations rather than ending material pressure.
 
-**Caution to carry forward:** Aggregate campaigns should not pretend every distant individual is continuously simulated.
+**Caution to carry forward:** Repeated recapture can erase the satisfaction of victory; preserve consequential gains and losses, and distinguish aggregate campaigning from continuously simulated distant people.
 
 **New catalogue:** [institutions politics](institutions-politics.md)
 
@@ -1212,9 +1220,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Middle-earth: Shadow of War](../../archive/02-research/game-inspiration/dossiers/middle-earth-shadow-of-war.md)
 
-**Design takeaway:** A recurring rival can change through encounters, scars and remembered outcomes.
+**Design takeaway:** Remembered encounters, scars, rival ambitions and attached followers turn tactical fights and fortress assaults into personal stories, including a choice between saving a favorite fighter and securing an objective.
 
-**Caution to carry forward:** Avoid endless contrived survival and copying a franchise's named system as the design.
+**Caution to carry forward:** Contrived resurrections weaken consequences, and domination is a specific coercive fiction rather than a universal model of friendship; borrow relationships, not a franchise's named system wholesale.
 
 **New catalogue:** [combat rescue](combat-rescue.md)
 
@@ -1242,7 +1250,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Dishonored 2](../../archive/02-research/game-inspiration/dossiers/dishonored-2.md)
 
-**Design takeaway:** Topology and linked effects can support inventive tactics and nonlethal aims.
+**Design takeaway:** Changing topology and linked powers enable inventive ambushes, escapes, spectacular violence and nonlethal solutions within the same intelligible world.
 
 **Caution to carry forward:** Intent differs from collateral outcome; detection need not force a reload.
 
@@ -1264,9 +1272,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Battle Brothers](../../archive/02-research/game-inspiration/dossiers/battle-brothers.md)
 
-**Design takeaway:** Personally valuable recruits, contracts, payroll and injury create modest-scale stakes.
+**Design takeaway:** Tactical mastery and dangerous contracts turn ordinary recruits into valued veterans; wages, equipment, injuries and death make mercenary ambition personally consequential.
 
-**Caution to carry forward:** Loss spirals can eliminate the means to recover; not every story needs world salvation.
+**Caution to carry forward:** Harsh irreversible loss can be the chosen appeal, but unreadable loss spirals and empty recovery prospects can end investment; a meaningful career need not save the world.
 
 **New catalogue:** [combat rescue](combat-rescue.md)
 
@@ -1304,9 +1312,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [XCOM 2](../../archive/02-research/game-inspiration/dossiers/xcom-2.md)
 
-**Design takeaway:** Terrain, staffing, bonds and memorials connect tactical outcomes to a continuing group.
+**Design takeaway:** Terrain destruction, squad roles and extraction decisions create tactical drama; saving a veteran can cost the mission, and bonds or memorials carry that outcome into the campaign.
 
-**Caution to carry forward:** Timers and permanent losses should be selected pressures with recovery, not universal defaults.
+**Caution to carry forward:** Timers and permanent death can create powerful stakes when readable and deliberately selected; repeated forced urgency should not crowd out every other tactical rhythm.
 
 **New catalogue:** [combat rescue](combat-rescue.md)
 
@@ -1314,7 +1322,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Crusader Kings III](../../archive/02-research/game-inspiration/dossiers/crusader-kings-iii.md)
 
-**Design takeaway:** Personality, office, inheritance and relationship obligations can pull differently.
+**Design takeaway:** Personality, affection and dynastic ambition pull against one another as rulers marry, inherit, scheme, wage war and bargain for power across generations.
 
 **Caution to carry forward:** Stress and traits should not force identical behavior or claim to model real psychology.
 
@@ -1354,11 +1362,193 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [S.T.A.L.K.E.R. 2: Heart of Chornobyl](../../archive/02-research/game-inspiration/dossiers/stalker-2-heart-of-chornobyl.md)
 
-**Design takeaway:** Environmental danger, tools and faction places suggest life beyond the camera.
+**Design takeaway:** Hostile terrain, anomalies, armed factions and valuable loot make preparation and a risky return compelling, while inhabited hubs provide relief, trade and reasons to venture out again.
 
 **Caution to carry forward:** Version-specific implementation claims and distant persistence aspirations must stay distinct.
 
 **New catalogue:** [ecology weather](ecology-weather.md)
+
+### G131–G148
+
+#### G131
+
+[Rust](../../archive/02-research/game-inspiration/dossiers/rust.md)
+
+**Design takeaway:** Contested resources, vulnerable constructions and uncertain strangers turn accumulation into territorial ambition, betrayal, raiding and improvised alliance.
+
+**Caution to carry forward:** Offline losses, extreme group asymmetry and harassment can destroy willingness to invest; choose the world’s threat and recovery contract explicitly.
+
+**New catalogue:** [diplomacy conflict](diplomacy-conflict.md)
+
+#### G132
+
+[DayZ](../../archive/02-research/game-inspiration/dossiers/dayz.md)
+
+**Design takeaway:** Sparse resources, audible activity and potentially treacherous strangers make a temporary alliance or successful extraction personally valuable.
+
+**Caution to carry forward:** Opaque illness chains and unreliable combat can replace suspense with confusion; fictional distrust is not a requirement for player harassment.
+
+**New catalogue:** [adventure discovery](adventure-discovery.md)
+
+#### G133
+
+[ARK: Survival Evolved](../../archive/02-research/game-inspiration/dossiers/ark-survival-evolved.md)
+
+**Design takeaway:** Distinct creatures transform labor, movement and combat, while taming, breeding, naming and permanent loss create attachment and territorial stakes.
+
+**Caution to carry forward:** Long tame clocks, compulsory specialist collections and overwhelming power disparities can make creature ownership an attendance burden.
+
+**New catalogue:** [bodies species](bodies-species.md)
+
+#### G134
+
+[ARK: Survival Ascended](../../archive/02-research/game-inspiration/dossiers/ark-survival-ascended.md)
+
+**Design takeaway:** Revisable construction and clearer utility coverage shift effort from correcting placement toward designing settlements and coordinating creature expeditions.
+
+**Caution to carry forward:** Removing network detail can erase a useful puzzle; visual upgrades and extra content do not compensate for persistent reliability problems.
+
+**New catalogue:** [settlements architecture](settlements-architecture.md)
+
+#### G135
+
+[7 Days to Die](../../archive/02-research/game-inspiration/dossiers/7-days-to-die.md)
+
+**Design takeaway:** A looming horde makes mining, trading, construction and ammunition one preparation arc; destructible supports turn defense into architectural strategy.
+
+**Caution to carry forward:** Repeating a solved siege or exploiting pathfinding can become rote; adversarial construction needs readable structural failure and varied tests.
+
+**New catalogue:** [combat rescue](combat-rescue.md)
+
+#### G136
+
+[Conan Exiles](../../archive/02-research/game-inspiration/dossiers/conan-exiles.md)
+
+**Design takeaway:** Climbing, martial builds, corruption, followers and fortified territory support domination, expedition and rival-clan fantasies in one world.
+
+**Caution to carry forward:** More production chains do not ensure interesting choices; coercive follower acquisition is a specific fictional institution, not a neutral model of all cooperation.
+
+**New catalogue:** [institutions politics](institutions-politics.md)
+
+#### G137
+
+[The Forest](../../archive/02-research/game-inspiration/dossiers/the-forest.md)
+
+**Design takeaway:** Watching, feinting and retreating enemies make danger interpretable but uncertain; fires and fortifications can provide security while advertising a camp.
+
+**Caution to carry forward:** Behavioral ambiguity needs actual varied responses; horror-specific grotesquerie and unknowable rule changes should not substitute for meaningful threat.
+
+**New catalogue:** [psychology behavior](psychology-behavior.md)
+
+#### G138
+
+[Sons of the Forest](../../archive/02-research/game-inspiration/dossiers/sons-of-the-forest.md)
+
+**Design takeaway:** Bounded companion labor frees the player to explore dangerous caves, while physical log manipulation keeps construction expressive and embodied.
+
+**Caution to carry forward:** A helper who gets stuck undermines trust; repeated interruptions and backtracking can consume the time supposedly liberated by delegation.
+
+**New catalogue:** [automation creators](automation-creators.md)
+
+#### G139
+
+[Subnautica](../../archive/02-research/game-inspiration/dossiers/subnautica.md)
+
+**Design takeaway:** Beautiful hostile biomes, oxygen and discoverable equipment make deeper exploration a progression loop; ecological understanding can resolve the central crisis.
+
+**Caution to carry forward:** Navigation failures, scavenger repetition and lost vehicles can overwhelm wonder; distinguish readable danger from technical loss.
+
+**New catalogue:** [ecology weather](ecology-weather.md)
+
+#### G140
+
+[Don't Starve Together](../../archive/02-research/game-inspiration/dossiers/dont-starve-together.md)
+
+**Design takeaway:** Seasons, asymmetric survivors and recoverable teammate deaths make preparation and shared victories consequential across a dangerous year.
+
+**Caution to carry forward:** Unannounced seasonal rules, opaque boss mechanics and compounded group loss can turn learning into compulsory external research.
+
+**New catalogue:** [mechanics](mechanics.md)
+
+#### G141
+
+[Raft](../../archive/02-research/game-inspiration/dossiers/raft.md)
+
+**Design takeaway:** A growing mobile home concentrates production, pride, safety and shared history; automation releases attention for larger expeditions.
+
+**Caution to carry forward:** Hunger pressure and a solved recurring predator can become chores; preserve real progression away from low-level maintenance.
+
+**New catalogue:** [technology](technology.md)
+
+#### G142
+
+[Grounded](../../archive/02-research/game-inspiration/dossiers/grounded.md)
+
+**Design takeaway:** Changing scale gives familiar objects new uses; creature territories first demand avoidance, then reward learned tactics and constructed routes.
+
+**Caution to carry forward:** Threats can block discovery too completely; readable counterplay and reliable combat matter as much as charming presentation.
+
+**New catalogue:** [unusual realities](unusual-realities.md)
+
+#### G143
+
+[The Long Dark](../../archive/02-research/game-inspiration/dossiers/the-long-dark.md)
+
+**Design takeaway:** Weather, travel time and bodily cost make shelter, route knowledge and choosing when to depart a complete dramatic survival loop.
+
+**Caution to carry forward:** Repeated progress circles and obscure irreversible injuries can flatten hard decisions into waiting; solitude and harshness are selected premises.
+
+**New catalogue:** [needs](needs.md)
+
+#### G144
+
+[Green Hell](../../archive/02-research/game-inspiration/dossiers/green-hell.md)
+
+**Design takeaway:** Visible symptoms and local bodily causes turn care into diagnosis, while shelter shortcuts can create later treatment obligations.
+
+**Caution to carry forward:** Unreadable cascades and punishing save rules can defeat learning; do not collapse fictional Indigenous societies into generic hostile wildlife.
+
+**New catalogue:** [bodies species](bodies-species.md)
+
+#### G145
+
+[Enshrouded](../../archive/02-research/game-inspiration/dossiers/enshrouded.md)
+
+**Design takeaway:** Timed hazardous exploration and rescued specialists connect expedition rewards to an increasingly capable, personally built home.
+
+**Caution to carry forward:** Portable characters and local world progress need distinct rules; authored progression can feel thin when combat, clues or movement are unreliable.
+
+**New catalogue:** [adventure discovery](adventure-discovery.md)
+
+#### G146
+
+[V Rising](../../archive/02-research/game-inspiration/dossiers/v-rising.md)
+
+**Design takeaway:** Predation, shifting shadows, blood properties, named quarry and exposed castles make the vampire fantasy govern daily decisions and progression.
+
+**Caution to carry forward:** Boss gates, long hauling and raid losses require readable pacing and selected world rules; solo and group difficulty need not share one baseline.
+
+**New catalogue:** [abilities progression](abilities-progression.md)
+
+#### G147
+
+[Once Human](../../archive/02-research/game-inspiration/dossiers/once-human.md)
+
+**Design takeaway:** Persistent identity and designs can coexist with changing scenarios, while anomalous creatures and player-built territory give shared exploration recognizable texture.
+
+**Caution to carry forward:** Weird appearances cannot redeem generic looting or weak opponents; resets, permanence and portable assets must have understandable boundaries.
+
+**New catalogue:** [automation creators](automation-creators.md)
+
+#### G148
+
+[Abiotic Factor](../../archive/02-research/game-inspiration/dossiers/abiotic-factor.md)
+
+**Design takeaway:** A familiar workplace becomes shelter, salvage and tactical geography; professions and strange inventions connect fear, comedy and cooperative discovery.
+
+**Caution to carry forward:** Dense invention still needs clear onboarding; late grind, combat friction and inventory chores can undercut a strong setting and opening.
+
+**New catalogue:** [technology](technology.md)
 
 ## Worlds
 
@@ -1366,9 +1556,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Middle-earth](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/01-middle-earth.md)
 
-**Design takeaway:** Language, place memory, hospitality and ordinary beauty make a world worth protecting.
+**Design takeaway:** Language, memory, hospitality and beauty give conquest, resistance, sacrifice and returning home something particular to put at stake.
 
-**Caution to carry forward:** Unexplained depth is useful; do not invent complete economics where the source is selective.
+**Caution to carry forward:** Mystery and selective depth matter; martial confidence, restraint and repair can coexist without demanding one moral response from every character.
 
 **New catalogue:** [languages knowledge](languages-knowledge.md)
 
@@ -1416,9 +1606,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [DC Universe](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/06-dc-universe.md)
 
-**Design takeaway:** Cities, supporting relationships and symbols distinguish power from legitimate authority.
+**Design takeaway:** Distinct cities, heroes, antagonists and supporting lives connect spectacular power, threatened institutions, rescue and competing claims to authority.
 
-**Caution to carry forward:** Avoid mental illness as shorthand for villainy and endless resets that erase change.
+**Caution to carry forward:** Keep villain motives particular, avoid diagnostic shorthand, and let consequences survive rather than erasing every change through resets.
 
 **New catalogue:** [institutions politics](institutions-politics.md)
 
@@ -1426,9 +1616,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [The Witcher](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/07-the-witcher.md)
 
-**Design takeaway:** Livelihood, chosen family and contested categories ground monstrous encounters.
+**Design takeaway:** Monstrous encounters, livelihood, chosen family, power and interested accounts force consequential decisions without a guaranteed clean resolution.
 
-**Caution to carry forward:** Grimness and sexual violence are not prerequisites for mature complexity.
+**Caution to carry forward:** Moral complexity does not mean every option is equally evil; humor, love and joy prevent grimness from becoming the only register.
 
 **New catalogue:** [characters backstories](characters-backstories.md)
 
@@ -1436,9 +1626,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Pokémon](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/08-pokemon.md)
 
-**Design takeaway:** Companionship, care institutions and accessible wonder make unfamiliar creatures approachable.
+**Design takeaway:** Companionship, discovery, training, rivalries and transformations make mastery and favorite creatures accessible, while local grief or exploitation can deepen their stakes.
 
-**Caution to carry forward:** Ownership and reciprocity deserve examination; species should not dictate personality.
+**Caution to carry forward:** Ownership and reciprocity remain tensions; an affectionate tone does not settle them, and species categories should not replace individual personality.
 
 **New catalogue:** [bodies species](bodies-species.md)
 
@@ -1446,9 +1636,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Dune](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/09-dune.md)
 
-**Design takeaway:** Ecology, resource discipline, etiquette and specialist dependence produce politics.
+**Design takeaway:** Ecology, valuable resources, dynastic ambition, prophecy, coercion and specialist dependence make intimate gestures part of a struggle for power.
 
-**Caution to carry forward:** Do not copy sacred vocabulary as exotic decoration or equate prophecy with truth.
+**Caution to carry forward:** Distinguish beliefs from truth and a better ruler from liberation; inherited superiority and borrowed sacred language need critical handling.
 
 **New catalogue:** [materials resources](materials-resources.md)
 
@@ -1456,9 +1646,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [A Song of Ice and Fire](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/10-a-song-of-ice-and-fire.md)
 
-**Design takeaway:** Hospitality, credible commitments and household costs make power materially consequential.
+**Design takeaway:** Succession, ambition, love, oaths, war and betrayal collide with household and resource dependencies, making victory produce lasting consequences.
 
-**Caution to carry forward:** Atrocity and noble viewpoints should not crowd out ordinary agency or recovery.
+**Caution to carry forward:** Brutality and loss can be central without excluding wit, affection, ordinary agency or meaningful aftermath; repeated shock alone does not establish depth.
 
 **New catalogue:** [diplomacy conflict](diplomacy-conflict.md)
 
@@ -1466,7 +1656,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Earthsea](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/11-earthsea.md)
 
-**Design takeaway:** Restraint, names, trust and locally held knowledge challenge mastery as the only ambition.
+**Design takeaway:** Names, knowledge and extraordinary power make pride, coercion and restraint consequential; care and locally held expertise can matter as much as a powerful outsider’s mastery.
 
 **Caution to carry forward:** A powerful outsider should not erase the agency of the person who knows the place.
 
@@ -1476,7 +1666,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Discworld](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/12-discworld.md)
 
-**Design takeaway:** Institutions become lovable through competent work, humor and practical reform.
+**Design takeaway:** Competent work, humor and affection make a city worth defending against crime, corruption and cruelty; formidable people can choose restraint while still acting decisively.
 
 **Caution to carry forward:** A benevolent clever ruler is not a substitute for durable, accountable services.
 
@@ -1486,7 +1676,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Avatar: The Last Airbender](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/13-avatar-the-last-airbender.md)
 
-**Design takeaway:** Training, bodily practice, architecture and joy connect extraordinary abilities to cultures.
+**Design takeaway:** Training, bodily practice, architecture and everyday joy make extraordinary abilities culturally specific, while invasion, betrayal and resistance put beloved people and places at stake.
 
 **Caution to carry forward:** A nation is not one temperament; alternatives need preparation rather than sudden author rescue.
 
@@ -1496,7 +1686,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [One Piece](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/14-one-piece.md)
 
-**Design takeaway:** Chosen family and complementary specialties connect freedom to shared consequences.
+**Design takeaway:** Ambitious voyages, complementary crew skills and chosen family connect freedom to shared consequences; defeating oppressive enemies makes rescue, feasts and celebration matter.
 
 **Caution to carry forward:** Long rescue formulas and savior patterns can limit the agency of local people.
 
@@ -1506,7 +1696,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [The Expanse](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/15-the-expanse.md)
 
-**Design takeaway:** Air, food, work and infrastructure connect political scale to one person's concern.
+**Design takeaway:** Air, food, work and infrastructure connect individual lives to factional power, war and incompatible futures; professional competence and affection survive amid choices with real costs.
 
 **Caution to carry forward:** Material persuasion is selective worldbuilding, not proof of exhaustive scientific simulation.
 
@@ -1526,9 +1716,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [The Culture](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/17-the-culture.md)
 
-**Design takeaway:** Abundance permits pleasure, voluntary excellence and questions beyond subsistence.
+**Design takeaway:** Abundance permits pleasure and voluntary excellence while leaving pride, political conflict and the ethics of intervention unresolved.
 
-**Caution to carry forward:** Powerful benevolent agents still need consent and fallible judgment.
+**Caution to carry forward:** Power and benevolent intentions do not erase coercion, mistaken judgment or the consequences of manipulating another society.
 
 **New catalogue:** [arts leisure](arts-leisure.md)
 
@@ -1536,7 +1726,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [The Broken Earth](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/18-the-broken-earth.md)
 
-**Design takeaway:** Who bears the cost of a public benefit can change its entire moral meaning.
+**Design takeaway:** Catastrophe, love and institutional cruelty shape particular lives; discovering who is forced to bear a public benefit’s cost can turn inherited order into a conflict over freedom and justice.
 
 **Caution to carry forward:** Trauma and catastrophe need not be the only sources of depth or identity.
 
@@ -1546,7 +1736,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Narnia](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/19-narnia.md)
 
-**Design takeaway:** Hospitality, unfamiliar beauty and returning to changed places create attachment.
+**Design takeaway:** Hospitality, unfamiliar beauty and changed returns create attachment, while temptation, betrayal and resistance to cruel rule make a beloved world dangerous and worth defending.
 
 **Caution to carry forward:** Avoid inherited cultural hierarchies and a single authority resolving every moral question.
 
@@ -1556,9 +1746,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [His Dark Materials](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/20-his-dark-materials.md)
 
-**Design takeaway:** Companionship, privacy and lived stories give visible symbols an inner significance.
+**Design takeaway:** Dæmon companionship makes inner life intimate and vulnerable, while institutional coercion, love, ambition and betrayal make knowledge and personhood matters of action.
 
-**Caution to carry forward:** Do not turn identity into rigid animal taxonomy or public access to private thoughts.
+**Caution to carry forward:** Do not reduce identity to animal taxonomy or confuse intimacy with access to every private thought; affection also does not erase exploitation, and rebellion does not excuse every means.
 
 **New catalogue:** [relationships](relationships.md)
 
@@ -1566,9 +1756,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [The Wire](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/21-the-wire.md)
 
-**Design takeaway:** Institutional handoffs can harm people without every worker being malicious.
+**Design takeaway:** Institutions shape opportunity through wages, authority, force and career incentives; affection, humor and individual competence coexist with incentives that reward concealment or harm.
 
-**Caution to carry forward:** Cynicism should not foreclose practical reform and local success in a playable world.
+**Caution to carry forward:** Do not reduce structural harm to either a few villains or universal futility: practical victories matter, and some reforms fail because powerful interests resist them.
 
 **New catalogue:** [institutions politics](institutions-politics.md)
 
@@ -1576,9 +1766,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [The Sopranos](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/22-the-sopranos.md)
 
-**Design takeaway:** Affection, self-justification, work and family can coexist in a contradictory person.
+**Design takeaway:** Love, humor, taste, ambition and self-justification can belong to the same person who extorts, betrays or kills; family and business loyalties create incompatible obligations.
 
-**Caution to carry forward:** Humanizing someone does not absolve harm or require a predetermined villain diagnosis.
+**Caution to carry forward:** Humanizing a person does not absolve their harm, and insight or affection need not produce reform; avoid reducing the character to a diagnostic label.
 
 **New catalogue:** [traits](traits.md)
 
@@ -1596,9 +1786,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Macondo](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/24-macondo.md)
 
-**Design takeaway:** Household memory, public denial and recurring names give history lived texture.
+**Design takeaway:** Sensory abundance, comedy, intimate longing and household memory coexist with war, corporate power and public denial, giving grand history consequences inside a familiar home.
 
-**Caution to carry forward:** Narrative cycles are not deterministic simulation laws; retain evidence distinctions.
+**Caution to carry forward:** Narrative recurrence is not a deterministic simulation law; distinguish remembered claims from events without explaining away every wonder as an engineering system.
 
 **New catalogue:** [history myth](history-myth.md)
 
@@ -1606,9 +1796,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Spirited Away](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/25-spirited-away.md)
 
-**Design takeaway:** Work, cooperation and recognition can transform a misread visitor into a relationship.
+**Design takeaway:** A strange workplace joins breathtaking beauty, greed, coercive rules and ordinary bodily labor; a frightened newcomer gains agency through competence, courage and particular acts of care.
 
-**Caution to carry forward:** Workplace dignity does not justify exploitation; care need not always have a material reward.
+**Caution to carry forward:** Dignity in work does not justify exploitation, and generosity need not always yield a material reward; leave room for quiet wonder as well as useful action.
 
 **New catalogue:** [faith ritual](faith-ritual.md)
 
@@ -1616,9 +1806,9 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Warhammer 40,000](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/26-warhammer-40000.md)
 
-**Design takeaway:** Civilian lives and institutional aftermath give monumental conflict personal scale.
+**Design takeaway:** Martial spectacle, dangerous belief, institutional rivalry and logistical dependence create monumental conflict, while personal loyalty, craftsmanship and dark humor give it lived texture.
 
-**Caution to carry forward:** Satire and adaptations differ; endless war need not be the only historical possibility.
+**Caution to carry forward:** Its cruel political orders are specific fictional premises, not universal human nature; preserve local agency and lasting outcomes rather than using endless war to reset every achievement.
 
 **New catalogue:** [diplomacy conflict](diplomacy-conflict.md)
 
@@ -1636,8 +1826,8 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Fallout](https://github.com/Macrofold/OpenLegend/blob/b387e7caeda5cec301045b877ca50a2815a869dd/archive/02-research/worldbuilding/worlds/28-fallout.md)
 
-**Design takeaway:** Material interdependence can offer cooperation across prejudice and rival claims.
+**Design takeaway:** Hopeful promises, grotesque humor and material dependency underpin competing new societies; characters can cooperate, dominate, betray or rebuild across prejudice and disputed personhood.
 
-**Caution to carry forward:** Rebuilding should be allowed to progress rather than preserving rubble forever.
+**Caution to carry forward:** Do not confuse unequal factions with morally equivalent choices, or freeze every settlement in rubble; rebuilding and political victory should be allowed to change ordinary life.
 
 **New catalogue:** [diplomacy conflict](diplomacy-conflict.md)

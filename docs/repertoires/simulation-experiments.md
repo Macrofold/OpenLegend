@@ -2,9 +2,24 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** Lab entries study a declared model. Plausible characters and attractive outcomes do not validate psychology, ecology, economics or policy in the real world. These proposals need explicit assumptions, reproducibility and appropriate external validation before scientific use.
+**Proposal catalogue · September 27, 2026.** Experimental worlds can make ecology, economies, rivalry, cooperation and cascading failure visible and playable. A lab studies its declared model; a game uses that model to create choices and surprises. Neither plausible dialogue nor an attractive result validates psychology, ecology, engineering or policy outside the model. Scientific use requires explicit assumptions, reproducibility and appropriate external validation. See the [design foundation](design-foundation.md) for the shared creative direction.
 
 [A rumor transmission laboratory](#a-rumor-transmission-laboratory) · [A household time study](#a-household-time-study) · [The resilient food web](#the-resilient-food-web) · [Energy cascades in miniature](#energy-cascades-in-miniature) · [Institutional handoff experiment](#institutional-handoff-experiment) · [Plural motivations without mind reading](#plural-motivations-without-mind-reading) · [A market with known assumptions](#a-market-with-known-assumptions) · [Memory and disagreement over time](#memory-and-disagreement-over-time) · [Embodiment and accessible design](#embodiment-and-accessible-design) · [The compound-effect observatory](#the-compound-effect-observatory)
+
+## Coverage to develop
+
+These domains broaden the catalogue base. The ten patterns below remain useful examples, not an exhaustive inventory or a requirement that every world include every domain.
+
+| Domain                                     | Dynamics and player aims                                                 | Concrete situations and interactions                                                                                              | Seed worlds | Research seeds                                             |
+| ------------------------------------------ | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------- |
+| Ecology, predation and survival            | Vary refuges, seasons, hunting and resource pressure.                    | Observe whether a prey refuge changes collapse risk; in play, decide whether to harvest now or protect a future food source.      | ALL         | [G123](source-atlas.md#g123), [G140](source-atlas.md#g140) |
+| Bodies, time and expedition choices        | Vary capabilities, activity costs and access to supplies.                | Compare a short exposed route with a long sheltered one; inspect who can use a workshop’s tools and escape routes.                | ALL         | [G139](source-atlas.md#g139), [G143](source-atlas.md#g143) |
+| Production, energy and cascading failure   | Vary reserves, capacity, shared dependencies and disruptions.            | A clinic and defensive barrier compete for stored power; isolate a failed link and compare recovery paths.                        | MO SC FA    | [G129](source-atlas.md#g129), [G148](source-atlas.md#g148) |
+| Markets, scarcity and unequal power        | Vary storage, monopoly, transport costs and ownership.                   | A trading puzzle changes when one faction controls the only kiln; compare embargo, smuggling and a new competitor.                | ALL         | [G115](source-atlas.md#g115), [G131](source-atlas.md#g131) |
+| Conflict, deterrence and aftermath         | Vary warning, defenses, objectives and the cost of continuing a dispute. | Two fictional factions contest a bridge; inspect whether taking it changes food access, retaliation and willingness to negotiate. | ALL         | [G115](source-atlas.md#g115), [G126](source-atlas.md#g126) |
+| Institutions, incentives and information   | Vary authority, handoffs, rewards and what each role can observe.        | A department rewards case closure while residents need lasting repairs; compare changed incentives and actual service outcomes.   | ALL         | [W21](source-atlas.md#w21), [W22](source-atlas.md#w22)     |
+| Relationships, rumor and memory            | Vary commitments, observations, trust in sources and retention.          | Witnesses disagree after an ambush; a correction reaches some audiences while a friendship survives disagreement.                 | ALL         | [G116](source-atlas.md#g116), [W24](source-atlas.md#w24)   |
+| Daily life, beauty and available attention | Vary routine burden, access and what people have time to enjoy.          | Shared kitchens free an evening for music; a prestigious household delegates invisible work to someone with less freedom.         | ALL         | [G124](source-atlas.md#g124), [W23](source-atlas.md#w23)   |
 
 ## A rumor transmission laboratory
 
@@ -42,7 +57,7 @@ Seeds: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [Ox
 
 **MO SC · Lab · Niche · 3/New.** Gap: auditable workflows, limited actor information and controlled variations.
 
-A request passes through intake, review and delivery; vary deadlines, authority and feedback to see where work stalls. Different workers can be conscientious yet produce a bad collective outcome. Measure the defined process, not moral worth. Generated dialogue is illustrative, and a convenient outcome cannot establish that a real institution would behave the same way.
+A request passes through intake, review and delivery; vary deadlines, authority and feedback to see where work stalls. Different workers can be conscientious yet produce a bad collective outcome; another variation can explicitly model favoritism, career incentives or deliberate obstruction. Measure the defined process, not moral worth. Generated dialogue is illustrative, and a convenient outcome cannot establish that a real institution would behave the same way.
 
 Seeds: [Dragon Age: Inquisition](source-atlas.md#g53), [Mass Effect: Andromeda](source-atlas.md#g104), [The Wire](source-atlas.md#w21).
 
@@ -58,7 +73,7 @@ Seeds: [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.m
 
 **ALL · Lab · Niche · 3/New.** Gap: controlled agents, price formation, conserved balances and reproducible shocks.
 
-Vary storage costs and transport delays in a three-town economy, then observe shortages and recovery. The same model can power a trading puzzle. Distinguish model results from real forecasts, and check sensitivity before interpreting an apparent policy benefit. Generated merchants cannot stand in for representative human samples merely because their negotiations sound plausible.
+Vary storage costs, transport delays and concentrated ownership in a three-town economy, then observe shortages, profit and recovery. Add a declared embargo or predatory pricing rule to explore conflict within the model rather than assuming every merchant pursues cooperative trade. The same model can power a trading puzzle. Distinguish model results from real forecasts, and check sensitivity before interpreting an apparent policy benefit. Generated merchants cannot stand in for representative human samples merely because their negotiations sound plausible.
 
 Seeds: [Ultima Online](source-atlas.md#g19), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Starsector](source-atlas.md#g120).
 

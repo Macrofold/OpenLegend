@@ -2,9 +2,24 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** Language shapes access, relationships and memory. Translation of words is not automatic understanding of context, and literacy is not omniscience.
+**Proposal catalogue · September 27, 2026.** Knowledge is a source of capability, intimacy, identity and power. People teach, joke, translate, discover, conceal, deceive and contest what becomes accepted history. Keep what an actor knows separate from what is true, and make acquiring or sharing knowledge change available choices. See the [design foundation](design-foundation.md) for the shared creative direction.
 
 [Names with sediment](#names-with-sediment) · [Translation leaves a question](#translation-leaves-a-question) · [Practical multilingualism](#practical-multilingualism) · [The shared sketch](#the-shared-sketch) · [A school that teaches questions](#a-school-that-teaches-questions) · [Rumor with a route](#rumor-with-a-route) · [The right not to explain](#the-right-not-to-explain) · [Knowledge carried in a craft](#knowledge-carried-in-a-craft) · [A public correction that travels](#a-public-correction-that-travels) · [A library of methods not answers](#a-library-of-methods-not-answers)
+
+## Coverage to develop
+
+These domains broaden the catalogue base. The ten patterns below remain useful examples, not an exhaustive inventory or a requirement that every world include every domain.
+
+| Domain                                   | Dynamics and player aims                                                          | Concrete situations and interactions                                                                                                      | Seed worlds | Research seeds                                             |
+| ---------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------- |
+| Names, stories and identity              | Recognize kinship, claim a place, tell a joke or reinterpret a past.              | An old river name survives an occupation; a household nickname reveals affection that official records miss.                              | ALL         | [W23](source-atlas.md#w23), [W27](source-atlas.md#w27)     |
+| Translation and first contact            | Communicate enough to act while investigating unresolved meanings.                | A literal warning could describe a predator or a taboo; a shared sketch helps an expedition choose its approach.                          | ALL         | [G104](source-atlas.md#g104), [G108](source-atlas.md#g108) |
+| Teaching, craft and mentorship           | Gain a useful method, earn recognition or surpass a teacher.                      | A smith teaches the first blade by demonstration; an apprentice later invents a cheaper tempering process that threatens the guild.       | ALL         | [G114](source-atlas.md#g114), [G148](source-atlas.md#g148) |
+| Investigation and discovery              | Assemble evidence, test a theory and open a new course of action.                 | A creature’s tracks reveal a safe hour to cross; a maintenance diagram exposes both an escape route and a vulnerable generator.           | ALL         | [G118](source-atlas.md#g118), [G142](source-atlas.md#g142) |
+| Rumor, reputation and propaganda         | Warn, persuade, defame, recruit or correct through actual audiences.              | A company praises a heroic discovery while suppressing an injured worker’s account; witnesses and a comic play spread competing versions. | ALL         | [W21](source-atlas.md#w21), [W24](source-atlas.md#w24)     |
+| Secrets, codes and forgery               | Protect an ally, infiltrate a group, expose a lie or sell a dangerous fact.       | A stolen roster identifies a patrol change; a forged letter works only until someone compares seals or asks its supposed author.          | ALL         | [G117](source-atlas.md#g117), [G126](source-atlas.md#g126) |
+| Archives, expertise and exclusion        | Preserve a record, control access or challenge an authoritative account.          | A library admits credentialed scholars but bars the mechanic who understands the failing machine; a sponsor can open the door at a price. | ALL         | [G113](source-atlas.md#g113), [W28](source-atlas.md#w28)   |
+| Private meaning and shared understanding | Choose what to disclose, enjoy an unfinished mystery or learn through friendship. | An elder shares the tune but not its private story; two friends invent a new phrase for an experience neither language names.             | ALL         | [G110](source-atlas.md#g110), [W23](source-atlas.md#w23)   |
 
 ## Names with sediment
 
@@ -18,7 +33,7 @@ Seeds: [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Middle-earth](
 
 **ALL · Play · High · 2/Extend.** Gap: partial semantic mappings with visible uncertainty.
 
-A phrase translates literally as “leave a chair in the rain,” but locals use it for keeping a promise to an absent person. A translator can ask, observe or offer alternatives. Players learn culture through situations. Never hide a crucial mechanical choice behind a confidently wrong automatic translation; uncertainty should invite investigation rather than trick the interface user.
+A phrase translates literally as “leave a chair in the rain,” but locals use it for keeping a promise to an absent person. A translator can ask, observe or offer alternatives. Players learn culture through situations. A biased interpreter or a bad translation can matter in the fiction, with clues and ways to investigate. The interface should distinguish a speaker’s interpretation from confirmed meaning instead of presenting uncertain translation as authoritative mechanical fact.
 
 Seeds: [Disco Elysium](source-atlas.md#g66), [Octopath Traveler II](source-atlas.md#g108), [Star Trek](source-atlas.md#w04).
 
@@ -50,7 +65,7 @@ Seeds: [Outer Wilds](source-atlas.md#g34), [Fire Emblem: Three Houses](source-at
 
 **ALL · Blend · High · 2/Extend.** Gap: attributed messages, limited propagation and correction.
 
-A report of a closed bridge travels through a courier, tavern and noticeboard, changing slightly at each retelling. Players can verify, correct or act cautiously. Information acquires geography. Store meaningful versions and sources rather than all possible gossip, and never let an unobserved event become universally known merely because narration mentions it.
+A report of a closed bridge travels through a courier, tavern and noticeboard, changing slightly at each retelling. Players can verify, correct, deliberately distort or act cautiously. Information acquires geography, and a false warning might clear a valuable route while harming the liar’s reputation when discovered. Store meaningful versions and sources rather than all possible gossip, and never let an unobserved event become universally known merely because narration mentions it.
 
 Seeds: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [S.T.A.L.K.E.R. 2: Heart of Chornobyl](source-atlas.md#g130).
 
@@ -58,7 +73,7 @@ Seeds: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [S
 
 **ALL · Play · Try · 1/Compose.** Gap: authored disclosure preferences and alternative investigation paths.
 
-An elder declines to interpret a private song but recommends a public archive. A player can respect the boundary while still pursuing the broader history. Curiosity coexists with privacy and independent agency. Avoid making every person a lore vending machine or rewarding persistent interrogation until hidden feelings become available; some stories can remain unshared.
+An elder declines to interpret a private song but recommends a public archive. A player can respect the boundary while still pursuing the broader history. Curiosity coexists with privacy and independent agency. Avoid making every person a lore vending machine: repeated demands need not produce disclosure. Investigation, deception or espionage can still uncover particular secrets through supported observations and evidence; they do not grant raw access to private cognition. Some stories can remain unshared.
 
 Seeds: [Dragon Age: Origins](source-atlas.md#g51), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110), [His Dark Materials](source-atlas.md#w20).
 
@@ -82,6 +97,6 @@ Seeds: [Among Us](source-atlas.md#g02), [The Elder Scrolls III: Morrowind](sourc
 
 **ALL · Play · High · 2/Extend.** Gap: reusable plans with prerequisites and truthful execution boundaries.
 
-Makers share “how to test a roof for leaks” or “how to welcome a visitor with different air,” including assumptions and failure signs. Another creator can adapt the method to a new setting. Reuse spreads competence. A stored plan is neither a guaranteed outcome nor permission to run it; missing capabilities and resources must be visible before use.
+Makers share “how to test a roof for leaks,” “how to welcome a visitor with different air” or “how to defend a narrow gate,” including assumptions and failure signs. Another creator can adapt the method to a new setting. Reuse spreads competence. A stored plan is neither a guaranteed outcome nor permission to run it; missing capabilities and resources must be visible before use.
 
 Seeds: [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14), [Final Fantasy XII](source-atlas.md#g89).

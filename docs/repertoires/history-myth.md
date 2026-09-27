@@ -2,9 +2,26 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** Past events matter when they shape present places, obligations and possibilities. A lore dump is not the same as a usable history.
+**Proposal catalogue · September 27, 2026.** History matters when it gives present places, powers, loyalties and conflicts their shape. Preserve wonder, admirable achievements and ordinary lives alongside war, conquest, betrayal, oppression and contested legitimacy. Some events are uncertain; others are established harms or victories that incompatible interests interpret differently. Not every mystery needs a corrupt founder, and not every conflict is merely a misunderstanding.
 
 [The flood with three anniversaries](#the-flood-with-three-anniversaries) · [A hero's useful mistake](#a-heros-useful-mistake) · [An invention with several parents](#an-invention-with-several-parents) · [A ruin older than the explanation](#a-ruin-older-than-the-explanation) · [The road whose name traveled](#the-road-whose-name-traveled) · [The missing ordinary archive](#the-missing-ordinary-archive) · [A prophecy as a social machine](#a-prophecy-as-a-social-machine) · [History changes an object](#history-changes-an-object) · [A villain's ordinary constituency](#a-villains-ordinary-constituency) · [The future historian](#the-future-historian)
+
+## Coverage of the playable foundation
+
+The [shared design foundation](design-foundation.md) owns the overall range and selection principles. This compact map establishes coverage for future specific entries; the ten existing cards below remain reusable patterns, not the whole category or a required implementation bundle. World labels describe the domain’s fit; individual examples still require suitable world rules.
+
+| Domain                                          | Seed worlds | Play and consequences                                                                                                                                                        |
+| ----------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Founding, belonging and shared achievement      | ALL         | A refuge, republic, dynasty or guild gives people something to love and defend; ceremonies and practical institutions keep the achievement present.                          |
+| War, conquest and dispossession                 | ALL         | Borders, ruined forts, veteran loyalties and stolen land survive a campaign; peace can end fighting without satisfying every claim.                                          |
+| Heroes, villains and consequential choices      | ALL         | A great defense, deliberate betrayal, merciful refusal or cruel decree changes lives; complexity need not deny culpability or flatten heroism.                               |
+| Faith, prophecy and sacred conflict             | ALL         | A relic authorizes competing claims, a claimed omen is exploited or a religious fraud conceals genuine belief; established world rules distinguish miracles from assertions. |
+| Lost knowledge, ruins and dangerous inheritance | ALL         | A dungeon preserves a weapon, forbidden technique or failed machine; discovery offers power, treasure and present choices as well as explanation.                            |
+| Culture, pleasure and ordinary memory           | ALL         | Songs, recipes, games, festivals and heirlooms connect generations; beauty can be inherited without secretly depending on an atrocity.                                       |
+| Suppression, competing accounts and evidence    | ALL         | Rulers censor a defeat, families protect a reputation or witnesses contradict an official story; records have provenance and some claims can be disproved.                   |
+| Living consequences and new legend              | ALL         | Return to a changed city, replace an institution, avenge a murder or choose how a victory is remembered; the player’s actions become another layer of history.               |
+
+Research anchors: [Final Fantasy VI](source-atlas.md#g83), [Warcraft III](source-atlas.md#g96), [Foundation](source-atlas.md#w16), [The Broken Earth](source-atlas.md#w18) and [Narnia](source-atlas.md#w19). Use the lessons selectively; franchise mechanics and moral cosmologies are not universal OpenLegend laws.
 
 ## The flood with three anniversaries
 

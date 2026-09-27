@@ -1,10 +1,27 @@
 # Bodies, species and ways of inhabiting a world
 
-[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
+[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** Body differences should create coherent capabilities and relationships. Biology does not determine morality, culture, intelligence or consent.
+**Proposal catalogue · September 27, 2026.** Bodies shape movement, perception, hunger, beauty, work, combat and vulnerability. Include capable fighters, predators, prey, transformations and unfamiliar organisms alongside accommodation and companionship. Physiology is not a universal moral alignment or a complete account of a people's culture.
 
 [Many ways to carry](#many-ways-to-carry) · [Touch-mapped citizen](#touch-mapped-citizen) · [A seasonal body](#a-seasonal-body) · [The modular citizen](#the-modular-citizen) · [A guest with different air](#a-guest-with-different-air) · [Two forms one social life](#two-forms-one-social-life) · [Long lives short appointments](#long-lives-short-appointments) · [A collective with a front door](#a-collective-with-a-front-door) · [Symbiotic neighbors](#symbiotic-neighbors) · [Accommodation as invention](#accommodation-as-invention)
+
+## Base coverage
+
+These domains restore the category's range before later inventories expand it. They are coverage foundations, not additional item counts or a requirement to simulate every row in one starter world. Select a coherent subset using the [shared design foundation](design-foundation.md). The ten existing pattern cards remain useful particular examples.
+
+| Domain                                             | Seed worlds | Positive appeal                                                   | Opposition, danger or ambiguity                                             | Concrete examples and interactions                                                                                                                                         |
+| -------------------------------------------------- | ----------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ordinary embodiment and physical skill             | ALL         | Agility, practiced strength, expressive movement and sensual life | Fatigue, reach, exposure and bodily limits                                  | A shield bearer, climber and dancer exploit different postures; the same body occupies space during fighting, work and rest.                                               |
+| Senses and concealed information                   | ALL         | Tracking, discovery and expertise unavailable to everyone         | Ambush, deception, overload and an undetected threat                        | A keen nose follows a scent while rain weakens it; vibration sensing detects one class of movement rather than revealing all nearby minds.                                 |
+| Anatomy, equipment and fighting styles             | ALL         | Distinctive capabilities and builds                               | Unprotected parts, incompatible gear and altered handling                   | Extra hands permit new loadouts; a long-bodied fighter controls a passage but struggles to turn. Anatomy supplies choices rather than a simple superior-species ranking.   |
+| Predators, prey and dangerous creatures            | ALL         | Hunting, awe, escape and learning a formidable opponent           | Injury, stalking, territorial attacks and failure to understand behavior    | A boar charges at close range; an alien ambusher waits near a useful mineral. A creature has its own needs without becoming harmless or merely a loot dispenser.           |
+| Injury, illness and altered capacity               | ALL         | Rescue, adaptation, recovery and earned interdependence           | Loss of capability, expensive care and death where selected                 | A wounded scout cannot carry the recovered chest; a prosthetic changes available grips. Consequences can persist without requiring every story to end in a cure.           |
+| Transformations, modifications and monstrous forms | SC FA       | Power, temptation, new identities and surprising movement         | Instability, incompatible equipment, fear and control costs                 | A voluntary wolf courier coexists with a different curse that forces transformation under defined fictional rules; identity, timing and reversion need explicit semantics. |
+| Life cycles, reproduction and inheritance          | ALL         | Raising companions, generational change and rare discoveries      | Mortality, competition, disrupted breeding or a changed habitat             | Migration or moulting alters needs and routes. Model the selected lifecycle relationships; ancestry does not determine every individual's loyalty or worth.                |
+| Synthetic, collective and symbiotic life           | SC FA       | Unfamiliar cooperation, modular capability and alien wonder       | Dependence, internal disagreement, parasitism and incompatible environments | A modular citizen borrows a grafting arm; a parasite exploits a host; a collective can be a rival. Each needs bounded state, perception and actor/part distinctions.       |
+
+Research basis: [G16](source-atlas.md#g16), [G25](source-atlas.md#g25), [G33](source-atlas.md#g33), [G36](source-atlas.md#g36), [G37](source-atlas.md#g37), [G41](source-atlas.md#g41), [G47](source-atlas.md#g47), [W08](source-atlas.md#w08). These are original synthesis and coverage choices, not claims that the sources implement the proposed examples.
 
 ## Many ways to carry
 
@@ -34,7 +51,7 @@ Seeds: [Spore](source-atlas.md#g16), [Wildermyth](source-atlas.md#g25), [Rain Wo
 
 **SC · Play · Try · 3/New.** Gap: supported replaceable body components with rights and capability checks.
 
-A synthetic gardener swaps a heavy digging arm for a delicate grafting tool, borrowing the latter from a friend. Modules affect reach, power and maintenance, but identity and relationships persist. This makes equipment social and spatial. Ownership of a component never grants ownership of the person; incompatible parts should fail clearly before installation causes hidden damage.
+A synthetic gardener swaps a heavy digging arm for a delicate grafting tool, borrowing the latter from a friend. Modules affect reach, power and maintenance, but identity and relationships persist. This makes equipment social and spatial. Ownership of a component is distinct from claims over the person; an exploitative faction may contest that distinction through fictional law or force. Inspectable compatibility avoids unexplained installation failure.
 
 Seeds: [Cyberpunk 2077](source-atlas.md#g68), [Mass Effect: Andromeda](source-atlas.md#g104), [Marvel](source-atlas.md#w05).
 
@@ -50,7 +67,7 @@ Seeds: [Oxygen Not Included](source-atlas.md#g129), [Star Trek](source-atlas.md#
 
 **FA · Play · High · 3/New.** Gap: identity-preserving transformation with equipment and capability rules.
 
-A voluntary wolf-form courier can cross rough terrain quickly but must arrange how to carry letters and enter a friend's tiny kitchen. Friends recognize behavior and voice under the world's chosen rules. Transformation is a change in possibilities, not automatic moral corruption. Define consent, timing, injury continuity and safe reversion rather than leaving them to narration.
+A voluntary wolf-form courier can cross rough terrain quickly but must arrange how to carry letters and enter a friend's tiny kitchen. Friends recognize behavior and voice under the world's chosen rules. This voluntary transformation does not automatically change morality. Other proposals can include imposed curses or loss of control, but must separately define fictional imposition, timing, injury continuity and reversion through supported rules.
 
 Seeds: [Wildermyth](source-atlas.md#g25), [Caves of Qud](source-atlas.md#g33), [His Dark Materials](source-atlas.md#w20).
 

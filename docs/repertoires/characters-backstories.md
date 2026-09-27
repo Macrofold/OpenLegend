@@ -2,9 +2,26 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** These are reusable formative situations, not complete people or mandatory trauma arcs. Combine a formation with pleasures, present circumstances and relationships; the world proposals contain full cast examples.
+**Proposal catalogue · September 27, 2026.** These are formative situations, not complete people. Build characters from a past, a present want, useful capabilities, pleasures, attachments and choices under pressure. A stable childhood can produce an adventurous hero; suffering can produce kindness, bitterness or neither; ambition and cruelty do not need a traumatic excuse. Include active fighters, rivals and villains alongside makers, caregivers and ordinary residents.
 
 [The child of a successful compromise](#the-child-of-a-successful-compromise) · [The late beginner](#the-late-beginner) · [The person who stayed](#the-person-who-stayed) · [Two apprentices one accident](#two-apprentices-one-accident) · [Raised between calendars](#raised-between-calendars) · [The former beneficiary](#the-former-beneficiary) · [An ordinary happy childhood](#an-ordinary-happy-childhood) · [The competent understudy](#the-competent-understudy) · [A return to a changed home](#a-return-to-a-changed-home) · [The maker of an inconvenient truth](#the-maker-of-an-inconvenient-truth)
+
+## Coverage of the playable foundation
+
+The [shared design foundation](design-foundation.md) owns the overall range and selection principles. This compact map establishes coverage for future specific entries; the ten existing cards below remain reusable patterns, not the whole category or a required implementation bundle. World labels describe the domain’s fit; individual examples still require suitable world rules.
+
+| Domain                                  | Seed worlds | Play and consequences                                                                                                                                                  |
+| --------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Loved beginnings and chosen adventure   | ALL         | A securely raised cook, hunter or knight leaves home from curiosity, ambition or love; returning home is a real desire rather than a punishment for growth.            |
+| Competence, vocation and mastery        | ALL         | A duelist perfects a difficult style, a healer protects a practice or an artisan chases a masterpiece; show how past work produced present skills.                     |
+| Ambition and contested recognition      | ALL         | An overlooked officer seeks command, a mage wants forbidden power or an heir wants a throne; opportunities reveal what they will risk and whom they will use.          |
+| Duty, faith and divided allegiance      | ALL         | A paladin doubts an order, a spy loves an enemy or a soldier changes sides; allegiance is specific, consequential and sometimes incompatible with friendship.          |
+| Crime, culpability and redemption       | ALL         | A thief wants wealth, a collaborator seeks atonement or an unrepentant tyrant protects a legacy; explain conduct without automatically excusing it.                    |
+| Loss, survival and unfinished revenge   | ALL         | A survivor hunts a betrayer, rebuilds a home or refuses another war; preserve humor, tastes and capabilities beyond the wound.                                         |
+| Belonging, outsiders and self-invention | ALL         | A migrant, transformed person or adopted child chooses among communities; ancestry and body do not prescribe personality or moral worth.                               |
+| Ordinary attachments and future choices | ALL         | Give each person friends, rivals, routines, pleasures and an attainable next step; companions, bystanders and antagonists should have lives beyond serving the player. |
+
+Research anchors: [Dragon Age: Origins](source-atlas.md#g51), [Fire Emblem: Path of Radiance](source-atlas.md#g61), [Final Fantasy IV](source-atlas.md#g81), [Discworld](source-atlas.md#w12) and [His Dark Materials](source-atlas.md#w20). Use the lessons selectively; franchise mechanics and moral cosmologies are not universal OpenLegend laws.
 
 ## The child of a successful compromise
 
@@ -66,7 +83,7 @@ Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-a
 
 **ALL · Play · High · 1/Compose.** Gap: authored expertise, recognition and succession pressures.
 
-An assistant has quietly run the expedition's logistics for years while its charismatic leader receives credit. When leadership becomes vacant, they must decide whether they want the public role at all. Players can recognize expertise without forcing promotion. Their competence should have visible evidence, and ambition can mean better working conditions rather than taking command.
+An assistant has quietly run the expedition's logistics for years while its charismatic leader receives credit. When leadership becomes vacant, they must decide whether they want the public role at all. Players can recognize expertise without forcing promotion. Their competence should have visible evidence; ambition may mean better working conditions, rightful command or a ruthless bid to surpass the old leader.
 
 Seeds: [Fire Emblem: The Blazing Blade (Fire Emblem, GBA)](source-atlas.md#g60), [Final Fantasy VI](source-atlas.md#g83), [Mass Effect 2](source-atlas.md#g102).
 

@@ -2,9 +2,26 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** These are authored models for fictional people, not clinical accounts or validated human predictors. Choose a few behaviorally useful distinctions; a fluent explanation is not proof of a hidden psychological cause.
+**Proposal catalogue · September 27, 2026.** Fictional people need wants, judgments and habits that can produce affection, laughter, courage, fear, vanity, jealousy, ambition and deliberate cruelty. Depth includes contradictions and refusals, not only misunderstandings that a conversation repairs. These are authored models for characters, not clinical accounts or validated human predictors; use a few consequential distinctions rather than an exhaustive inner-life simulation.
 
 [The same event two appraisals](#the-same-event-two-appraisals) · [Anticipation can be pleasant](#anticipation-can-be-pleasant) · [Trust in ability versus intent](#trust-in-ability-versus-intent) · [A crowded mind has priorities](#a-crowded-mind-has-priorities) · [Emotion changes the available method](#emotion-changes-the-available-method) · [Habits that can be renegotiated](#habits-that-can-be-renegotiated) · [A belief with a receipt](#a-belief-with-a-receipt) · [Grief with ordinary afternoons](#grief-with-ordinary-afternoons) · [Social feedback that compounds](#social-feedback-that-compounds) · [A self-story open to revision](#a-self-story-open-to-revision)
+
+## Coverage of the playable foundation
+
+The [shared design foundation](design-foundation.md) owns the overall range and selection principles. This compact map establishes coverage for future specific entries; the ten existing cards below remain reusable patterns, not the whole category or a required implementation bundle. World labels describe the domain’s fit; individual examples still require suitable world rules.
+
+| Domain                                     | Seed worlds | Play and consequences                                                                                                                                             |
+| ------------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Desire, pleasure and anticipation          | ALL         | Seek a good meal, a reunion, beauty, a triumph or an adventure; people can enjoy a fulfilled hope without a compulsory disappointment.                            |
+| Fear, courage and self-preservation        | ALL         | Flee, freeze, bluff, protect someone or take a calculated risk; history, visible danger and commitments distinguish brave action from fearlessness.               |
+| Ambition, pride and mastery                | ALL         | Pursue status, power, wealth, excellence or recognition; achievement can delight, create rivalry or tempt someone to sacrifice others.                            |
+| Anger, envy and resentment                 | ALL         | Challenge an insult, plot revenge, sabotage a rival or choose restraint; emotions inform action without making every outburst inevitable or irrational.           |
+| Care, attachment and conflicting loyalties | ALL         | Love a person whose cause one rejects, protect a community over a friend, or struggle between family and duty; affection is not obedience.                        |
+| Deception, cruelty and rationalization     | ALL         | Conceal a crime, enjoy domination, manipulate trust or justify exploitation; some characters understand the harm and choose it anyway.                            |
+| Belief, attention and error                | ALL         | Act on incomplete testimony, miss a cue or cling to an identity; corrected evidence can matter without requiring agreement or instant conversion.                 |
+| Guilt, grief, resilience and change        | ALL         | Mourn, make restitution, deny responsibility, find ordinary joy or change allegiance; different outcomes remain possible and no therapeutic breakthrough is owed. |
+
+Research anchors: [Dragon Age II](source-atlas.md#g52), [Disco Elysium](source-atlas.md#g66), [Red Dead Redemption 2](source-atlas.md#g70), [Warcraft III](source-atlas.md#g96) and [His Dark Materials](source-atlas.md#w20). Use the lessons selectively; franchise mechanics and moral cosmologies are not universal OpenLegend laws.
 
 ## The same event two appraisals
 
@@ -42,7 +59,7 @@ Seeds: [RimWorld](source-atlas.md#g21), [The Sims](source-atlas.md#g24), [Final 
 
 **ALL · Blend · Try · 2/Extend.** Gap: bounded state effects on planning with alternatives and recovery.
 
-An angry craftsperson chooses a walk before negotiating an expensive commission, or asks a trusted colleague to attend. The feeling creates a strategy, not a forced outburst. Players can support regulation through space, time or company. Do not equate emotion with irrationality or let a hidden mood state override every explicit intention without explanation.
+An angry craftsperson chooses a walk before negotiating an expensive commission, or asks a trusted colleague to attend. The feeling can change strategy; a different person may choose confrontation, intimidation or revenge. Players can support regulation through space, time or company. Do not equate emotion with irrationality or let a hidden mood state override every explicit intention without explanation.
 
 Seeds: [The Sims](source-atlas.md#g24), [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.md#g126).
 
@@ -58,7 +75,7 @@ Seeds: [Red Dead Redemption 2](source-atlas.md#g70), [Final Fantasy XII](source-
 
 **ALL · Blend · High · 2/Extend.** Gap: belief provenance, confidence and scoped correction.
 
-A shopkeeper believes the bridge is unsafe because a trusted courier saw a crack. A recent inspection may change that belief, or reveal the report concerned another bridge. Players can trace and repair misunderstanding. Keep testimony, inference and direct observation distinct; the model's confident phrasing must not manufacture evidence or instantly update people who never received it.
+A shopkeeper believes the bridge is unsafe because a trusted courier saw a crack. A recent inspection may change that belief, or reveal the report concerned another bridge. Players can trace and repair misunderstanding, exploit it or discover that accurate information still leaves incompatible goals. Keep testimony, inference and direct observation distinct; the model's confident phrasing must not manufacture evidence or instantly update people who never received it.
 
 Seeds: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [The Elder Scrolls III: Morrowind](source-atlas.md#g113).
 

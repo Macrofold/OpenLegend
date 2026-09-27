@@ -1,10 +1,27 @@
 # Work, craft, professions and invention
 
-[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
+[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** Work is interesting when it changes capability, expresses taste or connects people. Repetition should become optional expertise or a routine that can be delegated.
+**Proposal catalogue · September 27, 2026.** Work can be satisfying mastery, a route to wealth or fame, preparation for danger, service to a loved person, or participation in a harmful enterprise. Include ordinary crafts, dangerous trades and illicit expertise. Repetition deserves a purpose and a credible path to delegation when its decisions have become routine.
 
 [The commission with room for taste](#the-commission-with-room-for-taste) · [Teach the workshop one good routine](#teach-the-workshop-one-good-routine) · [Make do beautifully](#make-do-beautifully) · [The diagnostic profession](#the-diagnostic-profession) · [Craft as performance](#craft-as-performance) · [A profession that changes its clients](#a-profession-that-changes-its-clients) · [The prototype club](#the-prototype-club) · [Work worth sharing credit for](#work-worth-sharing-credit-for) · [An inherited method questioned](#an-inherited-method-questioned) · [A master who still learns](#a-master-who-still-learns)
+
+## Base coverage
+
+These domains restore the category's range before later inventories expand it. They are coverage foundations, not additional item counts or a requirement to simulate every row in one starter world. Select a coherent subset using the [shared design foundation](design-foundation.md). The ten existing pattern cards remain useful particular examples.
+
+| Domain                                    | Seed worlds | Positive appeal                                                   | Opposition, danger or ambiguity                                       | Concrete examples and interactions                                                                                                                                                 |
+| ----------------------------------------- | ----------- | ----------------------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Subsistence and household production      | ALL         | Self-reliance, taste, comfort and feeding others                  | Shortages, season windows and choosing whose needs come first         | Baking, preserving, farming and sewing make tangible goods; military requisition can turn an ordinary harvest into a consequential decision.                                       |
+| Arms, armor and defensive craft           | MD SC FA    | Visible progression, martial identity and equipping companions    | Material quality, deadlines, rival buyers and an order for an enemy   | A bowyer balances reach and handling; an armorer repairs a specific damaged piece. A beautiful sword should have a discoverable combat role.                                       |
+| Building and engineering trades           | ALL         | Transforming a place and solving spatial problems                 | Collapse, siege damage, contested land and expensive mistakes         | A bridgewright makes a crossing usable or prepares a removable span; a correct design still requires materials, labor and actual construction.                                     |
+| Diagnosis, medicine and maintenance       | ALL         | Expertise, rescue and making valued things dependable             | Limited evidence, triage, lost income and someone concealing a fault  | A healer treats a wounded rival; a millwright traces a stoppage. Failed diagnosis has consequences, while the interface must distinguish missing evidence from missing capability. |
+| Artistry, performance and luxury craft    | ALL         | Beauty, admiration, patronage and self-expression                 | Creative rivalry, censorship, fraud and a demanding patron            | A carved scabbard or commissioned song can matter through taste and reputation without a combat buff; performers may glorify a ruler or ridicule one.                              |
+| Commerce, service and organized labor     | ALL         | A livelihood, professional standing and successful joint work     | Exploitation, strikes, competition, overpromising and unequal credit  | A guild can teach apprentices while withholding a lucrative technique. Workers have interests, and a profitable commission need not be a moral success.                            |
+| Hunting, scouting and illicit professions | ALL         | Risk, stealth, tracking, loot and mastery of difficult situations | Bounties, betrayal, injury and victims who remember                   | Poachers, mercenary scouts, smugglers and burglars use shared tools and evidence. Fictional wrongdoing is an authored activity with consequences, not new platform authority.      |
+| Research, invention and transmission      | ALL         | Discovery, unusual combinations and teaching something worthwhile | Rival claims, failed prototypes, espionage and dangerous applications | A new furnace method can improve ploughs and weapons. A demonstration supplies evidence, not omniscient knowledge or permission to install unsupported behavior.                   |
+
+Research basis: [G19](source-atlas.md#g19), [G24](source-atlas.md#g24), [G27](source-atlas.md#g27), [G29](source-atlas.md#g29), [G30](source-atlas.md#g30), [G36](source-atlas.md#g36), [G48](source-atlas.md#g48), [G49](source-atlas.md#g49), [G50](source-atlas.md#g50). These are original synthesis and coverage choices, not claims that the sources implement the proposed examples.
 
 ## The commission with room for taste
 
@@ -58,7 +75,7 @@ Seeds: [Old School RuneScape](source-atlas.md#g49), [Assassin's Creed III](sourc
 
 **ALL · Play · High · 2/Extend.** Gap: bounded trials, recorded outcomes and supported definition revision.
 
-Makers meet to test one new device against ordinary problems: carry soup, open a high window, protect a seedling. Failures produce specific feedback and humorous recoverable mishaps. Inventors get an audience and collaborators. Distinguish a simulated test from descriptive speculation, and never treat a successful demonstration as permission to deploy an unsafe or unsupported capability everywhere.
+Makers meet to test one new device against ordinary problems: carry soup, open a high window, protect a seedling. Failures produce specific feedback: a friendly workshop can favor recoverable mishaps, while a dangerous prototype can cause real damage under the selected rules. Inventors get an audience and collaborators. Distinguish a simulated test from descriptive speculation, and never treat a successful demonstration as permission to deploy an unsafe or unsupported capability everywhere.
 
 Seeds: [Dreams](source-atlas.md#g13), [Noita](source-atlas.md#g32), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
 

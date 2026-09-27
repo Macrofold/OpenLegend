@@ -2,9 +2,24 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** These deliberately stretch beyond the four starting proposals. They are optional thought-provoking play spaces, not a demand for arbitrary new physics. ALL indicates a possible special scenario in any family, not a naturalistic fit.
+**Proposal catalogue · September 27, 2026.** Unusual worlds can be wondrous, funny, intimate, terrifying or politically explosive. Start with a strange premise that changes a few concrete actions and relationships, then make its consequences learnable. The four seed references identify strong fits under the shared legend; an unusual premise is not a demand for arbitrary executable physics. See the [design foundation](design-foundation.md) for the shared creative direction.
 
 [The city that walks one street a year](#the-city-that-walks-one-street-a-year) · [A house that negotiates rooms](#a-house-that-negotiates-rooms) · [The borrowed afternoon](#the-borrowed-afternoon) · [Dream architecture by invitation](#dream-architecture-by-invitation) · [A language that builds temporary paths](#a-language-that-builds-temporary-paths) · [The weather archive](#the-weather-archive) · [A civilization in the cracks](#a-civilization-in-the-cracks) · [The traveling festival economy](#the-traveling-festival-economy) · [A chorus with separate voices](#a-chorus-with-separate-voices) · [The world with a declared unreliable narrator](#the-world-with-a-declared-unreliable-narrator)
+
+## Coverage to develop
+
+These domains broaden the catalogue base. The ten patterns below remain useful examples, not an exhaustive inventory or a requirement that every world include every domain.
+
+| Domain                                     | Dynamics and player aims                                                        | Concrete situations and interactions                                                                                            | Seed worlds | Research seeds                                             |
+| ------------------------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------- |
+| Living architecture and moving places      | Befriend, negotiate with, explore or fight a place with its own behavior.       | A house proposes a music room; a hostile ruin folds its corridors to protect a treasure while leaving inspectable escape clues. | SC FA       | [G119](source-atlas.md#g119), [W25](source-atlas.md#w25)   |
+| Time, memory and contested history         | Gain an opportunity, inherit a debt or dispute what a place remembers.          | Borrow an afternoon to reconcile, study or prepare an ambush; a weather archive preserves a memory an authority wants erased.   | SC FA       | [G119](source-atlas.md#g119), [W24](source-atlas.md#w24)   |
+| Scale and unfamiliar embodiment            | Discover new affordances, vulnerable homes and unequal forms of power.          | Tiny inhabitants bargain for protection from a workshop flood; a familiar garden becomes a dangerous hunting ground.            | SC FA       | [G142](source-atlas.md#g142), [W25](source-atlas.md#w25)   |
+| Alien ecology and predatory life           | Learn a creature’s habits, hunt, hide, domesticate or inhabit a dangerous role. | A predator follows heat rather than sight; a vampire builds a splendid home through blood, conquest and servants.               | SC FA       | [G123](source-atlas.md#g123), [G146](source-atlas.md#g146) |
+| Names, music and composable laws           | Master a small grammar and discover beautiful or dangerous combinations.        | A sung phrase makes stepping stones; rivals interrupt the harmony to cut a bridge during a duel.                                | FA          | [G111](source-atlas.md#g111), [W27](source-atlas.md#w27)   |
+| Dreams, personhood and shared selves       | Create intimacy, disagree within a collective or defend a chosen identity.      | Friends author a shared dream; a fabricated citizen refuses a compulsory merger despite its useful pooled capabilities.         | SC FA       | [G110](source-atlas.md#g110), [W28](source-atlas.md#w28)   |
+| Strange economies and social orders        | Play under a coherent alternate rule and discover its winners and losers.       | Festival promises replace coins for one day; a city sells years of ceremonial precedence instead of land.                       | SC FA       | [G126](source-atlas.md#g126), [W24](source-atlas.md#w24)   |
+| Mystery, comedy and unreliable appearances | Investigate, be surprised, laugh or uncover a threat behind an ordinary object. | A laboratory appliance behaves like a hungry pet; a storyteller’s flattering account conflicts with a battered trophy.          | MO SC FA    | [G147](source-atlas.md#g147), [G148](source-atlas.md#g148) |
 
 ## The city that walks one street a year
 
@@ -18,7 +33,7 @@ Seeds: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Disho
 
 **FA SC · Play · Try · 3/New.** Gap: bounded building agency and safe reconfiguration of supported spaces.
 
-A sentient house proposes turning a spare corridor into a music room because residents keep rehearsing on the stairs. Occupants can accept, revise or refuse, and the house has its own maintenance needs. Architecture becomes a relationship. It cannot read unshared thoughts, trap dissenters or silently move occupied supports; a normal fixed-room version should remain possible.
+A sentient house proposes turning a spare corridor into a music room because residents keep rehearsing on the stairs. Occupants can accept, revise or refuse, and the house has its own maintenance needs. Architecture becomes a relationship. In this cooperative household version, its agreement protects occupied supports and allows residents to refuse. A predatory or coercive house is a separate viable premise with readable threats, bounded reconfiguration and possible escape; neither version gets access to unshared thoughts.
 
 Seeds: [The Sims](source-atlas.md#g24), [Caves of Qud](source-atlas.md#g33), [Spirited Away](source-atlas.md#w25).
 
@@ -26,7 +41,7 @@ Seeds: [The Sims](source-atlas.md#g24), [Caves of Qud](source-atlas.md#g33), [Sp
 
 **FA SC · Play · Try · 3/New.** Gap: explicit local-time scheduling with causal isolation and finite resource accounting.
 
-A garden grants one extra quiet afternoon inside while little time passes outside. Visitors use it to rehearse, talk or mend something, but cannot repeatedly export infinite crops or energy. The point is a chosen pocket of attention. Specify boundary crossings, aging, messages and material costs; fictional time never rewinds actual service charges, permissions or external events.
+A garden grants one extra quiet afternoon inside while little time passes outside. Visitors use it to rehearse, talk, mend something or prepare for a dangerous confrontation, but cannot repeatedly export infinite crops or energy. The point is a chosen pocket of attention. Specify boundary crossings, aging, messages and material costs; fictional time never rewinds actual service charges, permissions or external events.
 
 Seeds: [Outer Wilds](source-atlas.md#g34), [Dishonored 2](source-atlas.md#g119), [Narnia](source-atlas.md#w19).
 
@@ -50,7 +65,7 @@ Seeds: [Noita](source-atlas.md#g32), [Final Fantasy II](source-atlas.md#g79), [M
 
 **FA SC · Blend · Try · 3/New.** Gap: bounded environmental recordings and controlled replay inside a chamber.
 
-A museum preserves a village's last snowstorm or the first rain after a drought as a small sensory exhibit. Farmers compare conditions, artists compose experiences and families remember. Recordings are scoped captures, not perfect past worlds. Replaying a storm consumes resources and remains contained; it cannot become an unlimited weather weapon or fabricated proof of an unobserved event.
+A museum preserves a village's last snowstorm or the first rain after a drought as a small sensory exhibit. Farmers compare conditions, artists compose experiences and families remember. Recordings are scoped captures, not perfect past worlds. The museum’s replay consumes resources and remains contained. A world could separately admit a finite weaponized version with explicit reach, cost and counterplay; the word “archive” does not grant unlimited weather control or prove an unobserved event.
 
 Seeds: [Outer Wilds](source-atlas.md#g34), [Oxygen Not Included](source-atlas.md#g129), [Macondo](source-atlas.md#w24).
 
@@ -58,7 +73,7 @@ Seeds: [Outer Wilds](source-atlas.md#g34), [Oxygen Not Included](source-atlas.md
 
 **SC FA · Play · Try · 3/New.** Gap: discrete scale layers, body-compatible interaction and conserved transfers.
 
-Tiny inhabitants build homes inside a workshop's warm walls. A spilled cup becomes a flood, while a human repair can become collaborative infrastructure. Players communicate across scales through platforms, signals and patient observation. Use bounded zones rather than simulating every dust particle. Small size should change access and risk without implying simple minds or making the community disposable decoration.
+Tiny inhabitants build homes inside a workshop's warm walls. A spilled cup becomes a flood, while a human repair can become collaborative infrastructure. A tiny raiding party might steal a valuable filament, giving both scales choices beyond protection or helplessness. Players communicate across scales through platforms, signals and patient observation. Use bounded zones rather than simulating every dust particle. Small size should change access and risk without implying simple minds or making the community disposable decoration.
 
 Seeds: [Spore](source-atlas.md#g16), [Caves of Qud](source-atlas.md#g33), [Pokémon](source-atlas.md#w08).
 

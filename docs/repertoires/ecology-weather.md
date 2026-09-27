@@ -1,10 +1,27 @@
 # Ecology, weather and environmental relationships
 
-[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
+[Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Proposal catalogue · September 27, 2026.** Start with observable local relationships. A complete planet model is neither necessary for play nor established by a convincing description.
+**Proposal catalogue · September 27, 2026.** Surroundings offer beauty, food, shelter, rare discoveries and real danger. Wildlife, weather, fire and scarcity can alter plans, reward skill, threaten homes or be exploited by opponents. Model a few legible relationships deeply enough to matter rather than promising a complete planet.
 
 [The orchard has neighbors](#the-orchard-has-neighbors) · [Weather makes appointments](#weather-makes-appointments) · [The river remembers upstream](#the-river-remembers-upstream) · [Wildlife with an elsewhere](#wildlife-with-an-elsewhere) · [A useful weed](#a-useful-weed) · [Fire as a changing landscape](#fire-as-a-changing-landscape) · [The migration festival](#the-migration-festival) · [An alien afternoon](#an-alien-afternoon) · [The town's waste becomes a garden](#the-towns-waste-becomes-a-garden) · [Restoration with witnesses](#restoration-with-witnesses)
+
+## Base coverage
+
+These domains restore the category's range before later inventories expand it. They are coverage foundations, not additional item counts or a requirement to simulate every row in one starter world. Select a coherent subset using the [shared design foundation](design-foundation.md). The ten existing pattern cards remain useful particular examples.
+
+| Domain                                | Seed worlds | Positive appeal                                               | Opposition, danger or ambiguity                                    | Concrete examples and interactions                                                                                                                                    |
+| ------------------------------------- | ----------- | ------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Habitats and useful species           | ALL         | Gardening, gathering, discovery and watching life             | Competition, crop damage, invasive growth and changing habitat     | A hedge shelters both pollinators and pests; harvesting its cord plant can alter cover on a hunting route.                                                            |
+| Hunting, predation and territory      | ALL         | Tracking, food, trophies and mastering dangerous ground       | Being hunted, defending livestock and contested hunting rights     | A predator follows prey near a village; hunt it, move stores, build defenses or accept risk. Killing is a real option with actual ecological and social consequences. |
+| Weather and exposure                  | ALL         | Atmosphere, tactical opportunities and satisfying preparation | Storms, cold, heat, obscured sight and delayed rescue              | Fog favors an ambush and conceals its victims' escape; a dry shelter becomes a reward. Forecasts give useful evidence without making weather perfectly predictable.   |
+| Seasons and environmental rhythms     | ALL         | Anticipation, harvests, festivals and new routes              | Lean months, difficult crossings and a closing expedition window   | Frozen ground opens one passage and closes a fishery. Seasonal pressure needs a chosen time contract and should change plans, not merely meter speed.                 |
+| Fire, flood and destructive change    | ALL         | Powerful interventions, salvage and rebuilding                | Irreversible losses, arson, spreading hazards and displaced people | A burning palisade opens a fort but threatens the village behind it; bounded spread can still destroy valued things in an enabled destructive ruleset.                |
+| Ruins, caves and hazardous frontiers  | MD SC FA    | Exploration, valuable finds and environmental puzzles         | Darkness, exposure, unstable routes and overextended supplies      | A flooded storehouse hides metal and a possible exit; a climbing tool changes access. Discovery should reveal new decisions as well as prettier scenery.              |
+| Extraction, pollution and restoration | ALL         | Industry, prosperity, repair and changing a landscape         | Downstream harm, resource wars and a profitable dirty process      | A mill helps its owners while silting another landing. Disagreement may lead to engineering, compensation, sabotage, coercion or unresolved rivalry.                  |
+| Alien and supernatural environments   | SC FA       | Wonder, new combinations and unfamiliar expertise             | Toxicity, strange predators and dangerous local laws               | Abrasive crystal haze threatens optics but conceals scouts; a living forest responds to sound. Use a coherent bounded rule with several consequences.                 |
+
+Research basis: [G17](source-atlas.md#g17), [G20](source-atlas.md#g20), [G23](source-atlas.md#g23), [G29](source-atlas.md#g29), [G31](source-atlas.md#g31), [G32](source-atlas.md#g32), [G37](source-atlas.md#g37), [G45](source-atlas.md#g45), [G47](source-atlas.md#g47), [W01](source-atlas.md#w01). These are original synthesis and coverage choices, not claims that the sources implement the proposed examples.
 
 ## The orchard has neighbors
 
@@ -18,7 +35,7 @@ Seeds: [Grow a Garden](source-atlas.md#g05), [Stardew Valley](source-atlas.md#g3
 
 **ALL · Play · High · 2/Extend.** Gap: region forecasts, uncertainty and scheduled exposure.
 
-A storm shifts a market indoors, delays a survey and creates a good moment to collect roof water. Preparation has several payoffs without making weather only punishment. Forecasts should communicate likelihood and useful time windows. Stable shelter and known routines reduce repetitive response; a player returning after absence should not find everything destroyed by unattended weather.
+A storm shifts a market indoors, delays a survey and creates a good moment to collect roof water. Preparation has several payoffs without making weather only punishment. Forecasts should communicate likelihood and useful time windows. Stable shelter and known routines reduce repetitive response. The world's declared time and persistence rules determine whether hazards continue during absence; do not hide that choice from participants.
 
 Seeds: [Valheim](source-atlas.md#g31), [PEAK](source-atlas.md#g47), [S.T.A.L.K.E.R. 2: Heart of Chornobyl](source-atlas.md#g130).
 
@@ -34,7 +51,7 @@ Seeds: [Against the Storm](source-atlas.md#g45), [Oxygen Not Included](source-at
 
 **ALL · Blend · High · 2/Extend.** Gap: ecological goals, refuges and bounded population transitions.
 
-Predators visit a village because a route to their usual prey is blocked. Reopening habitat, protecting livestock or relocating stores are alternatives to extermination. Animals pursue needs without being quest dispensers. Do not promise an exact living individual behind every distant population count; refuges and immigration can keep the world resilient without invisible instant respawns.
+Predators visit a village because a route to their usual prey is blocked. Hunting the threatening animals, reopening habitat, protecting livestock or relocating stores are different responses with different costs. Animals pursue needs without being quest dispensers. Do not promise an exact living individual behind every distant population count; refuges and immigration can keep the world resilient without invisible instant respawns.
 
 Seeds: [EverQuest Next](source-atlas.md#g18), [Ultima Online](source-atlas.md#g19), [Rain World](source-atlas.md#g123).
 
@@ -50,7 +67,7 @@ Seeds: [Minecraft](source-atlas.md#g20), [Stardew Valley](source-atlas.md#g30), 
 
 **MD FA · Blend · Try · 3/New.** Gap: bounded fuel, spread, smoke, recovery and firebreaks.
 
-A controlled burn can protect a settlement or renew grazing, while smoke affects neighbors and wind changes the plan. The appeal is preparation and shared responsibility, not random destruction. Use finite regions, clear containment tools and world-selected severity. A tiny spark must not queue unbounded events or erase a long-running world before anyone can react.
+A controlled burn can protect a settlement or renew grazing, while smoke affects neighbors and wind changes the plan. The appeal can be skilled management, dangerous improvisation or deliberate destruction: a raider may use the same fire to deny cover or burn a settlement. Use finite regions, clear containment tools and world-selected severity. Bound propagation work and provide usable evidence of danger. An enabled destructive scenario can still burn a settlement; computational limits do not imply a guarantee that every threatened place can be saved.
 
 Seeds: [Noita](source-atlas.md#g32), [Project Zomboid](source-atlas.md#g37), [The Legend of Zelda: Breath of the Wild](source-atlas.md#g73).
 

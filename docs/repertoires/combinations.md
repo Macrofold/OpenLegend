@@ -1,8 +1,8 @@
-# Sixteen situations to build from the library
+# Situations to build from the library
 
-[Library](README.md) · [Labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
+[Library](README.md) · [Labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
 
-**Original, untested proposal scenes.** These combine specific cards into playable predicaments. The listed methods are examples, not exhaustive solutions or outcomes the narrator may guarantee. Participants act with their own knowledge and priorities. Implementation estimates cover a bounded scene, not a whole world. Stop when the scene's meaningful outcome is reached; do not generate endless emergencies to keep it running.
+**Original, untested proposal scenes.** These combine specific cards into playable predicaments. The listed methods are examples, not exhaustive solutions or outcomes the narrator may guarantee. Participants act with their own knowledge and priorities. Implementation estimates cover a bounded scene, not a whole world. Stop when the scene's meaningful outcome is reached; do not generate endless emergencies to keep it running. The original sixteen constructive scenes remain alongside nine additional situations centered on competition, combat, power, treachery and their aftermath. A gentle scene need not become a battle; the collection as a whole must also support actual opposition, desired victories and lasting losses.
 
 ## The wedding bridge
 
@@ -131,3 +131,89 @@ Combine [two forms](bodies-species.md#two-forms-one-social-life), [commission](w
 Apprentices spend mornings keeping market cloth rigid against rain. One invents a wet-triggered charm with a safe release, freeing them for lessons and play. Teachers disagree over losing a traditional exercise; shopkeepers worry about failure. Test, inspect, adopt selectively or keep manual alternatives. A good outcome removes repetitive labor and creates a new problem worth choosing, rather than inventing another compulsory spellcasting chore.
 
 Combine [useful charms](magic.md#the-grammar-of-useful-charms), [deliberate limits](magic.md#the-school-of-deliberate-limits), [apprenticeship](relationships.md#an-apprenticeship-with-an-exit) and [rehearsal room](automation-creators.md#the-rehearsal-room).
+
+## The toll tower at dawn
+
+**MD · Play · High · 3/New.** Gap: tactical combat, contested occupation, supply and faction response.
+
+A lord's garrison has seized the crossing that supplies Bellwold. Its commander intends to hold it, its soldiers need food and pay, and a merchant offers a reward for reopening the road. An ambitious knight wants the tower as a personal holding. A player can want the crossing, the money, the knight's favor or the satisfaction of defeating a capable enemy. Reconnaissance reveals a strong front gate, a narrow riverside approach and a disputed relief schedule. These are actual opportunities with risks, not a guarantee of an optimal method.
+
+| Approach                      | What can be gained                                   | Cost or changed situation                                                     |
+| ----------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Assault with a prepared force | Victory, captured equipment and immediate possession | Casualties, damaged defenses, prisoners and a hostile claimant remain         |
+| Infiltrate or suborn a guard  | Access or a momentary advantage                      | Evidence of betrayal, unreliable cooperation or an alarm can change the fight |
+| Bargain from strength         | Passage or withdrawal without taking the walls       | Tribute, recognition or a concession gives the garrison something it wants    |
+| Choose a rival crossing       | Trade continues on another route                     | The lord retains the tower and can pursue a different pressure                |
+
+A defeated garrison does not respawn to erase success. Who holds and repairs the tower matters afterward. Combine [construction](settlements-architecture.md), [combat](combat-rescue.md), [logistics](economy-logistics.md) and [diplomacy](diplomacy-conflict.md). Research seeds: [Bannerlord](source-atlas.md#g115), [Battle Brothers](source-atlas.md#g121), [Westeros](source-atlas.md#w10).
+
+## The champion and the oath
+
+**MD FA · Play · High · 2/Extend.** Gap: readable duel rules, reputation, equipment and incompatible commitments.
+
+A knight trained for years wants to win a tournament whose prize is land and command. Their patron demands a politically useful loss to another contender. The knight enjoys combat, loves a sibling whose education the patron finances, and believes an oath has meaning. The opponent is a real competitor with a different fighting style, not a prop waiting for the player's moral decision.
+
+Fight to win, obey, expose the arrangement, withdraw or negotiate a release from service. Combat mastery determines the bout if it proceeds; a heartfelt speech does not guarantee victory. A win can bring prestige and retaliation, a loss can preserve an obligation while costing self-respect, and withdrawal can close the desired career. The sibling has their own response. Combine [progression](abilities-progression.md), [relationships](relationships.md), [traits](traits.md) and [institutions](institutions-politics.md). Research seeds: [Kingdom Come II](source-atlas.md#g114), [Fire Emblem: Three Houses](source-atlas.md#g64), [Middle-earth](source-atlas.md#w01).
+
+## The companion who changes sides
+
+**ALL · Play · High · 3/New.** Gap: distinct loyalties, scoped knowledge, party commitments and faction consequences.
+
+The party's best scout loves another member but remains loyal to a faction the player now intends to attack. Earlier conversations, assistance and witnessed conduct establish that allegiance. Recruiting a useful former enemy further strains it. Affection, professional respect and political agreement are separate; sufficient gifts cannot automatically purchase obedience.
+
+The scout might refuse, resign, warn their faction, conceal information or participate under a specific concession. Their choice follows established motives and actual circumstances. The player can alter the objective, accept the departure, conceal their plan at the risk of later discovery, or continue with another scout. A betrayal can be deliberate and harmful without making every companion untrustworthy. Combine [psychology](psychology-behavior.md), [relationships](relationships.md), [knowledge](languages-knowledge.md) and [factions](diplomacy-conflict.md). Research seeds: [Dragon Age: Inquisition](source-atlas.md#g53), [Dragon Age II](source-atlas.md#g52), [Mass Effect 2](source-atlas.md#g102).
+
+## The festival contract
+
+**MO · Play · High · 2/Extend.** Gap: meaningful performance criteria, scarce commissions, sponsorship and remembered conduct.
+
+Jo and Vic both want the single commission to produce the River Lights main-stage centerpiece. Jo proposes a light installation and stage design with a local band; Vic offers a staged musical act. The bids compete on audience appeal, production quality, readiness and budget. Jo's design is inventive but unfinished; Vic has rehearsed a polished act and found a sponsor whose other business harms a neighbor. The audience wants a good evening, the organizer wants attendance, and performers want pay and recognition. None of those purposes can be reduced to a single reputation bar.
+
+Help one competitor, enter the contest, form a coalition, expose a concealed sponsorship term or take the money knowingly. Preparation and the performance matter. A rejected proposal can become a smaller successful event without pretending it won the main contract. The winner gains an audience and future access; the loser may become an ally, rival or critic. The festival should be enjoyable in its own right. Combine [arts](arts-leisure.md), [work](work-crafting.md), [status and relationships](relationships.md) and [economy](economy-logistics.md). Research seeds: [The Sims](source-atlas.md#g24), [Austen](source-atlas.md#w23), [The Culture](source-atlas.md#w17).
+
+## The witness and the promotion
+
+**MO · Play · High · 3/New.** Gap: investigative evidence, threats, institutional incentives and actual protection outcomes.
+
+Sera Holt can advance a case against the Quay Circle if a frightened stallholder testifies. Her superior wants an arrest before the festival; the witness wants their family left alone; an intermediary offers compensation in exchange for silence. A helpful disclosure can become dangerous as it travels between institutions. The player may want justice, a favor, payment, revenge or protection for a friend.
+
+Find corroboration, challenge a premature accusation, protect or relocate the witness through available means, publish evidence, accept a compromise or side with the Circle. These choices create different risks and responsibilities. A conviction can remove a perpetrator without eliminating the conditions supporting the organization; losing the case does not prove there was no crime. Preserve the particular witness's life and choices after the investigation. Combine [institutions](institutions-politics.md), [knowledge](languages-knowledge.md), [relationships](relationships.md) and [rescue](combat-rescue.md). Research seeds: [The Wire](source-atlas.md#w21), [The Sopranos](source-atlas.md#w22), [Deus Ex](source-atlas.md#g117).
+
+## The claim beneath the outpost
+
+**SC · Play · High · 3/New.** Gap: ground encounters, authored ownership claims, environmental hazards and resource use.
+
+A planetary survey reveals a valuable deposit beneath a settlement's atmospheric machinery. A charter company claims extraction rights, residents claim the infrastructure and a rival team arrives with armed escorts. The deposit is genuinely useful, not a fake prize introduced solely to teach a lesson about greed. The environmental cost and alternative extraction methods depend on inspectable local facts.
+
+| Objective               | Possible methods                                  | Consequence to carry forward                                         |
+| ----------------------- | ------------------------------------------------- | -------------------------------------------------------------------- |
+| Secure the deposit      | Negotiate, purchase, seize or defend a claim      | Revenue and power come with obligations, opposition or dispossession |
+| Protect the settlement  | Reinforce, contest the charter, bargain or fight  | Survival can cost wealth, allies or technical capacity               |
+| Find another method     | Investigate the site and test a supported process | Discovery may change bargaining power; it may also fail              |
+| Withdraw with knowledge | Sell, conceal or publish a bounded survey         | Others still act on the site and remember who helped them            |
+
+The playable encounter occurs on the ground; ship arrival is abstract. Combine [materials](materials-resources.md), [technology](technology.md), [institutions](institutions-politics.md) and [combat](combat-rescue.md). Research seeds: [The Expanse](source-atlas.md#w15), [Dune](source-atlas.md#w09), [Mass Effect](source-atlas.md#g101), [Subnautica](source-atlas.md#g139).
+
+## The quarry that learns
+
+**MD SC FA · Play · High · 3/New.** Gap: bounded creature behavior, sensory evidence, tracking and differentiated combat.
+
+A powerful predator occupies the route to a valuable ruin. It hunts, rests, avoids some hazards and changes its approach after an actual encounter. Its materials or defeated territory enable a desired advancement. A hunter seeks fame, a trader wants the road and a naturalist wants observations. Their interests can overlap without being identical.
+
+Study traces, prepare a counter, lure it into favorable terrain, challenge it directly, evade it or exploit a rival hunter's attempt. It can injure someone, escape, die or drive the party away. Killing it need not be revealed as a moral mistake; preserving it need not be the easiest or most profitable choice. Record the consequences of the chosen method, including a rival's success if the player delays. Combine [ecology](ecology-weather.md), [bodies](bodies-species.md), [abilities](abilities-progression.md) and [adventure](adventure-discovery.md). Research seeds: [Grounded](source-atlas.md#g142), [The Forest](source-atlas.md#g137), [V Rising](source-atlas.md#g146), [The Witcher 3](source-atlas.md#g72).
+
+## The crown below the ruins
+
+**FA · Play · High · 3/New.** Gap: bounded ruin traversal, combat, a defined magical power and competing claims.
+
+A ruined royal sanctuary contains a crown that can command an admitted class of bound guardians. A claimant wants an army, a knight wants to end raids, a sorcerer wants the technique, and a custodian knows the crown's history. The ruin offers traps, enemies, evidence and treasure; mastering its dangers is a worthwhile adventure before the political decision.
+
+Take and wield the crown, sell it, transfer it to an ally, destroy it or leave it guarded. Each option changes who can use an actual power. The crown's limits and costs are discoverable through play; an unexpected punishment is not added merely because the player chooses domination. A well-intentioned ruler may abuse it, a ruthless claimant may restore order while committing other harms, and destroying it may remove the easiest defense against a genuine enemy. The setting can contain a clear villain without making every claimant secretly equivalent. Combine [magic](magic.md), [history](history-myth.md), [faith](faith-ritual.md), [adventure](adventure-discovery.md) and [politics](institutions-politics.md). Research seeds: [Middle-earth](source-atlas.md#w01), [Earthsea](source-atlas.md#w11), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59).
+
+## The household after the victory
+
+**ALL · Play · High · 2/Extend.** Gap: remembered events, changed resources, relationships and ordinary activities.
+
+A returning party has won the objective. One person gained wealth, another lost a friend, another enjoyed the fight and wants a military career. A household member is proud and angry about a promise broken during the expedition. There is a meal, an attractive new possession, a real achievement and an absence that cannot be repaired by buying the correct gift.
+
+Celebrate, mourn, distribute spoils, pay debts, pursue romance, tell a self-serving story or quietly return to work. Neither forced catharsis nor a mandatory new disaster is needed. A survivor may forgive, refuse, leave, marry, enlist or remain undecided. Let the victory make something better while keeping its actual costs. Combine the retained [debrief](combat-rescue.md#the-debrief-at-the-kitchen-table), [relationships](relationships.md), [needs](needs.md), [art](arts-leisure.md) and [history](history-myth.md). Research seeds: [Hades](source-atlas.md#g22), [Wildermyth](source-atlas.md#g25), [Fire Emblem](source-atlas.md#g64), [Middle-earth](source-atlas.md#w01).

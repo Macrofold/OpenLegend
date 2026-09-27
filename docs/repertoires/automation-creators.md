@@ -2,9 +2,24 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** Creators range from decorators and scenario writers to system builders and hosts. Useful reuse needs understandable assumptions, bounded work and a reason for other people to play.
+**Proposal catalogue · September 27, 2026.** Creators build experiences as well as systems: homesteads, romances, expeditions, heists, wars, strange experiments and places to rest. Automation can remove solved chores, make a faction capable or give players a satisfying machine to master. Reuse needs clear assumptions, bounded work and a compelling first session; these remain proposals rather than claims that a general world compiler exists. See the [design foundation](design-foundation.md) for the shared creative direction.
 
 [The explainable household routine](#the-explainable-household-routine) · [A creation with a first evening](#a-creation-with-a-first-evening) · [Blueprint plus reasons](#blueprint-plus-reasons) · [The scenario dial with a promise](#the-scenario-dial-with-a-promise) · [The bounded civic planner](#the-bounded-civic-planner) · [A quiet world still runs](#a-quiet-world-still-runs) · [A remix with a family tree](#a-remix-with-a-family-tree) · [The rehearsal room](#the-rehearsal-room) · [A creator's attention budget](#a-creators-attention-budget) · [A world that can be handed over](#a-world-that-can-be-handed-over)
+
+## Coverage to develop
+
+These domains broaden the catalogue base. The ten patterns below remain useful examples, not an exhaustive inventory or a requirement that every world include every domain.
+
+| Domain                             | Dynamics and player aims                                                          | Concrete situations and interactions                                                                                                 | Seed worlds | Research seeds                                             |
+| ---------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------- | ---------------------------------------------------------- |
+| A playable first session           | Package a situation with an immediate aim, a choice and an outcome.               | A harbor offers a salvage contract, a rival crew and a damaged landing; players can profit, make an ally or lose the prize.          | ALL         | [G145](source-atlas.md#g145), [G148](source-atlas.md#g148) |
+| Domestic and productive routines   | Retire repetitive labor while preserving room for judgment and expression.        | A helper gathers logs while the player explores; automated nets make a growing raft easier to live on.                               | ALL         | [G138](source-atlas.md#g138), [G141](source-atlas.md#g141) |
+| Security, combat and command       | Prepare a defense, delegate a role or coordinate an ambitious operation.          | A patrol guards one gate; a weapon team holds fire for a clear target while a second team retrieves the captive.                     | MD MO SC FA | [G102](source-atlas.md#g102), [G135](source-atlas.md#g135) |
+| Blueprints and composition         | Adapt a proven method to a new place and understand its tradeoffs.                | Remix a greenhouse into a field hospital or a fortified workshop; preview changed materials, access and dependencies.                | ALL         | [G111](source-atlas.md#g111), [G135](source-atlas.md#g135) |
+| World premises and consequences    | Choose a coherent experience and disclose its stakes.                             | A severe expedition can lose equipment and companions; a quiet building world preserves finished homes through inactivity.           | ALL         | [G132](source-atlas.md#g132), [G143](source-atlas.md#g143) |
+| Living factions and scale          | Let a town, company or rival pursue goals beyond the player’s current view.       | A guild pays wages and commissions guards; distant supply stays aggregate until a contested shipment becomes playable.               | ALL         | [G115](source-atlas.md#g115), [G126](source-atlas.md#g126) |
+| Rehearsal, inspection and recovery | Understand why a plan succeeded, failed or stopped before expanding it.           | Rehearse an assault, flood or festival in isolated state; inspect the actual power failure instead of a fluent invented explanation. | ALL         | [G129](source-atlas.md#g129), [G135](source-atlas.md#g135) |
+| Sharing, continuity and attention  | Let others enjoy, adapt or inherit a creation without hidden administrative work. | A world handover preserves rivals and unfinished promises; a host sees major events while routine success stays quiet.               | ALL         | [G145](source-atlas.md#g145), [G147](source-atlas.md#g147) |
 
 ## The explainable household routine
 
@@ -18,7 +33,7 @@ Seeds: [RimWorld](source-atlas.md#g21), [Palworld](source-atlas.md#g41), [Final 
 
 **ALL · Play · High · 1/Compose.** Gap: authored onboarding scenario; packaging capability reviewed separately.
 
-A shared harbor pack includes three people, one damaged landing and several useful materials, giving visitors something to do immediately. Builders can then expand it. Evaluate whether another person enjoys the first evening, not how many generated entities exist. Avoid shipping only a vocabulary of parts and expecting every recipient to invent the missing experience.
+A shared harbor pack includes three people, one damaged landing, a valuable salvage claim and a rival crew. Visitors can repair access, bargain for cooperation or race the rival to the prize, then return with a reward or a changed relationship. Builders can expand a playable experience from that first evening. Evaluate whether another person enjoys the first evening, not how many generated entities exist. Avoid shipping only a vocabulary of parts and expecting every recipient to invent the missing experience.
 
 Seeds: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14).
 
@@ -50,7 +65,7 @@ Seeds: [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Crusader Kings III
 
 **ALL · Blend · High · 2/Extend.** Gap: due work, native routines and graceful model unavailability.
 
-Known routines continue when no one needs a conversation: ovens finish, agreed deliveries progress and characters rest. A model is used for a meaningful novel decision, not each motion. Hosts can budget interaction without freezing basic life. If inference is unavailable, pause or use an admitted fallback honestly; never narrate completion for a task that did not execute.
+Known routines continue when no one needs a conversation: ovens finish, agreed deliveries progress, patrols follow their orders and characters rest. A hostile routine remains limited to its admitted purposes, observations and actions. A model is used for a meaningful novel decision, not each motion. Hosts can budget interaction without freezing basic life. If inference is unavailable, pause or use an admitted fallback honestly; never narrate completion for a task that did not execute.
 
 Seeds: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Final Fantasy XIV](source-atlas.md#g91).
 
@@ -66,7 +81,7 @@ Seeds: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Fire Emble
 
 **ALL · Blend · High · 3/New.** Gap: isolated scenario copies with explicit external-effect fencing.
 
-Creators rehearse a flood, spell combination or council dispute using disposable fictional state. They inspect causal traces and try a different parameter without harming the main world. Rehearsal should show its seed, rules and limits. It cannot undo real charges or messages, and a successful small rehearsal is evidence only for the tested conditions.
+Creators rehearse a flood, spell combination, assault, betrayal or council dispute using disposable fictional state. They inspect causal traces and try a different parameter without harming the main world. Rehearsal should show its seed, rules and limits. It cannot undo real charges or messages, and a successful small rehearsal is evidence only for the tested conditions.
 
 Seeds: [Dreams](source-atlas.md#g13), [Noita](source-atlas.md#g32), [Garry's Mod](source-atlas.md#g35).
 

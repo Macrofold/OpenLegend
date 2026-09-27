@@ -2,9 +2,24 @@
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md)
 
-**Proposal catalogue · September 27, 2026.** Pleasure need not justify itself through productivity. These ideas offer expressive activities, social occasions and satisfying ways to inhabit a place.
+**Proposal catalogue · September 27, 2026.** Pleasure need not justify itself through productivity. Art, food, games, fashion, humor and celebration make places worth inhabiting. They can also carry courtship, rivalry, ambition, satire, scandal and power: a beautiful evening may be peaceful, competitive or politically dangerous. See the [design foundation](design-foundation.md) for the shared creative direction.
 
 [The neighborhood sound](#the-neighborhood-sound) · [A garden for looking at](#a-garden-for-looking-at) · [The play about last winter](#the-play-about-last-winter) · [A game made from a constraint](#a-game-made-from-a-constraint) · [Cooking for a particular person](#cooking-for-a-particular-person) · [The amateur observatory](#the-amateur-observatory) · [Fashion with a social itinerary](#fashion-with-a-social-itinerary) · [The collecting club that lends](#the-collecting-club-that-lends) · [A holiday after completion](#a-holiday-after-completion) · [Make a place for mischief](#make-a-place-for-mischief)
+
+## Coverage to develop
+
+These domains broaden the catalogue base. The ten patterns below remain useful examples, not an exhaustive inventory or a requirement that every world include every domain.
+
+| Domain                               | Dynamics and player aims                                                  | Concrete situations and interactions                                                                                                 | Seed worlds | Research seeds                                             |
+| ------------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------- | ---------------------------------------------------------- |
+| Beauty, atmosphere and contemplation | Decorate, explore, listen or savor without needing a reward meter.        | Plant a scent garden, watch luminous creatures from a shelter window or find a favorite street musician.                             | ALL         | [G139](source-atlas.md#g139), [W25](source-atlas.md#w25)   |
+| Making and performance               | Practice a craft, collaborate, improvise or seek an audience.             | Stage a comedy about last winter; rival actors compete for a role while friends build the set.                                       | ALL         | [G128](source-atlas.md#g128), [W24](source-atlas.md#w24)   |
+| Food, intimacy and courtship         | Host, flirt, remember, comfort or celebrate a particular person.          | Recreate a traveler’s home dish with local ingredients; an ambitious banquet competes with a private picnic.                         | ALL         | [G124](source-atlas.md#g124), [W23](source-atlas.md#w23)   |
+| Games, sports and mastery            | Compete, cooperate, invent rules or enjoy improving a skill.              | A rooftop ball game uses cargo nets as goals; a tavern board-game rival becomes a valued traveling companion.                        | ALL         | [G115](source-atlas.md#g115), [G124](source-atlas.md#g124) |
+| Gambling, spectacle and danger       | Risk a stake, pursue glory or watch something thrilling.                  | Bet salvaged parts on an arena bout, organize a dangerous race, or challenge a champion under explicit contest rules.                | ALL         | [G131](source-atlas.md#g131), [W22](source-atlas.md#w22)   |
+| Fashion, collecting and status       | Express taste, display a history, seek prestige or challenge convention.  | A patched expedition coat becomes fashionable; collectors lend ordinary pieces while rivals scheme over a rare original.             | ALL         | [G114](source-atlas.md#g114), [W23](source-atlas.md#w23)   |
+| Satire, patronage and scandal        | Make a reputation, criticize authority or trade independence for support. | A patron funds a theatre but demands a censored ending; a brilliant performance may delight the audience and anger a powerful guest. | ALL         | [W21](source-atlas.md#w21), [W22](source-atlas.md#w22)     |
+| Holidays, friendship and mischief    | Mark an achievement, make memories or play a clever joke.                 | Celebrate a successful expedition with music and a feast; a fountain prank becomes a local story whose target can answer back.       | ALL         | [G124](source-atlas.md#g124), [W25](source-atlas.md#w25)   |
 
 ## The neighborhood sound
 
@@ -26,7 +41,7 @@ Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-a
 
 **ALL · Play · High · 2/Extend.** Gap: authored scenes, voluntary casting and selected historical callbacks.
 
-Residents stage a comic version of a recent power failure, disagreeing about who gets to play the mayor. Players write, act, build sets or watch. Shared history becomes reinterpretation and laughter. Performance is not a new authoritative record of events; preserve the distinction between acting, claims and actual conflict so staged insults do not trigger real combat.
+Residents stage a comic version of a recent power failure, disagreeing about who gets to play the mayor. Players write, act, build sets or watch. Shared history becomes reinterpretation and laughter. Performance is not a new authoritative record of events. Distinguish stage action from actual injury, while allowing satire, a pointed casting choice or a broken promise to delight some spectators and genuinely offend others.
 
 Seeds: [Wildermyth](source-atlas.md#g25), [Garry's Mod](source-atlas.md#g35), [Macondo](source-atlas.md#w24).
 
@@ -58,7 +73,7 @@ Seeds: [Outer Wilds](source-atlas.md#g34), [Star Trek](source-atlas.md#w04), [Th
 
 **ALL · Play · Try · 2/Extend.** Gap: contextual dress interpretation separate from mechanical equipment.
 
-A coat gains patches from places visited and can be adapted for a formal dinner without losing its history. Tailors discuss taste, climate and local expectations. Clothing supports self-expression and conversation. Avoid universal beauty scores, gender locks or making social access depend on one exact outfit; practical alternatives and respectful exceptions should exist.
+A coat gains patches from places visited and can be adapted for a formal dinner without losing its history. Tailors discuss taste, climate and local expectations. Clothing supports self-expression and conversation. Avoid a universal beauty score or gender locks. A club’s dress code or court’s display of wealth can create a specific social obstacle, met through suitable clothes, a patron, deception or confrontation; one exact collectible outfit should not stand in for the whole social situation.
 
 Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Cyberpunk 2077](source-atlas.md#g68).
 
@@ -66,7 +81,7 @@ Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-a
 
 **ALL · Play · High · 2/Extend.** Gap: collection provenance, loans and shared displays.
 
-Collectors of maps, unusual cups or seeds curate rotating exhibits and lend duplicates to beginners. A complete collection is optional; a good story about one object can be enough. Players create community around taste. Prevent scarcity from forcing theft or daily chores, and let replicas satisfy display purposes while originals retain meaningful provenance.
+Collectors of maps, unusual cups or seeds curate rotating exhibits and lend duplicates to beginners. A complete collection is optional; a good story about one object can be enough. Players create community around taste. Let loans and replicas satisfy ordinary display goals while originals retain meaningful provenance. A rare object can also provoke a purchase, expedition, rivalry or deliberate theft in a different story; completion need not force every collector into crime or daily chores.
 
 Seeds: [Animal Crossing: New Horizons](source-atlas.md#g03), [Old School RuneScape](source-atlas.md#g49), [Persona 5 Royal](source-atlas.md#g124).
 
@@ -82,6 +97,6 @@ Seeds: [Hades I](source-atlas.md#g22), [Stardew Valley](source-atlas.md#g30), [F
 
 **ALL · Play · Try · 2/Extend.** Gap: bounded pranks, reversible props and social interpretation.
 
-Friends rig a fountain to play a tune when the mayor sits nearby, then decide whether to reveal the trick. Clever harmless mischief offers comedy beyond combat. Establish who has agreed to this tone and keep consequences proportionate. A prank should not secretly destroy property, expose private information or turn every trusting NPC into an exploitable punchline.
+Friends rig a fountain to play a tune when the mayor sits nearby, then decide whether to reveal the trick. Clever harmless mischief offers comedy beyond combat. Establish the playful tone and make the prank’s actual effects legible. The mayor may laugh, retaliate socially or demand restitution; the target retains agency. A harmless fountain trick should not secretly execute destructive effects, while a deliberately cruel prank belongs to a different, consequential choice.
 
 Seeds: [Garry's Mod](source-atlas.md#g35), [Lethal Company](source-atlas.md#g38), [Discworld](source-atlas.md#w12).
