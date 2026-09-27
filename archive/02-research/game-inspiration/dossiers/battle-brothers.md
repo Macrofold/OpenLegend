@@ -21,7 +21,7 @@ The first-session promise is modest and immediately legible: make a few poorly e
 
 The March 20, 2025 update added the Abandoned Village and a linked, harder location involving flesh golems and the Grand Diviner. Those locations require a new campaign; general fixes apply to existing campaigns. The developer explicitly warned that older mods could break and supplied a previous-version branch. This is an important distinction between preserving a save and making new generated-world content appear in it. [S15]
 
-The GOG release-note mirror inspected for this pass contains 1.5.2.2/1.5.2.3 changes, including the Executioner background, Pollaxe, Estoc, Executioner's Sword, additional world-map speed and later fixes. These are documented maintenance changes, not personally tested behavior or a claim that every storefront/console has identical version parity. For example, the newer notes change Riposte's cost and Duelist/buckler compatibility; older wiki tables must not override them. [S16]
+The June 2026 Steam announcements now provide a direct primary current-version boundary. **Update 1.5.2.2 (June 18, 2026)** added the Pollaxe, Executioner's Sword and Estoc, new Brigand leaders and Northern Noble House Men at Arms alongside balance changes; **1.5.2.3 (June 24, 2026)** fixed regressions including an Estoc crash without Beasts & Exploration, named-item recognition, an Executioner retirement ending and settlement-market issues. The publisher's July recap still points to 1.5.2.2/1.5.2.3 as the recent content/update pair, so 1.5.2.3 is the newest published Steam patch found in this September 27 audit. The earlier GOG mirror remains useful for additional detailed patch text, but it is no longer the primary source for the latest-version claim. These are documented PC/Steam changes, not personally tested behavior or proof of console/storefront parity. [S16, S36]
 
 ## R02 — What the player can actually do
 
@@ -149,7 +149,7 @@ The historical team account identifies a small Hamburg studio, with Jan Taaks ha
 
 The 2016 talent and surrounding changes addressed role potential and clarity. The perk/injury update then incorporated beta feedback, revised perks, introduced more persistent consequences and changed saves incompatibly during Early Access. The contract redesign explicitly rejected a more elaborate negotiation minigame because of time and roadmap constraints. These are concrete examples of scope management, not a speculative inference from the final interface. [S08, S10, S29]
 
-The later crafting system replaced occasional event-driven access with a controllable service. Retinue was conceived as company-level advancement that would survive losses. The 2025 update demonstrated that adding locations to generated worlds and retaining mod compatibility are separate support obligations. The more recent release notes document additional memory/mod stability work and balance fixes; they do not expose the proprietary implementation or justify inventing an engine architecture. [S13–S16]
+The later crafting system replaced occasional event-driven access with a controllable service. Retinue was conceived as company-level advancement that would survive losses. The 2025 update demonstrated that adding locations to generated worlds and retaining mod compatibility are separate support obligations. The June 2026 primary Steam notes then added new equipment/enemy content and immediately followed with a regression-fix patch; together with the mirrored notes, they document active memory/mod stability and balance work without exposing proprietary implementation or justifying an invented engine architecture. [S13–S16, S36]
 
 ## R10–R11 — Distribution, promotion and commercial context
 
@@ -213,7 +213,7 @@ These are research interpretations, not accepted OpenLegend requirements.
 
 ## R14 — Evidence, source register, viewing routes and preservation
 
-All sources were accessed or searched on September 26, 2026. “Read” below means the substantive retrieved text, not a claim to have played the game or watched linked footage. Community wiki rules are player-facing references, not authoritative proprietary-code inspection. Where direct Fandom opens returned 402, the substantial indexed section named below was read; unavailable surrounding sections were not treated as inspected. Historical developer intentions are qualified where later evidence differs.
+Sources were accessed or searched on September 26–27, 2026. “Read” below means the substantive retrieved text, not a claim to have played the game or watched linked footage. Community wiki rules are player-facing references, not authoritative proprietary-code inspection. Where direct Fandom opens returned 402, the substantial indexed section named below was read; unavailable surrounding sections were not treated as inspected. Historical developer intentions are qualified where later evidence differs.
 
 | Source | Annotation and access boundary |
 | --- | --- |
@@ -252,6 +252,7 @@ All sources were accessed or searched on September 26, 2026. “Read” below me
 | S33 | [Community game guide](https://battlebrothers.fandom.com/wiki/Game_Guide). Indexed negotiation section read; its evaluative advice is not adopted as an official rule. |
 | S34 | [Developer press kit](https://www.battlebrothersgame.com/Press/presskit/sheet.php?p=battle_brothers). Full text read; historical credits, presentation and trailer/developer-commentary links. |
 | S35 | [Accessible recent Steam store surface](https://store.steampowered.com/app/365360/Battle_Brothers/%3Fl%3Dkoreana%26newsId%3D38317). Retrieved player bodies dated September 2026. Store pagination/encoded route is volatile; reviewer names, dates and selection limits are recorded above. |
+| S36 | [Steam Community Announcements — Battle Brothers](https://store.steampowered.com/oldnews/?appgroupname=Battle+Brothers+Supporter+Edition&appids=365360&feed=steam_community_announcements&headlines=0&l=english), June–July 2026. Primary publisher/developer update stream inspected during the September 27 audit: v1.5.2.2 content, v1.5.2.3 regression fixes, revert-to-1.5.1.8 mod-compatibility instructions and the July content recap. Used to replace the mirror as the primary current-version source; not a console-parity test. |
 
 ### Viewing and reading route
 
