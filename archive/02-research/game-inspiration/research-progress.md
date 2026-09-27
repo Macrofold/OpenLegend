@@ -2,13 +2,34 @@
 
 **Read first:** [requirements / R01–R14](research-requirements.md) and [130-subject roster](research-roster.md). Research-only state; no runtime or product requirements are created here.
 
-## Completed scope — G111–G120
+## Current requested follow-up audit — G111–G120
+
+Mike requested a new full-requirements audit, corrections and completion of missing research after the original range pass. **The original completion history below is not a claim that this follow-up has already passed.** Continue on the existing `docs/game-inspiration-games-111-120` branch; do not recreate it, reset it or switch to another range.
+
+**Follow-up status: G111 audited and committed; G112–G120 awaiting their full dossier audit. Active next subject: G112 Fallout: New Vegas.** Read its entire original dossier, compare R01–R14 and the explicit mechanics/review minima, research actual gaps and correct in place. Commit per game and at least every five minutes, with truthful substantive checkpoints. Do not merely copy the original completion labels.
+
+| Subject | Follow-up state | Actual evidence / next action |
+| --- | --- | --- |
+| G111 | Audited and updated | `51ce1b39a7c14ef0f900089c5a8e03e38a7cea04`: complete dossier read; all R01–R14 checked against substantive sections. Added four underexplained sage roles, Sneakstrike/Puffshroom route, Master Sword exception and Gloom recovery. Retrieved primary ZELDA NOTES text to close the shell-only gap and distinguish asynchronous sharing from live co-op/subscription eligibility. Added labeled viewing route; preserved all eight cases, five reviews and original evidence. Actual commit diff inspected. Indexed-only Sneakstrike and no-playback limits remain explicit. |
+| G112 | Pending audit | Read full dossier; verify coverage, mechanics/version claims, review provenance and source limits; update only actual gaps. |
+| G113 | Pending audit | Read full dossier and verify coverage before retaining completion. |
+| G114 | Pending audit | Retry the explicitly unresolved Steam helpful-review body retrieval; audit remaining dimensions and version claims. |
+| G115 | Pending audit | Audit full dossier, current-patch boundaries and mechanics/reception coverage. |
+| G116 | Pending audit | Audit full dossier, Nemesis/online/monetization boundaries and mechanics/reception coverage. |
+| G117 | Pending audit | Audit full dossier, original/port/mod boundaries and mechanics/reception coverage. |
+| G118 | Pending audit | Audit full dossier, neuromod/security and campaign/expansion persistence boundaries. |
+| G119 | Pending audit | Audit full dossier, protagonist powers, chaos, mode boundaries and review coverage. |
+| G120 | Pending audit | Recheck the five-genuine-written-review requirement; historical previews/essays must not silently replace available reviews. Audit all other dimensions and current-build claims. |
+
+This is the sole current work tracker. Source additions belong in each canonical dossier. Existing sources remain attributed to the original pass unless freshly checked; the audit does not imply every original source was re-read. Global P01–P05 remain out of this range-local completion claim.
+
+## Original completed scope — G111–G120
 
 **Branch:** `docs/game-inspiration-games-111-120`, created from `docs/game-inspiration-library` at `da827cd90d862a1f994b540f5e3956b606ea4a82`, September 26, 2026. Mike authorized all games 111–120, one completed game at a time, with connector commits after each game and substantive checkpoints at least every five minutes.
 
-**Completed research passes in this range: 10 / 10. No active or pending game remains in G111–G120.** Each dossier addresses R01–R14, includes eight causal situations, and records its evidence limitations. Completion means the documented research pass, not that every source was accessible, every current build was tested, or private commercial data was obtained. In particular, G120 uses seven independent written critical perspectives, including explicitly labeled historical previews and an essay; five contemporary 0.98a reviews and a Steam store-review surface were not established. G114's Steam-body retrieval gap and the other version/service qualifications remain visible below. No continuation beyond G120 is authorized by this range assignment.
+**Original research passes in this range: 10 / 10.** The original pass reported no active or pending game in G111–G120; the current follow-up above reopens audit work without discarding that history. Each dossier addresses R01–R14, includes eight causal situations, and records its evidence limitations. Completion means the documented research pass, not that every source was accessible, every current build was tested, or private commercial data was obtained. In particular, G120 uses seven independent written critical perspectives, including explicitly labeled historical previews and an essay; five contemporary 0.98a reviews and a Steam store-review surface were not established. G114's Steam-body retrieval gap and the other version/service qualifications remain visible below. No continuation beyond G120 is authorized by this range assignment.
 
-| Subject | State | Dossier / completion evidence |
+| Subject | State recorded by original pass | Dossier / completion evidence |
 | --- | --- | --- |
 | G111 — Tears of the Kingdom | Complete | [Dossier](dossiers/the-legend-of-zelda-tears-of-the-kingdom.md); `3ec701da1b89fe2d6f262b20e3234012e1dd7ba6`, clarification `f244f25deb3a8e29363e84609a4f4a3071cc14a3`. Eight situations, five complete reviews plus essay, primary interviews, named non-Steam player accounts. Switch/Switch 2 and source limits explicit. Compare from `ec3c284` showed only the new dossier changed. |
 | G112 — Fallout: New Vegas | Complete | [Dossier](dossiers/fallout-new-vegas.md); `d958e1fe70b3c621ce6886ba474580ccb612ddd7`. Eight situations, five independent full reviews plus criticism; primary creator accounts, four story-DLC comparisons, helpful-week Steam bodies and separately identified PCR negative review. Shipment/retail metrics, unsimulated blockade and source simplifications qualified. Compare from `7ef518e` showed only this dossier changed. |
@@ -21,7 +42,7 @@
 | G119 — Dishonored 2 | Complete; exact chaos weights/current hardware and account limits explicit | [Dossier](dossiers/dishonored-2.md); `0461ccdd9dda9b297e3896e99a53dde102ee5222`, checkpoint `ec8ed2e8ca869c7a94c9ef1343c1ec16aa4beca4`. All major protagonist powers and shared enhancements, equipment/crafting, eight cases, mission/people consequences, five full independent reviews and direct Steam narratives. Primary level/audio/art and maintenance accounts, dated retail scope. No-powers/Iron/NG+/Mission Select/Mission+ and separate Death of the Outsider distinguished. Completion reviewed against checkpoint; remote comparison confirms only this dossier changed (271 additions, 35 deletions). Earlier review disagreements and observed incidents preserved. |
 | G120 — Starsector | Complete; contemporary-review/official-host and indexed-source limits explicit | [Dossier](dossiers/starsector.md); `8d64f7e74dd78497b8c99a02b3a1da2d5000e296`, reviewed source clarification `e7edeec539b747774ca3566eb31171d88a2b33a0`; checkpoints `cd55152ead4661f6e83c7ae3c34298101c3b0ec4` and `784aba343b5e2353158ecd3986be2f43e925956c`. Forty-skill inventory, combat/fitting/logistics/markets/colonies/crises, eight cases, seven independent critical perspectives, primary production/financing accounts and marked narrative spoilers. 0.98a versus unverified in-development versions, native/Nexerelin features, historical previews and Steam-group testimony distinguished. Completion comparison showed only this dossier changed (298 additions, 60 deletions); final clarification changed two lines. Observed combat incident, review disagreements, access limits and financial qualifications preserved. |
 
-## Final range review
+## Original final range review
 
 The remote comparison from fork `da827cd90d862a1f994b540f5e3956b606ea4a82` through completed-dossier head `8d64f7e74dd78497b8c99a02b3a1da2d5000e296` showed **ten new dossiers, one frozen inherited ledger, and the current ledger update only**. It contained no changes to existing game chapters, mechanics studies, source owners, runtime files, the roster or the requirements. Each of the ten navigation targets was matched to its returned repository path; all dossier return links use the existing library README, roster, requirements and progress files. This is a range-local path check, not a crawler audit of the entire library or external source availability.
 
@@ -47,6 +68,6 @@ At branch creation, the inherited snapshot recorded G01–G30 complete and G31 V
 
 ## Recovery discipline
 
-For any later authorized extension, read the current remote head and relevant blob before editing; preserve concurrent work. Commit each reviewed completed dossier before advancing this ledger. Checkpoints identify exact remaining work and do not count as completion. Keep substantive drafts and source annotations in the dossier, not a second bibliography here. The requested G111–G120 range is now closed; choose further work only from Mike's next scope instruction. No background execution or future delivery is implied.
+Read the current follow-up status first, then the current remote head and relevant blob before editing; preserve concurrent work. Commit each reviewed completed dossier before advancing this ledger. Checkpoints identify exact remaining work and do not count as completion. Keep substantive drafts and source annotations in the dossier, not a second bibliography here. The original G111–G120 range was closed before Mike's new audit request; the current follow-up is authorized, but expansion beyond G120 is not. No background execution or future delivery is implied.
 
 Full inherited assignment/reconciliation history and original instruction-commit references remain in the frozen snapshot. File counts, copied headings and elapsed work never substitute for research completion.
