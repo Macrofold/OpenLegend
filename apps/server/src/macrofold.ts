@@ -385,7 +385,7 @@ export class MacrofoldBackend implements AiClient {
           'World Agent is waiting for confirmation of its earlier run. No duplicate will be started.',
         );
       const config = this.service.config;
-      const billingMode = worldAgent ? 'managed' : config.macrofoldBillingMode;
+      const billingMode = config.macrofoldBillingMode;
       const toolPermissions = worldAgent
         ? {
             ...permissions,
@@ -444,7 +444,7 @@ export class MacrofoldBackend implements AiClient {
                 harness: config.macrofoldHarness,
                 model: config.macrofoldModel,
                 billing_mode: billingMode,
-                ...(!worldAgent && config.macrofoldProviderConnectionId
+                ...(config.macrofoldProviderConnectionId
                   ? { provider_connection_id: config.macrofoldProviderConnectionId }
                   : {}),
                 model_parameters: macrofoldModelParameters('full'),

@@ -1,5 +1,9 @@
 # Documentation changelog
 
+## 2026-09-27 — World Agent honors configured BYOK
+
+The owner selected BYOK for invention authoring. Removed the native authoring override that forced managed billing and omitted the saved provider connection; the [runtime](world-agent-runtime.md#4-execution-adapter) now honors the same operator settings as other native calls. This supersedes the request to fund managed credits. Existing admission caps, provider-cost accounting, conservative missing-usage holds and the abstract player usage display are preserved. [Real BYOK execution](verification/invention-main-integration.md#byok-authoring-and-connector-schema-blocker) reaches the model but exposes a Macrofold tool-schema validation failure; WW07 remains open rather than claiming successful invention qualification.
+
 ## 2026-09-27 — Invention foundation integration
 
 Merged the published foundation with current main while preserving ancestry. Updated the existing production integration plan, canonical runtime/budgets/MCP handoff, architecture and WW/INV trackers for PostgreSQL, current account/privacy and mutation owners, immutable review receipts, current-format save recovery and main’s shared Worker APIs. The owner explicitly superseded both the old rebase workflow and all-inclusive workshop compute guarantee: players now see abstract remaining usage; owner details explain attributable Run caps and separately billed shared capacity. Root no-legacy-support policy remains authoritative; historical import/replay machinery is not reinstated. [Evidence and limits](verification/invention-main-integration.md) distinguish current native/fixture/browser results from earlier SQLite/Sandbox results and open release gates.

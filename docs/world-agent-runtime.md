@@ -32,6 +32,8 @@ Use one `WorldAgentExecutor` boundary: start/resume an admitted turn; inspect pr
 
 The preferred executor is a **native Macrofold harness with OpenLegend registered as an MCP connector**. The existing app-executed structured-inference loop is a transitional adapter, not equivalent proof of native-harness support. Retain that path only while useful for known finite recipes; never silently substitute it when the requested capability requires tools it lacks.
 
+Native authoring honors the operator's `MACROFOLD_BILLING_MODE` and `MACROFOLD_PROVIDER_CONNECTION_ID`, including the default BYOK mode and saved provider connection. It never silently switches to managed billing. BYOK provider charges consume the same admitted allocation; complete reported provider usage and separate platform fees settle it, while missing cost data retains the reservation under [the provider accounting contract](ai-providers.md). Players still see only their abstract usage remaining.
+
 The agent may produce ordinary explanatory prose, ask a question, or invoke tools in any useful order within its grants. It should save drafts through tools before a run ends. Final prose is not parsed as a covert mutation command. Tool results and server receipts, not the provider's final answer, determine task status.
 
 ## 5. Macrofold provisioning and continuation
