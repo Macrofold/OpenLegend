@@ -10,6 +10,8 @@ Starry Studio, a NetEase studio, develops Once Human. The PC version launched gl
 
 As of **September 27, 2026**, the current live version is **3.0.6**. Its September 16 update includes the Beastmaster/animal overhaul, permanent-server merge work and an **Isles of Abyss** Pioneer test. Isles of Abyss is **not yet a normal released scenario**: the official final test runs September 16–October 8 under NDA with data wipe. This dossier therefore does not import its test-only naval/ocean rules into the normal live game. [3.0.6](https://www.oncehuman.game/news/devBlog/20260916/40781_1314019.html) · [Isles test](https://www.oncehuman.game/news/official/20260828/40779_1312551.html).
 
+The newest live maintenance notice found in this audit is still on the **3.0.6 line (September 23 bug fixes)**. The next full update is scheduled for **September 28**, so announced free reshaping/hair dye, the return to three simultaneous Beastmaster summons and other September-28 changes remain **future on the research date**. [3.0.6 fixes](https://www.oncehuman.game/news/update/20260923/40780_1314904.html) · [character-customization plan](https://www.oncehuman.game/news/devBlog/20260911/40781_1313623.html) · [Beastmaster plan](https://www.oncehuman.game/news/devBlog/20260915/40781_1313919.html).
+
 The player's baseline promise is to inhabit the contaminated continent of **Nalcott** as a Meta-Human: gather/build, explore strange towns and labs, craft and tune firearms/armor, capture Deviations, develop a territory, clear bosses/dungeons/events and participate in scenario-specific PvE or PvP communities.
 
 That baseline is deliberately not one immutable campaign. The current product offers multiple scenario families and related modes, including:
@@ -27,6 +29,14 @@ That baseline is deliberately not one immutable campaign. The current product of
 Server-opening plans and scenario availability change, so the canonical current server browser—not a 2024 guide—owns exact server counts.
 
 ## R02 — player actions and major mechanics
+
+### Character creation, body attributes and scenario level
+
+Players create a Meta-Human with detailed facial/body customization and gender presentation. Appearance can later be changed at a territory **Floor Mirror**. As of **September 27**, facial/body reshaping and hair-color changes still use the existing cosmetic-item flow; the announced change making reshaping/hair dye free is scheduled for **September 28** and is therefore not yet current. Gender change remains a separate Metamorphosis Token flow. [character-customization plan](https://www.oncehuman.game/news/devBlog/20260911/40781_1313623.html).
+
+Body shape is not purely cosmetic in the current 2026 rules. The Tech overhaul distinguishes **Overweight, Normal and Underweight** body types through carry-load and movement-speed tradeoffs. Character **Level** still exists within a scenario and can unlock feature/challenge pacing, but the rebuilt Tech tree is no longer hard-gated by character level. [Tech overhaul design](https://www.oncehuman.game/news/devBlog/20260302/40781_1288924.html) · [level/feature pacing](https://www.oncehuman.game/m/news/update/20260121/40780_1282991.html).
+
+A fresh normal scenario can therefore reset world-local Level/Tech progress while the same account keeps durable blueprint/cosmetic/social identity; permanent-server merges explicitly preserve Character Level and Tech Level. [permanent-server merge](https://www.oncehuman.game/news/devBlog/20260914/40781_1313806.html).
 
 ### Gathering, survival and territory
 
@@ -60,11 +70,19 @@ Temperature exists across scenarios, but **The Way of Winter** makes it central.
 
 Do not apply Way of Winter's harsh-weather loop to Manibus as if all scenarios are identical.
 
-### Memetics, Tech and classes
+### Tech tree, research/invention and classes
 
-Historically, **Memetics** acted as a broad technology/crafting unlock system, with Memetic Specializations adding randomized specialization choices. Starry Studio later concluded that randomized/level-gated specialization was pushing players toward min-maxing rather than freely expressed roles.
+The old **Memetics** framework has been renamed and structurally replaced by the current **Tech** system. Version 2.3.6 (April 2026) rebuilt the tree into four core branches—**Survival, Production, Combat and Building**—with scenario-specific tabs where appropriate. Tech progression is now primarily exploration/research-driven rather than a simple level/phase unlock ladder. [2.3.6](https://www.oncehuman.game/banner/20260408/41906_1295195.html).
 
-The **Class System** entered public testing in July 2025 and is now a major live progression layer for eligible scenarios. It is explicitly *not* a conventional combat-class lock.
+Current unlock routes include:
+- spending **Tech Points** on connected nodes;
+- **Reverse Engineering** cultural-artifact facilities/items at the research/Synthesis Bench to directly learn formulas or gain points;
+- **Tech Invention**, experimentally combining materials for a chance to unlock a formula and receive the finished item;
+- earning Tech Enhancement Points and applying enhancement effects to eligible Tech.
+
+Tech Points come from activities including leveling, repeated research, Elites/Great Ones, Silos/Monoliths and scenario challenges; Tech points/levels are scenario-local and reset when a normal scenario ends. The previous randomized **Tech/Memetic Specialization** layer was removed and its useful effects redistributed into Tech, class abilities, enhanced facilities or wilderness discoveries. [Tech design](https://www.oncehuman.game/news/devBlog/20260302/40781_1288924.html) · [May optimization](https://www.oncehuman.game/m/news/official/20260513/40779_1300125.html).
+
+The **Class System** is a parallel specialization layer rather than a conventional combat-class lock.
 
 Current classes include:
 
@@ -75,7 +93,7 @@ Current classes include:
 
 [Class introduction](https://www.oncehuman.game/news/update/20250630/40780_1243929.html).
 
-As of September 16, 2026 the Beastmaster can summon/command and ride supported animals; the September 15 FAQ says the intended simultaneous Beastmaster summon limit will return to **three** with the September 28 update, while 3.0.6 initially shipped the one-animal rework. This is a current transition boundary, not a stable timeless rule. [3.0.6 class update](https://www.oncehuman.game/news/devBlog/20260916/40781_1314019.html) · [Sept. 15 follow-up](https://www.oncehuman.game/news/devBlog/20260915/40781_1313919.html).
+As of September 27, 2026 the live Beastmaster can summon/command and ride supported animals, but the **current simultaneous summon limit is still one**. Starry Studio reversed its earlier design after feedback and has committed to restoring **three simultaneous Beastmaster animals on September 28** (non-Beastmasters remain limited to one); the latest September 23 clarification also says one Beast Whistle will command multiple summoned animals after that update. Those three-animal rules are announced future behavior, not yet live. [3.0.6](https://www.oncehuman.game/news/devBlog/20260916/40781_1314019.html) · [Sept. 15 FAQ](https://www.oncehuman.game/news/devBlog/20260915/40781_1313919.html) · [Sept. 23 clarification](https://www.oncehuman.game/news/devBlog/20260923/40781_1314860.html).
 
 ### Deviations: combat, utility and automation
 
@@ -93,25 +111,26 @@ The **Deviation: Survive, Capture, Preserve** scenario radically expands this re
 
 This should not be retroactively treated as the rule set for every older Manibus season.
 
-### Weapons, armor, blueprints and mods
+### Weapons, armor, blueprints, upgrades and mods
 
 Combat is third-person shooter/action-RPG driven, now also supporting first-person perspective in the wider product.
 
 Weapons include familiar firearm families plus bows/melee/special gear. Build composition involves:
-
-- weapon blueprint/tier;
-- weapon effects;
+- weapon/armor blueprint rarity and **star level**;
+- crafted or dropped gear instance/tier;
+- keyword/status effects;
 - armor set pieces;
-- mods;
-- accessories;
-- scenario/current-version item systems;
-- food/class/Deviation synergy.
+- mods and accessories;
+- food/class/Deviation synergy;
+- current scenario/world rules.
 
-Blueprint ownership is one of the durable progression layers that can persist across scenario transitions.
+The **Blueprint** layer is persistent account progression. Since the March 2026 simplification, weapon and armor blueprints are unlocked and upgraded **directly with Starchrom** rather than combining blueprint fragments; wilderness exploration, mysterious treasures, first-clear dungeons and tasks now pay equivalent Starchrom instead. Blueprint Conversion can move star levels between unlocked blueprints of the same rarity/type. [2.3.4 blueprint update](https://www.oncehuman.game/m/news/update/20260311/40780_1290685.html).
 
-The old **weapon Calibration** feature was removed in January 2026 because the team judged it repetitive and overly complex for a scenario-reset structure. Previously calibrated weapons retained unaffected stats while the system itself stopped being part of new progression. [Calibration revamp](https://www.oncehuman.game/m/news/devBlog/20260113/40781_1281545.html).
+Dropped gear also matters. The April 2026 Tech update expanded weapon/armor drops from Silos/crates and gives dropped gear an initial star rating; "lost" gear can provide immediate power but has different repair/reverse-engineering/trade rules from owned crafted progression. [2.3.6 additional update](https://www.oncehuman.game/news/update/20260409/40780_1295383.html).
 
-That is a rare example of a live game deleting a progression subsystem instead of endlessly stacking another layer on top.
+The old **weapon Calibration** function was removed in January 2026 because Starry Studio judged the interaction repetitive/complex for a scenario-reset game. Calibration **blueprints/styles** continue as crafting modifiers, while the old repeated calibration action no longer does. [Calibration revamp](https://www.oncehuman.game/m/news/devBlog/20260113/40781_1281545.html).
+
+This is a rare example of a live game deleting one progression action while preserving the valuable build identity attached to its artifacts.
 
 ### Combat and bosses
 
@@ -139,6 +158,18 @@ Building supports multi-story bases, decorative homes, farms, production lines a
 
 Current 3.0.2/3.0.5 updates continue improving construction snapping/storage search, showing that territory UX remains an active live-service surface. [3.0.2](https://www.oncehuman.game/news/update/20260722/40780_1308595.html) · [3.0.5](https://www.oncehuman.game/news/update/20260902/40780_1312959.html).
 
+### Loot, quests, commissions and repeatable activities
+
+The live game has several distinct reward/activity loops beyond combat farming:
+
+- **Main Story Tasks, Side Story Tasks and Exploration Notes** are the current names for the major quest/guidance layers after the January 2026 terminology cleanup. [2.3.1](https://www.oncehuman.game/m/news/update/20260121/40780_1282991.html)
+- **Commissions** provide limited daily task/reward loops; later updates changed how many can be accepted and how unfinished tasks refresh.
+- settlement **Mystical/weapon/armor/storage crates**, first-clear Silos/Monoliths and bosses supply gear, mods, Starchrom, resources and scenario rewards;
+- Public Crisis Events, Prime Wars, Scenario Challenges and seasonal/Visional events provide group objectives/rewards;
+- Eternaland's **Island Paradise** supports player-authored activities such as Hide and Seek/race-like modes with faction spawn/respawn/objective facilities. [Island Paradise](https://www.oncehuman.game/m/news/devBlog/20260129/40781_1284568.html).
+
+This is a live-service activity graph, not one universal "quest line." Which loops matter depends heavily on scenario and current phase.
+
 ### Farming and ranching
 
 Crop systems can become quite deep under Gardener mechanics: soil fertility, biomechanical crops, portable planting, material cultivation and greenhouse tooling. Animal husbandry/breeding feeds the Beastmaster layer.
@@ -150,6 +181,12 @@ The September 2026 class/animal work explicitly turns animals from "livestock/re
 Motorcycles and other vehicles accelerate the large open world. Fast-travel/teleport infrastructure reduces repeated driving. Vehicle and world rules can differ in Custom Servers/RaidZone.
 
 Current console launch also adds full cross-platform access and control adaptations; do not assume the launch-2024 mouse/keyboard limitation from early reviews is current.
+
+### Stealth is scenario-specific rather than a universal RPG skill tree
+
+Ordinary Once Human supports tactical avoidance and line-of-sight play, but the explicit **crouch-stealth mechanic** added in July 2026 is documented under **RaidZone**: crouching hides footstep sounds and corresponding visual footstep markers so players can use cover/deadzones for PvP repositioning. [3.0.1 RaidZone changes](https://www.oncehuman.game/news/update/20260709/40780_1307147.html).
+
+The dossier found no general stealth attribute/perk tree equivalent to a stealth RPG class across all normal scenarios. This mechanic therefore stays mode-scoped rather than being silently generalized to Manibus.
 
 ### Social organization
 
@@ -186,9 +223,25 @@ The **Community Creation Program** can share revenue with server hosts from play
 
 This makes live player-authored rules part of the product's business/community model.
 
+### Downed state, revival, respawn and death loss
+
+Failure/recovery is also mode-specific. Normal survival rules support a **near-death/downed state** that teammates or appropriate Deviation abilities/items can revive; current update notes continue referring to revive behavior. Activated Worldstones and other configured points can function as respawn locations. [2024 revive objective evidence](https://www.oncehuman.game/news/update/20240801/40780_1171506.html) · [2026 Worldstone/respawn rules](https://www.oncehuman.game/m/news/official/20260513/40779_1300125.html).
+
+The exact item-loss contract should not be generalized from PvP. **RaidZone** is explicit:
+- Casual mode drops only weapons/gear on death;
+- Standard/Hardcore use full-drop rules;
+- Safe Backpack slots and Territory Vault can protect selected assets;
+- Sleeping Bags/territories provide tactical respawn points and Custom Servers can alter respawn cooldowns/death drops.
+
+[2026 RaidZone modes](https://www.oncehuman.game/news/devBlog/20260416/40781_1296450.html) · [resource protection](https://www.oncehuman.game/m/news/update/20260121/40780_1282991.html) · [custom death-drop settings](https://www.oncehuman.game/news/update/20251203/40780_1274519.html).
+
+For normal PvE scenarios, first-party current sources inspected in this audit do **not** provide one clean universal inventory-loss table, so this dossier does not manufacture a precise drop percentage.
+
 ## R03 — items, entities and composition
 
 ### A character build is a multi-layer composition
+
+Character capability is not one stat sheet. Scenario Level, body-type load/movement tradeoffs, persistent blueprint star levels, current crafted/dropped gear, Tech/Tech Enhancements, class mechanics, weapon keyword effects, mods/accessories, food and Deviations all contribute. There is no Strength/Dexterity point-allocation screen; current Tech deliberately separated exploration/research progression from simple character-level gates.
 
 A current normal-scenario build can involve:
 
@@ -309,6 +362,12 @@ Monetization is structurally separate. The current console FAQ promises that all
 
 This is also a common criticism surface: current Steam users object to the number of cosmetic currencies/loot-crate-style storefront layers even when they do not grant combat power.
 
+### Trading, vending and social economy
+
+The economy is not only NPC currency. Players can use vending/trading systems and exchange items/facilities whose ownership/repair rules differ across scenario contexts. Tech enhancements can create tradable enhanced outputs, while scenario currencies and Starchrom remain system-specific rather than one universal gold standard.
+
+The official 2026 Tech redesign explicitly permits enhanced products to be exchanged/traded and ties some progression to reverse-engineering items obtained from the world or other players. [Tech redesign](https://www.oncehuman.game/news/devBlog/20260302/40781_1288924.html). RaidZone intentionally walls its economy off from normal-game imports.
+
 ### Time gating
 
 Scenario phases, event windows, servant/production timers and weekly/periodic progression can create urgency. Critics and players disagree whether that keeps servers socially synchronized or creates FOMO/forced cadence.
@@ -389,11 +448,19 @@ Unless attributed otherwise, these are rules-based illustrations from current do
 
 ## R06 — people, AI, Deviations and social systems
 
-### Human NPCs and factions
+### Human NPCs, factions and absent relationship simulation
 
-The story includes human survivor groups, settlements and hostile organizations. Their dialogue/quests provide world context, but launch criticism repeatedly describes the ordinary human narrative as jargon-heavy/thin compared with creature design.
+The story includes survivor settlements and multiple friendly/hostile factions. The current Steam product explicitly frames some factions as violent/hostile and others as friendly/helpful; scenario-specific PvP such as Prismverse can assign players to stronger faction identities. [Steam product page](https://store.steampowered.com/app/2139460/Once_Human/).
 
-Once Human is not a deep relationship-sim: there is no romance/companion-affinity party layer equivalent to a BioWare RPG.
+This is **not** a freeform relationship simulator: the dossier found no romance/companion-affinity party system, no dynamic dialogue-driven faction-reputation ladder comparable to a political RPG and no documented daily-schedule simulation for settlement NPCs. Quest NPCs/merchants primarily function as authored story/service actors.
+
+Launch criticism repeatedly describes the ordinary human narrative as jargon-heavy/thin compared with creature design.
+
+### Companion layers: Deviations, animals and human teams
+
+Once Human has companion mechanics, but they are mostly **nonhuman/systemic** rather than authored party-character relationships. Combat Deviations can be deployed for abilities, territory Deviations automate work, the Deviation scenario supports teams of anomaly companions, and current Beastmaster animals can be summoned/ridden/commanded. Human players form the social party through teams/Hives rather than recruiting narrative NPC followers.
+
+As of this audit, the live Beastmaster rules still allow one simultaneous animal until September 28; the announced three-animal version is future. This matters for accurately describing current companion capacity.
 
 ### Deviants versus Deviations
 
@@ -443,6 +510,12 @@ That tonal breadth is both a strength and criticism: some players love the surre
 
 Gun feel is generally reviewed more positively than enemy AI. PC Gamer and GamesRadar both distinguish competent/punchy shooting from low-threat ordinary enemies.
 
+### Audio, voice and territory music
+
+The current Steam product lists **full English and Simplified Chinese audio** alongside multilingual subtitles. Environmental/creature sound, firearms and voiced story delivery support the New Weird world, while player territories can also use jukebox/music furniture introduced through live events/updates. [Steam](https://store.steampowered.com/app/2139460/Once_Human/).
+
+This audit did **not** locate a trustworthy first-party composer/complete-score credit on the official site, so it does not invent one. Audio is therefore covered at the product/interaction level while soundtrack-production attribution remains an evidence limit.
+
 ### UI complexity
 
 By 2026 this is one of the clearest player pain points. The game now contains:
@@ -479,6 +552,8 @@ The launch story provides:
 - environmental anomaly lore.
 
 Critical reception repeatedly says the **creature/world premise is more compelling than the dialogue/mission narrative**. GamesRadar's central criticism is that fantastic anomaly concepts often resolve into conventional "loot a chest / shoot simple enemies" interactions.
+
+The current quest taxonomy also matters to how story reaches play: **Main Story Tasks** carry the core campaign, **Side Story Tasks** branch into local stories, and **Exploration Notes** surface world discoveries after the 2026 terminology overhaul. The names changed from Stardust Journey / World Quest / Stardust Chronicles specifically to reduce comprehension cost. [2.3.1](https://www.oncehuman.game/m/news/update/20260121/40780_1282991.html).
 
 The scenario system is the more interesting long-term narrative device. A scenario can change the world's rules and survival premise:
 - winter/climate catastrophe;
@@ -541,6 +616,8 @@ The product also turns players into distributors through Custom Servers: server 
 
 Once Human is free-to-play. Current first-party policy says gameplay modes/content are free and purchases focus on cosmetics/Battle Pass/non-power content. [Console FAQ](https://www.oncehuman.game/news/update/20260820/40780_1311772.html).
 
+That does **not** mean the shop is simple: the September 3.0.6 announcement contains a **Meta Pass subscription**, direct cosmetics and chance-based **Lightforge/Combo blind-box** products, and Steam labels the game as containing chance-based in-game purchases. The fair description is "no advertised gameplay-power sale, but extensive cosmetic/subscription/chance-based monetization," which better matches current player criticism. [3.0.6 monetization surface](https://www.oncehuman.game/news/devBlog/20260916/40781_1314019.html) · [Steam](https://store.steampowered.com/app/2139460/Once_Human/).
+
 Useful dated public scale measures:
 
 - **15m global pre-registrations** by June 19, 2024. [official](https://www.oncehuman.game/update/20240619/37494_1161943.html)
@@ -570,7 +647,7 @@ The Custom Server Community Creation Program introduces another business layer: 
 
 ### Current Steam player evidence — September 2026
 
-Current English Steam surfaces were directly inspected.
+Current English Steam surfaces were directly inspected again in this audit. Steam currently reports a **Very Positive recent** aggregate while the all-time English aggregate is lower, reinforcing that launch-era review bodies should not substitute for current sentiment. Helpful/all-time negative material remains version-mixed and is used only qualitatively. [Steam](https://store.steampowered.com/app/2139460/Once_Human/) · [current reviews](https://steamcommunity.com/app/2139460/reviews/) · [helpful negatives](https://steamcommunity.com/app/2139460/negativereviews/?browsefilter=toprated&l=english).
 
 **Positive recent testimony includes:**
 - players with 100–1,000+ hours still enjoying the survival loop;
@@ -808,6 +885,34 @@ https://butwhytho.net/2024/07/review-once-human-is-alright-i-guess-pc/
 https://steamcommunity.com/app/2139460/reviews/  
 https://steamcommunity.com/app/2139460/negativereviews/?browsefilter=toprated&l=english
 
+**S29 — Once Human 3.0.6 September 23 fixes + September 28 plans.** Primary current-version boundary: still 3.0.6 on Sep. 27; Sep. 28 character/Beastmaster changes are future.  
+https://www.oncehuman.game/news/update/20260923/40780_1314904.html  
+https://www.oncehuman.game/news/devBlog/20260911/40781_1313623.html  
+https://www.oncehuman.game/news/devBlog/20260915/40781_1313919.html  
+https://www.oncehuman.game/news/devBlog/20260923/40781_1314860.html
+
+**S30 — 2026 Tech-system overhaul and optimization.** Primary current progression rules: four Tech branches, reverse engineering, inventions, Tech Points/enhancements, removal of specialization and scenario-local resets.  
+https://www.oncehuman.game/news/devBlog/20260302/40781_1288924.html  
+https://www.oncehuman.game/banner/20260408/41906_1295195.html  
+https://www.oncehuman.game/m/news/official/20260513/40779_1300125.html
+
+**S31 — Blueprint / dropped-gear progression, Mar.–Apr. 2026.** Primary direct-Starchrom blueprint unlock/upgrade, conversion, Starchrom wilderness rewards and star-rated dropped gear.  
+https://www.oncehuman.game/m/news/update/20260311/40780_1290685.html  
+https://www.oncehuman.game/news/update/20260409/40780_1295383.html
+
+**S32 — RaidZone stealth, death and protection.** Primary mode-specific crouch stealth, Casual/Standard/Hardcore death drops, Safe Backpack/Vault and configurable death-drop/respawn rules.  
+https://www.oncehuman.game/news/update/20260709/40780_1307147.html  
+https://www.oncehuman.game/news/devBlog/20260416/40781_1296450.html  
+https://www.oncehuman.game/m/news/update/20260121/40780_1282991.html  
+https://www.oncehuman.game/news/update/20251203/40780_1274519.html
+
+**S33 — Current quest/creator activity references.** Primary 2026 task terminology and Eternaland Island Paradise Hide-and-Seek/faction facilities.  
+https://www.oncehuman.game/m/news/update/20260121/40780_1282991.html  
+https://www.oncehuman.game/m/news/devBlog/20260129/40781_1284568.html
+
+**S34 — Current Steam product page, Sep. 2026.** Primary current audio languages, official faction/product framing, recent/all-time review aggregates and chance-based purchase disclosure.  
+https://store.steampowered.com/app/2139460/Once_Human/
+
 ### Suggested reading route
 
 1. Read **S01** first to understand current inheritance/cross-platform rules; launch articles alone are now structurally stale.
@@ -843,6 +948,9 @@ https://steamcommunity.com/app/2139460/negativereviews/?browsefilter=toprated&l=
 - No private Isles of Abyss test/leak/NDA material was accessed or reproduced.
 - No video/trailer is represented as watched.
 - Many systems are scenario/world/server-rule specific; this dossier avoids promoting one server's parameters to universal rules.
+- Exact normal-PvE death-drop percentages were not cleanly specified in the current first-party sources retrieved; the dossier documents verified downed/respawn behavior and the explicit RaidZone/custom-server contracts instead of inventing a universal percentage.
+- The Sep. 28 free-reshape and three-animal Beastmaster rules are announced but future on Sep. 27.
+- No authoritative first-party soundtrack/composer credit was located in this audit; no composer attribution is invented.
 - Review bodies are primarily 2024 launch evidence; current mechanics use dated first-party 2025–2026 sources and current player testimony.
 - Steam player samples are qualitative, not prevalence estimates.
 - First-party preregistration/download figures are preserved as their original metric; they are not converted into revenue or current active users.
