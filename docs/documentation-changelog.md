@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — Progressive 3D pixel-art design package
+
+Added the requested [feature specification](projects/3d-pixel-art-feature-spec.md) and [technical design](projects/3d-pixel-art-tech-design.md), with focused [appearance-family](projects/3d-pixel-art-appearance-families.md), [runtime art pipeline](projects/3d-pixel-art-asset-pipeline.md), and [qualification](projects/3d-pixel-art-validation.md) documents. The proposal recommends a measured hybrid of sprites and real models, reusable rigs/parts/materials/state, and optional 2D-first/3D-later publication from one appearance brief. It preserves mechanical identity, authoritative spatial/action state, observer privacy, current-format saves, retained asset rights, and existing spending/no-paid-retry rules.
+
+[V3D01–V3D12](maintainers/3d-pixel-art.md) track staged delivery beneath SW/INV/PO; [A3D01–A3D14](limits/3d-pixel-art.md) record proposed resource envelopes and unqualified performance targets. The first gate is an actual moving woodland-camp comparison before broad conversion. Current PlayCanvas/runtime-art owners remain controlling; this is documentation-only work, not accepted implementation, provider selection, generated artwork, dependency change, or fresh runtime/graphics qualification.
+
 ## 2026-09-27 — Embodied survival and Jev-only action selection
 
 The owner approved the [embodied-survival design](projects/embodied-survival-tech-design.md) and explicitly retained strict Jev-only scenario acceptance. Implemented private body-condition episodes, world-authored hunger/death meaning, scoped inventory inspection and equipped melee with real misses, recovery and saved randomness. Mike/Ada receive starter knives; Ada has authored identity/practical knowledge, an explicitly empty goal list and lean supplies. NPC ghost continuity/difficult revival remains policy; no permanent-erasure promise is added.

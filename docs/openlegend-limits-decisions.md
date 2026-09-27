@@ -22,6 +22,8 @@ Start with [the tracking system](limits/README.md). Feature inventories retain l
 | [Authoring and presentation](ui-design-brief.md)                                                      | [Limits](limits/interface.md)     | [Tracker](maintainers/TODO.md)                           |
 | [Bundled-world defaults](worlds/base/README.md)                                                       | [Limits](limits/base-world.md)    | [Tracker](maintainers/base-world.md)                     |
 
+Proposed [progressive 3D pixel art](projects/3d-pixel-art-feature-spec.md): [A3D01–A3D14](limits/3d-pixel-art.md) inventory the new asset-pipeline envelopes and unqualified device targets; [V3D01–V3D12](maintainers/3d-pixel-art.md) own delivery. Existing lighting, spending, physical-world and persistence limits above remain controlling. These are proposals, not changes to current runtime limits.
+
 ## Original audit entries
 
 All 238 original numbers are preserved. `LA014` is audit number 14. Most old rows retain their historical baseline until rechecked; original Completed rows stay removed-history records. New report IDs and exclusions are mapped in [import coverage](limits/import-coverage.md).
