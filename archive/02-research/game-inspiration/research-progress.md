@@ -4,7 +4,7 @@
 
 ## Resume here
 
-**Active: requirements-and-corrections audit of G26–G39, beginning with G26 Baldur's Gate 3.** Mike requested checking every applicable research dimension, correcting errors and finishing missing research in this batch. **G40 AI Dungeon is explicitly excluded from this audit at Mike's request because it was handled on another branch.** Its existing dossier and historical completion record below are preserved; this audit does not re-certify or overwrite that work. Baseline for this audit: `e01d800a839e6bbbbc8ff0ed13eb45b0a3a3d01c`.
+**Completed: requirements-and-corrections audit of G26–G39.** Mike requested checking every applicable research dimension, correcting errors and finishing missing research in this batch. **G40 AI Dungeon is explicitly excluded from this audit at Mike's request because it was handled on another branch.** Its existing dossier and historical completion record below are preserved; this audit does not re-certify or overwrite that work. Baseline for this audit: `e01d800a839e6bbbbc8ff0ed13eb45b0a3a3d01c`.
 
 Initial full passes are recorded for G01–G40, but that is not evidence that the newly requested audit has passed. Check actual content against R01–R14 and the explicit mechanics inventory, not just headings or prior completion labels. For each subject, reread its dossier and earlier owners, investigate material factual/version disagreements, repair missing coverage and evidence, review changes and commit before advancing. Keep genuinely inaccessible evidence distinct from unfinished research. Current audit state: **G26–G39 audited; G40 skipped by instruction.** No G41+ work or global P01–P05 completion is claimed.
 
