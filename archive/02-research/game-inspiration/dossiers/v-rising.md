@@ -12,7 +12,7 @@ The current content boundary matters:
 
 - **1.0** completed the main ascent toward Dracula, added the Ruins of Mortium/endgame, Dracula, difficulty modes, castle relocation, controller support, achievements and other major system revisions.
 - **Update 1.1: Invaders of Oakveil** released **April 28, 2025**. It added Oakveil Woodlands, the Venom Blades, Megara the Serpent Queen, blood/combat/itemization changes, arenas, more castle/building content and other systems/QoL. [Stunlock 1.1 launch](https://blog.stunlock.com/invaders-of-oakveil-out-now/) · [Oakveil overview](https://playvrising.com/expansions/oakveil).
-- **Patch 1.1.1** arrived in May 2026 as a balance/bug pass and explicitly did **not** require a save wipe. [1.1.1 notes](https://blog.stunlock.com/free-weekend-and-patch-notes/).
+- **Patch 1.1.1** arrived in May 2026 as a major balance pass and explicitly did **not** require a save wipe. Subsequent maintenance continued; the newest first-party patch located in this audit is **V Rising 1.1 Hot Fix 12 (September 11, 2026)**, a server-side ownership-permission exploit fix. The content line remains 1.1 rather than a hidden 1.2. [1.1.1 notes](https://blog.stunlock.com/free-weekend-and-patch-notes/) · [current announcements](https://steamcommunity.com/app/1604030/announcements/).
 - On **March 26, 2026**, Stunlock stated that the journey to Dracula is complete and **no V Rising 1.2/content update is currently in development**. Balance and important bug-fix support continue. The studio is making a **new game in the V Rising world**, not another V Rising content patch. [Dev Update #32](https://blog.stunlock.com/dev-update-32-the-next-era/).
 
 That March 2026 statement supersedes earlier open-ended speculation about future expansions. Cosmetic DLC remains separate from gameplay progression.
@@ -20,6 +20,12 @@ That March 2026 statement supersedes earlier open-ended speculation about future
 The player promise is: awaken as a weakened vampire in the handcrafted world of **Vardoran**, hunt progressively stronger V Blood carriers, steal their knowledge/power, gather and refine materials, construct an increasingly extravagant castle, maintain a useful blood supply, avoid daylight and other vampiric hazards, and eventually defeat Dracula. The same campaign can be played solo, in cooperative PvE, or under configurable PvP/server rules.
 
 ## R02 — player actions and major mechanics
+
+### Character creation, attributes and build identity
+
+The player creates a named vampire and can customize presentation including body type, skin tone, face, eyes, hair and accessory/facial-hair options; a **Standing Mirror** later lets the player revisit appearance. These are identity/cosmetic choices rather than class selection. [Early Access Q&A](https://blog.stunlock.com/v-rising-update-13-early-access-qa/) · [Standing Mirror](https://vrising.fandom.com/wiki/Standing_Mirrors).
+
+V Rising has many combat/economy **attributes**—Health, Physical Power, Spell Power, movement/attack speed, resistances, critical stats, resource yield and other modifiers—but the player does not distribute Strength/Dexterity-style level-up points. Attributes come primarily from equipment, blood, spells/passives, consumables and server rules. [Attributes](https://wiki.v-ris.ing/w/Attributes). Gear Level remains the principal PvE progression measure.
 
 ### Blood is both survival resource and build layer
 
@@ -116,11 +122,13 @@ Spell progression is not locked to character classes. Players can choose among s
 
 The key design is **limited simultaneous action vocabulary + broad out-of-combat reconfiguration**. The player owns many possible spells but equips a small operational set.
 
-### Weapons and equipment
+### Weapons, inventory and equipment
 
-Weapon categories have unique abilities and range/mobility patterns. Armor, jewelry and weapons define Gear Level and other combat statistics. Higher-tier equipment requires region-specific processed resources and unlocked stations/recipes.
+Current equipment spans **weapons, armor, jewelry, cloaks, hats and bags**. Weapons define basic/weapon-skill action kits; armor/jewelry contribute Gear Level and build statistics; cloaks add protection/resistance; hats are cosmetic; bags expand carried inventory. Higher-tier equipment requires region-specific processed resources and unlocked stations/recipes. [Equipment](https://vrising.fandom.com/wiki/Equipment).
 
-1.1 further reworked combat statistics, equipment customization and blood interactions. Patch 1.1.1 then adjusted underperforming spells and PvP/PvE balance rather than introducing another content tier. [1.1.1](https://blog.stunlock.com/free-weekend-and-patch-notes/).
+Gear Level changes the player's damage relationship with NPC enemies rather than acting as a PvP level advantage by itself. 1.1 further reworked combat statistics, equipment customization and blood interactions; the 2026 balance line adjusted underperforming spells/options without introducing another content tier. [1.1.1](https://blog.stunlock.com/free-weekend-and-patch-notes/).
+
+Loot acquisition mixes crafted deterministic tiers with dropped/earned components, recipes, weapon shards, gems/jewels, coins, cosmetics and endgame currencies. V Blood kills are especially important because the **reward is capability/knowledge**, not only a random item roll.
 
 ### Castle Heart, territory and construction
 
@@ -161,9 +169,9 @@ Humans can be dominated/converted and placed into **Servant Coffins**. Servants 
 - be equipped;
 - be dispatched on Hunts/missions for resources.
 
-Their origin/type and equipment matter to mission suitability/performance. This is one of the game's most relevant agent-like systems: a human encountered as an enemy can become **persistent delegated capability** rather than disappearing after combat.
+Their origin/type and equipment matter to mission suitability/performance. Hunts resolve in real time and can continue while a solo player is offline/away from the save. In current 1.1 rules, servants no longer suffer the old "injured for a recovery timer" Hunt outcome; failed Hunts can still be consequential, including servant death depending on the current rule/outcome, and a dead servant can be resurrected through the coffin. [Servants](https://vrising.fandom.com/wiki/Servants).
 
-It is not a deep personality simulation. Servants are primarily functional agents.
+This is one of the game's most relevant agent-like systems: a human encountered as an enemy can become **persistent delegated capability** rather than disappearing after combat. It is not a deep personality simulation; servants are primarily functional agents rather than people with autonomous personal goals or relationship arcs.
 
 ### Prisoners turn blood quality into domestic infrastructure
 
@@ -181,6 +189,12 @@ Boss progression can unlock vampire transformations/forms such as:
 - bat and other later forms.
 
 Forms can change traversal, stealth/avoidance or access rather than merely combat damage. Restrictions vary by form/server/content state.
+
+### Human Form creates a real disguise/stealth-and-trade loop
+
+**Human Form**, unlocked from Bane the Shadowblade, lets the vampire pass unnoticed through most human settlements, scout dangerous towns and interact with vendors who would otherwise be hostile. Strong-willed/high-level enemies can see through the disguise, and combat/spell/container actions or taking ordinary damage can break it. [Human Form](https://vrising.fandom.com/wiki/Human_Form).
+
+This is a genuine stealth/social-infiltration mechanic, but not a broad Thief-style stealth progression tree: there is no persistent detection-skill stat, pickpocket profession or social reputation system behind the disguise.
 
 ### Horses and travel
 
@@ -207,6 +221,22 @@ Invaders of Oakveil adds:
 - PvP/practice arenas with reduced/no ordinary gear-loss stakes.
 
 [Oakveil](https://playvrising.com/expansions/oakveil).
+
+### Journal quests, fishing, gardening and arenas
+
+The **Journal** provides a lightweight ordered/unordered quest/tutorial progression that teaches systems and can unlock recipes/structures while the V Blood board supplies the major boss-tech spine. Journal steps can often be completed before they become the visible active task, preventing strict tutorial sequencing from blocking experienced players. [Journal](https://vrising.fandom.com/wiki/Journal) · [1.1 patch notes](https://blog.stunlock.com/v-rising-1-1-patch-notes/).
+
+Other recurring activities include:
+- **fishing** for fish/resource drops used in prisoners, crafting and vendors;
+- gardening/seeds/crops inside castle grounds;
+- prisoner management and blood harvesting;
+- servant Hunts;
+- Rift Incursions/endgame events;
+- PvP/practice arenas added/improved around 1.1;
+- castle building/decoration;
+- world-boss/V Blood hunting.
+
+These are integrated into the same resource/combat/castle economy rather than isolated minigame currencies.
 
 ### PvE, PvP and server rules
 
@@ -242,20 +272,26 @@ matter socially. Raiding can turn a home-design system into a territorial/econom
 
 ### Death and recovery
 
-Death rules vary by server mode/settings. On ordinary PvE/PvP configurations the vampire respawns and can recover dropped carried resources, while equipped progression is not equivalent to a hardcore full-character deletion. Historically harsher PvP variants could increase loss.
+Death rules are explicitly **server-configurable** rather than one universal contract. Settings include whether equipment is Blood-Bound/kept through death, death-durability penalties, which players can loot a death container and other PvP/death modifiers. [Server Settings](https://vrising.fandom.com/wiki/Server_Settings).
 
-The critical lesson is to document **the server's death contract**, not assert one universal penalty across every realm.
+On normal PvE-style rules, the vampire respawns and retrieves dropped non-bloodbound carried resources from a death container while equipped progression is preserved; harsher PvP/custom configurations can increase what is exposed/lost. This is not default full-character deletion.
+
+The critical lesson is to document **the server's death contract**, not infer one rule from a particular community server.
 
 ### Useful absences
 
 V Rising has no:
 - conventional hunger/thirst bars;
-- fixed RPG class chosen at creation;
-- deep dialogue/romance/companion quest simulation;
+- fixed RPG class chosen at creation or player-allocated attribute-point ladder;
+- recruitable adventuring companion party (servants defend/work from castle systems rather than following as dialogue companions);
+- deep dialogue/romance/affinity simulation;
+- joinable political-faction reputation/diplomacy campaign, despite many hostile world factions;
 - procedurally regenerated world geography each run;
 - broad player-market/auction-house economy;
-- normal XP character-level progression;
+- normal kill-XP character-level progression;
 - current open-ended 1.2 content roadmap.
+
+Stealth and trading are **not** absences: Human Form supplies a bounded disguise loop, and regional vendors use real currencies.
 
 ## R03 — items, entities and composition
 
@@ -337,9 +373,11 @@ The V Blood board/list always implies a meaningful next objective. This solves t
 
 The weakness is equally clear: current Steam players who want Rust/Minecraft-like emergent resets criticize V Rising as **too linear/replay-constrained** because repeated wipes still lead through substantially the same boss ladder.
 
-### No player currency economy dominates progression
+### Vendors and currencies supplement the material economy
 
-Resources, recipes and equipment are the real economy. Merchants and coin systems exist, but they do not replace gathering/refining/boss progression with gold purchasing.
+Resources, recipes and equipment remain the dominant progression economy, but the vendor layer is substantive enough to name explicitly. Current merchants sell recipes, seeds/potions, gems, fish/resources, cosmetics and high-end weapon/cloak items. Regional vendors use **Copper Coins, Silver Coins and Goldsun Coins**; Mortium vampire merchants use **Stygian / Greater Stygian Shards**. Some human merchants require Human Form, coupling trade to disguise and silver-resistance logistics. [Vendors](https://vrising.fandom.com/wiki/Vendors).
+
+Vendor stocks refresh, so coin value is partly about waiting/returning for useful inventory. There is still no universal player auction house or economy where money replaces V Blood, gathering, refinement and crafting.
 
 ### Real-time/server timers
 
@@ -439,11 +477,13 @@ Unless attributed otherwise, these are rules-based illustrations.
 
 ## R06 — people, AI, servants, clans and multiplayer
 
-### NPCs are functionally rich but socially shallow
+### NPCs and factions are functionally rich but socially shallow
 
-Named V Blood carriers have identity, locations/patrols, combat kits and progression meaning. Ordinary humans/creatures participate in world conflict and can fight one another, but the player does not build relationship meters or branching dialogue bonds with them.
+Named V Blood carriers have identity, locations/patrols, combat kits and progression meaning. Human groups, undead, creatures, Church forces, Gloomrot factions, Dracula's forces and Oakveil's Venom Blades can be meaningfully hostile to one another and give regions distinct enemy ecologies. Vendors have location/stock logic and some moving/patrol behavior.
 
-The game's character richness comes more from **what an entity is good for** than from conversational simulation.
+The player does **not** join these groups through a dynamic reputation/diplomacy system or build relationship meters/branching dialogue bonds. Human Form lets the vampire infiltrate/trade with humans, but it is disguise rather than earned social standing.
+
+The game's character richness comes more from **what an entity is good for and where it belongs** than from conversational simulation.
 
 ### Servants are persistent delegated agents
 
@@ -451,10 +491,11 @@ Servants are the closest thing to an owned worker system:
 - converted from world NPCs;
 - persistent in the castle;
 - equipable;
-- defend;
-- perform Hunts.
+- defend and patrol/respond within castle life;
+- perform real-time Hunts for resources;
+- can be resurrected after death through their coffin.
 
-They have useful traits/mission affinities rather than deep personal goals. For OpenLegend, this is a clean baseline of **delegation without personhood simulation**.
+They have useful traits/mission affinities rather than deep personal goals, romances or authored companion quests. They are also not a normal follow-the-player combat party. For OpenLegend, this is a clean baseline of **delegation without personhood simulation**.
 
 ### Clans
 
@@ -486,6 +527,12 @@ V Rising uses a stylized gothic isometric presentation with strong silhouettes, 
 The day/night lighting is mechanically legible: direct sun produces strong audiovisual warning and escalating danger, while shade reads as safety.
 
 The soundtrack and visual branding draw on gothic/vampire traditions. Stunlock's early marketing interview cites classic horror literature, Castlevania, Netflix's Castlevania and Swedish nature as influences. [Stunlock interview](https://blog.stunlock.com/interview-with-the-vampire/).
+
+### Music as regional storytelling
+
+Stunlock's music-focused developer interview credits composer **Aleksandria Migova** and describes the soundtrack as a complementary storyteller for Vardoran's regions and mood rather than nonstop combat wallpaper. Different areas receive distinctive instrumentation/themes so moving through the world can be heard as well as seen. [Dev Update #14: Songs of Vardoran](https://blog.stunlock.com/dev-update-14-songs-of-vardoran/).
+
+This gives primary production evidence for the dossier's audio dimension rather than relying only on review adjectives.
 
 ### Control lineage and PS5 friction
 
@@ -640,7 +687,7 @@ No private revenue/profit/retention figure is invented.
 
 ### Current Steam/player evidence — September 2026
 
-Current English Steam surfaces were directly inspected.
+Current English Steam surfaces were directly inspected again during the audit, separating **current-week/recent** testimony from the all-time helpful negative list, whose top entries include Early Access-era complaints that no longer define 1.1. [current surface](https://steamcommunity.com/app/1604030/reviews/?l=english) · [all-time helpful negatives](https://steamcommunity.com/app/1604030/negativereviews/?browsefilter=toprated&l=english).
 
 **Recent positives include:**
 - hundreds of hours of return play;
@@ -662,7 +709,7 @@ One September 19 review describes the game as a "vampire real estate simulator" 
 
 [Recent negative surface](https://steamcommunity.com/app/1604030/negativereviews/).
 
-These are qualitative anecdotes, not frequency estimates. In particular, a player describing "every update wipes my save" is historically understandable around major versions but is **not the current 2026 content roadmap**: Stunlock explicitly says no 1.2 content update is in development and patch 1.1.1 did not require a wipe.
+These are qualitative anecdotes, not frequency estimates. In particular, all-time helpful negatives include older 2022 map/server complaints and historical wipe frustration that must stay version-limited. A player describing "every update wipes my save" is historically understandable around major versions but is **not the current September 2026 content roadmap**: Stunlock explicitly says no 1.2 content update is in development, 1.1.1 did not require a wipe, and September's Hot Fix 12 is maintenance only.
 
 ### Durable reception tensions
 
@@ -815,6 +862,33 @@ https://www.gamespew.com/2024/06/v-rising-review-an-engrossing-vampire-filled-ac
 https://steamcommunity.com/app/1604030/reviews/?l=english  
 https://steamcommunity.com/app/1604030/negativereviews/
 
+**S18 — V Rising Steam announcements, Hot Fix 12, Sep. 11, 2026.** First-party latest live patch found in this audit; server-side castle-ownership permission exploit fix, confirming the live content line remains 1.1.  
+https://steamcommunity.com/app/1604030/announcements/
+
+**S19 — Stunlock Early Access Q&A + community Standing Mirror reference.** First-party creation overview and current operational appearance-editing categories; no mechanical class distinction.  
+https://blog.stunlock.com/v-rising-update-13-early-access-qa/  
+https://vrising.fandom.com/wiki/Standing_Mirrors
+
+**S20 — Community mechanics references: Attributes, Equipment and Abilities.** Current operational references for derived statistics, gear categories and flexible weapon/spell/power loadouts; used for rules rather than developer intent.  
+https://wiki.v-ris.ing/w/Attributes  
+https://vrising.fandom.com/wiki/Equipment  
+https://vrising.fandom.com/wiki/Abilities
+
+**S21 — Human Form and Vendors.** Current operational references for disguise/infiltration/trading, vendor inventories and Copper/Silver/Goldsun/Stygian currency boundaries.  
+https://vrising.fandom.com/wiki/Human_Form  
+https://vrising.fandom.com/wiki/Vendors
+
+**S22 — Servants and Server Settings.** Current operational references for servant Hunts/1.1 outcomes and configurable death/container/teleport/raid rules.  
+https://vrising.fandom.com/wiki/Servants  
+https://vrising.fandom.com/wiki/Server_Settings
+
+**S23 — Journal + Stunlock 1.1 patch notes.** Current tutorial/quest progression and first-party 1.1 changes.  
+https://vrising.fandom.com/wiki/Journal  
+https://blog.stunlock.com/v-rising-1-1-patch-notes/
+
+**S24 — Stunlock, Dev Update #14: Songs of Vardoran.** Primary music-production interview with composer Aleksandria Migova; regional/mood storytelling goals.  
+https://blog.stunlock.com/dev-update-14-songs-of-vardoran/
+
 ### Suggested reading route
 
 1. Read **S12 (PC Gamer)** for the complete 1.0 loop.
@@ -851,6 +925,8 @@ https://steamcommunity.com/app/1604030/negativereviews/
 - No video or soundtrack is represented as watched/listened to.
 - Server settings can materially change timings, death loss, PvP, teleports and progression; anecdotal rules are not generalized beyond their mode.
 - Review sources primarily describe 1.0; current 1.1 systems use first-party sources and current player testimony.
+- Current operational vendor/servant/attributes/death details use community-maintained mechanics pages and are not represented as Stunlock design intent.
+- The latest first-party live patch found is Hot Fix 12 (Sep. 11, 2026); this is a maintenance patch, not new content or evidence of a 1.2 branch.
 - Current Steam samples are qualitative, not prevalence estimates.
 - The 4m/5m first-party milestones use **players** wording and are not silently converted into copies sold or revenue.
 - Stunlock's separate new V Rising-world project is not called V Rising 1.2 and is not used as evidence of current-game mechanics.
