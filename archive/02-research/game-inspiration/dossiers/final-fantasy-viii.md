@@ -1,8 +1,8 @@
 # Final Fantasy VIII — full research dossier
 
-**G85 · Complete research pass, September 26, 2026.** Primary mechanics baseline: the 1999 PlayStation *Final Fantasy VIII*. The 2000 PC port, 2013 Steam edition and 2019 *Final Fantasy VIII Remastered* are separated where controls, visuals, convenience or platform behavior differ. The roster focus is Guardian Forces/Junction, Draw/stock/cast tensions, level scaling, Triple Triad/card refinement, weapon upgrading, SeeD salary, Limit Breaks and world progression. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G85 · Complete research pass, September 26, 2026; corrected and expanded after the substantive coverage audit.** Primary mechanics baseline: the 1999 PlayStation *Final Fantasy VIII*. The 2000 PC port, 2013 Steam edition and 2019 *Final Fantasy VIII Remastered* are separated where controls, visuals, convenience or platform behavior differ. The roster focus is Guardian Forces/Junction, Draw/stock/cast tensions, level scaling, Triple Triad/card refinement, weapon upgrading, SeeD salary, Limit Breaks and world progression. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
-No personal playthrough is claimed. Mechanics examples are reconstructed from developer interviews, written reviews and version-specific reference material.
+No personal playthrough is claimed. Mechanics examples are reconstructed from developer interviews, written reviews and version-specific reference material. **Spoiler boundary:** sections 14–16 discuss late travel, the orphanage/memory revelation and the central relationship. Section 26 expands the acquisition and companion-game boundaries without importing their rules into every edition.
 
 ## 1. Identity, scope and player promise
 
@@ -51,7 +51,7 @@ The original PC conversion preserved the underlying game but changed technical p
 
 ### 2.3 2013 Steam edition
 
-The 2013 Steam rerelease derives from the older PC line and added modern platform features. It remains separately available in some owners' libraries and has its own mod ecosystem. It should not be conflated with Remastered.
+The 2013 Steam rerelease derives from the older PC line and added modern platform features. It remains separately available in some owners' libraries and has its own mod ecosystem. It should not be conflated with Remastered. Its publisher description explicitly includes a separate **Chocobo World** application and conditional synchronization with the main game; that feature is developed in §26 rather than silently assumed to exist in Remastered. [FFVIII29](#ffviii29)
 
 ### 2.4 Final Fantasy VIII Remastered
 
@@ -279,10 +279,7 @@ Characters retain distinctive weapon families:
 - Rinoa: blaster edges;
 - Irvine: guns.
 
-Upgrade magazines reveal recipes. Junk shops can remodel weapons when the player has:
-- required materials;
-- required gil;
-- access to the recipe/information. [FFVIII14](#ffviii14)
+Upgrade magazines reveal recipes. Junk shops can remodel weapons when the player has the required materials and gil. **Reading or possessing the matching Weapons Monthly is not an eligibility requirement.** The earlier version of this dossier incorrectly included recipe access among mandatory conditions; the magazine supplies useful information rather than the permission itself. [FFVIII14](#ffviii14) [FFVIII25](#ffviii25)
 
 Examples show that Squall's gunblade upgrades require materials such as screws, steel pipes, shells, bones, ammo and rare monster-derived parts.
 
@@ -310,16 +307,19 @@ Several Limits contain interactive mechanics:
 - Zell's Duel chains player-entered commands;
 - Irvine consumes ammo types through Shot;
 - Rinoa's Angelo techniques depend partly on learned pet abilities;
-- Selphie's Slot cycles random magic outcomes.
+- Selphie's Slot cycles random magic outcomes;
+- Quistis learns Blue Magic through specific consumed items, not by being struck by a monster's attack.
 
-Progress can be discovered through in-world magazines:
-- weapon magazines;
-- Combat King for Zell;
-- Pet Pals for Rinoa.
+Progress and information can be discovered through in-world magazines:
+- weapon magazines reveal remodeling requirements;
+- Combat King reveals inputs for Zell;
+- Pet Pals participates in Rinoa's Angelo learning.
+
+**Correction:** Combat King is not an absolute move-unlock gate either: a player who knows a valid Duel sequence can enter it without collecting the corresponding issue. Do not collapse information, learned character capability and input knowledge into one mechanism. The source's separate, questionable claim that all Angelo moves arrive without magazines is not adopted here. [FFVIII34](#ffviii34)
 
 RPGFan highlights how Limit progression and weapon creation are embedded in world artifacts rather than abstract skill menus. [FFVIII05](#ffviii05)
 
-**OpenLegend lesson:** knowledge objects—manuals, field notes, teachers, magazines—can be real acquisition channels for abilities.
+**OpenLegend lesson:** knowledge objects—manuals, field notes, teachers, magazines—can be acquisition or explanation channels. The interface should distinguish which function an object actually performs.
 
 ## 13. ATB and combat actions
 
@@ -335,14 +335,14 @@ The underlying battle rhythm remains Active Time Battle:
 The crucial innovation is that **core commands themselves can depend on equipped GFs**. A character without the relevant junction does not automatically have the same menu structure as everyone else.
 
 This creates loadout authority at a lower level than FFVII:
-- FFVII usually gives basic Item/Magic availability through Materia;
-- FFVIII makes even standard command access part of the GF build.
+- FFVII grants many spells and special commands through Materia, but its ordinary **Item** command does not require Materia;
+- FFVIII makes even standard command access part of the GF build. [FFVIII35](#ffviii35) [FFVIII07](#ffviii07)
 
 The risk is usability: accidentally stripping/reassigning Junctions can produce characters who appear suddenly “broken” because expected commands/stat bindings vanish.
 
 ## 14. World traversal and place structure
 
-FFVIII moves through:
+**Late-game travel and setting spoilers.** FFVIII moves through:
 - schools/Gardens;
 - trains;
 - cities and occupied towns;
@@ -370,7 +370,7 @@ That is an unusual and valuable OpenLegend precedent:
 
 ## 15. Story, relationships and memory
 
-FFVIII's story centers:
+**Major relationship and memory spoilers.** FFVIII's story centers:
 - Squall's emotional isolation;
 - Rinoa's challenge to that isolation;
 - SeeD/Garden institutions;
@@ -412,6 +412,8 @@ NPCs do not typically have:
 The SeeD salary/rank system is notable because it makes institutional membership mechanically persistent, even though the institution itself is not simulated like OpenLegend aims to simulate organizations.
 
 ## 17. Concrete system interactions
+
+The four earlier sketches are preserved here. Section 26 completes their conditions, consequences, next choices and limitations with named examples rather than counting these sketches alone as sufficient R05 coverage.
 
 ### A. Card → item → magic → stat
 
@@ -468,12 +470,18 @@ In 2019 he described the intent as:
 
 A later PlayStation retrospective explains that the team had become more proficient with the CG/game-production pipeline established during FFVII, enabling tighter blending of cinematics and gameplay. [FFVIII15](#ffviii15)
 
-FFVIII was also Square's first use of motion capture, according to Kitase retrospectives. [FFVIII16](#ffviii16)
+**Motion-capture evidence correction:** Kitase's written Famitsu interview explicitly calls VIII the team's first use of motion capture for character performance and recalls an unnecessarily heavy gunblade prop. This firsthand written account replaces reliance on the featurette announcement alone. It is a participant recollection, not an independently audited history of every Square project. The same interview explains a late remaster decision to improve character models after a largely unchanged port was already advanced in production. [FFVIII31](#ffviii31)
 
 The 1998 developer interview gives more granular system rationale:
 - Junction emerged partly from reconsidering conventional equipment rewards;
 - Draw followed from treating magic as something acquired/junctioned rather than bought with MP abstraction;
 - the designers were consciously experimenting with series conventions. [FFVIII08](#ffviii08)
+
+### Music is part of staging, not merely a praised soundtrack
+
+In a fan-translated Ultimania interview, **Nobuo Uematsu** contrasts cinematic background support with memorable game melody and describes seeking more emotional color in VIII. He says the vocal theme was planned early, its melody preceded the choice of singer, and staff listened to candidate recordings before choosing **Faye Wong**. The translation is attributed; the original Japanese edition was not independently inspected. [FFVIII32](#ffviii32)
+
+Michael Harradence's written listening account identifies **Eyes on Me** as a recurring romantic theme whose full vocal performance accompanies a crucial Squall–Rinoa scene. **Interpretation:** recognizable music can connect a large cinematic moment to earlier, quieter associations. It can also impose a desired emotion on a player unconvinced by the writing. The article's sales and cultural-reach claims are not adopted as verified commercial metrics, and this research does not claim to have played the recording. [FFVIII33](#ffviii33)
 
 ## 19. Distribution, marketing and commercial context
 
@@ -541,17 +549,17 @@ These are qualitative player accounts, not prevalence estimates. Technical compl
 | Character creation | No avatar creator; authored Squall and fixed cast |
 | Classes/jobs | No class switching; roles built through GF/Junction/magic |
 | Levels | 1000 EXP per character level; enemies usually scale around party average |
-| Capability learning | GFs learn abilities through AP; magazines unlock/teach some Limits/recipes |
+| Capability learning | GFs learn abilities through AP; magazines can reveal information or participate in specific learning systems; Quistis consumes named learning items |
 | Magic | Stocked up to quantities; Draw/refine acquisition; cast or Junction |
 | Summons | Junctionable Guardian Forces with levels, compatibility and ability trees |
-| Equipment | Signature weapon lines remodeled from materials; no conventional armor ladder |
+| Equipment | Signature weapon lines remodeled from materials and gil; magazines are not mandatory; no conventional armor ladder |
 | Stat customization | Magic junctioned to stats/elements/status attack/defense |
-| Inventory/items | Consumables, magazines, ammo, cards, refinement materials |
+| Inventory/items | Consumables, magazines, ammo, cards, refinement materials and Blue Magic teaching items |
 | Crafting/upgrading | Weapon remodeling + extensive item/card/magic refinement |
 | Combat | ATB, GF-granted commands, Draw, summons, interactive Limit Breaks |
 | Enemy interaction | Draw magic/GFs, Card enemies, Mug, Devour, status/element exploitation |
 | Economy | SeeD salary + shops; cards/refinement act as alternative resource economy |
-| Minigames | Triple Triad persistent worldwide; several bespoke story minigames |
+| Minigames | Triple Triad worldwide; bespoke story activities; Chocobo World is a separate, edition-dependent companion game (§26) |
 | Traversal | Foot, train, car, chocobo, mobile Garden, Ragnarok |
 | Death/failure | KO/revival, party defeat/save recovery |
 | Story | Authored school/war/romance/time narrative |
@@ -618,37 +626,37 @@ Balamb Garden becomes a vehicle.
 
 Refinement makes Draw tedium largely optional, but many players never understand that.
 
-**Borrow:** mentors, manuals, experimentation feedback and inspectable transformation recipes should reveal deep systems organically.
+**Borrow:** mentors, manuals, experimentation feedback and inspectable transformation recipes should reveal deep systems organically. A source of instructions is not necessarily a permission gate; the corrected magazine example makes that distinction explicit.
 
 ## 24. Preservation and requirement audit
 
-No FFVIII-specific prior game/mechanics/dossier owner existed on this branch before G85, so this dossier is additive.
+No FFVIII-specific prior game/mechanics/dossier owner existed on this branch before G85, so this dossier is additive. The corrective pass preserves the four old sketches and all original source IDs; new sections qualify rather than silently erase mistaken eligibility and evidence claims.
 
 | Requirement | Coverage |
 | --- | --- |
-| R01 identity/scope/promise | §§1–2 |
-| R02 actions/major mechanics | §§3–17, 22 |
-| R03 items/entities/composition | §§3–12, 22 |
-| R04 progression/economy/time | §§4–11, 17 |
-| R05 concrete interactions | §§6–7, 9–10, 17 |
-| R06 people/AI/social/multiplayer | §§8, 15–16, 22 |
+| R01 identity/scope/promise | §§1–2, 26 |
+| R02 actions/major mechanics | §§3–17, 22, 26 |
+| R03 items/entities/composition | §§3–12, 22, 26 |
+| R04 progression/economy/time | §§4–11, 17, 26 |
+| R05 concrete interactions | §17 sketches completed by six contrasting situations in §26 |
+| R06 people/AI/social/multiplayer | §§8, 15–16, 22, 26 |
 | R07 art/audio/interface/feel | §§2, 18, 20–21 |
-| R08 story/narrative/play | §§14–16 |
-| R09 production/development | §18 |
+| R08 story/narrative/play | §§14–16 with spoiler warnings |
+| R09 production/development | §18 and written Kitase evidence |
 | R10 marketing/distribution/virality | §19 |
 | R11 commercial/participation | §§19, 21 |
 | R12 reviews/player feedback | §§20–21 |
-| R13 transferable inspiration/limits | §23 |
-| R14 sources/viewing/preservation/navigation | §§2, 24 + sources |
+| R13 transferable inspiration/limits | §§23, 26 |
+| R14 sources/viewing/preservation/navigation | §§2, 24, 26 + sources |
 
 ### Evidence limits
 
-- Original PlayStation, old PC, 2013 Steam and 2019 Remastered are separated where relevant.
-- Five independent written reviews were inspected.
+- Original PlayStation, old PC, 2013 Steam and 2019 Remastered are separated where relevant; Chocobo World's removal does not erase its historical existence.
+- Five independent written reviews were inspected in the original pass; this repair does not claim to have reread every inherited review or reconstructed missing Steam author identities.
 - Steam evidence is self-selected and hardware/patch sensitive.
 - Sales figures use dated Square Enix milestones and preserve shipment/sales distinctions.
-- Community mechanics references support rules; developer interviews support intent.
-- No claim depends on unwatched video footage.
+- Community mechanics references support rules; direct interviews support attributed intent. The Uematsu transcript is a fan translation, not an inspected original Japanese book.
+- No claim depends on unwatched video footage or unplayed audio. Useful later viewing routes include the GF command/Junction menus, a card-to-spell transformation, Quistis's item-learning menu, Chocobo World's transfer interface and the romantic theme's scene placement.
 
 ## 25. Completion conclusion
 
@@ -666,6 +674,46 @@ Cards can become items. Items can become magic. GFs can turn learned AP into com
 For OpenLegend, the valuable principle is not “copy Junction.” It is:
 
 > **Let world entities and social roles participate in a transparent graph of transformations, permissions and learned capabilities—then make that graph understandable enough that players do not need to fight the interface to discover the game.**
+
+## 26. Concrete acquisition and companion-game boundaries
+
+**Corrective research, September 26, 2026.** These are constructed rules-based illustrations, not personally tested exploits, saves or optimal builds.
+
+### Quistis: an object teaches a Limit, not ordinary stocked magic
+
+A **Spider Web**, obtainable from Caterchipillar or its card conversion, teaches **Ultra Waves** when used for Quistis. The same material also has a refinement use, so teaching competes with consuming it elsewhere. The acquired action remains part of her Blue Magic Limit repertoire, subject to Limit availability; it is not a junctionable stack of spell copies. Unlike the monster's similarly named action, her version does not inherit its Berserk effect. [FFVIII26](#ffviii26) [FFVIII27](#ffviii27)
+
+### Chocobo World: two games with a controlled exchange
+
+Historically a PocketStation companion and included in the 2013 PC release, Chocobo World sends **Boko** through small-map events, battles and item finds. The player can guide him or let him wander; returning Home transfers found items into the main adventure. Resetting the companion journey does not undo already imported items. These are explicit exchange and persistence boundaries, not a live co-op player inhabiting Squall's map. [FFVIII30](#ffviii30) [FFVIII29](#ffviii29)
+
+Kitase's 2019 Famitsu answer confirms that **Remastered removes the minigame** and makes its formerly exclusive items available through **Angelo Search**. That changes the acquisition route, not merely the graphics. The interview is not a tested modern item-drop table or a guarantee of fast acquisition. [FFVIII31](#ffviii31)
+
+### A. A card becomes twenty casts—or a stronger character sheet
+
+**Intention:** improve a low-level character's options. **Conditions:** an Abyss Worm card, learned Card Mod and Quezacotl's T Mag-RF are available. **Actions:** convert one card to a Windmill, then that item to twenty Tornado spells; assign the stock through an eligible Junction slot. **Interaction/result:** leisure rewards become a material, then magic, then statistics. **Next choice:** retain the stock or cast it. **Limit:** the conversions consume the inputs, and spell ownership alone does not supply a missing stat-junction permission. T Mag-RF is the thunder/wind refinement, not the differently named Time Mag-RF. [FFVIII26](#ffviii26) [FFVIII28](#ffviii28)
+
+### B. Casting the stored defense can be the correct emergency decision
+
+**Intention:** survive an immediate threat. **Conditions:** a useful spell is also junctioned to a valuable stat. **Actions:** spend copies when their immediate effect is necessary, then inspect the resulting stock and plan replenishment. **Interaction/result:** survival now can reduce a later statistical benefit. **Next choice:** refill, reassign or accept the smaller bonus. **Limit:** “never cast junctioned magic” is not a universal solution; avoiding an essential action can lose the fight. This completes §17B's tradeoff rather than merely describing consumption. [FFVIII07](#ffviii07)
+
+### C. A stronger enemy can also be a different resource source
+
+**Intention:** acquire better magic without assuming every enemy tier is equivalent. **Conditions:** enemy levels and available Draw lists can change. **Actions:** inspect the actual target's available magic and compare the danger with an alternative refinement route. **Interaction/result:** scaling changes rewards as well as durability and damage. **Next choice:** draw, defeat, avoid or obtain materials elsewhere. **Limit:** special-area and boss exceptions prevent a single average-party formula from predicting every encounter. This completes §17C without turning low-level play into mandatory advice. [FFVIII10](#ffviii10) [FFVIII28](#ffviii28)
+
+### D. A familiar card deck enters unfamiliar local rules
+
+**Intention:** win a useful card in another region. **Conditions:** the local rule set differs and may interact with carried rules. **Actions:** inspect the match rules before committing, then adjust the placement plan rather than assuming the last town's pattern still works. **Interaction/result:** travel changes the meaning of the same hand. **Next choice:** keep playing under the new conditions or seek another opponent. **Limit:** rule spreading is conditional, not automatic adoption of every visitor's custom, and a good deck can still lose under an unfamiliar rule. This completes §17D's cultural-diffusion sketch. [FFVIII09](#ffviii09)
+
+### E. A teaching item is not automatically a duplicate consumable
+
+**Intention:** expand Quistis's repertoire. **Conditions:** a Spider Web is available and Ultra Waves is not yet learned. **Actions:** use it for learning instead of refining it, then choose the technique when a valid Limit opportunity occurs. **Interaction/result:** one object becomes persistent capability rather than a spell stock. **Next choice:** retain further webs for another use. **Limit:** teaching the same action again does not create another distinct technique, and the player's version does not automatically copy every enemy-side effect. [FFVIII26](#ffviii26) [FFVIII27](#ffviii27)
+
+### F. Bringing a companion home realizes the reward
+
+**Intention:** use finds from the older companion game. **Conditions:** the main-game linkage is unlocked and Boko has acquired items. **Actions:** return him Home through the supported interface, then inspect the main inventory. **Interaction/result:** progress in one software mode becomes resources in another. **Next choice:** use the items or send him out again. **Limit:** a Remastered player cannot follow the same launch/menu route, and resetting a journey is not the same as importing it. The guide's contradictory Event Wait advice is not adopted as a control guarantee. [FFVIII30](#ffviii30)
+
+**Interpretation:** these cases separate acquiring knowledge, possessing a resource, holding permission and selecting an action. FFVIII's depth depends on their connections, while much of its confusion comes from presenting them as if they were the same. A reusable design should expose the distinction without requiring a spreadsheet or an external guide.
 
 ## Sources — annotated set
 
@@ -695,11 +743,11 @@ For OpenLegend, the valuable principle is not “copy Junction.” It is:
 
 <a id="ffviii13"></a>**FFVIII13 — [Final Fantasy VIII SeeD Rank Guide](https://gamefaqs.gamespot.com/ps/197343-final-fantasy-viii/faqs/19029).** Community mechanics reference for salary by rank and written exam mechanics.
 
-<a id="ffviii14"></a>**FFVIII14 — [Final Fantasy VIII Weapons](https://strategywiki.org/wiki/Final_Fantasy_VIII/Weapons).** StrategyWiki. Weapon remodeling recipes/materials and signature weapon families.
+<a id="ffviii14"></a>**FFVIII14 — [Final Fantasy VIII Weapons](https://strategywiki.org/wiki/Final_Fantasy_VIII/Weapons).** StrategyWiki. Weapon remodeling recipes/materials and signature weapon families. The earlier dossier's magazine-eligibility inference is explicitly corrected with FFVIII25.
 
 <a id="ffviii15"></a>**FFVIII15 — [Final Fantasy VIII: Yoshinori Kitase on taking the series in a bold new direction](https://blog.playstation.com/?amp=&p=356033).** PlayStation Blog, 2021. Developer retrospective on CG-production maturity, salary and Draw/Junction experimentation.
 
-<a id="ffviii16"></a>**FFVIII16 — [Inside FINAL FANTASY VIII Remastered featurette announcement](https://na.finalfantasy.com/news/1195).** Square Enix / Final Fantasy Portal, 2019-10-17. Primary developer-featurette context and original-creator participants; video contents not represented as watched.
+<a id="ffviii16"></a>**FFVIII16 — [Inside FINAL FANTASY VIII Remastered featurette announcement](https://na.finalfantasy.com/news/1195).** Square Enix / Final Fantasy Portal, 2019-10-17. Viewing route and original-creator participants; video contents not represented as watched. Motion-capture claims are now grounded in the written Famitsu interview, FFVIII31.
 
 <a id="ffviii17"></a>**FFVIII17 — [FINAL FANTASY VIII Remastered announcement](https://www.jp.square-enix.com/company/ja/news/2019/html/021cf687d9d26561ac63aeaa0e8c9282.html).** Square Enix, 2019-06-11. Primary E3 announcement and more-than-9.5-million worldwide sales milestone.
 
@@ -715,4 +763,28 @@ For OpenLegend, the valuable principle is not “copy Junction.” It is:
 
 <a id="ffviii23"></a>**FFVIII23 — [FINAL FANTASY VIII - REMASTERED most-helpful English Steam reviews](https://steamcommunity.com/app/1026680/reviews/?browsefilter=toprated&l=english).** Individual Steam reviewers, inspected 2026-09-26. Qualitative game/remaster praise and criticism; self-selected and patch/hardware sensitive.
 
-<a id="ffviii24"></a>**FFVIII24 — [FINAL FANTASY VIII original Steam helpful reviews](https://steamcommunity.com/app/39150/reviews/?browsefilter=toprated).** Individual Steam reviewers, inspected 2026-09-26. Useful comparison showing some players prefer the older PC build with community mods; not representative prevalence evidence.
+<a id="ffviii24"></a>**FFVIII24 — [Final Fantasy VIII original Steam helpful reviews](https://steamcommunity.com/app/39150/reviews/?browsefilter=toprated).** Individual Steam reviewers, inspected 2026-09-26. Comparison showing some players prefer the older PC build with community mods; not representative prevalence evidence.
+
+<a id="ffviii25"></a>**FFVIII25 — [Weapons and Weapons Monthly guide](https://www.rpgsite.net/feature/8930-final-fantasy-viii-weapons-guide-weapons-monthly-magazine-locations-ultimate-weapons-and-upgrade-materials).** RPG Site Staff, September 1, 2019; operative eligibility explanation read during the corrective pass. Magazines reveal materials but are not mandatory. Numerical recipe tables were not copied wholesale.
+
+<a id="ffviii26"></a>**FFVIII26 — [Items](https://gamefaqs.gamespot.com/ps/197343-final-fantasy-viii/faqs/72431/items).** bover_87, GameFAQs; Blue Magic items, Spider Web and Windmill rows read during the corrective pass. Named acquisition/conversion evidence, not a personally tested drop-rate catalog.
+
+<a id="ffviii27"></a>**FFVIII27 — [Ultra Waves](https://finalfantasy.fandom.com/wiki/Ultra_Waves_(Final_Fantasy_VIII)).** Community mechanics reference; substantive indexed learning/use text inspected after direct retrieval failed. Quistis's version is distinguished from the monster's status effect.
+
+<a id="ffviii28"></a>**FFVIII28 — [Tornado](https://finalfantasy.fandom.com/wiki/Tornado_(Final_Fantasy_VIII)).** Community mechanics reference; acquisition, refinement and level-qualified Draw text read. Windmill conversion uses T Mag-RF, not Time Mag-RF. Exact stat optimization is not prescribed.
+
+<a id="ffviii29"></a>**FFVIII29 — [Original PC edition on Steam](https://store.steampowered.com/app/39150/FINAL_FANTASY_VIII/).** Square Enix/Valve product text; Chocobo World and synchronization descriptions read. Old system requirements and marketing superlatives are not adopted as current technical or quality facts.
+
+<a id="ffviii30"></a>**FFVIII30 — [Chocobo World](https://www.gamerguides.com/final-fantasy-viii/guide/mini-games/guides/chocobo-world).** Gamer Guides; substantive play/transfer/reset sections read. Historical companion mode, not Remastered functionality; internally inconsistent Event Wait wording is excluded.
+
+<a id="ffviii31"></a>**FFVIII31 — [Kitase on FFVIII Remastered](https://www.famitsu.com/news/201906/28178783.html).** Famitsu, June 28, 2019; original Japanese written interview read and paraphrased. Chocobo removal/Angelo Search, motion-capture recollection and late model-revision decision. The article's correction identifies Shinji Hashimoto, not Kitase, as the remaster's producer.
+
+<a id="ffviii32"></a>**FFVIII32 — [Ultimania interviews translation: Uematsu](https://gamefaqs.gamespot.com/boards/197343-final-fantasy-viii/66115498).** Fan-translated transcript of primary interview material; relevant composer Q&A read. Original Japanese book not independently checked; no recording listened to or broad “first ever” claim adopted.
+
+<a id="ffviii33"></a>**FFVIII33 — [Classic Tracks: Eyes on Me](https://www.psu.com/news/classic-tracks-final-fantasy-viiis-eyes-on-me/).** Michael Harradence, PlayStation Universe, January 16, 2013; written listening/scene discussion read. Commercial numbers and broad audience claims are not certified; embedded music not played.
+
+<a id="ffviii34"></a>**FFVIII34 — [Missable items and magazines](https://jegged.com/Games/Final-Fantasy-VIII/Tips-and-Tricks/Missable-Items-and-Events.html).** Authored guide; Weapons Monthly/Combat King distinction read. Its separate automatic-Angelo-learning and sweeping missability claims are not adopted.
+
+<a id="ffviii35"></a>**FFVIII35 — [Final Fantasy VII: Battle Commands](https://gamefaqs.gamespot.com/ps/197341-final-fantasy-vii/faqs/2376).** Kao Megura, authored original-game guide; Item command and opening battle instructions read. Used only to correct the cross-game comparison, not to import VII's command permissions into VIII.
+
+All corrective sources FFVIII25–35 were inspected September 26, 2026 through direct bodies or the explicitly identified indexed passages. Historical source IDs and their original capture remain preserved; global packet reconciliation and personally tested gameplay are separate.
