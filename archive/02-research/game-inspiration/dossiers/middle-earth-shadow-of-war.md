@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Research pass — September 26, 2026.** Reference research, not accepted OpenLegend design. Scope: the 2017 game, the materially revised post-July-2018 experience, its two story expansions and separate Nemesis expansions. Five full original base-game reviews, a separate accessibility account, an expansion review and helpful Steam narratives were read. No gameplay, footage, current-server test or proprietary-code inspection was performed. Contemporary guides and patch milestones do not establish the exact latest executable on every platform.
+**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted OpenLegend design. Scope: the 2017 game, the materially revised post-July-2018 experience, its two story expansions and separate Nemesis expansions. Five full original base-game reviews, a separate accessibility account, an expansion review and helpful Steam narratives were read in the original pass. The follow-up read the entire dossier and checked all R01–R14; newly inspected sources are identified separately rather than implying a second reading of every original source. No gameplay, footage, current-server test or proprietary-code inspection was performed. Contemporary guides and patch milestones do not establish the exact latest executable on every platform.
 
 ## 1. Identity and changing player promise
 
@@ -47,7 +47,7 @@ Bait can draw beasts; opening a cage releases a creature that is not automatical
 
 Six equipment slots hold a sword, dagger, ranged weapon, armor, cloak and Ring/rune equipment. Their primary contributions differ: melee, stealth and ranged damage are not one shared weapon statistic, while armor, cloak and Ring support health, stealth and Focus. Gear arrives through encounters and rewards; rarity, conditional effects, challenges and legendary-set bonuses can matter more than the displayed level. Unwanted equipment can become Mirian. This is loot modification and build assembly, not a profession-based smithing or resource-production economy. The guide's translated 'Heroic' label is not used as an extra rarity above Epic. [S20]
 
-Gems supply another compositional layer. Red supports damage, green survival and white wealth/progression; the effect depends on the occupied slot. A wealth gem in armor helps personal experience, while one in Ring equipment improves recruitment-related levels. Combining three matching gems produces a higher-quality gem across the documented five quality levels. The guide's green-weapon damage description is questionable and is not adopted as a precise life-steal rule or balance table. [S21]
+Gems supply another compositional layer. Red supports damage, green survival and white wealth/progression; the effect depends on the occupied slot. A wealth gem in armor helps personal experience, while one in Ring equipment improves recruitment-related levels. Combining three matching gems produces a higher-quality gem across the documented five quality levels. The original guide's green-weapon damage description is questionable and was excluded. The follow-up's separate equipment reference clarifies **Life gems**: in weapons they restore health through attacks; in armor they increase maximum health; in Ring equipment they reduce damage received by followers. Those are three different survival contracts, not one global green statistic. Exact percentages are not asserted. [S21, S41]
 
 The July 2018 update raised Talion's cap to 80 and enemies' to 85, added repeatable Prestige skills after Act III, and enabled earned-currency gear leveling and perfect-gem secondary-trait rerolls after required challenges. These are verified update changes, not a claim every item is freely rerollable at the start. [S10]
 
@@ -57,13 +57,27 @@ The July 2018 update raised Talion's cap to 80 and enemies' to 85, added repeata
 
 Each region has an army hierarchy. Captains have names, voices, appearance, level, class and trait combinations; Warchiefs have bodyguards; an Overlord anchors a fortress. Immunities, fears, vulnerabilities, enrages and special attacks change which plan works. Intelligence makes the composition visible before the encounter. A higher level does not automatically outweigh a decisive fear or immunity. Army links make bodyguard relationships legible, not just implied by dialogue. [S18]
 
-Classes create recognizable behavior families. Tanks endure and recover; Berserkers are aggressively dangerous; Slayers specialize in fighting; Commanders strengthen or supply supporting forces; Beastmasters bring creatures into the encounter. These examples do not exhaust every class, nor validate the guide's universal recommendation to recruit everyone. The tactical question is compatibility with the opponent and assigned role, not a single best-captain ranking. [S23]
+Classes create recognizable behavior families. Tanks endure and recover; Berserkers are aggressively dangerous; Slayers specialize in fighting; Commanders strengthen or supply supporting forces; Beastmasters bring creatures into the encounter. These examples do not validate the guide's universal recommendation to recruit everyone. The tactical question is compatibility with the opponent and assigned role, not a single best-captain ranking. [S23]
+
+The original five examples did not exhaust the inventory. The ten **advanced classes** are **Assassin, Beastmaster, Berserker, Commander, Destroyer, Marksman, Slayer, Tank, Tracker and Trickster**. This classification is separate from a basic weapon-bearing type or tribe. [S39]
+
+| Previously missing class | Distinct encounter behavior |
+| --- | --- |
+| Assassin | Evasive attacks and throwing knives; No Chance can remove the recovery opportunity. |
+| Destroyer | Explosives, mines or sappers; defeating one may leave an explosion hazard. |
+| Marksman | Strong ranged attacks and targeting; approaching is part of the encounter. |
+| Tracker | Pursuit, traps and reinforcements; some Olog variants can pull a target with a harpoon. |
+| Trickster | Smoke and decoys complicate identification rather than simply adding health. |
+
+The seven base tribes are **Dark, Feral, Machine, Marauder, Mystic, Terror and Warmonger**; **Slaughter and Outlaw** are add-ons. Tribe-specific actions include Machine hooks, Terror chains and Outlaw bolas. A captain's complete trait combination still matters: naming a tribe or class does not prove every member has every listed possibility. The community reference has separate predecessor/sequel sections; only its Shadow of War material supports these additions. [S38]
 
 The production account adds an important limit to 'randomness': advanced classes helped constrain trait generation because unrestricted combinations could create unreasonable opponents. A memorable procedural individual is assembled within authored rules and performance material. It is not a language model improvising an unrestricted personality or a simulation of an entire independent domestic life. [S27]
 
 ### Recruiting, shaming and orders
 
 Domination follows weakening a target and meeting recruitment conditions. A higher-level captain or an Iron Will trait can obstruct immediate recruitment. Shaming can reduce level, but should not be equated with risk-free editing of a character sheet. Recruit, release into continued fighting, withdraw, dismiss and fight again are distinct decisions. Interrogating Worms or finding intelligence reveals enemy information; the guide's assertion that a weakness cannot function before intelligence is acquired is not relied upon here. [S19]
+
+**Three exclusions should not be conflated:** Iron Will can sometimes be removed by shaming, but **Unbreakable** prevents the ordinary broken-state recruitment route. **Undead** also prevents domination and further leveling. Consequently, “every unwanted trait can be removed by more shaming” is not a valid general rule. Glitch-based recruitment and modified captains are outside this mechanics account. [S40]
 
 Recruited captains can be sent to attack, support another operation, infiltrate as spies or fight in pits. These operations can proceed without Talion personally performing every action. Intervention can change the odds but does not make the subordinate invulnerable. The army interface is an assignment surface rather than unrestricted RTS control over every soldier's footsteps. [S19]
 
@@ -98,6 +112,8 @@ The early loop is learning counters and gaining enough capability to survive; th
 ### Online and business-model boundaries
 
 Online Vendettas and Conquests use other players' generated situations without putting two human Talions together in one cooperative campaign. Ranked Conquests, Garrison transfers and earned rewards have their own rules. The July 2018 notes also refer to Online Pit Fights; these should not be conflated with personally controlled PvP sword fighting. No current matchmaking population or server-availability guarantee is established by this research. [S2, S10]
+
+The predecessor's **Nemesis Forge** transfer route is a separate service. Warner Bros.' Shadow of Mordor status notice announced its removal, alongside that game's Vendettas/leaderboards, beginning December 31, 2020. A historical cross-game transfer recommendation is therefore not a currently available way to import a favorite opponent. That notice concerns **Shadow of Mordor**, not proof that Shadow of War's Garrison or all its online modes were removed. The official notice's date is retained as its announced cutoff, not independently measured service-disconnection timing. [S43]
 
 The verified post-update model is a purchased game with optional expansions, not the launch-era cash-funded orc acquisition loop. Mirian is an earned game resource with uses in development and army preparation; it is not evidence of a functioning paid Market. Availability of reward chests does not by itself establish paid loot boxes. [S9, S10]
 
@@ -145,6 +161,10 @@ The authored campaign connects Minas Ithil's defense, the new Ring, Shelob, Elta
 
 Later, the separation from Celebrimbor and Talion's use of Isildur's Ring change his power set toward necromancy. In the creator postmortem, de Plater acknowledges that the interface did not adequately communicate these new capabilities to everyone. The team considered more branching endings but prioritized a defined central arc and the stories generated through Nemesis. This exposes a concrete production tradeoff: local personal histories do not imply an endlessly branching main plot. [S28]
 
+**The actual late-game verbs:** Ringwraith replaces Elven Rage, bringing wraith assistance and enhanced combat. Raise Dead revives fallen fighters; **Undying Loyalty**, unlocked through the Minas Morgul champion pit challenge, extends revival to eligible dead allied captains. It is not universal resurrection of every corpse: decapitation can prevent it. Revived captains retain a body but lose ordinary personality/voice behavior, cannot continue leveling, gain fire vulnerability and remain loyal. The earlier guide says revival removes five levels; a January 3, 2023 reader correction says that initial penalty no longer applies. This audit excludes that disputed numerical penalty rather than presenting the older claim as a current rule. [S42]
+
+Our interpretation: preserving a useful subordinate's body is not necessarily preserving the relationship the player valued. That distinction gives recovery a cost beyond money or experience, and complicates the apparent promise that an important follower can simply be brought back unchanged.
+
 ### Art, sound, camera and accessibility
 
 Captain introductions combine a face, title, silhouette, voice and callback before returning control. A scar is valuable because it makes a prior encounter recognizable. Monstrous humor contrasts with the protagonist's grave presentation; regional changes such as green Núrnen help prevent every conflict feeling visually identical. The same interruption that establishes personality can irritate players during a complicated battle. Spectacle and legibility are separate achievements. [S1, S7]
@@ -191,7 +211,7 @@ Premium storefront distribution, optional paid expansions and the historical rem
 
 ## 8. Reception: five independent reviews and player testimony
 
-These are substantive original accounts rather than aggregate scores. They mostly describe launch builds; current accessibility, bugs and post-update progression require separate evidence. Each critic's prose was read.
+These are substantive original accounts rather than aggregate scores. They mostly describe launch builds; current accessibility, bugs and post-update progression require separate evidence. Each critic's prose was read in the original pass.
 
 ### Andy Kelly — PC Gamer, October 5, 2017
 
@@ -217,7 +237,9 @@ Bird is much more enthusiastic about the expanded plot, collection rewards and s
 
 The English **Most Helpful (All Time)** surface was read September 26, 2026. Sraxton's September 16, 2022 account follows Krosh from killer to fire-scarred recurring enemy to recruited captain, then mourns his loss in a fight pit. Vvhispr's April 29, 2021 account describes repeated shaming of Dûsh, attachment, betrayal and regret after killing him. Michael {United Critics}'s February 6, 2021 recommendation praises the breadth and performance while criticizing unskippable introductions, misdirected contextual movement and badly timed ambushes; it is marked as a free copy. [S7]
 
-These are player-reported stories, not independently reproduced outcomes or evidence that a particular sequence is guaranteed. Displayed current hours are not publication-time hours. Positive recommendations contain both enthusiasm and friction; they do not establish prevalence. Vvhispr's description of Iron Will as forever unrecruitable is too broad to adopt as a rule. The negative-filter retrieval failed; no inaccessible base-game negative body is counted. [S7]
+These are player-reported stories, not independently reproduced outcomes or evidence that a particular sequence is guaranteed. Displayed current hours are not publication-time hours. Positive recommendations contain both enthusiasm and friction; they do not establish prevalence. Vvhispr's description of Iron Will as forever unrecruitable is too broad to adopt as a rule. The original negative-filter request failed; that access limitation is now historical rather than a claim that no negative body could be recovered. [S7, S40]
+
+**Recovered direct negative sample:** the follow-up read the English **Most Helpful (All Time), Negative Only** page. **Artoriaz**, October 21, 2017, praises scope, equipment and fortresses but criticizes overloaded controls, repeated introductions, geometry problems and the endgame. It displayed 132.6 hours and 1,662 helpful votes. **Psychedelic Adventurer**, October 28, 2017, values combat and Nemesis yet finds some betrayals contrived; its later, undated edit acknowledges monetization removal while retaining its negative judgment of the original practice. It displayed 51.6 hours and 2,187 helpful votes. Its publisher-motive claims and confusion between Shadow Wars and online play are not adopted. These are dated, possibly edited experiences; counters are retrieval snapshots, not publication values or a representative current-build survey. [S44]
 
 ## 9. Transferable patterns and limits
 
@@ -233,7 +255,7 @@ These are player-reported stories, not independently reproduced outcomes or evid
 
 ## 10. Annotated sources and viewing routes
 
-All accessed September 26, 2026. Review and guide bodies were read; narrower primary/indexed/mirror access is explicitly identified. Gamepressure pages display a December 20, 2022 update date but retain historical terminology and some questionable advice. They are used for mechanics, not unqualified current numeric tables. No video was watched.
+All accessed September 26, 2026, in the original pass or expressly identified follow-up. Original review and guide bodies were read; narrower primary/indexed/mirror access is explicitly identified. Gamepressure pages display a December 20, 2022 update date but retain historical terminology and some questionable advice. They are used for mechanics, not unqualified current numeric tables. No video was watched.
 
 - **S1 — Original review:** [Andy Kelly, PC Gamer](https://www.pcgamer.com/middle-earth-shadow-of-war-review/), October 5, 2017. PC launch.
 - **S2 — Original review:** [Robert Ramsey, Push Square](https://www.pushsquare.com/reviews/ps4/middle-earth_shadow_of_war), 2017 prose republished October 28, 2020. PS4 Pro; archived Market claims remain historical.
@@ -241,7 +263,7 @@ All accessed September 26, 2026. Review and guide bodies were read; narrower pri
 - **S4 — Original review:** [Peter Taylor, Digital Chumps](https://digitalchumps.com/middle-earth-shadow-of-war-review/), October 16, 2017. Xbox One.
 - **S5 — Original review:** [Paul Bird, Horror Geek Life](https://www.horrorgeeklife.com/2017/10/21/middle-earth-shadow-war-review/), October 21, 2017. A specific enthusiastic counterpoint.
 - **S6 — Accessibility account:** [Dr. Josh Straub, DAGERSystem / Can I Play That?](https://caniplaythat.com/2017/11/07/disability-game-review-middle-earth-shadow-of-war/), November 7, 2017, later transferred. One article, limited play access, not a full-campaign evaluation.
-- **S7 — Player testimony:** [Steam helpful reviews](https://steamcommunity.com/app/356190/reviews/?browsefilter=toprated). Selected English all-time bodies; mutable sorting and possible edits. Negative-filter request failed.
+- **S7 — Player testimony:** [Steam helpful reviews](https://steamcommunity.com/app/356190/reviews/?browsefilter=toprated). Selected English all-time bodies; mutable sorting and possible edits. Original negative-filter failure now supplemented by S44.
 - **S8 — Primary interview:** [Matt Kamen interviewing Kevin Stephens, WIRED](https://www.wired.com/story/middle-earth-shadow-war-interview/), 2017 prerelease. Intent/duration; announced August date is not the delivered release.
 - **S9 — Primary storefront:** [Shadow of War on Steam](https://store.steampowered.com/app/356190/Middleearth_Shadow_of_War/). Indexed identity/release and product text read; direct age gate limited retrieval.
 - **S10 — Reproduced primary patch notes:** [VULKK, July 17, 2018 update](https://vulkk.com/2018/07/17/shadow-of-war-update-1-patch-notes-17th-july-update/). Official-note reproduction read; direct original Steam announcement returned a JavaScript shell. Market, epilogue and progression changes, not proof of the latest build number.
@@ -255,7 +277,7 @@ All accessed September 26, 2026. Review and guide bodies were read; narrower pri
 - **S18 — Mechanics:** [Higher-rank orcs](https://www.gamepressure.com/middle-earth-shadow-of-war/higher-rank-orcs/z7a32a). Hierarchy, bodyguards, traits and intelligence.
 - **S19 — Mechanics:** [Nemesis and orders](https://www.gamepressure.com/middle-earth-shadow-of-war/nemesis-system-and-orders/z8a32b). Recruitment and assignments; its weakness-before-intel assertion is not adopted.
 - **S20 — Mechanics:** [Equipment](https://www.gamepressure.com/middle-earth-shadow-of-war/upgrading-equipment/z9a332). Slots, rewards, challenges and sets; no extra 'Heroic' rarity inferred.
-- **S21 — Mechanics:** [Gems](https://www.gamepressure.com/middle-earth-shadow-of-war/gems/zaa333). Slot-dependent modifiers and composition; questionable green-weapon wording excluded.
+- **S21 — Mechanics:** [Gems](https://www.gamepressure.com/middle-earth-shadow-of-war/gems/zaa333). Slot-dependent modifiers and composition; questionable green-weapon wording excluded and separately clarified with S41.
 - **S22 — Mechanics:** [Recruitment and pit leveling](https://www.gamepressure.com/middle-earth-shadow-of-war/how-to-recruit-and-level-up-orcs/zea2f5). Delegated matchup risk; optimization advice is not a universal preference.
 - **S23 — Mechanics:** [Captain classes](https://www.gamepressure.com/middle-earth-shadow-of-war/which-orcs-are-best-to-recruit/zda2f4). Five useful class examples, not a comprehensive ranked tier list.
 - **S24 — Mechanics:** [Fortress assault](https://www.gamepressure.com/middle-earth-shadow-of-war/fortress-assault/zba32e). Preparation, attackers, capture points and Overlord.
@@ -273,6 +295,18 @@ All accessed September 26, 2026. Review and guide bodies were read; narrower pri
 - **S36 — Mechanics:** [Haedir and secrets](https://www.gamepressure.com/middle-earth-shadow-of-war/haedir-and-finding-secrets/zea2e6). Scouting, travel and three collection families.
 - **S37 — Puzzle/region reference:** [Ithildin doors](https://www.gamepressure.com/middle-earth-shadow-of-war/all-ithildin-doors-poems/zca2f3). Procedure and region inventory; poems/solutions are not reproduced.
 
+### Follow-up evidence
+
+- **S38 — Community traits reference:** [Nemesis Traits](https://shadowofwar.fandom.com/wiki/Nemesis_Traits). Substantive indexed Shadow of War class/tribe sections read; direct page failed. Predecessor-only traits excluded; no trait-generation code audit.
+- **S39 — Community achievement guide:** [HeadHunter](https://www.playstationtrophies.org/game/middle-earth-shadow-of-war/trophy/195725-headhunter.html). Indexed complete short ten-class inventory; direct opening failed. Supports classification, not every behavior.
+- **S40 — Community mechanics:** [Neoseeker, The Orcs of Mordor](https://www.neoseeker.com/middle-earth-shadow-of-war/The_Orcs_of_Mordor). Indexed relevant recruitment/trait text; historical maximum-level advice not imported over S10.
+- **S41 — Community equipment guide:** [Neoseeker, Equipment](https://www.neoseeker.com/middle-earth-shadow-of-war/Equipment). Indexed gem section read; direct page failed. Resolves slot-dependent Life-gem meaning without current percentage testing.
+- **S42 — Community progression guide:** [Neoseeker, Skills and Leveling](https://www.neoseeker.com/middle-earth-shadow-of-war/Skills_and_Leveling). Indexed Ringwraith/Undying Loyalty text and simon's January 3, 2023 correction read; direct page failed. Disputed initial level loss excluded, not independently resolved through gameplay.
+- **S43 — Primary service notice:** [Warner Bros., Shadow of Mordor Status Update](https://wbgasupport.wbgames.com/hc/en-us/articles/39931307380115-Middle-earth-Shadow-of-Mordor-Status-Update). Full substantive notice read; distinguishes predecessor services from sequel features.
+- **S44 — Direct negative testimony:** [Steam app 356190, negative helpful reviews](https://steamcommunity.com/app/356190/negativereviews/?browsefilter=toprated). Direct substantive bodies read, including both named accounts; historical/edited prose, not current population or code evidence.
+
+**Reading route:** compare Kelly's named orcs [S1] with the positive histories [S7] and recovered negative reactions [S44]. Then read the creator's scope/late-power discussion [S28] beside the qualified resurrection rules [S42]: keeping a character available is not the same as preserving every valued characteristic. Use the official removal notes [S10] to date monetization criticism, not erase it.
+
 **Viewing route — proposed, not watched:** begin with the official gameplay walkthrough for the relationship-to-fortress loop, then compare a tribe spotlight with a recorded multi-encounter captain story. Separately inspect a stealth/search exchange, a pit fight and a defender-rescue decision. Use the expansion trailers to compare Eltariel's Light kit with Baranor's tools. The linked official hub owns the videos; no timestamps, watched duration or footage-derived evidence is claimed.
 
 ## 11. Requirement and preservation review
@@ -280,20 +314,20 @@ All accessed September 26, 2026. Review and guide bodies were read; narrower pri
 | ID | Coverage owner |
 | --- | --- |
 | R01 | Section 1: identity, edition, changing promise and modes |
-| R02 | Section 2: complete major action/skill families; section 4 activities |
-| R03 | Section 2 equipment/gems; section 3 captains and trait composition |
-| R04 | Sections 2 and 4: resources, growth, failure, epilogue and ongoing loops |
+| R02 | Section 2: major action/skill families; section 3 complete advanced-class inventory; sections 4/6 activities and late powers |
+| R03 | Section 2 equipment/gems; section 3 captains, tribes and trait composition |
+| R04 | Sections 2, 4 and 6: resources, growth, failure, resurrection, epilogue and ongoing loops |
 | R05 | Section 5: eight causal situations with next decisions and limits |
-| R06 | Section 3: identity, hierarchy, memory, assignments and absent life-sim systems; section 4 online |
+| R06 | Section 3: identity, hierarchy, memory, assignments and absent life-sim systems; section 4 online/service distinctions |
 | R07 | Section 6: visual/audio acknowledgment, camera, menus and direct accessibility account |
 | R08 | Section 6: spoiler-marked authored arc, procedural continuity and expansion contrasts |
 | R09 | Section 7: primary interviews, generation/balance, scope and evidence limits |
 | R10 | Section 7: documented media units and distinct sharing hypothesis |
 | R11 | Sections 4 and 7: monetization transition and correctly bounded NPD evidence |
-| R12 | Section 8: five full independent base reviews and helpful Steam; section 6 expansion/access accounts |
+| R12 | Section 8: five full independent base reviews and helpful positive/negative Steam; section 6 expansion/access accounts |
 | R13 | Section 9: transferable patterns, dependencies, failure modes and alternatives |
-| R14 | Sections 10–11: annotations, viewing route, navigation and preservation |
+| R14 | Sections 10–11: annotations, reading/viewing routes, navigation and preservation |
 
 G116 is a curated addition rather than an original dedicated packet chapter. The inspected branch roster, navigation and dossier tree identify no prior dedicated owner. This file leaves original chapters, mechanics studies and packet sources untouched. All five checkpoint review accounts, named NPC/player narratives, the separate accessibility account, creator perspective and source/date caveats are preserved; temporary incomplete instructions are replaced with substantive coverage. Global packet reconciliation remains open.
 
-Reviewed for edition confusion, unsupported current-service claims, source-type distinctions, eight worked interactions, five independent review identities, relative navigation and R01–R14 coverage. The completion commit and actual diff evidence belong in the progress ledger. This is not a current-build execution test or closure of the entire 130-subject assignment.
+The follow-up read the whole dossier and checked all R01–R14, adding missing classes/tribes, recruitment exclusions, late-game resurrection costs, Life-gem distinctions, the predecessor service boundary and direct negative testimony. It preserves all eight situations, five original reviews and original source history. The uncertain resurrection penalty remains excluded; indexed-only pages are not called successful live-page reads. Current server operation, exhaustive patch/trait combinations and private finances remain unestablished. The actual diff and completion commit belong in the ledger. This is not a current-build test or closure of the entire 130-subject assignment.
