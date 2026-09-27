@@ -66,6 +66,12 @@ Examples:
 
 A player may use a preset archetype or define their own distribution and signature skill.
 
+### Skill points and learning caps
+
+The original pass named the attributes and signature skill but did not explain the progression constraint they create. A skill's starting value comes from its governing attribute. The chosen **Signature Skill** receives +1 and also raises the **learning cap for all six skills in that attribute by one**. Experience produces skill points (100 XP per level); a point can raise an individual skill up to its learning cap, or be spent on Thought Cabinet capacity/forgetting as described below. Certain Thoughts and temporary substance effects can raise learning caps further. [DE17](#de17)
+
+This matters because a “bad physical build” is not merely a low current roll bonus. Base attributes constrain how far ordinary skill-point investment can repair that weakness. Conversely, changing a learning cap can reopen a failed White Check by making another skill increase possible. The build therefore controls both perception **and future trainability**.
+
 ### The critical innovation
 
 A high skill does two things:
@@ -681,6 +687,12 @@ Top/helpful reviews repeatedly say:
 
 One recent positive review explicitly warns that players who do not enjoy dozens of hours of reading/listening should skip it; this is useful audience-fit evidence, not a quality complaint. [DE16](#de16)
 
+### September 2026 current-store check
+
+The audit also re-read the live Steam store surface rather than relying only on the original top/helpful URLs. On September 27, 2026 Steam showed the English corpus as **Very Positive** (about 92% positive across roughly 58,000 English reviews) and the recent 30-day corpus as **Very Positive** (about 91% across roughly 880 reviews). Current September positives still describe the game as overwhelmingly dialogue/reading-centered and emphasize writing, character/voice work and story over conventional action. [DE18](#de18)
+
+Those aggregate labels are useful participation/reception context, not a replacement for reading individual positive and negative bodies—especially because ownership-protest negatives distort a simple gameplay-satisfaction interpretation.
+
 ### Negative/helpful themes
 
 Current negative reviews split into two categories:
@@ -865,6 +877,7 @@ The game's ideological comedy works because the world pushes back.
 
 Covered:
 - character build/attributes/skills;
+- XP/skill points, signature-skill and attribute learning caps;
 - skill checks;
 - passive perception;
 - Thought Cabinet;
@@ -903,6 +916,17 @@ G66 is a new independent pass from the expanded roster. No inherited full Disco 
 
 Steam samples are qualitative and ownership-protest reviews are explicitly separated from gameplay criticism.
 
+### Reading / viewing routes
+
+For a compact route:
+1. **DE04 + DE17** for the Thought Cabinet and skill/learning-cap progression model.
+2. **DE02/DE03/DE11/DE12/DE13** for five substantive written critical perspectives across original and Final Cut versions.
+3. **DE15–DE16 + DE18** for direct/current Steam reception and audience-fit evidence.
+4. **DE07–DE08** for world/art/tabletop production origins.
+5. **DE09–DE10** for the contested post-release ownership context and why negative store sentiment cannot be read as pure gameplay dissatisfaction.
+
+No video or footage is represented as watched in this audit.
+
 ## Sources
 
 <a id="de01"></a>**DE01 — [Disco Elysium release profile](https://rpgamer.com/game/disco-elysium/).** RPGamer. Platform/release chronology.
@@ -936,3 +960,7 @@ Steam samples are qualitative and ownership-protest reviews are explicitly separ
 <a id="de15"></a>**DE15 — [Steam most-helpful all-time reviews](https://steamcommunity.com/app/632470/reviews/?browsefilter=toprated&l=english).** Steam. Qualitative top/helpful player sample.
 
 <a id="de16"></a>**DE16 — [Steam recent positive reviews](https://steamcommunity.com/app/632470/positivereviews/).** Steam current positive-review surface; qualitative audience-fit and voice/writing sample.
+
+<a id="de17"></a>**DE17 — [Skills](https://discoelysium.wiki.gg/wiki/Skills).** Disco Elysium Wiki community mechanics reference, audited September 27, 2026. Used for base-skill derivation, Signature Skill +1/cap effect, XP skill-point progression, learning caps and White/Red/passive-check relationships; community source, not developer intent.
+
+<a id="de18"></a>**DE18 — [Disco Elysium - The Final Cut on Steam](https://store.steampowered.com/app/632470/Disco_Elysium/).** Valve storefront/review surface, audited September 27, 2026. Used only for current review-count/sentiment labels and direct current-review examples; values are a dated snapshot and not lifetime sales.
