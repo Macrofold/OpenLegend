@@ -4,7 +4,7 @@
 
 Merged the five G40–G120 research branches into `docs/game-inspiration-library` with ordinary merge commits, preserving their ancestry and stable dossier paths so subsequent source-branch commits can be merged incrementally. Reconciled the shared navigation, interaction lookup and [progress ledger](../archive/02-research/game-inspiration/research-progress.md#integrated-branch-state--september-27-2026); the branch named G101–G120 actually owns the revised G101–G110 range. Both independent AI Dungeon studies and their separate evidence limits remain in one dossier.
 
-Per-range research and audit claims remain scoped to their recorded evidence. G121–G130 and the global packet/full-roster/evidence gates are not completed by this merge; the G40–G60 ledger's lag behind its last two research commits is explicit. No runtime behavior, accepted game requirement or maintainer implementation task changed. Integration verification checks committed-content preservation, local navigation/citations and Git ancestry; it does not repeat the external research or claim gameplay verification.
+Per-range research and audit claims remain scoped to their recorded evidence. G121–G130 and the global packet/full-roster/evidence gates are not completed by this merge; the G40–G60 ledger's lag behind its latest research commits is explicit. No runtime behavior, accepted game requirement or maintainer implementation task changed. Integration verification checks committed-content preservation, local navigation/citations and Git ancestry; it does not repeat the external research or claim gameplay verification.
 
 ## 2026-09-26 — G81–G100 substantive research audit and corrections
 

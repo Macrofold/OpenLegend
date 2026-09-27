@@ -8,18 +8,18 @@ This library now contains the five parallel research branches below, merged with
 
 | Source branch | Merged source head | Range status and detailed owner |
 | --- | --- | --- |
-| `docs/game-inspiration-library` | `872313092809` | [G01–G40 initial passes retained; G01–G25 audit continues and G26–G39 audit is recorded below. G40 also has the independent G40–G60 study.](#requirements-and-corrections-audit--g01-through-g25) |
-| `docs/game-inspiration-games-40-60` | `9f00bec28160` | [G40–G60 remediation remains open. The source ledger trails its latest G52/G53 research commits; see the integration note in this range.](#g40g60-branch-research-state) |
-| `docs/game-inspiration-games-61-80` | `da73e75558dd` | [G61–G80 follow-up audit remains active; the range table owns completed and pending subjects.](#g61g80-branch-research-state) |
+| `docs/game-inspiration-library` | `8f714940f43f` | [G01–G40 initial passes retained; G01–G25 audit continues and G26–G39 audit is recorded below. G40 also has the independent G40–G60 study.](#requirements-and-corrections-audit--g01-through-g25) |
+| `docs/game-inspiration-games-40-60` | `92cd9fc595b1` | [G40–G60 remediation remains open. The source ledger trails its latest G52–G54 research commits; see the integration note in this range.](#g40g60-branch-research-state) |
+| `docs/game-inspiration-games-61-80` | `8a0b8fa23f45` | [G61–G80 follow-up audit remains active; the range table owns completed and pending subjects.](#g61g80-branch-research-state) |
 | `docs/game-inspiration-games-81-100` | `203b409d9fe8` | [Identified G81–G100 audit repairs complete, with retained evidence limits.](#g81g100-branch-research-state) |
-| `docs/game-inspiration-games-101-120` | `cb771210406e` | [Revised scope is G101–G110; second-pass audit remains active.](#g101g110-branch-research-state) |
+| `docs/game-inspiration-games-101-120` | `b1a383dc7796` | [Revised scope is G101–G110; second-pass audit and scoped integration recorded complete.](#g101g110-branch-research-state) |
 | `docs/game-inspiration-games-111-120` | `2e7ddf5f53a1` | [G111–G120 follow-up audit recorded complete, with retained evidence limits.](#g111g120-branch-research-state) |
 
 G121–G130 remain outside these merged research ranges. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
 
-For later updates, fetch `origin` and merge each updated remote branch into `docs/game-inspiration-library` with a normal merge commit. Do not squash or rebase the shared histories. Keep dossier paths stable and reconcile any shared ledger changes within their own range; no propagation back to source branches is required for subsequent merges. Updates received during this integration from the library, G61–G80 and G101–G110 branches already merged cleanly.
+For later updates, fetch `origin` and merge each updated remote branch into `docs/game-inspiration-library` with a normal merge commit. Do not squash or rebase the shared histories. Keep dossier paths stable and reconcile any shared ledger changes within their own range; no propagation back to source branches is required for subsequent merges. Earlier updates received during this integration from the library, G61–G80 and G101–G110 branches merged cleanly. A later G101–G110 closeout changed its global-gate/recovery tail and needed reconciliation with the adjacent imported range; its completion evidence is preserved below.
 
-Integration review verified exact preservation in 221 file/source comparisons, both complete AI Dungeon study texts, every source navigation/changelog line and every per-game status row. A local Markdown path/anchor scan checked 8,345 links across 226 files without unresolved targets. Pinned Prettier 3.6.2 passed with repository ignore rules (the research archive is excluded). These are integration checks, not fresh research, external-URL validation or game execution.
+Integration review verified exact preservation in 221 file/source comparisons, both complete AI Dungeon study texts, every source navigation/changelog line and every per-game status row. A local Markdown path/anchor scan checked the integrated library without unresolved targets. Pinned Prettier 3.6.2 passed with repository ignore rules (the research archive is excluded). These are integration checks, not fresh research, external-URL validation or game execution.
 
 ## Resume here
 
@@ -121,9 +121,9 @@ This reconciliation checks content preservation, citation/link integrity and res
 
 ## G40–G60 branch research state
 
-Imported from `docs/game-inspiration-games-40-60` at `9f00bec28160`. Status and verification claims in this section apply only to that range and its recorded research pass.
+Imported from `docs/game-inspiration-games-40-60` at `92cd9fc595b1`. Status and verification claims in this section apply only to that range and its recorded research pass.
 
-**Integration note:** the source ledger below still resumes at G52, but the merged history also includes G52’s production-history addition (`71d429f9`) and G53’s build/multiplayer supplement (`9f00bec2`). Those changes are preserved in the dossier and linked supplement. This integration does not declare their audit gate closed or advance the source researcher’s resume point.
+**Integration note:** the source ledger below still resumes at G52, but the merged history also includes G52’s production-history addition (`71d429f9`) G53’s build/multiplayer supplement (`9f00bec2`), and G54’s source-classification/Wisp-link correction (`92cd9fc5`). Those changes are preserved in their dossiers and linked supplement. This integration does not declare their audit gate closed or advance the source researcher’s resume point.
 
 ### Resume state
 
@@ -219,7 +219,7 @@ The fork's 19 complete, 7 partial and 34 unstarted totals are historical. Spore 
 
 ## G61–G80 branch research state
 
-Imported from `docs/game-inspiration-games-61-80` at `da73e75558dd`. The following audit state is range-local; [global integration gates](#final-integration-gates--pending) remain open.
+Imported from `docs/game-inspiration-games-61-80` at `8a0b8fa23f45`. The following audit state is range-local; [global integration gates](#final-integration-gates--pending) remain open.
 
 ### Current requested follow-up audit — G61–G80
 
@@ -315,13 +315,13 @@ This is a **scoped manual static review**, not an automated whole-repository or 
 
 ## G101–G110 branch research state
 
-Imported from `docs/game-inspiration-games-101-120` at `cb771210406e`. The branch name retains its original range, but the revised assignment stops at G110. The following audit state is range-local; [global integration gates](#final-integration-gates--pending) remain open.
+Imported from `docs/game-inspiration-games-101-120` at `b1a383dc7796`. The branch name retains its original range, but the revised assignment stops at G110. The following audit state is range-local; [global integration gates](#final-integration-gates--pending) remain open.
 
 ### Current assignment and recovery
 
 **Repository / branch:** `Macrofold/OpenLegend`, `docs/game-inspiration-games-101-120`. Created September 26, 2026 from `docs/game-inspiration-library-expansion` at `57bcd96f75f4561baff10ea57e28210dd908ebd5`. Mike's revised range is **G101–G110; stop at G110**, despite the branch name. Do not recreate the branch or start G111–G120.
 
-**Initial passes: 10 / 10. Requested second-pass audit: 9 / 10. Active: G110 — Knights of the Old Republic II.** Mike subsequently requested checking every aspect of the instructions for every game in the batch, correcting mistakes and completing unfinished research. The previous final continuation freshly audited only G110; its nine inherited completion records do not discharge this new all-ten audit. Audit starting head: `bc65d9234874c195c7937ba38f524b360262b533`. No rebase, merge or history rewrite is requested.
+**Initial passes: 10 / 10. Requested second-pass audit: 10 / 10. Active: none — G101–G110 audit complete; stop here.** Mike subsequently requested checking every aspect of the instructions for every game in the batch, correcting mistakes and completing unfinished research. All ten dossiers now have a fresh second-pass audit record below. Audit starting head: `bc65d9234874c195c7937ba38f524b360262b533`. No rebase, merge or history rewrite was requested or performed.
 
 **Plan and completion gate:** read each complete dossier against R01–R14 and the explicit mechanics inventory, including its five substantive review summaries and player-evidence qualifications. Research weak or disputed rules, editions, source attributions, dates and commercial definitions; correct and complete the existing owner. Preserve prior examples and evidence history. Inspect changed diffs, source anchors and relative links; commit after each game and substantive checkpoints within five minutes during longer work. Finish scoped navigation, preservation/diff review and one reconciled documentation-changelog entry. Runtime logic changed: **zero**. Risks are factual accuracy, lost research and misleading acceptance, not engine behavior. No paid execution, game build or automated test suite is required.
 
@@ -338,7 +338,7 @@ Imported from `docs/game-inspiration-games-101-120` at `cb771210406e`. The branc
 | G107 — [Octopath Traveler](dossiers/octopath-traveler.md) | Complete. Entire R01–R14/inventory checked. Corrected the stale Steam-access limit by freshly reading the current English all-time helpful positive and negative review surfaces; preserved the prior player-discussion evidence separately. Added a documented pre-release feedback loop (>1M demo downloads, 45,500 survey responses, and concrete traversal/visibility/UI/event/battle changes) plus a primary current Nintendo US check for the October 1, 2026 Switch 2 release. Existing five independent reviews, six interactions, mechanics breadth and prior source identities preserved; four source groups added. | `ef906f6ff29948e0a9ccd9238bf684a1082fbcd9` |
 | G108 — [Octopath Traveler II](dossiers/octopath-traveler-ii.md) | Complete. Entire R01–R14/inventory checked. Corrected the stale Steam-access statement by recovering the indexed English all-time helpful surface and contrasting negative player bodies; preserved the prior pacing/build and Castti discussions separately. Added primary current Nintendo US confirmation of the October 1, 2026 Switch 2 date/save incompatibility and later five-million series context without misattributing that aggregate to the sequel. Existing five independent reviews, mechanics/interactions, developer interview and source-error boundaries preserved; four source groups added. | `3479673cc8e4eda93c4801717ac33592153ce171` |
 | G109 — [Knights of the Old Republic](dossiers/star-wars-knights-of-the-old-republic.md) | Complete. Entire R01–R14/inventory checked. Recovered the indexed English all-time helpful Steam surface and preserved the weekly positive/negative sample; added official Aspyr Switch patch evidence tying later fixes to review-reported UI/voice issues. Added Casey Hudson's GDC production scale/prototyping/PR account plus historical 250k-in-four-days and 1.5M+ worldwide unit snapshots without converting them into present lifetime or profit claims. Existing seven written reviews, mechanics, companions, constructed situations and source-error caveats preserved; four source groups added. | `b609127fc4e95f0779aa94e54bb4393c10c51c46` |
-| G110 — [Knights of the Old Republic II](dossiers/star-wars-knights-of-the-old-republic-ii.md) | In progress: full dossier, inventory and evidence audit. | — |
+| G110 — [Knights of the Old Republic II](dossiers/star-wars-knights-of-the-old-republic-ii.md) | Complete. Entire R01–R14/inventory checked. Added Kevin Saunders's original 2005 postmortem documenting the 33-person team, little-over-14-month schedule, late influence implementation and inadequate final balance/polish window. Replaced the weekly-only Steam limitation with current all-time helpful plus contrasting negative material while making the base/Aspyr-2015/TSLRCM evidence layers explicit. Added Aspyr's 2015 desktop/Workshop update, a directly retrieved 1.275M+ US sales snapshot and the 2023 Switch cancellation remediation offer without inventing a cancellation cause. Existing five reviews, six constructed interactions, mechanics/tooltips, restoration boundaries and production retrospectives preserved; six source groups added. | `bd561323ae40b058ab6e6a06d210c7d10f47eb94` |
 
 A public evidence limit can remain after an actual search; missing researchable content cannot be renamed an access limit. The audit reads all ten dossiers and checks identified factual/evidence issues; it does not claim a new playthrough or a fresh independent rereading of every historical external page. Each dossier specifies what was actually retrieved.
 
@@ -361,7 +361,11 @@ The following commits remain the **initial-pass** record, not second-pass accept
 
 Inherited G01–G20 claims and G21–G100/G111–G130 are outside this assignment. The [immutable parent ledger](https://github.com/Macrofold/OpenLegend/blob/57bcd96f75f4561baff10ea57e28210dd908ebd5/archive/02-research/game-inspiration/research-progress.md) retains original scope/resume history. Last inherited completion was Minecraft at `4f6b715814dd932af34806517539cfe55ed1a6a0`; original library baseline was `feab691827a7cd62b6146f31eef20ee12e1a4770`.
 
-Initial integration `bc65d9234874c195c7937ba38f524b360262b533` added ten library routes and six G110 interaction routes. Its review covered G110 and integration, not a fresh audit of G101–G109; the second-pass table above owns that follow-up.
+### G101–G110 scoped integration verification
+
+The source branch records its scoped navigation check complete: README links all ten dossiers, the interaction lookup links all six G110 situations to their live headings, and every Sxx reference across the ten dossiers resolves to an existing unique source anchor. Its comparison from audit start `bc65d923` through the final dossier commit touches only the ten expected dossiers plus the ledger. These checks close this range’s second-pass review, not the library-wide packet, conversation or roster gates.
+
+Initial integration `bc65d9234874c195c7937ba38f524b360262b533` added library/interaction routes and a documentation-changelog entry without runtime changes. Its review covered G110 and integration rather than freshly rereading G101–G109; the second-pass table above now supersedes that narrower audit status for G101–G110.
 
 ## G111–G120 branch research state
 
