@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Corrective research active: G87 — Final Fantasy X.** Correct the party-label and aggregate-Steam-attribution errors; add named Mix inputs, Al Bhed Primers, Cloister operations, complete cross-system situations and specific audiovisual evidence. Then continue G88–G90 and G93. The audit owner records exact closure criteria.
+**Corrective research active: G88 — Final Fantasy XI.** Develop representative endgame, PvP and noncombat activity loops; clarify item/binding/scroll acquisition; add named crafting or Skillchain situations and an expansion-character narrative. Then continue G89–G90 and G93. The audit owner records exact closure criteria.
 
-**Latest completed repair: G86**, `5578872c19a3a8e357ba9b94c0485bded0110c9b`. Corrected Eiko's Trance and qualified Sword Magic's partner-state/MP rules; added operative Tetra Master, frog and Mognet descriptions, six complete situations and explicit spoilers. Original sections, examples and FFIX01–22 sources remain; FFIX23–31 document new evidence. Principal committed diff inspected. Final source-tail/local-link review remains pending alongside the preceding repairs.
+**Latest completed repair: G87**, `83da33fca0d4f341f98c2fbdd3d582a2d6aff21a`. Corrected the all-human party label and withdrew unsupported aggregate-Steam attribution. Added named Mix inputs/costs, Al Bhed Primer and compilation rules, Besaid sphere/treasure operations with the later Anima/Dark Valefor boundary, specific score/art evidence and six complete situations. Original sections, examples, X-2 contrast and FFX01–30 remain; FFX31–36 annotate new evidence. Principal committed diff inspected. Final source-tail/local-link review remains pending alongside preceding repairs.
 
 The substantive audit reopened G81–G90 and G93; nine other dossiers retain coverage judgments. Mike authorized corrections and completion of missing research. The old blanket twenty-of-twenty statement was too strong. Complete and commit each game before advancing; headings and source counts are not substantive coverage.
 
@@ -22,8 +22,8 @@ Heading retained for inbound links. **Needs repair** is not complete. **Coverage
 | G84 | [Final Fantasy VII](dossiers/final-fantasy-vii.md) | Repair complete — `32eda3c24ff979f993d4d760076eaa1833e78344` |
 | G85 | [Final Fantasy VIII](dossiers/final-fantasy-viii.md) | Repair complete — `4479ef42a6c29b9907c8ed1ec96af2216e190ed0` |
 | G86 | [Final Fantasy IX](dossiers/final-fantasy-ix.md) | Repair complete — `5578872c19a3a8e357ba9b94c0485bded0110c9b` |
-| G87 | [Final Fantasy X](dossiers/final-fantasy-x.md) | Corrective research active |
-| G88 | [Final Fantasy XI](dossiers/final-fantasy-xi.md) | Needs repair |
+| G87 | [Final Fantasy X](dossiers/final-fantasy-x.md) | Repair complete — `83da33fca0d4f341f98c2fbdd3d582a2d6aff21a` |
+| G88 | [Final Fantasy XI](dossiers/final-fantasy-xi.md) | Corrective research active |
 | G89 | [Final Fantasy XII](dossiers/final-fantasy-xii.md) | Needs repair |
 | G90 | [Final Fantasy XIII](dossiers/final-fantasy-xiii.md) | Needs repair |
 | G91 | [Final Fantasy XIV](dossiers/final-fantasy-xiv.md) | Coverage present; unchanged |
