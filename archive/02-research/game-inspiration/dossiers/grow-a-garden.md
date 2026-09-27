@@ -180,6 +180,27 @@ These are inspiration lenses, not instructions to copy rare-drop timers, premium
 
 ## 14. Reading routes, coverage and preservation
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the live-experience dossier substantively complete. Because Grow a Garden has no stable numbered public release line, this audit preserves version uncertainty instead of inventing a universal current table.
+
+- **Identity / classes / attributes / skills / leveling / trees:** the player's garden/account and collection are the persistent identity; there is no conventional class, attribute, combat-skill or perk tree. Garden Ascension and capacity unlocks provide late progression (§§1, 9).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** seeds, living plants, produce, mutations, pets, pet mutations, gear, cooking ingredients/results and tradeable goods are covered in §§2–9. There is no armor/weapon progression ladder.
+- **Magic / spells / powers:** absent as a spell system; weather, mutations and pet/gear abilities are authored fantasy mechanics with specific eligibility.
+- **Traversal / environmental and object interaction:** movement between garden, shops/event spaces and Trade World plus planting, harvesting, rearranging, spraying, shoveling, feeding/cooking and booth interaction form the practical vocabulary.
+- **Activities / minigames:** gardening, mutation hunting, pet raising, cooking/event turn-ins, achievements, gifting, trading and market browsing are the main activities; no separate combat minigame is central.
+- **Combat / stealth / loot / rewards:** conventional combat/stealth are absent. Seeds, rare crops/mutations, pets, currencies, event rewards and collection goals are the reward structure.
+- **Death / failure / recovery:** there is no ordinary character-death loop; failure is more often lost opportunity, consumed gear, destructive removal, bad trade or missed event timing.
+- **Economy / trading:** Sheckles, Garden Coins, Trade Tokens, bilateral trade, market booths and Robux-linked products are explicitly separated in §§8–9.
+- **Story / relationships / romance / reputation / party / companions:** service characters lightly frame transactions while pets provide bounded helper behavior; human friendships/trust arise through multiplayer. There is no romance/reputation campaign or commandable RPG party.
+- **NPC/AI behavior and schedules / factions:** pet abilities and service characters are bounded scripted systems, not autonomous social schedules or faction politics.
+- **World map / environment / quests / events:** the garden, Trade World, weather/admin events, Guide Book achievements and rotating event activities provide the live-world structure.
+- **Building / settlements / management:** arranging and expanding a persistent garden is the central management layer; it is not population/colony management.
+- **Multiplayer / social / endgame / return loops:** shared servers, gifts/trades/markets, visible collections and event attendance are central social loops. Late purpose comes from collection, mutation/pet optimization, expansion/ascension and social play rather than a final campaign boss.
+
+**Current-boundary correction:** no source in this pass establishes one canonical September 2026 build number or immutable current mutation/trade table. The dossier therefore keeps dated mechanics and conflicting community thresholds explicit instead of upgrading them into a false “latest version” certification.
+
+
 Read the original creator interview for development history, the GameSpot guide for the actual progression vocabulary, and the contrasting firsthand accounts for why the same loop can feel restful or empty. Use specific mechanics entries to check the interaction of tools, plant states and pets. The official experience page is the starting location; linked videos, screenshots and event recordings are reference pointers, not footage claimed watched in full.
 
 | Requirement | Substantive coverage |
