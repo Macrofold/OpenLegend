@@ -215,6 +215,45 @@ Traversal also includes:
 
 Because climbing uses stamina, armor/encumbrance/combat readiness can conflict with mobility.
 
+### Journey System — structured goals inside the sandbox
+
+The initial pass omitted the modern **Journey System**, which is a major bridge between open survival and authored progression. Journeys are themed multi-step objective chains that can unlock recipes/rewards and teach systems without forcing one campaign order. Examples include Cartographer, Sorcerer, Adventurer, Vault Raider and Surge Defender. [Journey System technical overview](https://www.conanexiles.com/wp-content/wiki/3437659279.html) · [The Exiles Journey](https://conanexiles.fandom.com/wiki/The_Exiles_Journey).
+
+A Journey can require the player to:
+- discover named locations;
+- learn Knowledge;
+- use crafting stations;
+- fight bosses;
+- interact with sorcery;
+- attune to travel infrastructure;
+- complete Siptah-specific Vault/Surge objectives.
+
+This means the game has a **structured objective layer** even though it does not present one mandatory quest campaign. Journeys also make system onboarding and character progression partially explicit rather than relying entirely on wiki knowledge.
+
+### Map-Room and Obelisk traversal — audit expansion
+
+The Exiled Lands contain ten major Obelisks surrounded by corruption. Once a player **attunes** to an Obelisk, a player-built **Map-Room** can teleport bracelet-wearing survivors to that destination. The Cartographer Knowledge is learned from the Archivist in the Unnamed City. [Map-Room](https://conanexiles.fandom.com/wiki/Map-Room) · [Obelisk](https://conanexiles.fandom.com/wiki/Obelisk).
+
+This is asymmetric fast travel:
+- the Map-Room is a large expensive base structure;
+- destinations require prior physical discovery/attunement;
+- travel sends the player **to** an Obelisk rather than freely between arbitrary markers;
+- Obelisk areas themselves inflict Corruption.
+
+Enhanced adds a current cross-world use: Map-Rooms placed on Siptah can be used to travel to the Exiled Lands under the merged-world model. Fast travel therefore becomes **knowledge + infrastructure + world entitlement**, not a universal map click.
+
+### Isle of Siptah's distinct loop — Vaults, Maelstrom and Surges
+
+The first pass named Siptah without explaining its core mechanics. Siptah's original identity centers on three systems that were later deliberately decoupled after player feedback:
+
+- **Elder Vaults** — fourteen high-level dungeons tied to elder races, containing bosses, sigils, recipes/lore and Eldarium;
+- **The Maelstrom** — a violent central storm that spawns monsters from the Outer Dark and creates a hazardous/resource-rich world state;
+- **Surges of Sorcery** — Leyshrine rituals that summon waves of humans/creatures, including valuable capturable thralls.
+
+Funcom's producer letter says the original loop expected players to clear Vaults → use their rewards in the storm → gather essences → power Surges, but the studio found that dependency too cumbersome and changed the systems so they could be enjoyed more independently. [Siptah producer letter](https://www.conanexiles.com/blog/isle-of-siptah-producer-letter/) · [Update 2.3](https://www.conanexiles.com/blog/update-2-3-isle-of-siptah-improvements-and-npc-camps/) · [Siptah overview](https://www.conanexiles.com/siptah-en/).
+
+That evolution is directly useful research: **interconnected systems can create satisfying loops, but mandatory chaining can become friction when every player must do A→B→C for basic access**.
+
 ### Dungeons, bosses and exploration
 
 The Exiled Lands are a fixed authored map containing:
@@ -245,6 +284,15 @@ Animals can be captured/raised into followers. Pets differ from human thralls in
 ### Taverns and visitors
 
 Age of War/Heroes added tavern behavior and patrons. Enhanced June 2026 patch notes mention tavern barkeepers/patrons on Siptah, confirming the system remains active in current Enhanced. [June 2026 patch](https://www.conanexiles.com/blog/conan-exiles-enhanced-june-update-out-now/).
+
+### Siege tools — concrete PvP destruction
+
+The initial pass said "explosive/siege tools" too abstractly. Conan Exiles' PvP siege vocabulary includes **Trebuchets**, explosive orbs/jars/arrows and late religious/Avatar pressure, with building material tiers and server raid windows determining what is practical. The important distinction is between:
+- **slow positional siege** such as a Trebuchet, which requires construction/ammunition/range/line-of-fire;
+- **carried explosives**, which convert stored production resources directly into structure damage;
+- **Avatars**, which historically compress religious preparation into a short catastrophic manifestation.
+
+These are different answers to the same fortress problem and create different warning/counterplay windows.
 
 ### PvP, siege and gods
 
@@ -432,7 +480,32 @@ There is an authored escape/endgame route through the Exiled Lands story, but ma
 **Interaction:** storage organization remains important but physical transfer clicks fall.  
 **Result:** production focuses more on resource availability than inventory shuttling.
 
-### Case 10 — engine migration changes preservation rules
+### Case 10 — an Obelisk becomes useful only after the player learns and builds around it
+
+**Intention:** reduce repeated travel to the frozen north/other distant Exiled Lands region.  
+**Conditions:** survivor has physically discovered/attuned to the destination Obelisk and learned/built a Map-Room.  
+**Actions:** return to the Map-Room and select the attuned destination.  
+**Interaction:** exploration knowledge and expensive settlement infrastructure combine into travel convenience.  
+**Result:** distance is reduced **after** the world has been learned rather than before.
+
+### Case 11 — Siptah's loop was deliberately de-coupled
+
+**Intention:** acquire high-level Siptah rewards/thralls.  
+**Conditions:** Vaults, Maelstrom and Surge systems are all available.  
+**Actions:** choose whether to run Vaults for sigils/Eldarium, hunt storm creatures for essences, or perform Surges under the revised 2.3 rules.  
+**Interaction:** these systems once formed a mandatory chain but now feed one another without requiring strict linear completion.  
+**Result:** players retain cross-system synergy without every goal demanding the whole pipeline.  
+**Production lesson:** Funcom explicitly changed the dependency because players found it cumbersome.
+
+### Case 12 — Journey objectives teach without becoming the only campaign
+
+**Intention:** learn advanced travel/sorcery/Siptah systems.  
+**Conditions:** relevant Journey is unlocked by level/location.  
+**Actions:** complete explicit steps such as attuning an Obelisk, using a Map-Room, entering the Maelstrom or completing a Vault/Surge.  
+**Interaction:** sandbox actions double as authored tutorial/progression checkpoints.  
+**Result:** a player gets direction/rewards while remaining free to abandon the Journey and pursue other goals.
+
+### Case 13 — engine migration changes preservation rules
 
 **Intention:** preserve a Siptah base through Enhanced migration.  
 **Conditions:** Siptah coordinates are changing under merged-world UE5 structure.  
@@ -796,6 +869,8 @@ The seven-file packet predates G136. This dossier establishes the full per-game 
 - **Funcom — [Age of Heroes](https://www.conanexiles.com/age-of-heroes/) and [preview](https://www.conanexiles.com/blog/the-age-of-heroes-is-coming-to-conan-exiles/), 2024.** Primary companions/living settlements/Age of War retrospective.
 - **Funcom — [updates index](https://www.conanexiles.com/updates/), accessed September 27, 2026.** Current Giant-Kings Part One/current content chronology.
 - **Funcom — [Isle of Siptah](https://www.conanexiles.com/siptah-en/).** Expansion identity/history.
+- **Funcom — [Isle of Siptah producer letter](https://www.conanexiles.com/blog/isle-of-siptah-producer-letter/) and [Update 2.3](https://www.conanexiles.com/blog/update-2-3-isle-of-siptah-improvements-and-npc-camps/).** Primary evidence for Vault/Maelstrom/Surge design and the deliberate decoupling of their original mandatory chain.
+- **Funcom technical wiki — [Journey System](https://www.conanexiles.com/wp-content/wiki/3437659279.html), plus maintained Conan Exiles Wiki [The Exiles Journey](https://conanexiles.fandom.com/wiki/The_Exiles_Journey), [Map-Room](https://conanexiles.fandom.com/wiki/Map-Room), [Obelisk](https://conanexiles.fandom.com/wiki/Obelisk), [Elder Vault](https://conanexiles.fandom.com/wiki/Elder_Vault).** Operational objective/travel/Siptah mechanics added in the follow-up audit; community pages support rules, not developer intent.
 
 ### Production/commercial sources
 
@@ -836,7 +911,7 @@ No video scene or timestamp is represented as watched in this pass.
 | R02 actions/major mechanics | R02 |
 | R03 items/entities/composition | R03 |
 | R04 progression/economy/time | R04 |
-| R05 interactions | R05, ten worked cases |
+| R05 interactions | R05, thirteen worked cases |
 | R06 people/AI/social/multiplayer | R06 |
 | R07 art/audio/interface/feel | R07 |
 | R08 story/narrative/play | R08 |
@@ -849,6 +924,10 @@ No video scene or timestamp is represented as watched in this pass.
 
 ### Explicit mechanics-inventory closure
 
-Character creation; attributes/perks/corruption; XP/level/Knowledge progression; items/inventory/weapons/armor/durability; crafting/stations/upgrading; sorcery/religion; climbing/mounts/teleports; environmental interaction/resources/temperature/corruption; farming/cooking/pets; combat/dodging/ranged/siege; practical stealth/survival routing; looting/world bosses; death/respawn/inventory loss; resource/merchant/Bazaar economies; authored lore/escape story/Giant-Kings; companions/thralls/living settlements but no full romance system; follower/faction/camp AI; fixed maps/biomes/Siptah; dungeons/Purge/siege/events; extensive building/settlement management; single/co-op/dedicated/PvE/PvP/PvE-Conflict/modded servers; and late-game sorcery/legendary gear/clan war/story/mod loops are all covered.
+Character creation; attributes/perks/corruption; XP/level/Knowledge progression and explicit Journey objectives; items/inventory/weapons/armor/durability; crafting/stations/upgrading; sorcery/religion; climbing/mounts and Map-Room/Obelisk/cross-world travel; environmental interaction/resources/temperature/corruption; farming/cooking/pets; combat/dodging/ranged/Trebuchet/explosive/religious siege; practical stealth/survival routing; looting/world bosses; death/respawn/inventory loss; resource/merchant/Bazaar economies; authored lore/escape story/Giant-Kings; companions/thralls/living settlements but no full romance system; follower/faction/camp AI; fixed maps/biomes and Siptah's Vault/Maelstrom/Surge loop; dungeons/Purge/siege/events; extensive building/settlement management; single/co-op/dedicated/PvE/PvP/PvE-Conflict/modded servers; and late-game sorcery/legendary gear/clan war/story/mod loops are all covered.
 
 **Research boundary:** current supported major-content state is Steam Enhanced UE5.8.2/2.2.2 as of September 27, 2026. Consoles and UE4 Legacy have different support/content boundaries. Giant-Kings Part Two is October 6 future content and is not counted as delivered here.
+
+### Follow-up audit — September 27, 2026
+
+The second pass confirmed the current Enhanced/Legacy platform split and follower/sorcery/Purge coverage, but found three substantive omissions: the **Journey System**, operational **Map-Room/Obelisk travel**, and Siptah's actual **Vault/Maelstrom/Surge** loop. Siege was also too generic. Those systems and three new worked examples are now incorporated. The Siptah section preserves Funcom's documented redesign: the three original systems remain related, but Update 2.3 deliberately removed their strict dependency chain after player feedback.
