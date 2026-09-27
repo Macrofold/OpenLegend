@@ -228,6 +228,27 @@ Riot's documented recommendation tools, input changes, Honor rules and mode alte
 
 ## 17. Reading routes, completion and preservation
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and confirms the following boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** champion selection supplies the match identity; roles/lanes, runes, Summoner Spells and mode-specific preparation shape play. Match XP/levels and account XP/rank are distinct (§§1–3, 8–9).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** shop items, components, actives/passives and mode-specific item pools are covered in §§2, 8. There is no persistent player-crafted gear economy between ordinary matches.
+- **Magic / spells / powers:** champion kits, Summoner Spells, runes, Augments and item actives form bounded ability systems rather than freeform magic.
+- **Traversal / environmental and object interaction:** movement/pathing, WASD/point-and-click input, terrain/brush, wards/Faelights, jungle objectives, towers/inhibitors/Nexus and mode-specific plants are covered across §§1–8.
+- **Activities / minigames:** Summoner's Rift, ARAM/Mayhem, Arena and Classic are distinct native activities; they must not share one assumed rule table.
+- **Combat / stealth / loot / rewards:** team combat, fog-of-war/brush/vision play, gold/XP/objectives and item purchases are central; there is no randomized equipment-loot ladder.
+- **Death / failure / recovery:** champion death leads to respawn with time/map consequences; Arena has its own revive/recovery rules. Match loss resets the match state but not account/ranked progression.
+- **Economy / trading:** match gold/shop purchases are separate from RP/Blue Essence/pass/account monetization (§§2, 9). Player-to-player item trading is not a core system.
+- **Story / relationships / romance / reputation / party / companions:** champion lore and seasonal framing exist, but the meaningful team relationships are human multiplayer. There is no romance/companion-approval campaign.
+- **NPC/AI behavior and schedules / factions:** minions, jungle monsters and scripted map entities are bounded competitive systems, not autonomous social schedules or political factions.
+- **World map / quests / events:** Summoner's Rift objectives, role quests, mode-specific maps/events and Classic governance are covered in §§1–8.
+- **Building / settlements / management:** absent as a player construction system.
+- **Multiplayer / social / endgame / return loops:** five-player team competition, ranked progression, rotating/alternate modes, roster mastery, events/passes and esports/community identity provide return loops rather than a finite authored ending.
+
+**Current boundary check:** Riot's patch index lists **Patch 26.19 (September 22, 2026)** as the latest live patch at this audit. The September 23 Bilgewater Classic content is a current mode/content update within that line; announcements mentioning Patch 26.20 are forward-looking and are not treated as already deployed. [LL03](#ll03)
+
+
 Read Riot's basic guide, then the two champion examples and clarity essay before studying a large item table. For the development process, compare the WASD account, Bel'Veth's design history and the champion-theme article. The official music article links **Fiddlesticks' theme** as an optional listening/viewing route; the Classic developer page links its update video. These are identified pointers, not recordings claimed watched in full. Written sources support the findings above; no timestamps or playtest durations are invented.
 
 | Requirement | Substantive coverage |
