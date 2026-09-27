@@ -399,9 +399,11 @@ Historically, players could:
 
 The developers expanded My Castle beyond StreetPass specifically so players in low-StreetPass areas could connect over the Internet. [FA18](#fa18)
 
-### 2026 boundary
+### 2026 boundary: Internet/SpotPass retired, local communication survives
 
-Nintendo 3DS online communication ended April 8, 2024. Original Internet castle visiting/battles therefore are historical features in ordinary official service.
+Nintendo ended 3DS **online** play and other Internet communication on April 8, 2024, so official Internet castle visiting/battles and SpotPass-delivered functionality are historical. Nintendo's current shutdown notice is more precise than simply saying “3DS communication ended”: **StreetPass remains available because it uses local system-to-system communication**, while SpotPass no longer works because it depended on online communication. Offline features continue to function. [FA29](#fa29)
+
+For Fates, that means the authored My Castle/home layer itself is still an offline game system, and nearby/local exchanges should not be conflated with the retired Internet service. The network-dependent sharing surface is what disappeared.
 
 This is a strong preservation warning for OpenLegend:
 > if a created place has meaning, its basic existence should not depend on a matchmaking server surviving.
@@ -426,6 +428,21 @@ Economy differs by route.
 - grindable challenge encounters.
 
 The same combat engine therefore supports different campaign experiences largely through **resource rules**.
+
+## 16. DLC beyond Revelation: economy, classes, skills, and side stories
+
+Revelation is only one part of Fates' historical downloadable-content boundary. After Chapter 6, the **Dragon's Gate** also exposed optional maps that changed several otherwise important campaign constraints. These need to stay separate from base-route rules because they are no longer newly purchasable through the original 3DS storefront. [FA30](#fa30)
+
+Major functional groups included:
+- **Before Awakening** — a crossover map whose first-clear rewards included class-change items for Great Lord and Lodestar.
+- **Boo Camp** — repeatable experience; materially important because it provides a paid grinding route even for Conquest, whose ordinary campaign deliberately withholds repeatable EXP battles.
+- **Ghostly Gold** and **Museum Melee** — repeatable funds and weapons respectively, weakening base-campaign scarcity for owners who chose to use them.
+- **Royal Royale** — repeatable access to Dread Fighter and Dark Falcon class-change items after the first-clear stat rewards.
+- **Hidden Truths 1–2** — backstory connecting several Awakening characters to Fates and the Invisible Kingdom, plus Fell Brand / First Blood rewards; this is narrative context outside the three base campaign routes.
+- **Vanguard Dawn**, **Ballistician Blitz**, and **Witches' Trial** — additional class-access maps, including Vanguard, Ballistician, and Witch routes.
+- **Heirs of Fate** — a six-map child-generation side story played with scenario-specific versions of the children rather than the player's normal roster, awarding otherwise unusual skill scrolls for meeting survival/clear conditions. [FA30](#fa30) [FA31](#fa31)
+
+This matters to the audit in two ways. First, “Conquest has no grinding” is true for its ordinary repeatable campaign encounters, **not** for an account that owned Boo Camp. Second, Fates' complete historical build space included DLC class and skill acquisition that a new 2026 purchaser can no longer legally add through the original eShop. DLC therefore changes economy/progression and preservation simultaneously rather than being only bonus fanservice.
 
 ## 16. Failure modes: Classic, Casual, Phoenix
 
@@ -831,8 +848,8 @@ Covered:
 - children;
 - party/recruitment;
 - My Castle;
-- invasions/multiplayer history;
-- DLC/route preservation.
+- invasions/multiplayer history and surviving local StreetPass boundary;
+- DLC economy/grinding, classes, skill rewards, side stories and route preservation.
 
 Not major native systems:
 - free-roam stealth;
@@ -843,7 +860,18 @@ Not major native systems:
 
 ### Preservation check
 
-No inherited Fates full dossier existed on the G61–G80 branch before this pass. G63 was added by the September 26 expanded roster. Existing cross-game Fire Emblem references remain in their original owners. This dossier specifically preserves the route/availability distinction so Revelation is never falsely described as normally purchasable current DLC.
+No inherited Fates full dossier existed on the G61–G80 branch before this pass. G63 was added by the September 26 expanded roster. Existing cross-game Fire Emblem references remain in their original owners. This dossier specifically preserves the route/availability distinction so Revelation is never falsely described as normally purchasable current DLC. The audit also preserves the broader DLC catalogue separately so paid grinding, classes, skills and Heirs of Fate are not silently collapsed into “Revelation/DLC.”
+
+### Reading / viewing routes
+
+For a compact verification route:
+1. **FA03 + FA18 + FA20** for primary developer intent behind the three-route structure, My Castle, and the intended family-choice tension.
+2. **FA09–FA13 + FA17** for the core Attack/Guard Stance, weapon, forging, reclass and capture systems.
+3. **FA01/FA05/FA06/FA07/FA15/FA16** for independent route-specific critical perspectives.
+4. **FA25 + FA29** for the 3DS commerce/online shutdown and local StreetPass versus SpotPass boundary.
+5. **FA30–FA31** for optional DLC economy, class/skill rewards, Hidden Truths and Heirs of Fate.
+
+No video or footage is represented as watched in this audit.
 
 ## Sources
 
@@ -902,3 +930,9 @@ No inherited Fates full dossier existed on the G61–G80 branch before this pass
 <a id="fa27"></a>**FA27 — [Recent returning-player Birthright/Conquest discussion](https://gamefaqs.gamespot.com/boards/114533-fire-emblem-fates-conquest/81002196).** GameFAQs player discussion, qualitative only.
 
 <a id="fa28"></a>**FA28 — [Which version should I play first?](https://gamefaqs.gamespot.com/boards/114533-fire-emblem-fates-conquest/73534391).** GameFAQs community discussion. Qualitative evidence on perceived route order/difficulty; not an official mandate.
+
+<a id="fa29"></a>**FA29 — [Announcement of Discontinuation of Online Services for Nintendo 3DS and Wii U software](https://en-americas-support.nintendo.com/app/answers/detail/a_id/63227/).** Nintendo Support, current service notice audited September 27, 2026. Primary evidence that online communication ended April 8, 2024, offline features remain, StreetPass still works through local communication, and SpotPass no longer works.
+
+<a id="fa30"></a>**FA30 — [Downloadable Content](https://serenesforest.net/fire-emblem-fates/miscellaneous/downloadable-content/).** Serenes Forest community DLC catalogue, audited September 27, 2026. Used for Dragon's Gate map families and historical reward/access boundaries including EXP, funds, weapons and class-change items; historical listed prices are not treated as current prices.
+
+<a id="fa31"></a>**FA31 — [Heirs of Fate DLC maps](https://serenesforest.net/fire-emblem-fates/miscellaneous/downloadable-content/europe/maps/).** Serenes Forest community DLC-map reference, audited September 27, 2026. Used for the six-part children-focused scenario structure, scenario-specific units and skill-scroll survival rewards; regional release/pricing details are not generalized.
