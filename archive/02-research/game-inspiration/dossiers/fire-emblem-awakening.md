@@ -298,6 +298,14 @@ Awakening does **not** contain:
 
 Its economy exists to support roster preparation.
 
+### Locked routes, chests, and Event Tiles
+
+Battle maps also contain a smaller but important layer of **object/reward interaction** that the original pass under-described. Locked doors and chests can be opened with keys or by a unit carrying the Thief skill **Locktouch**, so bringing the right person can trade an inventory cost for a build/deployment cost. [AW25](#aw25)
+
+Most maps also place glowing **Event Tiles**. Ending a unit's turn on one can produce a random item, EXP, weapon EXP, or—when a support-compatible pair is together—relationship progress. The tile is therefore a literal composition point between movement, item acquisition, progression and the social graph rather than just decorative loot sparkle. [AW24](#aw24)
+
+This matters for the mechanics inventory: optional map rewards are not only post-battle gold/EXP. The player can route a unit away from the safest or fastest line to chase a one-use uncertain reward, and the value of that reward depends on who steps on it.
+
 ## 10. World map, random encounters, and pacing
 
 The world map connects chapters and supports:
@@ -475,9 +483,9 @@ Nintendo ended:
 - new Nintendo 3DS software/DLC purchases on **March 27, 2023**;
 - Nintendo 3DS online play/communication services on **April 8, 2024**.
 
-Previously purchased software/DLC can still be redownloaded “for the foreseeable future,” but a new 2026 player cannot legally purchase Awakening's DLC through the original eShop. [AW13](#aw13)
+Previously purchased software/DLC can still be redownloaded “for the foreseeable future,” but a new 2026 player cannot legally purchase Awakening's DLC through the original eShop. Nintendo's shutdown notice also makes an important distinction the original dossier only implied: **StreetPass still works because it is local communication, while SpotPass features no longer work because they required online communication.** [AW13](#aw13)
 
-Local/offline features must be distinguished from retired network services.
+That means “the 3DS network is retired” is too broad a description of Awakening's social surface. Nearby-system StreetPass remains a live local feature; SpotPass/data-distribution features are historical; Double Duel remains local; eShop acquisition is closed.
 
 ## 18. DLC and postgame boundaries
 
@@ -860,6 +868,7 @@ Covered:
 - weapons/durability/forging;
 - magic/staves;
 - map traversal;
+- locked doors/chests/keys/Locktouch and Event Tiles;
 - Pair Up/Dual actions;
 - combat;
 - items/economy;
@@ -893,7 +902,7 @@ As of September 2026:
 - original physical 3DS copies remain usable;
 - previously purchased digital content can still be redownloaded per Nintendo's current support wording;
 - new purchases of the game/DLC through 3DS eShop are unavailable;
-- original 3DS online services are retired.
+- original online/SpotPass services are retired, while local StreetPass remains available.
 
 No unavailable DLC feature is treated here as universally obtainable current content.
 
@@ -944,3 +953,7 @@ No unavailable DLC feature is treated here as universally obtainable current con
 <a id="aw22"></a>**AW22 — [GameSpot user review: As good as the critics say?](https://www.gamespot.com/fire-emblem-awakening/user-reviews/2200-143568/).** Player-authored 2013 veteran-series review; qualitative evidence only.
 
 <a id="aw23"></a>**AW23 — [Fire Emblem Awakening Saved The Series, And Reshaped It—For Better Or Worse](https://www.gamespot.com/articles/fire-emblem-awakening-saved-the-series-and-reshaped-it-for-better-or-worse/1100-6511174/).** Heidi Kemps, GameSpot, 2023 retrospective. Useful for long-running tactical-vs-social fan tension; analysis, not a launch review.
+
+<a id="aw24"></a>**AW24 — [Hidden Treasure / Event Tiles](https://serenesforest.net/awakening/miscellaneous/hidden-treasure/).** Serenes Forest community mechanics reference, audited September 27, 2026. Used for the glowing Event Tile reward families—items, EXP, weapon EXP and support progress—and their map-interaction role.
+
+<a id="aw25"></a>**AW25 — [Locktouch](https://fireemblem.fandom.com/wiki/Locktouch).** Fire Emblem Wiki community mechanics reference, audited September 27, 2026. Used narrowly for Awakening's Thief-learned ability to open doors and chests without keys.
