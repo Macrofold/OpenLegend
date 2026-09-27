@@ -17,6 +17,8 @@ import { MemoryRepository } from './memory-repository.js';
 import { WorldRecords } from './world-records.js';
 import { isDeepStrictEqual } from 'node:util';
 import { randomUUID } from 'node:crypto';
+import { readAttemptBudget, type AttemptBudgetSnapshot } from './attempt-budget.js';
+import { WorldAgentStore } from './world-agent-store.js';
 import { KnowledgeStore } from './knowledge-store.js';
 import { upgradeWorldState } from './upgrade-world.js';
 import { validateWorldModules } from '@open-legend/domain';
@@ -30,7 +32,6 @@ import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
 import type { GameView, IntelligenceCall } from '@open-legend/protocol';
 import { join } from 'node:path';
-import { createHash } from 'node:crypto';
 import {
   appendedEventCount as provenAppendCount,
   appendedRecordCount,
@@ -51,6 +52,13 @@ function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: s
     sql: `((payload::jsonb #>> '{ownerAccountId}')=? OR ((payload::jsonb #>> '{ownerAccountId}') IS NULL AND (${ids.length ? `(payload::jsonb #>> '{actorId}') IN (${ids.map(() => '?').join(',')})` : '1=0'}${access.allowUnscoped ? " OR (payload::jsonb #>> '{actorId}') IS NULL" : ''})))`,
     params: [access.accountId, ...ids],
   };
+}
+import { digest } from './content-digest.js';
+export { digest } from './content-digest.js';
+
+export interface AttemptBudget {
+  id: string;
+  limitUsd: number;
 }
 export interface SqlDatabase {
   /** Undefined adapters cannot prove whether shared committed reads are safe. */
@@ -113,6 +121,8 @@ export interface JobRecord extends AiJobView {
     };
     npcId?: string;
     invention?: {
+      mode?: 'workshop';
+      episodeBudgetUsd?: number;
       candidate?: unknown;
       actorId: string;
       worldId: string;
@@ -131,11 +141,12 @@ export interface JobRecord extends AiJobView {
     };
   };
   invention?: {
+    validation?: import('@open-legend/protocol').InventionValidationView;
     code: string;
     search?: import('@open-legend/protocol').InventionSearch;
     continuedBy?: string;
     candidateDigest?: string;
-    candidate?: import('@open-legend/domain').DeclarationDraft;
+    candidate?: unknown;
     recipeId?: string;
   };
   result?: unknown;
@@ -146,8 +157,6 @@ export interface JobRecord extends AiJobView {
 }
 
 const micro = (usd: number): number => Math.ceil(usd * 1_000_000);
-export const digest = (value: unknown): string =>
-  createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
 function samePrimitive(left: unknown, right: unknown): boolean {
   return left === right || (Number.isNaN(left) && Number.isNaN(right));
@@ -381,6 +390,7 @@ export interface GameRepository extends WorldStore {
     worldId: string,
     actorId: string,
     before?: { createdAt: number; id: string },
+    selection?: { timelineId: string; limit?: number },
   ): Promise<JobRecord[]>;
   reserve(
     id: string,
@@ -389,7 +399,9 @@ export interface GameRepository extends WorldStore {
     ceilingUsd: number,
     actorId?: string,
     reuse?: 'compute-allocation',
+    budget?: AttemptBudget,
   ): Promise<boolean>;
+  attemptBudget(budgetId: string): Promise<AttemptBudgetSnapshot>;
   settle(id: string, receipt: AiReceipt): Promise<void>;
   recoverInterruptedWork(): Promise<void>;
   usage(ceilingUsd: number, actorId?: string): Promise<Pick<GameView['ai'], 'budget' | 'usage'>>;
@@ -573,6 +585,8 @@ export class SqlGameRepository implements GameRepository {
       );
       CREATE INDEX IF NOT EXISTS jobs_inventor ON jobs ((payload::jsonb #>> '{request,invention,worldId}'), (payload::jsonb #>> '{request,invention,actorId}'), created_at, id);
       CREATE INDEX IF NOT EXISTS jobs_speech_event ON jobs ((payload::jsonb #>> '{playerSpeechEventId}')) WHERE (payload::jsonb #>> '{kind}') = 'chat';
+      CREATE INDEX IF NOT EXISTS jobs_inventor_timeline ON jobs ((payload::jsonb #>> '{request,invention,worldId}'), (payload::jsonb #>> '{request,invention,actorId}'), (payload::jsonb #>> '{request,invention,timelineId}'), created_at, id);
+      CREATE INDEX IF NOT EXISTS jobs_unfinished ON jobs(id) WHERE (payload::jsonb #>> '{status}') IN ('queued','judging','generating');
       CREATE TABLE IF NOT EXISTS attempts (
         id TEXT PRIMARY KEY, provider TEXT NOT NULL, status TEXT NOT NULL,
         reserved BIGINT NOT NULL CHECK (reserved >= 0), spent BIGINT NOT NULL DEFAULT 0 CHECK (spent >= 0),
@@ -580,6 +594,8 @@ export class SqlGameRepository implements GameRepository {
       );
       CREATE INDEX IF NOT EXISTS attempts_created ON attempts(created_at,id);
       CREATE TABLE IF NOT EXISTS attempt_scopes (attempt_id TEXT PRIMARY KEY, actor_id TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS attempt_budgets (attempt_id TEXT PRIMARY KEY, budget_id TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS attempt_budget_scope ON attempt_budgets(budget_id, attempt_id);
       CREATE INDEX IF NOT EXISTS attempt_actor ON attempt_scopes(actor_id,attempt_id);
       CREATE TABLE IF NOT EXISTS intelligence_calls (id TEXT PRIMARY KEY, started_at TEXT NOT NULL, payload TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS intelligence_calls_time ON intelligence_calls(started_at DESC, id DESC);
@@ -602,6 +618,7 @@ export class SqlGameRepository implements GameRepository {
     await new KnowledgeStore(this.db).initialize();
     await this.records.initialize();
     await this.memories.initialize();
+    await new WorldAgentStore(this.db).initialize();
     await this.history.initialize();
     await this.saves.initialize();
     await this.commands.initialize();
@@ -1106,14 +1123,30 @@ export class SqlGameRepository implements GameRepository {
     worldId: string,
     actorId: string,
     before = { createdAt: Number.MAX_SAFE_INTEGER, id: '\uffff' },
+    selection?: { timelineId: string; limit?: number },
   ): Promise<JobRecord[]> {
     await this.ready;
+    const limit = selection?.limit ?? 50;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 50)
+      throw new Error('Invention history limit must be between 1 and 50.');
+    // Filter before paging: abandoned timelines must not hide current actor feedback.
+    // docs/architecture.md#bounded-invention-history-and-recovery
+    const timeline = selection
+      ? " AND (payload::jsonb #>> '{request,invention,timelineId}') = ?"
+      : '';
     return (
       await this.db
         .prepare(
-          "SELECT payload FROM jobs WHERE (payload::jsonb #>> '{request,invention,worldId}') = ? AND (payload::jsonb #>> '{request,invention,actorId}') = ? AND (created_at < ? OR (created_at = ? AND id < ?)) ORDER BY created_at DESC, id DESC LIMIT 50",
+          `SELECT payload FROM jobs WHERE (payload::jsonb #>> '{request,invention,worldId}') = ? AND (payload::jsonb #>> '{request,invention,actorId}') = ?${timeline} AND (created_at, id) < (?, ?) ORDER BY created_at DESC, id DESC LIMIT ?`,
         )
-        .all(worldId, actorId, before.createdAt, before.createdAt, before.id)
+        .all(
+          worldId,
+          actorId,
+          ...(selection ? [selection.timelineId] : []),
+          before.createdAt,
+          before.id,
+          limit,
+        )
     ).map((row) => JSON.parse(String(row['payload'])) as JobRecord);
   }
 
@@ -1137,6 +1170,11 @@ export class SqlGameRepository implements GameRepository {
     await this.integrationValues.put(key, value);
   }
 
+  async attemptBudget(budgetId: string): Promise<AttemptBudgetSnapshot> {
+    await this.ready;
+    return readAttemptBudget(this.db, budgetId);
+  }
+
   async reserve(
     id: string,
     provider: 'jev' | 'openai' | 'macrofold',
@@ -1144,6 +1182,7 @@ export class SqlGameRepository implements GameRepository {
     ceilingUsd: number,
     actorId = 'world-agent',
     reuse?: 'compute-allocation',
+    budget?: AttemptBudget,
   ): Promise<boolean> {
     await this.ready;
 
@@ -1181,6 +1220,23 @@ export class SqlGameRepository implements GameRepository {
         )
         .get(start, actorId);
       const amount = micro(amountUsd);
+      // This is an additional cap over the same attempt ledger, not another wallet.
+      // docs/architecture.md#invention-workshop-tools
+      if (budget) {
+        if (
+          !budget.id ||
+          budget.id.length > 500 ||
+          !Number.isFinite(budget.limitUsd) ||
+          budget.limitUsd < 0
+        )
+          throw new Error('Invalid episode spending scope.');
+        const exposure = await this.db
+          .prepare(
+            "SELECT COALESCE(SUM(a.spent + CASE WHEN a.status = 'reserved' THEN a.reserved ELSE 0 END), 0) AS total FROM attempt_budgets b JOIN attempts a ON a.id=b.attempt_id WHERE b.budget_id=?",
+          )
+          .get(budget.id);
+        if (Number(exposure?.['total'] ?? 0) + amount > micro(budget.limitUsd)) return false;
+      }
       if (Number(row?.['total'] ?? 0) + amount > micro(Math.min(50, ceilingUsd))) {
         return false;
       }
@@ -1190,6 +1246,8 @@ export class SqlGameRepository implements GameRepository {
         )
         .run(id, provider, amount, Date.now());
       await this.db.prepare('INSERT INTO attempt_scopes VALUES (?,?)').run(id, actorId);
+      if (budget)
+        await this.db.prepare('INSERT INTO attempt_budgets VALUES (?,?)').run(id, budget.id);
       return true;
     });
     if (accepted) this.usageCache = undefined;
@@ -1244,31 +1302,43 @@ export class SqlGameRepository implements GameRepository {
       "UPDATE attempts SET status='uncertain', spent=reserved WHERE status='reserved'",
     );
     this.usageCache = undefined;
-    for (const row of await this.db.prepare('SELECT payload FROM jobs').all()) {
-      const job = JSON.parse(String(row['payload'])) as JobRecord;
-      if (['queued', 'judging', 'generating'].includes(job.status)) {
-        const uncertain =
-          job.invention &&
-          (await this.db
-            .prepare(
-              "SELECT id FROM attempts WHERE status='uncertain' AND (id IN (?, ?) OR substr(id, 1, ?) = ?) LIMIT 1",
-            )
-            .get(
-              `${job.id}:route`,
-              `${job.id}:generate`,
-              `${job.id}:invention-search:`.length,
-              `${job.id}:invention-search:`,
-            ));
-        await this.putJob({
-          ...job,
-          status: 'stale',
-          ...(job.invention
-            ? { invention: { ...job.invention, code: uncertain ? 'uncertain' : 'interrupted' } }
-            : {}),
-          message: uncertain
-            ? 'Interrupted with uncertain provider completion; spending remains reserved and no request was replayed.'
-            : 'Interrupted by restart; no paid request or world effect was repeated.',
-        });
+    // The partial index contains only unfinished work; retained history never enters memory.
+    // docs/architecture.md#bounded-invention-history-and-recovery
+    for (;;) {
+      const rows = await this.db
+        .prepare(
+          "SELECT payload FROM jobs WHERE (payload::jsonb #>> '{status}') IN ('queued','judging','generating') ORDER BY id LIMIT 50",
+        )
+        .all();
+      if (!rows.length) break;
+      for (const row of rows) {
+        const job = JSON.parse(String(row['payload'])) as JobRecord;
+        if (['queued', 'judging', 'generating'].includes(job.status)) {
+          const uncertain =
+            job.invention &&
+            (await this.db
+              .prepare(
+                "SELECT id FROM attempts WHERE status='uncertain' AND (id IN (?, ?) OR substr(id, 1, ?) = ? OR substr(id, 1, ?) = ?) LIMIT 1",
+              )
+              .get(
+                `${job.id}:route`,
+                `${job.id}:generate`,
+                `${job.id}:invention-search:`.length,
+                `${job.id}:invention-search:`,
+                `${job.id}:workshop:`.length,
+                `${job.id}:workshop:`,
+              ));
+          await this.putJob({
+            ...job,
+            status: 'stale',
+            ...(job.invention
+              ? { invention: { ...job.invention, code: uncertain ? 'uncertain' : 'interrupted' } }
+              : {}),
+            message: uncertain
+              ? 'Interrupted with uncertain provider completion; spending remains reserved and no request was replayed.'
+              : 'Interrupted by restart; no paid request or world effect was repeated.',
+          });
+        }
       }
     }
   }

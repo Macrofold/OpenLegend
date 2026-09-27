@@ -717,3 +717,7 @@ The current adapter carries response-local operation identity, original request 
 The implemented control vocabulary is still the existing flat sequential AG frontier plus a family-local indefinite follow activity. General wait/branch/repeat, finite follow termination, rich target roles, installed-definition dependency pins and arbitrary output ports remain to reconcile. An indefinite follow cannot be advertised as the completed prerequisite of a later generated step. Current confirmation stores only plan-eligible mechanical commands; confirmation of immediate social/control operations needs their own shared admission contract before claiming support.
 
 Automatic reason-specific retries are not implemented: explicit player resubmission may retry unresolved grounding, while autonomous unchanged retries remain bounded. The current UI negotiates an executable revision, not arbitrary missing-parameter forms. Broader live model evaluation and browser interaction/accessibility qualification remain open and are not replaced by injected semantic exercise results.
+
+## Invention integration
+
+[Repertoire foundation](repertoire-foundation.md) binds this action/activity contract to World Agent tools and invention composition. It does not create another activity controller, constraint language, permission service or planner. The current single physical lane remains until a concrete joint/channel family qualifies richer concurrency.

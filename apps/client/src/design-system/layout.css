@@ -2198,3 +2198,40 @@ body,
   margin: 4px 0 0;
   white-space: pre-wrap;
 }
+
+/* World Agent drafts use ordinary panels; no generated markup enters a review. */
+.ol-agent-reviews {
+  max-height: 240px;
+  overflow: auto;
+}
+.ol-agent-reviews article {
+  padding: 8px 0;
+}
+.ol-agent-json {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow: auto;
+}
+.ol-agent-tools select {
+  max-width: 260px;
+}
+
+.ol-usage-remaining {
+  min-width: 180px;
+  flex: none;
+}
+.ol-agent-tools > .ol-usage-remaining {
+  flex: 1;
+}
+.ol-usage-remaining > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+}
+.ol-usage-remaining .ol-meter-track {
+  display: block;
+  margin-top: var(--space-1);
+  --c: var(--accent);
+}

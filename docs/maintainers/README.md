@@ -19,6 +19,12 @@ This page is the master navigation index for active implementation work.
 
 [Macrofold Worker API cutover (MW01–MW04)](macrofold-worker-api.md) tracks the shared-compute caller migration, cancellation/state preservation and coordinated deployment gates.
 
+For a fresh conversation continuing invention and World Agent work, start with [the no-context handoff](../invention-handoff.md). It maps settled decisions, source files and existing task owners without creating another specification.
+
+## Invention foundation packet
+
+Begin with [Invention foundation](../invention-foundation.md) for coordination and canonical ownership. Supporting specifications are [World constitution](../world-constitution.md), [Validation and compositional evidence](../invention-validation.md), [Runtime art pipeline](../invention-art-pipeline.md), and [Budgets and runtime cost](../invention-budgets.md). Their detailed tasks remain in the single INV tracker, including INV-9–INV-14; this index does not duplicate task bodies or status.
+
 | Area                                                                   | Tracker                                                               | Design owner                                                                                                                                                                                                                                                   |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Maintenance / cross-cutting deferred validation                        | [TODO](TODO.md)                                                       | Relevant canonical specifications                                                                                                                                                                                                                              |
@@ -44,6 +50,10 @@ This page is the master navigation index for active implementation work.
 - [Action branch reconciliation and recovery](action-reconciliation.md) — AR01–AR08 integration tasks, source checkpoints and recovery order beneath the existing AC/PF owners.
 - [Base-world delivery](base-world.md) — bundled content boundary, God item creation, ground piles and action-foundation integration.
 
+## Reviewed World Agent writes
+
+[World Agent write detail](world-agent-writes.md) expands INV-21.6–21.7 with the current body-binding slice, storage/recovery review and remaining qualification; INV-21 retains the parent lifecycle and release gates. [Write continuation evidence](../verification/workshop-continuation.md) and [transport/funding evidence](../verification/workshop-transport-funding.md) record actual runtime scope. WW08/WW09 cover the shared JSON transport and native worker/run allocation. WW12–WW15 cover [bounded investigation and exact custom-value edits](../world-agent-inspection-and-edits.md), with [navigation/edit runtime evidence](../verification/workshop-navigation.md). Remaining provider/browser/payer qualification stays with the focused tracker.
+
 - [Agent-guidance delivery](agent-guidance.md) — development instructions, tooling and cross-agent verification; [system guide](../../.agents/README.md).
 
 ## Supporting references
@@ -56,6 +66,11 @@ This page is the master navigation index for active implementation work.
 - [Mechanics repertoire](../repertoires/mechanics.md) — related concepts, reusable mechanisms and authored-world choices; ideas, not another backlog.
 - [Social playable slices](base-world.md#social-playable-slices) — proposed family and promise UI; [ACT09](actor-model.md#act09--internal-feeling-process-authoring) covers conditional process authoring. Documentation only; runtime implementation is not authorized by these entries.
 
+- [Repertoire foundation](../repertoire-foundation.md) — detailed integration contract and INV-20 delivery; live arrangements, information, commitments, methods and observer-relative art.
+- [Unified World Agent](../world-agent-runtime.md) and [MCP integration](../world-agent-mcp.md)
+- [Relationship graph](../invention-graph.md), [composition](../invention-composition.md), and [target scenarios](../invention-scenarios.md)
+- [Encounter scaling](../encounter-scaling.md) and [MCP tooling research](../../archive/02-research/mcp-tooling-and-integration.md)
+- [World-agent invention tool contract](../invention-workshop-tools.md) — scoped read/preview/Apply and extension seams
 - [Product baseline](../../archive/01-requirements/product-baseline.md)
 - [Product roadmap](../../archive/05-project/roadmap.md)
 - [Open decisions](../../archive/05-project/open-decisions.md)
@@ -63,7 +78,7 @@ This page is the master navigation index for active implementation work.
 - [Verification](../verification.md)
 - [Implementation status](../../archive/05-project/implementation-status.md)
 - [World-agent Macrofold handoff](../macrofold-world-agent-handoff.md)
-- [Runtime-art design owner](../../archive/03-design-proposals/procedural-art-and-animation.md)
+- [Hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)
 - [Documentation changelog](../documentation-changelog.md)
 
 This file is navigation only. Task state belongs in focused trackers, current subsystem status in implementation status, verification evidence in verification, open choices in open decisions, and history in the documentation changelog.

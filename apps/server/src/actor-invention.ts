@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DECLARATION_CONTRACT } from '@open-legend/domain';
 import { declarationSchema } from './ai-schemas.js';
-import { buildContext } from './context.js';
+import { inventionMaterials } from './invention-context.js';
 import type { WorldService } from './world-service.js';
 
 /** Private context is read only for this actor. A response proposes; the shared gateway admits.
@@ -10,16 +10,18 @@ import type { WorldService } from './world-service.js';
 export async function prepareActorInvention(service: WorldService, actorId: string) {
   const enabled = !service.world.inventionPolicy.agentLocked;
   const policyRevision = service.world.inventionPolicy.revision;
-  const history = (await service.store.inventionJobs(service.world.id, actorId))
-    .filter((job) => job.request.invention?.timelineId === service.timelineId)
-    .slice(0, 3)
-    .map((job) => ({
-      id: job.id,
-      code: job.invention?.code,
-      feedback: job.message,
-      candidate: job.invention?.candidate ?? job.request.invention?.candidate,
-      continuedBy: job.invention?.continuedBy,
-    }));
+  const history = (
+    await service.store.inventionJobs(service.world.id, actorId, undefined, {
+      timelineId: service.timelineId,
+      limit: 3,
+    })
+  ).map((job) => ({
+    id: job.id,
+    code: job.invention?.code,
+    feedback: job.message,
+    candidate: job.invention?.candidate ?? job.request.invention?.candidate,
+    continuedBy: job.invention?.continuedBy,
+  }));
   return {
     enabled,
     policyRevision,
@@ -42,7 +44,7 @@ export async function prepareActorInvention(service: WorldService, actorId: stri
         ? {
             inventionContract: DECLARATION_CONTRACT,
             candidateSchema: declarationSchema,
-            inventionMaterials: buildContext(service, actorId, '').materials,
+            inventionMaterials: inventionMaterials(service.observe(actorId)!),
             continuation: 'Set parentId to an uncontinued result ID when revising; otherwise null.',
           }
         : {}),

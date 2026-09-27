@@ -744,6 +744,11 @@ function App({ resetApplication }: { resetApplication: () => void }) {
       case 'agent':
         return (
           <WorldAgent
+            actorId={view.player.id}
+            accessScope={view.access?.scope ?? view.player.id}
+            budget={view.ai.budget}
+            godMode={view.godMode}
+            saveTimeline={view.saveTimeline}
             key={view.worldId}
             worldId={view.worldId}
             recipes={view.recipes}

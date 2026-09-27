@@ -64,3 +64,59 @@ export function inventionFamily(draft: DeclarationDraft): InventionFamily | unde
       ? 'arrow'
       : undefined;
 }
+
+/** Native wilderness consumer summaries, not a universal property/effects interpreter.
+ * docs/architecture.md#invention-workshop-tools
+ */
+export function describeInvention(draft: DeclarationDraft): string {
+  const family = inventionFamily(draft);
+  const output = draft.output;
+  if (output.launcher)
+    return `${family} launcher; ${output.launcher.ammunitionKind} ammunition; range ${output.launcher.range}; damage ${output.launcher.damage}; accuracy ${output.launcher.accuracy}; ${draft.workSeconds} game seconds to craft`;
+  if (output.gatheringTool)
+    return `Carried gathering tool; up to ${output.gatheringTool.quantity} ${output.gatheringTool.resourceId} per batch, limited by remaining supply; tools do not stack; ${draft.workSeconds} game seconds to craft`;
+  if (output.ammunition)
+    return `Arrow ammunition; damage bonus ${output.ammunition.damageBonus}; one projectile per craft; ${draft.workSeconds} game seconds to craft`;
+  return 'No supported native effect.';
+}
+
+/** Discovery metadata only; these labels are not installable host registrations or proof of effect closure. */
+export const INVENTION_FAMILY_INTERFACES = {
+  swing: {
+    nativeConsumer: 'kernel:craft/equip/hunt',
+    uses: ['craft', 'equip', 'hunt'],
+    effects: ['finite-ammunition-consumption', 'body-injury'],
+    reads: ['known-recipe', 'inventory', 'target-body', 'spatial-reach'],
+    limitation: 'Native animal hunting only; not a general projectile or combat engine.',
+  },
+  flex: {
+    nativeConsumer: 'kernel:craft/equip/hunt',
+    uses: ['craft', 'equip', 'hunt'],
+    effects: ['finite-ammunition-consumption', 'body-injury'],
+    reads: ['known-recipe', 'inventory', 'target-body', 'spatial-reach'],
+    limitation: 'Uses compatible native arrows; no generated trajectory solver.',
+  },
+  arrow: {
+    nativeConsumer: 'kernel:craft/hunt',
+    uses: ['craft', 'hunt'],
+    effects: ['finite-crafted-item'],
+    reads: ['known-recipe', 'inventory'],
+    limitation: 'Consumed by a compatible launcher; cannot define new damage operators.',
+  },
+  'gathering-tool': {
+    nativeConsumer: 'gathering:gatheringYield',
+    uses: ['craft', 'gather'],
+    effects: ['finite-resource-transfer'],
+    reads: ['known-recipe', 'inventory', 'resource-remaining'],
+    limitation: 'Best compatible carried tool only; no stacking, wear, or container state.',
+  },
+} as const satisfies Record<
+  InventionFamily,
+  {
+    nativeConsumer: string;
+    uses: readonly string[];
+    effects: readonly string[];
+    reads: readonly string[];
+    limitation: string;
+  }
+>;

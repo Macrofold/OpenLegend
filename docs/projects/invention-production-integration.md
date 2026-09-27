@@ -54,7 +54,7 @@ Reuse [write continuation](../verification/workshop-continuation.md), [transport
 
 Completion requires both pinned heads as ancestors; no lost main/feature behavior; one current persistence/mutation authority; exact approvals and replay-safe receipts; current privacy/accounting/restore guarantees; the approved player usage UX; full-diff review with in-scope fixes; reconciled owners/trackers; selected required checks passing with honest CI status; pushed integration branch and a PR targeting main. A required verification or platform blocker means incomplete, not a deferred completed integration. Existing broader roadmap gates remain separately open.
 
-Planning is complete; merge, implementation, review, verification and publication are pending. The billing conflict was resolved explicitly by the owner: use main's billing model, with abstract player usage and owner-facing economics. No other consequential decision is currently identified; reassess during conflict and consumer review.
+Implementation, integration documentation, full-diff review and selected local verification are complete; see the [current evidence](../verification/invention-main-integration.md). The resulting feature diff contains approximately 6,000 runtime logic lines plus specifications/evidence; integration was reassessed as high risk throughout. Publication and required CI are recorded by the attached PR. The billing conflict was resolved explicitly by the owner: use main’s billing model, with abstract player usage and owner-facing economics. No unresolved consequential design decision remains. Existing broader qualification gates retain their original owners and scope.
 
 ## Publication baseline and historical provenance
 

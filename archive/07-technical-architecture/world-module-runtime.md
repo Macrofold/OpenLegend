@@ -1,5 +1,7 @@
 # World-module runtime contract
 
+For end-to-end authoring, use [Composition and live revision](../../docs/invention-composition.md). The [relationship graph](../../docs/invention-graph.md) projects exact references and enforced bindings for agents and UI; it is not another module manifest. The native World Agent reaches these services through the [shared tool contract](../../docs/invention-workshop-tools.md) and [MCP adapter](../../docs/world-agent-mcp.md).
+
 **Status: proposed implementation contract.** [Engine and world boundaries](../../docs/engine-and-world-boundaries.md) owns the architectural direction. [EWF](../../docs/maintainers/extensible-world-foundation.md) owns delivery of the missing common foundation. This contract adds integration requirements; it does not replace the existing AG, EPR, INV, CR, NC, PF, production-data, or SL implementations and trackers.
 
 ## 1. Purpose and initial scope

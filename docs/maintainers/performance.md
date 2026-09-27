@@ -244,6 +244,10 @@ Exit: same active tiny world at increasing cold-history sizes meets per-step bud
 
 - [ ] Qualify the measured dense acquisition and moving-observer costs from the simulation/cognition audit: the 344-entity cold mixed fixture missed 3×, and 164 crowded entities had only 1.31× native headroom at 1×. Extend EPR02/EPR05 change-scoped work before claiming population capacity; retain real evidence and indivisible-step latency reporting.
 
+The [repertoire foundation run](../verification.md#repertoire-foundation-runtime-observations) adds current-baseline cold gems/mixed samples. Both miss the requested 3× rate; source-backed graph reads do not resolve that native cost. Retain the existing phase/privacy work and qualify current-tree cold/warmed full-application behavior before new optimization claims.
+
+The [invention performance review](../verification.md#native-capacity-boundary) reproduced dense first-exposure/event fan-out and missed 3× native capacity on its older spatial baseline. Subsequent [native scaling work](../verification.md#spatial-scaling-review-third-pass) already improves audience/experience/participant and geometry paths; remeasure the same full-stack workloads before attributing current capacity. Private acquisition and broader qualification remain open. Preserve actual witnesses, physical effects and native RNG/order; do not meet a benchmark by silently dropping exposures. SR07 in [TODO](TODO.md#spatial-review-regression-todos) retains the integrated regression requirement.
+
 Coordinate module dependencies and aggregate admission with [EWF08](extensible-world-foundation.md#ewf08--declared-dependencies-aggregate-budgets-and-containment); PF retains implementation and qualification.
 
 Proposed [EPR02](events-perception-and-reactions.md#epr02--eliminate-redundant-full-world-sensory-scans) owns the specific object/audience scan integration; [EPR10](events-perception-and-reactions.md#epr10--conditional-incremental-spatialdeadline-infrastructure) owns its conditional incremental-index work. PF retains broader population qualification.
@@ -259,6 +263,16 @@ Dependencies: PF03/PF08 and PF00 population profile; reuse real-time interest an
 - [ ] Batch eligible embedding inputs only with measured benefit, without merging private contexts across actors; qualify dense-crowd fairness/backpressure.
 
 Exit: cost follows active changes and relevant neighbors in sparse worlds; dense cases have explicit limits and backpressure. Broader gameplay/AI-quality acceptance remains in ACT/CR/NC.
+
+### PF09 encounter implementation sequence
+
+[Encounter scaling](../encounter-scaling.md) owns the measured triage design; EPR owns private perception-acquisition semantics. These tasks add no new scheduler or public-event authority.
+
+- [ ] **PF09a:** Instrument candidate filtering, exact sense checks, event audience, experience mutation/finalization and history projection separately in cold and warmed fixtures. Preserve counts, seeds, requested/accepted time and bounded counterexamples.
+- [ ] **PF09b:** Qualify and extend the existing source-audience reuse, experience membership index and native participant/observation optimizations against cold acquisition and full application fixed-step workloads. Do not recreate the delivered indexes. Add a wider batch path only if a new measured bottleneck justifies it; preserve actual public witnesses, ownership and ordering. PF03 and SW retain the implemented optimizations; SR08–SR15 retain their existing regression coverage.
+- [ ] **PF09c:** Implement the accepted EPR private acquisition boundary for ordinary first-noticing, rather than broadcasting each observer's perception to every other actor. Treat this as an explicitly qualified semantic correction, not claim identical old event/awareness digests. Keep real speech/actions and configured public occurrences separately witnessed.
+- [ ] **PF09d:** Qualify large legitimate audiences and isolated graph/scenario work concurrently with native play. Bound work without exposing half-transitions or silently dropping required effects. Adopt resumable preparation/worker execution only if the simpler fixes cannot meet a measured workload.
+- [ ] **PF09e:** Record cold peak stall, warmed throughput, memory and event/awareness growth across population/density/speed. Keep deployment target sizes explicit; do not infer scale readiness from small tool-call latency or remove the first-exposure spike from reports.
 
 ## PF10 — Workers and movement prediction
 

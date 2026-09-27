@@ -1,5 +1,7 @@
 # Extensible world foundation — implementation tracker
 
+[INV-15–INV-19](inventions-and-world-evolution.md#unified-world-agent-delivery) now own the agent-facing graph/MCP/kind-adapter integration and capability journeys. EWF remains responsible for the actual shared host/state/port interfaces; tool descriptions or graph edges do not complete them. Use [Composition](../invention-composition.md) and [target scenarios](../invention-scenarios.md) when qualifying unlike consumers.
+
 **Status: the first attribute and coarse-contact slices are implemented; broader EWF release gates remain open.** Checked items below identify delivered work, not automated or live-model acceptance. See [current implementation](../architecture.md#extensible-attribute-foundation) and [runtime evidence](../verification.md#extensible-attribute-runtime).
 
 [Engine and world boundaries](../engine-and-world-boundaries.md) owns the architectural decision rule. [World-module runtime](../../archive/07-technical-architecture/world-module-runtime.md) owns the shared integration contract. Current behavior and test results belong to [Architecture](../architecture.md) and [Verification](../verification.md).
@@ -252,6 +254,10 @@ The delivered local reuse exercise covers definition-only attribute transfer and
 ## Required implementation report
 
 For each delivered slice report: task IDs and exact changed files; behavior preserved versus deliberately changed; canonical owner updates; native/fixture tests run; same-version save implications; deliberate v1 limitations and code/design seam links; measured performance where applicable; remaining blockers and unverified claims. Never claim a whole subsystem complete because its adapter compiles.
+
+## Repertoire integration consumers
+
+[INV-20](inventions-and-world-evolution.md#inv-20--repertoire-integration-and-cross-domain-composition) owns the new cross-domain integration slices. EWF continues to own the shared host/manifest and state interfaces; [AC](action-capabilities.md) owns invocation/activity semantics. A source-backed inspection graph is delivered without a new registry. Positive material/port contracts, carrier/interaction/clock/topology consumers and qualified effects must still be implemented by their actual owners before general compositional or exotic-world support is claimed.
 
 ## Targeted-strike slice
 

@@ -10,7 +10,7 @@ Implementation starting points: [context.ts](../../apps/server/src/context.ts).
 
 **Historical — needs recheck · Restrictiveness: Safe.**
 
-An invention request can start another invention request, but that chain can be at most 8 requests deep.
+The current finite invention flow permits eight linked authoring follow-ups. Applying an exact saved ready proposal is exempt because it makes no provider call and grants no additional allowance.
 
 **Reason / tradeoff:** Keep an explicit recursion stop so generated authoring work cannot repeatedly invoke itself without end.
 
@@ -257,3 +257,11 @@ Generated inventions can use only reviewed launcher, ammunition and gathering-to
 [Implementation starting point](../../apps/server/src/context.ts).
 
 Original recommendation: **Keep**.
+
+## Reviewed authoring and remaining usage
+
+**Current — September 2026 integration.** The finite recipe loop retains four model rounds, eight tool calls, 48,000 context bytes and 20,000 bytes per tool result. Owner sessions retain 64 drafts, 256 revisions per draft, 512 review plans, 2,048 edit receipts, 256 turns and a seven-day authorization lifetime; old records are not deleted on expiry. Four active/admitting turns and 32 short queued session operations bound local concurrency. These existing foundation guards bound work and retained operational growth; richer long-lived projects require INV-21 qualification before expansion. Paging does not grant additional work or money.
+
+The default owner session cap is $5 and may be lowered; the finite workshop root defaults to $5 and is configurable from $0–$10, under the existing per-character monthly ceiling. Attributable Run reservations use remaining session exposure. Shared Worker capacity is separately owner-managed; the earlier all-inclusive compute allocation is removed by the owner’s decision. Players see abstract remaining usage, with no dollars, provider terms or invention-count estimates. See [runtime ownership](../world-agent-runtime.md#1-product-decisions), [budget accounting](../invention-budgets.md), and WW09/WW11 in [write delivery](../maintainers/world-agent-writes.md).
+
+The relationship reader bounds 50,000 nodes / 200,000 edges, 1,024 examined entries and 50 public results per page; traces retain 100 visited nodes, depth 12 and 16 pages with explicit unfinished frontiers. These are synchronous safety ceilings, not measured population capacity. Current PostgreSQL memory inspection pages ten records through canonical cold storage, removing the obsolete 1,000-record hot-world cutoff. INV-15 and WW15 own expansion; current limits remain until evidence justifies it.

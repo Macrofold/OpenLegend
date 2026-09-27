@@ -15,6 +15,10 @@ export const COGNITION_PERMISSIONS = {
   },
   tools: { include: [] },
 };
+export interface WorkspaceToolProfile {
+  id: string;
+  permissions: unknown;
+}
 export interface ActorWorkspace {
   workspaceId: string;
   worktreeId: string;
@@ -30,14 +34,25 @@ export class MacrofoldProvisioner {
   ) {
     this.api = new MacrofoldTransport(config.macrofoldUrl, config.macrofoldKey);
   }
-  async ensure(actorId: string, name: string): Promise<ActorWorkspace> {
+  async ensure(
+    actorId: string,
+    name: string,
+    profile?: WorkspaceToolProfile,
+  ): Promise<ActorWorkspace> {
+    if (profile) actorId = `tools:${profile.id}:${actorId}`;
     const previous = this.inFlight.get(actorId);
     if (previous) return previous;
-    const promise = this.create(actorId, name).finally(() => this.inFlight.delete(actorId));
+    const promise = this.create(actorId, name, profile).finally(() =>
+      this.inFlight.delete(actorId),
+    );
     this.inFlight.set(actorId, promise);
     return promise;
   }
-  private async create(actorId: string, name: string): Promise<ActorWorkspace> {
+  private async create(
+    actorId: string,
+    name: string,
+    profile?: WorkspaceToolProfile,
+  ): Promise<ActorWorkspace> {
     const key = `macrofold-actor-v2:${digest(this.config.macrofoldUrl)}:${this.worldId}:${actorId}`;
     const state = (await this.store.getIntegration(key)) as
       | {
@@ -56,7 +71,7 @@ export class MacrofoldProvisioner {
     const body = state?.body ?? {
       name: `Open Legend · ${name} · ${digest(this.worldId).slice(0, 8)}`.slice(0, 120),
       persistence: 'persistent',
-      permissions: COGNITION_PERMISSIONS,
+      permissions: profile?.permissions ?? COGNITION_PERMISSIONS,
     };
     // Creation recovery repeats the exact provider identity/body; renamed actors cannot
     // accidentally change a pending request. docs/architecture.md#macrofold-worker-ownership
