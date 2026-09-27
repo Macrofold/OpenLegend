@@ -1,8 +1,8 @@
 # AI Dungeon — full research dossier
 
-**G40 · Complete research pass, September 26, 2026.** This dossier covers AI Dungeon from the 2019 GPT-2 prototypes through the current 2026 product, with model/provider/version boundaries kept explicit. Historical GPT-2/GPT-3 reviews are not treated as measurements of current model quality; the retired 2022–2024 Steam/Traveler edition is separated from today's web/mobile service. The prior chapter and source notebook remain preserved owners for the earlier field-guide material.
+**G40 · Complete research pass, September 26, 2026; targeted audit corrections applied September 26.** This dossier covers AI Dungeon from the 2019 GPT-2 prototypes through the current 2026 product, with model/provider/version boundaries kept explicit. Historical GPT-2/GPT-3 reviews are not treated as measurements of current model quality; the retired 2022–2024 Steam/Traveler edition is separated from today's web/mobile service. The prior chapter and source notebook remain preserved owners for the earlier field-guide material. The audit correction rechecked the official model/context and scripting documentation; it is not a new model benchmark or a fresh reading of every inherited source. Proposed OpenLegend adaptations remain research interpretations, not accepted implementation requirements.
 
-[Preserved overview](../games/ai-dungeon.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
+[Preserved overview](../games/ai-dungeon.md) · [Detailed language/context study](../mechanics/scribblenauts-ai-dungeon-language-intent-and-consequence.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md)
 
 AI Dungeon is most useful to OpenLegend precisely because it is **not** an authoritative world simulation. It is an unusually mature product for turning natural-language intent into collaborative fiction, repairing generated fiction when it drifts, and engineering limited model context so a long-running story feels more continuous. Its strongest lesson is the value of language as an interface. Its strongest warning is that plausible narration, remembered prose, and actual world truth are three different things.
 
@@ -355,6 +355,8 @@ The 2026 membership page states baseline context entitlements of roughly:
 
 with some models/tier combinations supporting different limits and optional credit-funded temporary context increases. The dedicated model page shows several specialized models and Shadow-tier configurations that can extend far beyond those baseline numbers. Treat the exact per-model matrix as volatile product configuration, not a timeless mechanic. [AID14](#aid14) [AID15](#aid15)
 
+Optimized Context is also a **compatibility choice**, not simply a larger token allowance. Its scripting tradeoff is explained beside the scripting capabilities in §12; the model, tier and context-processing mode must be considered together. [AID15](#aid15)
+
 ## 10. Model choice is part of the experience
 
 AI Dungeon no longer has one canonical “AI.”
@@ -444,6 +446,12 @@ Creators can use scripts for things the language model alone is poor at:
 - text transformation;
 - conditional lore;
 - bespoke mechanics.
+
+### Optimized Context and script compatibility
+
+Latitude's model documentation explicitly warns that **Optimized Context disables certain scripting features**. Several models present different context allowances with the setting on or off; DeepSeek V4 Flash instead has its own caching/allowance explanation. Therefore neither a membership's headline context number nor the presence of a Context hook establishes that every script works with every model configuration. The inspected official pages do not enumerate every affected function, so this dossier does not invent a universal disabled-hook matrix. [AID15](#aid15)
+
+The scripting guide separately documents input, context and output hooks, per-Adventure state and a creator test/inspection interface. **Constructed compatibility situation:** a creator wants a script to place a changing ritual condition into model context, then chooses a cache-optimized model. They must check that configuration's supported script behavior and inspect what reaches generation before assuming a longer context preserves the ritual rule. The next choice is a compatible setting or revised script, not simply buying more tokens. This is a documentation-derived compatibility concern, not a claimed live test or proof that all scripting stops working. [AID06](#aid06)
 
 ### OpenLegend comparison
 
@@ -584,7 +592,7 @@ Current moderation documentation says:
 - private story text is not read by staff except narrow permission/feedback/support paths described by the privacy docs;
 - “Improve the AI” is opt-in and can log anonymized model inputs/outputs for evaluation. [AID22](#aid22) [AID23](#aid23)
 
-This current posture cannot be understood without the 2021 privacy/filter crisis; that production history is part of the remaining checkpoint work and will be treated separately rather than back-projecting current policy onto the historical product.
+The 2021 privacy/filter crisis is covered in §20, with Latitude's retrospective separately attributed. Read that history alongside these dated current-policy statements; neither describes the other period's behavior automatically. [AID27](#aid27)
 
 ## 17. Narrative, characters, relationships and “death”
 
@@ -712,6 +720,8 @@ This is not merely a debugging affordance; it is part of the co-authoring contra
 **Action:** a creator can use Scripting/state around model input/output rather than merely asking the model to remember a counter.
 
 **Result:** the story model remains generative while a deterministic transform maintains creator-defined logic. [AID06](#aid06)
+
+**Compatibility limit:** the script must use features supported by the chosen model/context configuration; §12 explains why Optimized Context cannot be assumed independent of scripting. [AID15](#aid15)
 
 **OpenLegend implication:** free-form interpretation gets much stronger when exact rules have a separate owner.
 
@@ -1079,10 +1089,10 @@ to:
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / scope / player promise | §§1–4, 20 |
-| R02 player actions / major mechanics | §§2–16, 19 |
+| R02 player actions / major mechanics | §§2–16, 19; context/script compatibility in §12 |
 | R03 items / entities / composition | §§4–8, 12, 17, 19 |
 | R04 progression / economy / time / failure | §§3–5, 8–10, 15, 17, 22 |
-| R05 concrete interactions | §19 + preserved field-guide examples |
+| R05 concrete interactions | §19 + preserved field-guide examples; compatibility case in §12 |
 | R06 people / AI / social / multiplayer | §§7–8, 13–14, 17 |
 | R07 art / audio / interface / feel | §§2, 11, 18 |
 | R08 story / narrative connection | §§1–8, 17, 19 |
@@ -1095,7 +1105,9 @@ to:
 
 **Mechanics-inventory check:** conventional classes/attributes/skill trees, authoritative equipment/inventory, crafting, combat stats, stealth scores, native economy, NPC schedules, faction reputation, settlement management and fixed endgame are **not universal base systems**; they can be narrated or scenario-scripted. The dossier states those absences instead of forcing RPG vocabulary onto a narrative generator.
 
-**Preservation check:** [the prior AI Dungeon chapter](../games/ai-dungeon.md) remains intact and retains the earlier field-guide findings, Vinny viewing recommendation, 2022 Christoph Bartneck reflection, July 2026 player discussion and original AI1/AI2 source annotations. This dossier links rather than replaces it. There is no `dossiers/README.md` on this branch; roster/progress are the current dossier navigation owners, while cross-game dossier navigation remains explicitly deferred under final integration gate P04.
+**Preservation check:** [the prior AI Dungeon chapter](../games/ai-dungeon.md) remains intact and retains the earlier field-guide findings, Vinny viewing recommendation, 2022 Christoph Bartneck reflection, July 2026 player discussion and original AI1/AI2 source annotations. This dossier links rather than replaces it. The [language/context study](../mechanics/scribblenauts-ai-dungeon-language-intent-and-consequence.md) retains its more granular Story Card timing and memory distinctions. The [library README](../README.md), roster and progress ledger provide the G40–G60 dossier routes. Packet-wide reconciliation remains separate unfinished work in the progress ledger; it is not an undefined “P04” gate or a reason to call completed range navigation unfinished.
+
+**Audit resolution:** G40's identified R02/R14 corrections are applied: the compatibility warning and worked consequence are in §12, §16 points to the already-written 2021 history, and the obsolete navigation/checkpoint language is replaced above. Other games' audit findings and the packet-wide reconciliation remain open. Existing review, pricing, provider and player-testimony claims retain their original evidence dates; the targeted correction does not recertify every inherited external fact.
 
 **Viewing boundary:** the preserved Vinesauce video remains metadata/viewing-route evidence only; this pass did not claim to have watched footage or inspected a transcript.
 
@@ -1111,7 +1123,7 @@ to:
 
 <a id="aid05"></a>**AID05 — [Latitude brings AI-generated artwork to AI Dungeon](https://techcrunch.com/2022/09/15/latitude-brings-ai-generated-artwork-to-ai-dungeon/).** Kyle Wiggers, TechCrunch, 2022-09-15. Historical See/Stable Diffusion launch and hands-on image-generation limitations.
 
-<a id="aid06"></a>**AID06 — [How do I use Scripting in AI Dungeon?](https://help.aidungeon.com/faq/how-do-i-write-scripts-and-use-scripting).** AI Dungeon Help, accessed 2026-09-26. Scenario script ownership, hooks, state and test surface.
+<a id="aid06"></a>**AID06 — [How do I use Scripting in AI Dungeon?](https://help.aidungeon.com/faq/how-do-i-write-scripts-and-use-scripting), with the [detailed Scripting guide](https://help.aidungeon.com/scripting).** AI Dungeon Help, accessed 2026-09-26. Scenario script ownership, hooks, state and test surface. The detailed guide's relevant hook/state/inspection sections were reopened for the audit correction; no script was executed and the generic API guide is not a complete model-specific compatibility table.
 
 <a id="aid07"></a>**AID07 — [What are Scenarios?](https://help.aidungeon.com/faq/what-are-scenarios).** AI Dungeon Help, accessed 2026-09-26. Scenario/Adventure template boundary, publishing and inherited plot components.
 
@@ -1129,7 +1141,7 @@ to:
 
 <a id="aid14"></a>**AID14 — [Memberships & Benefits](https://help.aidungeon.com/memberships-benefits).** AI Dungeon Help, accessed 2026-09-26. Current standard tiers, monthly price snapshot, Credits, Memory Bank counts and baseline context entitlements.
 
-<a id="aid15"></a>**AID15 — [AI Models and their Differences](https://help.aidungeon.com/ai-model-differences).** AI Dungeon Help, accessed 2026-09-26. Current volatile model roster, specialties, provider/fine-tune notes, context and deprecated-model boundaries.
+<a id="aid15"></a>**AID15 — [AI Models and their Differences](https://help.aidungeon.com/ai-model-differences).** AI Dungeon Help, accessed 2026-09-26. Current volatile model roster, specialties, provider/fine-tune notes, context and deprecated-model boundaries. Reopened for the audit correction: model-specific Optimized Context warnings explicitly restrict some scripting features. The allowance/compatibility differences are documented configuration, not independently measured model quality; no unsupported list of disabled functions is inferred.
 
 <a id="aid16"></a>**AID16 — [What are AI Model Settings?](https://help.aidungeon.com/faq/what-are-advanced-settings).** AI Dungeon Help, accessed 2026-09-26. Context/response length and sampling controls.
 
