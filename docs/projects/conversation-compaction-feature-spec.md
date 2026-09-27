@@ -1,6 +1,6 @@
 # Long-conversation continuity and compaction — feature specification
 
-**Status:** implemented and locally qualified on 2026-09-27, following developer approval and the updated remote design. [Technical design](conversation-compaction-tech-design.md) owns the mechanism and implementation plan. [NC14–NC17](../maintainers/narration-and-conversations.md) record delivery; [runtime evidence and limits](../verification.md#conversation-compaction) distinguish native checks, live constructed scenarios and broader acceptance still outside this slice.
+**Status:** implemented and locally qualified on 2026-09-27, following developer approval and the updated remote design. [Technical design](conversation-compaction-tech-design.md) owns the mechanism and implementation plan. [NC14–NC17](../maintainers/narration-and-conversations.md) record delivery; NC18 tracks conditional future work; [runtime evidence and limits](../verification.md#conversation-compaction) distinguish native checks, live constructed scenarios and broader acceptance still outside this slice.
 
 ## 1. Outcome
 
@@ -31,6 +31,23 @@ The compactor reports the conversation; it does not critique it, decide who is c
 Recent exact wording and the current trigger remain outside this abstraction where possible. The recent verbatim tail carries local discourse focus and the current speech that caused a response stays verbatim in the existing Trigger section.
 
 Research basis: [conversation state and grounding](../../archive/02-research/conversation-state-and-grounding.md) and [long-conversation memory and compaction](../../archive/02-research/long-conversation-memory-and-compaction.md).
+
+### Research lineage and terminology
+
+This design deliberately adopts concepts from decades of dialogue research rather than inventing a new conversational-state vocabulary. The OpenLegend names are simplified adaptations of established terms:
+
+| Research lineage                                                                                                                    | OpenLegend term                              | How we use it                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dialogue Gameboard / information state** — especially shared assumptions, **Questions Under Discussion (QUD)** and **LatestMove** | Overall compact conversation projection      | Maintain a small evolving conversational state instead of replaying an unbounded transcript. We do not copy a full dialogue-manager ontology.                                                                               |
+| **Common ground / grounding**                                                                                                       | **Established conversational context**       | Preserve what this actor can treat as established for continuing the exchange, while keeping attribution, disagreement and uncertainty. This is actor-local conversational context, not objective or globally shared truth. |
+| **QUD** plus **discourse focus / Centering Theory**                                                                                 | **Active issues and focus**                  | Preserve the questions, decisions, explanations, disputes and referents that currently organize what a sensible next turn is about.                                                                                         |
+| **Conversational repair / clarification**                                                                                           | **Updates and repairs**                      | Preserve explicit corrections, clarifications, reversals, retractions and resolutions so obsolete compact state is not presented as current.                                                                                |
+| **LatestMove / local discourse coherence**                                                                                          | **Recent verbatim dialogue + exact Trigger** | Keep recent turns and the current speech exact rather than forcing pronouns, ellipsis, tone and local coherence through lossy summary text.                                                                                 |
+| **Persistent referential grounding**                                                                                                | **Reference continuity**                     | Preserve temporal, spatial, attributive and comparative relationships needed to resolve later references to people, objects, places and events.                                                                             |
+
+The terminology is intentionally not identical where the research term would imply stronger semantics than OpenLegend can safely claim. In particular, **common ground** often describes mutually established information; OpenLegend stores an actor-specific permitted projection and must not infer mutual agreement or objective truth merely from speech. The underlying concepts and original names remain documented here so future readers can trace the design lineage.
+
+Key background includes Dialogue Gameboard/information-state work, Questions Under Discussion, common-ground/grounding research, Centering Theory, clarification/repair, discourse obligations and recent persistent-reference research. See the linked research notes for primary sources and the limits of each analogy.
 
 ### Examples considered
 
@@ -108,7 +125,7 @@ V1 intentionally does **not** add:
 - transcript deletion;
 - new fictional forgetting behavior.
 
-A simple rolling actor-specific summary is sufficient until measured quality shows otherwise.
+A simple rolling actor-specific summary is sufficient until measured quality shows otherwise. Richer research-backed approaches remain explicit conditional future work under [NC18](../maintainers/narration-and-conversations.md), not untracked ideas and not pre-approved v1 scope.
 
 ## 8. Staged capability
 
@@ -152,7 +169,7 @@ The summary format and prompt are implementation policy behind that boundary. Th
 
 ## Maintained records
 
-- Implementation: [Narration and conversation tasks, NC14–NC17](../maintainers/narration-and-conversations.md).
+- Implementation: [Narration and conversation tasks, NC14–NC18](../maintainers/narration-and-conversations.md).
 - Limits and constraints: [Narration and conversations inventory](../limits/narration.md).
 - Related design: [Technical design](conversation-compaction-tech-design.md).
 - Current semantic owners: [Memory architecture](../memory-architecture.md) and [Narration, agent responses and conversations](../narration-and-conversations.md).
