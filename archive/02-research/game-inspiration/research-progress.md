@@ -2,7 +2,28 @@
 
 **Read first:** [complete assignment / R01–R14](research-requirements.md) and [130-subject roster, output paths and boundaries](research-roster.md). Repository `Macrofold/OpenLegend`; working branch `docs/game-inspiration-library`, integrating `docs/game-inspiration-library-expansion` at `57bcd96`; original baseline `feab691827a7cd62b6146f31eef20ee12e1a4770`. Research-only tracking, not an implementation backlog.
 
+## Integrated branch state — September 27, 2026
+
+This library now contains the five parallel research branches below, merged with their original commit ancestry. The source branches remain independent and may receive further commits. Research directions and verification statements retained in each range section describe that source's assignment and evidence; they do not change this integration's scope or certify other ranges.
+
+| Source branch | Merged source head | Range status and detailed owner |
+| --- | --- | --- |
+| `docs/game-inspiration-library` | `872313092809` | [G01–G40 initial passes retained; G01–G25 audit continues and G26–G39 audit is recorded below. G40 also has the independent G40–G60 study.](#requirements-and-corrections-audit--g01-through-g25) |
+| `docs/game-inspiration-games-40-60` | `9f00bec28160` | [G40–G60 remediation remains open. The source ledger trails its latest G52/G53 research commits; see the integration note in this range.](#g40g60-branch-research-state) |
+| `docs/game-inspiration-games-61-80` | `da73e75558dd` | [G61–G80 follow-up audit remains active; the range table owns completed and pending subjects.](#g61g80-branch-research-state) |
+| `docs/game-inspiration-games-81-100` | `203b409d9fe8` | [Identified G81–G100 audit repairs complete, with retained evidence limits.](#g81g100-branch-research-state) |
+| `docs/game-inspiration-games-101-120` | `cb771210406e` | [Revised scope is G101–G110; second-pass audit remains active.](#g101g110-branch-research-state) |
+| `docs/game-inspiration-games-111-120` | `2e7ddf5f53a1` | [G111–G120 follow-up audit recorded complete, with retained evidence limits.](#g111g120-branch-research-state) |
+
+G121–G130 remain outside these merged research ranges. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
+
+For later updates, fetch `origin` and merge each updated remote branch into `docs/game-inspiration-library` with a normal merge commit. Do not squash or rebase the shared histories. Keep dossier paths stable and reconcile any shared ledger changes within their own range; no propagation back to source branches is required for subsequent merges. Updates received during this integration from the library, G61–G80 and G101–G110 branches already merged cleanly.
+
+Integration review verified exact preservation in 221 file/source comparisons, both complete AI Dungeon study texts, every source navigation/changelog line and every per-game status row. A local Markdown path/anchor scan checked 8,345 links across 226 files without unresolved targets. Pinned Prettier 3.6.2 passed with repository ignore rules (the research archive is excluded). These are integration checks, not fresh research, external-URL validation or game execution.
+
 ## Resume here
+
+This first resume block records the library branch’s G01–G40 work. The integrated range table above supersedes old cross-range pending claims.
 
 **Completed: requirements-and-corrections audit of G26–G39.** Mike requested checking every applicable research dimension, correcting errors and finishing missing research in this batch. **G40 AI Dungeon is explicitly excluded from this audit at Mike's request because it was handled on another branch.** Its existing dossier and historical completion record below are preserved; this audit does not re-certify or overwrite that work. Baseline for this audit: `e01d800a839e6bbbbc8ff0ed13eb45b0a3a3d01c`.
 
@@ -10,7 +31,7 @@ Initial full passes are recorded for G01–G40, but that is not evidence that th
 
 The preceding continuation through G40 produced full dossiers, requirement maps, worked situations, annotated sources and explicit evidence-access limitations. Its earlier statement that the requested continuation was complete referred to those initial passes, not this subsequent audit. Mike confirmed `docs/game-inspiration-library` after the originally named `docs/game-inspiration-games` ref could not be resolved. No replacement branch was created. G26's unsuccessful Steam helpful-review retrieval and later per-game access limits remain recorded rather than falsely counted as completed sampling.
 
-RuneScape and Old School RuneScape remain independent pending full passes G48/G49. G50–G57 retain Dragonwilds, four separate mainline Dragon Age games, Deadfire, and Original Sin I/II. G58–G110 are the broader requested mechanics-library additions/franchise splits; G111–G130 are curated OpenLegend-relevant additions. Every pending dossier has the explicit five-written-review minimum and Steam top/helpful-review sampling when applicable. Adding scope is not completed research.
+RuneScape and Old School RuneScape are independent subjects G48/G49; their imported research and current remediation state now live in the G40–G60 section below. G50–G57 retain Dragonwilds, four separate mainline Dragon Age games, Deadfire, and Original Sin I/II. G58–G110 are the broader requested mechanics-library additions/franchise splits; G111–G130 are curated OpenLegend-relevant additions. These ranges describe roster scope, not a claim that their imported dossiers are still unstarted. Every pending dossier has the explicit five-written-review minimum and Steam top/helpful-review sampling when applicable. Adding scope is not completed research.
 
 ## Requirements-and-corrections audit — G01 through G25
 
@@ -100,7 +121,9 @@ This reconciliation checks content preservation, citation/link integrity and res
 
 ## G40–G60 branch research state
 
-Imported from `docs/game-inspiration-games-40-60`. Status and verification claims in this section apply only to that range and its recorded research pass.
+Imported from `docs/game-inspiration-games-40-60` at `9f00bec28160`. Status and verification claims in this section apply only to that range and its recorded research pass.
+
+**Integration note:** the source ledger below still resumes at G52, but the merged history also includes G52’s production-history addition (`71d429f9`) and G53’s build/multiplayer supplement (`9f00bec2`). Those changes are preserved in the dossier and linked supplement. This integration does not declare their audit gate closed or advance the source researcher’s resume point.
 
 ### Resume state
 
@@ -196,7 +219,7 @@ The fork's 19 complete, 7 partial and 34 unstarted totals are historical. Spore 
 
 ## G61–G80 branch research state
 
-Imported from `docs/game-inspiration-games-61-80` at `50c45692`. The following audit state is range-local; [global integration gates](#final-integration-gates--pending) remain open.
+Imported from `docs/game-inspiration-games-61-80` at `da73e75558dd`. The following audit state is range-local; [global integration gates](#final-integration-gates--pending) remain open.
 
 ### Current requested follow-up audit — G61–G80
 
@@ -292,7 +315,7 @@ This is a **scoped manual static review**, not an automated whole-repository or 
 
 ## G101–G110 branch research state
 
-Imported from `docs/game-inspiration-games-101-120` at `bc055931`. The branch name retains its original range, but the revised assignment stops at G110. The following audit state is range-local; [global integration gates](#final-integration-gates--pending) remain open.
+Imported from `docs/game-inspiration-games-101-120` at `cb771210406e`. The branch name retains its original range, but the revised assignment stops at G110. The following audit state is range-local; [global integration gates](#final-integration-gates--pending) remain open.
 
 ### Current assignment and recovery
 
