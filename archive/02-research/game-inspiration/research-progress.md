@@ -4,9 +4,9 @@
 
 ## Resume here
 
-**Corrective research active: G89 — Final Fantasy XII.** Correct shadowed Fire and unsafe farming Gambits; clarify repeated full-HP Steal, weapon-family differences, a named Bazaar recipe and counter behavior, fishing, full situations and score evidence. Then continue G90 and G93. The audit owner records exact closure criteria.
+**Corrective research active: G90 — Final Fantasy XIII.** Add postbattle recovery and TP/ATB/no-MP rules, Shrouds/Libra and rating/retry consequences; a named upgrade/catalyst chain and complete situations; qualify Lightning Returns' clock; add Hamauzu/art evidence and locate the precise primary 5.55-million disclosure or withdraw its certification. Then complete G93's alternative direct-player evidence and final slice review.
 
-**Latest completed repair: G88**, `bc2a57c128a8bd668e08ba60b1593e99f1763340`. Added spell-scroll learning versus permission, Rare/Ex restrictions, Orange Juice production, Mog Garden/rearing/chocobo loops, Ballista and Brenner objectives, a spoiler-marked Prishe/Ulmia arc, and operative Ambuscade/Omen/Odyssey/Sortie entry-action-reward distinctions. Completed the original five situations and added three contrasting cases. FFXI01–45 remain; FFXI46–57 annotate new evidence. Principal committed diff inspected; final source-tail/local-link checks remain pending.
+**Latest completed repair: G89**, `4541722ee512966f8d0a1c93eed2c24657b185f6`. Corrected the shadowed Fire and unsafe farming priorities and explained the full-HP Steal loop. Added named Bazaar recipes/shared-counter reset behavior, actual weapon-family distinctions and Gilt Measure support, fishing access/clues/tool/reward progression, primary Sakimoto score evidence and seven completed situations. FFXII01–30 remain; FFXII31–38 annotate new evidence. Principal actual diff inspected; final source-tail/local-link checks remain pending.
 
 The substantive audit reopened G81–G90 and G93; nine other dossiers retain coverage judgments. Mike authorized corrections and completion of missing research. The old blanket twenty-of-twenty statement was too strong. Complete and commit each game before advancing; headings and source counts are not substantive coverage.
 
@@ -24,8 +24,8 @@ Heading retained for inbound links. **Needs repair** is not complete. **Coverage
 | G86 | [Final Fantasy IX](dossiers/final-fantasy-ix.md) | Repair complete — `5578872c19a3a8e357ba9b94c0485bded0110c9b` |
 | G87 | [Final Fantasy X](dossiers/final-fantasy-x.md) | Repair complete — `83da33fca0d4f341f98c2fbdd3d582a2d6aff21a` |
 | G88 | [Final Fantasy XI](dossiers/final-fantasy-xi.md) | Repair complete — `bc2a57c128a8bd668e08ba60b1593e99f1763340` |
-| G89 | [Final Fantasy XII](dossiers/final-fantasy-xii.md) | Corrective research active |
-| G90 | [Final Fantasy XIII](dossiers/final-fantasy-xiii.md) | Needs repair |
+| G89 | [Final Fantasy XII](dossiers/final-fantasy-xii.md) | Repair complete — `4541722ee512966f8d0a1c93eed2c24657b185f6` |
+| G90 | [Final Fantasy XIII](dossiers/final-fantasy-xiii.md) | Corrective research active |
 | G91 | [Final Fantasy XIV](dossiers/final-fantasy-xiv.md) | Coverage present; unchanged |
 | G92 | [Final Fantasy XV](dossiers/final-fantasy-xv.md) | Coverage present; unchanged |
 | G93 | [Final Fantasy XVI](dossiers/final-fantasy-xvi.md) | Needs alternative direct-player evidence |
