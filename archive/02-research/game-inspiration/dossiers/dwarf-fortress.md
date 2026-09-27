@@ -236,6 +236,27 @@ These are research questions and design hypotheses. They do not authorize a new 
 
 ## 11. Preservation, coverage and verification
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory found the dossier complete and confirms the mode-specific boundaries:
+
+- **Identity / classes / attributes / skills / leveling / trees:** Fortress manages generated inhabitants with personalities, skills, preferences and histories rather than player classes; Adventure has character/party creation with bodily/skill/equipment constraints rather than one shared class tree (§§1, 4–5).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** physical stockpiles, containers, materials, tools, clothing/armor/weapons, industries, artifacts and quality/material distinctions are covered in §§2–4.
+- **Magic / spells / powers:** limited existing supernatural systems, necromantic knowledge and magical artifacts/creatures are distinguished from Bay 12's broader still-in-development procedural magic project (§5).
+- **Traversal / environmental and object interaction:** multi-z-level movement, climbing/jumping in Adventure, digging/construction, liquids/pumps, levers/mechanisms, doors, stockpiles and workshop/institution interaction are central.
+- **Activities / minigames:** mining, agriculture, manufacturing, trade, scholarship, religion, justice, healthcare, military, exploration and Adventure play are integrated simulation activities rather than separate arcade minigames.
+- **Combat / stealth / loot / rewards:** military combat, Adventure combat/wrestling/aimed attacks, hidden identities/crime/investigation and artifacts/equipment rewards are covered; there is no one universal stealth-loot RPG loop.
+- **Death / failure / recovery:** injury/treatment, death, fortress collapse/abandonment, retirement/reclamation and Adventure survival have distinct continuity contracts (§§4–5).
+- **Economy / trading:** production chains, caravan trade, material value, labor/logistics and institutional demand are central; there is no abstract global auction-house economy.
+- **Story / relationships / romance / reputation / party / companions:** generated relationships, memories, institutions, petitions, justice, Adventure parties and world history provide social/narrative structure; romance is emergent/character-level rather than a player-facing dating progression system.
+- **NPC/AI behavior and schedules / factions:** inhabitants, visitors, caravans, sieges, factions/civilizations and world-history actors have simulated behavior. Legends' omniscient records remain separate from any one character's knowledge.
+- **World map / environment / quests / events:** generated geography/history/civilizations, fortress sites, Adventure travel, sieges/petitions/events and Legends records form the shared world structure.
+- **Building / settlements / management:** Fortress construction, rooms, workshops, institutions, labor, stocks, military, healthcare and governance are the central management layer.
+- **Multiplayer / social / endgame / return loops:** Dwarf Fortress remains **single-player**; save/story/Workshop sharing is external social participation. Long-lived fortresses, Adventure, Legends, retirement/reclamation and self-chosen megaprojects provide return loops rather than one mandatory ending.
+
+**Current boundary check:** Bay 12 still lists **Dwarf Fortress 53.16 (August 5, 2026)** as the current Classic release. The September 1 development report is ongoing-development commentary, not a newer shipped version. Adventure remains delivered, the Siege/diplomacy changes remain shipped, and the larger procedural-magic project remains development work rather than current player scope. [D1]
+
+
 The old chapter and granular study remain unchanged. Preserved examples include the child/bridge account, the water-supply/flooding problem, the tavern as social infrastructure, artifact material versus prestige, strange moods and skill growth, manager intentions, stress/memory qualifications, Carpenter's puzzlebox, the newcomer who found safety boring, and the historical item/pathfinding interview. New evidence qualifies older claims without rewriting their provenance.
 
 The [packet provenance map](../references/packet-provenance.md) remains a reading map, not a claim that all seven supplied files received a new line-by-line audit. P01–P05 remain global integration gates.
