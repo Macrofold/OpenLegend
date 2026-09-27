@@ -295,15 +295,37 @@ function writeJson(response: ServerResponse, status: number, value: unknown) {
 }
 
 /** One serialized world host with explicit local or verified OIDC account authority. */
-export async function createGameServer(
-  options: {
-    config?: AppConfig;
-    production?: boolean;
-    store?: SqliteStore;
-    aiClient?: AiClient;
-    now?: () => number;
-    tick?: boolean;
-  } = {},
+interface GameServerOptions {
+  config?: AppConfig;
+  production?: boolean;
+  store?: SqliteStore;
+  aiClient?: AiClient;
+  now?: () => number;
+  tick?: boolean;
+}
+
+export async function createGameServer(options: GameServerOptions = {}) {
+  const rollback: (() => void | Promise<void>)[] = [];
+  try {
+    return await initializeGameServer(options, (close) => rollback.push(close));
+  } catch (error) {
+    // A failed factory returns no handle. Release each resource it acquired, preserving
+    // the initialization error and ownership of a caller-supplied store.
+    // docs/maintainers/action-reconciliation.md#integration-tasks
+    for (const close of rollback.reverse()) {
+      try {
+        await close();
+      } catch {
+        /* Continue closing the remaining owned resources. */
+      }
+    }
+    throw error;
+  }
+}
+
+async function initializeGameServer(
+  options: GameServerOptions,
+  onFailure: (close: () => void | Promise<void>) => void,
 ) {
   const config = options.config ?? readConfig();
   const store =
@@ -312,11 +334,16 @@ export async function createGameServer(
       config.databasePath,
       config.databaseUrl ? new PostgresDatabase(config.databaseUrl) : undefined,
     );
+  if (!options.store) onFailure(() => store.close());
   const service = new WorldService(store, config, options.now);
+  onFailure(() => service.releaseHostWork());
   const autosaves = new Autosaves(service);
+  onFailure(() => autosaves.close());
   await service.ready;
   const navigation = new NavigationCoordinator(service);
+  onFailure(() => navigation.close());
   let director = new AiDirector(service, options.aiClient, options.now);
+  onFailure(() => director.close());
   let loadingSave = false;
   let activeWrites = 0;
   let activeRequests = 0;
@@ -481,6 +508,7 @@ export async function createGameServer(
     }, 50);
   };
   const unsubscribe = service.subscribe(publish);
+  onFailure(unsubscribe);
   const vite = options.production
     ? null
     : await (
@@ -490,6 +518,7 @@ export async function createGameServer(
         server: { middlewareMode: true },
         appType: 'spa',
       });
+  if (vite) onFailure(() => vite.close());
   const assets = resolve('dist/client');
   const server = createServer(async (request, response) => {
     let responseScope: RequestScope | undefined;
@@ -1006,6 +1035,28 @@ export async function createGameServer(
           });
         const dispatch = async () => {
           switch (url.pathname) {
+            case '/api/action-attempt': {
+              const value = z
+                .object({
+                  requestId: requestIdSchema,
+                  text: z.string().trim().min(1).max(500),
+                  targetId: requestIdSchema.optional(),
+                  mode: z.enum(['enqueue', 'replace']),
+                })
+                .strict()
+                .parse(body);
+              return send(
+                response,
+                200,
+                await director.submitAction(
+                  value.requestId,
+                  value.text,
+                  value.mode,
+                  value.targetId,
+                  scope,
+                ),
+              );
+            }
             case '/api/saves/list': {
               const page = z
                 .object({
@@ -2130,6 +2181,7 @@ export async function createGameServer(
   server.requestTimeout = 10_000;
   server.headersTimeout = 10_000;
   const stopRuntimeMonitoring = startRuntimeMonitoring();
+  onFailure(stopRuntimeMonitoring);
   let previous = performance.now();
   let previousCallback = previous;
   let suspendedSeconds = 0;

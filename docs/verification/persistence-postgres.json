@@ -1,0 +1,158 @@
+{
+  "scope": "Real disposable loopback PostgreSQL and worker SQLite history projection, full required table comparison, edits, forgetting and rollback. Not a full PostgreSQL server/browser/soak or live-model qualification.",
+  "run": "36078958048",
+  "paidModelCalls": 0,
+  "cases": [
+    {
+      "name": "small",
+      "worldDigest": "5fc754adef8a9df0c497eed9e531dec1fdb177dec4e8be1a6b1f05a3cdd83066",
+      "databases": {
+        "sqlite": {
+          "elapsedMs": 2.541421000000014,
+          "tables": {
+            "history_events": {
+              "count": 24,
+              "digest": "db0cedd1bb59e50f61d96e9ae7fdf9b6d42f0bfc035587ca14d04a8f341b3735"
+            },
+            "history_audiences": {
+              "count": 24,
+              "digest": "510ffa8db7a3bd425414844d4ccb18d9d0a23171ec7aa1d42ee9d099a630d785"
+            },
+            "history_perspectives": {
+              "count": 24,
+              "digest": "cdd2d077deaa5a39b0211cfb7820440c454529957ced59099bb9972f443d2065"
+            }
+          },
+          "afterEdits": {
+            "history_events": {
+              "count": 24,
+              "digest": "db0cedd1bb59e50f61d96e9ae7fdf9b6d42f0bfc035587ca14d04a8f341b3735"
+            },
+            "history_audiences": {
+              "count": 23,
+              "digest": "0ba28432ea519723e60dc99edf3638618f2d65128537b224488248e60ec34bde"
+            },
+            "history_perspectives": {
+              "count": 23,
+              "digest": "d815fdf5f990954a459c70275171c27ae9fd955b82c36584b451ec960c9f19f5"
+            }
+          },
+          "rollbackPreserved": true,
+          "editApplied": true,
+          "revoked": true
+        },
+        "postgres": {
+          "elapsedMs": 4.754425000000026,
+          "tables": {
+            "history_events": {
+              "count": 24,
+              "digest": "db0cedd1bb59e50f61d96e9ae7fdf9b6d42f0bfc035587ca14d04a8f341b3735"
+            },
+            "history_audiences": {
+              "count": 24,
+              "digest": "510ffa8db7a3bd425414844d4ccb18d9d0a23171ec7aa1d42ee9d099a630d785"
+            },
+            "history_perspectives": {
+              "count": 24,
+              "digest": "cdd2d077deaa5a39b0211cfb7820440c454529957ced59099bb9972f443d2065"
+            }
+          },
+          "afterEdits": {
+            "history_events": {
+              "count": 24,
+              "digest": "db0cedd1bb59e50f61d96e9ae7fdf9b6d42f0bfc035587ca14d04a8f341b3735"
+            },
+            "history_audiences": {
+              "count": 23,
+              "digest": "0ba28432ea519723e60dc99edf3638618f2d65128537b224488248e60ec34bde"
+            },
+            "history_perspectives": {
+              "count": 23,
+              "digest": "d815fdf5f990954a459c70275171c27ae9fd955b82c36584b451ec960c9f19f5"
+            }
+          },
+          "rollbackPreserved": true,
+          "editApplied": true,
+          "revoked": true
+        }
+      },
+      "equivalent": true
+    },
+    {
+      "name": "dense",
+      "worldDigest": "2a4b889fac7f403c00addd6f7c719287a6e4e73bd277160f122390707c87f357",
+      "databases": {
+        "sqlite": {
+          "elapsedMs": 1126.6846379999997,
+          "tables": {
+            "history_events": {
+              "count": 62559,
+              "digest": "728f5d42c7d793c2e3433b0c68b51fb3d0ff1d3020debbc0b383d82b83568f61"
+            },
+            "history_audiences": {
+              "count": 67707,
+              "digest": "eb82c179c1b0f031374d034aed397fa87d6ed4f0aa851842b06c4ea38e7a6c36"
+            },
+            "history_perspectives": {
+              "count": 67707,
+              "digest": "b212512a918344a638bcd5909793c55de2e99ab32836d269c1a8eb4658a328c2"
+            }
+          },
+          "afterEdits": {
+            "history_events": {
+              "count": 62559,
+              "digest": "728f5d42c7d793c2e3433b0c68b51fb3d0ff1d3020debbc0b383d82b83568f61"
+            },
+            "history_audiences": {
+              "count": 67706,
+              "digest": "fcfca6306560c1cf43c79baaed5bd03fd75c2140809033c71e66b596b8a05a50"
+            },
+            "history_perspectives": {
+              "count": 67706,
+              "digest": "8eadcc5066d9cf1d64f6c52880b22e744338fb273a672140b4fc4c6a579ac928"
+            }
+          },
+          "rollbackPreserved": true,
+          "editApplied": true,
+          "revoked": true
+        },
+        "postgres": {
+          "elapsedMs": 3741.9653179999987,
+          "tables": {
+            "history_events": {
+              "count": 62559,
+              "digest": "728f5d42c7d793c2e3433b0c68b51fb3d0ff1d3020debbc0b383d82b83568f61"
+            },
+            "history_audiences": {
+              "count": 67707,
+              "digest": "eb82c179c1b0f031374d034aed397fa87d6ed4f0aa851842b06c4ea38e7a6c36"
+            },
+            "history_perspectives": {
+              "count": 67707,
+              "digest": "b212512a918344a638bcd5909793c55de2e99ab32836d269c1a8eb4658a328c2"
+            }
+          },
+          "afterEdits": {
+            "history_events": {
+              "count": 62559,
+              "digest": "728f5d42c7d793c2e3433b0c68b51fb3d0ff1d3020debbc0b383d82b83568f61"
+            },
+            "history_audiences": {
+              "count": 67706,
+              "digest": "fcfca6306560c1cf43c79baaed5bd03fd75c2140809033c71e66b596b8a05a50"
+            },
+            "history_perspectives": {
+              "count": 67706,
+              "digest": "8eadcc5066d9cf1d64f6c52880b22e744338fb273a672140b4fc4c6a579ac928"
+            }
+          },
+          "rollbackPreserved": true,
+          "editApplied": true,
+          "revoked": true
+        }
+      },
+      "equivalent": true
+    }
+  ],
+  "postgresVersion": "PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit"
+}

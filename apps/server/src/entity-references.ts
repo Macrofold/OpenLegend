@@ -117,6 +117,16 @@ export function resolveResponseEntities(
       act: op.act
         ? {
             ...op.act,
+            ...(op.act.invocation
+              ? {
+                  invocation: {
+                    ...op.act.invocation,
+                    targetEntityId: op.act.invocation.targetEntityId
+                      ? resolve(op.act.invocation.targetEntityId)
+                      : null,
+                  },
+                }
+              : {}),
             targetEntityId: op.act.targetEntityId ? resolve(op.act.targetEntityId) : null,
             description: op.act.description
               ? resolveEntityMarkers(op.act.description, references)

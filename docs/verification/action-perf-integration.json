@@ -1,0 +1,26 @@
+{
+  "scope": "Ad hoc native execution and injected no-provider grounding; no automated suites or live model-quality claim.",
+  "paidModelCalls": 0,
+  "checks": [
+    {
+      "name": "observer-scoped-action-names",
+      "passed": true
+    },
+    {
+      "name": "status-loss-clears-exposure-and-recognition",
+      "passed": true
+    },
+    {
+      "name": "follow-reconciles-locomotion-loss",
+      "passed": true
+    },
+    {
+      "name": "lossless-existing-source-order-upgrade",
+      "passed": true
+    },
+    {
+      "name": "frozen-owned-evidence-edit-isolation",
+      "passed": true
+    }
+  ]
+}

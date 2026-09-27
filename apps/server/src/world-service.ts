@@ -123,6 +123,9 @@ export const commandInputSchema = z
       'merge-item',
       'unequip',
       'move',
+      'follow',
+      'confirm-attempt',
+      'withdraw-attempt',
       'gather',
       'prepare',
       'craft',
@@ -145,6 +148,8 @@ export const commandInputSchema = z
     effectOperation: z.enum(['activate', 'deactivate']).optional(),
     targetId: id.optional(),
     definitionId: id.optional(),
+    distance: z.number().min(1.5).max(12).optional(),
+    attemptId: id.optional(),
     itemId: id.optional(),
     recipeId: id.optional(),
     attributeId: id.optional(),
@@ -1597,7 +1602,12 @@ export class WorldService {
       // the same mutation lane as commit (docs/architecture.md#actor-agency-foundation).
       if (responseJobId) {
         const job = await this.store.getJob(responseJobId);
-        if (!job || (!this.world.responseReceipts?.[responseJobId] && job.status !== 'generating'))
+        if (
+          !job ||
+          (!this.world.responseReceipts?.[responseJobId] &&
+            job.status !== 'generating' &&
+            !(job.responseReady && ['queued', 'judging'].includes(job.status)))
+        )
           return {
             ok: false,
             code: 'retired-response',
@@ -2536,6 +2546,22 @@ export class WorldService {
         if (!input.itemId || input.quantity === undefined)
           return { ok: false, code: 'item', message: 'Choose an item and quantity.' };
         command = { ...envelope, type: 'drop', itemId: input.itemId, quantity: input.quantity };
+        break;
+      case 'confirm-attempt':
+      case 'withdraw-attempt':
+        if (!input.attemptId)
+          return { ok: false, code: 'attempt', message: 'Choose a pending action.' };
+        command = { ...envelope, type: input.type, attemptId: input.attemptId };
+        break;
+      case 'follow':
+        if (!input.targetId)
+          return { ok: false, code: 'target', message: 'Choose an actor to follow.' };
+        command = {
+          ...envelope,
+          type: 'follow',
+          targetId: input.targetId,
+          ...(input.distance !== undefined ? { distance: input.distance } : {}),
+        };
         break;
       case 'gather':
       case 'harvest':

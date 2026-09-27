@@ -11,6 +11,7 @@ export interface ExposureInput {
   alive: boolean;
   memory: boolean;
   object: boolean;
+  feature: string;
 }
 interface ObserverInput {
   signature: string;
@@ -39,7 +40,8 @@ const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
   a.radius === b.radius &&
   a.alive === b.alive &&
   a.memory === b.memory &&
-  a.object === b.object;
+  a.object === b.object &&
+  a.feature === b.feature;
 /** Derived per-phase inputs, rebuilt on recovery. No visibility or event authority lives here. */
 export function exposureChanges(
   world: WorldState,
@@ -51,9 +53,9 @@ export function exposureChanges(
   const next: ExposureCache = {
     map,
     inputs: new Map(
-      inputs.map(({ id, position, height, radius, alive, memory, object }) => [
+      inputs.map(({ id, position, height, radius, alive, memory, object, feature }) => [
         id,
-        { id, position: { ...position }, height, radius, alive, memory, object },
+        { id, position: { ...position }, height, radius, alive, memory, object, feature },
       ]),
     ),
     observers: new Map(),

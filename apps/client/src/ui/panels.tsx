@@ -1,5 +1,6 @@
 import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
 import { playerEntity } from '../entity-view';
+import { ActionAttempts } from './action-attempts';
 import { useState } from 'react';
 import { EventTime } from './event-time';
 import { Button as AriaButton } from 'react-aria-components';
@@ -193,6 +194,11 @@ export function Character({
         />
       )}
       {openMind && <Button onPress={openMind}>My thoughts and relationships</Button>}
+      <ActionAttempts
+        key={`${view.access?.scope}:${view.access?.controlGeneration}:${view.worldId}:${view.saveTimeline}:${view.player.id}`}
+        view={view}
+        connected={connected}
+      />
       <Section title="Condition">
         <Condition {...view.player} />
         {view.player.statusEffects?.map((effect) => (

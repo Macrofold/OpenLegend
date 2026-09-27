@@ -7,7 +7,7 @@ const samples = new Map<
 export function recordDuration(stage: string, milliseconds: number): void {
   let sample = samples.get(stage);
   if (!sample) {
-    if (samples.size >= 32) return;
+    if (samples.size >= 64) return;
     samples.set(stage, (sample = { count: 0, values: [], next: 0, totalMs: 0, maxMs: 0 }));
   }
   sample.count++;
@@ -50,7 +50,9 @@ export function startRuntimeMonitoring(): () => void {
       'process.cpuPercent',
       ((cpu.user - lastCpu.user + cpu.system - lastCpu.system) / 1000 / (now - lastAt)) * 100,
     );
-    gaugeMetric('process.heapUsedBytes', process.memoryUsage().heapUsed);
+    const memory = process.memoryUsage();
+    gaugeMetric('process.heapUsedBytes', memory.heapUsed);
+    gaugeMetric('process.rssBytes', memory.rss);
     gaugeMetric('eventLoop.p95Ms', delay.count ? delay.percentile(95) / 1e6 : 0);
     gaugeMetric('eventLoop.maxMs', delay.count ? delay.max / 1e6 : 0);
     lastCpu = cpu;

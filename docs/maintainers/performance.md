@@ -306,3 +306,9 @@ PF03/PF09/EPR02/EPR05 still own real first-exposure fan-out and long individual 
 - [ ] **PF12.9 / PF10** Only if optimized work still needs isolation, qualify a long-lived simulation owner worker. Document ordering, persistence/recovery and message ownership before moving it; never add a second writable world or a worker per actor.
 
 Dense 8x is not complete. The implemented PF12.3–PF12.5 follow-through is measured in the [integration record](../verification/spatial-cadence-main-integration.md#performance-follow-through); continue their remaining dense/history qualification, PF13.11 regional rates and PF12.7 visible frame cost. No new density or geometry limits were raised by this rebase.
+
+## Perception/evidence and burst delivery
+
+The native action integration retains main's regional scalar/object exposure caches, elapsed cadence, navigation workers and dependency fences. It adds private acquisition batches, outward-feature invalidation, body-sized contact candidates, exact immutable history preparation and bounded SQL construction. SQLite isolation now preserves the independent read-only WAL snapshot path and transaction publication hooks. [Architecture](../architecture.md#private-perception-and-evidence-batches) owns behavior; [current evidence](../verification/native-action-integration.md) separates integration checks from historical reports.
+
+PF00/PF03/PF08/PF10/PF11 remain responsible for real-server latency, growing history, dense recipients, checkpoint competition and production capacity. [DP-R01–DP-R10](action-regressions.md#dense-persistence-regression-coverage) retain failure/coverage requirements. A worker or shorter build is not acceptance; local disk exhaustion currently blocks the fresh PostgreSQL fixture.

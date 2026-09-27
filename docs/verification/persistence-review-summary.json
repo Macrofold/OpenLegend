@@ -1,0 +1,57 @@
+{
+  "scope": "Current implementation, mature native dense workload and 30-second 8x small-server load; not matched latency qualification, full PostgreSQL server, browser, live cognition or a long soak. No paid APIs.",
+  "run": "36078958048",
+  "native": {
+    "steps": 600,
+    "warmupSteps": 30,
+    "totalMs": 13266.1051,
+    "p50Ms": 22.109473999998954,
+    "p95Ms": 27.45612799999799,
+    "maxStepMs": 130.41511699999955,
+    "finalCounts": {
+      "entities": 614,
+      "events": 62617,
+      "awareness": 67864
+    },
+    "nativeHeadroomAtRequestedSpeed": 0.7538007519629857,
+    "hottestSelfMs": [
+      ["(anonymous) src/perception-frame.ts:1", 1444.7089999999969],
+      ["finalizeProperty dist/immer.mjs:314", 1397.9259999999963],
+      ["get dist/immer.mjs:382", 922.5299999999997],
+      ["isPlainObject dist/immer.mjs:60", 695.0869999999998],
+      ["isDraftable dist/immer.mjs:54", 540.0770000000003],
+      ["advanceStatusEffects src/status-effects.ts:1", 420.53299999999984],
+      ["advanceWorldWork src/kernel.ts:1", 417.77400000000006],
+      ["getArchtype dist/immer.mjs:86", 404.5680000000002],
+      ["peek dist/immer.mjs:486", 402.38199999999966],
+      ["updateEncounters src/kernel.ts:1", 379.084],
+      ["query src/perception-frame.ts:1", 349.81299999999993],
+      ["(anonymous) src/perception.ts:1", 337.71799999999985]
+    ]
+  },
+  "server": {
+    "achievedSpeed": 7.982761209310564,
+    "eventLoop": {
+      "p50Ms": 11.452415,
+      "p95Ms": 25.165823,
+      "maxMs": 31.637503
+    },
+    "storageError": null,
+    "memoryBacklog": null,
+    "counters": {
+      "clock.activeRealSeconds": 29.950175155999975,
+      "clock.requestedSimSeconds": 14376.084074880011,
+      "native.cooperativeYields": 1,
+      "clock.advancedSimSeconds": 14376,
+      "timer.skippedWhileBusy": 21
+    }
+  },
+  "commands": {
+    "count": 1200,
+    "p50Ms": 9.647609999999986,
+    "p95Ms": 17.86058299999786,
+    "p99Ms": 24.466064000000188,
+    "maxMs": 47.327338
+  },
+  "errors": []
+}

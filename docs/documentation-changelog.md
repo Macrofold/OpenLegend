@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-26 — Integrate native action grounding and follow
+
+Rebased the preserved action branch onto main's records/checkpoints, account/control authority, placement, resource claims, dependency invalidation and elapsed cadence. Finite parameterized move/follow, reviewed private revisions and acquisition/history batching retain those owners. Reconciliation fixes include scoped action job/UI identities, live-draft contact mutation, follow navigation cancellation and server/checkpoint startup cleanup. Superseded fixed-step and raw-array cursor implementations are removed. Main's complete byte-bounded action choice set and free exact authored descriptions are preserved, and incomplete spatial queries are filtered before schedule batching. Updated [limit inventories](limits/cognition.md#cg02) record implemented boundaries without declaring uncalibrated thresholds or throughput qualified.
+
+[Architecture](architecture.md#jev-first-action-grounding) describes delivered behavior; [AR](maintainers/action-reconciliation.md), [AC](maintainers/action-capabilities.md), [EPR](maintainers/events-perception-and-reactions.md) and [PF](maintainers/performance.md) retain unmet acceptance. [Integration evidence](verification/native-action-integration.md) distinguishes actual no-cost runtime/static observations from historical reports and the disk-blocked PostgreSQL measurement. Recovered regression IDs remain linked from TODO; no broad acceptance gate is closed by this documentation update.
+
 ## 2026-09-26 — Import standalone worldbuilding research
 
 Squashed the 42 commits from `docs/worldbuilding-research-library` into `main`: [28 world dossiers, six comparative essays and supporting navigation/evidence records](../archive/02-research/worldbuilding/README.md). The library remains independent research, not accepted game mechanics or an implementation plan. [Integration verification](../archive/02-research/worldbuilding/research-progress.md#main-branch-integration) records the refreshed source/base, conflict-free integration and local documentation checks; original source-access limitations remain explicit.
@@ -354,6 +360,30 @@ Moved the sleep specification to `docs/worlds/base/sleep.md` and repaired inboun
 - Removed the implementation-chosen 256-summary quota from the consolidation contract and snapshot. Memory retention no longer constrains semantic grouping by remaining slots; request-size limits and atomic multi-request publication have separate ownership in the memory design and runtime snapshot.
 
 Knowledge canvas mechanics now have one engine owner in `docs/knowledge.md`; bundled limits/naming/recognition live in `docs/worlds/base/knowledge.md`. This replaces the proposed naming-heavy YAML state example and the external-beliefs-in-one-inner-world-text direction. The observer-known-name decision is resolved; aggregate storage remains open.
+
+## Action invocation and partial-fulfillment implementation
+
+Added current move/follow, Jev-first grounding and revised-action approval facts to Architecture and implementation status, with native/HTTP/stress evidence in Verification. Refined the action capability specification to permit explicit partial fulfillment and initiator review, and reserved Mechanical workflow reconciliation for integration with the separate invention work. The example repertoire remains aspirational. Broader AC/AG/INV acceptance is not marked complete. Temporary implementation/verification workflow files are removed and the original CI workflow is restored.
+
+## 2026-09-24 — Action capability code review
+
+Aligned current action docs with scoped binding/approval authority, native-behavior review and state-stream presentation. Marked the delivered narrow tasks separately from broad AC acceptance, recorded regression work in Maintainer TODO, preserved the invention-workflow reconciliation section, and advanced current development-save references to schema 11 without legacy readers. Runtime/performance evidence is recorded separately.
+
+## 2026-09-24 — Perception and reaction performance
+
+Recorded private visual-acquisition semantics, bounded experience batches, exposure/feature reuse, ordered reaction intake and cooperative native checkpoints. Updated EPR/PF delivery state, current development format 13, measured native/HTTP evidence and deferred automated coverage. Superseded the SR10 requirement to reproduce broadcast acquisition audiences while retaining outward-event equivalence requirements.
+
+The optional scalar-only capture experiment was rejected after a warm-workload deadline failure. Recorded the unchanged qualified implementation, the warm mixed result without a throughput gain, and the dense-scene capacity failure instead of reporting universal scalability.
+
+## Main rebase and measured acquisition follow-up
+
+Reconciled the action/perception branch with main's in-place save policy, generic status effects, observer knowledge and current-evidence scheduling. The old temporary-runner history is retained on a backup branch; active source uses the actual rebased implementation. Per-feature save-reset instructions are superseded by the active save owner, while historical measurement reports remain unchanged.
+
+Added the reusable full-server profiler and recorded its continuous-presence correction, native warm/dense results and limits. The patch-removal experiment was not retained. Moved bundled follow tuning to its base-world source, retained the existing execution adapter and reserved invention-workflow reconciliation section, and added deferred regression coverage without running automated suites.
+
+## Dense persistence and local database isolation
+
+Recorded DP01–DP06 scope under the existing PF owner. History preparation and bounded source buffers refine compact atomic persistence; the measured local SQLite worker is a PF10 subset, not a second database or an implemented general simulation worker. Runtime facts, performance evidence and deferred automated coverage remain in Architecture, Verification and Maintainer TODO respectively. The previous synchronous-SQLite wording is superseded for the local adapter; dense CPU/clock and broader qualification remain explicit.
 
 ## Limits audit implementation
 

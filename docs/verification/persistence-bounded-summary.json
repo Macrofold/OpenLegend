@@ -1,0 +1,226 @@
+{
+  "run": "36077786136",
+  "cpu": "AMD EPYC 7763 64-Core Processor",
+  "nativeAndHistoryDigestsMatch": true,
+  "before": {
+    "small": {
+      "nativeMs": 17.43697800000001,
+      "commits": [1.8365009999999984, 0.7139970000000062]
+    },
+    "dense": {
+      "nativeMs": 3291.8510690000003,
+      "commits": [1055.781739, 973.4138430000003]
+    }
+  },
+  "after": {
+    "small": {
+      "nativeMs": 17.149946999999997,
+      "commits": [2.4092370000000187, 0.8684149999999704]
+    },
+    "dense": {
+      "nativeMs": 2661.972474,
+      "commits": [1111.53003, 1052.676367]
+    }
+  },
+  "serverBefore": {
+    "achievedSpeed": 0.05747474146771257,
+    "eventLoop": {
+      "p50Ms": 17.186815,
+      "p95Ms": 48.070655,
+      "maxMs": 2745.171967
+    },
+    "heapUsedBytes": 815422456,
+    "storageError": null,
+    "memoryBacklog": null,
+    "counters": {
+      "clock.activeRealSeconds": 4.840456897000001,
+      "clock.requestedSimSeconds": 290.4274138200001,
+      "timer.skippedWhileBusy": 170,
+      "native.cooperativeYields": 828,
+      "clock.advancedSimSeconds": 52,
+      "clock.excludedGapRealSeconds": 2.777927399,
+      "clock.discardedPendingSimSeconds": 0.7283449400000066
+    },
+    "commands": {
+      "count": 21,
+      "p50Ms": 187.25841899999978,
+      "p95Ms": 409.216042,
+      "maxMs": 5906.725604
+    },
+    "metrics": {
+      "sqlite.statement": {
+        "count": 996,
+        "totalMs": 734.2969740000162,
+        "cumulativeMaxMs": 127.21041199999945
+      },
+      "persistence.diff": {
+        "count": 23,
+        "totalMs": 87.74044799999729,
+        "cumulativeMaxMs": 46.878157999999985
+      },
+      "persistence.journalEncode": {
+        "count": 23,
+        "totalMs": 149.86617099999648,
+        "cumulativeMaxMs": 143.0613400000002
+      },
+      "persistence.snapshotEncode": {
+        "count": 1,
+        "totalMs": 172.3172939999995,
+        "cumulativeMaxMs": 172.3172939999995
+      },
+      "sqlite.begin": {
+        "count": 23,
+        "totalMs": 0.6616090000020449,
+        "cumulativeMaxMs": 0.05311400000027788
+      },
+      "history.project": {
+        "count": 23,
+        "totalMs": 1458.6513319999958,
+        "cumulativeMaxMs": 1125.2178349999995
+      },
+      "sqlite.commit": {
+        "count": 23,
+        "totalMs": 601.8938180000005,
+        "cumulativeMaxMs": 562.7728819999993
+      },
+      "persistence.transaction": {
+        "count": 23,
+        "totalMs": 2198.238117999999,
+        "cumulativeMaxMs": 1815.865084
+      },
+      "public.projection": {
+        "count": 59,
+        "totalMs": 1624.2079049999925,
+        "cumulativeMaxMs": 41.85739000000103
+      },
+      "history.awarenessIndex": {
+        "count": 1632,
+        "totalMs": 123.81796599997779,
+        "cumulativeMaxMs": 4.400276000000304
+      },
+      "history.write": {
+        "count": 879,
+        "totalMs": 677.3052450000041,
+        "cumulativeMaxMs": 4.80560400000013
+      },
+      "native.slice": {
+        "count": 880,
+        "totalMs": 7972.17889999999,
+        "cumulativeMaxMs": 306.2121049999996
+      },
+      "native.stepWall": {
+        "count": 52,
+        "totalMs": 9510.189045000003,
+        "cumulativeMaxMs": 3448.986696
+      },
+      "native.step": {
+        "count": 52,
+        "totalMs": 8059.6457759999885,
+        "cumulativeMaxMs": 3318.4947689999917
+      }
+    }
+  },
+  "serverAfter": {
+    "achievedSpeed": 0.0718082528387372,
+    "eventLoop": {
+      "p50Ms": 16.424959,
+      "p95Ms": 50.429951,
+      "maxMs": 2696.937471
+    },
+    "heapUsedBytes": 349192424,
+    "storageError": null,
+    "memoryBacklog": null,
+    "counters": {
+      "clock.activeRealSeconds": 3.9302415270000015,
+      "clock.requestedSimSeconds": 235.8144916200001,
+      "timer.skippedWhileBusy": 171,
+      "native.cooperativeYields": 789,
+      "clock.advancedSimSeconds": 65,
+      "clock.excludedGapRealSeconds": 2.7041748159999996,
+      "clock.discardedPendingSimSeconds": 0.41735314000001367
+    },
+    "commands": {
+      "count": 22,
+      "p50Ms": 183.44722900000033,
+      "p95Ms": 320.7338929999996,
+      "maxMs": 4809.996859
+    },
+    "metrics": {
+      "sqlite.statement": {
+        "count": 1207,
+        "totalMs": 761.3937189999847,
+        "cumulativeMaxMs": 121.67928800000027
+      },
+      "persistence.diff": {
+        "count": 24,
+        "totalMs": 78.3430129999997,
+        "cumulativeMaxMs": 33.629509000000326
+      },
+      "persistence.journalEncode": {
+        "count": 24,
+        "totalMs": 163.01834499999995,
+        "cumulativeMaxMs": 154.42951300000004
+      },
+      "persistence.snapshotEncode": {
+        "count": 1,
+        "totalMs": 156.19573000000037,
+        "cumulativeMaxMs": 156.19573000000037
+      },
+      "sqlite.begin": {
+        "count": 24,
+        "totalMs": 0.6605569999987893,
+        "cumulativeMaxMs": 0.042541000000255735
+      },
+      "history.prepare": {
+        "count": 24,
+        "totalMs": 117.82667600000377,
+        "cumulativeMaxMs": 20.625022000000172
+      },
+      "history.sourceBuild": {
+        "count": 24,
+        "totalMs": 488.8288709999938,
+        "cumulativeMaxMs": 477.16321999999855
+      },
+      "history.project": {
+        "count": 24,
+        "totalMs": 1483.2152890000007,
+        "cumulativeMaxMs": 1185.8223800000005
+      },
+      "sqlite.commit": {
+        "count": 24,
+        "totalMs": 424.7873399999953,
+        "cumulativeMaxMs": 385.31659800000034
+      },
+      "persistence.transaction": {
+        "count": 24,
+        "totalMs": 2041.4012829999942,
+        "cumulativeMaxMs": 1693.4687279999998
+      },
+      "public.projection": {
+        "count": 72,
+        "totalMs": 1925.3760269999975,
+        "cumulativeMaxMs": 44.36346000000049
+      },
+      "history.write": {
+        "count": 1086,
+        "totalMs": 726.8617329999884,
+        "cumulativeMaxMs": 3.8662870000007388
+      },
+      "native.slice": {
+        "count": 855,
+        "totalMs": 7939.159265999999,
+        "cumulativeMaxMs": 351.58019799999965
+      },
+      "native.stepWall": {
+        "count": 65,
+        "totalMs": 9603.310315999996,
+        "cumulativeMaxMs": 2901.9311149999994
+      },
+      "native.step": {
+        "count": 65,
+        "totalMs": 8024.072721000015,
+        "cumulativeMaxMs": 2794.3684539999977
+      }
+    }
+  }
+}

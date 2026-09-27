@@ -1,0 +1,332 @@
+{
+  "base": "f551e3d8fddbc548717332508d9abd31c433d3b8",
+  "source": "580476bcfbfe8993b1c709acfacc7d4775b00941",
+  "node": "22.23.2",
+  "host": "Apple M1 Pro, local macOS",
+  "scope": "Native manual exercises and short comparative measurements, no automated suites or paid calls",
+  "action": {
+    "source": "codex/native-action-integration working tree",
+    "paidCalls": 0,
+    "scenario": "Disposable service/HTTP action, duplicate, approval, cancellation and restart walkthrough; local session has control",
+    "control": {
+      "ok": true,
+      "code": "unchanged",
+      "message": "This window now controls your character."
+    },
+    "resume": {
+      "ok": true,
+      "code": "control",
+      "message": "World running at 1\u00d7."
+    },
+    "initial": {
+      "status": 200,
+      "access": true,
+      "actor": "entity-0001"
+    },
+    "routes": {
+      "movePosition": {
+        "x": 11,
+        "y": 0,
+        "z": 13
+      },
+      "support": "terrain"
+    },
+    "submitted": {
+      "ok": true,
+      "code": "queued",
+      "message": "Resolving your action.",
+      "jobId": "human:0e59b791d91ed8197bbc970628d196dee33b01a262c1517a5a69e0e49070bdec"
+    },
+    "job": {
+      "status": "completed",
+      "message": "Native work queued; it has not completed."
+    },
+    "duplicate": {
+      "ok": true,
+      "code": "duplicate",
+      "message": "Native work queued; it has not completed.",
+      "jobId": "human:0e59b791d91ed8197bbc970628d196dee33b01a262c1517a5a69e0e49070bdec"
+    },
+    "nativeMovement": {
+      "from": {
+        "x": 11,
+        "y": 0,
+        "z": 13
+      },
+      "to": {
+        "x": 11.5,
+        "y": 0,
+        "z": 13
+      },
+      "plan": "completed"
+    },
+    "cancel": {
+      "ok": true,
+      "code": "cancelled",
+      "message": "Stopped. Materials already used in work remain consumed."
+    },
+    "proposal": {
+      "ok": false,
+      "code": "needs-confirmation",
+      "message": "Accept revised action? Walk to the nearby point. No stealth. Not fulfilled: quietly"
+    },
+    "pending": [
+      {
+        "id": "reviewed-move",
+        "status": "awaiting-confirmation"
+      }
+    ],
+    "restored": [
+      {
+        "id": "reviewed-move",
+        "status": "awaiting-confirmation"
+      }
+    ],
+    "approval": {
+      "ok": true,
+      "code": "queued",
+      "message": "Native work queued; it has not completed.",
+      "planId": "approve-restored"
+    },
+    "remainingAttempts": 0,
+    "validation": "passed",
+    "httpSubmission": {
+      "status": 200,
+      "ok": true,
+      "code": "queued",
+      "message": "Resolving your action.",
+      "jobId": "human:bead68fcba73b29a17855cb28028e5c0ce43036413622dc48d98acb8968ae31e"
+    }
+  },
+  "followContact": {
+    "scenario": "Native follow, physical contact and lost detector on disposable real server",
+    "paidCalls": 0,
+    "start": {
+      "ok": true,
+      "code": "accepted",
+      "message": "Action started."
+    },
+    "initial": "working",
+    "holding": "working",
+    "approach": {
+      "position": {
+        "x": 14.300000000000002,
+        "y": 0,
+        "z": 13
+      },
+      "action": "follow",
+      "stage": "approaching"
+    },
+    "lost": {
+      "action": null
+    },
+    "contactState": {
+      "paused": false,
+      "storage": null,
+      "blocked": false,
+      "senses": [
+        {
+          "id": "wilderness:vision",
+          "version": 1,
+          "implementation": "vision-geometry-v1",
+          "radius": 28
+        },
+        {
+          "id": "wilderness:hearing",
+          "version": 1,
+          "implementation": "hearing-transmission-v1",
+          "radius": 10
+        },
+        {
+          "id": "contact:touch",
+          "version": 1,
+          "implementation": "body-contact-v1",
+          "radius": 0
+        }
+      ],
+      "touching": true,
+      "time": 72
+    },
+    "contact": [
+      {
+        "sense": "contact:touch",
+        "detail": "present"
+      }
+    ],
+    "detectorRemoved": {
+      "contacts": 0,
+      "newContactEvents": 0
+    },
+    "validation": "passed"
+  },
+  "storage": {
+    "scenario": "Worker WAL snapshots, commit/rollback hooks and failed server startup",
+    "paidCalls": 0,
+    "rollback": {
+      "row": {
+        "id": 1,
+        "value": "before"
+      },
+      "committed": 0,
+      "rolledBack": 1
+    },
+    "snapshot": {
+      "before": {
+        "value": "before"
+      },
+      "after": {
+        "value": "before"
+      },
+      "writeRejected": true
+    },
+    "committed": {
+      "row": {
+        "id": 1,
+        "value": "after"
+      },
+      "committed": 1
+    },
+    "ownedFailure": "Error: unable to open database file",
+    "refusedPostgres": "ECONNREFUSED",
+    "borrowedFailure": "Error: intentional initialization failure",
+    "borrowedStillOpen": {
+      "value": 1
+    }
+  },
+  "nativeMixed": {
+    "main": [
+      {
+        "node": "v22.23.2",
+        "totalMs": 1355.8722910000001,
+        "p50": 6.3382910000000265,
+        "p95": 7.314832999999908,
+        "max": 189.683583,
+        "simTime": 179.000001,
+        "events": 3254,
+        "awareness": 3474,
+        "heapUsed": 69306376
+      },
+      {
+        "node": "v22.23.2",
+        "totalMs": 1435.8485,
+        "p50": 6.553915999999958,
+        "p95": 9.074583999999959,
+        "max": 194.358583,
+        "simTime": 179.000001,
+        "events": 3254,
+        "awareness": 3474,
+        "heapUsed": 69408184
+      },
+      {
+        "node": "v22.23.2",
+        "totalMs": 2009.287084,
+        "p50": 6.901417000000038,
+        "p95": 29.196125000000166,
+        "max": 262.71370800000005,
+        "simTime": 179.000001,
+        "events": 3254,
+        "awareness": 3474,
+        "heapUsed": 69308040
+      }
+    ],
+    "integrated": [
+      {
+        "node": "v22.23.2",
+        "totalMs": 1411.551583,
+        "p50": 6.730291999999963,
+        "p95": 8.918457999999873,
+        "max": 143.605458,
+        "simTime": 179.000001,
+        "events": 3254,
+        "awareness": 3474,
+        "heapUsed": 80395464
+      },
+      {
+        "node": "v22.23.2",
+        "totalMs": 1376.429042,
+        "p50": 6.663583000000017,
+        "p95": 8.168000000000006,
+        "max": 144.48333299999996,
+        "simTime": 179.000001,
+        "events": 3254,
+        "awareness": 3474,
+        "heapUsed": 80415560
+      },
+      {
+        "node": "v22.23.2",
+        "totalMs": 1545.0274170000002,
+        "p50": 7.19562499999995,
+        "p95": 11.410958999999934,
+        "max": 153.65541700000006,
+        "simTime": 179.000001,
+        "events": 3254,
+        "awareness": 3474,
+        "heapUsed": 79797296
+      }
+    ]
+  },
+  "postgres": {
+    "completedPhases": 0,
+    "error": "Disposable database creation failed, SQLSTATE 53100 (disk full)"
+  },
+  "browser": {
+    "status": "blocked",
+    "detail": "Disposable world remained at Sign in to enter your world in IAB; Chrome automation could not attach. Action UI interaction is unverified."
+  },
+  "grounding": {
+    "scenario": "Injected classification selects inherited handle beyond old first-48 cap",
+    "paidCalls": 0,
+    "offered": 64,
+    "chosen": "candidate-59",
+    "fulfillment": "exact"
+  },
+  "groundingAndScheduling": {
+    "scenario": "Native action and scheduling reconciliation walkthrough; injected classification",
+    "paidCalls": 0,
+    "exactAuthored": {
+      "judgeCalls": 0,
+      "binding": "candidate-59",
+      "outcome": {
+        "ok": true,
+        "code": "responded",
+        "message": "Response completed."
+      },
+      "planSteps": 1
+    },
+    "catalogue": {
+      "offered": 64,
+      "chosen": "candidate-59"
+    },
+    "pendingSlots": {
+      "stored": 3,
+      "newProposals": 2,
+      "judgeCalls": 1
+    },
+    "schedule": {
+      "eligibleAfter70Ineligible": ["walkthrough-69"]
+    }
+  },
+  "speechRestriction": {
+    "scenario": "Speech-only restriction does not cancel player native action",
+    "paidCalls": 0,
+    "activated": true,
+    "speechBlocked": true,
+    "actionsBlocked": false,
+    "submitted": {
+      "ok": true,
+      "code": "queued",
+      "message": "Resolving your action.",
+      "jobId": "human:f75a23db5bc67041b89a15e3238b866c8e93ad6f73d1bbedc9177c2f4d019866"
+    },
+    "job": {
+      "status": "completed",
+      "message": "Native work queued; it has not completed."
+    },
+    "position": {
+      "x": 11.5,
+      "y": 0,
+      "z": 13
+    },
+    "validation": "passed"
+  }
+}

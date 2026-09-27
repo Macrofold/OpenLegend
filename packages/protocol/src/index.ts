@@ -15,6 +15,9 @@ export interface CommandInput {
     | 'merge-item'
     | 'unequip'
     | 'move'
+    | 'follow'
+    | 'confirm-attempt'
+    | 'withdraw-attempt'
     | 'gather'
     | 'prepare'
     | 'craft'
@@ -41,6 +44,8 @@ export interface CommandInput {
   attributeId?: string;
   ammunitionId?: string;
   position?: SurfacePoint;
+  distance?: number;
+  attemptId?: string;
   quantity?: number;
   expectedRevision?: number;
   placementRevision?: number;
@@ -206,7 +211,7 @@ export interface AiJobView {
   queueLatencyMs?: number;
   totalLatencyMs?: number;
   id: string;
-  kind: 'chat' | 'invention' | 'thought';
+  kind: 'chat' | 'invention' | 'thought' | 'action';
   status: 'queued' | 'judging' | 'generating' | 'completed' | 'failed' | 'cancelled' | 'stale';
   message: string;
 }
@@ -289,6 +294,7 @@ export interface GameView {
     inventory: InventoryItemView[];
     inventoryRevision: number;
     canUseInventory: boolean;
+    actionAttempts: PlayerActionAttempt[];
     actions: ActionOption[];
   };
   entities: EntityView[];
@@ -668,4 +674,19 @@ export interface ContainerPage {
   breadcrumbs: Array<{ id: string; name: string; revision: number }>;
   items: InventoryItemView[];
   next?: string;
+}
+
+export interface PlayerActionAttempt {
+  mode: 'enqueue' | 'replace';
+  id: string;
+  description: string;
+  status: 'needs-interpretation' | 'awaiting-confirmation';
+  fulfillment?: {
+    requested: string;
+    executableDescription: string;
+    verdict: 'exact' | 'partial' | 'confirm';
+    supported: string[];
+    omitted: { requirement: string; reason: string }[];
+    reason: string;
+  };
 }

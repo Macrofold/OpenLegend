@@ -31,3 +31,4 @@ Lifecycle policies: [logout, protection, ghosts and lethal consequences](lifecyc
 
 - Implementation: [Feature tasks](../../maintainers/base-world.md).
 - Limits and constraints: [Bundled-world defaults inventory](../../limits/base-world.md).
+- [Navigation behavior](navigation.md) — bundled follow tuning and its current boundaries.

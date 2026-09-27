@@ -96,6 +96,7 @@ export { admitAttributeDeclaration, type AttributeDeclarationRequest } from './d
 export { editActorAttributes, type AttributeEditRequest } from './god-tools.js';
 
 export * from './agency.js';
+export * from './action-capabilities.js';
 
 export * from './invention-policy.js';
 
@@ -164,3 +165,5 @@ export * from './object-access.js';
 
 export { advanceWorldSlices } from './kernel.js';
 export { completeNavigation } from './kernel.js';
+
+export * from './action-targets.js';

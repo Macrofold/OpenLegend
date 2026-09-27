@@ -93,7 +93,7 @@ When an attempt needs new mechanics, it can become an invention request. When it
 
 This open route is available even when the immediate feasible-action shortlist is empty or was omitted as irrelevant. It is subject to normal actor capability, scope, budget and policy limits. A routing or attention model selecting existing candidates is not authorized to abolish the proposal route.
 
-The initial approach option moves once to a reachable location near a currently perceived entity, using the existing native movement command and body admission. It is available independently of hand/tool capability. Targets sharing a destination remain distinct choices. The offered description must distinguish this from continuously following a moving entity; native target tracking is a later locomotion extension.
+The initial approach option moves once to a reachable location near a currently perceived entity, using the existing native movement command and body admission. It is available independently of hand/tool capability. Targets sharing a destination remain distinct choices. The offered description must distinguish this from continuously following a moving entity; the separate native visual-follow activity now maintains proximity until cancellation, interruption or lost sight. Richer tracking senses, stealth and formation relations remain later work.
 
 An expressive fallback is not a loophole. The system must not replace an unsupported consequential action with prose that claims it happened. A nod may be a supported expression. Building a bridge cannot be rendered as a completed, effect-free “expression” when no bridge was built.
 

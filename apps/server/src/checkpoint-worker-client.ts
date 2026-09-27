@@ -49,6 +49,9 @@ export class CheckpointWorker {
       this.worker.on('error', fail);
       this.worker.on('exit', (code) => fail(new Error(`Checkpoint worker exited (${code}).`)));
     });
+    // Storage initialization can fail before GameSaves awaits this worker. Keep the
+    // original rejection observable there without an unhandled early/teardown rejection.
+    this.ready.catch(() => undefined);
   }
   async capture(request: CheckpointRequest, captured: () => void) {
     await this.ready;

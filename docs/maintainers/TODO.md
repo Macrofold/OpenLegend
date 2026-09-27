@@ -475,3 +475,23 @@ PF13 delivery and later implementation live in [the focused time tracker](simula
 - [ ] **SR29** Exercise the real host at 1x/3x/8x with moving and resting populations, CPU debt, pending/replaced/failed navigation, pause/speed/suspension, mid-action save/load and memory pressure. Count actual game time and integration intervals separately; preserve truthful durability and command responsiveness. No missing clock progress may be hidden by requested-call counters or pause-reset debt gauges.
 - [ ] **SR30** Reconcile graded speech/captions with elapsed intervals: emission before/after movement, sleep/visibility changes, stacked floors, repeated source/history reads, source revocation and restore. Preserve exact emission-state recipients and stable partial words; caption lifetime uses real time, not accelerated simulation seconds. An unchanged-exposure proof may skip only the sensing work whose dependencies it proves.
 - [ ] **SR31** Qualify sparse snapshot interpolation, full-facing sprite depth/picking, high/low camera poses and recent-past support changes at 1x/8x. Verify 20 Hz publication, if later adopted, does not cap rendering to 20 FPS or leak future NPC routes. Record real-device frames separately from server interval throughput.
+
+## Action review regression TODOs
+
+The recovered [action slice/review requirements](action-regressions.md#action-capability-slice-and-review) own native grounding, revision and continuation checks. AR tracks integration, AC owns acceptance; these are not separate backlogs.
+
+## Perception performance — deferred automated validation
+
+Use [perception regression requirements](action-regressions.md#perception-performance) for private acquisition, ownership, sensing lifecycle and reaction intake. Main's elapsed integration and current history owners supersede old fixed-step/raw-array assumptions.
+
+## Rebased action/perception regression TODOs
+
+[RPR01–RPR08](action-regressions.md#rebased-actionperception-regression-todos) preserve the recovered IDs and unmet checks.
+
+## Dense persistence regression coverage
+
+[DP-R01–DP-R10](action-regressions.md#dense-persistence-regression-coverage) own bounded history construction, worker/transaction failure, recovery and sustained qualification.
+
+## Action capability slice: deferred automated coverage
+
+[Action regressions](action-regressions.md) owns the action, approval, target-lifecycle and UI cases. This historical entry point preserves references without duplicating acceptance work.
