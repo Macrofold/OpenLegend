@@ -8,7 +8,7 @@
 
 Terraria combines side-view exploration, excavation, construction, real-time combat and equipment progression. A generated world is a place to alter, not simply a sequence of combat arenas. The player can build a home, tunnel toward a discovery, prepare a boss arena, collect decorative material or improve mobility. Those activities feed one another: a difficult place motivates a tool, the expedition supplies materials, and the improved settlement supports the next trip. It is not accurately reduced to Minecraft with one less dimension. [P1][R1]
 
-The current maintenance baseline is **1.4.5.8**. Re-Logic's **September 24, 2026** update still describes 1.4.6 and the first cross-play phase as unfinished, not universally available. It separately describes tModLoader's continuing 1.4.4 stable updates and a 1.4.5 development branch still months from the corresponding stable transition. A matching major game version is not proof that every platform can share a session. [V1]
+The current maintenance baseline is **1.4.5.8**. Re-Logic's **September 24, 2026** update still describes 1.4.6 and the first cross-play phase as unfinished, not universally available. tModLoader likewise still keeps 1.4.4 as its default stable line while 1.4.5.8 adaptation proceeds on the 1.4.5 development/beta branch; its August 31 update explicitly says the team is **not yet ready to set a date** for making 1.4.5 the default release. A matching vanilla major version is therefore not proof that the mod loader has completed its transition, and neither is it proof that every platform can already share a session. [V1][V4]
 
 **1.4.5, January 27, 2026**, added collaboration content, seed combinations and important interface changes. Crafting from nearby chests, station-filtered crafting and clearer equipment/reforge feedback matter when interpreting older criticism. An old console or 3DS review documents its own content and controls; it cannot establish what a current PC, mobile or supported console player receives. Some older exclusive content is retired rather than missing from a supposedly complete modern checklist. [V2][R2][R3][R4][R5]
 
@@ -94,7 +94,7 @@ These distinguish constructed rules-based illustrations from attributed play. No
 
 The player character and world are separate persistence units: equipment can accompany a character between compatible worlds, while terrain and settlement changes belong to a world save. Shared sessions can divide mining, construction and preparation, but an over-equipped visitor can also remove a newcomer's discovery curve. The inspected players describe returning with friends for updates and alternating vanilla/modded play. That establishes specific social routines, not a measured share of sales attributable to co-op. [P1][P2][S1]
 
-tModLoader supports a substantial modification ecosystem, but its stable release does not track every vanilla update immediately. The September developer account celebrates ten thousand Workshop mods while describing the later vanilla-version transition as unfinished. A Workshop count is not the number of independent creators, unique players or compatible mods in one save. Cross-play announcements likewise must not be confused with a currently working universal multiplayer pool. [V1]
+tModLoader supports a substantial modification ecosystem, but its default stable release does not track every vanilla update immediately. The September Terraria account celebrates ten thousand Workshop mods, while tModLoader's own August 31 update says 1.4.5.8 adaptation remains on a beta/development branch with no default-release date yet. A Workshop count is not the number of independent creators, unique players or compatible mods in one save. Cross-play announcements likewise must not be confused with a currently working universal multiplayer pool. [V1][V4]
 
 The setting supplies bosses, ruins, residents, corruption and broad mythic framing, while most moment-to-moment story comes from what a player discovered, lost or built. The Dungeon, a surprising island, the first flight and an unexpectedly dangerous excavation can become autobiographical landmarks. **Interpretation:** authored goals make discovery directional without specifying the exact house, route, equipment combination or personal project. The game need not generate new dialogue to let two people remember meaningfully different adventures.
 
@@ -148,6 +148,26 @@ All five substantive review bodies were read through their conclusions. They are
 
 ## 13. Coverage and preservation
 
+### September 26 requirements-and-corrections audit
+
+A fresh mechanics-inventory audit confirms the full requested surface and records the useful absences explicitly:
+
+- **Identity / classes / attributes / skills / leveling / trees:** Terraria has no fixed class picker or character-XP level ladder; melee/ranged/magic/summoning are equipment synergies. Permanent health/mana upgrades, equipment/accessories and world/boss progression provide growth (§§1, 3–4).
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** §§2–3 and 6 cover tools, storage, crafting stations, armor/set bonuses, accessories, reforging, combinations, potions and Shimmer transformations.
+- **Magic / spells / powers:** mana weapons and summon equipment are native magic-like capability systems; utility comes through items rather than a learned spellbook/class level table (§3).
+- **Traversal / environment / object interaction:** mining, block/wall placement/removal, liquid interaction, hooks, jumps, wings, mounts, minecarts, pylons, teleporters, wiring and Shimmer are covered in §§2–6.
+- **Activities / minigames:** fishing/Angler quests, building/decorating, wiring, collection and events diversify play (§6). They are not a separate real-money or persistent competitive minigame economy.
+- **Combat / stealth / loot / rewards:** bosses, weapons, ammunition, drops, treasure, exploration finds and world gates are covered in §§3–4. Terraria has no general-purpose stealth system analogous to a stealth RPG; invisibility-like item effects should not be inflated into one.
+- **Death / failure / recovery / economy / trading:** §1 distinguishes Classic/Mediumcore/Hardcore character-loss contracts; §5 covers coins, NPC services and reforging. World construction persists separately from character death.
+- **Story / relationships / romance / reputation / party / companions:** §5 and §8 cover authored residents and environmental/mythic framing. Native NPC friendship/romance, companion approval and freely recruitable adventuring parties are absent.
+- **NPC/AI schedules / factions:** town NPCs have roles, housing, happiness/pricing and combat behavior, but not a deep employment market or emergent faction-politics simulation (§5). Enemy/biome groupings are not automatically social factions.
+- **World map / environment / quests / events:** generated worlds, biomes, progression stages, invasions, weather/time and Angler daily quests are covered in §§2, 4 and 6. Most progression is discovery/boss/world-state driven rather than a conventional campaign quest log.
+- **Building / settlements / management:** housing, decoration, services and pylon-linked towns are major systems (§5), without NPC labor scheduling or colony production management.
+- **Multiplayer / social / endgame / return loops:** §8 covers shared worlds, character/world persistence and mods; §4 covers Moon Lord/post-completion building, collections, events, new seeds and modded replays rather than seasonal account resets.
+
+The version audit also removes an over-specific timing claim: tModLoader has **not** promised that its 1.4.5 branch will become default within a stated number of months. As of the August 31 stable update, 1.4.4 remains the default stable line, 1.4.5.8 work is active on beta/dev, and the team says it is not ready to set a release date. [V4]
+
+
 R01: §1; R02–R03: §§2–6; R04: §§1, 3–6, 10; R05: §7; R06: §§5, 8; R07: §9; R08: §§4, 8; R09: §9; R10–R11: §10; R12: §11; R13: §12; R14: here and below. Mechanics absences, source dates, old-platform limitations and future cross-play/mod work are explicit.
 
 Both earlier repository owners were read completely and remain **unchanged**. Their flooded cabin, mobility, Terraspark, novice combination, pylon disagreement, Shimmer, edited Steam accounts and collaboration passages remain in their original locations with annotations. This pass explicitly qualifies the old pylon rule rather than silently deleting it. The [2024 retrospective](https://www.youtube.com/watch?v=MUtkCXPHggI) remains an **unwatched viewing route**; no scene timestamps or new firsthand gameplay are claimed. This relevant-owner preservation check is not the separate seven-file packet-wide P01 audit.
@@ -159,6 +179,7 @@ Accessed September 26, 2026. Official-wiki content is community-maintained rules
 - **V1:** September 24 developer update read in full from the announcement archive. The archive UI is Korean but the relevant announcement body is English. Current update/mod/cross-play limits, not a claim of released 1.4.6.
 - **V2:** 1.4.5.0 patch text and history; delivered changes, not universal compatibility promises.
 - **V3:** May 16 anniversary announcement body read in the archive. The individual-post route returned only a shell. Primary reported sales and daily participation are separate measures.
+- **V4:** tModLoader September 2026 Stable Update, published August 31. Primary tModLoader status: default stable remains on Terraria 1.4.4; 1.4.5.8 adaptation is active on the 1.4.5 beta/dev branch; no date is set for making it default.
 - **M1–M22:** Version-qualified mechanics references. Exact optimal builds, drop tables and every conversion are deliberately not reproduced. Teleporter and Shimmer restrictions matter as much as their useful effects.
 - **A1:** Official soundtrack credits; identifies the composer without claiming a listening study.
 - **D1–D2:** Primary creator interviews, with historical intent and the displayed-date/URL mismatch retained.
@@ -169,6 +190,7 @@ Accessed September 26, 2026. Official-wiki content is community-maintained rules
 [V1]: https://steamcommunity.com/app/105600/announcements/?l=koreana
 [V2]: https://terraria.wiki.gg/wiki/1.4.5.0
 [V3]: https://steamcommunity.com/app/105600/announcements/
+[V4]: https://steamcommunity.com/app/1281930
 [M1]: https://terraria.wiki.gg/wiki/Difficulty
 [M2]: https://terraria.wiki.gg/wiki/Guide:Getting_started
 [M3]: https://terraria.wiki.gg/wiki/Ore
