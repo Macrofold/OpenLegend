@@ -8,7 +8,7 @@ This library now contains the five parallel research branches below, merged with
 
 | Source branch | Merged source head | Range status and detailed owner |
 | --- | --- | --- |
-| `docs/game-inspiration-library` | `8f714940f43f` | [G01–G40 initial passes retained; G01–G25 audit continues and G26–G39 audit is recorded below. G40 also has the independent G40–G60 study.](#requirements-and-corrections-audit--g01-through-g25) |
+| `docs/game-inspiration-library` | `8f714940f43f` | [G01–G40 initial passes retained; requirements-and-corrections audits are complete for G01–G39. G40 is excluded from these two audit passes and also has the independent G40–G60 study.](#requirements-and-corrections-audit--g01-through-g25) |
 | `docs/game-inspiration-games-40-60` | `92cd9fc595b1` | [G40–G60 remediation remains open. The source ledger trails its latest G52–G54 research commits; see the integration note in this range.](#g40g60-branch-research-state) |
 | `docs/game-inspiration-games-61-80` | `8a0b8fa23f45` | [G61–G80 follow-up audit remains active; the range table owns completed and pending subjects.](#g61g80-branch-research-state) |
 | `docs/game-inspiration-games-81-100` | `203b409d9fe8` | [Identified G81–G100 audit repairs complete, with retained evidence limits.](#g81g100-branch-research-state) |
@@ -25,9 +25,9 @@ Integration review verified exact preservation in 221 file/source comparisons, b
 
 This first resume block records the library branch’s G01–G40 work. The integrated range table above supersedes old cross-range pending claims.
 
-**Completed: requirements-and-corrections audit of G26–G39.** Mike requested checking every applicable research dimension, correcting errors and finishing missing research in this batch. **G40 AI Dungeon is explicitly excluded from this audit at Mike's request because it was handled on another branch.** Its existing dossier and historical completion record below are preserved; this audit does not re-certify or overwrite that work. Baseline for this audit: `e01d800a839e6bbbbc8ff0ed13eb45b0a3a3d01c`.
+**Completed: requirements-and-corrections audits of G01–G39.** Mike first requested the G26–G39 audit, then extended the same standard to G01–G25. **G40 AI Dungeon is explicitly excluded from these audit passes at Mike's request because it was handled on another branch.** Its existing dossier and historical completion records below are preserved; these audits do not re-certify or overwrite that work. G26–G39 audit baseline: `e01d800a839e6bbbbc8ff0ed13eb45b0a3a3d01c`; G01–G25 audit began September 27, 2026.
 
-Initial full passes are recorded for G01–G40, but that is not evidence that the newly requested audit has passed. Check actual content against R01–R14 and the explicit mechanics inventory, not just headings or prior completion labels. For each subject, reread its dossier and earlier owners, investigate material factual/version disagreements, repair missing coverage and evidence, review changes and commit before advancing. Keep genuinely inaccessible evidence distinct from unfinished research. Current audit state: **G26–G39 audited; G40 skipped by instruction.** No G41+ work or global P01–P05 completion is claimed.
+Initial full passes are recorded for G01–G40, and fresh requirements-and-corrections audit sections now re-certify **G01–G39** against R01–R14 plus the explicit mechanics inventory. Keep genuinely inaccessible evidence distinct from unfinished research. Current library-branch audit state: **G01–G39 audited; G40 skipped by instruction.** This statement does not override the independently imported G40+ range states above/below, and global P01–P05 completion is not claimed.
 
 The preceding continuation through G40 produced full dossiers, requirement maps, worked situations, annotated sources and explicit evidence-access limitations. Its earlier statement that the requested continuation was complete referred to those initial passes, not this subsequent audit. Mike confirmed `docs/game-inspiration-library` after the originally named `docs/game-inspiration-games` ref could not be resolved. No replacement branch was created. G26's unsuccessful Steam helpful-review retrieval and later per-game access limits remain recorded rather than falsely counted as completed sampling.
 
@@ -35,7 +35,7 @@ RuneScape and Old School RuneScape are independent subjects G48/G49; their impor
 
 ## Requirements-and-corrections audit — G01 through G25
 
-**Active.** Fresh audit begun September 27, 2026 using the same standard applied to G26–G39: actual dossier review against R01–R14 and the explicit mechanics inventory, current/version verification where material, preservation of earlier owners/evidence limits, and a per-game commit before advancing.
+**Completed.** Fresh audit performed September 27, 2026 using the same standard applied to G26–G39: actual dossier review against R01–R14 and the explicit mechanics inventory, current/version verification where material, preservation of earlier owners/evidence limits, and a per-game commit before advancing.
 
 | Subject | Audit status | Audit commit / correction boundary |
 | --- | --- | --- |
@@ -63,7 +63,7 @@ RuneScape and Old School RuneScape are independent subjects G48/G49; their impor
 | G22 — Hades I | **Audited** | `7bba29b816a515af52a0e6569ba4427d49967b64` — explicit mechanics-inventory closure; rechecked current PC/console availability and preserved the retired Netflix iOS route as historical only. |
 | G23 — Dwarf Fortress | **Audited** | `489b63f08f50524084d47a9de56623b9e735a35d` — explicit mechanics-inventory closure; rechecked 53.16 as current and kept procedural magic in development rather than shipped. |
 | G24 — The Sims | **Audited** | `1fd482920a3b55a3a7ddc31566e37f1d1cb7d758` — explicit mechanics-inventory closure; rechecked Sept 22 Sims 4 autonomy/QoL build numbers and kept Marketplace/Gallery and franchise-edition boundaries separate. |
-| G25 — Wildermyth | **In progress** | Recheck current hibernation/Omenroad/platform boundaries and full mechanics inventory. |
+| G25 — Wildermyth | **Audited** | `6fc5f7790273dfea3b082c9a5873baf2528c0b5c` — explicit mechanics-inventory closure; rechecked active-development hibernation against continuing support, latest visible PC patch 1.16+562, and separate PC versus console co-op/DLC boundaries. |
 
 ## Requirements-and-corrections audit — G26 through G40
 
