@@ -477,14 +477,14 @@ Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4
 
 ## Survival expansion — G131–G148
 
-**Initial research: 2 / 18 complete; G133 ARK: Survival Evolved in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
+**Initial research: 3 / 18 complete; G134 ARK: Survival Ascended in progress.** These are approved additions to the research assignment, not completed dossiers. Exact filenames and scope boundaries live in the [canonical roster](research-roster.md#september-27-survival-game-expansion-scope). The existing G121–G130 audit remains separate; no new research is claimed by this integration.
 
 | ID | Subject | Initial research | Follow-up audit |
 | --- | --- | --- | --- |
 | G131 | Rust | **Complete** — [dossier](dossiers/rust.md); full R01–R14 pass, ten worked interactions, five independent written reviews, current Steam sampling and 2026 live-service boundaries | Not started |
 | G132 | DayZ | **Complete** — [dossier](dossiers/dayz.md); stable 1.29/Experimental 1.30 boundaries, full bodily survival/condition/persistence pass, ten worked interactions, five independent reviews plus current Steam evidence | Not started |
-| G133 | ARK: Survival Evolved | **In progress** — original-release taming/breeding/tribes/building/technology/bosses/expansions and official-service-history pass underway | Not started |
-| G134 | ARK: Survival Ascended | Pending | Not started |
+| G133 | ARK: Survival Evolved | **Complete** — [dossier](dossiers/ark-survival-evolved.md); full original-release mechanics/progression/tribe pass plus 2023 official-network closure, 2025 Aquatica boundary, twelve worked cases and six independent reviews | Not started |
+| G134 | ARK: Survival Ascended | **In progress** — independent reimagined-release/current delivered-map/building/automation/mod-platform/paid-content and current-service pass underway | Not started |
 | G135 | 7 Days to Die | Pending | Not started |
 | G136 | Conan Exiles | Pending | Not started |
 | G137 | The Forest | Pending | Not started |
