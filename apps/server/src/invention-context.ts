@@ -24,6 +24,7 @@ export function inventionMaterials(observed: ActorObservation) {
       ...(definition.nutrition !== undefined ? { nutrition: definition.nutrition } : {}),
       ...(definition.cooked !== undefined ? { cooked: definition.cooked } : {}),
       ...(definition.launcher ? { launcher: definition.launcher } : {}),
+      ...(definition.melee ? { melee: definition.melee } : {}),
       ...(definition.ammunition ? { ammunition: definition.ammunition } : {}),
       ...(definition.gatheringTool ? { gatheringTool: definition.gatheringTool } : {}),
     }));

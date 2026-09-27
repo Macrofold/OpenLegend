@@ -35,9 +35,9 @@ import { timedSync } from './performance.js';
 import { Narrator } from './narrator.js';
 import { ActorWork } from './actor-work.js';
 import { entityVisionQuery, visionRadius } from '@open-legend/domain';
-import { decisionQuestions, JEV_QUESTIONS_VERSION } from './jev-questions.js';
+import { decisionQuestions, JEV_QUESTIONS_VERSION, JEV_ACTION_THRESHOLD } from './jev-questions.js';
 import { retrieveActions } from './action-retrieval.js';
-import { interestMatches, type InterestSubscription } from './interests.js';
+import { interestMatches, relevantPossessions, type InterestSubscription } from './interests.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
 import {
@@ -298,7 +298,7 @@ export class AiDirector {
         const config = this.service.config;
         if (
           !exactNavigation(text, this.service.world, actorId, targetId) &&
-          (!config.budgetUsd || (!config.macrofoldKey && (!config.jevKey || !config.llmKey)))
+          (!config.budgetUsd || (!config.macrofoldKey && !config.jevKey))
         )
           return {
             ok: false,
@@ -817,7 +817,7 @@ export class AiDirector {
         continuation?.action !== 'reuse' &&
         invention?.candidate === undefined &&
         !this.service.config.macrofoldKey &&
-        ((!this.service.config.jevKey && mode !== 'workshop') || !this.service.config.llmKey)
+        (mode === 'workshop' ? !this.service.config.llmKey : !this.service.config.jevKey)
       )
         return {
           ok: false,
@@ -1280,11 +1280,72 @@ export class AiDirector {
     return result.value;
   }
 
+  private selectKnownAction(
+    prepared: Awaited<ReturnType<typeof prepareDecision>>,
+    answers: Record<string, JudgmentAnswer>,
+  ): ActorResponse | null {
+    // Noul rates each action independently. Many viable alternatives cannot dilute
+    // a good choice below a multiclass majority threshold; no adequate option defers.
+    const selected = prepared.offered
+      .map((option) => ({ option, answer: answers[option.id] }))
+      .filter(
+        (
+          entry,
+        ): entry is {
+          option: (typeof prepared.offered)[number];
+          answer: Extract<JudgmentAnswer, { type: 'noul' }>;
+        } => entry.answer?.type === 'noul' && entry.answer.noul >= JEV_ACTION_THRESHOLD,
+      )
+      .sort((a, b) => b.answer.noul - a.answer.noul)[0]?.option.id;
+    if (!selected) return null;
+    if (prepared.binding.actions[selected] === null) return { operations: [] };
+    const steps = prepared.knownPlans[selected];
+    if (steps)
+      return {
+        operations: [
+          {
+            note: null,
+            name: null,
+            localId: 'sequence',
+            requiresAccepted: [],
+            talk: null,
+            think: null,
+            goal: null,
+            act: null,
+            plan: {
+              mode: 'enqueue',
+              expectedRevision: prepared.expectedPlanRevision,
+              goalId: null,
+              steps: steps.map((actionId) => ({ actionId, itemFromStep: null, useItemAs: null })),
+            },
+          },
+        ],
+      };
+    return actionResponse({
+      kind: 'known',
+      mode: 'enqueue',
+      actionId: selected,
+      verb: null,
+      targetEntityId: null,
+      description: null,
+    });
+  }
+
   private async generate<T>(
     run: Running,
     request: Omit<GenerateRequest, 'requestId' | 'signal'>,
     operation = 'generate',
   ): Promise<T> {
+    if (
+      this.service.config.jevOnly ||
+      (this.executionSource === 'live-model' &&
+        !this.service.config.macrofoldKey &&
+        !this.service.config.llmKey)
+    )
+      throw new StopJob(
+        'failed',
+        'Generation is unavailable; Jev decisions and native actions remain available.',
+      );
     if (
       request.execution === 'full' &&
       this.executionSource === 'live-model' &&
@@ -1495,7 +1556,9 @@ export class AiDirector {
       speech,
       attempt,
       triggerEvidenceId,
-      (request, operation) => this.generate<unknown>(run, request, operation),
+      this.service.config.jevOnly
+        ? undefined
+        : (request, operation) => this.generate<unknown>(run, request, operation),
     );
     this.current(run);
     await this.log.record(
@@ -1523,7 +1586,15 @@ export class AiDirector {
     };
     if (await retryForUrgentAwareness()) return;
     const policy = this.service.world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
-    const questions = decisionQuestions(addressedSpeech, policy.maxImmediateLevel, speechTrigger);
+    const generationAvailable =
+      !this.service.config.jevOnly &&
+      !!(this.service.config.macrofoldKey || this.service.config.llmKey);
+    const questions = decisionQuestions(
+      addressedSpeech,
+      policy.maxImmediateLevel,
+      speechTrigger,
+      generationAvailable,
+    );
     const routeQuestion = questions['route'];
     if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
     const criteria = routeQuestion.criteria;
@@ -1552,9 +1623,9 @@ export class AiDirector {
         : null;
     // Uncertain escalation must not silence an addressed ordinary reply.
     const route =
-      addressedSpeech && selectedRoute === 'native'
+      generationAvailable && addressedSpeech && selectedRoute === 'native'
         ? 'level2'
-        : (selectedRoute ?? (addressedSpeech ? 'level2' : null));
+        : (selectedRoute ?? (generationAvailable && addressedSpeech ? 'level2' : null));
     const actionGate = judged.answers['possibleAction'];
     const shouldOfferActions =
       !speechTrigger ||
@@ -1575,7 +1646,7 @@ export class AiDirector {
           checkActionSelection: true,
           reason: 'non-speech semantic decision',
         };
-    if (policy.reflection && choice(judged.answers['reflection']) === 'yes')
+    if (generationAvailable && policy.reflection && choice(judged.answers['reflection']) === 'yes')
       await this.maintenance.enqueue(actorId, run.job.id, stimulus);
     await this.log.record(
       `${run.job.id}:attempt:${attempt}:routing`,
@@ -1608,6 +1679,7 @@ export class AiDirector {
       );
       return;
     }
+    let actionAnswers: Record<string, JudgmentAnswer> = {};
     if (semanticTrigger.checkActionSelection) {
       const actionsStartedAt = new Date().toISOString();
       prepared = refreshDecisionActions(this.service, prepared);
@@ -1642,7 +1714,9 @@ export class AiDirector {
                   signal: run.controller.signal,
                 }),
             ),
+          route === 'level1' ? 'choose-action' : 'actions',
         );
+        actionAnswers = withActions.diagnostics.actionSelection.answers;
       } catch (error) {
         if (run.controller.signal.aborted || run.cancelReason || run.supersession) throw error;
         withActions = fallbackDecisionActions(
@@ -1671,7 +1745,10 @@ export class AiDirector {
     const level = route === 'level4' ? 4 : route === 'level3' ? 3 : 2;
     const limits = LEVEL_LIMITS[level];
     const c = this.service.config;
-    const actorInvention = await prepareActorInvention(this.service, actorId);
+    const actorInvention =
+      route === 'level1'
+        ? { enabled: false, policyRevision: 0, schema: z.null(), instructions: '', context: '' }
+        : await prepareActorInvention(this.service, actorId);
     const baseSchema = boundResponseSchema(
       Object.keys(prepared.entityReferences),
       Object.keys(prepared.binding.actions),
@@ -1690,31 +1767,44 @@ export class AiDirector {
     if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
       throw new ContextBudgetError();
     await prepared.validateConversation();
-    const value = await this.generate<unknown>(
-      run,
-      {
-        task: 'npc_response',
-        actorScope: actorId,
-        execution: level === 2 ? 'fast' : 'complex',
-        model: c.macrofoldKey
-          ? level === 2
-            ? c.macrofoldMiniModel
-            : c.macrofoldComplexModel
-          : level === 2
-            ? c.miniModel
-            : c.complexModel,
-        reasoningEffort: limits.effort,
-        maxOutputTokens: actorInvention.enabled
-          ? Math.max(1800, limits.outputTokens)
-          : limits.outputTokens,
-        instructions,
-        context,
-        schema: z.toJSONSchema(schema, { target: 'draft-7' }),
-      },
-      `attempt:${attempt}:generate`,
-    );
+    const value =
+      route === 'level1'
+        ? this.selectKnownAction(prepared, actionAnswers)
+        : await this.generate<unknown>(
+            run,
+            {
+              task: 'npc_response',
+              actorScope: actorId,
+              execution: level === 2 ? 'fast' : 'complex',
+              model: c.macrofoldKey
+                ? level === 2
+                  ? c.macrofoldMiniModel
+                  : c.macrofoldComplexModel
+                : level === 2
+                  ? c.miniModel
+                  : c.complexModel,
+              reasoningEffort: limits.effort,
+              maxOutputTokens: actorInvention.enabled
+                ? Math.max(1800, limits.outputTokens)
+                : limits.outputTokens,
+              instructions,
+              context,
+              schema: z.toJSONSchema(schema, { target: 'draft-7' }),
+            },
+            `attempt:${attempt}:generate`,
+          );
     this.current(run);
     if (await retryForUrgentAwareness()) return;
+    if (route === 'level1' && value === null) {
+      run.responseWatch = undefined;
+      await this.update(
+        run,
+        'completed',
+        'Jev deferred the action choice; no automatic escalation.',
+        { disposition: 'deferred' },
+      );
+      return;
+    }
     const reply = await this.log.run(
       'Response parsing',
       { schema: 'actor-response', value },
@@ -1961,16 +2051,16 @@ export class AiDirector {
   /** Meaningful changes are coalesced; native steps never purchase inference. */
   async considerThought(): Promise<void> {
     return this.admission(async () => {
+      if (!this.service.config.macrofoldKey && !this.service.config.jevKey) return;
       if (
-        !this.service.config.macrofoldKey &&
-        (!this.service.config.jevKey || !this.service.config.llmKey)
+        !this.service.config.jevOnly &&
+        (this.service.config.macrofoldKey || this.service.config.llmKey)
       )
-        return;
-      void this.maintenance.tick(!!this.running).catch(() => {
-        this.service.storageError =
-          'Cognition maintenance scheduling failed; simulation paused. Restart and reconcile storage.';
-        this.service.notify();
-      });
+        void this.maintenance.tick(!!this.running).catch(() => {
+          this.service.storageError =
+            'Cognition maintenance scheduling failed; simulation paused. Restart and reconcile storage.';
+          this.service.notify();
+        });
       if (this.running || this.stopped || this.service.paused) return;
       const world = this.service.world;
       const policy = world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY;
@@ -1994,7 +2084,8 @@ export class AiDirector {
               currentGoal(actor),
               actor.agency.plan?.revision,
               nativeProtectionReason(world, id),
-              nativeNeedBelow(actor, 'fullness', 20),
+              actor.conditions,
+              entity.inventoryRevision,
               nativeNeedBelow(actor, 'energy', 15),
               nativeNeedBelow(actor, 'energy', 10),
               capabilityBlocked(world, entity, 'actions'),
@@ -2017,7 +2108,6 @@ export class AiDirector {
               world.experience?.summaries[id],
               world.innerWorlds?.[id],
               world.cognitionPolicy,
-              this.service.telemetryRevision,
             ];
           },
           this.service.generation,
@@ -2069,6 +2159,14 @@ export class AiDirector {
             const handledByChat =
               speechJob?.status === 'completed' &&
               (speechJob.request.npcId ?? this.service.defaultResidentEntityId) === entity.id;
+            // Retain history but retract an obsolete bodily urgency before buying cognition.
+            const attributeId = event?.type === 'body-condition' && event.data?.['attributeId'];
+            if (
+              typeof attributeId === 'string' &&
+              typeof event?.data?.['severity'] === 'number' &&
+              (actor.conditions?.[attributeId]?.severity ?? 0) < event.data['severity']
+            )
+              return false;
             const ownResponse =
               event?.actorId === entity.id && typeof event.data?.['responseId'] === 'string';
             return (
@@ -2116,11 +2214,8 @@ export class AiDirector {
           // docs/architecture.md#change-driven-exposure-and-reaction-intake
           goal: currentGoal(actor),
           techniques: (world.knowledge[entity.id] ?? []).map((record) => record.recipeId),
-          need: nativeNeedBelow(actor, 'fullness', 20)
-            ? 'hungry'
-            : nativeNeedBelow(actor, 'energy', 15)
-              ? 'exhausted'
-              : 'stable',
+          possessions: relevantPossessions(world, entity.id, subscription),
+          need: nativeNeedBelow(actor, 'energy', 15) ? 'exhausted' : 'stable',
           concerns: projectAttributes(world, entity, 'owner')
             .filter((v) => v.concern && Object.hasOwn(actor.attributes ?? {}, v.id))
             .map((v) => [v.id, v.concern]),
@@ -2145,7 +2240,9 @@ export class AiDirector {
           ...projectAttributes(world, entity, 'owner')
             .filter((v) => Object.hasOwn(actor.attributes ?? {}, v.id))
             .flatMap((v) => (v.concern ? [v.concern] : [])),
-          ...(nativeNeedBelow(actor, 'fullness', 20) ? ['I am critically hungry.'] : []),
+          ...projectAttributes(world, entity, 'owner').flatMap((v) =>
+            v.condition ? [`${v.name}: ${v.condition}.`] : [],
+          ),
           ...(nativeNeedBelow(actor, 'energy', 15) ? ['I am exhausted.'] : []),
         ].join(' ');
         const urgentNeed = nativeProtection;

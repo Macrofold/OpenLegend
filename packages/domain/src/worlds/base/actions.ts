@@ -6,7 +6,6 @@ import { PERCEPTION_RULES } from './senses.js';
 export const BASE_GATHER_QUANTITY = 2;
 export const BASE_ACTION_DEFAULTS = {
   movementTilesPerSecond: 0.11,
-  foodSearchFullness: 42,
   sightRadius: PERCEPTION_RULES.sightRadius,
   interactionRadius: 1.6,
   animalFleeTilesPerSecond: 0.055,

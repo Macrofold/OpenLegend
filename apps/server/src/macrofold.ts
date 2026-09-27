@@ -552,6 +552,17 @@ export class MacrofoldBackend implements AiClient {
       revision: string;
     }>
   > {
+    if (this.service.config.jevOnly)
+      return {
+        outcome: 'unavailable',
+        reason: 'Reflection is disabled in Jev-only mode.',
+        receipt: this.receipt(
+          request.requestId,
+          'macrofold',
+          this.service.config.macrofoldModel,
+          request.context,
+        ),
+      };
     const actorId = request.actorScope!;
     const receipt = this.receipt(
       request.requestId,
@@ -621,6 +632,17 @@ export class MacrofoldBackend implements AiClient {
     }
   }
   async generate<T = JsonValue>(request: GenerateRequest): Promise<AiResult<T>> {
+    if (this.service.config.jevOnly)
+      return {
+        outcome: 'unavailable',
+        reason: 'Generation is disabled in Jev-only mode.',
+        receipt: this.receipt(
+          request.requestId,
+          'macrofold',
+          this.service.config.macrofoldModel,
+          request.context,
+        ),
+      };
     const receipt = this.receipt(
       request.requestId,
       'macrofold',
@@ -944,6 +966,12 @@ export class MacrofoldBackend implements AiClient {
     authority = this.service.localScope,
     worldAgent?: WorldAgentTurn,
   ): Promise<{ ok: boolean; code: string; message: string; jobId?: string }> {
+    if (this.service.config.jevOnly)
+      return {
+        ok: false,
+        code: 'generation-disabled',
+        message: 'Conversation generation is disabled in Jev-only mode.',
+      };
     this.service.assertScope(authority, 'play', true);
     const owner = {
       world: authority.worldId,

@@ -8,6 +8,10 @@ Historical migration/recovery observations below describe the pinned implementat
 
 Current 3× scene investigation: [measured improvements, lifecycle checks and unresolved acceptance](verification/three-times-scene-performance.md). Severe host contention invalidated the final capacity comparison; this is not a zero-stutter or full-release acceptance claim.
 
+## Embodied survival
+
+[Native, PostgreSQL, inventory stress and real Jev evidence](verification/embodied-survival.md) distinguish delivered mechanics from incomplete acceptance. The final lean-camp Jev run deferred through starvation; carried-food and berry comparisons executed successfully. No generation was dispatched. The autonomous attack/retry and browser visual checks remain open.
+
 ## PostgreSQL-only storage and shared preparation
 
 September 27, 2026, local macOS arm64, Node 22.23.2, PostgreSQL 14.17 / pgvector 0.8.6. All databases were newly created disposable fixtures. No provider requests or spending. [Raw matched samples](verification/postgresql-cognition-preparation.json) compare `059c6360` cognition owners with the current preparation path on the same seed, fixture transports and conversation workloads. This qualifies [DF03](maintainers/production-data.md#df03--postgresql-only-runtime) and [PF14](maintainers/performance.md#pf14--shared-cognition-preparation-and-complete-path-cost) locally; it does not establish model quality or hosted/population capacity.

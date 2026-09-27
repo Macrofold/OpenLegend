@@ -29,9 +29,11 @@ export interface CommandInput {
     | 'eat'
     | 'replenish'
     | 'status-effect'
+    | 'inspect-inventory'
     | 'cancel'
     | 'recover'
     | 'teach';
+  after?: string;
   conversationId?: string;
   text?: string;
   generation?: number;
@@ -109,7 +111,9 @@ export type PlayerPreferencePatch = Partial<PlayerProfile['preferences']>;
 
 export interface ActionAnimation {
   id: string;
-  kind: 'punch';
+  kind: 'punch' | 'melee';
+  phase?: 'windup' | 'recovery';
+  tool?: string;
   progress: number;
   direction: { x: number; z: number };
 }
@@ -616,6 +620,8 @@ export interface AttributeView {
   min?: number;
   max?: number;
   unit?: string;
+  meaning?: string;
+  condition?: string;
   concern?: string;
   critical?: boolean;
   revision: number;

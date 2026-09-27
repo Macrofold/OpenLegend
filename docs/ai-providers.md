@@ -4,6 +4,14 @@
 
 The game server owns routing, fresh context assembly, audience restrictions, request deduplication, durable reservations, cancellation, model eligibility, and validating proposals before world changes. A valid JSON result establishes its shape, not its truth, safety, or applicability to the current world. Native known actions need neither method. Jev can select among supplied routes or rate supplied evidence; conversation, thoughts, and novel declaration drafts require the generator. The server also implements a Macrofold backend; a configured `MACROFOLD_API_KEY` selects it ahead of direct providers. The direct client described below remains a separate adapter. Current live full deliberation requires Macrofold and fails explicitly without it.
 
+## Jev-only execution
+
+`AI_JEV_ONLY=true` permits known action selection while disabling generative replies, reflection, narration generation, conversation-summary generation and paid embeddings. Guards reject generation before provider dispatch; no automatic generative fallback repairs uncertainty. Direct Jev credentials or the configured Macrofold connection suffice. Existing native plan continuation remains zero-call.
+
+The current `cognition-questions-v9` level-1 path routes first, then batches independent Noul judgments over permitted known actions. It selects the highest score at or above **0.7**, preserving deliberate continue and explicit deferral separately. An exact offered equipment prerequisite can become an ordinary two-step plan; unrelated ratings never compose actions. Novel goal text, speech and proposals still need generation when enabled. [The runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md#24-level-1-selection-without-generative-escalation) owns admission; [CG05](limits/cognition.md#cg05) records the provisional threshold.
+
+[Live trials](verification/embodied-survival.md) selected eating and gathering but did not establish spontaneous hunting. This is a capability/quality gap, not permission to seed a hunting goal or enable generation.
+
 ## Current Macrofold routes
 
 Macrofold uses `POST /v1/inferences` with only `model_binding`, native provider `input`, and `limits`. Jev input is `{state, questions}` with independent named choice/score questions; it is never encoded as a Cartesian product of choices. Default synchronous 200 and asynchronous/replayed 202 share durable run handling. Answers come from `result.inference.value.answers`. Generative input uses native messages and strict JSON Schema. BYOK puts `provider_connection_id` inside `model_binding`; local Jev and generation use the configured saved OpenRouter connection, with no managed fallback.

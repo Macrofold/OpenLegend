@@ -125,7 +125,7 @@ export function readableDecisionContext(
     `## Current time\n${context['now']}`,
     `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
     `## Nearby actors and objects\n${list(context['surroundings'])}${Array.isArray(context['contacts']) && context['contacts'].length ? `\nContact evidence:\n${list(context['contacts'])}` : ''}`,
-    `## Inventory\n${list(context['possessions'])}`,
+    `## Inventory\n${list(context['possessions'])}${context['inventoryCoverage'] ? `\nPartial inventory preparation: ${JSON.stringify(context['inventoryCoverage'])}. Only this page and bound tools were considered. Other possessions may be useful; explicitly inspect another page when needed. Omission is not absence.` : ''}`,
     `## General knowledge notepad\n${JSON.stringify(context['notepad'] ?? {})}`,
     `## Knowledge\n${list(context['knowledge'])}`,
   ];

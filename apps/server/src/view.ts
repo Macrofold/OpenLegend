@@ -7,7 +7,7 @@ import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
 import { isConversationEvent } from '@open-legend/domain';
-import { NATIVE_STRIKES, supportsManualWork } from '@open-legend/domain';
+import { availableStrikes, supportsManualWork } from '@open-legend/domain';
 import { actionAnimation } from './action-animation.js';
 import {
   knownRecipeAttribution,
@@ -246,6 +246,8 @@ export async function projectView(
           active,
           paused,
           launcher,
+          actor.equippedItemId,
+          (actor.attackReadyAt ?? 0) > world.simTime,
           ammunition,
           observation.knownRecipes,
           worldPosition(player),
@@ -276,19 +278,21 @@ export async function projectView(
             );
           }
           if (entity.actor)
-            for (const definition of Object.values(NATIVE_STRIKES)) {
+            for (const definition of availableStrikes(service.world, scope.actorId)) {
               const command = {
                 type: 'strike' as const,
                 definitionId: definition.id,
+                itemId: definition.weaponItemId,
                 targetId: entity.id,
               };
+              const preview = service.previewCommand(command, scope.actorId);
               actions.push(
                 action(
                   `${definition.id}-${entity.id}`,
                   definition.label,
                   command,
-                  !!entity.actor?.alive && supportsManualWork(player) && active,
-                  'Requires an active actor with a supported biped body and a living target.',
+                  preview.ok,
+                  preview.message,
                 ),
               );
             }
@@ -550,7 +554,8 @@ export async function projectView(
     new Map<string, never>(),
   );
   const jevConfigured = service.config.macrofoldKey ? true : !!service.config.jevKey;
-  const llmConfigured = service.config.macrofoldKey ? true : !!service.config.llmKey;
+  const llmConfigured =
+    !service.config.jevOnly && !!(service.config.macrofoldKey || service.config.llmKey);
   // Job history is not a service-health probe. A later completed request
   // supersedes an older failure; cancellations do not diagnose provider health.
   const latestSettled = jobs.find((job) => job.status === 'failed' || job.status === 'completed');
@@ -558,7 +563,7 @@ export async function projectView(
   const aiMode =
     executionSource === 'test-fixture'
       ? 'fixture'
-      : jevConfigured && llmConfigured
+      : jevConfigured
         ? latestProblem
           ? 'degraded'
           : 'live'

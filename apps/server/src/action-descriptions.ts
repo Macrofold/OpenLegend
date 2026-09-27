@@ -47,6 +47,8 @@ export const ACTION_DESCRIPTIONS: Record<CommandInput['type'] | 'talk', string> 
   replenish:
     'Approach a compatible supply and transfer its finite resource into your reservoir over time. Stopping keeps only the amount already transferred.',
   'status-effect': 'Activate or end an applicable state on the selected target.',
+  'inspect-inventory':
+    'Inspect a bounded page of your own accessible possessions; further pages require another explicit request.',
   cancel: 'Stop your current movement or work. Materials already consumed are not returned.',
   recover:
     'Return to camp after collapsing, with health, fullness and energy partially restored. Your current action ends; the world continues from its current state.',
@@ -77,6 +79,10 @@ export function describeCommand(command: CommandInput, observation: ActorObserva
   const common = ACTION_DESCRIPTIONS[command.type];
   switch (command.type) {
     case 'strike': {
+      if (itemDefinition?.melee) {
+        const m = itemDefinition.melee;
+        return `${common} ${itemDefinition.name}: ${m.damage} damage, ${m.accuracy * 100}% accuracy, ${m.range} units reach, ${m.windupSeconds} game seconds wind-up and ${m.recoverySeconds} seconds recovery. Requires this exact equipped weapon; misses cause no damage.`;
+      }
       const strike = strikeDefinition(command.definitionId);
       return strike
         ? `${common} ${strike.label}: ${strike.damage} injury damage, ${strike.range} units reach, ${strike.workSeconds} game seconds of wind-up. One strike per command; no automatic repeated attacks.`

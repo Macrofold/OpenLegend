@@ -11,7 +11,7 @@ import { batchedAttentionQuestions } from './jev-questions.js';
 export function attentionRequest(
   state: Record<string, unknown>,
   entries: [string, string][],
-  purpose: 'context' | 'actions' = 'context',
+  purpose: 'context' | 'actions' | 'choose-action' = 'context',
 ) {
   const candidates: Record<string, string> = {};
   const questions: TypedQuestionMap = {};

@@ -8,6 +8,7 @@ import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
 import { nextCommitmentDeadline } from './commitments.js';
 import { nextAppraisalDeadline } from './appraisal-index.js';
+import { nextConditionReview } from './conditions.js';
 import { nextResourceReservationDeadline } from './resource-claims.js';
 import {
   addRate,
@@ -44,6 +45,7 @@ export function nativeInterval(
       actor = entity?.actor;
     if (!entity || !actor?.alive || actor.incapacitated) continue;
     const action = actor.action;
+    bound = Math.min(bound, nextConditionReview(entity) - world.simTime);
     for (const d of manifest.definitions) {
       const value = readAttribute(actor, d);
       if (typeof value !== 'number' || d.schema.kind !== 'number') continue;
@@ -83,7 +85,16 @@ export function nativeInterval(
           : d.implementation === 'native-energy-v1'
             ? BASE_TIME_POLICY.energyBoundaries
             : [];
-      for (const t of thresholds)
+      for (const t of [
+        ...thresholds,
+        ...(d.condition?.bands.flatMap((b) => [
+          b.below,
+          Math.min(
+            d.schema.kind === 'number' ? d.schema.max : Infinity,
+            b.below + d.condition!.recoveryMargin,
+          ),
+        ]) ?? []),
+      ])
         if (
           !(
             value === t &&

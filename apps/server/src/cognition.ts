@@ -170,12 +170,20 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
     case 'eat':
     case 'equip':
       return { ...base, type: input.type, itemId: input.itemId! };
+    case 'inspect-inventory':
+      return {
+        ...base,
+        type: 'inspect-inventory',
+        after: input.after,
+        expectedRevision: input.expectedRevision,
+      };
     case 'strike':
       return {
         ...base,
         type: 'strike',
         targetId: input.targetId!,
         definitionId: input.definitionId!,
+        ...(input.itemId ? { weaponItemId: input.itemId } : {}),
       };
     case 'status-effect':
       return {

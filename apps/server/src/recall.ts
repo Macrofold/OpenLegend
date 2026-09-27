@@ -259,7 +259,12 @@ export function candidateSet(
     if (memory.sourceIds && memory.sourceIds.length > 1)
       memory.text += ` (${memory.sourceIds.length} records contain this same remembered content.)`;
   const definitions = new Map(
-    observed.itemDefinitions.map((definition) => [definition.id, definition]),
+    // Observation determines which definitions are permitted. Reuse their committed
+    // immutable facts so repeated preparation can share descriptor work.
+    observed.itemDefinitions.map((definition) => [
+      definition.id,
+      world.itemDefinitions[definition.id] ?? definition,
+    ]),
   );
   const groundItems = new Map<string, typeof observed.groundItems>();
   for (const item of observed.groundItems) {
@@ -321,6 +326,27 @@ export function candidateSet(
           worldPosition(b).z - worldPosition(observed.actor).z,
         ) || a.id.localeCompare(b.id),
   );
+  // An explicitly bound tool remains necessary even when a large inventory is ranked.
+  const boundItems = new Set<string>();
+  const actor = observed.actor.actor!;
+  for (const action of [
+    actor.action,
+    ...(actor.agency.plan?.steps ?? [])
+      .filter((step) => ['queued', 'running'].includes(step.status))
+      .map((step) => step.command),
+  ]) {
+    if (!action) continue;
+    for (const field of ['itemId', 'weaponItemId', 'ammoItemId'] as const)
+      if (field in action) {
+        const value = (action as unknown as Record<string, unknown>)[field];
+        if (typeof value === 'string') boundItems.add(value);
+      }
+  }
+  if (
+    observed.inventory.filter((item) => boundItems.has(item.id)).length >
+    HARD_CONTEXT_LIMITS.possessions
+  )
+    throw new Error('Required possession references exceed the decision allowance.');
   const hardIds = new Set([
     ...nearest
       .filter((e) => e.actor)
@@ -333,8 +359,10 @@ export function candidateSet(
     ...[...observed.inventory]
       .sort(
         (a, b) =>
+          Number(boundItems.has(b.id)) - Number(boundItems.has(a.id)) ||
           Number(b.id === observed.actor.actor!.equippedItemId) -
-            Number(a.id === observed.actor.actor!.equippedItemId) || a.id.localeCompare(b.id),
+            Number(a.id === observed.actor.actor!.equippedItemId) ||
+          a.id.localeCompare(b.id),
       )
       .slice(0, HARD_CONTEXT_LIMITS.possessions)
       .map((i) => `item:${i.id}`),

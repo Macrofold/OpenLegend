@@ -61,6 +61,8 @@ import {
   itemsForOwner,
 } from './item-handling.js';
 import { strikeDefinition } from './strikes.js';
+import { inspectPossessions } from './inventory-inspection.js';
+import { reconcileConditions } from './conditions.js';
 import { gatheringYield } from './gathering.js';
 import { visibleFeature } from './perception-frame.js';
 import { FOLLOW_RULES, updateFollowPath, followUnavailable } from './follow.js';
@@ -264,7 +266,10 @@ function ammoFor(
 }
 function actionReach(world: WorldState, action: Action): number {
   if (action.type === 'pickup') return world.itemHandling.reach;
-  if (action.type === 'strike') return strikeDefinition(action.definitionId)?.range ?? 0;
+  if (action.type === 'strike') {
+    const definition = strikeDefinition(action.definitionId, world, action.weaponItemId);
+    return definition?.approachRange ?? definition?.range ?? 0;
+  }
   if (action.type !== 'hunt') return SIMULATION_RULES.interactionRadius;
   const range =
     world.itemDefinitions[itemFor(world, action.weaponItemId ?? '')?.definitionId ?? '']?.launcher
@@ -812,10 +817,49 @@ function executeCommandNative(
       action.destination = { ...command.destination };
       break;
     }
+    case 'inspect-inventory': {
+      try {
+        const { page, ...cursor } = inspectPossessions(
+          world,
+          actor.id,
+          command.after,
+          command.expectedRevision,
+        );
+        component.inventoryInspection = cursor;
+        emit(
+          world,
+          events,
+          'inventory-inspected',
+          `I inspect my accessible possessions: ${page.join(' ')}${cursor.more ? ' More possessions remain; I can explicitly inspect the next page.' : ' This is the last page.'}`,
+          actor,
+          undefined,
+          { semanticTrigger: true, importance: 6 },
+          'private',
+        );
+        result = outcome(true, 'inventory-inspected', 'Accessible possessions inspected.');
+      } catch (error) {
+        return reject(
+          'inspection-unavailable',
+          error instanceof Error ? error.message : 'Inspection unavailable.',
+        );
+      }
+      break;
+    }
     case 'strike': {
-      const definition = strikeDefinition(command.definitionId);
+      const definition = strikeDefinition(command.definitionId, world, command.weaponItemId);
       const target = getOwn(world.entities, command.targetId);
       if (!definition) return reject('unknown-action', 'Choose a registered strike.');
+      if ((component.attackReadyAt ?? 0) > world.simTime)
+        return reject(
+          'attack-recovery',
+          'Finish recovering from the last swing before attacking again.',
+        );
+      if (
+        command.weaponItemId &&
+        (component.equippedItemId !== command.weaponItemId ||
+          !accessiblePossession(world, actor.id, command.weaponItemId))
+      )
+        return reject('weapon-unavailable', 'Equip that exact accessible weapon first.');
       if (!target?.actor?.alive || target.id === actor.id)
         return reject('invalid-target', 'Choose another living actor.');
       if (!definition.autoMoveToRange && !canReachEntity(world, actor, target, definition.range))
@@ -824,6 +868,10 @@ function executeCommandNative(
       action.definitionId = definition.id;
       action.definitionVersion = definition.version;
       action.targetId = target.id;
+      if (command.weaponItemId) {
+        action.weaponItemId = command.weaponItemId;
+        action.strikePhase = 'windup';
+      }
       break;
     }
     case 'gather': {
@@ -871,6 +919,7 @@ function executeCommandNative(
         !accessiblePossession(world, actor.id, item.id) ||
         !(
           world.itemDefinitions[item.definitionId]?.launcher ||
+          world.itemDefinitions[item.definitionId]?.melee ||
           world.itemDefinitions[item.definitionId]?.gatheringTool
         )
       )
@@ -901,6 +950,11 @@ function executeCommandNative(
       break;
     }
     case 'hunt': {
+      if ((component.attackReadyAt ?? 0) > world.simTime)
+        return reject(
+          'attack-recovery',
+          'Finish recovering from the last swing before attacking again.',
+        );
       const target = getOwn(world.entities, command.targetId);
       if (!(target?.animal && target.actor?.alive))
         return reject('not-huntable', 'Choose a living animal.');
@@ -1217,6 +1271,7 @@ function executeCommandNative(
   }
   if (options.preview) return { world: original, events: [], outcome: result };
   world.commandReceipts[command.id] = { digest, outcome: result };
+  reconcileConditions(world, actor, events);
   return finish(world, events, result);
 }
 
@@ -1364,7 +1419,8 @@ function completeAction(
       break;
     }
     case 'strike': {
-      const definition = strikeDefinition(action.definitionId);
+      if (action.weaponItemId) break; // Impact already committed; recovery completes the attempt.
+      const definition = strikeDefinition(action.definitionId, world, action.weaponItemId);
       const target = world.entities[action.targetId ?? ''];
       // Admission is not a hit: recheck the pinned definition and live physical target.
       // docs/targeted-actions.md#targeted-strikes
@@ -1501,7 +1557,13 @@ function completeAction(
     }
   }
   finishPlanAction(world, actor.id, action.id, {
-    ...outcome(true, 'completed', `${action.type} completed.`),
+    ...outcome(
+      true,
+      action.strikeOutcome ?? 'completed',
+      action.strikeOutcome
+        ? `The strike ${action.strikeOutcome === 'hit' ? 'hit' : 'missed'}; recovery is complete.`
+        : `${action.type} completed.`,
+    ),
     ...(outputItemId ? { itemId: outputItemId } : {}),
   });
   component.action = null;
@@ -1555,6 +1617,14 @@ function advanceAction(
 ): void {
   const action = actor.actor!.action;
   if (!action) return;
+  if (action.strikePhase === 'recovery') {
+    action.remainingSeconds = Math.max(
+      0,
+      (actor.actor!.attackReadyAt ?? world.simTime) - world.simTime,
+    );
+    if (action.remainingSeconds === 0) completeAction(world, actor, action, events);
+    return;
+  }
   if (
     action.type === 'strike' &&
     actor.actor!.controller === 'player' &&
@@ -1581,9 +1651,27 @@ function advanceAction(
   }
   if (
     action.type === 'strike' &&
-    strikeDefinition(action.definitionId)?.version !== action.definitionVersion
+    strikeDefinition(action.definitionId, world, action.weaponItemId)?.version !==
+      action.definitionVersion
   ) {
     failAction(world, actor, events, 'the strike definition is unavailable or changed.');
+    return;
+  }
+  if (
+    action.weaponItemId &&
+    action.type === 'strike' &&
+    (actor.actor!.equippedItemId !== action.weaponItemId ||
+      !accessiblePossession(world, actor.id, action.weaponItemId) ||
+      capabilityBlocked(world, actor, 'actions') ||
+      !world.entities[action.targetId!]?.actor?.alive ||
+      !visible(world, actor, world.entities[action.targetId!]!))
+  ) {
+    failAction(
+      world,
+      actor,
+      events,
+      'the weapon, capability or perceived target is no longer available.',
+    );
     return;
   }
   if (action.type === 'follow') {
@@ -1771,6 +1859,56 @@ function advanceAction(
   }
   if (action.type === 'status-effect') return; // Effect conditions own completion; docs/status-effects.md#transitions.
   action.remainingSeconds = Math.max(0, action.remainingSeconds - seconds);
+  if (
+    action.remainingSeconds === 0 &&
+    action.type === 'strike' &&
+    action.weaponItemId &&
+    action.strikePhase === 'windup'
+  ) {
+    const definition = strikeDefinition(action.definitionId, world, action.weaponItemId)!;
+    const target = world.entities[action.targetId!]!;
+    const inRange = target.actor!.alive && canReachEntity(world, actor, target, definition.range);
+    const hit = inRange && nextRandom(world) < definition.accuracy!;
+    const before = target.actor!.health;
+    if (hit)
+      commitBodyEffects(
+        world,
+        target,
+        [{ targetId: target.id, kind: 'injury', amount: definition.damage }],
+        action.id,
+        events,
+      );
+    const damage = before - target.actor!.health;
+    if (target.animal && target.actor!.alive) {
+      target.animal.fleeFrom = { ...worldPosition(actor) };
+      target.animal.fleeSeconds = 110;
+    }
+    action.strikeOutcome = hit ? 'hit' : 'miss';
+    action.strikePhase = 'recovery';
+    action.totalSeconds = definition.recoverySeconds!;
+    action.remainingSeconds = definition.recoverySeconds!;
+    actor.actor!.attackReadyAt = world.simTime + definition.recoverySeconds!;
+    // The shared event owner records the world outcome and the actor's own awareness.
+    // A completed miss is evidence for another choice, never an automatic retry.
+    emit(
+      world,
+      events,
+      'struck',
+      `${actor.name} ${hit ? 'hit' : 'missed'} ${target.name} with ${world.itemDefinitions[definition.id]!.name}.${hit ? ` ${damage} damage.` : inRange ? '' : ' The target moved out of reach.'}`,
+      actor,
+      target.id,
+      {
+        definitionId: definition.id,
+        weaponItemId: action.weaponItemId,
+        actionId: action.id,
+        hit,
+        damage,
+        reason: hit ? 'hit' : inRange ? 'accuracy' : 'out-of-range',
+        semanticTrigger: true,
+      },
+    );
+    return;
+  }
   if (action.remainingSeconds === 0) completeAction(world, actor, action, events);
 }
 function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void {
@@ -1827,83 +1965,8 @@ function advanceAnimal(world: WorldState, entity: Entity, seconds: number): void
   }
 }
 
-/** Native urgency uses only carried food and currently visible resources; it is not an AI impersonation. */
-function nativeSurvival(
-  world: WorldState,
-  actor: Entity,
-  events: WorldEvent[],
-  resources: ReadonlyMap<string, readonly string[]>,
-): void {
-  const component = actor.actor!;
-  if (
-    !hasWildernessNeeds(component) ||
-    component.controller !== 'npc' ||
-    !component.alive ||
-    component.incapacitated
-  )
-    return;
-  if (component.fullness < 38) {
-    const food = inventoryFor(world, actor.id).find(
-      (item) =>
-        !!world.itemDefinitions[item.definitionId]?.nutrition &&
-        availableItemQuantity(world, item.id) > 0,
-    );
-    if (food) {
-      interruptStatusEffects(world, actor, events, 'hunger');
-      if (capabilityBlocked(world, actor, 'actions')) return;
-      const definition = world.itemDefinitions[food.definitionId]!;
-      if (!takeItem(world, actor.id, food.id)) return;
-      setWildernessNeed(component, 'fullness', component.fullness + definition.nutrition!);
-      emit(
-        world,
-        events,
-        'ate',
-        `${actor.name} ate ${definition.name.toLowerCase()} to stave off hunger.`,
-        actor,
-      );
-      return;
-    }
-  }
-  if (component.action && component.fullness > 10 && component.energy > 5) return;
-  if (component.fullness < BASE_ACTION_DEFAULTS.foodSearchFullness) {
-    const resource = (resources.get('berries') ?? [])
-      .flatMap((id) => (world.entities[id] ? [world.entities[id]!] : []))
-      .filter(
-        (entity) =>
-          entity.resource?.definitionId === 'berries' &&
-          entity.resource.quantity > 0 &&
-          visible(world, actor, entity),
-      )
-      .sort(
-        (a, b) =>
-          distance(worldPosition(actor), worldPosition(a)) -
-          distance(worldPosition(actor), worldPosition(b)),
-      )[0];
-    if (
-      resource &&
-      component.action?.type === 'gather' &&
-      world.entities[component.action.targetId ?? '']?.resource?.definitionId === 'berries'
-    )
-      return;
-    if (resource) {
-      const action = createAction(world, 'gather', resource.resource!.workSeconds);
-      action.targetId = resource.id;
-      if (!approach(world, actor, action)) {
-        interruptStatusEffects(world, actor, events, 'hunger');
-        if (
-          capabilityBlocked(world, actor, 'actions') ||
-          component.action?.type === 'status-effect'
-        )
-          return;
-        component.action = action;
-        component.planGeneration++;
-      }
-      return;
-    }
-  }
-}
+/** An installed reservoir can opt into its existing native replenishment controller. */
 
-/** A low reservoir can use finite nearby supply without model calls or a goal record. */
 function nativeReservoirResponse(world: WorldState, actor: Entity): void {
   const component = actor.actor!;
   if (component.controller !== 'npc' || component.action || !component.attributes) return;
@@ -1949,19 +2012,8 @@ function nativeParticipants(world: WorldState): {
   actors: string[];
   ambient: string[];
   statuses: string[];
-  resources: Map<string, string[]>;
 } {
   const roots = worldRootEntities(world);
-  // Supply membership follows the same command/continuation boundaries as the roster.
-  // Quantities and visibility remain live; hunger need not proxy unrelated scenery.
-  const resources = new Map<string, string[]>();
-  for (const entity of roots) {
-    const definition = entity.resource?.definitionId;
-    if (!definition) continue;
-    const ids = resources.get(definition) ?? [];
-    ids.push(entity.id);
-    resources.set(definition, ids);
-  }
   const active = roots
     .filter((e) => activelyParticipates(e) && (e.actor || e.animal || e.heat))
     .sort((a, b) => a.id.localeCompare(b.id));
@@ -1969,7 +2021,6 @@ function nativeParticipants(world: WorldState): {
     actors: active.filter((e) => e.actor).map((e) => e.id),
     ambient: active.map((e) => e.id),
     statuses: roots.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id),
-    resources,
   };
 }
 
@@ -2100,11 +2151,7 @@ function* advanceWorldNative(
       if (!actor?.actor) continue;
       let component = actor.actor;
       if (!component.alive || component.incapacitated) continue;
-      if (
-        hasWildernessNeeds(component) &&
-        (!capabilityBlocked(world, actor, 'actions') || component.fullness < 10)
-      )
-        nativeSurvival(world, actor, events, participants.resources);
+      reconcileConditions(world, actor, events);
       if (!capabilityBlocked(world, actor, 'actions')) nativeReservoirResponse(world, actor);
       const step = readyPlanStep(world, actorId);
       if (step) {
@@ -2233,17 +2280,15 @@ function* advanceWorldNative(
           (actor.action?.type === 'follow' ||
             actor.agency.plan ||
             (actor.controller === 'npc' &&
-              ((hasWildernessNeeds(actor) &&
-                actor.fullness < BASE_ACTION_DEFAULTS.foodSearchFullness) ||
-                Object.entries(actor.attributes ?? {}).some(([id, state]) => {
-                  const definition = attributeDefinition(world, id)!;
-                  return (
-                    definition.reservoir &&
-                    definition.concern &&
-                    typeof state.value === 'number' &&
-                    state.value < definition.concern.below
-                  );
-                }))))
+              Object.entries(actor.attributes ?? {}).some(([id, state]) => {
+                const definition = attributeDefinition(world, id)!;
+                return (
+                  definition.reservoir &&
+                  definition.concern &&
+                  typeof state.value === 'number' &&
+                  state.value < definition.concern.below
+                );
+              })))
         );
       });
       mechanics = {
@@ -2358,6 +2403,7 @@ function* advanceWorldNative(
         )
       )
         reconcileBody(world, actor, events, 'needs');
+      reconcileConditions(world, actor, events);
       if (!component.alive || component.incapacitated) continue;
       advanceReservoirs(world, actor, seconds, events);
       if (working.get(id) === component.action?.id) {
@@ -2649,6 +2695,20 @@ function* updateEncounters(
     );
 }
 
+/** Establish real encounter episodes before a fresh world's first decision. Otherwise
+ * an equip-then-target plan binds a null episode and becomes stale on the first tick.
+ * Startup already owns this mutation; no clock advance or recognition is fabricated. */
+export function initializePerception(world: WorldState, events: WorldEvent[]): void {
+  for (const _ of updateEncounters(
+    world,
+    snapshotEncounters(world),
+    events,
+    nativeParticipants(world).actors,
+  )) {
+    // Startup consumes the finite initial roster; ordinary ticks use bounded slices.
+  }
+}
+
 /** Private records are returned only for the supplied actor; bind this ID to authorization in the application. */
 export function queryMemories(
   world: WorldState,
@@ -2737,6 +2797,9 @@ export function observeActor(
         // Sparse state is owner-private; explicit permitted projections carry public values.
         delete copy.actor.attributes;
         delete copy.actor.contacts;
+        delete copy.actor.conditions;
+        delete copy.actor.inventoryInspection;
+        delete copy.actor.attackReadyAt;
         copy.actor.agency = seedAgency();
         delete copy.actor.initialGoals;
         delete copy.actor.personality;

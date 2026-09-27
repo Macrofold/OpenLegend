@@ -88,6 +88,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
             attempts: list('sim_intentions', 'id'),
           }),
           attributes: map('sim_actor_attributes'),
+          conditions: map('sim_actor_conditions'),
           traits: list('sim_actor_traits', 'id'),
         }),
         animal: one('sim_animal_behavior'),

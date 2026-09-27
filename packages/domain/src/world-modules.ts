@@ -11,7 +11,14 @@ import { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 export { DEFAULT_ATTRIBUTES } from './worlds/base/attributes.js';
 import { validateStatusEffects } from './status-effect-validation.js';
 import { activeStatusEffects } from './status-capabilities.js';
-import { strikeDefinition } from './strikes.js';
+import { strikeDefinition, validMelee } from './strikes.js';
+import {
+  conditionText,
+  reconcileConditions,
+  validateConditionPolicy,
+  validateConditionEpisodes,
+  type ConditionPolicy,
+} from './conditions.js';
 import { validatePerceptionState } from './perception-frame.js';
 import { DEFAULT_ACOUSTICS, validateAcoustics, type AcousticPolicy } from './acoustics.js';
 import { validateSpatialWorld } from './spatial-state.js';
@@ -33,6 +40,8 @@ export interface AttributeState {
   concernActive?: boolean;
 }
 export interface AttributeDefinition {
+  meaning?: string;
+  condition?: ConditionPolicy;
   id: string;
   version: number;
   implementation:
@@ -74,6 +83,8 @@ export interface WorldModuleManifest {
   acousticsPin: DefinitionPin;
 }
 export interface AttributeView {
+  meaning?: string;
+  condition?: string;
   id: string;
   version: number;
   name: string;
@@ -257,6 +268,8 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       'schema',
       'concern',
       'reservoir',
+      'meaning',
+      'condition',
     ]);
     if (
       !namespace.test(d.id) ||
@@ -303,6 +316,7 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       !d.schema.choices.includes(d.schema.initial)
     )
       throw new Error('Invalid categorical attribute.');
+    validateConditionPolicy(d);
     if (d.concern) {
       object(d.concern, ['below', 'text']);
       if (
@@ -440,6 +454,7 @@ export function setAttribute(
         'private',
       );
   }
+  reconcileConditions(world, entity, events);
   return true;
 }
 export function initializeAttributes(
@@ -491,6 +506,8 @@ export function projectAttributes(
               ? (entity.actor!.energyRevision ?? 0)
               : (entity.actor!.attributes?.[d.id]?.revision ?? entity.actor!.body?.revision ?? 0),
         ...(d.schema.kind === 'number' ? { min: d.schema.min, max, unit: d.schema.unit } : {}),
+        ...(audience === 'owner' && d.meaning ? { meaning: d.meaning } : {}),
+        ...(audience === 'owner' && d.condition ? { condition: conditionText(d, value) } : {}),
         ...(audience === 'owner' &&
         (entity.actor!.attributes?.[d.id]?.concernActive ??
           (threshold !== undefined && typeof value === 'number' && value < threshold))
@@ -513,7 +530,7 @@ export function bodyContext(world: WorldState, entity: Entity): string {
           : v.display === 'meter'
             ? `${name}: ${typeof v.value === 'number' ? Number(v.value.toFixed(1)) : v.value}${v.unit ? ` ${v.unit}` : ''} (range ${v.min}–${v.max}${v.unit ? ` ${v.unit}` : ''}).`
             : `${name}: ${v.value}.`;
-      return v.concern ? [measurement, v.concern] : [measurement];
+      return [measurement, v.condition ?? v.concern, v.meaning].filter(Boolean);
     }),
     ...activeStatusEffects(world, entity)
       .filter((d) => d.actions)
@@ -558,6 +575,9 @@ export function validateWorldModules(world: WorldState): void {
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);
   validateGatheringTools(world);
+  for (const definition of Object.values(world.itemDefinitions))
+    if (definition.melee && !validMelee(definition.melee))
+      throw new Error('Invalid melee definition.');
   validateItemHandling(world);
   for (const recipe of Object.values(world.recipes)) {
     const authority = recipe.provenance?.authority;
@@ -601,6 +621,26 @@ export function validateWorldModules(world: WorldState): void {
         e.actor.senses.some((id) => !world.moduleManifest!.senses.some((s) => s.id === id)))
     )
       throw new Error('Missing actor sense binding.');
+    validateConditionEpisodes(world, e);
+    const inspection = e.actor?.inventoryInspection;
+    if (
+      inspection &&
+      (!Number.isSafeInteger(inspection.revision) ||
+        inspection.revision < 0 ||
+        typeof inspection.after !== 'string' ||
+        inspection.after.length > 120 ||
+        typeof inspection.more !== 'boolean' ||
+        !Array.isArray(inspection.itemIds) ||
+        inspection.itemIds.length > 16 ||
+        new Set(inspection.itemIds).size !== inspection.itemIds.length ||
+        inspection.itemIds.some((id) => typeof id !== 'string' || !id || id.length > 120))
+    )
+      throw new Error('Invalid saved inventory inspection.');
+    if (
+      e.actor?.attackReadyAt !== undefined &&
+      (!finite(e.actor.attackReadyAt) || e.actor.attackReadyAt < 0)
+    )
+      throw new Error('Invalid attack recovery deadline.');
     for (const contact of Object.values(e.actor?.contacts ?? {})) {
       object(contact, ['id', 'senseId', 'detail', 'enteredAt', 'changedAt']);
       if (
@@ -639,10 +679,21 @@ export function validateWorldModules(world: WorldState): void {
     }
     if (
       e.actor?.action?.type === 'strike' &&
-      (!strikeDefinition(e.actor.action.definitionId) ||
-        strikeDefinition(e.actor.action.definitionId)?.version !== e.actor.action.definitionVersion)
+      (!strikeDefinition(e.actor.action.definitionId, world, e.actor.action.weaponItemId) ||
+        strikeDefinition(e.actor.action.definitionId, world, e.actor.action.weaponItemId)
+          ?.version !== e.actor.action.definitionVersion)
     )
       throw new Error('Missing active strike definition.');
+    if (
+      e.actor?.action?.type === 'strike' &&
+      e.actor.action.weaponItemId &&
+      (!['windup', 'recovery'].includes(e.actor.action.strikePhase ?? '') ||
+        (e.actor.action.strikePhase === 'windup' && e.actor.action.strikeOutcome !== undefined) ||
+        (e.actor.action.strikePhase === 'recovery' &&
+          (!['hit', 'miss'].includes(e.actor.action.strikeOutcome ?? '') ||
+            e.actor.attackReadyAt === undefined)))
+    )
+      throw new Error('Invalid saved melee phase.');
     if (
       e.actor?.action?.type === 'replenish' &&
       (!attributeDefinition(world, e.actor.action.attributeId ?? '')?.reservoir ||

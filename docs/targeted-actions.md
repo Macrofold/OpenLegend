@@ -1,5 +1,13 @@
 # Targeted actions
 
+## Equipped contact strikes
+
+An installed item definition may declare finite damage, accuracy, contact range, inner approach distance, wind-up and recovery values. The public intention adds `itemId` to the strike's `definitionId` and `targetId`; the server binds it as the native `weaponItemId`. The exact accessible item must be equipped, with its current definition/version. These are validated data within a trusted family, not generated code or universal world balance.
+
+At the end of wind-up the domain checks capability, target life/sight, line of effect and reach. A physically eligible attempt draws once from saved world randomness; an out-of-range/obstructed attempt misses without drawing. A hit commits body effects once. Both outcomes emit `struck` with actual damage/reason and the actor's own awareness. The saved recovery phase and actor deadline survive cancellation; switching to another melee or ranged attack cannot bypass that deadline. A dead/lost target or unavailable weapon stops unfinished work truthfully.
+
+Current-format persistence retains exact references, phase, outcome and recovery timing. Reopening after impact cannot reroll or repeat damage. Each action performs one attempt; chosen short plans may repeat it without inference between steps. Completing the sequence records a private result but never completes a broad survival goal. [Base combat](worlds/base/combat.md), [AC09.6](maintainers/action-capabilities.md#ac09--expand-ordinary-use-through-domain-owned-families) and [verification](verification/embodied-survival.md) distinguish mechanics from unqualified spontaneous hunting.
+
 ## Targeted strikes
 
 A targeted strike is a finite trusted native action family. The [base-world combat specification](worlds/base/combat.md) owns the bundled Punch definition and balance; its authored data lives in `packages/domain/src/worlds/base/strikes.ts`.
@@ -12,11 +20,13 @@ At impact, the domain rechecks target life, definition/version, range and line o
 
 Active work saves its definition ID/version, target, path and remaining time through the existing serializable action state. Loading rejects an unknown or changed active strike definition. Same-version work resumes without replaying committed hits. Command receipts retain duplicate protection. This additive family does not reinterpret existing action state or add migrations.
 
-The first implementation registers trusted definitions in code. It does not yet admit user/generated strike declarations or a general effect scripting language. The extension seam is this typed definition plus the native strike executor; add definition validation/module registration when a real world-authoring consumer requires it. Combat balance, armor, attack combinations and non-biped attacks remain separate extensions.
+Unarmed definitions remain trusted code; equipped profiles are validated installed item data. User/generated strike declarations and general effect scripting remain unsupported. The extension seam is the typed profile and native executor. Combat balance, armor, attack combinations and non-biped attacks remain separate extensions.
 
 ## Presentation
 
 The server projects an active strike's animation kind, progress and horizontal direction, and explicit `null` on completion/cancellation. Null is essential for merged player deltas: JSON omits undefined values and would otherwise leave the previous animation attached. The descriptor exposes neither private plans nor target identity.
+
+Equipped strikes project their tool and authoritative wind-up/recovery phase. Recovery uses the attacker’s public heading rather than tracking an unseen escaping target. The same cached arm frames show the swing and return; bespoke knife artwork remains outside this slice.
 
 The renderer uses cached pixel-sprite frames that replace the character's hanging arm with a bent guard, extension and contact pose. It faces the sprite toward the target's screen direction and uses a 180ms visual recovery to return to idle after the authoritative descriptor clears. Pausing freezes presentation. There are no separate arm/fist meshes. Rendering never applies damage, predicts success or controls completion.
 

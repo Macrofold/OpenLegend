@@ -101,7 +101,7 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 - [ ] Keep live exposure, last-seen evidence, and encounter-episode hysteresis distinct. Linger must not provide current hidden updates or extend action reach.
 - [ ] Add invalidation for stationary observers seeing moved sources, movement within a cell, source feature changes, sense/capability changes, and removal. Do not depend only on observer movement.
 - [ ] Reappraise currently exposed candidates when relevant actor goals, needs, knowledge, or accepted mind change. Do not require an exit/re-entry to discover new relevance.
-- [ ] Establish new-world initialization separately from same-version restore rebaselining. Restore must not synthesize fresh encounters for already-active relationships.
+- [ ] Qualify new-world initialization separately from same-version restore rebaselining. Fresh initialization now establishes exposure before the first target-bound plan; existing saves retain their episodes. The native equip→strike fixture passes, but the broader restore/sense-change matrix must still prove that already-active relationships do not get fabricated encounters.
 
 **Tests:** A already sees the sword while B arrives; A does not receive a duplicate entry. C sees A but cannot see the sword; C must not acquire the sword through A's private acquisition. Source becomes bright without movement; old observers can get updated evidence. Actor becomes interested in an already-visible tree. Boundary jitter does not repeatedly dispatch. Losing sight retains historical facts but not live updates.
 
@@ -109,21 +109,26 @@ Coordinate EWF01 host metadata through [EWF](extensible-world-foundation.md); ex
 
 ## EPR04 — Private internal threshold events and native protection
 
+**Implemented refinement; remaining qualification stays below:** the [embodied-survival proposal](../projects/embodied-survival-tech-design.md#body-descriptions-and-transition-lifecycle) removes automatic berry seeking/eating for bundled cognitive people. The former deterministic feeding behavior is intentionally replaced with deterministic physiology plus cognitive choice; provider unavailability can leave a person unfed even with food available. Preserve sleep/incapacity and unrelated world policies. [BW07](../limits/base-world.md#bw07) records current provisional bands/rearm/reminders; [D54](../../archive/05-project/open-decisions.md#perception-and-attention) retains production tuning.
+
 Coordinate EWF02 typed state through [EWF](extensible-world-foundation.md); existing native adapters suffice without full EWF qualification.
 
 **Dependencies:** EPR01. Can proceed alongside EPR03.
 
-- [ ] Centralize named threshold policies and their owning state updates; retain separate roles for eating, food seeking, rest, action interruption, and semantic protection. Do not replace them all with the user's illustrative health-20 threshold.
-- [ ] Emit owner-private crossing/escalation/recovery records from authoritative needs/body updates. Use sparse per-policy episode/latch state; no event per tiny numeric decrement.
-- [ ] Provide a recovery margin/hysteresis contract. Preserve production defaults where already defined; leave unselected reminder/margin policies configurable and use explicit test fixtures to exercise them.
-- [ ] Keep native protection at its current deterministic boundary and prevent duplicate responses. Do not route critical survival through Jev, optional queues, credentials, or paid budget.
+- [x] Centralize named threshold policies and their owning state updates; distinguish condition descriptions, notification/rearm, physical effects, rest and action capability. Remove obsolete eating/berry-seeking thresholds with the requested controller change; do not turn the new descriptive bands into forced actions or apply a universal health-20 rule.
+- [x] Emit owner-private crossing/escalation/recovery records from authoritative needs/body updates. Use sparse per-policy episode/latch state; no event per tiny numeric decrement.
+- [x] Provide a recovery margin/hysteresis contract. Preserve production defaults where already defined; leave unselected reminder/margin policies configurable and use explicit test fixtures to exercise them.
+- [x] Keep bodily effects, genuine incapacity and already admitted native execution independent of Jev/credentials/budget. Remove food-specific semantic protection whose adequacy depended on the deleted feeding controller. Prevent duplicate cognition without promising a meal during provider unavailability.
 - [ ] Cover all meaningful native writers, including eating/healing, damage, god-stat overrides, and body-effect changes—not only hunger decay in `advanceWorld`.
 - [ ] Respect sleep and cognitive capability: an internal physical change can require native handling without manufacturing a conscious memory for a sleeping or non-memory actor. Use current waking rules; do not add automatic wake behavior silently.
-- [ ] Persist or reproduce the state that prevents duplicate crossings and preserves due reminders through same-version save/load.
+- [x] Persist or reproduce the state that prevents duplicate crossings and preserves due reminders through same-version save/load.
+- [ ] Seed one initial-condition opportunity for an already hungry new actor without manufacturing a prior crossing; carry policy/version and consumed/pending evidence through scheduling. Derive current labels from authoritative state and keep generic engine intake independent of hunger names or thresholds.
 
-**Tests:** each band entry fires once, recovery/re-entry behaves deterministically, cross-and-recover within a batch retains required events, no credentials still permits protection, observer B cannot read actor A's internal event, outward symptoms require a separate actual effect/event, and god overrides use the same detector without bypassing reconciliation.
+**Evidence and remaining coverage:** [Native checks](../verification/embodied-survival.md) cover initial/worsening/rearm, pending capability restoration, privacy, charge/shutdown and PostgreSQL continuity. Direct-writer, sleeping/long-advance partition, in-flight arrival/recovery and multi-actor scheduling qualification remain incomplete; the unverified mixed checklist items stay open.
 
-**Exit:** internal changes use the common stimulus contract while native survival remains at least as responsive and no more expensive in paid calls.
+**Tests:** each band entry fires once, recovery/re-entry behaves deterministically, cross-and-recover within a batch retains required events, no credentials still permits physiology/incapacity handling and reports unavailable cognition, observer B cannot read actor A's internal event, outward symptoms require a separate actual effect/event, and god overrides use the same detector without bypassing reconciliation.
+
+**Exit:** internal changes use the common stimulus contract; bodily simulation remains deterministic and independent of paid work, while bounded opportunities support actor-chosen survival actions. Repeated numerical samples cannot create paid storms. Removal of automatic feeding is a deliberate behavior change, not a claim of equal survival reliability.
 
 ## EPR05 — Change-fed ActorWork and one reaction intake
 

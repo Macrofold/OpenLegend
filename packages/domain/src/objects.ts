@@ -801,7 +801,7 @@ export function equipLot(
   )
     throw new Error('Equipped stack has an unsupported active reference; conversion refused.');
   const definition = world.itemDefinitions[lot.definitionPin.id];
-  if (!definition?.launcher && !definition?.gatheringTool)
+  if (!definition?.launcher && !definition?.gatheringTool && !definition?.melee)
     throw new Error('This item has no equipment capability.');
   if (parentOf(entity) !== actorId) moveLot(world, id, actorId, lot.quantity, cause, false);
   const previous = actor.equippedItemId ? world.entities[actor.equippedItemId] : undefined;

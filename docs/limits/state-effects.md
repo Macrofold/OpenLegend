@@ -283,3 +283,9 @@ Source-sustained effects stop when the source is retired, dies if it is an actor
 An effect definition cannot be changed, disabled or removed while retained effect records reference its exact definition—even after those effects ended. Certain direct APIs also require complete historical records to be loaded first.
 
 **Reason / tradeoff:** Preserve exact historical interpretation; immutable version retention could allow future versions without freezing authoring.
+
+## ST16
+
+**Current — condition descriptions, September 27 · Restrictiveness: Safe.** Installed numeric attributes may supply factual meaning up to **1,600 characters**, condition/clear text up to **160 characters**, descending finite thresholds inside their numeric range, a nonnegative recovery margin and positive simulated review duration. Invalid profiles are rejected; text is never executable policy. There is no independent band-count cap beyond definition admission and strictly descending thresholds. Current engine processing visits the installed bands during relevant reconciliation.
+
+**Reason / tradeoff:** Keep bodily context concise while permitting world-owned meanings. Exact text sizes and very large band tables are not empirically qualified; revisit only with authored use or measured work pressure. [Condition owner](../../packages/domain/src/conditions.ts) · [integration](../architecture.md#embodied-conditions-and-inventory) · [base tuning](base-world.md#bw07) · [EPR04](../maintainers/events-perception-and-reactions.md#epr04--private-internal-threshold-events-and-native-protection).

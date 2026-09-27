@@ -1,3 +1,4 @@
+import { reconcileConditions } from './conditions.js';
 import { validateStatusInstallation } from './native-work.js';
 import { itemsForOwner, setItemQuantity } from './objects.js';
 import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
@@ -404,6 +405,8 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     for (const [definitionId, quantity] of quantities)
       if (quantity > 0) addItem(world, draft.actorId, definitionId, quantity);
   }
+  const events: WorldEvent[] = [];
+  reconcileConditions(world, entity, events);
   migrateCognition(world);
   const invalidated = new Set<string>();
   const memoryMutations: ExperienceMutation[] = [];
@@ -487,7 +490,7 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     }
   }
   return {
-    ...finish(world, [], outcome(true, 'person-saved', `${entity.name} saved.`)),
+    ...finish(world, events, outcome(true, 'person-saved', `${entity.name} saved.`)),
     invalidatedMemoryIds: invalidated.size ? { [draft.actorId]: [...invalidated] } : undefined,
   };
 }

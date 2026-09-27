@@ -5,13 +5,15 @@ export function actionResponse(act: NonNullable<ResponseOperation['act']>): Acto
   return {
     operations: [
       {
+        note: null,
+        name: null,
         localId: 'action',
         requiresAccepted: [],
         talk: null,
         think: null,
         goal: null,
         plan: null,
-        act,
+        act: { ...act, invocation: act.invocation ?? null },
       },
     ],
   };

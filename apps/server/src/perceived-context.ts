@@ -91,10 +91,7 @@ export function relativeLocation(observer: Entity, target: Entity): string {
   return `${horizontal < 0.1 ? 'At my horizontal position' : `About ${horizontal.toFixed(1)} m horizontally ${direction}`}, ${height}.`;
 }
 
-export function possessionText(item: ItemInstance, definition: ItemDefinition, equipped: boolean) {
-  const properties = definition.properties.map((property) => propertyDescriptions[property]);
-  return `${item.quantity} × ${definition.name}${equipped ? ', equipped' : ''}.${properties.length ? ` Properties: ${properties.join(', ')}.` : ''}`;
-}
+export { describePossession as possessionText } from '@open-legend/domain';
 
 /** The same category names reach attention and the final actor context; metadata stays server-side. */
 export function contextSections(candidates: AttentionCandidate[]): Record<string, string[]> {

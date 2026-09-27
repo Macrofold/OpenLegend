@@ -55,3 +55,14 @@ BW13 evidence is in [MP01/MP04](multiplayer.md) and [Verification](../verificati
 - [ ] After implementation, manually exercise creation, actual completion, overdue state, approved amendments, stale requests and reload/restart. Record new evidence separately from existing native promise observations; retain the linked deferred automated gates.
 
 **Dependencies:** NC committed speech/audience, CR memory/privacy, MP actor scope and SL recovery; full AC or a new inference harness is not a prerequisite for the existing gathering journey. **Exit:** a player can understand and manage the agreed supported obligations without raw diagnostics; no unsupported fulfillment or reciprocal agreement is claimed. **Deferred coverage:** [social slice validation TODO](TODO.md#social-playable-slices--future-validation). Limits owner: [base-world BW04](../limits/base-world.md#bw04).
+
+### BW18 — Ada and the lean starting camp
+
+**Status:** starter content implemented and native/live context inspected; UI and integrated hunting acceptance remain open. [Feature specification](../projects/embodied-survival-feature-spec.md) · [Technical design](../projects/embodied-survival-tech-design.md#starter-content-and-observability). The owner confirmed existing NPC ghost/revival policy remains; this does not implement BW15.
+
+- [x] After design approval, author Ada's consistent biography, traits and practical knowledge through existing identity/About me sources. Explicit empty goals must stay empty in both actor creation and mind initialization; no fallback survival instruction or fictional witnessed hunting event.
+- [x] Add the installed knife definition and one knife to each named Mike/Ada starter loadout, using AC09.6's general melee profile. Do not grant it to every `createActor` call or silently modify existing characters/saves.
+- [x] Apply accepted lean-camp settings under [BW09](../limits/base-world.md#bw09), with truthful depleted-resource and inventory inspection. Preserve normal animal health/movement and leave alternative choices available; no scenario-specific forced action.
+- [ ] Expose world-authored body meaning and equipment capability through ordinary inspection and actual cognitive context. Keep permanent-death claims and inaccessible future revival capabilities out of Ada's factual instructions.
+
+**Depends on:** EPR04/AG06/AG07 integration and AC09.6 for the complete journey. **Exit:** a newly created world presents the agreed character and supplies accurately; only Mike/Ada receive knives, Ada begins without an operational goal, and reload preserves the current authored state. [AG13](agent-agency.md#ag13--embodied-survival-demonstration) owns the live autonomous demonstration and comparison evidence; no claim of full harvest/cook/eat autonomy follows from starter content.

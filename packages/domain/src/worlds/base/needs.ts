@@ -1,7 +1,7 @@
 import type { ActorComponent, Entity } from '../../types.js';
 import { setBodyHealth } from '../../body-state.js';
 
-// Base-world seeking, eating, sleep and cognitive concern use distinct thresholds.
+// Physiology continues independently of cognitive food choices and authored sleep rules.
 // docs/worlds/base/survival.md
 export const WILDERNESS_NEEDS = {
   fullnessPerSecond: 0.003,

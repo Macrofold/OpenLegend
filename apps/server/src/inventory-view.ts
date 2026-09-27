@@ -8,6 +8,7 @@ import {
   hasWildernessNeeds,
   observerDescription,
   itemFor,
+  describePossession,
   contentsQuery,
   capabilityBlocked,
   custodian,
@@ -238,7 +239,7 @@ export function inventoryItemView(
     actions.push(action(`drop-${item.id}`, 'Drop', command, !reason, reason ?? undefined));
   }
   if (
-    (definition.launcher || definition.gatheringTool) &&
+    (definition.launcher || definition.melee || definition.gatheringTool) &&
     accessiblePossession(world, player.id, item.id)
   )
     actions.push(action(`equip-${item.id}`, 'Equip', { type: 'equip', itemId: item.id }));
@@ -322,14 +323,15 @@ export function inventoryItemView(
     definitionId: item.definitionId,
     name: definition.name,
     quantity: item.quantity,
-    category: definition.launcher
-      ? 'equipment'
-      : definition.ammunition
-        ? 'ammunition'
-        : definition.properties.includes('food')
-          ? 'food'
-          : 'material',
-    description: definition.description,
+    category:
+      definition.launcher || definition.melee || definition.gatheringTool
+        ? 'equipment'
+        : definition.ammunition
+          ? 'ammunition'
+          : definition.properties.includes('food')
+            ? 'food'
+            : 'material',
+    description: describePossession(item, definition, actor.equippedItemId === item.id),
     equipped: actor.equippedItemId === item.id,
     tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],
     actions,
