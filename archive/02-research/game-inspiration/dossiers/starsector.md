@@ -2,13 +2,13 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Research pass — September 26, 2026.** Reference research, not accepted OpenLegend requirements. Baseline: the best-substantiated released 0.98a family, with historical builds and mods separated. Seven independent written critical accounts were read: three articles presented as reviews, three explicitly labeled previews, and one author's two-part critical essay. **This is not five contemporary full-release reviews.** Current official-download verification and full direct wiki-page retrieval were limited; detailed qualifications appear below. No gameplay, audio listening, footage viewing, mod installation or source-code execution was performed.
+**Research pass and follow-up audit — September 26, 2026.** Reference research, not accepted OpenLegend requirements. Baseline: the best-substantiated released 0.98a family, with historical builds and mods separated. The original seven independent written accounts are preserved; two newly read substantive reviews bring the collection to **five genuine reviews, three explicitly labeled previews and one author's two-part critical essay**. These are dated early-access/player reviews, not five contemporary reviews of a final 1.0 release. The follow-up read the entire dossier against R01–R14 and added separately identified evidence, without implying every original external source was reread. Current official-download verification and full direct wiki-page retrieval were limited; detailed qualifications appear below. No gameplay, audio listening, footage viewing, mod installation or source-code execution was performed.
 
 ## 1. Identity, version and player promise
 
 Starsector, formerly Starfarer, is Fractal Softworks' single-player space sandbox combining direct ship combat, fleet command, exploration, trade and colony management. The captain is a player-defined operator rather than a fixed protagonist with a prescribed career. Starting choices and optional instruction introduce a fleet whose future can be organized around contracts, salvage, commerce or fighting. A selectable campaign tutorial teaches salvage, an initial engagement, advancement, identification and movement. Standalone combat scenarios and the simulator are different from the persistent campaign. [S1–S5, S8, S19, S40]
 
-The documented 0.98a release dates to **March 27, 2025**, with Abyss opponents, equipment, side-story content, autosave and interface improvements. The retrieved version history lists RC8 on **April 18, 2025** and 0.98.5a on **April 2, 2026** as **in development**. The higher number is not certified here as a shipped update. Official home, purchase and selected forum requests failed; a readable publisher-feed reproduction and indexed release records provide the stated baseline, not a successful current-download test. [S7, S8]
+The documented 0.98a release dates to **March 27, 2025**, with Abyss opponents, equipment, side-story content, autosave and interface improvements. The retrieved version history lists RC8 on **April 18, 2025** and 0.98.5a on **April 2, 2026** as **in development**. The higher number is not certified here as a shipped update. Official home, purchase and selected forum requests failed; a readable publisher-feed reproduction and indexed release records provide the stated baseline, not a successful current-download test. The follow-up again found the official host inaccessible and the indexed version history still labeling 0.98.5a in development. This supports retaining the qualified baseline, not claiming a successful live release audit or proving that no later build could exist. [S7, S8]
 
 **Interpretation:** the distinctive promise is continuity across scales. A recovered ship can change tomorrow's combat, the fuel needed to get home and the sort of expedition worth attempting next. Later, a colony makes the captain responsible for infrastructure that continues to matter when the fleet leaves. These layers are compelling when they change decisions rather than merely add independent meters.
 
@@ -59,6 +59,8 @@ The current-reference skill page identifies forty families across four aptitudes
 
 The families cover piloting, organization, information, resilience and production. Prerequisites, elite upgrades and fleet-size-sensitive bonuses prevent treating the names as forty simultaneously free improvements. Historical guides may contain removed skills; this inventory does not import those as additional current choices. [S12]
 
+**Build revision has consequences:** the player has fifteen skill selections, not all forty. The indexed 0.98a reference permits respecialization for a Story Point while preserving prerequisites. Removing Automated Ships can make affected vessels unusable through lost readiness; redistributing points is therefore not merely an interface change. Hull Restoration and Derelict Operations illustrate contrasting approaches to damaged ships: repairing defects versus making compromised hulls cheaper to operate. Player and officer retraining contracts should not be conflated. [S12]
+
 Human officers add ship-specific skills and personalities. Ordinary recruits, rare cryopod finds and temporary mercenaries have different progression contracts. Mentoring and retraining can change a captain's development, but a high level is not proof that the underlying pathfinding becomes more intelligent. Matching temperament and capabilities to a fit is different from hiring a generic numerical upgrade. [S13]
 
 Gamma, beta and alpha AI cores can serve economic or automated-ship purposes under distinct rules. Alpha administrators differ from ordinary hired administrators. The reference also describes Omega cores, but **their listed statistics do not mean the player can normally obtain one**. Core integration, legality and threat consequences depend on how the object is being used; a core in cargo is not equivalent to an automated ship under its command. [S38]
@@ -78,6 +80,16 @@ Full surveying requires crew and machinery and consumes supplies; equipment can 
 Supplies maintain ships, restore readiness and repair damage; fuel supports travel; crew keep vessels functional and receive pay; machinery supports recovery and construction. These demands make the route home part of the outbound plan. Fleet controls allow repair suspension, storage, mothballing and scuttling. **Mothballing does not eliminate towing fuel consumption**, and the mothballed vessel stops supplying its normal capacity. Scuttling recovers some resources at the cost of the ship itself. [S24, S43]
 
 **Interpretation:** logistics makes opportunities conditional. A wreck that would be a prize near home can be a liability at the edge of range. The desirable choice is not always “take everything,” and a supposedly successful expedition can create a new emergency. The limitation is that repeated maintenance arithmetic can become friction without a meaningful route or investment decision; several critics explicitly experienced that downside.
+
+### Ground operations are separate choices
+
+A **raid** can obtain commodities, blueprints, AI cores or industrial artifacts, or disrupt a chosen industry. Marines are allocated among targets, with unused strength providing diversion; target difficulty and defender strength affect casualties. Nearby opposing fleets can prevent the operation. An orbital station increases ground resistance but does **not** itself make raiding impossible. Repeated raids raise preparedness, and a successful raid imposes a documented sixty-day market/bar lockout, so immediately selling the spoils back at the same market is not a free loop. These are the indexed 0.98a reference's rules, not a live timing experiment. Raiding does not by itself supply Nexerelin's invasion-and-annexation system. [S50]
+
+Marines are not interchangeable with ordinary operating crew. They receive wages and gain experience; adding inexperienced personnel dilutes the group's average experience. This makes replacing losses different from merely restocking fuel. Troop-support hulls also matter: the Valkyrie and Colossus Mk.III's Ground Support Package and the Phantom's Advanced Ground Support have bounded support capacity rather than multiplying an arbitrarily large force without limit. [S51, S52]
+
+**Bombardment** spends fuel and requires overcoming the orbital station, unlike a raid. Tactical bombardment disables military infrastructure; saturation attacks have broader industrial, population and diplomatic consequences. Concealing the transponder does not make either a secret operation. The indexed reference also distinguishes permanent pollution from saturation bombardment on habitable worlds from the nanoforge's removal grace period. Particular story-protected markets are exceptions to ordinary destructive outcomes; this is not a promise that every named world can be removed at any point in the campaign. [S53]
+
+**Interpretation:** winning a fleet battle, stealing a valuable item, degrading a competitor and taking political ownership are different objectives. Keeping their prerequisites and consequences distinct creates decisions without requiring a second, fully tactical ground-combat game. A choice becomes shallow if every operation merely converts the same resource into a different damage number.
 
 ## 5. Progression, economy, time and failure
 
@@ -203,6 +215,8 @@ In an October 12, 2020 interview, Mosolov says he repeatedly simplified the econ
 
 **Interpretation:** this is an especially useful counterpoint to equating more simulation with a better game. A world can be convincing because its meaningful consequences are visible and coherent. Additional detail that neither informs a decision nor supports a perceivable outcome can impose performance and explanation costs without delivering the intended feeling.
 
+A primary **August 16, 2018** design account explains why raiding was introduced alongside the colony economy: attacking a competitor could complement improving one's own production. Mosolov rejected adding a separate tactical minigame merely for its own sake, emphasizing the operation's purpose. He also explains equal fuel costs for tactical and saturation bombardment as avoiding an awkward two-step optimization. This is dated design reasoning, not authority for importing the post's older skill names or tentative invasion plans into 0.98a. [S54]
+
 The developer describes financing through savings and sales, sometimes precariously. He identifies **Sseth's video** as a turning point in financial comfort and names other creator coverage as important. These are primary recollections, not audited acquisition percentages, unit sales or profit. His concerns about Steam economics and cadence are explicitly his **2020** reasoning, not current platform-policy facts. [S6]
 
 The documented route is a premium, directly distributed game with an extended public-development history. The official storefront was not successfully read during this pass, so no current checkout price, discount, regional tax or license promise is certified. Later reporting describes the March 2025 update as still outside Steam. No accessible Starsector store-review page was established; a Steam community-group thread is not a substitute store listing. [S6, S8, S9, S47]
@@ -217,9 +231,9 @@ Histidine's creator-owned **Nexerelin** listing explicitly adds 4X-style warfare
 
 **Interpretation:** modding supports different appetites for the same foundation. A player who wants greater empire-level conflict can choose a different contract rather than requiring the base campaign to satisfy every preference. That benefit depends on clear provenance and version compatibility. A research dossier that silently imports a popular mod's systems misrepresents both the original design and why the mod exists.
 
-## 11. Reception: seven independent written perspectives
+## 11. Reception: five genuine reviews and four supplemental perspectives
 
-The first five complete bodies below were read, followed by two additional independent accounts. The early-access labels are deliberate. These are not aggregate-score summaries, five reviews of a final 1.0 release, or a representative player survey.
+The original seven complete accounts below are preserved, followed by two newly read reviews. The five-review set is **Cola Powered Gamer, Rankin Ryukenden, Mellow Carter, gamerofpassion and Maiyannah Bishop**. The three previews and Fishbreath's two-part essay remain supplements, not relabeled reviews or two authors. These are substantive firsthand assessments across early-access versions, not aggregate-score summaries, five reviews of a final 1.0 release, or a representative player survey.
 
 ### Eric Ace — Cubed3, July 4, 2017; preview
 
@@ -249,11 +263,21 @@ Fishbreath values selective deployment, broad tactical direction and hands-on pi
 
 Carter praises career breadth and a high combat skill ceiling and recommends the tutorial. This is student-publication player criticism with an unspecified build, not a professional consensus or verified developer census. The complete short body was read. Its statement that overload prevents movement is explicitly rejected as a mechanics authority in favor of the detailed flux references. [S11, S20]
 
+### gamerofpassion — Gamer of Passion, 2020-era text; review
+
+The author values a coherent captain's career joining travel, supplies, fitting and settlements. Importantly, they describe delegating combat for an extended period before becoming comfortable with direct piloting: automation was an entry route, not evidence of avoiding the game. The enthusiastic assessment still acknowledges complexity and substantial time demands. Its description of sparse overarching story is historical, not an assessment of later Galatia content. No exact publication date or build was established from the accessible page. Its claim that personal control is necessarily superior is not treated as a universal combat result. [S48]
+
+### Maiyannah Bishop — Highland Arrow, May 23, 2022; early-access review
+
+Bishop's substantial review praises tactical depth, serviceable stock loadouts, the simulator and colony development, but criticizes a tutorial that restricts otherwise legitimate actions and the frustration of pursuing fleets. This is a particularly useful tension between teaching a fixed sequence and supporting improvisation. The page reports 159 manually recorded hours; that is the reviewer's disclosure, not telemetry verified here. Its header is dated May 23 while the editor's note identifies the build available May 24, 2022; the one-day discrepancy is retained. Its transponder-off-only explanation of black-market access is not adopted over the mechanics references. The page explicitly presents an early-access **review**, despite residing under a `/preview/` URL. [S49]
+
 ### Steam and other player evidence: the actual access boundary
 
 The eXplorminate Steam **group discussion** contains a substantial 2018 explanation of flux, mixed fleets and officers. Its opening account covers 0.8a and describes colonies as forthcoming 0.9a content. First-page replies were inspected, not all 103 posts. Group membership and online counts are not Starsector population measures. Financial speculation in the discussion is not adopted. [S9]
 
-Searches for contemporary written reviews and original links recovered the accounts above, but did not establish five independent full contemporary reviews of 0.98a. Three previews, an older essay and an unspecified-build student review remain labeled rather than being promoted into that missing corpus. The unavailable Steam store-review surface is reported, not filled with an unrelated Steam app or invented helpful-review sample. The result supports a historical reception comparison, not a numerical modern-consensus claim.
+A contrasting directly read reader comment, **AnotherOne**, December 25, 2021, appreciates interface clarity and depth but describes repeatedly losing campaigns after the tutorial. This is evidence of the transition's difficulty for that person, not proof that repeated restarts or their preferred save restriction are mandatory. It supplements the review on which it appears and is not counted as an additional independent review. [S48]
+
+The follow-up resolves the actual five-genuine-written-review requirement without claiming five contemporary 0.98a reviews. The original previews, essay and student-publication limitations remain explicit. No accessible Steam store-review surface was established, so the strongest recovered independent reviews and direct player discussion are used instead of inventing a helpful-review sample or substituting an unrelated app. The result supports a historical reception comparison, not a numerical modern-consensus claim.
 
 **Interpretation:** the recurring disagreement is whether operating a fleet feels like consequential command or exhausting administration. The same question appears in controls, supplies and officer timing. These accounts suggest testing decision clarity and delegation expectations, not simply removing logistics or adding more interface numbers.
 
@@ -279,18 +303,18 @@ These are **research interpretations**, not accepted OpenLegend features, copied
 
 | Requirement | Substantive coverage |
 | --- | --- |
-| R01 | Section 1: identity, career promise, tutorial and verified-version boundary |
-| R02 | Sections 2–4: combat, ship systems, all forty skill families and campaign verbs |
-| R03 | Sections 3, 4 and 6: fittings, objects, compatibility, materials and composition |
-| R04 | Sections 4–6: exploration costs, progression, Story Points, economy and failure |
+| R01 | Section 1: identity, career promise, tutorial and qualified version boundary |
+| R02 | Sections 2–4: combat, ship systems, all forty skill families, campaign verbs and ground operations |
+| R03 | Sections 3, 4 and 6: fittings, objects, compatibility, marine experience/support, materials and composition |
+| R04 | Sections 3–6: build revision, exploration costs, progression, Story Points, economy and failure |
 | R05 | Section 8: eight causal situations, next decisions, evidence type and limits |
 | R06 | Sections 2, 3 and 7: officers, factions, AI behavior, relationships and native/mod/MP boundaries |
 | R07 | Section 9 and critical accounts: visual identity, audio, UI, learning and testing limits |
 | R08 | Section 7 and case 8: marked story spoilers, institutions and changed travel possibilities |
-| R09 | Sections 9–10: primary production, simplification, art iteration and financing account |
+| R09 | Sections 9–10: primary production, simplification, bounded ground-operation design, art iteration and financing |
 | R10 | Section 10: direct distribution, creator discovery, updates and mod ecosystem |
 | R11 | Section 10: business structure, dated financing testimony and unavailable private metrics |
-| R12 | Section 11: seven independent full written accounts, preview labels and missing contemporary/Steam corpus |
+| R12 | Section 11: five genuine reviews, three preserved previews, one two-part essay and accurately scoped direct player testimony |
 | R13 | Section 12: concrete patterns, prerequisites, counterexamples and simpler alternatives |
 | R14 | This section and register: access state, routes, provenance and preservation |
 
@@ -298,9 +322,11 @@ For an introduction, compare the dated critic accounts before treating any one a
 
 G120 is a curated addition. The inspected base tree/navigation contained no dedicated earlier Starsector chapter, mechanics study or dossier. This file leaves original packet owners and incidental cross-game references unchanged. Both checkpoints' five original critic accounts, the cruiser incident, financing qualifications, newer player writing, forty-skill table and Steam-group distinction are preserved. Corrections distinguish overload from immobilization, dated fighter behavior, draft story ideas and current crisis changes. This range-local pass does not close the global packet-preservation or all-130-subject gates.
 
+The follow-up read the complete original dossier and checked R01–R14. All eight original cases, all seven original critical accounts and S1–S47 remain. The two genuine review additions close the review minimum without relabeling prior material. Newly documented raids, marine experience, support hulls, bombardment, respecialization and primary design rationale fill substantive mechanics/production gaps. Current-download and direct-wiki access limits remain honest; no installed build, save, mod, audiovisual or commercial-metric test is claimed. The audit commit and actual change review belong in the current progress ledger.
+
 ## 14. Annotated sources and access limitations
 
-Accessed **September 26, 2026**. Most wiki.gg/Fandom entries were available as substantial indexed text despite direct requests failing; those are not described as fully browsed pages. Patch labels and detailed entries sometimes disagree, so the specific caveats above take precedence over a generic “up to date” banner. No embedded audiovisual content was consumed.
+Accessed **September 26, 2026**, in the original pass or identified follow-up. Most wiki.gg/Fandom entries were available as substantial indexed text despite direct requests failing; those are not described as fully browsed pages. Original source provenance is retained without claiming every original external page was reread. Patch labels and detailed entries sometimes disagree, so the specific caveats above take precedence over a generic “up to date” banner. No embedded audiovisual content was consumed.
 
 - **S1.** Eric Ace, [Starsector preview](https://www.cubed3.com/preview/685/1/starsector-pc.html), July 4, 2017. Complete critical body read; early-access scope.
 - **S2.** Kenny McKee, [Starsector Preview](https://www.heypoorplayer.com/2017/07/12/starsector-preview/), July 12, 2017. Complete body; broad procedural/faction claims qualified.
@@ -309,11 +335,11 @@ Accessed **September 26, 2026**. Most wiki.gg/Fandom entries were available as s
 - **S5.** Rankin Ryukenden, [Starsector](https://jrkrpg.pl/gry/pc/starsector/), July 5, 2021. Complete Polish body read; English paraphrase, not copied translation; playtime and combat incident are personal accounts.
 - **S6.** Cola Powered Gamer, [Interview with Alexander Mosolov](https://www.indieretronews.com/2020/10/an-exclusive-interview-with-starsector.html), October 12, 2020. Full primary interview; no private financial totals or current Steam rules inferred.
 - **S7.** Fractal Softworks, [developer-feed mirror](https://starsector9.rssing.com/chan-10890146/all_p6.html). March 27, 2025 release body read; selected substantial passages of **Writing False Idols** (April 29, 2025) and **Creating Threat** (July 3, 2025) read. Primary text through RSS reproduction because original host failed; not every long entry or image inspected. Draft outlines are not all shipped behavior.
-- **S8.** [Version history](https://starsector.wiki.gg/wiki/Version_History). Indexed community reproduction of official metadata; in-development 0.98.5a separated from 0.98a release/hotfixes, former Starfarer name retained. Current official-download verification unavailable.
+- **S8.** [Version history](https://starsector.wiki.gg/wiki/Version_History). Indexed community reproduction of official metadata; in-development 0.98.5a separated from 0.98a release/hotfixes, former Starfarer name retained. Follow-up index rechecked; current official-download verification remains unavailable.
 - **S9.** aReclusiveMind and respondents, [Starsector — It's Worth the Wait](https://steamcommunity.com/groups/explorminate/discussions/0/1734333281939532746/), July 2018 onward. Opening body and relevant first-page replies; not all posts, a store-review page or an official eXplorminate editorial review.
 - **S10.** Fishbreath, [Starsector essays, Parts I and II](https://soapbox.manywords.press/tag/starsector/), November 5 and December 13, 2014. Both complete written bodies read; historical fighter/officer rules and unwatched videos distinguished.
 - **S11.** Mellow Carter, [Starsector: A 15 Year Masterpiece](https://www.poudrepress.com/post/starsector-a-15-year-masterpiece), April 27, 2026. Complete short student-publication review; unspecified build and erroneous immobilization claim qualified.
-- **S12.** [Skill](https://starsector.wiki.gg/wiki/Skill), marked 0.98a; [Skills](https://starsector.fandom.com/wiki/Skills) cross-check. Indexed names, prerequisites and scaling; table artwork labeled an older version is not a separate current skill inventory.
+- **S12.** [Skill](https://starsector.wiki.gg/wiki/Skill), marked 0.98a; [Skills](https://starsector.fandom.com/wiki/Skills) cross-check. Indexed names, prerequisites and scaling; table artwork labeled an older version is not a separate current skill inventory. Follow-up inspected the indexed player-cap/respecialization and relevant capstone passages, not live build migration.
 - **S13.** [Officer](https://starsector.wiki.gg/wiki/Officer). Indexed progression and exceptional-recruit passages; not an AI implementation audit.
 - **S14.** [Trade](https://starsector.wiki.gg/wiki/Trade). Indexed tariffs, market-access and commission passages; user strategy tips are not guaranteed returns.
 - **S15.** [Market](https://starsector.wiki.gg/wiki/Market); [historical Market reference](https://starsector.fandom.com/wiki/Market), marked 0.97. Indexed smuggling/storage and blueprint-learning descriptions; case 4 retains its version boundary.
@@ -349,3 +375,13 @@ Accessed **September 26, 2026**. Most wiki.gg/Fandom entries were available as s
 - **S45.** [Scylla Coureuse](https://starsector.wiki.gg/wiki/Scylla_Coureuse). Substantive indexed biography and quest events; **major spoilers**, not evidence of player-directed romance mechanics.
 - **S46.** [Janus Device](https://starsector.wiki.gg/wiki/Janus_Device). Indexed acquisition, scanning and fuel/travel contract; **major progression spoiler**.
 - **S47.** GamingOnLinux, [Starsector's March 2025 update](https://www.gamingonlinux.com/2025/03/starsector-one-of-the-best-space-rpgs-thats-not-on-steam-had-a-huge-update/), March 28, 2025. Relevant indexed contemporaneous distribution/update account; not counted as a full independent review or proof of September 2026 checkout availability.
+
+### Follow-up evidence
+
+- **S48.** gamerofpassion, [Starsector Review — An Epic Space RPG/Simulation](https://gamerofpassion.com/starsector-review-an-epic-space-rpg-simulation/). Complete substantive review and the identified AnotherOne comment read directly. Text refers to 2020; exact publication date/build not established. Comment dated December 25, 2021 is supplemental testimony, not a sixth review.
+- **S49.** Maiyannah Bishop, [Starsector Early Access Review](https://www.highlandarrow.com/preview/pc/starsector-ea.html), May 23, 2022 header; May 24, 2022 build note. Complete critic body through conclusion read directly. Disclosed manual playtime, publication discrepancy and mechanics simplifications retained; not a 1.0 review.
+- **S50.** [Raid](https://starsector.wiki.gg/wiki/Raid), marked 0.98a. Substantive indexed targeting, defenses, casualties, preparedness and access-lockout text read; not a live raid or full direct-page inspection.
+- **S51.** [Marines](https://starsector.wiki.gg/wiki/Marines), marked 0.98a. Substantive indexed pay, experience and replenishment text read; no independently tested casualty/experience formula.
+- **S52.** [Ground Support Package](https://starsector.wiki.gg/wiki/Ground_Support_Package) and [Advanced Ground Support](https://starsector.wiki.gg/wiki/Advanced_Ground_Support). Indexed effect/capacity and named-hull entries read; not universal unlimited force multipliers.
+- **S53.** [Bombardment](https://starsector.wiki.gg/wiki/Bombardment), marked 0.98a. Substantive indexed prerequisite, tactical/saturation, pollution and story-exception passages read; direct page failed. Fictional game operations, not real weapons guidance.
+- **S54.** Alexander Mosolov, **Raids, Bombardments, and Planetary Defenses**, August 16, 2018, in the [publisher-feed reproduction](https://starsector9.rssing.com/chan-10890146/all_p4.html). Substantive indexed primary design account read because original host failed. Historical purpose, abstraction and cost reasoning used; older skill names and speculative invasion plans are not current-feature evidence. Images uninspected.
