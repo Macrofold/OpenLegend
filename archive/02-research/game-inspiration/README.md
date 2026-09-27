@@ -18,56 +18,16 @@
 - **[Implications for OpenLegend](essays/implications-for-openlegend.md):** research hypotheses, not accepted requirements.
 - **[Study itinerary](essays/prioritized-study-itinerary.md)** and **[YouTube watchlist](references/youtube-watchlist.md)**.
 
-## Expanded per-game dossiers
 
-The dossiers supplement the original chapters and granular studies rather than replacing them. Use the [progress ledger](research-progress.md) for completion state and commit references; the [roster](research-roster.md) remains the owner of numbering and edition boundaries. These reading routes cover canonical G40–G60 without implying that the entire 130-subject assignment or packet-wide preservation audit is finished.
 
-**G40–G47 — language-driven play, combinations and shared pressure:** [AI Dungeon](dossiers/ai-dungeon.md) · [Palworld](dossiers/palworld.md) · [Balatro](dossiers/balatro.md) · [Slay the Spire](dossiers/slay-the-spire.md) · [Vampire Survivors](dossiers/vampire-survivors.md) · [Against the Storm](dossiers/against-the-storm.md) · [Core Keeper](dossiers/core-keeper.md) · [PEAK](dossiers/peak.md).
+## Full dossiers — G81–G100
 
-**G48–G50 — distinct RuneScape experiences:** [RuneScape / RS3](dossiers/runescape.md) · [Old School RuneScape](dossiers/old-school-runescape.md) · [RuneScape: Dragonwilds](dossiers/runescape-dragonwilds.md).
+These independent per-game passes supplement the original chapters and mechanics studies; they do not replace them. Each dossier identifies its editions, systems, worked interactions, production and reception evidence, sources and access limits. Completion commits and the scope of verification live in the [completed slice register](research-progress.md#completed-slice-register), not in a duplicate status list here.
 
-**G51–G54 — Dragon Age's changing party, combat and choice structures:** [Origins](dossiers/dragon-age-origins.md) · [Dragon Age II](dossiers/dragon-age-ii.md) · [Inquisition](dossiers/dragon-age-inquisition.md) · [The Veilguard](dossiers/dragon-age-the-veilguard.md). The [series supplement](dossiers/dragon-age-series.md) owns the smaller-game and Keep comparisons, not another combined replacement for the four mainline passes.
+**Final Fantasy, G81–G93:** [IV](dossiers/final-fantasy-iv.md) · [V](dossiers/final-fantasy-v.md) · [VI](dossiers/final-fantasy-vi.md) · [VII](dossiers/final-fantasy-vii.md) · [VIII](dossiers/final-fantasy-viii.md) · [IX](dossiers/final-fantasy-ix.md) · [X](dossiers/final-fantasy-x.md) · [XI](dossiers/final-fantasy-xi.md) · [XII](dossiers/final-fantasy-xii.md) · [XIII](dossiers/final-fantasy-xiii.md) · [XIV](dossiers/final-fantasy-xiv.md) · [XV](dossiers/final-fantasy-xv.md) · [XVI](dossiers/final-fantasy-xvi.md).
 
-**G55–G60 — party composition, world consequences and tactical relationships:** [Pillars of Eternity II: Deadfire](dossiers/pillars-of-eternity-ii-deadfire.md) · [Divinity: Original Sin](dossiers/divinity-original-sin.md) · [Divinity: Original Sin II](dossiers/divinity-original-sin-ii.md) · [Pathfinder: Kingmaker](dossiers/pathfinder-kingmaker.md) · [Pathfinder: Wrath of the Righteous](dossiers/pathfinder-wrath-of-the-righteous.md) · [Fire Emblem: The Blazing Blade](dossiers/fire-emblem-the-blazing-blade.md).
+**Warcraft, G94–G97:** [Orcs & Humans](dossiers/warcraft-orcs-and-humans.md) · [Warcraft II](dossiers/warcraft-ii.md) · [Warcraft III](dossiers/warcraft-iii.md) · [World of Warcraft](dossiers/world-of-warcraft.md).
 
-## Game studies
+**Assassin's Creed, G98–G100:** [IV: Black Flag](dossiers/assassins-creed-iv-black-flag.md) · [III](dossiers/assassins-creed-iii.md) · [Valhalla](dossiers/assassins-creed-valhalla.md).
 
-### People, relationships, place, and systemic stories
-
-[Minecraft](games/minecraft.md) · [RimWorld](games/rimworld.md) · [Hades / Hades II](games/hades-and-hades-ii.md) · [Dwarf Fortress](games/dwarf-fortress.md) · [The Sims](games/the-sims.md) · [Wildermyth](games/wildermyth.md) · [Baldur's Gate 3](games/baldur-s-gate-3.md) · [Stardew Valley](games/stardew-valley.md) · [Kenshi](games/kenshi.md) · [Project Zomboid](games/project-zomboid.md) · [Palworld](games/palworld.md) · [Animal Crossing](games/animal-crossing-new-horizons.md).
-
-### Construction, combinations, discovery, and mastery
-
-[Factorio / Satisfactory](games/factorio-and-satisfactory.md) · [Terraria](games/terraria.md) · [Valheim](games/valheim.md) · [Noita](games/noita.md) · [Caves of Qud](games/caves-of-qud.md) · [Outer Wilds](games/outer-wilds.md) · [Balatro](games/balatro.md) · [Slay the Spire](games/slay-the-spire.md) · [Vampire Survivors](games/vampire-survivors.md) · [Core Keeper](games/core-keeper.md) · [Against the Storm](games/against-the-storm.md).
-
-### Multiplayer, creators, communities, and return loops
-
-[Roblox / Grow a Garden / Steal a Brainrot](games/roblox.md) · [Garry's Mod](games/garry-s-mod.md) · [Among Us / Lethal Company](games/among-us-and-lethal-company.md) · [PEAK](games/peak.md) · [Fortnite](games/fortnite.md) · [League of Legends / Dota 2](games/league-of-legends-and-dota-2.md) · [Path of Exile / Path of Exile 2 / Diablo IV](games/path-of-exile-path-of-exile-2-and-diablo-iv.md).
-
-### Cautionary cases and language-driven creation
-
-[Dreams / Project Spark](games/dreams-and-project-spark.md) · [EverQuest Next](games/everquest-next.md) · [Worlds Adrift](games/worlds-adrift.md) · [Spore](games/spore.md) · [No Man's Sky](games/no-man-s-sky.md) · [Ultima Online ecology](games/ultima-online-s-ecology.md) · [Scribblenauts](games/scribblenauts.md) · [AI Dungeon](games/ai-dungeon.md).
-
-### Expanded tactical, open-world and party-RPG dossiers
-
-The [G61–G80 reading index](dossiers/README.md) links the full-category studies from Fire Emblem: Path of Radiance through Final Fantasy III. These dossiers supplement the earlier game chapters rather than replacing them. The [roster](research-roster.md) retains all other ranges and their exact subject boundaries; the [progress ledger](research-progress.md) alone owns completion status.
-
-## Deeper reading by system
-
-The [granular study index](mechanics/README.md#detailed-system-studies) links twenty-five extended studies. They supplement, rather than replace, the game chapters above. Subjects include wand payloads, factory feedback loops, object blueprints, environment-powered magic, transformations, triggered meals, artifact history, social knowledge, seasonal opportunities, useful creature workers, cooperative information, language-driven objective recognition, and knowledge as progression. Additional studies examine injury and rescue, equipment combinations, redstone and auto-crafting, production orders, reusable contraptions and game modes, authored character callbacks, configurable offscreen autonomy, and information-changing spells.
-
-The expanded set also covers ordered scoring and copy effects in Balatro; deck compatibility and information tradeoffs in Slay the Spire; automated targeting and different cooperative modes in Vampire Survivors; recipe substitution and settlement pressure in Against the Storm; resource circuits and authored discoveries in Core Keeper; and shared burdens, spatial tools, and rescue in PEAK. Their production and reception sections explain the supporting evidence and its limits rather than presenting one universal success formula.
-
-Start with a game chapter for its overall promise, history, reception, and videos. Follow a granular study to understand individual rules and their consequences. Use the [interaction lookup](mechanics/interaction-lookup.md) when the starting point is a design question rather than a game name. Return to the cross-game essays to compare the design tensions. Each study includes its own source annotations and labels worked examples separately from attributed incidents. Outer Wilds' specific discoveries are spoiler-marked.
-
-## Evidence and preservation
-
-[Evidence interpretation](essays/how-to-interpret-the-evidence.md) · [Review notebook](references/review-evidence.md) · [Popularity/economics ledger](references/popularity-and-economics.md) · [Source annotations](references/sources-01.md) · [Original bibliography](references/master-bibliography.md) · [Earlier additional findings](references/earlier-additional-findings.md) · [Supplied packet provenance](references/packet-provenance.md).
-
-The previous master has been divided into game chapters and cross-game essays without turning it into a summary. Reviews, named features, concrete examples, creator accounts, videos, economic history, cautions, and conclusions are retained. Earlier paragraphs absent verbatim from the enriched edition are retained separately to avoid silent information loss. The standalone field guide remains available as a convenient reading route.
-
-Historical figures keep their measurement dates. Imported research claims are not a fresh synchronized market census; source availability and confidence vary. A player story is an attributed report, a mechanic description is not necessarily a source-code audit, and a proposed explanation of success is not controlled causal evidence. Videos were identified from titles/descriptions, not watched in full; do not invent timestamps. See each source's limitations.
-
-Specific item and character names identify reference examples, not proposed OpenLegend names. Borrow design patterns rather than copying protected assets, dialogue, distinctive fictional settings, or branding. Reference media is linked, not redistributed.
-
-The existing engineering, product, and world-design owners remain authoritative for OpenLegend. This library grants no implementation, spending, permissions, or runtime changes.
+The [roster](research-roster.md) retains all other subjects and their canonical output paths. Completing this slice does not certify the separate 130-subject integration or seven-file packet-preservation audit; those gates remain explicitly tracked in [research progress](research-progress.md#final-integration-gates--pending).
