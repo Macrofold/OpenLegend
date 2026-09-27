@@ -1,10 +1,10 @@
 # Final Fantasy XI — full research dossier
 
-**G88 · Complete research pass, September 26, 2026.** This dossier treats *Final Fantasy XI* as a **24-year evolving MMORPG**, not a frozen 2002/2003 launch artifact. Launch-era reviews are preserved because they explain the game's original social contract; current-system claims are grounded in Square Enix's official 2023–2026 returning-player guides and September 2026 service state. PlayStation 2/Xbox 360 support, original level-cap assumptions, pre-Trust party requirements, and later PC-only operation are kept distinct. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G88 · Research pass and corrective coverage review, September 26, 2026.** This dossier treats *Final Fantasy XI* as a **24-year evolving MMORPG**, not a frozen 2002/2003 launch artifact. Launch-era reviews are preserved because they explain the game's original social contract; current-system claims are grounded in Square Enix's official 2023–2026 returning-player guides and September 2026 service state. PlayStation 2/Xbox 360 support, original level-cap assumptions, pre-Trust party requirements, and later PC-only operation are kept distinct. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
 The central OpenLegend relevance is unusually strong: FFXI models a persistent world in which **one character can inhabit many professions, social groups and long-term equipment identities**, while combat's most distinctive power comes from timed cooperation between separately controlled people. Its 2013→2026 Trust evolution is also a rare live experiment in what happens when a socially interdependent MMORPG gradually makes its story and progression solo-accessible.
 
-No personal playthrough is claimed. Current population cannot be inferred from unofficial census sites; official congestion evidence is used without fabricating global MAU.
+No personal playthrough is claimed. Current population cannot be inferred from unofficial census sites; official congestion evidence is used without fabricating global MAU. The corrective pass preserves the original research and adds operative activity/acquisition rules and complete situations. **Section 27 contains Chains of Promathia character and ending spoilers.** Historical mode schedules and guide prices are not current service promises.
 
 ## 1. Identity, current scope and the changing player promise
 
@@ -213,6 +213,12 @@ OpenLegend can generalize that:
 
 need not be identical state.
 
+### Learning a spell is not the same as holding its scroll
+
+Many spells require consuming the appropriate scroll after meeting its job/level conditions. Scrolls can come from shops, rewards or drops and eligible ones can circulate through trade. Learning persists on the character: a spell learned under one eligible job need not be bought again when another eligible job reaches its own requirement. The current job or support-job level still constrains use. **Instant** effect scrolls are a different category; consuming an Instant Warp does not permanently teach Warp. Blue Magic's monster-learning route is another exception to treating every ability as a purchased book. [FFXI48](#ffxi48)
+
+**Interpretation:** permission, possession, learned knowledge and practiced fluency are four distinct states. A market can move the learning opportunity between people without making learned expertise itself a tradable object. A player needs to see which state is missing when an expected action is unavailable.
+
 ## 8. Combat: continuous positioning plus scheduled actions
 
 FFXI combat is not a separate turn-based screen.
@@ -418,6 +424,12 @@ The downside is enormous complexity and inventory pressure. Modern FFXI accumula
 
 OpenLegend should borrow situational equipment value, not the inventory-management burden.
 
+### Storage and exchange are distinct restrictions
+
+**Rare** primarily limits duplicate possession; it does not mean that an item is unique across the whole world or untradeable. **Exclusive (Ex)** restricts exchange with other players through trade, Bazaar and Auction House. Some Ex items can still be sold to NPCs, and eligible same-account delivery exceptions must be checked per item. Inventory, ordinary storage, delivery boxes and NPC storage do not all impose an identical duplicate rule. [FFXI49](#ffxi49)
+
+**Interpretation:** a full wardrobe, an item that cannot be transferred and an item that cannot be acquired twice are different problems. The interface needs to identify the actual restriction rather than suggesting that more storage or another character universally solves it.
+
 ## 18. Death and loss preserve stakes
 
 FFXI historically made K.O. costly through experience loss and possible level loss.
@@ -525,6 +537,12 @@ Historically, synthesis and the Auction House created a deeply interdependent pl
 
 The official Vana'diel census itself discussed auction activity, crafting demand and RMT enforcement. [FFXI27](#ffxi27)
 
+### A named transformation: Orange Juice
+
+**Water Crystal + four Saruta Oranges → Orange Juice** is a Cooking recipe. The drink grants temporary MP recovery; it is not permanent Magic skill growth. The output occupies inventory differently from a stack of ingredients, and synthesis can fail. The opportunity therefore includes sourcing, competence, carrying capacity and the moment at which to consume or sell the result. Historical vendor/Auction House prices are not reused as current profitability advice. [FFXI50](#ffxi50)
+
+**Interpretation:** an inexpensive recipe can demonstrate a whole production system. The value of the bottle depends on another intended activity, not solely the price of the inputs. Producing everything in advance and carrying ingredients for later preparation impose different risks and attention costs.
+
 ## 22. Mog House: persistent private space with mechanical value
 
 Every adventurer receives a Mog House.
@@ -546,6 +564,16 @@ This is not full freeform housing architecture, but it gives the player:
 - service hub.
 
 OpenLegend should go much further: housing can be a physical object in the shared simulation with ownership, guests, storage, workspaces, safety and social meaning.
+
+### Mog Garden and other noncombat loops
+
+**Mog Garden** is a separate personal production space. After the relevant nation-rank or pioneer access, a dinghy or Adoulin service provides entry. Limited daily harvests at its gathering sites build usage toward purchased rank upgrades; a combat level alone does not mature the garden. Gathering, spending for infrastructure and collecting later output are different steps. [FFXI47](#ffxi47)
+
+Its **monster rearing** adds feeding, care and growth choices. Caring for a creature can yield a memento, which connects to an active cheer and shop access; it is not simply another summoned combat pet. Growth and mood affect the relationship's practical outcome, while the player chooses whether to keep developing the creature or preserve its present form. These are bounded rearing rules rather than general animal autonomy. [FFXI57](#ffxi57)
+
+**Chocobo digging** spends Gysahl Greens to obtain materials while riding, with trained attributes affecting the activity. Circuit participation instead concerns a raised racing bird and a separate contest/reward context; attending and wagering from the grandstand is not directly steering one's mount through an ordinary field. Fishing likewise has species/rod progression, including upgrade quests for Lu Shang's and Ebisu rods. The official returning guide treats these as distinct pursuits, not interchangeable forms of combat experience. [FFXI47](#ffxi47)
+
+**Interpretation:** a durable world can offer growing competence without constantly increasing damage. The important boundary is whether a player is improving a tool, a creature, a site or their own skill. Hiding those owners behind one progress bar would make the next useful action harder to understand.
 
 ## 23. Linkshells: communication objects become communities
 
@@ -627,6 +655,14 @@ That separation protected the cooperative shared-world contract:
 
 OpenLegend should similarly treat violence permissions as world laws/context, not assume every shared reality must allow unrestricted player killing.
 
+### Their objectives create different uses for fighting
+
+**Ballista** combines quarrying **Petras**, gaining **Gate Breach** through successful combat and delivering stones into a **Rook** to score. Official rules place the contest inside licensed, scheduled participation; the 2004 fees and level timetable remain historical. Defeating an opponent opens a scoring opportunity rather than being the complete objective. Team coordination must link the fighter, carrier and route. [FFXI51](#ffxi51)
+
+**Brenner** instead asks teams to seize **Flammes** from opposing burners and light their own. Holding the full required arrangement creates victory, so defending an established lead matters as well as attacking. The official introduction uses Afdeen in Upper Jeuno for access and distinguishes official from player-organized matches at Isle-Purgonorgo. It explicitly does not require a Ballista license; expansion access and the chosen match's rules still matter. Neither mode's historical existence certifies a populated match queue in September 2026. [FFXI52](#ffxi52)
+
+**Interpretation:** the objective changes which fight is useful. Pursuing one more opponent can be worse than protecting someone who already has what is needed to score. Bounded competition also permits a different failure contract from ordinary field adventuring without turning every stranger into a persistent enemy.
+
 ## 27. Story: an MMO with authored Final Fantasy campaigns
 
 A major launch differentiator was that FFXI contained long authored mission storylines and cinematic cutscenes.
@@ -652,6 +688,14 @@ The current Ultimate Collection includes the five boxed expansions plus add-ons.
 - ties story progression into Prime Weapon forging/upgrading and Sortie currency. [FFXI32](#ffxi32) [FFXI33](#ffxi33)
 
 This is one of FFXI's best achievements: a persistent MMO character can still participate in **authored story arcs with endings**, rather than the world requiring one endless plot.
+
+### Prishe and Ulmia: a specific life inside the expansion — spoilers
+
+**Chains of Promathia spoilers.** The official character pages introduce Prishe through the stigma attached to her and her theological upbringing, and Ulmia as an elder's granddaughter whose singing and concern for Prishe matter. The player meets particular Tavnazian survivors rather than an interchangeable faction quest terminal. [FFXI53](#ffxi53)
+
+The story's suspicions repeatedly misidentify the Keeper of the Apocalypse. Prishe's embedded magicite and apparently unchanging youth make her an object of fear, but she actively challenges the proposed destruction of humanity. Ulmia searches for her friend and recovers missing knowledge of the sacred song. At the Empyreal Paradox, Prishe and Selh'teus participate alongside the adventurer against Promathia. Afterward Prishe returns with Ulmia to Tavnazia; her magicite dissolves and mortality returns. This is an authored character resolution, not a permanently branching choice available to every group. [FFXI54](#ffxi54)
+
+**Interpretation:** the expansion can make losing an extraordinary property a hopeful ending because ordinary life and companionship are what the character gains. It also lets a player-created adventurer contribute without making all other characters passive. Modern solo access changes how a person reaches these scenes, not the fact that the story has named participants and a defined conclusion.
 
 ## 28. Expansion history changed mechanics as much as geography
 
@@ -698,6 +742,22 @@ This supports different long-horizon goals:
 - social/endgame group leadership.
 
 **OpenLegend lesson:** persistent worlds survive longer when they support several durable identities rather than one universal “raid score.”
+
+### Entry, objective, reward and persistence are different contracts
+
+**Ambuscade:** Gorpa-Masorpa in Mhaura and Records of Eminence lead to the primer key item required by each participant. Select Normal or Intense and a difficulty at the Tome, then solve that month's encounter. A successful clear consumes the primer; defeat does not. Hallmarks buy rewards and also count toward cumulative milestones, while Gallantry rewards actual player grouping rather than a party filled only with Trusts. Monthly currency resets make spending before the update a separate concern from winning a fight. Augmentable job capes are one concrete continuing equipment goal. [FFXI46](#ffxi46)
+
+**Omen:** complete the required Rhapsodies progression, obtain each participant's mystical canteen from Incantrix and enter through Reisenjima's concrescence. Floor objectives and branching routes let the group emphasize job cards or bosses. Rewards develop Artifact armor and provide equipment; choosing a route is therefore also choosing a development goal. A higher item level does not itself replace the entry key or fulfilled story condition. [FFXI10](#ffxi10)
+
+**Odyssey exploration:** a moglophone opens a timed Sheol expedition from Rabao. Fighting creates party-shared **izzat**, which can open chests and is lost when the expedition ends; it is not a bankable currency. Loot supplies equipment augmentation. The later system also awards persistent **Moogle Segments**, which can fund a different entry item. [FFXI56](#ffxi56) [FFXI10](#ffxi10)
+
+**Sheol: Gaol:** the separate moglophone II route leads to selected bosses under stricter party/job rules. Wins unlock associated merchant gear; higher-difficulty fights supply augmentation progress. It is not merely another floor of the same chest expedition. [FFXI10](#ffxi10)
+
+**Sortie:** the documented entry conditions include the relevant Adoulin and Rhapsodies milestones and a shiny Ra'Kaznarian plate from Ruspix. The plate becomes dull on entry and recharges; participants cannot bypass its state because someone else can enter. Monsters and fulfilled conditions supply chests, gallimaufry, gear-upgrade materials and appraisal opportunities. The original note specifies Adoulin through **The Light Within**, so a broader guide's “complete Seekers” shorthand is not substituted for that precise requirement. [FFXI55](#ffxi55)
+
+Some Sortie objectives involve examining a target without equipment or discarding a temporary item rather than maximizing kills. Gallimaufry supports Empyrean and Prime development. This makes knowing the objective an independent form of progress. [FFXI10](#ffxi10)
+
+**Interpretation:** each activity asks what should persist: an item's development, a score toward this month's exchange, an expedition resource, access to a boss or knowledge of a hidden condition. Calling all of these a grind conceals the decisions; promising that every currency is permanent would conceal real loss boundaries.
 
 ## 30. Current participation: evidence of resurgence without fake population math
 
@@ -886,6 +946,8 @@ These are qualitative anecdotes, not prevalence estimates.
 
 ## 37. Concrete interaction studies
 
+**These are constructed illustrations, not named players' recorded sessions or personally tested optimal routes.** The original five examples are retained and completed with consequences, next decisions and limits; the later examples broaden the activity coverage.
+
 ### A. Player-created combat language: Skillchain → Magic Burst
 
 **Situation:** six humans fight an enemy weak to Ice/Water-related properties.
@@ -898,6 +960,8 @@ These are qualitative anecdotes, not prevalence estimates.
 6. mage has preselected/cast-timed corresponding magic;
 7. Magic Burst magnifies value;
 8. party success comes from shared timing/knowledge rather than one build's DPS.
+
+**Named contrasting example:** the official lesson uses **Flat Blade → Gust Slash → Detonation**, creating a **Wind** chain. The earlier Ice/Water situation needs its own compatible sequence; these named skills are not falsely assigned to those elements. After Detonation, the next decision is whether a suitable Wind spell can land in the burst window or whether recovery is more urgent. **Limit:** available TP, eligible weapons/skills and a surviving target are prerequisites; two good attacks used too far apart do not create the intended joint result. The old lesson's blanket restriction on repeating a skill is not adopted for every later multi-property skill. [FFXI14](#ffxi14) [FFXI15](#ffxi15)
 
 **OpenLegend implication:** group expertise can be encoded as temporal protocols players learn socially.
 
@@ -912,7 +976,7 @@ These are qualitative anecdotes, not prevalence estimates.
 5. retain same name, nationality, story completion, Linkshells and social reputation;
 6. level new job independently.
 
-The character's **life history remains continuous** while profession changes.
+The character's **life history remains continuous** while profession changes. **Next decision:** obtain the new role's missing equipment or learning sources before entering the intended activity. **Limit:** having learned a spell under another job does not make it usable below the new job's applicable level, nor does a familiar armor appearance override equipment permissions. The switch preserves history, not universal readiness. [FFXI01](#ffxi01) [FFXI48](#ffxi48)
 
 ### C. Creature/AI companionship replacing unavailable humans
 
@@ -925,7 +989,7 @@ The character's **life history remains continuous** while profession changes.
 5. enter formerly party-gated content;
 6. complete story without recreating the 2004 population distribution.
 
-This demonstrates compatibility through **substitute agents**, not a separate “solo mode.”
+This demonstrates compatibility through **substitute agents**, not a separate “solo mode.” **Next decision:** alter the companion mix when a particular mechanic defeats the first plan. **Limit:** these preparation steps are a permissive example, not a minimum level required to begin the story or proof every encounter can be delegated completely. Engagement triggers and bounded Trust behavior still matter. [FFXI17](#ffxi17) [FFXI19](#ffxi19)
 
 ### D. Player economy as dependency network
 
@@ -938,7 +1002,7 @@ This demonstrates compatibility through **substitute agents**, not a separate �
 5. sell output through AH/Bazaar/direct trade;
 6. buyer turns economic output into combat/progression capability.
 
-Unlike a universal vendor economy, the value chain passes through several people/activities.
+Unlike a universal vendor economy, the value chain passes through several people/activities. **Named small-scale case:** turn a Water Crystal and four Saruta Oranges into Orange Juice for a coming MP-intensive outing. **Next decision:** carry finished bottles, preserve ingredients for later production or sell eligible output. **Limit:** input availability is not guaranteed synthesis success or profit; a market asking price is not a completed sale. A cheap consumable is sufficient to expose those dependencies without inventing a lucrative high-end recipe. [FFXI24](#ffxi24) [FFXI50](#ffxi50)
 
 ### E. Story progression creates mechanical infrastructure
 
@@ -950,7 +1014,19 @@ Unlike a universal vendor economy, the value chain passes through several people
 4. later obtain mounts/airship access;
 5. repeated trips compress from long expeditions to routine travel.
 
-World mastery becomes infrastructure.
+World mastery becomes infrastructure. **Next decision:** choose a useful newly accessible route rather than repeat the old journey by habit. **Limit:** registering one network's destination does not automatically register every other system or satisfy a separate permission requirement. Convenience should follow the actually unlocked infrastructure, not an assumed universal fast-travel flag. [FFXI17](#ffxi17)
+
+### F. A victory is useful only if it becomes a score
+
+**Intention:** help a Ballista team win rather than merely chase opponents. **Conditions:** a carrier has Petras and a scoring opportunity. **Actions:** use the combat opening to approach a Rook and deliver the stones, while allies contest interception. **Interaction:** acquisition, battle and movement form a scoring chain. **Result:** a successful fight becomes points instead of only a temporary absence of an enemy. **Next choice:** gather again or defend another carrier. **Limit:** winning a duel does not itself deposit the carried resource. [FFXI51](#ffxi51)
+
+### G. Choose an attainable reward before committing to a monthly fight
+
+**Intention:** obtain an Ambuscade equipment reward. **Conditions:** the primer is ready, but the current party may not handle the highest difficulty. **Actions:** select an appropriate encounter/difficulty, clear it and inspect earned currency and milestones. **Interaction:** encounter choice and the monthly spending horizon affect the value of a session. **Result:** consistent progress can be preferable to repeated failed attempts at a theoretically larger payout. **Next choice:** spend, obtain another primer or recruit real players for a different reward path. **Limit:** Trust companions do not count as humans for Gallantry, and holding a currency past reset is not saving it indefinitely. [FFXI46](#ffxi46)
+
+### H. Recognizing the objective can beat killing another enemy
+
+**Intention:** obtain a Sortie conditional reward. **Conditions:** the party knows a particular chest condition requires an interaction or temporary-item action. **Actions:** satisfy that condition while maintaining safety instead of assuming another kill is the only way forward. **Interaction:** inventory state and observation become encounter actions. **Result:** the expedition can yield development resources through knowledge as well as damage. **Next choice:** pursue another condition or a boss appropriate to the remaining time. **Limit:** the trigger must be the actual documented condition; arbitrary ritual actions do not generate new rewards. [FFXI10](#ffxi10)
 
 ## 38. Comprehensive mechanics inventory
 
@@ -960,32 +1036,32 @@ World mastery becomes infrastructure.
 | Classes/jobs | 22 independently leveled jobs on one character |
 | Multiclassing | Main job + support job; Master Levels extend support cap |
 | Attributes/skills | Character/job levels, weapon/magic skill-by-use, merits/job points/master levels |
-| Ability learning | Job-level abilities/spells, skill-gated Weapon Skills, Blue Magic, job systems |
+| Ability learning | Job abilities, consumed spell scrolls, skill-gated Weapon Skills, Blue Magic and job systems; knowledge differs from current permission |
 | Equipment | Job/level requirements, vast situational sets, Artifact/Relic/Empyrean/job weapons |
-| Items/inventory | Consumables, crystals, currencies, key items, crafting mats, storage/wardrobes |
-| Crafting | Crystal synthesis, guild skills, HQ/success, cooking and multiple craft professions |
-| Gathering | Fishing/mining and content-specific gathering; crafting inputs circulate economically |
+| Items/inventory | Consumables, crystals, currencies, key items, mats and wardrobes; Rare duplicate restriction differs from Ex exchange restriction |
+| Crafting | Crystal synthesis, guild skills, HQ/success, cooking and multiple craft professions; named Orange Juice chain |
+| Gathering | Fishing/mining, Mog Garden harvests and chocobo digging; outputs feed production and exchange |
 | Magic | Multiple schools/jobs; MP; buffs/debuffs/healing/damage/utility; Magic Bursts |
 | Combat | World-space autoattack + abilities/spells + TP Weapon Skills + enmity/position |
-| Cooperative combat | Skillchains/Magic Bursts create timing-dependent joint effects |
+| Cooperative combat | Skillchains/Magic Bursts create timing-dependent joint effects; named Wind sequence in §37 |
 | NPC companions | 100+ Trust alter egos; up to five with player; 2026 alter-ego progression |
-| Pets | Beastmaster pets, Dragoon wyvern, Summoner avatars, Puppetmaster automaton etc. |
+| Pets | Beastmaster pets, Dragoon wyvern, Summoner avatars, Puppetmaster automaton etc.; garden rearing is a separate activity |
 | Traversal | Walking, chocobo, ferry, airship, teleport/warp, Home Points, Survival Guides, mounts |
 | Environment | Large zoned persistent world, weather/day/night, aggro/leash rules; not physics sandbox |
-| Activities | Story, quests, crafting, fishing, chocobo systems, seasonal events, PvP modes, lotteries |
+| Activities | Story, quests, crafting, fishing, chocobo digging/racing, garden/rearing, seasonal events, PvP modes, lotteries |
 | Economy | Gil, Auction House, Bazaar, direct trade, NPC/guild shops, player crafting |
-| Death/failure | K.O., Raise, EXP/exemplar loss under applicable rules; old penalties historically harsher |
-| Story | Nation missions + five expansions + add-ons + Rhapsodies + Voracious Resurgence |
+| Death/failure | K.O., Raise, EXP/exemplar loss under applicable rules; event and currency resets need separate contracts |
+| Story | Nation missions + five expansions + add-ons + Rhapsodies + Voracious Resurgence; named Prishe/Ulmia arc in §27 |
 | Relationships | Primarily player-created social bonds and authored NPC stories; no general NPC affinity sim |
 | Party | Six-person parties; larger alliances; role composition historically central |
 | Social systems | Linkshells, tells/chat, friend list, search, Assist Channel, party/alliance tools |
 | NPC/AI | Scripted NPCs plus role-authored Trust AI; no general autonomous social simulation |
 | Factions | Nations/Conquest, expansion factions; mostly authored/state systems |
-| Housing | Mog House personal space, furnishings/storage/gardening/service functions |
-| PvP | Opt-in bounded modes such as Ballista/Brenner, not open-world default |
+| Housing | Mog House personal space, furnishings/storage/gardening/service functions; Mog Garden is distinct infrastructure |
+| PvP | Ballista quarry/combat/delivery and Brenner flame-control objectives; opt-in rather than open-world default |
 | Quests/events | Persistent quest/missions plus monthly/seasonal/service events |
 | Building/settlements | No freeform player settlement construction |
-| Endgame | Multiple overlapping content/currency/gear paths rather than one linear raid tier |
+| Endgame | Ambuscade encounters/exchanges, Omen objectives/branches, Odyssey expeditions/Gaol and Sortie conditions; distinct entry and reward rules |
 | Monetization | Box/digital collection + $12.95/30-day subscription; extra character options |
 | Current platform | Windows service; PS2/Xbox 360 ended March 2016 |
 | Current free-trial progression | Level cap raised to 75 in September 2026 |
@@ -1066,24 +1142,24 @@ Classic party waits and travel helped create memorable social stories, but also 
 
 ## 40. Preservation and requirement audit
 
-No FFXI-specific prior game/mechanics/dossier owner existed on this branch before G88, so this pass is additive.
+No FFXI-specific prior game/mechanics/dossier owner existed on this branch before G88, so this pass is additive. The corrective pass retains the original sections, five examples, critical/player evidence and FFXI01–45 sources. It develops their missing operative detail rather than treating an endgame or pastime list as sufficient research. Added recommendations remain hypotheses, not accepted OpenLegend requirements.
 
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / scope / promise | §§1–3 |
-| R02 actions / major mechanics | §§4–29, 37–38 |
-| R03 items / entities / composition | §§5–7, 12–17, 20–23 |
-| R04 progression / economy / time | §§15–22, 29–31 |
-| R05 concrete interactions | §§9–10, 12–13, 20–25, 37 |
-| R06 people / AI / social / multiplayer | §§11–14, 20, 23–26, 36–38 |
+| R02 actions / major mechanics | §§4–29, 37–38; expanded activity operations |
+| R03 items / entities / composition | §§5–7, 12–17, 20–23; scroll, Rare/Ex and named recipe |
+| R04 progression / economy / time | §§15–22, 29–31; distinct temporary/monthly/persistent rewards |
+| R05 concrete interactions | §37: eight completed situations, including named chain/craft and contrasting objectives |
+| R06 people / AI / social / multiplayer | §§11–14, 20, 23–27, 36–38 |
 | R07 art / audio / interface / feel | §§31, 34–36 |
-| R08 story / narrative / play | §§25, 27–28 |
+| R08 story / narrative / play | §§25, 27–28; spoiler-marked Prishe/Ulmia arc |
 | R09 production / development | §§28, 32–33 |
 | R10 marketing / distribution / virality | §§2, 30–33 |
 | R11 commercial / participation | §§30–31, 36 |
 | R12 reviews / player feedback | §§35–36 |
-| R13 transferable inspiration / limits | §39 |
-| R14 sources / viewing / preservation / navigation | §§2, 40 + annotated sources |
+| R13 transferable inspiration / limits | §39 and labeled local interpretation |
+| R14 sources / viewing / preservation / navigation | §§2, 40 + annotated sources; old numbered routes preserved |
 
 ### Evidence limits
 
@@ -1091,11 +1167,13 @@ No FFXI-specific prior game/mechanics/dossier owner existed on this branch befor
 - PS2/Xbox 360 are historical platforms; current service is Windows.
 - Current official global subscriber/MAU numbers are unavailable in inspected sources.
 - Server congestion is evidence of concentrated demand, not a global population estimate.
-- Five substantive reviews were inspected across four independent publications.
+- Five substantive reviews were inspected across four independent publications in the original pass; those readings are not falsely represented as repeated by this correction.
 - Steam aggregate was accessible, but Steam helpful review bodies were not retrievable through the available web surface after a direct attempt. This limitation is recorded; accessible current Reddit player testimony is used as qualitative supplementary evidence instead.
 - Player-community posts are self-selected and not representative prevalence estimates.
 - Private servers are not used as evidence for retail mechanics.
-- No unseen video is represented as watched.
+- New official guides, historical rules and community references support the added activities. Historical costs and battle schedules are not certified current; the precise Sortie release-note prerequisite takes precedence over simplified guide wording.
+- No unseen video is represented as watched. Useful further viewing targets are the actual Skillchain/burst timing, an Omen branch, a Sortie conditional chest, a garden-care interaction and a Ballista scoring attempt. Linked guides supply reading routes, not invented timestamps or playback claims.
+- Final slice-wide link/source-tail review and the seven-file packet audit are separate from completing these content repairs.
 
 ## 41. Completion conclusion
 
@@ -1139,7 +1217,7 @@ For OpenLegend:
 
 <a id="ffxi09"></a>**FFXI09 — [Final Fantasy XI Review](https://www.gamespot.com/reviews/final-fantasy-xi-review/1900-6083638/).** Greg Kasavin, GameSpot, 2003-11-14. Full PC launch review; job switching, six-player groups, support jobs, Skillchains, crafting/trade/housing, PlayOnline/install and forced-grouping evidence.
 
-<a id="ffxi10"></a>**FFXI10 — [Returning Adventurer Guide Vol. 6](https://we-are-vanadiel.finalfantasyxi.com/post/?id=721&lang=en).** Square Enix, 2023. Primary current Master Level/Exemplar Point/support-job cap and current battle-content progression reference.
+<a id="ffxi10"></a>**FFXI10 — [Returning Adventurer Guide Vol. 6](https://we-are-vanadiel.finalfantasyxi.com/post/?id=721&lang=en).** Square Enix, 2023. Primary current Master Level/Exemplar Point/support-job cap and current battle-content progression reference. Corrective pass reread Omen, Sortie and Odyssey sections; the narrower Sortie release-note prerequisite is separately preserved in FFXI55.
 
 <a id="ffxi11"></a>**FFXI11 — [WE DISCUSS VANA'DIEL: Seekers job design](https://we-are-vanadiel.finalfantasyxi.com/post/?id=764&lang=en).** Square Enix. Developer interview with Yasuhiro Taniguchi; Rune Fencer was partly inspired by player-created Red Mage tanking.
 
@@ -1147,7 +1225,7 @@ For OpenLegend:
 
 <a id="ffxi13"></a>**FFXI13 — [Vana'diel Tribune: Weapon Skills](https://www.playonline.com/ff11us/guide/development/vt/extra/02-2.html).** Square Enix. Official in-world explanation connecting weapon-skill acquisition to practiced combat skill.
 
-<a id="ffxi14"></a>**FFXI14 — [Vana'diel Tribune: Skillchains](https://www.playonline.com/ff11us/guide/development/vt/extra/03-1.html) and [higher-level chains](https://www.playonline.com/ff11us/guide/development/vt/extra/03-2.html).** Square Enix. Official chain-property/order examples.
+<a id="ffxi14"></a>**FFXI14 — [Vana'diel Tribune: Skillchains](https://www.playonline.com/ff11us/guide/development/vt/extra/03-1.html) and [higher-level chains](https://www.playonline.com/ff11us/guide/development/vt/extra/03-2.html).** Square Enix. Official chain-property/order examples. Corrective pass read the named Flat Blade/Gust Slash/Detonation sequence; sweeping old repetition restrictions are not generalized to every later skill.
 
 <a id="ffxi15"></a>**FFXI15 — [FINAL FANTASY XI Battle Guide](https://www.playonline.com/ff11us/guide/system/battle.html).** Square Enix. Official Weapon Skill, Skillchain and Magic Burst overview.
 
@@ -1210,3 +1288,31 @@ For OpenLegend:
 <a id="ffxi44"></a>**FFXI44 — [Final Fantasy XI Review](https://www.gamingnexus.com/Article/406/Final-Fantasy-XI).** Tyler Sager, Gaming Nexus, 2003-12-30. Full PC review; install/interface/commitment criticism plus stable service/social-content praise.
 
 <a id="ffxi45"></a>**FFXI45 — [Worth returning in 2026?](https://www.reddit.com/r/ffxi/comments/1qu1kde/worth_returning_in_2026/).** Reddit discussion, February 2026. Qualitative veteran testimony: modern leveling/story is much more solo-friendly through Trusts, while endgame still benefits strongly from real-player communities.
+
+### Corrective-pass sources
+
+Accessed September 26, 2026. Primary guides and historical update text are distinguished from community rules and narrative summaries. Source passages were inspected, not their embedded footage. Old prices, schedules and incomplete launch descriptions are not current service guarantees.
+
+<a id="ffxi46"></a>**FFXI46 — [Returning Adventurer Guide Vol. 5](https://we-are-vanadiel.finalfantasyxi.com/post/?id=712&lang=en).** Square Enix, 2023. Entry, difficulty, primer consumption, Hallmarks/Gallantry and equipment-development passages read. Selected strategies are guidance, not universal minimum party requirements.
+
+<a id="ffxi47"></a>**FFXI47 — [Returning Adventurer Guide Vol. 3](https://we-are-vanadiel.finalfantasyxi.com/post/?id=695&lang=en).** Square Enix, 2023. Nonbattle systems, Mog Garden, fishing and chocobo passages read. The garden is not the Mog House interior, and spectatorship is not directly controlled racing.
+
+<a id="ffxi48"></a>**FFXI48 — [Category: Scrolls](https://ffxiclopedia.fandom.com/wiki/Category:Scrolls) and [Scroll](https://ffxiclopedia.fandom.com/wiki/Scroll).** FFXIclopedia, community rules reference. Consumed learning, job/level permission and instant-effect distinction inspected. No private-server rules imported.
+
+<a id="ffxi49"></a>**FFXI49 — [Rare](https://ffxiclopedia.fandom.com/wiki/Category:Rare) and [Exclusive](https://ffxiclopedia.fandom.com/wiki/Category:Exclusive).** FFXIclopedia. Operative restrictions and exceptions read; editorial “one in existence” shorthand rejected. Same-account delivery eligibility is not universal.
+
+<a id="ffxi50"></a>**FFXI50 — [Orange Juice](https://ffxiclopedia.fandom.com/wiki/Orange_Juice) and [retail recipe cross-check](https://www.bg-wiki.com/ffxi/Orange_Juice).** Retail community item references. Substantive indexed recipe/effect and inventory text inspected after direct-page errors. Historical price suggestions and unrelated private-server results excluded.
+
+<a id="ffxi51"></a>**FFXI51 — [Official Ballista rules](https://www.playonline.com/comnews/200404225213.html), April 22, 2004, and [Vana'diel Tribune account](https://www.playonline.com/ff11us/guide/development/vt/26/02-2.html).** Square Enix. Japanese rules page opened; English operative scoring text read through substantive indexed access after direct retrieval failed. Historical rules and schedules, not current population evidence.
+
+<a id="ffxi52"></a>**FFXI52 — [February 2006 update: Brenner](https://www.playonline.com/pcd/update/ff11us/20060221ALyQT2/detail.html).** Square Enix. Full relevant flame-control, access and match-type rules read. Historical level/fee tables not represented as current.
+
+<a id="ffxi53"></a>**FFXI53 — Official Chains of Promathia cast pages: [Prishe](https://www.playonline.com/ff11us/promathia/cast/prishe.html) and [Ulmia](https://www.playonline.com/ff11us/promathia/cast/ulmia.html).** Square Enix. Short descriptive text inspected, including image alternative text; establishes introductions, not the entire plot.
+
+<a id="ffxi54"></a>**FFXI54 — [Chains of Promathia story](https://finalfantasy.fandom.com/wiki/Final_Fantasy_XI:_Chains_of_Promathia).** Final Fantasy Wiki, secondary narrative summary. Named-character and late-chapter passages through the ending read. Character outcomes not inferred from artwork, and no scene playback or full script reading claimed.
+
+<a id="ffxi55"></a>**FFXI55 — [August 10, 2022 update notes](https://ffxiclopedia.fandom.com/wiki/2022_-_%2808/10/2022%29_The_August_Version_Update_Has_Landed%21).** Original official patch text preserved by a community host. Substantive prerequisite, entry-plate and reward passages inspected. The initial temporary NPC disable is not erased by calling the whole release instant access; current activity confirmation comes from later FFXI10.
+
+<a id="ffxi56"></a>**FFXI56 — [March 10, 2020 version update](https://forum.square-enix.com/ffxi/threads/56575).** Square Enix, official forum. Odyssey entry, timed expedition and shared temporary izzat passages inspected; later Moogle Segments/Gaol come from FFXI10 rather than being backdated to launch.
+
+<a id="ffxi57"></a>**FFXI57 — [Monster Rearing](https://ffxiclopedia.fandom.com/wiki/Monster_Rearing).** Community activity reference. Substantive indexed care, growth, memento and cheer passages read, alongside the official access introduction in FFXI47. Not a general autonomous-creature simulation or a personally raised animal.
