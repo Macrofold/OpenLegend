@@ -114,6 +114,8 @@ The first playable slice is **parameterized movement through the existing native
 
 ## AC07 — Scoped inspection, search and monitoring
 
+The [embodied-survival implementation](../projects/embodied-survival-tech-design.md#required-versus-selected-information) delivers a narrow AC07.1–AC07.2 consumer: ordinary `inspect-inventory` reads only accessible own possessions, retains exact page IDs and revision-bound continuation, and discloses remaining coverage under [CG04](../limits/cognition.md#cg04). Native checks cover explicit second-page access and stale-cursor refusal; oversized cognition retains the inspection route. No automatic paid pagination or god query is used. Broader search/filter/measurement capabilities remain open; this does not complete AC07.
+
 **Owner:** actor-query/grounding integration; EPR/CR retain sensing and recall. **Depends on:** AC02–AC03, AC06 for composed search; existing sense owners. **Touchpoints:** scoped observation/query projections, `interests.ts`, `actor-work.ts`, recall and EPR intake.
 
 - [ ] AC07.1 Expose permitted inspection/measurement capabilities with their true detail, cost, disturbance and attention requirements. Do not use god inspection or private component dumps.
@@ -143,6 +145,7 @@ The first playable slice is **parameterized movement through the existing native
 - [ ] AC09.3 Use the repertoire's related-mechanic keys to identify gaps. Route fire, fluids, body care, construction, vehicles and special abilities to their actual owners rather than enlarging an action enum or creating placebo effect labels.
 - [ ] AC09.4 Demonstrate compatible repurposing/composition when real interfaces allow it; a pot-as-bell or plank-as-support example remains blocked until its actual acoustic/support mechanics exist.
 - [ ] AC09.5 Keep ordinary invocation available under the appropriate invention lock: a known mechanic's use is not authoring. Definition changes continue through INV.
+- [ ] **AC09.6 — Equipped contact strikes (implemented; acceptance partial).** Deliver the [embodied-survival melee contract](../projects/embodied-survival-tech-design.md#equipped-melee-contract) through text/menu/NPC/plan callers: exact item binding/equipment prerequisites, permitted moving target, inner approach stance, wind-up/impact/recovery, saved-RNG hit/miss and one body-effect commit. Qualify cancellation without attack-speed bypass, equipment/definition loss, target death/lost sight, same-version restore and readable client results. Reuse the existing short plan for repeat attacks, preserve human-target protections and prove another authored melee profile without item-name branches. [BW08](../limits/base-world.md#bw08) owns provisional knife tuning; AG13 owns autonomous behavioral acceptance. [Native/fixture evidence](../verification/embodied-survival.md) covers moving prey, hit/miss, equipment/definition loss, cancellation, recovery, alternate profile and PostgreSQL restore. UI interaction/visuals and Jev-selected attack/retry remain open; no autonomous acceptance is claimed.
 
 **Exit:** at least one additional family passes the same relevant AX contract tests without special cases in every generic layer. Wider catalogue coverage is not inferred from that one example.
 

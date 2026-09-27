@@ -1,4 +1,4 @@
-import { itemFor } from '@open-legend/domain';
+import { itemFor, inventoryFor, accessiblePossession } from '@open-legend/domain';
 import { currentGoal, NATIVE_PREPARATIONS } from '@open-legend/domain';
 import type { WorldState } from '@open-legend/domain';
 import { digest } from './store.js';
@@ -105,4 +105,37 @@ export function interestMatches(
           (definitions.has(definition.id) || definition.properties.some((p) => properties.has(p)))))
     );
   });
+}
+
+/** Inventory changes only wake decisions for semantically selected interests or explicit prerequisites.
+ * Custody/access are checked again; a changed hidden or unrelated object supplies no cue. */
+export function relevantPossessions(
+  world: WorldState,
+  actorId: string,
+  subscription: InterestSubscription | undefined,
+): string[] {
+  const valid =
+    subscription &&
+    subscription.version === 1 &&
+    subscription.goal === digest(currentGoal(world.entities[actorId]!.actor!)) &&
+    subscription.knowledgeRevision === (world.knowledgeRevisions?.[actorId] ?? 0) &&
+    subscription.mindRevision === (world.innerWorlds?.[actorId]?.revision ?? 0) &&
+    world.simTime < subscription.expiresAt;
+  const definitions = new Set([
+    ...planDefinitions(world, actorId),
+    ...(valid ? subscription.definitions : []),
+  ]);
+  const properties = new Set(valid ? subscription.properties : []);
+  if (!definitions.size && !properties.size) return [];
+  return inventoryFor(world, actorId)
+    .filter((item) => {
+      const definition = world.itemDefinitions[item.definitionId];
+      return (
+        accessiblePossession(world, actorId, item.id) &&
+        definition &&
+        (definitions.has(definition.id) || definition.properties.some((p) => properties.has(p)))
+      );
+    })
+    .map((item) => `${item.id}:${item.revision}:${item.quantity}`)
+    .sort();
 }

@@ -27,6 +27,7 @@ export interface Ammunition {
   damageBonus: number;
 }
 export interface ItemDefinition {
+  melee?: import('./strikes.js').MeleeProfile;
   /** Consumed by the installed item-handling mechanic; absent means not portable. */
   portable?: boolean;
   gatheringTool?: { resourceId: string; quantity: number };
@@ -108,6 +109,8 @@ export type ActionType =
   | 'status-effect'
   | 'replenish';
 export interface Action {
+  strikePhase?: 'windup' | 'recovery';
+  strikeOutcome?: 'hit' | 'miss';
   follow?: { distance: number; nextRepathAt: number; lastObservedPosition?: Position };
   id: string;
   type: ActionType;
@@ -141,6 +144,10 @@ export interface CharacterTrait {
 }
 
 export interface ActorComponent {
+  conditions?: Record<string, import('./conditions.js').ConditionEpisode>;
+  /** Attack recovery survives cancelling an already committed swing. */
+  attackReadyAt?: number;
+  inventoryInspection?: { revision: number; after: string; more: boolean; itemIds: string[] };
   participation?: import('./participation-state.js').ParticipationState;
   senses?: string[];
   /** Receiver-private provenance, never part of a contact projection. */
@@ -378,7 +385,7 @@ export type Command = Envelope &
     | { type: 'craft'; recipeId: string }
     | { type: 'replenish'; targetId: string; attributeId: string }
     | { type: 'equip' | 'eat'; itemId: string }
-    | { type: 'strike'; definitionId: string; targetId: string }
+    | { type: 'strike'; definitionId: string; targetId: string; weaponItemId?: string }
     | { type: 'hunt'; targetId: string; weaponItemId?: string; ammoItemId?: string }
     | { type: 'cook'; itemId: string; heatId: string }
     | {
@@ -387,6 +394,7 @@ export type Command = Envelope &
         definitionId: string;
         operation: 'activate' | 'deactivate';
       }
+    | { type: 'inspect-inventory'; after?: string; expectedRevision?: number }
     | { type: 'cancel' | 'recover' }
     | {
         type: 'say';

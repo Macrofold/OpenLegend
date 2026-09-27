@@ -1,7 +1,7 @@
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
-import { createItemLot, inventoryFor } from '@open-legend/domain';
+import { createItemLot, inventoryFor, seedAgency } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -146,6 +146,10 @@ it('includes learned recipes beyond an AI retrieval limit while excluding anothe
 
 it('updates contextual food descriptions from the player’s current state without leaking private memories', async () => {
   const { service } = await setup();
+  await editWorld(service, (world) => {
+    createItemLot(world, PLAYER_ID, 'berries', 3, 'fixture-food');
+    world.entities[NPC_ID]!.actor!.agency = seedAgency(['Private fixture objective']);
+  });
   const itemId = inventoryFor(service.world, PLAYER_ID).find(
     (item) => item.definitionId === 'berries',
   )!.id;

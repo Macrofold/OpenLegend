@@ -1,6 +1,24 @@
 import type { ItemDefinition } from '../../types.js';
 
 export const NATIVE_ITEMS: Readonly<Record<string, ItemDefinition>> = {
+  knife: {
+    id: 'knife',
+    version: 1,
+    portable: true,
+    packingLoad: 1,
+    name: 'Knife',
+    description:
+      'A small sharp cutting tool, useful for preparing material and for close contact strikes. It can injure a living body, but a swing can miss.',
+    properties: ['rigid', 'point'],
+    melee: {
+      damage: 8,
+      accuracy: 0.75,
+      range: 1.3,
+      approachRange: 0.8,
+      windupSeconds: 6,
+      recoverySeconds: 18,
+    },
+  },
   woven_bag: {
     id: 'woven_bag',
     version: 1,

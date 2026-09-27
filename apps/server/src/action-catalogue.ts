@@ -4,7 +4,7 @@ import { inventoryItemView } from './inventory-view.js';
 import type { RequestScope } from './authority.js';
 import { pickupActions } from './item-actions.js';
 import { statusEffectActions } from './status-effect-actions.js';
-import { NATIVE_STRIKES } from '@open-legend/domain';
+import { availableStrikes } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { canSpeak } from '@open-legend/domain';
 import { NATIVE_PREPARATIONS } from '@open-legend/domain';
@@ -203,12 +203,17 @@ export function actionCatalogue(
         { availability: option.availability, description: option.description },
       );
     if (target.actor && target.id !== scope.actorId)
-      for (const definition of Object.values(NATIVE_STRIKES))
+      for (const definition of availableStrikes(service.world, scope.actorId))
         add(
           `${definition.id}-${target.id}`,
           `${definition.label} ${target.name}`,
           'Combat',
-          { type: 'strike', definitionId: definition.id, targetId: target.id },
+          {
+            type: 'strike',
+            definitionId: definition.id,
+            itemId: definition.weaponItemId,
+            targetId: target.id,
+          },
           ['punch', 'hit', 'melee', 'attack'],
           target.id,
         );
@@ -282,7 +287,7 @@ export function actionCatalogue(
   const fires = (selected ? [selected] : targets).filter((entity) => entity.heat);
   for (const item of observation.inventory) {
     const definition = world.itemDefinitions[item.definitionId]!;
-    if (definition.launcher)
+    if (definition.launcher || definition.melee || definition.gatheringTool)
       add(
         `equip-${item.id}`,
         `Equip ${definition.name}`,
@@ -359,7 +364,7 @@ export function actionCatalogue(
   family('gather', 'Gather resources', 'Gather', 'Move within sight of a resource.');
   family('hunt', 'Hunt an animal', 'Hunt', 'Move within sight of a living animal.');
   family('harvest', 'Harvest remains', 'Gather', 'Find animal remains to harvest.');
-  family('equip', 'Equip a launcher', 'Equipment', 'Craft or acquire a ranged tool.');
+  family('equip', 'Equip a tool', 'Equipment', 'Carry a supported tool or weapon.');
   family('eat', 'Eat food', 'Survival', 'Gather or cook edible food.');
   family('cook', 'Cook meat', 'Create', 'Carry raw meat and find a lit campfire.');
   family('craft', 'Craft a known recipe', 'Create', 'Invent or learn a recipe first.');

@@ -1,3 +1,4 @@
+import { reconcileConditions } from './conditions.js';
 import { recordSemanticChange } from './dependencies.js';
 import { worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
@@ -137,6 +138,7 @@ export function reconcileBody(
       { significant: true, cause },
     );
   }
+  reconcileConditions(world, entity, events);
   if (world.innerWorlds?.[entity.id]) world.innerWorlds[entity.id]!.reconsiderationRequired = true;
 }
 export interface BodyEffect {

@@ -96,6 +96,8 @@ Use the current single writer and existing stores first. No new platform depende
 
 ### AG06 — Goal/plan-aware context and derived interests
 
+The [embodied-survival feature](../projects/embodied-survival-feature-spec.md) now supplies capability-rich possessions, reserved bound tools, relevant-possession fingerprints and explicit revision-bound inventory inspection. Oversized preparation falls back to a disclosed page plus bound tools. [Native measurements](../verification/embodied-survival.md#inventory-preparation) cover 1k/8k inventories. Actor-proposed interests beyond the existing selected-evidence/native-prerequisite compiler, full relevance/expiry qualification, pre-materialization paging and bounded weapon-by-target candidate preparation remain open; these are not established by a final 16-item context.
+
 - [x] Derive material interests from known pending native steps even without a prior selected-object subscription; keep matching restricted to perceived candidates.
 
 **Owner:** server context/recall integration. **Depends on:** AG02–AG03 and delivered CR03/CR04 substrate. **Touchpoints:** `apps/server/src/decision-context.ts`, `response-context.ts`, `interests.ts`, `recall.ts`.
@@ -105,10 +107,13 @@ Use the current single writer and existing stores first. No new platform depende
 - [ ] Preserve scope-before-relevance, required evidence, accepted About me, current conversation guarantees, obligations and total byte reservation. Optional planner context yields before privacy or required-context integrity does.
 - [ ] Retain contradictory evidence and a measured optional opportunity-discovery allowance. No interest subscription can search another actor's private inventions or unseen world state.
 - [ ] Extend existing context diagnostics to show why a goal/result changed retrieval. Do not create a second embedding store or a new general memory extractor.
+- [ ] Include supported item capabilities, accessibility and equipment state in task-relevant inventory context; reserve explicitly referenced tools and known prerequisites. Admit actor-proposed goal interests through the existing subscription owner, without native hunger-to-food/tool/animal mappings. Relevant inventory changes must survive the final opportunity fingerprint; unrelated changes must not force cognition. Measure cold/warm preselection work and disclose omissions under [CG04](../limits/cognition.md#cg04).
 
 **Exit evidence:** a newly adopted need for a known material can attend to a currently visible resource that was absent from the preceding selected-object list. Goal changes expire the old cue; unchanged goals do not rebuild every context. Relevant contrary evidence and danger survive focused planning; mandatory context overflow fails before paid dispatch.
 
 ### AG07 — Meaningful feedback, survival and bounded reconsideration
+
+**Implemented behavior reversal; integration qualification remains open:** [Embodied survival](../projects/embodied-survival-tech-design.md#remove-choices-retain-bodily-mechanics) removes this bundled world's automatic person-controller berry seeking/eating and associated food-specific protection. The completed adequacy-based fix below remains historical evidence; its automatic-feeding premise is superseded. Deterministic physiology and incapacity checks remain, while unavailable cognition may now leave an NPC unfed. Coordinate EPR04 rather than preserving feeding autopilot as an acceptance requirement.
 
 - [x] Emit one private experience on frontier failure/interruption, suppress unchanged retries, and remove goal-only edits from the autonomous response fingerprint. Duplicate suppression and spending admission remain authoritative; autonomous actor/global cooldowns are removed.
 
@@ -116,11 +121,12 @@ Use the current single writer and existing stores first. No new platform depende
 
 - [ ] Connect private goal-review, native action-result and invention-result opportunities through the existing scheduler. Integrate the [EPR01/EPR05 scope and intake contract](events-perception-and-reactions.md); no parallel opportunity schema or universal event bus. AG01–AG04 can use existing receipts before full EPR delivery; AG07 qualifies the shared intake integration.
 - [x] Distinguish unresolved/deferred opportunities from completed consideration. Replace native-urgency cursor advancement that would incorrectly consume needed semantic evidence without a later path to reconsider it.
-- [x] Remove the categorical low-fullness semantic dead end for capable actors. Use native-response adequacy and urgency while preserving immediate native survival, actual incapacity/sleep/cognition capability checks and bounded spending.
+- [x] Remove the categorical low-fullness semantic dead end for capable actors. The earlier native-food adequacy gate is superseded by removing food autopilot; actual incapacity/sleep/cognition checks and bounded spending remain.
 - [ ] Suppress self-thought/self-goal immediate wake loops, repeated unchanged failures and recursive result-to-result churn. Preserve episode identity, coalescing, spending admission and hysteresis under the existing D54 policy ownership.
 - [ ] Keep simulation deadlines separate from wall-time provider deadlines/spend. Measure fairness under the current single global workflow before adding bounded concurrency; maintain one authoritative writer.
+- [ ] Remove food-autopilot suppression/late invalidation and obsolete reactive thresholds; admit initial hungry bodies, worsening private conditions and relevant action results through the existing intake. Preserve new evidence during in-flight work and same-version episode/deadline continuity. Demonstrate no-credentials physiology without fabricating a cognitive response or restoring automatic feeding.
 
-**Exit evidence:** a conscious hungry actor with no adequate native solution gets an eligible bounded planning/help opportunity rather than permanent suppression. A meaningful hunger opportunity remains eligible during long work, allowing foreground goal/plan revision and explicit interruption while preserving the longer-term intention. Food becoming available resumes the relevant native plan without compulsory thought. Repeated hunger samples, self-authored thoughts and unchanged invention failures do not create paid storms. Deferred urgent evidence remains available; restarts do not fabricate new encounters.
+**Exit evidence:** a conscious hungry actor gets an eligible bounded planning/help opportunity rather than permanent suppression. A meaningful hunger opportunity remains eligible during long work, allowing foreground goal/plan revision and explicit interruption while preserving the longer-term intention. An already chosen executable food plan can continue without compulsory thought; merely acquiring food must not create an unchosen eat action. Repeated hunger samples, self-authored thoughts and unchanged invention failures do not create paid storms. Deferred urgent evidence remains available; restarts do not fabricate new encounters.
 
 ### AG08 — Actor-side invention continuation and choice
 
@@ -199,6 +205,22 @@ Use the current single writer and existing stores first. No new platform depende
 - [ ] Keep quantitative release thresholds unset until a baseline and required experience are recorded; reserve explicit privacy/resource/replay invariants as hard gates. Publish uncertainty, sample size and failed runs. A more articulate plan is not necessarily better gameplay.
 
 **Live execution gate:** separately confirm configured credentials, current provider compatibility, explicit nonzero cap and intended scenario set. This tracker authorizes no calls by itself. No automatic paid repair/retry loop is permitted. Retain the existing narrowly bounded semantic-supersession policy only under its distinct accounting and identity rules.
+
+### AG13 — Embodied survival demonstration
+
+**Status:** mechanics implemented; **integrated acceptance incomplete**. Live Jev chose carried food and berries but deferred in the lean camp through starvation. The owner explicitly keeps the whole scenario Jev-only: no generative goal formation, seeded hunt or forced action. [Actual evidence and gaps](../verification/embodied-survival.md). [Feature specification](../projects/embodied-survival-feature-spec.md) · [Technical plan](../projects/embodied-survival-tech-design.md#delivery-and-verification).
+
+**Depends on:** scoped EPR04/EPR05 and AG06/AG07 work, AC09.6 equipped melee, and BW18 starter content. Those owners retain their individual task bodies; this item owns their integrated behavioral acceptance. Existing AG12 owns broader quality/cost evaluation.
+
+- [x] After implementation approval, reconcile the selected proposal into persistent agency/survival/combat/targeted-action contracts with unimplemented status preserved until each slice ships.
+- [ ] Trace an initial private bodily opportunity through actual decision context, optional self-authored goal, chosen equipped strike, native approach and real hit/miss outcome. No seeded operational goal, fallback survival slogan, actor-directed hunting prompt or fabricated provider choice.
+- [ ] Qualify goal/plan continuity, repeat chosen strikes and meaningful failure feedback without a thought per footstep or automatic retry loop. Show the engine does not complete a broad survival goal merely because an animal dies.
+- [x] Separate mechanical fixture evidence from separately authorized live behavior. Record all agreed lean-camp trials and food-present/no-weapon/no-reachable-prey comparisons, actual latency/spend and incomplete outcomes. Another sensible survival choice is not proof of hunting; one favorable trace does not prove reliability.
+- [ ] Verify charge/shutdown and alternate melee-profile fixtures reuse the same engine contracts without hunger, knife, Ada or deer identifiers. Measure relevant scheduling/context work under the technical plan; leave unrelated scale qualifications open.
+
+**Delivered subsets:** private initial/worsening/review evidence; no native feeding; exact equip/strike plan execution; own hit/miss awareness; terminal plan completion feedback; charge/shutdown and alternate-club fixtures; PostgreSQL episode/cursor/recovery continuity. **Remaining:** Jev-selected attack and retry, browser interaction/visuals, relevant-versus-unrelated acquisition and in-flight/restore scheduling races, and multi-actor preparation/fairness qualification. The explicit trial budget is exhausted; repeated prompt tuning has not established the required behavior.
+
+**Exit:** the agreed autonomous approach/attack demonstration and meaningful comparisons have actual evidence, and mechanical/private-state/save/load checks pass. Harvest/cook/eat autonomy remains explicitly outside this first behavioral acceptance. This item is not closed by writing the design or by removing autopilot alone.
 
 ## Recording completion
 

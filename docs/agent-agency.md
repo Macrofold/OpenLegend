@@ -1,5 +1,13 @@
 # Agent agency: thoughts, intentions, plans and open-ended action
 
+## Current embodied-survival integration
+
+Ada starts with authored identity and factual body knowledge, without an operational goal or fallback survival slogan. Private bodily opportunities, scoped possessions and actual outcomes enter decisions. Installed capabilities describe what a tool can do; active goals and admitted interests determine relevance without a native hunger-to-food/tool/animal mapping. Automatic person-controller eating/berry seeking and their food-specific cognition protection are removed.
+
+Known choices can execute through Jev selection and ordinary native admission. An offered exact equip-then-strike sequence is one selectable means, not an automatically assigned goal. Completion or failure supplies new private evidence; intermediate movement and plan steps need no model call. Jev-only mode cannot invent novel goal prose. [Provider policy](ai-providers.md#jev-only-execution), [the implementation plan](projects/embodied-survival-tech-design.md), and [AG13](maintainers/agent-agency.md#ag13--embodied-survival-demonstration) retain the strict, currently unmet autonomous hunting acceptance.
+
+Possessions use shared immutable definition descriptions plus current quantity/equipment. Required tool references survive optional selection. Explicit `inspect-inventory` reads own accessible items in revision-bound pages, with no automatic paid pagination. Oversized inventory preparation retains a disclosed page and bound tools so inspection remains possible; it does not claim exhaustive semantic search. [CG04](limits/cognition.md#cg04) records bounds and measured remaining scan cost.
+
 ## Spatial movement dependency
 
 Plans reference the [spatial destination and native route contract](../archive/07-technical-architecture/spatial-world-runtime.md). A blocked route, inaccessible stance or flying target can change the current means without deleting a goal. Native traversal and level-1 selected actions share fresh spatial admission; navigation/cache preparation is not an invented action or a mandatory LLM decision. [SW05–SW08](maintainers/spatial-world.md) supplies ground integration; flight-specific cases add SW12 only.
@@ -51,7 +59,7 @@ A need is a native bodily condition. A desire is something the actor wants or im
 
 Hunger does not require creating “Satisfy hunger” every time it changes. Eating an available berry can be a native or immediate response with no durable goal. “Keep enough food for tomorrow” is a good candidate for a persistent goal because it matters beyond the present stimulus. “Understand why the shelter leaks” is also a goal, although its next useful action may be investigation rather than construction.
 
-For example, a hungry actor carrying an edible berry may choose “Eat one berry” through Jev alone. After normal engine checks, native execution consumes the berry and applies its nutrition effect. No goal, written thought, speech, reflection or generative explanation is required. When native survival already handles eating adequately, even Jev is unnecessary. The [level-1 runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md#24-level-1-selection-without-generative-escalation) defines selection and admission.
+For example, a hungry actor carrying an edible berry may choose “Eat one berry” through Jev alone. After normal engine checks, native execution consumes the berry and applies its nutrition effect. No goal, written thought, speech, reflection or generative explanation is required. Once an eating action is chosen, its execution needs no further inference. This world no longer chooses feeding through a native person controller. The [level-1 runtime contract](../archive/07-technical-architecture/agent-agency-runtime.md#24-level-1-selection-without-generative-escalation) defines selection and admission.
 
 ### What persists
 

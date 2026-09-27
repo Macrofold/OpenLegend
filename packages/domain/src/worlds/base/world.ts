@@ -1,3 +1,4 @@
+import { ADA_IDENTITY } from './characters.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { BASE_PARTICIPATION_POLICY } from './participation.js';
 import { addItem, nextRandom, nextId } from '../../data.js';
@@ -43,7 +44,7 @@ export function createActor(
     traits: identity.traits?.map((trait) => ({ ...trait })) ?? sampleTraits(world),
     ...(identity.personality ? { personality: identity.personality } : {}),
     ...(identity.backstory ? { backstory: identity.backstory } : {}),
-    ...(initialGoals?.length ? { initialGoals } : {}),
+    ...(initialGoals !== undefined ? { initialGoals } : {}),
     controller,
     species: 'human',
     body: livingBody('human'),
@@ -57,7 +58,7 @@ export function createActor(
     action: null,
     equippedItemId: null,
     agency: seedAgency(
-      initialGoals?.length
+      initialGoals !== undefined
         ? initialGoals
         : [
             controller === 'npc'
@@ -147,7 +148,7 @@ export function createWorld(
       name: 'Ada',
       kind: 'npc',
       placement: worldPlacement({ y: 0, x: 13, z: 12 }, 'terrain'),
-      actor: createActor(world, 'npc', 66),
+      actor: createActor(world, 'npc', 35, ADA_IDENTITY),
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -195,7 +196,7 @@ export function createWorld(
       name: 'Berry bush',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 8, z: 13 }, 'terrain'),
-      resource: { definitionId: 'berries', quantity: 36, workSeconds: 30 },
+      resource: { definitionId: 'berries', quantity: 0, workSeconds: 30 },
     },
     {
       spatial: { bodyProfileId: 'object', heading: 0 },
@@ -203,7 +204,7 @@ export function createWorld(
       name: 'Berry thicket',
       kind: 'resource',
       placement: worldPlacement({ y: 0, x: 19, z: 15 }, 'terrain'),
-      resource: { definitionId: 'berries', quantity: 30, workSeconds: 30 },
+      resource: { definitionId: 'berries', quantity: 0, workSeconds: 30 },
     },
     {
       spatial: { bodyProfileId: 'hare', heading: 0 },
@@ -270,7 +271,7 @@ export function createWorld(
   for (const entity of entities) world.entities[entity.id] = entity;
   for (const id of [PLAYER_ID, NPC_ID]) {
     addItem(world, id, 'stone_tool', 1);
-    addItem(world, id, 'berries', 3);
+    addItem(world, id, 'knife', 1);
     addItem(world, id, 'prepared_fiber', id === PLAYER_ID ? 4 : 2);
     addItem(world, id, 'cord', id === PLAYER_ID ? 3 : 1);
     addItem(world, id, 'wood', 2);

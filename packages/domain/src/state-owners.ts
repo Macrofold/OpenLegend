@@ -1,3 +1,4 @@
+import { reconcileConditions } from './conditions.js';
 import { installedStateQuery } from './queries.js';
 import { ResourceReservationError } from './resource-claims.js';
 import { recordSemanticChange } from './dependencies.js';
@@ -197,6 +198,7 @@ export function writeState(
       reconcileBody(world, entity, events, cause);
     } else setWildernessNeed(entity.actor, storage, value);
   }
+  reconcileConditions(world, entity, events);
   recordSemanticChange(world, {
     kind: 'state',
     entityId: entity.id,

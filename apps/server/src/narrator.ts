@@ -143,7 +143,7 @@ export class Narrator {
       await repository.publish(world.id, job, null, 'Cancelled before generation.');
       return;
     }
-    if (!(config.macrofoldKey || config.llmKey)) {
+    if (config.jevOnly || !(config.macrofoldKey || config.llmKey)) {
       await repository.publish(
         world.id,
         job,

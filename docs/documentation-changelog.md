@@ -1,5 +1,13 @@
 # Documentation changelog
 
+## 2026-09-27 — Embodied survival and Jev-only action selection
+
+The owner approved the [embodied-survival design](projects/embodied-survival-tech-design.md) and explicitly retained strict Jev-only scenario acceptance. Implemented private body-condition episodes, world-authored hunger/death meaning, scoped inventory inspection and equipped melee with real misses, recovery and saved randomness. Mike/Ada receive starter knives; Ada has authored identity/practical knowledge, an explicitly empty goal list and lean supplies. NPC ghost continuity/difficult revival remains policy; no permanent-erasure promise is added.
+
+Removed automatic below-42 berry seeking/below-38 carried-food eating and food-specific cognition suppression. This intentionally trades deterministic feeding reliability for character choice. Known action decisions use batched Jev Noul ratings and native admission, including an exact offered equipment prerequisite; novel language/goals remain generative when enabled. `AI_JEV_ONLY` disables those routes without automatic fallback. The provisional threshold and paging/work bounds are recorded in [CG04–CG05](limits/cognition.md#cg04); world tuning is in [BW07–BW09](limits/base-world.md#bw07).
+
+[Native and live evidence](verification/embodied-survival.md) are distinct: approach/hit/miss/recovery and PostgreSQL continuity pass, while live Jev chooses eating/gathering but has not chosen an unprompted hunt. Visual and residual qualification remain open. [AG13](maintainers/agent-agency.md#ag13--embodied-survival-demonstration), EPR04/AG06/AG07, AC09.6 and BW18 retain unmet acceptance; this change is not a completed autonomous-hunting claim.
+
 ## 2026-09-27 — PostgreSQL-only storage and shared cognition preparation
 
 Removed SQLite runtime support, its worker/fallback/schema branches and import tool: PostgreSQL is already the local and production database, and no embedded/offline product requires a second engine. `SqlGameRepository` retains the repository boundary. Startup requires a PostgreSQL URL; scripts, fixtures and CI use PostgreSQL, with owned disposable databases for verification. Checkpoint/recovery preserves current-format world, privacy and spending guarantees; the operational CLI rejects legacy JSON. Existing saves are not converted, deleted or reset. The removed worker limits retain their rationale under [SB19](limits/persistence.md#sb19).

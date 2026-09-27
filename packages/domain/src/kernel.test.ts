@@ -127,6 +127,7 @@ describe('authoritative pure world', () => {
   });
   it('does not mutate its input and makes duplicate commands harmless', () => {
     const original = createWorld();
+    createItemLot(original, PLAYER_ID, 'berries', 3, 'fixture-food');
     const snapshot = structuredClone(original);
     const eat: Command = {
       id: 'eat-1',
@@ -438,7 +439,7 @@ describe('perception, survival and continuity', () => {
       { y: 0, x: 26, z: 22 },
       worldSupport(world.entities[NPC_ID]!),
     );
-    world = command(world, { type: 'say', text: 'The secret is moonflower.' });
+    world = command(world, { type: 'say', text: 'The secret is moonflower.', volume: 'whisper' });
     setSpatialPosition(
       world,
       world.entities[NPC_ID]!,
@@ -448,9 +449,11 @@ describe('perception, survival and continuity', () => {
     expect(
       queryMemories(world, NPC_ID).some((record) => record.summary.includes('moonflower')),
     ).toBe(false);
-    expect(observeActor(world, NPC_ID)!.recentEvents.some((event) => event.type === 'speech')).toBe(
-      false,
-    );
+    expect(
+      observeActor(world, NPC_ID)!.recentEvents.some(
+        (event) => event.type === 'speech' && event.text.includes('moonflower'),
+      ),
+    ).toBe(false);
     world = command(world, { type: 'say', text: 'I will bring you berries.', targetId: NPC_ID });
     const event = world.events.at(-1)!;
     world = remember(world, NPC_ID, {
@@ -472,17 +475,19 @@ describe('perception, survival and continuity', () => {
         .join('; '),
     ).toBe('');
   });
-  it('keeps native NPC foraging and eating functional without a provider', () => {
+  it('preserves physiology without automatically choosing food without a provider', () => {
     let world = createWorld();
     world.entities[NPC_ID]!.actor!.fullness = 20;
     for (const item of inventoryFor(world, NPC_ID))
       if (item.definitionId === 'berries') retireItem(world, item.id, 'fixture');
     world = advanceWorld(world, 300).world;
     expect(world.entities[NPC_ID]!.actor!.alive).toBe(true);
-    expect(world.entities[NPC_ID]!.actor!.fullness).toBeGreaterThan(38);
+    expect(world.entities[NPC_ID]!.actor!.fullness).toBeLessThan(20);
     expect(
-      world.events.some((event) => event.actorId === NPC_ID && event.type === 'gathered'),
-    ).toBe(true);
+      world.events.some(
+        (event) => event.actorId === NPC_ID && ['gathered', 'ate'].includes(event.type),
+      ),
+    ).toBe(false);
   });
   it('allows NPC death while preserving separate player recovery and history', () => {
     let world = createWorld();

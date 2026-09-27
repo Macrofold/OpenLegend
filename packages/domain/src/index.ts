@@ -39,6 +39,7 @@ export {
   advanceWorld,
   navigationBlocked,
   observeActor,
+  initializePerception,
   queryMemories,
   remember,
   inventoryFor,
@@ -114,7 +115,14 @@ export { recordInventionFeedback } from './invention-feedback.js';
 export * from './spatial-state.js';
 export * from './spatial-mutations.js';
 
-export { NATIVE_STRIKES, strikeDefinition, type StrikeDefinition } from './strikes.js';
+export {
+  NATIVE_STRIKES,
+  strikeDefinition,
+  availableStrikes,
+  validMelee,
+  type StrikeDefinition,
+  type MeleeProfile,
+} from './strikes.js';
 
 export { isConversationEvent } from './events.js';
 
@@ -171,3 +179,5 @@ export * from './action-targets.js';
 export * from './acoustics.js';
 export { speechExposure, soundOrigin, hearingReferenceRadius } from './perception.js';
 export * from './speech.js';
+export * from './conditions.js';
+export * from './inventory-inspection.js';

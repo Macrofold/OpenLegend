@@ -390,11 +390,15 @@ export function finishPlanAction(
       : 'active';
   plan!.revision++;
   actor.agency.revision++;
-  if (!result.ok)
+  // Exhausting chosen steps is meaningful feedback; ordinary intermediate progress
+  // remains native. This never completes the actor's broader goal.
+  if (!result.ok || plan!.status === 'completed')
     appendMemory(world, actorId, {
       kind: 'episode',
       source: 'internal',
-      summary: `My planned work stopped: ${result.message}`,
+      summary: result.ok
+        ? `My chosen sequence is complete: ${result.message}`
+        : `My planned work stopped: ${result.message}`,
       entityIds: [actorId],
       importance: 6,
     });
@@ -699,8 +703,18 @@ function isPhysicalCommand(command: Command): boolean {
     case 'equip':
     case 'eat':
       return isSafeRecordId(command.itemId);
+    case 'inspect-inventory':
+      return (
+        (command.after === undefined || isSafeRecordId(command.after)) &&
+        (command.expectedRevision === undefined ||
+          (Number.isSafeInteger(command.expectedRevision) && command.expectedRevision >= 0))
+      );
     case 'strike':
-      return isSafeRecordId(command.targetId) && isSafeRecordId(command.definitionId);
+      return (
+        isSafeRecordId(command.targetId) &&
+        isSafeRecordId(command.definitionId) &&
+        (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId))
+      );
     case 'hunt':
       return (
         isSafeRecordId(command.targetId) &&

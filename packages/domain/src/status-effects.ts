@@ -1,3 +1,4 @@
+import { reconcileConditions } from './conditions.js';
 import { admitStatusWork, chargeStatusWork } from './native-work.js';
 import { releaseWork } from './work-budget.js';
 import { recordSemanticChange } from './dependencies.js';
@@ -439,6 +440,7 @@ function applyRate(
   else if (d.implementation === 'native-fullness-v1')
     setWildernessNeed(entity.actor!, 'fullness', value);
   else setAttribute(world, entity, d, value, events);
+  reconcileConditions(world, entity, events);
 }
 /** A conservative participation check, not a condition evaluator. Native rate operations
  * cannot add an absent attribute or actor component; every active instance still runs.

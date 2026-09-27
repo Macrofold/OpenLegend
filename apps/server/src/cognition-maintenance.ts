@@ -59,6 +59,7 @@ export class CognitionMaintenance {
     return `reflection-queue:${this.service.world.id}:${actorId}`;
   }
   async enqueue(actorId: string, origin: string, reason: string): Promise<void> {
+    if (this.service.config.jevOnly) return;
     if (!(this.service.world.cognitionPolicy ?? DEFAULT_COGNITION_POLICY).reflection) return;
     const world = this.service.world;
     const actor = world.entities[actorId]?.actor;
@@ -107,6 +108,7 @@ export class CognitionMaintenance {
     }
   }
   async tick(interactiveBusy: boolean): Promise<void> {
+    if (this.service.config.jevOnly) return;
     if (this.schedulingTask || this.now() < this.readRetryAt) return;
     this.schedulingTask = this.schedule(interactiveBusy).catch(async (error) => {
       if (!(error instanceof MaintenanceReadFailure)) throw error;

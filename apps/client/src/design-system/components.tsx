@@ -298,7 +298,7 @@ export function Condition({
               aria-valuemin={min}
               aria-valuemax={max}
               aria-valuenow={value}
-              aria-valuetext={display}
+              aria-valuetext={[display, attribute.condition].filter(Boolean).join(', ')}
             >
               <span className="ol-meter-fill" />
             </span>
@@ -320,6 +320,11 @@ export function Condition({
               </span>
             ) : (
               <span className="ol-meter-value">{display}</span>
+            )}
+            {attribute.condition && (
+              <span className="ol-condition-description" title={attribute.meaning}>
+                {attribute.condition}
+              </span>
             )}
           </div>
         );

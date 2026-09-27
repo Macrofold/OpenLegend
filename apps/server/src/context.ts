@@ -1,11 +1,12 @@
 import { worldPosition } from '@open-legend/domain';
+import { decisionObservation } from './decision-observation.js';
 import { itemFor, directChildIds } from '@open-legend/domain';
 import { observerDescription } from '@open-legend/domain';
 import { dropItemReason } from '@open-legend/domain';
 import { pickupActions } from './item-actions.js';
 import { entityLabel } from './entity-references.js';
 import { statusEffectActions } from './status-effect-actions.js';
-import { NATIVE_STRIKES } from '@open-legend/domain';
+import { availableStrikes, strikeDefinition } from '@open-legend/domain';
 import {
   canReachEntity,
   findApproachPath,
@@ -14,7 +15,6 @@ import {
   inventionFamily,
   SUPPORTED_INVENTION_FAMILIES,
 } from '@open-legend/domain';
-import { nativeNeedBelow } from '@open-legend/domain';
 import { attributeDefinition, readAttribute } from '@open-legend/domain';
 import { hearsEntity, visionRadius } from '@open-legend/domain';
 import {
@@ -115,6 +115,7 @@ export function buildContext(
       ...(definition.nutrition !== undefined ? { nutrition: definition.nutrition } : {}),
       ...(definition.cooked !== undefined ? { cooked: definition.cooked } : {}),
       ...(definition.launcher ? { launcher: definition.launcher } : {}),
+      ...(definition.melee ? { melee: definition.melee } : {}),
       ...(definition.ammunition ? { ammunition: definition.ammunition } : {}),
       ...(definition.gatheringTool ? { gatheringTool: definition.gatheringTool } : {}),
     }));
@@ -236,20 +237,19 @@ export interface CandidateAction {
   id: string;
   description: string;
   command: CommandInput | null;
+  prerequisite?: CommandInput;
 }
 export function npcCandidates(
   service: WorldService,
   actorId = service.defaultResidentEntityId,
+  observed = decisionObservation(service.world, actorId),
 ): CandidateAction[] {
-  const observed = service.observe(actorId, { includeMemories: false });
   const actor = observed?.actor.actor;
   if (!observed || !actor?.alive || actor.incapacitated || service.paused) return [];
   const definitions = new Map(
     observed.itemDefinitions.map((definition) => [definition.id, definition]),
   );
-  const inventory = observed.inventory.filter(
-    (item) => item.ownerId === observed.actor.id && item.quantity > 0,
-  );
+  const inventory = observed.inventory.filter((item) => item.quantity > 0);
   const quantity = (definitionId: string) =>
     inventory
       .filter((item) => item.definitionId === definitionId)
@@ -273,7 +273,28 @@ export function npcCandidates(
         ]
       : [];
   });
+  const cursor = actor.inventoryInspection;
   const actions: CandidateAction[] = [
+    {
+      id: 'inspect-inventory',
+      description:
+        'Inspect the first page of my own accessible possessions if the selected context omits needed information. This reads at most 16 possessions; it does not change them.',
+      command: { type: 'inspect-inventory' },
+    },
+    ...(cursor?.more && cursor.revision === (observed.actor.inventoryRevision ?? 0)
+      ? [
+          {
+            id: 'inspect-inventory-next',
+            description:
+              'Explicitly inspect the next page of my own accessible possessions, continuing my last inspection.',
+            command: {
+              type: 'inspect-inventory' as const,
+              after: cursor.after,
+              expectedRevision: cursor.revision,
+            },
+          },
+        ]
+      : []),
     ...replenishments,
     ...observed.visibleEntities.flatMap((target) =>
       pickupActions(service.world, observed.actor, target, (command) =>
@@ -379,7 +400,7 @@ export function npcCandidates(
     });
   for (const item of inventory) {
     const definition = definitions.get(item.definitionId);
-    if (definition?.nutrition && nativeNeedBelow(actor, 'fullness', actor.action ? 30 : 85))
+    if (definition?.nutrition)
       actions.push({
         id: `eat:${item.id}`,
         description: `Eat one ${definition.name} to restore fullness.`,
@@ -392,8 +413,8 @@ export function npcCandidates(
   ])
     for (const option of statusEffectActions(service.world, observed.actor, target))
       actions.push({ id: option.id, description: option.label, command: option.command });
-  // Starting another timed task would discard actual work/materials. Native survival
-  // may still interrupt an emergency; ordinary thought preserves the existing plan.
+  // Starting another timed task would discard actual work/materials. The actor can
+  // explicitly cancel work; listing alternatives must not silently interrupt it.
   if (actor.action) return actions;
 
   if (visionRadius(service.world, observed.actor) === 0) {
@@ -465,13 +486,15 @@ export function npcCandidates(
   for (const item of inventory) {
     const definition = definitions.get(item.definitionId);
     if (
-      definition?.launcher &&
+      definition &&
       item.id !== actor.equippedItemId &&
-      compatibleAmmo(definition.launcher.ammunitionKind)
+      (definition.melee ||
+        definition.gatheringTool ||
+        (definition.launcher && compatibleAmmo(definition.launcher.ammunitionKind)))
     )
       actions.push({
         id: `equip:${item.id}`,
-        description: `Equip ${definition.name}; compatible ${definition.launcher.ammunitionKind} ammunition is carried.`,
+        description: `Equip ${definition.name}: ${definition.description}${definition.melee ? ` Contact weapon: ${definition.melee.damage} damage, ${definition.melee.accuracy * 100}% accuracy, ${definition.melee.range} units reach, ${definition.melee.windupSeconds} seconds wind-up and ${definition.melee.recoverySeconds} seconds recovery.` : ''}`,
         command: { type: 'equip', itemId: item.id },
       });
   }
@@ -481,6 +504,17 @@ export function npcCandidates(
   const cuttingTool = inventory.some((item) =>
     definitions.get(item.definitionId)?.properties.includes('point'),
   );
+  const strikes = [
+    ...availableStrikes(service.world, actorId),
+    ...inventory
+      .filter(
+        (item) => item.id !== actor.equippedItemId && definitions.get(item.definitionId)?.melee,
+      )
+      .flatMap((item) => {
+        const strike = strikeDefinition(item.definitionId, service.world, item.id);
+        return strike ? [strike] : [];
+      }),
+  ];
   const fires: { id: string; travelSeconds: number; fuelSeconds: number }[] = [];
   for (const entity of observed.visibleEntities) {
     // Target discovery uses only this actor's perception. Terrain is the same public
@@ -495,11 +529,21 @@ export function npcCandidates(
     if (!route) continue;
     const path = route.path;
     if (entity.actor?.alive && entity.id !== actorId && supportsManualWork(observed.actor))
-      for (const definition of Object.values(NATIVE_STRIKES))
+      for (const definition of strikes)
         actions.push({
-          id: `${definition.id}:${entity.id}`,
-          description: `${definition.label} ${entity.name}: approach within ${definition.range} units, then one strike after ${definition.workSeconds} game seconds; ${definition.damage} injury damage if still in reach. Violence is optional and must be warranted by the actor's intent.`,
-          command: { type: 'strike', definitionId: definition.id, targetId: entity.id },
+          id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
+          description: `${definition.weaponItemId && definition.weaponItemId !== actor.equippedItemId ? 'Requires first equipping the carried weapon in a separate action. ' : ''}${definition.label} ${entity.name}: approach within ${definition.range} units, then one strike after ${definition.workSeconds} game seconds; ${definition.damage} injury damage if still in reach; ${Math.round((definition.accuracy ?? 1) * 100)}% hit probability, ${definition.recoverySeconds ?? 0} seconds recovery.`,
+          command: {
+            type: 'strike',
+            definitionId: definition.id,
+            itemId: definition.weaponItemId,
+            targetId: entity.id,
+          },
+          ...(definition.weaponItemId &&
+          definition.weaponItemId !== actor.equippedItemId &&
+          inventory.find((item) => item.id === definition.weaponItemId)?.quantity === 1
+            ? { prerequisite: { type: 'equip' as const, itemId: definition.weaponItemId } }
+            : {}),
         });
     if (entity.resource && entity.resource.quantity > 0)
       actions.push({
@@ -580,8 +624,11 @@ export function npcCandidates(
 /** Known techniques are valid planning vocabulary before their materials are owned.
  * Admission queues intentions; native dispatch still owns all physical prerequisites.
  */
-export function planningCandidates(service: WorldService, actorId: string): CandidateAction[] {
-  const observed = service.observe(actorId, { includeMemories: false });
+export function planningCandidates(
+  service: WorldService,
+  actorId: string,
+  observed = decisionObservation(service.world, actorId),
+): CandidateAction[] {
   if (!observed || !supportsManualWork(observed.actor)) return [];
   return describeTargets(service, actorId, [
     ...observed.visibleEntities

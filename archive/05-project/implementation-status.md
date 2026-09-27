@@ -117,6 +117,10 @@ Intelligence now shows visible trigger subtypes/semantic levels, bottom-right ro
 
 Cognition has no per-actor cooldown or global post-completion wait, records scheduling/trigger-age metadata, and presents perceived speech roles separately from current visibility. Speech fallback retains intended-recipient metadata without inventing an audience. Recall distinguishes named episodes from generic species grouping. Retrieval UI distinguishes skipped vectors from Jev judgments and selections. Runtime evidence and remaining validation are in [verification](../../docs/verification.md#trace-attribution-and-pacing-runtime).
 
+## Embodied survival
+
+Private condition episodes, world-authored hunger/death descriptions, scoped inventory inspection and item-defined timed melee are implemented. New Mike/Ada starts receive knives; Ada has a rich identity, empty operational goals, fullness 35 and no food autopilot. Strict Jev-only execution selects known actions without generation. Native approach/hit/miss/recovery and PostgreSQL reopening pass, while live Jev has selected eating/gathering but **has not chosen to hunt**. Visual acceptance and residual scheduling/scale cases remain open. [Architecture](../../docs/architecture.md#embodied-conditions-and-inventory), [evidence](../../docs/verification/embodied-survival.md), [AG13](../../docs/maintainers/agent-agency.md#ag13--embodied-survival-demonstration).
+
 ## Base-world content and physical items
 
 Bundled world defaults are separated under `packages/domain/src/worlds/base/` with [canonical world mechanics](../../docs/worlds/base/README.md). Known-item God creation supports player inventory and ground piles; character inventory editing remains available. Portable item stacks support native approach/pickup, Pick Up All and partial dropping, with shared custody, perceived contents and saved state. Concrete NPC handles share execution. Scheduled previews avoid discarded event/history finalization; immutable custody lookup is indexed, and pending pickup rechecks required capabilities. External world packaging and post-merge freeform action binding remain [BW05–BW07](../../docs/maintainers/base-world.md).

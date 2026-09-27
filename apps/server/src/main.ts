@@ -12,9 +12,9 @@ game.server.listen(config.port, config.host, () => {
   console.log(`Open Legend · http://${config.host}:${config.port}`);
   console.log('Persistence: PostgreSQL');
   console.log(
-    config.macrofoldKey || (config.jevKey && config.llmKey)
+    config.macrofoldKey || config.jevKey
       ? `Live AI enabled with a $${config.budgetUsd.toFixed(2)} per-agent monthly spending cap.`
-      : 'Live AI not configured. Native survival is available; see .env.example for the live experience.',
+      : 'Live AI not configured. Native world mechanics remain available; see .env.example for the live experience.',
   );
 });
 let closing = false;

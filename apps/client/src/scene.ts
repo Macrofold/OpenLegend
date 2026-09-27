@@ -1142,14 +1142,25 @@ export class WildernessScene implements WorldRenderer {
       const punch = entry.view.actionAnimation;
       let punchFrame = 0;
       if (
-        punch?.kind === 'punch' &&
+        (punch?.kind === 'punch' || punch?.kind === 'melee') &&
         entry.view.kind === 'actor' &&
         !entry.view.statusEffects?.some((effect) => effect.pose === 'horizontal')
       ) {
         const direction =
           punch.direction.x * this.camera.right.x + punch.direction.z * this.camera.right.z;
         if (Math.abs(direction) > 0.01) entry.facing = direction < 0 ? -1 : 1;
-        punchFrame = punch.progress < 0.4 ? 3 : punch.progress < 0.8 ? 4 : 5;
+        punchFrame =
+          punch.phase === 'recovery'
+            ? punch.progress < 0.4
+              ? 5
+              : punch.progress < 0.8
+                ? 4
+                : 3
+            : punch.progress < 0.4
+              ? 3
+              : punch.progress < 0.8
+                ? 4
+                : 5;
         entry.punchRecovery = 0.18;
       } else if (entry.punchRecovery) {
         // A short visual recovery ends at idle even when no further snapshots arrive.

@@ -1,3 +1,4 @@
+import { reconcileConditions, initializePerception } from '@open-legend/domain';
 import { advanceWorldSlices, appendedRecordCount } from '@open-legend/domain';
 import { setContainerAccess, type ContainerAccessRequest } from '@open-legend/domain';
 import { WorkLane, OverloadError } from './work-lane.js';
@@ -138,10 +139,12 @@ export const commandInputSchema = z
       'eat',
       'status-effect',
       'replenish',
+      'inspect-inventory',
       'cancel',
       'recover',
       'teach',
     ]),
+    after: id.optional(),
     conversationId: id.optional(),
     text: z.string().trim().min(1).max(1500).optional(),
     generation: z.number().int().nonnegative().optional(),
@@ -454,6 +457,11 @@ export class WorldService {
           if (!actor) continue;
           actor.controller = 'player';
           world.authorship.playerAccountIds[actorId] = accountId;
+        }
+        if (!existing) {
+          initializePerception(world, []);
+          for (const entity of Object.values(world.entities))
+            reconcileConditions(world, entity, []);
         }
         world.paused = true;
       }),
@@ -2696,6 +2704,14 @@ export class WorldService {
         command = { ...envelope, type: 'cook', itemId: input.itemId, heatId };
         break;
       }
+      case 'inspect-inventory':
+        command = {
+          ...envelope,
+          type: 'inspect-inventory',
+          after: input.after,
+          expectedRevision: input.expectedRevision,
+        };
+        break;
       case 'strike':
         if (!input.targetId || !input.definitionId)
           return { ok: false, code: 'target', message: 'Choose a strike and target.' };
@@ -2704,6 +2720,7 @@ export class WorldService {
           type: 'strike',
           targetId: input.targetId,
           definitionId: input.definitionId,
+          ...(input.itemId ? { weaponItemId: input.itemId } : {}),
         };
         break;
       case 'hunt':

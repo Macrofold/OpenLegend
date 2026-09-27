@@ -122,7 +122,10 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     },
     worldPreset,
     databaseUrl,
-    embeddingKey: env['OPENAI_EMBEDDING_API_KEY'] ?? env['OPENAI_API_KEY'] ?? '',
+    embeddingKey:
+      env['AI_JEV_ONLY'] === 'true'
+        ? ''
+        : (env['OPENAI_EMBEDDING_API_KEY'] ?? env['OPENAI_API_KEY'] ?? ''),
     embeddingModel: env['EMBEDDING_MODEL'] ?? 'text-embedding-3-small',
     embeddingDimensions: numberSetting(env, 'EMBEDDING_DIMENSIONS', 512, 64, 3072),
     embeddingReserveUsd: numberSetting(env, 'EMBEDDING_CALL_RESERVE_USD', 0.01, 0.000001, 1),
@@ -140,6 +143,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     baseRatio: 60,
     exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,
     budgetUsd: numberSetting(env, 'AI_BUDGET_USD', 50, 0, 100),
+    jevOnly: env['AI_JEV_ONLY'] === 'true',
     conversationInactivitySeconds: numberSetting(
       env,
       'CONVERSATION_INACTIVITY_SECONDS',
