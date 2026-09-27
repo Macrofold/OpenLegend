@@ -20,7 +20,7 @@ The early experience is about obtaining shelter, water, food, usable equipment a
 | Mods | Magiclysm, Mind Over Matter and other additions can change the available powers and setting. The engine's spell/effect infrastructure is not evidence that an unmodified survivor has a conventional spellcasting class. [S10, S12] |
 | Separate co-op fork | CDDA Coop advertises two-player play based on experimental 0.I+. It is a separate project, not native multiplayer in the upstream stable or Steam product. Its own changelog records work on long-action synchronization, vehicles and shared inventory. Its existence does not make those problems trivial. [S13] |
 
-The release-date distinction is material: an old complaint about Steam being behind upstream can be valid for the review date without establishing that the August 2026 update never happened. Conversely, shipping stable 0.I does not discharge a request for experimental builds that the publisher explicitly chooses not to distribute. [S02, S15]
+The release-date distinction is material: an old complaint about Steam being behind upstream can be valid for the review date without establishing that the August 2026 update never happened. Conversely, shipping stable 0.I does not discharge a request for experimental builds that the publisher explicitly chooses not to distribute. **September 27 audit check:** the project's own current Releases page still identifies **0.I Ito** as the latest stable and separately describes the experimental stream as bleeding-edge development, confirming that this dossier's stable baseline remains current while experimental builds continue independently. [S02, S15, S29]
 
 ## R02 — Action vocabulary and complete mechanics inventory
 
@@ -240,7 +240,7 @@ The following are **research interpretations**, not accepted OpenLegend requirem
 
 ## R14 — Annotated evidence register and reading route
 
-All sources were accessed or retrieved on September 26, 2026. The tagged in-game help and developer FAQ were read through the GitHub connector, with specific ranges for the larger help file. Other documentation is an evolving project site unless explicitly pinned. “Read” refers to the substantive retrieved text, not personally tested gameplay or watched footage.
+Sources were accessed or retrieved on September 26–27, 2026. The tagged in-game help and developer FAQ were read through the GitHub connector, with specific ranges for the larger help file. Other documentation is an evolving project site unless explicitly pinned. “Read” refers to the substantive retrieved text, not personally tested gameplay or watched footage.
 
 | Source | Annotation and access boundary |
 | --- | --- |
@@ -272,6 +272,7 @@ All sources were accessed or retrieved on September 26, 2026. The tagged in-game
 | [S26] | Caba da Muleste da Paçoca's Steam review. Full body and posted/updated dates read; chosen positive account with a concrete tutorial limitation. |
 | [S27] | Steam English helpful-all-time surface. Substantive indexed recommended review dated March 31, 2023; direct page gated and author not reliably exposed. Selection and access limits retained. |
 | [S28] | NyoNine's Steam not-recommended review. Substantive indexed body with November 27, 2024 / June 1, 2025 dates read; direct page failed. Distribution criticism distinguished from unsupported publisher assertion. |
+| [S29] | [Official Releases page](https://cataclysmdda.org/releases/), inspected September 27, 2026. Current project page explicitly names 0.I Ito as the latest stable and keeps experimental builds distinct. Used only for the current stable/experimental boundary, not as a substitute for the tagged 0.I mechanics documentation. |
 
 ### Reading and viewing route
 
@@ -311,3 +312,4 @@ G122 is a newly curated roster addition with no dedicated inherited chapter, mec
 [S26]: https://steamcommunity.com/id/cabadamuleste/recommended/2330750
 [S27]: https://steamcommunity.com/app/2330750/reviews/?browsefilter=toprated
 [S28]: https://steamcommunity.com/profiles/76561198346706988/recommended/2330750/
+[S29]: https://cataclysmdda.org/releases/
