@@ -1,8 +1,8 @@
 # Slay the Spire — full research dossier
 
-**G43 · Complete research pass, September 26, 2026.** This dossier covers the **original Slay the Spire**, not Slay the Spire 2, Downfall, unofficial multiplayer mods, or sequel-only co-op/mechanics. Mega Crit's current FAQ states that no more content updates are planned for the original while the studio works on the sequel. Historical Early Access and launch reviews are therefore useful records of a now-stable core, with platform-port differences treated separately.
+**G43 · Research pass and substantive audit remedies, September 26, 2026.** This dossier covers the **original Slay the Spire**, not Slay the Spire 2, the board-game adaptation, Downfall, unofficial multiplayer mods, or sequel-only co-op/mechanics. Mega Crit's FAQ states that no more content updates are planned for the original while the studio works on the sequel. Historical Early Access and launch reviews remain version-qualified. The audit adds operational orb/stance rules, distinct key costs and the sparse authored narrative, without claiming a new playthrough or an exhaustive re-reading of inherited sources. OpenLegend adaptations are research interpretations, not accepted implementation requirements.
 
-[Preserved overview](../games/slay-the-spire.md) · [Detailed mechanics study](../mechanics/slay-the-spire-deck-ecology-information-and-costly-synergies.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
+[Preserved overview](../games/slay-the-spire.md) · [Detailed mechanics study](../mechanics/slay-the-spire-deck-ecology-information-and-costly-synergies.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md)
 
 Slay the Spire's central lesson for OpenLegend is not “cards are good.” It is that a player can make deep decisions when three scales remain connected and legible: **this turn, the evolving deck, and the future route**. A choice that looks strong alone can make the whole system worse. Declining, removing and postponing are therefore real verbs.
 
@@ -52,24 +52,41 @@ The Silent emphasizes:
 
 A poison strategy and a Shiv strategy can value entirely different rewards despite sharing the same character.
 
-### Defect
+### Defect: a queue whose contents act between card plays
 
-The Defect introduces **Orbs**:
-- Lightning;
-- Frost;
-- Dark;
-- Plasma.
+The Defect begins combat with three Orb slots. **Channel** installs an Orb; when the slots are full, adding another evokes the next/oldest Orb to make room. **Evoke** resolves that Orb's burst immediately and removes it. Slots and Orbs are combat state, not permanent objects carried between fights. Losing an occupied slot is not automatically an Evoke. [STS-S](#sts-s)
 
-Orb slots, Focus and Evoke effects create a persistent subsystem alongside the hand.
+| Orb | Passive behavior | Evoke behavior |
+| --- | --- | --- |
+| Lightning | Damages a random enemy at turn end. | Immediate stronger damage to a random enemy. |
+| Frost | Supplies Block at turn end. | Immediate larger Block contribution. |
+| Dark | Accumulates stored damage at turn end. | Spends the accumulated value against the lowest-HP enemy. |
+| Plasma | Supplies Energy at the next turn's start. | Supplies Energy immediately. |
 
-The character illustrates a useful design idea:
-> the same turn economy can host a second state machine without requiring a completely separate game.
+These are the original game's four Orb types. Keeping an Orb preserves recurring value; evoking changes when that value arrives and what remains in the queue. [STS-S](#sts-s)
 
-### Watcher
+**Focus is not general attack strength.** It increases Lightning/Frost passive and burst values and Dark's accumulation rate, but not Plasma's Energy. It does not retroactively add another flat bonus to all damage already stored in a Dark Orb. A Focus change, another slot and another Channel card therefore solve different problems. For example, Frost's ordinary 2-Block passive becomes 4 at +2 Focus; its 5-Block burst becomes 7, not 9. [STS-S](#sts-s) [STS-T](#sts-t)
 
-The Watcher uses **Stances** such as Calm and Wrath, with Divinity as a powerful additional state.
+**Interpretation:** the player balances immediate survival against an engine's future output. More slots can preserve passive sources but delay a desired automatic Evoke. A stronger eventual Dark burst is useless if the character dies before releasing it. The same turn economy can host a second state machine without requiring a separate game; its ordering and disposal rules must be visible.
 
-Wrath increases both damage dealt and received; entering/exiting stances becomes timing rather than a permanent class toggle.
+### Watcher: transition, current state and exit are different effects
+
+The Watcher can be in **no Stance**, Calm, Wrath or Divinity. Changing into a different Stance both leaves the old one and enters the new one; leaving for no Stance is still a change. [STS-U](#sts-u)
+
+| State | Operating rule and consequence |
+| --- | --- |
+| Calm | Leaving it normally grants 2 Energy. Merely being calm is not an inherent damage-reduction bonus. |
+| Wrath | Doubles attack damage dealt and received. Remaining in it for an enemy attack is a different risk from entering it to finish the fight. |
+| Divinity | Entering grants 3 Energy; attacks deal triple damage. If still active, it is exited at the **start of the next turn**, not generically at the end of the current turn. |
+| No Stance | No stance bonus; a valid destination for exit effects, not an impossible state. |
+
+The rules apply to attack damage, not every unrelated HP-loss effect. [STS-U](#sts-u) [STS-V](#sts-v)
+
+Vigilance provides Block and enters Calm; Eruption deals its damage and then enters Wrath. Thus the stance reached after an action is not necessarily the stance under which that action's earlier damage resolved. Accumulating at least ten Mantra consumes ten to enter Divinity, retaining any excess; Blasphemy instead enters directly with a separately dangerous next-turn consequence. [STS-U](#sts-u) [STS-V](#sts-v)
+
+Other cards turn the **transition itself** into value: Flurry of Blows returns from discard when stance changes, while Rushdown draws on entering Wrath. This does not make any two stance cards an automatic infinite loop; cost, available cards, draw order and encounter constraints still matter. [STS-Z](#sts-z)
+
+**Interpretation:** state changes can provide resources as well as change multipliers. Entering Wrath without a usable exit is a commitment, not simply selecting the higher-damage mode. A good interface distinguishes the entry reward, continuing effect and exit condition instead of hiding all three under a status icon.
 
 The four characters do not merely reskin one generic card pool. They teach different ways of thinking about:
 - resource flow;
@@ -385,16 +402,21 @@ This is the distinction between:
 
 OpenLegend inventions/agents should be evaluated on whether they help before the situation is already lost.
 
-## 16. Act 4 and the Heart
+## 16. Act 4 and the Heart: three different prices for access
 
-After the main Act 3 progression is understood, players can pursue the secret final challenge by collecting three different keys during a run, each tied to an opportunity cost.
+**Ending spoilers.** Key collection becomes available after ordinary Act 3 victories with **Ironclad, Silent and Defect**; Watcher is not an additional prerequisite. Unlocking that possibility is persistent progress, but the three actual keys must be collected again in the intended run. [STS-W](#sts-w)
 
-That opens Act 4 and the Heart encounter.
+| Key | Acquisition | What the player gives up or risks |
+| --- | --- | --- |
+| Ruby | Choose Recall at a Rest Site. | The other action at that visit: ordinarily healing or an upgrade. |
+| Sapphire | Choose it instead of the linked non-boss chest Relic. | That particular equipment opportunity, not every unrelated reward in the chest. |
+| Emerald | Defeat the flaming-map-icon enhanced Elite. | A harder encounter and the route needed to reach it; normal Elite rewards remain. |
 
-The important structural choice is:
-- endgame access requires modifying earlier route/reward decisions.
+Before obtaining Emerald, an eligible enhanced Elite appears in each Act. Delaying a key can preserve an attractive immediate reward but restrict later routing. Possessing all three still requires beating the Act 3 boss to enter the additional Act. [STS-W](#sts-w)
 
-The secret challenge is not merely a menu unlocked after credits. It reaches backward into the run's economy.
+Act 4 is a fixed sequence: Rest Site, Merchant, Spire Shield/Spear, then Corrupt Heart. Its known endpoint lets earlier choices prepare for a specific challenge; it does not make those intervening fights trivial. [STS-AA](#sts-aa)
+
+**Interpretation:** endgame admission reaches backward into the run's economy. The three keys are not interchangeable tokens: one spends recovery opportunity, another an item, and another safety/flexibility. Access is more interesting when its different costs remain legible rather than becoming one arbitrary “readiness” number.
 
 ## 17. Ascension: difficulty as progressive rule pressure
 
@@ -438,7 +460,7 @@ Mods are an important ecosystem but are **not** evidence for native base-game me
 
 The sequel's native co-op similarly does not apply to G43.
 
-## 19. Progression across runs
+## 19. Progression across runs and sparse authored continuity
 
 Run failure resets:
 - deck;
@@ -465,6 +487,16 @@ Players learn:
 - how much risk a route can absorb.
 
 The Steam review surface repeatedly praises the game for continuing to teach players after hundreds of hours. [STS-J](#sts-j)
+
+### Neow is an authored explanation, not only a menu decoration
+
+Neow meets the adventurer at the Spire's base and offers starting bargains. In ordinary play, reaching the first Act's boss in the previous run affects the available blessing set; the restricted alternative still supplies help. Her repeated greeting connects a new mechanical attempt to a recurring named presence. [STS-X](#sts-x)
+
+The **Cursed Tome** event supplies an in-world account: Neow is an exiled Ancient of resurrection, using repeatedly restored outsiders against the Spire. Reading further costs HP and can award Enchiridion, Nilry's Codex or Necronomicon. Thus learning the premise and accepting a build resource occur in the same risk-bearing event. This is attributed **game text**, not independent proof that every implication of the tome is a fully simulated cosmology. [STS-AB](#sts-ab)
+
+The **Sensory Stone** offers memory fragments with different emotional frames: the Ironclad's devastating bargain, the Silent's ritual victory, the Defect's confused awakening and the Watcher's investigation. Its colorless-card choices can cost health. This is authored character/history material attached to a normal run decision, not a companion relationship campaign or procedurally generated biography. [STS-Y](#sts-y)
+
+**Interpretation:** the story of an improvised deck and the authored story of recurring resurrection coexist. Sparse, memorable anchors can give repetition meaning without interrupting every turn with exposition. The portability limit is important: another game's persistent people should not inherit run erasure merely because a short roguelike makes that erasure narratively intelligible.
 
 ## 20. Art, audio, UI and feel
 
@@ -635,6 +667,8 @@ These are audience-specific criticisms, not evidence that outcomes are actually 
 
 ## 26. Concrete situations
 
+These are constructed rule illustrations unless an attributed source says otherwise, not newly played sessions.
+
 ### Situation A — decline a superficially good card
 
 **Goal:** keep a small deck cycling a key defensive engine.
@@ -691,6 +725,18 @@ These are audience-specific criticisms, not evidence that outcomes are actually 
 
 **Lesson:** compatibility depends on hidden assumptions such as cleanup capacity.
 
+### Situation F — preserve output or bring it forward
+
+**Goal:** survive the next enemy attack. **State:** the next Orb is Frost and an Evoke action is available. **Choice:** obtain its immediate Block or keep its recurring contribution while using another defense. **Consequence:** the burst removes that Orb, changing later output. **Next decision:** replenish the queue or end the fight before the lost passive matters. The rule does not say the larger immediate number is always preferable. [STS-S](#sts-s)
+
+### Situation G — plan the exit before entering power
+
+**Goal:** use Wrath's offense without accepting an avoidable lethal response. **State:** Calm, a Wrath entry, a later exit option and sufficient resources. **Action:** enter Wrath, use the resulting opportunity, then leave if enemies will survive. **Consequence:** Calm's exit helps finance the sequence, but an unavailable exit can leave the player exposed. **Next decision:** preserve that escape resource instead of spending every point on damage. [STS-U](#sts-u)
+
+### Situation H — access competes with the tools needed after access
+
+**Goal:** reach the Heart. **State:** the Ruby Key is still missing at a Rest Site and HP is low. **Choice:** Recall now or recover and rely on a later opportunity. **Consequence:** obtaining admission can make the route less survivable; delaying can constrain the final Act. **Next decision:** inspect the remaining path, not merely the key checklist. The example concerns the original single-player game, not the board game's party-wide sacrifice rule. [STS-W](#sts-w)
+
 ## 27. Transferable inspiration for OpenLegend
 
 ### A. Treat subtraction as a first-class creator action
@@ -745,24 +791,26 @@ Players can meaningfully master a world only if its laws remain sufficiently con
 
 | Requirement | Coverage |
 | --- | --- |
-| R01 identity / scope / promise | §§1–2 |
-| R02 player actions / major mechanics | §§3–18 |
-| R03 items / entities / composition | §§6–12 |
-| R04 progression / economy / time | §§5–7, 9, 12–19 |
-| R05 concrete interactions | §26 |
-| R06 people / AI / social / multiplayer | §§4, 15, 18 |
+| R01 identity / scope / promise | §§1–2; original/sequel/board-game distinction |
+| R02 player actions / major mechanics | §§2–18; orb and stance operations |
+| R03 items / entities / composition | §§2, 6–12; timing and resource dependencies |
+| R04 progression / economy / time | §§2, 5–7, 9, 12–19; different key costs |
+| R05 concrete interactions | §26, including new F–H |
+| R06 people / AI / social / multiplayer | §§4, 15, 18–19 |
 | R07 art / audio / interface / feel | §20 |
-| R08 story / narrative | §§14, 16, 19 |
+| R08 story / narrative | §§14, 16, 19; named authored framing |
 | R09 production / development | §§21–22 |
 | R10 marketing / distribution / virality | §23 |
 | R11 commercial / participation | §23 |
 | R12 reviews / player feedback | §§24–25 |
-| R13 inspiration / limits | §27 |
+| R13 inspiration / limits | §27 and section-level interpretations |
 | R14 sources / preservation / navigation | this section + sources |
 
-**Mechanics-inventory check:** the dossier covers four characters, card/deck/draw/energy/discard/exhaust, upgrades, Relics, Potions, HP/Block, enemy Intent, Events, shops/gold, Rest Sites, route map, Elites/bosses, keys/Heart, Ascension, Daily/Custom/seeds/mods and run-reset/meta progression. It has no conventional equipment armor inventory, crafting/building, NPC relationship/romance/faction system, traversal avatar or native multiplayer; these absences are explicit.
+**Mechanics-inventory check:** the dossier covers four characters, card/deck/draw/energy/discard/exhaust, orb Channel/Evoke/Focus, stance transitions, upgrades, Relics, Potions, HP/Block, enemy Intent, Events, shops/gold, Rest Sites, route map, Elites/bosses, distinct keys/Heart, Ascension, Daily/Custom/seeds/mods and run-reset/meta progression. It has no conventional equipment armor inventory, crafting/building, NPC relationship/romance/faction system, traversal avatar or native multiplayer; these absences are explicit.
 
-**Preservation check:** [the original chapter](../games/slay-the-spire.md) remains intact. [The granular deck ecology study](../mechanics/slay-the-spire-deck-ecology-information-and-costly-synergies.md) remains the detailed owner for Runic Dome, Corruption/Dead Branch, Snecko Eye/Runic Pyramid, Rest/Smiting and telemetry examples. Sequel mechanics and unofficial mods are excluded from base-game claims.
+**Preservation check:** [the original chapter](../games/slay-the-spire.md) remains intact. [The granular deck ecology study](../mechanics/slay-the-spire-deck-ecology-information-and-costly-synergies.md) remains the detailed owner for Runic Dome, Corruption/Dead Branch, Snecko Eye/Runic Pyramid, Rest/Smithing and telemetry examples. Sequel mechanics and unofficial mods are excluded from base-game claims.
+
+**Audit remedies applied:** the former category-only Defect/Watcher accounts now explain their operations and costs (§2); the three keys have different prerequisites and opportunity costs (§16); Neow, Cursed Tome and Sensory Stone establish sparse authored continuity (§19); and the Smithing typo is repaired. All earlier reviews, situations and source notes remain. New rules were checked against accessible indexed original-game references and game-text transcriptions; blocked direct wiki pages are not represented as fully read. No game, video, audio, mod or port was tested. The progress ledger owns current resolution, while the audit matrix remains the historical baseline.
 
 ## Sources
 
@@ -792,7 +840,7 @@ Players can meaningfully master a world only if its laws remain sufficiently con
 
 <a id="sts-m"></a>**STS-M — [Slay the Spire: Success through Marketability](https://gdcvault.com/browse/gdc-19/play/1025667).** Casey Yano, GDC. Session overview documents Early Access date/duration, weak initial launch visibility and the team's attributed growth factors.
 
-<a id="sts-n"></a>**STS-N — [Slay the Spire: Metrics Driven Design and Balance](https://www.gdcvault.com/play/1025731/contactUs).** Anthony Giovannetti, GDC. Session overview states over one million copies in first year after Steam Early Access and describes data-driven/community balancing.
+<a id="sts-n"></a>**STS-N — [Slay the Spire: Metrics Driven Design and Balance](https://gdcvault.com/play/1025731/contactUs).** Anthony Giovannetti, GDC. Session overview states over one million copies in first year after Steam Early Access and describes data-driven/community balancing.
 
 <a id="sts-o"></a>**STS-O — [Slay The Spire Review — Trend Setter](https://www.gamespot.com/reviews/slay-the-spire-review-trend-setter/1900-6417497/).** Chris Pereira, GameSpot, updated 2020-07-09. Full review including mobile-era perspective.
 
@@ -802,3 +850,22 @@ Players can meaningfully master a world only if its laws remain sufficiently con
 
 <a id="sts-r"></a>**STS-R — [Slay the Spire — most helpful negative Steam reviews](https://steamcommunity.com/app/646570/negativereviews/?browsefilter=toprated&l=english).** Steam Community, accessed 2026-09-26. Self-selected negative accounts around RNG, repetition, difficulty and audience fit; no prevalence inference.
 
+<a id="sts-s"></a>**STS-S — [Orbs](https://slay-the-spire.fandom.com/wiki/Orbs), original-game community reference, accessed 2026-09-26.** Substantive indexed queue, timing, Orb-type and Focus sections read; direct wiki access was blocked. Dark's stored value and Plasma's different timing are distinguished. No sequel Glass Orb or unaudited guide's erroneous doubled-Focus formula is imported.
+
+<a id="sts-t"></a>**STS-T — [Focus](https://slay-the-spire.fandom.com/wiki/Focus), accessed 2026-09-26.** Indexed game-description/rules text. Used with the Orb-specific reference rather than treating a broad buff summary as every effect's exact formula.
+
+<a id="sts-u"></a>**STS-U — [Stance](https://slay-the-spire.fandom.com/wiki/Stance) and [keyword text](https://slay-the-spire.fandom.com/wiki/Module%3AKeywords/data), accessed 2026-09-26.** Indexed original-game rules and transcribed keyword definitions: entry/exit, no-Stance, attack-damage and Energy distinctions. These are community-hosted descriptions/transcriptions, not newly inspected proprietary code.
+
+<a id="sts-v"></a>**STS-V — [Divinity](https://slay-the-spire.fandom.com/wiki/Divinity) and [Blasphemy](https://slay-the-spire.fandom.com/wiki/Blasphemy), accessed 2026-09-26.** Indexed Mantra consumption, retained excess, next-turn-start exit and separate card risk. Inconsistent informal guide descriptions of end-of-turn exit or a harmless HP reduction were not adopted.
+
+<a id="sts-w"></a>**STS-W — [Keys](https://slay-the-spire.fandom.com/wiki/Keys), accessed 2026-09-26.** Indexed original-game prerequisites, Recall, linked chest reward and enhanced Elite rules. The board game's superficially similar keys have different group rules and are excluded.
+
+<a id="sts-x"></a>**STS-X — [Neow](https://slay-the-spire.fandom.com/wiki/Neow), accessed 2026-09-26.** Indexed starting-bargain and prior-run-condition sections plus dialogue context. Speculation in the trivia is not treated as a developer's narrative explanation.
+
+<a id="sts-y"></a>**STS-Y — [Sensory Stone](https://slay-the-spire.fandom.com/wiki/Sensory_Stone), accessed 2026-09-26.** Indexed event choices and game-text memory fragments; paraphrased, not reproduced wholesale. Character interpretation is distinguished from a simulated biography.
+
+<a id="sts-z"></a>**STS-Z — [Rushdown](https://slay-the-spire.fandom.com/wiki/Rushdown) and the transition interactions in STS-U, accessed 2026-09-26.** Indexed draw/return triggers; not a claim that any superficially similar deck guarantees an infinite combination.
+
+<a id="sts-aa"></a>**STS-AA — [Act 4](https://slay-the-spire.fandom.com/wiki/Act_4), accessed 2026-09-26.** Indexed fixed room sequence and the distinction between unlocking keys and carrying them in a run. Full direct-page fetch failed; no Heart fight was replayed.
+
+<a id="sts-ab"></a>**STS-AB — [Cursed Tome](https://slay-the-spire.fandom.com/wiki/Cursed_Tome), accessed 2026-09-26.** Indexed event choices and Neow narrative text read. The page's strategic “almost always” recommendation is not adopted; health cost and a possible book reward are the relevant interaction.
