@@ -76,6 +76,28 @@ Farming 2.0, April 2020, made crops depend on conditions including water, light,
 
 Livestock and ecology continue to evolve; the 2026 roadmap discusses more animals and breeding, but any undelivered roadmap details remain future rather than current evidence.
 
+### Player-maintained monuments and island-wide infrastructure — 2026 audit addition
+
+The August 2026 **Power Trip** update is a major current mechanic that the initial pass named but under-explained. Players can now spend found **Heavy Fuses** to restart the Power Plant and progressively energize a shared island-wide grid. The resulting state changes several other monuments and activities for everyone on the server: roadside power poles become usable electrical sources and climbable structures; green recyclers recover better efficiency and speed; the Power Plant exposes a 75%-efficiency red recycler and additional loot room; the Supermarket freezer produces chilled food; Water Treatment can be repaired to feed roadside water outlets; Oxum's garage/car lift activates; Airfield terminals can call events; Launch Site can deliberately crash a satellite into a player-selected part of the map; and Oil Rig can pump crude that must be physically hauled in a tanker module. [Power Trip](https://rust.facepunch.com/news/power-trip).
+
+This adds an important category missing from the initial mechanics inventory: **public infrastructure state**. A group can spend resources/effort at one monument and alter electricity, recycling, food, water, vehicles or events elsewhere for allies and rivals alike. It is neither private base automation nor a permanent quest unlock. Other players can exploit the result, and maintenance can lapse.
+
+### Workbench upgrades — 2026 audit addition
+
+The May 2026 **Upgrade hard, raid harder** update added nine rare **Workbench Upgrades**. They are found rather than crafted, slot into a workbench inventory, visibly alter the bench and provide different bonuses that can be combined. This is distinct from learning blueprints or upgrading the workbench tier: the workbench itself has become a configurable item platform. The same update added a deployable Mortar and let the Tin Can Alarm launch supported grenades/signals when triggered, expanding player-authored defenses. [May 2026 update](https://rust.facepunch.com/news/upgrade-hard-raid-harder).
+
+The August Recycle Bin upgrade then gained its own take-only inventory for recovered bonus items. This illustrates live composition depth: a station can have **tier → learned recipe access → slotted upgrade effects → automation connections** rather than one scalar "level."
+
+### Fishing, gambling and other structured activities — audit addition
+
+The initial pass under-covered non-combat activities. Rust's current activity layer includes:
+
+- **fishing**, with bait quality, water/depth/location-dependent fish, directional reeling/line-strain management, selling catches for Scrap and later **overfishing** that temporarily exhausts repeatedly fished areas; player fish traps remain a separate passive option. [Going Deep](https://rust.facepunch.com/news/going-deep) · [Spring Clean](https://rust.facepunch.com/news/spring-clean);
+- **casino gambling** at Bandit Camp/Outpost and some Underwater Lab layouts, including the Big Wheel, poker, blackjack and slot machines, all using Scrap and therefore directly touching the survival economy. [Bandit Town](https://rust.facepunch.com/news/bandit-town-update) · [Gestures/Poker](https://rust.facepunch.com/news/gestures-update) · [Prototype 17](https://rust.facepunch.com/news/prototype-17);
+- gestures, instruments/voice props, signs/painting and other social-expression systems that create interaction without resource progression.
+
+These systems matter because Rust's world supports **leisure/social risk** as well as gathering and combat. Gambling can destroy progression currency; fishing can be a livelihood; poker/voice create temporary social spaces among players who remain materially capable of betrayal outside safe zones.
+
 ### Trade and services
 
 NPC safe-zone economies, vending machines, drones and player vending create exchange without requiring trust at every transaction. **Common Ground** in July 2026 added an Apartment Complex monument with rentable rooms and rentable player-run shops. Rent is paid in scrap; failure to keep rent funded causes eviction. Shops have inventory/listings and can be taken over after operating periods under the update's rules. The same update introduced a formal Clan system and Clan Table. [Common Ground](https://rust.facepunch.com/news/common-ground).
@@ -248,7 +270,26 @@ Unless attributed otherwise, these are rules-based illustrations grounded in cur
 **Result:** the boat extends operational range while creating one expensive, visible asset that can be damaged or contested.  
 **Next decision:** specialize for cargo, combat, processing or mobility rather than maximize everything.
 
-### Case 9 — wipe changes the meaning of optimization
+### Case 9 — one group's infrastructure work changes everyone else's island
+
+**Intention:** improve recycling and access powered monument services.  
+**Conditions:** Power Plant is unpowered and the group has Heavy Fuses.  
+**Actions:** carry fuses into the monument, insert them into staged fuse boxes and defend/maintain the process.  
+**Interaction:** power state propagates into remote recyclers, roadside electrical sources and other monument services.  
+**Result:** the group's local action changes economic/infrastructure options for unrelated players across the server.  
+**Next decision:** exploit the unlocked services immediately, defend/maintain the source, or ambush other groups drawn to the newly valuable network.  
+**Limit:** the benefit is public rather than exclusive; effort can advantage competitors.
+
+### Case 10 — a rare Workbench Upgrade changes where loot value lives
+
+**Intention:** improve an established production base.  
+**Conditions:** the player finds one of the non-craftable workbench upgrade items.  
+**Actions:** carry it home, slot it into a compatible workbench and combine it with other upgrades/automation where useful.  
+**Interaction:** rare exploration loot modifies a persistent crafting station rather than becoming another weapon.  
+**Result:** base infrastructure itself gains a configurable build.  
+**Next decision:** protect the upgraded bench, trade the upgrade, or risk moving it during a base transition.
+
+### Case 11 — wipe changes the meaning of optimization
 
 **Intention:** decide whether to build one more elaborate production wing late in a wipe.  
 **Conditions:** the server's next map wipe is near.  
@@ -257,7 +298,7 @@ Unless attributed otherwise, these are rules-based illustrations grounded in cur
 **Result:** players may spend stockpiles on raids, experiments or risky projects instead of compounding infrastructure.  
 **Next decision:** optimize the current world or convert resources into memorable conflict before reset.
 
-### Case 10 — trust creates content no authored quest can guarantee
+### Case 12 — trust creates content no authored quest can guarantee
 
 **Intention:** trade or cooperate with a stranger encountered through proximity voice.  
 **Conditions:** both parties can attack and loot each other; neither has reliable knowledge of intent.  
@@ -511,6 +552,11 @@ The source packet predates G131's addition. [Packet provenance](../references/pa
 - **Facepunch — [Naval Update changelist](https://rust.facepunch.com/changelist/4029), February 5, 2026.** Primary delivered 2026 naval features.
 - **Facepunch — [Shipshape changelist](https://rust.facepunch.com/changelist/4032), March 5, 2026.** Primary boat-building/infrastructure follow-up.
 - **Facepunch — [Common Ground](https://rust.facepunch.com/news/common-ground), July 2, 2026.** Primary Apartment Complex, rentable shops, Clan system and explicitly Softcore raid-window/gather-rate changes.
+- **Facepunch — [Upgrade hard, raid harder](https://rust.facepunch.com/news/upgrade-hard-raid-harder), May 7, 2026.** Primary Workbench Upgrade, Mortar and alarm/defense composition evidence added during the follow-up audit.
+- **Facepunch — [Power Trip](https://rust.facepunch.com/news/power-trip), August 6, 2026.** Primary island-wide Power Plant/player-maintained-monument mechanics; this was a substantive missing current system in the initial pass.
+- **Facepunch — [Going Deep](https://rust.facepunch.com/news/going-deep), August 5, 2021, and [Spring Clean](https://rust.facepunch.com/news/spring-clean), April 2, 2026.** Primary fishing and current overfishing evidence.
+- **Facepunch — [Bandit Town](https://rust.facepunch.com/news/bandit-town-update), [Gestures/Poker](https://rust.facepunch.com/news/gestures-update), and [Prototype 17](https://rust.facepunch.com/news/prototype-17).** Primary casino/minigame evidence.
+
 - **Facepunch — [Breach and Clear](https://rust.facepunch.com/news/breach-and-clear), September 3, 2026.** Primary latest monthly update boundary located for this pass.
 - **Facepunch — [2026 roadmap](https://rust.facepunch.com/roadmap), updated August 27, 2026.** Primary planning document. Explicitly non-binding; future bullets are not current mechanics.
 - **Double Eleven — [Rust Console Edition](https://rust.double11.com/) and [Community Servers](https://rust.double11.com/community-servers), accessed September 27, 2026.** Primary evidence for separate console release/version/roadmap/server boundaries.
@@ -544,7 +590,7 @@ No YouTube scene or timestamp is represented as watched in this pass. Embedded v
 | R02 actions/major mechanics | R02 full action inventory |
 | R03 items/entities/composition | R03 |
 | R04 progression/economy/time | R04, current Blueprint Fragment boundary |
-| R05 concrete interactions | R05, ten worked cases |
+| R05 concrete interactions | R05, twelve worked cases |
 | R06 people/AI/social/multiplayer | R06 |
 | R07 art/audio/interface/feel | R07 |
 | R08 story/narrative/play connection | R08 |
@@ -557,6 +603,10 @@ No YouTube scene or timestamp is represented as watched in this pass. Embedded v
 
 ### Explicit mechanics-inventory closure
 
-Character creation is minimal/randomized avatar identity rather than a class builder; there are no RPG attributes, skill points, level ladder, romance system or persistent recruitable companions. Progression is blueprints/workbenches/fragments, gear, infrastructure, geography, group organization and player skill. Items/inventory, weapons/armor, crafting/research/upgrading, traversal/vehicles, environmental interaction, farming, electricity, industrial automation, activities/monuments/events, combat, practical stealth, looting, death/recovery, trade, social communication, teams/clans, NPC AI, map/biomes/monuments, building/base management, server/multiplayer rules and wipe-relative endgame are all addressed above. "Magic" is absent; electricity/industrial logic is technological, not a renamed spell system.
+Character creation is minimal/randomized avatar identity rather than a class builder; there are no RPG attributes, skill points, level ladder, romance system or persistent recruitable companions. Progression is blueprints/workbenches/fragments, gear, infrastructure, geography, group organization and player skill. Items/inventory, weapons/armor, crafting/research/workbench upgrades, traversal/vehicles, environmental interaction, farming, fishing, gambling/minigames, electricity, industrial automation, island-wide player-maintained infrastructure, monuments/events, combat, practical stealth, looting, death/recovery, trade, social communication, teams/clans, NPC AI, map/biomes/monuments, building/base management, server/multiplayer rules and wipe-relative endgame are all addressed above. "Magic" is absent; electricity/industrial logic is technological, not a renamed spell system.
 
 **Research boundary:** current web evidence was checked through September 27, 2026. Rust changes monthly, server configuration can override substantial rules, and historical critic reviews cannot establish current balance or performance. The dossier therefore dates live-service claims and preserves mode/server qualifiers instead of manufacturing one timeless ruleset.
+
+### Follow-up audit — September 27, 2026
+
+The second pass rechecked the current September release stream, 2026 roadmap and R01–R14/mechanics checklist. The initial dossier was broadly complete but **under-covered three applicable areas**: Workbench Upgrades, Power Trip's player-maintained island infrastructure, and structured activities/minigames. Those are now researched above with two additional worked cases. Current-version claims remain consistent with Breach and Clear as the latest September content update; Q4 animal breeding/dogs remain roadmap/future rather than shipped mechanics. No inherited evidence limitation was converted into a successful read or population claim.
