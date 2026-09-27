@@ -890,6 +890,27 @@ OpenLegend should use generation to **multiply intentional design**, not replace
 
 ## 29. Requirement and preservation check
 
+### September 27 requirements-and-corrections audit
+
+A fresh audit against the explicit mechanics inventory confirms the dossier meets the assignment **as an unreleased/cancelled-game study**. Categories below distinguish demonstrated/planned design from nonexistent shipped evidence:
+
+- **Identity / classes / attributes / skills / leveling / trees:** planned horizontal collection of roughly forty classes, shallow tiers, class accomplishments and small active loadouts are covered in §§2–5. No retail balance/progression curve existed to verify.
+- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** equipment/material composition and meaningful crafting were documented design goals (§§6–7), but no final shipped inventory/crafting economy is claimed.
+- **Magic / spells / powers:** weapon/class abilities and multiclass combinations were demonstrated/planned; a final complete skill catalogue never shipped.
+- **Traversal / environmental and object interaction:** action movement, destructible/voxel terrain, subterranean layers and Landmark-derived creation/destruction technology are covered, with prototype versus EQN delivery distinctions.
+- **Activities / minigames:** exploration, combat, class discovery, crafting, Rallying Calls and world events were the intended activity set; none is represented as a proven live-service loop.
+- **Combat / stealth / loot / rewards:** action combat and bounded active loadouts were demonstrated; detailed final stealth/loot/reward balance is explicitly unavailable.
+- **Death / failure / recovery:** no final retail death/recovery contract existed to audit; the dossier does not invent one.
+- **Economy / trading:** crafting/equipment/world-contribution ambitions are documented, but no final player economy/auction/trade implementation is claimed.
+- **Story / relationships / romance / reputation / party / companions:** faction relationships, consequence and dynamic opportunity were central goals; no shipped romance/companion system is fabricated.
+- **NPC/AI behavior and schedules / factions:** Storybricks-informed preferences, group behavior and consequence were core documented ambitions; the dossier separates prototypes/demos from proven MMO-scale operation.
+- **World map / environment / quests / events:** Rallying Calls, destructibility, layered terrain and server-local permanent change are central documented design areas.
+- **Building / settlements / management:** crafter contributions, settlement construction and persistent world change were planned/demonstrated at design level, not shipped as a final player-management system.
+- **Multiplayer / social / endgame / return loops:** EQN was designed as an MMO, but because it never released there is no legitimate player-retention/endgame evidence. Landmark's separately released creator community is supporting technology/product evidence, not a substitute playerbase.
+
+**Current boundary:** EverQuest Next remains **cancelled since March 2016**. Landmark subsequently shut down as a separate product. No revival, launch, private-server implementation or later EverQuest title is treated as delivered EQN. The absence of five conventional post-release reviews is therefore an evidence property of the cancelled subject, not unfinished research.
+
+
 | Requirement | Coverage |
 | --- | --- |
 | R01 identity / promise | §§1, 26 |
