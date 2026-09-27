@@ -6,6 +6,8 @@
 
 **Spoilers:** the opening sections discuss recruitment and progression. The story section and examples reveal companion development, planet resolutions, party separation and the final opponent. This is reference research, not an accepted OpenLegend feature specification. Constructed examples below are rules-based illustrations, not claims of personally recorded play.
 
+**September 27 audit:** all R01–R14 sections and the mechanics inventory were reread. The audit added the original 2005 Obsidian postmortem, the 2015 Aspyr desktop update, a directly reported US sales milestone, and all-time Steam helpful/negative material. It preserves the base-game / TSLRCM distinction rather than treating later restoration-heavy player testimony as launch reception.
+
 ## Identity and access boundaries
 
 Obsidian Entertainment developed the original game and LucasArts published it; Aspyr handled later desktop work. Steam dates the Windows release February 8, 2005, identifies single-player play and sets the story five years after the original. Its protagonist rebuilds an exiled Jedi's connection to the Force, not the first protagonist's existing build. Workshop availability does not automatically install restoration. [S01](#s01)
@@ -175,9 +177,11 @@ Tucker values fast weapon-set switching and more behavior choices. Fable objects
 
 ## Production: constrained continuity, not simply a publisher-blame story
 
+Kevin Saunders's **April 2005 Game Developer postmortem** is the strongest contemporary production source recovered in this audit. He describes a **33-person development team**, with roughly one third hired during the final six months and about 70 percent of the design staff among those late hires. BioWare supplied the inherited engine/toolset; LucasArts supplied QA, audio, rendered cinematics and some art assistance. Saunders says that support made delivery possible in **little more than 14 months**. The schedule did not merely affect cut story material: companion dialogue arrived late enough that the influence system could not be thoroughly mapped or balanced, so late testing led the team to increase influence-shift magnitudes; a complete playthrough also arrived only shortly before gold, leaving too little time to tune auto-balancing, and the team deliberately erred toward making the game easier. He calls some final systems essentially rough drafts whose identified flaws could not be addressed. This primary postmortem makes “rushed” a documented production constraint while also identifying concrete internal planning, staffing and polish failures rather than reducing the outcome to a one-party blame story. [S40](#s40)
+
 In a March 26, 2007 interview, Obsidian co-founder Feargus Urquhart describes choosing improvements around limited resources and a story-heavy design team. He reports that Chris Jones reunited the inherited PC and Xbox code/resource pipelines, which had diverged, so both versions could build together while retaining platform-specific asset resolutions. This is a specific developer account, not a reverse-engineered claim about all engine internals. Urquhart also acknowledges that Obsidian planned too much and shipped before the ending was sufficiently polished. His retrospective qualifies the simpler blame narratives in contemporary reviews. [S10](#s10)
 
-In the December 2019 interview, Avellone says the studio began with seven people and grew to roughly thirty; this corrects the notion that seven people made the entire finished game. He describes pitching before access to the original, subsequently revising the plan, and choosing a new protagonist rather than arbitrarily stripping Revan of power. He accepts scope responsibility, identifies expensive features/cinematics, and describes LucasArts supplying QA help. His account should not be flattened into a one-party blame narrative. [S11](#s11)
+In the December 2019 interview, Avellone says the studio began with seven people and grew to roughly thirty; this describes the studio/project ramp rather than contradicting Saunders's contemporary 33-person development-team count. It corrects the notion that seven people made the entire finished game. He describes pitching before access to the original, subsequently revising the plan, and choosing a new protagonist rather than arbitrarily stripping Revan of power. He accepts scope responsibility, identifies expensive features/cinematics, and describes LucasArts supplying QA help. His account should not be flattened into a one-party blame narrative. [S11](#s11)
 
 **Research interpretation:** reuse reduces some production costs but does not remove integration work. Narrative scope also creates obligations: a companion secret introduced early needs an implemented reveal and resolution later. A familiar combat system can remain functional while these less visible content dependencies fail to close. This is a production lesson, not proof that any particular extra month or budget would have fixed every defect.
 
@@ -187,12 +191,15 @@ Restoration changes more than polish: TSLRCM's documentation covers the HK Facto
 
 This is paid single-player distribution rather than a subscription campaign. Steam positions it around the setting, character development and consequential decisions. [S01](#s01) Those are observable choices; they do not establish channel conversion or acquisition cost.
 
-Contemporary review publication, later port reviews and a long-lived mod distribution page document different routes through which people encounter the game: initial release criticism, rediscovery on another device, and community restoration. A recommendation to install a mod is itself a shareable instruction, visible in the sampled Steam accounts, but this dossier does not translate that observation into a viral coefficient or a claim that modding caused a particular sales total. [S08](#s08), [S04](#s04), [S06](#s06), [S12](#s12)
+Contemporary review publication, later port reviews and a long-lived mod distribution page document different routes through which people encounter the game: initial release criticism, rediscovery on another device, and community restoration. In **July 2015**, Aspyr and Disney/Lucas also shipped a substantial Mac/Linux/Windows update adding achievements, cloud saves, native widescreen and high-resolution support, broader controller support and Steam Workshop integration; Aspyr explicitly says it worked with the TSLRCM team so the restoration mod was available through Workshop at launch. This is a material distribution/preservation event, not evidence that TSLRCM became part of the unmodified campaign. [S41](#s41)
+
+A recommendation to install a mod is itself a shareable instruction, visible in the sampled Steam accounts, but this dossier does not translate that observation into a viral coefficient or a claim that modding caused a particular sales total. [S08](#s08), [S04](#s04), [S06](#s06), [S12](#s12)
 
 | Date / evidence | What can responsibly be said | What it does not establish |
 | --- | --- | --- |
 | February 8, 2005, Steam's Windows release field | A dated product-release milestone for that storefront's game record. [S01](#s01) | The date of every territory, port or later digital listing. |
-| 2006 sales-history lead | The secondary chronology attributes an approximately 1.5-million sales figure to an early-2006 IGN developer profile. Direct retrieval of that profile failed in this pass; keep this as an attributed historical lead, not an independently verified, audited metric. [S31](#s31) | Current lifetime sales, sell-through definitions, region/platform split, revenue or profit. |
+| 2006 sales-history lead | The secondary chronology attributes an approximately 1.5-million worldwide sales figure to an early-2006 IGN developer profile. Direct retrieval of that profile failed in this pass; keep this as an attributed historical lead, not an independently verified, audited metric. [S31](#s31) | Current lifetime sales, sell-through definitions, region/platform split, revenue or profit. |
+| October 2008 historical sales context | GameSpot reported **more than 1.275 million US units** across the Xbox and PC releases while introducing *The Old Republic*. This is a directly retrieved secondary unit snapshot with geography/platforms stated; it does not validate the separate 2006 worldwide figure or establish later lifetime sales. [S42](#s42) | Worldwide lifetime units, revenue, profit, active users or a 2026 installed base. |
 | June 2022 / June 2023 | A released Switch port was followed by cancellation of its promised restoration DLC. [S04](#s04), [S07](#s07) | A quantified refund burden, lost sales, or the cost of continued support. |
 | September 26, 2026, accessible Steam reviews | The sampled weekly-helpful surface provides named qualitative responses and visible helpful counts. [S06](#s06) | Population sentiment, ownership, active users, retention or market share. |
 
@@ -200,7 +207,7 @@ Contemporary review publication, later port reviews and a long-lived mod distrib
 
 ### Switch cancellation and the chronology of claims
 
-Nintendo Life's June 3, 2023 report reproduces Aspyr's cancellation announcement; its June 5 update reports restoration contributor zbyl2 rejecting a rumor that failure to credit the modders caused it. **That 2023 evidence does not establish the actual reason.** [S07](#s07)
+Nintendo Life's June 3, 2023 report reproduces Aspyr's cancellation announcement; its June 5 update reports restoration contributor zbyl2 rejecting a rumor that failure to credit the modders caused it. GameSpot independently recorded Aspyr's cancellation and its offer of a free Star Wars game to people who had already purchased KOTOR II on Switch. **That 2023 evidence establishes cancellation and the remediation offer, but not the actual reason.** [S07](#s07) [S43](#s43)
 
 The subsequently updated encyclopedia points to a December 9, 2025 GamesIndustry.biz report about contributor permissions and legal names. Attempts to retrieve that underlying article were blocked, so this pass does not claim an independent examination of its reporting or legal materials. The later lead must not be silently erased, but neither should it be conflated with the different 2023 missing-credit rumor. Cancellation itself is established; a definitive causal account is not established by the primary material inspected here. [S31](#s31)
 
@@ -218,11 +225,15 @@ The subsequently updated encyclopedia points to a December 9, 2025 GamesIndustry
 
 **Research interpretation:** disagreement extends beyond bugs. Tucker finds the cast and plot less compelling; Bowling and Fable value precisely their ethical and personal complexity. Ratan's reluctance to replay contrasts with the enthusiastic modded-player accounts below. A port can preserve meaningful writing while adding separate technical friction. Neither a later mod nor an anticipated patch should be silently included in what an earlier reviewer actually played.
 
-## Accessible helpful Steam material
+## Helpful Steam material: restoration is part of the evidence boundary
 
-The default Community review page successfully displayed **Most Helpful (Week), English**. Capture date September 26, 2026; the displayed September posting dates omit the year. The sample is small and changing, not an all-time ranking or representative survey. [S06](#s06)
+The September 27 audit recovered Steam's English **Most Helpful (All Time)** surface. Its most visible long-form material repeatedly recommends TSLRCM or discusses the post-2015 desktop update. A November 25, 2013 review with 982 helpful marks begins by recommending restoration because it considers the standard game unfinished and bug-prone; **R2L3372** (October 30, 2014) recommends the game but criticizes vague questing/backtracking and also tells readers to install restoration; **KutarFOX** (July 21, 2015) mainly celebrates Aspyr's then-new desktop update and Workshop support; **Jean le Point** (February 15, 2015) praises the protagonist, crew and mystery while warning that the opening through Telos can feel linear and again recommends restoration. Helpful ordering and counts are dynamic snapshots. More importantly, this is **not clean evidence about the unmodified 2004–2005 release**: restoration itself has become part of how prominent Steam reviewers frame the product. [S38](#s38)
 
-**Jimmy D Spoofy** (September 21, two helpful votes) praises the writing and power-building while explicitly recommending restoration. **Chubbs_Karamozov** (September 26, no helpful votes yet) also endorses the story but describes a restored-content context. **_n0T3** (September 25, no helpful votes yet) reports enjoying team-building while using both TSLRCM and a save editor. Those are not unmodified-base-game tests. **determinedidiot** (September 25, no helpful votes yet) likes the experience despite rough edges. The displayed sample contains recommendations rather than a strong negative counter-sample; editorial criticism supplies disagreement without inventing one. [S06](#s06)
+Contrasting Steam material exists. **Powerglove64**'s August 22, 2016 not-recommended review likes several ideas but treats the vanilla game as only middling because of bugs, missing content and unresolved story material, while saying restoration substantially improves it. A top-rated negative-review surface also contains players who call the underlying game worthwhile yet reject the Steam Windows package because of severe compatibility failures. These are player accounts about both design and presentational/compatibility state, not proof that every Windows configuration fails or that restoration fixes every problem. [S39](#s39)
+
+The earlier **Most Helpful (Week), English** capture remains useful as a current-sentiment snapshot rather than an all-time ranking. **Jimmy D Spoofy** praises the writing and power-building while explicitly recommending restoration. **Chubbs_Karamozov** also endorses the story in a restored-content context. **_n0T3** reports enjoying team-building while using both TSLRCM and a save editor; that is not an unmodified-base-game test. **determinedidiot** likes the experience despite rough edges. [S06](#s06)
+
+**Interpretation:** Steam reception cannot responsibly be summarized as though customers are all reviewing one stable artifact. The base campaign, Aspyr's 2015 compatibility/update layer and TSLRCM are separable states, yet prominent player reviews often evaluate them together. The professional launch/port reviews remain necessary counterweights when asking what Obsidian actually shipped.
 
 ## Transferable patterns and limits
 
@@ -254,7 +265,7 @@ No gameplay session, video footage, timestamped sequence or soundtrack listening
 
 ## Sources and evidence limits
 
-Access date throughout: **September 26, 2026**. Undated GameBanshee mechanics pages are early-campaign community references unless otherwise identified; their present crawl date is not their original publication date. Primary material includes the manual, actual game-tooltip images, developers' own interview answers and the restoration authors' documentation. Reviews are firsthand criticism, not authoritative specifications. Wikipedia is used only for explicitly bounded secondary chronology and inaccessible-source leads.
+Initial access date: **September 26, 2026**; the original postmortem, all-time/negative Steam material, Aspyr's 2015 update, GameSpot sales history and cancellation/remediation report were freshly inspected September 27, 2026. Undated GameBanshee mechanics pages are early-campaign community references unless otherwise identified; their present crawl date is not their original publication date. Primary material includes the manual, actual game-tooltip images, developers' own interview answers and the restoration authors' documentation. Reviews are firsthand criticism, not authoritative specifications. Wikipedia is used only for explicitly bounded secondary chronology and inaccessible-source leads.
 
 <a id="s01"></a> **S01 — [Steam storefront](https://store.steampowered.com/app/208580/STAR_WARS_Knights_of_the_Old_Republic_II__The_Sith_Lords/).** Primary credits, Windows release field, positioning and distribution features; dynamic prices and aggregates are not sales history.
 
@@ -330,6 +341,18 @@ Access date throughout: **September 26, 2026**. Undated GameBanshee mechanics pa
 
 <a id="s37"></a> **S37 — [Awareness in-game tooltip](https://www.gamebanshee.com/starwarskotorii/skills/images/awareness.jpg).** Actual game UI image visually read. Separate Demolitions and Treat Injury image requests failed; those brief descriptions use the accessible manual instead.
 
+<a id="s38"></a> **S38 — [Steam English Most Helpful (All Time)](https://steamcommunity.com/app/208580/reviews/?browsefilter=toprated).** Ranked surface freshly inspected September 27, 2026. Multiple high-helpful bodies were read, including restoration/update-heavy reviews; helpful order/counts are dynamic and are not prevalence measures.
+
+<a id="s39"></a> **S39 — [Powerglove64 Steam review](https://steamcommunity.com/profiles/76561198127817295/recommended/208580/) and [top-rated negative review surface](https://steamcommunity.com/app/208580/negativereviews/?browsefilter=toprated&l=malay).** Contrasting not-recommended bodies freshly inspected September 27, 2026. Individual compatibility failures and ratings remain player reports; the localized negative surface exposed English review bodies but is not treated as a population survey.
+
+<a id="s40"></a> **S40 — [Classic Postmortem: Obsidian's Knights of the Old Republic II: The Sith Lords](https://www.gamedeveloper.com/design/classic-postmortem-obsidian-s-i-knights-of-the-old-republic-ii-the-sith-lords-i-).** Kevin Saunders, originally April 2005 *Game Developer Magazine*, republished December 5, 2017. Primary contemporary postmortem freshly read via the indexed full article; used for team structure, inherited technology/support, ~14-month schedule, late influence implementation, incomplete balancing and the team's own assessment of rough-draft systems.
+
+<a id="s41"></a> **S41 — [Introducing an updated KOTOR II for Mac, Linux, and Windows](https://steamcommunity.com/app/208580/allnews/).** Aspyr, July 21, 2015. Primary update announcement freshly inspected; establishes Mac/Linux availability, achievements, cloud saves, widescreen/high-resolution and controller support, Steam Workshop, and explicit launch collaboration with the TSLRCM team.
+
+<a id="s42"></a> **S42 — [Star Wars: The Old Republic revealed](https://www.gamespot.com/articles/star-wars-the-old-republic-revealed/1100-6199726/).** GameSpot, October 21, 2008. Historical reporting freshly retrieved; states KOTOR II had sold more than 1.275 million units in the US across Xbox and PC. Kept separate from the inaccessible early-2006 worldwide-sales source.
+
+<a id="s43"></a> **S43 — [Star Wars KOTOR 2 Restored Content DLC Canceled On Switch](https://www.gamespot.com/articles/star-wars-kotor-2-restored-content-dlc-canceled-on-switch/1100-6514788/).** Demi Williams, GameSpot, June 5, 2023. Confirms the cancellation and Aspyr's free-Star-Wars-game remediation offer; explicitly notes that Aspyr did not give a reason, so it does not support a causal claim.
+
 ## Requirement map and preservation
 
 | Requirement | Substantive owner in this dossier |
@@ -342,12 +365,12 @@ Access date throughout: **September 26, 2026**. Undated GameBanshee mechanics pa
 | R06 | People, relationships, factions and AI; explicit absent multiplayer/settlement systems |
 | R07 | Art, audio, interface and feel; inspected tooltip images and production staging evidence |
 | R08 | Story through play; named locations, companion development and spoiler-marked conclusion |
-| R09 | Production; two developer interviews and restoration-maintenance boundaries |
-| R10 | Distribution and promotion; observable channels separated from causal hypotheses |
-| R11 | Dated commercial-context table, monetization structure and explicit unavailable financial data |
-| R12 | Five complete written-review bodies across four outlets; sampled helpful Steam material |
+| R09 | Original 2005 postmortem plus two developer retrospectives; staffing/schedule, influence/balance iteration and restoration-maintenance boundaries |
+| R10 | Original/later distribution, 2015 desktop preservation/update, Workshop/restoration route and observable channels separated from causal hypotheses |
+| R11 | Dated commercial-context table including directly retrieved 1.275M+ US snapshot, monetization structure and explicit unavailable financial data |
+| R12 | Five complete written-review bodies across four outlets; all-time helpful, negative and weekly Steam samples with restoration/version boundaries |
 | R13 | Six transferable patterns with dependencies, alternatives and failure modes |
-| R14 | Adjacent S01–S37 references, annotated access limits, reading/viewing routes and preservation statement |
+| R14 | Adjacent S01–S43 references, annotated access limits, reading/viewing routes and preservation statement |
 
 **Preservation:** this is an additive owner. The inherited `games/` and `mechanics/` inventories contained no dedicated KOTOR II chapter to replace. The original KOTOR dossier remains a separate G109 owner; sequel rules do not silently overwrite it. The partial G110 draft's five reviews, player sample, production account, PDF-inspection record and cancellation caveat remain present, with the latter explicitly extended by the later-source access boundary. Earlier chapters, packet references, examples and viewing routes are unchanged.
 
