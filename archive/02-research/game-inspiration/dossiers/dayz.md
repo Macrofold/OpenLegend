@@ -14,7 +14,7 @@ The player promise is intentionally sparse: wake in an infected post-collapse la
 
 ### Current September 2026 stable versus Experimental
 
-As of September 27, 2026, the **stable branch is Update 1.29**. The update initially reached stable PC in April 2026 and the July 15 **Road to Badlands** stable update added/previewed assets such as SCR17 variants/accessories, holographic sights, desert-oriented equipment, additional infected and a Nasdara convoy server event. The current official forum index still separates stable 1.29 from Experimental 1.30. [Stable 1.29 thread](https://forums.dayz.com/topic/266379-stable-update-129/) · [official news](https://dayz.com/).
+As of September 27, 2026, the **stable branch is Update 1.29**. The initial 1.29 stable build shipped April 8, 2026; **Road to Badlands** then shipped as a stable 1.29 update across PC/Xbox/PlayStation on July 15, with a later August 12 1.29 hotfix. The July content adds selected future-Badlands assets to the current game—SCR17 variants/accessories, holographic sights, desert-oriented equipment, additional infected, Nasdara-related wrecks, a Morse-code leaflet and a Nasdara convoy server event—without making the Badlands/Nasdara expansion itself released. The current official update index still separates stable 1.29 from Experimental 1.30. [Stable 1.29 thread](https://forums.dayz.com/topic/266379-stable-update-129/) · [official news](https://dayz.com/).
 
 **Update 1.30 is Experimental**, first exposed on Steam in September 2026. It includes experimental motorbikes, inventory/UI changes, shield attachments, wash-face/wet-clothing actions, weapon variants and many fixes/settings. Bohemia's Experimental forum rules are explicit that features in test builds can change or be removed. Therefore this dossier does **not** treat motorbikes or the 1.30 inventory UI as stable released mechanics yet. [Experimental forum](https://forums.dayz.com/forum/135-pc-experimental-updates/) · [official DayZ news](https://dayz.com/).
 
@@ -110,6 +110,16 @@ Vehicle/network code has itself been an active development target; Update 1.28 i
 Players can build fences/gates/watchtowers and establish storage or shelters, use locks and flags, hide/bury caches and gather vehicles. Bases are not permanent ownership claims: they can be discovered, raided, damaged, abandoned or wiped by service decisions. Persistence rules also depend on server settings.
 
 Base construction therefore creates a memory anchor in a permadeath game. A character can die while the group's physical place remains.
+
+### Base construction, raiding and persistence — audit expansion
+
+The initial pass named bases but did not operationally explain them. Vanilla DayZ base construction centers on **Fence Kits/Fences**, gates, Watchtowers and the **Territory Flag/Flag Pole**, plus tents, barrels, crates and buried/hidden caches. Fences are built from staged physical materials such as logs, planks, nails and wire using appropriate tools; wire can turn a fence into a gate, and combination locks can control access. Watchtowers add vertical defensive/storage structure rather than a free-form building grid.
+
+The **Flag Pole**, introduced in Update 1.09, is specifically a persistence-management device: while the flag remains raised it refreshes lifetime values for nearby eligible items/structures so owners do not have to manually touch every fence/container to keep it from cleanup. The flag gradually lowers and must be raised/maintained. [Update 1.09](https://dayz.com/article/game-update/DayZ-Update-1-09).
+
+Base raiding/damage is part of the default sandbox, but server configuration is a first-class boundary. Bohemia's current gameplay-settings documentation exposes settings such as `disableBaseDamage`, `disableContainerDamage`, stamina modifiers and multiple building-placement checks. Community servers can therefore preserve the same construction vocabulary while radically changing whether bases can be damaged or where pieces can be placed. [Gameplay Settings](https://community.bistudio.com/wiki/DayZ:Gameplay_Settings).
+
+This is distinct from Rust/Conan ownership: DayZ does not create a general "claimed territory" economy merely because a flag is present. The flag's core vanilla role is object-lifetime maintenance, while social ownership still depends on walls, locks, concealment, server rules and player behavior.
 
 ### Communication, restraint and social interaction
 
@@ -286,7 +296,17 @@ Unless attributed otherwise, these are rules-based illustrations.
 **Result:** the group gains reach while creating a new thing to protect.  
 **Boundary:** September 2026 motorbikes remain Experimental 1.30, so they are not substituted into this stable case.
 
-### Case 9 — a base outlives a character but not the world
+### Case 9 — a flag pole turns persistence into maintenance
+
+**Intention:** keep a group's built camp/storage from expiring under normal persistence cleanup.  
+**Conditions:** fences/containers are inside the flag's effective territory and the group has constructed/raised a flag pole.  
+**Actions:** maintain/raise the flag rather than manually refreshing every eligible nearby object.  
+**Interaction:** base ownership, object cleanup and real-time absence become linked through one visible world device.  
+**Result:** the camp can persist through individual character deaths and offline periods while the flag is maintained.  
+**Next decision:** protect the conspicuous flag/base, distribute hidden caches, or accept eventual cleanup.  
+**Boundary:** server owners can change persistence/base-damage/placement behavior; the flag is not a universal invulnerability claim.
+
+### Case 10 — a base outlives a character but not the world
 
 **Intention:** create a repeatable home for a group.  
 **Conditions:** enough tools/materials have been accumulated.  
@@ -296,7 +316,7 @@ Unless attributed otherwise, these are rules-based illustrations.
 **Next decision:** expand visibly, stay discreet, distribute caches, or relocate.  
 **Limit:** raids/server wipes can erase the investment; community rules vary.
 
-### Case 10 — weapon condition changes a social tragedy
+### Case 11 — weapon condition changes a social tragedy
 
 **Intention:** defend oneself after a long cooperative run.  
 **Conditions:** the character finally has a firearm, but its condition is poor.  
@@ -576,6 +596,9 @@ This pass therefore does not overwrite a prior DayZ owner, and it does **not** c
 - **Bohemia Interactive — [Update 1.26 / Frostline](https://dayz.com/article/game-update/DayZ-Update-1-26), October 2024.** Primary Frostline-era stable features/map boundary.
 - **Bohemia Interactive — [Update 1.28](https://dayz.com/article/game-update/DayZ-Update-1-28), 2025.** Primary current-era vehicle/network work.
 - **Bohemia Interactive — [Update 1.14](https://dayz.com/article/game-update/DayZ-Update-1-14), 2021.** Primary contaminated-zone addition; historical current-feature origin.
+- **Bohemia Interactive — [Update 1.09](https://dayz.com/article/game-update/DayZ-Update-1-09), 2020.** Primary Flag Pole/persistence-management evidence added during the follow-up audit.
+- **Bohemia Interactive Community Wiki — [Gameplay Settings](https://community.bistudio.com/wiki/DayZ:Gameplay_Settings), accessed September 27, 2026.** Official server-configuration reference for base/container damage, stamina and building-placement overrides.
+
 - **Bohemia Interactive Community Wiki — [Central Economy Configuration](https://community.bistudio.com/wiki/DayZ:Central_Economy_Configuration), accessed September 27, 2026.** Primary/official technical documentation for server economy configuration.
 - **Bohemia Interactive — [beta transition](https://www.bohemia.net/en/blog/dayz-enters-beta-on-pc), November 2018.** Primary production/engine/beta scope account.
 - **Bohemia Interactive — [1.0 launch](https://www.bohemia.net/en/blog/dayz-10-is-launching-on-december-13-on-steam), December 2018.** Primary standalone release history.
@@ -616,7 +639,7 @@ No video scene, spoken quote or timestamp is represented as watched in this pass
 | R02 actions/major mechanics | R02 complete action vocabulary |
 | R03 items/entities/composition | R03 |
 | R04 progression/economy/time | R04 |
-| R05 interactions | R05, ten worked situations |
+| R05 interactions | R05, eleven worked situations |
 | R06 people/AI/social/multiplayer | R06 |
 | R07 art/audio/interface/feel | R07 |
 | R08 story/narrative/play | R08 |
@@ -629,6 +652,10 @@ No video scene, spoken quote or timestamp is represented as watched in this pass
 
 ### Explicit mechanics-inventory closure
 
-Character identity is a vulnerable survivor rather than a class build; no RPG attributes, XP levels, perk tree, spells, romance or recruitable companion party exists. Progression is equipment, supplies, bodily state, map knowledge, base/vehicle access and relationships. Items/inventory/condition/compatibility; clothing/armor/weapons; crafting/repair; traversal/navigation/vehicles; environmental and object interaction; hunting/fishing/farming/cooking; combat/practical stealth; looting/scarcity; death/permadeath/recovery; informal trade; emergent narrative; communication/restraint; AI infected/animals; official and community maps; environmental hazards/events; base building/storage; multiplayer/server governance; and self-authored endgame/return loops are all addressed above.
+Character identity is a vulnerable survivor rather than a class build; no RPG attributes, XP levels, perk tree, spells, romance or recruitable companion party exists. Progression is equipment, supplies, bodily state, map knowledge, base/vehicle access and relationships. Items/inventory/condition/compatibility; clothing/armor/weapons; crafting/repair; traversal/navigation/vehicles; environmental and object interaction; hunting/fishing/farming/cooking; combat/practical stealth; looting/scarcity; death/permadeath/recovery; informal trade; emergent narrative; communication/restraint; AI infected/animals; official and community maps; environmental hazards/events; fence/gate/watchtower/flag-based base construction and persistence; multiplayer/server governance; and self-authored endgame/return loops are all addressed above.
 
 **Research boundary:** facts were checked against current/public evidence through September 27, 2026. DayZ's server configurability, mod ecosystem and Experimental branch mean no single community-server rule should be generalized to the stable official baseline. Historical launch reviews remain valuable reception evidence but are not current bug inventories.
+
+### Follow-up audit — September 27, 2026
+
+The second pass rechecked stable 1.29, Road to Badlands and the September 1.30 Experimental branch against R01–R14. The initial dossier's release-state judgment was correct, but its **base-building/persistence coverage was not operational enough** for R02/R04. The audit now documents fences/gates/watchtowers, the Flag Pole's lifetime-refresh role and server-configurable base damage/placement. It also clarifies the April → July → August 1.29 stable chronology and keeps motorbikes/new inventory actions in Experimental 1.30, where Bohemia explicitly warns features may change or disappear.
