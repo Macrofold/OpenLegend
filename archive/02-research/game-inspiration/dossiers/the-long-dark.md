@@ -2,7 +2,7 @@
 
 **Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
 
-The Long Dark is most useful as a study of **survival as expedition accounting**. Its core dramatic unit is not crafting a castle or defeating waves of enemies; it is deciding whether today's weather, clothing, calories, daylight, fatigue, injuries and route knowledge justify leaving a warm shelter for something you may need tomorrow. The strongest stories come from chains of small decisions whose costs compound over hours or days.
+The Long Dark is most useful as a study of **survival as expedition accounting**. Its core dramatic unit is not crafting a castle or defeating waves of enemies; it is deciding whether today's weather, clothing, calories, daylight, fatigue, injuries and route knowledge justify leaving a warm shelter for something you may need tomorrow. The strongest stories come from chains of small decisions whose costs compound over hours or days. The current Survival game is no longer absolutely one-life-only: since TALES Part Five, an **optional Cheat Death** system can preserve a run at escalating cost, so the important contract is consequential mortality rather than an obsolete claim of unconditional save deletion.
 
 ## R01 — identity, current scope, product boundaries and player promise
 
@@ -23,6 +23,10 @@ Hinterland's August 2026 diary explicitly says **WINTERMUTE is finished and futu
 The player promise in Survival is unusually austere: there are no zombies, settlements to conquer or tech-tree victory. You are alone in the frozen Canadian wilderness after a geomagnetic disaster, and **the environment is the antagonist**. Survival ends when the character dies. Progress is better clothing, tools, skills, stocked shelters, geographic knowledge and a longer history of not making a fatal mistake.
 
 ## R02 — player actions and major mechanics
+
+### Survivor identity and progression baseline
+
+Survival Mode lets the player choose a **male or female survivor voice/body presentation** rather than a custom RPG character. The two choices are mechanically equivalent; there is no class, attribute-point, species or profession selection. The character's real differentiation emerges from current clothing, equipment, afflictions, learned Survival Skills, selected Feats and player knowledge. Community documentation notes that the male/female survivor presentations reuse Will/Astrid voice/model work but are not Story Mode relationship identities. [Survival Mode reference](https://thelongdark.fandom.com/wiki/Survival_Mode).
 
 ### Four basic needs feed one condition system
 
@@ -114,6 +118,19 @@ Ice fishing and snares convert appropriate locations/materials/time into food. M
 
 Injuries/conditions include bleeding, infection risk/infection, sprains, burns, food poisoning, dysentery, parasites depending on difficulty/food, broken ribs, frostbite/hypothermia and DLC/newer hazards. Treatment is often **specific**—bandage, antiseptic/old-man's-beard dressing, antibiotics/reishi, painkillers/rest, warmth, etc.—so the first-aid inventory is a set of future contingency options.
 
+### Mapping, looting, collections and other activities
+
+The player can spend significant time on non-combat activities that deepen map knowledge and long-run purpose:
+- **charcoal surveying** to reveal local map geography;
+- searching houses, vehicles, lockers, containers, corpses and caches for finite loot;
+- discovering **Polaroids, Mementos, Buffer Memories, recipe cards, cairns, notes and surveyed locations**;
+- building Rock Caches and Snow Shelters;
+- beachcombing;
+- fishing and trapping;
+- Tales objectives and Challenge-mode goals.
+
+The Survival journal explicitly tracks Skills, Collections, Rock Caches, notes and statistics, and TALES adds a dedicated objective view. These activities are not a separate arcade/minigame economy; they reuse time, weather, carry capacity and route risk. [Survival Menu](https://thelongdark.fandom.com/wiki/Survival_Menu).
+
 ### Skills as use/read progression
 
 Survival skills improve capabilities such as fire starting, cooking, carcass harvesting, fishing, archery/rifle/revolver use and repair-related activities. Skills grow through doing and through found skill books where applicable. Higher skill can reduce waste/time/risk, but does not make the world harmless.
@@ -141,14 +158,15 @@ The geomagnetic event normally leaves much technology dead, but the **Aurora** c
 Core Survival has:
 - no character classes or attribute point allocation;
 - no conventional enemy XP/loot levels;
+- no magic/spell/power progression;
+- no dedicated stealth-skill tree (crouching, line-of-sight, scent and avoidance still matter behaviorally);
 - no settlement/faction diplomacy campaign;
 - no multiplayer/co-op;
 - no recruitable companion party;
-- no romance system;
-- no large freeform construction tech tree;
-- no respawn after Survival death.
+- no romance/reputation relationship system;
+- no large freeform construction tech tree.
 
-These absences focus cognitive load on survival state, geography and time.
+The old absolute "no respawn after death" statement is no longer correct: optional Cheat Death now provides bounded continuation with escalating cost. These absences focus cognitive load on survival state, geography and time.
 
 ## R03 — objects, resources and composition
 
@@ -209,15 +227,17 @@ This learned map can make a veteran vastly more capable than a first-time charac
 
 ### Difficulty/Experience modes reshape the simulation
 
-Pilgrim, Voyageur, Stalker and Interloper alter loot, weather, wildlife and other pressure; Custom settings can further tune systems. Therefore anecdotes from Interloper cannot be silently generalized to Voyageur.
+Pilgrim, Voyageur, Stalker and Interloper alter loot, weather, wildlife and other pressure; Custom settings can further tune systems. **Misery Mode**, added with TALES Part Five as a free update, goes beyond Interloper by applying a sequence of escalating afflictions intended for expert players. Therefore anecdotes from Interloper—or Misery—cannot be silently generalized to Voyageur. [TALES Part Five](https://www.thelongdark.com/news/tales-from-the-far-territory-part-five-now-live/).
 
 Interloper is especially important as a design reference because scarcity removes many comfortable items and makes improvised forging/knowledge more central. The game changes *what counts as an option*, not just enemy hit points.
 
-### Permadeath and save behavior
+### Death, Cheat Death and save behavior
 
-Survival death ends that run. The game autosaves around consequential events/actions rather than encouraging tactical quicksave experimentation. This makes every expedition an investment of a unique history.
+The original Survival contract was strict permadeath, but **TALES Part Five changed that in June 2024**. On death, the player can still accept ordinary death and lose the save, or optionally **Cheat Death**. Hinterland's design allows up to three Cheat Death uses (four total lives): the world and stored/explored/Tales progress persist, the player can recover part of the death inventory, and each continuation imposes increasingly severe tradeoffs/penalties. [May 2024 design explanation](https://www.thelongdark.com/news/dev-diary-may-2024/) · [Part Five release](https://www.thelongdark.com/news/tales-from-the-far-territory-part-five-now-live/).
 
-WINTERMUTE uses different story/checkpoint logic and should not be described with Survival's permadeath contract.
+This preserves the emotional weight of mortality without requiring every player to throw away a beloved hundreds-day history. Players who want the original one-life contract can simply decline Cheat Death. The game still autosaves around consequential events/actions rather than encouraging tactical quicksave experimentation.
+
+WINTERMUTE uses separate story/checkpoint logic and should not be described with Survival's death contract.
 
 ### Long-run scarcity and renewability
 
@@ -335,6 +355,12 @@ Audio is unusually functional:
 - indoor quiet contrasts with outdoor danger.
 
 The UI mostly surfaces needs/status without turning the world into a waypoint-heavy HUD. The game's slower animations/progress circles for tasks are divisive: they communicate that time passes and work has cost, but PC Gamer's 2017 review wished for more physical on-screen interaction rather than repeated progress circles.
+
+### Music and authored sound
+
+Hinterland separates the score's responsibilities by mode. Its May 2026 **Music for The Long Dark, Volume 3** announcement credits **Cris Velasco** for WINTERMUTE's authored-story music and **Sascha Dikiciyan** for Survival Mode music, with Volume 3 covering Episodes Four/Five plus TALES material. Earlier Volume One combined about 100 minutes of Survival and Episodes One/Two music. [Volume 3](https://www.thelongdark.com/news/music-for-the-long-dark-volume-3-now-available/) · [Volume One](https://www.thelongdark.com/news/the-long-dark-original-soundtrack-now-available-on-steam/).
+
+That division supports the mode split: Survival's score can reinforce loneliness/region atmosphere without dictating narrative beats, while WINTERMUTE can use more authored dramatic scoring.
 
 Current visual-enhancement work reached newer consoles in 2025. Do not retroactively describe launch-console presentation using those newer builds.
 
@@ -566,6 +592,17 @@ https://thelongdark.fandom.com/wiki/Crafting
 https://steamcommunity.com/app/305620/positivereviews/?browsefilter=trendyear&filterLanguage=default&l=english&p=1  
 https://steamcommunity.com/app/305620/reviews/?l=english
 
+**S20 — Hinterland, May 2024 dev diary + TALES Part Five release, June 24, 2024.** Primary Cheat Death/Misery design and shipped boundary; optional continuation, escalating penalties and up-to-three Cheat Death uses.  
+https://www.thelongdark.com/news/dev-diary-may-2024/  
+https://www.thelongdark.com/news/tales-from-the-far-territory-part-five-now-live/
+
+**S21 — Hinterland, Music for The Long Dark Volume 3, May 5, 2026.** Primary current music credits and Episode Four/Five/TALES soundtrack boundary; Cris Velasco for WINTERMUTE, Sascha Dikiciyan for Survival.  
+https://www.thelongdark.com/news/music-for-the-long-dark-volume-3-now-available/
+
+**S22 — Community Survival Mode / Survival Menu references.** Operational references for male/female mechanically equivalent survivor presentation and tracked collections/skills/Tales objectives.  
+https://thelongdark.fandom.com/wiki/Survival_Mode  
+https://thelongdark.fandom.com/wiki/Survival_Menu
+
 ### Reading route
 
 1. Read **S13 (PC Gamer)** for the core Survival experience.
@@ -600,5 +637,6 @@ https://steamcommunity.com/app/305620/reviews/?l=english
 - No video or soundtrack was represented as watched/listened to.
 - Community mechanics references can lag exact patches; first-party sources own product/version boundaries.
 - The five full reviews are deliberately historical 2017 sources; their incomplete-story statements are contextualized, not presented as 2026 facts.
+- The original Survival marketing language still emphasizes death as the end, but the current shipped Cheat Death system materially qualifies that older permadeath wording; this audit follows the current mechanic rather than preserving the stale absolute claim.
 - Current Steam reviews are qualitative testimony, not a frequency estimate.
 - Dated sales/player figures use Hinterland's own definitions and are not extrapolated into a current lifetime total.
