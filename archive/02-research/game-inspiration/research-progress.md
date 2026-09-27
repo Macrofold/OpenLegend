@@ -14,7 +14,7 @@ This library now contains the six parallel research branches below, merged with 
 | `docs/game-inspiration-games-81-100` | `203b409d9fe8` | [Identified G81–G100 audit repairs complete, with retained evidence limits.](#g81g100-branch-research-state) |
 | `docs/game-inspiration-games-101-120` | `b1a383dc7796` | [Revised scope is G101–G110; second-pass audit and scoped integration recorded complete.](#g101g110-branch-research-state) |
 | `docs/game-inspiration-games-111-120` | `2e7ddf5f53a1` | [G111–G120 follow-up audit recorded complete, with retained evidence limits.](#g111g120-branch-research-state) |
-| `docs/game-inspiration-games-121-end` | `a47b3d4520aa` | [All ten initial passes complete; latest follow-up audit state and closure evidence are retained.](#g121g130-branch-research-state) |
+| `docs/game-inspiration-games-121-end` | `ec7110a1c676` | [All ten initial passes complete; latest follow-up audit state and closure evidence are retained.](#g121g130-branch-research-state) |
 
 All G01–G130 initial research is now present. The approved [G131–G148 survival expansion](#survival-expansion--g131g148) adds eighteen pending passes, bringing the roster to 148. The [global P01–P05 gates](#final-integration-gates--pending) remain open; merging manuscripts does not complete their research or independently repeat source verification. The two AI Dungeon studies are retained in the same dossier with separate source registers and pass-specific retrieval limits.
 
@@ -448,7 +448,7 @@ The original range pass produced ten dossiers with eight worked situations each,
 
 ## G121–G130 branch research state
 
-Imported from `docs/game-inspiration-games-121-end` at `a47b3d4520aa97f99fb6e3e56d5e5af2e312967c`. Its [immutable source ledger](https://github.com/Macrofold/OpenLegend/blob/a47b3d4520aa97f99fb6e3e56d5e5af2e312967c/archive/02-research/game-inspiration/research-progress.md) preserves the inherited G01–G25/fork history and source-specific recovery instructions; current states for those other ranges are owned by their sections above.
+Imported from `docs/game-inspiration-games-121-end` at `ec7110a1c676972bcd45cce4c40e1f1200c9fb3a`. Its [immutable source ledger](https://github.com/Macrofold/OpenLegend/blob/ec7110a1c676972bcd45cce4c40e1f1200c9fb3a/archive/02-research/game-inspiration/research-progress.md) preserves the inherited G01–G25/fork history and source-specific recovery instructions; current states for those other ranges are owned by their sections above.
 
 ### Requirements-and-corrections audit — G121 through G130
 
