@@ -176,6 +176,37 @@ Genesis Ascended Part 1 and **Tides of Fortune** launched in July 2026. Current 
 
 By September 2026 current patches had added a **Galleon** for Tides owners and a **Trireme** for Astraeos owners, plus ocean outposts/market camps on Genesis. Patch mirrors should be treated as version evidence, not a timeless final fleet. [current patch mirror](https://steamcommunity.com/app/2399830/discussions/0/592939664045914998/).
 
+### Cross-ARK continuity — audit addition
+
+ASA retains the broader **CrossARK transfer** model: compatible worlds/server clusters can move survivors, items and creatures through Obelisks, Tek Transmitters and map-specific terminals where server policy permits it. Transfers remain permissioned and constrained rather than automatic; server owners can independently prevent survivor/item/dino upload/download, and specific ASA creatures/content can have transfer restrictions. [CrossARK Transfers](https://ark.wiki.gg/wiki/CrossARK_Transfers).
+
+This matters more in ASA because the current live product spans remastered canonical maps, Official Partner maps and paid story/content layers. A survivor's progression can therefore form a **cross-map career**, while server operators still own the portability contract.
+
+### Club ARK — social hub, minigames and cross-world rewards
+
+The initial pass omitted **Club ARK**, a free Wildcard social-hub map released June 17, 2024. Wildcard describes it as a place where survivors can converge irrespective of tribe/PvE/PvP context, play activities and take earned items/dinos back "home." [Community Crunch 414](https://survivetheark.com/index.php?/forums/topic/736304-community-crunch-414-club-ark-conquest-servers-and-more/).
+
+Club ARK's activity set includes minigames such as:
+- Doed Dodge;
+- Duck Duck Jump;
+- duels;
+- lasso;
+- parkour;
+- Ray Race;
+- Whac-A-Dodo;
+- event-specific activities;
+- Bob's Tall Tales missions such as Laboratory Escape, Train Robbery and later **Mad Mark**.
+
+Players earn **Club Tokens** and rewards; the hub also supports direct safe player trading. Later updates added a dino store, wardrobe, consumables, repair items, more minigames and Wasteland/Extinction content. [Club ARK](https://ark.wiki.gg/wiki/Club_ARK) · [Wasteland War](https://survivetheark.com/index.php?/forums/topic/769859-community-crunch-443-club-ark-update-community-creature-submission/).
+
+Club ARK is important because it temporarily changes the social contract: a persistent survival character can leave the dangerous home ARK, enter a purpose-built leisure/challenge space, earn transferable rewards and return. It is **not** just a menu minigame and not evidence that ordinary PvP maps are safe.
+
+### Custom Cosmetic mods — creator layer separate from gameplay mods
+
+Starting with Club ARK's June 2024 rollout, ASA can dynamically download compatible **Custom Cosmetic mods** in the background, including costumes/items and even functional structures, with a player toggle. [Community Crunch 414](https://survivetheark.com/index.php?/forums/topic/736304-community-crunch-414-club-ark-conquest-servers-and-more/).
+
+This extends the cross-platform mod platform into a presentation/content layer that can appear in shared worlds without every cosmetic needing to be bundled into the base executable. It belongs in the creator/platform inventory separately from full gameplay/map mods.
+
 ### Official server modes remain a first-class layer
 
 Official PvE/PvP, ARKpocalypse wipes, Classic/Conquest experiments and server-rate events change the social contract. Community/unofficial servers add further settings/mods.
@@ -388,7 +419,24 @@ Unless attributed otherwise, these are rules-based illustrations.
 **Current reception:** multiple September 2026 Steam negatives identify this exact frustration.  
 **Limit:** the complaint demonstrates player perception, not an objective competitiveness score.
 
-### Case 12 — UE5 visuals increase both atmosphere and hardware pressure
+### Case 12 — Club ARK changes the social contract without changing the survivor
+
+**Intention:** earn rewards/socialize without risking the ordinary home-map PvP/PvE loop.  
+**Conditions:** player enters Club ARK through the supported network flow.  
+**Actions:** play parkour/race/dodge/mission activities, earn Club Tokens/rewards, trade safely, then return home.  
+**Interaction:** one persistent survivor identity participates in a bounded ruleset whose purpose is leisure/challenge rather than survival-base ownership.  
+**Result:** rewards can feed back into the main persistent world.  
+**Lesson:** a world network can support radically different local social contracts without forcing every world to share one activity model.
+
+### Case 13 — transfer permissions decide whether an expansion is continuity or restart
+
+**Intention:** bring an established survivor/tame economy into another ASA map.  
+**Conditions:** source/destination cluster and transfer settings allow the relevant survivor/items/creatures.  
+**Actions:** upload through supported transfer infrastructure and download on destination.  
+**Interaction:** expansion geography, ownership entitlements and server governance determine portability.  
+**Result:** the same map can function as continuation on one cluster and fresh-start challenge on another.
+
+### Case 14 — UE5 visuals increase both atmosphere and hardware pressure
 
 **Intention:** revisit a familiar Island location.  
 **Conditions:** Lumen/Nanite/dynamic-water/foliage presentation is enabled at a hardware-appropriate level.  
@@ -718,6 +766,9 @@ The original seven-file packet predates G134. This pass does **not** claim the s
 - **PlayStation Store — [Tides of Fortune](https://store.playstation.com/en-us/product/UP0691-PPSA16810_00-TIDESOFFORTUNE01), accessed September 27, 2026.** Current product description of Sloop/Brigantine/Galleon, broadside combat and ship skill trees.
 - **ARK Official Community Wiki — [Tides of Fortune](https://ark.wiki.gg/wiki/Tides_of_Fortune), accessed September 27, 2026.** Maintained mechanics details for outposts/ships/items.
 - **Wildcard Support — [ASA mods](https://support.survivetheark.com/hc/en-us/articles/19362130409111-Where-can-I-find-Ark-Survival-Ascended-mods), accessed September 27, 2026.** Official cross-platform/in-game mod browser route.
+- **Studio Wildcard — [Community Crunch 414](https://survivetheark.com/index.php?/forums/topic/736304-community-crunch-414-club-ark-conquest-servers-and-more/), June 15, 2024.** Primary Club ARK social-hub/minigame/reward and dynamic Custom Cosmetic announcement.
+- **Studio Wildcard — [Community Crunch 443](https://survivetheark.com/index.php?/forums/topic/769859-community-crunch-443-club-ark-update-community-creature-submission/), February 1, 2025.** Primary Club ARK Wasteland War/Mad Mark/reward update.
+- **ARK Official Community Wiki — [Club ARK](https://ark.wiki.gg/wiki/Club_ARK), [Club ARK Missions](https://ark.wiki.gg/wiki/Club_ARK/Missions), and [CrossARK Transfers](https://ark.wiki.gg/wiki/CrossARK_Transfers), accessed September 27, 2026.** Current operational minigame/transfer details and edition-specific restrictions.
 - **Steam — [ARK: Survival Ascended](https://store.steampowered.com/app/2399830/ARK_Survival_Ascended/), accessed September 27, 2026.** Current Early Access/platform/DLC surface.
 
 ### Production/history sources
@@ -758,7 +809,7 @@ No video scene or timestamp is represented as watched in this pass.
 | R02 actions/major mechanics | R02 |
 | R03 items/entities/composition | R03 |
 | R04 progression/economy/time | R04 |
-| R05 worked interactions | R05, twelve cases |
+| R05 worked interactions | R05, fourteen cases |
 | R06 people/AI/social/multiplayer | R06 |
 | R07 art/audio/interface/feel | R07 |
 | R08 story/narrative/play | R08 |
@@ -771,6 +822,10 @@ No video scene or timestamp is represented as watched in this pass.
 
 ### Explicit mechanics-inventory closure
 
-Character creation; survivor attributes and XP/levels; Engrams/Tekgrams plus Lost Colony skills; items/inventory/blueprints; weapons/armor/saddles; crafting/upgrading/industrial/Tek production; no conventional spellcasting in the base survival chassis, though expansion abilities can be fantastical; walking/swimming/mounts/fliers/vehicles/ships; environmental object interaction; farming/cooking/breeding; combat/practical stealth; loot/death/corpse recovery; resource/barter plus expansion-specific markets; canonical narrative/Explorer Notes; tribe reputation/social identity rather than universal base NPC reputation; creature and Thrall followers rather than romance party; creature AI and command; maps/biomes; caves/bosses/Outposts/missions; building/base/mobile-ship management; cross-platform multiplayer/mods/server modes; Ascension, skills, live maps and continuing sandbox as endgame/return layers are addressed above.
+Character creation; survivor attributes and XP/levels; Engrams/Tekgrams plus Lost Colony skills; items/inventory/blueprints; weapons/armor/saddles; crafting/upgrading/industrial/Tek production; no conventional spellcasting in the base survival chassis, though expansion abilities can be fantastical; walking/swimming/mounts/fliers/vehicles/ships plus permissioned Cross-ARK continuity; environmental object interaction; farming/cooking/breeding; combat/practical stealth; loot/death/corpse recovery; resource/barter plus expansion-specific markets; Club ARK minigames/missions/social trading; canonical narrative/Explorer Notes; tribe reputation/social identity rather than universal base NPC reputation; creature and Thrall followers rather than romance party; creature AI and command; maps/biomes; caves/bosses/Outposts/missions; building/base/mobile-ship management; cross-platform gameplay mods and dynamic Custom Cosmetics/server modes; Ascension, skills, live maps and continuing sandbox as endgame/return layers are addressed above.
 
 **Research boundary:** evidence was checked through September 27, 2026. ASA remains a fast-moving Early Access/live product. Future roadmap dates, Genesis Part 2/Fjordur timing, patch-only creatures and planned systems should be reverified from explicit release posts before being described as current. Server rules, mods and paid entitlements can materially alter the mechanics experienced by any particular player.
+
+### Follow-up audit — September 27, 2026
+
+The second pass found the ASA-only building/Traits/Lost Colony/Tides research substantive, but it had two real coverage holes: **Cross-ARK portability was only mentioned, not explained**, and **Club ARK was absent despite being ASA's dedicated activities/minigames/social-hub system**. Both are now documented with new worked cases, alongside the dynamic Custom Cosmetic layer. The original delivered-vs-roadmap map audit remains intact; no planned Genesis Part 2/Fjordur feature has been promoted into current capability.
