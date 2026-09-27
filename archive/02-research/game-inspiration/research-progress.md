@@ -24,8 +24,8 @@ RuneScape and Old School RuneScape remain independent pending full passes G48/G4
 | G04 — Roblox | **Audited** | `99549978885a9bbef41362d95d192a53483ba287` — explicit platform-level mechanics closure; retained RDC 2026 delivered-vs-roadmap boundaries instead of promoting future web/offline/creation features into current capability. |
 | G05 — Grow a Garden | **Audited** | `c8808755dae39c56b6e8e9b0a69014a979803d04` — explicit mechanics-inventory closure; preserved live-service uncertainty instead of inventing a canonical September 2026 build or immutable mutation/trade table. |
 | G06 — Steal a Brainrot | **Audited** | `f0eedc0e27527ff60d2e715dec4f9cc08a739c9b` — explicit mechanics-inventory closure; current official experience still exposes the core buy/steal/income/rebirth loop while rotating event titles remain non-versioned live-service state. |
-| G07 — Fortnite | **In progress** | Recheck current Battle Royale/Creative/UEFN/mode boundaries and full mechanics inventory. |
-| G08 — League of Legends | Pending | — |
+| G07 — Fortnite | **Audited** | `36f52f093d56067eb6e6e3124eb8bf81c24c1595` — explicit mode-scoped mechanics closure; rechecked Override/Kingdom Hearts as delivered and Rocket Racing's October 2026 removal as still future. |
+| G08 — League of Legends | **In progress** | Recheck current patch/mode boundaries and full mechanics inventory. |
 | G09 — Dota 2 | Pending | — |
 | G10 — Path of Exile | Pending | — |
 | G11 — Path of Exile 2 | Pending | — |
