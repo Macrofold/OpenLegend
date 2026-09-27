@@ -1,6 +1,6 @@
 # G58 — Pathfinder: Kingmaker
 
-**Completed research pass — September 26, 2026.** Reference research, not an approved OpenLegend design or implementation plan. [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md).
+**Original research September 26, 2026; identified operational gaps addressed September 27.** Reference research, not an approved OpenLegend design or implementation plan. [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Party rules and kingdom operations](../mechanics/kingmaker-party-rules-and-kingdom-operations.md).
 
 ## 1. Identity, editions and the promise
 
@@ -20,6 +20,8 @@ The game adapts **Pathfinder First Edition**, not Pathfinder Second Edition or D
 **First-session experience:** select a character, navigate an attack on the opening gathering, recruit or separate from prospective companions, then explore toward the Stag Lord. **Established experience:** alternate between expeditions, companion matters and the kingdom calendar. **Late experience:** resolve accumulated crises and the larger mystery rather than maintain an endless service economy. Those changes in responsibility are more significant than a simple increase in enemy health. [C01], [C02]
 
 ## 2. Major mechanics and the decisions they create
+
+The [operational supplement](../mechanics/kingmaker-party-rules-and-kingdom-operations.md) supplies the audited missing detail behind this original overview: action categories, defenses and spell checks, prepared/spontaneous casting, equipment/feat eligibility, exploration/camping, death and recovery, and the kingdom's event/project/rank/construction machinery. Its dated sources and corrections are separate from the original review evidence below.
 
 ### 2.1 Character identity, classes and attributes
 
@@ -75,6 +77,8 @@ The kingdom layer uses advisers to address problems, opportunities and projects.
 
 **Interpretation:** a shared calendar can make commitments feel real. But it needs a fair account of what may arrive during the commitment and what can be interrupted. A deadline whose existence or severity becomes clear only after every suitable adviser is unavailable can feel like a trap rather than a strategic choice.
 
+**Operational distinction:** [supplement §§7–9](../mechanics/kingmaker-party-rules-and-kingdom-operations.md#7-kingdom-values-ranks-and-advisers-are-different-layers) distinguishes stat values from ranks, adviser eligibility from assignment, uncertain event checks from deterministic projects, ruler-consuming rank upgrades from ordinary delegated work, and unrest from the Stability development stat.
+
 ### 2.10 Territory, settlements, projects and artisans
 
 Exploration and political decisions feed expansion; the realm's settlements and improvements feed its capabilities. Artisans connect the managed territory to distinctive equipment. Advisers and development options make the kingdom more than a decorative house, but its feedback is partly numerical and menu-driven. The launch reviewer found the connection promising while wanting the built environment to show more of what had changed. [S01], [C02]
@@ -107,7 +111,7 @@ Chris Avellone identifies three intertwined narrative levels: the protagonist's 
 
 ## 4. Nine causal interaction studies
 
-Cases 1–7 are **constructed illustrations** based on the documented systems, not newly played sessions. Cases 8–9 preserve attributed experiences.
+Cases 1–7 are **constructed illustrations** based on the documented systems, not newly played sessions. Cases 8–9 preserve attributed experiences. [Five additional named cases](../mechanics/kingmaker-party-rules-and-kingdom-operations.md#11-five-additional-constructed-cases) now ground the operational relationships in Ray of Enfeeblement, Outflank, An Ancient Curse, the Signed Scroll and Bokken's research. They supplement this original set rather than erasing its reviewer history.
 
 ### 1. Diagnose the wrong damage
 
@@ -206,7 +210,7 @@ The 2025 report also discusses ownership history and royalties, but this dossier
 
 ## 8. Six independent reviews and a later reassessment
 
-Each article below was read substantively. The retrospective is not counted as a seventh independent publication.
+Each article below was read substantively in the original pass. The retrospective is not counted as a seventh independent publication, and the September 27 rules supplement does not claim seven fresh review readings.
 
 | Critic, date and version | Specific appreciation | Specific criticism / qualification |
 | --- | --- | --- |
@@ -246,6 +250,8 @@ A useful play study would distinguish time spent deciding, executing, traveling,
 
 **Routes:** start with the [official companion gallery][S02] for authored identities; compare [Avellone's interview][S09] with [launch criticism][C02] and the [one-year reassessment][C06]; compare the three DLC pages for alternative uses of the same rules. The [console announcement][S10] embeds a trailer and screenshots for input/platform positioning. The [Wccftech review][C07] links the launch trailer. These are viewing routes, **not watched-footage evidence**, and no timestamps are invented. A deliberate gameplay inspection should compare one difficult battle, one camp, one adviser commitment and the resulting return to the capital rather than watch only a combat highlight.
 
+**Operational reading route:** [party rules and kingdom operations](../mechanics/kingmaker-party-rules-and-kingdom-operations.md) now supplies actual prerequisites, costs, checks and recovery rules. Its source annotations distinguish read guide bodies from indexed-only material and correct conflicting touch-AC/action metadata instead of reproducing it blindly.
+
 ### Source register
 
 | IDs | Type and access boundary |
@@ -260,26 +266,26 @@ A useful play study would distinguish time spent deciding, executing, traveling,
 | P01–P03 | Direct selected player writing: GOG helpful bodies, Reddit discussion and dated early impressions. Not representative sampling. |
 | P04 | Attempted Steam helpful surface; gated, no review-body evidence obtained. |
 
-**Preservation:** the target dossier and same-named original chapter were absent before this pass. The checkpoint's three review accounts, exact campaign figures and access limitation are retained and extended. Existing chapters, mechanics studies, source records and [packet provenance](../references/packet-provenance.md) were not replaced. This is not a new line-by-line reconciliation of the seven historical packet inputs. No new companion/character names here are proposed as OpenLegend assets.
+**Preservation:** the target dossier and same-named original chapter were absent before the original pass. The checkpoint's three review accounts, exact campaign figures and access limitation were retained and extended. Existing chapters, mechanics studies, source records and [packet provenance](../references/packet-provenance.md) were not replaced. The subsequent operational supplement adds the identified missing rules and five named cases while preserving this dossier's original nine cases, all independent criticism and its historical limitations. This is not a new line-by-line reconciliation of the seven historical packet inputs. No new companion/character names here are proposed as OpenLegend assets.
 
-**Verification:** documentary review, source/edition checks and requirement mapping only. No gameplay, local game run, full video viewing, performance benchmark or source-code inspection. Inaccessible community rules sites were not treated as read; the dossier avoids unsupported exact formulas and exhaustive item lists.
+**Verification:** documentary review, source/edition checks and requirement mapping only. No gameplay, local game run, full video viewing, performance benchmark or source-code inspection. Originally inaccessible mechanics sites were not treated as read. The September 27 supplement supplies newly accessible guide and indexed rules, with its own source boundaries rather than retroactively claiming the original failed reads succeeded. Neither document claims exhaustive formulas or item lists.
 
 | Requirement | Substantive coverage |
 | --- | --- |
 | R01 | Section 1: game/edition boundaries and first-to-late play |
-| R02 | Section 2: twelve action/system groups |
-| R03 | Sections 2.2, 2.4–2.5, 2.8, 2.10–2.11 and DLC distinctions |
-| R04 | Sections 2.2, 2.8–2.12; fictional resources separated from business figures |
-| R05 | Section 4: nine causal cases and explicit attribution |
-| R06 | Sections 2.6, 2.9 and 3: party, advisers, society and native solo boundary |
+| R02 | Section 2 overview and operational supplement §§1–10: actual party and kingdom rules |
+| R03 | Sections 2.2, 2.4–2.5, 2.8, 2.10–2.11 and DLC; supplement's equipment, feats, recovery tools and Bokken |
+| R04 | Sections 2.2, 2.8–2.12 and supplement §§5–10: recovery, ranks, event/project costs, BP and unrest |
+| R05 | Section 4: nine preserved cases; supplement §11: five additional named causal examples |
+| R06 | Sections 2.6, 2.9 and 3; supplement's camp and adviser/assignment distinctions |
 | R07 | Section 6: visual/audio/UI and input-specific friction |
 | R08 | Sections 1, 3 and 5: story, people, places and parallel perspective |
 | R09 | Section 7: funding, authorship, iteration and unknown production details |
 | R10 | Section 7: documented distribution versus explanatory hypotheses |
 | R11 | Section 7: dated pledges/copies/business model and measurement limits |
 | R12 | Sections 8–9: six reviews, reassessment and alternative player testimony |
-| R13 | Section 10: conditional patterns, dependencies and alternatives |
-| R14 | Section 11: routes, annotations, preservation and coverage map |
+| R13 | Section 10 and supplementary interpretations: conditional patterns, dependencies and alternatives |
+| R14 | Section 11 and linked supplement: dated annotations, preservation, reading routes and coverage |
 
 [S01]: https://store.steampowered.com/app/640820/Pathfinder_Kingmaker__Enhanced_Plus_Edition/
 [S02]: https://kingmaker.owlcat.games/
