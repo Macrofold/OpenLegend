@@ -61,6 +61,8 @@ Additional perspectives deserve explicit selection rather than being assumed to 
 | Romance and social-drama player        | Attraction, wit, intimacy, reputation, conflicting commitments and change                                  | Everyone is available and agreeable, or relationships reduce to gifts and one affection number                       |
 | Heroic adventurer                      | Explore, gain powers, defeat a genuine evil and protect particular people or places                        | Every villain becomes a misunderstanding, victory changes nothing, or heroism requires a compulsory tragic backstory |
 
+Apply the [adult-scope foundation](design-foundation.md#adult-scope-and-world-specific-tone) when selecting a world. Mature sexuality, substance use, abusive power and horror can be central to the intended experience; their disturbing or unsavory nature alone does not lower their priority. Criticality measures their role in that selected game. A lighter world can omit them deliberately without removing them from the shared repertoire.
+
 These perspectives overlap. A builder may want a severe expedition on Saturday and a quiet garden on Sunday. Use explicit world choices and activity options rather than assuming one permanent player type.
 
 ## Complexity budgets that protect the experience

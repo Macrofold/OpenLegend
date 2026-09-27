@@ -1,5 +1,11 @@
 # Documentation changelog
 
+## 2026-09-27 — Adult scope made explicit in the repertoire foundation
+
+Established an [adult, R-rated creative direction](repertoires/design-foundation.md#adult-scope-and-world-specific-tone) for the proposal library, with lighter and PG worlds remaining deliberate selections. The foundation and sixteen relevant category bases now explicitly account for adult sex, alcohol and drugs, nightlife and rebellious music, abuse, rape and sexual assault, torture, horror, demons, black magic, undead catastrophe and cruel political or supernatural powers. Mature subject matter applies to possible systems and consequences, while existing pleasures, relationships and constructive ideas remain.
+
+Kept consensual sexuality distinct from sexual violence and specific voluntary traditions distinct from all possible world mechanics. Narrowed two overbroad restrictions on fictional mind effects and permanent ecological collapse; retained actual platform-authority boundaries. The selection guide and source atlas reflect the clarification. This remains foundation documentation, with no individual inventory expansion, runtime change or gameplay validation. Existing [ACT and parent tracker ownership](maintainers/action-capabilities.md#ownership-and-dependencies) is unchanged, with no implementation criteria closed.
+
 ## 2026-09-27 — Repertoire foundation revised around the full range of world dynamics
 
 Reworked the [repertoire foundation](repertoires/design-foundation.md) and all 27 category bases to include mastery, combat, ambition, cruelty, betrayal, power and lasting loss alongside beauty, love, care, creation and ordinary pleasure. The 216 compact domain rows establish coverage for future specific inventories; all 270 existing pattern cards remain, with narrow corrections where older wording imposed universal cooperation or forgiving outcomes. Criticality and Level definitions and the complete 384-action catalogue remain unchanged.

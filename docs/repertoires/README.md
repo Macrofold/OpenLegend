@@ -8,6 +8,8 @@ Start with the [design foundation](design-foundation.md): what people seek, what
 
 These worlds make room for mastery, combat, adventure, rivalry, ambition, wealth, romance, treachery, cruelty, fear and loss, alongside beauty, humor, care, creativity and belonging. Inhabitants have purposes of their own and can be admirable, malicious, conflicted or ordinary. A fictional character need not behave like a helpful assistant. A selected world can favor a particular tone; the library must not silently impose one cooperative or uniformly bleak interpretation on every genre.
 
+**Adult audience and scope:** the creative target is R-rated in tone. The [adult-scope foundation](design-foundation.md#adult-scope-and-world-specific-tone) explicitly covers sex, drugs and alcohol, nightlife, abuse, rape and sexual assault, torture, horror, demons, black magic and deadly catastrophes. PG worlds remain an available authored choice. The shared mechanics vocabulary is not restricted to a PG default.
+
 ## Catalogue map
 
 | Create or explore                         | Catalogue                                                   | Coverage and starting points                                            |

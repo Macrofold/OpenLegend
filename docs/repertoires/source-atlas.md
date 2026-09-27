@@ -716,7 +716,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 [Disco Elysium](../../archive/02-research/game-inspiration/dossiers/disco-elysium.md)
 
-**Design takeaway:** Plural interpretations, provisional beliefs and interesting failure support investigation.
+**Design takeaway:** Plural interpretations, provisional beliefs and interesting failure support investigation. Alcohol and drugs can also connect temporary capability changes to money, temptation and relationships.
 
 **Caution to carry forward:** Psychological vocabulary is not diagnosis; hidden knowledge should not become player certainty.
 
@@ -1436,7 +1436,7 @@ These primary-author or estate-published sources were consulted on September 27,
 
 **Design takeaway:** Watching, feinting and retreating enemies make danger interpretable but uncertain; fires and fortifications can provide security while advertising a camp.
 
-**Caution to carry forward:** Behavioral ambiguity needs actual varied responses; horror-specific grotesquerie and unknowable rule changes should not substitute for meaningful threat.
+**Caution to carry forward:** Body horror and uncertain hostile behavior can reinforce fear; repeated unexplained rule changes or broken responses can undermine it.
 
 **New catalogue:** [psychology behavior](psychology-behavior.md)
 
